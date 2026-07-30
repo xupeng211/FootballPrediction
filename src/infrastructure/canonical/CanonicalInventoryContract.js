@@ -22,7 +22,10 @@ const FIXTURES_PER_SEASON = 380;
 const MASTER_COUNT = SEASONS.length * FIXTURES_PER_SEASON;
 const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
     'eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f';
-const ALLOWED_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled', 'abandoned']);
+// `abandoned` fixtures are excluded by the approved full-inventory preflight.
+// They must not become durable canonical rows merely because status is outside
+// the v1 identity projection.
+const ALLOWED_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled']);
 const SHA256 = /^[0-9a-f]{64}$/;
 const REPOSITORY_ROOT = path.resolve(__dirname, '../../..');
 

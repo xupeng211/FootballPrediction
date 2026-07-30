@@ -17,6 +17,7 @@ const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
+const GIT_REVISION = /^[0-9a-f]{40}$/;
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -126,11 +127,16 @@ function artifactShape(artifact, file) {
 }
 
 class CanonicalInventoryWriter {
-    constructor({ pool, target, authorizationAuthority, codeRevision = 'unknown', afterAdvisoryLock = null } = {}) {
+    constructor({ pool, target, authorizationAuthority, codeRevision, afterAdvisoryLock = null } = {}) {
         if (!pool || typeof pool.connect !== 'function') {
             throw new CanonicalInventoryWriterError('writer requires a pg Pool');
         }
-        if (!target?.serviceIdentity || !target?.databaseIdentity || target.classification !== 'disposable') {
+        if (
+            !target?.serviceIdentity ||
+            !target?.databaseIdentity ||
+            !target?.writerRole ||
+            target.classification !== 'disposable'
+        ) {
             throw new CanonicalInventoryWriterError(
                 'writer requires an independently configured disposable target identity',
                 'TARGET_CLASSIFICATION_MISMATCH'
@@ -140,6 +146,12 @@ class CanonicalInventoryWriter {
             throw new CanonicalInventoryWriterError(
                 'writer requires a trusted external authorization authority',
                 'AUTHORIZATION_AUTHORITY_MISSING'
+            );
+        }
+        if (typeof codeRevision !== 'string' || !GIT_REVISION.test(codeRevision)) {
+            throw new CanonicalInventoryWriterError(
+                'writer requires the actual 40-character git code revision',
+                'CODE_REVISION_MISSING'
             );
         }
         this.pool = pool;
@@ -153,6 +165,7 @@ class CanonicalInventoryWriter {
         const result = await client.query(`
             SELECT current_database() AS database_identity,
                    current_user AS current_user,
+                   session_user AS session_user,
                    current_setting('transaction_read_only') AS transaction_read_only,
                    current_setting('server_version_num') AS server_version_num,
                    to_regclass('public.m3_canonical_source_artifacts') IS NOT NULL AS artifact_table,
@@ -164,6 +177,9 @@ class CanonicalInventoryWriter {
         const identity = result.rows[0];
         if (identity.database_identity !== this.target.databaseIdentity) {
             throw new CanonicalInventoryWriterError('database identity mismatch', 'TARGET_IDENTITY_MISMATCH');
+        }
+        if (identity.current_user !== this.target.writerRole || identity.session_user !== this.target.writerRole) {
+            throw new CanonicalInventoryWriterError('database writer role mismatch', 'TARGET_WRITER_ROLE_MISMATCH');
         }
         if (identity.transaction_read_only === 'on') {
             throw new CanonicalInventoryWriterError('target transaction is read-only', 'TARGET_READ_ONLY');
@@ -401,7 +417,7 @@ class CanonicalInventoryWriter {
                 (run_id, artifact_id, execution_id, authorization_receipt_sha256, code_revision)
             VALUES ($1, $2, $3, $4, $5)
         `,
-            [runId, artifact.artifact_id, receipt.execution_id, receipt.receipt_sha256, this.codeRevision]
+            [runId, artifact.artifact_id, receipt.execution_id, receipt.receipt_sha256, receipt.code_revision]
         );
         return runId;
     }
@@ -467,6 +483,8 @@ class CanonicalInventoryWriter {
                 database_identity: targetIdentity.database_identity,
                 schema_baseline: SCHEMA_BASELINE,
                 target_classification: this.target.classification,
+                writer_role: targetIdentity.current_user,
+                code_revision: this.codeRevision,
                 artifact: {
                     sha256: inputBinding.sha256,
                     business_hash: inputBinding.artifact.business_hash,
@@ -545,6 +563,7 @@ class CanonicalInventoryWriter {
                     target: {
                         database_identity: targetIdentity.database_identity,
                         current_user: targetIdentity.current_user,
+                        session_user: targetIdentity.session_user,
                     },
                     artifact_sha256: verifiedInput.sha256,
                     candidate_count: verifiedInput.candidates.length,

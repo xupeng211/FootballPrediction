@@ -27,6 +27,8 @@ const binding = {
     database_identity: 'fp_m3_canonical_ephemeral_test',
     schema_baseline: 'm3-canonical-inventory-v26.10',
     target_classification: 'disposable',
+    writer_role: 'm3_canonical_writer',
+    code_revision: '0000000000000000000000000000000000000000',
     artifact,
 };
 function receipt(overrides = {}) {
@@ -36,12 +38,14 @@ function receipt(overrides = {}) {
         operation_type: DISPOSABLE_OPERATION,
         issued_at: '2026-01-01T00:00:00Z',
         expires_at: '2026-01-01T01:00:00Z',
+        code_revision: binding.code_revision,
         ...remaining,
         target: {
             classification: 'disposable',
             service_identity: binding.service_identity,
             database_identity: binding.database_identity,
             schema_baseline: binding.schema_baseline,
+            writer_role: binding.writer_role,
             ...targetOverrides,
         },
         artifact: { ...artifact, ...artifactOverrides },
@@ -63,6 +67,8 @@ test('runtime receipt is target/hash/scope/expiry bound and persistent operation
         receipt({ operation_type: 'persistent_master_write' }),
         receipt({ target: { ...receipt().target, classification: 'persistent' } }),
         receipt({ expires_at: '2025-12-31T23:59:59Z' }),
+        receipt({ code_revision: 'f'.repeat(40) }),
+        receipt({ target: { ...receipt().target, writer_role: 'other_writer' } }),
         receipt({ artifact: { ...artifact, sha256: 'd'.repeat(64) } }),
     ]) {
         assert.throws(
@@ -112,7 +118,12 @@ test('authorization receipt hash covers the complete signed receipt scope', () =
         ...signed,
         target: { ...signed.target, service_identity: 'other-disposable-service' },
     };
+    const revisionChanged = {
+        ...signed,
+        code_revision: 'f'.repeat(40),
+    };
     assert.notEqual(authorizationReceiptSha256(signed), authorizationReceiptSha256(targetChanged));
+    assert.notEqual(authorizationReceiptSha256(signed), authorizationReceiptSha256(revisionChanged));
     assert.match(authorizationReceiptSha256(signed), /^[a-f0-9]{64}$/);
 });
 

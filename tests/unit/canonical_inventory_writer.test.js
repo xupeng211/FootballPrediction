@@ -9,6 +9,7 @@ const {
     CanonicalInventoryWriterError,
     classifyProviderDifference,
 } = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
+const { SYNTHETIC_TEST_CODE_REVISION } = require('../helpers/canonicalInventoryFixtures');
 
 const candidate = {
     competition: 'Premier League',
@@ -49,8 +50,14 @@ test('writer requires independently configured disposable target and trusted aut
         () =>
             new CanonicalInventoryWriter({
                 pool,
-                target: { databaseIdentity: 'db', serviceIdentity: 'service', classification: 'persistent' },
+                target: {
+                    databaseIdentity: 'db',
+                    serviceIdentity: 'service',
+                    writerRole: 'writer',
+                    classification: 'persistent',
+                },
                 authorizationAuthority: { public_key: 'not-used' },
+                codeRevision: SYNTHETIC_TEST_CODE_REVISION,
             }),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_CLASSIFICATION_MISMATCH'
     );
@@ -58,8 +65,29 @@ test('writer requires independently configured disposable target and trusted aut
         () =>
             new CanonicalInventoryWriter({
                 pool,
-                target: { databaseIdentity: 'db', serviceIdentity: 'service', classification: 'disposable' },
+                target: {
+                    databaseIdentity: 'db',
+                    serviceIdentity: 'service',
+                    writerRole: 'writer',
+                    classification: 'disposable',
+                },
+                codeRevision: SYNTHETIC_TEST_CODE_REVISION,
             }),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'AUTHORIZATION_AUTHORITY_MISSING'
+    );
+    assert.throws(
+        () =>
+            new CanonicalInventoryWriter({
+                pool,
+                target: {
+                    databaseIdentity: 'db',
+                    serviceIdentity: 'service',
+                    writerRole: 'writer',
+                    classification: 'disposable',
+                },
+                authorizationAuthority: { public_key: 'not-used' },
+                codeRevision: 'not-a-git-revision',
+            }),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'CODE_REVISION_MISSING'
     );
 });

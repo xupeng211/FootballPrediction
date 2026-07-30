@@ -28,6 +28,7 @@ function sha256(value) {
 }
 
 const authorizationKeyPair = crypto.generateKeyPairSync('ed25519');
+const SYNTHETIC_TEST_CODE_REVISION = '0000000000000000000000000000000000000000';
 
 function testAuthorizationAuthority() {
     return {
@@ -125,6 +126,8 @@ function runtimeReceipt({
     sha256: artifactSha,
     databaseIdentity,
     serviceIdentity,
+    writerRole = 'm3_canonical_writer',
+    codeRevision = SYNTHETIC_TEST_CODE_REVISION,
     executionId = crypto.randomUUID(),
     expiresAt = new Date(Date.now() + 60_000).toISOString(),
 }) {
@@ -133,11 +136,13 @@ function runtimeReceipt({
         operation_type: DISPOSABLE_OPERATION,
         issued_at: new Date(Date.now() - 1_000).toISOString(),
         expires_at: expiresAt,
+        code_revision: codeRevision,
         target: {
             classification: 'disposable',
             database_identity: databaseIdentity,
             service_identity: serviceIdentity,
             schema_baseline: SCHEMA_BASELINE,
+            writer_role: writerRole,
         },
         artifact: {
             sha256: artifactSha,
@@ -168,6 +173,7 @@ module.exports = {
     sha256,
     syntheticCandidates,
     syntheticProvenance,
+    SYNTHETIC_TEST_CODE_REVISION,
     testAuthorizationAuthority,
     writeDocument,
 };

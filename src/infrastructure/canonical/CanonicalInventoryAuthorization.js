@@ -110,9 +110,10 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
     if (binding.target_classification !== 'disposable') {
         throw new CanonicalInventoryAuthorizationError('writer target is not independently classified as disposable');
     }
-    for (const field of ['service_identity', 'database_identity', 'schema_baseline']) {
+    for (const field of ['service_identity', 'database_identity', 'schema_baseline', 'writer_role']) {
         assertReceiptText(receipt.target?.[field], `target.${field}`);
     }
+    assertReceiptText(receipt.code_revision, 'code_revision');
     const issuedAt = assertDate(receipt.issued_at, 'issued_at');
     const expiresAt = assertDate(receipt.expires_at, 'expires_at');
     if (issuedAt > now || expiresAt <= now) {
@@ -120,12 +121,16 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
     }
     if (
         receipt.target.database_identity !== binding.database_identity ||
-        receipt.target.service_identity !== binding.service_identity
+        receipt.target.service_identity !== binding.service_identity ||
+        receipt.target.writer_role !== binding.writer_role
     ) {
         throw new CanonicalInventoryAuthorizationError('runtime authorization target identity mismatch');
     }
     if (receipt.target.schema_baseline !== binding.schema_baseline) {
         throw new CanonicalInventoryAuthorizationError('runtime authorization schema baseline mismatch');
+    }
+    if (receipt.code_revision !== binding.code_revision) {
+        throw new CanonicalInventoryAuthorizationError('runtime authorization code revision mismatch');
     }
     const expected = receipt.artifact;
     if (!expected || typeof expected !== 'object') {
@@ -147,6 +152,7 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
         execution_id: receipt.execution_id,
         operation_type: receipt.operation_type,
         expires_at: receipt.expires_at,
+        code_revision: receipt.code_revision,
         receipt_sha256: authorizationReceiptSha256(receipt),
     };
 }

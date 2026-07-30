@@ -38,6 +38,7 @@ const config = {
     writerPassword: process.env.M3_CANONICAL_DB_WRITER_PASSWORD,
 };
 const serviceIdentity = 'fp_m3_canonical_disposable_postgres15';
+const codeRevision = process.env.M3_CANONICAL_WRITER_CODE_REVISION;
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fp-m3-canonical-proof-'));
 let admin;
 let pool;
@@ -46,6 +47,7 @@ function assertConfig() {
     assert.ok(config.database.startsWith('fp_m3_canonical_ephemeral_'));
     assert.equal(config.host, 'ephemeral-postgres');
     assert.equal(config.writerUser, 'm3_canonical_writer');
+    assert.match(codeRevision, /^[0-9a-f]{40}$/);
 }
 function candidateInput(file, document, receipt = {}) {
     const artifact = readOrdinaryArtifact(file.path, {
@@ -63,6 +65,8 @@ function candidateInput(file, document, receipt = {}) {
                 sha256: file.sha256,
                 databaseIdentity: config.database,
                 serviceIdentity,
+                writerRole: config.writerUser,
+                codeRevision,
             }),
         provenanceReceipt: receipt.provenance === undefined ? syntheticProvenance(file.sha256) : receipt.provenance,
     };
@@ -70,9 +74,14 @@ function candidateInput(file, document, receipt = {}) {
 function writer() {
     return new CanonicalInventoryWriter({
         pool,
-        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        target: {
+            classification: 'disposable',
+            databaseIdentity: config.database,
+            serviceIdentity,
+            writerRole: config.writerUser,
+        },
         authorizationAuthority: testAuthorizationAuthority(),
-        codeRevision: 'disposable-proof',
+        codeRevision,
     });
 }
 async function counts() {
@@ -192,11 +201,41 @@ test('migration replay, identity constraints and least-privilege schema are acti
     await admin.query("DELETE FROM matches WHERE match_id = 'legacy-null'");
     await admin.query('BEGIN');
     await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
+    const schemaInspector = new CanonicalInventoryWriter({
+        pool,
+        target: {
+            classification: 'disposable',
+            databaseIdentity: config.database,
+            serviceIdentity,
+            writerRole: config.adminUser,
+        },
+        authorizationAuthority: testAuthorizationAuthority(),
+        codeRevision,
+    });
     await assert.rejects(
-        writer().inspectTarget(admin),
+        schemaInspector.inspectTarget(admin),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
     );
     await admin.query('ROLLBACK');
+    const wrongRoleDocument = buildDocument(syntheticCandidates());
+    const wrongRoleFile = writeDocument(temp, 'wrong-writer-role.json', wrongRoleDocument);
+    const wrongRoleWriter = new CanonicalInventoryWriter({
+        pool,
+        target: {
+            classification: 'disposable',
+            databaseIdentity: config.database,
+            serviceIdentity,
+            writerRole: config.adminUser,
+        },
+        authorizationAuthority: testAuthorizationAuthority(),
+        codeRevision,
+    });
+    const beforeWrongRole = await counts();
+    await assert.rejects(
+        () => wrongRoleWriter.execute(candidateInput(wrongRoleFile, wrongRoleDocument)),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_WRITER_ROLE_MISMATCH'
+    );
+    assert.deepEqual(await counts(), beforeWrongRole);
 });
 
 test('Proof A/B: full 1,140 synthetic master inserts once then exact replays with zero delta', async () => {
@@ -207,6 +246,9 @@ test('Proof A/B: full 1,140 synthetic master inserts once then exact replays wit
     assert.deepEqual(first.terminal_counts, { inserted: 1140 });
     assert.deepEqual(first.database_delta, { matches: 1140, artifacts: 1, import_runs: 1, lineages: 1140 });
     assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
+    assert.deepEqual((await admin.query('SELECT DISTINCT code_revision FROM m3_canonical_import_runs')).rows, [
+        { code_revision: codeRevision },
+    ]);
     const replay = await writer().execute(candidateInput(file, master));
     assert.deepEqual(replay.terminal_counts, { exact_duplicate: 1140 });
     assert.deepEqual(replay.database_delta, { matches: 0, artifacts: 0, import_runs: 0, lineages: 0 });
@@ -362,9 +404,14 @@ test('writer re-reads the hash-bound artifact after authorization and ignores mu
     const originalHomeTeam = input.candidates[0].home_team;
     const boundWriter = new CanonicalInventoryWriter({
         pool,
-        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        target: {
+            classification: 'disposable',
+            databaseIdentity: config.database,
+            serviceIdentity,
+            writerRole: config.writerUser,
+        },
         authorizationAuthority: testAuthorizationAuthority(),
-        codeRevision: 'disposable-proof',
+        codeRevision,
         afterAdvisoryLock: () => {
             input.candidates[0].home_team = 'Injected in-memory candidate';
         },
@@ -399,9 +446,14 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     });
     const firstWriter = new CanonicalInventoryWriter({
         pool,
-        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        target: {
+            classification: 'disposable',
+            databaseIdentity: config.database,
+            serviceIdentity,
+            writerRole: config.writerUser,
+        },
         authorizationAuthority: testAuthorizationAuthority(),
-        codeRevision: 'disposable-proof',
+        codeRevision,
         afterAdvisoryLock: async () => {
             signalLock();
             await release;

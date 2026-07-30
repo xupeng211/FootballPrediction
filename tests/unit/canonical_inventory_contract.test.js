@@ -42,6 +42,9 @@ test('synthetic v2 master preserves its deterministic v1 identity projection and
     const unknownStatus = structuredClone(master);
     unknownStatus.candidates[0].status = 'invented';
     assert.throws(() => validateArtifactDocument(unknownStatus), CanonicalInventoryContractError);
+    const abandonedStatus = structuredClone(master);
+    abandonedStatus.candidates[0].status = 'abandoned';
+    assert.throws(() => validateArtifactDocument(abandonedStatus), CanonicalInventoryContractError);
 });
 
 test('population, duplicate, scope and identity mismatches fail closed', () => {

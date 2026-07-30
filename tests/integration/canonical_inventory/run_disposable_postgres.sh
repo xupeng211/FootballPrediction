@@ -10,6 +10,11 @@ project="fp_m3_canonical_${nonce}"
 export M3_CANONICAL_DB_NAME="fp_m3_canonical_ephemeral_${nonce}"
 export M3_CANONICAL_DB_ADMIN_USER="m3_canonical_admin"
 export M3_CANONICAL_DB_ADMIN_PASSWORD="$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+export M3_CANONICAL_WRITER_CODE_REVISION="$(git -C "$repo_root" rev-parse HEAD)"
+if [[ ! "$M3_CANONICAL_WRITER_CODE_REVISION" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "M3 canonical disposable proof requires a checked-out git revision" >&2
+  exit 1
+fi
 
 cleanup() {
   docker compose -p "$project" -f "$compose_file" down -v --remove-orphans >/dev/null 2>&1 || true
