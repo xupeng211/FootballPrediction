@@ -1205,8 +1205,14 @@ rebinds and rotates the nonce, so a similarly named/schema-compatible clone
 fails closed. Before it starts a transaction, the writer checks the
 V26.10 checksum ledger, exact lock-function ACLs, table grants, schema/TEMP
 denial, absence of inherited writer roles and that database-backed target
-binding. It was not applied to development, persistent M3 sandbox, staging or
-production.
+binding. It additionally verifies every inventory CHECK constraint as an exact
+normalized expression set (artifact kind/parent, competition, both
+status-mapping versions, binding key, all hash formats, byte size and
+candidate count) and proves instance-nonce uniqueness structurally — a real
+UNIQUE constraint backed by a valid, ready, non-partial unique index. The
+schema declares no UUID-generating defaults, so the writer role carries no
+hidden function EXECUTE dependency. It was not applied to development,
+persistent M3 sandbox, staging or production.
 
 The disposable proof used deterministic synthetic data only: three synthetic
 seasons of 380 candidates (1,140 total), never a recovered FotMob artifact.
@@ -1220,7 +1226,12 @@ expired, out-of-scope and divergent candidate inputs; serializable/advisory
 lock contention; denied UPDATE/DELETE/TRUNCATE/DDL/direct table lock for the
 writer role; and pre-write custom backup restored into a fresh clone with
 baseline row count and schema/ACL checks. The compose launcher verified cleanup
-of its labelled containers, network and volume.
+of its labelled containers, network and volume. The final proof at head
+`26c8ecf76878ec4442411c0c54c236d1db09104b` additionally proved the schema-drift
+boundary: weakened, widened, narrowed, dropped and duplicated CHECK
+definitions, and dropped, plain-index, wrong-column and partial-predicate
+instance-nonce replacements, all fail closed, including one committed drift
+that stops the write path with zero database delta.
 
 The implemented terminal arithmetic remains fail-closed:
 `inserted + exact_duplicate + already_present_equivalent = declared input`.

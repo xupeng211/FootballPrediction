@@ -1049,10 +1049,22 @@ This is design readiness only, not database-write authorization.
   contention, least-privilege denial and backup/restore.
   Before any transaction, the writer verifies the V26.10 checksum baseline,
   exact required lock-function ACLs, no writer role inheritance, no schema
-  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. A full master also
+  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. It also verifies
+  every inventory CHECK constraint as an exact normalized expression set
+  (artifact kind/parent, competition, status-mapping versions, binding key,
+  hash formats, byte size and candidate count) and proves the instance-nonce
+  uniqueness structurally (a real UNIQUE constraint backed by a valid, ready,
+  non-partial unique index); weakened, widened, narrowed, dropped or duplicated
+  definitions fail closed. The schema carries no UUID-generating defaults, so
+  the writer role has no hidden function EXECUTE dependency. A full master also
   verifies that the in-scope canonical target is exactly its authorized
   1,140-candidate population before commit; an extra pre-existing in-scope row
   rolls back. The labelled proof containers, network and volume were cleaned up.
+- The final proof ran at head `26c8ecf76878ec4442411c0c54c236d1db09104b` with
+  the hardened baseline: migration lifecycle, 1,140 master, exact replay,
+  same-parent canary rollout, conflict and committed schema-drift rollbacks,
+  concurrency, exclusive-writer boundary and fresh-instance restore all passed;
+  disposable containers, networks and volumes were verified removed.
 - No real v2 artifact, FotMob request, canonical persistent write, linkage,
   odds staging/import, raw payload activity, training, backtest or prediction
   occurred. The 888 exact links, four kickoff quarantines and 248
