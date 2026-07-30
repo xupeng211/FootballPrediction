@@ -23,27 +23,40 @@ services:
         working_dir: /workspace
         command: ['tests/integration/canonical_inventory/bootstrap_disposable_postgres.js']
         depends_on: { ephemeral-postgres: { condition: service_healthy } }
-        environment: &db_env
+        environment: &runtime_env
             NODE_PATH: /app/node_modules
             M3_CANONICAL_DB_HOST: ephemeral-postgres
             M3_CANONICAL_DB_PORT: '5432'
             M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}
-            M3_CANONICAL_DB_ADMIN_USER: ${M3_CANONICAL_DB_ADMIN_USER:?missing admin user}
-            M3_CANONICAL_DB_ADMIN_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
             M3_CANONICAL_DB_WRITER_USER: m3_canonical_writer
             M3_CANONICAL_DB_WRITER_PASSWORD: m3_canonical_writer_proof
             M3_CANONICAL_DB_VERIFIER_USER: m3_canonical_verifier
             M3_CANONICAL_DB_VERIFIER_PASSWORD: m3_canonical_verifier_proof
             M3_CANONICAL_WRITER_CODE_REVISION: ${M3_CANONICAL_WRITER_CODE_REVISION:?missing code revision}
+            M3_CANONICAL_DB_ADMIN_USER: ${M3_CANONICAL_DB_ADMIN_USER:?missing admin user}
+            M3_CANONICAL_DB_ADMIN_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        volumes: ['../../../:/workspace:ro']
+        networks: [ephemeral]
+
+    schema-verifier:
+        image: footballprediction:v175-stable
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        entrypoint: ['node']
+        working_dir: /workspace
+        command: ['--test', 'tests/integration/canonical_inventory/disposable_postgres.test.js']
+        depends_on: { bootstrap: { condition: service_completed_successfully } }
+        environment:
+            <<: *runtime_env
+            M3_CANONICAL_SCHEMA_ONLY: 'yes'
         volumes: ['../../../:/workspace:ro']
         networks: [ephemeral]
 
     prewrite-backup:
         image: postgres:15-alpine
         labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
-        depends_on: { bootstrap: { condition: service_completed_successfully } }
+        depends_on: { schema-verifier: { condition: service_completed_successfully } }
         environment:
-            <<: *db_env
+            <<: *runtime_env
             PGPASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
         command:
             - sh
@@ -55,36 +68,93 @@ services:
         volumes: ['backup:/backup']
         networks: [ephemeral]
 
+    owner-phase-seal:
+        image: postgres:15-alpine
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        depends_on: { prewrite-backup: { condition: service_completed_successfully } }
+        environment:
+            <<: *runtime_env
+            PGPASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        command:
+            - sh
+            - -ec
+            - >-
+                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$M3_CANONICAL_DB_NAME" -Atqc "SELECT rolcanlogin FROM pg_roles WHERE rolname = 'm3_canonical_admin'")" = t;
+                psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$M3_CANONICAL_DB_NAME" -v ON_ERROR_STOP=1 -c 'ALTER ROLE m3_canonical_admin NOLOGIN';
+                echo '{"status":"owner_phase_sealed","admin_login":false}'
+        networks: [ephemeral]
+
     runner:
         image: footballprediction:v175-stable
         labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
         entrypoint: ['node']
         working_dir: /workspace
         command: ['--test', 'tests/integration/canonical_inventory/disposable_postgres.test.js']
-        depends_on: { prewrite-backup: { condition: service_completed_successfully } }
-        environment: *db_env
+        depends_on: { owner-phase-seal: { condition: service_completed_successfully } }
+        environment:
+            NODE_PATH: /app/node_modules
+            M3_CANONICAL_DB_HOST: ephemeral-postgres
+            M3_CANONICAL_DB_PORT: '5432'
+            M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}
+            M3_CANONICAL_DB_WRITER_USER: m3_canonical_writer
+            M3_CANONICAL_DB_WRITER_PASSWORD: m3_canonical_writer_proof
+            M3_CANONICAL_DB_VERIFIER_USER: m3_canonical_verifier
+            M3_CANONICAL_DB_VERIFIER_PASSWORD: m3_canonical_verifier_proof
+            M3_CANONICAL_WRITER_CODE_REVISION: ${M3_CANONICAL_WRITER_CODE_REVISION:?missing code revision}
         volumes: ['../../../:/workspace:ro']
+        networks: [ephemeral]
+
+    restore-postgres:
+        image: postgres:15-alpine
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        environment:
+            POSTGRES_DB: ${M3_CANONICAL_DB_NAME:?missing database name}_restore
+            POSTGRES_USER: ${M3_CANONICAL_DB_ADMIN_USER:?missing admin user}
+            POSTGRES_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        tmpfs: ['/var/lib/postgresql/data:rw,noexec,nosuid,size=384m']
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+            interval: 2s
+            timeout: 2s
+            retries: 30
         networks: [ephemeral]
 
     restore-verifier:
         image: postgres:15-alpine
         labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
-        depends_on: { runner: { condition: service_completed_successfully } }
+        depends_on:
+            runner: { condition: service_completed_successfully }
+            restore-postgres: { condition: service_healthy }
         environment:
-            <<: *db_env
+            <<: *runtime_env
             PGPASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
         command:
             - sh
             - -ec
-            - >-
+            - |
                 restore_db="$${M3_CANONICAL_DB_NAME}_restore";
-                createdb -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" "$$restore_db";
-                pg_restore -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" /backup/prewrite.dump;
-                psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -v ON_ERROR_STOP=1 -c "REVOKE TEMPORARY ON DATABASE \"$$restore_db\" FROM PUBLIC";
-                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc 'SELECT COUNT(*) FROM matches')" = 0;
-                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_table_privilege('m3_canonical_writer', 'public.matches', 'INSERT')")" = t;
-                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_database_privilege('m3_canonical_writer', current_database(), 'TEMPORARY')")" = f;
-                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'matches_m3_epl_canonical_identity_required')")" = t;
+                psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -v ON_ERROR_STOP=1 <<'SQL'
+                DO $$$$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_owner') THEN
+                        CREATE ROLE m3_canonical_owner NOLOGIN;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_writer') THEN
+                        CREATE ROLE m3_canonical_writer LOGIN PASSWORD 'm3_canonical_writer_proof';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_verifier') THEN
+                        CREATE ROLE m3_canonical_verifier LOGIN PASSWORD 'm3_canonical_verifier_proof' NOINHERIT;
+                    END IF;
+                END
+                $$$$;
+                SQL
+                pg_restore -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" /backup/prewrite.dump;
+                psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -v ON_ERROR_STOP=1 -c "REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC; REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC; REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC; REVOKE ALL ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) FROM PUBLIC; REVOKE TEMPORARY ON DATABASE \"$$restore_db\" FROM PUBLIC; GRANT CONNECT ON DATABASE \"$$restore_db\" TO m3_canonical_writer, m3_canonical_verifier; GRANT USAGE ON SCHEMA public TO m3_canonical_writer, m3_canonical_verifier; GRANT SELECT, INSERT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages TO m3_canonical_writer; GRANT SELECT ON public.m3_canonical_schema_migrations TO m3_canonical_writer; GRANT SELECT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages, public.m3_canonical_schema_migrations TO m3_canonical_verifier; GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO m3_canonical_writer; GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO m3_canonical_writer; GRANT EXECUTE ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) TO m3_canonical_writer; ALTER ROLE m3_canonical_verifier SET default_transaction_read_only = on";
+                test "$$(psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc 'SELECT COUNT(*) FROM matches')" = 0;
+                test "$$(psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_table_privilege('m3_canonical_writer', 'public.matches', 'INSERT')")" = t;
+                test "$$(psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_database_privilege('m3_canonical_writer', current_database(), 'TEMPORARY')")" = f;
+                test "$$(psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'matches_m3_epl_canonical_identity_required')")" = t;
+                psql -h restore-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -v ON_ERROR_STOP=1 -c 'ALTER ROLE m3_canonical_admin NOLOGIN';
                 echo '{"status":"prewrite_backup_restore_verified","restored_matches":0}'
         volumes: ['backup:/backup:ro']
         networks: [ephemeral]
@@ -97,8 +167,15 @@ services:
         command: ['tests/integration/canonical_inventory/verify_restored_postgres.js']
         depends_on: { restore-verifier: { condition: service_completed_successfully } }
         environment:
-            <<: *db_env
+            NODE_PATH: /app/node_modules
+            M3_CANONICAL_DB_HOST: restore-postgres
+            M3_CANONICAL_DB_PORT: '5432'
             M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}_restore
+            M3_CANONICAL_DB_WRITER_USER: m3_canonical_writer
+            M3_CANONICAL_DB_WRITER_PASSWORD: m3_canonical_writer_proof
+            M3_CANONICAL_DB_VERIFIER_USER: m3_canonical_verifier
+            M3_CANONICAL_DB_VERIFIER_PASSWORD: m3_canonical_verifier_proof
+            M3_CANONICAL_WRITER_CODE_REVISION: ${M3_CANONICAL_WRITER_CODE_REVISION:?missing code revision}
         volumes: ['../../../:/workspace:ro']
         networks: [ephemeral]
 

@@ -22,6 +22,13 @@ const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
 const GIT_REVISION = /^[0-9a-f]{40}$/;
 const TRUSTED_LOCK_OWNER = 'm3_canonical_owner';
+const EXPECTED_LOCK_FUNCTION_BODY =
+    'beginlocktablepublic.m3_canonical_source_artifactsinsharerowexclusivemode;locktablepublic.m3_canonical_import_runsinsharerowexclusivemode;locktablepublic.m3_canonical_match_lineagesinsharerowexclusivemode;locktablepublic.matchesinsharerowexclusivemode;end;';
+const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
+    matches_canonical_provider_fotmob_only: "canonical_providerisnullorcanonical_provider='fotmob'",
+    matches_m3_epl_canonical_identity_required:
+        "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']isnottrueorcanonical_providerisnotnullandcanonical_provider='fotmob'andexternal_idisnotnull",
+});
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -127,6 +134,13 @@ function artifactShape(artifact, file) {
         per_season_counts: artifact.per_season_counts,
         status_mapping_version: artifact.status_mapping_version,
     };
+}
+
+function normalizeSchemaExpression(definition) {
+    return String(definition)
+        .toLowerCase()
+        .replace(/::[a-z_ ]+(?:\[\])?/g, '')
+        .replace(/[\s()"]+/g, '');
 }
 
 class CanonicalInventoryWriter {
@@ -247,9 +261,7 @@ class CanonicalInventoryWriter {
                          AND function_owner.rolname = '${TRUSTED_LOCK_OWNER}'
                          AND NOT function_owner.rolcanlogin
                          AND function_meta.proconfig @> ARRAY['search_path=pg_catalog']::text[]
-                         AND lower(pg_get_functiondef(function_meta.oid)) LIKE '%lock table public.m3_canonical_source_artifacts in share row exclusive mode;%lock table public.m3_canonical_import_runs in share row exclusive mode;%lock table public.m3_canonical_match_lineages in share row exclusive mode;%lock table public.matches in share row exclusive mode;%'
-                         AND pg_get_functiondef(function_meta.oid) !~* '\\mexecute\\M'
-                         AND pg_get_functiondef(function_meta.oid) !~* '\\m(insert|update|delete|merge|truncate|copy|perform)\\M'
+                         AND regexp_replace(lower(function_meta.prosrc), '[[:space:]]+', '', 'g') = '${EXPECTED_LOCK_FUNCTION_BODY}'
                    ) AS controlled_lock_function
         `);
         const identity = result.rows[0];
@@ -272,6 +284,30 @@ class CanonicalInventoryWriter {
             !identity.controlled_lock_function
         ) {
             throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH');
+        }
+        const matchesChecks = await client.query(
+            `
+            SELECT constraint_meta.conname,
+                   pg_get_expr(constraint_meta.conbin, constraint_meta.conrelid) AS expression
+            FROM pg_constraint constraint_meta
+            WHERE constraint_meta.conrelid = 'public.matches'::regclass
+              AND constraint_meta.contype = 'c'
+              AND constraint_meta.conname = ANY($1::text[])
+        `,
+            [Object.keys(EXPECTED_MATCHES_CHECK_EXPRESSIONS)]
+        );
+        const expressionsByName = new Map(
+            matchesChecks.rows.map(row => [row.conname, normalizeSchemaExpression(row.expression)])
+        );
+        if (
+            Object.entries(EXPECTED_MATCHES_CHECK_EXPRESSIONS).some(
+                ([name, expression]) => expressionsByName.get(name) !== expression
+            )
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'matches canonical constraints do not match the required definition',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
         }
         const inventorySchema = await client.query(`
             WITH required_columns(table_name, column_name, type_name, must_be_not_null) AS (

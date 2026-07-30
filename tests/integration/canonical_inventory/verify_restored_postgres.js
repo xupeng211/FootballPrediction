@@ -42,6 +42,12 @@ async function main() {
         try {
             await writer.inspectTarget(client);
             const result = await client.query('SELECT COUNT(*)::integer AS matches FROM public.matches');
+            const adminRole = await client.query(
+                "SELECT rolcanlogin FROM pg_roles WHERE rolname = 'm3_canonical_admin'"
+            );
+            if (adminRole.rows[0]?.rolcanlogin !== false) {
+                throw new Error('restored disposable admin login must be disabled before writer baseline verification');
+            }
             process.stdout.write(
                 `${JSON.stringify({ status: 'restored_writer_baseline_verified', database, matches: result.rows[0].matches })}\n`
             );
