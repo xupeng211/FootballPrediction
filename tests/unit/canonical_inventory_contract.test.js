@@ -88,8 +88,7 @@ test('canary requires exact parent allowlist order and immutable projection', ()
         });
         assert.equal(
             validateArtifactDocument(canary, {
-                parentDocument: master,
-                parentBinding: binding,
+                parentArtifactPath: binding.path,
                 allowSyntheticTestOnly: true,
             }).candidates.length,
             10
@@ -100,8 +99,7 @@ test('canary requires exact parent allowlist order and immutable projection', ()
         assert.throws(
             () =>
                 validateArtifactDocument(reordered, {
-                    parentDocument: master,
-                    parentBinding: binding,
+                    parentArtifactPath: binding.path,
                     allowSyntheticTestOnly: true,
                 }),
             CanonicalInventoryContractError
@@ -111,8 +109,48 @@ test('canary requires exact parent allowlist order and immutable projection', ()
         assert.throws(
             () =>
                 validateArtifactDocument(mutated, {
-                    parentDocument: master,
-                    parentBinding: binding,
+                    parentArtifactPath: binding.path,
+                    allowSyntheticTestOnly: true,
+                }),
+            CanonicalInventoryContractError
+        );
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test('canary parent is bound to an ordinary physical master artifact', () => {
+    const directory = tempDir();
+    try {
+        const master = buildDocument(syntheticCandidates());
+        const masterFile = writeDocument(directory, 'master-physical.json', master);
+        const canary = buildDocument(master.candidates.slice(0, 1), {
+            kind: 'canary',
+            parentMaster: parentMetadata(master, masterFile),
+        });
+        const canaryFile = writeDocument(directory, 'canary-physical.json', canary);
+        const validated = readOrdinaryArtifact(canaryFile.path, {
+            sha256: canaryFile.sha256,
+            parentArtifactPath: masterFile.path,
+            allowSyntheticTestOnly: true,
+        });
+        assert.equal(validated.parent_artifact_path, masterFile.path);
+        assert.equal(validated.parent_binding.sha256, masterFile.sha256);
+        assert.throws(
+            () =>
+                readOrdinaryArtifact(canaryFile.path, {
+                    sha256: canaryFile.sha256,
+                    parentArtifactPath: canaryFile.path,
+                    allowSyntheticTestOnly: true,
+                }),
+            CanonicalInventoryContractError
+        );
+        fs.appendFileSync(masterFile.path, '\n');
+        assert.throws(
+            () =>
+                readOrdinaryArtifact(canaryFile.path, {
+                    sha256: canaryFile.sha256,
+                    parentArtifactPath: masterFile.path,
                     allowSyntheticTestOnly: true,
                 }),
             CanonicalInventoryContractError

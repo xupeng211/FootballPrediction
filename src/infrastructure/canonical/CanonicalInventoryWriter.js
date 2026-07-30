@@ -55,8 +55,7 @@ function snapshotInputBinding(input) {
         byte_size: input.byte_size,
         sha256: input.sha256,
         artifact: structuredClone(input.artifact),
-        parent_document: input.parent_document ? structuredClone(input.parent_document) : undefined,
-        parent_binding: input.parent_binding ? structuredClone(input.parent_binding) : undefined,
+        parent_artifact_path: input.parent_artifact_path,
         runtime_authorization: structuredClone(input.runtimeAuthorization),
         provenance_receipt: structuredClone(input.provenanceReceipt),
     };
@@ -68,8 +67,7 @@ function assertArtifactStillImmutable(binding) {
         rebound = readOrdinaryArtifact(binding.path, {
             sha256: binding.sha256,
             byte_size: binding.byte_size,
-            parentDocument: binding.parent_document,
-            parentBinding: binding.parent_binding,
+            parentArtifactPath: binding.parent_artifact_path,
             allowSyntheticTestOnly: binding.artifact.synthetic_test_only === true,
         });
     } catch (error) {

@@ -58,8 +58,7 @@ async function main(argv = process.argv.slice(2)) {
             sha256: args['parent-artifact-sha256'],
             allowSyntheticTestOnly,
         });
-        expected.parentDocument = parent.document;
-        expected.parentBinding = { sha256: parent.sha256, byte_size: parent.byte_size };
+        expected.parentArtifactPath = parent.path;
     }
     const artifact = readOrdinaryArtifact(args.artifact, {
         ...expected,

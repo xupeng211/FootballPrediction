@@ -52,8 +52,7 @@ function assertConfig() {
 function candidateInput(file, document, receipt = {}) {
     const artifact = readOrdinaryArtifact(file.path, {
         sha256: file.sha256,
-        parentDocument: receipt.parentDocument,
-        parentBinding: receipt.parentBinding,
+        parentArtifactPath: receipt.parentArtifactPath,
         allowSyntheticTestOnly: true,
     });
     return {
@@ -262,9 +261,7 @@ test('Proof C: one-row and ten-row canaries become master lineages without dupli
     const parent = parentMetadata(master, masterFile);
     const one = buildDocument(master.candidates.slice(0, 1), { kind: 'canary', parentMaster: parent });
     const oneFile = writeDocument(temp, 'canary-one.json', one);
-    const oneResult = await writer().execute(
-        candidateInput(oneFile, one, { parentDocument: master, parentBinding: masterFile })
-    );
+    const oneResult = await writer().execute(candidateInput(oneFile, one, { parentArtifactPath: masterFile.path }));
     assert.deepEqual(oneResult.terminal_counts, { inserted: 1 });
     assert.deepEqual(oneResult.database_delta, { matches: 1, artifacts: 2, import_runs: 1, lineages: 1 });
     const oneMasterResult = await writer().execute(candidateInput(masterFile, master));
@@ -275,8 +272,7 @@ test('Proof C: one-row and ten-row canaries become master lineages without dupli
     const ten = buildDocument(master.candidates.slice(0, 10), { kind: 'canary', parentMaster: parent });
     const tenFile = writeDocument(temp, 'canary-ten.json', ten);
     assert.deepEqual(
-        (await writer().execute(candidateInput(tenFile, ten, { parentDocument: master, parentBinding: masterFile })))
-            .terminal_counts,
+        (await writer().execute(candidateInput(tenFile, ten, { parentArtifactPath: masterFile.path }))).terminal_counts,
         { inserted: 10 }
     );
     const masterResult = await writer().execute(candidateInput(masterFile, master));
@@ -394,6 +390,18 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     const preflighted = candidateInput(mutableFile, mutable);
     fs.appendFileSync(mutableFile.path, '\n');
     await expectZeroDelta(() => writer().execute(preflighted));
+    const parentMaster = buildDocument(syntheticCandidates());
+    const parentFile = writeDocument(temp, 'parent-mutated-after-canary-preflight.json', parentMaster);
+    const parentBoundCanary = buildDocument(parentMaster.candidates.slice(0, 1), {
+        kind: 'canary',
+        parentMaster: parentMetadata(parentMaster, parentFile),
+    });
+    const parentBoundCanaryFile = writeDocument(temp, 'canary-with-mutated-parent.json', parentBoundCanary);
+    const preflightedCanary = candidateInput(parentBoundCanaryFile, parentBoundCanary, {
+        parentArtifactPath: parentFile.path,
+    });
+    fs.appendFileSync(parentFile.path, '\n');
+    await expectZeroDelta(() => writer().execute(preflightedCanary));
 });
 
 test('writer re-reads the hash-bound artifact after authorization and ignores mutated caller candidates', async () => {

@@ -252,15 +252,8 @@ function assertMasterPopulation(artifact, candidates) {
 }
 
 // eslint-disable-next-line complexity -- all parent/allowlist assertions form one atomic contract.
-function assertCanaryPopulation(artifact, candidates, parentDocument, parentBinding = null, options = {}) {
+function assertCanaryPopulation(artifact, candidates, options = {}) {
     if (artifact.kind !== 'canary') return;
-    if (!parentDocument) {
-        throw new CanonicalInventoryContractError('canary artifact requires its parent master document');
-    }
-    const parent = validateArtifactDocument(parentDocument, options);
-    if (parent.artifact.kind !== 'master') {
-        throw new CanonicalInventoryContractError('canary parent must be a master artifact');
-    }
     const declared = artifact.parent_master;
     if (!declared || typeof declared !== 'object') {
         throw new CanonicalInventoryContractError('canary parent_master metadata is required');
@@ -268,15 +261,29 @@ function assertCanaryPopulation(artifact, candidates, parentDocument, parentBind
     assertSha(declared.sha256, 'canary parent sha256');
     for (const field of ['business_hash', 'identity_projection_hash']) {
         assertSha(declared[field], `canary parent ${field}`);
-        if (declared[field] !== parent.artifact[field]) {
-            throw new CanonicalInventoryContractError(`canary parent ${field} mismatch`);
-        }
     }
     if (!Number.isInteger(declared.byte_size) || declared.byte_size <= 0) {
         throw new CanonicalInventoryContractError('canary parent byte_size is required');
     }
-    if (parentBinding && (parentBinding.sha256 !== declared.sha256 || parentBinding.byte_size !== declared.byte_size)) {
-        throw new CanonicalInventoryContractError('canary parent file binding mismatch');
+    if (!options.parentArtifactPath) {
+        throw new CanonicalInventoryContractError('canary artifact requires its physical parent master path');
+    }
+    // Do not accept an in-memory parent document or caller-supplied binding as
+    // evidence. The canary declaration binds its parent by bytes, so re-read the
+    // ordinary external parent file and make that physical binding the only
+    // source of lineage metadata.
+    const parent = readOrdinaryArtifact(options.parentArtifactPath, {
+        sha256: declared.sha256,
+        byte_size: declared.byte_size,
+        allowSyntheticTestOnly: options.allowSyntheticTestOnly === true,
+    });
+    if (parent.artifact.kind !== 'master') {
+        throw new CanonicalInventoryContractError('canary parent must be a master artifact');
+    }
+    for (const field of ['business_hash', 'identity_projection_hash']) {
+        if (declared[field] !== parent.artifact[field]) {
+            throw new CanonicalInventoryContractError(`canary parent ${field} mismatch`);
+        }
     }
     if (
         declared.candidate_count !== MASTER_COUNT ||
@@ -318,6 +325,14 @@ function assertCanaryPopulation(artifact, candidates, parentDocument, parentBind
             );
         }
     }
+    return {
+        document: parent.document,
+        binding: {
+            path: parent.path,
+            sha256: parent.sha256,
+            byte_size: parent.byte_size,
+        },
+    };
 }
 
 function validateArtifactDocument(document, options = {}) {
@@ -337,8 +352,15 @@ function validateArtifactDocument(document, options = {}) {
     }
     const artifact = assertMetadata(document, candidates, options);
     assertMasterPopulation(artifact, candidates);
-    assertCanaryPopulation(artifact, candidates, options.parentDocument, options.parentBinding, options);
-    return { document: { ...document, candidates }, artifact, candidates };
+    const parent = assertCanaryPopulation(artifact, candidates, options);
+    return {
+        document: { ...document, candidates },
+        artifact,
+        candidates,
+        parent_document: parent?.document,
+        parent_binding: parent?.binding,
+        parent_artifact_path: parent?.binding.path,
+    };
 }
 
 // eslint-disable-next-line complexity -- file identity checks must remain adjacent to parsing.
@@ -386,15 +408,12 @@ function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
     }
     return {
         ...validateArtifactDocument(document, {
-            parentDocument: expected.parentDocument,
-            parentBinding: expected.parentBinding,
+            parentArtifactPath: expected.parentArtifactPath,
             allowSyntheticTestOnly: expected.allowSyntheticTestOnly === true,
         }),
         sha256,
         byte_size: before.size,
         path: resolvedArtifactPath,
-        parent_document: expected.parentDocument ? structuredClone(expected.parentDocument) : undefined,
-        parent_binding: expected.parentBinding ? structuredClone(expected.parentBinding) : undefined,
     };
 }
 
