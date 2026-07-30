@@ -3,6 +3,7 @@
 // lifecycle: permanent
 // M3 integration proof against only the compose-labelled disposable PostgreSQL.
 // M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: compose-labelled synthetic target only.
+/* eslint-disable max-lines -- the fixed proof stages and their schema-tamper matrices stay adjacent to the disposable harness they verify. */
 
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -406,6 +407,142 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
         error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
     );
     await admin.query('ROLLBACK');
+    const findChecks = async (table, needle) =>
+        (
+            await admin.query(
+                `SELECT constraint_meta.conname
+                 FROM pg_constraint constraint_meta
+                 WHERE constraint_meta.conrelid = $1::regclass
+                   AND constraint_meta.contype = 'c'
+                   AND pg_get_constraintdef(constraint_meta.oid) ILIKE $2
+                 ORDER BY constraint_meta.conname`,
+                [`public.${table}`, `%${needle}%`]
+            )
+        ).rows.map(row => row.conname);
+    const expectSchemaTamperReject = async statements => {
+        await admin.query('BEGIN');
+        for (const statement of statements) await admin.query(statement);
+        await assert.rejects(
+            schemaInspector.inspectTarget(admin),
+            error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+        );
+        await admin.query('ROLLBACK');
+    };
+    // Every inventory CHECK is part of the write-time safety contract: weakened,
+    // widened, narrowed, replaced, dropped or duplicated definitions fail closed.
+    const artifactKindParent = (await findChecks('m3_canonical_source_artifacts', 'parent_artifact_id'))[0];
+    assert.ok(artifactKindParent);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactKindParent}`,
+        'ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_weakened_kind_parent CHECK (true)',
+    ]);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactKindParent}`,
+        "ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_narrowed_kind_parent CHECK (artifact_kind = 'master' AND parent_artifact_id IS NULL)",
+    ]);
+    const artifactCompetition = (await findChecks('m3_canonical_source_artifacts', 'premier league'))[0];
+    assert.ok(artifactCompetition);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactCompetition}`,
+        "ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_widened_competition CHECK (competition IN ('Premier League', 'Championship'))",
+    ]);
+    await expectSchemaTamperReject([
+        'ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_additive_weakening CHECK (true)',
+    ]);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_duplicated_competition CHECK (competition = 'Premier League')`,
+    ]);
+    const artifactStatusMapping = (await findChecks('m3_canonical_source_artifacts', 'status_mapping_version'))[0];
+    assert.ok(artifactStatusMapping);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactStatusMapping}`,
+        "ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_wrong_status_mapping CHECK (status_mapping_version = 'fotmob-status-to-matches-status/v2')",
+    ]);
+    const artifactShaFormat = (await findChecks('m3_canonical_source_artifacts', 'artifact_sha256'))[0];
+    assert.ok(artifactShaFormat);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactShaFormat}`,
+    ]);
+    const artifactByteSize = (await findChecks('m3_canonical_source_artifacts', 'byte_size'))[0];
+    assert.ok(artifactByteSize);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactByteSize}`,
+    ]);
+    const artifactCandidateCount = (await findChecks('m3_canonical_source_artifacts', 'candidate_count'))[0];
+    assert.ok(artifactCandidateCount);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactCandidateCount}`,
+        'ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT m3_widened_candidate_count CHECK (candidate_count > -1)',
+    ]);
+    const bindingKeyCheck = (await findChecks('m3_canonical_target_identity', 'binding_key'))[0];
+    assert.ok(bindingKeyCheck);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${bindingKeyCheck}`,
+        'ALTER TABLE public.m3_canonical_target_identity ADD CONSTRAINT m3_weakened_binding_key CHECK (true)',
+    ]);
+    const serviceIdentityFormat = (await findChecks('m3_canonical_target_identity', "'^[a-z0-9]"))[0];
+    assert.ok(serviceIdentityFormat);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${serviceIdentityFormat}`,
+    ]);
+    const runReceiptFormat = (await findChecks('m3_canonical_import_runs', 'authorization_receipt_sha256'))[0];
+    assert.ok(runReceiptFormat);
+    await expectSchemaTamperReject([`ALTER TABLE public.m3_canonical_import_runs DROP CONSTRAINT ${runReceiptFormat}`]);
+    const lineageStatusMapping = (await findChecks('m3_canonical_match_lineages', 'status_mapping_version'))[0];
+    assert.ok(lineageStatusMapping);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_match_lineages DROP CONSTRAINT ${lineageStatusMapping}`,
+    ]);
+    const lineageFingerprintFormat = (await findChecks('m3_canonical_match_lineages', 'immutable_fingerprint'))[0];
+    assert.ok(lineageFingerprintFormat);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_match_lineages DROP CONSTRAINT ${lineageFingerprintFormat}`,
+    ]);
+    const nonceUnique = (
+        await admin.query(
+            `SELECT constraint_meta.conname
+             FROM pg_constraint constraint_meta
+             WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+               AND constraint_meta.contype = 'u'
+               AND ARRAY(
+                   SELECT attribute.attname
+                   FROM unnest(constraint_meta.conkey) AS key_column(attnum)
+                   JOIN pg_attribute attribute
+                     ON attribute.attrelid = constraint_meta.conrelid
+                    AND attribute.attnum = key_column.attnum
+               ) = ARRAY['instance_nonce']::name[]`
+        )
+    ).rows[0].conname;
+    assert.ok(nonceUnique);
+    await expectSchemaTamperReject([`ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${nonceUnique}`]);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${nonceUnique}`,
+        'CREATE INDEX m3_nonce_plain_index ON public.m3_canonical_target_identity (instance_nonce)',
+    ]);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${nonceUnique}`,
+        'ALTER TABLE public.m3_canonical_target_identity ADD CONSTRAINT m3_nonce_wrong_column UNIQUE (created_at)',
+    ]);
+    await expectSchemaTamperReject([
+        `ALTER TABLE public.m3_canonical_target_identity DROP CONSTRAINT ${nonceUnique}`,
+        "CREATE UNIQUE INDEX m3_nonce_partial_index ON public.m3_canonical_target_identity (instance_nonce) WHERE binding_key = 'canonical_inventory_v1'",
+    ]);
+    // A committed schema drift must stop the full write path before any
+    // transaction, with zero database delta; the exact constraint definition is
+    // then restored and re-verified so later proofs see the untampered schema.
+    await admin.query(`ALTER TABLE public.m3_canonical_source_artifacts DROP CONSTRAINT ${artifactKindParent}`);
+    const driftMaster = buildDocument(population('schema-drift-population', 6_500_000));
+    const driftFile = writeDocument(temp, 'schema-drift-population.json', driftMaster);
+    const beforeDrift = await counts();
+    await assert.rejects(
+        canonicalWriter().execute(candidateInput(driftFile, driftMaster)),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    assert.deepEqual(await counts(), beforeDrift);
+    await admin.query(
+        `ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT ${artifactKindParent} CHECK ((artifact_kind = 'master' AND parent_artifact_id IS NULL) OR (artifact_kind = 'canary' AND parent_artifact_id IS NOT NULL))`
+    );
+    await schemaInspector.inspectTarget(admin);
     const targetIdentityClient = await pool.connect();
     try {
         await admin.query(

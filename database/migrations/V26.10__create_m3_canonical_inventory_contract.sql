@@ -62,8 +62,11 @@ CREATE TABLE IF NOT EXISTS public.m3_canonical_target_identity (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- No UUID-generating defaults anywhere in this contract: every official insert
+-- path (the canonical writer) supplies explicit application-generated UUIDs, so
+-- the schema carries no hidden function EXECUTE dependency for the writer role.
 CREATE TABLE IF NOT EXISTS public.m3_canonical_source_artifacts (
-    artifact_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    artifact_id UUID PRIMARY KEY,
     artifact_sha256 CHAR(64) NOT NULL UNIQUE CHECK (artifact_sha256 ~ '^[0-9a-f]{64}$'),
     artifact_kind VARCHAR(16) NOT NULL CHECK (artifact_kind IN ('master', 'canary')),
     parent_artifact_id UUID REFERENCES public.m3_canonical_source_artifacts(artifact_id) ON DELETE RESTRICT,
@@ -93,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.m3_canonical_import_runs (
 );
 
 CREATE TABLE IF NOT EXISTS public.m3_canonical_match_lineages (
-    lineage_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    lineage_id UUID PRIMARY KEY,
     match_id VARCHAR(50) NOT NULL REFERENCES public.matches(match_id) ON DELETE RESTRICT,
     artifact_id UUID NOT NULL REFERENCES public.m3_canonical_source_artifacts(artifact_id) ON DELETE RESTRICT,
     created_import_run_id UUID NOT NULL,

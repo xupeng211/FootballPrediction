@@ -16,7 +16,7 @@ const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./C
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const REQUIRED_MIGRATION_VERSION = 'V26.10';
-const REQUIRED_MIGRATION_CHECKSUM = '81a8abadabbbcab558600679002b9efa3ceaeca91288c3e2f82071b0c7a9694f';
+const REQUIRED_MIGRATION_CHECKSUM = '951c56f3a5bd68089cfe2d3ebd78b3f2b19c09f18a7081a9b7c85340ecea36da';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
@@ -31,6 +31,33 @@ const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
 });
 const EXPECTED_FIXTURE_INDEX_PREDICATE =
     "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025'']andcanonical_provider=''fotmob''";
+// Every CHECK constraint on the four V26.10 inventory tables is part of the
+// write-time safety contract, so the complete normalized expression set is
+// verified — never constraint names, LIKE fragments or keyword presence.
+// Normalization is owned by normalizeSchemaExpression (lowercase, stable
+// casts, whitespace/parens/quotes), the same standard as the matches CHECKs.
+const EXPECTED_INVENTORY_CHECK_EXPRESSIONS = Object.freeze({
+    m3_canonical_target_identity: Object.freeze([
+        "binding_key='canonical_inventory_v1'",
+        "service_identity~'^[a-z0-9][a-z0-9_.:-]{2,127}$'",
+    ]),
+    m3_canonical_source_artifacts: Object.freeze([
+        "artifact_kind='master'andparent_artifact_idisnullorartifact_kind='canary'andparent_artifact_idisnotnull",
+        "artifact_kind=anyarray['master','canary']",
+        "artifact_sha256~'^[0-9a-f]{64}$'",
+        "business_hash~'^[0-9a-f]{64}$'",
+        'byte_size>0',
+        'candidate_count>0',
+        "competition='premierleague'",
+        "identity_projection_hash~'^[0-9a-f]{64}$'",
+        "status_mapping_version='fotmob-status-to-matches-status/v1'",
+    ]),
+    m3_canonical_import_runs: Object.freeze(["authorization_receipt_sha256~'^[0-9a-f]{64}$'"]),
+    m3_canonical_match_lineages: Object.freeze([
+        "immutable_fingerprint~'^[0-9a-f]{64}$'",
+        "status_mapping_version='fotmob-status-to-matches-status/v1'",
+    ]),
+});
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -143,6 +170,42 @@ function normalizeSchemaExpression(definition) {
         .toLowerCase()
         .replace(/::[a-z_ ]+(?:\[\])?/g, '')
         .replace(/[\s()"]+/g, '');
+}
+
+function multisetDifference(left, right) {
+    const remaining = [...right];
+    const onlyInLeft = [];
+    for (const item of left) {
+        const index = remaining.indexOf(item);
+        if (index === -1) onlyInLeft.push(item);
+        else remaining.splice(index, 1);
+    }
+    return { onlyInLeft, onlyInRight: remaining };
+}
+
+// Compare the complete CHECK expression set of each V26.10 inventory table as a
+// multiset, so a weakened (CHECK true), widened, narrowed, replaced, dropped or
+// duplicated constraint fails closed instead of passing a keyword search.
+function findInventoryCheckDrift(rows, expected = EXPECTED_INVENTORY_CHECK_EXPRESSIONS) {
+    const actualByTable = new Map();
+    for (const row of rows) {
+        const expressions = actualByTable.get(row.table_name) || [];
+        expressions.push(normalizeSchemaExpression(row.expression));
+        actualByTable.set(row.table_name, expressions);
+    }
+    const drift = [];
+    for (const [table, expectedExpressions] of Object.entries(expected)) {
+        const actual = actualByTable.get(table) || [];
+        const { onlyInLeft: unexpected, onlyInRight: missing } = multisetDifference(actual, expectedExpressions);
+        if (missing.length > 0 || unexpected.length > 0) {
+            drift.push({
+                table,
+                missing: missing.slice(0, MAX_EXCEPTION_SAMPLES),
+                unexpected: unexpected.slice(0, MAX_EXCEPTION_SAMPLES),
+            });
+        }
+    }
+    return drift;
 }
 
 class CanonicalInventoryWriter {
@@ -444,27 +507,6 @@ class CanonicalInventoryWriter {
                           AND constraint_meta.confdeltype = 'r'
                           AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['parent_artifact_id']::name[]
                     )
-                    AND EXISTS (
-                        SELECT 1 FROM pg_constraint constraint_meta
-                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
-                          AND constraint_meta.contype = 'c'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%artifact_kind%master%canary%'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%parent_artifact_id%'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%is null%'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%is not null%'
-                    )
-                    AND EXISTS (
-                        SELECT 1 FROM pg_constraint constraint_meta
-                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
-                          AND constraint_meta.contype = 'c'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%competition%premier league%'
-                    )
-                    AND EXISTS (
-                        SELECT 1 FROM pg_constraint constraint_meta
-                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
-                          AND constraint_meta.contype = 'c'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%status_mapping_version%fotmob-status-to-matches-status/v1%'
-                    )
                 ) AS artifact_constraints,
                 (
                     EXISTS (
@@ -479,11 +521,19 @@ class CanonicalInventoryWriter {
                           AND constraint_meta.contype = 'u'
                           AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['service_identity']::name[]
                     )
+                    -- instance_nonce carries the cross-cluster authorization binding,
+                    -- so its uniqueness is verified structurally: a real UNIQUE
+                    -- constraint backed by a valid, ready, non-partial unique index.
                     AND EXISTS (
                         SELECT 1 FROM pg_constraint constraint_meta
+                        JOIN pg_index index_meta ON index_meta.oid = constraint_meta.conindid
                         WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
-                          AND constraint_meta.contype = 'c'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%binding_key%canonical_inventory_v1%'
+                          AND constraint_meta.contype = 'u'
+                          AND index_meta.indisunique
+                          AND index_meta.indisvalid
+                          AND index_meta.indisready
+                          AND index_meta.indpred IS NULL
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['instance_nonce']::name[]
                     )
                 ) AS target_identity_constraints,
                 (
@@ -549,12 +599,6 @@ class CanonicalInventoryWriter {
                           AND constraint_meta.contype = 'u'
                           AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['match_id', 'artifact_id']::name[]
                     )
-                    AND EXISTS (
-                        SELECT 1 FROM pg_constraint constraint_meta
-                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
-                          AND constraint_meta.contype = 'c'
-                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%status_mapping_version%fotmob-status-to-matches-status/v1%'
-                    )
                 ) AS lineage_constraints
         `);
         const schemaBoundary = inventorySchema.rows[0];
@@ -568,6 +612,29 @@ class CanonicalInventoryWriter {
             throw new CanonicalInventoryWriterError(
                 'inventory schema definition is incomplete',
                 'SCHEMA_BASELINE_MISMATCH'
+            );
+        }
+        const inventoryChecks = await client.query(`
+            SELECT relation.relname AS table_name,
+                   pg_get_expr(constraint_meta.conbin, constraint_meta.conrelid) AS expression
+            FROM pg_constraint constraint_meta
+            JOIN pg_class relation ON relation.oid = constraint_meta.conrelid
+            JOIN pg_namespace relation_schema ON relation_schema.oid = relation.relnamespace
+            WHERE relation_schema.nspname = 'public'
+              AND constraint_meta.contype = 'c'
+              AND relation.relname = ANY(ARRAY[
+                  'm3_canonical_target_identity',
+                  'm3_canonical_source_artifacts',
+                  'm3_canonical_import_runs',
+                  'm3_canonical_match_lineages'
+              ]::text[])
+        `);
+        const checkDrift = findInventoryCheckDrift(inventoryChecks.rows);
+        if (checkDrift.length > 0) {
+            throw new CanonicalInventoryWriterError(
+                'inventory check constraints do not match the required definitions',
+                'SCHEMA_BASELINE_MISMATCH',
+                { check_drift: checkDrift }
             );
         }
         const permissions = await client.query(
@@ -1153,8 +1220,10 @@ module.exports = {
     ADVISORY_LOCK_NAMESPACE,
     CanonicalInventoryWriter,
     CanonicalInventoryWriterError,
+    EXPECTED_INVENTORY_CHECK_EXPRESSIONS,
     SCHEMA_BASELINE,
     classifyProviderDifference,
     assertArtifactStillImmutable,
+    findInventoryCheckDrift,
     matchesCandidateExactly,
 };
