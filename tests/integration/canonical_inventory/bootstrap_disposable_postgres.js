@@ -55,6 +55,14 @@ async function main() {
             filename: 'V26.10__create_m3_canonical_inventory_contract.sql',
             sql: migration,
         });
+        await client.query(
+            `
+            INSERT INTO public.m3_canonical_target_identity (binding_key, service_identity, database_oid)
+            SELECT 'canonical_inventory_v1', 'fp_m3_canonical_disposable_postgres15', oid
+            FROM pg_database
+            WHERE datname = current_database()
+        `
+        );
         await client.query(`
             DO $$ BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_owner') THEN CREATE ROLE m3_canonical_owner NOLOGIN; END IF;
@@ -62,6 +70,7 @@ async function main() {
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_verifier') THEN CREATE ROLE m3_canonical_verifier LOGIN PASSWORD 'm3_canonical_verifier_proof' NOINHERIT; END IF;
             END $$;
             ALTER TABLE public.matches OWNER TO m3_canonical_owner;
+            ALTER TABLE public.m3_canonical_target_identity OWNER TO m3_canonical_owner;
             ALTER TABLE public.m3_canonical_source_artifacts OWNER TO m3_canonical_owner;
             ALTER TABLE public.m3_canonical_import_runs OWNER TO m3_canonical_owner;
             ALTER TABLE public.m3_canonical_match_lineages OWNER TO m3_canonical_owner;
@@ -83,8 +92,9 @@ async function main() {
             GRANT USAGE ON SCHEMA public TO m3_canonical_writer;
             GRANT USAGE ON SCHEMA public TO m3_canonical_verifier;
             GRANT SELECT, INSERT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages TO m3_canonical_writer;
+            GRANT SELECT ON public.m3_canonical_target_identity TO m3_canonical_writer;
             GRANT SELECT ON public.m3_canonical_schema_migrations TO m3_canonical_writer;
-            GRANT SELECT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages, public.m3_canonical_schema_migrations TO m3_canonical_verifier;
+            GRANT SELECT ON public.matches, public.m3_canonical_target_identity, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages, public.m3_canonical_schema_migrations TO m3_canonical_verifier;
             GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) TO m3_canonical_writer;

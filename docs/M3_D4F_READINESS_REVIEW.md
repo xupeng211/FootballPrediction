@@ -1080,8 +1080,8 @@ M3 canonical-inventory v1 contract; then call the no-argument,
 `public.m3_canonical_inventory_acquire_locks_v1()`. Its non-login table-owner
 must issue four static `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` statements,
 in this immutable fully qualified relation-name order:
-`public.m3_canonical_import_runs`, `public.m3_canonical_match_lineages`,
-`public.m3_canonical_source_artifacts`, `public.matches`. Its body has no
+`public.m3_canonical_source_artifacts`, `public.m3_canonical_import_runs`,
+`public.m3_canonical_match_lineages`, `public.matches`. Its body has no
 dynamic SQL, exposes no data-operation path and fixes `search_path` to
 `pg_catalog`; the writer has no direct privilege for these locks. The function
 must execute inside the writer's existing transaction, so these locks remain
@@ -1196,18 +1196,24 @@ endpoint/capture/process/licence evidence.
 `V26.10__create_m3_canonical_inventory_contract.sql` is additive and was
 executed only against a task-specific PostgreSQL 15 tmpfs database. It adds the
 provider-scoped canonical identity and fixture protections, immutable
-artifact/import-run/lineage relations, the restricted static lock function and
-the least-privilege writer contract. Before it starts a transaction, the writer
-checks the V26.10 checksum ledger, exact lock-function ACLs, table grants,
-schema/TEMP denial and absence of inherited writer roles. It was not applied to
-development, persistent M3 sandbox, staging or production.
+artifact/import-run/lineage relations, a one-row target-local service identity
+and PostgreSQL database-OID binding, the restricted static lock function and
+the least-privilege writer contract. An environment owner must provision that
+binding for each target; the writer reads it back and requires the signed
+receipt to bind the same instance, so a similarly named/schema-compatible
+clone fails closed. Before it starts a transaction, the writer checks the
+V26.10 checksum ledger, exact lock-function ACLs, table grants, schema/TEMP
+denial, absence of inherited writer roles and that database-backed target
+binding. It was not applied to development, persistent M3 sandbox, staging or
+production.
 
 The disposable proof used deterministic synthetic data only: three synthetic
 seasons of 380 candidates (1,140 total), never a recovered FotMob artifact.
 It proved fresh insert of 1,140 matches plus one artifact, one import run and
-1,140 lineages; exact replay with zero match/artifact/run/lineage delta; 1-row
-and 10-row canary-to-master lineage behavior (including exact parent/current
-artifact deltas); full rollback for malformed,
+1,140 lineages; exact replay with zero match/artifact/run/lineage delta; a
+1-row then overlapping 10-row staged canary under the same parent master,
+followed by the full-master lineage transition (including exact
+parent/current-artifact deltas); full rollback for malformed,
 expired, out-of-scope and divergent candidate inputs; serializable/advisory
 lock contention; denied UPDATE/DELETE/TRUNCATE/DDL/direct table lock for the
 writer role; and pre-write custom backup restored into a fresh clone with

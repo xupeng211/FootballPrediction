@@ -3301,7 +3301,7 @@ data-schema-m3-canonical-inventory-disposable-preview: ## Print the fixed V26.10
 	@echo "target_classification=disposable"
 	@echo "target_scope=compose-labelled PostgreSQL 15 tmpfs only"
 	@echo "migration=database/migrations/V26.10__create_m3_canonical_inventory_contract.sql"
-	@echo "migration_sha256=d4e83b7e6464dbb15e5ac3c2b15e5e848cac45607bc518e5ead684dbac54fed1"
+	@echo "migration_sha256=ade25f7f898e1282712fcf496eb8dc4516f269aea5b36ffeaaf650ba037bf823"
 	@echo "persistent_targets=blocked"
 	@echo "No SQL was executed."
 
@@ -3315,7 +3315,7 @@ data-schema-m3-canonical-inventory-disposable-authorize: ## Validate the separat
 
 data-schema-m3-canonical-inventory-disposable-preflight: data-schema-m3-canonical-inventory-disposable-authorize ## Verify the fixed disposable migration identity; no SQL executed.
 	@test -f database/migrations/V26.10__create_m3_canonical_inventory_contract.sql
-	@test "$$(sha256sum database/migrations/V26.10__create_m3_canonical_inventory_contract.sql | awk '{print $$1}')" = "d4e83b7e6464dbb15e5ac3c2b15e5e848cac45607bc518e5ead684dbac54fed1"
+	@test "$$(sha256sum database/migrations/V26.10__create_m3_canonical_inventory_contract.sql | awk '{print $$1}')" = "ade25f7f898e1282712fcf496eb8dc4516f269aea5b36ffeaaf650ba037bf823"
 	@echo "schema_preflight=passed"
 	@echo "No SQL was executed."
 

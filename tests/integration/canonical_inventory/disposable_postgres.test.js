@@ -49,6 +49,7 @@ let admin;
 let pool;
 let verifier;
 let ownerPhaseClosed = !schemaOnly;
+let databaseInstanceOid;
 
 function assertConfig() {
     assert.ok(config.database.startsWith('fp_m3_canonical_ephemeral_'));
@@ -79,6 +80,7 @@ function candidateInput(file, document, receipt = {}) {
                 sha256: file.sha256,
                 databaseIdentity: config.database,
                 serviceIdentity,
+                databaseInstanceOid,
                 writerRole: config.writerUser,
                 codeRevision,
             }),
@@ -158,6 +160,11 @@ test.before(async () => {
         password: config.verifierPassword,
     });
     await verifier.connect();
+    databaseInstanceOid = (
+        await verifier.query(
+            'SELECT oid::text AS database_instance_oid FROM pg_database WHERE datname = current_database()'
+        )
+    ).rows[0].database_instance_oid;
     assert.equal((await verifier.query('SHOW transaction_read_only')).rows[0].transaction_read_only, 'on');
     await assert.rejects(verifier.query('CREATE TEMP TABLE m3_canonical_verifier_write_probe (id integer)'));
 });
@@ -376,6 +383,28 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
         error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
     );
     await admin.query('ROLLBACK');
+    const targetIdentityClient = await pool.connect();
+    try {
+        await admin.query(
+            "UPDATE public.m3_canonical_target_identity SET service_identity = 'fp_m3_canonical_untrusted_clone15' WHERE binding_key = 'canonical_inventory_v1'"
+        );
+        await assert.rejects(
+            canonicalWriter().inspectTarget(targetIdentityClient),
+            error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_SERVICE_IDENTITY_MISMATCH'
+        );
+        await admin.query(
+            "UPDATE public.m3_canonical_target_identity SET service_identity = 'fp_m3_canonical_disposable_postgres15', database_oid = '1'::oid WHERE binding_key = 'canonical_inventory_v1'"
+        );
+        await assert.rejects(
+            canonicalWriter().inspectTarget(targetIdentityClient),
+            error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_SERVICE_IDENTITY_MISMATCH'
+        );
+    } finally {
+        await admin.query(
+            "UPDATE public.m3_canonical_target_identity SET service_identity = 'fp_m3_canonical_disposable_postgres15', database_oid = (SELECT oid FROM pg_database WHERE datname = current_database()) WHERE binding_key = 'canonical_inventory_v1'"
+        );
+        targetIdentityClient.release();
+    }
     const wrongRoleDocument = buildDocument(syntheticCandidates());
     const wrongRoleFile = writeDocument(temp, 'wrong-writer-role.json', wrongRoleDocument);
     const wrongRoleWriter = new CanonicalInventoryWriter({
@@ -411,6 +440,10 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
     await expectPermissionBoundary(
         'GRANT UPDATE ON public.matches TO m3_canonical_writer',
         'REVOKE UPDATE ON public.matches FROM m3_canonical_writer'
+    );
+    await expectPermissionBoundary(
+        'GRANT UPDATE ON public.m3_canonical_target_identity TO m3_canonical_writer',
+        'REVOKE UPDATE ON public.m3_canonical_target_identity FROM m3_canonical_writer'
     );
     await expectPermissionBoundary(
         'GRANT CREATE ON SCHEMA public TO m3_canonical_writer',
@@ -482,36 +515,32 @@ proofTest('Proof A/B: full 1,140 synthetic master inserts once then exact replay
     assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
 });
 
-proofTest('Proof C: one-row and ten-row canaries become master lineages without duplicate matches', async () => {
-    const before = await counts();
-    const master = buildDocument(population('Proof C one-row', 1_000_000));
-    const masterFile = writeDocument(temp, 'master-c.json', master);
-    const parent = parentMetadata(master, masterFile);
-    const one = buildDocument(master.candidates.slice(0, 1), { kind: 'canary', parentMaster: parent });
-    const oneFile = writeDocument(temp, 'canary-one.json', one);
-    const oneResult = await writer().execute(candidateInput(oneFile, one, { parentArtifactPath: masterFile.path }));
-    assert.deepEqual(oneResult.terminal_counts, { inserted: 1 });
-    assert.deepEqual(oneResult.database_delta, { matches: 1, artifacts: 2, import_runs: 1, lineages: 1 });
-    const oneMasterResult = await writer().execute(candidateInput(masterFile, master));
-    assert.deepEqual(oneMasterResult.terminal_counts, { already_present_equivalent: 1, inserted: 1139 });
-    assert.deepEqual(oneMasterResult.database_delta, { matches: 1139, artifacts: 0, import_runs: 1, lineages: 1140 });
-    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 2, runs: 2, lineages: 1141 }));
-    const tenMaster = buildDocument(population('Proof C ten-row', 2_000_000));
-    const tenMasterFile = writeDocument(temp, 'master-c-ten.json', tenMaster);
-    const ten = buildDocument(tenMaster.candidates.slice(0, 10), {
-        kind: 'canary',
-        parentMaster: parentMetadata(tenMaster, tenMasterFile),
-    });
-    const tenFile = writeDocument(temp, 'canary-ten.json', ten);
-    assert.deepEqual(
-        (await writer().execute(candidateInput(tenFile, ten, { parentArtifactPath: tenMasterFile.path })))
-            .terminal_counts,
-        { inserted: 10 }
-    );
-    const masterResult = await writer().execute(candidateInput(tenMasterFile, tenMaster));
-    assert.deepEqual(masterResult.terminal_counts, { already_present_equivalent: 10, inserted: 1130 });
-    assert.deepEqual(await counts(), addCounts(before, { matches: 2280, artifacts: 4, runs: 4, lineages: 2291 }));
-});
+proofTest(
+    'Proof C: staged one-row and ten-row canaries share one parent master without duplicate matches',
+    async () => {
+        const before = await counts();
+        const master = buildDocument(population('Proof C one-row', 1_000_000));
+        const masterFile = writeDocument(temp, 'master-c.json', master);
+        const parent = parentMetadata(master, masterFile);
+        const one = buildDocument(master.candidates.slice(0, 1), { kind: 'canary', parentMaster: parent });
+        const oneFile = writeDocument(temp, 'canary-one.json', one);
+        const oneResult = await writer().execute(candidateInput(oneFile, one, { parentArtifactPath: masterFile.path }));
+        assert.deepEqual(oneResult.terminal_counts, { inserted: 1 });
+        assert.deepEqual(oneResult.database_delta, { matches: 1, artifacts: 2, import_runs: 1, lineages: 1 });
+        const ten = buildDocument(master.candidates.slice(0, 10), {
+            kind: 'canary',
+            parentMaster: parent,
+        });
+        const tenFile = writeDocument(temp, 'canary-ten.json', ten);
+        const tenResult = await writer().execute(candidateInput(tenFile, ten, { parentArtifactPath: masterFile.path }));
+        assert.deepEqual(tenResult.terminal_counts, { already_present_equivalent: 1, inserted: 9 });
+        assert.deepEqual(tenResult.database_delta, { matches: 9, artifacts: 1, import_runs: 1, lineages: 10 });
+        const masterResult = await writer().execute(candidateInput(masterFile, master));
+        assert.deepEqual(masterResult.terminal_counts, { already_present_equivalent: 10, inserted: 1130 });
+        assert.deepEqual(masterResult.database_delta, { matches: 1130, artifacts: 0, import_runs: 1, lineages: 1140 });
+        assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 3, runs: 3, lineages: 1151 }));
+    }
+);
 
 proofTest('Proof D: contract, authorization and divergent canonical conflicts rollback completely', async () => {
     const master = buildDocument(population('Proof D', 3_000_000));
@@ -571,6 +600,7 @@ proofTest('Proof D: contract, authorization and divergent canonical conflicts ro
             sha256: base.sha256,
             databaseIdentity: config.database,
             serviceIdentity,
+            databaseInstanceOid,
             expiresAt: '2000-01-01T00:00:00Z',
         }),
     });
@@ -581,6 +611,7 @@ proofTest('Proof D: contract, authorization and divergent canonical conflicts ro
             sha256: base.sha256,
             databaseIdentity: 'not-this-db',
             serviceIdentity,
+            databaseInstanceOid,
         }),
     });
     await expectZeroDelta(() => writer().execute(wrongTarget));

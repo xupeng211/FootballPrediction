@@ -1035,14 +1035,18 @@ This is design readiness only, not database-write authorization.
   requires a clean checked-out code revision before Compose can start. Real
   inputs fail closed when provenance is absent.
 - Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
-  protection, immutable artifact/import-run/lineage tables and the restricted
-  canonical lock function. It was executed only on a task-specific PostgreSQL
-  15 tmpfs database, never on development, persistent M3 sandbox, staging or
-  production.
+  protection, immutable artifact/import-run/lineage tables, a target-local
+  service-identity plus PostgreSQL database-OID binding, and the restricted
+  canonical lock function. The signed runtime receipt must match the binding
+  read back from the target database; a similarly named/schema-compatible
+  clone fails closed unless an environment owner separately provisions it. It
+  was executed only on a task-specific PostgreSQL 15 tmpfs database, never on
+  development, persistent M3 sandbox, staging or production.
 - The independent insert-only writer and default-no-write operator proved a
   synthetic 1,140-candidate master (380 / 380 / 380), exact replay zero delta,
-  1- and 10-candidate canary-to-master behavior, conflict rollback,
-  serializable lock contention, least-privilege denial and backup/restore.
+  a staged 1-row then overlapping 10-row canary under one parent master before
+  the full-master lineage transition, conflict rollback, serializable lock
+  contention, least-privilege denial and backup/restore.
   Before any transaction, the writer verifies the V26.10 checksum baseline,
   exact required lock-function ACLs, no writer role inheritance, no schema
   CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. The labelled proof

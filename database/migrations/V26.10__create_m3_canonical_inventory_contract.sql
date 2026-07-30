@@ -47,6 +47,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS matches_m3_epl_fixture_identity_uq
       AND season IN ('2022/2023', '2023/2024', '2024/2025')
       AND canonical_provider = 'fotmob';
 
+-- This target-local binding is provisioned by the environment owner before a
+-- writer can run. It prevents a signed receipt for one disposable instance
+-- from being replayed against another similarly named/schema-compatible one.
+CREATE TABLE IF NOT EXISTS public.m3_canonical_target_identity (
+    binding_key VARCHAR(64) PRIMARY KEY CHECK (binding_key = 'canonical_inventory_v1'),
+    service_identity VARCHAR(128) NOT NULL UNIQUE
+        CHECK (service_identity ~ '^[a-z0-9][a-z0-9_.:-]{2,127}$'),
+    database_oid OID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.m3_canonical_source_artifacts (
     artifact_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     artifact_sha256 CHAR(64) NOT NULL UNIQUE CHECK (artifact_sha256 ~ '^[0-9a-f]{64}$'),

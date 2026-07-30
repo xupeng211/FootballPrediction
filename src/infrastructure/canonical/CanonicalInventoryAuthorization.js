@@ -110,7 +110,13 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
     if (binding.target_classification !== 'disposable') {
         throw new CanonicalInventoryAuthorizationError('writer target is not independently classified as disposable');
     }
-    for (const field of ['service_identity', 'database_identity', 'schema_baseline', 'writer_role']) {
+    for (const field of [
+        'service_identity',
+        'database_identity',
+        'database_instance_oid',
+        'schema_baseline',
+        'writer_role',
+    ]) {
         assertReceiptText(receipt.target?.[field], `target.${field}`);
     }
     assertReceiptText(receipt.code_revision, 'code_revision');
@@ -122,6 +128,7 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
     if (
         receipt.target.database_identity !== binding.database_identity ||
         receipt.target.service_identity !== binding.service_identity ||
+        receipt.target.database_instance_oid !== binding.database_instance_oid ||
         receipt.target.writer_role !== binding.writer_role
     ) {
         throw new CanonicalInventoryAuthorizationError('runtime authorization target identity mismatch');

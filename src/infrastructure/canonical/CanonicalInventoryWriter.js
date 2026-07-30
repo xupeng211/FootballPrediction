@@ -16,7 +16,7 @@ const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./C
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const REQUIRED_MIGRATION_VERSION = 'V26.10';
-const REQUIRED_MIGRATION_CHECKSUM = 'd4e83b7e6464dbb15e5ac3c2b15e5e848cac45607bc518e5ead684dbac54fed1';
+const REQUIRED_MIGRATION_CHECKSUM = 'ade25f7f898e1282712fcf496eb8dc4516f269aea5b36ffeaaf650ba037bf823';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
@@ -182,11 +182,13 @@ class CanonicalInventoryWriter {
     async inspectTarget(client) {
         const result = await client.query(`
             SELECT current_database() AS database_identity,
+                   (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_instance_oid,
                    current_user AS current_user,
                    session_user AS session_user,
                    current_setting('transaction_read_only') AS transaction_read_only,
                    current_setting('server_version_num') AS server_version_num,
                    to_regclass('public.m3_canonical_schema_migrations') IS NOT NULL AS migration_ledger_table,
+                   to_regclass('public.m3_canonical_target_identity') IS NOT NULL AS target_identity_table,
                    to_regclass('public.m3_canonical_source_artifacts') IS NOT NULL AS artifact_table,
                    to_regclass('public.m3_canonical_import_runs') IS NOT NULL AS run_table,
                    to_regclass('public.m3_canonical_match_lineages') IS NOT NULL AS lineage_table,
@@ -279,11 +281,37 @@ class CanonicalInventoryWriter {
             !identity.run_table ||
             !identity.lineage_table ||
             !identity.migration_ledger_table ||
+            !identity.target_identity_table ||
             !identity.provider_index ||
             !identity.fixture_index ||
             !identity.controlled_lock_function
         ) {
             throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH');
+        }
+        const targetBinding = await client.query(
+            `
+            SELECT service_identity, database_oid::text AS database_instance_oid
+            FROM public.m3_canonical_target_identity
+            WHERE binding_key = 'canonical_inventory_v1'
+        `
+        );
+        if (targetBinding.rowCount !== 1) {
+            throw new CanonicalInventoryWriterError(
+                'target service identity binding is incomplete',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
+        }
+        if (targetBinding.rows[0].service_identity !== this.target.serviceIdentity) {
+            throw new CanonicalInventoryWriterError(
+                'database-backed service identity mismatch',
+                'TARGET_SERVICE_IDENTITY_MISMATCH'
+            );
+        }
+        if (targetBinding.rows[0].database_instance_oid !== identity.database_instance_oid) {
+            throw new CanonicalInventoryWriterError(
+                'database-backed instance identity mismatch',
+                'TARGET_SERVICE_IDENTITY_MISMATCH'
+            );
         }
         const matchesChecks = await client.query(
             `
@@ -312,6 +340,10 @@ class CanonicalInventoryWriter {
         const inventorySchema = await client.query(`
             WITH required_columns(table_name, column_name, type_name, must_be_not_null) AS (
                 VALUES
+                    ('m3_canonical_target_identity', 'binding_key', 'character varying(64)', true),
+                    ('m3_canonical_target_identity', 'service_identity', 'character varying(128)', true),
+                    ('m3_canonical_target_identity', 'database_oid', 'oid', true),
+                    ('m3_canonical_target_identity', 'created_at', 'timestamp with time zone', true),
                     ('m3_canonical_source_artifacts', 'artifact_id', 'uuid', true),
                     ('m3_canonical_source_artifacts', 'artifact_sha256', 'character(64)', true),
                     ('m3_canonical_source_artifacts', 'artifact_kind', 'character varying(16)', true),
@@ -407,6 +439,26 @@ class CanonicalInventoryWriter {
                 (
                     EXISTS (
                         SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['binding_key']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['service_identity']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'c'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%binding_key%canonical_inventory_v1%'
+                    )
+                ) AS target_identity_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
                         WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
                           AND constraint_meta.contype = 'p'
                           AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['run_id']::name[]
@@ -478,6 +530,7 @@ class CanonicalInventoryWriter {
         const schemaBoundary = inventorySchema.rows[0];
         if (
             !schemaBoundary.required_columns_present ||
+            !schemaBoundary.target_identity_constraints ||
             !schemaBoundary.artifact_constraints ||
             !schemaBoundary.run_constraints ||
             !schemaBoundary.lineage_constraints
@@ -492,6 +545,7 @@ class CanonicalInventoryWriter {
             WITH RECURSIVE read_tables(table_name) AS (
                 VALUES
                     ('public.matches'::text),
+                    ('public.m3_canonical_target_identity'::text),
                     ('public.m3_canonical_source_artifacts'::text),
                     ('public.m3_canonical_import_runs'::text),
                     ('public.m3_canonical_match_lineages'::text),
@@ -597,7 +651,11 @@ class CanonicalInventoryWriter {
                 'BLOCKED_PERMISSION_BOUNDARY'
             );
         }
-        return identity;
+        return {
+            ...identity,
+            service_identity: targetBinding.rows[0].service_identity,
+            database_instance_oid: targetBinding.rows[0].database_instance_oid,
+        };
     }
 
     async findArtifact(client, sha256) {
@@ -767,26 +825,26 @@ class CanonicalInventoryWriter {
             if (currentLineage.rowCount === 1) {
                 return { candidate, terminal: 'exact_duplicate', fingerprint: targetFingerprint, match: providerMatch };
             }
-            if (artifact.artifact_kind === 'master') {
-                const parentLineage = await client.query(
-                    `
-                    SELECT 1
-                    FROM public.m3_canonical_match_lineages lineage
-                    JOIN public.m3_canonical_source_artifacts prior ON prior.artifact_id = lineage.artifact_id
-                    WHERE lineage.match_id = $1 AND lineage.candidate_id = $2 AND lineage.immutable_fingerprint = $3
-                      AND prior.parent_artifact_id = $4
-                    LIMIT 1
-                `,
-                    [providerMatch.match_id, candidate.id, targetFingerprint, artifact.artifact_id]
-                );
-                if (parentLineage.rowCount === 1) {
-                    return {
-                        candidate,
-                        terminal: 'already_present_equivalent',
-                        fingerprint: targetFingerprint,
-                        match: providerMatch,
-                    };
-                }
+            const parentMasterArtifactId =
+                artifact.artifact_kind === 'master' ? artifact.artifact_id : artifact.parent_artifact_id;
+            const parentLineage = await client.query(
+                `
+                SELECT 1
+                FROM public.m3_canonical_match_lineages lineage
+                JOIN public.m3_canonical_source_artifacts prior ON prior.artifact_id = lineage.artifact_id
+                WHERE lineage.match_id = $1 AND lineage.candidate_id = $2 AND lineage.immutable_fingerprint = $3
+                  AND (prior.artifact_id = $4 OR prior.parent_artifact_id = $4)
+                LIMIT 1
+            `,
+                [providerMatch.match_id, candidate.id, targetFingerprint, parentMasterArtifactId]
+            );
+            if (parentLineage.rowCount === 1) {
+                return {
+                    candidate,
+                    terminal: 'already_present_equivalent',
+                    fingerprint: targetFingerprint,
+                    match: providerMatch,
+                };
             }
             return {
                 candidate,
@@ -893,8 +951,9 @@ class CanonicalInventoryWriter {
         try {
             const targetIdentity = await this.inspectTarget(client);
             const binding = {
-                service_identity: this.target.serviceIdentity,
+                service_identity: targetIdentity.service_identity,
                 database_identity: targetIdentity.database_identity,
+                database_instance_oid: targetIdentity.database_instance_oid,
                 schema_baseline: SCHEMA_BASELINE,
                 target_classification: this.target.classification,
                 writer_role: targetIdentity.current_user,

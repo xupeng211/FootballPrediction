@@ -25,6 +25,7 @@ const artifact = {
 const binding = {
     service_identity: 'disposable-service',
     database_identity: 'fp_m3_canonical_ephemeral_test',
+    database_instance_oid: 'synthetic-database-instance-oid',
     schema_baseline: 'm3-canonical-inventory-v26.10',
     target_classification: 'disposable',
     writer_role: 'm3_canonical_writer',
@@ -44,6 +45,7 @@ function receipt(overrides = {}) {
             classification: 'disposable',
             service_identity: binding.service_identity,
             database_identity: binding.database_identity,
+            database_instance_oid: binding.database_instance_oid,
             schema_baseline: binding.schema_baseline,
             writer_role: binding.writer_role,
             ...targetOverrides,
@@ -69,6 +71,7 @@ test('runtime receipt is target/hash/scope/expiry bound and persistent operation
         receipt({ expires_at: '2025-12-31T23:59:59Z' }),
         receipt({ code_revision: 'f'.repeat(40) }),
         receipt({ target: { ...receipt().target, writer_role: 'other_writer' } }),
+        receipt({ target: { ...receipt().target, database_instance_oid: 'other-instance' } }),
         receipt({ artifact: { ...artifact, sha256: 'd'.repeat(64) } }),
     ]) {
         assert.throws(
