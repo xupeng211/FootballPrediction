@@ -25,7 +25,26 @@ const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
 // `abandoned` fixtures are excluded by the approved full-inventory preflight.
 // They must not become durable canonical rows merely because status is outside
 // the v1 identity projection.
-const ALLOWED_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled']);
+const STATUS_MAPPING_VERSION = 'fotmob-status-to-matches-status/v1';
+const FOTMOB_STATUS_TO_APPLICATION_STATUS = Object.freeze({
+    scheduled: 'scheduled',
+    finished: 'finished',
+    postponed: 'postponed',
+    cancelled: 'cancelled',
+});
+const ALLOWED_STATUSES = new Set(Object.keys(FOTMOB_STATUS_TO_APPLICATION_STATUS));
+const CANDIDATE_FIELDS = new Set([
+    'id',
+    'source_provider',
+    'source_match_id',
+    'competition',
+    'season',
+    'home_team',
+    'away_team',
+    'kickoff_at',
+    'provider_status',
+    'status_mapping_version',
+]);
 const SHA256 = /^[0-9a-f]{64}$/;
 const REPOSITORY_ROOT = path.resolve(__dirname, '../../..');
 
@@ -64,10 +83,6 @@ function canonicalOrder(left, right) {
     return leftKey.localeCompare(rightKey);
 }
 
-function normalizeStatus(value) {
-    return typeof value === 'string' ? value.trim().toLowerCase() : '';
-}
-
 function assertText(value, field, candidateId) {
     if (typeof value !== 'string' || value.length === 0) {
         throw new CanonicalInventoryContractError(`candidate ${candidateId || '<unknown>'} requires ${field}`);
@@ -85,7 +100,8 @@ function canonicalCandidateProjection(candidate) {
         home_team: candidate.home_team,
         away_team: candidate.away_team,
         kickoff_at: candidate.kickoff_at,
-        status: candidate.status,
+        provider_status: candidate.provider_status,
+        status_mapping_version: candidate.status_mapping_version,
     };
 }
 
@@ -138,6 +154,11 @@ function validateCandidate(candidate) {
     if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
         throw new CanonicalInventoryContractError('candidate must be an object');
     }
+    for (const field of Object.keys(candidate)) {
+        if (!CANDIDATE_FIELDS.has(field)) {
+            throw new CanonicalInventoryContractError(`candidate has unknown semantic field ${field}`);
+        }
+    }
     const id = assertText(candidate.id, 'id');
     assertText(candidate.source_provider, 'source_provider', id);
     assertText(candidate.source_match_id, 'source_match_id', id);
@@ -146,7 +167,8 @@ function validateCandidate(candidate) {
     assertText(candidate.home_team, 'home_team', id);
     assertText(candidate.away_team, 'away_team', id);
     assertText(candidate.kickoff_at, 'kickoff_at', id);
-    assertText(candidate.status, 'status', id);
+    const providerStatus = assertText(candidate.provider_status, 'provider_status', id);
+    const mappingVersion = assertText(candidate.status_mapping_version, 'status_mapping_version', id);
     if (candidate.source_provider !== SOURCE_PROVIDER) {
         throw new CanonicalInventoryContractError(`candidate ${id} source_provider must be ${SOURCE_PROVIDER}`);
     }
@@ -165,11 +187,26 @@ function validateCandidate(candidate) {
     if (!isStrictAbsoluteTimestamp(candidate.kickoff_at)) {
         throw new CanonicalInventoryContractError(`candidate ${id} kickoff_at must be absolute ISO-8601`);
     }
-    const normalizedStatus = normalizeStatus(candidate.status);
-    if (!ALLOWED_STATUSES.has(normalizedStatus)) {
-        throw new CanonicalInventoryContractError(`candidate ${id} has unknown status`);
+    if (mappingVersion !== STATUS_MAPPING_VERSION) {
+        throw new CanonicalInventoryContractError(`candidate ${id} has unknown status mapping version`);
     }
-    return { ...candidate, status: normalizedStatus };
+    const applicationStatus = FOTMOB_STATUS_TO_APPLICATION_STATUS[providerStatus];
+    if (!applicationStatus) {
+        throw new CanonicalInventoryContractError(`candidate ${id} has unknown provider status`);
+    }
+    return {
+        id,
+        source_provider: candidate.source_provider,
+        source_match_id: candidate.source_match_id,
+        competition: candidate.competition,
+        season: candidate.season,
+        home_team: candidate.home_team,
+        away_team: candidate.away_team,
+        kickoff_at: candidate.kickoff_at,
+        provider_status: providerStatus,
+        status_mapping_version: mappingVersion,
+        application_status: applicationStatus,
+    };
 }
 
 function assertSha(value, label) {
@@ -205,6 +242,9 @@ function assertMetadata(document, candidates, options = {}) {
     }
     assertSha(artifact.business_hash, 'artifact business_hash');
     assertSha(artifact.identity_projection_hash, 'artifact identity_projection_hash');
+    if (artifact.status_mapping_version !== STATUS_MAPPING_VERSION) {
+        throw new CanonicalInventoryContractError('artifact status_mapping_version is not approved');
+    }
     if (!sameSeasonCounts(artifact.per_season_counts, countBySeason(candidates))) {
         throw new CanonicalInventoryContractError('artifact per_season_counts does not match candidates');
     }
@@ -284,6 +324,9 @@ function assertCanaryPopulation(artifact, candidates, options = {}) {
         if (declared[field] !== parent.artifact[field]) {
             throw new CanonicalInventoryContractError(`canary parent ${field} mismatch`);
         }
+    }
+    if (declared.status_mapping_version !== parent.artifact.status_mapping_version) {
+        throw new CanonicalInventoryContractError('canary parent status mapping version mismatch');
     }
     if (
         declared.candidate_count !== MASTER_COUNT ||
@@ -423,11 +466,13 @@ module.exports = {
     CANONICAL_PROVIDER,
     COMPETITION,
     CanonicalInventoryContractError,
+    FOTMOB_STATUS_TO_APPLICATION_STATUS,
     FIXTURES_PER_SEASON,
     MASTER_COUNT,
     SCHEMA_VERSION,
     SEASONS,
     SOURCE_PROVIDER,
+    STATUS_MAPPING_VERSION,
     canonicalCandidateProjection,
     canonicalOrder,
     computeBusinessHash,

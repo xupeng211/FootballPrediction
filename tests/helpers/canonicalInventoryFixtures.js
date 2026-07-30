@@ -11,6 +11,7 @@ const {
     COMPETITION,
     SCHEMA_VERSION,
     SEASONS,
+    STATUS_MAPPING_VERSION,
     computeBusinessHash,
     computeV1IdentityProjectionHash,
     canonicalOrder,
@@ -70,7 +71,8 @@ function syntheticCandidates() {
                 home_team: `Synthetic ${season} Home ${String(index).padStart(3, '0')}`,
                 away_team: `Synthetic ${season} Away ${String(index).padStart(3, '0')}`,
                 kickoff_at: kickoff,
-                status: index % 5 === 0 ? 'finished' : 'scheduled',
+                provider_status: index % 5 === 0 ? 'finished' : 'scheduled',
+                status_mapping_version: STATUS_MAPPING_VERSION,
             });
         }
     }
@@ -95,6 +97,7 @@ function buildDocument(candidates, { kind = 'master', parentMaster = null } = {}
         competition: COMPETITION,
         seasons: [...SEASONS],
         per_season_counts: seasonCounts(sorted),
+        status_mapping_version: STATUS_MAPPING_VERSION,
     };
     if (kind === 'canary') {
         artifact.parent_master = parentMaster;
@@ -118,6 +121,7 @@ function parentMetadata(masterDocument, masterBinding) {
         identity_projection_hash: masterDocument.artifact.identity_projection_hash,
         candidate_count: masterDocument.artifact.candidate_count,
         per_season_counts: masterDocument.artifact.per_season_counts,
+        status_mapping_version: masterDocument.artifact.status_mapping_version,
     };
 }
 

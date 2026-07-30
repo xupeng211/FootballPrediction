@@ -25,7 +25,7 @@ function tempDir() {
     return fs.mkdtempSync(path.join(os.tmpdir(), 'fp-canonical-contract-'));
 }
 
-test('synthetic v2 master preserves its deterministic v1 identity projection and rejects status defects', () => {
+test('synthetic v2 master preserves its deterministic v1 identity projection and rejects provider-status defects', () => {
     const master = buildDocument(syntheticCandidates());
     assert.equal(master.candidates.length, MASTER_COUNT);
     assert.equal(master.artifact.identity_projection_hash, computeV1IdentityProjectionHash(master.candidates));
@@ -36,15 +36,21 @@ test('synthetic v2 master preserves its deterministic v1 identity projection and
         () => validateArtifactDocument(nonSynthetic),
         error => error.code === 'V1_IDENTITY_PROJECTION_MISMATCH'
     );
-    const missingStatus = structuredClone(master);
-    delete missingStatus.candidates[0].status;
-    assert.throws(() => validateArtifactDocument(missingStatus), CanonicalInventoryContractError);
-    const unknownStatus = structuredClone(master);
-    unknownStatus.candidates[0].status = 'invented';
-    assert.throws(() => validateArtifactDocument(unknownStatus), CanonicalInventoryContractError);
-    const abandonedStatus = structuredClone(master);
-    abandonedStatus.candidates[0].status = 'abandoned';
-    assert.throws(() => validateArtifactDocument(abandonedStatus), CanonicalInventoryContractError);
+    const missingProviderStatus = structuredClone(master);
+    delete missingProviderStatus.candidates[0].provider_status;
+    assert.throws(() => validateArtifactDocument(missingProviderStatus), CanonicalInventoryContractError);
+    const unknownProviderStatus = structuredClone(master);
+    unknownProviderStatus.candidates[0].provider_status = 'invented';
+    assert.throws(() => validateArtifactDocument(unknownProviderStatus), CanonicalInventoryContractError);
+    const abandonedProviderStatus = structuredClone(master);
+    abandonedProviderStatus.candidates[0].provider_status = 'abandoned';
+    assert.throws(() => validateArtifactDocument(abandonedProviderStatus), CanonicalInventoryContractError);
+    const unknownMapping = structuredClone(master);
+    unknownMapping.candidates[0].status_mapping_version = 'unapproved/v1';
+    assert.throws(() => validateArtifactDocument(unknownMapping), CanonicalInventoryContractError);
+    const unknownSemanticField = structuredClone(master);
+    unknownSemanticField.candidates[0].canonical_match_id = 'must-not-be-accepted';
+    assert.throws(() => validateArtifactDocument(unknownSemanticField), CanonicalInventoryContractError);
 });
 
 test('population, duplicate, scope and identity mismatches fail closed', () => {

@@ -1174,8 +1174,12 @@ Persistent write status = REAL_WRITE_BLOCKED_PROVENANCE_POLICY
 The design is now implemented as a dedicated insert-only path, not through the
 legacy `FixtureRepository.persist` update-on-conflict path. It adds
 `candidate-match-identity/v2` validation for a status-complete, hash-bound
-master or canary input; a v1 identity projection gate; ordinary-file,
-non-symlink and mutation checks; hash/scope-bound fresh runtime authorization;
+master or canary input. It preserves provider status separately from the
+derived application status and requires the exact versioned
+`fotmob-status-to-matches-status/v1` mapping; unknown semantic candidate keys
+and unmapped statuses fail closed. It also has a v1 identity projection gate;
+ordinary-file, non-symlink and mutation checks; hash/scope-bound fresh runtime
+authorization;
 an Ed25519-verifiable, trusted-authority authorization receipt; and a
 provenance receipt contract. The receipt hash persisted with an import run
 covers the full canonical signed receipt. Synthetic disposable receipts are
@@ -1184,7 +1188,8 @@ fixed synthetic write proof is reachable only through the
 `data-m3-canonical-inventory-disposable-proof` wrapper and its separate,
 disposable-only `data-schema-m3-canonical-inventory-disposable-*` V26.10 gate.
 Both the wrapper and launcher require distinct exact schema and proof
-authorizations before Compose can start. A real canary/master fails closed
+authorizations, and the launcher rejects a dirty worktree before Compose can
+start. A real canary/master fails closed
 without the independently reviewable FotMob
 endpoint/capture/process/licence evidence.
 

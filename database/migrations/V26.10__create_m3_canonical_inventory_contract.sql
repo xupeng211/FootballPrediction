@@ -25,7 +25,11 @@ BEGIN
             ADD CONSTRAINT matches_m3_epl_canonical_identity_required
             CHECK (
                 (league_name = 'Premier League' AND season IN ('2022/2023', '2023/2024', '2024/2025')) IS NOT TRUE
-                OR (canonical_provider = 'fotmob' AND external_id IS NOT NULL)
+                OR (
+                    canonical_provider IS NOT NULL
+                    AND canonical_provider = 'fotmob'
+                    AND external_id IS NOT NULL
+                )
             );
     END IF;
 END;
@@ -55,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.m3_canonical_source_artifacts (
     competition VARCHAR(100) NOT NULL CHECK (competition = 'Premier League'),
     season_scope JSONB NOT NULL,
     per_season_counts JSONB NOT NULL,
+    status_mapping_version VARCHAR(64) NOT NULL CHECK (status_mapping_version = 'fotmob-status-to-matches-status/v1'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CHECK (
         (artifact_kind = 'master' AND parent_artifact_id IS NULL)
@@ -79,6 +84,9 @@ CREATE TABLE IF NOT EXISTS public.m3_canonical_match_lineages (
     created_import_run_id UUID NOT NULL,
     candidate_id VARCHAR(100) NOT NULL,
     provider_match_id VARCHAR(100) NOT NULL,
+    provider_status VARCHAR(50) NOT NULL,
+    status_mapping_version VARCHAR(64) NOT NULL CHECK (status_mapping_version = 'fotmob-status-to-matches-status/v1'),
+    application_status VARCHAR(50) NOT NULL,
     immutable_fingerprint CHAR(64) NOT NULL CHECK (immutable_fingerprint ~ '^[0-9a-f]{64}$'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (created_import_run_id, artifact_id)

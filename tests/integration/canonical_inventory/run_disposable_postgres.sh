@@ -15,6 +15,10 @@ if [[ "${M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION:-}" != "$expected_proof_aut
 fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+if [[ -n "$(git -C "$repo_root" status --porcelain)" ]]; then
+  echo "BLOCKED: disposable proof requires a clean checked-out worktree" >&2
+  exit 1
+fi
 compose_file="$repo_root/tests/integration/canonical_inventory/docker-compose.disposable.yml"
 nonce="$(date +%s)_${RANDOM}"
 project="fp_m3_canonical_${nonce}"

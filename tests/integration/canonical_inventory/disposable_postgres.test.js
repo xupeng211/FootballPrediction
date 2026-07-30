@@ -194,6 +194,11 @@ test('migration replay, identity constraints and least-privilege schema are acti
     );
     await assert.rejects(
         admin.query(
+            "INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team, canonical_provider) VALUES ('bad-null-provider', '2', 'Premier League', '2022/2023', 'H-null', 'A-null', NULL)"
+        )
+    );
+    await assert.rejects(
+        admin.query(
             "INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team, canonical_provider) VALUES ('bad-provider', '1', 'Premier League', '2022/2023', 'H2', 'A2', 'other')"
         )
     );
@@ -248,6 +253,25 @@ test('Proof A/B: full 1,140 synthetic master inserts once then exact replays wit
     assert.deepEqual((await admin.query('SELECT DISTINCT code_revision FROM m3_canonical_import_runs')).rows, [
         { code_revision: codeRevision },
     ]);
+    assert.deepEqual(
+        (
+            await admin.query(
+                `SELECT lineage.provider_status, lineage.status_mapping_version, lineage.application_status, match.status
+                 FROM m3_canonical_match_lineages lineage
+                 JOIN matches match ON match.match_id = lineage.match_id
+                 WHERE lineage.candidate_id = $1`,
+                [master.candidates[0].id]
+            )
+        ).rows,
+        [
+            {
+                provider_status: master.candidates[0].provider_status,
+                status_mapping_version: master.candidates[0].status_mapping_version,
+                application_status: 'finished',
+                status: 'finished',
+            },
+        ]
+    );
     const replay = await writer().execute(candidateInput(file, master));
     assert.deepEqual(replay.terminal_counts, { exact_duplicate: 1140 });
     assert.deepEqual(replay.database_delta, { matches: 0, artifacts: 0, import_runs: 0, lineages: 0 });
@@ -362,7 +386,7 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
         })
     );
     const missingStatus = structuredClone(master);
-    delete missingStatus.candidates[0].status;
+    delete missingStatus.candidates[0].provider_status;
     await expectZeroDelta(async () =>
         readOrdinaryArtifact(writeDocument(temp, 'missing-status.json', missingStatus).path, {
             sha256: sha256File(temp, 'missing-status.json'),
@@ -441,7 +465,7 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     const master = buildDocument(syntheticCandidates());
     const file = writeDocument(temp, 'master-ef.json', master);
     const different = structuredClone(master);
-    different.candidates[0].status = 'finished';
+    different.candidates[0].provider_status = 'scheduled';
     const differentDocument = buildDocument(different.candidates);
     const differentFile = writeDocument(temp, 'master-ef-different-artifact.json', differentDocument);
     let releaseFirst;

@@ -1019,16 +1019,21 @@ This is design readiness only, not database-write authorization.
 **Implementation decision: READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW.**
 `REAL_WRITE_BLOCKED_PROVENANCE_POLICY` remains in force.
 
-- A dedicated status-complete `candidate-match-identity/v2` contract, v1
-  identity-projection binding, fresh hash-bound Ed25519 runtime authorization
+- A dedicated status-complete `candidate-match-identity/v2` contract retains
+  the provider status separately, requires the exact versioned
+  `fotmob-status-to-matches-status/v1` mapping and persists both it and the
+  derived application status in immutable lineage; unknown semantic fields and
+  unmapped provider statuses fail closed. Its v1 identity-projection binding,
+  fresh hash-bound Ed25519 runtime authorization
   from a trusted authority and provenance receipt validator are implemented.
   The persisted receipt hash covers the complete signed receipt. Direct CLI
   execution is disabled; only the fixed synthetic disposable proof can write,
   through `make data-m3-canonical-inventory-disposable-proof`. The wrapper and
   launcher independently require separate exact schema and proof
   authorizations, and V26.10 runs only through the disposable-only
-  `data-schema-m3-canonical-inventory-disposable-*` gate. Real inputs fail
-  closed when provenance is absent.
+  `data-schema-m3-canonical-inventory-disposable-*` gate; the launcher also
+  requires a clean checked-out code revision before Compose can start. Real
+  inputs fail closed when provenance is absent.
 - Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
   protection, immutable artifact/import-run/lineage tables and the restricted
   canonical lock function. It was executed only on a task-specific PostgreSQL

@@ -15,7 +15,7 @@ const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./C
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const REQUIRED_MIGRATION_VERSION = 'V26.10';
-const REQUIRED_MIGRATION_CHECKSUM = '2a3fbdcff9dbf58b333d91d73cc935a10f1a32e8dba8e054a1da90b06daa061d';
+const REQUIRED_MIGRATION_CHECKSUM = 'd4e83b7e6464dbb15e5ac3c2b15e5e848cac45607bc518e5ead684dbac54fed1';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
@@ -98,7 +98,7 @@ function matchesCandidateExactly(row, candidate) {
         row.home_team === candidate.home_team &&
         row.away_team === candidate.away_team &&
         new Date(row.match_date).getTime() === new Date(candidate.kickoff_at).getTime() &&
-        String(row.status).trim().toLowerCase() === candidate.status
+        String(row.status).trim().toLowerCase() === candidate.application_status
     );
 }
 
@@ -123,6 +123,7 @@ function artifactShape(artifact, file) {
         competition: artifact.competition,
         season_scope: artifact.seasons,
         per_season_counts: artifact.per_season_counts,
+        status_mapping_version: artifact.status_mapping_version,
     };
 }
 
@@ -325,6 +326,7 @@ class CanonicalInventoryWriter {
             'byte_size',
             'candidate_count',
             'competition',
+            'status_mapping_version',
         ]) {
             if (String(existing[field]) !== String(expected[field])) {
                 throw new CanonicalInventoryWriterError(
@@ -349,8 +351,8 @@ class CanonicalInventoryWriter {
         const result = await client.query(
             `
             INSERT INTO public.m3_canonical_source_artifacts
-                (artifact_sha256, artifact_kind, parent_artifact_id, business_hash, identity_projection_hash, byte_size, candidate_count, competition, season_scope, per_season_counts)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb)
+                (artifact_sha256, artifact_kind, parent_artifact_id, business_hash, identity_projection_hash, byte_size, candidate_count, competition, season_scope, per_season_counts, status_mapping_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11)
             RETURNING *
         `,
             [
@@ -364,6 +366,7 @@ class CanonicalInventoryWriter {
                 shape.competition,
                 JSON.stringify(shape.season_scope),
                 JSON.stringify(shape.per_season_counts),
+                shape.status_mapping_version,
             ]
         );
         return result.rows[0];
@@ -385,6 +388,7 @@ class CanonicalInventoryWriter {
                 competition: input.artifact.competition,
                 season_scope: input.artifact.seasons,
                 per_season_counts: declared.per_season_counts,
+                status_mapping_version: declared.status_mapping_version,
             };
             parent = await this.findArtifact(client, parentShape.artifact_sha256);
             if (parent) await this.assertExistingArtifactEquivalent(client, parent, parentShape);
@@ -554,8 +558,8 @@ class CanonicalInventoryWriter {
                         row.candidate.home_team,
                         row.candidate.away_team,
                         row.candidate.kickoff_at,
-                        row.candidate.status,
-                        row.candidate.status === 'finished',
+                        row.candidate.application_status,
+                        row.candidate.application_status === 'finished',
                         CANONICAL_PROVIDER,
                         provenanceKind === 'synthetic-test-only' ? 'synthetic' : 'fotmob_pageprops',
                         provenanceKind === 'synthetic-test-only' ? 'synthetic_invalid' : 'missing',
@@ -566,8 +570,8 @@ class CanonicalInventoryWriter {
                 await client.query(
                     `
                     INSERT INTO public.m3_canonical_match_lineages
-                        (match_id, artifact_id, created_import_run_id, candidate_id, provider_match_id, immutable_fingerprint)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                        (match_id, artifact_id, created_import_run_id, candidate_id, provider_match_id, provider_status, status_mapping_version, application_status, immutable_fingerprint)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 `,
                     [
                         matchId,
@@ -575,6 +579,9 @@ class CanonicalInventoryWriter {
                         runId,
                         row.candidate.id,
                         row.candidate.source_match_id,
+                        row.candidate.provider_status,
+                        row.candidate.status_mapping_version,
+                        row.candidate.application_status,
                         row.fingerprint,
                     ]
                 );
