@@ -34,7 +34,7 @@ function createUuid() {
 
 function boundedEvidence(rows) {
     return rows.slice(0, MAX_EXCEPTION_SAMPLES).map(row => ({
-        candidate_id: row.candidate_id,
+        candidate_id: row.candidate.id,
         terminal: row.terminal,
         reason: row.reason,
     }));

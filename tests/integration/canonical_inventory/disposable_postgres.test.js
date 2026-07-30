@@ -250,8 +250,29 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     const changed = structuredClone(master);
     changed.candidates[0].kickoff_at = '2022-08-02T12:30:00Z';
     const changedDocument = buildDocument(changed.candidates);
+    const kickoffConflictCandidate = changedDocument.candidates.find(
+        candidate => candidate.kickoff_at === '2022-08-02T12:30:00Z'
+    );
+    assert.ok(kickoffConflictCandidate);
     const changedFile = writeDocument(temp, 'conflict-kickoff.json', changedDocument);
-    await expectZeroDelta(() => writer().execute(candidateInput(changedFile, changedDocument)));
+    const beforeKickoffConflict = await counts();
+    await assert.rejects(
+        () => writer().execute(candidateInput(changedFile, changedDocument)),
+        error => {
+            assert.equal(error.code, 'CANONICAL_CONFLICT');
+            assert.ok(error.evidence.samples.every(sample => typeof sample.candidate_id === 'string'));
+            assert.deepEqual(
+                error.evidence.samples.find(sample => sample.candidate_id === kickoffConflictCandidate.id),
+                {
+                    candidate_id: kickoffConflictCandidate.id,
+                    terminal: 'conflict_kickoff',
+                    reason: 'provider_identity_divergence',
+                }
+            );
+            return true;
+        }
+    );
+    assert.deepEqual(await counts(), beforeKickoffConflict);
     const homeChanged = structuredClone(master);
     homeChanged.candidates[0].home_team = 'Synthetic changed home';
     const homeDocument = buildDocument(homeChanged.candidates);
