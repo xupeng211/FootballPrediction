@@ -5,11 +5,10 @@
 // 不执行 UPSERT/UPDATE/DELETE，也拒绝非 disposable 的运行授权。
 
 const crypto = require('node:crypto');
-const fs = require('node:fs');
 const {
     CANONICAL_PROVIDER,
     immutableFingerprint,
-    sha256Text,
+    readOrdinaryArtifact,
     stableStringify,
 } = require('./CanonicalInventoryContract');
 const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./CanonicalInventoryAuthorization');
@@ -40,25 +39,50 @@ function boundedEvidence(rows) {
     }));
 }
 
-function assertArtifactStillImmutable(input) {
-    if (!input.path || !Number.isInteger(input.byte_size) || input.byte_size <= 0) {
+function snapshotInputBinding(input) {
+    if (
+        !input?.path ||
+        !Number.isInteger(input.byte_size) ||
+        input.byte_size <= 0 ||
+        !input?.artifact ||
+        !input?.sha256
+    ) {
         throw new CanonicalInventoryWriterError('artifact path and byte size are required', 'ARTIFACT_BINDING_MISSING');
     }
-    const before = fs.lstatSync(input.path);
-    if (!before.isFile() || before.isSymbolicLink() || before.size !== input.byte_size) {
-        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED');
+    return {
+        path: input.path,
+        byte_size: input.byte_size,
+        sha256: input.sha256,
+        artifact: structuredClone(input.artifact),
+        parent_document: input.parent_document ? structuredClone(input.parent_document) : undefined,
+        parent_binding: input.parent_binding ? structuredClone(input.parent_binding) : undefined,
+        runtime_authorization: structuredClone(input.runtimeAuthorization),
+        provenance_receipt: structuredClone(input.provenanceReceipt),
+    };
+}
+
+function assertArtifactStillImmutable(binding) {
+    let rebound;
+    try {
+        rebound = readOrdinaryArtifact(binding.path, {
+            sha256: binding.sha256,
+            byte_size: binding.byte_size,
+            parentDocument: binding.parent_document,
+            parentBinding: binding.parent_binding,
+            allowSyntheticTestOnly: binding.artifact.synthetic_test_only === true,
+        });
+    } catch (error) {
+        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED', {
+            cause: error.code || error.message,
+        });
     }
-    const bytes = fs.readFileSync(input.path);
-    const after = fs.lstatSync(input.path);
-    if (
-        before.dev !== after.dev ||
-        before.ino !== after.ino ||
-        before.size !== after.size ||
-        before.mtimeMs !== after.mtimeMs ||
-        sha256Text(bytes) !== input.sha256
-    ) {
-        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED');
+    if (stableStringify(rebound.artifact) !== stableStringify(binding.artifact)) {
+        throw new CanonicalInventoryWriterError(
+            'artifact content no longer matches authorized metadata',
+            'ARTIFACT_MUTATED'
+        );
     }
+    return rebound;
 }
 
 function matchesCandidateExactly(row, candidate) {
@@ -434,6 +458,7 @@ class CanonicalInventoryWriter {
         if (!input?.artifact || !input?.candidates || !input?.sha256) {
             throw new CanonicalInventoryWriterError('validated artifact input is required');
         }
+        const inputBinding = snapshotInputBinding(input);
         const client = await this.pool.connect();
         try {
             const targetIdentity = await this.inspectTarget(client);
@@ -443,25 +468,25 @@ class CanonicalInventoryWriter {
                 schema_baseline: SCHEMA_BASELINE,
                 target_classification: this.target.classification,
                 artifact: {
-                    sha256: input.sha256,
-                    business_hash: input.artifact.business_hash,
-                    identity_projection_hash: input.artifact.identity_projection_hash,
-                    kind: input.artifact.kind,
-                    candidate_count: input.candidates.length,
-                    competition: input.artifact.competition,
-                    seasons: input.artifact.seasons,
+                    sha256: inputBinding.sha256,
+                    business_hash: inputBinding.artifact.business_hash,
+                    identity_projection_hash: inputBinding.artifact.identity_projection_hash,
+                    kind: inputBinding.artifact.kind,
+                    candidate_count: inputBinding.artifact.candidate_count,
+                    competition: inputBinding.artifact.competition,
+                    seasons: inputBinding.artifact.seasons,
                 },
             };
             const receipt = validateRuntimeAuthorization(
-                input.runtimeAuthorization,
+                inputBinding.runtime_authorization,
                 binding,
                 this.authorizationAuthority
             );
-            const provenance = validateProvenanceReceipt(input.provenanceReceipt, {
-                sha256: input.sha256,
+            const provenance = validateProvenanceReceipt(inputBinding.provenance_receipt, {
+                sha256: inputBinding.sha256,
                 target_classification: 'disposable',
             });
-            assertArtifactStillImmutable(input);
+            assertArtifactStillImmutable(inputBinding);
             await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
             try {
                 await client.query("SET LOCAL lock_timeout = '5s'; SET LOCAL statement_timeout = '30s'");
@@ -474,11 +499,14 @@ class CanonicalInventoryWriter {
                 }
                 if (this.afterAdvisoryLock) await this.afterAdvisoryLock();
                 await client.query('SELECT public.m3_canonical_inventory_acquire_locks_v1()');
-                assertArtifactStillImmutable(input);
-                const artifactState = await this.ensureArtifacts(client, input);
+                // Only the second physical-file read feeds persistence. In-memory
+                // caller objects may change after authorization, but cannot change
+                // the signed and hash-bound rows that reach this transaction.
+                const verifiedInput = assertArtifactStillImmutable(inputBinding);
+                const artifactState = await this.ensureArtifacts(client, verifiedInput);
                 const { artifact } = artifactState;
                 const classified = [];
-                for (const candidate of input.candidates) {
+                for (const candidate of verifiedInput.candidates) {
                     classified.push(await this.classifyCandidate(client, candidate, artifact));
                 }
                 const terminalCounts = classified.reduce(
@@ -504,7 +532,7 @@ class CanonicalInventoryWriter {
                     (terminalCounts.inserted || 0) +
                     (terminalCounts.exact_duplicate || 0) +
                     (terminalCounts.already_present_equivalent || 0);
-                if (reconciled !== input.candidates.length) {
+                if (reconciled !== verifiedInput.candidates.length) {
                     throw new CanonicalInventoryWriterError(
                         'terminal arithmetic did not close',
                         'TERMINAL_ARITHMETIC_FAILURE'
@@ -517,8 +545,8 @@ class CanonicalInventoryWriter {
                         database_identity: targetIdentity.database_identity,
                         current_user: targetIdentity.current_user,
                     },
-                    artifact_sha256: input.sha256,
-                    candidate_count: input.candidates.length,
+                    artifact_sha256: verifiedInput.sha256,
+                    candidate_count: verifiedInput.candidates.length,
                     terminal_counts: terminalCounts,
                     database_delta: {
                         matches: terminalCounts.inserted || 0,

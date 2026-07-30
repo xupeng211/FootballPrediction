@@ -141,10 +141,11 @@ test('ordinary-file hash and symlink checks reject swapped inputs', { skip: proc
         let lstatCalls = 0;
         const mutatedFileSystem = {
             readFileSync: fs.readFileSync.bind(fs),
+            realpathSync: fs.realpathSync.bind(fs),
             lstatSync(filePath) {
                 lstatCalls += 1;
                 const stat = fs.lstatSync(filePath);
-                return lstatCalls === 1 ? stat : { ...stat, size: stat.size + 1 };
+                return lstatCalls === 3 ? { ...stat, size: stat.size + 1 } : stat;
             },
         };
         assert.throws(
@@ -160,3 +161,27 @@ test('ordinary-file hash and symlink checks reject swapped inputs', { skip: proc
         fs.rmSync(directory, { recursive: true, force: true });
     }
 });
+
+test(
+    'repository-external artifact boundary resolves intermediate symlinks',
+    { skip: process.platform === 'win32' },
+    () => {
+        const directory = tempDir();
+        const repositoryRoot = path.resolve(__dirname, '../..');
+        const repositoryTemp = fs.mkdtempSync(path.join(repositoryRoot, '.canonical-contract-test-'));
+        try {
+            const master = buildDocument(syntheticCandidates());
+            const binding = writeDocument(repositoryTemp, 'artifact.json', master);
+            const repositoryLink = path.join(directory, 'repository-link');
+            fs.symlinkSync(repositoryRoot, repositoryLink, 'dir');
+            const linkedArtifact = path.join(repositoryLink, path.basename(repositoryTemp), 'artifact.json');
+            assert.throws(
+                () => readOrdinaryArtifact(linkedArtifact, { sha256: binding.sha256, allowSyntheticTestOnly: true }),
+                error => error instanceof CanonicalInventoryContractError && /repository-external/.test(error.message)
+            );
+        } finally {
+            fs.rmSync(repositoryTemp, { recursive: true, force: true });
+            fs.rmSync(directory, { recursive: true, force: true });
+        }
+    }
+);

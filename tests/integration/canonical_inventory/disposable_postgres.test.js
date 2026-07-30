@@ -354,6 +354,26 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     await expectZeroDelta(() => writer().execute(preflighted));
 });
 
+test('writer re-reads the hash-bound artifact after authorization and ignores mutated caller candidates', async () => {
+    await clearState();
+    const master = buildDocument(syntheticCandidates());
+    const file = writeDocument(temp, 'master-bound-content.json', master);
+    const input = candidateInput(file, master);
+    const originalHomeTeam = input.candidates[0].home_team;
+    const boundWriter = new CanonicalInventoryWriter({
+        pool,
+        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        authorizationAuthority: testAuthorizationAuthority(),
+        codeRevision: 'disposable-proof',
+        afterAdvisoryLock: () => {
+            input.candidates[0].home_team = 'Injected in-memory candidate';
+        },
+    });
+    assert.deepEqual((await boundWriter.execute(input)).terminal_counts, { inserted: 1140 });
+    const persisted = await admin.query('SELECT home_team FROM matches WHERE match_id = $1', [master.candidates[0].id]);
+    assert.equal(persisted.rows[0].home_team, originalHomeTeam);
+});
+
 function sha256File(directory, name) {
     return crypto
         .createHash('sha256')

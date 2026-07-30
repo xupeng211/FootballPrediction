@@ -124,6 +124,13 @@ function sameSeasonCounts(left, right) {
     );
 }
 
+function isWithinDirectory(directory, candidatePath) {
+    const relative = path.relative(directory, candidatePath);
+    return (
+        relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative))
+    );
+}
+
 function validateCandidate(candidate) {
     if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
         throw new CanonicalInventoryContractError('candidate must be an object');
@@ -334,19 +341,25 @@ function validateArtifactDocument(document, options = {}) {
 // eslint-disable-next-line complexity -- file identity checks must remain adjacent to parsing.
 function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
     if (!path.isAbsolute(filePath)) throw new CanonicalInventoryContractError('artifact path must be absolute');
-    const relativeToRepository = path.relative(REPOSITORY_ROOT, path.resolve(filePath));
-    if (
-        relativeToRepository === '' ||
-        (!relativeToRepository.startsWith(`..${path.sep}`) && relativeToRepository !== '..')
-    ) {
+    const supplied = fileSystem.lstatSync(filePath);
+    if (!supplied.isFile() || supplied.isSymbolicLink()) {
+        throw new CanonicalInventoryContractError('artifact must be an ordinary non-symlink file');
+    }
+    // `path.resolve()` is lexical and does not reveal an intermediate symlink.
+    // Bind the read to the physical ordinary file, then compare physical roots so
+    // `/tmp/link-to-repository/artifact.json` cannot bypass the external-artifact
+    // boundary.
+    const repositoryPath = fileSystem.realpathSync(REPOSITORY_ROOT);
+    const resolvedArtifactPath = fileSystem.realpathSync(filePath);
+    if (isWithinDirectory(repositoryPath, resolvedArtifactPath)) {
         throw new CanonicalInventoryContractError('artifact must be repository-external');
     }
-    const before = fileSystem.lstatSync(filePath);
+    const before = fileSystem.lstatSync(resolvedArtifactPath);
     if (!before.isFile() || before.isSymbolicLink()) {
         throw new CanonicalInventoryContractError('artifact must be an ordinary non-symlink file');
     }
-    const bytes = fileSystem.readFileSync(filePath);
-    const after = fileSystem.lstatSync(filePath);
+    const bytes = fileSystem.readFileSync(resolvedArtifactPath);
+    const after = fileSystem.lstatSync(resolvedArtifactPath);
     if (
         before.dev !== after.dev ||
         before.ino !== after.ino ||
@@ -376,7 +389,9 @@ function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
         }),
         sha256,
         byte_size: before.size,
-        path: filePath,
+        path: resolvedArtifactPath,
+        parent_document: expected.parentDocument ? structuredClone(expected.parentDocument) : undefined,
+        parent_binding: expected.parentBinding ? structuredClone(expected.parentBinding) : undefined,
     };
 }
 
