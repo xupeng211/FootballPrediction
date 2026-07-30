@@ -1,0 +1,1229 @@
+'use strict';
+
+// lifecycle: permanent
+// 独立的 M3 canonical inventory insert-only writer。它不复用 FixtureRepository，
+// 不执行 UPSERT/UPDATE/DELETE，也拒绝非 disposable 的运行授权。
+/* eslint-disable max-lines -- fixed-schema verification remains adjacent to the fail-closed write boundary. */
+
+const crypto = require('node:crypto');
+const {
+    CANONICAL_PROVIDER,
+    immutableFingerprint,
+    readOrdinaryArtifact,
+    stableStringify,
+} = require('./CanonicalInventoryContract');
+const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./CanonicalInventoryAuthorization');
+
+const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
+const REQUIRED_MIGRATION_VERSION = 'V26.10';
+const REQUIRED_MIGRATION_CHECKSUM = '951c56f3a5bd68089cfe2d3ebd78b3f2b19c09f18a7081a9b7c85340ecea36da';
+const ADVISORY_LOCK_NAMESPACE = 1793;
+const ADVISORY_LOCK_KEY = 1;
+const MAX_EXCEPTION_SAMPLES = 20;
+const GIT_REVISION = /^[0-9a-f]{40}$/;
+const TRUSTED_LOCK_OWNER = 'm3_canonical_owner';
+const EXPECTED_LOCK_FUNCTION_BODY =
+    'beginlocktablepublic.m3_canonical_source_artifactsinsharerowexclusivemode;locktablepublic.m3_canonical_import_runsinsharerowexclusivemode;locktablepublic.m3_canonical_match_lineagesinsharerowexclusivemode;locktablepublic.matchesinsharerowexclusivemode;end;';
+const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
+    matches_canonical_provider_fotmob_only: "canonical_providerisnullorcanonical_provider='fotmob'",
+    matches_m3_epl_canonical_identity_required:
+        "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']isnottrueorcanonical_providerisnotnullandcanonical_provider='fotmob'andexternal_idisnotnull",
+});
+const EXPECTED_FIXTURE_INDEX_PREDICATE =
+    "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025'']andcanonical_provider=''fotmob''";
+// Every CHECK constraint on the four V26.10 inventory tables is part of the
+// write-time safety contract, so the complete normalized expression set is
+// verified — never constraint names, LIKE fragments or keyword presence.
+// Normalization is owned by normalizeSchemaExpression (lowercase, stable
+// casts, whitespace/parens/quotes), the same standard as the matches CHECKs.
+const EXPECTED_INVENTORY_CHECK_EXPRESSIONS = Object.freeze({
+    m3_canonical_target_identity: Object.freeze([
+        "binding_key='canonical_inventory_v1'",
+        "service_identity~'^[a-z0-9][a-z0-9_.:-]{2,127}$'",
+    ]),
+    m3_canonical_source_artifacts: Object.freeze([
+        "artifact_kind='master'andparent_artifact_idisnullorartifact_kind='canary'andparent_artifact_idisnotnull",
+        "artifact_kind=anyarray['master','canary']",
+        "artifact_sha256~'^[0-9a-f]{64}$'",
+        "business_hash~'^[0-9a-f]{64}$'",
+        'byte_size>0',
+        'candidate_count>0',
+        "competition='premierleague'",
+        "identity_projection_hash~'^[0-9a-f]{64}$'",
+        "status_mapping_version='fotmob-status-to-matches-status/v1'",
+    ]),
+    m3_canonical_import_runs: Object.freeze(["authorization_receipt_sha256~'^[0-9a-f]{64}$'"]),
+    m3_canonical_match_lineages: Object.freeze([
+        "immutable_fingerprint~'^[0-9a-f]{64}$'",
+        "status_mapping_version='fotmob-status-to-matches-status/v1'",
+    ]),
+});
+
+class CanonicalInventoryWriterError extends Error {
+    constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
+        super(message);
+        this.name = 'CanonicalInventoryWriterError';
+        this.code = code;
+        this.evidence = evidence;
+    }
+}
+
+function createUuid() {
+    return crypto.randomUUID();
+}
+
+function boundedEvidence(rows) {
+    return rows.slice(0, MAX_EXCEPTION_SAMPLES).map(row => ({
+        candidate_id: row.candidate.id,
+        terminal: row.terminal,
+        reason: row.reason,
+    }));
+}
+
+function snapshotInputBinding(input) {
+    if (
+        !input?.path ||
+        !Number.isInteger(input.byte_size) ||
+        input.byte_size <= 0 ||
+        !input?.artifact ||
+        !input?.sha256
+    ) {
+        throw new CanonicalInventoryWriterError('artifact path and byte size are required', 'ARTIFACT_BINDING_MISSING');
+    }
+    return {
+        path: input.path,
+        byte_size: input.byte_size,
+        sha256: input.sha256,
+        artifact: structuredClone(input.artifact),
+        parent_artifact_path: input.parent_artifact_path,
+        runtime_authorization: structuredClone(input.runtimeAuthorization),
+        provenance_receipt: structuredClone(input.provenanceReceipt),
+    };
+}
+
+function assertArtifactStillImmutable(binding) {
+    let rebound;
+    try {
+        rebound = readOrdinaryArtifact(binding.path, {
+            sha256: binding.sha256,
+            byte_size: binding.byte_size,
+            parentArtifactPath: binding.parent_artifact_path,
+            allowSyntheticTestOnly: binding.artifact.synthetic_test_only === true,
+        });
+    } catch (error) {
+        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED', {
+            cause: error.code || error.message,
+        });
+    }
+    if (stableStringify(rebound.artifact) !== stableStringify(binding.artifact)) {
+        throw new CanonicalInventoryWriterError(
+            'artifact content no longer matches authorized metadata',
+            'ARTIFACT_MUTATED'
+        );
+    }
+    return rebound;
+}
+
+function matchesCandidateExactly(row, candidate) {
+    // PostgreSQL normalises a valid `...:00Z` value to `.000Z` on read. Compare
+    // instants here, while lineage retains the source artifact's exact immutable
+    // fingerprint; formatting alone must not turn a replay into a conflict.
+    return (
+        row.match_id === candidate.id &&
+        String(row.external_id) === candidate.source_match_id &&
+        row.league_name === candidate.competition &&
+        row.season === candidate.season &&
+        row.home_team === candidate.home_team &&
+        row.away_team === candidate.away_team &&
+        new Date(row.match_date).getTime() === new Date(candidate.kickoff_at).getTime() &&
+        String(row.status).trim().toLowerCase() === candidate.application_status
+    );
+}
+
+function classifyProviderDifference(candidate, existing) {
+    if (existing.league_name !== candidate.competition) return 'conflict_competition';
+    if (existing.season !== candidate.season) return 'conflict_season';
+    if (existing.home_team !== candidate.home_team || existing.away_team !== candidate.away_team) {
+        return 'conflict_home_away';
+    }
+    if (new Date(existing.match_date).getTime() !== new Date(candidate.kickoff_at).getTime()) return 'conflict_kickoff';
+    return 'conflict_external_id';
+}
+
+function artifactShape(artifact, file) {
+    return {
+        artifact_sha256: file.sha256,
+        artifact_kind: artifact.kind,
+        business_hash: artifact.business_hash,
+        identity_projection_hash: artifact.identity_projection_hash,
+        byte_size: file.byte_size,
+        candidate_count: artifact.candidate_count,
+        competition: artifact.competition,
+        season_scope: artifact.seasons,
+        per_season_counts: artifact.per_season_counts,
+        status_mapping_version: artifact.status_mapping_version,
+    };
+}
+
+function normalizeSchemaExpression(definition) {
+    return String(definition)
+        .toLowerCase()
+        .replace(/::[a-z_ ]+(?:\[\])?/g, '')
+        .replace(/[\s()"]+/g, '');
+}
+
+function multisetDifference(left, right) {
+    const remaining = [...right];
+    const onlyInLeft = [];
+    for (const item of left) {
+        const index = remaining.indexOf(item);
+        if (index === -1) onlyInLeft.push(item);
+        else remaining.splice(index, 1);
+    }
+    return { onlyInLeft, onlyInRight: remaining };
+}
+
+// Compare the complete CHECK expression set of each V26.10 inventory table as a
+// multiset, so a weakened (CHECK true), widened, narrowed, replaced, dropped or
+// duplicated constraint fails closed instead of passing a keyword search.
+function findInventoryCheckDrift(rows, expected = EXPECTED_INVENTORY_CHECK_EXPRESSIONS) {
+    const actualByTable = new Map();
+    for (const row of rows) {
+        const expressions = actualByTable.get(row.table_name) || [];
+        expressions.push(normalizeSchemaExpression(row.expression));
+        actualByTable.set(row.table_name, expressions);
+    }
+    const drift = [];
+    for (const [table, expectedExpressions] of Object.entries(expected)) {
+        const actual = actualByTable.get(table) || [];
+        const { onlyInLeft: unexpected, onlyInRight: missing } = multisetDifference(actual, expectedExpressions);
+        if (missing.length > 0 || unexpected.length > 0) {
+            drift.push({
+                table,
+                missing: missing.slice(0, MAX_EXCEPTION_SAMPLES),
+                unexpected: unexpected.slice(0, MAX_EXCEPTION_SAMPLES),
+            });
+        }
+    }
+    return drift;
+}
+
+class CanonicalInventoryWriter {
+    constructor({ pool, target, authorizationAuthority, codeRevision, afterAdvisoryLock = null } = {}) {
+        if (!pool || typeof pool.connect !== 'function') {
+            throw new CanonicalInventoryWriterError('writer requires a pg Pool');
+        }
+        if (
+            !target?.serviceIdentity ||
+            !target?.databaseIdentity ||
+            !target?.writerRole ||
+            target.classification !== 'disposable'
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'writer requires an independently configured disposable target identity',
+                'TARGET_CLASSIFICATION_MISMATCH'
+            );
+        }
+        if (!authorizationAuthority) {
+            throw new CanonicalInventoryWriterError(
+                'writer requires a trusted external authorization authority',
+                'AUTHORIZATION_AUTHORITY_MISSING'
+            );
+        }
+        if (typeof codeRevision !== 'string' || !GIT_REVISION.test(codeRevision)) {
+            throw new CanonicalInventoryWriterError(
+                'writer requires the actual 40-character git code revision',
+                'CODE_REVISION_MISSING'
+            );
+        }
+        this.pool = pool;
+        this.target = target;
+        this.authorizationAuthority = authorizationAuthority;
+        this.codeRevision = codeRevision;
+        this.afterAdvisoryLock = afterAdvisoryLock;
+    }
+
+    // eslint-disable-next-line complexity -- fixed schema and least-privilege boundary checks must fail closed together.
+    async inspectTarget(client) {
+        const result = await client.query(`
+            SELECT current_database() AS database_identity,
+                   (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_instance_oid,
+                   current_user AS current_user,
+                   session_user AS session_user,
+                   current_setting('transaction_read_only') AS transaction_read_only,
+                   current_setting('server_version_num') AS server_version_num,
+                   to_regclass('public.m3_canonical_schema_migrations') IS NOT NULL AS migration_ledger_table,
+                   to_regclass('public.m3_canonical_target_identity') IS NOT NULL AS target_identity_table,
+                   to_regclass('public.m3_canonical_source_artifacts') IS NOT NULL AS artifact_table,
+                   to_regclass('public.m3_canonical_import_runs') IS NOT NULL AS run_table,
+                   to_regclass('public.m3_canonical_match_lineages') IS NOT NULL AS lineage_table,
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_index index_meta
+                       JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                       JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                       JOIN pg_class table_class ON table_class.oid = index_meta.indrelid
+                       JOIN pg_namespace table_schema ON table_schema.oid = table_class.relnamespace
+                       WHERE index_schema.nspname = 'public'
+                         AND table_schema.nspname = 'public'
+                         AND table_class.relname = 'matches'
+                         AND index_class.relname = 'matches_m3_fotmob_external_id_uq'
+                         AND index_meta.indisunique
+                         AND index_meta.indisvalid
+                         AND index_meta.indisready
+                         AND ARRAY(
+                             SELECT attribute.attname
+                             FROM unnest(index_meta.indkey) WITH ORDINALITY AS key_column(attnum, ordinal)
+                             JOIN pg_attribute attribute
+                               ON attribute.attrelid = index_meta.indrelid
+                              AND attribute.attnum = key_column.attnum
+                             WHERE key_column.ordinal <= index_meta.indnkeyatts
+                             ORDER BY key_column.ordinal
+                         ) = ARRAY['external_id']::name[]
+                         AND regexp_replace(
+                             regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                             '[[:space:]()]',
+                             '',
+                             'g'
+                         ) = 'canonical_provider=''fotmob'''
+                   ) AS provider_index,
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_index index_meta
+                       JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                       JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                       JOIN pg_class table_class ON table_class.oid = index_meta.indrelid
+                       JOIN pg_namespace table_schema ON table_schema.oid = table_class.relnamespace
+                       WHERE index_schema.nspname = 'public'
+                         AND table_schema.nspname = 'public'
+                         AND table_class.relname = 'matches'
+                         AND index_class.relname = 'matches_m3_epl_fixture_identity_uq'
+                         AND index_meta.indisunique
+                         AND index_meta.indisvalid
+                         AND index_meta.indisready
+                         AND ARRAY(
+                             SELECT attribute.attname
+                             FROM unnest(index_meta.indkey) WITH ORDINALITY AS key_column(attnum, ordinal)
+                             JOIN pg_attribute attribute
+                               ON attribute.attrelid = index_meta.indrelid
+                              AND attribute.attnum = key_column.attnum
+                             WHERE key_column.ordinal <= index_meta.indnkeyatts
+                             ORDER BY key_column.ordinal
+                         ) = ARRAY['league_name', 'season', 'home_team', 'away_team']::name[]
+                         AND regexp_replace(
+                             replace(
+                                 regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                                 '[]',
+                                 ''
+                             ),
+                             '[[:space:]()]',
+                             '',
+                             'g'
+                         ) = '${EXPECTED_FIXTURE_INDEX_PREDICATE}'
+                   ) AS fixture_index,
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_proc function_meta
+                       JOIN pg_namespace function_schema ON function_schema.oid = function_meta.pronamespace
+                       JOIN pg_language function_language ON function_language.oid = function_meta.prolang
+                       JOIN pg_roles function_owner ON function_owner.oid = function_meta.proowner
+                       WHERE function_schema.nspname = 'public'
+                         AND function_meta.proname = 'm3_canonical_inventory_acquire_locks_v1'
+                         AND function_meta.pronargs = 0
+                         AND function_meta.prosecdef
+                         AND function_language.lanname = 'plpgsql'
+                         AND function_owner.rolname = '${TRUSTED_LOCK_OWNER}'
+                         AND NOT function_owner.rolcanlogin
+                         AND function_meta.proconfig @> ARRAY['search_path=pg_catalog']::text[]
+                         AND regexp_replace(lower(function_meta.prosrc), '[[:space:]]+', '', 'g') = '${EXPECTED_LOCK_FUNCTION_BODY}'
+                   ) AS controlled_lock_function
+        `);
+        const identity = result.rows[0];
+        if (identity.database_identity !== this.target.databaseIdentity) {
+            throw new CanonicalInventoryWriterError('database identity mismatch', 'TARGET_IDENTITY_MISMATCH');
+        }
+        if (identity.current_user !== this.target.writerRole || identity.session_user !== this.target.writerRole) {
+            throw new CanonicalInventoryWriterError('database writer role mismatch', 'TARGET_WRITER_ROLE_MISMATCH');
+        }
+        if (identity.transaction_read_only === 'on') {
+            throw new CanonicalInventoryWriterError('target transaction is read-only', 'TARGET_READ_ONLY');
+        }
+        if (
+            !identity.artifact_table ||
+            !identity.run_table ||
+            !identity.lineage_table ||
+            !identity.migration_ledger_table ||
+            !identity.target_identity_table ||
+            !identity.provider_index ||
+            !identity.fixture_index ||
+            !identity.controlled_lock_function
+        ) {
+            const fixtureIndexDefinition = await client.query(`
+                SELECT pg_get_expr(index_meta.indpred, index_meta.indrelid) AS predicate
+                FROM pg_index index_meta
+                JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                WHERE index_schema.nspname = 'public'
+                  AND index_class.relname = 'matches_m3_epl_fixture_identity_uq'
+            `);
+            throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH', {
+                migration_ledger_table: identity.migration_ledger_table,
+                target_identity_table: identity.target_identity_table,
+                artifact_table: identity.artifact_table,
+                run_table: identity.run_table,
+                lineage_table: identity.lineage_table,
+                provider_index: identity.provider_index,
+                fixture_index: identity.fixture_index,
+                fixture_index_predicate: fixtureIndexDefinition.rows[0]?.predicate || null,
+                controlled_lock_function: identity.controlled_lock_function,
+            });
+        }
+        const targetBinding = await client.query(
+            `
+            SELECT service_identity,
+                   database_oid::text AS database_instance_oid,
+                   instance_nonce::text AS database_instance_nonce
+            FROM public.m3_canonical_target_identity
+            WHERE binding_key = 'canonical_inventory_v1'
+        `
+        );
+        if (targetBinding.rowCount !== 1) {
+            throw new CanonicalInventoryWriterError(
+                'target service identity binding is incomplete',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
+        }
+        if (targetBinding.rows[0].service_identity !== this.target.serviceIdentity) {
+            throw new CanonicalInventoryWriterError(
+                'database-backed service identity mismatch',
+                'TARGET_SERVICE_IDENTITY_MISMATCH'
+            );
+        }
+        if (targetBinding.rows[0].database_instance_oid !== identity.database_instance_oid) {
+            throw new CanonicalInventoryWriterError(
+                'database-backed instance identity mismatch',
+                'TARGET_SERVICE_IDENTITY_MISMATCH'
+            );
+        }
+        const matchesChecks = await client.query(
+            `
+            SELECT constraint_meta.conname,
+                   pg_get_expr(constraint_meta.conbin, constraint_meta.conrelid) AS expression
+            FROM pg_constraint constraint_meta
+            WHERE constraint_meta.conrelid = 'public.matches'::regclass
+              AND constraint_meta.contype = 'c'
+              AND constraint_meta.conname = ANY($1::text[])
+        `,
+            [Object.keys(EXPECTED_MATCHES_CHECK_EXPRESSIONS)]
+        );
+        const expressionsByName = new Map(
+            matchesChecks.rows.map(row => [row.conname, normalizeSchemaExpression(row.expression)])
+        );
+        if (
+            Object.entries(EXPECTED_MATCHES_CHECK_EXPRESSIONS).some(
+                ([name, expression]) => expressionsByName.get(name) !== expression
+            )
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'matches canonical constraints do not match the required definition',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
+        }
+        const inventorySchema = await client.query(`
+            WITH required_columns(table_name, column_name, type_name, must_be_not_null) AS (
+                VALUES
+                    ('m3_canonical_target_identity', 'binding_key', 'character varying(64)', true),
+                    ('m3_canonical_target_identity', 'service_identity', 'character varying(128)', true),
+                    ('m3_canonical_target_identity', 'database_oid', 'oid', true),
+                    ('m3_canonical_target_identity', 'instance_nonce', 'uuid', true),
+                    ('m3_canonical_target_identity', 'created_at', 'timestamp with time zone', true),
+                    ('m3_canonical_source_artifacts', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_source_artifacts', 'artifact_sha256', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'artifact_kind', 'character varying(16)', true),
+                    ('m3_canonical_source_artifacts', 'parent_artifact_id', 'uuid', false),
+                    ('m3_canonical_source_artifacts', 'business_hash', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'identity_projection_hash', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'byte_size', 'bigint', true),
+                    ('m3_canonical_source_artifacts', 'candidate_count', 'integer', true),
+                    ('m3_canonical_source_artifacts', 'competition', 'character varying(100)', true),
+                    ('m3_canonical_source_artifacts', 'season_scope', 'jsonb', true),
+                    ('m3_canonical_source_artifacts', 'per_season_counts', 'jsonb', true),
+                    ('m3_canonical_source_artifacts', 'status_mapping_version', 'character varying(64)', true),
+                    ('m3_canonical_source_artifacts', 'created_at', 'timestamp with time zone', true),
+                    ('m3_canonical_import_runs', 'run_id', 'uuid', true),
+                    ('m3_canonical_import_runs', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_import_runs', 'execution_id', 'character varying(128)', true),
+                    ('m3_canonical_import_runs', 'authorization_receipt_sha256', 'character(64)', true),
+                    ('m3_canonical_import_runs', 'code_revision', 'character varying(80)', true),
+                    ('m3_canonical_import_runs', 'created_at', 'timestamp with time zone', true),
+                    ('m3_canonical_match_lineages', 'lineage_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'match_id', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'created_import_run_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'candidate_id', 'character varying(100)', true),
+                    ('m3_canonical_match_lineages', 'provider_match_id', 'character varying(100)', true),
+                    ('m3_canonical_match_lineages', 'provider_status', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'status_mapping_version', 'character varying(64)', true),
+                    ('m3_canonical_match_lineages', 'application_status', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'immutable_fingerprint', 'character(64)', true),
+                    ('m3_canonical_match_lineages', 'created_at', 'timestamp with time zone', true)
+            )
+            SELECT
+                NOT EXISTS (
+                    SELECT 1
+                    FROM required_columns required
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM pg_class relation
+                        JOIN pg_namespace schema ON schema.oid = relation.relnamespace
+                        JOIN pg_attribute column_meta ON column_meta.attrelid = relation.oid
+                        WHERE schema.nspname = 'public'
+                          AND relation.relname = required.table_name
+                          AND column_meta.attname = required.column_name
+                          AND column_meta.attnum > 0
+                          AND NOT column_meta.attisdropped
+                          AND format_type(column_meta.atttypid, column_meta.atttypmod) = required.type_name
+                          AND (NOT required.must_be_not_null OR column_meta.attnotnull)
+                    )
+                ) AS required_columns_present,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_sha256']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['parent_artifact_id']::name[]
+                    )
+                ) AS artifact_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['binding_key']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['service_identity']::name[]
+                    )
+                    -- instance_nonce carries the cross-cluster authorization binding,
+                    -- so its uniqueness is verified structurally: a real UNIQUE
+                    -- constraint backed by a valid, ready, non-partial unique index.
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        JOIN pg_index index_meta ON index_meta.indexrelid = constraint_meta.conindid
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND index_meta.indisunique
+                          AND index_meta.indisvalid
+                          AND index_meta.indisready
+                          AND index_meta.indpred IS NULL
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['instance_nonce']::name[]
+                    )
+                ) AS target_identity_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['run_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['execution_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['run_id', 'artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id']::name[]
+                    )
+                ) AS run_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['lineage_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.matches'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['match_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['created_import_run_id', 'artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id', 'candidate_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['match_id', 'artifact_id']::name[]
+                    )
+                ) AS lineage_constraints
+        `);
+        const schemaBoundary = inventorySchema.rows[0];
+        if (
+            !schemaBoundary.required_columns_present ||
+            !schemaBoundary.target_identity_constraints ||
+            !schemaBoundary.artifact_constraints ||
+            !schemaBoundary.run_constraints ||
+            !schemaBoundary.lineage_constraints
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'inventory schema definition is incomplete',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
+        }
+        const inventoryChecks = await client.query(`
+            SELECT relation.relname AS table_name,
+                   pg_get_expr(constraint_meta.conbin, constraint_meta.conrelid) AS expression
+            FROM pg_constraint constraint_meta
+            JOIN pg_class relation ON relation.oid = constraint_meta.conrelid
+            JOIN pg_namespace relation_schema ON relation_schema.oid = relation.relnamespace
+            WHERE relation_schema.nspname = 'public'
+              AND constraint_meta.contype = 'c'
+              AND relation.relname = ANY(ARRAY[
+                  'm3_canonical_target_identity',
+                  'm3_canonical_source_artifacts',
+                  'm3_canonical_import_runs',
+                  'm3_canonical_match_lineages'
+              ]::text[])
+        `);
+        const checkDrift = findInventoryCheckDrift(inventoryChecks.rows);
+        if (checkDrift.length > 0) {
+            throw new CanonicalInventoryWriterError(
+                'inventory check constraints do not match the required definitions',
+                'SCHEMA_BASELINE_MISMATCH',
+                { check_drift: checkDrift }
+            );
+        }
+        const permissions = await client.query(
+            `
+            WITH RECURSIVE read_tables(table_name) AS (
+                VALUES
+                    ('public.matches'::text),
+                    ('public.m3_canonical_target_identity'::text),
+                    ('public.m3_canonical_source_artifacts'::text),
+                    ('public.m3_canonical_import_runs'::text),
+                    ('public.m3_canonical_match_lineages'::text),
+                    ('public.m3_canonical_schema_migrations'::text)
+            ),
+            insert_tables(table_name) AS (
+                VALUES
+                    ('public.matches'::text),
+                    ('public.m3_canonical_source_artifacts'::text),
+                    ('public.m3_canonical_import_runs'::text),
+                    ('public.m3_canonical_match_lineages'::text)
+            ),
+            role_memberships(role_id) AS (
+                SELECT roleid
+                FROM pg_auth_members
+                WHERE member = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+                UNION
+                SELECT membership.roleid
+                FROM pg_auth_members membership
+                JOIN role_memberships inherited ON membership.member = inherited.role_id
+            ),
+            required_functions(function_oid) AS (
+                VALUES
+                    ('pg_catalog.pg_try_advisory_xact_lock(integer,integer)'::regprocedure),
+                    ('public.m3_canonical_inventory_acquire_locks_v1()'::regprocedure)
+            )
+            SELECT
+                EXISTS (
+                    SELECT 1
+                    FROM public.m3_canonical_schema_migrations
+                    WHERE version = $1 AND sha256_checksum = $2
+                ) AS migration_baseline,
+                has_database_privilege(current_user, current_database(), 'CONNECT') AS database_connect,
+                NOT has_database_privilege(current_user, current_database(), 'TEMPORARY') AS database_temp_revoked,
+                has_schema_privilege(current_user, 'public', 'USAGE') AS schema_usage,
+                NOT has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create_revoked,
+                NOT EXISTS (SELECT 1 FROM role_memberships) AS no_role_memberships,
+                NOT EXISTS (
+                    SELECT 1
+                    FROM pg_roles
+                    WHERE rolname = current_user
+                      AND (rolsuper OR rolcreaterole OR rolcreatedb OR rolreplication OR rolbypassrls)
+                ) AS role_attributes_restricted,
+                (SELECT bool_and(has_table_privilege(current_user, table_name, 'SELECT')) FROM read_tables) AS table_select,
+                (SELECT bool_and(has_table_privilege(current_user, table_name, 'INSERT')) FROM insert_tables) AS table_insert,
+                (
+                    SELECT bool_and(
+                        NOT has_table_privilege(
+                            current_user,
+                            table_name,
+                            'UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'
+                        )
+                    )
+                    FROM read_tables
+                ) AS table_mutation_revoked,
+                (
+                    SELECT bool_and(class.relowner <> (SELECT oid FROM pg_roles WHERE rolname = current_user))
+                    FROM read_tables
+                    JOIN pg_class class ON class.oid = to_regclass(read_tables.table_name)
+                ) AS table_ownership_restricted,
+                (
+                    SELECT bool_and(has_function_privilege(current_user, function_oid, 'EXECUTE'))
+                    FROM required_functions
+                ) AS required_functions_executable,
+                (
+                    SELECT bool_and(function.proowner <> (SELECT oid FROM pg_roles WHERE rolname = current_user))
+                    FROM required_functions
+                    JOIN pg_proc function ON function.oid = required_functions.function_oid
+                ) AS function_ownership_restricted,
+                (
+                    SELECT bool_and(
+                        NOT EXISTS (
+                            SELECT 1
+                            FROM aclexplode(COALESCE(function.proacl, acldefault('f', function.proowner))) AS acl
+                            WHERE acl.grantee = 0 AND acl.privilege_type = 'EXECUTE'
+                        )
+                    )
+                    FROM required_functions
+                    JOIN pg_proc function ON function.oid = required_functions.function_oid
+                ) AS required_functions_public_revoked
+            `,
+            [REQUIRED_MIGRATION_VERSION, REQUIRED_MIGRATION_CHECKSUM]
+        );
+        const boundary = permissions.rows[0];
+        if (
+            !boundary.migration_baseline ||
+            !boundary.database_connect ||
+            !boundary.database_temp_revoked ||
+            !boundary.schema_usage ||
+            !boundary.schema_create_revoked ||
+            !boundary.no_role_memberships ||
+            !boundary.role_attributes_restricted ||
+            !boundary.table_select ||
+            !boundary.table_insert ||
+            !boundary.table_mutation_revoked ||
+            !boundary.table_ownership_restricted ||
+            !boundary.required_functions_executable ||
+            !boundary.function_ownership_restricted ||
+            !boundary.required_functions_public_revoked
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'target writer role violates the canonical least-privilege boundary',
+                'BLOCKED_PERMISSION_BOUNDARY'
+            );
+        }
+        return {
+            ...identity,
+            service_identity: targetBinding.rows[0].service_identity,
+            database_instance_oid: targetBinding.rows[0].database_instance_oid,
+            database_instance_nonce: targetBinding.rows[0].database_instance_nonce,
+        };
+    }
+
+    async findArtifact(client, sha256) {
+        const result = await client.query(
+            'SELECT * FROM public.m3_canonical_source_artifacts WHERE artifact_sha256 = $1',
+            [sha256]
+        );
+        return result.rows[0] || null;
+    }
+
+    async assertExistingArtifactEquivalent(client, existing, expected) {
+        for (const field of [
+            'artifact_kind',
+            'business_hash',
+            'identity_projection_hash',
+            'byte_size',
+            'candidate_count',
+            'competition',
+            'status_mapping_version',
+        ]) {
+            if (String(existing[field]) !== String(expected[field])) {
+                throw new CanonicalInventoryWriterError(
+                    'existing artifact metadata conflicts',
+                    'ARTIFACT_METADATA_CONFLICT'
+                );
+            }
+        }
+        if (
+            stableStringify(existing.season_scope) !== stableStringify(expected.season_scope) ||
+            stableStringify(existing.per_season_counts) !== stableStringify(expected.per_season_counts)
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'existing artifact population metadata conflicts',
+                'ARTIFACT_METADATA_CONFLICT'
+            );
+        }
+        return existing;
+    }
+
+    async insertArtifact(client, shape, parentArtifactId = null) {
+        const artifactId = createUuid();
+        const result = await client.query(
+            `
+            INSERT INTO public.m3_canonical_source_artifacts
+                (artifact_id, artifact_sha256, artifact_kind, parent_artifact_id, business_hash, identity_projection_hash, byte_size, candidate_count, competition, season_scope, per_season_counts, status_mapping_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12)
+            RETURNING *
+        `,
+            [
+                artifactId,
+                shape.artifact_sha256,
+                shape.artifact_kind,
+                parentArtifactId,
+                shape.business_hash,
+                shape.identity_projection_hash,
+                shape.byte_size,
+                shape.candidate_count,
+                shape.competition,
+                JSON.stringify(shape.season_scope),
+                JSON.stringify(shape.per_season_counts),
+                shape.status_mapping_version,
+            ]
+        );
+        return result.rows[0];
+    }
+
+    async ensureArtifacts(client, input) {
+        const shape = artifactShape(input.artifact, input);
+        let parent = null;
+        let parentInserted = false;
+        if (input.artifact.kind === 'canary') {
+            const declared = input.artifact.parent_master;
+            const parentShape = {
+                artifact_sha256: declared.sha256,
+                artifact_kind: 'master',
+                business_hash: declared.business_hash,
+                identity_projection_hash: declared.identity_projection_hash,
+                byte_size: declared.byte_size,
+                candidate_count: declared.candidate_count,
+                competition: input.artifact.competition,
+                season_scope: input.artifact.seasons,
+                per_season_counts: declared.per_season_counts,
+                status_mapping_version: declared.status_mapping_version,
+            };
+            parent = await this.findArtifact(client, parentShape.artifact_sha256);
+            if (parent) await this.assertExistingArtifactEquivalent(client, parent, parentShape);
+            else {
+                parent = await this.insertArtifact(client, parentShape);
+                parentInserted = true;
+            }
+        }
+        let artifact = await this.findArtifact(client, shape.artifact_sha256);
+        let artifactInserted = false;
+        if (artifact) await this.assertExistingArtifactEquivalent(client, artifact, shape);
+        else {
+            artifact = await this.insertArtifact(client, shape, parent?.artifact_id || null);
+            artifactInserted = true;
+        }
+        if (input.artifact.kind === 'canary' && artifact.parent_artifact_id !== parent.artifact_id) {
+            throw new CanonicalInventoryWriterError('canary parent artifact conflict', 'ARTIFACT_PARENT_CONFLICT');
+        }
+        return {
+            artifact,
+            parent,
+            artifacts_inserted: Number(parentInserted) + Number(artifactInserted),
+        };
+    }
+
+    async loadExistingMatches(client, candidate) {
+        const result = await client.query(
+            `
+            SELECT match_id, external_id, league_name, season, home_team, away_team, match_date, status, canonical_provider
+            FROM public.matches
+            WHERE match_id = $1
+               OR (canonical_provider = $2 AND external_id = $3)
+               OR (canonical_provider = $2 AND league_name = $4 AND season = $5 AND home_team = $6 AND away_team = $7)
+            ORDER BY match_id ASC
+        `,
+            [
+                candidate.id,
+                CANONICAL_PROVIDER,
+                candidate.source_match_id,
+                candidate.competition,
+                candidate.season,
+                candidate.home_team,
+                candidate.away_team,
+            ]
+        );
+        return result.rows;
+    }
+
+    async classifyCandidate(client, candidate, artifact) {
+        const targetFingerprint = immutableFingerprint(candidate);
+        const rows = await this.loadExistingMatches(client, candidate);
+        const providerMatch = rows.find(
+            row =>
+                row.canonical_provider === CANONICAL_PROVIDER && String(row.external_id) === candidate.source_match_id
+        );
+        const fixtureMatch = rows.find(
+            row =>
+                row.canonical_provider === CANONICAL_PROVIDER &&
+                row.league_name === candidate.competition &&
+                row.season === candidate.season &&
+                row.home_team === candidate.home_team &&
+                row.away_team === candidate.away_team
+        );
+        const idMatch = rows.find(row => row.match_id === candidate.id);
+        const existing = providerMatch || fixtureMatch || idMatch;
+        if (!existing) return { candidate, terminal: 'inserted', fingerprint: targetFingerprint, match: null };
+        if (providerMatch) {
+            if (!matchesCandidateExactly(providerMatch, candidate)) {
+                return {
+                    candidate,
+                    terminal: classifyProviderDifference(candidate, providerMatch),
+                    fingerprint: targetFingerprint,
+                    match: providerMatch,
+                    reason: 'provider_identity_divergence',
+                };
+            }
+            const currentLineage = await client.query(
+                `
+                SELECT 1 FROM public.m3_canonical_match_lineages
+                WHERE artifact_id = $1 AND candidate_id = $2 AND match_id = $3 AND immutable_fingerprint = $4
+            `,
+                [artifact.artifact_id, candidate.id, providerMatch.match_id, targetFingerprint]
+            );
+            if (currentLineage.rowCount === 1) {
+                return { candidate, terminal: 'exact_duplicate', fingerprint: targetFingerprint, match: providerMatch };
+            }
+            const parentMasterArtifactId =
+                artifact.artifact_kind === 'master' ? artifact.artifact_id : artifact.parent_artifact_id;
+            const parentLineage = await client.query(
+                `
+                SELECT 1
+                FROM public.m3_canonical_match_lineages lineage
+                JOIN public.m3_canonical_source_artifacts prior ON prior.artifact_id = lineage.artifact_id
+                WHERE lineage.match_id = $1 AND lineage.candidate_id = $2 AND lineage.immutable_fingerprint = $3
+                  AND (prior.artifact_id = $4 OR prior.parent_artifact_id = $4)
+                LIMIT 1
+            `,
+                [providerMatch.match_id, candidate.id, targetFingerprint, parentMasterArtifactId]
+            );
+            if (parentLineage.rowCount === 1) {
+                return {
+                    candidate,
+                    terminal: 'already_present_equivalent',
+                    fingerprint: targetFingerprint,
+                    match: providerMatch,
+                };
+            }
+            return {
+                candidate,
+                terminal: 'conflict_external_id',
+                fingerprint: targetFingerprint,
+                match: providerMatch,
+                reason: 'equivalent row lacks permitted lineage',
+            };
+        }
+        if (fixtureMatch) {
+            const terminal =
+                new Date(fixtureMatch.match_date).getTime() !== new Date(candidate.kickoff_at).getTime()
+                    ? 'conflict_kickoff'
+                    : 'conflict_business_identity';
+            return {
+                candidate,
+                terminal,
+                fingerprint: targetFingerprint,
+                match: fixtureMatch,
+                reason: 'fixture_identity_occupied',
+            };
+        }
+        return {
+            candidate,
+            terminal: 'conflict_business_identity',
+            fingerprint: targetFingerprint,
+            match: idMatch,
+            reason: 'match_id_occupied',
+        };
+    }
+
+    async insertRun(client, artifact, receipt) {
+        const runId = createUuid();
+        await client.query(
+            `
+            INSERT INTO public.m3_canonical_import_runs
+                (run_id, artifact_id, execution_id, authorization_receipt_sha256, code_revision)
+            VALUES ($1, $2, $3, $4, $5)
+        `,
+            [runId, artifact.artifact_id, receipt.execution_id, receipt.receipt_sha256, receipt.code_revision]
+        );
+        return runId;
+    }
+
+    async persistClassified(client, classified, artifact, runId, provenanceKind) {
+        for (const row of classified) {
+            let matchId = row.match?.match_id;
+            if (row.terminal === 'inserted') {
+                matchId = row.candidate.id;
+                await client.query(
+                    `
+                    INSERT INTO public.matches
+                        (match_id, external_id, league_name, season, home_team, away_team, match_date, status, is_finished, data_source, pipeline_status, canonical_provider, source_type, evidence_level, is_production_scope, is_reconciliation_eligible, is_training_eligible)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8, $9, 'FotMob', 'pending', $10, $11, $12, FALSE, FALSE, FALSE)
+                `,
+                    [
+                        matchId,
+                        row.candidate.source_match_id,
+                        row.candidate.competition,
+                        row.candidate.season,
+                        row.candidate.home_team,
+                        row.candidate.away_team,
+                        row.candidate.kickoff_at,
+                        row.candidate.application_status,
+                        row.candidate.application_status === 'finished',
+                        CANONICAL_PROVIDER,
+                        provenanceKind === 'synthetic-test-only' ? 'synthetic' : 'fotmob_pageprops',
+                        provenanceKind === 'synthetic-test-only' ? 'synthetic_invalid' : 'missing',
+                    ]
+                );
+            }
+            if (row.terminal === 'inserted' || row.terminal === 'already_present_equivalent') {
+                const lineageId = createUuid();
+                await client.query(
+                    `
+                    INSERT INTO public.m3_canonical_match_lineages
+                        (lineage_id, match_id, artifact_id, created_import_run_id, candidate_id, provider_match_id, provider_status, status_mapping_version, application_status, immutable_fingerprint)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                `,
+                    [
+                        lineageId,
+                        matchId,
+                        artifact.artifact_id,
+                        runId,
+                        row.candidate.id,
+                        row.candidate.source_match_id,
+                        row.candidate.provider_status,
+                        row.candidate.status_mapping_version,
+                        row.candidate.application_status,
+                        row.fingerprint,
+                    ]
+                );
+            }
+        }
+    }
+
+    async assertMasterTargetPopulation(client, input) {
+        if (input.artifact.kind !== 'master') return;
+        const actual = await client.query(
+            `
+            SELECT match_id, external_id, league_name, season, home_team, away_team, match_date, status
+            FROM public.matches
+            WHERE canonical_provider = $1
+              AND league_name = $2
+              AND season = ANY($3::text[])
+            ORDER BY match_id ASC
+        `,
+            [CANONICAL_PROVIDER, input.artifact.competition, input.artifact.seasons]
+        );
+        const expectedById = new Map(input.candidates.map(candidate => [candidate.id, candidate]));
+        const actualBySeason = Object.fromEntries(input.artifact.seasons.map(season => [season, 0]));
+        const exactCandidateIds = new Set();
+        const unexpected = [];
+        for (const row of actual.rows) {
+            actualBySeason[row.season] = (actualBySeason[row.season] || 0) + 1;
+            const candidate = expectedById.get(row.match_id);
+            if (candidate && matchesCandidateExactly(row, candidate)) exactCandidateIds.add(candidate.id);
+            else if (unexpected.length < MAX_EXCEPTION_SAMPLES) {
+                unexpected.push({
+                    match_id: row.match_id,
+                    external_id: row.external_id,
+                    season: row.season,
+                });
+            }
+        }
+        const missingCandidateIds = input.candidates
+            .filter(candidate => !exactCandidateIds.has(candidate.id))
+            .slice(0, MAX_EXCEPTION_SAMPLES)
+            .map(candidate => candidate.id);
+        const expectedSeasonCounts = input.artifact.per_season_counts;
+        const seasonCountsMatch = input.artifact.seasons.every(
+            season => Number(actualBySeason[season] || 0) === Number(expectedSeasonCounts[season] || 0)
+        );
+        if (
+            actual.rowCount !== input.artifact.candidate_count ||
+            exactCandidateIds.size !== input.artifact.candidate_count ||
+            !seasonCountsMatch
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'master canonical target population does not exactly match the authorized artifact',
+                'MASTER_TARGET_POPULATION_MISMATCH',
+                {
+                    expected_count: input.artifact.candidate_count,
+                    actual_count: actual.rowCount,
+                    expected_per_season_counts: expectedSeasonCounts,
+                    actual_per_season_counts: actualBySeason,
+                    unexpected_matches: unexpected,
+                    missing_candidate_ids: missingCandidateIds,
+                }
+            );
+        }
+    }
+
+    // eslint-disable-next-line complexity -- this fixed sequence mirrors the transactional safety contract.
+    async execute(input) {
+        if (!input?.artifact || !input?.candidates || !input?.sha256) {
+            throw new CanonicalInventoryWriterError('validated artifact input is required');
+        }
+        const inputBinding = snapshotInputBinding(input);
+        const client = await this.pool.connect();
+        try {
+            const targetIdentity = await this.inspectTarget(client);
+            const binding = {
+                service_identity: targetIdentity.service_identity,
+                database_identity: targetIdentity.database_identity,
+                database_instance_oid: targetIdentity.database_instance_oid,
+                database_instance_nonce: targetIdentity.database_instance_nonce,
+                schema_baseline: SCHEMA_BASELINE,
+                target_classification: this.target.classification,
+                writer_role: targetIdentity.current_user,
+                code_revision: this.codeRevision,
+                artifact: {
+                    sha256: inputBinding.sha256,
+                    business_hash: inputBinding.artifact.business_hash,
+                    identity_projection_hash: inputBinding.artifact.identity_projection_hash,
+                    kind: inputBinding.artifact.kind,
+                    candidate_count: inputBinding.artifact.candidate_count,
+                    competition: inputBinding.artifact.competition,
+                    seasons: inputBinding.artifact.seasons,
+                },
+            };
+            const receipt = validateRuntimeAuthorization(
+                inputBinding.runtime_authorization,
+                binding,
+                this.authorizationAuthority
+            );
+            const preflightedInput = assertArtifactStillImmutable(inputBinding);
+            const provenance = validateProvenanceReceipt(inputBinding.provenance_receipt, {
+                sha256: inputBinding.sha256,
+                target_classification: 'disposable',
+                artifact_synthetic_test_only: preflightedInput.artifact.synthetic_test_only === true,
+            });
+            await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+            try {
+                await client.query("SET LOCAL lock_timeout = '5s'; SET LOCAL statement_timeout = '30s'");
+                const lock = await client.query('SELECT pg_catalog.pg_try_advisory_xact_lock($1, $2) AS locked', [
+                    ADVISORY_LOCK_NAMESPACE,
+                    ADVISORY_LOCK_KEY,
+                ]);
+                if (!lock.rows[0].locked) {
+                    throw new CanonicalInventoryWriterError('advisory transaction lock busy', 'LOCK_BUSY');
+                }
+                if (this.afterAdvisoryLock) await this.afterAdvisoryLock();
+                await client.query('SELECT public.m3_canonical_inventory_acquire_locks_v1()');
+                // Only the second physical-file read feeds persistence. In-memory
+                // caller objects may change after authorization, but cannot change
+                // the signed and hash-bound rows that reach this transaction.
+                const verifiedInput = assertArtifactStillImmutable(inputBinding);
+                const artifactState = await this.ensureArtifacts(client, verifiedInput);
+                const { artifact } = artifactState;
+                const classified = [];
+                for (const candidate of verifiedInput.candidates) {
+                    classified.push(await this.classifyCandidate(client, candidate, artifact));
+                }
+                const terminalCounts = classified.reduce(
+                    (counts, row) => ({ ...counts, [row.terminal]: (counts[row.terminal] || 0) + 1 }),
+                    {}
+                );
+                const failures = classified.filter(
+                    row => !['inserted', 'exact_duplicate', 'already_present_equivalent'].includes(row.terminal)
+                );
+                if (failures.length > 0) {
+                    throw new CanonicalInventoryWriterError(
+                        `canonical conflict preflight failed: ${failures[0].terminal}`,
+                        'CANONICAL_CONFLICT',
+                        { samples: boundedEvidence(failures), terminal_counts: terminalCounts }
+                    );
+                }
+                const changing = classified.filter(row => row.terminal !== 'exact_duplicate');
+                if (changing.length > 0) {
+                    const runId = await this.insertRun(client, artifact, receipt);
+                    await this.persistClassified(client, classified, artifact, runId, provenance.kind);
+                }
+                await this.assertMasterTargetPopulation(client, verifiedInput);
+                const reconciled =
+                    (terminalCounts.inserted || 0) +
+                    (terminalCounts.exact_duplicate || 0) +
+                    (terminalCounts.already_present_equivalent || 0);
+                if (reconciled !== verifiedInput.candidates.length) {
+                    throw new CanonicalInventoryWriterError(
+                        'terminal arithmetic did not close',
+                        'TERMINAL_ARITHMETIC_FAILURE'
+                    );
+                }
+                await client.query('COMMIT');
+                return {
+                    status: 'committed',
+                    target: {
+                        database_identity: targetIdentity.database_identity,
+                        current_user: targetIdentity.current_user,
+                        session_user: targetIdentity.session_user,
+                    },
+                    artifact_sha256: verifiedInput.sha256,
+                    candidate_count: verifiedInput.candidates.length,
+                    terminal_counts: terminalCounts,
+                    database_delta: {
+                        matches: terminalCounts.inserted || 0,
+                        artifacts: changing.length > 0 ? artifactState.artifacts_inserted : 0,
+                        import_runs: changing.length > 0 ? 1 : 0,
+                        lineages: changing.length,
+                    },
+                };
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            }
+        } finally {
+            client.release();
+        }
+    }
+}
+
+module.exports = {
+    ADVISORY_LOCK_KEY,
+    ADVISORY_LOCK_NAMESPACE,
+    CanonicalInventoryWriter,
+    CanonicalInventoryWriterError,
+    EXPECTED_INVENTORY_CHECK_EXPRESSIONS,
+    SCHEMA_BASELINE,
+    classifyProviderDifference,
+    assertArtifactStillImmutable,
+    findInventoryCheckDrift,
+    matchesCandidateExactly,
+};

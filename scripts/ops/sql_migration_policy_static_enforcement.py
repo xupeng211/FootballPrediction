@@ -20,6 +20,10 @@ SQL_DIRS = (
 )
 REVIEWED_SANDBOX_CLASSIFICATION = "reviewed_sandbox_sql"
 REVIEWED_SANDBOX_PREFIX = "database/sandbox/m3_odds_staging/"
+REVIEWED_DISPOSABLE_MIGRATION_CLASSIFICATION = "reviewed_disposable_additive_migration"
+REVIEWED_DISPOSABLE_MIGRATION_PATHS = {
+    "database/migrations/V26.10__create_m3_canonical_inventory_contract.sql",
+}
 REVIEWED_SANDBOX_REQUIRED = (
     "environment_scope",
     "execution_authorized",
@@ -272,6 +276,9 @@ def _validate_entry(e):
     missing = [f for f in req if f not in e or not e[f]]
     if e.get("classification") == REVIEWED_SANDBOX_CLASSIFICATION:
         missing.extend(f for f in REVIEWED_SANDBOX_REQUIRED if f not in e or e[f] in (None, ""))
+    if e.get("classification") == REVIEWED_DISPOSABLE_MIGRATION_CLASSIFICATION:
+        required = ("environment_scope", "execution_authorized", "target_identity", "review_status")
+        missing.extend(f for f in required if f not in e or e[f] in (None, ""))
     return missing
 
 
@@ -314,6 +321,49 @@ def _reviewed_sandbox_policy_passes(result, entry):
     )
 
 
+def _reviewed_disposable_migration_policy_passes(result, entry):
+    """Permit only the exact reviewed additive migration in a disposable proof.
+
+    This is deliberately narrower than the historical baseline: it permits no
+    DML and no destructive operation except the exact PUBLIC-function REVOKE
+    required to remove an ambient execution path.
+    """
+    operations = _detected_operation_names(result)
+    destructive = {
+        signal["signal"]
+        for signal in result.get("destructive_signals", [])
+        if signal["evidence_type"] == "executable_context"
+    }
+    revoke_lines = [
+        evidence.get("snippet", "")
+        for evidence in result.get("evidence_lines", [])
+        if evidence.get("signal") == "REVOKE"
+    ]
+    allowed = set(entry.get("allowed_operations", []))
+    return (
+        result.get("file_type") == "sql_migration"
+        and result.get("path") in REVIEWED_DISPOSABLE_MIGRATION_PATHS
+        and entry.get("path") == result.get("path")
+        and entry.get("classification") == REVIEWED_DISPOSABLE_MIGRATION_CLASSIFICATION
+        and entry.get("environment_scope") == "task_specific_disposable_postgresql15_only"
+        and entry.get("execution_authorized") is False
+        and entry.get("target_identity") == "fp_m3_canonical_ephemeral_postgres15"
+        and entry.get("review_status") == "explicitly_reviewed"
+        and not (operations & (UNCONDITIONALLY_FORBIDDEN_OPERATIONS - {"REVOKE"}))
+        and operations <= allowed
+        and destructive <= {"REVOKE"}
+        and revoke_lines
+        and all(
+            re.fullmatch(
+                r"REVOKE ALL ON FUNCTION public\.m3_canonical_inventory_acquire_locks_v1\(\) FROM PUBLIC;",
+                line,
+                re.I,
+            )
+            for line in revoke_lines
+        )
+    )
+
+
 def _apply_al(results, al):
     for r in results:
         p = r["path"]
@@ -328,6 +378,11 @@ def _apply_al(results, al):
             elif _reviewed_sandbox_policy_passes(r, e) and r["allowlist_entry_complete"]:
                 r["would_fail_changed_files_gate"] = False
                 r["recommended_next_action"] = "reviewed_sandbox_policy"
+            elif (
+                _reviewed_disposable_migration_policy_passes(r, e) and r["allowlist_entry_complete"]
+            ):
+                r["would_fail_changed_files_gate"] = False
+                r["recommended_next_action"] = "reviewed_disposable_migration_policy"
         elif p.startswith(REVIEWED_SANDBOX_PREFIX):
             # A sandbox directory name is not an authorization boundary. Every
             # newly changed SQL file under this narrow path needs its own exact,

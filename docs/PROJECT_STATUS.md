@@ -1014,7 +1014,62 @@ This is design readiness only, not database-write authorization.
   not a canonical target. No canonical/linkage/staging write, migration,
   network/raw-payload action, training, backtest or prediction occurred.
 
-The next separately authorized task may implement/test the writer,
-status-complete artifact contract and isolated migration plan on disposable
-infrastructure. It must stop before canonical, linkage or business-database
-write unless separately authorized.
+## M3 canonical inventory writer implementation — 2026-07-29
+
+**Implementation decision: READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW.**
+`REAL_WRITE_BLOCKED_PROVENANCE_POLICY` remains in force.
+
+- A dedicated status-complete `candidate-match-identity/v2` contract retains
+  the provider status separately, requires the exact versioned
+  `fotmob-status-to-matches-status/v1` mapping and persists both it and the
+  derived application status in immutable lineage; unknown semantic fields and
+  unmapped provider statuses fail closed. Its v1 identity-projection binding,
+  fresh hash-bound Ed25519 runtime authorization
+  from a trusted authority and provenance receipt validator are implemented.
+  The persisted receipt hash covers the complete signed receipt. Direct CLI
+  execution is disabled; only the fixed synthetic disposable proof can write,
+  through `make data-m3-canonical-inventory-disposable-proof`. The wrapper and
+  launcher independently require separate exact schema and proof
+  authorizations, and V26.10 runs only through the disposable-only
+  `data-schema-m3-canonical-inventory-disposable-*` gate; the launcher also
+  requires a clean checked-out code revision before Compose can start. Real
+  inputs fail closed when provenance is absent.
+- Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
+  protection, immutable artifact/import-run/lineage tables, a target-local
+  service-identity plus PostgreSQL database-OID and owner-provisioned instance
+  nonce binding, and the restricted canonical lock function. The signed runtime
+  receipt must match the binding read back from the target database; restore
+  rebinding rotates the nonce so a similarly named/schema-compatible clone
+  fails closed. It was executed only on a task-specific PostgreSQL 15 tmpfs
+  database, never on development, persistent M3 sandbox, staging or production.
+- The independent insert-only writer and default-no-write operator proved a
+  synthetic 1,140-candidate master (380 / 380 / 380), exact replay zero delta,
+  a staged 1-row then overlapping 10-row canary under one parent master before
+  the full-master lineage transition, conflict rollback, serializable lock
+  contention, least-privilege denial and backup/restore.
+  Before any transaction, the writer verifies the V26.10 checksum baseline,
+  exact required lock-function ACLs, no writer role inheritance, no schema
+  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. It also verifies
+  every inventory CHECK constraint as an exact normalized expression set
+  (artifact kind/parent, competition, status-mapping versions, binding key,
+  hash formats, byte size and candidate count) and proves the instance-nonce
+  uniqueness structurally (a real UNIQUE constraint backed by a valid, ready,
+  non-partial unique index); weakened, widened, narrowed, dropped or duplicated
+  definitions fail closed. The schema carries no UUID-generating defaults, so
+  the writer role has no hidden function EXECUTE dependency. A full master also
+  verifies that the in-scope canonical target is exactly its authorized
+  1,140-candidate population before commit; an extra pre-existing in-scope row
+  rolls back. The labelled proof containers, network and volume were cleaned up.
+- The final proof ran at head `26c8ecf76878ec4442411c0c54c236d1db09104b` with
+  the hardened baseline: migration lifecycle, 1,140 master, exact replay,
+  same-parent canary rollout, conflict and committed schema-drift rollbacks,
+  concurrency, exclusive-writer boundary and fresh-instance restore all passed;
+  disposable containers, networks and volumes were verified removed.
+- No real v2 artifact, FotMob request, canonical persistent write, linkage,
+  odds staging/import, raw payload activity, training, backtest or prediction
+  occurred. The 888 exact links, four kickoff quarantines and 248
+  canonical-only candidates remain separate future stages.
+
+The next separately authorized task is a provenance review for a real
+status-complete FotMob artifact. It does not authorize provider acquisition or
+any persistent canonical, linkage or odds write.

@@ -6,8 +6,24 @@
   "_sc002_status": "partial mitigation only",
   "_sql_execution_authorized": false,
   "_destructive_migrations_found": 0,
-  "_destructive_policy": "Any new destructive SQL/migration (DROP DATABASE, DROP TABLE, TRUNCATE, DELETE without WHERE, GRANT ALL, REVOKE) MUST fail changed-files gate even if allowlisted. Manual review required.",
+  "_destructive_policy": "Any new destructive SQL/migration (DROP DATABASE, DROP TABLE, TRUNCATE, DELETE without WHERE, GRANT ALL, REVOKE) MUST fail changed-files gate even if allowlisted. The sole exception is an exact, explicitly reviewed PUBLIC EXECUTE revocation on the V26.10 disposable-only canonical lock function; it does not authorize any execution outside that proof.",
   "entries": [
+    {
+      "path": "database/migrations/V26.10__create_m3_canonical_inventory_contract.sql",
+      "file_type": "sql_migration",
+      "classification": "reviewed_disposable_additive_migration",
+      "reason": "M3 canonical inventory contract: additive schema, identity indexes, immutable artifact/run/lineage tables, and the exact lock-function PUBLIC revoke required to remove ambient execution. It contains no business DML or destructive schema operation.",
+      "evidence": "ALTER TABLE ADD COLUMN/constraints; CREATE TABLE/INDEX; one exact REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC; no INSERT/UPDATE/DELETE/TRUNCATE/DROP/GRANT.",
+      "source_doc": "docs/M3_D4F_READINESS_REVIEW.md",
+      "owner_task": "m3_canonical_inventory_writer_implementation",
+      "allowed_operations": ["ALTER_TABLE", "CREATE_TABLE", "CREATE_INDEX", "REVOKE"],
+      "disallowed_operations": ["DROP DATABASE", "DROP TABLE", "TRUNCATE", "INSERT", "UPDATE", "DELETE", "COPY", "GRANT", "GRANT ALL", "CREATE ROLE", "ALTER ROLE", "REVOKE ON TABLE"],
+      "review_note": "The allowlist admits CI review of this exact file only. It does not authorize migration execution outside the task-specific disposable PostgreSQL 15 proof.",
+      "environment_scope": "task_specific_disposable_postgresql15_only",
+      "execution_authorized": false,
+      "target_identity": "fp_m3_canonical_ephemeral_postgres15",
+      "review_status": "explicitly_reviewed"
+    },
     {
       "path": "database/migrations/V26.9__add_odds_historical_observation_fingerprint.sql",
       "file_type": "sql_migration",

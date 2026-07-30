@@ -14,9 +14,11 @@ _R = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_R / "scripts" / "ops"))
 import sql_migration_policy_static_enforcement as policy_scanner  # noqa: E402
 from sql_migration_policy_static_enforcement import (  # noqa: E402
+    REVIEWED_DISPOSABLE_MIGRATION_CLASSIFICATION,
     REVIEWED_SANDBOX_CLASSIFICATION,
     UNCONDITIONALLY_FORBIDDEN_OPERATIONS,
     _load_al,
+    _reviewed_disposable_migration_policy_passes,
     _reviewed_sandbox_policy_passes,
     _scan,
     _validate_entry,
@@ -186,6 +188,45 @@ class TestReviewedSandboxPolicy:
 
         assert result["would_hard_fail"]
         assert result["violations"][0]["allowlist_status"] == "not_in_allowlist"
+
+
+class TestReviewedDisposableMigrationPolicy:
+    PATH = "database/migrations/V26.10__create_m3_canonical_inventory_contract.sql"
+
+    def test_exact_reviewed_migration_passes_only_for_disposable_proof(self):
+        result = changed_files_check([self.PATH])
+        assert not result["would_hard_fail"]
+        assert (
+            result["passed"][0]["recommended_next_action"] == "reviewed_disposable_migration_policy"
+        )
+
+    def test_entry_is_nonhistorical_and_exactly_scoped(self):
+        entry = _load_al()[self.PATH]
+        assert entry["classification"] == REVIEWED_DISPOSABLE_MIGRATION_CLASSIFICATION
+        assert entry["environment_scope"] == "task_specific_disposable_postgresql15_only"
+        assert entry["execution_authorized"] is False
+        assert entry["target_identity"] == "fp_m3_canonical_ephemeral_postgres15"
+
+    def test_table_revoke_or_dml_fails_closed(self):
+        entry = _load_al()[self.PATH]
+        base = {
+            "path": self.PATH,
+            "file_type": "sql_migration",
+            "ddl_signals": [],
+            "dml_signals": [],
+            "privilege_signals": [],
+            "destructive_signals": [{"signal": "REVOKE", "evidence_type": "executable_context"}],
+            "migration_api_signals": [],
+            "evidence_lines": [
+                {"signal": "REVOKE", "snippet": "REVOKE ALL ON TABLE public.matches FROM PUBLIC;"}
+            ],
+        }
+        assert not _reviewed_disposable_migration_policy_passes(base, entry)
+        base["dml_signals"] = [{"signal": "INSERT", "evidence_type": "executable_context"}]
+        base["evidence_lines"].append(
+            {"signal": "INSERT", "snippet": "synthetic mutation evidence"}
+        )
+        assert not _reviewed_disposable_migration_policy_passes(base, entry)
 
 
 class TestDocs:

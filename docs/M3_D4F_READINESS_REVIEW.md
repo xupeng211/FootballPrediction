@@ -1080,8 +1080,8 @@ M3 canonical-inventory v1 contract; then call the no-argument,
 `public.m3_canonical_inventory_acquire_locks_v1()`. Its non-login table-owner
 must issue four static `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` statements,
 in this immutable fully qualified relation-name order:
-`public.m3_canonical_import_runs`, `public.m3_canonical_match_lineages`,
-`public.m3_canonical_source_artifacts`, `public.matches`. Its body has no
+`public.m3_canonical_source_artifacts`, `public.m3_canonical_import_runs`,
+`public.m3_canonical_match_lineages`, `public.matches`. Its body has no
 dynamic SQL, exposes no data-operation path and fixes `search_path` to
 `pg_catalog`; the writer has no direct privilege for these locks. The function
 must execute inside the writer's existing transaction, so these locks remain
@@ -1160,7 +1160,89 @@ required for linkage/odds import.
 
 No provider request, browser action, migration, database/schema/row write,
 canonical/linkage/staging/import, persistent M3 sandbox action, raw-payload
-storage, training, backtest or prediction occurred. A future separate task may
-implement/test the writer, v2 artifact contract and isolated migration plan; it
-may not execute a canonical or linkage write without another explicit
+storage, training, backtest or prediction occurred in the design review.
+
+## 16. Canonical inventory writer implementation and disposable proof — 2026-07-29
+
+### Decision
+
+```text
+Implementation decision = READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW
+Persistent write status = REAL_WRITE_BLOCKED_PROVENANCE_POLICY
+```
+
+The design is now implemented as a dedicated insert-only path, not through the
+legacy `FixtureRepository.persist` update-on-conflict path. It adds
+`candidate-match-identity/v2` validation for a status-complete, hash-bound
+master or canary input. It preserves provider status separately from the
+derived application status and requires the exact versioned
+`fotmob-status-to-matches-status/v1` mapping; unknown semantic candidate keys
+and unmapped statuses fail closed. It also has a v1 identity projection gate;
+ordinary-file, non-symlink and mutation checks; hash/scope-bound fresh runtime
+authorization;
+an Ed25519-verifiable, trusted-authority authorization receipt; and a
+provenance receipt contract. The receipt hash persisted with an import run
+covers the full canonical signed receipt. Synthetic disposable receipts are
+accepted only for the labelled proof; direct CLI execution is disabled and the
+fixed synthetic write proof is reachable only through the
+`data-m3-canonical-inventory-disposable-proof` wrapper and its separate,
+disposable-only `data-schema-m3-canonical-inventory-disposable-*` V26.10 gate.
+Both the wrapper and launcher require distinct exact schema and proof
+authorizations, and the launcher rejects a dirty worktree before Compose can
+start. A real canary/master fails closed
+without the independently reviewable FotMob
+endpoint/capture/process/licence evidence.
+
+`V26.10__create_m3_canonical_inventory_contract.sql` is additive and was
+executed only against a task-specific PostgreSQL 15 tmpfs database. It adds the
+provider-scoped canonical identity and fixture protections, immutable
+artifact/import-run/lineage relations, a one-row target-local service identity,
+PostgreSQL database-OID and owner-provisioned instance-nonce binding, the
+restricted static lock function and the least-privilege writer contract. An
+environment owner must provision that binding for each target; the writer reads
+it back and requires the signed receipt to bind the same instance. Restore
+rebinds and rotates the nonce, so a similarly named/schema-compatible clone
+fails closed. Before it starts a transaction, the writer checks the
+V26.10 checksum ledger, exact lock-function ACLs, table grants, schema/TEMP
+denial, absence of inherited writer roles and that database-backed target
+binding. It additionally verifies every inventory CHECK constraint as an exact
+normalized expression set (artifact kind/parent, competition, both
+status-mapping versions, binding key, all hash formats, byte size and
+candidate count) and proves instance-nonce uniqueness structurally — a real
+UNIQUE constraint backed by a valid, ready, non-partial unique index. The
+schema declares no UUID-generating defaults, so the writer role carries no
+hidden function EXECUTE dependency. It was not applied to development,
+persistent M3 sandbox, staging or production.
+
+The disposable proof used deterministic synthetic data only: three synthetic
+seasons of 380 candidates (1,140 total), never a recovered FotMob artifact.
+It proved fresh insert of 1,140 matches plus one artifact, one import run and
+1,140 lineages; exact replay with zero match/artifact/run/lineage delta; a
+1-row then overlapping 10-row staged canary under the same parent master,
+followed by the full-master lineage transition (including exact
+parent/current-artifact deltas); an exact full-master target-population check
+that rolls back an extra in-scope canonical row; full rollback for malformed,
+expired, out-of-scope and divergent candidate inputs; serializable/advisory
+lock contention; denied UPDATE/DELETE/TRUNCATE/DDL/direct table lock for the
+writer role; and pre-write custom backup restored into a fresh clone with
+baseline row count and schema/ACL checks. The compose launcher verified cleanup
+of its labelled containers, network and volume. The final proof at head
+`26c8ecf76878ec4442411c0c54c236d1db09104b` additionally proved the schema-drift
+boundary: weakened, widened, narrowed, dropped and duplicated CHECK
+definitions, and dropped, plain-index, wrong-column and partial-predicate
+instance-nonce replacements, all fail closed, including one committed drift
+that stops the write path with zero database delta.
+
+The implemented terminal arithmetic remains fail-closed:
+`inserted + exact_duplicate + already_present_equivalent = declared input`.
+The 1,140/888/4/248 population decision is unchanged: inventory creation is a
+separate future authorization from the 888 linkage candidates, the four
+kickoff quarantines and all historical odds staging. No real v2 artifact was
+created; no provenance was established; no persistent canonical row, source
+linkage, odds observation, raw payload, training, backtest or prediction was
+written.
+
+The next separately authorized task is a provenance review for a proposed real
+FotMob v2 artifact. It may not perform a provider request, persistent canary,
+master inventory write, linkage or odds import without a further explicit
 authorization.
