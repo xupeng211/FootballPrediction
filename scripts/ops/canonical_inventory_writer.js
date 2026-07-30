@@ -50,6 +50,9 @@ async function main(argv = process.argv.slice(2)) {
             'direct execution is disabled: use make data-m3-canonical-inventory-disposable-proof for the fixed synthetic disposable proof'
         );
     }
+    if (Boolean(args['parent-artifact']) !== Boolean(args['parent-artifact-sha256'])) {
+        throw new Error('--parent-artifact and --parent-artifact-sha256 must be provided together');
+    }
     const expected = { sha256: args['artifact-sha256'] };
     if (!expected.sha256) throw new Error('--artifact-sha256 is required');
     const allowSyntheticTestOnly = args['target-classification'] === 'disposable';

@@ -20,6 +20,7 @@ const COMPETITION = 'Premier League';
 const SEASONS = Object.freeze(['2022/2023', '2023/2024', '2024/2025']);
 const FIXTURES_PER_SEASON = 380;
 const MASTER_COUNT = SEASONS.length * FIXTURES_PER_SEASON;
+const APPROVED_CANARY_COUNTS = new Set([1, 10]);
 const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
     'eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f';
 // `abandoned` fixtures are excluded by the approved full-inventory preflight.
@@ -294,6 +295,9 @@ function assertMasterPopulation(artifact, candidates) {
 // eslint-disable-next-line complexity -- all parent/allowlist assertions form one atomic contract.
 function assertCanaryPopulation(artifact, candidates, options = {}) {
     if (artifact.kind !== 'canary') return;
+    if (!APPROVED_CANARY_COUNTS.has(candidates.length)) {
+        throw new CanonicalInventoryContractError('canary artifact count must be an approved bounded size (1 or 10)');
+    }
     const declared = artifact.parent_master;
     if (!declared || typeof declared !== 'object') {
         throw new CanonicalInventoryContractError('canary parent_master metadata is required');
@@ -461,6 +465,7 @@ function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
 }
 
 module.exports = {
+    APPROVED_CANARY_COUNTS,
     APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH,
     ALLOWED_STATUSES,
     CANONICAL_PROVIDER,

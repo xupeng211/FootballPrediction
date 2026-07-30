@@ -129,6 +129,8 @@ test.after(async () => {
 });
 
 test('migration replay, identity constraints and least-privilege schema are active', async () => {
+    const compose = fs.readFileSync(path.join(__dirname, 'docker-compose.disposable.yml'), 'utf8');
+    assert.match(compose, /NODE_PATH:\s*\/app\/node_modules/);
     const migration = fs.readFileSync(
         path.join(__dirname, '../../../database/migrations/V26.10__create_m3_canonical_inventory_contract.sql'),
         'utf8'
@@ -203,8 +205,6 @@ test('migration replay, identity constraints and least-privilege schema are acti
         )
     );
     await admin.query("DELETE FROM matches WHERE match_id = 'legacy-null'");
-    await admin.query('BEGIN');
-    await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
     const schemaInspector = new CanonicalInventoryWriter({
         pool,
         target: {
@@ -216,6 +216,28 @@ test('migration replay, identity constraints and least-privilege schema are acti
         authorizationAuthority: testAuthorizationAuthority(),
         codeRevision,
     });
+    await admin.query('BEGIN');
+    await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
+    await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
+    await admin.query(
+        "CREATE UNIQUE INDEX matches_m3_fotmob_external_id_uq ON public.matches (external_id) WHERE canonical_provider = 'fotmob' AND season = '2022/2023'"
+    );
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
+    await admin.query('DROP INDEX public.matches_m3_epl_fixture_identity_uq');
+    await admin.query(
+        "CREATE UNIQUE INDEX matches_m3_epl_fixture_identity_uq ON public.matches (league_name, season, home_team, away_team) WHERE league_name = 'Premier League' AND season = '2022/2023' AND canonical_provider = 'fotmob'"
+    );
     await assert.rejects(
         schemaInspector.inspectTarget(admin),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'

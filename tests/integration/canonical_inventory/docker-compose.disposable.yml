@@ -24,6 +24,7 @@ services:
         command: ['tests/integration/canonical_inventory/bootstrap_disposable_postgres.js']
         depends_on: { ephemeral-postgres: { condition: service_healthy } }
         environment: &db_env
+            NODE_PATH: /app/node_modules
             M3_CANONICAL_DB_HOST: ephemeral-postgres
             M3_CANONICAL_DB_PORT: '5432'
             M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}

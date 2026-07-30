@@ -678,8 +678,18 @@ data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check o
 		echo "ERROR: provide ARTIFACT=<absolute path visible in dev container> and ARTIFACT_SHA256=<sha256>"; \
 		exit 1; \
 	fi
+	@if [ -n "$(PARENT_ARTIFACT)" ] && [ -z "$(PARENT_ARTIFACT_SHA256)" ]; then \
+		echo "ERROR: PARENT_ARTIFACT requires PARENT_ARTIFACT_SHA256"; \
+		exit 1; \
+	fi
+	@if [ -z "$(PARENT_ARTIFACT)" ] && [ -n "$(PARENT_ARTIFACT_SHA256)" ]; then \
+		echo "ERROR: PARENT_ARTIFACT_SHA256 requires PARENT_ARTIFACT"; \
+		exit 1; \
+	fi
 	@$(COMPOSE_DEV) exec -T dev node scripts/ops/canonical_inventory_writer.js \
-		--artifact "$(ARTIFACT)" --artifact-sha256 "$(ARTIFACT_SHA256)"
+		--artifact "$(ARTIFACT)" --artifact-sha256 "$(ARTIFACT_SHA256)" \
+		$(if $(PARENT_ARTIFACT),--parent-artifact "$(PARENT_ARTIFACT)") \
+		$(if $(PARENT_ARTIFACT_SHA256),--parent-artifact-sha256 "$(PARENT_ARTIFACT_SHA256)")
 
 data-m3-canonical-inventory-disposable-proof: ## Fixed synthetic PostgreSQL 15 proof; task-specific temporary DB only.
 	@$(MAKE) --no-print-directory data-schema-m3-canonical-inventory-disposable-execute \

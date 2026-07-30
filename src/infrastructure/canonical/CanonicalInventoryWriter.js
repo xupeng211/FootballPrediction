@@ -174,8 +174,63 @@ class CanonicalInventoryWriter {
                    to_regclass('public.m3_canonical_source_artifacts') IS NOT NULL AS artifact_table,
                    to_regclass('public.m3_canonical_import_runs') IS NOT NULL AS run_table,
                    to_regclass('public.m3_canonical_match_lineages') IS NOT NULL AS lineage_table,
-                   EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'matches_m3_fotmob_external_id_uq') AS provider_index,
-                   EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'matches_m3_epl_fixture_identity_uq') AS fixture_index
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_index index_meta
+                       JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                       JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                       JOIN pg_class table_class ON table_class.oid = index_meta.indrelid
+                       JOIN pg_namespace table_schema ON table_schema.oid = table_class.relnamespace
+                       WHERE index_schema.nspname = 'public'
+                         AND table_schema.nspname = 'public'
+                         AND table_class.relname = 'matches'
+                         AND index_class.relname = 'matches_m3_fotmob_external_id_uq'
+                         AND index_meta.indisunique
+                         AND index_meta.indisvalid
+                         AND index_meta.indisready
+                         AND ARRAY(
+                             SELECT attribute.attname
+                             FROM unnest(index_meta.indkey) WITH ORDINALITY AS key_column(attnum, ordinal)
+                             JOIN pg_attribute attribute
+                               ON attribute.attrelid = index_meta.indrelid
+                              AND attribute.attnum = key_column.attnum
+                             WHERE key_column.ordinal <= index_meta.indnkeyatts
+                             ORDER BY key_column.ordinal
+                         ) = ARRAY['external_id']::name[]
+                         AND regexp_replace(
+                             regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                             '[[:space:]()]',
+                             '',
+                             'g'
+                         ) = 'canonical_provider=''fotmob'''
+                   ) AS provider_index,
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_index index_meta
+                       JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                       JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                       JOIN pg_class table_class ON table_class.oid = index_meta.indrelid
+                       JOIN pg_namespace table_schema ON table_schema.oid = table_class.relnamespace
+                       WHERE index_schema.nspname = 'public'
+                         AND table_schema.nspname = 'public'
+                         AND table_class.relname = 'matches'
+                         AND index_class.relname = 'matches_m3_epl_fixture_identity_uq'
+                         AND index_meta.indisunique
+                         AND index_meta.indisvalid
+                         AND index_meta.indisready
+                         AND ARRAY(
+                             SELECT attribute.attname
+                             FROM unnest(index_meta.indkey) WITH ORDINALITY AS key_column(attnum, ordinal)
+                             JOIN pg_attribute attribute
+                               ON attribute.attrelid = index_meta.indrelid
+                              AND attribute.attnum = key_column.attnum
+                             WHERE key_column.ordinal <= index_meta.indnkeyatts
+                             ORDER BY key_column.ordinal
+                         ) = ARRAY['league_name', 'season', 'home_team', 'away_team']::name[]
+                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%league_name%premier league%'
+                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%season%2022/2023%2023/2024%2024/2025%'
+                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%canonical_provider%fotmob%'
+                   ) AS fixture_index
         `);
         const identity = result.rows[0];
         if (identity.database_identity !== this.target.databaseIdentity) {

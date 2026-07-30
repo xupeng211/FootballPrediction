@@ -99,6 +99,18 @@ test('canary requires exact parent allowlist order and immutable projection', ()
             }).candidates.length,
             10
         );
+        const unbounded = buildDocument(master.candidates.slice(0, 2), {
+            kind: 'canary',
+            parentMaster: parentMetadata(master, binding),
+        });
+        assert.throws(
+            () =>
+                validateArtifactDocument(unbounded, {
+                    parentArtifactPath: binding.path,
+                    allowSyntheticTestOnly: true,
+                }),
+            /approved bounded size/
+        );
         const reordered = structuredClone(canary);
         reordered.candidates.reverse();
         reordered.artifact.allowlist.reverse();
