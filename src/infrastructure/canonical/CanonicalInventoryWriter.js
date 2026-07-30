@@ -30,7 +30,7 @@ const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
         "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']isnottrueorcanonical_providerisnotnullandcanonical_provider='fotmob'andexternal_idisnotnull",
 });
 const EXPECTED_FIXTURE_INDEX_PREDICATE =
-    "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025'']andcanonical_provider=''fotmob''";
+    "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025''][]andcanonical_provider=''fotmob''";
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
