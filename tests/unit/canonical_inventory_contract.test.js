@@ -10,6 +10,7 @@ const test = require('node:test');
 const {
     CanonicalInventoryContractError,
     MASTER_COUNT,
+    computeBusinessHash,
     computeV1IdentityProjectionHash,
     readOrdinaryArtifact,
     validateArtifactDocument,
@@ -83,6 +84,23 @@ test('population, duplicate, scope and identity mismatches fail closed', () => {
     }
 });
 
+test('ordered fixture identity duplicates fail during offline contract preflight', () => {
+    const duplicateFixture = structuredClone(buildDocument(syntheticCandidates()));
+    duplicateFixture.candidates[1] = {
+        ...duplicateFixture.candidates[1],
+        id: '47_20222023_99000001',
+        source_match_id: '99000001',
+        home_team: duplicateFixture.candidates[0].home_team,
+        away_team: duplicateFixture.candidates[0].away_team,
+    };
+    duplicateFixture.artifact.business_hash = computeBusinessHash(duplicateFixture.candidates);
+    duplicateFixture.artifact.identity_projection_hash = computeV1IdentityProjectionHash(duplicateFixture.candidates);
+    assert.throws(
+        () => validateArtifactDocument(duplicateFixture, { allowSyntheticTestOnly: true }),
+        /duplicate ordered fixture identity/
+    );
+});
+
 test('canary requires exact parent allowlist order and immutable projection', () => {
     const directory = tempDir();
     try {
@@ -131,6 +149,16 @@ test('canary requires exact parent allowlist order and immutable projection', ()
                     allowSyntheticTestOnly: true,
                 }),
             CanonicalInventoryContractError
+        );
+        const classificationMismatch = structuredClone(canary);
+        delete classificationMismatch.artifact.synthetic_test_only;
+        assert.throws(
+            () =>
+                validateArtifactDocument(classificationMismatch, {
+                    parentArtifactPath: binding.path,
+                    allowSyntheticTestOnly: true,
+                }),
+            /synthetic classification must match/
         );
     } finally {
         fs.rmSync(directory, { recursive: true, force: true });

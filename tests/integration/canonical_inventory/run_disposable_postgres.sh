@@ -43,5 +43,5 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "M3 canonical disposable project=$project database=$M3_CANONICAL_DB_NAME (password redacted)"
-docker compose -p "$project" -f "$compose_file" up --abort-on-container-exit --exit-code-from restore-verifier \
-  --attach bootstrap --attach prewrite-backup --attach runner --attach restore-verifier restore-verifier
+docker compose -p "$project" -f "$compose_file" up --abort-on-container-exit --exit-code-from restore-baseline-verifier \
+  --attach bootstrap --attach prewrite-backup --attach runner --attach restore-verifier --attach restore-baseline-verifier restore-baseline-verifier

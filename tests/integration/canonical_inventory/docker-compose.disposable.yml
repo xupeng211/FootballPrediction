@@ -80,11 +80,26 @@ services:
                 restore_db="$${M3_CANONICAL_DB_NAME}_restore";
                 createdb -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" "$$restore_db";
                 pg_restore -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" /backup/prewrite.dump;
+                psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -v ON_ERROR_STOP=1 -c "REVOKE TEMPORARY ON DATABASE \"$$restore_db\" FROM PUBLIC";
                 test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc 'SELECT COUNT(*) FROM matches')" = 0;
                 test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_table_privilege('m3_canonical_writer', 'public.matches', 'INSERT')")" = t;
+                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_database_privilege('m3_canonical_writer', current_database(), 'TEMPORARY')")" = f;
                 test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'matches_m3_epl_canonical_identity_required')")" = t;
                 echo '{"status":"prewrite_backup_restore_verified","restored_matches":0}'
         volumes: ['backup:/backup:ro']
+        networks: [ephemeral]
+
+    restore-baseline-verifier:
+        image: footballprediction:v175-stable
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        entrypoint: ['node']
+        working_dir: /workspace
+        command: ['tests/integration/canonical_inventory/verify_restored_postgres.js']
+        depends_on: { restore-verifier: { condition: service_completed_successfully } }
+        environment:
+            <<: *db_env
+            M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}_restore
+        volumes: ['../../../:/workspace:ro']
         networks: [ephemeral]
 
 volumes:

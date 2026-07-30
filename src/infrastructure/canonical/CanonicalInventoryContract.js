@@ -324,6 +324,9 @@ function assertCanaryPopulation(artifact, candidates, options = {}) {
     if (parent.artifact.kind !== 'master') {
         throw new CanonicalInventoryContractError('canary parent must be a master artifact');
     }
+    if (Boolean(parent.artifact.synthetic_test_only) !== Boolean(artifact.synthetic_test_only)) {
+        throw new CanonicalInventoryContractError('canary and parent synthetic classification must match');
+    }
     for (const field of ['business_hash', 'identity_projection_hash']) {
         if (declared[field] !== parent.artifact[field]) {
             throw new CanonicalInventoryContractError(`canary parent ${field} mismatch`);
@@ -389,13 +392,24 @@ function validateArtifactDocument(document, options = {}) {
     const candidates = document.candidates.map(validateCandidate);
     const ids = new Set();
     const providerIds = new Set();
+    const fixtureIdentities = new Set();
     for (const candidate of candidates) {
         if (ids.has(candidate.id)) throw new CanonicalInventoryContractError(`duplicate candidate ID ${candidate.id}`);
         if (providerIds.has(candidate.source_match_id)) {
             throw new CanonicalInventoryContractError(`duplicate provider match ID ${candidate.source_match_id}`);
         }
+        const fixtureIdentity = [
+            candidate.competition,
+            candidate.season,
+            candidate.home_team,
+            candidate.away_team,
+        ].join('\u0000');
+        if (fixtureIdentities.has(fixtureIdentity)) {
+            throw new CanonicalInventoryContractError(`duplicate ordered fixture identity ${candidate.id}`);
+        }
         ids.add(candidate.id);
         providerIds.add(candidate.source_match_id);
+        fixtureIdentities.add(fixtureIdentity);
     }
     const artifact = assertMetadata(document, candidates, options);
     assertMasterPopulation(artifact, candidates);
