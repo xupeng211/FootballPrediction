@@ -291,6 +291,14 @@ class CanonicalInventoryWriter {
             !identity.fixture_index ||
             !identity.controlled_lock_function
         ) {
+            const fixtureIndexDefinition = await client.query(`
+                SELECT pg_get_expr(index_meta.indpred, index_meta.indrelid) AS predicate
+                FROM pg_index index_meta
+                JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+                JOIN pg_namespace index_schema ON index_schema.oid = index_class.relnamespace
+                WHERE index_schema.nspname = 'public'
+                  AND index_class.relname = 'matches_m3_epl_fixture_identity_uq'
+            `);
             throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH', {
                 migration_ledger_table: identity.migration_ledger_table,
                 target_identity_table: identity.target_identity_table,
@@ -299,6 +307,7 @@ class CanonicalInventoryWriter {
                 lineage_table: identity.lineage_table,
                 provider_index: identity.provider_index,
                 fixture_index: identity.fixture_index,
+                fixture_index_predicate: fixtureIndexDefinition.rows[0]?.predicate || null,
                 controlled_lock_function: identity.controlled_lock_function,
             });
         }
