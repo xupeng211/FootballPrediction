@@ -54,9 +54,9 @@ function signRuntimeAuthorization(unsignedReceipt) {
     };
 }
 
-function syntheticCandidates() {
+function syntheticCandidates({ sourceIdOffset = 0, label = 'Base' } = {}) {
     const candidates = [];
-    let sourceId = 9000000;
+    let sourceId = 9000000 + sourceIdOffset;
     for (const season of SEASONS) {
         const startYear = Number(season.slice(0, 4));
         for (let index = 0; index < 380; index += 1) {
@@ -68,8 +68,8 @@ function syntheticCandidates() {
                 source_match_id: id,
                 competition: COMPETITION,
                 season,
-                home_team: `Synthetic ${season} Home ${String(index).padStart(3, '0')}`,
-                away_team: `Synthetic ${season} Away ${String(index).padStart(3, '0')}`,
+                home_team: `Synthetic ${label} ${season} Home ${String(index).padStart(3, '0')}`,
+                away_team: `Synthetic ${label} ${season} Away ${String(index).padStart(3, '0')}`,
                 kickoff_at: kickoff,
                 provider_status: index % 5 === 0 ? 'finished' : 'scheduled',
                 status_mapping_version: STATUS_MAPPING_VERSION,

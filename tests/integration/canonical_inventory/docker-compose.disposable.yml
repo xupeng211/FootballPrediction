@@ -32,6 +32,8 @@ services:
             M3_CANONICAL_DB_ADMIN_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
             M3_CANONICAL_DB_WRITER_USER: m3_canonical_writer
             M3_CANONICAL_DB_WRITER_PASSWORD: m3_canonical_writer_proof
+            M3_CANONICAL_DB_VERIFIER_USER: m3_canonical_verifier
+            M3_CANONICAL_DB_VERIFIER_PASSWORD: m3_canonical_verifier_proof
             M3_CANONICAL_WRITER_CODE_REVISION: ${M3_CANONICAL_WRITER_CODE_REVISION:?missing code revision}
         volumes: ['../../../:/workspace:ro']
         networks: [ephemeral]

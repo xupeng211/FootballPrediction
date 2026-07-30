@@ -36,17 +36,22 @@ const config = {
     adminPassword: process.env.M3_CANONICAL_DB_ADMIN_PASSWORD,
     writerUser: process.env.M3_CANONICAL_DB_WRITER_USER,
     writerPassword: process.env.M3_CANONICAL_DB_WRITER_PASSWORD,
+    verifierUser: process.env.M3_CANONICAL_DB_VERIFIER_USER,
+    verifierPassword: process.env.M3_CANONICAL_DB_VERIFIER_PASSWORD,
 };
 const serviceIdentity = 'fp_m3_canonical_disposable_postgres15';
 const codeRevision = process.env.M3_CANONICAL_WRITER_CODE_REVISION;
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fp-m3-canonical-proof-'));
 let admin;
 let pool;
+let verifier;
+let ownerPhaseClosed = false;
 
 function assertConfig() {
     assert.ok(config.database.startsWith('fp_m3_canonical_ephemeral_'));
     assert.equal(config.host, 'ephemeral-postgres');
     assert.equal(config.writerUser, 'm3_canonical_writer');
+    assert.equal(config.verifierUser, 'm3_canonical_verifier');
     assert.match(codeRevision, /^[0-9a-f]{40}$/);
 }
 function candidateInput(file, document, receipt = {}) {
@@ -70,7 +75,7 @@ function candidateInput(file, document, receipt = {}) {
         provenanceReceipt: receipt.provenance === undefined ? syntheticProvenance(file.sha256) : receipt.provenance,
     };
 }
-function writer() {
+function canonicalWriter(options = {}) {
     return new CanonicalInventoryWriter({
         pool,
         target: {
@@ -81,10 +86,19 @@ function writer() {
         },
         authorizationAuthority: testAuthorizationAuthority(),
         codeRevision,
+        ...options,
     });
 }
+function writer(options = {}) {
+    assert.equal(admin, null, 'owner/migrator session must be closed before canonical writer proof');
+    assert.equal(ownerPhaseClosed, true, 'canonical writer proof requires a completed owner/migrator phase');
+    return canonicalWriter(options);
+}
+function population(label, sourceIdOffset) {
+    return syntheticCandidates({ label, sourceIdOffset });
+}
 async function counts() {
-    const result = await admin.query(`
+    const result = await verifier.query(`
         SELECT (SELECT COUNT(*)::int FROM matches) AS matches,
                (SELECT COUNT(*)::int FROM m3_canonical_source_artifacts) AS artifacts,
                (SELECT COUNT(*)::int FROM m3_canonical_import_runs) AS runs,
@@ -92,10 +106,13 @@ async function counts() {
     `);
     return result.rows[0];
 }
-async function clearState() {
-    await admin.query(
-        'DELETE FROM m3_canonical_match_lineages; DELETE FROM m3_canonical_import_runs; DELETE FROM m3_canonical_source_artifacts; DELETE FROM matches;'
-    );
+function addCounts(before, delta) {
+    return {
+        matches: before.matches + (delta.matches || 0),
+        artifacts: before.artifacts + (delta.artifacts || 0),
+        runs: before.runs + (delta.runs || 0),
+        lineages: before.lineages + (delta.lineages || 0),
+    };
 }
 async function expectZeroDelta(action) {
     const before = await counts();
@@ -121,9 +138,20 @@ test.before(async () => {
         password: config.writerPassword,
         max: 4,
     });
+    verifier = new Client({
+        host: config.host,
+        port: config.port,
+        database: config.database,
+        user: config.verifierUser,
+        password: config.verifierPassword,
+    });
+    await verifier.connect();
+    assert.equal((await verifier.query('SHOW transaction_read_only')).rows[0].transaction_read_only, 'on');
+    await assert.rejects(verifier.query('CREATE TEMP TABLE m3_canonical_verifier_write_probe (id integer)'));
 });
 test.after(async () => {
     await pool?.end();
+    await verifier?.end();
     await admin?.end();
     fs.rmSync(temp, { recursive: true, force: true });
 });
@@ -224,6 +252,58 @@ test('migration replay, identity constraints and least-privilege schema are acti
     );
     await admin.query('ROLLBACK');
     await admin.query('BEGIN');
+    await admin.query('ALTER TABLE public.m3_canonical_match_lineages ALTER COLUMN provider_status DROP NOT NULL');
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    const lineageUnique = await admin.query(`
+        SELECT conname
+        FROM pg_constraint constraint_meta
+        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+          AND constraint_meta.contype = 'u'
+          AND ARRAY(
+              SELECT attribute.attname
+              FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal)
+              JOIN pg_attribute attribute
+                ON attribute.attrelid = constraint_meta.conrelid
+               AND attribute.attnum = key_column.attnum
+              ORDER BY key_column.ordinal
+          ) = ARRAY['artifact_id', 'candidate_id']::name[]
+    `);
+    assert.equal(lineageUnique.rowCount, 1);
+    assert.match(lineageUnique.rows[0].conname, /^[a-z0-9_]+$/);
+    await admin.query('BEGIN');
+    await admin.query(
+        `ALTER TABLE public.m3_canonical_match_lineages DROP CONSTRAINT ${lineageUnique.rows[0].conname}`
+    );
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
+    await admin.query(`
+        CREATE OR REPLACE FUNCTION public.m3_canonical_inventory_acquire_locks_v1()
+        RETURNS void
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        AS $$ BEGIN NULL; END; $$
+    `);
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
+    await admin.query('ALTER FUNCTION public.m3_canonical_inventory_acquire_locks_v1() OWNER TO m3_canonical_writer');
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
     await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
     await admin.query(
         "CREATE UNIQUE INDEX matches_m3_fotmob_external_id_uq ON public.matches (external_id) WHERE canonical_provider = 'fotmob' AND season = '2022/2023'"
@@ -262,22 +342,60 @@ test('migration replay, identity constraints and least-privilege schema are acti
         error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_WRITER_ROLE_MISMATCH'
     );
     assert.deepEqual(await counts(), beforeWrongRole);
+    const expectPermissionBoundary = async (grant, revoke) => {
+        await admin.query(grant);
+        const writerClient = await pool.connect();
+        try {
+            await assert.rejects(
+                canonicalWriter().inspectTarget(writerClient),
+                error => error instanceof CanonicalInventoryWriterError && error.code === 'BLOCKED_PERMISSION_BOUNDARY'
+            );
+        } finally {
+            writerClient.release();
+            await admin.query(revoke);
+        }
+    };
+    await expectPermissionBoundary(
+        'GRANT UPDATE ON public.matches TO m3_canonical_writer',
+        'REVOKE UPDATE ON public.matches FROM m3_canonical_writer'
+    );
+    await expectPermissionBoundary(
+        'GRANT CREATE ON SCHEMA public TO m3_canonical_writer',
+        'REVOKE CREATE ON SCHEMA public FROM m3_canonical_writer'
+    );
+    await expectPermissionBoundary(
+        'GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO PUBLIC',
+        'REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC'
+    );
+    await admin.query('CREATE ROLE m3_canonical_disposable_prohibited_member NOLOGIN');
+    try {
+        await expectPermissionBoundary(
+            'GRANT m3_canonical_disposable_prohibited_member TO m3_canonical_writer',
+            'REVOKE m3_canonical_disposable_prohibited_member FROM m3_canonical_writer'
+        );
+    } finally {
+        await admin.query('DROP ROLE m3_canonical_disposable_prohibited_member');
+    }
+    await admin.end();
+    admin = null;
+    ownerPhaseClosed = true;
 });
 
 test('Proof A/B: full 1,140 synthetic master inserts once then exact replays with zero delta', async () => {
-    await clearState();
-    const master = buildDocument(syntheticCandidates());
+    const before = await counts();
+    assert.deepEqual(before, { matches: 0, artifacts: 0, runs: 0, lineages: 0 });
+    const master = buildDocument(population('Proof A', 0));
     const file = writeDocument(temp, 'master-a.json', master);
     const first = await writer().execute(candidateInput(file, master));
     assert.deepEqual(first.terminal_counts, { inserted: 1140 });
     assert.deepEqual(first.database_delta, { matches: 1140, artifacts: 1, import_runs: 1, lineages: 1140 });
-    assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
-    assert.deepEqual((await admin.query('SELECT DISTINCT code_revision FROM m3_canonical_import_runs')).rows, [
+    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
+    assert.deepEqual((await verifier.query('SELECT DISTINCT code_revision FROM m3_canonical_import_runs')).rows, [
         { code_revision: codeRevision },
     ]);
     assert.deepEqual(
         (
-            await admin.query(
+            await verifier.query(
                 `SELECT lineage.provider_status, lineage.status_mapping_version, lineage.application_status, match.status
                  FROM m3_canonical_match_lineages lineage
                  JOIN matches match ON match.match_id = lineage.match_id
@@ -297,12 +415,12 @@ test('Proof A/B: full 1,140 synthetic master inserts once then exact replays wit
     const replay = await writer().execute(candidateInput(file, master));
     assert.deepEqual(replay.terminal_counts, { exact_duplicate: 1140 });
     assert.deepEqual(replay.database_delta, { matches: 0, artifacts: 0, import_runs: 0, lineages: 0 });
-    assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
+    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
 });
 
 test('Proof C: one-row and ten-row canaries become master lineages without duplicate matches', async () => {
-    await clearState();
-    const master = buildDocument(syntheticCandidates());
+    const before = await counts();
+    const master = buildDocument(population('Proof C one-row', 1_000_000));
     const masterFile = writeDocument(temp, 'master-c.json', master);
     const parent = parentMetadata(master, masterFile);
     const one = buildDocument(master.candidates.slice(0, 1), { kind: 'canary', parentMaster: parent });
@@ -313,22 +431,26 @@ test('Proof C: one-row and ten-row canaries become master lineages without dupli
     const oneMasterResult = await writer().execute(candidateInput(masterFile, master));
     assert.deepEqual(oneMasterResult.terminal_counts, { already_present_equivalent: 1, inserted: 1139 });
     assert.deepEqual(oneMasterResult.database_delta, { matches: 1139, artifacts: 0, import_runs: 1, lineages: 1140 });
-    assert.deepEqual(await counts(), { matches: 1140, artifacts: 2, runs: 2, lineages: 1141 });
-    await clearState();
-    const ten = buildDocument(master.candidates.slice(0, 10), { kind: 'canary', parentMaster: parent });
+    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 2, runs: 2, lineages: 1141 }));
+    const tenMaster = buildDocument(population('Proof C ten-row', 2_000_000));
+    const tenMasterFile = writeDocument(temp, 'master-c-ten.json', tenMaster);
+    const ten = buildDocument(tenMaster.candidates.slice(0, 10), {
+        kind: 'canary',
+        parentMaster: parentMetadata(tenMaster, tenMasterFile),
+    });
     const tenFile = writeDocument(temp, 'canary-ten.json', ten);
     assert.deepEqual(
-        (await writer().execute(candidateInput(tenFile, ten, { parentArtifactPath: masterFile.path }))).terminal_counts,
+        (await writer().execute(candidateInput(tenFile, ten, { parentArtifactPath: tenMasterFile.path })))
+            .terminal_counts,
         { inserted: 10 }
     );
-    const masterResult = await writer().execute(candidateInput(masterFile, master));
+    const masterResult = await writer().execute(candidateInput(tenMasterFile, tenMaster));
     assert.deepEqual(masterResult.terminal_counts, { already_present_equivalent: 10, inserted: 1130 });
-    assert.deepEqual(await counts(), { matches: 1140, artifacts: 2, runs: 2, lineages: 1150 });
+    assert.deepEqual(await counts(), addCounts(before, { matches: 2280, artifacts: 4, runs: 4, lineages: 2291 }));
 });
 
 test('Proof D: contract, authorization and divergent canonical conflicts rollback completely', async () => {
-    await clearState();
-    const master = buildDocument(syntheticCandidates());
+    const master = buildDocument(population('Proof D', 3_000_000));
     const base = writeDocument(temp, 'master-d.json', master);
     await writer().execute(candidateInput(base, master));
     const changed = structuredClone(master);
@@ -431,12 +553,12 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
             allowSyntheticTestOnly: true,
         })
     );
-    const mutable = buildDocument(syntheticCandidates());
+    const mutable = buildDocument(population('Proof D mutable', 4_000_000));
     const mutableFile = writeDocument(temp, 'mutated-between-preflight-and-write.json', mutable);
     const preflighted = candidateInput(mutableFile, mutable);
     fs.appendFileSync(mutableFile.path, '\n');
     await expectZeroDelta(() => writer().execute(preflighted));
-    const parentMaster = buildDocument(syntheticCandidates());
+    const parentMaster = buildDocument(population('Proof D parent', 5_000_000));
     const parentFile = writeDocument(temp, 'parent-mutated-after-canary-preflight.json', parentMaster);
     const parentBoundCanary = buildDocument(parentMaster.candidates.slice(0, 1), {
         kind: 'canary',
@@ -451,27 +573,19 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
 });
 
 test('writer re-reads the hash-bound artifact after authorization and ignores mutated caller candidates', async () => {
-    await clearState();
-    const master = buildDocument(syntheticCandidates());
+    const master = buildDocument(population('Proof artifact binding', 6_000_000));
     const file = writeDocument(temp, 'master-bound-content.json', master);
     const input = candidateInput(file, master);
     const originalHomeTeam = input.candidates[0].home_team;
-    const boundWriter = new CanonicalInventoryWriter({
-        pool,
-        target: {
-            classification: 'disposable',
-            databaseIdentity: config.database,
-            serviceIdentity,
-            writerRole: config.writerUser,
-        },
-        authorizationAuthority: testAuthorizationAuthority(),
-        codeRevision,
+    const boundWriter = writer({
         afterAdvisoryLock: () => {
             input.candidates[0].home_team = 'Injected in-memory candidate';
         },
     });
     assert.deepEqual((await boundWriter.execute(input)).terminal_counts, { inserted: 1140 });
-    const persisted = await admin.query('SELECT home_team FROM matches WHERE match_id = $1', [master.candidates[0].id]);
+    const persisted = await verifier.query('SELECT home_team FROM matches WHERE match_id = $1', [
+        master.candidates[0].id,
+    ]);
     assert.equal(persisted.rows[0].home_team, originalHomeTeam);
 });
 
@@ -483,8 +597,8 @@ function sha256File(directory, name) {
 }
 
 test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or bypass locks', async () => {
-    await clearState();
-    const master = buildDocument(syntheticCandidates());
+    const before = await counts();
+    const master = buildDocument(population('Proof E/F', 7_000_000));
     const file = writeDocument(temp, 'master-ef.json', master);
     const different = structuredClone(master);
     different.candidates[0].provider_status = 'scheduled';
@@ -498,16 +612,7 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     const release = new Promise(resolve => {
         releaseFirst = resolve;
     });
-    const firstWriter = new CanonicalInventoryWriter({
-        pool,
-        target: {
-            classification: 'disposable',
-            databaseIdentity: config.database,
-            serviceIdentity,
-            writerRole: config.writerUser,
-        },
-        authorizationAuthority: testAuthorizationAuthority(),
-        codeRevision,
+    const firstWriter = writer({
         afterAdvisoryLock: async () => {
             signalLock();
             await release;
@@ -521,29 +626,7 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     );
     releaseFirst();
     assert.deepEqual((await first).terminal_counts, { inserted: 1140 });
-    assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
-    const expectPermissionBoundary = async () => {
-        const before = await counts();
-        await assert.rejects(
-            () => writer().execute(candidateInput(file, master)),
-            error => error instanceof CanonicalInventoryWriterError && error.code === 'BLOCKED_PERMISSION_BOUNDARY'
-        );
-        assert.deepEqual(await counts(), before);
-    };
-    await admin.query('GRANT UPDATE ON public.matches TO m3_canonical_writer');
-    await expectPermissionBoundary();
-    await admin.query('REVOKE UPDATE ON public.matches FROM m3_canonical_writer');
-    await admin.query('GRANT CREATE ON SCHEMA public TO m3_canonical_writer');
-    await expectPermissionBoundary();
-    await admin.query('REVOKE CREATE ON SCHEMA public FROM m3_canonical_writer');
-    await admin.query('GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO PUBLIC');
-    await expectPermissionBoundary();
-    await admin.query('REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC');
-    await admin.query('CREATE ROLE m3_canonical_disposable_prohibited_member NOLOGIN');
-    await admin.query('GRANT m3_canonical_disposable_prohibited_member TO m3_canonical_writer');
-    await expectPermissionBoundary();
-    await admin.query('REVOKE m3_canonical_disposable_prohibited_member FROM m3_canonical_writer');
-    await admin.query('DROP ROLE m3_canonical_disposable_prohibited_member');
+    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
     await assert.rejects(pool.query("UPDATE matches SET status = 'changed'"));
     await assert.rejects(pool.query('DELETE FROM matches'));
     await assert.rejects(pool.query('TRUNCATE matches'));
@@ -556,7 +639,7 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
 
 test('schema baseline constant is explicit and source-linkage/staging tables stay untouched', async () => {
     assert.equal(SCHEMA_BASELINE, 'm3-canonical-inventory-v26.10');
-    const touched = await admin.query(
+    const touched = await verifier.query(
         "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('odds_historical_staging_observations', 'raw_match_data')"
     );
     assert.equal(touched.rowCount, 0);

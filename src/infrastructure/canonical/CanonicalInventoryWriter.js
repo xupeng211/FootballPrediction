@@ -3,6 +3,7 @@
 // lifecycle: permanent
 // 独立的 M3 canonical inventory insert-only writer。它不复用 FixtureRepository，
 // 不执行 UPSERT/UPDATE/DELETE，也拒绝非 disposable 的运行授权。
+/* eslint-disable max-lines -- fixed-schema verification remains adjacent to the fail-closed write boundary. */
 
 const crypto = require('node:crypto');
 const {
@@ -20,6 +21,7 @@ const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
 const GIT_REVISION = /^[0-9a-f]{40}$/;
+const TRUSTED_LOCK_OWNER = 'm3_canonical_owner';
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -230,7 +232,25 @@ class CanonicalInventoryWriter {
                          AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%league_name%premier league%'
                          AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%season%2022/2023%2023/2024%2024/2025%'
                          AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%canonical_provider%fotmob%'
-                   ) AS fixture_index
+                   ) AS fixture_index,
+                   EXISTS (
+                       SELECT 1
+                       FROM pg_proc function_meta
+                       JOIN pg_namespace function_schema ON function_schema.oid = function_meta.pronamespace
+                       JOIN pg_language function_language ON function_language.oid = function_meta.prolang
+                       JOIN pg_roles function_owner ON function_owner.oid = function_meta.proowner
+                       WHERE function_schema.nspname = 'public'
+                         AND function_meta.proname = 'm3_canonical_inventory_acquire_locks_v1'
+                         AND function_meta.pronargs = 0
+                         AND function_meta.prosecdef
+                         AND function_language.lanname = 'plpgsql'
+                         AND function_owner.rolname = '${TRUSTED_LOCK_OWNER}'
+                         AND NOT function_owner.rolcanlogin
+                         AND function_meta.proconfig @> ARRAY['search_path=pg_catalog']::text[]
+                         AND lower(pg_get_functiondef(function_meta.oid)) LIKE '%lock table public.m3_canonical_source_artifacts in share row exclusive mode;%lock table public.m3_canonical_import_runs in share row exclusive mode;%lock table public.m3_canonical_match_lineages in share row exclusive mode;%lock table public.matches in share row exclusive mode;%'
+                         AND pg_get_functiondef(function_meta.oid) !~* '\\mexecute\\M'
+                         AND pg_get_functiondef(function_meta.oid) !~* '\\m(insert|update|delete|merge|truncate|copy|perform)\\M'
+                   ) AS controlled_lock_function
         `);
         const identity = result.rows[0];
         if (identity.database_identity !== this.target.databaseIdentity) {
@@ -248,9 +268,188 @@ class CanonicalInventoryWriter {
             !identity.lineage_table ||
             !identity.migration_ledger_table ||
             !identity.provider_index ||
-            !identity.fixture_index
+            !identity.fixture_index ||
+            !identity.controlled_lock_function
         ) {
             throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH');
+        }
+        const inventorySchema = await client.query(`
+            WITH required_columns(table_name, column_name, type_name, must_be_not_null) AS (
+                VALUES
+                    ('m3_canonical_source_artifacts', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_source_artifacts', 'artifact_sha256', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'artifact_kind', 'character varying(16)', true),
+                    ('m3_canonical_source_artifacts', 'parent_artifact_id', 'uuid', false),
+                    ('m3_canonical_source_artifacts', 'business_hash', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'identity_projection_hash', 'character(64)', true),
+                    ('m3_canonical_source_artifacts', 'byte_size', 'bigint', true),
+                    ('m3_canonical_source_artifacts', 'candidate_count', 'integer', true),
+                    ('m3_canonical_source_artifacts', 'competition', 'character varying(100)', true),
+                    ('m3_canonical_source_artifacts', 'season_scope', 'jsonb', true),
+                    ('m3_canonical_source_artifacts', 'per_season_counts', 'jsonb', true),
+                    ('m3_canonical_source_artifacts', 'status_mapping_version', 'character varying(64)', true),
+                    ('m3_canonical_source_artifacts', 'created_at', 'timestamp with time zone', true),
+                    ('m3_canonical_import_runs', 'run_id', 'uuid', true),
+                    ('m3_canonical_import_runs', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_import_runs', 'execution_id', 'character varying(128)', true),
+                    ('m3_canonical_import_runs', 'authorization_receipt_sha256', 'character(64)', true),
+                    ('m3_canonical_import_runs', 'code_revision', 'character varying(80)', true),
+                    ('m3_canonical_import_runs', 'created_at', 'timestamp with time zone', true),
+                    ('m3_canonical_match_lineages', 'lineage_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'match_id', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'artifact_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'created_import_run_id', 'uuid', true),
+                    ('m3_canonical_match_lineages', 'candidate_id', 'character varying(100)', true),
+                    ('m3_canonical_match_lineages', 'provider_match_id', 'character varying(100)', true),
+                    ('m3_canonical_match_lineages', 'provider_status', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'status_mapping_version', 'character varying(64)', true),
+                    ('m3_canonical_match_lineages', 'application_status', 'character varying(50)', true),
+                    ('m3_canonical_match_lineages', 'immutable_fingerprint', 'character(64)', true),
+                    ('m3_canonical_match_lineages', 'created_at', 'timestamp with time zone', true)
+            )
+            SELECT
+                NOT EXISTS (
+                    SELECT 1
+                    FROM required_columns required
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM pg_class relation
+                        JOIN pg_namespace schema ON schema.oid = relation.relnamespace
+                        JOIN pg_attribute column_meta ON column_meta.attrelid = relation.oid
+                        WHERE schema.nspname = 'public'
+                          AND relation.relname = required.table_name
+                          AND column_meta.attname = required.column_name
+                          AND column_meta.attnum > 0
+                          AND NOT column_meta.attisdropped
+                          AND format_type(column_meta.atttypid, column_meta.atttypmod) = required.type_name
+                          AND (NOT required.must_be_not_null OR column_meta.attnotnull)
+                    )
+                ) AS required_columns_present,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_sha256']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['parent_artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'c'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%artifact_kind%master%canary%'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%parent_artifact_id%'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%is null%'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%is not null%'
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'c'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%competition%premier league%'
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.contype = 'c'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%status_mapping_version%fotmob-status-to-matches-status/v1%'
+                    )
+                ) AS artifact_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['run_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['execution_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['run_id', 'artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_source_artifacts'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id']::name[]
+                    )
+                ) AS run_constraints,
+                (
+                    EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'p'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['lineage_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.matches'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['match_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'f'
+                          AND constraint_meta.confrelid = 'public.m3_canonical_import_runs'::regclass
+                          AND constraint_meta.confdeltype = 'r'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['created_import_run_id', 'artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['artifact_id', 'candidate_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'u'
+                          AND ARRAY(SELECT attribute.attname FROM unnest(constraint_meta.conkey) WITH ORDINALITY AS key_column(attnum, ordinal) JOIN pg_attribute attribute ON attribute.attrelid = constraint_meta.conrelid AND attribute.attnum = key_column.attnum ORDER BY key_column.ordinal) = ARRAY['match_id', 'artifact_id']::name[]
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM pg_constraint constraint_meta
+                        WHERE constraint_meta.conrelid = 'public.m3_canonical_match_lineages'::regclass
+                          AND constraint_meta.contype = 'c'
+                          AND lower(pg_get_constraintdef(constraint_meta.oid)) LIKE '%status_mapping_version%fotmob-status-to-matches-status/v1%'
+                    )
+                ) AS lineage_constraints
+        `);
+        const schemaBoundary = inventorySchema.rows[0];
+        if (
+            !schemaBoundary.required_columns_present ||
+            !schemaBoundary.artifact_constraints ||
+            !schemaBoundary.run_constraints ||
+            !schemaBoundary.lineage_constraints
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'inventory schema definition is incomplete',
+                'SCHEMA_BASELINE_MISMATCH'
+            );
         }
         const permissions = await client.query(
             `

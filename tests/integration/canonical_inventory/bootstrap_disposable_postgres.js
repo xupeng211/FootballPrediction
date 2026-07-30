@@ -59,6 +59,7 @@ async function main() {
             DO $$ BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_owner') THEN CREATE ROLE m3_canonical_owner NOLOGIN; END IF;
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_writer') THEN CREATE ROLE m3_canonical_writer LOGIN PASSWORD 'm3_canonical_writer_proof'; END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_verifier') THEN CREATE ROLE m3_canonical_verifier LOGIN PASSWORD 'm3_canonical_verifier_proof' NOINHERIT; END IF;
             END $$;
             ALTER TABLE public.matches OWNER TO m3_canonical_owner;
             ALTER TABLE public.m3_canonical_source_artifacts OWNER TO m3_canonical_owner;
@@ -76,12 +77,16 @@ async function main() {
             REVOKE TEMPORARY ON DATABASE ${JSON.stringify(config.database)} FROM PUBLIC;
             GRANT USAGE ON SCHEMA public TO m3_canonical_owner;
             GRANT CONNECT ON DATABASE ${JSON.stringify(config.database)} TO m3_canonical_writer;
+            GRANT CONNECT ON DATABASE ${JSON.stringify(config.database)} TO m3_canonical_verifier;
             GRANT USAGE ON SCHEMA public TO m3_canonical_writer;
+            GRANT USAGE ON SCHEMA public TO m3_canonical_verifier;
             GRANT SELECT, INSERT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages TO m3_canonical_writer;
             GRANT SELECT ON public.m3_canonical_schema_migrations TO m3_canonical_writer;
+            GRANT SELECT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages, public.m3_canonical_schema_migrations TO m3_canonical_verifier;
             GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) TO m3_canonical_writer;
+            ALTER ROLE m3_canonical_verifier SET default_transaction_read_only = on;
         `);
         process.stdout.write(
             JSON.stringify({
@@ -90,6 +95,7 @@ async function main() {
                 migration: 'V26.10',
                 migration_status: migrationResult.status,
                 writer_role: 'm3_canonical_writer',
+                verifier_role: 'm3_canonical_verifier',
             }) + '\n'
         );
     } finally {
