@@ -1036,12 +1036,12 @@ This is design readiness only, not database-write authorization.
   inputs fail closed when provenance is absent.
 - Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
   protection, immutable artifact/import-run/lineage tables, a target-local
-  service-identity plus PostgreSQL database-OID binding, and the restricted
-  canonical lock function. The signed runtime receipt must match the binding
-  read back from the target database; a similarly named/schema-compatible
-  clone fails closed unless an environment owner separately provisions it. It
-  was executed only on a task-specific PostgreSQL 15 tmpfs database, never on
-  development, persistent M3 sandbox, staging or production.
+  service-identity plus PostgreSQL database-OID and owner-provisioned instance
+  nonce binding, and the restricted canonical lock function. The signed runtime
+  receipt must match the binding read back from the target database; restore
+  rebinding rotates the nonce so a similarly named/schema-compatible clone
+  fails closed. It was executed only on a task-specific PostgreSQL 15 tmpfs
+  database, never on development, persistent M3 sandbox, staging or production.
 - The independent insert-only writer and default-no-write operator proved a
   synthetic 1,140-candidate master (380 / 380 / 380), exact replay zero delta,
   a staged 1-row then overlapping 10-row canary under one parent master before
@@ -1049,8 +1049,10 @@ This is design readiness only, not database-write authorization.
   contention, least-privilege denial and backup/restore.
   Before any transaction, the writer verifies the V26.10 checksum baseline,
   exact required lock-function ACLs, no writer role inheritance, no schema
-  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. The labelled proof
-  containers, network and volume were cleaned up.
+  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. A full master also
+  verifies that the in-scope canonical target is exactly its authorized
+  1,140-candidate population before commit; an extra pre-existing in-scope row
+  rolls back. The labelled proof containers, network and volume were cleaned up.
 - No real v2 artifact, FotMob request, canonical persistent write, linkage,
   odds staging/import, raw payload activity, training, backtest or prediction
   occurred. The 888 exact links, four kickoff quarantines and 248

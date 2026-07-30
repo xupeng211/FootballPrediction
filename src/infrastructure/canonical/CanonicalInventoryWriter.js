@@ -16,7 +16,7 @@ const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./C
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const REQUIRED_MIGRATION_VERSION = 'V26.10';
-const REQUIRED_MIGRATION_CHECKSUM = 'ade25f7f898e1282712fcf496eb8dc4516f269aea5b36ffeaaf650ba037bf823';
+const REQUIRED_MIGRATION_CHECKSUM = '81a8abadabbbcab558600679002b9efa3ceaeca91288c3e2f82071b0c7a9694f';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
@@ -29,6 +29,8 @@ const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
     matches_m3_epl_canonical_identity_required:
         "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']isnottrueorcanonical_providerisnotnullandcanonical_provider='fotmob'andexternal_idisnotnull",
 });
+const EXPECTED_FIXTURE_INDEX_PREDICATE =
+    "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']andcanonical_provider='fotmob'";
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -245,9 +247,12 @@ class CanonicalInventoryWriter {
                              WHERE key_column.ordinal <= index_meta.indnkeyatts
                              ORDER BY key_column.ordinal
                          ) = ARRAY['league_name', 'season', 'home_team', 'away_team']::name[]
-                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%league_name%premier league%'
-                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%season%2022/2023%2023/2024%2024/2025%'
-                         AND lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')) LIKE '%canonical_provider%fotmob%'
+                         AND regexp_replace(
+                             regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                             '[[:space:]()]',
+                             '',
+                             'g'
+                         ) = '${EXPECTED_FIXTURE_INDEX_PREDICATE}'
                    ) AS fixture_index,
                    EXISTS (
                        SELECT 1
@@ -290,7 +295,9 @@ class CanonicalInventoryWriter {
         }
         const targetBinding = await client.query(
             `
-            SELECT service_identity, database_oid::text AS database_instance_oid
+            SELECT service_identity,
+                   database_oid::text AS database_instance_oid,
+                   instance_nonce::text AS database_instance_nonce
             FROM public.m3_canonical_target_identity
             WHERE binding_key = 'canonical_inventory_v1'
         `
@@ -343,6 +350,7 @@ class CanonicalInventoryWriter {
                     ('m3_canonical_target_identity', 'binding_key', 'character varying(64)', true),
                     ('m3_canonical_target_identity', 'service_identity', 'character varying(128)', true),
                     ('m3_canonical_target_identity', 'database_oid', 'oid', true),
+                    ('m3_canonical_target_identity', 'instance_nonce', 'uuid', true),
                     ('m3_canonical_target_identity', 'created_at', 'timestamp with time zone', true),
                     ('m3_canonical_source_artifacts', 'artifact_id', 'uuid', true),
                     ('m3_canonical_source_artifacts', 'artifact_sha256', 'character(64)', true),
@@ -655,6 +663,7 @@ class CanonicalInventoryWriter {
             ...identity,
             service_identity: targetBinding.rows[0].service_identity,
             database_instance_oid: targetBinding.rows[0].database_instance_oid,
+            database_instance_nonce: targetBinding.rows[0].database_instance_nonce,
         };
     }
 
@@ -941,6 +950,63 @@ class CanonicalInventoryWriter {
         }
     }
 
+    async assertMasterTargetPopulation(client, input) {
+        if (input.artifact.kind !== 'master') return;
+        const actual = await client.query(
+            `
+            SELECT match_id, external_id, league_name, season, home_team, away_team, match_date, status
+            FROM public.matches
+            WHERE canonical_provider = $1
+              AND league_name = $2
+              AND season = ANY($3::text[])
+            ORDER BY match_id ASC
+        `,
+            [CANONICAL_PROVIDER, input.artifact.competition, input.artifact.seasons]
+        );
+        const expectedById = new Map(input.candidates.map(candidate => [candidate.id, candidate]));
+        const actualBySeason = Object.fromEntries(input.artifact.seasons.map(season => [season, 0]));
+        const exactCandidateIds = new Set();
+        const unexpected = [];
+        for (const row of actual.rows) {
+            actualBySeason[row.season] = (actualBySeason[row.season] || 0) + 1;
+            const candidate = expectedById.get(row.match_id);
+            if (candidate && matchesCandidateExactly(row, candidate)) exactCandidateIds.add(candidate.id);
+            else if (unexpected.length < MAX_EXCEPTION_SAMPLES) {
+                unexpected.push({
+                    match_id: row.match_id,
+                    external_id: row.external_id,
+                    season: row.season,
+                });
+            }
+        }
+        const missingCandidateIds = input.candidates
+            .filter(candidate => !exactCandidateIds.has(candidate.id))
+            .slice(0, MAX_EXCEPTION_SAMPLES)
+            .map(candidate => candidate.id);
+        const expectedSeasonCounts = input.artifact.per_season_counts;
+        const seasonCountsMatch = input.artifact.seasons.every(
+            season => Number(actualBySeason[season] || 0) === Number(expectedSeasonCounts[season] || 0)
+        );
+        if (
+            actual.rowCount !== input.artifact.candidate_count ||
+            exactCandidateIds.size !== input.artifact.candidate_count ||
+            !seasonCountsMatch
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'master canonical target population does not exactly match the authorized artifact',
+                'MASTER_TARGET_POPULATION_MISMATCH',
+                {
+                    expected_count: input.artifact.candidate_count,
+                    actual_count: actual.rowCount,
+                    expected_per_season_counts: expectedSeasonCounts,
+                    actual_per_season_counts: actualBySeason,
+                    unexpected_matches: unexpected,
+                    missing_candidate_ids: missingCandidateIds,
+                }
+            );
+        }
+    }
+
     // eslint-disable-next-line complexity -- this fixed sequence mirrors the transactional safety contract.
     async execute(input) {
         if (!input?.artifact || !input?.candidates || !input?.sha256) {
@@ -954,6 +1020,7 @@ class CanonicalInventoryWriter {
                 service_identity: targetIdentity.service_identity,
                 database_identity: targetIdentity.database_identity,
                 database_instance_oid: targetIdentity.database_instance_oid,
+                database_instance_nonce: targetIdentity.database_instance_nonce,
                 schema_baseline: SCHEMA_BASELINE,
                 target_classification: this.target.classification,
                 writer_role: targetIdentity.current_user,
@@ -1020,6 +1087,7 @@ class CanonicalInventoryWriter {
                     const runId = await this.insertRun(client, artifact, receipt);
                     await this.persistClassified(client, classified, artifact, runId, provenance.kind);
                 }
+                await this.assertMasterTargetPopulation(client, verifiedInput);
                 const reconciled =
                     (terminalCounts.inserted || 0) +
                     (terminalCounts.exact_duplicate || 0) +

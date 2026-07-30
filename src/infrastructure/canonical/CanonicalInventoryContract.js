@@ -180,7 +180,10 @@ function isActualAbsoluteTimestamp(value) {
         hour <= 23 &&
         minute <= 59 &&
         second <= 59 &&
-        offsetHour <= 23 &&
+        // PostgreSQL's timestamptz input accepts offsets through ±15:59 only.
+        // Keep the offline contract inside that database boundary rather than
+        // accepting a lexical value that persistence would reject later.
+        offsetHour <= 15 &&
         offsetMinute <= 59
     );
 }

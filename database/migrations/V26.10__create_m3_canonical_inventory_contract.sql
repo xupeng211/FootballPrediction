@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS public.m3_canonical_target_identity (
     service_identity VARCHAR(128) NOT NULL UNIQUE
         CHECK (service_identity ~ '^[a-z0-9][a-z0-9_.:-]{2,127}$'),
     database_oid OID NOT NULL,
+    -- This owner-provisioned nonce is deliberately rotated after a restore.
+    -- PostgreSQL OIDs are cluster-local and therefore cannot by themselves
+    -- prevent a receipt from being replayed against a restored lookalike.
+    instance_nonce UUID NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

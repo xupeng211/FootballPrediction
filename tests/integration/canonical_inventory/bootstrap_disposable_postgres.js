@@ -58,8 +58,9 @@ async function main() {
         });
         await client.query(
             `
-            INSERT INTO public.m3_canonical_target_identity (binding_key, service_identity, database_oid)
-            SELECT 'canonical_inventory_v1', 'fp_m3_canonical_disposable_postgres15', oid
+            INSERT INTO public.m3_canonical_target_identity
+                (binding_key, service_identity, database_oid, instance_nonce)
+            SELECT 'canonical_inventory_v1', 'fp_m3_canonical_disposable_postgres15', oid, uuid_generate_v4()
             FROM pg_database
             WHERE datname = current_database()
         `

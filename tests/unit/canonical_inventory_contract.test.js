@@ -55,6 +55,25 @@ test('synthetic v2 master preserves its deterministic v1 identity projection and
         () => validateArtifactDocument(impossibleKickoff, { allowSyntheticTestOnly: true }),
         /must be an actual absolute ISO-8601 instant/
     );
+    const postgresOffsetBoundary = structuredClone(master);
+    postgresOffsetBoundary.candidates[0].kickoff_at = '2022-08-01T12:00:00+15:59';
+    postgresOffsetBoundary.artifact.business_hash = computeBusinessHash(postgresOffsetBoundary.candidates);
+    postgresOffsetBoundary.artifact.identity_projection_hash = computeV1IdentityProjectionHash(
+        postgresOffsetBoundary.candidates
+    );
+    assert.doesNotThrow(() => validateArtifactDocument(postgresOffsetBoundary, { allowSyntheticTestOnly: true }));
+    const postgresOffsetOutsideBoundary = structuredClone(postgresOffsetBoundary);
+    postgresOffsetOutsideBoundary.candidates[0].kickoff_at = '2022-08-01T12:00:00+16:00';
+    postgresOffsetOutsideBoundary.artifact.business_hash = computeBusinessHash(
+        postgresOffsetOutsideBoundary.candidates
+    );
+    postgresOffsetOutsideBoundary.artifact.identity_projection_hash = computeV1IdentityProjectionHash(
+        postgresOffsetOutsideBoundary.candidates
+    );
+    assert.throws(
+        () => validateArtifactDocument(postgresOffsetOutsideBoundary, { allowSyntheticTestOnly: true }),
+        /must be an actual absolute ISO-8601 instant/
+    );
     const unknownSemanticField = structuredClone(master);
     unknownSemanticField.candidates[0].canonical_match_id = 'must-not-be-accepted';
     assert.throws(() => validateArtifactDocument(unknownSemanticField), CanonicalInventoryContractError);

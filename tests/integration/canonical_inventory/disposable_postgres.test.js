@@ -43,17 +43,22 @@ const serviceIdentity = 'fp_m3_canonical_disposable_postgres15';
 const codeRevision = process.env.M3_CANONICAL_WRITER_CODE_REVISION;
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'fp-m3-canonical-proof-'));
 const schemaOnly = process.env.M3_CANONICAL_SCHEMA_ONLY === 'yes';
+const proofProfile = process.env.M3_CANONICAL_PROOF_PROFILE || 'main';
 const schemaTest = schemaOnly ? test : test.skip;
-const proofTest = schemaOnly ? test.skip : test;
+const proofTest = schemaOnly || proofProfile !== 'main' ? test.skip : test;
+const canaryProofTest = schemaOnly || proofProfile !== 'canary' ? test.skip : test;
 let admin;
 let pool;
 let verifier;
 let ownerPhaseClosed = !schemaOnly;
 let databaseInstanceOid;
+let databaseInstanceNonce;
+let primaryMaster;
+let primaryMasterFile;
 
 function assertConfig() {
     assert.ok(config.database.startsWith('fp_m3_canonical_ephemeral_'));
-    assert.equal(config.host, 'ephemeral-postgres');
+    assert.equal(config.host, proofProfile === 'canary' ? 'canary-postgres' : 'ephemeral-postgres');
     assert.equal(config.writerUser, 'm3_canonical_writer');
     assert.equal(config.verifierUser, 'm3_canonical_verifier');
     assert.match(codeRevision, /^[0-9a-f]{40}$/);
@@ -81,6 +86,7 @@ function candidateInput(file, document, receipt = {}) {
                 databaseIdentity: config.database,
                 serviceIdentity,
                 databaseInstanceOid,
+                databaseInstanceNonce,
                 writerRole: config.writerUser,
                 codeRevision,
             }),
@@ -160,11 +166,18 @@ test.before(async () => {
         password: config.verifierPassword,
     });
     await verifier.connect();
-    databaseInstanceOid = (
+    const targetIdentity = (
         await verifier.query(
-            'SELECT oid::text AS database_instance_oid FROM pg_database WHERE datname = current_database()'
+            `
+            SELECT (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_instance_oid,
+                   instance_nonce::text AS database_instance_nonce
+            FROM public.m3_canonical_target_identity
+            WHERE binding_key = 'canonical_inventory_v1'
+        `
         )
-    ).rows[0].database_instance_oid;
+    ).rows[0];
+    databaseInstanceOid = targetIdentity.database_instance_oid;
+    databaseInstanceNonce = targetIdentity.database_instance_nonce;
     assert.equal((await verifier.query('SHOW transaction_read_only')).rows[0].transaction_read_only, 'on');
     await assert.rejects(verifier.query('CREATE TEMP TABLE m3_canonical_verifier_write_probe (id integer)'));
 });
@@ -265,6 +278,16 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
     });
     await admin.query('BEGIN');
     await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
+    await assert.rejects(
+        schemaInspector.inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
+    await admin.query('BEGIN');
+    await admin.query('DROP INDEX public.matches_m3_epl_fixture_identity_uq');
+    await admin.query(
+        "CREATE UNIQUE INDEX matches_m3_epl_fixture_identity_uq ON public.matches (league_name, season, home_team, away_team) WHERE league_name = 'Premier League' AND season IN ('2022/2023', '2023/2024', '2024/2025') AND canonical_provider = 'fotmob' AND home_team = '__never__'"
+    );
     await assert.rejects(
         schemaInspector.inspectTarget(admin),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
@@ -471,6 +494,23 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
     } finally {
         await admin.query('DROP ROLE m3_canonical_disposable_prohibited_member');
     }
+    await admin.query(
+        `
+        INSERT INTO public.matches
+            (match_id, external_id, league_name, season, home_team, away_team, match_date, status, canonical_provider)
+        VALUES
+            ('m3-rogue-outside-master', '79999999', 'Premier League', '2022/2023', 'Rogue Home', 'Rogue Away', '2022-08-01T12:00:00Z', 'scheduled', 'fotmob')
+    `
+    );
+    const strictMaster = buildDocument(population('schema-master-population', 8_000_000));
+    const strictMasterFile = writeDocument(temp, 'schema-master-population.json', strictMaster);
+    const beforeStrictMaster = await counts();
+    await assert.rejects(
+        canonicalWriter().execute(candidateInput(strictMasterFile, strictMaster)),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'MASTER_TARGET_POPULATION_MISMATCH'
+    );
+    assert.deepEqual(await counts(), beforeStrictMaster);
+    await admin.query("DELETE FROM public.matches WHERE match_id = 'm3-rogue-outside-master'");
     await admin.end();
     admin = null;
     ownerPhaseClosed = true;
@@ -483,6 +523,8 @@ proofTest('Proof A/B: full 1,140 synthetic master inserts once then exact replay
     assert.deepEqual(before, { matches: 0, artifacts: 0, runs: 0, lineages: 0 });
     const master = buildDocument(population('Proof A', 0));
     const file = writeDocument(temp, 'master-a.json', master);
+    primaryMaster = master;
+    primaryMasterFile = file;
     const first = await writer().execute(candidateInput(file, master));
     assert.deepEqual(first.terminal_counts, { inserted: 1140 });
     assert.deepEqual(first.database_delta, { matches: 1140, artifacts: 1, import_runs: 1, lineages: 1140 });
@@ -515,7 +557,7 @@ proofTest('Proof A/B: full 1,140 synthetic master inserts once then exact replay
     assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
 });
 
-proofTest(
+canaryProofTest(
     'Proof C: staged one-row and ten-row canaries share one parent master without duplicate matches',
     async () => {
         const before = await counts();
@@ -543,9 +585,9 @@ proofTest(
 );
 
 proofTest('Proof D: contract, authorization and divergent canonical conflicts rollback completely', async () => {
-    const master = buildDocument(population('Proof D', 3_000_000));
-    const base = writeDocument(temp, 'master-d.json', master);
-    await writer().execute(candidateInput(base, master));
+    assert.ok(primaryMaster && primaryMasterFile, 'Proof A must establish the canonical master first');
+    const master = primaryMaster;
+    const base = primaryMasterFile;
     const changed = structuredClone(master);
     changed.candidates[0].kickoff_at = '2022-08-02T12:30:00Z';
     const changedDocument = buildDocument(changed.candidates);
@@ -615,6 +657,19 @@ proofTest('Proof D: contract, authorization and divergent canonical conflicts ro
         }),
     });
     await expectZeroDelta(() => writer().execute(wrongTarget));
+    const wrongInstanceNonce = candidateInput(base, master, {
+        runtime: runtimeReceipt({
+            artifact: master.artifact,
+            sha256: base.sha256,
+            databaseIdentity: config.database,
+            serviceIdentity,
+            databaseInstanceOid,
+            databaseInstanceNonce: '00000000-0000-4000-8000-000000000099',
+            writerRole: config.writerUser,
+            codeRevision,
+        }),
+    });
+    await expectZeroDelta(() => writer().execute(wrongInstanceNonce));
     await expectZeroDelta(() => writer().execute(candidateInput(base, master, { provenance: null })));
     const duplicate = structuredClone(master);
     duplicate.candidates[1].id = duplicate.candidates[0].id;
@@ -670,8 +725,9 @@ proofTest('Proof D: contract, authorization and divergent canonical conflicts ro
 proofTest(
     'writer re-reads the hash-bound artifact after authorization and ignores mutated caller candidates',
     async () => {
-        const master = buildDocument(population('Proof artifact binding', 6_000_000));
-        const file = writeDocument(temp, 'master-bound-content.json', master);
+        assert.ok(primaryMaster && primaryMasterFile, 'Proof A must establish the canonical master first');
+        const master = primaryMaster;
+        const file = primaryMasterFile;
         const input = candidateInput(file, master);
         const originalHomeTeam = input.candidates[0].home_team;
         const boundWriter = writer({
@@ -679,7 +735,7 @@ proofTest(
                 input.candidates[0].home_team = 'Injected in-memory candidate';
             },
         });
-        assert.deepEqual((await boundWriter.execute(input)).terminal_counts, { inserted: 1140 });
+        assert.deepEqual((await boundWriter.execute(input)).terminal_counts, { exact_duplicate: 1140 });
         const persisted = await verifier.query('SELECT home_team FROM matches WHERE match_id = $1', [
             master.candidates[0].id,
         ]);
@@ -696,8 +752,9 @@ function sha256File(directory, name) {
 
 proofTest('Proof E/F: concurrent writers fail closed and writer role cannot mutate or bypass locks', async () => {
     const before = await counts();
-    const master = buildDocument(population('Proof E/F', 7_000_000));
-    const file = writeDocument(temp, 'master-ef.json', master);
+    assert.ok(primaryMaster && primaryMasterFile, 'Proof A must establish the canonical master first');
+    const master = primaryMaster;
+    const file = primaryMasterFile;
     const different = structuredClone(master);
     different.candidates[0].provider_status = 'scheduled';
     const differentDocument = buildDocument(different.candidates);
@@ -723,8 +780,8 @@ proofTest('Proof E/F: concurrent writers fail closed and writer role cannot muta
         error => error instanceof CanonicalInventoryWriterError && error.code === 'LOCK_BUSY'
     );
     releaseFirst();
-    assert.deepEqual((await first).terminal_counts, { inserted: 1140 });
-    assert.deepEqual(await counts(), addCounts(before, { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 }));
+    assert.deepEqual((await first).terminal_counts, { exact_duplicate: 1140 });
+    assert.deepEqual(await counts(), before);
     await assert.rejects(pool.query("UPDATE matches SET status = 'changed'"));
     await assert.rejects(pool.query('DELETE FROM matches'));
     await assert.rejects(pool.query('TRUNCATE matches'));

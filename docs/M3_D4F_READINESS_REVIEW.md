@@ -1196,12 +1196,13 @@ endpoint/capture/process/licence evidence.
 `V26.10__create_m3_canonical_inventory_contract.sql` is additive and was
 executed only against a task-specific PostgreSQL 15 tmpfs database. It adds the
 provider-scoped canonical identity and fixture protections, immutable
-artifact/import-run/lineage relations, a one-row target-local service identity
-and PostgreSQL database-OID binding, the restricted static lock function and
-the least-privilege writer contract. An environment owner must provision that
-binding for each target; the writer reads it back and requires the signed
-receipt to bind the same instance, so a similarly named/schema-compatible
-clone fails closed. Before it starts a transaction, the writer checks the
+artifact/import-run/lineage relations, a one-row target-local service identity,
+PostgreSQL database-OID and owner-provisioned instance-nonce binding, the
+restricted static lock function and the least-privilege writer contract. An
+environment owner must provision that binding for each target; the writer reads
+it back and requires the signed receipt to bind the same instance. Restore
+rebinds and rotates the nonce, so a similarly named/schema-compatible clone
+fails closed. Before it starts a transaction, the writer checks the
 V26.10 checksum ledger, exact lock-function ACLs, table grants, schema/TEMP
 denial, absence of inherited writer roles and that database-backed target
 binding. It was not applied to development, persistent M3 sandbox, staging or
@@ -1213,7 +1214,8 @@ It proved fresh insert of 1,140 matches plus one artifact, one import run and
 1,140 lineages; exact replay with zero match/artifact/run/lineage delta; a
 1-row then overlapping 10-row staged canary under the same parent master,
 followed by the full-master lineage transition (including exact
-parent/current-artifact deltas); full rollback for malformed,
+parent/current-artifact deltas); an exact full-master target-population check
+that rolls back an extra in-scope canonical row; full rollback for malformed,
 expired, out-of-scope and divergent candidate inputs; serializable/advisory
 lock contention; denied UPDATE/DELETE/TRUNCATE/DDL/direct table lock for the
 writer role; and pre-write custom backup restored into a fresh clone with

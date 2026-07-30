@@ -114,6 +114,7 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
         'service_identity',
         'database_identity',
         'database_instance_oid',
+        'database_instance_nonce',
         'schema_baseline',
         'writer_role',
     ]) {
@@ -129,6 +130,7 @@ function validateRuntimeAuthorization(receipt, binding, authority, now = Date.no
         receipt.target.database_identity !== binding.database_identity ||
         receipt.target.service_identity !== binding.service_identity ||
         receipt.target.database_instance_oid !== binding.database_instance_oid ||
+        receipt.target.database_instance_nonce !== binding.database_instance_nonce ||
         receipt.target.writer_role !== binding.writer_role
     ) {
         throw new CanonicalInventoryAuthorizationError('runtime authorization target identity mismatch');
