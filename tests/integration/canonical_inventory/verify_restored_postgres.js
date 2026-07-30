@@ -60,6 +60,7 @@ async function main() {
 }
 
 main().catch(error => {
+    if (error?.evidence) process.stderr.write(`${JSON.stringify({ code: error.code, evidence: error.evidence })}\n`);
     process.stderr.write(`${error.stack || error}\n`);
     process.exitCode = 1;
 });

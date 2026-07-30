@@ -291,7 +291,16 @@ class CanonicalInventoryWriter {
             !identity.fixture_index ||
             !identity.controlled_lock_function
         ) {
-            throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH');
+            throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH', {
+                migration_ledger_table: identity.migration_ledger_table,
+                target_identity_table: identity.target_identity_table,
+                artifact_table: identity.artifact_table,
+                run_table: identity.run_table,
+                lineage_table: identity.lineage_table,
+                provider_index: identity.provider_index,
+                fixture_index: identity.fixture_index,
+                controlled_lock_function: identity.controlled_lock_function,
+            });
         }
         const targetBinding = await client.query(
             `
