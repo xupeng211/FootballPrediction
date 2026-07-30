@@ -526,7 +526,7 @@ class CanonicalInventoryWriter {
                     -- constraint backed by a valid, ready, non-partial unique index.
                     AND EXISTS (
                         SELECT 1 FROM pg_constraint constraint_meta
-                        JOIN pg_index index_meta ON index_meta.oid = constraint_meta.conindid
+                        JOIN pg_index index_meta ON index_meta.indexrelid = constraint_meta.conindid
                         WHERE constraint_meta.conrelid = 'public.m3_canonical_target_identity'::regclass
                           AND constraint_meta.contype = 'u'
                           AND index_meta.indisunique
