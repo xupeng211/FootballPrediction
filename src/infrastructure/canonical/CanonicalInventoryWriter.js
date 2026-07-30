@@ -30,7 +30,7 @@ const EXPECTED_MATCHES_CHECK_EXPRESSIONS = Object.freeze({
         "league_name='premierleague'andseason=anyarray['2022/2023','2023/2024','2024/2025']isnottrueorcanonical_providerisnotnullandcanonical_provider='fotmob'andexternal_idisnotnull",
 });
 const EXPECTED_FIXTURE_INDEX_PREDICATE =
-    "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025''][]andcanonical_provider=''fotmob''";
+    "league_name=''premierleague''andseason=anyarray[''2022/2023'',''2023/2024'',''2024/2025'']andcanonical_provider=''fotmob''";
 
 class CanonicalInventoryWriterError extends Error {
     constructor(message, code = 'CANONICAL_WRITER_FAILURE', evidence = {}) {
@@ -248,7 +248,11 @@ class CanonicalInventoryWriter {
                              ORDER BY key_column.ordinal
                          ) = ARRAY['league_name', 'season', 'home_team', 'away_team']::name[]
                          AND regexp_replace(
-                             regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                             replace(
+                                 regexp_replace(lower(COALESCE(pg_get_expr(index_meta.indpred, index_meta.indrelid), '')), '::[a-z_ ]+', '', 'g'),
+                                 '[]',
+                                 ''
+                             ),
                              '[[:space:]()]',
                              '',
                              'g'
