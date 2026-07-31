@@ -10,6 +10,7 @@
 const crypto = require('node:crypto');
 const path = require('node:path');
 const fs = require('node:fs');
+const child_process = require('node:child_process');
 
 const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 const DEFAULT_UA = 'FootballPrediction-FotMobCandidateExporter/1.0';
@@ -24,53 +25,76 @@ const CANONICAL_COMPETITION = 'Premier League';
 // Provider status contract
 // ----------------------------------------------------------------
 
-/**
- * Versioned mapping this exporter produces. Must equal the single
- * authoritative definition in CanonicalInventoryContract.js.
- */
-const STATUS_MAPPING_VERSION = 'fotmob-status-to-matches-status/v1';
-
-/**
- * Allowed provider_status values per the canonical v2 contract.
- * Every exported candidate MUST carry one of these values.
- */
-const ALLOWED_PROVIDER_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled']);
+const {
+    ALLOWED_PROVIDER_STATUSES,
+    FOTMOB_STATUS_TO_APPLICATION_STATUS,
+    STATUS_MAPPING_VERSION,
+} = require('./FotMobStatusContract');
 
 /**
  * Derive a deterministic provider_status from a FotMob fixtures-page
  * `fixture.status` object.
  *
- * Priority (highest first):
- *   1. cancelled === true  →  cancelled
- *   2. finished  === true  →  finished
- *   3. reason.short indicates postponement  →  postponed
- *   4. otherwise           →  scheduled
+ * Only explicitly confirmed terminal states are accepted. Every other
+ * combination is treated as unknown and fails closed so callers can
+ * reject the fixture and block the season export.
  *
- * Contradictory combinations (e.g. cancelled && finished) fail closed.
- * Unknown / unprocessable status objects also fail closed.
+ * Allowed terminal states:
+ *   cancelled === true  && finished !== true  →  cancelled
+ *   finished  === true  && cancelled !== true →  finished
+ *   reason.short ∈ {Postponed, Postp}          →  postponed
+ *   (see scheduled rules below)                →  scheduled
+ *
+ * scheduled is ONLY returned when ALL of the following hold:
+ *   - started  === false or absent (must NOT be true)
+ *   - finished === false or absent (must NOT be true)
+ *   - cancelled === false or absent (must NOT be true)
+ *   - reason is absent, or reason.short is null/empty,
+ *     or reason.short is one of the known pre-match reason codes
+ *     that do NOT indicate postponement/cancellation/interruption
+ *   - no unknown extra boolean flags on the status object
+ *
+ * Fail-closed (status=null) for:
+ *   - started === true (match is in progress — not a terminal state)
+ *   - any non-boolean value for started/finished/cancelled
+ *   - contradictory flags (finished + cancelled)
+ *   - unknown reason.short values (including 'Suspended', 'Live',
+ *     'Interrupted', 'Cancelled' as reason short)
+ *   - missing / non-object fixtureStatus
  *
  * @param {object}  fixtureStatus  fixture.status from FotMob pageProps
  * @returns {{ status: string|null, error: string|null }}
- *   status — canonical provider_status value, or null on failure
- *   error  — failure reason, or null on success
  */
+/* eslint-disable-next-line complexity */
 function deriveProviderStatus(fixtureStatus) {
     if (!fixtureStatus || typeof fixtureStatus !== 'object') {
         return { status: null, error: 'missing_status_object' };
     }
 
-    const cancelled = fixtureStatus.cancelled === true;
+    // Every boolean flag MUST be a strict boolean if present.
+    for (const flag of ['started', 'finished', 'cancelled']) {
+        if (Object.prototype.hasOwnProperty.call(fixtureStatus, flag)) {
+            const value = fixtureStatus[flag];
+            if (typeof value !== 'boolean') {
+                return { status: null, error: `non_boolean_flag:${flag}=${typeof value}` };
+            }
+        }
+    }
+
+    const started = fixtureStatus.started === true;
     const finished = fixtureStatus.finished === true;
+    const cancelled = fixtureStatus.cancelled === true;
     const reasonShort =
         fixtureStatus.reason && typeof fixtureStatus.reason.short === 'string'
             ? fixtureStatus.reason.short
             : null;
 
-    // Contradictory: a match cannot be both finished and cancelled.
+    // Contradictory terminal states.
     if (finished && cancelled) {
         return { status: null, error: 'contradictory_status_flags:finished_and_cancelled' };
     }
 
+    // Explicit terminal states.
     if (cancelled) {
         return { status: 'cancelled', error: null };
     }
@@ -78,15 +102,38 @@ function deriveProviderStatus(fixtureStatus) {
         return { status: 'finished', error: null };
     }
 
-    // Postponement is indicated by reason code, not a boolean flag.
-    // Observed reason short values: 'Postponed', 'Postp'.
+    // Postponement — only when terminal flags are not set.
     if (reasonShort === 'Postponed' || reasonShort === 'Postp') {
         return { status: 'postponed', error: null };
     }
 
-    // Not finished, not cancelled, not postponed — treat as scheduled.
-    // This covers future matches and matches where status has not yet
-    // been updated to a terminal state.
+    // A match that has started but is not finished/cancelled/postponed
+    // is in an unknown intermediate state (e.g. live, suspended,
+    // interrupted, half-time). Fail closed — the exporter cannot
+    // determine the final status.
+    if (started) {
+        const detail = reasonShort ? `started_with_reason:${reasonShort}` : 'started_no_reason';
+        return { status: null, error: detail };
+    }
+
+    // Unknown / unexpected reason codes when the match has not started.
+    // Known benign reasons that appear for future scheduled fixtures:
+    //   - (empty / null / absent)  — no status annotation yet
+    //   - 'FT' is only expected on finished matches but can appear
+    //     briefly before boolean flags are updated; treat as
+    //     scheduled only when finished===false explicitly.
+    // Everything else (Suspended, Live, Interrupted, Cancelled as
+    // reason short, etc.) is unknown territory → fail closed.
+    if (reasonShort !== null && reasonShort !== '') {
+        // 'FT' with finished===false is ambiguous but can occur in
+        // edge cases; treat conservatively as scheduled since the
+        // boolean flag overrides the reason code.
+        if (reasonShort !== 'FT') {
+            return { status: null, error: `unknown_reason:${reasonShort}` };
+        }
+    }
+
+    // All checks passed — this is a future scheduled fixture.
     return { status: 'scheduled', error: null };
 }
 
@@ -833,9 +880,26 @@ async function processSeason(season, context) {
         };
     }
 
+    // Capture data for provenance retention — always included when
+    // we received bytes, regardless of parse/validation outcome.
+    const _capture = resp.bodyBytes
+        ? {
+              url,
+              bodyBytes: resp.bodyBytes,
+              httpStatus: resp.status,
+              contentType: resp.contentType,
+          }
+        : null;
+
     if (resp.status === 403 || resp.status === 429) {
         return {
-            seasonResult: { season, result: `blocked_http_${resp.status}`, candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: `blocked_http_${resp.status}`,
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: true,
@@ -845,7 +909,13 @@ async function processSeason(season, context) {
 
     if (resp.status !== 200) {
         return {
-            seasonResult: { season, result: `http_${resp.status}`, candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: `http_${resp.status}`,
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: false,
@@ -856,7 +926,13 @@ async function processSeason(season, context) {
     const nd = extractNextData(resp.body);
     if (!nd) {
         return {
-            seasonResult: { season, result: 'no_next_data', candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: 'no_next_data',
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: false,
@@ -873,6 +949,7 @@ async function processSeason(season, context) {
                 result: verdict.reason,
                 candidates: 0,
                 identity: buildSafeIdentitySummary(identity),
+                _capture,
             },
             candidates: [],
             requestsUsed: 1,
@@ -890,25 +967,30 @@ async function processSeason(season, context) {
     });
 
     // Audit closure invariant: every fixture must be classified exactly once.
-    // Rejected (contract-invalid) fixtures block season completion.
-    const auditCloses =
-        extraction.audit.raw_fixture_count ===
+    // Accepted + Excluded + Rejected + StatusUnknown = Raw.
+    const classifiedSum =
         extraction.audit.accepted_fixture_count +
-            extraction.audit.excluded_fixture_count +
-            extraction.audit.rejected_fixture_count;
+        extraction.audit.excluded_fixture_count +
+        extraction.audit.rejected_fixture_count +
+        extraction.audit.status_unknown_fixture_count;
+    const auditCloses = extraction.audit.raw_fixture_count === classifiedSum;
 
     if (!auditCloses || extraction.audit.rejected_fixture_count > 0 || extraction.audit.status_unknown_fixture_count > 0) {
         const errs = [...validation.errors];
+        if (!auditCloses) {
+            errs.push(
+                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},` +
+                    `accepted=${extraction.audit.accepted_fixture_count},` +
+                    `excluded=${extraction.audit.excluded_fixture_count},` +
+                    `rejected=${extraction.audit.rejected_fixture_count},` +
+                    `status_unknown=${extraction.audit.status_unknown_fixture_count}`
+            );
+        }
         if (extraction.audit.rejected_fixture_count > 0) {
             errs.push(`unexpected_rejected_fixtures:${extraction.audit.rejected_fixture_count}`);
         }
         if (extraction.audit.status_unknown_fixture_count > 0) {
             errs.push(`unknown_provider_status:${extraction.audit.status_unknown_fixture_count}`);
-        }
-        if (!auditCloses) {
-            errs.push(
-                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},sum=${extraction.audit.accepted_fixture_count + extraction.audit.excluded_fixture_count + extraction.audit.rejected_fixture_count + extraction.audit.status_unknown_fixture_count}`
-            );
         }
         Object.assign(validation, { valid: false, errors: errs });
     }
@@ -925,19 +1007,67 @@ async function processSeason(season, context) {
             },
             audit: extraction.audit,
             validation,
-            // Raw retention context (null when not requested or season failed)
-            _capture: {
-                url,
-                bodyBytes: resp.bodyBytes,
-                httpStatus: resp.status,
-                contentType: resp.contentType,
-            },
+            _capture,
         },
         candidates: seasonCandidates,
         requestsUsed: 1,
         stop: false,
         succeeded: true,
     };
+}
+
+/**
+ * Resolve the trusted 40-hex git revision from HEAD.
+ * Fails closed when the worktree is dirty, the repository cannot be
+ * identified, or the revision is not a plausible full-length SHA.
+ *
+ * @param {object} [options]
+ * @param {string} [options.repositoryRoot] — absolute path to the Git repo
+ * @param {object} [options.deps] — { execSync } for testability
+ * @returns {{ revision: string, dirty: false }}
+ */
+function resolveGitState(options = {}) {
+    const repositoryRoot = options.repositoryRoot
+        ? path.resolve(options.repositoryRoot)
+        : path.resolve(__dirname, '..', '..', '..');
+    const execSync = (options.deps && options.deps.execSync) || child_process.execSync;
+    const execOptions = { cwd: repositoryRoot, encoding: 'utf8', timeout: 10_000 };
+
+    // Detect uncommitted change or untracked file — fail closed.
+    let statusOutput;
+    try {
+        statusOutput = execSync('git status --porcelain', execOptions);
+    } catch (err) {
+        throw Object.assign(
+            new Error(`git status failed: ${err.message}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (statusOutput.trim().length > 0) {
+        throw Object.assign(
+            new Error('git worktree is dirty — commit or stash changes before exporting'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Resolve the full 40-hex revision.
+    let revision;
+    try {
+        revision = execSync('git rev-parse HEAD', execOptions).trim();
+    } catch (err) {
+        throw Object.assign(
+            new Error(`git rev-parse failed: ${err.message}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (!/^[0-9a-f]{40}$/.test(revision)) {
+        throw Object.assign(
+            new Error(`git revision is not a valid 40-hex SHA: ${revision}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    return { revision, dirty: false };
 }
 
 /**
@@ -1008,13 +1138,14 @@ async function exportCandidates(options = {}) {
         const captureCompletedAt = _clock();
 
         requestCount += outcome.requestsUsed;
-        seasonResults.push(outcome.seasonResult);
         allCandidates.push(...outcome.candidates);
 
-        // Raw response retention (before any delay, immediately after the request)
-        if (outcome.succeeded && retainRaw && outcome.seasonResult._capture) {
-            const cap = outcome.seasonResult._capture;
-            if (cap.bodyBytes && cap.bodyBytes.length > 0) {
+        // Raw response retention — capture evidence BEFORE parsing,
+        // so failed parses and identity mismatches still leave raw.
+        // In v2 mode, every HTTP response with bytes must be retained.
+        const cap = outcome.seasonResult._capture;
+        if (cap && cap.bodyBytes && cap.bodyBytes.length > 0) {
+            if (retainRaw) {
                 try {
                     const retention = writeRawRetention(
                         retainRaw.outputDir,
@@ -1046,16 +1177,23 @@ async function exportCandidates(options = {}) {
                         { code: 'SAFETY_ERROR' }
                     );
                 }
-            } else if (retainRaw) {
+            } else if (outputSchema === 'canonical-v2') {
                 throw Object.assign(
-                    new Error(`raw retention failed: no response bytes for season ${canonicalSeasons[i]}`),
+                    new Error(`raw retention failed: no retention config for season ${canonicalSeasons[i]}`),
                     { code: 'SAFETY_ERROR' }
                 );
             }
+        } else if (outputSchema === 'canonical-v2' && outcome.succeeded) {
+            // Succeeded seasons must always have capture data in v2 mode.
+            throw Object.assign(
+                new Error(`raw retention failed: no response bytes for season ${canonicalSeasons[i]}`),
+                { code: 'SAFETY_ERROR' }
+            );
         }
 
         // Strip internal capture data from season results before returning
         delete outcome.seasonResult._capture;
+        seasonResults.push(outcome.seasonResult);
 
         if (outcome.stop) {
             break;
@@ -1224,8 +1362,18 @@ function buildOutputDocument(candidates, snapshot, meta) {
 
 /**
  * Build a canonical-inventory-artifact/v2 output document.
- * Includes provider_status, status_mapping_version, and dual hashes
- * (identity_projection_hash for v1 compatibility, business_hash for full v2).
+ *
+ * Contract requirements (from CanonicalInventoryContract.js):
+ *   schema_version  = 'canonical-inventory-artifact/v2'
+ *   artifact.kind   = 'master'  (this exporter always produces master)
+ *   artifact.competition, seasons, candidate_count, per_season_counts
+ *   artifact.business_hash, artifact.identity_projection_hash
+ *   artifact.status_mapping_version
+ *   artifact.synthetic_test_only
+ *   candidates       — sorted deterministic array
+ *
+ * The artifact field 'source_provider' is accepted by the formal
+ * unknown-field policy (the contract does not reject it).
  */
 function buildV2OutputDocument(candidates, snapshot, meta, v2Snapshot) {
     const sorted = [...candidates].sort((a, b) => {
@@ -1237,6 +1385,7 @@ function buildV2OutputDocument(candidates, snapshot, meta, v2Snapshot) {
         schema_version: meta.schema_version,
         extracted_at: meta.extracted_at,
         artifact: {
+            kind: 'master',
             source_provider: snapshot.source_provider,
             competition: snapshot.competition,
             seasons: snapshot.seasons,
@@ -1372,45 +1521,69 @@ function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
     const rawFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.html`;
     const rawFilePath = path.join(safeDir, rawFileName);
 
-    // Atomic write: temp file → rename
-    const tempPath = rawFilePath + '.tmp.' + Date.now();
-    try {
-        fileSystem.writeFileSync(tempPath, bodyBytes, { flag: 'wx' });
+    // Paired manifest file written alongside the raw HTML as evidence unit.
+    const manifestFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.manifest.json`;
+    const manifestFilePath = path.join(safeDir, manifestFileName);
+    const manifest = buildCaptureManifest(context, bodySha256, byteSize, rawFileName);
 
-        // Reject silent overwrite of a different existing file
-        let existingStat;
+    // Atomic write: temp files → rename (paired evidence unit)
+    const tempHtmlPath = rawFilePath + '.tmp.' + Date.now();
+    const tempManifestPath = manifestFilePath + '.tmp.' + Date.now();
+    try {
+        // Write HTML bytes and manifest JSON in parallel using wx (exclusive create)
+        fileSystem.writeFileSync(tempHtmlPath, bodyBytes, { flag: 'wx' });
+        fileSystem.writeFileSync(tempManifestPath, JSON.stringify(manifest, null, 2) + '\n', {
+            encoding: 'utf8',
+            flag: 'wx',
+        });
+
+        // Reject silent overwrite of a different existing file (check both)
+        let existingHtmlStat;
         try {
-            existingStat = fileSystem.lstatSync(rawFilePath);
+            existingHtmlStat = fileSystem.lstatSync(rawFilePath);
         } catch {
-            existingStat = null;
+            existingHtmlStat = null;
         }
-        if (existingStat) {
-            bestEffortUnlink(fileSystem, tempPath);
-            const existingBytes = fileSystem.readFileSync(rawFilePath);
-            const existingSha = crypto.createHash('sha256').update(existingBytes).digest('hex');
-            if (existingSha !== bodySha256) {
-                throw Object.assign(
-                    new Error(`raw retention refused: target ${rawFileName} exists with different content`),
-                    { code: 'SAFETY_ERROR' }
-                );
+        let existingManifestStat;
+        try {
+            existingManifestStat = fileSystem.lstatSync(manifestFilePath);
+        } catch {
+            existingManifestStat = null;
+        }
+        if (existingHtmlStat || existingManifestStat) {
+            bestEffortUnlink(fileSystem, tempHtmlPath);
+            bestEffortUnlink(fileSystem, tempManifestPath);
+            if (existingHtmlStat) {
+                const existingBytes = fileSystem.readFileSync(rawFilePath);
+                const existingSha = crypto.createHash('sha256').update(existingBytes).digest('hex');
+                if (existingSha !== bodySha256) {
+                    throw Object.assign(
+                        new Error(`raw retention refused: target ${rawFileName} exists with different content`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
             }
-            // Same content already present — idempotent, leave existing file
+            // Same content already present — idempotent, leave existing files
             return {
-                manifest: buildCaptureManifest(context, bodySha256, byteSize, rawFileName),
+                manifest,
+                manifestFilePath,
                 rawFilePath,
                 bodySha256,
                 byteSize,
             };
         }
 
-        fileSystem.renameSync(tempPath, rawFilePath);
+        fileSystem.renameSync(tempHtmlPath, rawFilePath);
+        fileSystem.renameSync(tempManifestPath, manifestFilePath);
     } catch (err) {
-        bestEffortUnlink(fileSystem, tempPath);
+        bestEffortUnlink(fileSystem, tempHtmlPath);
+        bestEffortUnlink(fileSystem, tempManifestPath);
         throw err;
     }
 
     return {
-        manifest: buildCaptureManifest(context, bodySha256, byteSize, rawFileName),
+        manifest,
+        manifestFilePath,
         rawFilePath,
         bodySha256,
         byteSize,
@@ -1488,6 +1661,9 @@ module.exports = {
     buildV2SummaryDocument,
     verifyOutputPathSafety,
     writeOutputFiles,
+
+    // Git state
+    resolveGitState,
 
     // Raw retention
     writeRawRetention,

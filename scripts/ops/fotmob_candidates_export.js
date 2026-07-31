@@ -20,6 +20,7 @@ const {
     canonicalizeCompetition,
     canonicalizeLeagueId,
     canonicalizeLeagueSlug,
+    resolveGitState,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 
 const CANONICAL_MAKE_TARGET = 'make data-fotmob-candidates-network-export';
@@ -260,6 +261,21 @@ function writeInputErrors(stderr, errors) {
 
 function createExportOptions(args, deps) {
     const competition = canonicalizeCompetition(args.competition);
+    const repositoryRoot = deps.repositoryRoot
+        ? path.resolve(deps.repositoryRoot)
+        : path.resolve(__dirname, '..', '..');
+
+    // Resolve trusted git revision — fails closed on dirty worktree.
+    // Tests and synthetic environments may inject a pre-resolved revision
+    // via deps.collectorCodeRevision to bypass the git check.
+    let collectorCodeRevision;
+    if (!deps.collectorCodeRevision) {
+        const gitState = resolveGitState({ repositoryRoot, deps: deps.gitDeps });
+        collectorCodeRevision = gitState.revision;
+    } else {
+        collectorCodeRevision = deps.collectorCodeRevision;
+    }
+
     const options = {
         leagueId: canonicalizeLeagueId(args.leagueId),
         competition,
@@ -279,7 +295,7 @@ function createExportOptions(args, deps) {
         options.retainRawResponses = {
             outputDir: args.retainRawResponses,
             collectorComponent: 'FotMobCandidateExporter',
-            collectorCodeRevision: deps.collectorCodeRevision || 'unknown',
+            collectorCodeRevision,
         };
     }
 
@@ -337,6 +353,9 @@ function writeRequestedOutput(args, result, deps, stderr) {
                 stderr.write(
                     `Retained raw: ${retention.rawFilePath} (SHA-256: ${retention.bodySha256}, ${retention.byteSize} bytes)\n`
                 );
+                if (retention.manifestFilePath) {
+                    stderr.write(`  manifest: ${retention.manifestFilePath}\n`);
+                }
             }
         }
 
@@ -349,13 +368,43 @@ function writeRequestedOutput(args, result, deps, stderr) {
 
 /**
  * Atomic write for v2 output files.
+ * Validates the artifact document against the formal canonical inventory
+ * contract before writing, and rejects silent overwrite of existing files
+ * with different content.
  */
 function writeV2OutputFiles(outputDir, candidateDoc, summaryDoc, deps) {
     const fs = require('node:fs');
+    const crypto = require('node:crypto');
     verifyOutputPathSafety(outputDir, { repositoryRoot: deps.repositoryRoot });
+
+    // Formal contract validation before any file write (P1-1).
+    // This enforces all_seasons_complete, master population, hash parity,
+    // and every candidate-level invariant from CanonicalInventoryContract.js.
+    const {
+        validateArtifactDocument,
+    } = require('../../src/infrastructure/canonical/CanonicalInventoryContract');
+    validateArtifactDocument(candidateDoc);
 
     const candidatePath = path.join(outputDir, 'canonical-inventory-artifact.v2.json');
     const summaryPath = path.join(outputDir, 'canonical-inventory-artifact.v2.summary.json');
+
+    // Reject silent overwrite of existing files with different content (P2-3)
+    const existingCandidateBytes = (() => {
+        try { return fs.readFileSync(candidatePath); } catch { return null; }
+    })();
+    if (existingCandidateBytes) {
+        const newBytes = Buffer.from(JSON.stringify(candidateDoc, null, 2) + '\n', 'utf8');
+        const existingSha = crypto.createHash('sha256').update(existingCandidateBytes).digest('hex');
+        const newSha = crypto.createHash('sha256').update(newBytes).digest('hex');
+        if (existingSha !== newSha) {
+            throw Object.assign(
+                new Error('v2 artifact overwrite refused: target exists with different content'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        // Same content — idempotent, skip write
+        return;
+    }
 
     const tempCandidate = candidatePath + '.tmp.' + Date.now();
     const tempSummary = summaryPath + '.tmp.' + Date.now();
@@ -412,8 +461,11 @@ async function main(argv = process.argv.slice(2), deps = {}) {
         const runExporter = deps.exportCandidates || exportCandidates;
         const result = await runExporter(createExportOptions(args, deps));
 
-        // Print summary
-        const summaryDoc = buildSummaryDocument(result.candidates, result.snapshot, result.meta);
+        // Print summary — use v2 summary document for canonical-v2 output
+        const isV2 = result.meta.schema_version === 'canonical-inventory-artifact/v2';
+        const summaryDoc = isV2
+            ? buildV2SummaryDocument(result.candidates, result.snapshot, result.meta, result.v2Snapshot)
+            : buildSummaryDocument(result.candidates, result.snapshot, result.meta);
         stdout.write(JSON.stringify(summaryDoc, null, 2) + '\n');
 
         // Validate

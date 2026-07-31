@@ -128,9 +128,13 @@ all 58 rows is not uniquely attributable.
   `canonical-inventory-artifact/v2` schema that includes `provider_status`
   (fail-closed `fotmob-status-to-matches-status/v1`), `status_mapping_version`,
   dual hashes (identity projection + full business), and raw response provenance
-  retention with SHA-256 capture manifests. The v2 exporter
+  retention with SHA-256 capture manifests persisted to disk alongside raw HTML
+  as a paired evidence unit, and a shared dependency-free
+  `FotMobStatusContract.js` leaf module to prevent status constant drift. The v2 exporter
   (`FotMobCandidateExporter.js`) and CLI (`scripts/ops/fotmob_candidates_export.js`)
-  support `--output-schema=canonical-v2` and `--retain-raw-responses`. This
+  support `--output-schema=canonical-v2` and `--retain-raw-responses` with
+  git-revision binding (clean worktree required), overwrite protection, and
+  formal `validateArtifactDocument()` contract enforcement before file write. This
   resolves the status-field gap. No inventory writer, link or import has been
   authorized.
 - No network, database write, migration, new identity generation or legacy
@@ -150,7 +154,7 @@ all 58 rows is not uniquely attributable.
 Do not start automatically. Recommended next task only after user confirmation:
 the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`
 artifact contract and raw response provenance retention is now implemented
-(PR pending). Future inventory is 1,140 candidates; the next step is a
+(PR #1813 in corrective review). Future inventory is 1,140 candidates; the next step is a
 separate future canonical FotMob writer as a `data-*`-gated business milestone.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
