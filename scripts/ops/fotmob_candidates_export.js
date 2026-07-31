@@ -21,7 +21,12 @@ const {
     canonicalizeLeagueId,
     canonicalizeLeagueSlug,
     resolveGitState,
+    validateV2SummaryAgainstArtifact,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+
+const {
+    validateArtifactDocument,
+} = require('../../src/infrastructure/canonical/CanonicalInventoryContract');
 
 const CANONICAL_MAKE_TARGET = 'make data-fotmob-candidates-network-export';
 const TRUE_LIKE_NETWORK_VALUES = new Set(['yes', 'true', '1', 'on']);
@@ -367,71 +372,192 @@ function writeRequestedOutput(args, result, deps, stderr) {
 }
 
 /**
- * Atomic write for v2 output files.
- * Validates the artifact document against the formal canonical inventory
- * contract before writing, and rejects silent overwrite of existing files
- * with different content.
+ * Atomic write for v2 output files with paired integrity enforcement.
+ *
+ * The validator enforces that the artifact + summary form a complete
+ * evidence pair — partial state, symlinks, and content mismatches
+ * are all rejected with SAFETY_ERROR.
+ *
+ * Sequence:
+ *   1. Formal contract validation of candidateDoc
+ *   2. Summary-to-artifact consistency validation
+ *   3. Both-or-neither existence check (lstat, not stat)
+ *   4. Symlink / non-regular-file rejection
+ *   5. Idempotent same-content check when both exist
+ *   6. Atomic write with partial-rename rollback
+ *   7. Final post-write verification
  */
-function writeV2OutputFiles(outputDir, candidateDoc, summaryDoc, deps) {
-    const fs = require('node:fs');
+/* eslint-disable-next-line complexity */
+function writeV2OutputFiles(outputDir, candidateDoc, summaryDoc, deps, options = {}) {
     const crypto = require('node:crypto');
+    const fileSystem = deps.fileSystem || fs;
     verifyOutputPathSafety(outputDir, { repositoryRoot: deps.repositoryRoot });
 
-    // Formal contract validation before any file write (P1-1).
-    // This enforces all_seasons_complete, master population, hash parity,
-    // and every candidate-level invariant from CanonicalInventoryContract.js.
-    const {
-        validateArtifactDocument,
-    } = require('../../src/infrastructure/canonical/CanonicalInventoryContract');
-    validateArtifactDocument(candidateDoc);
+    // Step 1: Formal contract validation.
+    validateArtifactDocument(candidateDoc, {
+        allowSyntheticTestOnly: options.allowSyntheticTestOnly === true,
+    });
+
+    // Step 2: Summary-to-artifact consistency.
+    validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc);
 
     const candidatePath = path.join(outputDir, 'canonical-inventory-artifact.v2.json');
     const summaryPath = path.join(outputDir, 'canonical-inventory-artifact.v2.summary.json');
+    const candidateBytes = Buffer.from(JSON.stringify(candidateDoc, null, 2) + '\n', 'utf8');
+    const summaryBytes = Buffer.from(JSON.stringify(summaryDoc, null, 2) + '\n', 'utf8');
+    const candidateSha = crypto.createHash('sha256').update(candidateBytes).digest('hex');
+    const summarySha = crypto.createHash('sha256').update(summaryBytes).digest('hex');
 
-    // Reject silent overwrite of existing files with different content (P2-3)
-    const existingCandidateBytes = (() => {
-        try { return fs.readFileSync(candidatePath); } catch { return null; }
-    })();
-    if (existingCandidateBytes) {
-        const newBytes = Buffer.from(JSON.stringify(candidateDoc, null, 2) + '\n', 'utf8');
-        const existingSha = crypto.createHash('sha256').update(existingCandidateBytes).digest('hex');
-        const newSha = crypto.createHash('sha256').update(newBytes).digest('hex');
-        if (existingSha !== newSha) {
+    // 5.1 Step 3: Both-or-neither existence check via lstat (no symlink following).
+    let existingCandidateStat;
+    try { existingCandidateStat = fileSystem.lstatSync(candidatePath); } catch { existingCandidateStat = null; }
+    let existingSummaryStat;
+    try { existingSummaryStat = fileSystem.lstatSync(summaryPath); } catch { existingSummaryStat = null; }
+
+    const candidateExists = existingCandidateStat !== null;
+    const summaryExists = existingSummaryStat !== null;
+
+    // 5.1 — Partial state: only one file exists.
+    if (candidateExists !== summaryExists) {
+        throw Object.assign(
+            new Error(
+                `v2 artifact pair integrity violated: ` +
+                `artifact=${candidateExists ? 'present' : 'absent'}, ` +
+                `summary=${summaryExists ? 'present' : 'absent'}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // 5.1 — Symlinks and non-regular files rejected.
+    if (candidateExists && (!existingCandidateStat.isFile() || existingCandidateStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error('v2 artifact overwrite refused: artifact is not a regular file'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (summaryExists && (!existingSummaryStat.isFile() || existingSummaryStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error('v2 artifact overwrite refused: summary is not a regular file'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // 5.2 — Both files exist: verify paired integrity.
+    if (candidateExists) {
+        const existingCandidateBytes = fileSystem.readFileSync(candidatePath);
+        const existingCandidateSha = crypto.createHash('sha256').update(existingCandidateBytes).digest('hex');
+        const existingSummaryBytes = fileSystem.readFileSync(summaryPath);
+        const existingSummarySha = crypto.createHash('sha256').update(existingSummaryBytes).digest('hex');
+
+        if (existingCandidateSha !== candidateSha) {
             throw Object.assign(
                 new Error('v2 artifact overwrite refused: target exists with different content'),
                 { code: 'SAFETY_ERROR' }
             );
         }
-        // Same content — idempotent, skip write
+        if (existingSummarySha !== summarySha) {
+            throw Object.assign(
+                new Error('v2 artifact overwrite refused: summary exists with different content (but artifact matches)'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Both files match — idempotent success.
         return;
     }
 
+    // 5.3 — Neither file exists: atomic write of both.
     const tempCandidate = candidatePath + '.tmp.' + Date.now();
     const tempSummary = summaryPath + '.tmp.' + Date.now();
 
     try {
-        fs.writeFileSync(tempCandidate, JSON.stringify(candidateDoc, null, 2) + '\n', {
-            encoding: 'utf8',
-            flag: 'wx',
-        });
-        fs.writeFileSync(tempSummary, JSON.stringify(summaryDoc, null, 2) + '\n', {
-            encoding: 'utf8',
-            flag: 'wx',
-        });
-        fs.renameSync(tempCandidate, candidatePath);
-        fs.renameSync(tempSummary, summaryPath);
+        fileSystem.writeFileSync(tempCandidate, candidateBytes, { flag: 'wx' });
+        fileSystem.writeFileSync(tempSummary, summaryBytes, { flag: 'wx' });
+
+        // Verify temp files.
+        const tempCandidateBytes = fileSystem.readFileSync(tempCandidate);
+        if (crypto.createHash('sha256').update(tempCandidateBytes).digest('hex') !== candidateSha) {
+            throw Object.assign(
+                new Error('v2 artifact write failed: temp artifact verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const tempSummaryBytes = fileSystem.readFileSync(tempSummary);
+        if (crypto.createHash('sha256').update(tempSummaryBytes).digest('hex') !== summarySha) {
+            throw Object.assign(
+                new Error('v2 artifact write failed: temp summary verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Rename artifact first, then summary.
+        fileSystem.renameSync(tempCandidate, candidatePath);
+
+        try {
+            fileSystem.renameSync(tempSummary, summaryPath);
+        } catch (summaryRenameErr) {
+            // 5.3: Summary rename failed — rollback the just-created final artifact.
+            bestEffortUnlink(fileSystem, candidatePath);
+            bestEffortUnlink(fileSystem, tempSummary);
+            throw Object.assign(
+                new Error(`v2 artifact write failed: summary rename error: ${summaryRenameErr.message}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // 5.3: Final verification — re-read both files.
+        let finalCandidateBytes;
+        try { finalCandidateBytes = fileSystem.readFileSync(candidatePath); } catch {
+            throw Object.assign(
+                new Error('v2 artifact write failed: final artifact read failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const finalCandidateSha = crypto.createHash('sha256').update(finalCandidateBytes).digest('hex');
+        if (finalCandidateSha !== candidateSha) {
+            bestEffortUnlink(fileSystem, candidatePath);
+            bestEffortUnlink(fileSystem, summaryPath);
+            throw Object.assign(
+                new Error('v2 artifact write failed: final artifact verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        let finalSummaryBytes;
+        try { finalSummaryBytes = fileSystem.readFileSync(summaryPath); } catch {
+            bestEffortUnlink(fileSystem, candidatePath);
+            bestEffortUnlink(fileSystem, summaryPath);
+            throw Object.assign(
+                new Error('v2 artifact write failed: final summary read failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const finalSummarySha = crypto.createHash('sha256').update(finalSummaryBytes).digest('hex');
+        if (finalSummarySha !== summarySha) {
+            bestEffortUnlink(fileSystem, candidatePath);
+            bestEffortUnlink(fileSystem, summaryPath);
+            throw Object.assign(
+                new Error('v2 artifact write failed: final summary verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
     } catch (err) {
-        try {
-            fs.unlinkSync(tempCandidate);
-        } catch (cleanupErr) {
-            void cleanupErr;
-        }
-        try {
-            fs.unlinkSync(tempSummary);
-        } catch (cleanupErr) {
-            void cleanupErr;
-        }
+        // Clean up any temp files — best-effort, do not mask the original error.
+        bestEffortUnlink(fileSystem, tempCandidate);
+        bestEffortUnlink(fileSystem, tempSummary);
         throw err;
+    }
+}
+
+/**
+ * Best-effort unlink used during atomic-write cleanup.
+ */
+function bestEffortUnlink(fileSystem, filePath) {
+    try {
+        fileSystem.unlinkSync(filePath);
+    } catch (cleanupError) {
+        void cleanupError;
     }
 }
 
@@ -510,5 +636,7 @@ module.exports = {
     validateNetworkAuthorization,
     normaliseNetworkAuthorizationValue,
     createExportOptions,
+    writeV2OutputFiles,
+    bestEffortUnlink,
     USAGE,
 };

@@ -3,10 +3,13 @@
 // lifecycle: permanent
 // Unit tests for FotMobCandidateExporter — fully mocked, no network.
 
+/* eslint-disable max-lines */
+
 const test = require('node:test');
 const assert = require('node:assert');
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const {
@@ -948,6 +951,556 @@ test('CLI parseArgs supports --output-schema and --retain-raw-responses as separ
 
 /* prettier-ignore */
 test('CLI usage string mentions v2 options', () => { const { USAGE } = require('../../scripts/ops/fotmob_candidates_export'); assert.match(USAGE, /output-schema/); assert.match(USAGE, /canonical-v2/); assert.match(USAGE, /retain-raw-responses/); assert.match(USAGE, /provider_status/); });
+
+// =================================================================
+// Pair Integrity: raw + manifest (section 6.1)
+// =================================================================
+
+test('raw+manifest: only raw file (no manifest) → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_rm_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        // Create only the raw file, leave manifest absent
+        fs.writeFileSync(path.join(tmpDir, rawName), bodyBytes);
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: only manifest file (no raw) → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_mo_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-2</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        // Create only the manifest file, leave raw absent
+        fs.writeFileSync(path.join(tmpDir, manifestName), JSON.stringify({ test: true }));
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: manifest body_sha256 wrong → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_mh_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-3</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        // Create both files but manifest has wrong body_sha256
+        fs.writeFileSync(path.join(tmpDir, rawName), bodyBytes);
+        const badManifest = buildCaptureManifest(ctx, '0000000000000000000000000000000000000000000000000000000000000000', bodyBytes.length, rawName);
+        fs.writeFileSync(path.join(tmpDir, manifestName), JSON.stringify(badManifest, null, 2) + '\n');
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: manifest body_byte_size wrong → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_mbs_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-4</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        fs.writeFileSync(path.join(tmpDir, rawName), bodyBytes);
+        const badManifest = buildCaptureManifest(ctx, sha, 99999, rawName); // wrong byte_size
+        fs.writeFileSync(path.join(tmpDir, manifestName), JSON.stringify(badManifest, null, 2) + '\n');
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: manifest raw_file_relative_path wrong → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_mrp_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-5</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        fs.writeFileSync(path.join(tmpDir, rawName), bodyBytes);
+        const badManifest = buildCaptureManifest(ctx, sha, bodyBytes.length, 'wrong-file-name.html');
+        fs.writeFileSync(path.join(tmpDir, manifestName), JSON.stringify(badManifest, null, 2) + '\n');
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: raw is symlink → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_rs_');
+    const realDir = fs.mkdtempSync('/tmp/m3d2bf_pair_rs_real_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-6</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        const realRawPath = path.join(realDir, rawName);
+        const manifestPath_sl = path.join(tmpDir, manifestName);
+        // Raw is a symlink to a real file in another directory
+        fs.writeFileSync(realRawPath, bodyBytes);
+        fs.symlinkSync(realRawPath, path.join(tmpDir, rawName));
+        const correctSha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const correctManifest = buildCaptureManifest(ctx, correctSha, bodyBytes.length, rawName);
+        fs.writeFileSync(manifestPath_sl, JSON.stringify(correctManifest, null, 2) + '\n');
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+        bestEffort(() => fs.rmSync(realDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: manifest is symlink → SAFETY_ERROR', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_ms_');
+    const realDir = fs.mkdtempSync('/tmp/m3d2bf_pair_ms_real_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-7</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        const realManifestPath = path.join(realDir, manifestName);
+        // Manifest is a symlink to a real file in another directory
+        fs.writeFileSync(path.join(tmpDir, rawName), bodyBytes);
+        const correctManifest = buildCaptureManifest(ctx, sha, bodyBytes.length, rawName);
+        fs.writeFileSync(realManifestPath, JSON.stringify(correctManifest, null, 2) + '\n');
+        fs.symlinkSync(realManifestPath, path.join(tmpDir, manifestName));
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+        bestEffort(() => fs.rmSync(realDir, { recursive: true, force: true }));
+    }
+});
+
+test('raw+manifest: manifest rename failure → no orphaned final raw file', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_pair_rf_');
+    try {
+        const bodyBytes = Buffer.from('<html>pair-test-rename-fail</html>', 'utf8');
+        const ctx = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-01T00:00:00Z',
+            captureCompletedAt: '2026-08-01T00:00:01Z',
+            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            networkAuthorizationMode: 'test',
+        };
+        const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const rawName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.html`;
+        const manifestName = `fotmob-fixtures-47-2022_2023-${sha.slice(0, 12)}.manifest.json`;
+        const finalRawPath = path.join(tmpDir, rawName);
+        const finalManifestPath = path.join(tmpDir, manifestName);
+        // Simulate rename failure: renameSync succeeds for raw but throws for manifest
+        const realRenameSync = fs.renameSync;
+        let renameCount = 0;
+        const mockFs = {
+            ...fs,
+            renameSync: (src, dst) => {
+                renameCount += 1;
+                if (renameCount === 2 && dst === finalManifestPath) {
+                    throw new Error('simulated manifest rename failure');
+                }
+                return realRenameSync(src, dst);
+            },
+        };
+        assert.throws(
+            () => writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo', fileSystem: mockFs }),
+            { code: 'SAFETY_ERROR' }
+        );
+        // Verify the raw file was rolled back (deleted after rename error)
+        assert.equal(fs.existsSync(finalRawPath), false, 'orphaned raw file should not exist after rollback');
+        assert.equal(fs.existsSync(finalManifestPath), false, 'manifest should not exist');
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+// =================================================================
+// Pair Integrity: validateV2SummaryAgainstArtifact (section 5.4)
+// =================================================================
+
+test('summary: validateV2SummaryAgainstArtifact passes for consistent pair', () => {
+    const { validateV2SummaryAgainstArtifact } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+    const candidateDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        artifact: {
+            source_provider: 'FotMob', competition: 'Premier League',
+            per_season_counts: { '2022/2023': 380 },
+            identity_projection_hash: 'aaa111', business_hash: 'bbb222',
+            status_mapping_version: STATUS_MAPPING_VERSION,
+        },
+        candidates: new Array(380).fill(null),
+    };
+    const summaryDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        summary: {
+            total_candidates: 380, per_season: { '2022/2023': 380 },
+            source_provider: 'FotMob', competition: 'Premier League',
+            identity_projection_hash: 'aaa111', business_hash: 'bbb222',
+            status_mapping_version: STATUS_MAPPING_VERSION,
+        },
+    };
+    // Should not throw
+    validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc);
+});
+
+test('summary: validateV2SummaryAgainstArtifact rejects total_candidates mismatch', () => {
+    const { validateV2SummaryAgainstArtifact } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+    const candidateDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        artifact: { source_provider: 'FotMob', competition: 'Premier League', per_season_counts: { '2022/2023': 380 }, identity_projection_hash: 'aaa111', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+        candidates: new Array(380).fill(null),
+    };
+    const summaryDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        summary: { total_candidates: 999, per_season: { '2022/2023': 380 }, source_provider: 'FotMob', competition: 'Premier League', identity_projection_hash: 'aaa111', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+    };
+    assert.throws(() => validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc), { code: 'SAFETY_ERROR' });
+});
+
+test('summary: validateV2SummaryAgainstArtifact rejects hash mismatch', () => {
+    const { validateV2SummaryAgainstArtifact } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+    const candidateDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        artifact: { source_provider: 'FotMob', competition: 'Premier League', per_season_counts: { '2022/2023': 380 }, identity_projection_hash: 'aaa111', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+        candidates: new Array(380).fill(null),
+    };
+    const summaryDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        summary: { total_candidates: 380, per_season: { '2022/2023': 380 }, source_provider: 'FotMob', competition: 'Premier League', identity_projection_hash: 'DIFFERENT_HASH', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+    };
+    assert.throws(() => validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc), { code: 'SAFETY_ERROR' });
+});
+
+test('summary: validateV2SummaryAgainstArtifact rejects per_season mismatch', () => {
+    const { validateV2SummaryAgainstArtifact } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+    const candidateDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        artifact: { source_provider: 'FotMob', competition: 'Premier League', per_season_counts: { '2022/2023': 380 }, identity_projection_hash: 'aaa111', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+        candidates: new Array(380).fill(null),
+    };
+    const summaryDoc = {
+        schema_version: 'canonical-inventory-artifact/v2',
+        summary: { total_candidates: 380, per_season: { '2022/2023': 100 }, source_provider: 'FotMob', competition: 'Premier League', identity_projection_hash: 'aaa111', business_hash: 'bbb222', status_mapping_version: STATUS_MAPPING_VERSION },
+    };
+    assert.throws(() => validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc), { code: 'SAFETY_ERROR' });
+});
+
+test('summary: validateV2SummaryAgainstArtifact rejects missing summary block', () => {
+    const { validateV2SummaryAgainstArtifact } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+    assert.throws(() => validateV2SummaryAgainstArtifact({ artifact: {} }, { no_summary: true }), { code: 'SAFETY_ERROR' });
+    assert.throws(() => validateV2SummaryAgainstArtifact(null, { summary: {} }), { code: 'SAFETY_ERROR' });
+});
+
+// =================================================================
+// Pair Integrity: v2 artifact + summary (section 6.2)
+// =================================================================
+
+// Generate a season of EPL_FIXTURES_PER_SEASON fixtures with all unique ordered
+// team pairings (20 teams × 19 opponents = 380) so the contract validator does not
+// reject duplicate fixture identities.
+/* prettier-ignore */
+function generateUniqueSeasonFixtures(startId) {
+    const teams = ['Arsenal','Aston Villa','Bournemouth','Brentford','Brighton','Chelsea','Crystal Palace','Everton','Fulham','Leeds','Leicester','Liverpool','Man City','Man United','Newcastle','Southampton','Tottenham','West Ham','Wolves','Nottingham Forest'];
+    const fixtures = [];
+    let id = startId;
+    for (let hi = 0; hi < teams.length; hi += 1) {
+        for (let ai = 0; ai < teams.length; ai += 1) {
+            if (hi === ai) continue;
+            const kickoff = `2022-${String((fixtures.length % 12) + 1).padStart(2, '0')}-${String((fixtures.length % 28) + 1).padStart(2, '0')}T${String((fixtures.length % 22) + 1).padStart(2, '0')}:00:00Z`;
+            fixtures.push(buildFixture(id, teams[hi], teams[ai], kickoff));
+            id += 1;
+            if (fixtures.length >= EPL_FIXTURES_PER_SEASON) break;
+        }
+        if (fixtures.length >= EPL_FIXTURES_PER_SEASON) break;
+    }
+    return fixtures;
+}
+
+// Fetch mock that returns unique fixtures for each of the 3 approved seasons.
+/* prettier-ignore */
+function makeUniqueSeasonPageFetch() {
+    const baseIds = { '2022/2023': 5000000, '2023/2024': 5100000, '2024/2025': 5200000 };
+    return async url => {
+        const season = decodeURIComponent(url.match(/season=([^&]+)/)[1]);
+        const startId = baseIds[season] || 5000000;
+        const fixtures = generateUniqueSeasonFixtures(startId);
+        const { html } = buildNextDataPage({ fixtures, season });
+        return { status: 200, contentType: 'text/html', body: html };
+    };
+}
+
+// Build valid v2 documents using all 3 approved seasons (1140 candidates) that
+// pass formal contract validation including master population and hash parity.
+/* prettier-ignore */
+async function buildValidV2Docs() {
+    const result = await exportCandidates(makeExportOptions(
+        ['2022/2023', '2023/2024', '2024/2025'],
+        makeUniqueSeasonPageFetch()
+    ));
+    const meta = { schema_version: 'canonical-inventory-artifact/v2', extracted_at: '2026-08-01T00:00:00Z' };
+    const perSeasonCounts = {};
+    for (const c of result.candidates) perSeasonCounts[c.season] = (perSeasonCounts[c.season] || 0) + 1;
+    const v2 = {
+        identity_projection_hash: computeV1IdentityProjectionHash(result.candidates),
+        business_hash: computeV2BusinessHash(result.candidates),
+        per_season_counts: perSeasonCounts,
+    };
+    const candidateDoc = buildV2OutputDocument(result.candidates, result.snapshot, meta, v2);
+    // Mark as synthetic for testing so the contract does not require the
+    // approved real master hash.
+    candidateDoc.artifact.synthetic_test_only = true;
+    const summaryDoc = buildV2SummaryDocument(result.candidates, result.snapshot, meta, v2);
+    return { candidateDoc, summaryDoc };
+}
+
+test('v2 pair: first write succeeds, both files created', async () => {
+    const { writeV2OutputFiles, bestEffortUnlink: cliCleanup } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_first_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true });
+        assert.ok(fs.existsSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.json')));
+        assert.ok(fs.existsSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json')));
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: idempotent second write with identical content', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_idem_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true });
+        const stat1 = fs.lstatSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.json'));
+        // Second write with identical content should succeed (idempotent)
+        writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true });
+        const stat2 = fs.lstatSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.json'));
+        assert.equal(stat1.mtimeMs, stat2.mtimeMs, 'idempotent write should not modify files');
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: only artifact file (no summary) → SAFETY_ERROR', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_oa_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        // Create only artifact, leave summary absent
+        fs.writeFileSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.json'), JSON.stringify(candidateDoc));
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: only summary file (no artifact) → SAFETY_ERROR', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_os_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        // Create only summary, leave artifact absent
+        fs.writeFileSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json'), JSON.stringify(summaryDoc));
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: artifact same but summary content differs → SAFETY_ERROR', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_asd_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true });
+        // Tamper with the summary on disk, then try again with unchanged candidate
+        fs.writeFileSync(
+            path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json'),
+            JSON.stringify({ tampered: true })
+        );
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: artifact is symlink → SAFETY_ERROR', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_asl_');
+    const realDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_asl_real_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        const realArtifactPath = path.join(realDir, 'canonical-inventory-artifact.v2.json');
+        const linkArtifactPath = path.join(tmpDir, 'canonical-inventory-artifact.v2.json');
+        const summaryPath_sl = path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json');
+        fs.writeFileSync(realArtifactPath, JSON.stringify(candidateDoc));
+        fs.symlinkSync(realArtifactPath, linkArtifactPath);
+        fs.writeFileSync(summaryPath_sl, JSON.stringify(summaryDoc));
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo' }, { allowSyntheticTestOnly: true }),
+            { code: 'SAFETY_ERROR' }
+        );
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+        bestEffort(() => fs.rmSync(realDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: summary rename failure → no orphaned final artifact file', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_srf_');
+    try {
+        const { candidateDoc, summaryDoc } = await buildValidV2Docs();
+        const finalArtifactPath = path.join(tmpDir, 'canonical-inventory-artifact.v2.json');
+        const finalSummaryPath = path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json');
+        const realRenameSync = fs.renameSync;
+        let renameCount = 0;
+        const mockFs = {
+            ...fs,
+            renameSync: (src, dst) => {
+                renameCount += 1;
+                if (renameCount === 2 && dst === finalSummaryPath) {
+                    throw new Error('simulated summary rename failure');
+                }
+                return realRenameSync(src, dst);
+            },
+        };
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, candidateDoc, summaryDoc, { repositoryRoot: '/home/user/repo', fileSystem: mockFs }, { allowSyntheticTestOnly: true }),
+            { code: 'SAFETY_ERROR' }
+        );
+        assert.equal(fs.existsSync(finalArtifactPath), false, 'orphaned artifact should not exist after rollback');
+        assert.equal(fs.existsSync(finalSummaryPath), false, 'summary should not exist');
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('v2 pair: contract rejection → zero files written', async () => {
+    const { writeV2OutputFiles } = require('../../scripts/ops/fotmob_candidates_export');
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_v2pair_cr_');
+    try {
+        // Build an invalid artifact (wrong candidate count for master)
+        const badDoc = { schema_version: 'canonical-inventory-artifact/v2', artifact: { kind: 'master' }, candidates: [1, 2, 3] };
+        const badSummary = { schema_version: 'canonical-inventory-artifact/v2', summary: { total_candidates: 3 } };
+        assert.throws(
+            () => writeV2OutputFiles(tmpDir, badDoc, badSummary, { repositoryRoot: '/home/user/repo' }),
+            { code: 'CANONICAL_INPUT_INVALID' }
+        );
+        assert.equal(fs.existsSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.json')), false);
+        assert.equal(fs.existsSync(path.join(tmpDir, 'canonical-inventory-artifact.v2.summary.json')), false);
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
 
 // =================================================================
 // Network: verify all tests use mocked fetch, zero real network

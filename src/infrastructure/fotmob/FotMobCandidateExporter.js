@@ -1424,6 +1424,112 @@ function buildV2SummaryDocument(candidates, snapshot, meta, v2Snapshot) {
 }
 
 /**
+ * Validate that a v2 summary document is consistent with the corresponding
+ * v2 artifact document that has already passed formal contract validation.
+ *
+ * Checks schema_version, candidate counts, per-season distribution,
+ * hashes, and status_mapping_version. Throws SAFETY_ERROR on any mismatch.
+ *
+ * This is a pure function — no filesystem or network access.
+ *
+ * @param {object} candidateDoc  the v2 artifact document (already validated)
+ * @param {object} summaryDoc    the v2 summary document to validate
+ */
+/* eslint-disable-next-line complexity */
+function validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc) {
+    if (!candidateDoc || !summaryDoc) {
+        throw Object.assign(new Error('summary validation requires both artifact and summary documents'), {
+            code: 'SAFETY_ERROR',
+        });
+    }
+
+    const artifact = candidateDoc.artifact;
+    const summary = summaryDoc.summary;
+    if (!artifact || !summary) {
+        throw Object.assign(new Error('summary validation: missing artifact or summary block'), {
+            code: 'SAFETY_ERROR',
+        });
+    }
+
+    // Schema version must match.
+    if (candidateDoc.schema_version !== summaryDoc.schema_version) {
+        throw Object.assign(
+            new Error('summary schema_version does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Candidate count must match.
+    const artifactCount = candidateDoc.candidates ? candidateDoc.candidates.length : 0;
+    if (artifactCount !== summary.total_candidates) {
+        throw Object.assign(
+            new Error(`summary total_candidates ${summary.total_candidates} does not match artifact ${artifactCount}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Per-season counts must match.
+    if (!summary.per_season || typeof summary.per_season !== 'object') {
+        throw Object.assign(new Error('summary is missing per_season counts'), { code: 'SAFETY_ERROR' });
+    }
+    const artifactPerSeason = artifact.per_season_counts || {};
+    const seasons = Object.keys(summary.per_season);
+    if (seasons.length !== Object.keys(artifactPerSeason).length) {
+        throw Object.assign(
+            new Error('summary per_season season count does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    for (const season of seasons) {
+        if (summary.per_season[season] !== artifactPerSeason[season]) {
+            throw Object.assign(
+                new Error(
+                    `summary per_season["${season}"]=${summary.per_season[season]} ` +
+                    `does not match artifact ${artifactPerSeason[season]}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
+
+    // Source provider and competition must match.
+    if (summary.source_provider !== artifact.source_provider) {
+        throw Object.assign(
+            new Error('summary source_provider does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (summary.competition !== artifact.competition) {
+        throw Object.assign(
+            new Error('summary competition does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Hashes must match.
+    if (summary.identity_projection_hash !== artifact.identity_projection_hash) {
+        throw Object.assign(
+            new Error('summary identity_projection_hash does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (summary.business_hash !== artifact.business_hash) {
+        throw Object.assign(
+            new Error('summary business_hash does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Status mapping version must match.
+    if (summary.status_mapping_version !== artifact.status_mapping_version) {
+        throw Object.assign(
+            new Error('summary status_mapping_version does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+}
+
+/**
  * Build a summary document (counts, hashes, season stats only — no full candidate data).
  */
 function buildSummaryDocument(candidates, snapshot, meta) {
@@ -1509,6 +1615,7 @@ function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
  * @param {object} options     { fileSystem, repositoryRoot }
  * @returns {{ manifest: object, rawFilePath: string, bodySha256: string, byteSize: number }}
  */
+/* eslint-disable-next-line complexity */
 function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
     const fileSystem = options.fileSystem || fs;
     const safeDir = verifyOutputPathSafety(outputDir, options);
@@ -1525,57 +1632,190 @@ function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
     const manifestFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.manifest.json`;
     const manifestFilePath = path.join(safeDir, manifestFileName);
     const manifest = buildCaptureManifest(context, bodySha256, byteSize, rawFileName);
+    const manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    const expectedManifestSha = crypto.createHash('sha256').update(manifestBytes).digest('hex');
 
-    // Atomic write: temp files → rename (paired evidence unit)
+    // 4.1 — Only two allowed states: both absent or both present as regular files.
+    let existingRawStat;
+    try { existingRawStat = fileSystem.lstatSync(rawFilePath); } catch { existingRawStat = null; }
+    let existingManifestStat;
+    try { existingManifestStat = fileSystem.lstatSync(manifestFilePath); } catch { existingManifestStat = null; }
+
+    const rawExists = existingRawStat !== null;
+    const manifestExists = existingManifestStat !== null;
+
+    // Partial state — only one file exists.
+    if (rawExists !== manifestExists) {
+        throw Object.assign(
+            new Error(
+                `raw retention pair integrity violated: ` +
+                `raw=${rawExists ? 'present' : 'absent'}, ` +
+                `manifest=${manifestExists ? 'present' : 'absent'}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Symlinks are rejected for both files.
+    if (rawExists && (!existingRawStat.isFile() || existingRawStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error(`raw retention refused: raw file is not a regular file: ${rawFileName}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (manifestExists && (!existingManifestStat.isFile() || existingManifestStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error(`raw retention refused: manifest is not a regular file: ${manifestFileName}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Both files exist — verify paired integrity.
+    if (rawExists) {
+        const existingRawBytes = fileSystem.readFileSync(rawFilePath);
+        const existingRawSha = crypto.createHash('sha256').update(existingRawBytes).digest('hex');
+
+        if (existingRawSha !== bodySha256) {
+            throw Object.assign(
+                new Error(`raw retention refused: target ${rawFileName} exists with different content`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Verify manifest file is valid JSON and content matches.
+        let existingManifest;
+        try {
+            existingManifest = JSON.parse(fileSystem.readFileSync(manifestFilePath, 'utf8'));
+        } catch (parseErr) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest is not valid JSON: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Verify manifest fields match the raw file and expected values.
+        if (existingManifest.body_sha256 !== bodySha256) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest body_sha256 does not match raw: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (existingManifest.body_byte_size !== byteSize) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest body_byte_size does not match raw: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (existingManifest.raw_file_relative_path !== rawFileName) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest raw_file_relative_path mismatch: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Full manifest content must match (after stable serialization of the expected one).
+        // Compare the serialized bytes so timestamp/revision differences are caught.
+        const existingManifestBytes = fileSystem.readFileSync(manifestFilePath);
+        const existingManifestSha = crypto.createHash('sha256').update(existingManifestBytes).digest('hex');
+        if (existingManifestSha !== expectedManifestSha) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest content differs (capture time or revision changed): ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Both files match — idempotent success.
+        return {
+            manifest,
+            manifestFilePath,
+            rawFilePath,
+            bodySha256,
+            byteSize,
+        };
+    }
+
+    // Neither file exists — write both atomically.
+    // 4.3: Write temp files → verify → rename raw → rename manifest → verify final → rollback on partial.
     const tempHtmlPath = rawFilePath + '.tmp.' + Date.now();
     const tempManifestPath = manifestFilePath + '.tmp.' + Date.now();
+
     try {
-        // Write HTML bytes and manifest JSON in parallel using wx (exclusive create)
         fileSystem.writeFileSync(tempHtmlPath, bodyBytes, { flag: 'wx' });
-        fileSystem.writeFileSync(tempManifestPath, JSON.stringify(manifest, null, 2) + '\n', {
-            encoding: 'utf8',
-            flag: 'wx',
-        });
+        fileSystem.writeFileSync(tempManifestPath, manifestBytes, { flag: 'wx' });
 
-        // Reject silent overwrite of a different existing file (check both)
-        let existingHtmlStat;
-        try {
-            existingHtmlStat = fileSystem.lstatSync(rawFilePath);
-        } catch {
-            existingHtmlStat = null;
+        // Verify temp file contents before rename.
+        const tempHtmlBytes = fileSystem.readFileSync(tempHtmlPath);
+        if (crypto.createHash('sha256').update(tempHtmlBytes).digest('hex') !== bodySha256) {
+            throw Object.assign(
+                new Error('raw retention failed: temp HTML verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
         }
-        let existingManifestStat;
-        try {
-            existingManifestStat = fileSystem.lstatSync(manifestFilePath);
-        } catch {
-            existingManifestStat = null;
-        }
-        if (existingHtmlStat || existingManifestStat) {
-            bestEffortUnlink(fileSystem, tempHtmlPath);
-            bestEffortUnlink(fileSystem, tempManifestPath);
-            if (existingHtmlStat) {
-                const existingBytes = fileSystem.readFileSync(rawFilePath);
-                const existingSha = crypto.createHash('sha256').update(existingBytes).digest('hex');
-                if (existingSha !== bodySha256) {
-                    throw Object.assign(
-                        new Error(`raw retention refused: target ${rawFileName} exists with different content`),
-                        { code: 'SAFETY_ERROR' }
-                    );
-                }
-            }
-            // Same content already present — idempotent, leave existing files
-            return {
-                manifest,
-                manifestFilePath,
-                rawFilePath,
-                bodySha256,
-                byteSize,
-            };
+        const tempManifestBytes = fileSystem.readFileSync(tempManifestPath);
+        if (crypto.createHash('sha256').update(tempManifestBytes).digest('hex') !== expectedManifestSha) {
+            throw Object.assign(
+                new Error('raw retention failed: temp manifest verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
         }
 
+        // Rename raw first, then manifest.
         fileSystem.renameSync(tempHtmlPath, rawFilePath);
-        fileSystem.renameSync(tempManifestPath, manifestFilePath);
+
+        try {
+            fileSystem.renameSync(tempManifestPath, manifestFilePath);
+        } catch (manifestRenameErr) {
+            // 4.3: Manifest rename failed — rollback the just-created final raw.
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, tempManifestPath);
+            throw Object.assign(
+                new Error(`raw retention failed: manifest rename error: ${manifestRenameErr.message}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Final verification: re-read both files and confirm pairing.
+        let finalRawBytes;
+        try { finalRawBytes = fileSystem.readFileSync(rawFilePath); } catch {
+            throw Object.assign(
+                new Error('raw retention failed: final raw read failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const finalRawSha = crypto.createHash('sha256').update(finalRawBytes).digest('hex');
+        if (finalRawSha !== bodySha256) {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final raw verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        let finalManifestParsed;
+        try {
+            finalManifestParsed = JSON.parse(fileSystem.readFileSync(manifestFilePath, 'utf8'));
+        } catch {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final manifest parse failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        if (finalManifestParsed.body_sha256 !== bodySha256 ||
+            finalManifestParsed.body_byte_size !== byteSize ||
+            finalManifestParsed.raw_file_relative_path !== rawFileName) {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final manifest field mismatch'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
     } catch (err) {
+        // Clean up any temp files — best-effort, do not mask the original error.
         bestEffortUnlink(fileSystem, tempHtmlPath);
         bestEffortUnlink(fileSystem, tempManifestPath);
         throw err;
@@ -1659,6 +1899,7 @@ module.exports = {
     buildSummaryDocument,
     buildV2OutputDocument,
     buildV2SummaryDocument,
+    validateV2SummaryAgainstArtifact,
     verifyOutputPathSafety,
     writeOutputFiles,
 
