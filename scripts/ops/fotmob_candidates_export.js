@@ -13,6 +13,8 @@ const {
     writeOutputFiles,
     buildOutputDocument,
     buildSummaryDocument,
+    buildV2OutputDocument,
+    buildV2SummaryDocument,
     verifyOutputPathSafety,
     canonicalizeRequestedSeasons,
     canonicalizeCompetition,
@@ -35,6 +37,8 @@ const USAGE = [
     '    --network-preview=true \\',
     '    --network-authorization=yes \\',
     '    [--slug premier-league] \\',
+    '    [--output-schema=identity-v1|canonical-v2] \\',
+    '    [--retain-raw-responses=/absolute/path/outside/repo/] \\',
     '    [--output /absolute/path/outside/repository/]',
     '',
     'Required:',
@@ -49,9 +53,22 @@ const USAGE = [
     '  --network-authorization=yes',
     '                  Fresh explicit authorization for the live network request.',
     '',
+    'Output schema:',
+    '  --output-schema=identity-v1    Default. Produce candidate-match-identity/v1 artifact.',
+    '  --output-schema=canonical-v2   Produce canonical-inventory-artifact/v2 artifact with',
+    '                                 provider_status, status_mapping_version, and dual hashes.',
+    '                                 REQUIRES --retain-raw-responses.',
+    '',
+    'Raw provenance retention:',
+    '  --retain-raw-responses=<dir>   Absolute directory OUTSIDE the repository.',
+    '                                 Saves the raw FotMob HTML response bytes per season',
+    '                                 with a capture manifest. Required for canonical-v2.',
+    '                                 Files are written atomically; existing identical files',
+    '                                 are idempotent.',
+    '',
     'Optional:',
     '  --slug          URL slug override; must be safe ASCII kebab-case (default: derived from competition name)',
-    '  --output        Absolute output directory OUTSIDE the Git repository',
+    '  --output        Absolute output directory OUTSIDE the Git repository for the candidate artifact',
     '',
     'Safety:',
     `  Ordinary invocations are blocked. Use ${CANONICAL_MAKE_TARGET}.`,
@@ -61,11 +78,16 @@ const USAGE = [
     '  Network access is limited to FotMob league fixtures pages only.',
     '  Maximum 6 requests per invocation.',
     '',
-    'Output files (when --output is used):',
+    'Output files (--output-schema=identity-v1, when --output is used):',
     '  candidate-match-identity.v1.json          Full candidate document',
     '  candidate-match-identity.v1.summary.json  Counts, hashes, season stats',
+    '',
+    'Output files (--output-schema=canonical-v2, when --output is used):',
+    '  canonical-inventory-artifact.v2.json          Full v2 artifact document',
+    '  canonical-inventory-artifact.v2.summary.json  Dual hashes, counts, status coverage',
 ].join('\n');
 
+/* eslint-disable-next-line complexity */
 function parseArgs(argv) {
     const args = {
         leagueId: '',
@@ -73,6 +95,8 @@ function parseArgs(argv) {
         seasons: [],
         slug: '',
         output: '',
+        outputSchema: '',
+        retainRawResponses: '',
         networkPreview: '',
         networkAuthorization: '',
         help: false,
@@ -107,6 +131,24 @@ function parseArgs(argv) {
         if (token === '--output') {
             args.output = argv[i + 1];
             i += 1;
+            continue;
+        }
+        if (token === '--output-schema') {
+            args.outputSchema = argv[i + 1];
+            i += 1;
+            continue;
+        }
+        if (typeof token === 'string' && token.startsWith('--output-schema=')) {
+            args.outputSchema = token.slice('--output-schema='.length);
+            continue;
+        }
+        if (token === '--retain-raw-responses') {
+            args.retainRawResponses = argv[i + 1];
+            i += 1;
+            continue;
+        }
+        if (typeof token === 'string' && token.startsWith('--retain-raw-responses=')) {
+            args.retainRawResponses = token.slice('--retain-raw-responses='.length);
             continue;
         }
         if (token === '--network-preview') {
@@ -218,7 +260,7 @@ function writeInputErrors(stderr, errors) {
 
 function createExportOptions(args, deps) {
     const competition = canonicalizeCompetition(args.competition);
-    return {
+    const options = {
         leagueId: canonicalizeLeagueId(args.leagueId),
         competition,
         seasons: args.seasons,
@@ -226,6 +268,22 @@ function createExportOptions(args, deps) {
         networkAuthorization: true,
         deps: deps.exporterDeps,
     };
+
+    // Output schema
+    if (args.outputSchema && args.outputSchema !== 'identity-v1') {
+        options.outputSchema = args.outputSchema;
+    }
+
+    // Raw response retention
+    if (args.retainRawResponses) {
+        options.retainRawResponses = {
+            outputDir: args.retainRawResponses,
+            collectorComponent: 'FotMobCandidateExporter',
+            collectorCodeRevision: deps.collectorCodeRevision || 'unknown',
+        };
+    }
+
+    return options;
 }
 
 function hasIncompleteSeasons(result, stderr) {
@@ -243,16 +301,88 @@ function hasIncompleteSeasons(result, stderr) {
 function writeRequestedOutput(args, result, deps, stderr) {
     if (!args.output) return null;
 
+    const isV2 = result.meta.schema_version === 'canonical-inventory-artifact/v2';
+
     try {
-        const paths = writeOutputFiles(args.output, result.candidates, result.snapshot, result.meta, {
-            repositoryRoot: deps.repositoryRoot,
-        });
-        stderr.write(`Wrote ${paths.candidatePath}\n`);
-        stderr.write(`Wrote ${paths.summaryPath}\n`);
+        if (isV2) {
+            const candidatePath = path.join(args.output, 'canonical-inventory-artifact.v2.json');
+            const summaryPath = path.join(args.output, 'canonical-inventory-artifact.v2.summary.json');
+            const candidateDoc = buildV2OutputDocument(
+                result.candidates,
+                result.snapshot,
+                result.meta,
+                result.v2Snapshot
+            );
+            const summaryDoc = buildV2SummaryDocument(
+                result.candidates,
+                result.snapshot,
+                result.meta,
+                result.v2Snapshot
+            );
+            // Write atomically
+            writeV2OutputFiles(args.output, candidateDoc, summaryDoc, deps);
+            stderr.write(`Wrote ${candidatePath}\n`);
+            stderr.write(`Wrote ${summaryPath}\n`);
+        } else {
+            const paths = writeOutputFiles(args.output, result.candidates, result.snapshot, result.meta, {
+                repositoryRoot: deps.repositoryRoot,
+            });
+            stderr.write(`Wrote ${paths.candidatePath}\n`);
+            stderr.write(`Wrote ${paths.summaryPath}\n`);
+        }
+
+        // Report raw retentions
+        if (result.rawRetentions && result.rawRetentions.length > 0) {
+            for (const retention of result.rawRetentions) {
+                stderr.write(
+                    `Retained raw: ${retention.rawFilePath} (SHA-256: ${retention.bodySha256}, ${retention.byteSize} bytes)\n`
+                );
+            }
+        }
+
         return null;
     } catch (err) {
         stderr.write(`Output error: ${err.message}\n`);
         return 3;
+    }
+}
+
+/**
+ * Atomic write for v2 output files.
+ */
+function writeV2OutputFiles(outputDir, candidateDoc, summaryDoc, deps) {
+    const fs = require('node:fs');
+    verifyOutputPathSafety(outputDir, { repositoryRoot: deps.repositoryRoot });
+
+    const candidatePath = path.join(outputDir, 'canonical-inventory-artifact.v2.json');
+    const summaryPath = path.join(outputDir, 'canonical-inventory-artifact.v2.summary.json');
+
+    const tempCandidate = candidatePath + '.tmp.' + Date.now();
+    const tempSummary = summaryPath + '.tmp.' + Date.now();
+
+    try {
+        fs.writeFileSync(tempCandidate, JSON.stringify(candidateDoc, null, 2) + '\n', {
+            encoding: 'utf8',
+            flag: 'wx',
+        });
+        fs.writeFileSync(tempSummary, JSON.stringify(summaryDoc, null, 2) + '\n', {
+            encoding: 'utf8',
+            flag: 'wx',
+        });
+        fs.renameSync(tempCandidate, candidatePath);
+        fs.renameSync(tempSummary, summaryPath);
+    } catch (err) {
+        try {
+            fs.unlinkSync(tempCandidate);
+        } catch (cleanupErr) {
+            void cleanupErr;
+        }
+        try {
+            fs.unlinkSync(tempSummary);
+        } catch (cleanupErr) {
+            void cleanupErr;
+        }
+        throw err;
     }
 }
 
@@ -299,6 +429,10 @@ async function main(argv = process.argv.slice(2), deps = {}) {
                 `${result.meta.total_requests} requests\n`
         );
         stderr.write(`Business SHA-256: ${result.snapshot.business_content_sha256}\n`);
+        if (result.v2Snapshot) {
+            stderr.write(`V2 business hash: ${result.v2Snapshot.business_hash}\n`);
+            stderr.write(`Identity projection hash: ${result.v2Snapshot.identity_projection_hash}\n`);
+        }
 
         return 0;
     } catch (err) {

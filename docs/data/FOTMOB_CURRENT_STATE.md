@@ -9,12 +9,13 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-07-29
+## Current authoritative status — 2026-07-31
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-complete, raw retention)
 ```
 
 ### Current read-only retained inventory
@@ -123,9 +124,15 @@ all 58 rows is not uniquely attributable.
   the bounded 2022/2023–2024/2025 Premier League audit: 888 exact unique and
   four isolated kickoff conflicts out of 892 source candidates. The local
   development `matches` inventory remains zero for that scope. The recovered
-  1,140-candidate `candidate-match-identity/v1` artifact has no status field,
-  so it cannot pass future writer preflight; no inventory writer, link or
-  import has been authorized.
+  1,140-candidate `candidate-match-identity/v1` artifact has been extended with a
+  `canonical-inventory-artifact/v2` schema that includes `provider_status`
+  (fail-closed `fotmob-status-to-matches-status/v1`), `status_mapping_version`,
+  dual hashes (identity projection + full business), and raw response provenance
+  retention with SHA-256 capture manifests. The v2 exporter
+  (`FotMobCandidateExporter.js`) and CLI (`scripts/ops/fotmob_candidates_export.js`)
+  support `--output-schema=canonical-v2` and `--retain-raw-responses`. This
+  resolves the status-field gap. No inventory writer, link or import has been
+  authorized.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
 
@@ -141,13 +148,11 @@ all 58 rows is not uniquely attributable.
 ## Recommended next step
 
 Do not start automatically. Recommended next task only after user confirmation:
-an implementation review for a new fail-closed canonical writer, its
-status-complete hash-bound FotMob artifact contract, and isolated
-provider-scoped uniqueness/import-lineage migration plan. Future inventory is
-1,140 candidates; linkage remains separately authorized for 888 exact
-identities and the four conflicts remain quarantine. The 32/10/8 Ligue 1
-states remain independent. No network, database write, migration,
-canonical-linkage persistence or legacy-writer execution is authorized here.
-
-The future canonical FotMob writer is a separate `data-*`-gated business
-milestone, not an automatic follow-up or a legacy-script restart.
+the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`
+artifact contract and raw response provenance retention is now implemented
+(PR pending). Future inventory is 1,140 candidates; the next step is a
+separate future canonical FotMob writer as a `data-*`-gated business milestone.
+Linkage remains separately authorized for 888 exact identities and the four
+conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
+No network, database write, migration, canonical-linkage persistence or
+legacy-writer execution is authorized here.

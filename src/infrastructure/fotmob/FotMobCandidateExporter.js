@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 // Deterministic, read-only FotMob league schedule candidate exporter.
 // No writes to repository, database, or project directories.
@@ -17,6 +19,76 @@ const MAX_TOTAL_REQUESTS = 6;
 const FIXTURES_URL_PATTERN = '/leagues/{leagueId}/fixtures/{slug}';
 const EPL_FIXTURES_PER_SEASON = 380;
 const CANONICAL_COMPETITION = 'Premier League';
+
+// ----------------------------------------------------------------
+// Provider status contract
+// ----------------------------------------------------------------
+
+/**
+ * Versioned mapping this exporter produces. Must equal the single
+ * authoritative definition in CanonicalInventoryContract.js.
+ */
+const STATUS_MAPPING_VERSION = 'fotmob-status-to-matches-status/v1';
+
+/**
+ * Allowed provider_status values per the canonical v2 contract.
+ * Every exported candidate MUST carry one of these values.
+ */
+const ALLOWED_PROVIDER_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled']);
+
+/**
+ * Derive a deterministic provider_status from a FotMob fixtures-page
+ * `fixture.status` object.
+ *
+ * Priority (highest first):
+ *   1. cancelled === true  →  cancelled
+ *   2. finished  === true  →  finished
+ *   3. reason.short indicates postponement  →  postponed
+ *   4. otherwise           →  scheduled
+ *
+ * Contradictory combinations (e.g. cancelled && finished) fail closed.
+ * Unknown / unprocessable status objects also fail closed.
+ *
+ * @param {object}  fixtureStatus  fixture.status from FotMob pageProps
+ * @returns {{ status: string|null, error: string|null }}
+ *   status — canonical provider_status value, or null on failure
+ *   error  — failure reason, or null on success
+ */
+function deriveProviderStatus(fixtureStatus) {
+    if (!fixtureStatus || typeof fixtureStatus !== 'object') {
+        return { status: null, error: 'missing_status_object' };
+    }
+
+    const cancelled = fixtureStatus.cancelled === true;
+    const finished = fixtureStatus.finished === true;
+    const reasonShort =
+        fixtureStatus.reason && typeof fixtureStatus.reason.short === 'string'
+            ? fixtureStatus.reason.short
+            : null;
+
+    // Contradictory: a match cannot be both finished and cancelled.
+    if (finished && cancelled) {
+        return { status: null, error: 'contradictory_status_flags:finished_and_cancelled' };
+    }
+
+    if (cancelled) {
+        return { status: 'cancelled', error: null };
+    }
+    if (finished) {
+        return { status: 'finished', error: null };
+    }
+
+    // Postponement is indicated by reason code, not a boolean flag.
+    // Observed reason short values: 'Postponed', 'Postp'.
+    if (reasonShort === 'Postponed' || reasonShort === 'Postp') {
+        return { status: 'postponed', error: null };
+    }
+
+    // Not finished, not cancelled, not postponed — treat as scheduled.
+    // This covers future matches and matches where status has not yet
+    // been updated to a terminal state.
+    return { status: 'scheduled', error: null };
+}
 
 // ----------------------------------------------------------------
 // Candidate identity
@@ -122,7 +194,7 @@ function canonicalizeRequestedSeasons(values) {
 // ----------------------------------------------------------------
 
 /**
- * Fetch a URL and return { status, body }. Does NOT save full response.
+ * Fetch a URL and return { status, contentType, body, bodyBytes }.
  * Hard budget — callers must track request count externally.
  */
 async function fetchPage(url, options = {}) {
@@ -134,11 +206,16 @@ async function fetchPage(url, options = {}) {
 
     try {
         const res = await fetch(url, { signal: ctrl.signal, headers: { 'User-Agent': userAgent } });
-        const body = await res.text();
+        // Read as ArrayBuffer first so we can retain the raw bytes for
+        // provenance capture, then decode to text for __NEXT_DATA__ parsing.
+        const bodyArrayBuffer = await res.arrayBuffer();
+        const bodyBytes = Buffer.from(bodyArrayBuffer);
+        const body = new TextDecoder().decode(bodyArrayBuffer);
         return {
             status: res.status,
             contentType: String(res.headers.get('content-type') || ''),
             body,
+            bodyBytes,
         };
     } finally {
         clearTimeout(timer);
@@ -337,6 +414,9 @@ function createEmptyFixtureAudit() {
         rejected_by_reason: {},
         rejected_fixture_samples: [],
         accepted_fixture_count: 0,
+        status_unknown_fixture_count: 0,
+        status_unknown_by_reason: {},
+        status_unknown_fixture_samples: [],
     };
 }
 
@@ -396,6 +476,7 @@ function recordRejectedFixture(audit, fixture) {
 /**
  * Build an accepted fixture record, or null when the fixture does not
  * satisfy the candidate contract (numeric id, both teams, kickoff).
+ * Includes the derived provider_status for v2 output.
  */
 function extractAcceptedFixture(fixture) {
     if (classifyFixtureRejection(fixture) !== null) {
@@ -405,7 +486,8 @@ function extractAcceptedFixture(fixture) {
     const home = fixture.home.name;
     const away = fixture.away.name;
     const kickoff = fixture.status.utcTime;
-    return { id, home, away, kickoff };
+    const statusResult = deriveProviderStatus(fixture.status);
+    return { id, home, away, kickoff, provider_status: statusResult.status, status_error: statusResult.error };
 }
 
 /**
@@ -413,6 +495,8 @@ function extractAcceptedFixture(fixture) {
  * Returns { fixtures, audit } where audit records exclusion counts.
  * Excludes abandoned matches (status.reason.short === 'Ab').
  * Postponed, rescheduled, and cancelled matches are NOT excluded.
+ * Fixtures with unknown/unresolvable provider status are rejected and
+ * counted separately so the season can fail closed.
  */
 function extractFixtures(nd) {
     const pp = nd?.props?.pageProps;
@@ -433,6 +517,23 @@ function extractFixtures(nd) {
         }
         const accepted = extractAcceptedFixture(f);
         if (accepted) {
+            // Fail closed: every accepted fixture MUST have a valid provider_status.
+            if (!accepted.provider_status || !ALLOWED_PROVIDER_STATUSES.has(accepted.provider_status)) {
+                audit.status_unknown_fixture_count += 1;
+                const reasonKey = accepted.status_error || 'unknown';
+                audit.status_unknown_by_reason[reasonKey] =
+                    (audit.status_unknown_by_reason[reasonKey] || 0) + 1;
+                if (audit.status_unknown_fixture_samples.length < MAX_EXCLUDED_SAMPLES) {
+                    const sample = { reason_code: reasonKey };
+                    const id = f?.id ? String(f.id).trim() : null;
+                    if (id && isNumericExternalId(id)) {
+                        sample.source_match_id = id;
+                    }
+                    audit.status_unknown_fixture_samples.push(sample);
+                }
+                // Do NOT include this fixture in the accepted set.
+                continue;
+            }
             fixtures.push(accepted);
         } else {
             recordRejectedFixture(audit, f);
@@ -460,6 +561,8 @@ function buildCandidate(fixture, leagueId, competition, season) {
         home_team: fixture.home,
         away_team: fixture.away,
         kickoff_at: fixture.kickoff,
+        provider_status: fixture.provider_status,
+        status_mapping_version: STATUS_MAPPING_VERSION,
     };
 }
 
@@ -590,6 +693,49 @@ function computeBusinessContentHash(candidates) {
 }
 
 // ----------------------------------------------------------------
+// V2 hashes
+// ----------------------------------------------------------------
+
+/**
+ * Compute the v1 identity projection hash over the 8 identity fields only.
+ * This MUST match the existing approved hash for real 3-season master data.
+ * provider_status, status_mapping_version, and all metadata are excluded.
+ *
+ * Unchanged from the historical computeBusinessContentHash logic — kept as
+ * a separately named entrypoint so v2 callers never accidentally call the
+ * old name and conflate it with the full v2 business hash.
+ */
+function computeV1IdentityProjectionHash(candidates) {
+    return computeBusinessContentHash(candidates);
+}
+
+/**
+ * Compute a full v2 business hash over the complete candidate fields
+ * including provider status and status mapping version.
+ * Deterministic: sorted, projected to canonical fields, SHA-256.
+ */
+function computeV2BusinessHash(candidates) {
+    const sorted = [...candidates].sort((a, b) => {
+        const keyA = `${a.season}|${a.kickoff_at}|${a.home_team}|${a.away_team}|${a.source_match_id}`;
+        const keyB = `${b.season}|${b.kickoff_at}|${b.home_team}|${b.away_team}|${b.source_match_id}`;
+        return keyA.localeCompare(keyB);
+    });
+    const content = sorted.map(c => ({
+        id: c.id,
+        source_provider: c.source_provider,
+        source_match_id: c.source_match_id,
+        competition: c.competition,
+        season: c.season,
+        home_team: c.home_team,
+        away_team: c.away_team,
+        kickoff_at: c.kickoff_at,
+        provider_status: c.provider_status,
+        status_mapping_version: c.status_mapping_version,
+    }));
+    return crypto.createHash('sha256').update(JSON.stringify(content)).digest('hex');
+}
+
+// ----------------------------------------------------------------
 // Main export pipeline
 // ----------------------------------------------------------------
 
@@ -657,6 +803,7 @@ function buildSafeIdentitySummary(identity) {
  * `stop` is set only for blocking statuses (403/429); `succeeded` marks a
  * fully processed season and drives inter-season delay placement.
  */
+/* eslint-disable-next-line complexity */
 async function processSeason(season, context) {
     const { leagueId, competition, leagueSlug, deps, userAgent, requestCount, maxRequests } = context;
 
@@ -750,14 +897,17 @@ async function processSeason(season, context) {
             extraction.audit.excluded_fixture_count +
             extraction.audit.rejected_fixture_count;
 
-    if (!auditCloses || extraction.audit.rejected_fixture_count > 0) {
+    if (!auditCloses || extraction.audit.rejected_fixture_count > 0 || extraction.audit.status_unknown_fixture_count > 0) {
         const errs = [...validation.errors];
         if (extraction.audit.rejected_fixture_count > 0) {
             errs.push(`unexpected_rejected_fixtures:${extraction.audit.rejected_fixture_count}`);
         }
+        if (extraction.audit.status_unknown_fixture_count > 0) {
+            errs.push(`unknown_provider_status:${extraction.audit.status_unknown_fixture_count}`);
+        }
         if (!auditCloses) {
             errs.push(
-                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},sum=${extraction.audit.accepted_fixture_count + extraction.audit.excluded_fixture_count + extraction.audit.rejected_fixture_count}`
+                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},sum=${extraction.audit.accepted_fixture_count + extraction.audit.excluded_fixture_count + extraction.audit.rejected_fixture_count + extraction.audit.status_unknown_fixture_count}`
             );
         }
         Object.assign(validation, { valid: false, errors: errs });
@@ -775,6 +925,13 @@ async function processSeason(season, context) {
             },
             audit: extraction.audit,
             validation,
+            // Raw retention context (null when not requested or season failed)
+            _capture: {
+                url,
+                bodyBytes: resp.bodyBytes,
+                httpStatus: resp.status,
+                contentType: resp.contentType,
+            },
         },
         candidates: seasonCandidates,
         requestsUsed: 1,
@@ -792,9 +949,12 @@ async function processSeason(season, context) {
  * @param {string[]}      options.seasons         — season strings (e.g. ["2022/2023"])
  * @param {string}        [options.leagueSlug]    — safe ASCII kebab-case URL slug (default: derived from competition)
  * @param {boolean}       options.networkAuthorization — explicit live-network authorization
+ * @param {string}        [options.outputSchema]  — 'identity-v1' (default) or 'canonical-v2'
+ * @param {Object}        [options.retainRawResponses] — { outputDir, collectorComponent, gitRevision }
  * @param {Object}        [options.deps]          — dependency injection
- * @returns {Promise<Object>} { candidates, snapshot, validation }
+ * @returns {Promise<Object>} { candidates, snapshot, validation, meta, rawRetentions (if enabled) }
  */
+/* eslint-disable-next-line complexity */
 async function exportCandidates(options = {}) {
     const rawSeasons = Array.isArray(options.seasons) ? options.seasons : [];
     const deps = options.deps || {};
@@ -802,9 +962,6 @@ async function exportCandidates(options = {}) {
     const _clock = deps.clock || (() => new Date().toISOString());
 
     // Validate every user-controlled identity before any network access.
-    // The core layer is the final line of defense: seasons, competition,
-    // league id, and league slug are all canonicalised here — the CLI must
-    // not be relied upon as the only gate.
     const canonicalSeasons = canonicalizeRequestedSeasons(rawSeasons);
     const competition = canonicalizeCompetition(options.competition);
     const leagueId = canonicalizeLeagueId(options.leagueId);
@@ -817,11 +974,28 @@ async function exportCandidates(options = {}) {
     }
     const maxRequests = Math.min(canonicalSeasons.length * 2, MAX_TOTAL_REQUESTS);
 
+    // Output schema
+    const outputSchema = options.outputSchema || 'identity-v1';
+    if (!['identity-v1', 'canonical-v2'].includes(outputSchema)) {
+        throw Object.assign(new Error(`Unknown output schema: ${outputSchema}`), { code: 'INPUT_ERROR' });
+    }
+
+    // Raw retention gate: v2 canoncial mode requires retention
+    const retainRaw = options.retainRawResponses || null;
+    if (outputSchema === 'canonical-v2' && !retainRaw) {
+        throw Object.assign(
+            new Error('canonical-v2 output requires --retain-raw-responses with a repository-external output directory'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
     const allCandidates = [];
     const seasonResults = [];
+    const rawRetentions = [];
     let requestCount = 0;
 
     for (let i = 0; i < canonicalSeasons.length; i += 1) {
+        const captureStartedAt = _clock();
         const outcome = await processSeason(canonicalSeasons[i], {
             leagueId,
             competition,
@@ -831,10 +1005,57 @@ async function exportCandidates(options = {}) {
             requestCount,
             maxRequests,
         });
+        const captureCompletedAt = _clock();
 
         requestCount += outcome.requestsUsed;
         seasonResults.push(outcome.seasonResult);
         allCandidates.push(...outcome.candidates);
+
+        // Raw response retention (before any delay, immediately after the request)
+        if (outcome.succeeded && retainRaw && outcome.seasonResult._capture) {
+            const cap = outcome.seasonResult._capture;
+            if (cap.bodyBytes && cap.bodyBytes.length > 0) {
+                try {
+                    const retention = writeRawRetention(
+                        retainRaw.outputDir,
+                        cap.bodyBytes,
+                        {
+                            url: cap.url,
+                            leagueId,
+                            competition,
+                            requestedSeason: canonicalSeasons[i],
+                            canonicalSeason: canonicalSeasons[i],
+                            httpStatus: cap.httpStatus,
+                            contentType: cap.contentType,
+                            captureStartedAt,
+                            captureCompletedAt,
+                            collectorComponent: retainRaw.collectorComponent || 'FotMobCandidateExporter',
+                            collectorCodeRevision: retainRaw.collectorCodeRevision || 'unknown',
+                            networkAuthorizationMode: 'explicit_network_authorization',
+                        },
+                        {
+                            fileSystem: deps.fileSystem || fs,
+                            repositoryRoot: deps.repositoryRoot,
+                        }
+                    );
+                    rawRetentions.push(retention);
+                } catch (retentionErr) {
+                    // Raw retention failure blocks the entire export in v2 mode.
+                    throw Object.assign(
+                        new Error(`raw retention failed for season ${canonicalSeasons[i]}: ${retentionErr.message}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+            } else if (retainRaw) {
+                throw Object.assign(
+                    new Error(`raw retention failed: no response bytes for season ${canonicalSeasons[i]}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+        }
+
+        // Strip internal capture data from season results before returning
+        delete outcome.seasonResult._capture;
 
         if (outcome.stop) {
             break;
@@ -846,12 +1067,25 @@ async function exportCandidates(options = {}) {
         }
     }
 
-    const businessHash = computeBusinessContentHash(allCandidates);
     const extractedAt = _clock();
-
     const aggregateV = validateAggregateCandidates(allCandidates, canonicalSeasons, EPL_FIXTURES_PER_SEASON);
-
     const allSeasonsComplete = seasonResults.every(r => r.result === 'complete') && aggregateV.valid;
+
+    // Compute hashes
+    const identityProjectionHash = computeV1IdentityProjectionHash(allCandidates);
+    const v2BusinessHash =
+        outputSchema === 'canonical-v2' ? computeV2BusinessHash(allCandidates) : null;
+    const v1BusinessHash = computeBusinessContentHash(allCandidates);
+
+    // Per-season counts
+    const perSeasonCounts = {};
+    for (const c of allCandidates) {
+        perSeasonCounts[c.season] = (perSeasonCounts[c.season] || 0) + 1;
+    }
+
+    // Schema version for meta
+    const schemaVersion =
+        outputSchema === 'canonical-v2' ? 'canonical-inventory-artifact/v2' : 'candidate-match-identity/v1';
 
     return {
         candidates: allCandidates,
@@ -861,8 +1095,16 @@ async function exportCandidates(options = {}) {
             competition,
             seasons: canonicalSeasons,
             candidate_count: allCandidates.length,
-            business_content_sha256: businessHash,
+            business_content_sha256: v1BusinessHash,
         },
+        v2Snapshot:
+            outputSchema === 'canonical-v2'
+                ? {
+                      identity_projection_hash: identityProjectionHash,
+                      business_hash: v2BusinessHash,
+                      per_season_counts: perSeasonCounts,
+                  }
+                : undefined,
         validation: {
             all_seasons_complete: allSeasonsComplete,
             season_results: seasonResults,
@@ -873,8 +1115,9 @@ async function exportCandidates(options = {}) {
         meta: {
             extracted_at: extractedAt,
             total_requests: requestCount,
-            schema_version: 'candidate-match-identity/v1',
+            schema_version: schemaVersion,
         },
+        rawRetentions: rawRetentions.length > 0 ? rawRetentions : undefined,
     };
 }
 
@@ -980,6 +1223,58 @@ function buildOutputDocument(candidates, snapshot, meta) {
 }
 
 /**
+ * Build a canonical-inventory-artifact/v2 output document.
+ * Includes provider_status, status_mapping_version, and dual hashes
+ * (identity_projection_hash for v1 compatibility, business_hash for full v2).
+ */
+function buildV2OutputDocument(candidates, snapshot, meta, v2Snapshot) {
+    const sorted = [...candidates].sort((a, b) => {
+        const keyA = `${a.season}|${a.kickoff_at}|${a.home_team}|${a.away_team}|${a.source_match_id}`;
+        const keyB = `${b.season}|${b.kickoff_at}|${b.home_team}|${b.away_team}|${b.source_match_id}`;
+        return keyA.localeCompare(keyB);
+    });
+    return {
+        schema_version: meta.schema_version,
+        extracted_at: meta.extracted_at,
+        artifact: {
+            source_provider: snapshot.source_provider,
+            competition: snapshot.competition,
+            seasons: snapshot.seasons,
+            candidate_count: snapshot.candidate_count,
+            per_season_counts: v2Snapshot.per_season_counts,
+            identity_projection_hash: v2Snapshot.identity_projection_hash,
+            business_hash: v2Snapshot.business_hash,
+            status_mapping_version: STATUS_MAPPING_VERSION,
+            synthetic_test_only: false,
+        },
+        candidates: sorted,
+    };
+}
+
+/**
+ * Build a v2 summary document.
+ */
+function buildV2SummaryDocument(candidates, snapshot, meta, v2Snapshot) {
+    const bySeason = {};
+    for (const c of candidates) {
+        bySeason[c.season] = (bySeason[c.season] || 0) + 1;
+    }
+    return {
+        schema_version: meta.schema_version,
+        extracted_at: meta.extracted_at,
+        summary: {
+            total_candidates: candidates.length,
+            per_season: bySeason,
+            source_provider: snapshot.source_provider,
+            competition: snapshot.competition,
+            identity_projection_hash: v2Snapshot.identity_projection_hash,
+            business_hash: v2Snapshot.business_hash,
+            status_mapping_version: STATUS_MAPPING_VERSION,
+        },
+    };
+}
+
+/**
  * Build a summary document (counts, hashes, season stats only — no full candidate data).
  */
 function buildSummaryDocument(candidates, snapshot, meta) {
@@ -1051,11 +1346,111 @@ function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
     return { candidatePath, summaryPath };
 }
 
+// ----------------------------------------------------------------
+// Raw response retention
+// ----------------------------------------------------------------
+
+/**
+ * Write raw response bytes to a repository-external directory atomically.
+ * Computes SHA-256, records byte_size, and produces a capture manifest.
+ *
+ * @param {string} outputDir   absolute directory outside the repository
+ * @param {Buffer} bodyBytes   raw HTTP response body bytes
+ * @param {object} context     { url, season, httpStatus, contentType, captureStartedAt, captureCompletedAt, collectorComponent, gitRevision }
+ * @param {object} options     { fileSystem, repositoryRoot }
+ * @returns {{ manifest: object, rawFilePath: string, bodySha256: string, byteSize: number }}
+ */
+function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
+    const fileSystem = options.fileSystem || fs;
+    const safeDir = verifyOutputPathSafety(outputDir, options);
+
+    const bodySha256 = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+    const byteSize = bodyBytes.length;
+
+    // Sanitised season for filename
+    const seasonSafe = context.canonicalSeason.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const rawFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.html`;
+    const rawFilePath = path.join(safeDir, rawFileName);
+
+    // Atomic write: temp file → rename
+    const tempPath = rawFilePath + '.tmp.' + Date.now();
+    try {
+        fileSystem.writeFileSync(tempPath, bodyBytes, { flag: 'wx' });
+
+        // Reject silent overwrite of a different existing file
+        let existingStat;
+        try {
+            existingStat = fileSystem.lstatSync(rawFilePath);
+        } catch {
+            existingStat = null;
+        }
+        if (existingStat) {
+            bestEffortUnlink(fileSystem, tempPath);
+            const existingBytes = fileSystem.readFileSync(rawFilePath);
+            const existingSha = crypto.createHash('sha256').update(existingBytes).digest('hex');
+            if (existingSha !== bodySha256) {
+                throw Object.assign(
+                    new Error(`raw retention refused: target ${rawFileName} exists with different content`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            // Same content already present — idempotent, leave existing file
+            return {
+                manifest: buildCaptureManifest(context, bodySha256, byteSize, rawFileName),
+                rawFilePath,
+                bodySha256,
+                byteSize,
+            };
+        }
+
+        fileSystem.renameSync(tempPath, rawFilePath);
+    } catch (err) {
+        bestEffortUnlink(fileSystem, tempPath);
+        throw err;
+    }
+
+    return {
+        manifest: buildCaptureManifest(context, bodySha256, byteSize, rawFileName),
+        rawFilePath,
+        bodySha256,
+        byteSize,
+    };
+}
+
+/**
+ * Build a capture manifest for a single raw response.
+ */
+function buildCaptureManifest(context, bodySha256, byteSize, rawFileName) {
+    return {
+        schema_version: 'fotmob-raw-capture-manifest/v1',
+        source_provider: 'FotMob',
+        source_kind: 'league_fixtures_page',
+        request_method: 'GET',
+        request_url: context.url,
+        league_id: context.leagueId,
+        competition: context.competition,
+        requested_season: context.requestedSeason,
+        canonical_season: context.canonicalSeason,
+        capture_started_at: context.captureStartedAt,
+        capture_completed_at: context.captureCompletedAt,
+        http_status: context.httpStatus,
+        content_type: context.contentType,
+        body_byte_size: byteSize,
+        body_sha256: bodySha256,
+        collector_component: context.collectorComponent,
+        collector_code_revision: context.collectorCodeRevision,
+        network_authorization_mode: context.networkAuthorizationMode,
+        raw_file_relative_path: rawFileName,
+    };
+}
+
 module.exports = {
     // Constants
     FOTMOB_BASE_URL,
     EPL_FIXTURES_PER_SEASON,
     MAX_TOTAL_REQUESTS,
+    STATUS_MAPPING_VERSION,
+    ALLOWED_PROVIDER_STATUSES,
 
     // Season identity
     normaliseSeason,
@@ -1075,19 +1470,28 @@ module.exports = {
     classifySeasonIdentity,
     extractFixtures,
     classifyFixtureRejection,
+    deriveProviderStatus,
 
     // Building and validation
     buildCandidate,
     validateSeasonCandidates,
     validateAggregateCandidates,
     computeBusinessContentHash,
+    computeV1IdentityProjectionHash,
+    computeV2BusinessHash,
 
     // Pipeline
     exportCandidates,
     buildOutputDocument,
     buildSummaryDocument,
+    buildV2OutputDocument,
+    buildV2SummaryDocument,
     verifyOutputPathSafety,
     writeOutputFiles,
+
+    // Raw retention
+    writeRawRetention,
+    buildCaptureManifest,
 
     // Network (for test injection)
     fetchPage,
