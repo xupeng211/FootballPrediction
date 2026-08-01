@@ -1,3 +1,14 @@
+> ⚠️ **HISTORICAL SNAPSHOT / NON-AUTHORITATIVE**（2026-08-01 加注）
+>
+> 本文件仅保留历史背景和审计证据，**不得**作为当前命令、部署、数据库、merge 或生产操作依据。
+> 本文件头部自称"唯一权威操作指南"（V3.1-STABLE / 2026-03-06）已过时。
+> 当前入口请查看 README "Canonical Business Entrypoints" 表、`docs/PROJECT_MAP.md`、
+> `docs/CAPABILITY_INDEX.md`、`docs/ACTIVE_MILESTONE.md`。
+> 任何真实网络、数据库写入、migration、训练或生产操作必须重新获得明确授权。
+>
+> This file is a historical snapshot and is NOT authoritative. Do not use it as the basis
+> for current commands, deployment, database, merge, or production operations.
+
 # FootballPrediction 数字化指挥中心操作手册
 
 **版本**: V3.1-STABLE | **生效日期**: 2026-03-06 | **密级**: 内部绝密
