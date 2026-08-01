@@ -26,14 +26,11 @@ const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
 // `abandoned` fixtures are excluded by the approved full-inventory preflight.
 // They must not become durable canonical rows merely because status is outside
 // the v1 identity projection.
-const STATUS_MAPPING_VERSION = 'fotmob-status-to-matches-status/v1';
-const FOTMOB_STATUS_TO_APPLICATION_STATUS = Object.freeze({
-    scheduled: 'scheduled',
-    finished: 'finished',
-    postponed: 'postponed',
-    cancelled: 'cancelled',
-});
-const ALLOWED_STATUSES = new Set(Object.keys(FOTMOB_STATUS_TO_APPLICATION_STATUS));
+const {
+    ALLOWED_PROVIDER_STATUSES: ALLOWED_STATUSES,
+    FOTMOB_STATUS_TO_APPLICATION_STATUS,
+    STATUS_MAPPING_VERSION,
+} = require('../fotmob/FotMobStatusContract');
 const CANDIDATE_FIELDS = new Set([
     'id',
     'source_provider',

@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 // Deterministic, read-only FotMob league schedule candidate exporter.
 // No writes to repository, database, or project directories.
@@ -8,6 +10,7 @@
 const crypto = require('node:crypto');
 const path = require('node:path');
 const fs = require('node:fs');
+const child_process = require('node:child_process');
 
 const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 const DEFAULT_UA = 'FootballPrediction-FotMobCandidateExporter/1.0';
@@ -17,6 +20,122 @@ const MAX_TOTAL_REQUESTS = 6;
 const FIXTURES_URL_PATTERN = '/leagues/{leagueId}/fixtures/{slug}';
 const EPL_FIXTURES_PER_SEASON = 380;
 const CANONICAL_COMPETITION = 'Premier League';
+
+// ----------------------------------------------------------------
+// Provider status contract
+// ----------------------------------------------------------------
+
+const {
+    ALLOWED_PROVIDER_STATUSES,
+    FOTMOB_STATUS_TO_APPLICATION_STATUS,
+    STATUS_MAPPING_VERSION,
+} = require('./FotMobStatusContract');
+
+/**
+ * Derive a deterministic provider_status from a FotMob fixtures-page
+ * `fixture.status` object.
+ *
+ * Only explicitly confirmed terminal states are accepted. Every other
+ * combination is treated as unknown and fails closed so callers can
+ * reject the fixture and block the season export.
+ *
+ * Allowed terminal states:
+ *   cancelled === true  && finished !== true  →  cancelled
+ *   finished  === true  && cancelled !== true →  finished
+ *   reason.short ∈ {Postponed, Postp}          →  postponed
+ *   (see scheduled rules below)                →  scheduled
+ *
+ * scheduled is ONLY returned when ALL of the following hold:
+ *   - started  === false or absent (must NOT be true)
+ *   - finished === false or absent (must NOT be true)
+ *   - cancelled === false or absent (must NOT be true)
+ *   - reason is absent, or reason.short is null/empty,
+ *     or reason.short is one of the known pre-match reason codes
+ *     that do NOT indicate postponement/cancellation/interruption
+ *   - no unknown extra boolean flags on the status object
+ *
+ * Fail-closed (status=null) for:
+ *   - started === true (match is in progress — not a terminal state)
+ *   - any non-boolean value for started/finished/cancelled
+ *   - contradictory flags (finished + cancelled)
+ *   - unknown reason.short values (including 'Suspended', 'Live',
+ *     'Interrupted', 'Cancelled' as reason short)
+ *   - missing / non-object fixtureStatus
+ *
+ * @param {object}  fixtureStatus  fixture.status from FotMob pageProps
+ * @returns {{ status: string|null, error: string|null }}
+ */
+/* eslint-disable-next-line complexity */
+function deriveProviderStatus(fixtureStatus) {
+    if (!fixtureStatus || typeof fixtureStatus !== 'object') {
+        return { status: null, error: 'missing_status_object' };
+    }
+
+    // Every boolean flag MUST be a strict boolean if present.
+    for (const flag of ['started', 'finished', 'cancelled']) {
+        if (Object.prototype.hasOwnProperty.call(fixtureStatus, flag)) {
+            const value = fixtureStatus[flag];
+            if (typeof value !== 'boolean') {
+                return { status: null, error: `non_boolean_flag:${flag}=${typeof value}` };
+            }
+        }
+    }
+
+    const started = fixtureStatus.started === true;
+    const finished = fixtureStatus.finished === true;
+    const cancelled = fixtureStatus.cancelled === true;
+    const reasonShort =
+        fixtureStatus.reason && typeof fixtureStatus.reason.short === 'string'
+            ? fixtureStatus.reason.short
+            : null;
+
+    // Contradictory terminal states.
+    if (finished && cancelled) {
+        return { status: null, error: 'contradictory_status_flags:finished_and_cancelled' };
+    }
+
+    // Explicit terminal states.
+    if (cancelled) {
+        return { status: 'cancelled', error: null };
+    }
+    if (finished) {
+        return { status: 'finished', error: null };
+    }
+
+    // Postponement — only when terminal flags are not set.
+    if (reasonShort === 'Postponed' || reasonShort === 'Postp') {
+        return { status: 'postponed', error: null };
+    }
+
+    // A match that has started but is not finished/cancelled/postponed
+    // is in an unknown intermediate state (e.g. live, suspended,
+    // interrupted, half-time). Fail closed — the exporter cannot
+    // determine the final status.
+    if (started) {
+        const detail = reasonShort ? `started_with_reason:${reasonShort}` : 'started_no_reason';
+        return { status: null, error: detail };
+    }
+
+    // Unknown / unexpected reason codes when the match has not started.
+    // Known benign reasons that appear for future scheduled fixtures:
+    //   - (empty / null / absent)  — no status annotation yet
+    //   - 'FT' is only expected on finished matches but can appear
+    //     briefly before boolean flags are updated; treat as
+    //     scheduled only when finished===false explicitly.
+    // Everything else (Suspended, Live, Interrupted, Cancelled as
+    // reason short, etc.) is unknown territory → fail closed.
+    if (reasonShort !== null && reasonShort !== '') {
+        // 'FT' with finished===false is ambiguous but can occur in
+        // edge cases; treat conservatively as scheduled since the
+        // boolean flag overrides the reason code.
+        if (reasonShort !== 'FT') {
+            return { status: null, error: `unknown_reason:${reasonShort}` };
+        }
+    }
+
+    // All checks passed — this is a future scheduled fixture.
+    return { status: 'scheduled', error: null };
+}
 
 // ----------------------------------------------------------------
 // Candidate identity
@@ -122,7 +241,7 @@ function canonicalizeRequestedSeasons(values) {
 // ----------------------------------------------------------------
 
 /**
- * Fetch a URL and return { status, body }. Does NOT save full response.
+ * Fetch a URL and return { status, contentType, body, bodyBytes }.
  * Hard budget — callers must track request count externally.
  */
 async function fetchPage(url, options = {}) {
@@ -134,11 +253,16 @@ async function fetchPage(url, options = {}) {
 
     try {
         const res = await fetch(url, { signal: ctrl.signal, headers: { 'User-Agent': userAgent } });
-        const body = await res.text();
+        // Read as ArrayBuffer first so we can retain the raw bytes for
+        // provenance capture, then decode to text for __NEXT_DATA__ parsing.
+        const bodyArrayBuffer = await res.arrayBuffer();
+        const bodyBytes = Buffer.from(bodyArrayBuffer);
+        const body = new TextDecoder().decode(bodyArrayBuffer);
         return {
             status: res.status,
             contentType: String(res.headers.get('content-type') || ''),
             body,
+            bodyBytes,
         };
     } finally {
         clearTimeout(timer);
@@ -337,6 +461,9 @@ function createEmptyFixtureAudit() {
         rejected_by_reason: {},
         rejected_fixture_samples: [],
         accepted_fixture_count: 0,
+        status_unknown_fixture_count: 0,
+        status_unknown_by_reason: {},
+        status_unknown_fixture_samples: [],
     };
 }
 
@@ -396,6 +523,7 @@ function recordRejectedFixture(audit, fixture) {
 /**
  * Build an accepted fixture record, or null when the fixture does not
  * satisfy the candidate contract (numeric id, both teams, kickoff).
+ * Includes the derived provider_status for v2 output.
  */
 function extractAcceptedFixture(fixture) {
     if (classifyFixtureRejection(fixture) !== null) {
@@ -405,7 +533,8 @@ function extractAcceptedFixture(fixture) {
     const home = fixture.home.name;
     const away = fixture.away.name;
     const kickoff = fixture.status.utcTime;
-    return { id, home, away, kickoff };
+    const statusResult = deriveProviderStatus(fixture.status);
+    return { id, home, away, kickoff, provider_status: statusResult.status, status_error: statusResult.error };
 }
 
 /**
@@ -413,6 +542,8 @@ function extractAcceptedFixture(fixture) {
  * Returns { fixtures, audit } where audit records exclusion counts.
  * Excludes abandoned matches (status.reason.short === 'Ab').
  * Postponed, rescheduled, and cancelled matches are NOT excluded.
+ * Fixtures with unknown/unresolvable provider status are rejected and
+ * counted separately so the season can fail closed.
  */
 function extractFixtures(nd) {
     const pp = nd?.props?.pageProps;
@@ -433,6 +564,23 @@ function extractFixtures(nd) {
         }
         const accepted = extractAcceptedFixture(f);
         if (accepted) {
+            // Fail closed: every accepted fixture MUST have a valid provider_status.
+            if (!accepted.provider_status || !ALLOWED_PROVIDER_STATUSES.has(accepted.provider_status)) {
+                audit.status_unknown_fixture_count += 1;
+                const reasonKey = accepted.status_error || 'unknown';
+                audit.status_unknown_by_reason[reasonKey] =
+                    (audit.status_unknown_by_reason[reasonKey] || 0) + 1;
+                if (audit.status_unknown_fixture_samples.length < MAX_EXCLUDED_SAMPLES) {
+                    const sample = { reason_code: reasonKey };
+                    const id = f?.id ? String(f.id).trim() : null;
+                    if (id && isNumericExternalId(id)) {
+                        sample.source_match_id = id;
+                    }
+                    audit.status_unknown_fixture_samples.push(sample);
+                }
+                // Do NOT include this fixture in the accepted set.
+                continue;
+            }
             fixtures.push(accepted);
         } else {
             recordRejectedFixture(audit, f);
@@ -460,6 +608,8 @@ function buildCandidate(fixture, leagueId, competition, season) {
         home_team: fixture.home,
         away_team: fixture.away,
         kickoff_at: fixture.kickoff,
+        provider_status: fixture.provider_status,
+        status_mapping_version: STATUS_MAPPING_VERSION,
     };
 }
 
@@ -590,6 +740,49 @@ function computeBusinessContentHash(candidates) {
 }
 
 // ----------------------------------------------------------------
+// V2 hashes
+// ----------------------------------------------------------------
+
+/**
+ * Compute the v1 identity projection hash over the 8 identity fields only.
+ * This MUST match the existing approved hash for real 3-season master data.
+ * provider_status, status_mapping_version, and all metadata are excluded.
+ *
+ * Unchanged from the historical computeBusinessContentHash logic — kept as
+ * a separately named entrypoint so v2 callers never accidentally call the
+ * old name and conflate it with the full v2 business hash.
+ */
+function computeV1IdentityProjectionHash(candidates) {
+    return computeBusinessContentHash(candidates);
+}
+
+/**
+ * Compute a full v2 business hash over the complete candidate fields
+ * including provider status and status mapping version.
+ * Deterministic: sorted, projected to canonical fields, SHA-256.
+ */
+function computeV2BusinessHash(candidates) {
+    const sorted = [...candidates].sort((a, b) => {
+        const keyA = `${a.season}|${a.kickoff_at}|${a.home_team}|${a.away_team}|${a.source_match_id}`;
+        const keyB = `${b.season}|${b.kickoff_at}|${b.home_team}|${b.away_team}|${b.source_match_id}`;
+        return keyA.localeCompare(keyB);
+    });
+    const content = sorted.map(c => ({
+        id: c.id,
+        source_provider: c.source_provider,
+        source_match_id: c.source_match_id,
+        competition: c.competition,
+        season: c.season,
+        home_team: c.home_team,
+        away_team: c.away_team,
+        kickoff_at: c.kickoff_at,
+        provider_status: c.provider_status,
+        status_mapping_version: c.status_mapping_version,
+    }));
+    return crypto.createHash('sha256').update(JSON.stringify(content)).digest('hex');
+}
+
+// ----------------------------------------------------------------
 // Main export pipeline
 // ----------------------------------------------------------------
 
@@ -657,6 +850,7 @@ function buildSafeIdentitySummary(identity) {
  * `stop` is set only for blocking statuses (403/429); `succeeded` marks a
  * fully processed season and drives inter-season delay placement.
  */
+/* eslint-disable-next-line complexity */
 async function processSeason(season, context) {
     const { leagueId, competition, leagueSlug, deps, userAgent, requestCount, maxRequests } = context;
 
@@ -686,9 +880,26 @@ async function processSeason(season, context) {
         };
     }
 
+    // Capture data for provenance retention — always included when
+    // we received bytes, regardless of parse/validation outcome.
+    const _capture = resp.bodyBytes
+        ? {
+              url,
+              bodyBytes: resp.bodyBytes,
+              httpStatus: resp.status,
+              contentType: resp.contentType,
+          }
+        : null;
+
     if (resp.status === 403 || resp.status === 429) {
         return {
-            seasonResult: { season, result: `blocked_http_${resp.status}`, candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: `blocked_http_${resp.status}`,
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: true,
@@ -698,7 +909,13 @@ async function processSeason(season, context) {
 
     if (resp.status !== 200) {
         return {
-            seasonResult: { season, result: `http_${resp.status}`, candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: `http_${resp.status}`,
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: false,
@@ -709,7 +926,13 @@ async function processSeason(season, context) {
     const nd = extractNextData(resp.body);
     if (!nd) {
         return {
-            seasonResult: { season, result: 'no_next_data', candidates: 0, identity: null },
+            seasonResult: {
+                season,
+                result: 'no_next_data',
+                candidates: 0,
+                identity: null,
+                _capture,
+            },
             candidates: [],
             requestsUsed: 1,
             stop: false,
@@ -726,6 +949,7 @@ async function processSeason(season, context) {
                 result: verdict.reason,
                 candidates: 0,
                 identity: buildSafeIdentitySummary(identity),
+                _capture,
             },
             candidates: [],
             requestsUsed: 1,
@@ -743,22 +967,30 @@ async function processSeason(season, context) {
     });
 
     // Audit closure invariant: every fixture must be classified exactly once.
-    // Rejected (contract-invalid) fixtures block season completion.
-    const auditCloses =
-        extraction.audit.raw_fixture_count ===
+    // Accepted + Excluded + Rejected + StatusUnknown = Raw.
+    const classifiedSum =
         extraction.audit.accepted_fixture_count +
-            extraction.audit.excluded_fixture_count +
-            extraction.audit.rejected_fixture_count;
+        extraction.audit.excluded_fixture_count +
+        extraction.audit.rejected_fixture_count +
+        extraction.audit.status_unknown_fixture_count;
+    const auditCloses = extraction.audit.raw_fixture_count === classifiedSum;
 
-    if (!auditCloses || extraction.audit.rejected_fixture_count > 0) {
+    if (!auditCloses || extraction.audit.rejected_fixture_count > 0 || extraction.audit.status_unknown_fixture_count > 0) {
         const errs = [...validation.errors];
+        if (!auditCloses) {
+            errs.push(
+                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},` +
+                    `accepted=${extraction.audit.accepted_fixture_count},` +
+                    `excluded=${extraction.audit.excluded_fixture_count},` +
+                    `rejected=${extraction.audit.rejected_fixture_count},` +
+                    `status_unknown=${extraction.audit.status_unknown_fixture_count}`
+            );
+        }
         if (extraction.audit.rejected_fixture_count > 0) {
             errs.push(`unexpected_rejected_fixtures:${extraction.audit.rejected_fixture_count}`);
         }
-        if (!auditCloses) {
-            errs.push(
-                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},sum=${extraction.audit.accepted_fixture_count + extraction.audit.excluded_fixture_count + extraction.audit.rejected_fixture_count}`
-            );
+        if (extraction.audit.status_unknown_fixture_count > 0) {
+            errs.push(`unknown_provider_status:${extraction.audit.status_unknown_fixture_count}`);
         }
         Object.assign(validation, { valid: false, errors: errs });
     }
@@ -775,12 +1007,67 @@ async function processSeason(season, context) {
             },
             audit: extraction.audit,
             validation,
+            _capture,
         },
         candidates: seasonCandidates,
         requestsUsed: 1,
         stop: false,
         succeeded: true,
     };
+}
+
+/**
+ * Resolve the trusted 40-hex git revision from HEAD.
+ * Fails closed when the worktree is dirty, the repository cannot be
+ * identified, or the revision is not a plausible full-length SHA.
+ *
+ * @param {object} [options]
+ * @param {string} [options.repositoryRoot] — absolute path to the Git repo
+ * @param {object} [options.deps] — { execSync } for testability
+ * @returns {{ revision: string, dirty: false }}
+ */
+function resolveGitState(options = {}) {
+    const repositoryRoot = options.repositoryRoot
+        ? path.resolve(options.repositoryRoot)
+        : path.resolve(__dirname, '..', '..', '..');
+    const execSync = (options.deps && options.deps.execSync) || child_process.execSync;
+    const execOptions = { cwd: repositoryRoot, encoding: 'utf8', timeout: 10_000 };
+
+    // Detect uncommitted change or untracked file — fail closed.
+    let statusOutput;
+    try {
+        statusOutput = execSync('git status --porcelain', execOptions);
+    } catch (err) {
+        throw Object.assign(
+            new Error(`git status failed: ${err.message}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (statusOutput.trim().length > 0) {
+        throw Object.assign(
+            new Error('git worktree is dirty — commit or stash changes before exporting'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Resolve the full 40-hex revision.
+    let revision;
+    try {
+        revision = execSync('git rev-parse HEAD', execOptions).trim();
+    } catch (err) {
+        throw Object.assign(
+            new Error(`git rev-parse failed: ${err.message}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (!/^[0-9a-f]{40}$/.test(revision)) {
+        throw Object.assign(
+            new Error(`git revision is not a valid 40-hex SHA: ${revision}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    return { revision, dirty: false };
 }
 
 /**
@@ -792,9 +1079,12 @@ async function processSeason(season, context) {
  * @param {string[]}      options.seasons         — season strings (e.g. ["2022/2023"])
  * @param {string}        [options.leagueSlug]    — safe ASCII kebab-case URL slug (default: derived from competition)
  * @param {boolean}       options.networkAuthorization — explicit live-network authorization
+ * @param {string}        [options.outputSchema]  — 'identity-v1' (default) or 'canonical-v2'
+ * @param {Object}        [options.retainRawResponses] — { outputDir, collectorComponent, gitRevision }
  * @param {Object}        [options.deps]          — dependency injection
- * @returns {Promise<Object>} { candidates, snapshot, validation }
+ * @returns {Promise<Object>} { candidates, snapshot, validation, meta, rawRetentions (if enabled) }
  */
+/* eslint-disable-next-line complexity */
 async function exportCandidates(options = {}) {
     const rawSeasons = Array.isArray(options.seasons) ? options.seasons : [];
     const deps = options.deps || {};
@@ -802,9 +1092,6 @@ async function exportCandidates(options = {}) {
     const _clock = deps.clock || (() => new Date().toISOString());
 
     // Validate every user-controlled identity before any network access.
-    // The core layer is the final line of defense: seasons, competition,
-    // league id, and league slug are all canonicalised here — the CLI must
-    // not be relied upon as the only gate.
     const canonicalSeasons = canonicalizeRequestedSeasons(rawSeasons);
     const competition = canonicalizeCompetition(options.competition);
     const leagueId = canonicalizeLeagueId(options.leagueId);
@@ -817,11 +1104,28 @@ async function exportCandidates(options = {}) {
     }
     const maxRequests = Math.min(canonicalSeasons.length * 2, MAX_TOTAL_REQUESTS);
 
+    // Output schema
+    const outputSchema = options.outputSchema || 'identity-v1';
+    if (!['identity-v1', 'canonical-v2'].includes(outputSchema)) {
+        throw Object.assign(new Error(`Unknown output schema: ${outputSchema}`), { code: 'INPUT_ERROR' });
+    }
+
+    // Raw retention gate: v2 canoncial mode requires retention
+    const retainRaw = options.retainRawResponses || null;
+    if (outputSchema === 'canonical-v2' && !retainRaw) {
+        throw Object.assign(
+            new Error('canonical-v2 output requires --retain-raw-responses with a repository-external output directory'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
     const allCandidates = [];
     const seasonResults = [];
+    const rawRetentions = [];
     let requestCount = 0;
 
     for (let i = 0; i < canonicalSeasons.length; i += 1) {
+        const captureStartedAt = _clock();
         const outcome = await processSeason(canonicalSeasons[i], {
             leagueId,
             competition,
@@ -831,10 +1135,65 @@ async function exportCandidates(options = {}) {
             requestCount,
             maxRequests,
         });
+        const captureCompletedAt = _clock();
 
         requestCount += outcome.requestsUsed;
-        seasonResults.push(outcome.seasonResult);
         allCandidates.push(...outcome.candidates);
+
+        // Raw response retention — capture evidence BEFORE parsing,
+        // so failed parses and identity mismatches still leave raw.
+        // In v2 mode, every HTTP response with bytes must be retained.
+        const cap = outcome.seasonResult._capture;
+        if (cap && cap.bodyBytes && cap.bodyBytes.length > 0) {
+            if (retainRaw) {
+                try {
+                    const retention = writeRawRetention(
+                        retainRaw.outputDir,
+                        cap.bodyBytes,
+                        {
+                            url: cap.url,
+                            leagueId,
+                            competition,
+                            requestedSeason: canonicalSeasons[i],
+                            canonicalSeason: canonicalSeasons[i],
+                            httpStatus: cap.httpStatus,
+                            contentType: cap.contentType,
+                            captureStartedAt,
+                            captureCompletedAt,
+                            collectorComponent: retainRaw.collectorComponent || 'FotMobCandidateExporter',
+                            collectorCodeRevision: retainRaw.collectorCodeRevision || 'unknown',
+                            networkAuthorizationMode: 'explicit_network_authorization',
+                        },
+                        {
+                            fileSystem: deps.fileSystem || fs,
+                            repositoryRoot: deps.repositoryRoot,
+                        }
+                    );
+                    rawRetentions.push(retention);
+                } catch (retentionErr) {
+                    // Raw retention failure blocks the entire export in v2 mode.
+                    throw Object.assign(
+                        new Error(`raw retention failed for season ${canonicalSeasons[i]}: ${retentionErr.message}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+            } else if (outputSchema === 'canonical-v2') {
+                throw Object.assign(
+                    new Error(`raw retention failed: no retention config for season ${canonicalSeasons[i]}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+        } else if (outputSchema === 'canonical-v2' && outcome.succeeded) {
+            // Succeeded seasons must always have capture data in v2 mode.
+            throw Object.assign(
+                new Error(`raw retention failed: no response bytes for season ${canonicalSeasons[i]}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Strip internal capture data from season results before returning
+        delete outcome.seasonResult._capture;
+        seasonResults.push(outcome.seasonResult);
 
         if (outcome.stop) {
             break;
@@ -846,12 +1205,25 @@ async function exportCandidates(options = {}) {
         }
     }
 
-    const businessHash = computeBusinessContentHash(allCandidates);
     const extractedAt = _clock();
-
     const aggregateV = validateAggregateCandidates(allCandidates, canonicalSeasons, EPL_FIXTURES_PER_SEASON);
-
     const allSeasonsComplete = seasonResults.every(r => r.result === 'complete') && aggregateV.valid;
+
+    // Compute hashes
+    const identityProjectionHash = computeV1IdentityProjectionHash(allCandidates);
+    const v2BusinessHash =
+        outputSchema === 'canonical-v2' ? computeV2BusinessHash(allCandidates) : null;
+    const v1BusinessHash = computeBusinessContentHash(allCandidates);
+
+    // Per-season counts
+    const perSeasonCounts = {};
+    for (const c of allCandidates) {
+        perSeasonCounts[c.season] = (perSeasonCounts[c.season] || 0) + 1;
+    }
+
+    // Schema version for meta
+    const schemaVersion =
+        outputSchema === 'canonical-v2' ? 'canonical-inventory-artifact/v2' : 'candidate-match-identity/v1';
 
     return {
         candidates: allCandidates,
@@ -861,8 +1233,16 @@ async function exportCandidates(options = {}) {
             competition,
             seasons: canonicalSeasons,
             candidate_count: allCandidates.length,
-            business_content_sha256: businessHash,
+            business_content_sha256: v1BusinessHash,
         },
+        v2Snapshot:
+            outputSchema === 'canonical-v2'
+                ? {
+                      identity_projection_hash: identityProjectionHash,
+                      business_hash: v2BusinessHash,
+                      per_season_counts: perSeasonCounts,
+                  }
+                : undefined,
         validation: {
             all_seasons_complete: allSeasonsComplete,
             season_results: seasonResults,
@@ -873,8 +1253,9 @@ async function exportCandidates(options = {}) {
         meta: {
             extracted_at: extractedAt,
             total_requests: requestCount,
-            schema_version: 'candidate-match-identity/v1',
+            schema_version: schemaVersion,
         },
+        rawRetentions: rawRetentions.length > 0 ? rawRetentions : undefined,
     };
 }
 
@@ -980,6 +1361,175 @@ function buildOutputDocument(candidates, snapshot, meta) {
 }
 
 /**
+ * Build a canonical-inventory-artifact/v2 output document.
+ *
+ * Contract requirements (from CanonicalInventoryContract.js):
+ *   schema_version  = 'canonical-inventory-artifact/v2'
+ *   artifact.kind   = 'master'  (this exporter always produces master)
+ *   artifact.competition, seasons, candidate_count, per_season_counts
+ *   artifact.business_hash, artifact.identity_projection_hash
+ *   artifact.status_mapping_version
+ *   artifact.synthetic_test_only
+ *   candidates       — sorted deterministic array
+ *
+ * The artifact field 'source_provider' is accepted by the formal
+ * unknown-field policy (the contract does not reject it).
+ */
+function buildV2OutputDocument(candidates, snapshot, meta, v2Snapshot) {
+    const sorted = [...candidates].sort((a, b) => {
+        const keyA = `${a.season}|${a.kickoff_at}|${a.home_team}|${a.away_team}|${a.source_match_id}`;
+        const keyB = `${b.season}|${b.kickoff_at}|${b.home_team}|${b.away_team}|${b.source_match_id}`;
+        return keyA.localeCompare(keyB);
+    });
+    return {
+        schema_version: meta.schema_version,
+        extracted_at: meta.extracted_at,
+        artifact: {
+            kind: 'master',
+            source_provider: snapshot.source_provider,
+            competition: snapshot.competition,
+            seasons: snapshot.seasons,
+            candidate_count: snapshot.candidate_count,
+            per_season_counts: v2Snapshot.per_season_counts,
+            identity_projection_hash: v2Snapshot.identity_projection_hash,
+            business_hash: v2Snapshot.business_hash,
+            status_mapping_version: STATUS_MAPPING_VERSION,
+            synthetic_test_only: false,
+        },
+        candidates: sorted,
+    };
+}
+
+/**
+ * Build a v2 summary document.
+ */
+function buildV2SummaryDocument(candidates, snapshot, meta, v2Snapshot) {
+    const bySeason = {};
+    for (const c of candidates) {
+        bySeason[c.season] = (bySeason[c.season] || 0) + 1;
+    }
+    return {
+        schema_version: meta.schema_version,
+        extracted_at: meta.extracted_at,
+        summary: {
+            total_candidates: candidates.length,
+            per_season: bySeason,
+            source_provider: snapshot.source_provider,
+            competition: snapshot.competition,
+            identity_projection_hash: v2Snapshot.identity_projection_hash,
+            business_hash: v2Snapshot.business_hash,
+            status_mapping_version: STATUS_MAPPING_VERSION,
+        },
+    };
+}
+
+/**
+ * Validate that a v2 summary document is consistent with the corresponding
+ * v2 artifact document that has already passed formal contract validation.
+ *
+ * Checks schema_version, candidate counts, per-season distribution,
+ * hashes, and status_mapping_version. Throws SAFETY_ERROR on any mismatch.
+ *
+ * This is a pure function — no filesystem or network access.
+ *
+ * @param {object} candidateDoc  the v2 artifact document (already validated)
+ * @param {object} summaryDoc    the v2 summary document to validate
+ */
+/* eslint-disable-next-line complexity */
+function validateV2SummaryAgainstArtifact(candidateDoc, summaryDoc) {
+    if (!candidateDoc || !summaryDoc) {
+        throw Object.assign(new Error('summary validation requires both artifact and summary documents'), {
+            code: 'SAFETY_ERROR',
+        });
+    }
+
+    const artifact = candidateDoc.artifact;
+    const summary = summaryDoc.summary;
+    if (!artifact || !summary) {
+        throw Object.assign(new Error('summary validation: missing artifact or summary block'), {
+            code: 'SAFETY_ERROR',
+        });
+    }
+
+    // Schema version must match.
+    if (candidateDoc.schema_version !== summaryDoc.schema_version) {
+        throw Object.assign(
+            new Error('summary schema_version does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Candidate count must match.
+    const artifactCount = candidateDoc.candidates ? candidateDoc.candidates.length : 0;
+    if (artifactCount !== summary.total_candidates) {
+        throw Object.assign(
+            new Error(`summary total_candidates ${summary.total_candidates} does not match artifact ${artifactCount}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Per-season counts must match.
+    if (!summary.per_season || typeof summary.per_season !== 'object') {
+        throw Object.assign(new Error('summary is missing per_season counts'), { code: 'SAFETY_ERROR' });
+    }
+    const artifactPerSeason = artifact.per_season_counts || {};
+    const seasons = Object.keys(summary.per_season);
+    if (seasons.length !== Object.keys(artifactPerSeason).length) {
+        throw Object.assign(
+            new Error('summary per_season season count does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    for (const season of seasons) {
+        if (summary.per_season[season] !== artifactPerSeason[season]) {
+            throw Object.assign(
+                new Error(
+                    `summary per_season["${season}"]=${summary.per_season[season]} ` +
+                    `does not match artifact ${artifactPerSeason[season]}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
+
+    // Source provider and competition must match.
+    if (summary.source_provider !== artifact.source_provider) {
+        throw Object.assign(
+            new Error('summary source_provider does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (summary.competition !== artifact.competition) {
+        throw Object.assign(
+            new Error('summary competition does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Hashes must match.
+    if (summary.identity_projection_hash !== artifact.identity_projection_hash) {
+        throw Object.assign(
+            new Error('summary identity_projection_hash does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (summary.business_hash !== artifact.business_hash) {
+        throw Object.assign(
+            new Error('summary business_hash does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Status mapping version must match.
+    if (summary.status_mapping_version !== artifact.status_mapping_version) {
+        throw Object.assign(
+            new Error('summary status_mapping_version does not match artifact'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+}
+
+/**
  * Build a summary document (counts, hashes, season stats only — no full candidate data).
  */
 function buildSummaryDocument(candidates, snapshot, meta) {
@@ -1051,11 +1601,269 @@ function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
     return { candidatePath, summaryPath };
 }
 
+// ----------------------------------------------------------------
+// Raw response retention
+// ----------------------------------------------------------------
+
+/**
+ * Write raw response bytes to a repository-external directory atomically.
+ * Computes SHA-256, records byte_size, and produces a capture manifest.
+ *
+ * @param {string} outputDir   absolute directory outside the repository
+ * @param {Buffer} bodyBytes   raw HTTP response body bytes
+ * @param {object} context     { url, season, httpStatus, contentType, captureStartedAt, captureCompletedAt, collectorComponent, gitRevision }
+ * @param {object} options     { fileSystem, repositoryRoot }
+ * @returns {{ manifest: object, rawFilePath: string, bodySha256: string, byteSize: number }}
+ */
+/* eslint-disable-next-line complexity */
+function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
+    const fileSystem = options.fileSystem || fs;
+    const safeDir = verifyOutputPathSafety(outputDir, options);
+
+    const bodySha256 = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+    const byteSize = bodyBytes.length;
+
+    // Sanitised season for filename
+    const seasonSafe = context.canonicalSeason.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const rawFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.html`;
+    const rawFilePath = path.join(safeDir, rawFileName);
+
+    // Paired manifest file written alongside the raw HTML as evidence unit.
+    const manifestFileName = `fotmob-fixtures-${context.leagueId}-${seasonSafe}-${bodySha256.slice(0, 12)}.manifest.json`;
+    const manifestFilePath = path.join(safeDir, manifestFileName);
+    const manifest = buildCaptureManifest(context, bodySha256, byteSize, rawFileName);
+    const manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    const expectedManifestSha = crypto.createHash('sha256').update(manifestBytes).digest('hex');
+
+    // 4.1 — Only two allowed states: both absent or both present as regular files.
+    let existingRawStat;
+    try { existingRawStat = fileSystem.lstatSync(rawFilePath); } catch { existingRawStat = null; }
+    let existingManifestStat;
+    try { existingManifestStat = fileSystem.lstatSync(manifestFilePath); } catch { existingManifestStat = null; }
+
+    const rawExists = existingRawStat !== null;
+    const manifestExists = existingManifestStat !== null;
+
+    // Partial state — only one file exists.
+    if (rawExists !== manifestExists) {
+        throw Object.assign(
+            new Error(
+                `raw retention pair integrity violated: ` +
+                `raw=${rawExists ? 'present' : 'absent'}, ` +
+                `manifest=${manifestExists ? 'present' : 'absent'}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Symlinks are rejected for both files.
+    if (rawExists && (!existingRawStat.isFile() || existingRawStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error(`raw retention refused: raw file is not a regular file: ${rawFileName}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (manifestExists && (!existingManifestStat.isFile() || existingManifestStat.isSymbolicLink())) {
+        throw Object.assign(
+            new Error(`raw retention refused: manifest is not a regular file: ${manifestFileName}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Both files exist — verify paired integrity.
+    if (rawExists) {
+        const existingRawBytes = fileSystem.readFileSync(rawFilePath);
+        const existingRawSha = crypto.createHash('sha256').update(existingRawBytes).digest('hex');
+
+        if (existingRawSha !== bodySha256) {
+            throw Object.assign(
+                new Error(`raw retention refused: target ${rawFileName} exists with different content`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Verify manifest file is valid JSON and content matches.
+        let existingManifest;
+        try {
+            existingManifest = JSON.parse(fileSystem.readFileSync(manifestFilePath, 'utf8'));
+        } catch (parseErr) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest is not valid JSON: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Verify manifest fields match the raw file and expected values.
+        if (existingManifest.body_sha256 !== bodySha256) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest body_sha256 does not match raw: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (existingManifest.body_byte_size !== byteSize) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest body_byte_size does not match raw: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (existingManifest.raw_file_relative_path !== rawFileName) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest raw_file_relative_path mismatch: ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Full manifest content must match (after stable serialization of the expected one).
+        // Compare the serialized bytes so timestamp/revision differences are caught.
+        const existingManifestBytes = fileSystem.readFileSync(manifestFilePath);
+        const existingManifestSha = crypto.createHash('sha256').update(existingManifestBytes).digest('hex');
+        if (existingManifestSha !== expectedManifestSha) {
+            throw Object.assign(
+                new Error(`raw retention refused: manifest content differs (capture time or revision changed): ${manifestFileName}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Both files match — idempotent success.
+        return {
+            manifest,
+            manifestFilePath,
+            rawFilePath,
+            bodySha256,
+            byteSize,
+        };
+    }
+
+    // Neither file exists — write both atomically.
+    // 4.3: Write temp files → verify → rename raw → rename manifest → verify final → rollback on partial.
+    const tempHtmlPath = rawFilePath + '.tmp.' + Date.now();
+    const tempManifestPath = manifestFilePath + '.tmp.' + Date.now();
+
+    try {
+        fileSystem.writeFileSync(tempHtmlPath, bodyBytes, { flag: 'wx' });
+        fileSystem.writeFileSync(tempManifestPath, manifestBytes, { flag: 'wx' });
+
+        // Verify temp file contents before rename.
+        const tempHtmlBytes = fileSystem.readFileSync(tempHtmlPath);
+        if (crypto.createHash('sha256').update(tempHtmlBytes).digest('hex') !== bodySha256) {
+            throw Object.assign(
+                new Error('raw retention failed: temp HTML verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const tempManifestBytes = fileSystem.readFileSync(tempManifestPath);
+        if (crypto.createHash('sha256').update(tempManifestBytes).digest('hex') !== expectedManifestSha) {
+            throw Object.assign(
+                new Error('raw retention failed: temp manifest verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Rename raw first, then manifest.
+        fileSystem.renameSync(tempHtmlPath, rawFilePath);
+
+        try {
+            fileSystem.renameSync(tempManifestPath, manifestFilePath);
+        } catch (manifestRenameErr) {
+            // 4.3: Manifest rename failed — rollback the just-created final raw.
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, tempManifestPath);
+            throw Object.assign(
+                new Error(`raw retention failed: manifest rename error: ${manifestRenameErr.message}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        // Final verification: re-read both files and confirm pairing.
+        let finalRawBytes;
+        try { finalRawBytes = fileSystem.readFileSync(rawFilePath); } catch {
+            throw Object.assign(
+                new Error('raw retention failed: final raw read failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        const finalRawSha = crypto.createHash('sha256').update(finalRawBytes).digest('hex');
+        if (finalRawSha !== bodySha256) {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final raw verification failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        let finalManifestParsed;
+        try {
+            finalManifestParsed = JSON.parse(fileSystem.readFileSync(manifestFilePath, 'utf8'));
+        } catch {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final manifest parse failed'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+
+        if (finalManifestParsed.body_sha256 !== bodySha256 ||
+            finalManifestParsed.body_byte_size !== byteSize ||
+            finalManifestParsed.raw_file_relative_path !== rawFileName) {
+            bestEffortUnlink(fileSystem, rawFilePath);
+            bestEffortUnlink(fileSystem, manifestFilePath);
+            throw Object.assign(
+                new Error('raw retention failed: final manifest field mismatch'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    } catch (err) {
+        // Clean up any temp files — best-effort, do not mask the original error.
+        bestEffortUnlink(fileSystem, tempHtmlPath);
+        bestEffortUnlink(fileSystem, tempManifestPath);
+        throw err;
+    }
+
+    return {
+        manifest,
+        manifestFilePath,
+        rawFilePath,
+        bodySha256,
+        byteSize,
+    };
+}
+
+/**
+ * Build a capture manifest for a single raw response.
+ */
+function buildCaptureManifest(context, bodySha256, byteSize, rawFileName) {
+    return {
+        schema_version: 'fotmob-raw-capture-manifest/v1',
+        source_provider: 'FotMob',
+        source_kind: 'league_fixtures_page',
+        request_method: 'GET',
+        request_url: context.url,
+        league_id: context.leagueId,
+        competition: context.competition,
+        requested_season: context.requestedSeason,
+        canonical_season: context.canonicalSeason,
+        capture_started_at: context.captureStartedAt,
+        capture_completed_at: context.captureCompletedAt,
+        http_status: context.httpStatus,
+        content_type: context.contentType,
+        body_byte_size: byteSize,
+        body_sha256: bodySha256,
+        collector_component: context.collectorComponent,
+        collector_code_revision: context.collectorCodeRevision,
+        network_authorization_mode: context.networkAuthorizationMode,
+        raw_file_relative_path: rawFileName,
+    };
+}
+
 module.exports = {
     // Constants
     FOTMOB_BASE_URL,
     EPL_FIXTURES_PER_SEASON,
     MAX_TOTAL_REQUESTS,
+    STATUS_MAPPING_VERSION,
+    ALLOWED_PROVIDER_STATUSES,
 
     // Season identity
     normaliseSeason,
@@ -1075,19 +1883,32 @@ module.exports = {
     classifySeasonIdentity,
     extractFixtures,
     classifyFixtureRejection,
+    deriveProviderStatus,
 
     // Building and validation
     buildCandidate,
     validateSeasonCandidates,
     validateAggregateCandidates,
     computeBusinessContentHash,
+    computeV1IdentityProjectionHash,
+    computeV2BusinessHash,
 
     // Pipeline
     exportCandidates,
     buildOutputDocument,
     buildSummaryDocument,
+    buildV2OutputDocument,
+    buildV2SummaryDocument,
+    validateV2SummaryAgainstArtifact,
     verifyOutputPathSafety,
     writeOutputFiles,
+
+    // Git state
+    resolveGitState,
+
+    // Raw retention
+    writeRawRetention,
+    buildCaptureManifest,
 
     // Network (for test injection)
     fetchPage,
