@@ -23,7 +23,7 @@
 
 ## 已完成（勿重复）
 
-- M3-D4A → D4F：离线 staging pipeline、CSV recovery、确定性候选导出与身份、
+- M3 离线主线 → D4F：离线 staging pipeline、CSV recovery、确定性候选导出与身份、
   D4B 持久化合同（38,616 accepted / 216 quarantined 冻结合同）、
   D4C / D4E 受控 synthetic 写入验证（1 run / 1 source / 6 accepted / 3 quarantine）、
   D4D readiness 评审、D4F 交叉来源审计

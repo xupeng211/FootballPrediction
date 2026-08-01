@@ -43,7 +43,7 @@
 
 - 双语言仓库：Node.js（收割 / 编排 / 基础设施）+ Python（ML 训练 / 推理 / 特征）。
 - PostgreSQL 15+（开发 / 生产数据库）、Redis（缓存）、Docker Compose（dev 容器）。
-- 数据链路：L1 Discovery → L2 Harvest → L3 Smelt → ELO → Predict（见 README 数据流向图）。
+- 数据链路：L1 Discovery → L2 Harvest → L3 Smelt → Predict（见 README 数据流向图）。
 - 详细架构见 docs/ARCHITECTURE.md；本文件不复制大段架构内容。
 
 ## 主要目录职责
@@ -87,7 +87,7 @@
 
 ## 两套 migration 目录的已知边界
 
-- `database/migrations/`：16 个 V*.sql（V6.x / V26.x）。V26.8（odds historical staging
+- `database/migrations/`：16 个 V*.sql（V6.x / V12.x / V26.x）。V26.8（odds historical staging
   contract）、V26.9（observation fingerprint）、V26.10（M3 canonical inventory contract）
   为 M3 合同。执行必须走 `make data-schema-*` 门禁；M3 相关迁移仅在 disposable
   PostgreSQL 15 tmpfs 容器中执行过（docs/PROJECT_STATUS.md）。
@@ -108,7 +108,7 @@
   是否在 README canonical 表 / CAPABILITY_INDEX 中注册；未注册的脚本不得当作正式入口。
 - `docs/_reports`、`docs/_manifests` 属于历史治理资产分类：新任务默认不得创建，
   只有 Issue 明确授权且通过 M2 增长冻结门禁才允许最小必要记录（AGENTS.md §2.4）。
-- 现存历史资产不得替代 runtime 实现（AGENTS.md §2.3）。
+- 现存历史资产不得替代 runtime 实现（AGENTS.md §2.4）。
 
 ## canonical ≠ 授权
 

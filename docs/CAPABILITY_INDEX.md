@@ -33,7 +33,7 @@
 
 | Domain | Capability | Status | Canonical entrypoint | Core implementation | Primary tests | Authorization & side effects | Legacy or forbidden alternatives | Current notes |
 |---|---|---|---|---|---|---|---|---|
-| Odds | 离线 source inventory | CANONICAL | `npm run odds:staging:dry-run` | `src/infrastructure/odds_staging/sourceManifest.js` | tests/unit/odds_staging_pipeline.test.js | no-write 默认；读本地 CSV + manifest | 历史 CSV 直接入库脚本 | M3-D4A 已合并（Issue #1793） |
+| Odds | 离线 source inventory | CANONICAL | `npm run odds:staging:dry-run` | `src/infrastructure/odds_staging/sourceManifest.js` | tests/unit/odds_staging_pipeline.test.js | no-write 默认；读本地 CSV + manifest | 历史 CSV 直接入库脚本 | 离线 source inventory 已合并（M3 里程碑，Issue #1793） |
 | Odds | 离线 staging pipeline | CANONICAL | `npm run odds:staging:dry-run` | `src/infrastructure/odds_staging/pipeline.js` | tests/unit/odds_staging_pipeline.test.js、tests/unit/odds_staging_cli.test.js、tests/integration/odds_staging/ | no-write 默认（dry-run）；写文件需显式授权 | — | football-data-csv@1.2.0 + E0/Premier League + three-season + exact-alias + Europe/London 合同（docs/M3_D4F_READINESS_REVIEW.md） |
 | Odds | dry-run importer | CANONICAL | `npm run odds:staging:dry-run` | 同上（CLI 默认 dry-run） | tests/unit/odds_staging_cli.test.js | 不写 DB、不写文件 | — | 唯一离线导入入口，默认 fail-closed/no-write |
 | Odds | semantic identity | CANONICAL | 同上（pipeline 内） | `src/infrastructure/odds_staging/footballDataIdentity.js` | tests/unit/odds_staging_match_identity.test.js | 纯计算 | — | — |
