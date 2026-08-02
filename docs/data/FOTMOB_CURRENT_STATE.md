@@ -9,13 +9,19 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-07-31
+## Current authoritative status — 2026-08-02
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-complete, raw retention)
+FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
+  (malformed reason.short fail closed; started+postponed contradiction fail closed;
+   core-layer 40-hex collector_code_revision enforcement in buildCaptureManifest)
+Real FotMob network probe = still NOT authorized and NOT executed
+Public terms / usage-boundary review = NOT completed
+Single-page shape probe = NOT executed; requires separate explicit user authorization
 ```
 
 ### Current read-only retained inventory
@@ -135,7 +141,19 @@ all 58 rows is not uniquely attributable.
   support `--output-schema=canonical-v2` and `--retain-raw-responses` with
   git-revision binding (clean worktree required), overwrite protection, and
   formal `validateArtifactDocument()` contract enforcement before file write. This
-  resolves the status-field gap. No inventory writer, link or import has been
+  resolves the status-field gap. As of 2026-08-02 the FOTMOB_REAL_CAPTURE_READINESS
+  Phase A pre-capture hardening (PR #1813 Debt Impact items 1–2) is implemented in
+  the exporter core: malformed `reason` / `reason.short` shapes fail closed with
+  deterministic `malformed_reason_object:<type>` / `non_string_reason_short:<type>`
+  errors instead of being silently downgraded to scheduled; `started=true` combined
+  with a `Postponed`/`Postp` reason fails closed as
+  `contradictory_status_flags:started_and_postponed`; and
+  `collector_code_revision` is enforced as a full 40-character lowercase hex Git SHA
+  inside `buildCaptureManifest()`, so direct core calls and injected dependencies
+  cannot bypass the CLI-layer `resolveGitState()` check and no raw or manifest file
+  is written for an invalid revision. `ALLOWED_PROVIDER_STATUSES`,
+  `STATUS_MAPPING_VERSION`, the identity-v1 output path and both hash schemes are
+  unchanged. No inventory writer, link or import has been
   authorized.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
@@ -153,8 +171,15 @@ all 58 rows is not uniquely attributable.
 
 Do not start automatically. Recommended next task only after user confirmation:
 the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`
-artifact contract and raw response provenance retention is now implemented
-(PR #1813 in corrective review). Future inventory is 1,140 candidates; the next step is a
+artifact contract and raw response provenance retention is implemented
+(PR #1813, merged), and the FOTMOB_REAL_CAPTURE_READINESS Phase A pre-capture
+code hardening is implemented and fully tested (malformed `reason.short` fail
+closed, started+postponed contradiction fail closed, core-layer 40-hex
+`collector_code_revision` enforcement). Phase A is code hardening only: no real
+FotMob network request has been made, no real capture artifact has been
+generated, the FotMob public terms / usage-boundary review is not complete, and
+the single-page shape probe still requires a new explicit user authorization.
+Future inventory is 1,140 candidates; the next step is a
 separate future canonical FotMob writer as a `data-*`-gated business milestone.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.

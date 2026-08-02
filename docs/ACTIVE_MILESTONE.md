@@ -34,6 +34,14 @@
 - PR #1811：canonical inventory writer proof（已结案）。
 - PR #1812：disposable canonical proof SQL scan 范围修复（已结案）。
 - PR #1813：FotMob v2 provenance export（已结案）。
+- FOTMOB_REAL_CAPTURE_READINESS 阶段A 三项代码加固（出处：PR #1813 Debt Impact
+  P3-1 / P3-2）：已在 exporter 核心层实现并测试 —— malformed `reason.short`
+  fail closed（确定性 `malformed_reason_object:<type>` /
+  `non_string_reason_short:<type>`）、started=true + postponed/Postp 矛盾 fail closed
+  （`contradictory_status_flags:started_and_postponed`）、`buildCaptureManifest()`
+  核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
+  非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
+  `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
 
 ## 未完成 / 未授权（不得自动开始）
 
@@ -49,12 +57,12 @@
    独立 Issue / tag / 文档；唯一出处为 PR #1813 正文与 Issue #1793 结案评论
    （"begin a separate FOTMOB_REAL_CAPTURE_READINESS milestone. Do not start real
    capture automatically."）。它未被授权为可执行里程碑，不得自动开始真实采集。
-4. **阶段A 三项（出处：PR #1813 Debt Impact，P3-1 / P3-2）**：
-   - malformed `reason.short` fail closed（P3-1）
-   - started=true + postponed 矛盾组合 fail closed（P3-1）
-   - canonical-v2 核心层强制 40-hex（40 位小写十六进制）Git SHA（当前仅在 CLI 层强制，P3-2）
-   注意：P3-3（v1 paired-write 弱点）**不属于**阶段A（PR #1813 Debt Impact 第 3 项，
-   标注 unchanged scope）。阶段A 的出处仅为 PR #1813 正文 Debt Impact，不是既有文档决策。
+4. **阶段A 剩余 P3（出处：PR #1813 Debt Impact）**：P3-1 / P3-2 代码加固已完成
+   （见"已完成"）；以下各项**不属于**阶段A、本轮未处理：
+   P3-3 v1 paired-write 弱点（标注 unchanged scope）、injected filesystem
+   path-validation consistency、final readback cleanup semantic inconsistency。
+   阶段A 仅为代码加固：未执行真实 FotMob 网络请求、未生成真实 capture artifact、
+   未完成公共条款 / 使用边界审查、未执行 single-page shape probe（仍需新的用户明确授权）。
 5. **FotMob 公共条款 / 使用边界审查**：属 FOTMOB_REAL_CAPTURE_READINESS 范围，
    后续独立研究，未授权。
 6. **单页面 shape probe**：必须单独授权（Issue #1793 评论明确 "requires a separate

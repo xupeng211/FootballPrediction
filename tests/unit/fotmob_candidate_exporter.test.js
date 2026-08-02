@@ -40,6 +40,7 @@ const {
     writeOutputFiles,
     writeRawRetention,
     buildCaptureManifest,
+    validateCollectorCodeRevision,
     exportCandidates,
     delay,
     STATUS_MAPPING_VERSION,
@@ -76,6 +77,11 @@ const EPL_BASE_IDS = { '2022/2023': 3900000, '2023/2024': 4190000, '2024/2025': 
 const FIXED_CLOCK = () => '2026-07-18T00:00:00Z';
 // Business hash of the 3-season mock pipeline, pinned before the M3-D2BG refactor.
 const EXPECTED_PIPELINE_HASH = '046dac4c0a9ff711befc55f5aa885494367303ce9d0ee3aa30c9a5afe1a86c15';
+// Valid full-length lowercase hex Git SHA injected wherever a test feeds a
+// collector code revision into the manifest core path. The core layer now
+// enforces the 40-hex contract, so placeholder revisions ('sha', 'test-sha',
+// 'abc123def456', …) must never reach buildCaptureManifest / writeRawRetention.
+const TEST_COLLECTOR_CODE_REVISION = '0123456789abcdef0123456789abcdef01234567';
 const OUTPUT_META = { schema_version: 'candidate-match-identity/v1', extracted_at: '2026-07-18T00:00:00Z' };
 /* prettier-ignore */
 const outputSnapshot = (candidateCount, hash = 'h', seasons = ['2022/2023']) => ({ source_provider: 'FotMob', league_id: '47', competition: 'Premier League', seasons, candidate_count: candidateCount, business_content_sha256: hash });
@@ -813,6 +819,68 @@ test('deriveProviderStatus: extra unknown fields do not alter result', () => { c
 /* prettier-ignore */
 test('deriveProviderStatus: started=true but not finished → fails closed', () => { const r = deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', started: true, reason: { short: 'Live' } }); assert.deepEqual(r, { status: null, error: 'started_with_reason:Live' }); });
 
+/* prettier-ignore */
+test('deriveProviderStatus: legal reason shapes still derive normally', () => { assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z' }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: null }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: undefined }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: {} }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short: null } }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short: undefined } }), { status: 'scheduled', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short: '' } }), { status: 'scheduled', error: null }); });
+
+test('deriveProviderStatus: malformed reason object fails closed without coercion', () => {
+    const cases = [
+        ['Postponed', 'malformed_reason_object:string'],
+        [123, 'malformed_reason_object:number'],
+        [true, 'malformed_reason_object:boolean'],
+        [false, 'malformed_reason_object:boolean'],
+        [['Postp'], 'malformed_reason_object:array'],
+        [() => 'Postp', 'malformed_reason_object:function'],
+    ];
+    for (const [reason, expectedError] of cases) {
+        const r = deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason });
+        assert.equal(r.status, null, `reason=${String(reason)} must fail closed`);
+        assert.equal(r.error, expectedError);
+    }
+});
+
+test('deriveProviderStatus: non-string reason.short fails closed without coercion', () => {
+    let toStringCalls = 0;
+    const coercible = {
+        toString: () => {
+            toStringCalls += 1;
+            return 'Postp';
+        },
+    };
+    const cases = [
+        [5, 'non_string_reason_short:number'],
+        [true, 'non_string_reason_short:boolean'],
+        [{}, 'non_string_reason_short:object'],
+        [['Postp'], 'non_string_reason_short:array'],
+        [coercible, 'non_string_reason_short:object'],
+    ];
+    for (const [short, expectedError] of cases) {
+        const r = deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short } });
+        assert.equal(r.status, null, `reason.short must fail closed`);
+        assert.equal(r.error, expectedError);
+    }
+    assert.equal(toStringCalls, 0, 'no implicit String() coercion may be applied to reason.short');
+});
+
+test('deriveProviderStatus: started with postponed reason is a contradiction and fails closed', () => {
+    for (const short of ['Postponed', 'Postp']) {
+        const r = deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', started: true, reason: { short } });
+        assert.equal(r.status, null);
+        assert.equal(r.error, 'contradictory_status_flags:started_and_postponed');
+    }
+    // Non-contradictory combinations keep the existing behaviour.
+    assert.deepEqual(
+        deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', started: false, reason: { short: 'Postponed' } }),
+        { status: 'postponed', error: null }
+    );
+    assert.deepEqual(
+        deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short: 'Postp' } }),
+        { status: 'postponed', error: null }
+    );
+});
+
+/* prettier-ignore */
+test('deriveProviderStatus: terminal and existing fail-closed semantics unchanged', () => { assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', finished: true }), { status: 'finished', error: null }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', cancelled: true }), { status: 'cancelled', error: null }); assert.equal(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', finished: true, cancelled: true }).error, 'contradictory_status_flags:finished_and_cancelled'); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', started: true }), { status: null, error: 'started_no_reason' }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', started: true, reason: { short: 'Live' } }), { status: null, error: 'started_with_reason:Live' }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z', reason: { short: 'Suspended' } }), { status: null, error: 'unknown_reason:Suspended' }); assert.deepEqual(deriveProviderStatus({ utcTime: '2022-08-01T15:00:00Z' }), { status: 'scheduled', error: null }); });
+
 // =================================================================
 // V2: status extraction in fixtures pipeline
 // =================================================================
@@ -822,6 +890,27 @@ test('extractFixtures: accepted fixtures carry provider_status from deriveProvid
 
 /* prettier-ignore */
 test('extractFixtures: contradictory status flags produce status_unknown count', () => { const fixtures = [buildFixture('1', 'A', 'B', '2022-08-01T15:00:00Z', 'FT', { finished: true, cancelled: true })]; const { extracted, audit } = fixtureAudit(fixtures); assert.equal(extracted.length, 0); assert.equal(audit.status_unknown_fixture_count, 1); });
+
+test('extractFixtures: malformed reason.short fails closed as status unknown, never scheduled', () => {
+    const fixture = buildFixture('1', 'A', 'B', '2022-08-01T15:00:00Z', 'FT');
+    fixture.status.reason = { short: 42 };
+    const { extracted, audit } = fixtureAudit([fixture]);
+    assert.equal(extracted.length, 0, 'malformed reason.short must not enter accepted fixtures');
+    assert.equal(audit.status_unknown_fixture_count, 1);
+    assert.equal(audit.status_unknown_by_reason['non_string_reason_short:number'], 1);
+    assert.equal(audit.excluded_fixture_count, 0, 'must not be classified as an exclusion');
+    assert.equal(audit.rejected_fixture_count, 0, 'must not be classified as a contract rejection');
+});
+
+test('extractFixtures: started+postponed fixture fails closed as status unknown, never postponed', () => {
+    const fixture = buildFixture('1', 'A', 'B', '2022-08-01T15:00:00Z', 'Postp', { started: true });
+    const { extracted, audit } = fixtureAudit([fixture]);
+    assert.equal(extracted.length, 0, 'started+postponed must not enter accepted fixtures');
+    assert.equal(audit.status_unknown_fixture_count, 1);
+    assert.equal(audit.status_unknown_by_reason['contradictory_status_flags:started_and_postponed'], 1);
+    assert.equal(audit.excluded_fixture_count, 0);
+    assert.equal(audit.rejected_fixture_count, 0);
+});
 
 // =================================================================
 // V2: buildCandidate includes status fields
@@ -864,7 +953,7 @@ test('v2: hash determinism with reversed order', () => { const fixs = generateSe
 // =================================================================
 
 /* prettier-ignore */
-test('exportCandidates canonical-v2 produces correct schema, hashes, and status fields', async () => { const fixs = generateSeasonFixtures(5000000, 380); fixs.forEach(f => (f.status.finished = true)); const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_retain_'); try { const result = await exportCandidates(makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') }), {}, { outputSchema: 'canonical-v2', retainRawResponses: { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: 'test-head-sha' } })); assert.equal(result.meta.schema_version, 'canonical-inventory-artifact/v2'); assert.equal(result.candidates.length, 380); assert.ok(result.validation.all_seasons_complete); assert.ok(result.v2Snapshot); assert.equal(result.v2Snapshot.identity_projection_hash.length, 64); assert.equal(result.v2Snapshot.business_hash.length, 64); assert.notEqual(result.v2Snapshot.identity_projection_hash, result.v2Snapshot.business_hash); assert.deepEqual(result.v2Snapshot.per_season_counts, { '2022/2023': 380 }); assert.ok(result.candidates.every(c => c.provider_status === 'finished')); assert.ok(result.candidates.every(c => c.status_mapping_version === STATUS_MAPPING_VERSION)); assert.ok(result.rawRetentions); assert.equal(result.rawRetentions.length, 1); assert.equal(result.rawRetentions[0].bodySha256.length, 64); assert.ok(result.rawRetentions[0].byteSize > 0); assert.ok(result.rawRetentions[0].rawFilePath.startsWith(retainDir)); assert.ok(result.rawRetentions[0].manifestFilePath); assert.ok(result.rawRetentions[0].manifestFilePath.startsWith(retainDir)); assert.ok(result.rawRetentions[0].manifest.request_url.includes('fotmob.com')); assert.equal(result.rawRetentions[0].manifest.source_provider, 'FotMob'); assert.equal(result.rawRetentions[0].manifest.collector_component, 'FotMobCandidateExporter'); assert.equal(result.rawRetentions[0].manifest.canonical_season, '2022/2023'); const manifestStr = JSON.stringify(result.rawRetentions[0].manifest); const secretPattern = /\b(cookie|bearer|[Aa]uthorization:|password|credential|secret[_-]|api[_-]key|api[_-]secret|access[_-]token|proxy[_-](?:url|host|user|pass|secret)|x-api-key)\b/i; assert.doesNotMatch(manifestStr, secretPattern); } finally { bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true })); } });
+test('exportCandidates canonical-v2 produces correct schema, hashes, and status fields', async () => { const fixs = generateSeasonFixtures(5000000, 380); fixs.forEach(f => (f.status.finished = true)); const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_retain_'); try { const result = await exportCandidates(makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') }), {}, { outputSchema: 'canonical-v2', retainRawResponses: { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION } })); assert.equal(result.meta.schema_version, 'canonical-inventory-artifact/v2'); assert.equal(result.candidates.length, 380); assert.ok(result.validation.all_seasons_complete); assert.ok(result.v2Snapshot); assert.equal(result.v2Snapshot.identity_projection_hash.length, 64); assert.equal(result.v2Snapshot.business_hash.length, 64); assert.notEqual(result.v2Snapshot.identity_projection_hash, result.v2Snapshot.business_hash); assert.deepEqual(result.v2Snapshot.per_season_counts, { '2022/2023': 380 }); assert.ok(result.candidates.every(c => c.provider_status === 'finished')); assert.ok(result.candidates.every(c => c.status_mapping_version === STATUS_MAPPING_VERSION)); assert.ok(result.rawRetentions); assert.equal(result.rawRetentions.length, 1); assert.equal(result.rawRetentions[0].bodySha256.length, 64); assert.ok(result.rawRetentions[0].byteSize > 0); assert.ok(result.rawRetentions[0].rawFilePath.startsWith(retainDir)); assert.ok(result.rawRetentions[0].manifestFilePath); assert.ok(result.rawRetentions[0].manifestFilePath.startsWith(retainDir)); assert.ok(result.rawRetentions[0].manifest.request_url.includes('fotmob.com')); assert.equal(result.rawRetentions[0].manifest.source_provider, 'FotMob'); assert.equal(result.rawRetentions[0].manifest.collector_component, 'FotMobCandidateExporter'); assert.equal(result.rawRetentions[0].manifest.canonical_season, '2022/2023'); const manifestStr = JSON.stringify(result.rawRetentions[0].manifest); const secretPattern = /\b(cookie|bearer|[Aa]uthorization:|password|credential|secret[_-]|api[_-]key|api[_-]secret|access[_-]token|proxy[_-](?:url|host|user|pass|secret)|x-api-key)\b/i; assert.doesNotMatch(manifestStr, secretPattern); } finally { bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true })); } });
 
 /* prettier-ignore */
 test('exportCandidates: canonical-v2 without retainRawResponses throws SAFETY_ERROR', async () => { await assert.rejects(exportCandidates(makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: '', bodyBytes: Buffer.from('') }), {}, { outputSchema: 'canonical-v2' })), { code: 'SAFETY_ERROR' }); });
@@ -872,8 +961,43 @@ test('exportCandidates: canonical-v2 without retainRawResponses throws SAFETY_ER
 /* prettier-ignore */
 test('exportCandidates: season fails when status_unknown fixtures exist', async () => { const fixs = generateSeasonFixtures(6000000, 380); fixs[0].status.finished = true; fixs[0].status.cancelled = true; const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); const result = await exportFromHtml(html); assert.equal(result.candidates.length, 379); assert.equal(result.validation.all_seasons_complete, false); const sr = result.validation.season_results[0]; assert.equal(sr.result, 'validation_failed'); assert.equal(sr.audit.status_unknown_fixture_count, 1); });
 
+test('exportCandidates: malformed reason.short fixture fails the season closed', async () => {
+    const fixs = generateSeasonFixtures(6100000, 380);
+    fixs[5].status.reason = { short: 7 };
+    const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' });
+    const result = await exportFromHtml(html);
+    assert.equal(result.candidates.length, 379, 'malformed fixture must not be accepted as scheduled');
+    assert.equal(result.validation.all_seasons_complete, false);
+    const sr = result.validation.season_results[0];
+    assert.equal(sr.result, 'validation_failed');
+    assert.equal(sr.validation.valid, false);
+    assert.equal(sr.audit.status_unknown_fixture_count, 1);
+    assert.equal(sr.audit.status_unknown_by_reason['non_string_reason_short:number'], 1);
+    assert.equal(sr.audit.rejected_fixture_count, 0);
+    assert.equal(sr.audit.excluded_fixture_count, 0);
+    assert.ok(sr.validation.errors.includes('unknown_provider_status:1'));
+});
+
+test('exportCandidates: started+postponed fixture fails the season closed', async () => {
+    const fixs = generateSeasonFixtures(6200000, 380);
+    fixs[9].status.started = true;
+    fixs[9].status.reason = { short: 'Postponed' };
+    const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' });
+    const result = await exportFromHtml(html);
+    assert.equal(result.candidates.length, 379, 'contradictory fixture must not be accepted as postponed');
+    assert.equal(result.validation.all_seasons_complete, false);
+    const sr = result.validation.season_results[0];
+    assert.equal(sr.result, 'validation_failed');
+    assert.equal(sr.validation.valid, false);
+    assert.equal(sr.audit.status_unknown_fixture_count, 1);
+    assert.equal(sr.audit.status_unknown_by_reason['contradictory_status_flags:started_and_postponed'], 1);
+    assert.equal(sr.audit.rejected_fixture_count, 0);
+    assert.equal(sr.audit.excluded_fixture_count, 0);
+    assert.ok(sr.validation.errors.includes('unknown_provider_status:1'));
+});
+
 /* prettier-ignore */
-test('exportCandidates: abandoned fixture still excluded in v2 mode', async () => { const fixs = generateSeasonFixtures(7000000, 380); fixs.push(buildFixture('7999999', 'TeamX', 'TeamY', '2022-12-25T15:00:00Z', 'Ab')); fixs.forEach(f => (f.status.finished = true)); const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_ab_retain_'); try { const result = await exportCandidates(makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') }), {}, { outputSchema: 'canonical-v2', retainRawResponses: { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: 'test-head' } })); assert.equal(result.candidates.length, 380); assert.equal(result.validation.season_results[0].audit.excluded_fixture_count, 1); assert.equal(result.validation.season_results[0].audit.excluded_by_reason['Ab'], 1); } finally { bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true })); } });
+test('exportCandidates: abandoned fixture still excluded in v2 mode', async () => { const fixs = generateSeasonFixtures(7000000, 380); fixs.push(buildFixture('7999999', 'TeamX', 'TeamY', '2022-12-25T15:00:00Z', 'Ab')); fixs.forEach(f => (f.status.finished = true)); const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_ab_retain_'); try { const result = await exportCandidates(makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') }), {}, { outputSchema: 'canonical-v2', retainRawResponses: { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION } })); assert.equal(result.candidates.length, 380); assert.equal(result.validation.season_results[0].audit.excluded_fixture_count, 1); assert.equal(result.validation.season_results[0].audit.excluded_by_reason['Ab'], 1); } finally { bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true })); } });
 
 // =================================================================
 // Raw retention: unit tests
@@ -891,7 +1015,7 @@ test('writeRawRetention: atomic write, sha256, manifest, conflict detection', ()
             captureStartedAt: '2026-07-30T00:00:00Z',
             captureCompletedAt: '2026-07-30T00:00:01Z',
             collectorComponent: 'FotMobCandidateExporter',
-            collectorCodeRevision: 'abc123def456',
+            collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'explicit',
         };
         const r1 = writeRawRetention(tmpDir, bodyBytes, ctx, { repositoryRoot: '/home/user/repo' });
@@ -914,7 +1038,7 @@ test('writeRawRetention: atomic write, sha256, manifest, conflict detection', ()
         assert.equal(m.http_status, 200);
         assert.equal(m.body_byte_size, bodyBytes.length);
         assert.equal(m.body_sha256, r1.bodySha256);
-        assert.equal(m.collector_code_revision, 'abc123def456');
+        assert.equal(m.collector_code_revision, TEST_COLLECTOR_CODE_REVISION);
         assert.ok(m.raw_file_relative_path.length > 0);
         const secretPattern = /\b(cookie|bearer|[Aa]uthorization:|password|credential|secret[_-]|api[_-]key|api[_-]secret|access[_-]token|proxy[_-](?:url|host|user|pass|secret)|x-api-key)\b/i;
         assert.doesNotMatch(JSON.stringify(m), secretPattern);
@@ -934,10 +1058,116 @@ test('writeRawRetention: atomic write, sha256, manifest, conflict detection', ()
 });
 
 /* prettier-ignore */
-test('writeRawRetention: rejects paths inside repository', () => { const repoRoot = path.resolve(__dirname, '..', '..'); const ctx = { url: 'https://example.com', leagueId: '47', competition: 'Premier League', requestedSeason: '2022/2023', canonicalSeason: '2022/2023', httpStatus: 200, contentType: 'text/html', captureStartedAt: '2026-07-30T00:00:00Z', captureCompletedAt: '2026-07-30T00:00:01Z', collectorComponent: 'test', collectorCodeRevision: 'sha', networkAuthorizationMode: 'explicit' }; assert.throws(() => writeRawRetention(repoRoot, Buffer.from('test'), ctx), { code: 'SAFETY_ERROR' }); });
+test('writeRawRetention: rejects paths inside repository', () => { const repoRoot = path.resolve(__dirname, '..', '..'); const ctx = { url: 'https://example.com', leagueId: '47', competition: 'Premier League', requestedSeason: '2022/2023', canonicalSeason: '2022/2023', httpStatus: 200, contentType: 'text/html', captureStartedAt: '2026-07-30T00:00:00Z', captureCompletedAt: '2026-07-30T00:00:01Z', collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION, networkAuthorizationMode: 'explicit' }; assert.throws(() => writeRawRetention(repoRoot, Buffer.from('test'), ctx), { code: 'SAFETY_ERROR' }); });
 
 /* prettier-ignore */
-test('buildCaptureManifest: correct structure and no secrets', () => { const m = buildCaptureManifest({ url: 'https://www.fotmob.com/leagues/47/fixtures/premier-league?season=2022%2F2023', leagueId: '47', competition: 'Premier League', requestedSeason: '2022/2023', canonicalSeason: '2022/2023', captureStartedAt: '2026-07-30T00:00:00Z', captureCompletedAt: '2026-07-30T00:00:01Z', httpStatus: 200, contentType: 'text/html', collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: 'abc123def456789', networkAuthorizationMode: 'explicit_network_authorization' }, 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890', 12345, 'fotmob-fixtures-47-2022_2023-abcdef123456.html'); assert.equal(m.schema_version, 'fotmob-raw-capture-manifest/v1'); assert.equal(m.body_sha256, 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'); assert.equal(m.body_byte_size, 12345); assert.equal(m.collector_code_revision, 'abc123def456789'); assert.equal(m.request_headers, undefined); const str = JSON.stringify(m); const secretPattern = /\b(cookie|bearer|[Aa]uthorization:|password|credential|secret[_-]|api[_-]key|api[_-]secret|access[_-]token|proxy[_-](?:url|host|user|pass|secret)|x-api-key)\b/i; assert.doesNotMatch(str, secretPattern); });
+test('buildCaptureManifest: correct structure and no secrets', () => { const m = buildCaptureManifest({ url: 'https://www.fotmob.com/leagues/47/fixtures/premier-league?season=2022%2F2023', leagueId: '47', competition: 'Premier League', requestedSeason: '2022/2023', canonicalSeason: '2022/2023', captureStartedAt: '2026-07-30T00:00:00Z', captureCompletedAt: '2026-07-30T00:00:01Z', httpStatus: 200, contentType: 'text/html', collectorComponent: 'FotMobCandidateExporter', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION, networkAuthorizationMode: 'explicit_network_authorization' }, 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890', 12345, 'fotmob-fixtures-47-2022_2023-abcdef123456.html'); assert.equal(m.schema_version, 'fotmob-raw-capture-manifest/v1'); assert.equal(m.body_sha256, 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'); assert.equal(m.body_byte_size, 12345); assert.equal(m.collector_code_revision, TEST_COLLECTOR_CODE_REVISION); assert.equal(m.request_headers, undefined); const str = JSON.stringify(m); const secretPattern = /\b(cookie|bearer|[Aa]uthorization:|password|credential|secret[_-]|api[_-]key|api[_-]secret|access[_-]token|proxy[_-](?:url|host|user|pass|secret)|x-api-key)\b/i; assert.doesNotMatch(str, secretPattern); });
+
+// =================================================================
+// Core-layer 40-hex collector_code_revision enforcement
+// =================================================================
+
+test('validateCollectorCodeRevision: accepts a full 40-hex SHA and rejects everything else', () => {
+    const VALID = TEST_COLLECTOR_CODE_REVISION;
+    assert.equal(validateCollectorCodeRevision(VALID), VALID, 'valid revision returned verbatim');
+    const invalid = [
+        undefined,
+        null,
+        42,
+        true,
+        {},
+        [],
+        '',
+        'sha',
+        'test-sha',
+        'unknown',
+        'abc123def456',
+        VALID.slice(0, 39), // 39 chars
+        `${VALID}0`, // 41 chars
+        VALID.toUpperCase(), // 40 hex but uppercase
+        ` ${VALID}`, // leading whitespace — never trimmed into validity
+        `${VALID} `, // trailing whitespace
+        `${VALID.slice(0, 20)}g${VALID.slice(21)}`, // non-hex character
+    ];
+    for (const value of invalid) {
+        assert.throws(() => validateCollectorCodeRevision(value), { code: 'SAFETY_ERROR' }, `must reject: ${String(value)}`);
+    }
+});
+
+test('buildCaptureManifest: invalid revision throws SAFETY_ERROR at the core layer', () => {
+    const baseContext = {
+        url: 'https://www.fotmob.com/leagues/47/fixtures/premier-league?season=2022%2F2023',
+        leagueId: '47', competition: 'Premier League',
+        requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+        captureStartedAt: '2026-08-02T00:00:00Z', captureCompletedAt: '2026-08-02T00:00:01Z',
+        httpStatus: 200, contentType: 'text/html',
+        collectorComponent: 'FotMobCandidateExporter',
+        networkAuthorizationMode: 'explicit_network_authorization',
+    };
+    const bodySha = 'a'.repeat(64);
+    const rawFileName = 'fotmob-fixtures-47-2022_2023-aaaaaaaaaaaa.html';
+    for (const revision of [undefined, null, 42, 'unknown', 'test-sha', 'abc123def456789', TEST_COLLECTOR_CODE_REVISION.toUpperCase(), ` ${TEST_COLLECTOR_CODE_REVISION}`]) {
+        assert.throws(
+            () => buildCaptureManifest({ ...baseContext, collectorCodeRevision: revision }, bodySha, 12345, rawFileName),
+            { code: 'SAFETY_ERROR' },
+            `direct buildCaptureManifest call must reject revision: ${String(revision)}`
+        );
+    }
+    const manifest = buildCaptureManifest(
+        { ...baseContext, collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION },
+        bodySha,
+        12345,
+        rawFileName
+    );
+    assert.equal(manifest.collector_code_revision, TEST_COLLECTOR_CODE_REVISION, 'valid revision written verbatim');
+});
+
+test('writeRawRetention: invalid revision writes no raw or manifest files', () => {
+    const tmpDir = fs.mkdtempSync('/tmp/m3d2bf_reject_rev_');
+    try {
+        const baseContext = {
+            url: 'https://www.fotmob.com/leagues/47/test',
+            leagueId: '47', competition: 'Premier League',
+            requestedSeason: '2022/2023', canonicalSeason: '2022/2023',
+            httpStatus: 200, contentType: 'text/html',
+            captureStartedAt: '2026-08-02T00:00:00Z', captureCompletedAt: '2026-08-02T00:00:01Z',
+            collectorComponent: 'test', networkAuthorizationMode: 'test',
+        };
+        const bodyBytes = Buffer.from('<html>rev-test</html>', 'utf8');
+        for (const revision of [undefined, 'sha', 'abc123def456789', TEST_COLLECTOR_CODE_REVISION.toUpperCase(), ` ${TEST_COLLECTOR_CODE_REVISION}`]) {
+            assert.throws(
+                () => writeRawRetention(tmpDir, bodyBytes, { ...baseContext, collectorCodeRevision: revision }, { repositoryRoot: '/home/user/repo' }),
+                { code: 'SAFETY_ERROR' },
+                `writeRawRetention must reject revision: ${String(revision)}`
+            );
+            assert.deepEqual(fs.readdirSync(tmpDir), [], 'invalid revision must leave the output directory untouched');
+        }
+    } finally {
+        bestEffort(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
+    }
+});
+
+test('exportCandidates: injected invalid collector revision cannot bypass the core check', async () => {
+    const fixs = generateSeasonFixtures(6300000, 380);
+    fixs.forEach(f => (f.status.finished = true));
+    const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' });
+    const mockedPage = async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') });
+    for (const revision of ['test-sha', undefined]) {
+        const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_bad_rev_');
+        try {
+            const retainRawResponses = { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter' };
+            if (revision !== undefined) retainRawResponses.collectorCodeRevision = revision;
+            await assert.rejects(
+                exportCandidates(makeExportOptions(['2022/2023'], mockedPage, {}, { outputSchema: 'canonical-v2', retainRawResponses })),
+                { code: 'SAFETY_ERROR' },
+                `injected revision ${String(revision)} must fail closed`
+            );
+            assert.deepEqual(fs.readdirSync(retainDir), [], 'invalid revision must not produce raw or manifest files');
+        } finally {
+            bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true }));
+        }
+    }
+});
 
 // =================================================================
 // CLI: v2 args and usage
@@ -967,7 +1197,7 @@ test('raw+manifest: only raw file (no manifest) → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -994,7 +1224,7 @@ test('raw+manifest: only manifest file (no raw) → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1021,7 +1251,7 @@ test('raw+manifest: manifest body_sha256 wrong → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1051,7 +1281,7 @@ test('raw+manifest: manifest body_byte_size wrong → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1080,7 +1310,7 @@ test('raw+manifest: manifest raw_file_relative_path wrong → SAFETY_ERROR', () 
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1110,7 +1340,7 @@ test('raw+manifest: raw is symlink → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1146,7 +1376,7 @@ test('raw+manifest: manifest is symlink → SAFETY_ERROR', () => {
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
@@ -1179,7 +1409,7 @@ test('raw+manifest: manifest rename failure → no orphaned final raw file', () 
             httpStatus: 200, contentType: 'text/html',
             captureStartedAt: '2026-08-01T00:00:00Z',
             captureCompletedAt: '2026-08-01T00:00:01Z',
-            collectorComponent: 'test', collectorCodeRevision: 'sha',
+            collectorComponent: 'test', collectorCodeRevision: TEST_COLLECTOR_CODE_REVISION,
             networkAuthorizationMode: 'test',
         };
         const sha = crypto.createHash('sha256').update(bodyBytes).digest('hex');
