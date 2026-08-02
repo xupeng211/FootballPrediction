@@ -558,6 +558,16 @@ function replayCapturePair(args = {}) {
         manifest.candidate_identity_sha256 !== String(planCandidate.candidate_identity_sha256 || '')) {
         throw Object.assign(new Error('replay failed: manifest candidate does not match run plan snapshot'), { code: 'SAFETY_ERROR' });
     }
+    // Bind the manifest to the FULL run plan (Codex re-review P2): two valid
+    // plans may share a candidate with different siblings/ordering — the
+    // manifest's source_plan_sha256 must equal the snapshot's recomputed
+    // plan_business_sha256 or replay fails closed.
+    if (manifest.source_plan_sha256 !== String(runPlan.plan_business_sha256 || '')) {
+        throw Object.assign(
+            new Error('replay failed: manifest source_plan_sha256 does not match the run plan snapshot'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
 
     let payload;
     try {

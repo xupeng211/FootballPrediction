@@ -364,6 +364,15 @@ function runReplay(args, deps = {}) {
             { code: 'SAFETY_ERROR' }
         );
     }
+    // The run state must be bound to the SAME plan as the snapshot (Codex
+    // re-review P2): a snapshot from another valid plan mixed into this run
+    // directory must fail closed before any artifact is materialized.
+    if (String(runState.plan_sha256 || '') !== String(runPlan.plan_business_sha256 || '')) {
+        throw Object.assign(
+            new Error('run state plan SHA does not match the run plan snapshot'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
 
     const planPath = String(args.plan || '').trim();
     if (planPath) {
@@ -406,12 +415,23 @@ function runReplay(args, deps = {}) {
 
         // Fully offline and deterministic: identity from the run snapshot,
         // parsed_at derived from the capture record — no wall clock.
+        // The parser code revision comes from the verified run plan snapshot
+        // (generator_code_revision is enforced 40-hex by the plan contract)
+        // so the canonical make replay path never writes an empty or
+        // unverifiable revision (Codex re-review P2).
+        const parserCodeRevision = String(runPlan.generator_code_revision || deps.parserCodeRevision || '');
+        if (!/^[0-9a-f]{40}$/.test(parserCodeRevision)) {
+            throw Object.assign(
+                new Error('replay failed: parser code revision must be 40-hex from the run plan snapshot'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         const result = replayCapturePair({
             runDir,
             ordinal,
             sourceMatchId,
             runPlan,
-            parserCodeRevision: deps.parserCodeRevision || '',
+            parserCodeRevision,
             fsImpl,
         });
         const written = writeDetailArtifact({

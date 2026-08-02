@@ -96,6 +96,9 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
  * @param {object} options - {
  *   fetchImpl?, delayMs?, timeoutMs?, sleepImpl?,
  *   onBeforeFetch? (called with (url, count) before native fetch),
+ *   initialUsed? (already-consumed requests from a resumed run; the
+ *   budget cap is enforced against the CUMULATIVE count so a resume can
+ *   never exceed the declared max-requests budget),
  *   now? ()
  * }
  * @returns {{ fetchOnce: (url, opts) => Promise<object>, budget: { used, max }, requestCount: () => number }}
@@ -103,6 +106,10 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 function createBoundedFetchAdapter(options = {}) {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     const maxRequests = Number(options.maxRequests || 0);
+    // Already-consumed requests from a prior run cycle (P1: resume budget).
+    // The cap is checked against initialUsed + local count, so resuming a
+    // run whose budget was exhausted performs zero further fetches.
+    const initialUsed = Math.max(0, Number(options.initialUsed || 0));
     const delayMs = options.delayMs === undefined ? DEFAULT_DELAY_MS : Number(options.delayMs);
     const timeoutMs = options.timeoutMs === undefined ? REQUEST_TIMEOUT_MS : Number(options.timeoutMs);
 
@@ -152,9 +159,9 @@ function createBoundedFetchAdapter(options = {}) {
                 { code: 'SAFETY_ERROR' }
             );
         }
-        if (requestCount >= maxRequests) {
+        if (initialUsed + requestCount >= maxRequests) {
             throw Object.assign(
-                new Error(`SAFETY_ERROR:budget_exhausted:${requestCount}/${maxRequests}`),
+                new Error(`SAFETY_ERROR:budget_exhausted:${initialUsed + requestCount}/${maxRequests}`),
                 { code: 'SAFETY_ERROR' }
             );
         }
@@ -221,6 +228,8 @@ function createBoundedFetchAdapter(options = {}) {
 
     return {
         fetchOnce,
+        // Run-local request count (this adapter instance's own fetches); the
+        // absolute consumed budget is initialUsed + this count.
         requestCount: () => requestCount,
         budget: { used: () => requestCount, max: maxRequests },
     };
@@ -646,6 +655,11 @@ async function executeCaptureRun(options = {}) {
     const budgetedFetch = createBoundedFetchAdapter({
         fetchImpl: options.fetchImpl,
         maxRequests: binding.maxRequests,
+        // P1 (Codex re-review): the budget cap is cumulative — a resumed run
+        // seeds the adapter with the already-consumed attempted count, so it
+        // can never fetch past the declared max-requests under the same
+        // authorization context.
+        initialUsed: priorNetworkRequests,
         delayMs,
         timeoutMs: options.timeoutMs,
         sleepImpl: options.sleepImpl,

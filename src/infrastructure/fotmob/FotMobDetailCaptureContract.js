@@ -81,15 +81,23 @@ const ALLOWED_CONTENT_TYPES = [
 const MAX_BODY_BYTES = 8 * 1024 * 1024; // 8 MiB
 const MIN_BODY_BYTES = 100;
 
-// Captcha / WAF challenge markers (looked at in the body text only, never stored).
+// Captcha / WAF challenge markers (looked at in the body text only, never
+// stored). Only STRUCTURED challenge markers are matched — generic
+// natural-language substrings like 'challenge' or 'blocked' can appear in
+// legitimate football content and must never stop a valid run (Codex
+// re-review P2).
 const BLOCK_MARKERS = [
     'captcha',
     'cf-challenge',
-    'cloudflare',
+    'cf-chl-',
+    'cf-error-details',
+    'challenge-platform',
+    'turnstile',
+    'cloudflare-challenge',
+    'managed-challenge',
+    'just a moment',
+    'attention required!',
     'access denied',
-    'access_denied',
-    'challenge',
-    'blocked',
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -1089,6 +1097,12 @@ function validateDetailArtifact(artifact) {
     }
     if (!/^\d+$/.test(String(artifact.matchId || ''))) {
         errors.push('matchId must be numeric');
+    }
+    // The parser code revision must be a verified 40-hex revision — an empty
+    // or non-40-hex value would make the artifact provenance untraceable
+    // (Codex re-review P2).
+    if (!/^[0-9a-f]{40}$/.test(String(artifact.parser_code_revision || ''))) {
+        errors.push('parser_code_revision must be 40 lowercase hex');
     }
     // Replay must never emit empty candidate identity (P2-6): the identity
     // comes from the run-bound plan snapshot, never from file names.
