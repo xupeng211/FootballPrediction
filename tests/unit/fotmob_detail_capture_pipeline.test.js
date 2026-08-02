@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 // CAPTURE-stage tests for the bounded FotMob detail capture pipeline.
 // Fully offline and mocked: real network is structurally forbidden.
@@ -842,7 +844,7 @@ test('RESUME: failure at Nth candidate keeps previous N-1 pairs', async () => {
     }
 });
 
-test('RESUME: budget counts only this run\'s real fetches', async () => {
+test('RESUME: budget is cumulative across runs; a resumed run never fetches past the declared cap', async () => {
     const dir = tmpDir('fotmob-resume-budget-');
     try {
         const three = [TWO_CANDIDATES[0], TWO_CANDIDATES[1],
@@ -864,14 +866,16 @@ test('RESUME: budget counts only this run\'s real fetches', async () => {
         assert.equal(first.stopReason, 'budget_exhausted');
         assert.equal(first.completedCount, 2);
         assert.equal(calls.length, 2);
-        // Second run: same budget contract (P1-5) → completed 2 are
-        // skipped (0 fetches), ordinal 3 fetches once. Budget only counts
-        // this run's real fetches (P2-4: attempted counts stay cumulative).
+        // Second run: the budget cap is CUMULATIVE (Codex re-review P1) —
+        // the persisted attempted count seeds the adapter, so ordinal 3 is
+        // stopped BEFORE any fetch. The run can never exceed the declared
+        // max-requests total across resume cycles.
         const second = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl }));
-        assert.equal(second.status, 'complete');
-        assert.equal(second.completedCount, 3);
-        assert.equal(second.networkRequestsMade, 1);
-        assert.equal(calls.length, 3);
+        assert.equal(second.status, 'stopped');
+        assert.equal(second.stopReason, 'budget_exhausted');
+        assert.equal(second.completedCount, 2);
+        assert.equal(second.networkRequestsMade, 0);
+        assert.equal(calls.length, 2);
         // Changing the budget contract across runs is refused (P1-5).
         await assert.rejects(
             executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 3, fetchImpl })),

@@ -1080,3 +1080,173 @@ test('P2-6: replay identity comes from the verified plan candidate, never empty'
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// L. Codex re-review round 2 (R2) — regression tests
+//   L1. P1 resume budget is cumulative across cycles
+//   L2. P2 replay binds the FULL run plan (snapshot + manifest)
+//   L3. P2 replay derives a verified 40-hex parser code revision
+//   L4. P2 block markers are structured-only (no football false positives)
+// ─────────────────────────────────────────────────────────────
+
+test('R2-P1: resumed run can never fetch past the declared max-requests budget', async () => {
+    const dir = tmpDir('fotmob-r2p1-budget-');
+    try {
+        const THREE_CANDIDATES = [
+            ...TWO_CANDIDATES,
+            makeCandidate({ id: 4506265, season: '2024/2025', home: 'Brighton', away: 'Everton', kickoff: '2024-08-17T14:00:00Z' }),
+        ];
+        const { plan, planPath } = makePlanFixture(dir, THREE_CANDIDATES, { seasons: ['2024/2025'] });
+        const calls = [];
+        const opts = makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r2p1-budget', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).match(/(\d+)$/)?.[1];
+                const cand = THREE_CANDIDATES.find(c => String(c.source_match_id) === id) || THREE_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }, calls),
+        });
+
+        // First run: budget of 2 lets ordinals 1-2 fetch; ordinal 3 is
+        // stopped before any fetch (budget_exhausted).
+        const first = await executeCaptureRun(opts);
+        assert.equal(first.status, 'stopped');
+        assert.equal(first.stopReason, 'budget_exhausted');
+        assert.equal(first.networkRequestsMade, 2);
+        assert.equal(calls.length, 2);
+
+        // Resume under the same run id + authorization context: the budget
+        // is cumulative (initialUsed seeds the adapter with the persisted
+        // attempted count) — zero further fetches may be issued.
+        const resume = await executeCaptureRun(opts);
+        assert.equal(resume.stopReason, 'budget_exhausted');
+        assert.equal(resume.networkRequestsMade, 0, 'resume must not issue any fetch');
+        assert.equal(calls.length, 2, 'no fetch may be issued after the cumulative budget is exhausted');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R2-P2: replay fails closed when the run plan snapshot or manifest comes from another plan', async () => {
+    const dir = tmpDir('fotmob-r2p2-planbind-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r2p2-bind', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+        const originalSnapshot = fs.readFileSync(path.join(run.runDir, 'plan.json'));
+
+        // A DIFFERENT valid plan over the same candidate (sibling set
+        // changed) must not be accepted as the run snapshot: the run state
+        // is bound to the snapshot by plan SHA and fails closed.
+        const other = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        assert.notEqual(other.plan.plan_business_sha256, plan.plan_business_sha256);
+        fs.writeFileSync(path.join(run.runDir, 'plan.json'), JSON.stringify(other.plan, null, 2) + '\n');
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} } }),
+            (e) => e.code === 'SAFETY_ERROR' && /run state plan SHA does not match the run plan snapshot/.test(e.message)
+        );
+
+        // Restore the genuine snapshot; a manifest whose source_plan_sha256
+        // belongs to another plan (self-hash kept consistent) still fails
+        // closed at the pair level.
+        fs.writeFileSync(path.join(run.runDir, 'plan.json'), originalSnapshot);
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.source_plan_sha256 = 'f'.repeat(64);
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} } }),
+            (e) => e.code === 'SAFETY_ERROR' && /manifest source_plan_sha256 does not match the run plan snapshot/.test(e.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R2-P3: canonical replay derives a verified 40-hex parser code revision from the plan snapshot', async () => {
+    const dir = tmpDir('fotmob-r2p3-parserrev-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r2p3-rev', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+        assert.equal(plan.generator_code_revision, TEST_REVISION);
+
+        // Canonical path: NO deps.parserCodeRevision (exactly like the
+        // make data-fotmob-detail-capture-replay target) — the revision must
+        // come from the verified run plan snapshot, never an empty string.
+        const result = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} } });
+        assert.equal(result.replayed_count, 1);
+        const artifact = JSON.parse(fs.readFileSync(path.join(run.runDir, 'replay', '1-4506263.detail.json'), 'utf8'));
+        assert.equal(artifact.parser_code_revision, TEST_REVISION);
+        assert.match(artifact.parser_code_revision, /^[0-9a-f]{40}$/);
+
+        // The artifact contract rejects empty / non-40-hex revisions.
+        const { validateDetailArtifact } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        for (const bad of ['', 'abc', 'ABCABC']) {
+            const check = validateDetailArtifact({ ...artifact, parser_code_revision: bad });
+            assert.equal(check.ok, false, `revision ${JSON.stringify(bad)} must be rejected`);
+            assert.ok(
+                check.errors.some(e => /parser_code_revision must be 40 lowercase hex/.test(e)),
+                `expected parser_code_revision error for ${JSON.stringify(bad)}, got: ${check.errors.join('; ')}`
+            );
+        }
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R2-P4: generic challenge/blocked words in valid football pages do not stop the run', async () => {
+    const dir = tmpDir('fotmob-r2p4-generic-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const page = makePageHtml({
+            matchId: TWO_CANDIDATES[0].source_match_id,
+            homeTeam: TWO_CANDIDATES[0].home_team,
+            awayTeam: TWO_CANDIDATES[0].away_team,
+            kickoffAt: TWO_CANDIDATES[0].kickoff_at,
+            content: {
+                stats: { periods: ['x'] },
+                lineup: { lineups: [{ team: TWO_CANDIDATES[0].home_team }] },
+                shotmap: { shots: [{ x: 1 }] },
+                liveticker: [{ type: 'event', text: 'a late challenge, the shot was blocked' }],
+            },
+        }).replace('</body>', '<p class="x">a late challenge on the wing, the shot was blocked, cloud cover all afternoon</p></body>');
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r2p4-generic', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(page)),
+        }));
+        assert.equal(result.status, 'complete', 'generic football words must not be treated as WAF markers');
+        assert.equal(result.stopReason, null);
+        const captures = fs.readdirSync(path.join(result.runDir, 'captures')).sort();
+        assert.deepEqual(captures, ['1-4506263.manifest.json', '1-4506263.payload.json']);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R2-P4: structured WAF challenge markers still stop the run before any pair is written', async () => {
+    const dir = tmpDir('fotmob-r2p4-structured-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const page = pageFor(TWO_CANDIDATES[0]).replace(
+            '</body>',
+            '<div class="cf-challenge" data-sitekey="x">verify you are human</div></body>'
+        );
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r2p4-waf', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(page)),
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /^access_control:block_marker:/);
+        assert.equal(result.networkRequestsMade, 1, 'the fetch was attempted and counted');
+        const capturesDir = path.join(result.runDir, 'captures');
+        assert.equal(
+            fs.readdirSync(capturesDir).filter(f => f.endsWith('.manifest.json')).length,
+            0,
+            'no pair may be persisted from a challenge page'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
