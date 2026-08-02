@@ -253,10 +253,17 @@ function normalizeMatchId(payload = {}, input = {}, context = {}) {
     const payloadText = buildPayloadSearchText(safePayload);
     const requestText = buildRequestSearchText(context);
 
+    // Conflict detection: when multiple trusted response fields carry
+    // numeric match ids that disagree, the resolution is a conflict —
+    // fail-closed consumers must not treat either as observed identity.
+    const conflict =
+        isNumericId(payloadMatchId) && isNumericId(generalMatchId) && payloadMatchId !== generalMatchId;
+
     if (isNumericId(payloadMatchId)) {
         return {
             matchId: payloadMatchId,
             matchIdSource: 'payload.matchId',
+            conflict,
         };
     }
 
@@ -264,6 +271,7 @@ function normalizeMatchId(payload = {}, input = {}, context = {}) {
         return {
             matchId: generalMatchId,
             matchIdSource: 'general.matchId',
+            conflict,
         };
     }
 
@@ -280,12 +288,14 @@ function normalizeMatchId(payload = {}, input = {}, context = {}) {
         return {
             matchId: externalId,
             matchIdSource: 'input_external_id_fallback',
+            conflict,
         };
     }
 
     return {
         matchId: null,
         matchIdSource: 'unresolved',
+        conflict,
     };
 }
 
@@ -674,6 +684,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         hash_strategy: hashInfo.hash_strategy,
         metadata_hash_excluded_fields: hashInfo.metadata_hash_excluded_fields,
         match_id_source: matchIdResolution.matchIdSource,
+        observed_match_id_conflict: matchIdResolution.conflict === true,
         contains_external_id: valid,
         contains_home_team: valid,
         contains_away_team: valid,

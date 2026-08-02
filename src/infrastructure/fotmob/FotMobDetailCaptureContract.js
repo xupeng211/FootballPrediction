@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 //
 // FotMob bounded detail capture — contract module.
@@ -54,9 +56,14 @@ const {
 
 const PLAN_SCHEMA_VERSION = 'fotmob-detail-capture-plan/v1';
 const MANIFEST_SCHEMA_VERSION = 'fotmob-match-detail-capture-manifest/v1';
+const PAYLOAD_SCHEMA_VERSION = 'fotmob-match-detail-capture-payload/v1';
 const DETAIL_ARTIFACT_SCHEMA_VERSION = 'fotmob-match-detail-artifact/v1';
 const GENERATOR_COMPONENT = 'FotMobDetailCapturePipeline';
 const NETWORK_AUTHORIZATION_MODE = 'explicit_network_authorization';
+
+// Trusted observed match-id sources — the observed ID must come from a real
+// response payload field, never from the request input / fallback / URL.
+const TRUSTED_OBSERVED_ID_SOURCES = new Set(['payload.matchId', 'general.matchId']);
 
 const REQUIRED_SOURCE_PROVIDER = 'FotMob';
 const REQUIRED_COMPETITION = 'Premier League';
@@ -127,6 +134,66 @@ function assertNoSymlinkAncestors(absPath, fsImpl = fs) {
     return abs;
 }
 
+/**
+ * Ensure an absolute directory path is a REAL directory tree: walk every
+ * component from the root, reject any symlink component (a recursive
+ * mkdirSync would silently follow pre-existing symlinked descendants),
+ * create missing components one level at a time, and verify immediately
+ * after creation. Rejects non-directory components and symlinks.
+ *
+ * @param {string} absDirPath - absolute target directory
+ * @param {object} fsImpl? - injected filesystem (tests)
+ * @returns {string} the resolved absolute path
+ */
+function ensureRealDirectoryTree(absDirPath, fsImpl = fs) {
+    const abs = path.resolve(String(absDirPath));
+    const segments = abs.split(path.sep).filter(Boolean);
+    let current = path.parse(abs).root;
+    for (const segment of segments) {
+        current = path.join(current, segment);
+        let stat = null;
+        try {
+            stat = fsImpl.lstatSync(current);
+        } catch { /* absent */ }
+        if (stat) {
+            if (stat.isSymbolicLink()) {
+                throw Object.assign(
+                    new Error(`path component must not be a symlink: ${current}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            if (!stat.isDirectory()) {
+                throw Object.assign(
+                    new Error(`path component must be a directory: ${current}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+        } else {
+            // Create one level at a time — never a single recursive mkdir
+            // that could cross a pre-existing symlink unchecked.
+            fsImpl.mkdirSync(current);
+            let created = null;
+            try {
+                created = fsImpl.lstatSync(current);
+            } catch { /* treat as missing */ }
+            if (!created || created.isSymbolicLink() || !created.isDirectory()) {
+                throw Object.assign(
+                    new Error(`failed to create real directory: ${current}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+        }
+    }
+    const finalStat = fsImpl.lstatSync(abs);
+    if (!finalStat || finalStat.isSymbolicLink() || !finalStat.isDirectory()) {
+        throw Object.assign(
+            new Error(`target must be a real directory: ${abs}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    return abs;
+}
+
 function assertRegularInputFile(filePath, fsImpl = fs) {
     // Symlink rejection: lstat resolves the path itself, never the link target.
     let stat;
@@ -164,6 +231,240 @@ function readInputFile(filePath, fsImpl = fs) {
         parsed,
         sha256: sha256Hex(bytes),
     };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Capture plan contract (fotmob-detail-capture-plan/v1)
+// ─────────────────────────────────────────────────────────────
+
+const PLAN_REQUIRED_FIELDS = [
+    'schema_version',
+    'source_provider',
+    'source_artifact_schema',
+    'source_artifact_sha256',
+    'source_artifact_business_hash',
+    'competition',
+    'league_id',
+    'selected_seasons',
+    'selected_candidate_count',
+    'candidates',
+    'plan_business_sha256',
+    'generated_at',
+    'generator_component',
+    'generator_code_revision',
+];
+
+/**
+ * Rebuild the canonical business projection of a capture plan. The PLAN
+ * builder and every CAPTURE-side validator must use this single function so
+ * the hash logic cannot drift: the recomputed value is compared against the
+ * plan's self-declared plan_business_sha256 and the operator-provided
+ * --expected-plan-sha256.
+ *
+ * The projection is derived from the plan's actual business fields:
+ *   - ordinal is derived as index+1 (must equal the stored ordinal);
+ *   - expected_request_path is derived as /match/<source_match_id> (must
+ *     equal the stored value);
+ *   - candidate_identity_sha256 is recomputed over the identity projection;
+ *   - all other candidate fields are copied verbatim so any tampering with
+ *     teams, season, kickoff, ids or count changes the recomputed hash.
+ *
+ * @param {object} plan - plan document
+ * @returns {object} the canonical business projection
+ */
+function computeCapturePlanBusinessProjection(plan) {
+    const candidates = (Array.isArray(plan.candidates) ? plan.candidates : []).map((c, index) => {
+        const ordinal = index + 1;
+        const sourceMatchId = String(c.source_match_id ?? '');
+        const identity = {
+            source_match_id: sourceMatchId,
+            competition: String(c.competition ?? ''),
+            season: String(c.season ?? ''),
+            home_team: String(c.home_team ?? ''),
+            away_team: String(c.away_team ?? ''),
+            kickoff_at: String(c.kickoff_at ?? ''),
+        };
+        return {
+            ordinal,
+            candidate_id: String(c.candidate_id ?? ''),
+            source_match_id: sourceMatchId,
+            competition: String(c.competition ?? ''),
+            season: String(c.season ?? ''),
+            home_team: String(c.home_team ?? ''),
+            away_team: String(c.away_team ?? ''),
+            kickoff_at: String(c.kickoff_at ?? ''),
+            expected_request_path: `/match/${sourceMatchId}`,
+            candidate_identity_sha256: canonicalJsonHash(identity),
+        };
+    });
+    return {
+        source_provider: String(plan.source_provider ?? ''),
+        source_artifact_schema: String(plan.source_artifact_schema ?? ''),
+        source_artifact_sha256: String(plan.source_artifact_sha256 ?? ''),
+        source_artifact_business_hash: plan.source_artifact_business_hash === null
+            ? null
+            : String(plan.source_artifact_business_hash ?? ''),
+        competition: String(plan.competition ?? ''),
+        league_id: String(plan.league_id ?? ''),
+        selected_seasons: Array.isArray(plan.selected_seasons) ? plan.selected_seasons.map(String).sort() : [],
+        selected_candidate_count: candidates.length,
+        candidates,
+    };
+}
+
+/**
+ * Validate a capture plan and recompute its business hash from the actual
+ * business fields. Fails closed on any tampering — including the plan's own
+ * self-declared plan_business_sha256 field.
+ *
+ * All validation happens BEFORE any mkdir, run-state write, fetch or
+ * artifact write (callers must invoke this before creating anything).
+ *
+ * @param {object} plan - plan document
+ * @returns {{ ok: boolean, errors: string[], recomputed_sha256: string|null, projection: object|null }}
+ */
+/* eslint-disable-next-line complexity */
+function validateAndRecomputeCapturePlan(plan) {
+    const errors = [];
+    if (!isPlainObject(plan)) {
+        return { ok: false, errors: ['plan is not an object'], recomputed_sha256: null, projection: null };
+    }
+    if (plan.schema_version !== PLAN_SCHEMA_VERSION) {
+        errors.push(`schema_version must be ${PLAN_SCHEMA_VERSION}`);
+    }
+    for (const field of PLAN_REQUIRED_FIELDS) {
+        if (!(field in plan) || plan[field] === undefined || plan[field] === null) {
+            errors.push(`missing required field: ${field}`);
+        }
+    }
+    if (errors.length > 0) {
+        return { ok: false, errors, recomputed_sha256: null, projection: null };
+    }
+
+    if (plan.source_provider !== REQUIRED_SOURCE_PROVIDER) {
+        errors.push(`source_provider must be ${REQUIRED_SOURCE_PROVIDER}`);
+    }
+    if (String(plan.league_id) !== REQUIRED_LEAGUE_ID) {
+        errors.push(`league_id must be ${REQUIRED_LEAGUE_ID}`);
+    }
+    if (plan.competition !== REQUIRED_COMPETITION) {
+        errors.push(`competition must be ${REQUIRED_COMPETITION}`);
+    }
+    if (!/^[0-9a-f]{64}$/.test(String(plan.source_artifact_sha256 || ''))) {
+        errors.push('source_artifact_sha256 must be 64 lowercase hex');
+    }
+    const artifactBusinessHash = plan.source_artifact_business_hash;
+    if (artifactBusinessHash !== null && !/^[0-9a-f]{64}$/.test(String(artifactBusinessHash || ''))) {
+        errors.push('source_artifact_business_hash must be 64 lowercase hex or null');
+    }
+    if (!/^[0-9a-f]{40}$/.test(String(plan.generator_code_revision || ''))) {
+        errors.push('generator_code_revision must be 40-hex');
+    }
+    if (!Array.isArray(plan.candidates)) {
+        errors.push('candidates must be an array');
+    } else {
+        if (Number(plan.selected_candidate_count) !== plan.candidates.length) {
+            errors.push(
+                `selected_candidate_count mismatch: stated ${plan.selected_candidate_count}, actual ${plan.candidates.length}`
+            );
+        }
+        const seenOrdinals = new Set();
+        const seenSourceIds = new Set();
+        const seenCandidateIds = new Set();
+        for (let i = 0; i < plan.candidates.length; i += 1) {
+            const c = plan.candidates[i];
+            const label = `candidates[${i}]`;
+            if (!isPlainObject(c)) {
+                errors.push(`${label} is not an object`);
+                continue;
+            }
+            const ordinal = Number(c.ordinal || 0);
+            if (ordinal !== i + 1) {
+                errors.push(`${label}: ordinal must be ${i + 1}, got ${c.ordinal}`);
+            } else if (seenOrdinals.has(ordinal)) {
+                errors.push(`${label}: duplicate ordinal ${ordinal}`);
+            } else {
+                seenOrdinals.add(ordinal);
+            }
+            const sourceMatchId = String(c.source_match_id || '');
+            if (!/^\d+$/.test(sourceMatchId)) {
+                errors.push(`${label}: source_match_id must be numeric, got ${JSON.stringify(c.source_match_id)}`);
+            } else if (seenSourceIds.has(sourceMatchId)) {
+                errors.push(`${label}: duplicate source_match_id ${sourceMatchId}`);
+            } else {
+                seenSourceIds.add(sourceMatchId);
+            }
+            const candidateId = String(c.candidate_id || '');
+            if (candidateId === '') {
+                errors.push(`${label}: candidate_id missing`);
+            } else if (seenCandidateIds.has(candidateId)) {
+                errors.push(`${label}: duplicate candidate_id ${candidateId}`);
+            } else {
+                seenCandidateIds.add(candidateId);
+            }
+            if (c.expected_request_path !== `/match/${sourceMatchId}`) {
+                errors.push(
+                    `${label}: expected_request_path must be derived as /match/<source_match_id>, got ${JSON.stringify(c.expected_request_path)}`
+                );
+            }
+            if (typeof c.season !== 'string' || !VALID_SEASON_PATTERN.test(c.season)) {
+                errors.push(`${label}: season must be YYYY/YYYY, got ${JSON.stringify(c.season)}`);
+            }
+            if (typeof c.home_team !== 'string' || c.home_team.trim() === '') {
+                errors.push(`${label}: home_team missing`);
+            }
+            if (typeof c.away_team !== 'string' || c.away_team.trim() === '') {
+                errors.push(`${label}: away_team missing`);
+            }
+            if (c.home_team === c.away_team) {
+                errors.push(`${label}: home_team must differ from away_team`);
+            }
+            if (typeof c.kickoff_at !== 'string' || !isStrictAbsoluteTimestamp(c.kickoff_at)) {
+                errors.push(`${label}: kickoff_at must be a strict ISO timestamp with timezone, got ${JSON.stringify(c.kickoff_at)}`);
+            }
+            const recomputedIdentity = canonicalJsonHash({
+                source_match_id: sourceMatchId,
+                competition: String(c.competition ?? ''),
+                season: String(c.season ?? ''),
+                home_team: String(c.home_team ?? ''),
+                away_team: String(c.away_team ?? ''),
+                kickoff_at: String(c.kickoff_at ?? ''),
+            });
+            if (c.candidate_identity_sha256 !== recomputedIdentity) {
+                errors.push(`${label}: candidate_identity_sha256 mismatch (tampering)`);
+            }
+        }
+    }
+    if (errors.length > 0) {
+        return { ok: false, errors, recomputed_sha256: null, projection: null };
+    }
+
+    const projection = computeCapturePlanBusinessProjection(plan);
+    const recomputed = canonicalJsonHash(projection);
+    if (recomputed !== String(plan.plan_business_sha256 || '')) {
+        errors.push('plan_business_sha256 does not match recomputed business projection');
+    }
+    return {
+        ok: errors.length === 0,
+        errors,
+        recomputed_sha256: recomputed,
+        projection,
+    };
+}
+
+/**
+ * Compute the canonical self-hash of a capture manifest: SHA-256 over the
+ * canonical JSON of every manifest field EXCEPT capture_manifest_sha256
+ * itself. The builder and the validator must use this single helper.
+ *
+ * @param {object} manifest - capture manifest
+ * @returns {string} 64-hex self-hash
+ */
+function computeCaptureManifestSelfHash(manifest) {
+    const clone = Object.fromEntries(
+        Object.entries(manifest || {}).filter(([k]) => k !== 'capture_manifest_sha256')
+    );
+    return canonicalJsonHash(clone);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -272,12 +573,33 @@ function validateCandidateArtifact(loaded) {
     const seenCandidateIds = new Set();
     const seenSourceIds = new Set();
 
+    // Authorized-scope inheritance: when a candidate omits provider /
+    // competition / league it deterministically inherits the validated
+    // top-level values; a candidate that DECLARES a conflicting scope is
+    // rejected rather than silently overridden (mixed artifacts fail).
+    const topProvider = doc.artifact?.source_provider ?? doc.source_provider ?? doc.snapshot?.source_provider;
+    const topCompetition = doc.artifact?.competition ?? doc.competition ?? doc.snapshot?.competition;
+    const topLeagueId = doc.league_id ?? doc.snapshot?.league_id;
+
     for (let i = 0; i < candidates.length; i += 1) {
         const c = candidates[i];
         const label = `candidates[${i}]`;
         if (!isPlainObject(c)) {
             errors.push(`${label} is not an object`);
             continue;
+        }
+        const candidateProvider = c.source_provider ?? c.provider ?? topProvider;
+        if (candidateProvider !== REQUIRED_SOURCE_PROVIDER) {
+            errors.push(`${label}: source_provider must be ${REQUIRED_SOURCE_PROVIDER}, got ${JSON.stringify(candidateProvider)}`);
+        }
+        const candidateCompetition = c.competition ?? topCompetition;
+        if (candidateCompetition !== REQUIRED_COMPETITION) {
+            errors.push(`${label}: competition must be ${REQUIRED_COMPETITION}, got ${JSON.stringify(candidateCompetition)}`);
+        }
+        const candidateLeagueId = c.league_id ?? topLeagueId;
+        if (candidateLeagueId !== undefined && candidateLeagueId !== null &&
+            String(candidateLeagueId) !== REQUIRED_LEAGUE_ID) {
+            errors.push(`${label}: league_id must be ${REQUIRED_LEAGUE_ID}, got ${JSON.stringify(candidateLeagueId)}`);
         }
         const candidateId = c.candidate_id ?? c.id;
         const sourceId = c.source_match_id ?? c.external_id ?? c.id;
@@ -430,9 +752,16 @@ function evaluateContentValidity(args = {}) {
         ? Array.isArray(rawDataShapeErrors) && rawDataShapeErrors.length === 0
         : false;
 
-    // observed inner match id
+    // observed inner match id — must come from a TRUSTED response payload
+    // field (payload.matchId / general.matchId), never from the input
+    // external id fallback, request URL or any derivation. A page whose
+    // only "match id" is the request id must fail closed.
     const observedId = rawData && (rawData.matchId ?? null) !== null ? String(rawData.matchId) : null;
+    const matchIdSource = String(fr.match_id_source ||
+        (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
     checks.observed_match_id_present = observedId !== null;
+    checks.observed_match_id_source_trusted = TRUSTED_OBSERVED_ID_SOURCES.has(matchIdSource);
+    checks.observed_match_id_not_conflicting = fr.observed_match_id_conflict !== true;
     checks.observed_match_id_matches = observedId !== null && observedId === String(args.expected_match_id || '');
 
     // stable raw payload + stable hash format
@@ -521,11 +850,10 @@ const MANIFEST_REQUIRED_FIELDS = [
     'schema_version',
     'source_provider',
     'source_kind',
-    'request_method',
-    'request_url',
     'candidate_id',
     'source_match_id',
     'competition',
+    'league_id',
     'season',
     'home_team',
     'away_team',
@@ -538,14 +866,18 @@ const MANIFEST_REQUIRED_FIELDS = [
     'request_ordinal',
     'request_budget',
     'delay_ms',
-    'capture_started_at',
-    'capture_completed_at',
+    'request_method',
+    'request_url',
+    'request_attempted_at',
+    'response_received_at',
     'http_status',
     'content_type',
-    'body_byte_size',
-    'body_sha256',
+    'response_body_byte_size',
+    'response_body_sha256',
     'observed_match_id',
+    'observed_match_id_source',
     'observed_match_id_match',
+    'observed_match_id_conflict',
     'hydration_parse_ok',
     'transformed_api_format',
     'looks_like_valid_match_detail',
@@ -553,12 +885,15 @@ const MANIFEST_REQUIRED_FIELDS = [
     'has_lineup',
     'has_shotmap',
     'stable_raw_payload_sha256',
+    'stable_payload_sha256',
+    'payload_file_sha256',
+    'payload_file_relative_path',
     'parser_component',
     'parser_version',
     'collector_component',
     'collector_code_revision',
-    'raw_file_relative_path',
     'network_authorization_mode',
+    'capture_manifest_sha256',
 ];
 
 /* eslint-disable-next-line complexity */
@@ -582,24 +917,125 @@ function validateCaptureManifest(manifest) {
     if (!/^https:\/\/www\.fotmob\.com\/match\/[0-9]+$/.test(String(manifest.request_url || ''))) {
         errors.push('request_url must match https://www.fotmob.com/match/<digits>');
     }
-    if (!/^[0-9a-f]{64}$/.test(String(manifest.body_sha256 || ''))) {
-        errors.push('body_sha256 must be 64 lowercase hex');
+    if (!/^\d+$/.test(String(manifest.observed_match_id || ''))) {
+        errors.push('observed_match_id must be numeric');
     }
-    if (!/^[0-9a-f]{64}$/.test(String(manifest.stable_raw_payload_sha256 || ''))) {
-        errors.push('stable_raw_payload_sha256 must be 64 lowercase hex');
+    if (!TRUSTED_OBSERVED_ID_SOURCES.has(String(manifest.observed_match_id_source || ''))) {
+        errors.push(`observed_match_id_source must be one of ${[...TRUSTED_OBSERVED_ID_SOURCES].join('/')}`);
+    }
+    if (manifest.observed_match_id_match !== true) {
+        errors.push('observed_match_id_match must be true');
+    }
+    for (const hexField of ['response_body_sha256', 'stable_raw_payload_sha256', 'stable_payload_sha256',
+        'payload_file_sha256', 'candidate_identity_sha256', 'source_plan_sha256',
+        'source_artifact_sha256']) {
+        if (!/^[0-9a-f]{64}$/.test(String(manifest[hexField] || ''))) {
+            errors.push(`${hexField} must be 64 lowercase hex`);
+        }
     }
     if (!/^[0-9a-f]{40}$/.test(String(manifest.collector_code_revision || ''))) {
         errors.push('collector_code_revision must be 40-hex');
     }
-    if (String(manifest.raw_file_relative_path || '').includes('..')) {
-        errors.push('raw_file_relative_path must not traverse directories');
+    if (String(manifest.payload_file_relative_path || '').includes('..')) {
+        errors.push('payload_file_relative_path must not traverse directories');
     }
     for (const field of MANIFEST_REQUIRED_FIELDS) {
         if (!(field in manifest) || manifest[field] === undefined || manifest[field] === null) {
             errors.push(`missing required field: ${field}`);
         }
     }
+    // Manifest self-hash: REQUIRED, 64-hex, recomputed from the other fields
+    // with the shared helper. Any tampered field fails closed. No lenient
+    // "derive and accept when absent" fallback exists (P2-1).
+    if (!/^[0-9a-f]{64}$/.test(String(manifest.capture_manifest_sha256 || ''))) {
+        errors.push('capture_manifest_sha256 must be 64 lowercase hex');
+    } else if (computeCaptureManifestSelfHash(manifest) !== manifest.capture_manifest_sha256) {
+        errors.push('capture_manifest_sha256 does not match recomputed self-hash');
+    }
     return { ok: errors.length === 0, errors };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Stable capture payload contract (fotmob-match-detail-capture-payload/v1)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Build the stable, allowlisted capture payload persisted after a
+ * successful in-memory parse. The payload NEVER contains the full HTML
+ * body, __NEXT_DATA__, pageProps, raw_data or translations — only the
+ * deterministic parser-output fields needed downstream, plus the exact
+ * identity binding (expected vs observed).
+ *
+ * stable_payload_sha256 is the canonical hash of the payload's business
+ * projection (identity + normalized fields). The same value is bound by
+ * the manifest (manifest.stable_payload_sha256) and reused by REPLAY as
+ * structured_payload_sha256, so the persisted payload and the materialized
+ * artifact are provably the same document.
+ *
+ * @param {object} args - {
+ *   candidate (plan candidate), parsedData (FotMobRawParser output .data),
+ *   observedIdentity: { home_team, away_team, observed_match_id,
+ *                       observed_match_id_source, observed_match_id_conflict }
+ * }
+ * @returns {object} payload document (with stable_payload_sha256)
+ */
+/* eslint-disable-next-line complexity */
+function buildCapturePayload(args = {}) {
+    const candidate = args.candidate || {};
+    const parsedData = args.parsedData || {};
+    const observed = args.observedIdentity || {};
+    const normalized = {
+        match_external_id: parsedData.match && parsedData.match.externalId !== undefined
+            ? String(parsedData.match.externalId)
+            : String(candidate.source_match_id || ''),
+        home_team: parsedData.homeTeam ?? null,
+        away_team: parsedData.awayTeam ?? null,
+        stats: parsedData.stats ?? null,
+        lineup: parsedData.lineup ?? null,
+        events: parsedData.events ?? null,
+        shotmap: parsedData.shotmap ?? null,
+        player_stats: parsedData.playerStats ?? null,
+    };
+    const expectedIdentity = {
+        home_team: String(candidate.home_team || ''),
+        away_team: String(candidate.away_team || ''),
+        kickoff_at: String(candidate.kickoff_at || ''),
+    };
+    const observedIdentity = {
+        home_team: String(observed.home_team || ''),
+        away_team: String(observed.away_team || ''),
+        observed_match_id: String(observed.observed_match_id || ''),
+        observed_match_id_source: String(observed.observed_match_id_source || ''),
+        observed_match_id_conflict: observed.observed_match_id_conflict === true,
+    };
+    const payload = {
+        schema_version: PAYLOAD_SCHEMA_VERSION,
+        source_provider: REQUIRED_SOURCE_PROVIDER,
+        source_match_id: String(candidate.source_match_id || ''),
+        candidate_id: String(candidate.candidate_id || ''),
+        competition: String(candidate.competition || ''),
+        league_id: REQUIRED_LEAGUE_ID,
+        season: String(candidate.season || ''),
+        expected_identity: expectedIdentity,
+        observed_identity: observedIdentity,
+        normalized,
+        parser_component: 'NextDataParser+FotMobRawParser',
+        parser_version: 'V174.0.0',
+        parser_output_contract_version: 'fotmob-match-detail-parsed/v1',
+    };
+    const projection = {
+        source_provider: payload.source_provider,
+        source_match_id: payload.source_match_id,
+        candidate_id: payload.candidate_id,
+        competition: payload.competition,
+        league_id: payload.league_id,
+        season: payload.season,
+        expected_identity: expectedIdentity,
+        observed_identity: observedIdentity,
+        normalized,
+    };
+    payload.stable_payload_sha256 = canonicalJsonHash(projection);
+    return payload;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -615,20 +1051,19 @@ const DETAIL_ARTIFACT_REQUIRED_FIELDS = [
     'season',
     'expected_identity',
     'observed_identity',
-    'raw_file_sha256',
+    'normalized',
+    'payload_file_sha256',
     'capture_manifest_sha256',
-    'stable_raw_payload_sha256',
+    'stable_payload_sha256',
     'structured_payload_sha256',
     'parser_component',
     'parser_version',
     'parser_code_revision',
     'parsed_at',
-    'content',
-    'general',
-    'header',
     'matchId',
 ];
 
+/* eslint-disable-next-line complexity */
 function validateDetailArtifact(artifact) {
     const errors = [];
     if (!isPlainObject(artifact)) {
@@ -640,14 +1075,31 @@ function validateDetailArtifact(artifact) {
     if (artifact.source_provider !== REQUIRED_SOURCE_PROVIDER) {
         errors.push('source_provider must be FotMob');
     }
-    if (!/^[0-9a-f]{64}$/.test(String(artifact.raw_file_sha256 || ''))) {
-        errors.push('raw_file_sha256 must be 64 lowercase hex');
+    if (!/^[0-9a-f]{64}$/.test(String(artifact.payload_file_sha256 || ''))) {
+        errors.push('payload_file_sha256 must be 64 lowercase hex');
     }
     if (!/^[0-9a-f]{64}$/.test(String(artifact.capture_manifest_sha256 || ''))) {
         errors.push('capture_manifest_sha256 must be 64 lowercase hex');
     }
+    if (!/^[0-9a-f]{64}$/.test(String(artifact.stable_payload_sha256 || ''))) {
+        errors.push('stable_payload_sha256 must be 64 lowercase hex');
+    }
     if (!/^[0-9a-f]{64}$/.test(String(artifact.structured_payload_sha256 || ''))) {
         errors.push('structured_payload_sha256 must be 64 lowercase hex');
+    }
+    if (!/^\d+$/.test(String(artifact.matchId || ''))) {
+        errors.push('matchId must be numeric');
+    }
+    // Replay must never emit empty candidate identity (P2-6): the identity
+    // comes from the run-bound plan snapshot, never from file names.
+    const expected = artifact.expected_identity || {};
+    if (typeof expected.home_team !== 'string' || expected.home_team.trim() === '' ||
+        typeof expected.away_team !== 'string' || expected.away_team.trim() === '' ||
+        typeof expected.kickoff_at !== 'string' || expected.kickoff_at.trim() === '') {
+        errors.push('expected_identity home_team/away_team/kickoff_at must be non-empty');
+    }
+    if (typeof artifact.candidate_id !== 'string' || artifact.candidate_id.trim() === '') {
+        errors.push('candidate_id must be non-empty');
     }
     for (const field of DETAIL_ARTIFACT_REQUIRED_FIELDS) {
         if (!(field in artifact) || artifact[field] === undefined || artifact[field] === null) {
@@ -660,6 +1112,7 @@ function validateDetailArtifact(artifact) {
 module.exports = {
     PLAN_SCHEMA_VERSION,
     MANIFEST_SCHEMA_VERSION,
+    PAYLOAD_SCHEMA_VERSION,
     DETAIL_ARTIFACT_SCHEMA_VERSION,
     GENERATOR_COMPONENT,
     NETWORK_AUTHORIZATION_MODE,
@@ -671,8 +1124,10 @@ module.exports = {
     MAX_BODY_BYTES,
     MIN_BODY_BYTES,
     BLOCK_MARKERS,
+    TRUSTED_OBSERVED_ID_SOURCES,
     MANIFEST_REQUIRED_FIELDS,
     DETAIL_ARTIFACT_REQUIRED_FIELDS,
+    PLAN_REQUIRED_FIELDS,
     sha256Hex,
     sha256Text,
     canonicalJsonHash,
@@ -680,9 +1135,14 @@ module.exports = {
     readInputFile,
     assertRegularInputFile,
     assertNoSymlinkAncestors,
+    ensureRealDirectoryTree,
+    computeCapturePlanBusinessProjection,
+    validateAndRecomputeCapturePlan,
+    computeCaptureManifestSelfHash,
     validateCandidateArtifact,
     readAndValidateCandidateArtifact,
     evaluateContentValidity,
+    buildCapturePayload,
     validateCaptureManifest,
     validateDetailArtifact,
     normalizeTeamName,

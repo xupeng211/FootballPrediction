@@ -3,7 +3,7 @@
 
 // lifecycle: permanent
 // CLI entry point for the bounded, auditable FotMob detail capture
-// pipeline (PLAN / CAPTURE / REPLAY).
+// pipeline (PLAN / PREFLIGHT / CAPTURE / REPLAY).
 //
 // Default behavior is always safe:
 //   - `help` or no subcommand prints usage and exits 0;
@@ -27,15 +27,22 @@ const {
 const {
     executeCaptureRun,
     validateAuthorizationBinding,
+    resolveGitRevision,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
 
 const {
     replayCapturePair,
     writeDetailArtifact,
     readRunState,
+    readPlanSnapshot,
     writeRunSummary,
     buildRunSummary,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
+
+const {
+    validateAndRecomputeCapturePlan,
+    readAndValidateCandidateArtifact,
+} = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 
 const NextDataParser = require('../../src/parsers/fotmob/NextDataParser');
 const FotMobRawParser = require('../../src/parsers/fotmob/FotMobRawParser');
@@ -49,7 +56,19 @@ const USAGE = [
     '    [--limit=<positive integer>] \\',
     '    --output=/absolute/external/path/plan.json',
     '',
-    '  # CAPTURE — help/example only; never runs without every gate:',
+    '  node scripts/ops/fotmob_detail_capture.js preflight \\',
+    '    --plan=/absolute/path/plan.json \\',
+    '    --expected-plan-sha256=<64hex> \\',
+    '    --authorization-id=<id> \\',
+    '    --max-requests=3 \\',
+    '    --output-root=/absolute/external/path \\',
+    '    --run-id=<plain-identifier, no slashes or dots-at-start>',
+    '    # fully offline: validates plan + authorization gates, prints the',
+    '    # candidate count and URL summary; creates nothing, fetches nothing.',
+    '',
+    '  # CAPTURE — canonical entrypoint is make data-fotmob-detail-capture-execute;',
+    '  # the direct Node CLI below is the internal engine and never runs without',
+    '  # every gate:',
     '  CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1 \\',
     '  CONFIRM_MAX_FOTMOB_REQUESTS=3 \\',
     '  node scripts/ops/fotmob_detail_capture.js capture \\',
@@ -64,12 +83,13 @@ const USAGE = [
     '',
     '  node scripts/ops/fotmob_detail_capture.js replay \\',
     '    --run-dir=/absolute/external/path/runs/<run-id> \\',
-    '    [--plan=/absolute/path/plan.json]',
+    '    [--plan=/absolute/path/plan.json]   # optional; must match run snapshot',
     '',
     'Selection rules:',
     '  PLAN requires at least one of --season, --match-id, or --limit;',
     '  it never silently selects the full candidate population.',
     '  CAPTURE requires --execute plus the documented environment gates.',
+    '  REPLAY is fully offline and binds identity to the run plan snapshot.',
     '  All outputs are written to repository-external absolute paths.',
 ].join('\n');
 
@@ -132,13 +152,36 @@ function runPlan(args, deps = {}) {
     }
 
     const fsImpl = deps.fsImpl || fs;
+
+    // Input errors surface BEFORE any git interaction: explicit selection
+    // and artifact schema are validated exactly like the plan builder does,
+    // so a missing selection or an unknown artifact schema is reported as
+    // such even when the worktree is dirty (the git revision binding only
+    // applies to plans that would otherwise build successfully).
+    const hasSeasonFilter = seasons.length > 0;
+    const hasMatchIdFilter = matchIds.length > 0;
+    if (!hasSeasonFilter && !hasMatchIdFilter && limit === null) {
+        fail('explicit selection required: provide --season, --match-id, or --limit');
+    }
+    const artifactCheck = readAndValidateCandidateArtifact(artifactPath, fsImpl);
+    if (!artifactCheck.ok) {
+        fail(`candidate artifact validation failed: ${artifactCheck.errors.join('; ')}`);
+    }
+
+    // The plan is bound to the generating git revision (clean worktree,
+    // full 40-hex HEAD) so the generator revision inside the plan is always
+    // a verified repository state.
+    const collectorCodeRevision = resolveGitRevision({
+        repositoryRoot: deps.repositoryRoot,
+        execSync: deps.execSync,
+    });
     const planResult = buildDeterministicCapturePlan({
         artifactPath,
         seasons,
         matchIds,
         limit,
         generatedAt: deps.now ? deps.now() : new Date().toISOString(),
-        collectorCodeRevision: deps.collectorCodeRevision || '',
+        collectorCodeRevision,
         fsImpl,
     });
 
@@ -152,6 +195,73 @@ function runPlan(args, deps = {}) {
     };
     (deps.stdout || process.stdout).write(JSON.stringify(out, null, 2) + '\n');
     return out;
+}
+
+/**
+ * PREFLIGHT — fully offline gate validation.
+ * Re-validates the plan (schema + recomputed business hash), every
+ * authorization gate that does not require --execute (git revision,
+ * output root, run id, budget, authorization variables), and prints the
+ * candidate count and URL-path summary. Creates NO run directory, writes
+ * NO capture payload, and calls NO fetch.
+ */
+function runPreflight(args, deps = {}) {
+    const planPath = String(args.plan || '').trim();
+    const outputRoot = String(args['output-root'] || '').trim();
+    const expectedPlanSha256 = String(args['expected-plan-sha256'] || '').trim();
+    const authorizationId = String(args['authorization-id'] || '').trim();
+    const maxRequests = Number(args['max-requests'] || 0);
+    const runId = String(args['run-id'] || '').trim();
+
+    if (!planPath) fail('--plan is required');
+    if (!outputRoot) fail('--output-root is required');
+
+    const fsImpl = deps.fsImpl || fs;
+    if (!fsImpl.existsSync(planPath)) fail('--plan file does not exist');
+
+    const plan = JSON.parse(fsImpl.readFileSync(planPath, 'utf8'));
+
+    // The full plan re-validation + recomputation runs first (P1-2): a
+    // tampered plan is rejected with zero side effects.
+    const planCheck = validateAndRecomputeCapturePlan(plan);
+    if (!planCheck.ok) {
+        fail(`plan validation failed: ${planCheck.errors.join('; ')}`);
+    }
+    if (planCheck.recomputed_sha256 !== expectedPlanSha256) {
+        fail('recomputed plan SHA-256 does not match --expected-plan-sha256');
+    }
+
+    // Authorization gate validation WITHOUT --execute: git revision,
+    // paths, run id, budget and authorization variables must all be ready
+    // before the operator can proceed to the execute target. The
+    // execute-only confirmations (--execute, networkAuthorization,
+    // CONFIRM_* env vars) are skipped by requireExecute: false.
+    validateAuthorizationBinding({
+        plan,
+        planPath,
+        expectedPlanSha256,
+        authorizationId,
+        maxRequests,
+        outputRoot,
+        runId,
+        execute: false,
+        networkAuthorization: false,
+        requireExecute: false,
+        env: deps.env || process.env,
+        repositoryRoot: deps.repositoryRoot,
+        execSync: deps.execSync,
+        fsImpl,
+    });
+
+    const summary = {
+        mode: 'preflight',
+        plan_sha256: planCheck.recomputed_sha256,
+        selected_candidate_count: plan.candidates.length,
+        request_urls: plan.candidates.map(c => `/match/${c.source_match_id}`),
+        execution_ready: true,
+    };
+    (deps.stdout || process.stdout).write(JSON.stringify(summary, null, 2) + '\n');
+    return summary;
 }
 
 /* eslint-disable-next-line complexity */
@@ -206,6 +316,7 @@ async function runCapture(args, deps = {}) {
         parser: deps.parser || {
             extractFromHtml: NextDataParser.extractFromHtml,
             transformToApiFormat: NextDataParser.transformToApiFormat,
+            parseFotMobRaw: FotMobRawParser.parseFotMobRaw,
         },
         now: deps.now,
         env: deps.env || process.env,
@@ -233,29 +344,48 @@ async function runCapture(args, deps = {}) {
 /* eslint-disable-next-line complexity */
 function runReplay(args, deps = {}) {
     const runDir = String(args['run-dir'] || '').trim();
-    if (!runDir) fail('--run-dir is required');
+    if (!runDir) {
+        throw Object.assign(new Error('--run-dir is required'), { code: 'SAFETY_ERROR' });
+    }
 
     const fsImpl = deps.fsImpl || fs;
     const runState = readRunState(runDir, fsImpl);
-    if (!runState) fail('run-state.json not found in --run-dir');
+    if (!runState) {
+        throw Object.assign(new Error('run-state.json not found in --run-dir'), { code: 'SAFETY_ERROR' });
+    }
+
+    // The run-bound plan snapshot is REQUIRED for replay identity (P2-6):
+    // replay never guesses identity from file names and never emits empty
+    // candidate identity.
+    const runPlan = readPlanSnapshot(runDir, fsImpl);
+    if (!runPlan) {
+        throw Object.assign(
+            new Error('run plan snapshot (run-dir/plan.json) not found in --run-dir'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
 
     const planPath = String(args.plan || '').trim();
-    let plan = null;
     if (planPath) {
-        if (!fsImpl.existsSync(planPath)) fail('--plan file does not exist');
-        plan = JSON.parse(fsImpl.readFileSync(planPath, 'utf8'));
+        if (!fsImpl.existsSync(planPath)) {
+            throw Object.assign(new Error('--plan file does not exist'), { code: 'SAFETY_ERROR' });
+        }
+        const externalPlan = JSON.parse(fsImpl.readFileSync(planPath, 'utf8'));
+        // An external --plan may only serve as an additional comparison: it
+        // must match the run snapshot's plan SHA exactly.
+        if (String(externalPlan.plan_business_sha256 || '') !== runPlan.plan_business_sha256) {
+            throw Object.assign(
+                new Error('--plan does not match the run plan snapshot'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
     }
 
     const capturesDir = path.join(runDir, 'captures');
     const replayDir = path.join(runDir, 'replay');
-    if (!fsImpl.existsSync(capturesDir)) fail('captures directory not found');
-    fsImpl.mkdirSync(replayDir, { recursive: true });
-
-    const parser = deps.parser || {
-        extractFromHtml: NextDataParser.extractFromHtml,
-        transformToApiFormat: NextDataParser.transformToApiFormat,
-        parseFotMobRaw: FotMobRawParser.parseFotMobRaw,
-    };
+    if (!fsImpl.existsSync(capturesDir)) {
+        throw Object.assign(new Error('captures directory not found'), { code: 'SAFETY_ERROR' });
+    }
 
     const ordinals = (Array.isArray(runState.completed_ordinals) ? runState.completed_ordinals : [])
         .map(Number)
@@ -274,13 +404,13 @@ function runReplay(args, deps = {}) {
         const sourceMatchId = manifestFiles[0]
             .slice(`${ordinal}-`.length, -'.manifest.json'.length);
 
+        // Fully offline and deterministic: identity from the run snapshot,
+        // parsed_at derived from the capture record — no wall clock.
         const result = replayCapturePair({
             runDir,
             ordinal,
             sourceMatchId,
-            plan,
-            parser,
-            parsedAt: deps.now ? deps.now() : new Date().toISOString(),
+            runPlan,
             parserCodeRevision: deps.parserCodeRevision || '',
             fsImpl,
         });
@@ -326,13 +456,14 @@ async function main(argv = process.argv.slice(2), deps = {}) {
     }
     const subcommand = positionals[0];
     if (subcommand === 'plan') return runPlan(args, deps);
+    if (subcommand === 'preflight') return runPreflight(args, deps);
     if (subcommand === 'capture') return runCapture(args, deps);
     if (subcommand === 'replay') return runReplay(args, deps);
     fail(`unknown subcommand: ${subcommand}`);
     return null;
 }
 
-module.exports = { main, parseArgs, runPlan, runCapture, runReplay, USAGE };
+module.exports = { main, parseArgs, runPlan, runPreflight, runCapture, runReplay, USAGE };
 
 if (require.main === module) {
     main().catch((err) => {

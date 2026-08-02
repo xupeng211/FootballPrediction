@@ -23,6 +23,8 @@ const {
     canonicalJsonHash,
     isPlainObject,
     readAndValidateCandidateArtifact,
+    validateAndRecomputeCapturePlan,
+    computeCapturePlanBusinessProjection,
     sha256Text,
     assertNoSymlinkAncestors,
 } = require('./FotMobDetailCaptureContract');
@@ -208,7 +210,10 @@ function buildDeterministicCapturePlan(options = {}) {
     });
 
     const selectedSeasons = [...new Set(candidates.map(c => c.season))].sort();
-    const planBusiness = {
+    // The business projection is built by the shared Contract helper so the
+    // PLAN builder and the CAPTURE validator use the SAME hash logic
+    // (P1-2: a tampered plan can never keep its old self-declared hash).
+    const provisional = {
         source_provider: 'FotMob',
         source_artifact_schema: loaded.schema,
         source_artifact_sha256: loaded.artifact_sha256,
@@ -219,6 +224,7 @@ function buildDeterministicCapturePlan(options = {}) {
         selected_candidate_count: candidates.length,
         candidates,
     };
+    const planBusiness = computeCapturePlanBusinessProjection(provisional);
     const planBusinessSha256 = canonicalJsonHash(planBusiness);
 
     const plan = {
@@ -229,6 +235,16 @@ function buildDeterministicCapturePlan(options = {}) {
         generator_component: GENERATOR_COMPONENT,
         generator_code_revision: String(options.collectorCodeRevision || ''),
     };
+
+    // Defensive self-check: the freshly built plan must pass the same
+    // validator the CAPTURE gate will run.
+    const selfCheck = validateAndRecomputeCapturePlan(plan);
+    if (!selfCheck.ok) {
+        throw Object.assign(
+            new Error(`plan self-validation failed: ${selfCheck.errors.join('; ')}`),
+            { code: 'INPUT_ERROR' }
+        );
+    }
 
     return {
         plan,
