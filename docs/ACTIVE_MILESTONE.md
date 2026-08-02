@@ -42,6 +42,15 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
+- **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
+  全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 三阶段
+  PLAN（确定性 plan + plan_business_sha256）/ CAPTURE（13 项授权门、单 URL
+  网络合同、17 项内容有效性门、raw+manifest 配对原子保留、run-state 恢复、
+  预算只计本次真实 fetch）/ REPLAY（完全离线，确定性
+  fotmob-match-detail-artifact/v1）。复用 FotMobCandidateExporter /
+  FotMobRawDetailFetcher / FotMobRouteIdentityReconciler / NextDataParser /
+  FotMobRawParser，未创建重复 parser；不写数据库。**未执行任何真实 FotMob
+  请求**：CAPTURE 默认关闭，真实执行仍须单独授权（OWNER_REAL_CAPTURE_AUTHORIZATION=NO）。
 
 ## 未完成 / 未授权（不得自动开始）
 
@@ -85,6 +94,9 @@
 
 - 不执行任何真实网络抓取、浏览器自动化、DB 写入、migration、artifact 写盘、
   训练、预测或生产操作。
+- 不执行 detail capture CAPTURE 的真实 FotMob 请求：即使
+  `fotmob_detail_capture.js capture` 已实现，也必须满足全部 13 项授权门并另行
+  获得用户明确授权（canonical 入口 ≠ 已获授权）。
 - 不把 FOTMOB_REAL_CAPTURE_READINESS 写成已授权里程碑或已有独立 Issue/tag。
 - 不重建 M3 staging 已完成的任何模块（防重复开发，AGENTS.md §2.1）。
 - 不新增 Phase/ADG 编号脚本、report、manifest（M2 增长冻结，AGENTS.md）。
