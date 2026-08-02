@@ -300,6 +300,13 @@ function validateAuthorizationBinding(options = {}) {
         if (String(env[REQUIRED_ENV_VAR] || '') !== '1') {
             errors.push(`environment variable ${REQUIRED_ENV_VAR}=1 required`);
         }
+        // The network authorization declaration must be re-confirmed in
+        // Node, not only in make (Internal Reviewer A P2): a direct Node
+        // invocation with the CONFIRM vars but no NETWORK_AUTHORIZATION=yes
+        // must fail closed before any fetch.
+        if (String(env.NETWORK_AUTHORIZATION || '') !== 'yes') {
+            errors.push('environment variable NETWORK_AUTHORIZATION=yes required');
+        }
     }
     const authorizationId = String(options.authorizationId || '').trim();
     if (!authorizationId) {

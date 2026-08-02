@@ -93,6 +93,12 @@ function validateFetchInput(input = {}) {
     if (input.retry > 0) {
         errors.push('retry > 0 is blocked');
     }
+    if (input.requestUrl !== undefined && input.requestUrl !== null) {
+        // Internal Reviewer A (P2): the request URL must always be derived
+        // from the numeric external id — a free-form URL override would let
+        // a direct caller target an arbitrary host. Rejected fail-closed.
+        errors.push('requestUrl is not supported: the request URL is derived from the numeric external id');
+    }
     if (input.allowBrowserRuntime === true) {
         errors.push('browser runtime is blocked');
     }
@@ -530,7 +536,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const now = dependencies.now || (() => new Date().toISOString());
     const v = inputValidation.value;
     const request = buildFotMobHtmlHydrationRequest(v.externalId);
-    const requestUrl = v.requestUrl || request.url;
+    const requestUrl = request.url;
     const fetchedAt = now();
 
     let response;

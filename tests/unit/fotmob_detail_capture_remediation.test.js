@@ -187,6 +187,7 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
         env: env || {
             [REQUIRED_ENV_VAR]: '1',
             [REQUIRED_ENV_BUDGET]: String(maxRequests),
+            NETWORK_AUTHORIZATION: 'yes',
         },
         repositoryRoot: REPO_ROOT,
         execSync: execSync || CLEAN_EXEC,
@@ -291,7 +292,7 @@ test('P1-2: built plan recomputes to the same hash the capture gate expects', ()
             outputRoot: path.join(dir, 'out'),
             execute: true,
             networkAuthorization: true,
-            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' },
+            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1', NETWORK_AUTHORIZATION: 'yes' },
             repositoryRoot: REPO_ROOT,
             execSync: CLEAN_EXEC,
         }).expectedPlanSha256);
@@ -470,6 +471,12 @@ test('P1-3: execute target fails in make before Node unless every variable is ex
     assert.notEqual(badBudget.status, 0);
     assert.match(badBudget.output, /CONFIRM_MAX_FOTMOB_REQUESTS must equal MAX_REQUESTS/);
     assert.equal(badBudget.dockerCalled, false);
+
+    // DELAY_MS below the 60000 lower bound is blocked in make (Reviewer A P2).
+    const lowDelay = runMake('data-fotmob-detail-capture-execute', { ...vars, NETWORK_AUTHORIZATION: 'yes', DELAY_MS: '1' });
+    assert.notEqual(lowDelay.status, 0);
+    assert.match(lowDelay.output, /DELAY_MS must be an integer >= 60000/);
+    assert.equal(lowDelay.dockerCalled, false);
 
     // Fully satisfied → reaches the Node invocation inside the container.
     const ok = runMake('data-fotmob-detail-capture-execute', {

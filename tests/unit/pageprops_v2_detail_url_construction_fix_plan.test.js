@@ -313,7 +313,10 @@ test('manifest URL summary and fetch path summary cover empty and populated bran
     assert.equal(emptyFetchSummary.uses_match_external_id_route, false);
     assert.equal(emptyFetchSummary.uses_source_inventory_page_url, false);
     assert.equal(realSourceAnalysis[0].uses_match_external_id_route, true);
-    assert.equal(realSourceAnalysis[0].supports_request_url_override, true);
+    // The free-form requestUrl override was removed (PR #1816 Internal
+    // Reviewer A P2): the fetcher now derives the URL from the numeric
+    // external id only, so the override flag is false in the current source.
+    assert.equal(realSourceAnalysis[0].supports_request_url_override, false);
     assert.equal(fullEvidence.source_inventory_route_used, 'source_inventory');
     assert.equal(fullEvidence.shared_page_url_base_pair_count, 8);
     assert.equal(fullEvidence.all_pairs_share_page_url_base, true);

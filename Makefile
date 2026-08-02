@@ -722,6 +722,13 @@ data-fotmob-detail-capture-execute: ## Canonical real-network capture entrypoint
 		echo "BLOCKED: data-fotmob-detail-capture-execute requires NETWORK_AUTHORIZATION=yes before Node execution."; \
 		exit 1; \
 	fi
+	@case "$(DELAY_MS)" in ''|*[!0-9]*) \
+		echo "BLOCKED: DELAY_MS must be an integer >= 60000 before Node execution."; \
+		exit 1;; esac; \
+	if [ "$(DELAY_MS)" -lt 60000 ]; then \
+		echo "BLOCKED: DELAY_MS must be an integer >= 60000 before Node execution."; \
+		exit 1; \
+	fi
 	@if [ "$(CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE)" != "1" ]; then \
 		echo "BLOCKED: data-fotmob-detail-capture-execute requires CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1 before Node execution."; \
 		exit 1; \
@@ -731,6 +738,7 @@ data-fotmob-detail-capture-execute: ## Canonical real-network capture entrypoint
 		exit 1; \
 	fi
 	@$(COMPOSE_DEV) exec -T \
+		-e NETWORK_AUTHORIZATION="$(NETWORK_AUTHORIZATION)" \
 		-e CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE="$(CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE)" \
 		-e CONFIRM_MAX_FOTMOB_REQUESTS="$(CONFIRM_MAX_FOTMOB_REQUESTS)" \
 		-e FOTMOB_DC_PLAN="$(PLAN)" \

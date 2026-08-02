@@ -174,6 +174,7 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
         env: env || {
             [REQUIRED_ENV_VAR]: '1',
             [REQUIRED_ENV_BUDGET]: String(maxRequests),
+            NETWORK_AUTHORIZATION: 'yes',
         },
         repositoryRoot: REPO_ROOT,
         execSync: execSync || CLEAN_EXEC,
@@ -372,6 +373,7 @@ function zeroFetchEnv(maxRequests) {
     return {
         [REQUIRED_ENV_VAR]: '1',
         [REQUIRED_ENV_BUDGET]: String(maxRequests),
+        NETWORK_AUTHORIZATION: 'yes',
     };
 }
 
@@ -400,6 +402,27 @@ test('AUTH: missing environment variable → SAFETY_ERROR, zero fetches', async 
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.env = { [REQUIRED_ENV_BUDGET]: '1' };
         await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE/.test(e.message));
+        assert.equal(calls.length, 0);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('AUTH: missing NETWORK_AUTHORIZATION=yes → SAFETY_ERROR, zero fetches (Node re-enforcement)', async () => {
+    const dir = tmpDir('fotmob-auth-netauth-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const calls = [];
+        const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
+        const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
+        // Direct Node invocation with the CONFIRM vars but no
+        // NETWORK_AUTHORIZATION declaration must fail closed (Reviewer A P2:
+        // the gate is enforced in Node, not only in make).
+        opts.env = { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' };
+        await assert.rejects(
+            executeCaptureRun(opts),
+            (e) => e.code === 'SAFETY_ERROR' && /NETWORK_AUTHORIZATION=yes/.test(e.message)
+        );
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

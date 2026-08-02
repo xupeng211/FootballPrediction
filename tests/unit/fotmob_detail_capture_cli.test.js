@@ -215,7 +215,7 @@ test('CLI: capture subcommand without --execute fails with zero fetches', async 
                 'run-id': 'cli-run',
             }, {
                 stdout,
-                env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' },
+                env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1', NETWORK_AUTHORIZATION: 'yes' },
                 repositoryRoot: REPO_ROOT,
                 execSync: CLEAN_EXEC,
                 fetchImpl,
@@ -262,7 +262,7 @@ test('CLI: capture subcommand succeeds with all gates (mocked fetch)', async () 
             execute: true,
         }, {
             stdout,
-            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' },
+            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1', NETWORK_AUTHORIZATION: 'yes' },
             repositoryRoot: REPO_ROOT,
             execSync: CLEAN_EXEC,
             fetchImpl,
@@ -313,7 +313,7 @@ test('CLI: replay subcommand replays a completed run offline', async () => {
             fetchImpl,
             parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat, parseFotMobRaw: FotMobRawParser.parseFotMobRaw },
             now: () => FIXED_CLOCK,
-            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' },
+            env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1', NETWORK_AUTHORIZATION: 'yes' },
             repositoryRoot: REPO_ROOT,
             execSync: CLEAN_EXEC,
         });
