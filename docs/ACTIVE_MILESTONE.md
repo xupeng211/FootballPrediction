@@ -14,8 +14,9 @@
 
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
-- 当前 main 基线：`635773a7e8015b8e4e4e4293fa4ac4db8cb7f7a9`
-  （PR #1813 merge 后；post-merge main gate 结果以主会话最终核验为准）
+- 本任务基线（PR base；main 在合并本 PR 后将前移，不再等于该 SHA）：
+  `635773a7e8015b8e4e4e4293fa4ac4db8cb7f7a9`（PR #1813 merge 后；
+  post-merge main gate 结果以主会话最终核验为准）
 - 最近完成：**PR #1813** — FotMob v2 provenance export（provider status、dual hash、
   raw retention + capture manifest、clean-worktree 40-hex git revision 绑定、
   unknown / started fail closed、v1 输出路径不变）
@@ -64,11 +65,12 @@
    dedicated sandbox/ACL/backup-restore 等 Gate，见 Issue #1793 评论）。
 9. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
 
-## 当前授权下一步（仅这些可自动做）
+## 当前授权下一步
 
-- 只读审计与阅读：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md、
+- 只读审计与阅读（无需另行授权）：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md、
   PR #1813 证据、Issue #1793 记录。
-- 文档维护：本文档与 docs/CAPABILITY_INDEX.md、docs/PROJECT_MAP.md 的 current-state 更新。
+- 文档维护（不自动执行：需用户明确确认后方可发起，且连续 governance/docs-only PR 须人工确认）：
+  本文档与 docs/CAPABILITY_INDEX.md、docs/PROJECT_MAP.md 的 current-state 更新。
 - 等待主会话 / 用户对下一授权步骤的明确指令（如阶段A 实现、writer implementation review）。
 
 ## 明确停止边界（不得越界）

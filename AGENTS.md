@@ -73,7 +73,9 @@
     migration 或数据合同之前，必须先：(1) 阅读 `docs/CAPABILITY_INDEX.md`，
     确认同类能力是否已存在；(2) 搜索既有 symbol 及其调用者；(3) 确认 canonical 入口；
     (4) 说明为何不能复用现有能力；(5) 声明新组件属于 CANONICAL /
-    SUPPORTED_COMPATIBILITY / LEGACY 中的哪一类。已有 canonical 能力不得重复创建替代入口。
+    SUPPORTED_COMPATIBILITY / LEGACY / Specialized / Internal 中的哪一类（§5.1；
+    内部入口可声明为 Specialized / Internal，不得提升为 canonical）。
+    已有 canonical 能力不得重复创建替代入口。
 
 ### 2.2 默认工作方式
 
