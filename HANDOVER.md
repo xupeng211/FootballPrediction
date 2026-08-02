@@ -1,3 +1,14 @@
+> ⚠️ **HISTORICAL SNAPSHOT / NON-AUTHORITATIVE**（2026-08-01 加注）
+>
+> 本文件仅保留历史背景和审计证据，**不得**作为当前命令、部署、数据库、merge 或生产操作依据。
+> 本文件头部"V6.6 | 2026-03-20 | 状态: 生产就绪"的表述已过时。
+> 当前入口请查看 README "Canonical Business Entrypoints" 表、`docs/PROJECT_MAP.md`、
+> `docs/CAPABILITY_INDEX.md`、`docs/ACTIVE_MILESTONE.md`。
+> 任何真实网络、数据库写入、migration、训练或生产操作必须重新获得明确授权。
+>
+> This file is a historical snapshot and is NOT authoritative. Do not use it as the basis
+> for current commands, deployment, database, merge, or production operations.
+
 # V6.6 项目交付快速索引 (HANDOVER.md)
 
 > **最后更新**: 2026-03-20 | **版本**: V6.6 | **状态**: 生产就绪

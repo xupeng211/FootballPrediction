@@ -221,6 +221,22 @@ this section rather than maintaining duplicate command lists.
 5. **Canonical does not mean automatically authorized.** Side-effectful commands (DB writes, network, browser,
    training, odds ingestion) still require explicit authorization per AGENTS.md.
 
+### Project Knowledge Entry（当前可信知识入口）
+
+- The table above defines the formal entrypoints, but **canonical ≠ 已获得执行授权**。
+  含副作用的命令仍须按本表与 `AGENTS.md` 逐项明确授权。
+- 新 Agent 应按 `CLAUDE.md` 定义的阅读顺序开始：`AGENTS.md` → 本表 →
+  `docs/AGENT_WORKFLOW.md` / `docs/engineering/AI_AGENT_WORKFLOW.md` →
+  `docs/AI_AGENT_WORKFLOW_HARDENING.md` → `docs/data/FOTMOB_CURRENT_STATE.md`。
+- 项目地图 / 能力索引 / 活动里程碑（current-state 索引，不新增"唯一权威"声明）：
+  - `docs/PROJECT_MAP.md` — 仓库结构、目录职责、阅读顺序、两套 migration 树的已知边界。
+  - `docs/CAPABILITY_INDEX.md` — 可扫描能力表（状态 / canonical 入口 / 授权 / legacy 替代）。
+  - `docs/ACTIVE_MILESTONE.md` — 当前活动里程碑（M3）与授权边界。
+- 历史 handover / merge-ready / command-center 类文档（`COMMAND_CENTER.md`、`HANDOVER.md`、
+  `MERGE_READY.md`）仅保留历史背景与审计证据，**不得作为当前执行依据**。
+- 真实网络、数据库写入、migration、artifact、训练与生产操作仍需单独授权，
+  不因任何文档存在而自动放行。
+
 ---
 
 ## 🚀 Quick Start

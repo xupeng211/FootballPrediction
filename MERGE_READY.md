@@ -1,3 +1,14 @@
+> ⚠️ **HISTORICAL SNAPSHOT / NON-AUTHORITATIVE**（2026-08-01 加注）
+>
+> 本文件仅保留历史背景和审计证据，**不得**作为当前 merge、部署、数据库或生产操作依据。
+> 本文件头部"APPROVED FOR MERGE"（2026-03-12）只代表历史时点结论，不代表当前状态。
+> 当前入口请查看 README "Canonical Business Entrypoints" 表、`docs/PROJECT_MAP.md`、
+> `docs/CAPABILITY_INDEX.md`、`docs/ACTIVE_MILESTONE.md`。
+> 任何真实网络、数据库写入、migration、训练或生产操作必须重新获得明确授权。
+>
+> This file is a historical snapshot and is NOT authoritative. Do not use it as the basis
+> for current merge, deployment, database, or production decisions.
+
 # TITAN V4.51-TOTAL-WAR 合并就绪清单
 
 > 准入级审计报告 | Merge Readiness Checklist

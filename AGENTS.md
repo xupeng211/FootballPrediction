@@ -69,6 +69,13 @@
     switch data source / compare alternative source、redesign FotMob identity mapping strategy。
 21. raw write 仍需 fresh authorization；
     review / planning / execution 结果不得自动放行 DB write、`raw_match_data` write 或 re-acceptance。
+22. 防重复开发：创建新模块、脚本、writer、collector、status mapping、hash helper、
+    migration 或数据合同之前，必须先：(1) 阅读 `docs/CAPABILITY_INDEX.md`，
+    确认同类能力是否已存在；(2) 搜索既有 symbol 及其调用者；(3) 确认 canonical 入口；
+    (4) 说明为何不能复用现有能力；(5) 声明新组件属于 CANONICAL /
+    SUPPORTED_COMPATIBILITY / LEGACY / Specialized / Internal 中的哪一类（§5.1；
+    内部入口可声明为 Specialized / Internal，不得提升为 canonical）。
+    已有 canonical 能力不得重复创建替代入口。
 
 ### 2.2 默认工作方式
 
@@ -234,9 +241,13 @@ AI / Codex 默认只能执行 `make data-help` 和 `make data-check` 以及明�
 
 以下入口对 agents 视为 deprecated / blocked：
 - `titan_discovery.js`、`run_production.js`、`batch_historical_backfill.js`、`total_war_pipeline.js`
-- `npm start`、`npm run titan:total-war`、`npm run odds:harvest`（未经授权）
+- `npm start`、`npm run titan:total-war`
 - `npm run train`、`npm run predict`（未经训练/预测授权）
 - 任何 `--commit` 命令、任何外网收割命令、任何写 DB 命令
+
+`npm run odds:harvest` 不在上述 deprecated / blocked 列表内：README canonical 表将其列为
+**Primary canonical**，但属于"canonical 但未经明确授权不得执行"——它含网络访问与 DB 写入
+副作用，与列表内其它 legacy 入口性质不同，不得直接运行。
 
 ### 5.4 原则
 
@@ -256,7 +267,7 @@ AI / Codex 默认只能执行 `make data-help` 和 `make data-check` 以及明�
 | -------- | ------------------------------------------------------ |
 | L1 种子  | `src/infrastructure/services/DiscoveryService.js`      |
 | L1 配置  | `src/infrastructure/services/L1ConfigManager.js`       |
-| L1 发现  | `scripts/ops/titan_discovery.js`                       |
+| L1 发现  | `scripts/ops/titan_discovery.js`（legacy / admin-only，见 §2.2 与 §5.1；新工作默认走 `make data-l1-discovery-preview`） |
 | L2 收割  | `src/infrastructure/harvesters/ProductionHarvester.js` |
 | Swarm    | `src/infrastructure/harvesters/SwarmHarvester.js`      |
 | Backfill | `src/infrastructure/harvesters/OddsPortalHarvester.js` |
@@ -397,8 +408,8 @@ make dev-ps
 ### 10.1 核心说明
 
 - `CLAUDE.md`: AI 协作细则
-- `COMMAND_CENTER.md`: 指挥中心总览
-- `HANDOVER.md`: 交接信息
+- `COMMAND_CENTER.md`: 指挥中心总览（HISTORICAL SNAPSHOT / NON-AUTHORITATIVE——不可用于当前操作）
+- `HANDOVER.md`: 交接信息（HISTORICAL SNAPSHOT / NON-AUTHORITATIVE——不可用于当前操作）
 - `CHANGELOG.md`: 版本演进
 - `MIGRATION.md`: 迁移说明
 
