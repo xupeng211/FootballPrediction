@@ -1151,8 +1151,12 @@ test('exportCandidates: injected invalid collector revision cannot bypass the co
     const fixs = generateSeasonFixtures(6300000, 380);
     fixs.forEach(f => (f.status.finished = true));
     const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' });
-    const mockedPage = async () => ({ status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') });
     for (const revision of ['test-sha', undefined]) {
+        let fetchCalls = 0;
+        const mockedPage = async () => {
+            fetchCalls += 1;
+            return { status: 200, contentType: 'text/html', body: html, bodyBytes: Buffer.from(html, 'utf8') };
+        };
         const retainDir = fs.mkdtempSync('/tmp/m3d2bf_v2_bad_rev_');
         try {
             const retainRawResponses = { outputDir: retainDir, collectorComponent: 'FotMobCandidateExporter' };
@@ -1162,6 +1166,7 @@ test('exportCandidates: injected invalid collector revision cannot bypass the co
                 { code: 'SAFETY_ERROR' },
                 `injected revision ${String(revision)} must fail closed`
             );
+            assert.equal(fetchCalls, 0, 'invalid revision must fail before any network request');
             assert.deepEqual(fs.readdirSync(retainDir), [], 'invalid revision must not produce raw or manifest files');
         } finally {
             bestEffort(() => fs.rmSync(retainDir, { recursive: true, force: true }));

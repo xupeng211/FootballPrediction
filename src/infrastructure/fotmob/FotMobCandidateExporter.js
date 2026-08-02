@@ -1179,6 +1179,16 @@ async function exportCandidates(options = {}) {
         );
     }
 
+    // Preflight the collector revision before any network access: an invalid
+    // revision must fail the whole export before a single request is made,
+    // not after a response has been fetched and would have to be discarded.
+    // The core-layer check in buildCaptureManifest() remains the unbypassable
+    // enforcement point for direct core calls; this preflight only decides
+    // how early the pipeline fails.
+    if (retainRaw) {
+        validateCollectorCodeRevision(retainRaw.collectorCodeRevision);
+    }
+
     const allCandidates = [];
     const seasonResults = [];
     const rawRetentions = [];
