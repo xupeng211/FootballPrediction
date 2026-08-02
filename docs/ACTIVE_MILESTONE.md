@@ -38,8 +38,12 @@
 
 1. **M3 主线收尾未完成**：Issue #1793 保持 open —— historical odds staging/import
    主线尚未完整收尾。
-2. **production import schema（NOT_ESTABLISHED）**：fail-closed writer 与隔离
-   schema/lineage 迁移计划均未实现（docs/PROJECT_STATUS.md）；真实 import 未授权未执行。
+2. **historical odds production import 集成（NOT_ESTABLISHED）**：与 canonical
+   inventory writer 分开 —— CanonicalInventoryWriter、V26.10 canonical inventory
+   contract（artifact / import-run / lineage 表）与 disposable canonical writer proof
+   已实现（PR #1811，docs/PROJECT_STATUS.md）；尚未建立的是 historical odds staging →
+   production bookmaker odds / matches 表的正式 import 集成、授权表面与执行流程。
+   真实持久化 / 生产写入仍 BLOCKED，未授权未执行。
 3. **FOTMOB_REAL_CAPTURE_READINESS（planning milestone）**：仓库内无该里程碑的
    独立 Issue / tag / 文档；唯一出处为 PR #1813 正文与 Issue #1793 结案评论
    （"begin a separate FOTMOB_REAL_CAPTURE_READINESS milestone. Do not start real
