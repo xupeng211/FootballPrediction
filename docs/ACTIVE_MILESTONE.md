@@ -80,7 +80,7 @@
 - 不把 FOTMOB_REAL_CAPTURE_READINESS 写成已授权里程碑或已有独立 Issue/tag。
 - 不重建 M3 staging 已完成的任何模块（防重复开发，AGENTS.md §2.1）。
 - 不新增 Phase/ADG 编号脚本、report、manifest（M2 增长冻结，AGENTS.md）。
-- 不修改本任务授权文件集合之外的任何文件。
+- 不修改本任务授权文件集合之外的任何文件（该限制仅适用于本文档 PR #1814 的修复任务，合并后不再生效；后续已授权的任务按其自身授权范围执行）。
 
 ## 链接
 
