@@ -30,7 +30,11 @@ const {
     REQUIRED_ENV_VAR,
     REQUIRED_ENV_BUDGET,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+const {
+    computeCaptureManifestSelfHash,
+} = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 const NextDataParser = require('../../src/parsers/fotmob/NextDataParser');
+const FotMobRawParser = require('../../src/parsers/fotmob/FotMobRawParser');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TEST_REVISION = 'a7da729fd29675c6f16e1bfc49511772d2bd590d';
@@ -162,6 +166,7 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
         parser: {
             extractFromHtml: NextDataParser.extractFromHtml,
             transformToApiFormat: NextDataParser.transformToApiFormat,
+            parseFotMobRaw: FotMobRawParser.parseFotMobRaw,
         },
         now: () => FIXED_CLOCK,
         env: env || {
@@ -539,8 +544,17 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
         assert.equal(result.completedCount, 1);
         assert.equal(result.networkRequestsMade, 1);
         const runDir = result.runDir;
-        assert.ok(fs.existsSync(path.join(runDir, 'captures', '1-4506263.html')));
+        assert.ok(fs.existsSync(path.join(runDir, 'captures', '1-4506263.payload.json')));
         assert.ok(fs.existsSync(path.join(runDir, 'captures', '1-4506263.manifest.json')));
+        // P1-1: the full HTML body is never persisted — no .html file, no
+        // __NEXT_DATA__ / pageProps / raw_data inside the outputs.
+        assert.equal(fs.readdirSync(path.join(runDir, 'captures')).some(f => f.endsWith('.html')), false);
+        assert.ok(fs.existsSync(path.join(runDir, 'plan.json')), 'run plan snapshot must exist');
+        const payload = JSON.parse(fs.readFileSync(path.join(runDir, 'captures', '1-4506263.payload.json'), 'utf8'));
+        const serialized = JSON.stringify(payload);
+        for (const marker of ['__NEXT_DATA__', 'pageProps', 'raw_data', '<!doctype']) {
+            assert.ok(!serialized.includes(marker), `payload must not contain ${marker}`);
+        }
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -565,13 +579,21 @@ test('CONTENT: complete retained fixture succeeds with full manifest', async () 
         assert.equal(manifest.request_method, 'GET');
         assert.equal(manifest.observed_match_id, '4506263');
         assert.equal(manifest.observed_match_id_match, true);
+        assert.equal(manifest.observed_match_id_source, 'payload.matchId');
+        assert.equal(manifest.observed_match_id_conflict, false);
+        assert.equal(manifest.league_id, 47);
         assert.equal(manifest.looks_like_valid_match_detail, true);
         assert.equal(manifest.has_stats, true);
         assert.equal(manifest.has_lineup, true);
         assert.equal(manifest.has_shotmap, true);
-        assert.match(manifest.body_sha256, /^[0-9a-f]{64}$/);
+        assert.match(manifest.response_body_sha256, /^[0-9a-f]{64}$/);
         assert.match(manifest.stable_raw_payload_sha256, /^[0-9a-f]{64}$/);
-        assert.equal(manifest.raw_file_relative_path, '1-4506263.html');
+        assert.match(manifest.stable_payload_sha256, /^[0-9a-f]{64}$/);
+        assert.match(manifest.payload_file_sha256, /^[0-9a-f]{64}$/);
+        assert.equal(manifest.payload_file_relative_path, '1-4506263.payload.json');
+        // P2-1: manifest self-hash is present and recomputes exactly.
+        assert.match(manifest.capture_manifest_sha256, /^[0-9a-f]{64}$/);
+        assert.equal(manifest.capture_manifest_sha256, computeCaptureManifestSelfHash(manifest));
         assert.equal(manifest.authorization_id, 'test-authorization-id');
         assert.equal(manifest.collector_code_revision, TEST_REVISION);
         assert.equal(manifest.network_authorization_mode, 'explicit_network_authorization');
@@ -580,18 +602,27 @@ test('CONTENT: complete retained fixture succeeds with full manifest', async () 
     }
 });
 
-test('CONTENT: body hash matches the actual raw bytes retained', async () => {
+test('CONTENT: response body hash covers the in-memory HTML; payload file hash covers the retained file', async () => {
     const dir = tmpDir('fotmob-content-hash-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
-        const rawPath = path.join(result.runDir, 'captures', '1-4506263.html');
-        const rawBytes = fs.readFileSync(rawPath);
+        // P1-1: the full HTML body exists only in memory — its hash is bound
+        // by the manifest, but the HTML itself is never written to disk.
         const manifest = JSON.parse(fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
-        assert.equal(manifest.body_sha256, sha256Text(rawBytes.toString('utf8')));
-        assert.equal(manifest.body_byte_size, rawBytes.length);
+        assert.equal(manifest.response_body_sha256, sha256Text(page));
+        assert.equal(manifest.response_body_byte_size, Buffer.byteLength(page));
+        assert.equal(fs.readdirSync(path.join(result.runDir, 'captures')).some(f => f.endsWith('.html')), false);
+        // The retained payload file hash binds the actual persisted bytes.
+        const payloadPath = path.join(result.runDir, 'captures', '1-4506263.payload.json');
+        const payloadBytes = fs.readFileSync(payloadPath);
+        assert.equal(manifest.payload_file_sha256, sha256Text(payloadBytes.toString('utf8')));
+        assert.equal(manifest.payload_file_sha256, crypto.createHash('sha256').update(payloadBytes).digest('hex'));
+        // Payload stable hash equals the manifest binding (same document).
+        const payload = JSON.parse(payloadBytes.toString('utf8'));
+        assert.equal(payload.stable_payload_sha256, manifest.stable_payload_sha256);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -606,7 +637,7 @@ test('CONTENT: ssr=false empty shell rejected with EMPTY_SSR_SHELL', async () =>
         assert.equal(result.status, 'stopped');
         assert.equal(result.stopReason, 'content_validity:EMPTY_SSR_SHELL:ordinal_1');
         assert.equal(result.completedCount, 0);
-        assert.ok(!fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.html')));
+        assert.ok(!fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.payload.json')));
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -760,9 +791,9 @@ test('RESUME: completed pair hash mismatch stops without fetching', async () => 
         const runId = 'run-mismatch';
         const opts = makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 1, fetchImpl });
         await executeCaptureRun(opts);
-        // Corrupt the raw file — resume must detect the mismatch.
-        const rawPath = path.join(opts.outputRoot, 'runs', runId, 'captures', '1-4506263.html');
-        fs.writeFileSync(rawPath, 'CORRUPTED CONTENT');
+        // Corrupt the payload file — resume must detect the mismatch.
+        const payloadPath = path.join(opts.outputRoot, 'runs', runId, 'captures', '1-4506263.payload.json');
+        fs.writeFileSync(payloadPath, 'CORRUPTED CONTENT');
         const callsBefore = calls.length;
         const second = await executeCaptureRun(opts);
         assert.equal(second.status, 'stopped');
@@ -805,7 +836,7 @@ test('RESUME: failure at Nth candidate keeps previous N-1 pairs', async () => {
         assert.equal(result.completedCount, 1);
         const capturesDir = path.join(result.runDir, 'captures');
         const files = fs.readdirSync(capturesDir);
-        assert.deepEqual(files.sort(), ['1-4506263.html', '1-4506263.manifest.json']);
+        assert.deepEqual(files.sort(), ['1-4506263.manifest.json', '1-4506263.payload.json']);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -833,13 +864,19 @@ test('RESUME: budget counts only this run\'s real fetches', async () => {
         assert.equal(first.stopReason, 'budget_exhausted');
         assert.equal(first.completedCount, 2);
         assert.equal(calls.length, 2);
-        // Second run: budget 3 → completed 2 are skipped (0 fetches),
-        // ordinal 3 fetches once. Budget only counts this run's fetch.
-        const second = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 3, fetchImpl }));
+        // Second run: same budget contract (P1-5) → completed 2 are
+        // skipped (0 fetches), ordinal 3 fetches once. Budget only counts
+        // this run's real fetches (P2-4: attempted counts stay cumulative).
+        const second = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl }));
         assert.equal(second.status, 'complete');
         assert.equal(second.completedCount, 3);
         assert.equal(second.networkRequestsMade, 1);
         assert.equal(calls.length, 3);
+        // Changing the budget contract across runs is refused (P1-5).
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 3, fetchImpl })),
+            (e) => e.code === 'SAFETY_ERROR' && /max-requests contract mismatch/.test(e.message)
+        );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }

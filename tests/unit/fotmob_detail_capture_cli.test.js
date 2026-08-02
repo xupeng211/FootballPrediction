@@ -37,6 +37,7 @@ const {
     REQUIRED_ENV_BUDGET,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
 const NextDataParser = require('../../src/parsers/fotmob/NextDataParser');
+const FotMobRawParser = require('../../src/parsers/fotmob/FotMobRawParser');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const CLI_PATH = path.join(REPO_ROOT, 'scripts/ops/fotmob_detail_capture.js');
@@ -128,7 +129,7 @@ test('CLI: plan subcommand writes a valid plan', () => {
             'candidate-artifact': artifact,
             season: ['2024/2025'],
             output: outputPath,
-        }, { stdout, now: () => FIXED_CLOCK, collectorCodeRevision: TEST_REVISION });
+        }, { stdout, now: () => FIXED_CLOCK, repositoryRoot: REPO_ROOT, execSync: CLEAN_EXEC });
         assert.equal(result.mode, 'plan');
         assert.equal(result.selected_candidate_count, 1);
         assert.ok(fs.existsSync(outputPath));
@@ -218,7 +219,7 @@ test('CLI: capture subcommand without --execute fails with zero fetches', async 
                 repositoryRoot: REPO_ROOT,
                 execSync: CLEAN_EXEC,
                 fetchImpl,
-                parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat },
+                parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat, parseFotMobRaw: FotMobRawParser.parseFotMobRaw },
                 now: () => FIXED_CLOCK,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /--execute/.test(e.message)
@@ -265,7 +266,7 @@ test('CLI: capture subcommand succeeds with all gates (mocked fetch)', async () 
             repositoryRoot: REPO_ROOT,
             execSync: CLEAN_EXEC,
             fetchImpl,
-            parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat },
+            parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat, parseFotMobRaw: FotMobRawParser.parseFotMobRaw },
             now: () => FIXED_CLOCK,
         });
         assert.equal(result.mode, 'capture');
@@ -310,7 +311,7 @@ test('CLI: replay subcommand replays a completed run offline', async () => {
             delayMs: 60000,
             sleepImpl: async () => {},
             fetchImpl,
-            parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat },
+            parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: NextDataParser.transformToApiFormat, parseFotMobRaw: FotMobRawParser.parseFotMobRaw },
             now: () => FIXED_CLOCK,
             env: { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' },
             repositoryRoot: REPO_ROOT,
