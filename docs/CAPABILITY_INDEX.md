@@ -15,7 +15,7 @@
 | LEGACY | 历史遗留，不得成为新依赖 |
 | BLOCKED | 入口存在或计划中，但当前未授权 / 被禁止执行 |
 | NOT_ESTABLISHED | 尚未建立（设计评审完成或未开始，均未实现） |
-| DOCUMENTED_ONLY | 仅有文档描述 / 审计结论，无实现或未验证 |
+| DOCUMENTED_ONLY | 无正式受控 canonical 入口；可能已实现并有历史执行证据（行内说明给出实现与入口），也可能仅为文档 / 审计描述 |
 
 状态可用斜杠组合（如 CANONICAL/BLOCKED）：入口已定义但执行未授权。
 
@@ -80,7 +80,7 @@
 | Domain | Capability | Status | Canonical entrypoint | Core implementation | Primary tests | Authorization & side effects | Legacy or forbidden alternatives | Current notes |
 |---|---|---|---|---|---|---|---|---|
 | ML | training | CANONICAL/BLOCKED | `npm run train`（train:fast / train:deep 变体） | `src/ml/` | ML 测试 | 写模型 artifact；仅显式训练授权后可执行 | 任何未经授权的训练脚本 | 当前无训练授权 |
-| ML | prediction | CANONICAL/BLOCKED | `npm run predict`（predict:dry / predict:json 变体） | `src/ml/inference/predictor.py` | ML 测试 | 读 DB；需确认环境 / 模型 / 授权 | — | 未授权不执行 |
+| ML | prediction | CANONICAL/BLOCKED | `npm run predict`（predict:dry / predict:json 变体） | `src/ml/inference/predictor.py` | ML 测试 | 读 DB；`scripts/ops/predict_pipeline.py` 模块加载即创建 `/app/logs` 并追加写 `/app/logs/predict_pipeline.log`（dev Compose 将仓库挂载到 `/app`，即使 predict:dry 也会写宿主工作区 `logs/`）；需确认环境 / 模型 / 授权 | — | 未授权不执行 |
 | ML | backtest | NOT_ESTABLISHED | 无 | 无 | — | 无 | `recon_scanner.js`、`gold_pilot_50.js`、`titan_marathon.js` 不是 canonical 回测入口 | 需未来业务里程碑实现并验收（README canonical 表） |
 
 ## 本索引不回答什么
