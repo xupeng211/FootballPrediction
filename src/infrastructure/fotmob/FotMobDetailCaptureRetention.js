@@ -5,27 +5,33 @@
 // FotMob bounded detail capture — retention and replay support.
 //
 // Owns:
-//   - the atomic raw+manifest paired writer (both-or-neither, temp file +
-//     rename, readback verification, rollback, symlink rejection, no
-//     overwrite of different content, idempotent on identical bytes);
+//   - the atomic stable-payload + manifest paired writer (both-or-neither,
+//     temp file + rename, readback verification, rollback, symlink rejection,
+//     no overwrite of different content, idempotent on identical bytes). The
+//     full HTML response body is NEVER persisted: only the allowlisted
+//     stable payload and its manifest survive (P1-1);
 //   - run-state management (plan SHA binding, per-candidate completion,
 //     resume support without refetching);
-//   - offline REPLAY output of structured detail artifacts.
+//   - the run-bound immutable plan snapshot (run-dir/plan.json) that REPLAY
+//     binds candidate identity to (P2-6);
+//   - offline REPLAY that materializes deterministic detail artifacts from
+//     the persisted stable payload (no HTML, no current-time drift).
 //
 // This module never touches the network and never touches the database.
 
 const path = require('node:path');
 const fs = require('node:fs');
-const crypto = require('node:crypto');
 
 const {
     MANIFEST_SCHEMA_VERSION,
+    PAYLOAD_SCHEMA_VERSION,
     validateCaptureManifest,
     validateDetailArtifact,
+    validateAndRecomputeCapturePlan,
     sha256Hex,
     sha256Text,
-    canonicalJsonHash,
     isPlainObject,
+    ensureRealDirectoryTree,
 } = require('./FotMobDetailCaptureContract');
 
 // ─────────────────────────────────────────────────────────────
@@ -53,31 +59,34 @@ function sha256Bytes(buf) {
 }
 
 /**
- * Atomic paired write of raw HTML + capture manifest.
+ * Atomic paired write of stable payload + capture manifest.
  *
  * Both files are written via temp files and renamed. On any failure the
  * already-renamed file is rolled back so the pair remains both-or-neither.
  * Existing identical pair → idempotent success; partial pair or different
- * content → SAFETY_ERROR.
+ * content → SAFETY_ERROR. The target directory is created/verified via
+ * ensureRealDirectoryTree so pre-existing symlinked descendants are
+ * rejected before any write.
  *
  * @param {object} args - {
- *   rawBody (Buffer), manifest (object),
- *   rawFileName, manifestFileName, pairDir (absolute),
+ *   payloadBody (string — serialized stable payload document),
+ *   manifest (object),
+ *   payloadFileName, manifestFileName, pairDir (absolute),
  *   fsImpl?
  * }
- * @returns {{ rawPath, manifestPath, rawSha256, manifestSha256, idempotent }}
+ * @returns {{ payloadPath, manifestPath, payloadSha256, manifestSha256, idempotent }}
  */
 /* eslint-disable-next-line complexity */
 function writeCapturePair(args = {}) {
     const fileSystem = args.fsImpl || fs;
-    const rawBody = Buffer.isBuffer(args.rawBody) ? args.rawBody : Buffer.from(String(args.rawBody || ''), 'utf8');
+    const payloadBody = String(args.payloadBody ?? '');
     const manifest = args.manifest;
-    const rawFileName = String(args.rawFileName || '');
+    const payloadFileName = String(args.payloadFileName || '');
     const manifestFileName = String(args.manifestFileName || '');
     const pairDir = path.resolve(String(args.pairDir || ''));
 
-    if (!rawFileName || !manifestFileName) {
-        throw Object.assign(new Error('rawFileName and manifestFileName are required'), { code: 'INPUT_ERROR' });
+    if (!payloadFileName || !manifestFileName) {
+        throw Object.assign(new Error('payloadFileName and manifestFileName are required'), { code: 'INPUT_ERROR' });
     }
     if (!isPlainObject(manifest)) {
         throw Object.assign(new Error('manifest must be an object'), { code: 'INPUT_ERROR' });
@@ -90,38 +99,59 @@ function writeCapturePair(args = {}) {
         );
     }
 
-    const rawSha256 = sha256Bytes(rawBody);
-    if (rawSha256 !== manifest.body_sha256) {
+    const payloadSha256 = sha256Bytes(Buffer.from(payloadBody, 'utf8'));
+    if (payloadSha256 !== manifest.payload_file_sha256) {
         throw Object.assign(
-            new Error('manifest body_sha256 does not match raw body'),
+            new Error('manifest payload_file_sha256 does not match payload body'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    // The persisted payload must be the same business document the manifest
+    // binds: its own stable_payload_sha256 must equal the manifest's.
+    let payloadParsed = null;
+    try {
+        payloadParsed = JSON.parse(payloadBody);
+    } catch {
+        throw Object.assign(new Error('payload body is not valid JSON'), { code: 'SAFETY_ERROR' });
+    }
+    if (!isPlainObject(payloadParsed) ||
+        payloadParsed.schema_version !== PAYLOAD_SCHEMA_VERSION ||
+        payloadParsed.stable_payload_sha256 !== manifest.stable_payload_sha256) {
+        throw Object.assign(
+            new Error('payload stable_payload_sha256 does not match manifest'),
             { code: 'SAFETY_ERROR' }
         );
     }
 
-    const rawPath = path.join(pairDir, rawFileName);
+    // Create/verify the pair directory WITHOUT following symlinked
+    // descendants (P2-3); ensureRealDirectoryTree is the single shared
+    // symlink-safe walk (no local duplicate).
+    ensureRealDirectoryTree(pairDir, fileSystem);
+
+    const payloadPath = path.join(pairDir, payloadFileName);
     const manifestPath = path.join(pairDir, manifestFileName);
 
     // Both-or-neither + symlink rejection + overwrite protection.
-    const rawStat = assertRegularFilePath(rawPath, fileSystem, 'raw retention');
+    const payloadStat = assertRegularFilePath(payloadPath, fileSystem, 'payload retention');
     const manifestStat = assertRegularFilePath(manifestPath, fileSystem, 'manifest retention');
-    const rawExists = rawStat !== null;
+    const payloadExists = payloadStat !== null;
     const manifestExists = manifestStat !== null;
 
-    if (rawExists !== manifestExists) {
+    if (payloadExists !== manifestExists) {
         throw Object.assign(
             new Error(
-                `capture pair integrity violated: raw=${rawExists ? 'present' : 'absent'}, ` +
+                `capture pair integrity violated: payload=${payloadExists ? 'present' : 'absent'}, ` +
                     `manifest=${manifestExists ? 'present' : 'absent'}`
             ),
             { code: 'SAFETY_ERROR' }
         );
     }
 
-    if (rawExists) {
-        const existingRawSha = sha256Bytes(fileSystem.readFileSync(rawPath));
-        if (existingRawSha !== rawSha256) {
+    if (payloadExists) {
+        const existingPayloadSha = sha256Bytes(fileSystem.readFileSync(payloadPath));
+        if (existingPayloadSha !== payloadSha256) {
             throw Object.assign(
-                new Error(`capture pair refused: raw file exists with different content`),
+                new Error(`capture pair refused: payload file exists with different content`),
                 { code: 'SAFETY_ERROR' }
             );
         }
@@ -137,9 +167,9 @@ function writeCapturePair(args = {}) {
             );
         }
         return {
-            rawPath,
+            payloadPath,
             manifestPath,
-            rawSha256,
+            payloadSha256,
             manifestSha256: existingManifestSha,
             idempotent: true,
         };
@@ -148,22 +178,22 @@ function writeCapturePair(args = {}) {
     // Write both via temp files, rename, rollback on failure.
     const manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n', 'utf8');
     const manifestSha256 = sha256Bytes(manifestBytes);
-    const rawTmp = `${rawPath}.tmp-${process.pid}-${Date.now()}`;
+    const payloadTmp = `${payloadPath}.tmp-${process.pid}-${Date.now()}`;
     const manifestTmp = `${manifestPath}.tmp-${process.pid}-${Date.now()}`;
-    let rawRenamed = false;
+    let payloadRenamed = false;
 
     try {
-        fileSystem.writeFileSync(rawTmp, rawBody, { encoding: 'utf8', flag: 'wx' });
+        fileSystem.writeFileSync(payloadTmp, Buffer.from(payloadBody, 'utf8'), { encoding: 'utf8', flag: 'wx' });
         fileSystem.writeFileSync(manifestTmp, manifestBytes, { encoding: 'utf8', flag: 'wx' });
-        fileSystem.renameSync(rawTmp, rawPath);
-        rawRenamed = true;
+        fileSystem.renameSync(payloadTmp, payloadPath);
+        payloadRenamed = true;
         fileSystem.renameSync(manifestTmp, manifestPath);
     } catch (err) {
-        // Rollback: if raw was renamed but manifest was not, remove raw.
-        try { fileSystem.unlinkSync(rawTmp); } catch { /* ignore */ }
+        // Rollback: if payload was renamed but manifest was not, remove payload.
+        try { fileSystem.unlinkSync(payloadTmp); } catch { /* ignore */ }
         try { fileSystem.unlinkSync(manifestTmp); } catch { /* ignore */ }
-        if (rawRenamed) {
-            try { fileSystem.unlinkSync(rawPath); } catch { /* ignore */ }
+        if (payloadRenamed) {
+            try { fileSystem.unlinkSync(payloadPath); } catch { /* ignore */ }
         }
         throw Object.assign(
             new Error(`capture pair write failed: ${err.message}`),
@@ -173,18 +203,18 @@ function writeCapturePair(args = {}) {
 
     // Final readback verification — both files must be readable, regular,
     // and byte-identical to what we wrote.
-    const rawReadback = fileSystem.readFileSync(rawPath);
-    if (sha256Bytes(rawReadback) !== rawSha256) {
-        try { fileSystem.unlinkSync(rawPath); } catch { /* ignore */ }
+    const payloadReadback = fileSystem.readFileSync(payloadPath);
+    if (sha256Bytes(payloadReadback) !== payloadSha256) {
+        try { fileSystem.unlinkSync(payloadPath); } catch { /* ignore */ }
         try { fileSystem.unlinkSync(manifestPath); } catch { /* ignore */ }
         throw Object.assign(
-            new Error('capture pair readback failed: raw hash mismatch'),
+            new Error('capture pair readback failed: payload hash mismatch'),
             { code: 'SAFETY_ERROR' }
         );
     }
     const manifestReadback = fileSystem.readFileSync(manifestPath, 'utf8');
     if (sha256Text(manifestReadback) !== manifestSha256) {
-        try { fileSystem.unlinkSync(rawPath); } catch { /* ignore */ }
+        try { fileSystem.unlinkSync(payloadPath); } catch { /* ignore */ }
         try { fileSystem.unlinkSync(manifestPath); } catch { /* ignore */ }
         throw Object.assign(
             new Error('capture pair readback failed: manifest hash mismatch'),
@@ -193,9 +223,9 @@ function writeCapturePair(args = {}) {
     }
 
     return {
-        rawPath,
+        payloadPath,
         manifestPath,
-        rawSha256,
+        payloadSha256,
         manifestSha256,
         idempotent: false,
     };
@@ -214,15 +244,19 @@ function defaultRunState(plan, options = {}) {
         authorization_id: String(options.authorizationId || ''),
         max_requests: Number(options.maxRequests || 0),
         delay_ms: Number(options.delayMs || 0),
+        collector_code_revision: String(options.collectorCodeRevision || ''),
         started_at: String(options.startedAt || ''),
         completed_ordinals: [],
         stopped_at_ordinal: null,
         stop_reason: null,
         status: 'in_progress',
+        network_requests_attempted: 0,
+        network_responses_received: 0,
     };
 }
 
 function writeRunState(runDir, runState, fsImpl = fs) {
+    ensureRealDirectoryTree(runDir, fsImpl);
     const statePath = path.join(runDir, 'run-state.json');
     const bytes = Buffer.from(JSON.stringify(runState, null, 2) + '\n', 'utf8');
     const tmpPath = `${statePath}.tmp-${process.pid}-${Date.now()}`;
@@ -250,37 +284,145 @@ function readRunState(runDir, fsImpl = fs) {
     return parsed;
 }
 
+// ─────────────────────────────────────────────────────────────
+// Run-bound plan snapshot (P2-6)
+// ─────────────────────────────────────────────────────────────
+
 /**
- * Check whether a candidate ordinal already has a complete, matching pair.
- * Used for resume: completed candidates must never be fetched again.
+ * Write the immutable, run-bound plan snapshot to <run-dir>/plan.json.
+ * Atomic temp+rename, readback verified, symlink rejected, no overwrite of
+ * different content, idempotent on identical bytes. Called BEFORE any real
+ * network request so the run is self-contained for offline REPLAY.
  *
- * @param {object} args - { runDir, ordinal, sourceMatchId, expectedManifestSha256, fsImpl }
+ * @param {object} args - { runDir, plan, fsImpl }
+ * @returns {{ snapshotPath, snapshotSha256, idempotent }}
+ */
+function writePlanSnapshot(args = {}) {
+    const fileSystem = args.fsImpl || fs;
+    const runDir = path.resolve(String(args.runDir || ''));
+    const plan = args.plan;
+
+    if (!isPlainObject(plan)) {
+        throw Object.assign(new Error('plan snapshot requires a plan object'), { code: 'INPUT_ERROR' });
+    }
+    const planCheck = validateAndRecomputeCapturePlan(plan);
+    if (!planCheck.ok) {
+        throw Object.assign(
+            new Error(`plan snapshot refused: ${planCheck.errors.join('; ')}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    ensureRealDirectoryTree(runDir, fileSystem);
+    const snapshotPath = path.join(runDir, 'plan.json');
+    const bytes = Buffer.from(JSON.stringify(plan, null, 2) + '\n', 'utf8');
+    const snapshotSha256 = sha256Bytes(bytes);
+
+    const existingStat = assertRegularFilePath(snapshotPath, fileSystem, 'plan snapshot');
+    if (existingStat) {
+        const existingBytes = fileSystem.readFileSync(snapshotPath);
+        if (sha256Bytes(existingBytes) !== snapshotSha256) {
+            throw Object.assign(
+                new Error('plan snapshot refused: exists with different content'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        return { snapshotPath, snapshotSha256, idempotent: true };
+    }
+
+    const tmpPath = `${snapshotPath}.tmp-${process.pid}-${Date.now()}`;
+    try {
+        fileSystem.writeFileSync(tmpPath, bytes, { encoding: 'utf8', flag: 'wx' });
+        fileSystem.renameSync(tmpPath, snapshotPath);
+    } catch (err) {
+        try { fileSystem.unlinkSync(tmpPath); } catch { /* ignore */ }
+        throw Object.assign(
+            new Error(`plan snapshot write failed: ${err.message}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    const readback = fileSystem.readFileSync(snapshotPath);
+    if (sha256Bytes(readback) !== snapshotSha256) {
+        try { fileSystem.unlinkSync(snapshotPath); } catch { /* ignore */ }
+        throw Object.assign(
+            new Error('plan snapshot readback failed: hash mismatch'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    return { snapshotPath, snapshotSha256, idempotent: false };
+}
+
+/**
+ * Read the run-bound plan snapshot from <run-dir>/plan.json.
+ * Returns null when absent; the snapshot is re-validated (schema + hash
+ * recompute) on read — a tampered snapshot fails closed.
+ *
+ * @param {string} runDir
+ * @param {object} fsImpl?
+ * @returns {object|null} validated plan snapshot
+ */
+function readPlanSnapshot(runDir, fsImpl = fs) {
+    const snapshotPath = path.join(runDir, 'plan.json');
+    const stat = assertRegularFilePath(snapshotPath, fsImpl, 'plan snapshot');
+    if (!stat) return null;
+    const parsed = JSON.parse(fsImpl.readFileSync(snapshotPath, 'utf8'));
+    const planCheck = validateAndRecomputeCapturePlan(parsed);
+    if (!planCheck.ok) {
+        throw Object.assign(
+            new Error(`plan snapshot invalid: ${planCheck.errors.join('; ')}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    return parsed;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Resume pair check (P1-5: exact run/plan/authorization binding)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Check whether a candidate ordinal already has a complete, matching
+ * payload+manifest pair for the CURRENT run context. Used for resume:
+ * completed candidates must never be fetched again.
+ *
+ * The pair is bound to the current run, plan, source artifact,
+ * authorization, candidate and request URL — a pair copied from another run
+ * or plan is NEVER treated as complete (RESUME_PAIR_CONTEXT_MISMATCH).
+ *
+ * @param {object} args - {
+ *   runDir, ordinal, sourceMatchId,
+ *   expectedRunId, expectedAuthorizationId, expectedPlanSha256,
+ *   expectedSourceArtifactSha256, expectedCandidate (plan candidate),
+ *   expectedRequestUrl, fsImpl?
+ * }
  * @returns {{ completed: boolean, state: 'complete'|'partial'|'mismatch'|'absent'|'error', detail: string }}
  */
+/* eslint-disable-next-line complexity */
 function checkCompletedPair(args = {}) {
     const fileSystem = args.fsImpl || fs;
     const runDir = String(args.runDir || '');
     const ordinal = Number(args.ordinal || 0);
     const sourceMatchId = String(args.sourceMatchId || '');
-    const rawFileName = `${ordinal}-${sourceMatchId}.html`;
+    const payloadFileName = `${ordinal}-${sourceMatchId}.payload.json`;
     const manifestFileName = `${ordinal}-${sourceMatchId}.manifest.json`;
-    const rawPath = path.join(runDir, 'captures', rawFileName);
+    const payloadPath = path.join(runDir, 'captures', payloadFileName);
     const manifestPath = path.join(runDir, 'captures', manifestFileName);
 
-    const rawStat = assertRegularFilePath(rawPath, fileSystem, 'resume check');
+    const payloadStat = assertRegularFilePath(payloadPath, fileSystem, 'resume check');
     const manifestStat = assertRegularFilePath(manifestPath, fileSystem, 'resume check');
 
-    if (rawStat === null && manifestStat === null) return { completed: false, state: 'absent', detail: 'pair absent' };
-    if (rawStat === null !== (manifestStat === null)) {
+    if (payloadStat === null && manifestStat === null) return { completed: false, state: 'absent', detail: 'pair absent' };
+    if (payloadStat === null !== (manifestStat === null)) {
         return {
             completed: false,
             state: 'partial',
-            detail: `partial pair: raw=${rawStat !== null}, manifest=${manifestStat !== null}`,
+            detail: `partial pair: payload=${payloadStat !== null}, manifest=${manifestStat !== null}`,
         };
     }
 
-    // Both present: verify hash binding.
-    const rawSha = sha256Bytes(fileSystem.readFileSync(rawPath));
+    // Both present: verify file binding, manifest contract (incl. self-hash),
+    // then the exact run-context binding field by field.
+    const payloadSha = sha256Bytes(fileSystem.readFileSync(payloadPath));
     let manifest;
     try {
         manifest = JSON.parse(fileSystem.readFileSync(manifestPath, 'utf8'));
@@ -291,31 +433,67 @@ function checkCompletedPair(args = {}) {
     if (!manifestValidation.ok) {
         return { completed: false, state: 'mismatch', detail: `manifest invalid: ${manifestValidation.errors.join('; ')}` };
     }
-    if (manifest.body_sha256 !== rawSha) {
-        return { completed: false, state: 'mismatch', detail: 'manifest body_sha256 does not match raw file' };
+    if (manifest.payload_file_sha256 !== payloadSha) {
+        return { completed: false, state: 'mismatch', detail: 'manifest payload_file_sha256 does not match payload file' };
     }
-    if (manifest.raw_file_relative_path !== rawFileName) {
-        return { completed: false, state: 'mismatch', detail: 'manifest raw_file_relative_path mismatch' };
+    let payload;
+    try {
+        payload = JSON.parse(fileSystem.readFileSync(payloadPath, 'utf8'));
+    } catch {
+        return { completed: false, state: 'mismatch', detail: 'payload unparseable' };
     }
-    if (args.expectedManifestSha256 && manifest.capture_manifest_sha256 !== args.expectedManifestSha256) {
-        return { completed: false, state: 'mismatch', detail: 'manifest content differs from expected' };
+    if (!isPlainObject(payload) || payload.stable_payload_sha256 !== manifest.stable_payload_sha256) {
+        return { completed: false, state: 'mismatch', detail: 'payload stable_payload_sha256 does not match manifest' };
     }
 
-    return { completed: true, state: 'complete', detail: 'pair complete and matching' };
+    // Exact run-context binding — any field that does not match the current
+    // run, plan, artifact, authorization or candidate is a mismatch that
+    // stops the run; it is NEVER treated as completed.
+    const expectedCandidate = args.expectedCandidate || {};
+    const checks = [
+        ['manifest.source_match_id', manifest.source_match_id, sourceMatchId],
+        ['manifest.request_ordinal', Number(manifest.request_ordinal), ordinal],
+        ['manifest.observed_match_id', manifest.observed_match_id, sourceMatchId],
+        ['manifest.capture_run_id', manifest.capture_run_id, args.expectedRunId],
+        ['manifest.authorization_id', manifest.authorization_id, args.expectedAuthorizationId],
+        ['manifest.source_plan_sha256', manifest.source_plan_sha256, args.expectedPlanSha256],
+        ['manifest.source_artifact_sha256', manifest.source_artifact_sha256, args.expectedSourceArtifactSha256],
+        ['manifest.candidate_id', manifest.candidate_id, expectedCandidate.candidate_id],
+        ['manifest.candidate_identity_sha256', manifest.candidate_identity_sha256, expectedCandidate.candidate_identity_sha256],
+        ['manifest.request_url', manifest.request_url, args.expectedRequestUrl],
+    ];
+    for (const [label, actual, expected] of checks) {
+        if (String(actual ?? '') !== String(expected ?? '')) {
+            return {
+                completed: false,
+                state: 'mismatch',
+                detail: `RESUME_PAIR_CONTEXT_MISMATCH:${label}`,
+            };
+        }
+    }
+
+    return { completed: true, state: 'complete', detail: 'pair complete and bound to this run context' };
 }
 
 // ─────────────────────────────────────────────────────────────
-// Replay (fully offline)
+// Replay (fully offline, deterministic, payload-based)
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Replay one captured pair into a structured detail artifact, fully offline.
+ * Replay one captured payload+manifest pair into a structured detail
+ * artifact, fully offline. No HTML is involved: the stable payload file is
+ * verified (file hash, business hash, manifest self-hash, observed id) and
+ * then materialized deterministically. parsed_at is derived from the
+ * manifest's response_received_at — never the current wall clock — so
+ * repeated replays of the same run produce byte-identical artifacts.
+ *
+ * Candidate identity comes exclusively from the run-bound plan snapshot;
+ * a missing snapshot, missing candidate, or a plan candidate whose identity
+ * hash does not match the manifest fails closed (no empty identity output).
  *
  * @param {object} args - {
  *   runDir, ordinal, sourceMatchId,
- *   plan (for identity expectations),
- *   parser: { extractFromHtml, transformToApiFormat, parseFotMobRaw },
- *   parsedAt (ISO string),
+ *   runPlan (validated run-bound plan snapshot — REQUIRED),
  *   parserCodeRevision (40-hex),
  *   fsImpl?
  * }
@@ -327,18 +505,28 @@ function replayCapturePair(args = {}) {
     const runDir = String(args.runDir || '');
     const ordinal = Number(args.ordinal || 0);
     const sourceMatchId = String(args.sourceMatchId || '');
-    const rawFileName = `${ordinal}-${sourceMatchId}.html`;
+    const payloadFileName = `${ordinal}-${sourceMatchId}.payload.json`;
     const manifestFileName = `${ordinal}-${sourceMatchId}.manifest.json`;
-    const rawPath = path.join(runDir, 'captures', rawFileName);
+    const payloadPath = path.join(runDir, 'captures', payloadFileName);
     const manifestPath = path.join(runDir, 'captures', manifestFileName);
-    const parser = args.parser || {};
-    const plan = args.plan || {};
-    const planCandidates = Array.isArray(plan.candidates) ? plan.candidates : [];
-    const planCandidate = planCandidates.find(c => String(c.source_match_id) === sourceMatchId) || {};
 
-    // Raw hash must match manifest.
-    const rawBytes = fileSystem.readFileSync(rawPath);
-    const rawSha256 = sha256Bytes(rawBytes);
+    // Run-bound plan snapshot is REQUIRED for replay identity (P2-6).
+    const runPlan = args.runPlan;
+    if (!isPlainObject(runPlan)) {
+        throw Object.assign(new Error('replay failed: run-bound plan snapshot required'), { code: 'SAFETY_ERROR' });
+    }
+    const planCandidate = (Array.isArray(runPlan.candidates) ? runPlan.candidates : [])
+        .find(c => String(c.source_match_id) === sourceMatchId);
+    if (!planCandidate) {
+        throw Object.assign(
+            new Error(`replay failed: plan snapshot has no candidate for source_match_id ${sourceMatchId}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
+    // Payload file hash must match manifest; manifest must be self-valid.
+    const payloadBytes = fileSystem.readFileSync(payloadPath);
+    const payloadFileSha256 = sha256Bytes(payloadBytes);
     let manifest;
     try {
         manifest = JSON.parse(fileSystem.readFileSync(manifestPath, 'utf8'));
@@ -352,8 +540,8 @@ function replayCapturePair(args = {}) {
             { code: 'SAFETY_ERROR' }
         );
     }
-    if (manifest.body_sha256 !== rawSha256) {
-        throw Object.assign(new Error('replay failed: raw hash does not match manifest body_sha256'), { code: 'SAFETY_ERROR' });
+    if (manifest.payload_file_sha256 !== payloadFileSha256) {
+        throw Object.assign(new Error('replay failed: payload file hash does not match manifest payload_file_sha256'), { code: 'SAFETY_ERROR' });
     }
     if (manifest.source_match_id !== sourceMatchId) {
         throw Object.assign(new Error('replay failed: manifest source_match_id mismatch'), { code: 'SAFETY_ERROR' });
@@ -361,82 +549,62 @@ function replayCapturePair(args = {}) {
     if (manifest.observed_match_id !== sourceMatchId) {
         throw Object.assign(new Error('replay failed: observed_match_id does not match source_match_id'), { code: 'SAFETY_ERROR' });
     }
-
-    if (typeof parser.extractFromHtml !== 'function' ||
-        typeof parser.transformToApiFormat !== 'function' ||
-        typeof parser.parseFotMobRaw !== 'function') {
-        throw Object.assign(new Error('replay failed: parser dependencies missing'), { code: 'INPUT_ERROR' });
+    if (manifest.request_ordinal !== ordinal) {
+        throw Object.assign(new Error('replay failed: manifest request_ordinal mismatch'), { code: 'SAFETY_ERROR' });
+    }
+    // Bind the manifest to the run plan candidate: same candidate id and
+    // same identity hash — a manifest from another plan fails closed.
+    if (manifest.candidate_id !== String(planCandidate.candidate_id || '') ||
+        manifest.candidate_identity_sha256 !== String(planCandidate.candidate_identity_sha256 || '')) {
+        throw Object.assign(new Error('replay failed: manifest candidate does not match run plan snapshot'), { code: 'SAFETY_ERROR' });
     }
 
-    // Parse chain: HTML → __NEXT_DATA__ → API format (raw_data) → structured.
-    let nextData;
+    let payload;
     try {
-        const extraction = parser.extractFromHtml(rawBytes.toString('utf8'));
-        if (!extraction || extraction.success === false || !extraction.data) {
-            throw Object.assign(new Error('replay failed: no __NEXT_DATA__ payload'), { code: 'REPLAY_PARSE_ERROR' });
-        }
-        nextData = extraction.data;
+        payload = JSON.parse(payloadBytes.toString('utf8'));
     } catch (err) {
-        throw Object.assign(new Error(`replay failed: extraction error: ${err.message}`), { code: 'REPLAY_PARSE_ERROR' });
+        throw Object.assign(new Error(`replay failed: payload unparseable: ${err.message}`), { code: 'SAFETY_ERROR' });
+    }
+    if (!isPlainObject(payload) || payload.schema_version !== PAYLOAD_SCHEMA_VERSION) {
+        throw Object.assign(new Error('replay failed: payload has unknown schema'), { code: 'SAFETY_ERROR' });
+    }
+    if (payload.stable_payload_sha256 !== manifest.stable_payload_sha256) {
+        throw Object.assign(new Error('replay failed: payload stable_payload_sha256 does not match manifest'), { code: 'SAFETY_ERROR' });
+    }
+    if (payload.source_match_id !== sourceMatchId) {
+        throw Object.assign(new Error('replay failed: payload source_match_id mismatch'), { code: 'SAFETY_ERROR' });
+    }
+    if (payload.candidate_id !== String(planCandidate.candidate_id || '')) {
+        throw Object.assign(new Error('replay failed: payload candidate_id does not match run plan snapshot'), { code: 'SAFETY_ERROR' });
     }
 
-    let transformed;
-    try {
-        transformed = parser.transformToApiFormat(nextData, sourceMatchId);
-    } catch (err) {
-        throw Object.assign(new Error(`replay failed: transform error: ${err.message}`), { code: 'REPLAY_PARSE_ERROR' });
-    }
-    if (!transformed || typeof transformed !== 'object') {
-        throw Object.assign(new Error('replay failed: transform returned no structured match data'), { code: 'REPLAY_PARSE_ERROR' });
-    }
-
-    const parsed = parser.parseFotMobRaw(transformed, sourceMatchId);
-    if (!parsed || parsed.ok !== true || !parsed.data) {
-        const errMsg = parsed && parsed.error ? parsed.error : 'unknown parser error';
-        throw Object.assign(new Error(`replay failed: parseFotMobRaw: ${errMsg}`), { code: 'REPLAY_PARSE_ERROR' });
-    }
-
-    // Structured payload hash over the deterministic business projection.
-    const structuredProjection = {
-        matchId: parsed.data.match?.externalId ?? sourceMatchId,
-        homeTeam: parsed.data.homeTeam,
-        awayTeam: parsed.data.awayTeam,
-        stats: parsed.data.stats,
-        lineup: parsed.data.lineup,
-        events: parsed.data.events,
-        shotmap: parsed.data.shotmap,
-        playerStats: parsed.data.playerStats,
-    };
-    const structuredPayloadSha256 = canonicalJsonHash(structuredProjection);
+    // Structured payload hash = the payload's own business projection hash
+    // (deterministic — identical bytes on every replay).
+    const structuredPayloadSha256 = payload.stable_payload_sha256;
 
     const artifact = {
         schema_version: 'fotmob-match-detail-artifact/v1',
         source_provider: 'FotMob',
         source_match_id: sourceMatchId,
-        candidate_id: String(planCandidate.candidate_id || ''),
-        competition: String(planCandidate.competition || manifest.competition || 'Premier League'),
-        season: String(planCandidate.season || manifest.season || ''),
+        candidate_id: String(planCandidate.candidate_id),
+        competition: String(planCandidate.competition || ''),
+        season: String(planCandidate.season || ''),
         expected_identity: {
             home_team: String(planCandidate.home_team || ''),
             away_team: String(planCandidate.away_team || ''),
             kickoff_at: String(planCandidate.kickoff_at || ''),
         },
-        observed_identity: {
-            home_team: manifest.home_team || '',
-            away_team: manifest.away_team || '',
-            observed_match_id: manifest.observed_match_id || '',
-        },
-        raw_file_sha256: rawSha256,
-        capture_manifest_sha256: resolveManifestSelfHash(manifest, sha256Text),
-        stable_raw_payload_sha256: manifest.stable_raw_payload_sha256 || null,
+        observed_identity: payload.observed_identity || {},
+        normalized: payload.normalized || {},
+        payload_file_sha256: payloadFileSha256,
+        capture_manifest_sha256: manifest.capture_manifest_sha256,
+        stable_payload_sha256: payload.stable_payload_sha256,
         structured_payload_sha256: structuredPayloadSha256,
         parser_component: manifest.parser_component || 'NextDataParser+FotMobRawParser',
         parser_version: manifest.parser_version || null,
         parser_code_revision: String(args.parserCodeRevision || ''),
-        parsed_at: String(args.parsedAt || ''),
-        content: parsed.data,
-        general: transformed.general || {},
-        header: transformed.header || {},
+        // Deterministic: derived from the capture record, never the wall clock.
+        parsed_at: String(manifest.response_received_at || ''),
         matchId: sourceMatchId,
     };
 
@@ -453,22 +621,9 @@ function replayCapturePair(args = {}) {
 }
 
 /**
- * Resolve the manifest's self-hash for the detail artifact contract.
- * Prefers the manifest's own field; derives it deterministically when the
- * manifest was produced without one.
- */
-function resolveManifestSelfHash(manifest, sha256TextFn) {
-    if (manifest && /^[0-9a-f]{64}$/.test(String(manifest.capture_manifest_sha256 || ''))) {
-        return manifest.capture_manifest_sha256;
-    }
-    const clone = { ...manifest };
-    delete clone.capture_manifest_sha256;
-    return sha256TextFn(JSON.stringify(clone));
-}
-
-/**
  * Write a structured detail artifact to the replay directory (atomic,
- * no overwrite of different content, symlink rejection).
+ * no overwrite of different content, symlink rejection, real directory
+ * tree for the target directory).
  *
  * @param {object} args - { artifact, replayDir, ordinal, sourceMatchId, fsImpl }
  * @returns {{ artifactPath, artifactSha256 }}
@@ -489,6 +644,8 @@ function writeDetailArtifact(args = {}) {
             { code: 'SAFETY_ERROR' }
         );
     }
+
+    ensureRealDirectoryTree(replayDir, fileSystem);
 
     const bytes = Buffer.from(JSON.stringify(artifact, null, 2) + '\n', 'utf8');
     const artifactSha256 = sha256Bytes(bytes);
@@ -544,13 +701,19 @@ function buildRunSummary(runState, plan, completedOrdinals) {
         completed_ordinals: [...completedOrdinals].sort((a, b) => a - b),
         stopped_at_ordinal: runState.stopped_at_ordinal,
         stop_reason: runState.stop_reason,
-        network_requests_made: runState.network_requests_made || 0,
+        // Attempted counts persist BEFORE the fetch; failed requests are
+        // never recorded as zero (P2-4).
+        network_requests_attempted: Number(runState.network_requests_attempted || 0),
+        network_responses_received: Number(runState.network_responses_received || 0),
+        captures_completed: completedOrdinals.length,
+        network_requests_made: Number(runState.network_requests_made || 0),
+        real_fotmob_network_requests: Number(runState.real_fotmob_network_requests || 0),
         database_writes: 0,
-        real_fotmob_network_requests: runState.real_fotmob_network_requests || 0,
     };
 }
 
 function writeRunSummary(runDir, summary, fsImpl = fs) {
+    ensureRealDirectoryTree(runDir, fsImpl);
     const summaryPath = path.join(runDir, 'run-summary.json');
     const bytes = Buffer.from(JSON.stringify(summary, null, 2) + '\n', 'utf8');
     const tmpPath = `${summaryPath}.tmp-${process.pid}-${Date.now()}`;
@@ -572,6 +735,8 @@ module.exports = {
     defaultRunState,
     writeRunState,
     readRunState,
+    writePlanSnapshot,
+    readPlanSnapshot,
     checkCompletedPair,
     replayCapturePair,
     writeDetailArtifact,

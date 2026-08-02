@@ -33,11 +33,15 @@ const fs = require('node:fs');
 const {
     GENERATOR_COMPONENT,
     NETWORK_AUTHORIZATION_MODE,
-    canonicalJsonHash,
+    REQUIRED_LEAGUE_ID,
     isPlainObject,
     evaluateContentValidity,
+    validateAndRecomputeCapturePlan,
+    buildCapturePayload,
+    computeCaptureManifestSelfHash,
     BLOCK_MARKERS,
     assertNoSymlinkAncestors,
+    ensureRealDirectoryTree,
 } = require('./FotMobDetailCaptureContract');
 
 const {
@@ -56,6 +60,7 @@ const {
     defaultRunState,
     writeRunState,
     readRunState,
+    writePlanSnapshot,
     checkCompletedPair,
     buildRunSummary,
     writeRunSummary,
@@ -257,15 +262,35 @@ function resolveGitRevision(options = {}) {
 function validateAuthorizationBinding(options = {}) {
     const env = options.env || process.env;
     const errors = [];
+    // Preflight (requireExecute: false) validates every gate that can be
+    // checked without --execute: plan schema + recomputed hash, git
+    // revision, paths, run id, budget and authorization id. The execute-only
+    // confirmations (--execute, networkAuthorization, CONFIRM_* env vars)
+    // are only enforced for the capture path.
+    const requireExecute = options.requireExecute !== false;
 
-    if (options.execute !== true) {
-        errors.push('execute flag required (--execute)');
+    // FIRST gate, before anything else: the plan itself is re-validated and
+    // its business hash RECOMPUTED from the actual business fields. A plan
+    // with tampered candidates, ordinals, teams, seasons, kickoffs, count or
+    // expected_request_path can never keep its old self-declared hash
+    // (P1-2). Runs before any mkdir, run-state write, fetch or artifact
+    // write.
+    const planCheck = validateAndRecomputeCapturePlan(options.plan);
+    if (!planCheck.ok) {
+        errors.push(`plan validation failed: ${planCheck.errors.join('; ')}`);
     }
-    if (options.networkAuthorization !== true) {
-        errors.push('networkAuthorization must be true');
-    }
-    if (String(env[REQUIRED_ENV_VAR] || '') !== '1') {
-        errors.push(`environment variable ${REQUIRED_ENV_VAR}=1 required`);
+    const recomputedPlanSha256 = planCheck.recomputed_sha256;
+
+    if (requireExecute) {
+        if (options.execute !== true) {
+            errors.push('execute flag required (--execute)');
+        }
+        if (options.networkAuthorization !== true) {
+            errors.push('networkAuthorization must be true');
+        }
+        if (String(env[REQUIRED_ENV_VAR] || '') !== '1') {
+            errors.push(`environment variable ${REQUIRED_ENV_VAR}=1 required`);
+        }
     }
     const authorizationId = String(options.authorizationId || '').trim();
     if (!authorizationId) {
@@ -275,13 +300,13 @@ function validateAuthorizationBinding(options = {}) {
     if (!/^[0-9a-f]{64}$/.test(expectedPlanSha256)) {
         errors.push('expected-plan-sha256 must be 64 lowercase hex');
     }
-    if (String(options.plan?.plan_business_sha256 || '') !== expectedPlanSha256) {
-        errors.push('plan SHA-256 does not match expected-plan-sha256');
+    if (recomputedPlanSha256 !== expectedPlanSha256) {
+        errors.push('recomputed plan SHA-256 does not match expected-plan-sha256');
     }
     const maxRequests = Number(options.maxRequests || 0);
     if (!Number.isInteger(maxRequests) || maxRequests < 1) {
         errors.push('max-requests must be a positive integer');
-    } else if (String(env[REQUIRED_ENV_BUDGET] || '') !== String(maxRequests)) {
+    } else if (requireExecute && String(env[REQUIRED_ENV_BUDGET] || '') !== String(maxRequests)) {
         errors.push(`environment variable ${REQUIRED_ENV_BUDGET} must equal max-requests`);
     }
 
@@ -383,11 +408,10 @@ function buildCaptureManifest(context) {
         schema_version: 'fotmob-match-detail-capture-manifest/v1',
         source_provider: 'FotMob',
         source_kind: 'match_detail_page',
-        request_method: 'GET',
-        request_url: context.requestUrl,
         candidate_id: context.candidate.candidate_id,
         source_match_id: context.candidate.source_match_id,
         competition: context.candidate.competition,
+        league_id: REQUIRED_LEAGUE_ID,
         season: context.candidate.season,
         home_team: context.candidate.home_team,
         away_team: context.candidate.away_team,
@@ -400,14 +424,18 @@ function buildCaptureManifest(context) {
         request_ordinal: context.ordinal,
         request_budget: context.maxRequests,
         delay_ms: context.delayMs,
-        capture_started_at: context.captureStartedAt,
-        capture_completed_at: context.captureCompletedAt,
+        request_method: 'GET',
+        request_url: context.requestUrl,
+        request_attempted_at: context.requestAttemptedAt,
+        response_received_at: context.responseReceivedAt,
         http_status: context.fetcherResult.http_status,
         content_type: context.fetcherResult.content_type,
-        body_byte_size: context.fetcherResult.body_byte_length,
-        body_sha256: context.fetcherResult.body_sha256,
+        response_body_byte_size: context.fetcherResult.body_byte_length,
+        response_body_sha256: context.fetcherResult.body_sha256,
         observed_match_id: context.observedMatchId,
+        observed_match_id_source: context.observedMatchIdSource,
         observed_match_id_match: context.observedMatchId === context.candidate.source_match_id,
+        observed_match_id_conflict: context.observedMatchIdConflict === true,
         hydration_parse_ok: context.fetcherResult.hydration_parse_ok === true,
         transformed_api_format: context.fetcherResult.transformed_api_format === true,
         looks_like_valid_match_detail: context.fetcherResult.looks_like_valid_match_detail === true,
@@ -415,17 +443,17 @@ function buildCaptureManifest(context) {
         has_lineup: context.meta && context.meta.has_lineup === true,
         has_shotmap: context.meta && context.meta.has_shotmap === true,
         stable_raw_payload_sha256: context.stableRawPayloadSha256,
-        parser_component: 'NextDataParser',
+        stable_payload_sha256: context.stablePayloadSha256,
+        payload_file_sha256: context.payloadFileSha256,
+        payload_file_relative_path: context.payloadFileName,
+        parser_component: 'NextDataParser+FotMobRawParser',
         parser_version: 'V174.0.0',
         collector_component: GENERATOR_COMPONENT,
         collector_code_revision: context.collectorCodeRevision,
-        raw_file_relative_path: context.rawFileName,
         network_authorization_mode: NETWORK_AUTHORIZATION_MODE,
     };
-    const selfHash = canonicalJsonHash(
-        Object.fromEntries(Object.entries(manifest).filter(([k]) => k !== 'capture_manifest_sha256'))
-    );
-    manifest.capture_manifest_sha256 = selfHash;
+    // Shared helper: self-hash over every field except itself.
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
     return manifest;
 }
 
@@ -518,15 +546,34 @@ async function executeCaptureRun(options = {}) {
         );
     }
 
-    fsImpl.mkdirSync(capturesDir, { recursive: true });
-    fsImpl.mkdirSync(replayDir, { recursive: true });
+    // Directory creation is symlink-safe: every component below the output
+    // root is lstat-verified; pre-existing symlinked runs / run-id /
+    // captures / replay descendants are rejected (P2-3).
+    ensureRealDirectoryTree(runsDir, fsImpl);
+    ensureRealDirectoryTree(runDir, fsImpl);
+    ensureRealDirectoryTree(capturesDir, fsImpl);
+    ensureRealDirectoryTree(replayDir, fsImpl);
 
-    // Resume: load existing run state bound to this plan SHA.
+    // Resume: load existing run state bound to this exact run context.
     let runState = readRunState(runDir, fsImpl);
     if (runState) {
+        // Full binding validation — run, plan, artifact, authorization,
+        // budget contract, delay contract, collector revision (P1-5).
+        if (String(runState.run_id || '') !== binding.runId) {
+            throw Object.assign(
+                new Error('run state run id mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         if (runState.plan_sha256 !== plan.plan_business_sha256) {
             throw Object.assign(
                 new Error('run state plan SHA mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(runState.source_artifact_sha256 || '') !== String(plan.source_artifact_sha256 || '')) {
+            throw Object.assign(
+                new Error('run state source artifact SHA mismatch — refusing to continue'),
                 { code: 'SAFETY_ERROR' }
             );
         }
@@ -536,16 +583,65 @@ async function executeCaptureRun(options = {}) {
                 { code: 'SAFETY_ERROR' }
             );
         }
+        if (Number(runState.max_requests) !== binding.maxRequests) {
+            throw Object.assign(
+                new Error('run state max-requests contract mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (Number(runState.delay_ms) !== delayMs) {
+            throw Object.assign(
+                new Error('run state delay contract mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(runState.collector_code_revision || '') !== binding.collectorCodeRevision) {
+            throw Object.assign(
+                new Error('run state collector revision mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
     } else {
+        // Fail closed: captures present without run-state must not be
+        // guessed-and-continued from file names (P1-5).
+        let existingPairs = 0;
+        try {
+            existingPairs = fsImpl.readdirSync(capturesDir)
+                .filter(f => f.endsWith('.payload.json')).length;
+        } catch { /* absent dir is fine */ }
+        if (existingPairs > 0) {
+            throw Object.assign(
+                new Error('run state missing but capture pairs exist — refusing to guess'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         runState = defaultRunState(plan, {
             runId: binding.runId,
             authorizationId: binding.authorizationId,
             maxRequests: binding.maxRequests,
             delayMs,
+            collectorCodeRevision: binding.collectorCodeRevision,
             startedAt: now(),
         });
         writeRunState(runDir, runState, fsImpl);
     }
+
+    // Run-bound immutable plan snapshot BEFORE any real network request:
+    // REPLAY binds candidate identity to this snapshot (P2-6).
+    writePlanSnapshot({ runDir, plan, fsImpl });
+
+    const completedOrdinals = new Set(
+        Array.isArray(runState.completed_ordinals) ? runState.completed_ordinals.map(Number) : []
+    );
+    // Budget counts only THIS run's real fetches (resume must not inherit
+    // earlier runs' counts); the run-state record keeps the cumulative
+    // ATTEMPTED total for the run id's audit trail. The attempted count is
+    // persisted BEFORE the native fetch (P2-4): a timeout/abort/read failure
+    // can never be recorded as zero.
+    const priorNetworkRequests = Number(runState.network_requests_attempted || 0);
+    let runNetworkRequests = 0;
+    let stopReason = null;
+    let stoppedAtOrdinal = null;
 
     const budgetedFetch = createBoundedFetchAdapter({
         fetchImpl: options.fetchImpl,
@@ -553,29 +649,34 @@ async function executeCaptureRun(options = {}) {
         delayMs,
         timeoutMs: options.timeoutMs,
         sleepImpl: options.sleepImpl,
+        onBeforeFetch: (url, count) => {
+            runNetworkRequests = count;
+            runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
+            runState.network_requests_made = runState.network_requests_attempted;
+            runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            writeRunState(runDir, runState, fsImpl);
+        },
     });
-
-    const completedOrdinals = new Set(
-        Array.isArray(runState.completed_ordinals) ? runState.completed_ordinals.map(Number) : []
-    );
-    // Budget counts only THIS run's real fetches (resume must not inherit
-    // earlier runs' counts); the run-state record keeps the cumulative total
-    // for the run id's audit trail.
-    const priorNetworkRequests = Number(runState.network_requests_made || 0);
-    let runNetworkRequests = 0;
-    let stopReason = null;
-    let stoppedAtOrdinal = null;
 
     for (const candidate of plan.candidates) {
         const ordinal = Number(candidate.ordinal || 0);
         if (ordinal === 0) continue;
 
-        // Resume check BEFORE any fetch: completed pairs are never fetched again.
+        // Resume check BEFORE any fetch: completed pairs bound to THIS run
+        // context are never fetched again; anything else stops the run
+        // (P1-5: cross-run / cross-plan / cross-authorization pairs are
+        // RESUME_PAIR_CONTEXT_MISMATCH, never treated as completed).
         if (options.resume !== false) {
             const pairCheck = checkCompletedPair({
                 runDir,
                 ordinal,
                 sourceMatchId: candidate.source_match_id,
+                expectedRunId: binding.runId,
+                expectedAuthorizationId: binding.authorizationId,
+                expectedPlanSha256: plan.plan_business_sha256,
+                expectedSourceArtifactSha256: String(plan.source_artifact_sha256 || ''),
+                expectedCandidate: candidate,
+                expectedRequestUrl: `${FOTMOB_BASE_URL}${candidate.expected_request_path}`,
                 fsImpl,
             });
             if (pairCheck.state === 'complete') {
@@ -583,7 +684,7 @@ async function executeCaptureRun(options = {}) {
                 continue;
             }
             if (pairCheck.state === 'partial' || pairCheck.state === 'mismatch') {
-                stopReason = `resume_pair_${pairCheck.state}:ordinal_${ordinal}`;
+                stopReason = `resume_pair_${pairCheck.state}:${pairCheck.detail || `ordinal_${ordinal}`}`;
                 stoppedAtOrdinal = ordinal;
                 break;
             }
@@ -594,15 +695,28 @@ async function executeCaptureRun(options = {}) {
         // as a CACHED response — the fetcher's injected fetchFn must never
         // hit the network or consume budget a second time.
         const requestUrl = `${FOTMOB_BASE_URL}${candidate.expected_request_path}`;
-        const captureStartedAt = now();
+        const requestAttemptedAt = now();
 
         let fetchResult;
         try {
             fetchResult = await budgetedFetch.fetchOnce(requestUrl);
-            runNetworkRequests += 1;
+            // A resolved response was received (even non-200): record it.
+            runNetworkRequests = budgetedFetch.requestCount();
+            runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
+            runState.network_responses_received = priorNetworkRequests + runNetworkRequests;
+            runState.network_requests_made = runState.network_requests_attempted;
+            runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            writeRunState(runDir, runState, fsImpl);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
-            // violations, timeouts) stop the run.
+            // violations, timeouts, abort, read failures) stop the run. The
+            // attempted count was already persisted before the fetch and is
+            // synced from the adapter so failures are never zero (P2-4).
+            runNetworkRequests = budgetedFetch.requestCount();
+            runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
+            runState.network_requests_made = runState.network_requests_attempted;
+            runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            writeRunState(runDir, runState, fsImpl);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')
                 ? 'budget_exhausted'
@@ -619,12 +733,19 @@ async function executeCaptureRun(options = {}) {
         }
 
         // Content validity gate (HTTP 200 is not sufficient). The contract
-        // enforces 17 checks: the 15 mandated gates plus 2 hex-format gates
-        // (body_sha256_hex, stable_hash_64hex) — a fail-closed superset.
+        // enforces 19 checks: the mandated gates plus hex-format gates and
+        // the trusted observed-match-id provenance gates — a fail-closed
+        // superset. The observed match id must come from a trusted response
+        // payload field; an input-external-id fallback fails closed (P1-4).
         let fetcherResult = null;
         let observedMatchId = null;
+        let observedMatchIdSource = null;
+        let observedMatchIdConflict = false;
+        let observedHome = null;
+        let observedAway = null;
         let meta = null;
         let stableRawPayloadSha256 = null;
+        let parsedRaw = null;
         let nextData = null;
         let contentValidity = null;
 
@@ -646,20 +767,36 @@ async function executeCaptureRun(options = {}) {
                         now,
                     }
                 );
-                observedMatchId = fetcherResult.raw_data && (fetcherResult.raw_data.matchId ?? null) !== null
-                    ? String(fetcherResult.raw_data.matchId)
+                const rawData = fetcherResult.raw_data || null;
+                observedMatchId = rawData && (rawData.matchId ?? null) !== null
+                    ? String(rawData.matchId)
                     : null;
-                meta = fetcherResult.raw_data && fetcherResult.raw_data._meta
-                    ? fetcherResult.raw_data._meta
-                    : null;
-                const stable = fetcherResult.raw_data
-                    ? buildStableRawPayload(fetcherResult.raw_data, {}, {})
-                    : null;
+                observedMatchIdSource = String(fetcherResult.match_id_source ||
+                    (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
+                observedMatchIdConflict = fetcherResult.observed_match_id_conflict === true;
+                const g = rawData && rawData.general ? rawData.general : {};
+                observedHome = String(g.homeTeam?.name ?? g.home_team?.name ?? g.home_team ?? '').trim() || null;
+                observedAway = String(g.awayTeam?.name ?? g.away_team?.name ?? g.away_team ?? '').trim() || null;
+                meta = rawData && rawData._meta ? rawData._meta : null;
+                const stable = rawData ? buildStableRawPayload(rawData, {}, {}) : null;
                 stableRawPayloadSha256 = stable ? sha256StableRawPayload(stable) : null;
                 const extracted = parser.extractFromHtml
                     ? parser.extractFromHtml(fetchResult.body)
                     : null;
                 nextData = extracted && extracted.success === true ? extracted.data : null;
+                // Full parse chain: HTML → __NEXT_DATA__ → transform →
+                // FotMobRawParser. The parser output feeds the persisted
+                // stable payload (never the raw HTML). A missing/invalid
+                // raw data (e.g. an EMPTY_SSR_SHELL page) is NOT a parser
+                // error: it falls through to the content-validity gate,
+                // which reports the structural failure code.
+                if (typeof parser.parseFotMobRaw === 'function' && rawData && typeof rawData === 'object') {
+                    parsedRaw = parser.parseFotMobRaw(rawData, candidate.source_match_id);
+                    if (!parsedRaw || parsedRaw.ok !== true || !parsedRaw.data) {
+                        const errMsg = parsedRaw && parsedRaw.error ? parsedRaw.error : 'unknown parser error';
+                        throw Object.assign(new Error(`parseFotMobRaw: ${errMsg}`), { code: 'PARSER_ERROR' });
+                    }
+                }
                 contentValidity = evaluateContentValidity({
                     http_status: fetchResult.status,
                     content_type: fetchResult.contentType,
@@ -694,9 +831,29 @@ async function executeCaptureRun(options = {}) {
             stoppedAtOrdinal = ordinal;
             break;
         }
+        if (!parsedRaw) {
+            stopReason = 'content_validity:PARSER_OUTPUT_MISSING';
+            stoppedAtOrdinal = ordinal;
+            break;
+        }
 
-        // Retention: raw + manifest paired, atomic, verified.
-        const rawFileName = `${ordinal}-${candidate.source_match_id}.html`;
+        // Retention: stable allowlisted payload + manifest paired, atomic,
+        // verified. The full HTML response body exists only in memory (it is
+        // hashed for audit, never persisted) (P1-1).
+        const stablePayload = buildCapturePayload({
+            candidate,
+            parsedData: parsedRaw.data,
+            observedIdentity: {
+                home_team: observedHome,
+                away_team: observedAway,
+                observed_match_id: observedMatchId,
+                observed_match_id_source: observedMatchIdSource,
+                observed_match_id_conflict: observedMatchIdConflict,
+            },
+        });
+        const payloadBody = JSON.stringify(stablePayload, null, 2) + '\n';
+        const payloadFileSha256 = sha256Bytes(Buffer.from(payloadBody, 'utf8'));
+        const payloadFileName = `${ordinal}-${candidate.source_match_id}.payload.json`;
         const manifest = buildCaptureManifest({
             candidate,
             plan,
@@ -705,22 +862,26 @@ async function executeCaptureRun(options = {}) {
             ordinal,
             maxRequests: binding.maxRequests,
             delayMs,
-            captureStartedAt,
-            captureCompletedAt: now(),
+            requestAttemptedAt,
+            responseReceivedAt: now(),
             fetcherResult,
             observedMatchId,
+            observedMatchIdSource,
+            observedMatchIdConflict,
             meta,
             stableRawPayloadSha256,
-            rawFileName,
+            stablePayloadSha256: stablePayload.stable_payload_sha256,
+            payloadFileSha256,
+            payloadFileName,
             collectorCodeRevision: binding.collectorCodeRevision,
             requestUrl,
         });
 
         try {
             writeCapturePair({
-                rawBody: fetchResult.bodyBytes,
+                payloadBody,
                 manifest,
-                rawFileName,
+                payloadFileName,
                 manifestFileName: `${ordinal}-${candidate.source_match_id}.manifest.json`,
                 pairDir: capturesDir,
                 fsImpl,
@@ -735,8 +896,9 @@ async function executeCaptureRun(options = {}) {
 
         // Persist run state after each completed candidate (resume safety).
         runState.completed_ordinals = [...completedOrdinals].sort((a, b) => a - b);
-        runState.network_requests_made = priorNetworkRequests + runNetworkRequests;
-        runState.real_fotmob_network_requests = runState.network_requests_made;
+        runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
+        runState.network_requests_made = runState.network_requests_attempted;
+        runState.real_fotmob_network_requests = runState.network_requests_attempted;
         writeRunState(runDir, runState, fsImpl);
     }
 
@@ -745,8 +907,9 @@ async function executeCaptureRun(options = {}) {
     runState.status = stopReason ? 'stopped' : (completed === total ? 'complete' : 'in_progress');
     runState.stopped_at_ordinal = stoppedAtOrdinal;
     runState.stop_reason = stopReason;
-    runState.network_requests_made = priorNetworkRequests + runNetworkRequests;
-    runState.real_fotmob_network_requests = runState.network_requests_made;
+    runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
+    runState.network_requests_made = runState.network_requests_attempted;
+    runState.real_fotmob_network_requests = runState.network_requests_attempted;
     runState.completed_ordinals = [...completedOrdinals].sort((a, b) => a - b);
     writeRunState(runDir, runState, fsImpl);
 
