@@ -20,40 +20,78 @@ FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
   (malformed reason.short fail closed; started+postponed contradiction fail closed;
    core-layer 40-hex collector_code_revision enforcement in buildCaptureManifest)
 Bounded auditable detail capture pipeline = implemented and fully tested offline
-  (PLAN / CAPTURE / REPLAY; see "Detail capture pipeline" below)
-Real FotMob network probe = still NOT authorized and NOT executed
+  (PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
 Real FotMob detail capture = still NOT authorized and NOT executed (CAPTURE default-off)
-Public terms / usage-boundary review = NOT completed
-Single-page shape probe = NOT executed; requires separate explicit user authorization
+Public terms / usage-boundary review = completed
+FotMob written permission = absent (no written permission granted)
+Bounded two-path compatibility probe = completed
+  (actual probe requests = 2; match detail route = compatible at probe time;
+   EPL fixtures route = compatible at probe time; no access-control signal
+   observed in that bounded probe)
+No batch capture executed; no 1,140-match detail capture executed; no database write
+This repository state executes zero real network requests
+  (the probe's 2 requests were a separate authorized one-time action; no code
+   path in this state performs live fetches)
 ```
 
 ### Detail capture pipeline
 
 The bounded, auditable detail capture pipeline (`scripts/ops/fotmob_detail_capture.js`
 plus `src/infrastructure/fotmob/FotMobDetailCapture{Plan,Pipeline,Retention,Contract}.js`)
-connects the validated candidate artifact to an auditable three-stage flow:
+connects the validated candidate artifact to an auditable four-stage flow. The
+**canonical runtime entrypoints are the `make data-fotmob-detail-capture-*`
+targets** (`-help` / `-plan` / `-preflight` / `-execute` / `-replay`); the direct
+Node CLI (`scripts/ops/fotmob_detail_capture.js`) is the internal engine and is
+marked as such — it is a specialized implementation detail, not the documented
+canonical interface.
 
 - **PLAN** — fully offline; builds a deterministic `fotmob-detail-capture-plan/v1`
-  with `plan_business_sha256`; explicit selection required (`--season` /
-  `--match-id` / `--limit`), never silently selects the 1,140-candidate population.
-- **CAPTURE** — default-off. 13 authorization gates (`--execute`,
+  with `plan_business_sha256`; the hash is always RECOMPUTED from the business
+  fields by the shared `validateAndRecomputeCapturePlan` contract (builder and
+  CAPTURE validator use the same helper); explicit selection required
+  (`--season` / `--match-id` / `--limit`), never silently selects the
+  1,140-candidate population.
+- **PREFLIGHT** — fully offline; re-validates the plan schema and recomputes the
+  plan hash, verifies git revision / output paths / run id / budget /
+  authorization variables, and prints the candidate count and URL-path summary.
+  Creates nothing, fetches nothing, writes nothing.
+- **CAPTURE** — default-off. Every authorization gate (`--execute`,
   `CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1`, authorization id, expected-plan-sha256,
   max-requests + `CONFIRM_MAX_FOTMOB_REQUESTS`, clean git worktree, 40-hex HEAD,
-  repository-external non-symlink output root, non-symlink plan, safe run id) are
-  all validated before any network call; single allowed URL
+  repository-external non-symlink output root, non-symlink plan, safe run id) is
+  validated before any network call; the make `-execute` target fails in make
+  before Node when any variable is missing. Single allowed URL
   `https://www.fotmob.com/match/<digits>` (GET, no redirect follow, no
   cookie/auth/proxy/browser, concurrency 1, retry 0, delay ≥ 60 s, 30 s timeout);
-  17 content-validity gates (15 mandated + 2 hex-format) fail closed on empty SSR
-  shells; raw+manifest paired atomic retention with rollback/readback; resume
-  bound to plan SHA never refetches completed pairs; budget counts only this
-  run's real fetches.
-- **REPLAY** — fully offline; raw hash must match the manifest; emits deterministic
-  `fotmob-match-detail-artifact/v1` artifacts.
+  19 content-validity gates (incl. trusted observed-match-id provenance and
+  conflict detection) fail closed on empty SSR shells and untrusted identities.
+  The observed match id must come from a trusted payload field
+  (`payload.matchId` / `general.matchId`), never an input fallback. Retention is
+  a **stable allowlisted payload** (`<ordinal>-<source_match_id>.payload.json`,
+  schema `fotmob-match-detail-capture-payload/v1`) + manifest paired atomically
+  with rollback/readback; the full HTML response body exists only in memory
+  (hashed for audit, never persisted — no `.html` files, no `__NEXT_DATA__` /
+  `pageProps` / `raw_data` in outputs). Manifest self-hash is required and
+  recomputed; a run-bound immutable plan snapshot (`<run-dir>/plan.json`) is
+  written before any network request; resume binds run id / plan SHA / source
+  artifact SHA / authorization id / budget / delay / collector revision and
+  every completed pair field-by-field (cross-run pairs are
+  `RESUME_PAIR_CONTEXT_MISMATCH`, never completed); attempted requests are
+  counted before the fetch, so failed/timeout requests are never recorded as
+  zero.
+- **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
+  snapshot fails closed), verifies payload file hash + manifest self-hash, and
+  materializes deterministic `fotmob-match-detail-artifact/v1` artifacts from the
+  stable payload (no HTML involved, `parsed_at` derived from the capture
+  record — repeated replays are byte-identical). Candidate identity comes
+  exclusively from the verified run plan snapshot, never from file names.
 
-No real FotMob request has been made and no capture has been executed: every test
-is mocked (`REAL_NETWORK_FORBIDDEN_IN_TEST` global fetch), the run summary records
-`database_writes: 0`, and real CAPTURE requires a new explicit user authorization
-(`OWNER_REAL_CAPTURE_AUTHORIZATION=NO`).
+No real detail-capture request has been made by the pipeline and no capture has
+been executed in this repository state: every test is mocked
+(`REAL_NETWORK_FORBIDDEN_IN_TEST` global fetch), the only real FotMob network
+traffic is the completed two-path compatibility probe (2 requests), the run
+summary records `database_writes: 0`, and real CAPTURE requires a new explicit
+user authorization (`OWNER_REAL_CAPTURE_AUTHORIZATION=NO`).
 
 ### Current read-only retained inventory
 
@@ -207,10 +245,11 @@ artifact contract and raw response provenance retention is implemented
 code hardening is implemented and fully tested (malformed `reason.short` fail
 closed, started+postponed contradiction fail closed, core-layer 40-hex
 `collector_code_revision` enforcement). Phase A is code hardening only: no real
-FotMob network request has been made, no real capture artifact has been
-generated, the FotMob public terms / usage-boundary review is not complete, and
-the single-page shape probe still requires a new explicit user authorization.
-Future inventory is 1,140 candidates; the next step is a
+capture has been executed and no real capture artifact has been generated (the
+only real FotMob network traffic is the completed two-path compatibility probe
+= 2 requests). The FotMob public terms / usage-boundary review is complete (no
+written permission granted); a real batch capture still requires a new explicit
+user authorization. Future inventory is 1,140 candidates; the next step is a
 separate future canonical FotMob writer as a `data-*`-gated business milestone.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
