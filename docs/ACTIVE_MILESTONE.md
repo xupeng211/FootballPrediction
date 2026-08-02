@@ -71,7 +71,7 @@
   PR #1813 证据、Issue #1793 记录。
 - 文档维护（不自动执行：需用户明确确认后方可发起，且连续 governance/docs-only PR 须人工确认）：
   本文档与 docs/CAPABILITY_INDEX.md、docs/PROJECT_MAP.md 的 current-state 更新。
-- 等待主会话 / 用户对下一授权步骤的明确指令（如阶段A 实现、writer implementation review）。
+- 等待主会话 / 用户对下一授权步骤的明确指令（如阶段A 实现、canonical inventory provenance review）。
 
 ## 明确停止边界（不得越界）
 

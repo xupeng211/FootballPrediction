@@ -408,8 +408,8 @@ make dev-ps
 ### 10.1 核心说明
 
 - `CLAUDE.md`: AI 协作细则
-- `COMMAND_CENTER.md`: 指挥中心总览
-- `HANDOVER.md`: 交接信息
+- `COMMAND_CENTER.md`: 指挥中心总览（HISTORICAL SNAPSHOT / NON-AUTHORITATIVE——不可用于当前操作）
+- `HANDOVER.md`: 交接信息（HISTORICAL SNAPSHOT / NON-AUTHORITATIVE——不可用于当前操作）
 - `CHANGELOG.md`: 版本演进
 - `MIGRATION.md`: 迁移说明
 
