@@ -81,15 +81,15 @@
 |---|---|---|---|---|---|---|---|---|
 | Data | L1 发现 / 种子写入（data-l1-*） | CANONICAL/BLOCKED | `make data-l1-*`（`make data-help` 列出；preview → plan → authorization → preflight → execute 多阶段） | Makefile Phase 5.05-5.07L1 目标 | — | preview / plan 阶段 no-write；authorization / execute 阶段需每目标显式授权（如 `USER_AUTHORIZED_MATCHES_SEED_COMMIT=yes` + `FINAL_HUMAN_CONFIRMATION=yes`） | `scripts/ops/titan_discovery.js`（legacy/admin-only，不得作为新依赖，AGENTS.md §6.1） | 未授权不执行（README canonical 表） |
 | Data | L2 原始比赛数据（data-l2-*） | CANONICAL/BLOCKED | `make data-l2-*`（`make data-help` 列出；preview → plan → authorization → preflight → write 多阶段） | Makefile L2 目标 | — | ingest / write 阶段需逐目标显式授权（如 ALLOW_DB_WRITE 门禁）+ 最终人工确认 | 历史 raw 直写脚本 | 未授权不执行（README canonical 表） |
-| Odds | 赔率收割（odds:harvest） | CANONICAL/BLOCKED | `npm run odds:harvest` | `scripts/ops/odds_harvest_pipeline.js` | — | 可能访问网络并写 DB；执行前确认授权 / 环境 / 凭据（README L198） | `npm run odds:sniper` 为 Specialized/Internal 替代 | 未授权不执行；以 README canonical 表为准 |
-| Data | L3 特征构建 | CANONICAL/BLOCKED | `npm run l3:stitch` | `scripts/ops/l3_stitch_pipeline.js` | — | 执行前确认输入数据与写入范围（README L201） | `npm run smelt` 为 Specialized/Internal 替代 | 未授权不执行；以 README canonical 表为准 |
+| Odds | 赔率收割（odds:harvest） | DOCUMENTED_ONLY | `npm run odds:harvest`（无 make `data-*` 受控门禁 wrapper；README canonical 表登记为 Primary canonical，但 npm script 直接宿主运行 Node，绕过容器化多阶段门禁） | `scripts/ops/odds_harvest_pipeline.js` | — | 默认 l3Enabled=true：收割后触发 `l3_stitch_pipeline.js`（L3_STITCH_FULL_RECALCULATE=true），其运行 `scripts/maintenance/recalculate_elo.js`，写 matches / l3_features / team_elo_ratings（默认跨域写入链）；赔率-only 需 `--skip-l3`；可能访问网络并写 DB；执行前确认授权 / 环境 / 凭据（README L198） | `npm run odds:sniper` 为 Specialized/Internal 替代 | 已实现（脚本存在）但无受控入口；README 登记 Primary canonical 与本索引 DOCUMENTED_ONLY 的差异即有无 make `data-*` 门禁；未授权不执行 |
+| Data | L3 特征构建 | DOCUMENTED_ONLY | `npm run l3:stitch`（无 make `data-*` 受控门禁 wrapper；README canonical 表登记为 Primary canonical，但 npm script 直接宿主运行 Node，绕过容器化多阶段门禁；`make data-l3-*` 是另一套 fixture/local pipeline） | `scripts/ops/l3_stitch_pipeline.js` | — | 执行前确认输入数据与写入范围；可能触发 `scripts/maintenance/recalculate_elo.js`（写 l3_features / team_elo_ratings）（README L201） | `npm run smelt` 为 Specialized/Internal 替代 | 已实现（脚本存在）但无受控入口；未授权不执行 |
 
 ## Domain: 训练 / 预测 / 回测
 
 | Domain | Capability | Status | Canonical entrypoint | Core implementation | Primary tests | Authorization & side effects | Legacy or forbidden alternatives | Current notes |
 |---|---|---|---|---|---|---|---|---|
 | ML | training | CANONICAL/BLOCKED | `npm run train`（train:fast / train:deep 变体） | `src/ml/` | ML 测试 | 写模型 artifact；仅显式训练授权后可执行 | 任何未经授权的训练脚本 | 当前无训练授权 |
-| ML | prediction | CANONICAL/BLOCKED | `npm run predict`（predict:dry / predict:json 变体） | `src/ml/inference/predictor.py` | ML 测试 | 读 DB；`scripts/ops/predict_pipeline.py` 模块加载即创建 `/app/logs` 并追加写 `/app/logs/predict_pipeline.log`（dev Compose 将仓库挂载到 `/app`，即使 predict:dry 也会写宿主工作区 `logs/`）；需确认环境 / 模型 / 授权 | — | 未授权不执行 |
+| ML | prediction | CANONICAL/BLOCKED | `npm run predict`（predict:dry / predict:json 变体） | `scripts/ops/predict_pipeline.py`（→ `src.ml.inference.titan_loader.get_titan_model` + `src/database/repositories/prediction_repo`） | ML 测试 | 读 DB；`scripts/ops/predict_pipeline.py` 模块加载即创建 `/app/logs` 并追加写 `/app/logs/predict_pipeline.log`（dev Compose 将仓库挂载到 `/app`，即使 predict:dry 也会写宿主工作区 `logs/`）；需确认环境 / 模型 / 授权 | — | 未授权不执行 |
 | ML | backtest | NOT_ESTABLISHED | 无 | 无 | — | 无 | `recon_scanner.js`、`gold_pilot_50.js`、`titan_marathon.js` 不是 canonical 回测入口 | 需未来业务里程碑实现并验收（README canonical 表） |
 
 ## 本索引不回答什么
