@@ -32,6 +32,53 @@ const {
 } = require('./FotMobStatusContract');
 
 /**
+ * Strictly classify the `reason` / `reason.short` shape of a FotMob fixture
+ * status object. This is a fail-closed shape contract: any present-but-
+ * malformed value must be rejected explicitly instead of being silently
+ * downgraded to null (which could then be accepted as a scheduled match).
+ *
+ * Legal shapes (ok: true):
+ *   - `reason` property absent, null, or undefined        → reasonShort null
+ *   - `reason` is an object without a `short` property    → reasonShort null
+ *   - `reason.short` is null or undefined                 → reasonShort null
+ *   - `reason.short` is a string (including '')           → reasonShort string
+ *
+ * Illegal shapes (ok: false) — deterministic, payload-free error codes:
+ *   - `reason` is a string/number/boolean/array/function  → malformed_reason_object:<type>
+ *   - `reason.short` is a non-string, non-null value      → non_string_reason_short:<type>
+ *
+ * No String() or other implicit coercion is ever applied to either value.
+ *
+ * @param {object} fixtureStatus  fixture.status from FotMob pageProps
+ * @returns {{ ok: boolean, reasonShort: string|null, error: string|null }}
+ */
+function classifyStatusReasonShort(fixtureStatus) {
+    if (!Object.prototype.hasOwnProperty.call(fixtureStatus, 'reason')) {
+        return { ok: true, reasonShort: null, error: null };
+    }
+    const reason = fixtureStatus.reason;
+    if (reason === null || reason === undefined) {
+        return { ok: true, reasonShort: null, error: null };
+    }
+    if (typeof reason !== 'object' || Array.isArray(reason)) {
+        const type = Array.isArray(reason) ? 'array' : typeof reason;
+        return { ok: false, reasonShort: null, error: `malformed_reason_object:${type}` };
+    }
+    if (!Object.prototype.hasOwnProperty.call(reason, 'short')) {
+        return { ok: true, reasonShort: null, error: null };
+    }
+    const short = reason.short;
+    if (short === null || short === undefined) {
+        return { ok: true, reasonShort: null, error: null };
+    }
+    if (typeof short !== 'string') {
+        const type = Array.isArray(short) ? 'array' : typeof short;
+        return { ok: false, reasonShort: null, error: `non_string_reason_short:${type}` };
+    }
+    return { ok: true, reasonShort: short, error: null };
+}
+
+/**
  * Derive a deterministic provider_status from a FotMob fixtures-page
  * `fixture.status` object.
  *
@@ -42,7 +89,8 @@ const {
  * Allowed terminal states:
  *   cancelled === true  && finished !== true  →  cancelled
  *   finished  === true  && cancelled !== true →  finished
- *   reason.short ∈ {Postponed, Postp}          →  postponed
+ *   reason.short ∈ {Postponed, Postp} && started !== true
+ *                                              →  postponed
  *   (see scheduled rules below)                →  scheduled
  *
  * scheduled is ONLY returned when ALL of the following hold:
@@ -58,6 +106,8 @@ const {
  *   - started === true (match is in progress — not a terminal state)
  *   - any non-boolean value for started/finished/cancelled
  *   - contradictory flags (finished + cancelled)
+ *   - contradictory started === true with a Postponed/Postp reason
+ *   - malformed reason / reason.short shapes (see classifyStatusReasonShort)
  *   - unknown reason.short values (including 'Suspended', 'Live',
  *     'Interrupted', 'Cancelled' as reason short)
  *   - missing / non-object fixtureStatus
@@ -84,10 +134,15 @@ function deriveProviderStatus(fixtureStatus) {
     const started = fixtureStatus.started === true;
     const finished = fixtureStatus.finished === true;
     const cancelled = fixtureStatus.cancelled === true;
-    const reasonShort =
-        fixtureStatus.reason && typeof fixtureStatus.reason.short === 'string'
-            ? fixtureStatus.reason.short
-            : null;
+
+    // Strict reason shape contract — enforced before any status can be
+    // derived so a malformed reason can never be silently treated as absent
+    // and slip through to scheduled.
+    const reasonResult = classifyStatusReasonShort(fixtureStatus);
+    if (!reasonResult.ok) {
+        return { status: null, error: reasonResult.error };
+    }
+    const reasonShort = reasonResult.reasonShort;
 
     // Contradictory terminal states.
     if (finished && cancelled) {
@@ -102,8 +157,13 @@ function deriveProviderStatus(fixtureStatus) {
         return { status: 'finished', error: null };
     }
 
-    // Postponement — only when terminal flags are not set.
+    // Postponement — only when terminal flags are not set. A match that has
+    // started cannot also be postponed: the combination is a provider-side
+    // contradiction and must fail closed rather than be accepted.
     if (reasonShort === 'Postponed' || reasonShort === 'Postp') {
+        if (started) {
+            return { status: null, error: 'contradictory_status_flags:started_and_postponed' };
+        }
         return { status: 'postponed', error: null };
     }
 
@@ -1119,6 +1179,16 @@ async function exportCandidates(options = {}) {
         );
     }
 
+    // Preflight the collector revision before any network access: an invalid
+    // revision must fail the whole export before a single request is made,
+    // not after a response has been fetched and would have to be discarded.
+    // The core-layer check in buildCaptureManifest() remains the unbypassable
+    // enforcement point for direct core calls; this preflight only decides
+    // how early the pipeline fails.
+    if (retainRaw) {
+        validateCollectorCodeRevision(retainRaw.collectorCodeRevision);
+    }
+
     const allCandidates = [];
     const seasonResults = [];
     const rawRetentions = [];
@@ -1161,7 +1231,10 @@ async function exportCandidates(options = {}) {
                             captureStartedAt,
                             captureCompletedAt,
                             collectorComponent: retainRaw.collectorComponent || 'FotMobCandidateExporter',
-                            collectorCodeRevision: retainRaw.collectorCodeRevision || 'unknown',
+                            // No fallback sentinel: an absent or invalid revision
+                            // must reach the core-layer validator unchanged and
+                            // fail closed there (SAFETY_ERROR, no files written).
+                            collectorCodeRevision: retainRaw.collectorCodeRevision,
                             networkAuthorizationMode: 'explicit_network_authorization',
                         },
                         {
@@ -1611,7 +1684,10 @@ function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
  *
  * @param {string} outputDir   absolute directory outside the repository
  * @param {Buffer} bodyBytes   raw HTTP response body bytes
- * @param {object} context     { url, season, httpStatus, contentType, captureStartedAt, captureCompletedAt, collectorComponent, gitRevision }
+ * @param {object} context     { url, leagueId, competition, requestedSeason, canonicalSeason, httpStatus, contentType, captureStartedAt, captureCompletedAt, collectorComponent, collectorCodeRevision, networkAuthorizationMode }
+ *                             collectorCodeRevision must be a full 40-char lowercase hex Git SHA;
+ *                             it is validated before any file is created, so an invalid revision
+ *                             leaves the output directory untouched.
  * @param {object} options     { fileSystem, repositoryRoot }
  * @returns {{ manifest: object, rawFilePath: string, bodySha256: string, byteSize: number }}
  */
@@ -1831,9 +1907,45 @@ function writeRawRetention(outputDir, bodyBytes, context, options = {}) {
 }
 
 /**
+ * Enforce the collector code revision contract: a primitive string of
+ * exactly 40 lowercase hex characters (a full Git SHA). Pure function.
+ *
+ * Rejects — with a deterministic SAFETY_ERROR that never embeds the
+ * received value — non-strings, empty strings, short SHAs, uppercase SHAs,
+ * whitespace-padded SHAs, placeholders such as 'unknown' or 'test-sha',
+ * and any value containing non-[0-9a-f] characters. Returns the value
+ * unchanged on success.
+ */
+function validateCollectorCodeRevision(value) {
+    if (typeof value !== 'string' || !/^[0-9a-f]{40}$/.test(value)) {
+        const received =
+            typeof value === 'string'
+                ? `string of length ${value.length}`
+                : `non-string ${Array.isArray(value) ? 'array' : typeof value}`;
+        throw Object.assign(
+            new Error(
+                'collector_code_revision must be a full 40-character lowercase hex Git SHA ' +
+                    `(received ${received})`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    return value;
+}
+
+/**
  * Build a capture manifest for a single raw response.
+ *
+ * Core-layer revision contract: `context.collectorCodeRevision` must be a
+ * full 40-character lowercase hex Git SHA. This enforcement lives here — in
+ * the one path every capture manifest must pass through — so that direct
+ * core calls and test-time dependency injection cannot bypass it the way
+ * they bypass the CLI-layer `resolveGitState()` check. Invalid values are
+ * strictly rejected with SAFETY_ERROR; they are never trimmed, lowercased,
+ * padded, expanded from a short SHA, or otherwise repaired.
  */
 function buildCaptureManifest(context, bodySha256, byteSize, rawFileName) {
+    const collectorCodeRevision = validateCollectorCodeRevision(context.collectorCodeRevision);
     return {
         schema_version: 'fotmob-raw-capture-manifest/v1',
         source_provider: 'FotMob',
@@ -1851,7 +1963,7 @@ function buildCaptureManifest(context, bodySha256, byteSize, rawFileName) {
         body_byte_size: byteSize,
         body_sha256: bodySha256,
         collector_component: context.collectorComponent,
-        collector_code_revision: context.collectorCodeRevision,
+        collector_code_revision: collectorCodeRevision,
         network_authorization_mode: context.networkAuthorizationMode,
         raw_file_relative_path: rawFileName,
     };
@@ -1909,6 +2021,7 @@ module.exports = {
     // Raw retention
     writeRawRetention,
     buildCaptureManifest,
+    validateCollectorCodeRevision,
 
     // Network (for test injection)
     fetchPage,
