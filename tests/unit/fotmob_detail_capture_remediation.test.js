@@ -1108,7 +1108,7 @@ test('R2-P1: resumed run can never fetch past the declared max-requests budget',
         });
 
         // First run: budget of 2 lets ordinals 1-2 fetch; ordinal 3 is
-        // stopped before any fetch (budget_exhausted).
+        // stopped before any fetch is issued (budget_exhausted).
         const first = await executeCaptureRun(opts);
         assert.equal(first.status, 'stopped');
         assert.equal(first.stopReason, 'budget_exhausted');
