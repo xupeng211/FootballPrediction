@@ -50,23 +50,24 @@
 
 | 目录 | 职责 | 说明 |
 |---|---|---|
-| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`odds_staging_dry_run.js`、`canonical_inventory_writer.js` 等） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查 |
+| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查 |
 | `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（12 个模块）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
 | `src/ml/` | 训练、特征、推理 | 训练 / 预测需显式授权 |
 | `src/feature_engine/` | Node 侧特征工程 | |
 | `src/config/` | Python 侧配置 | 与 `config/`、`src/config_unified/` 多目录并存（见 config 风险提示） |
 | `config/` | 业务配置 | AGENTS.md §6.2 列出的优先配置源 |
-| `database/migrations/` | M3 正式 SQL migration 树（16 个 V*.sql） | V26.8 / V26.9 / V26.10 为 M3 合同；执行必须走 `make data-schema-*` 门禁 |
+| `database/migrations/` | SQL migration 树（16 个 V*.sql） | V26.8 / V26.9 / V26.10 为 M3 合同；V26.10 经 `make data-schema-m3-canonical-inventory-disposable-*` 门禁；V26.8 / V26.9 仅经 `make m3-odds-sandbox-migrate`（授权 sandbox，双授权），`make data-schema-*` 不覆盖（plan 止于 V26.4、migrate 未接通） |
 | `src/database/migrations/` | Alembic migration 树（alembic.ini / env.py / versions/ 3 个版本） | 职责划分 UNCLEAR（见下） |
 | `tests/` | 单元、集成、夹具 | 含 `tests/unit/odds_staging_*`、`tests/unit/canonical_inventory_*`、`tests/integration/odds_staging/` 等 |
 | `docs/` | 架构与运维文档 | `docs/_reports`、`docs/_manifests` 为历史治理资产，新任务默认不得创建 |
 
 ## 正式 / 兼容 / 历史代码分布
 
-- **CANONICAL（正式入口指向的实现）**：`src/infrastructure/odds_staging/`、
-  `src/infrastructure/canonical/`（CanonicalInventoryContract.js 等）、
-  `src/infrastructure/fotmob/FotMobCandidateExporter.js`、
+- **CANONICAL（正式入口指向的实现）**：`src/infrastructure/canonical/`
+  （CanonicalInventoryContract.js 等）、`src/infrastructure/fotmob/FotMobCandidateExporter.js`、
   `src/infrastructure/fotmob/FotMobStatusContract.js`。
+- **已实现但入口未登记（DOCUMENTED_ONLY，见 docs/CAPABILITY_INDEX.md）**：
+  `src/infrastructure/odds_staging/`（12 个模块，随 internal 入口 `npm run odds:staging:dry-run` 执行）。
 - **SUPPORTED_COMPATIBILITY（保留兼容路径，非默认入口）**：v1 identity 输出路径
   （`--output-schema=identity-v1`，与 canonical-v2 并存，PR #1813 保留）。
 - **LEGACY / admin-only（保留但不得成为新代码依赖）**：`scripts/ops/titan_discovery.js`、
@@ -89,8 +90,10 @@
 
 - `database/migrations/`：16 个 V*.sql（V6.x / V12.x / V26.x）。V26.8（odds historical staging
   contract）、V26.9（observation fingerprint）、V26.10（M3 canonical inventory contract）
-  为 M3 合同。执行必须走 `make data-schema-*` 门禁；M3 相关迁移仅在 disposable
-  PostgreSQL 15 tmpfs 容器中执行过（docs/PROJECT_STATUS.md）。
+  为 M3 合同。V26.10 经 `make data-schema-m3-canonical-inventory-disposable-*` 门禁执行；
+  V26.8 / V26.9 仅经 `make m3-odds-sandbox-migrate` 在授权 sandbox（M3-D4D-B1）中应用，
+  `make data-schema-*` 不覆盖（plan 止于 V26.4、migrate 未接通）
+  （docs/PROJECT_STATUS.md、docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md）。
 - `src/database/migrations/`：Alembic 树（alembic.ini / env.py / versions/，3 个版本）。
 - **UNCLEAR — requires dedicated documentation**：两套树的职责划分（谁负责哪个 schema、
   何时用 SQL 树、何时用 Alembic 树）在仓库文档中无明确说明。本文档不自行断言划分依据。
