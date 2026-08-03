@@ -534,6 +534,24 @@ function checkCompletedPair(args = {}) {
     if (!isPlainObject(payload) || payload.stable_payload_sha256 !== manifest.stable_payload_sha256) {
         return { completed: false, state: 'mismatch', detail: 'payload stable_payload_sha256 does not match manifest' };
     }
+    // P2 (Codex round-2 review on 85bc0ee43): two self-declared equal hashes
+    // are not evidence — the business hash is RECOMPUTED from the payload's
+    // actual business fields with the shared projection before the pair is
+    // treated as completed. A tampered payload with refreshed file hash and
+    // manifest self-hash (but the same old declared stable hash) would
+    // otherwise be skipped by resume and only fail later at replay.
+    if (!isPlainObject(payload) || payload.schema_version !== PAYLOAD_SCHEMA_VERSION) {
+        return { completed: false, state: 'mismatch', detail: 'payload has unknown schema' };
+    }
+    const recomputedPayloadHash = computeStableCapturePayloadSha256(payload);
+    if (recomputedPayloadHash !== String(payload.stable_payload_sha256 || '') ||
+        recomputedPayloadHash !== String(manifest.stable_payload_sha256 || '')) {
+        return {
+            completed: false,
+            state: 'mismatch',
+            detail: 'RESUME_PAIR_BUSINESS_HASH_MISMATCH: recomputed payload business hash does not match declared stable_payload_sha256',
+        };
+    }
 
     // Exact run-context binding — any field that does not match the current
     // run, plan, artifact, authorization or candidate is a mismatch that
