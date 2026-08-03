@@ -603,6 +603,19 @@ function checkCompletedPair(args = {}) {
         ['manifest.candidate_id', manifest.candidate_id, expectedCandidate.candidate_id],
         ['manifest.candidate_identity_sha256', manifest.candidate_identity_sha256, expectedCandidate.candidate_identity_sha256],
         ['manifest.request_url', manifest.request_url, args.expectedRequestUrl],
+        // P2 (Codex re-review on a5d63af60): the pair must also be bound to
+        // the EXECUTION context the current run-state records — request
+        // budget, inter-request delay and collector code revision. The plan
+        // business hash deliberately excludes the generator revision, so two
+        // runs with identical plan / run id / authorization / candidate but
+        // different budgets, delays or revisions must never accept each
+        // other's pairs: a complete pair copied from a prior run would
+        // otherwise be counted complete here and later replayed under THIS
+        // run's revision, declaring false parser provenance. Missing expected
+        // values fail closed (never skip the check).
+        ['manifest.request_budget', Number(manifest.request_budget), args.expectedRequestBudget],
+        ['manifest.delay_ms', Number(manifest.delay_ms), args.expectedDelayMs],
+        ['manifest.collector_code_revision', manifest.collector_code_revision, args.expectedCollectorCodeRevision],
     ];
     for (const [label, actual, expected] of checks) {
         if (String(actual ?? '') !== String(expected ?? '')) {
@@ -710,6 +723,43 @@ function replayCapturePair(args = {}) {
     if (!expectedRunId || !expectedAuthorizationId) {
         throw Object.assign(
             new Error('replay failed: expected run id and authorization id required'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    // P2 (Codex re-review on a5d63af60): replay binds the pair to the FULL
+    // execution context recorded in the run state — request budget,
+    // inter-request delay and collector code revision. The plan business hash
+    // excludes the generator revision, so a complete pair copied from a prior
+    // run (same plan/run/authorization, different budget/delay/revision) must
+    // never be replayed under THIS run's context: the artifact would declare
+    // parser provenance of the wrong revision. Missing expected values fail
+    // closed.
+    const expectedRequestBudget = Number(args.expectedRequestBudget);
+    const expectedDelayMs = Number(args.expectedDelayMs);
+    const expectedCollectorCodeRevision = String(args.expectedCollectorCodeRevision || '');
+    if (!Number.isInteger(expectedRequestBudget) || !Number.isInteger(expectedDelayMs) ||
+        !expectedCollectorCodeRevision) {
+        throw Object.assign(
+            new Error('replay failed: expected request budget, delay and collector code revision required'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (Number(manifest.request_budget) !== expectedRequestBudget ||
+        Number(manifest.delay_ms) !== expectedDelayMs) {
+        throw Object.assign(
+            new Error(
+                'REPLAY_PAIR_CONTEXT_MISMATCH: manifest request_budget/delay_ms do not match the run state'
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (String(manifest.collector_code_revision || '') !== expectedCollectorCodeRevision) {
+        throw Object.assign(
+            new Error(
+                `REPLAY_PAIR_REVISION_MISMATCH: manifest collector_code_revision ` +
+                `${String(manifest.collector_code_revision || '')} does not match run state ` +
+                `collector_code_revision ${expectedCollectorCodeRevision}`
+            ),
             { code: 'SAFETY_ERROR' }
         );
     }
