@@ -37,6 +37,7 @@ const {
     readPlanSnapshot,
     writeRunSummary,
     buildRunSummary,
+    sha256Bytes,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
 
 const {
@@ -490,8 +491,41 @@ function runReplay(args, deps = {}) {
     }
 
     // Phase 2: every pair validated — only now materialize the artifacts.
+    // P2 (Codex re-review on 670504754): pre-check EVERY output target
+    // BEFORE any artifact is written. Phase 1 validated the input pairs, but
+    // a later pair whose target already exists with DIFFERENT content would
+    // otherwise abort after the earlier artifacts were already written — the
+    // command fails yet leaves partial output. Replay artifacts are fully
+    // deterministic, so the pre-check is exact: each target must be absent
+    // or byte-identical to what this replay would produce.
+    const materializePlan = prepared.map(({ ordinal, sourceMatchId, result }) => {
+        const bytes = Buffer.from(JSON.stringify(result.artifact, null, 2) + '\n', 'utf8');
+        return {
+            ordinal,
+            sourceMatchId,
+            result,
+            artifactPath: path.join(replayDir, `${ordinal}-${sourceMatchId}.detail.json`),
+            artifactSha256: sha256Bytes(bytes),
+        };
+    });
+    for (const entry of materializePlan) {
+        let existingStat = null;
+        try {
+            existingStat = fsImpl.lstatSync(entry.artifactPath);
+        } catch { /* absent is fine */ }
+        if (existingStat) {
+            const existingBytes = fsImpl.readFileSync(entry.artifactPath);
+            if (sha256Bytes(existingBytes) !== entry.artifactSha256) {
+                throw Object.assign(
+                    new Error(`replay failed: target exists with different content: ${entry.artifactPath}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+        }
+    }
+
     const replayed = [];
-    for (const { ordinal, sourceMatchId, result } of prepared) {
+    for (const { ordinal, sourceMatchId, result } of materializePlan) {
         const written = writeDetailArtifact({
             artifact: result.artifact,
             replayDir,
