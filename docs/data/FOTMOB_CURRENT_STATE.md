@@ -50,7 +50,13 @@ canonical interface.
   fields by the shared `validateAndRecomputeCapturePlan` contract (builder and
   CAPTURE validator use the same helper); explicit selection required
   (`--season` / `--match-id` / `--limit`), never silently selects the
-  1,140-candidate population.
+  1,140-candidate population. A filter that matches NOTHING fails as an
+  `INPUT_ERROR` (`selection matched no candidates (season filter (...) /
+  match id filter (...)) — refusing to build an empty capture plan`), and
+  the contract validator independently rejects zero-candidate plans
+  (`candidates must not be empty`) — an empty plan can never pass PLAN /
+  PREFLIGHT / CAPTURE gates, so EXECUTE can never report a zero-request
+  run as `status=complete` (round-12 P2).
 - **PREFLIGHT** — fully offline; re-validates the plan schema and recomputes the
   plan hash, verifies git revision / output paths / run id / budget /
   authorization variables, and prints the candidate count and URL-path summary.

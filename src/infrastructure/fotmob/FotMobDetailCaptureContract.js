@@ -378,6 +378,14 @@ function validateAndRecomputeCapturePlan(plan) {
     if (!Array.isArray(plan.candidates)) {
         errors.push('candidates must be an array');
     } else {
+        // R14-P1 (Codex re-review on 948e0d23f): an EMPTY plan must fail the
+        // contract too — belt-and-suspenders behind the builder's
+        // empty-selection rejection, so a tampered or legacy zero-candidate
+        // plan can never pass the contract or preflight (and EXECUTE can
+        // never report a zero-request run as status=complete).
+        if (plan.candidates.length === 0) {
+            errors.push('candidates must not be empty');
+        }
         if (Number(plan.selected_candidate_count) !== plan.candidates.length) {
             errors.push(
                 `selected_candidate_count mismatch: stated ${plan.selected_candidate_count}, actual ${plan.candidates.length}`

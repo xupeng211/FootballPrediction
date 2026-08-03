@@ -3181,3 +3181,51 @@ test('R13-P1 (Codex re-review on 13b27d5b9): a pid recycled to a DIFFERENT proce
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-12 (Codex re-review on 948e0d23f) — R14-P1
+// ─────────────────────────────────────────────────────────────
+
+test('R14-P1 (Codex re-review on 948e0d23f): a season filter that matches NO candidate fails as INPUT_ERROR — an empty capture plan can never be built', () => {
+    const dir = tmpDir('fotmob-r14p1-season-');
+    try {
+        assert.throws(
+            () => makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2099/2100'] }),
+            (err) => err.code === 'INPUT_ERROR'
+                && /selection matched no candidates \(season filter \(2099\/2100\)\)/.test(err.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R14-P1 (Codex re-review on 948e0d23f): a match-id filter that matches NO candidate fails as INPUT_ERROR', () => {
+    const dir = tmpDir('fotmob-r14p1-mid-');
+    try {
+        assert.throws(
+            () => makePlanFixture(dir, [TWO_CANDIDATES[0]], { matchIds: ['999999999'] }),
+            (err) => err.code === 'INPUT_ERROR'
+                && /selection matched no candidates \(match id filter \(999999999\)\)/.test(err.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R14-P1 (Codex re-review on 948e0d23f): a zero-candidate plan fails the CONTRACT validator too — belt and suspenders behind the builder, so EXECUTE can never report a zero-request run as complete', () => {
+    const dir = tmpDir('fotmob-r14p1-validator-');
+    try {
+        const { plan } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { validateAndRecomputeCapturePlan } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        // A tampered / legacy zero-candidate plan: wipe the candidates.
+        const tampered = { ...plan, candidates: [], selected_candidate_count: 0 };
+        const check = validateAndRecomputeCapturePlan(tampered);
+        assert.equal(check.ok, false);
+        assert.ok(
+            check.errors.some((e) => /candidates must not be empty/.test(e)),
+            `expected 'candidates must not be empty' in: ${check.errors.join('; ')}`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

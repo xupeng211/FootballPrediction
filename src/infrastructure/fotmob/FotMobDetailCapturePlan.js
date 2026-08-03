@@ -186,6 +186,22 @@ function buildDeterministicCapturePlan(options = {}) {
 
     const selected = limit === null ? ordered : ordered.slice(0, limit);
 
+    // R14-P1 (Codex re-review on 948e0d23f): a filter that matches NOTHING
+    // must fail as an INPUT ERROR — a valid-looking empty plan
+    // (selected_candidate_count=0) would pass the contract and preflight,
+    // and EXECUTE would return status=complete with zero requests, making a
+    // mis-scoped run look like a successful capture.
+    if (selected.length === 0) {
+        const reasons = [];
+        if (seasons.length > 0) reasons.push(`season filter (${seasons.join(', ')})`);
+        if (matchIds.length > 0) reasons.push(`match id filter (${matchIds.join(', ')})`);
+        if (reasons.length === 0) reasons.push('limit');
+        throw Object.assign(
+            new Error(`selection matched no candidates (${reasons.join(' and ')}) — refusing to build an empty capture plan`),
+            { code: 'INPUT_ERROR' }
+        );
+    }
+
     const candidates = selected.map((c, index) => {
         const candidateIdentity = {
             source_match_id: c.source_match_id,
