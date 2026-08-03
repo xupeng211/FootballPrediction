@@ -348,6 +348,22 @@ function validateRunState(runState) {
         && String(runState.next_allowed_request_at).trim() !== '') {
         if (Number.isNaN(Date.parse(String(runState.next_allowed_request_at)))) {
             errors.push('next_allowed_request_at must be a parseable timestamp');
+        } else if (Number(runState.network_requests_attempted || 0) > 0
+            && runState.last_network_request_attempted_at !== undefined
+            && runState.last_network_request_attempted_at !== null
+            && String(runState.last_network_request_attempted_at).trim() !== '') {
+            // R21-P2 (Codex re-review on 05cd23c55): when both are present the
+            // deadline is a fail-closed GATE — a syntactically valid but EARLY
+            // deadline (tampered below last + delay_ms) would let a resume
+            // issue the next request before the full delay. Every legit write
+            // keeps deadline === last + delay_ms exactly; any deviation
+            // (earlier OR later) fails closed.
+            const lastMs = Date.parse(String(runState.last_network_request_attempted_at));
+            const delayMs = Number(runState.delay_ms);
+            if (!Number.isNaN(lastMs) && !Number.isNaN(delayMs)
+                && Date.parse(String(runState.next_allowed_request_at)) !== lastMs + delayMs) {
+                errors.push('next_allowed_request_at must equal last_network_request_attempted_at + delay_ms');
+            }
         }
     }
     return { ok: errors.length === 0, errors };
@@ -389,6 +405,28 @@ function readRunState(runDir, fsImpl = fs) {
         );
     }
     return parsed;
+}
+
+/**
+ * R21-P1 (Codex re-review on 05cd23c55): the run-state file's mtime IS the
+ * completion moment of its last write — the one piece of information a
+ * pre-fetch write cannot carry about itself. When a process hard-crashes
+ * after the native fetch started but before the actualization write, the
+ * persisted deadline's basis (taken before the LAST pre-fetch write)
+ * antedates the true fetch start by that write's duration; the mtime
+ * recovers the write's completion and lets the resume gate anchor there,
+ * covering the write's duration without relying on post-settlement
+ * correction. Returns the mtime in ms, or null when the file is absent /
+ * unreadable / statless (the gate then falls back to the persisted values
+ * only — never looser than the deadline formula).
+ */
+function runStateMtimeMs(runDir, fsImpl = fs) {
+    const statePath = path.join(runDir, 'run-state.json');
+    try {
+        const stat = fsImpl.statSync(statePath);
+        if (stat && typeof stat.mtimeMs === 'number') return stat.mtimeMs;
+    } catch { /* absent or unreadable */ }
+    return null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1149,6 +1187,7 @@ module.exports = {
     defaultRunState,
     writeRunState,
     readRunState,
+    runStateMtimeMs,
     validateRunState,
     writePlanSnapshot,
     readPlanSnapshot,

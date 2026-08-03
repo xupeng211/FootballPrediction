@@ -61,6 +61,7 @@ const {
     defaultRunState,
     writeRunState,
     readRunState,
+    runStateMtimeMs,
     writePlanSnapshot,
     checkCompletedPair,
     buildRunSummary,
@@ -1179,7 +1180,39 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            initialLastRequestAt = new Date(deadlineMs - delayMs).toISOString();
+            // R21-P2 (Codex re-review on 05cd23c55): when the deadline is
+            // present it is a fail-closed GATE — it must equal the persisted
+            // request time + delayMs exactly (every legit write maintains
+            // this invariant). A syntactically valid but EARLY deadline
+            // (tampered below last + delayMs) would loosen the gate and let
+            // the next request start before the full delay; the read-side
+            // validator rejects it too, belt and suspenders.
+            const lastMs = Date.parse(String(runState.last_network_request_attempted_at));
+            if (!Number.isNaN(lastMs) && deadlineMs !== lastMs + delayMs) {
+                throw Object.assign(
+                    new Error(
+                        'SAFETY_ERROR:next_allowed_request_at must equal last_network_request_attempted_at + delay_ms in run state'
+                    ),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            // R21-P1 (Codex re-review on 05cd23c55): the deadline's basis
+            // (the last pre-fetch moment, taken before the follow-up write)
+            // still antedates the TRUE fetch start by that write's duration —
+            // a hard crash after the fetch started but before the
+            // actualization write leaves exactly that gap on disk. The
+            // run-state file's mtime IS that write's completion moment (the
+            // one fact a write cannot carry about itself), so the gate
+            // anchors at max(deadline − delayMs, mtime): the crash window's
+            // wait covers the final pre-fetch write's duration without
+            // relying on post-settlement correction. The mtime can only push
+            // the anchor LATER (conservative direction — never earlier).
+            let anchorMs = deadlineMs - delayMs;
+            const stateMtimeMs = runStateMtimeMs(runDir, fsImpl);
+            if (stateMtimeMs !== null && stateMtimeMs > anchorMs) {
+                anchorMs = stateMtimeMs;
+            }
+            initialLastRequestAt = new Date(anchorMs).toISOString();
         }
     }
 

@@ -166,7 +166,57 @@ function okResponse(body, contentType = 'text/html; charset=utf-8') {
     return { status: 200, body, contentType };
 }
 
+// R21-P1 (Codex re-review on 05cd23c55): the resume gate anchors at the
+// run-state file's mtime (the completion moment of its last write). The
+// fake-clock tests' mtimes must live on the SAME clock as the pipeline's
+// injected now(), so every makeCaptureOptions fsImpl is wrapped in a layer
+// that records the effective clock at each successful write and reports it
+// as the file's mtime. The records are module-scoped (keyed by resolved
+// path) so a resumed run in a LATER makeCaptureOptions instance still sees
+// the previous run's write times — exactly what a real file system gives
+// production. Files never written through the layer keep their real stat.
+const fsWriteTimes = new Map();
+function makeWriteTimeFs(baseFs, effNow) {
+    const record = (p) => fsWriteTimes.set(path.resolve(String(p)), Date.parse(effNow()));
+    return {
+        ...baseFs,
+        writeFileSync: (p, data, enc) => {
+            const r = baseFs.writeFileSync(p, data, enc);
+            record(p);
+            return r;
+        },
+        renameSync: (from, to) => {
+            const r = baseFs.renameSync(from, to);
+            record(to);
+            return r;
+        },
+        statSync: (p, ...args) => {
+            const st = baseFs.statSync(p, ...args);
+            const recorded = fsWriteTimes.get(path.resolve(String(p)));
+            if (recorded === undefined) return st;
+            // Preserve the Stats prototype (isFile / isSymbolicLink / … are
+            // used by the pipeline) while reporting the recorded mtime.
+            const clone = Object.create(Object.getPrototypeOf(st));
+            return Object.assign(clone, st, { mtimeMs: recorded });
+        },
+        lstatSync: (p, ...args) => {
+            const st = baseFs.lstatSync(p, ...args);
+            const recorded = fsWriteTimes.get(path.resolve(String(p)));
+            if (recorded === undefined) return st;
+            const clone = Object.create(Object.getPrototypeOf(st));
+            return Object.assign(clone, st, { mtimeMs: recorded });
+        },
+    };
+}
+
 function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoot, env, fetchImpl, sleepImpl, execSync, fsImpl, timeoutMs, extra }) {
+    const effExtra = { ...(extra || {}) };
+    const effNow = effExtra.now || (() => FIXED_CLOCK);
+    const rawFs = effExtra.fsImpl || fsImpl || fs;
+    // The write-time layer must WIN over any fsImpl the caller passed via
+    // extra — the resume gate reads the run-state mtime through this layer.
+    delete effExtra.fsImpl;
+    const effFs = makeWriteTimeFs(rawFs, effNow);
     return {
         plan,
         planPath,
@@ -186,7 +236,7 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
             transformToApiFormat: NextDataParser.transformToApiFormat,
             parseFotMobRaw: FotMobRawParser.parseFotMobRaw,
         },
-        now: () => FIXED_CLOCK,
+        now: effNow,
         env: env || {
             [REQUIRED_ENV_VAR]: '1',
             [REQUIRED_ENV_BUDGET]: String(maxRequests),
@@ -194,8 +244,8 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
         },
         repositoryRoot: REPO_ROOT,
         execSync: execSync || CLEAN_EXEC,
-        fsImpl,
-        ...extra,
+        fsImpl: effFs,
+        ...effExtra,
     };
 }
 
@@ -3909,6 +3959,140 @@ test('R20-P1 (Codex re-review on 0bfe90629): the persisted next-allowed-request 
         await assert.rejects(
             executeCaptureRun(optionsFor()),
             (e) => e.code === 'SAFETY_ERROR' && /next_allowed_request_at/.test(e.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R21-P1 (Codex re-review on 05cd23c55): a HARD CRASH immediately after the fetch started — before ANY actualization write — still leaves a resume gate that covers the last pre-fetch write: the run-state file mtime (that write\'s completion) anchors the resumed wait', async () => {
+    const dir = tmpDir('fotmob-r21p1-crash-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        let runStateWriteCount = 0;
+        let crashing = true;
+        // The LAST pre-fetch run-state writes (run-state writes #2 and #3 —
+        // the callback's write-1 and its follow-up write-2) take 200 ms each,
+        // and the completion actualization (run-state write #4) is replaced
+        // by a SIMULATED HARD CRASH: nothing is written after the fetch
+        // started — exactly like a process death between fetchImpl() and the
+        // actualization write, the finding's scenario.
+        const wrappedFs = {
+            ...fs,
+            writeFileSync: (p, data, enc) => {
+                if (String(p).includes('run-state')) {
+                    runStateWriteCount += 1;
+                    if (crashing && runStateWriteCount >= 4) {
+                        throw new Error('SIMULATED_HARD_CRASH_AFTER_FETCH_START');
+                    }
+                    if (runStateWriteCount === 2 || runStateWriteCount === 3) clockMs += 200;
+                }
+                return fs.writeFileSync(p, data, enc);
+            },
+        };
+        const optionsFor = (fetchImpl) => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r21p1', maxRequests: 3,
+            fetchImpl, sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString(), fsImpl: wrappedFs },
+        });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r21p1');
+        // Process 1: candidate 1's fetch starts (TRUE start = T0 + 400) and
+        // the process hard-crashes before the actualization — the on-disk
+        // state is the LAST PRE-FETCH write's crash-window values.
+        await assert.rejects(
+            executeCaptureRun(optionsFor(mockFetchImpl(() => {
+                fetchesAt.push(clockMs);
+                return okResponse(pageFor(TWO_CANDIDATES[0]));
+            }))),
+            (e) => /SIMULATED_HARD_CRASH_AFTER_FETCH_START/.test(e.message),
+            'the simulated hard crash stops the run exactly at the actualization write'
+        );
+        assert.equal(fetchesAt.length, 1, 'exactly one real request was issued before the crash');
+        const state1 = readStateJson(runDir);
+        assert.equal(state1.network_requests_attempted, 1);
+        assert.equal(state1.captures_completed, 0, 'the actualization never landed — the crash preceded it');
+        assert.equal(
+            Date.parse(state1.next_allowed_request_at) - Date.parse(state1.last_network_request_attempted_at), 60000,
+            'the crash-window deadline keeps the delay invariant'
+        );
+        assert.equal(
+            Date.parse(state1.next_allowed_request_at),
+            fetchesAt[0] - 200 + 60000,
+            'the disk deadline = the pre-fetch basis + delayMs = TRUE fetch start + delayMs − (last pre-fetch write duration) — the reviewer\'s exact gap'
+        );
+        // The operator resumes 59900 ms after the TRUE fetch start — the
+        // deadline-only gate (anchored at the pre-fetch basis) would already
+        // be satisfied and issue the request 100 ms early.
+        clockMs = fetchesAt[0] + 59900;
+        sleeps.length = 0;
+        crashing = false;
+        // Process 2: resume — candidate 1 has no pair (the crash preceded the
+        // pair write), so it is re-fetched AFTER the mtime-anchored wait.
+        const run2 = await executeCaptureRun(optionsFor(mockFetchImpl((url) => {
+            fetchesAt.push(clockMs);
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        })));
+        assert.equal(run2.status, 'complete');
+        assert.equal(run2.completedCount, 2, 'the retried candidate and the second candidate both complete');
+        assert.equal(fetchesAt.length, 3, 'one fetch before the crash, two after the resume');
+        assert.equal(
+            fetchesAt[1] - fetchesAt[0], 60000,
+            `the resumed request starts exactly delayMs after the TRUE previous fetch start (got ${fetchesAt[1] - fetchesAt[0]}): the mtime anchor covers the last pre-fetch write's 200 ms (the deadline-only gate yields 59800)`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R21-P2 (Codex re-review on 05cd23c55): a deadline tampered to a SYNTACTICALLY VALID ISO time EARLIER than last + delay_ms fails closed on resume — parseability alone is not a gate', async () => {
+    const dir = tmpDir('fotmob-r21p2-invariant-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleepImpl = async () => {};
+        const optionsFor = () => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r21p2', maxRequests: 3,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString() },
+        });
+        const run = await executeCaptureRun(optionsFor());
+        assert.equal(run.status, 'complete');
+        const state = readStateJson(run.runDir);
+        assert.equal(
+            Date.parse(state.next_allowed_request_at) - Date.parse(state.last_network_request_attempted_at), 60000,
+            'a clean run keeps the deadline === last + delayMs invariant'
+        );
+        // Tamper the deadline to a VALID ISO timestamp 1000 ms EARLY —
+        // syntactically fine, but the resume gate would wait 1000 ms too
+        // little. Both the read-side validator and the resume seeding reject
+        // it before any request can be issued (the seeding's check is belt
+        // and suspenders).
+        state.next_allowed_request_at = new Date(
+            Date.parse(state.last_network_request_attempted_at) + 59000
+        ).toISOString();
+        writeStateJson(run.runDir, state);
+        await assert.rejects(
+            executeCaptureRun(optionsFor()),
+            (e) => e.code === 'SAFETY_ERROR' && /next_allowed_request_at/.test(e.message),
+            'an EARLY-but-valid deadline fails closed on resume'
+        );
+        // The LATER direction (deadline beyond last + delayMs) is equally
+        // outside the invariant — fail closed, never silently accepted.
+        state.next_allowed_request_at = new Date(
+            Date.parse(state.last_network_request_attempted_at) + 61000
+        ).toISOString();
+        writeStateJson(run.runDir, state);
+        await assert.rejects(
+            executeCaptureRun(optionsFor()),
+            (e) => e.code === 'SAFETY_ERROR' && /next_allowed_request_at/.test(e.message),
+            'a LATE-but-valid deadline also fails closed (the invariant is exact, not one-sided)'
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

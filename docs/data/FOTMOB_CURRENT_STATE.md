@@ -132,7 +132,20 @@ canonical interface.
   (initialLastRequestAt = deadline − delayMs), so the persisted gate covers
   the LAST pre-fetch write's duration even when the run-state write itself
   is what a crash loses (round-18 P2; a present-but-invalid deadline fails
-  closed, a missing deadline falls back to the timestamp formula) and
+  closed, a missing deadline falls back to the timestamp formula). The
+  deadline's basis (the last pre-fetch moment) still precedes the write
+  that carries it by one write duration — a hard crash right after the
+  fetch started, before ANY actualization write, leaves exactly that gap on
+  disk — so the resume gate also anchors at the run-state file's mtime
+  (the completion moment of its last write, recovered via
+  `runStateMtimeMs`): the wait covers the final pre-fetch write's duration
+  without relying on post-settlement correction, and the mtime can only
+  push the anchor LATER (round-19 P2, R21-P1). When both the deadline and
+  the persisted request time are present, the read-side validator AND the
+  resume seeding enforce the exact invariant
+  `next_allowed_request_at === last_network_request_attempted_at + delay_ms`
+  — a syntactically valid but EARLY tampered deadline fails closed like any
+  other deviation (round-19 P2, R21-P2) and
   is validated on every read (non-negative, monotonic, unique ordinals, no
   auto-fixing); attempted requests are counted before the fetch, so
   failed/timeout requests are never recorded as zero. On resume, a pair left
