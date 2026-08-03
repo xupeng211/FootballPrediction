@@ -3114,3 +3114,70 @@ test('R12-P2 (Codex re-review on cf500786e): replay shares the run lock — a li
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-11 (Codex re-review on 13b27d5b9) — R13-P1
+// ─────────────────────────────────────────────────────────────
+
+test('R13-P1 (Codex re-review on 13b27d5b9): a lock whose token records the CURRENT process instance is judged live by INSTANCE identity — SAFETY_ERROR with zero fetches, no pidAlive injection needed', async () => {
+    const dir = tmpDir('fotmob-r13p1-live-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r13p1live');
+        const { readProcStarttimeTicks } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        const { spawn } = require('node:child_process');
+        const holder = spawn('sleep', ['30']);
+        try {
+            const startTicks = readProcStarttimeTicks(holder.pid);
+            assert.notEqual(startTicks, null, 'requires a Linux /proc start-time identity in the test environment');
+            fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+            fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), `pid:${holder.pid}:${startTicks}:9999`, 'utf8');
+
+            const calls = [];
+            await assert.rejects(
+                executeCaptureRun(makeCaptureOptions({
+                    dir, plan, planPath, runId: 'run-r13p1live', maxRequests: 1,
+                    fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])), calls),
+                    extra: { pid: 54321 },
+                })),
+                (e) => e.code === 'SAFETY_ERROR'
+                    && new RegExp(`another capture process \\(pid ${holder.pid}\\) holds the run lock`).test(e.message)
+            );
+            assert.equal(calls.length, 0, 'no fetch while the same-instance holder lives');
+            assert.equal(fs.existsSync(path.join(runDir, 'run-state.json')), false, 'run state never written');
+            assert.equal(fs.existsSync(path.join(runDir, '.capture-run.lock')), true, 'the live instance lock is never removed');
+        } finally {
+            holder.kill();
+        }
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R13-P1 (Codex re-review on 13b27d5b9): a pid recycled to a DIFFERENT process instance is judged STALE despite kill() reporting it alive — capture takes over and recovers', async () => {
+    const dir = tmpDir('fotmob-r13p1-recycled-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r13p1recycled');
+        const { readProcStarttimeTicks } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        // Our OWN pid is verifiably alive (kill(pid,0) succeeds), but the
+        // token records a start-time that belongs to NO live instance —
+        // exactly the crashed-holder-then-pid-recycled scenario.
+        const myTicks = readProcStarttimeTicks(process.pid);
+        assert.notEqual(myTicks, null, 'requires a Linux /proc start-time identity in the test environment');
+        const fakeTicks = myTicks + 1000;
+        fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), `pid:${process.pid}:${fakeTicks}:9999`, 'utf8');
+
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r13p1recycled', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            extra: { pid: 54321 },
+        }));
+        assert.equal(result.status, 'complete');
+        assert.equal(result.completedCount, 1);
+        assert.equal(fs.existsSync(path.join(runDir, '.capture-run.lock')), false, 'the recycled-instance lock is taken over and released');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

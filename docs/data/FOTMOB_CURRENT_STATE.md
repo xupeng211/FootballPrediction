@@ -168,7 +168,15 @@ canonical interface.
   (`verifyRunLockOwnership` → `SAFETY_ERROR:run lock ownership lost`): a
   holder displaced mid-run fails closed at its next state write, BEFORE its
   next fetch can issue — two processes can never both keep fetching under
-  the same run id (round-10 P1).
+  the same run id (round-10 P1). Liveness of a holder is judged by PROCESS
+  INSTANCE, not by pid liveness alone: the token records the holder's
+  kernel process-start identity (`/proc/<pid>/stat` field 22, clock ticks
+  since boot) as `pid:<pid>:<startTicks>:<nonce>`, and the stale judge
+  re-reads `/proc/<pid>/stat` — identical start ticks → the same instance
+  still runs (live); different ticks → the recorded holder instance is GONE
+  (its pid was recycled by an unrelated process, `kill(pid, 0)` alone would
+  keep the lock alive forever) → the lock is stale and can be taken over;
+  legacy tokens without start ticks fall back to pid-liveness (round-11 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at

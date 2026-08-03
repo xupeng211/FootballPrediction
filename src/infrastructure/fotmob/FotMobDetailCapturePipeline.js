@@ -688,16 +688,30 @@ function resolveRunDirs(outputRoot, runId) {
  */
 const RUN_LOCK_DIR_NAME = '.capture-run.lock';
 
-// R10-P1 + R11-P1 + R12-P1 (Codex re-review on 047f6afcb / abf6fbc65 /
-// cf500786e): cross-process exclusive lock for a capture run id.
+// R10-P1 + R11-P1 + R12-P1 + R13-P1 (Codex re-review on 047f6afcb /
+// abf6fbc65 / cf500786e / 13b27d5b9): cross-process exclusive lock for a
+// capture run id.
 //
-// NON-REUSABLE OWNER TOKEN: the token is `pid:<pid>:<nonce>` where the
-// nonce is the monotonic process uptime — the same token can never be
-// produced by a later process (OS pid recycling cannot reproduce it). The
-// lock is a directory that appears atomically COMPLETE: the holder writes
-// its token into a private temp dir and renames the whole dir into place
-// (rename is atomic), so a competitor can never observe a "live lock
-// without an owner".
+// NON-REUSABLE OWNER TOKEN: the token is `pid:<pid>:<startTicks>:<nonce>`
+// where the nonce is the monotonic process uptime and startTicks is the
+// kernel's process-start identity (/proc/<pid>/stat field 22, in clock
+// ticks since boot — R13-P1). The same token can never be produced by a
+// later process (OS pid recycling cannot reproduce either the nonce or a
+// different instance's start ticks). The lock is a directory that appears
+// atomically COMPLETE: the holder writes its token into a private temp dir
+// and renames the whole dir into place (rename is atomic), so a competitor
+// can never observe a "live lock without an owner".
+//
+// INSTANCE-IDENTITY LIVENESS (R13-P1): a token's holder is judged alive by
+// PROCESS INSTANCE, not by pid liveness alone — `kill(pid, 0)` would keep a
+// crashed holder's lock forever live once an unrelated long-lived process
+// recycled the pid. The judge re-reads /proc/<pid>/stat: identical start
+// ticks → the same instance still runs (live); different (or unreadable
+// but existing) ticks → the recorded instance is GONE — the pid belongs to
+// a different process, the lock is stale and can be taken over. Legacy
+// tokens without start ticks (pre-R13 format) and pids whose /proc cannot
+// be read fall back to pid-liveness (conservative — an unreadable live pid
+// is treated as alive).
 //
 // TAKEOVER NEVER DELETES A CHANGED TOKEN (R12-P1): a stale lock is grabbed
 // by renaming the lock dir to the taker's PRIVATE trash name (atomic —
@@ -731,6 +745,51 @@ function parseRunLockToken(token) {
     return m ? Number(m[1]) : null;
 }
 
+// R13-P1: the kernel's process-start identity — /proc/<pid>/stat field 22
+// (starttime, clock ticks since boot). Two distinct process instances can
+// never share (pid, starttime), so this distinguishes a recycled pid from
+// the recorded holder. Null when the pid does not exist or /proc is
+// unavailable (non-Linux / unreadable).
+function readProcStarttimeTicks(pid, fsImpl = fs) {
+    try {
+        const stat = String(fsImpl.readFileSync(`/proc/${pid}/stat`, 'utf8') || '');
+        const closeParen = stat.lastIndexOf(')');
+        if (closeParen < 0) return null;
+        // Fields after the closing paren restart at state=1; starttime is
+        // field 20 there (22 overall, including pid and comm).
+        const fields = stat.slice(closeParen + 1).trim().split(/\s+/);
+        const starttime = Number(fields[19]);
+        return Number.isFinite(starttime) ? starttime : null;
+    } catch {
+        return null;
+    }
+}
+
+function parseRunLockStartTicks(token) {
+    const m = /^pid:\d+:(\d+):/.exec(String(token || ''));
+    return m ? Number(m[1]) : null;
+}
+
+// R13-P1: is the recorded holder INSTANCE alive? Instance-identity check
+// when the token records start ticks and /proc is readable; pid-liveness
+// fallback otherwise (legacy tokens, non-Linux, unreadable-but-alive pids).
+function isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl) {
+    if (holderStartTicks !== null) {
+        const currentTicks = readProcStarttimeTicks(holderPid, fsImpl);
+        if (currentTicks !== null && currentTicks !== holderStartTicks) {
+            // The pid is alive (kill would say so) but belongs to a
+            // DIFFERENT process instance — the recorded holder crashed and
+            // its pid was recycled. Stale.
+            return false;
+        }
+        if (currentTicks === holderStartTicks) {
+            return true; // the same instance still runs
+        }
+        // /proc unreadable for this pid — fall through to pid-liveness.
+    }
+    return isPidAlive(holderPid);
+}
+
 /* eslint-disable-next-line complexity */
 function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {}) {
     const isPidAlive = pidAlive || ((candidatePid) => {
@@ -742,7 +801,8 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
             return err && err.code === 'EPERM';
         }
     });
-    const ourToken = `pid:${pid}:${process.hrtime.bigint()}`;
+    const ourStartTicks = readProcStarttimeTicks(pid, fsImpl);
+    const ourToken = `pid:${pid}:${ourStartTicks === null ? '' : ourStartTicks}:${process.hrtime.bigint()}`;
     const lockDir = path.join(runDir, RUN_LOCK_DIR_NAME);
     for (let attempt = 0; attempt < 2; attempt += 1) {
         const tmpDir = path.join(runDir, `${RUN_LOCK_DIR_NAME}.tmp.${pid}.${Date.now()}`);
@@ -762,10 +822,15 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Lock exists: evaluate the CURRENT token.
+            // Lock exists: evaluate the CURRENT token. R13-P1: liveness is
+            // decided by PROCESS INSTANCE (recorded start ticks vs the pid's
+            // current /proc identity), never by pid liveness alone — a
+            // recycled pid must not keep a crashed holder's lock alive.
             const token = readRunLockToken(lockDir, fsImpl);
             const holderPid = parseRunLockToken(token);
-            if (holderPid !== null && holderPid !== Number(pid) && isPidAlive(holderPid)) {
+            const holderStartTicks = parseRunLockStartTicks(token);
+            if (holderPid !== null && holderPid !== Number(pid)
+                && isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl)) {
                 throw Object.assign(
                     new Error(`SAFETY_ERROR:another capture process (pid ${holderPid}) holds the run lock`),
                     { code: 'SAFETY_ERROR' }
@@ -1433,4 +1498,5 @@ module.exports = {
     acquireRunLock,
     releaseRunLock,
     verifyRunLockOwnership,
+    readProcStarttimeTicks,
 };
