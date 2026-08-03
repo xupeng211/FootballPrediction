@@ -112,11 +112,14 @@ canonical interface.
   the inter-request delay continues across processes: remainingDelay =
   delayMs − (now − lastRequestAt); an invalid or missing timestamp with
   attempts fails closed, a backwards clock waits the full delay — R3-P2-5;
-  the pacing ANCHOR is the ACTUAL fetch-start moment returned by the
-  pre-fetch callback, not the pre-callback instant — the callback's
-  synchronous run-state write happens between the two, and a slower first
-  write used to shrink the real gap between two request starts below
-  delayMs, risking server rate limiting (round-16 P2)) and
+  the pacing ANCHOR is the ACTUAL fetch-start moment: the adapter re-takes
+  it AFTER the pre-fetch callback (and its synchronous run-state write)
+  completes, and the callback re-takes and persists its timestamp after
+  its own write (one follow-up write), so the anchor, the manifest and the
+  cross-process resume seed all agree on the same conservative post-write
+  instant — a slower first write used to shrink the real gap between two
+  request starts below delayMs, risking server rate limiting (round-16 P2,
+  round-17 P2)) and
   is validated on every read (non-negative, monotonic, unique ordinals, no
   auto-fixing); attempted requests are counted before the fetch, so
   failed/timeout requests are never recorded as zero. On resume, a pair left

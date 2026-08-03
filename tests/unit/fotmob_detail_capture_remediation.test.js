@@ -3616,6 +3616,131 @@ test('R18-P1 (Codex re-review on 6ca5e90be): executeCaptureRun persists the SAME
     }
 });
 
+test('R19-P1 (Codex re-review on 52fadcf09): even when onBeforeFetch returns a PRE-write timestamp, the adapter re-anchors AFTER the callback returns — the real gap between two request STARTS never falls below delayMs', async () => {
+    const { createBoundedFetchAdapter } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+    let clockMs = Date.parse(FIXED_CLOCK);
+    const sleeps = [];
+    const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+    const fetchesAt = [];
+    const fetches = [];
+    const fetchImpl = async (url) => {
+        fetchesAt.push(clockMs);
+        fetches.push(String(url));
+        return {
+            status: 200,
+            url: String(url),
+            headers: { get: () => null },
+            arrayBuffer: async () => new TextEncoder().encode('<html>x</html>'),
+            body: new TextEncoder().encode('<html>x</html>'),
+        };
+    };
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl,
+        maxRequests: 2,
+        delayMs: 60000,
+        now: () => clockMs,
+        sleepImpl,
+        onBeforeFetch: (url, count) => {
+            // Models the R18-P1 pipeline callback: the returned timestamp is
+            // taken BEFORE the synchronous run-state write, and that write
+            // advances the wall clock by 200 ms. R18-P1 anchored on the
+            // returned (pre-write) moment, so the second request started
+            // only 59800 ms after the first request's START. The adapter
+            // must ignore the return value for PACING and anchor on the
+            // post-callback moment — the true fetch start.
+            const returned = new Date(clockMs).toISOString();
+            clockMs += 200;
+            return returned;
+        },
+    });
+    await adapter.fetchOnce('https://www.fotmob.com/match/4506263');
+    assert.equal(sleeps.length, 0, 'first request never waits');
+    await adapter.fetchOnce('https://www.fotmob.com/match/4506264');
+    assert.equal(
+        sleeps[0], 60000,
+        `the second request waits the FULL delay (got ${sleeps[0]}): the anchor is the post-callback moment, not the returned pre-write timestamp`
+    );
+    assert.ok(
+        fetchesAt[1] - fetchesAt[0] >= 60000,
+        `the real gap between the two request STARTS never falls below delayMs (got ${fetchesAt[1] - fetchesAt[0]}): the second callback's own write can only ENLARGE the gap, never shrink it`
+    );
+    assert.equal(fetches.length, 2, 'both requests issued');
+});
+
+test('R19-P1 (Codex re-review on 52fadcf09): executeCaptureRun anchors pacing on the moment AFTER its run-state write completes — when the FIRST candidate\'s state write is slower than the second\'s, the real fetch-start gap still never falls below delayMs', async () => {
+    const dir = tmpDir('fotmob-r19p1-e2e-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        // Each synchronous run-state write for the FIRST candidate takes
+        // 200 ms of wall-clock time; the second candidate's writes are fast.
+        // The finding's exact scenario: if the first candidate's state write
+        // is slower than the second's, an anchor taken BEFORE the write makes
+        // the real gap between the two request STARTS
+        // delayMs + write2 - write1 < delayMs. The R19-P1 callback re-takes
+        // the anchor AFTER its own write (and the adapter re-anchors after
+        // the callback), so the gap stays at the full delay.
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        const wrappedFs = {
+            ...fs,
+            writeFileSync: (p, data, enc) => {
+                // Key the write duration on the request the payload belongs
+                // to (the callback sets network_requests_attempted before
+                // writing) — deterministic and independent of how many
+                // run-state writes each version performs per request.
+                if (String(p).includes('run-state')) {
+                    let attempts = 0;
+                    try { attempts = Number(JSON.parse(String(data)).network_requests_attempted || 0); } catch { /* non-JSON write */ }
+                    if (attempts === 1) clockMs += 200;
+                }
+                return fs.writeFileSync(p, data, enc);
+            },
+        };
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r19p1e2e', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).split('/match/')[1];
+                const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                fetchesAt.push(clockMs);
+                return okResponse(pageFor(cand));
+            }),
+            sleepImpl,
+            extra: {
+                now: () => new Date(clockMs).toISOString(),
+                fsImpl: wrappedFs,
+            },
+        }));
+        assert.equal(run.status, 'complete');
+        assert.equal(run.completedCount, 2);
+        assert.ok(sleeps.length >= 1, 'inter-request wait enforced');
+        const state = readStateJson(run.runDir);
+        // Compare with the SECOND candidate's manifest — the run-state
+        // anchor is the last request's attempt moment.
+        const manifest = JSON.parse(fs.readFileSync(
+            path.join(run.runDir, 'captures', '2-4506264.manifest.json'), 'utf8'
+        ));
+        assert.equal(
+            manifest.request_attempted_at, state.last_network_request_attempted_at,
+            'the persisted anchor is the callback\'s post-write moment — identical to the manifest'
+        );
+        assert.ok(
+            Date.parse(state.last_network_request_attempted_at) > Date.parse(FIXED_CLOCK),
+            'the persisted anchor is a post-write (later) instant, not the pre-write moment'
+        );
+        // THE invariant from the finding: two real request STARTS are never
+        // closer than delayMs, regardless of how the per-request state-write
+        // durations vary (R18-P1 code yields 59800 here — the bug).
+        assert.ok(
+            fetchesAt[1] - fetchesAt[0] >= 60000,
+            `the real gap between the two request STARTS is at least delayMs (got ${fetchesAt[1] - fetchesAt[0]})`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('R17-P1 (Codex re-review on 317fdb0d8): the declared-length cancel is best-effort — a body without a cancel method still stops the run with the same safety error', async () => {
     const dir = tmpDir('fotmob-r17p1-nocancel-');
     try {

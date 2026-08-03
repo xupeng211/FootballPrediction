@@ -218,23 +218,18 @@ function createBoundedFetchAdapter(options = {}) {
             // request delay, immediately before the native fetch); that value
             // is what the manifest records — never the pre-wait moment.
             const returned = options.onBeforeFetch(url, requestCount);
-            if (typeof returned === 'string' && returned) {
-                requestAttemptedAt = returned;
-                // R18-P1 (Codex re-review on 6ca5e90be): RE-ANCHOR the pacing
-                // delay on that actual fetch-start moment. The callback runs
-                // a synchronous run-state write between the pre-callback
-                // anchor above and the native fetch; keeping the older anchor
-                // makes the next wait start from before that write, so the
-                // REAL gap between two request STARTS could be delayMs minus
-                // the state-write duration — with write times that vary
-                // between requests, the gap can fall below the 60000 ms
-                // minimum and trip server rate limiting. The same timestamp
-                // is what the callback persisted for cross-process resume, so
-                // the anchor and the resumed delay agree exactly.
-                const actualMs = Date.parse(returned);
-                if (!Number.isNaN(actualMs)) lastRequestAt = actualMs;
-            }
+            if (typeof returned === 'string' && returned) requestAttemptedAt = returned;
         }
+        // R18-P1 + R19-P1 (Codex re-review on 6ca5e90be / 52fadcf09): the
+        // pacing anchor is the ACTUAL fetch-start moment. The pre-fetch
+        // callback runs a synchronous run-state write between the anchor
+        // taken above and the native fetch; the adapter re-takes the anchor
+        // NOW — after the callback (and its write) completed, microseconds
+        // before fetchImpl — so the next request's wait is measured from the
+        // TRUE start of this request and the real gap between two request
+        // STARTS can never fall below delayMs, regardless of how long the
+        // per-request state writes took.
+        lastRequestAt = nowMs();
 
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -1173,10 +1168,24 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.last_network_request_attempted_at = attemptAt;
             runState.updated_at = attemptAt;
             writeRunStateLocked(runState);
+            // R19-P1 (Codex re-review on 52fadcf09): the synchronous write
+            // above is part of the pre-fetch path and takes real time — the
+            // native fetch only starts AFTER it completes, so an anchor
+            // taken before it is still too early: with state-write
+            // durations that vary between requests, the real gap between
+            // two request STARTS could fall below delayMs. Re-take the
+            // ACTUAL fetch-start moment AFTER the write and persist it
+            // (one follow-up write), so the pacing anchor, the manifest and
+            // the cross-process resume seed all agree on the same
+            // conservative post-write instant.
+            const actualAt = now();
+            runState.last_network_request_attempted_at = actualAt;
+            runState.updated_at = actualAt;
+            writeRunStateLocked(runState);
             // Return the actual attempt timestamp: the adapter records it on
             // the fetch result so the manifest never antedates the request
             // by the inter-request delay (P2, Codex re-review).
-            return attemptAt;
+            return actualAt;
         },
     });
 
