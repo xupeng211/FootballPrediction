@@ -28,6 +28,9 @@ const {
     executeCaptureRun,
     validateAuthorizationBinding,
     resolveGitRevision,
+    acquireRunLock,
+    releaseRunLock,
+    verifyRunLockOwnership,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
 
 const {
@@ -343,7 +346,6 @@ async function runCapture(args, deps = {}) {
     return out;
 }
 
-/* eslint-disable-next-line complexity */
 function runReplay(args, deps = {}) {
     const runDir = String(args['run-dir'] || '').trim();
     if (!runDir) {
@@ -376,7 +378,23 @@ function runReplay(args, deps = {}) {
         throw Object.assign(new Error(`replay run dir: ${err.message}`), { code: 'SAFETY_ERROR' });
     }
 
+    // R12-P2 (Codex re-review on cf500786e): replay shares the SAME
+    // cross-process run lock as capture (acquireRunLock from the pipeline).
+    // The lock is acquired BEFORE reading run state and held until every
+    // replay write (detail artifacts + run summary) completes — a concurrent
+    // capture or replay of the same run id fails closed instead of
+    // interleaving run-state/artifact writes with us.
     const fsImpl = deps.fsImpl || fs;
+    const runLock = acquireRunLock(runDir, { fsImpl });
+    try {
+        return runReplayLocked(args, deps, runDir, fsImpl, runLock);
+    } finally {
+        releaseRunLock(runDir, runLock, fsImpl);
+    }
+}
+
+/* eslint-disable-next-line complexity */
+function runReplayLocked(args, deps, runDir, fsImpl, runLock) {
     const runState = readRunState(runDir, fsImpl);
     if (!runState) {
         throw Object.assign(new Error('run-state.json not found in --run-dir'), { code: 'SAFETY_ERROR' });
@@ -595,6 +613,10 @@ function runReplay(args, deps = {}) {
         }
     }
 
+    // R12-P1/P2: verify we still own the run lock token before materializing
+    // any artifact — a displaced replay fails closed before its first write.
+    verifyRunLockOwnership(runLock, fsImpl);
+
     const replayed = [];
     for (const { ordinal, sourceMatchId, result } of materializePlan) {
         const written = writeDetailArtifact({
@@ -619,6 +641,8 @@ function runReplay(args, deps = {}) {
     // 1 => plan_candidate_count 3, captures_completed 1). Replay never
     // shrinks the declared plan. (summary + its target pre-check are built
     // BEFORE any artifact write — see the pre-check above.)
+    // R12-P1/P2: re-verify ownership before the final summary write.
+    verifyRunLockOwnership(runLock, fsImpl);
     writeRunSummary(runDir, summary, fsImpl);
 
     const out = {

@@ -2677,8 +2677,10 @@ test('R10-P1 (Codex re-review on 047f6afcb): a live holder of the run lock stops
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         const runDir = path.join(dir, 'out', 'runs', 'run-r10p1live');
+        // R12-P1 (Codex re-review on cf500786e): the ownership token is
+        // non-reusable — `pid:<pid>:<nonce>` (a bare pid is no token).
         fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
-        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), '12345', 'utf8');
+        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), 'pid:12345:9999', 'utf8');
 
         const calls = [];
         await assert.rejects(
@@ -2705,7 +2707,8 @@ test('R10-P1 (Codex re-review on 047f6afcb): a stale lock left by a dead holder 
         const runDir = path.join(dir, 'out', 'runs', 'run-r10p1stale');
         const lockDir = path.join(runDir, '.capture-run.lock');
         fs.mkdirSync(lockDir, { recursive: true });
-        fs.writeFileSync(path.join(lockDir, 'pid'), '999999', 'utf8');
+        // R12-P1: token-format lock left by a crashed (dead) holder.
+        fs.writeFileSync(path.join(lockDir, 'pid'), 'pid:999999:7777', 'utf8');
 
         const result = await executeCaptureRun(makeCaptureOptions({
             dir, plan, planPath, runId: 'run-r10p1stale', maxRequests: 1,
@@ -2968,6 +2971,145 @@ test('R11-P2-3 (Codex re-review on abf6fbc65): an oversized streamed body cancel
         assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:stream_/);
         assert.equal(cancelled, 1, 'the reader is cancelled once the cap is exceeded');
         assert.equal(reads, 2, 'reading stops as soon as the cap is exceeded');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// Round-10 (Codex re-review on cf500786e) — R12-P1 / R12-P2
+// ─────────────────────────────────────────────────────────────
+
+test('R12-P1 (Codex re-review on cf500786e): release never deletes a changed ownership token — a displaced holder leaves the new owner\'s lock intact', async () => {
+    const dir = tmpDir('fotmob-r12p1-release-');
+    try {
+        const { acquireRunLock, releaseRunLock } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        const runDir = path.join(dir, 'run');
+        fs.mkdirSync(runDir, { recursive: true });
+        const runLock = acquireRunLock(runDir, { fsImpl: fs, pid: 1111, pidAlive: () => true });
+
+        // A concurrent process takes over while we hold the lock: the lock
+        // path now carries a FOREIGN token (never ours, never empty).
+        const lockDir = path.join(runDir, '.capture-run.lock');
+        fs.rmSync(lockDir, { recursive: true, force: true });
+        fs.mkdirSync(lockDir, { recursive: true });
+        fs.writeFileSync(path.join(lockDir, 'pid'), 'pid:2222:55', 'utf8');
+
+        // Our release must rename-verify-restore: the foreign token is
+        // NEVER deleted (R12-P1 — process C must not delete B\'s lock).
+        releaseRunLock(runDir, runLock, fs);
+        assert.equal(fs.existsSync(lockDir), true, 'a foreign token is never deleted by our release');
+        assert.equal(
+            fs.readFileSync(path.join(lockDir, 'pid'), 'utf8'),
+            'pid:2222:55',
+            'the foreign ownership token is preserved verbatim'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R12-P1 (Codex re-review on cf500786e): a holder displaced mid-run fails closed at its next run-state write — the run stops with SAFETY_ERROR, zero further fetches, zero pairs', async () => {
+    const dir = tmpDir('fotmob-r12p1-theft-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const calls = [];
+        let theftDone = false;
+        // Proxy the fs so that right after the FIRST run-state write (the
+        // initial state), a concurrent process steals the run lock: the lock
+        // path is replaced with a foreign token.
+        const thievingFs = new Proxy(fs, {
+            get(target, prop) {
+                if (prop === 'writeFileSync') {
+                    return (...args) => {
+                        const ret = target.writeFileSync(...args);
+                        // writeRunState stages to a `.tmp-<pid>-<nonce>`
+                        // sibling first — match the run-state target by
+                        // containment, not suffix.
+                        if (!theftDone && String(args[0]).includes('run-state.json')) {
+                            theftDone = true;
+                            const runDir = path.dirname(String(args[0]));
+                            const lockDir = path.join(runDir, '.capture-run.lock');
+                            target.rmSync(lockDir, { recursive: true, force: true });
+                            target.mkdirSync(lockDir, { recursive: true });
+                            target.writeFileSync(path.join(lockDir, 'pid'), 'pid:77777:9', 'utf8');
+                        }
+                        return ret;
+                    };
+                }
+                return target[prop];
+            },
+        });
+
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({
+                dir, plan, planPath, runId: 'run-r12p1theft', maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])), calls),
+                extra: { fsImpl: thievingFs },
+            })),
+            (e) => e.code === 'SAFETY_ERROR' && /run lock ownership lost/.test(e.message)
+        );
+        assert.equal(calls.length, 0, 'no fetch may issue once ownership is lost (onBeforeFetch write verifies first)');
+        assert.equal(
+            fs.existsSync(path.join(dir, 'out', 'runs', 'run-r12p1theft', 'captures', '1-4506263.payload.json')),
+            false,
+            'no pair is retained by the displaced holder'
+        );
+        // The thief\'s lock survives (our release restored it).
+        assert.equal(
+            fs.readFileSync(path.join(dir, 'out', 'runs', 'run-r12p1theft', '.capture-run.lock', 'pid'), 'utf8'),
+            'pid:77777:9',
+            'the thief\'s token is never deleted'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R12-P2 (Codex re-review on cf500786e): replay shares the run lock — a live holder blocks replay with SAFETY_ERROR and zero artifacts; replay proceeds once the lock is released', async () => {
+    const dir = tmpDir('fotmob-r12p2-replaylock-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r12p2', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Simulate a concurrent capture process holding the SAME run lock
+        // the pipeline uses (the lock replay must now share). The holder is
+        // a REAL live child process — the CLI's default liveness check must
+        // see it as alive (an invented pid would be judged dead and taken
+        // over, masking the lock).
+        const { spawn } = require('node:child_process');
+        const holder = spawn('sleep', ['30']);
+        try {
+            const { acquireRunLock, releaseRunLock } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+            const held = acquireRunLock(run.runDir, { fsImpl: fs, pid: holder.pid });
+
+            assert.throws(
+                () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+                (e) => e.code === 'SAFETY_ERROR' && new RegExp(`another capture process \\(pid ${holder.pid}\\) holds the run lock`).test(e.message)
+            );
+            assert.equal(
+                fs.readdirSync(path.join(run.runDir, 'replay')).length,
+                0,
+                'zero replay artifacts while the lock is held'
+            );
+            assert.equal(
+                fs.existsSync(path.join(run.runDir, 'run-summary.json')),
+                true,
+                'the capture summary is untouched while the lock is held'
+            );
+
+            releaseRunLock(run.runDir, held, fs);
+        } finally {
+            holder.kill();
+        }
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1, 'replay proceeds once the lock is released');
+        assert.equal(
+            fs.existsSync(path.join(run.runDir, '.capture-run.lock')),
+            false,
+            'replay releases the run lock afterwards — no residue'
+        );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }

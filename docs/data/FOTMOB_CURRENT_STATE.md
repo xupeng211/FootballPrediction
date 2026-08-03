@@ -156,7 +156,19 @@ canonical interface.
   a COMPLETE lock (with a pid) is never deleted (rmdir fails ENOTEMPTY on a
   fresh lock), and the post-acquire ownership re-verification fails closed
   if the token was lost mid-takeover; release removes only the holder's own
-  token (round-9 P1).
+  token (round-9 P1). The ownership token is NON-REUSABLE (`pid:<pid>:<nonce>`
+  with a monotonic nonce, so an OS-pid-recycled process can never reproduce
+  a dead holder's token), and takeover/release use ATOMIC rename-based
+  grab/verify/restore: the lock dir is renamed to a private trash name,
+  deleted ONLY if the moved dir still carries the exact token that was
+  verified stale (or both absent), otherwise renamed back — a takeover or
+  release can never delete a token it did not verify, so process C can never
+  delete process B's lock (round-10 P1). The holder additionally RE-VERIFIES
+  ownership of the token before EVERY run-state write
+  (`verifyRunLockOwnership` → `SAFETY_ERROR:run lock ownership lost`): a
+  holder displaced mid-run fails closed at its next state write, BEFORE its
+  next fetch can issue — two processes can never both keep fetching under
+  the same run id (round-10 P1).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -230,7 +242,13 @@ canonical interface.
   league (round-9 P2). An oversized streamed body CANCELS the underlying
   reader before the run stops — a chunked server that keeps streaming past
   the 8 MiB cap can no longer hold the socket or block connection reuse
-  (round-9 P2).
+  (round-9 P2). Replay SHARES THE SAME cross-process run lock as capture:
+  `runReplay` acquires the identical `acquireRunLock` BEFORE reading the run
+  state and holds it until every replay write (detail artifacts + run
+  summary) completes, releasing in `finally` — a concurrent capture or
+  replay of the same run id fails closed instead of interleaving state or
+  artifact writes, and replay re-verifies lock ownership before the
+  artifact loop and before the summary write (round-10 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked

@@ -688,28 +688,49 @@ function resolveRunDirs(outputRoot, runId) {
  */
 const RUN_LOCK_DIR_NAME = '.capture-run.lock';
 
-// R10-P1 + R11-P1 (Codex re-review on 047f6afcb / abf6fbc65): cross-process
-// exclusive lock for a capture run id.
+// R10-P1 + R11-P1 + R12-P1 (Codex re-review on 047f6afcb / abf6fbc65 /
+// cf500786e): cross-process exclusive lock for a capture run id.
 //
-// ATOMIC OWNERSHIP TOKEN: the lock is a directory that appears atomically
-// COMPLETE — the holder writes its pid into a private temp dir and renames
-// the whole dir into place (rename is atomic). A competing process can
-// therefore never observe a "live lock without an owner": the R10 review's
-// mkdir→pid-write window is gone by construction, and the pid IS the
-// ownership token.
+// NON-REUSABLE OWNER TOKEN: the token is `pid:<pid>:<nonce>` where the
+// nonce is the monotonic process uptime — the same token can never be
+// produced by a later process (OS pid recycling cannot reproduce it). The
+// lock is a directory that appears atomically COMPLETE: the holder writes
+// its token into a private temp dir and renames the whole dir into place
+// (rename is atomic), so a competitor can never observe a "live lock
+// without an owner".
 //
-// STALE TAKEOVER: only a lock whose token was verified dead (or absent —
-// a state only a crashed holder can produce) is ever removed, by unlinking
-// the verified-dead pid and rmdir'ing the now-empty dir. A COMPLETE lock
-// (one with a pid) is never empty, so a takeover can never delete a NEW
-// owner's lock: rmdir fails ENOTEMPTY on a fresh lock and the taker
-// retries into a SAFETY_ERROR instead. The post-acquire ownership
-// re-verification closes the last residual race: a process whose token was
-// lost mid-takeover fails closed instead of running.
+// TAKEOVER NEVER DELETES A CHANGED TOKEN (R12-P1): a stale lock is grabbed
+// by renaming the lock dir to the taker's PRIVATE trash name (atomic —
+// whatever sits at the lock path at that instant moves there), and only if
+// the moved dir still carries the EXACT token that was verified dead (or
+// both are absent) is it deleted; otherwise it is renamed BACK. Rename is
+// the only destructive primitive, so a takeover can never delete a token
+// it did not verify — a new owner's lock is either restored or the taker
+// fails SAFETY_ERROR. Release follows the same rename-verify-restore
+// protocol: only the dir carrying OUR token is ever removed.
+//
+// OWNERSHIP RE-VERIFICATION (R12-P1): the holder re-reads its token before
+// every run-state write (verifyRunLockOwnership). If a concurrent takeover
+// displaced the lock, the displaced holder fails closed at its next write
+// BEFORE the next fetch — two processes can never both continue fetching
+// under the same run id.
 //
 // A live holder stops the competing run with SAFETY_ERROR before it can
 // read or overwrite run state. The lock is held until releaseRunLock and
 // released in finally on every path.
+function readRunLockToken(lockDir, fsImpl) {
+    try {
+        return String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim() || null;
+    } catch {
+        return null;
+    }
+}
+
+function parseRunLockToken(token) {
+    const m = /^pid:(\d+):/.exec(String(token || ''));
+    return m ? Number(m[1]) : null;
+}
+
 /* eslint-disable-next-line complexity */
 function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {}) {
     const isPidAlive = pidAlive || ((candidatePid) => {
@@ -721,16 +742,16 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
             return err && err.code === 'EPERM';
         }
     });
+    const ourToken = `pid:${pid}:${process.hrtime.bigint()}`;
     const lockDir = path.join(runDir, RUN_LOCK_DIR_NAME);
-    const tmpDir = path.join(runDir, `${RUN_LOCK_DIR_NAME}.tmp.${pid}.${Date.now()}`);
     for (let attempt = 0; attempt < 2; attempt += 1) {
+        const tmpDir = path.join(runDir, `${RUN_LOCK_DIR_NAME}.tmp.${pid}.${Date.now()}`);
         try {
             fsImpl.mkdirSync(tmpDir);
-            fsImpl.writeFileSync(path.join(tmpDir, 'pid'), String(pid), 'utf8');
-            // Atomic publish: the lock dir appears complete (dir + pid).
-            // rename over an existing EMPTY dir replaces it (a takeover of
-            // a crashed holder's empty lock); over a complete lock it fails
-            // ENOTEMPTY — a new owner's lock is never replaced.
+            fsImpl.writeFileSync(path.join(tmpDir, 'pid'), ourToken, 'utf8');
+            // Atomic publish: the lock dir appears complete (dir + token).
+            // rename over an existing EMPTY dir replaces it (a crashed
+            // holder's empty lock); over a complete lock it fails ENOTEMPTY.
             fsImpl.renameSync(tmpDir, lockDir);
         } catch (err) {
             // Best effort cleanup of OUR temp dir (never anyone else's).
@@ -741,30 +762,42 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Lock exists: read the ownership token and decide.
-            let holderPid = null;
-            try {
-                const pidText = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim();
-                if (/^\d+$/.test(pidText)) holderPid = Number(pidText);
-            } catch { /* missing / unreadable pid file */ }
+            // Lock exists: evaluate the CURRENT token.
+            const token = readRunLockToken(lockDir, fsImpl);
+            const holderPid = parseRunLockToken(token);
             if (holderPid !== null && holderPid !== Number(pid) && isPidAlive(holderPid)) {
                 throw Object.assign(
                     new Error(`SAFETY_ERROR:another capture process (pid ${holderPid}) holds the run lock`),
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Stale (dead holder, or a pid-less lock — only a crashed holder
-            // can produce one): take over exactly once and retry; a second
-            // failure means the lock cannot be taken.
+            // Stale (dead holder, or a token-less lock — only a crashed
+            // holder can produce one): take over exactly once and retry.
             if (attempt === 0) {
+                // ATOMIC GRAB: rename the lock dir to OUR private trash
+                // name. Whatever sits at the lock path at this instant is
+                // what we get — and only we can reach the trash name.
+                const trash = path.join(runDir, `${RUN_LOCK_DIR_NAME}.trash.${pid}.${Date.now()}`);
                 try {
-                    fsImpl.unlinkSync(path.join(lockDir, 'pid'));
-                } catch { /* already gone */ }
-                try {
-                    // rmdir only succeeds on an EMPTY dir: a complete lock
-                    // that a new owner just published is never deleted here.
-                    fsImpl.rmdirSync(lockDir);
-                } catch { /* non-empty: another process took over — the retry reports it */ }
+                    fsImpl.renameSync(lockDir, trash);
+                } catch { continue; } // raced out — the retry re-evaluates
+                const movedToken = readRunLockToken(trash, fsImpl);
+                if (String(movedToken ?? '') === String(token ?? '')) {
+                    // The moved dir still carries the EXACT token we
+                    // verified as stale — delete it and retry the publish.
+                    try { fsImpl.rmSync(trash, { recursive: true, force: true }); } catch { /* best effort */ }
+                } else {
+                    // The lock changed between evaluation and grab: a NEW
+                    // owner's lock was moved. Restore it — never delete a
+                    // token we did not verify.
+                    try {
+                        fsImpl.renameSync(trash, lockDir);
+                    } catch {
+                        // lockDir occupied again — the displaced owner will
+                        // fail its own ownership re-verification before its
+                        // next state write; leave the moved lock in trash.
+                    }
+                }
                 continue;
             }
             throw Object.assign(
@@ -772,42 +805,45 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                 { code: 'SAFETY_ERROR' }
             );
         }
-        // Owned — re-verify the token (R11-P1): if the lock is no longer
-        // ours (replaced during a concurrent takeover), fail closed rather
-        // than run unverified.
-        let ours = false;
-        try {
-            ours = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim() === String(pid);
-        } catch { ours = false; }
-        if (!ours) {
+        // Owned — verify OUR token is at the lock path (R11-P1 / R12-P1).
+        if (readRunLockToken(lockDir, fsImpl) !== ourToken) {
             throw Object.assign(
                 new Error('SAFETY_ERROR:run lock ownership lost during acquisition'),
                 { code: 'SAFETY_ERROR' }
             );
         }
-        return lockDir;
+        return { lockDir, ourToken };
     }
     /* istanbul ignore next -- loop always returns or throws */
     throw Object.assign(new Error('SAFETY_ERROR:run lock could not be acquired'), { code: 'SAFETY_ERROR' });
 }
 
-function releaseRunLock(runDir, lockDir, fsImpl = fs) {
-    if (!lockDir) return;
-    // Release ONLY our token: never delete a lock whose pid is not ours (a
-    // takeover replaced us — leave their lock alone), and never touch a
-    // lock with no pid at all.
-    let pidText = null;
+function releaseRunLock(runDir, runLock, fsImpl = fs) {
+    if (!runLock || !runLock.lockDir) return;
+    const { lockDir, ourToken } = runLock;
+    // Atomic rename-verify-restore: move whatever is at the lock path to a
+    // private trash name, delete it ONLY if it still carries OUR token;
+    // otherwise restore it (a takeover displaced us — never delete).
+    const trash = path.join(runDir, `${RUN_LOCK_DIR_NAME}.trash.${process.pid}.${Date.now()}`);
     try {
-        pidText = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim();
-    } catch { return; /* already released or unreadable */ }
-    if (!/^\d+$/.test(pidText)) return;
-    try {
-        fsImpl.unlinkSync(path.join(lockDir, 'pid'));
-    } catch { return; /* already gone */ }
-    try {
-        fsImpl.rmdirSync(lockDir);
-    } catch {
-        // Non-empty: another process is mid-takeover — leave it.
+        fsImpl.renameSync(lockDir, trash);
+    } catch { return; /* already released */ }
+    if (readRunLockToken(trash, fsImpl) === ourToken) {
+        try { fsImpl.rmSync(trash, { recursive: true, force: true }); } catch { /* best effort */ }
+    } else {
+        try {
+            fsImpl.renameSync(trash, lockDir);
+        } catch { /* occupied again — leave the moved lock; its owner re-verifies */ }
+    }
+}
+
+function verifyRunLockOwnership(runLock, fsImpl = fs) {
+    if (!runLock || !runLock.lockDir) return;
+    if (readRunLockToken(runLock.lockDir, fsImpl) !== runLock.ourToken) {
+        throw Object.assign(
+            new Error('SAFETY_ERROR:run lock ownership lost — another process took over the run lock'),
+            { code: 'SAFETY_ERROR' }
+        );
     }
 }
 
@@ -855,6 +891,10 @@ async function executeCaptureRun(options = {}) {
     // and writes — the lock is acquired BEFORE reading run state and held
     // until the final run-state write completes (released in finally, so
     // every path — success, error, stop — releases it).
+    // R12-P1 (Codex re-review on cf500786e): the holder additionally
+    // re-verifies ownership of the lock token before EVERY run-state write
+    // (writeRunStateLocked) — a displaced holder fails closed at its next
+    // write, so two processes can never both keep fetching under this id.
     const runLock = acquireRunLock(runDir, {
         fsImpl,
         pid: options.pid,
@@ -866,15 +906,23 @@ async function executeCaptureRun(options = {}) {
             runDir,
             capturesDir,
             replayDir,
-        });
+        }, runLock);
     } finally {
         releaseRunLock(runDir, runLock, fsImpl);
     }
 }
 
 /* eslint-disable-next-line complexity */
-async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, now, parser, dirs) {
+async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, now, parser, dirs, runLock) {
     const { runsDir, runDir, capturesDir, replayDir } = dirs;
+
+    // R12-P1: every run-state write first re-verifies that we still hold
+    // the run lock's ownership token — fail closed at the next write if a
+    // concurrent takeover displaced us (before the next fetch can issue).
+    const writeRunStateLocked = (runState) => {
+        verifyRunLockOwnership(runLock, fsImpl);
+        writeRunState(runDir, runState, fsImpl);
+    };
 
     // Resume: load existing run state bound to this exact run context.
     let runState = readRunState(runDir, fsImpl);
@@ -945,7 +993,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             collectorCodeRevision: binding.collectorCodeRevision,
             startedAt: now(),
         });
-        writeRunState(runDir, runState, fsImpl);
+        writeRunStateLocked(runState);
     }
 
     // Run-bound immutable plan snapshot BEFORE any real network request:
@@ -1027,7 +1075,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.last_network_request_attempted_at = attemptAt;
             runState.updated_at = attemptAt;
-            writeRunState(runDir, runState, fsImpl);
+            writeRunStateLocked(runState);
             // Return the actual attempt timestamp: the adapter records it on
             // the fetch result so the manifest never antedates the request
             // by the inter-request delay (P2, Codex re-review).
@@ -1120,7 +1168,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.updated_at = now();
-            writeRunState(runDir, runState, fsImpl);
+            writeRunStateLocked(runState);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
             // violations, timeouts, abort, read failures) stop the run. The
@@ -1132,7 +1180,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.updated_at = now();
-            writeRunState(runDir, runState, fsImpl);
+            writeRunStateLocked(runState);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')
                 ? 'budget_exhausted'
@@ -1331,7 +1379,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         runState.network_requests_made = runState.network_requests_attempted;
         runState.real_fotmob_network_requests = runState.network_requests_attempted;
         runState.updated_at = now();
-        writeRunState(runDir, runState, fsImpl);
+        writeRunStateLocked(runState);
     }
 
     const completed = completedOrdinals.size;
@@ -1345,7 +1393,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     runState.captures_completed = priorCapturesCompleted + runCapturesCompleted;
     runState.completed_ordinals = [...completedOrdinals].sort((a, b) => a - b);
     runState.updated_at = now();
-    writeRunState(runDir, runState, fsImpl);
+    writeRunStateLocked(runState);
 
     const summary = buildRunSummary(runState, plan, [...completedOrdinals]);
     writeRunSummary(runDir, summary, fsImpl);
@@ -1382,4 +1430,7 @@ module.exports = {
     evaluateAccessControl,
     resolveRunDirs,
     executeCaptureRun,
+    acquireRunLock,
+    releaseRunLock,
+    verifyRunLockOwnership,
 };
