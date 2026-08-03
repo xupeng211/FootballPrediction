@@ -95,18 +95,32 @@ canonical interface.
   attempts fails closed, a backwards clock waits the full delay — R3-P2-5) and
   is validated on every read (non-negative, monotonic, unique ordinals, no
   auto-fixing); attempted requests are counted before the fetch, so
-  failed/timeout requests are never recorded as zero.
+  failed/timeout requests are never recorded as zero. On resume, a pair left
+  on disk by a prior process that crashed between the pair write and the
+  run-state update is counted as a completion, so the persisted
+  `captures_completed` always equals `completed_ordinals.length` (round-2 P1);
+  the authorization gate validates the authorization id with the SAME contract
+  as the run-state validator, so an admitted id can never produce a record its
+  own consumer rejects (round-2 P2); the manifest `request_attempted_at` is
+  the ACTUAL attempt instant — recorded by the adapter's pre-fetch callback
+  after any inter-request delay, immediately before the native request — and
+  always equals the persisted run-state timestamp (round-2 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
   capture time — a tampered normalized field fails closed even when the file
-  hash and manifest self-hash were refreshed (R3-P2-1). Every replayed pair must
-  be bound to the run state's run id and authorization id
-  (`REPLAY_PAIR_CONTEXT_MISMATCH` otherwise, zero writes — R3-P2-2); the parser
-  code revision comes from the bound collector revision chain. The run summary
-  keeps the FULL plan scope (`plan_candidate_count` from the verified plan, not
-  the completed subset — R3-P2-6) and `parsed_at` is derived from the capture
-  record — repeated replays are byte-identical. Candidate identity comes
+  hash and manifest self-hash were refreshed (R3-P2-1). The payload's observed
+  identity (match id, source, conflict flag, response-derived flag) is bound
+  field-by-field to the verified manifest and must be response-derived with no
+  conflict (`REPLAY_PAYLOAD_OBSERVED_IDENTITY_MISMATCH` otherwise — round-2 P2).
+  Every replayed pair must be bound to the run state's run id and authorization
+  id (`REPLAY_PAIR_CONTEXT_MISMATCH` otherwise — R3-P2-2); replay is TWO-PHASE:
+  every pair is validated and built BEFORE any artifact is written, so a
+  mismatch on any later pair leaves zero artifacts on disk (round-2 P2); the
+  parser code revision comes from the bound collector revision chain. The run
+  summary keeps the FULL plan scope (`plan_candidate_count` from the verified
+  plan, not the completed subset — R3-P2-6) and `parsed_at` is derived from the
+  capture record — repeated replays are byte-identical. Candidate identity comes
   exclusively from the verified run plan snapshot, never from file names.
 
 No real detail-capture request has been made by the pipeline and no capture has
