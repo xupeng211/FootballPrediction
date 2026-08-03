@@ -796,6 +796,16 @@ async function executeCaptureRun(options = {}) {
                 fsImpl,
             });
             if (pairCheck.state === 'complete') {
+                // P1 (Codex re-review on cdcb7ae18): a pair left on disk by a
+                // prior process that crashed between writeCapturePair() and
+                // the run-state update is still one of THIS run's completed
+                // pairs. Count it here so the persisted captures_completed
+                // stays equal to completed_ordinals.length (the run-state
+                // contract); an ordinal already recorded in the prior state
+                // is never recounted.
+                if (!completedOrdinals.has(ordinal)) {
+                    runCapturesCompleted += 1;
+                }
                 completedOrdinals.add(ordinal);
                 continue;
             }
