@@ -131,7 +131,11 @@ canonical interface.
   declared scope: candidate `competition` must equal the plan's declared
   competition and candidate `season` must be one of the declared
   `selected_seasons` — a self-consistent but out-of-scope plan (recomputed
-  hash included) fails the CAPTURE gate (round-4 P2).
+  hash included) fails the CAPTURE gate (round-4 P2). The delay contract is
+  enforced in the authorization gate BEFORE any directory creation,
+  plan-snapshot or run-state write: `--delay-ms` below 60000, non-integer or
+  NaN fails closed with the run directory never created — no poisoned
+  run-state.json/plan.json can ever leave a RUN_ID unrecoverable (round-5 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -175,7 +179,12 @@ canonical interface.
   transactional materialization: `run-summary.json` is pre-checked BEFORE any
   artifact write (absent, or a regular file with byte-identical deterministic
   content; differing content or a directory/symlink fails closed) — the
-  zero-write guarantee now covers the summary too (round-4 P2).
+  zero-write guarantee now covers the summary too (round-4 P2). The captures
+  directory itself must be a REAL directory (lstat) with no symlink anywhere
+  in its ancestor chain, verified BEFORE any existsSync / readdirSync / pair
+  read — a completed run whose `captures/` was replaced by a symlink to
+  another directory can never replay the link target's pairs as this run's
+  retained evidence (round-5 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked
