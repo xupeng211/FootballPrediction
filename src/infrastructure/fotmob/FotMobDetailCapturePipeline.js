@@ -375,6 +375,18 @@ function validateAuthorizationBinding(options = {}) {
     } else if (requireExecute && String(env[REQUIRED_ENV_BUDGET] || '') !== String(maxRequests)) {
         errors.push(`environment variable ${REQUIRED_ENV_BUDGET} must equal max-requests`);
     }
+    // P2 (Codex re-review on d95b91d53): the delay contract is validated
+    // HERE — before any directory creation, plan-snapshot or run-state
+    // write. The adapter re-validates the same contract later, but a direct
+    // CLI call with --delay-ms=1 / non-integer / NaN would otherwise create
+    // the run directory and persist run-state.json + plan.json first and
+    // only then fail — leaving a POISONED run that a retry with the same
+    // RUN_ID can never recover (the persisted delay contract mismatch is
+    // permanent, since the run-state validator enforces it on every read).
+    const gateDelayMs = options.delayMs === undefined ? DEFAULT_DELAY_MS : Number(options.delayMs);
+    if (!Number.isInteger(gateDelayMs) || gateDelayMs < MIN_DELAY_MS) {
+        errors.push(`delay-ms must be an integer >= ${MIN_DELAY_MS}`);
+    }
 
     // Plan file must be a regular non-symlink file whose parsed document
     // carries the expected deterministic business hash. (File bytes are not
