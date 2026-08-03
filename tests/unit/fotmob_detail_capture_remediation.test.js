@@ -2820,3 +2820,155 @@ test('R10-P2-1 (Codex re-review on 047f6afcb): a body without a readable stream 
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-9 (Codex re-review on abf6fbc65) — R11-P1 / R11-P2-1 / R11-P2-2 / R11-P2-3
+// ─────────────────────────────────────────────────────────────
+
+test('R11-P1 (Codex re-review on abf6fbc65): a pid-less lock dir (crashed holder) is taken over atomically and the capture proceeds', async () => {
+    const dir = tmpDir('fotmob-r11p1-empty-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r11p1empty');
+        fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r11p1empty', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            extra: { pid: 54321, pidAlive: () => false },
+        }));
+        assert.equal(result.status, 'complete');
+        assert.equal(result.completedCount, 1);
+        assert.equal(fs.existsSync(path.join(runDir, '.capture-run.lock')), false, 'lock released after the run');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R11-P2-1 (Codex re-review on abf6fbc65): resume binds manifest AND payload plan identity to the CURRENT plan candidate — a consistent dual-tamper (both files swapped) never counts the pair complete', async () => {
+    const dir = tmpDir('fotmob-r11p21-dual-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r11p21', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Swap the SAME identity field (competition) in BOTH the payload AND
+        // the manifest — the payload↔manifest checks pass because both agree.
+        // Recompute the payload business hash (the projection covers
+        // competition), refresh the payload file hash, the manifest's
+        // declared business hash and its self-hash, and KEEP the original
+        // candidate_identity_sha256 (nothing recomputes it from the manifest
+        // identity fields). Only the direct binding to expectedCandidate can
+        // catch the swap; the manifest still must match the CURRENT plan.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.competition = 'Some Other League';
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.competition = 'Some Other League';
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r11p21', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'a consistent dual-tamper stops the resume');
+        assert.match(resumed.stopReason, /RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH:manifest\.competition vs plan candidate/);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R11-P2-2 (Codex re-review on abf6fbc65): replay binds league_id to the run plan — a synchronized payload+manifest league swap fails closed with zero artifacts', async () => {
+    const dir = tmpDir('fotmob-r11p22-league-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r11p22', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Sanity: a clean replay passes.
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1);
+        fs.rmSync(path.join(run.runDir, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(run.runDir, 'run-summary.json'), { force: true });
+
+        // Swap league_id in BOTH files to a wrong league and refresh every
+        // hash replay checks — the payload↔manifest comparison passes; only
+        // the binding to the run plan's top-level league id can catch it.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.league_id = '99';
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.league_id = '99';
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH: league_id does not match verified manifest \/ run plan league id/.test(e.message)
+        );
+        const replayDir = path.join(run.runDir, 'replay');
+        assert.equal(
+            !fs.existsSync(replayDir) || fs.readdirSync(replayDir).length === 0,
+            true,
+            'zero artifacts written for a swapped league id'
+        );
+        assert.equal(fs.existsSync(path.join(run.runDir, 'run-summary.json')), false, 'no summary written');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R11-P2-3 (Codex re-review on abf6fbc65): an oversized streamed body cancels the underlying reader before the run stops', async () => {
+    const dir = tmpDir('fotmob-r11p23-cancel-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        // chunk = half the cap + 1: two chunks exceed the cap on the second read.
+        const chunk = Math.floor(MAX_BODY_BYTES / 2) + 1;
+        let cancelled = 0;
+        let reads = 0;
+        // A server that keeps streaming forever (chunked, never closes):
+        // the pre-close test stream would mask whether cancel() is issued.
+        const body = {
+            getReader() {
+                return {
+                    async read() {
+                        reads += 1;
+                        return { done: false, value: new Uint8Array(chunk) };
+                    },
+                    async cancel() {
+                        cancelled += 1;
+                    },
+                };
+            },
+        };
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: () => null },
+            body,
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r11p23', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:stream_/);
+        assert.equal(cancelled, 1, 'the reader is cancelled once the cap is exceeded');
+        assert.equal(reads, 2, 'reading stops as soon as the cap is exceeded');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

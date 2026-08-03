@@ -148,7 +148,15 @@ canonical interface.
   path). A live holder stops the competing run with `SAFETY_ERROR` before
   any fetch or state write — two processes can never interleave state
   reads/writes for the same run id; a stale lock left by a dead pid is
-  broken exactly once and retried (round-8 P1).
+  broken exactly once and retried (round-8 P1). The lock uses an ATOMIC
+  OWNERSHIP TOKEN: the holder writes its pid into a private temp dir and
+  renames the whole dir into place (rename is atomic) — a competing process
+  can never observe a "live lock without an owner" (round-9 P1). Stale
+  takeover unlinks only a verified-dead pid and rmdir's the now-empty dir:
+  a COMPLETE lock (with a pid) is never deleted (rmdir fails ENOTEMPTY on a
+  fresh lock), and the post-acquire ownership re-verification fails closed
+  if the token was lost mid-takeover; release removes only the holder's own
+  token (round-9 P1).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -208,7 +216,21 @@ canonical interface.
   the same plan-identity binding: `payload.competition` / `league_id` /
   `season` / `expected_identity.*` must equal the manifest's declared values
   before a pair is treated as completed (`RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH`
-  otherwise — round-8 P2).
+  otherwise — round-8 P2). Resume binds the plan identity DIRECTLY to the
+  current plan candidate, not only to the manifest: a tamperer who swaps the
+  SAME identity fields in BOTH files (recomputing business/file/self hashes
+  and keeping the original candidate_identity_sha256, which nothing
+  recomputes from manifest fields) still fails closed — manifest AND payload
+  `competition` / `league_id` / `season` / home/away/kickoff are each
+  compared against `expectedCandidate` (round-9 P2). Replay binds `league_id`
+  to the run plan's TOP-LEVEL league id in addition to the
+  payload↔manifest comparison — a synchronized league swap in both files
+  fails closed with `REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH` and zero
+  artifacts, so the artifact's structured hash can never bind to the wrong
+  league (round-9 P2). An oversized streamed body CANCELS the underlying
+  reader before the run stops — a chunked server that keeps streaming past
+  the 8 MiB cap can no longer hold the socket or block connection reuse
+  (round-9 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked

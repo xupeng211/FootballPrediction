@@ -45,6 +45,7 @@ const {
     validateAndRecomputeCapturePlan,
     validateCaptureManifest,
     buildCapturePayload,
+    REQUIRED_LEAGUE_ID,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 const {
     buildDeterministicCapturePlan,
@@ -938,6 +939,7 @@ test('RETENTION: checkCompletedPair distinguishes complete/partial/mismatch and 
             expectedSourceArtifactSha256: plan.source_artifact_sha256,
             expectedCandidate: candidate,
             expectedRequestUrl: `https://www.fotmob.com/match/${candidate.source_match_id}`,
+            expectedLeagueId: REQUIRED_LEAGUE_ID,
         };
         const complete = checkCompletedPair(expected);
         assert.equal(complete.state, 'complete');

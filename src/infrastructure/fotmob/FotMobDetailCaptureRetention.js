@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 //
 // FotMob bounded detail capture — retention and replay support.
@@ -604,10 +606,46 @@ function checkCompletedPair(args = {}) {
         };
     }
 
+    // R11-P2-1 (Codex re-review on abf6fbc65): the plan identity must bind
+    // to the CURRENT plan candidate, not only to the manifest. A tamperer
+    // who swaps the SAME identity fields in BOTH payload and manifest
+    // (recomputing business/file/self hashes and keeping the original
+    // candidate_identity_sha256 — which nothing here recomputes from the
+    // manifest's identity fields) would otherwise pass every
+    // payload↔manifest check while the pair actually belongs to a DIFFERENT
+    // plan candidate: resume would count it complete and only a later
+    // replay would reject it. Bind manifest AND payload plan-identity
+    // fields directly to expectedCandidate (and the league id to the
+    // run's REQUIRED league id). Missing expected values fail closed.
+    const expectedCandidate = args.expectedCandidate || {};
+    const expectedLeagueId = args.expectedLeagueId;
+    const planIdentityChecks = [
+        ['manifest.competition vs plan candidate', manifest.competition, expectedCandidate.competition],
+        ['manifest.league_id vs plan', manifest.league_id, expectedLeagueId],
+        ['manifest.season vs plan candidate', manifest.season, expectedCandidate.season],
+        ['manifest.home_team vs plan candidate', manifest.home_team, expectedCandidate.home_team],
+        ['manifest.away_team vs plan candidate', manifest.away_team, expectedCandidate.away_team],
+        ['manifest.kickoff_at vs plan candidate', manifest.kickoff_at, expectedCandidate.kickoff_at],
+        ['payload.competition vs plan candidate', payload.competition, expectedCandidate.competition],
+        ['payload.league_id vs plan', payload.league_id, expectedLeagueId],
+        ['payload.season vs plan candidate', payload.season, expectedCandidate.season],
+        ['payload.expected_identity.home_team vs plan candidate', payloadExpected.home_team, expectedCandidate.home_team],
+        ['payload.expected_identity.away_team vs plan candidate', payloadExpected.away_team, expectedCandidate.away_team],
+        ['payload.expected_identity.kickoff_at vs plan candidate', payloadExpected.kickoff_at, expectedCandidate.kickoff_at],
+    ];
+    for (const [label, actual, expected] of planIdentityChecks) {
+        if (String(actual ?? '') !== String(expected ?? '')) {
+            return {
+                completed: false,
+                state: 'mismatch',
+                detail: `RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH:${label}`,
+            };
+        }
+    }
+
     // Exact run-context binding — any field that does not match the current
     // run, plan, artifact, authorization or candidate is a mismatch that
     // stops the run; it is NEVER treated as completed.
-    const expectedCandidate = args.expectedCandidate || {};
     const checks = [
         ['manifest.source_match_id', manifest.source_match_id, sourceMatchId],
         ['manifest.request_ordinal', Number(manifest.request_ordinal), ordinal],
@@ -910,8 +948,16 @@ function replayCapturePair(args = {}) {
         String(payload.competition ?? '') !== String(planCandidate.competition ?? '')) {
         planIdentityMismatch('competition does not match verified manifest / run plan snapshot');
     }
-    if (String(payload.league_id ?? '') !== String(manifest.league_id ?? '')) {
-        planIdentityMismatch('league_id does not match verified manifest');
+    // R11-P2-2 (Codex re-review on abf6fbc65): league_id is a PLAN-level
+    // field (it lives on the plan, not on each candidate) — a
+    // payload↔manifest comparison alone lets a tamperer sync both files to
+    // a different league id and have the artifact's structured hash bind to
+    // the WRONG league. Bind BOTH files to the verified run plan's top-level
+    // league id; a missing run plan league id fails closed.
+    if (String(payload.league_id ?? '') !== String(manifest.league_id ?? '') ||
+        String(payload.league_id ?? '') !== String(runPlan.league_id ?? '') ||
+        String(manifest.league_id ?? '') !== String(runPlan.league_id ?? '')) {
+        planIdentityMismatch('league_id does not match verified manifest / run plan league id');
     }
     if (String(payload.season ?? '') !== String(manifest.season ?? '') ||
         String(payload.season ?? '') !== String(planCandidate.season ?? '')) {

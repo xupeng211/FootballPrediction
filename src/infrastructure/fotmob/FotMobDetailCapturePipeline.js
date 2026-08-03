@@ -272,6 +272,17 @@ function createBoundedFetchAdapter(options = {}) {
                         if (done) break;
                         total += value ? value.byteLength : 0;
                         if (total > MAX_BODY_BYTES) {
+                            // R11-P2-3 (Codex re-review on abf6fbc65): cancel
+                            // the underlying stream BEFORE throwing — a
+                            // chunked server that keeps streaming past the
+                            // cap would otherwise leave the socket owned by
+                            // this request, blocking reuse and holding the
+                            // process.
+                            if (typeof stream.cancel === 'function') {
+                                try {
+                                    await stream.cancel();
+                                } catch { /* best effort — the error below is the outcome */ }
+                            }
                             throw Object.assign(
                                 new Error(`SAFETY_ERROR:oversized_response_body:stream_${total}/${MAX_BODY_BYTES}`),
                                 { code: 'SAFETY_ERROR' }
@@ -677,14 +688,28 @@ function resolveRunDirs(outputRoot, runId) {
  */
 const RUN_LOCK_DIR_NAME = '.capture-run.lock';
 
-// R10-P1 (Codex re-review on 047f6afcb): cross-process exclusive lock for a
-// capture run id. mkdir is atomic, so a dedicated lock directory inside the
-// run dir is an exclusive marker: the first process to create it wins and
-// holds it until releaseRunLock removes it. The holder's pid is persisted
-// inside so a crashed holder can be detected: a pid that is no longer alive
-// marks a STALE lock, which is broken exactly once and retried; a live pid
-// means another process owns the run — the competing run stops with
-// SAFETY_ERROR before it can read or overwrite run state.
+// R10-P1 + R11-P1 (Codex re-review on 047f6afcb / abf6fbc65): cross-process
+// exclusive lock for a capture run id.
+//
+// ATOMIC OWNERSHIP TOKEN: the lock is a directory that appears atomically
+// COMPLETE — the holder writes its pid into a private temp dir and renames
+// the whole dir into place (rename is atomic). A competing process can
+// therefore never observe a "live lock without an owner": the R10 review's
+// mkdir→pid-write window is gone by construction, and the pid IS the
+// ownership token.
+//
+// STALE TAKEOVER: only a lock whose token was verified dead (or absent —
+// a state only a crashed holder can produce) is ever removed, by unlinking
+// the verified-dead pid and rmdir'ing the now-empty dir. A COMPLETE lock
+// (one with a pid) is never empty, so a takeover can never delete a NEW
+// owner's lock: rmdir fails ENOTEMPTY on a fresh lock and the taker
+// retries into a SAFETY_ERROR instead. The post-acquire ownership
+// re-verification closes the last residual race: a process whose token was
+// lost mid-takeover fails closed instead of running.
+//
+// A live holder stops the competing run with SAFETY_ERROR before it can
+// read or overwrite run state. The lock is held until releaseRunLock and
+// released in finally on every path.
 /* eslint-disable-next-line complexity */
 function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {}) {
     const isPidAlive = pidAlive || ((candidatePid) => {
@@ -697,17 +722,26 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
         }
     });
     const lockDir = path.join(runDir, RUN_LOCK_DIR_NAME);
+    const tmpDir = path.join(runDir, `${RUN_LOCK_DIR_NAME}.tmp.${pid}.${Date.now()}`);
     for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
-            fsImpl.mkdirSync(lockDir);
+            fsImpl.mkdirSync(tmpDir);
+            fsImpl.writeFileSync(path.join(tmpDir, 'pid'), String(pid), 'utf8');
+            // Atomic publish: the lock dir appears complete (dir + pid).
+            // rename over an existing EMPTY dir replaces it (a takeover of
+            // a crashed holder's empty lock); over a complete lock it fails
+            // ENOTEMPTY — a new owner's lock is never replaced.
+            fsImpl.renameSync(tmpDir, lockDir);
         } catch (err) {
-            if (!err || err.code !== 'EEXIST') {
+            // Best effort cleanup of OUR temp dir (never anyone else's).
+            try { fsImpl.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+            if (!err || (err.code !== 'EEXIST' && err.code !== 'ENOTEMPTY')) {
                 throw Object.assign(
                     new Error(`SAFETY_ERROR:run lock could not be created: ${String(err && err.message || err)}`),
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Lock exists: is the holder still alive?
+            // Lock exists: read the ownership token and decide.
             let holderPid = null;
             try {
                 const pidText = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim();
@@ -719,12 +753,18 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Stale (dead holder or unreadable pid): break it exactly once
-            // and retry; a second failure means the lock cannot be taken.
+            // Stale (dead holder, or a pid-less lock — only a crashed holder
+            // can produce one): take over exactly once and retry; a second
+            // failure means the lock cannot be taken.
             if (attempt === 0) {
                 try {
-                    fsImpl.rmSync(lockDir, { recursive: true, force: true });
-                } catch { /* best effort — the retry reports failure */ }
+                    fsImpl.unlinkSync(path.join(lockDir, 'pid'));
+                } catch { /* already gone */ }
+                try {
+                    // rmdir only succeeds on an EMPTY dir: a complete lock
+                    // that a new owner just published is never deleted here.
+                    fsImpl.rmdirSync(lockDir);
+                } catch { /* non-empty: another process took over — the retry reports it */ }
                 continue;
             }
             throw Object.assign(
@@ -732,11 +772,19 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                 { code: 'SAFETY_ERROR' }
             );
         }
-        // Lock acquired — record the holder pid (best effort: a lock without
-        // a pid file is still exclusive; stale recovery covers missing pids).
+        // Owned — re-verify the token (R11-P1): if the lock is no longer
+        // ours (replaced during a concurrent takeover), fail closed rather
+        // than run unverified.
+        let ours = false;
         try {
-            fsImpl.writeFileSync(path.join(lockDir, 'pid'), String(pid), 'utf8');
-        } catch { /* non-fatal: the lock itself remains exclusive */ }
+            ours = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim() === String(pid);
+        } catch { ours = false; }
+        if (!ours) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:run lock ownership lost during acquisition'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         return lockDir;
     }
     /* istanbul ignore next -- loop always returns or throws */
@@ -745,19 +793,21 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
 
 function releaseRunLock(runDir, lockDir, fsImpl = fs) {
     if (!lockDir) return;
+    // Release ONLY our token: never delete a lock whose pid is not ours (a
+    // takeover replaced us — leave their lock alone), and never touch a
+    // lock with no pid at all.
+    let pidText = null;
     try {
-        // Symlink-safe removal: lstat first — a symlink planted at the lock
-        // location is unlinked (never followed).
-        const st = fsImpl.lstatSync(lockDir);
-        if (st.isSymbolicLink() || !st.isDirectory()) {
-            fsImpl.rmSync(lockDir, { force: true });
-        } else {
-            fsImpl.rmSync(lockDir, { recursive: true, force: true });
-        }
+        pidText = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim();
+    } catch { return; /* already released or unreadable */ }
+    if (!/^\d+$/.test(pidText)) return;
+    try {
+        fsImpl.unlinkSync(path.join(lockDir, 'pid'));
+    } catch { return; /* already gone */ }
+    try {
+        fsImpl.rmdirSync(lockDir);
     } catch {
-        // A failed release is not a run failure: the stale-lock recovery in
-        // acquireRunLock handles it on the next attempt. Never mask the run
-        // result with a cleanup error.
+        // Non-empty: another process is mid-takeover — leave it.
     }
 }
 
@@ -1007,6 +1057,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 expectedRequestBudget: binding.maxRequests,
                 expectedDelayMs: delayMs,
                 expectedCollectorCodeRevision: binding.collectorCodeRevision,
+                expectedLeagueId: REQUIRED_LEAGUE_ID,
                 fsImpl,
             });
             if (pairCheck.state === 'complete') {
