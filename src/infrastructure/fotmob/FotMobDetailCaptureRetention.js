@@ -28,6 +28,7 @@ const {
     validateCaptureManifest,
     validateDetailArtifact,
     validateAndRecomputeCapturePlan,
+    computeStableCapturePayloadSha256,
     sha256Hex,
     sha256Text,
     isPlainObject,
@@ -578,8 +579,23 @@ function replayCapturePair(args = {}) {
     if (!isPlainObject(payload) || payload.schema_version !== PAYLOAD_SCHEMA_VERSION) {
         throw Object.assign(new Error('replay failed: payload has unknown schema'), { code: 'SAFETY_ERROR' });
     }
-    if (payload.stable_payload_sha256 !== manifest.stable_payload_sha256) {
-        throw Object.assign(new Error('replay failed: payload stable_payload_sha256 does not match manifest'), { code: 'SAFETY_ERROR' });
+    // R3-P2-1 (Codex final-head review): the payload's business hash is
+    // RECOMPUTED at replay time with the same shared projection used by the
+    // capture builder — a tampered business field (e.g. normalized nested
+    // data) fails closed even when the payload file hash and the manifest
+    // self-hash were refreshed to match.
+    const recomputedPayloadHash = computeStableCapturePayloadSha256(payload);
+    if (recomputedPayloadHash !== String(payload.stable_payload_sha256 || '')) {
+        throw Object.assign(
+            new Error('replay failed: recomputed payload business hash does not match payload stable_payload_sha256'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (recomputedPayloadHash !== String(manifest.stable_payload_sha256 || '')) {
+        throw Object.assign(
+            new Error('replay failed: recomputed payload business hash does not match manifest stable_payload_sha256'),
+            { code: 'SAFETY_ERROR' }
+        );
     }
     if (payload.source_match_id !== sourceMatchId) {
         throw Object.assign(new Error('replay failed: payload source_match_id mismatch'), { code: 'SAFETY_ERROR' });

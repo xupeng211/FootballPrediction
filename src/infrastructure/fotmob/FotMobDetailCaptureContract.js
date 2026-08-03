@@ -1002,6 +1002,48 @@ function validateCaptureManifest(manifest) {
  * @returns {object} payload document (with stable_payload_sha256)
  */
 /* eslint-disable-next-line complexity */
+/**
+ * Shared business projection of the stable capture payload (Codex
+ * re-review P2-1). The SAME projection is used to build the hash at CAPTURE
+ * time and to RECOMPUTE it at REPLAY time, so a tampered normalized /
+ * identity field — even with a refreshed payload file hash and manifest
+ * self-hash — fails closed at replay.
+ *
+ * Business fields: schema_version, source_provider, source_match_id,
+ * candidate_id, competition, league_id, season, expected_identity,
+ * observed_identity, normalized and the parser component / version /
+ * output-contract-version fields. Self-hash (stable_payload_sha256), file
+ * hash, manifest hash and non-contract timestamps are excluded by
+ * construction — they are not part of the projection.
+ */
+function computeStableCapturePayloadBusinessProjection(payload = {}) {
+    return {
+        schema_version: payload.schema_version,
+        source_provider: payload.source_provider,
+        source_match_id: payload.source_match_id,
+        candidate_id: payload.candidate_id,
+        competition: payload.competition,
+        league_id: payload.league_id,
+        season: payload.season,
+        expected_identity: payload.expected_identity,
+        observed_identity: payload.observed_identity,
+        normalized: payload.normalized,
+        parser_component: payload.parser_component,
+        parser_version: payload.parser_version,
+        parser_output_contract_version: payload.parser_output_contract_version,
+    };
+}
+
+/**
+ * Recomputed business hash of the stable capture payload. Deterministic:
+ * identical payload business fields always produce the identical hash,
+ * independent of when or where it is recomputed.
+ */
+function computeStableCapturePayloadSha256(payload = {}) {
+    return canonicalJsonHash(computeStableCapturePayloadBusinessProjection(payload));
+}
+
+/* eslint-disable-next-line complexity */
 function buildCapturePayload(args = {}) {
     const candidate = args.candidate || {};
     const parsedData = args.parsedData || {};
@@ -1050,18 +1092,9 @@ function buildCapturePayload(args = {}) {
         parser_version: 'V174.0.0',
         parser_output_contract_version: 'fotmob-match-detail-parsed/v1',
     };
-    const projection = {
-        source_provider: payload.source_provider,
-        source_match_id: payload.source_match_id,
-        candidate_id: payload.candidate_id,
-        competition: payload.competition,
-        league_id: payload.league_id,
-        season: payload.season,
-        expected_identity: expectedIdentity,
-        observed_identity: observedIdentity,
-        normalized,
-    };
-    payload.stable_payload_sha256 = canonicalJsonHash(projection);
+    // Shared business projection: buildCapturePayload and REPLAY recompute
+    // the same hash from the same fields (P2-1).
+    payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
     return payload;
 }
 
@@ -1172,6 +1205,8 @@ module.exports = {
     computeCapturePlanBusinessProjection,
     validateAndRecomputeCapturePlan,
     computeCaptureManifestSelfHash,
+    computeStableCapturePayloadBusinessProjection,
+    computeStableCapturePayloadSha256,
     validateCandidateArtifact,
     readAndValidateCandidateArtifact,
     evaluateContentValidity,
