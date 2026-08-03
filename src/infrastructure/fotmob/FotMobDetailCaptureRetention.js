@@ -541,6 +541,36 @@ function replayCapturePair(args = {}) {
             { code: 'SAFETY_ERROR' }
         );
     }
+    // R3-P2-2 (Codex final-head review): the capture pair must be bound to
+    // THIS run and THIS authorization — a pair captured under another
+    // run/authorization is REPLAY_PAIR_CONTEXT_MISMATCH and must fail
+    // closed before any artifact or summary write.
+    const expectedRunId = String(args.expectedRunId || '');
+    const expectedAuthorizationId = String(args.expectedAuthorizationId || '');
+    if (!expectedRunId || !expectedAuthorizationId) {
+        throw Object.assign(
+            new Error('replay failed: expected run id and authorization id required'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (String(manifest.capture_run_id || '') !== expectedRunId) {
+        throw Object.assign(
+            new Error(
+                `REPLAY_PAIR_CONTEXT_MISMATCH: manifest capture_run_id ${String(manifest.capture_run_id || '')} ` +
+                `does not match run state run_id ${expectedRunId}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (String(manifest.authorization_id || '') !== expectedAuthorizationId) {
+        throw Object.assign(
+            new Error(
+                `REPLAY_PAIR_CONTEXT_MISMATCH: manifest authorization_id ${String(manifest.authorization_id || '')} ` +
+                `does not match run state authorization_id ${expectedAuthorizationId}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
     if (manifest.payload_file_sha256 !== payloadFileSha256) {
         throw Object.assign(new Error('replay failed: payload file hash does not match manifest payload_file_sha256'), { code: 'SAFETY_ERROR' });
     }

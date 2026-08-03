@@ -405,6 +405,23 @@ function validateAuthorizationBinding(options = {}) {
     });
     validateCollectorCodeRevision(collectorCodeRevision);
 
+    // R3-P2-3 (Codex final-head review): the collector HEAD must be EXACTLY
+    // the revision that generated the plan. The plan generator binds
+    // generator_code_revision to the generating HEAD (clean worktree, full
+    // 40-hex); a plan generated at any other HEAD must fail closed before a
+    // native fetch or a formal run-state write. Both preflight and execute
+    // surface PLAN_REVISION_HEAD_MISMATCH.
+    const planGeneratorRevision = String(options.plan && options.plan.generator_code_revision || '');
+    if (planGeneratorRevision !== collectorCodeRevision) {
+        throw Object.assign(
+            new Error(
+                `PLAN_REVISION_HEAD_MISMATCH: plan generator_code_revision ${planGeneratorRevision || '(missing)'} ` +
+                `does not match collector HEAD ${collectorCodeRevision}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
     return {
         authorizationId,
         expectedPlanSha256,

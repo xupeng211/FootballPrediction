@@ -415,23 +415,42 @@ function runReplay(args, deps = {}) {
 
         // Fully offline and deterministic: identity from the run snapshot,
         // parsed_at derived from the capture record — no wall clock.
-        // The parser code revision comes from the verified run plan snapshot
-        // (generator_code_revision is enforced 40-hex by the plan contract)
-        // so the canonical make replay path never writes an empty or
-        // unverifiable revision (Codex re-review P2).
-        const parserCodeRevision = String(runPlan.generator_code_revision || deps.parserCodeRevision || '');
+        // The parser code revision comes from the BOUND collector revision
+        // chain (R3-P2-3): the run plan snapshot's generator_code_revision
+        // and the run state's collector_code_revision must agree (the
+        // capture gate requires both to equal the HEAD that ran the
+        // capture). A chain mismatch fails closed — replay never writes an
+        // empty or unverifiable revision (Codex re-review P2).
+        const planRevision = String(runPlan.generator_code_revision || '');
+        const runStateRevision = String(runState.collector_code_revision || '');
+        const parserCodeRevision = planRevision || runStateRevision || String(deps.parserCodeRevision || '');
         if (!/^[0-9a-f]{40}$/.test(parserCodeRevision)) {
             throw Object.assign(
                 new Error('replay failed: parser code revision must be 40-hex from the run plan snapshot'),
                 { code: 'SAFETY_ERROR' }
             );
         }
+        if (planRevision && runStateRevision && planRevision !== runStateRevision) {
+            throw Object.assign(
+                new Error(
+                    'replay failed: collector revision chain mismatch — ' +
+                    `plan snapshot generator_code_revision ${planRevision} vs run state collector_code_revision ${runStateRevision}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        // R3-P2-2: every replayed pair must be bound to THIS run state —
+        // a pair captured under another run id / authorization id is
+        // REPLAY_PAIR_CONTEXT_MISMATCH and fails closed before any artifact
+        // or summary write.
         const result = replayCapturePair({
             runDir,
             ordinal,
             sourceMatchId,
             runPlan,
             parserCodeRevision,
+            expectedRunId: String(runState.run_id || ''),
+            expectedAuthorizationId: String(runState.authorization_id || ''),
             fsImpl,
         });
         const written = writeDetailArtifact({
