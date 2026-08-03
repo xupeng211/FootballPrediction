@@ -724,6 +724,36 @@ function replayCapturePair(args = {}) {
     if (payload.candidate_id !== String(planCandidate.candidate_id || '')) {
         throw Object.assign(new Error('replay failed: payload candidate_id does not match run plan snapshot'), { code: 'SAFETY_ERROR' });
     }
+    // P2 (Codex re-review on cdcb7ae18): bind the payload's OBSERVED IDENTITY
+    // to the verified manifest, field by field. Hash equality alone is not
+    // enough — a tamperer who recomputes the business hash and refreshes the
+    // manifest hashes could otherwise swap in a request-side or conflicting
+    // observed identity. The observed identity must be response-derived with
+    // no conflict, or replay fails closed before any artifact write.
+    const payloadObserved = isPlainObject(payload.observed_identity) ? payload.observed_identity : {};
+    const observedIdentityMismatch = (field) => {
+        throw Object.assign(
+            new Error(`REPLAY_PAYLOAD_OBSERVED_IDENTITY_MISMATCH: ${field}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    };
+    if (String(payloadObserved.observed_match_id ?? '') !== String(manifest.observed_match_id ?? '')) {
+        observedIdentityMismatch('observed_match_id does not match verified manifest');
+    }
+    if (String(payloadObserved.observed_match_id_source ?? '') !== String(manifest.observed_match_id_source ?? '')) {
+        observedIdentityMismatch('observed_match_id_source does not match verified manifest');
+    }
+    if ((payloadObserved.observed_match_id_conflict === true) !== (manifest.observed_match_id_conflict === true)) {
+        observedIdentityMismatch('observed_match_id_conflict does not match verified manifest');
+    }
+    if ((payloadObserved.observed_match_id_is_response_derived === true) !==
+        (manifest.observed_match_id_is_response_derived === true)) {
+        observedIdentityMismatch('observed_match_id_is_response_derived does not match verified manifest');
+    }
+    if (payloadObserved.observed_match_id_is_response_derived !== true ||
+        payloadObserved.observed_match_id_conflict === true) {
+        observedIdentityMismatch('observed identity must be response-derived with no conflict');
+    }
 
     // Structured payload hash = the payload's own business projection hash
     // (deterministic — identical bytes on every replay).
