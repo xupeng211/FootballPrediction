@@ -420,8 +420,31 @@ function runReplay(args, deps = {}) {
 
     const capturesDir = path.join(runDir, 'captures');
     const replayDir = path.join(runDir, 'replay');
-    if (!fsImpl.existsSync(capturesDir)) {
+    // P2 (Codex re-review on d95b91d53): the captures directory itself must
+    // be a REAL directory (lstat) with no symlink anywhere in its ancestor
+    // chain — checked BEFORE any existsSync / readdirSync / pair read. Those
+    // calls follow links: a completed run whose captures/ was replaced by a
+    // symlink to another directory would otherwise replay the link target's
+    // pairs as THIS run's retained evidence, bypassing the pair-path
+    // symlink-rejection boundary (the runDir boundary check alone only
+    // covers the run dir and its ancestors, not the captures subdirectory).
+    let capturesStat = null;
+    try {
+        capturesStat = fsImpl.lstatSync(capturesDir);
+    } catch { /* absent handled below */ }
+    if (!capturesStat) {
         throw Object.assign(new Error('captures directory not found'), { code: 'SAFETY_ERROR' });
+    }
+    if (!capturesStat.isDirectory() || capturesStat.isSymbolicLink()) {
+        throw Object.assign(
+            new Error('captures directory must be a real directory, not a symlink'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    try {
+        assertNoSymlinkAncestors(capturesDir, fsImpl);
+    } catch (err) {
+        throw Object.assign(new Error(`replay failed: ${err.message}`), { code: 'SAFETY_ERROR' });
     }
 
     const ordinals = (Array.isArray(runState.completed_ordinals) ? runState.completed_ordinals : [])
