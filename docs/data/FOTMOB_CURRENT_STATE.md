@@ -112,7 +112,16 @@ canonical interface.
   payload business hash with the shared projection before treating a pair as
   complete (`RESUME_PAIR_BUSINESS_HASH_MISMATCH` otherwise), and a completed
   ordinal whose pair files are missing fails closed (`resume_pair_absent`) —
-  never a silent re-fetch that would corrupt the counters (round-3 P2).
+  never a silent re-fetch that would corrupt the counters (round-3 P2). Resume
+  also binds the payload's OWN identity — `source_match_id`, `candidate_id`
+  and the full `observed_identity` block (match id, source, conflict flag,
+  response-derived flag) — field-by-field to the verified manifest and requires
+  a response-derived identity with no conflict, exactly like replay
+  (`RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH` otherwise — round-3 P2). The capture
+  output root must be an ABSOLUTE path: relative forms are rejected before any
+  resolution, so `OUTPUT_ROOT=../../external/captures` can never be silently
+  converted into a repository-external path whose meaning depends on the
+  working directory (round-3 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -133,7 +142,11 @@ canonical interface.
   run directory itself must satisfy the same boundary as PLAN/CAPTURE outputs —
   absolute, repository-external, no symlink ancestors — before any replay read
   or write, so replay artifacts can never be materialized inside the
-  repository (round-3 P2).
+  repository (round-3 P2). Replay ALSO pre-checks every output target before
+  materializing: each target must be absent or byte-identical to the
+  deterministic artifact this replay would produce, so a conflicting target on
+  a later pair fails closed with ZERO partial output — the zero-write guarantee
+  now covers output conflicts, not only input mismatches (round-3 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked
