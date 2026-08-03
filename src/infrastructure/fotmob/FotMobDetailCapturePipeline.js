@@ -346,6 +346,12 @@ function validateAuthorizationBinding(options = {}) {
     const authorizationId = String(options.authorizationId || '').trim();
     if (!authorizationId) {
         errors.push('authorization id required (--authorization-id)');
+    } else if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(authorizationId)) {
+        // P2 (Codex re-review on cdcb7ae18): the gate must never admit an id
+        // that the run-state contract rejects — same [a-zA-Z0-9][a-zA-Z0-9._-]*
+        // contract as validateRunState's authorization_id, so the persistent
+        // record always satisfies its own consumer (resume / replay).
+        errors.push('authorization id must match [a-zA-Z0-9][a-zA-Z0-9._-]*');
     }
     const expectedPlanSha256 = String(options.expectedPlanSha256 || '').trim();
     if (!/^[0-9a-f]{64}$/.test(expectedPlanSha256)) {
