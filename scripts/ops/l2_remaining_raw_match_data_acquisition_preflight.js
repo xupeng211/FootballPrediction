@@ -20,6 +20,7 @@ const {
     buildRawDataFromStablePayload,
     buildFetchMetadata,
     normalizeMatchId,
+    extractTrustedObservedMatchIdentity,
     sha256CanonicalJson,
     sha256StableRawPayload,
     validateCanonicalRawDataShape,
@@ -380,8 +381,12 @@ function getRemainingTargetRegistry() {
 }
 
 function buildRawDataFromPreviewPayload(preview = {}) {
-    const stableRawPayload = buildStableRawPayload(preview, {}, {});
-    const matchIdSource = normalizeMatchId(preview, {}, {}).matchIdSource;
+    // R3-P1: the preview is the raw hydration pageProps shape; recover the
+    // trusted observed id with the same pre-transform allowlist the fetcher
+    // core uses, so legacy previews never trust a synthetic id.
+    const trustedIdentity = extractTrustedObservedMatchIdentity({ pageProps: preview });
+    const stableRawPayload = buildStableRawPayload(preview, {}, {}, trustedIdentity);
+    const matchIdSource = normalizeMatchId(preview, {}, {}, trustedIdentity).matchIdSource;
     const dataHash = sha256StableRawPayload(stableRawPayload);
     return buildRawDataFromStablePayload(
         stableRawPayload,
@@ -405,10 +410,14 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         !Array.isArray(recaptureResult.payload)
             ? recaptureResult.payload
             : recaptureResult;
+    // R3-P1: resolve the trusted observed id from the raw-hydration-shaped
+    // source payload; the fetcher already trusts it, the fallback path must
+    // agree instead of trusting a synthetic payload id.
+    const trustedIdentity = extractTrustedObservedMatchIdentity({ pageProps: sourcePayload });
     const originalMatchResolution = normalizeMatchId(sourcePayload, fetcherInput, {
         requestUrl: recaptureResult.request_url,
         finalUrl: recaptureResult.final_url,
-    });
+    }, trustedIdentity);
     const stableRawPayload =
         recaptureResult.stable_raw_payload &&
         typeof recaptureResult.stable_raw_payload === 'object' &&
@@ -417,7 +426,7 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
             : buildStableRawPayload(sourcePayload, fetcherInput, {
                   requestUrl: recaptureResult.request_url,
                   finalUrl: recaptureResult.final_url,
-              });
+              }, trustedIdentity);
     const rawDataHash =
         recaptureResult.raw_data_hash ||
         recaptureResult.data_hash ||

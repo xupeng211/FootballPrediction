@@ -62,8 +62,15 @@ const GENERATOR_COMPONENT = 'FotMobDetailCapturePipeline';
 const NETWORK_AUTHORIZATION_MODE = 'explicit_network_authorization';
 
 // Trusted observed match-id sources — the observed ID must come from a real
-// response payload field, never from the request input / fallback / URL.
-const TRUSTED_OBSERVED_ID_SOURCES = new Set(['payload.matchId', 'general.matchId']);
+// RESPONSE payload field, never from the request input / fallback / URL, and
+// never from a transformer-injected field. R3-P1: payload.matchId is the
+// NextData transformer's copy of the REQUEST-side id and is synthetic; only
+// the raw-hydration allowlist paths extracted pre-transform qualify:
+//   - 'general.matchId' → raw pageProps.general.matchId
+//   - 'matchId' → raw top-level pageProps.matchId
+// (Source names carry the raw field path without the pageProps container,
+// so persisted provenance never leaks the raw-data marker itself.)
+const TRUSTED_OBSERVED_ID_SOURCES = new Set(['general.matchId', 'matchId']);
 
 const REQUIRED_SOURCE_PROVIDER = 'FotMob';
 const REQUIRED_COMPETITION = 'Premier League';
@@ -760,10 +767,12 @@ function evaluateContentValidity(args = {}) {
         ? Array.isArray(rawDataShapeErrors) && rawDataShapeErrors.length === 0
         : false;
 
-    // observed inner match id — must come from a TRUSTED response payload
-    // field (payload.matchId / general.matchId), never from the input
-    // external id fallback, request URL or any derivation. A page whose
-    // only "match id" is the request id must fail closed.
+    // observed inner match id — must come from a TRUSTED raw-hydration
+    // response field (general.matchId / matchId, i.e. raw
+    // pageProps.general.matchId / pageProps.matchId extracted pre-transform),
+    // never from the transformer-injected payload.matchId, input external id
+    // fallback, request URL or any derivation. A page whose only "match id"
+    // is the request id must fail closed (R3-P1).
     const observedId = rawData && (rawData.matchId ?? null) !== null ? String(rawData.matchId) : null;
     const matchIdSource = String(fr.match_id_source ||
         (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
@@ -934,6 +943,11 @@ function validateCaptureManifest(manifest) {
     if (manifest.observed_match_id_match !== true) {
         errors.push('observed_match_id_match must be true');
     }
+    // R3-P1: provenance flag must be present and boolean — a manifest whose
+    // observed id came from any request-side / derived value fails closed.
+    if (typeof manifest.observed_match_id_is_response_derived !== 'boolean') {
+        errors.push('observed_match_id_is_response_derived must be a boolean');
+    }
     for (const hexField of ['response_body_sha256', 'stable_raw_payload_sha256', 'stable_payload_sha256',
         'payload_file_sha256', 'candidate_identity_sha256', 'source_plan_sha256',
         'source_artifact_sha256']) {
@@ -1015,6 +1029,11 @@ function buildCapturePayload(args = {}) {
         observed_match_id: String(observed.observed_match_id || ''),
         observed_match_id_source: String(observed.observed_match_id_source || ''),
         observed_match_id_conflict: observed.observed_match_id_conflict === true,
+        // R3-P1: provenance — true only when the observed id was extracted
+        // from the raw hydration allowlist (pageProps.general.matchId /
+        // pageProps.matchId) pre-transform; false for any request-side or
+        // derived value.
+        observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
     };
     const payload = {
         schema_version: PAYLOAD_SCHEMA_VERSION,

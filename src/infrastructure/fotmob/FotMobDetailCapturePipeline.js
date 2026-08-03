@@ -452,6 +452,10 @@ function buildCaptureManifest(context) {
         observed_match_id_source: context.observedMatchIdSource,
         observed_match_id_match: context.observedMatchId === context.candidate.source_match_id,
         observed_match_id_conflict: context.observedMatchIdConflict === true,
+        // R3-P1: provenance — the observed id was extracted from the raw
+        // hydration allowlist pre-transform (never a transformer-injected
+        // request-side id).
+        observed_match_id_is_response_derived: context.observedMatchIdResponseDerived === true,
         hydration_parse_ok: context.fetcherResult.hydration_parse_ok === true,
         transformed_api_format: context.fetcherResult.transformed_api_format === true,
         looks_like_valid_match_detail: context.fetcherResult.looks_like_valid_match_detail === true,
@@ -762,6 +766,7 @@ async function executeCaptureRun(options = {}) {
         let observedMatchId = null;
         let observedMatchIdSource = null;
         let observedMatchIdConflict = false;
+        let observedMatchIdResponseDerived = false;
         let observedHome = null;
         let observedAway = null;
         let meta = null;
@@ -795,6 +800,7 @@ async function executeCaptureRun(options = {}) {
                 observedMatchIdSource = String(fetcherResult.match_id_source ||
                     (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
                 observedMatchIdConflict = fetcherResult.observed_match_id_conflict === true;
+                observedMatchIdResponseDerived = fetcherResult.observed_match_id_response_derived === true;
                 const g = rawData && rawData.general ? rawData.general : {};
                 observedHome = String(g.homeTeam?.name ?? g.home_team?.name ?? g.home_team ?? '').trim() || null;
                 observedAway = String(g.awayTeam?.name ?? g.away_team?.name ?? g.away_team ?? '').trim() || null;
@@ -870,6 +876,7 @@ async function executeCaptureRun(options = {}) {
                 observed_match_id: observedMatchId,
                 observed_match_id_source: observedMatchIdSource,
                 observed_match_id_conflict: observedMatchIdConflict,
+                observed_match_id_is_response_derived: observedMatchIdResponseDerived,
             },
         });
         const payloadBody = JSON.stringify(stablePayload, null, 2) + '\n';
@@ -889,6 +896,7 @@ async function executeCaptureRun(options = {}) {
             observedMatchId,
             observedMatchIdSource,
             observedMatchIdConflict,
+            observedMatchIdResponseDerived,
             meta,
             stableRawPayloadSha256,
             stablePayloadSha256: stablePayload.stable_payload_sha256,
