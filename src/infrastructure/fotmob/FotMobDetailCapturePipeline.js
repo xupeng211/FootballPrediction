@@ -46,8 +46,6 @@ const {
 
 const {
     fetchFotMobRawDetail,
-    buildStableRawPayload,
-    sha256StableRawPayload,
 } = require('../services/FotMobRawDetailFetcher');
 
 const {
@@ -952,8 +950,14 @@ async function executeCaptureRun(options = {}) {
                 observedHome = String(g.homeTeam?.name ?? g.home_team?.name ?? g.home_team ?? '').trim() || null;
                 observedAway = String(g.awayTeam?.name ?? g.away_team?.name ?? g.away_team ?? '').trim() || null;
                 meta = rawData && rawData._meta ? rawData._meta : null;
-                const stable = rawData ? buildStableRawPayload(rawData, {}, {}) : null;
-                stableRawPayloadSha256 = stable ? sha256StableRawPayload(stable) : null;
+                // The authoritative stable-raw-payload hash is the fetcher's,
+                // computed with the trusted response-derived identity
+                // (R3-P1). Rebuilding here with an empty context would null
+                // out the matchId (normalizeMatchId no longer trusts
+                // rawData.matchId) and diverge from the real hash, leaving
+                // the manifest unbound to the actual observed match id
+                // (P2, Codex round-2 review on 85bc0ee43).
+                stableRawPayloadSha256 = fetcherResult.stable_raw_payload_hash || null;
                 const extracted = parser.extractFromHtml
                     ? parser.extractFromHtml(fetchResult.body)
                     : null;
