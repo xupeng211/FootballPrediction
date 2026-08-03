@@ -835,6 +835,17 @@ async function executeCaptureRun(options = {}) {
                 stoppedAtOrdinal = ordinal;
                 break;
             }
+            // P2 (Codex round-2 review on 85bc0ee43): the run state records
+            // this ordinal as completed but the pair files are missing —
+            // data loss or tampering, never a reason to re-fetch. Re-capturing
+            // would inflate captures_completed without growing
+            // completed_ordinals (the ordinal is already recorded), producing
+            // a state its own validator rejects. Fail closed instead.
+            if (pairCheck.state === 'absent' && completedOrdinals.has(ordinal)) {
+                stopReason = `resume_pair_absent:state records ordinal_${ordinal} as completed but the pair is missing`;
+                stoppedAtOrdinal = ordinal;
+                break;
+            }
         }
 
         // Serial per-candidate execution: exactly one bounded fetch per
