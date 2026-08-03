@@ -419,7 +419,17 @@ function validateAuthorizationBinding(options = {}) {
     // ancestor component — an intermediate symlink can escape the repo).
     if (options.outputRoot) {
         const fsImpl = options.fsImpl || fs;
-        const root = path.resolve(String(options.outputRoot));
+        // P2 (Codex re-review on 670504754): reject RELATIVE forms before any
+        // resolution. path.resolve() would otherwise turn e.g.
+        // OUTPUT_ROOT=../../external/captures into an absolute repository-
+        // external path, passing every gate and making the path's meaning
+        // depend on the container working directory. PLAN and REPLAY already
+        // require absolute paths — capture must be consistent with them.
+        const rawOutputRoot = String(options.outputRoot);
+        if (!path.isAbsolute(rawOutputRoot)) {
+            errors.push('output root must be an absolute path, not a relative path');
+        }
+        const root = path.resolve(rawOutputRoot);
         const repositoryRoot = options.repositoryRoot
             ? path.resolve(options.repositoryRoot)
             : path.resolve(__dirname, '..', '..', '..');
