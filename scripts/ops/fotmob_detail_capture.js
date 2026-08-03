@@ -469,11 +469,12 @@ function runReplay(args, deps = {}) {
         });
     }
 
-    const summary = buildRunSummary(
-        runState,
-        { selected_candidate_count: runState.completed_ordinals.length },
-        ordinals
-    );
+    // R3-P2-6 (Codex final-head review): the summary reflects the FULL plan
+    // scope, not the completed subset — plan_candidate_count must be the
+    // verified run plan's selected_candidate_count (e.g. plan=3, completed
+    // 1 => plan_candidate_count 3, captures_completed 1). Replay never
+    // shrinks the declared plan.
+    const summary = buildRunSummary(runState, runPlan, ordinals);
     writeRunSummary(runDir, summary, fsImpl);
 
     const out = {
