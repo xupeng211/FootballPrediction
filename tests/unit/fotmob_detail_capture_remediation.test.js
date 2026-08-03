@@ -2218,3 +2218,106 @@ test('P2 (Codex round-2 review on 85bc0ee43): replay rejects relative, in-repo a
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('P2 (Codex round-2 review on 670504754): checkCompletedPair binds the payload identity to the verified manifest — a swapped source/candidate/observed identity with RECOMPUTED business hash and refreshed file hashes is never treated as completed', async () => {
+    const dir = tmpDir('fotmob-p2-payloadid-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2payloadid', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Tamper the payload's OWN identity (source_match_id) AND recompute
+        // its declared business hash — the projection includes the identity
+        // fields, so a tamperer who recomputes the hash stays internally
+        // self-consistent. Refresh the payload file hash and the manifest
+        // self-hash so every file-level check passes. Only the NEW identity
+        // binding can catch the swap; the manifest still declares the real
+        // 4506263 identity.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.source_match_id = '9999999';
+        payload.observed_identity.observed_match_id = '9999999';
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        // The tamperer refreshes the manifest's declared business hash too,
+        // so every self-consistent hash check passes; the manifest still
+        // declares the REAL identity (4506263) while the payload now claims
+        // 9999999 — only the identity binding can catch the swap.
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2payloadid', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'swapped payload identity stops the resume');
+        assert.match(resumed.stopReason, /RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH/);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 670504754): replay pre-checks EVERY output target before materializing — a later target with different content leaves zero partial output', async () => {
+    const dir = tmpDir('fotmob-p2-outprecheck-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        const calls = [];
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2outcheck', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).match(/(\d+)$/)?.[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }, calls),
+        }));
+        assert.equal(run.status, 'complete');
+        assert.equal(calls.length, 2);
+
+        // First replay materializes both artifacts.
+        const first = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(first.replayed_count, 2);
+        const target1 = path.join(run.runDir, 'replay', '1-4506263.detail.json');
+        const target2 = path.join(run.runDir, 'replay', '2-4506264.detail.json');
+        const bytes1Before = fs.readFileSync(target1);
+        const bytes2Before = fs.readFileSync(target2);
+
+        // Corrupt the LATER target; the pre-check must fail BEFORE any write,
+        // so the earlier artifact is untouched and the corrupt file is not
+        // overwritten.
+        fs.writeFileSync(target2, '{ "corrupted": true }\n');
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /target exists with different content/.test(e.message)
+        );
+        assert.deepStrictEqual(fs.readFileSync(target1), bytes1Before, 'earlier artifact never rewritten');
+        assert.equal(fs.readFileSync(target2, 'utf8'), '{ "corrupted": true }\n', 'conflicting target untouched');
+        const leftovers = fs.readdirSync(path.join(run.runDir, 'replay')).filter(f => f.includes('.tmp-'));
+        assert.deepStrictEqual(leftovers, [], 'no partial tmp files remain');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 670504754): capture rejects a RELATIVE output root before any resolution — zero fetches, consistent with PLAN and REPLAY boundaries', async () => {
+    const dir = tmpDir('fotmob-p2-reloadout-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const fetchCalls = [];
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({
+                dir, plan, planPath, runId: 'run-p2relout', maxRequests: 1,
+                outputRoot: 'relative/external/captures',
+                fetchImpl: mockFetchImpl(() => { throw new Error('RELATIVE_ROOT_SHOULD_NOT_FETCH'); }, fetchCalls),
+            })),
+            (e) => e.code === 'SAFETY_ERROR' && /output root must be an absolute path/.test(e.message)
+        );
+        assert.equal(fetchCalls.length, 0, 'no fetch is attempted when the output root is relative');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
