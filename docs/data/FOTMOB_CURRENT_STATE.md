@@ -65,25 +65,48 @@ canonical interface.
   cookie/auth/proxy/browser, concurrency 1, retry 0, delay ≥ 60 s, 30 s timeout);
   19 content-validity gates (incl. trusted observed-match-id provenance and
   conflict detection) fail closed on empty SSR shells and untrusted identities.
-  The observed match id must come from a trusted payload field
-  (`payload.matchId` / `general.matchId`), never an input fallback. Retention is
+  The observed match id is extracted from the RAW hydration BEFORE the
+  transformer runs (allowlist: raw `pageProps.general.matchId` →
+  `general.matchId`, raw `pageProps.matchId` → `matchId`); the transformer-
+  injected `payload.matchId` (a copy of the request-side id) is NEVER trusted
+  (R3-P1), the provenance flag `observed_match_id_is_response_derived` is
+  recorded, and an input fallback always fails closed. The collector HEAD must
+  equal the plan's `generator_code_revision` (`PLAN_REVISION_HEAD_MISMATCH`
+  otherwise, before any fetch or run-state write). Retention is
   a **stable allowlisted payload** (`<ordinal>-<source_match_id>.payload.json`,
-  schema `fotmob-match-detail-capture-payload/v1`) + manifest paired atomically
-  with rollback/readback; the full HTML response body exists only in memory
-  (hashed for audit, never persisted — no `.html` files, no `__NEXT_DATA__` /
-  `pageProps` / `raw_data` in outputs). Manifest self-hash is required and
-  recomputed; a run-bound immutable plan snapshot (`<run-dir>/plan.json`) is
-  written before any network request; resume binds run id / plan SHA / source
-  artifact SHA / authorization id / budget / delay / collector revision and
-  every completed pair field-by-field (cross-run pairs are
-  `RESUME_PAIR_CONTEXT_MISMATCH`, never completed); attempted requests are
-  counted before the fetch, so failed/timeout requests are never recorded as
-  zero.
+  schema `fotmob-match-detail-capture-payload/v1`, business hash built by the
+  shared `computeStableCapturePayloadSha256` projection) + manifest paired
+  atomically with rollback/readback; the full HTML response body exists only in
+  memory (hashed for audit, never persisted — no `.html` files, no
+  `__NEXT_DATA__` / `pageProps` / `raw_data` in outputs). Manifest self-hash is
+  required and recomputed; a run-bound immutable plan snapshot
+  (`<run-dir>/plan.json`) is written before any network request; resume binds
+  run id / plan SHA / source artifact SHA / authorization id / budget / delay /
+  collector revision and every completed pair field-by-field (cross-run pairs
+  are `RESUME_PAIR_CONTEXT_MISMATCH`, never completed); attempted / response /
+  capture counters accumulate INDEPENDENTLY (a timeout or 403 is a response but
+  never a completion; resume never infers responses from attempts — R3-P2-4);
+  the run-state contract (`fotmob-detail-capture-run-state/v1`) records
+  `network_requests_attempted`, `network_responses_received`,
+  `captures_completed`, `completed_ordinals`,
+  `last_network_request_attempted_at` (persisted before each native fetch —
+  the inter-request delay continues across processes: remainingDelay =
+  delayMs − (now − lastRequestAt); an invalid or missing timestamp with
+  attempts fails closed, a backwards clock waits the full delay — R3-P2-5) and
+  is validated on every read (non-negative, monotonic, unique ordinals, no
+  auto-fixing); attempted requests are counted before the fetch, so
+  failed/timeout requests are never recorded as zero.
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
-  materializes deterministic `fotmob-match-detail-artifact/v1` artifacts from the
-  stable payload (no HTML involved, `parsed_at` derived from the capture
-  record — repeated replays are byte-identical). Candidate identity comes
+  RECOMPUTES the payload business hash with the same shared projection used at
+  capture time — a tampered normalized field fails closed even when the file
+  hash and manifest self-hash were refreshed (R3-P2-1). Every replayed pair must
+  be bound to the run state's run id and authorization id
+  (`REPLAY_PAIR_CONTEXT_MISMATCH` otherwise, zero writes — R3-P2-2); the parser
+  code revision comes from the bound collector revision chain. The run summary
+  keeps the FULL plan scope (`plan_candidate_count` from the verified plan, not
+  the completed subset — R3-P2-6) and `parsed_at` is derived from the capture
+  record — repeated replays are byte-identical. Candidate identity comes
   exclusively from the verified run plan snapshot, never from file names.
 
 No real detail-capture request has been made by the pipeline and no capture has
