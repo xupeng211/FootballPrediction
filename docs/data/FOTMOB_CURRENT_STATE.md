@@ -121,7 +121,17 @@ canonical interface.
   output root must be an ABSOLUTE path: relative forms are rejected before any
   resolution, so `OUTPUT_ROOT=../../external/captures` can never be silently
   converted into a repository-external path whose meaning depends on the
-  working directory (round-3 P2).
+  working directory (round-3 P2). Resume binds the pair to the FULL execution
+  context, not only run/plan/candidate identity: manifest `request_budget`,
+  `delay_ms` and `collector_code_revision` must equal the current run-state's
+  values (`RESUME_PAIR_CONTEXT_MISMATCH` otherwise) — the plan business hash
+  deliberately excludes the generator revision, so a complete pair copied from
+  a prior run with different budget/delay/revision is never counted complete
+  (round-4 P2). The PLAN validator cross-checks every candidate against the
+  declared scope: candidate `competition` must equal the plan's declared
+  competition and candidate `season` must be one of the declared
+  `selected_seasons` — a self-consistent but out-of-scope plan (recomputed
+  hash included) fails the CAPTURE gate (round-4 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -155,7 +165,17 @@ canonical interface.
   `planCandidate.ordinal === ordinal` — a copied pair replayed under a wrong
   ordinal (refreshed `request_ordinal` + self-hash) fails closed before any
   artifact, so the summary can never claim an ordinal the pair does not
-  actually hold (round-4 P2).
+  actually hold (round-4 P2). Replay also binds the pair to the FULL execution
+  context recorded in the run state: manifest `request_budget`, `delay_ms` and
+  `collector_code_revision` must equal the run state's values
+  (`REPLAY_PAIR_CONTEXT_MISMATCH` / `REPLAY_PAIR_REVISION_MISMATCH`
+  otherwise) — a pair captured under a different budget, delay or collector
+  revision is never replayed, so artifacts never declare parser provenance of
+  the wrong revision (round-4 P2). The run-summary target is part of the
+  transactional materialization: `run-summary.json` is pre-checked BEFORE any
+  artifact write (absent, or a regular file with byte-identical deterministic
+  content; differing content or a directory/symlink fails closed) — the
+  zero-write guarantee now covers the summary too (round-4 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked
