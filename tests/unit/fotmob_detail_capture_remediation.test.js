@@ -3521,6 +3521,101 @@ test('R17-P1 (Codex re-review on 317fdb0d8): an over-limit DECLARED Content-Leng
     }
 });
 
+test('R18-P1 (Codex re-review on 6ca5e90be): the pacing anchor is RE-ANCHORED on the ACTUAL fetch-start moment returned by onBeforeFetch — a slow pre-fetch state write can no longer shrink the real inter-request gap below delayMs', async () => {
+    // The first request's pre-fetch callback (which synchronously writes
+    // run-state) takes 200 ms of wall-clock time; the returned attempt
+    // timestamp is the ACTUAL fetch-start moment. The old code kept the
+    // pre-callback anchor, so the second request waited only 59800 ms and
+    // the real gap between the two request STARTS was 59800 < 60000. The
+    // fixed adapter anchors on the returned moment: full 60000 ms wait.
+    const { createBoundedFetchAdapter } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+    let clockMs = Date.parse(FIXED_CLOCK);
+    const sleeps = [];
+    const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+    const fetches = [];
+    const fetchImpl = async (url) => {
+        fetches.push(String(url));
+        return {
+            status: 200,
+            url: String(url),
+            headers: { get: () => null },
+            arrayBuffer: async () => new TextEncoder().encode('<html>x</html>'),
+            body: new TextEncoder().encode('<html>x</html>'),
+        };
+    };
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl,
+        maxRequests: 2,
+        delayMs: 60000,
+        now: () => clockMs,
+        sleepImpl,
+        onBeforeFetch: (url, count) => {
+            // Simulate the synchronous run-state write: the wall clock
+            // advances DURING the callback, before the native fetch.
+            clockMs += 200;
+            return new Date(clockMs).toISOString();
+        },
+    });
+    await adapter.fetchOnce('https://www.fotmob.com/match/4506263');
+    assert.equal(sleeps.length, 0, 'first request never waits');
+    await adapter.fetchOnce('https://www.fotmob.com/match/4506264');
+    assert.equal(
+        sleeps[0], 60000,
+        `the second request waits the FULL delay (got ${sleeps[0]}): anchored on the actual fetch start, not the pre-callback moment`
+    );
+    assert.equal(fetches.length, 2, 'both requests issued');
+});
+
+test('R18-P1 (Codex re-review on 6ca5e90be): executeCaptureRun persists the SAME actual fetch-start moment that anchors the pacing — cross-process resume cannot start earlier than delayMs after the real request start', async () => {
+    const dir = tmpDir('fotmob-r18p1-e2e-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        // A clock that advances DURING the callback: the adapter's ms clock
+        // (Date.parse(now())) is read pre-callback and the run-state write
+        // lands on a LATER tick — the persisted timestamp must be that later
+        // (conservative) instant, identical to the pacing anchor.
+        let tick = 0;
+        let nextTimestamp = Date.parse(FIXED_CLOCK);
+        const advancingNow = () => new Date((nextTimestamp += 1)).toISOString();
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); };
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r18p1e2e', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).split('/match/')[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }),
+            sleepImpl,
+            extra: { now: advancingNow },
+        }));
+        assert.equal(run.status, 'complete');
+        assert.equal(run.completedCount, 2);
+        const state = readStateJson(run.runDir);
+        // The run-state anchor is the LAST request's attempt — compare it
+        // with the SECOND candidate's manifest (candidate 2's attempt).
+        const manifest = JSON.parse(fs.readFileSync(
+            path.join(run.runDir, 'captures', '2-4506264.manifest.json'), 'utf8'
+        ));
+        // The persisted timestamp is the callback's returned attempt instant
+        // (taken after the pre-callback anchor, immediately before the native
+        // fetch) — the SAME value the adapter re-anchors on. A resume seeds
+        // initialLastRequestAt with the ACTUAL fetch start and never starts
+        // earlier than delayMs after the previous real request.
+        assert.ok(
+            Date.parse(state.last_network_request_attempted_at) > Date.parse(FIXED_CLOCK),
+            'the persisted anchor is the later, actual fetch-start moment, not the pre-callback moment'
+        );
+        assert.equal(
+            manifest.request_attempted_at, state.last_network_request_attempted_at,
+            'the persisted anchor and the manifest agree on the actual fetch-start moment'
+        );
+        assert.equal(sleeps.length, 1, 'one inter-request wait across the two candidates');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('R17-P1 (Codex re-review on 317fdb0d8): the declared-length cancel is best-effort — a body without a cancel method still stops the run with the same safety error', async () => {
     const dir = tmpDir('fotmob-r17p1-nocancel-');
     try {
