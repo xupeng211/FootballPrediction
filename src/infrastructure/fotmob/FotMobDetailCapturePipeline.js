@@ -212,13 +212,17 @@ function createBoundedFetchAdapter(options = {}) {
         // fetch — a timeout / abort / read failure can never be recorded as
         // zero attempts (P2-4) or as an unrecorded request time (R3-P2-5).
         let requestAttemptedAt = new Date(lastRequestAt).toISOString();
+        let fetchStartIso = null;
         if (options.onBeforeFetch) {
-            // P2 (Codex re-review on cdcb7ae18): the pre-fetch callback may
-            // return the ACTUAL attempt timestamp (taken after any inter-
-            // request delay, immediately before the native fetch); that value
-            // is what the manifest records — never the pre-wait moment.
-            const returned = options.onBeforeFetch(url, requestCount);
-            if (typeof returned === 'string' && returned) requestAttemptedAt = returned;
+            // P2 (Codex re-review on cdcb7ae18): the pre-fetch callback runs
+            // after the inter-request delay and persists the attempt (budget
+            // + timestamp) BEFORE the native fetch — a timeout / abort / read
+            // failure can never be recorded as zero attempts (P2-4). Its
+            // return value is NOT used as the audit timestamp: the callback
+            // takes it before its OWN last run-state write, so it still
+            // antedates the real fetch by one write duration (R20-P1) — the
+            // adapter re-stamps below with the true post-callback moment.
+            options.onBeforeFetch(url, requestCount);
         }
         // R18-P1 + R19-P1 (Codex re-review on 6ca5e90be / 52fadcf09): the
         // pacing anchor is the ACTUAL fetch-start moment. The pre-fetch
@@ -230,6 +234,17 @@ function createBoundedFetchAdapter(options = {}) {
         // STARTS can never fall below delayMs, regardless of how long the
         // per-request state writes took.
         lastRequestAt = nowMs();
+        // R20-P1 (Codex re-review on 0bfe90629): the audit timestamp on the
+        // fetch result is THIS true fetch-start moment — taken after every
+        // pre-fetch write, microseconds before fetchImpl. The pipeline
+        // persists it after the request settles (completion / failure
+        // actualization), so the cross-process resume gate starts from the
+        // REAL request start and covers the last pre-fetch run-state write's
+        // duration; the callback's own earlier timestamp remains only the
+        // crash-window value. On failure the same ISO is attached to the
+        // thrown error.
+        requestAttemptedAt = new Date(lastRequestAt).toISOString();
+        fetchStartIso = requestAttemptedAt;
 
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -348,6 +363,19 @@ function createBoundedFetchAdapter(options = {}) {
                 // recorded by the adapter and/or its pre-fetch callback.
                 requestAttemptedAt,
             };
+        } catch (err) {
+            // R20-P1 (Codex re-review on 0bfe90629): convey the TRUE
+            // fetch-start moment even on failure — the run's stop-path state
+            // write actualizes the persisted resume seed with it, so a resume
+            // after a failed attempt still waits the full delay from the real
+            // request start (the attempt DID reach the network). Budget /
+            // contract errors that precede the fetch carry no timestamp.
+            if (fetchStartIso !== null && err !== null && typeof err === 'object') {
+                try {
+                    err.requestAttemptedAt = fetchStartIso;
+                } catch { /* frozen error object — the value stays unset */ }
+            }
+            throw err;
         } finally {
             clearTimeout(timer);
         }
@@ -1155,12 +1183,15 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         now: () => Date.parse(now()),
         onBeforeFetch: (url, count) => {
             runNetworkRequests = count;
-            // P2 (Codex round-2 review on 85bc0ee43): the attempt timestamp
-            // is taken ONCE — the same value persists the run-state
-            // timestamp, the updated_at marker, and the manifest's
-            // request_attempted_at. Separate now() calls could straddle a
-            // millisecond boundary on the real clock and make the manifest
-            // time differ from the persisted run-state time.
+            // P2 (Codex round-2 review on 85bc0ee43): the pre-fetch attempt
+            // timestamp is taken ONCE per write so the crash-window value is
+            // internally consistent (separate now() calls could straddle a
+            // millisecond boundary). R20-P1: this is the CRASH-WINDOW seed —
+            // the pipeline ACTUALIZES the persisted
+            // last_network_request_attempted_at to the adapter's true
+            // fetch-start after the fetch, so the manifest, the run-state and
+            // the cross-process resume gate all settle on the real request
+            // start (which covers the last pre-fetch write's duration).
             const attemptAt = now();
             runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
             runState.network_requests_made = runState.network_requests_attempted;
@@ -1177,14 +1208,18 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // ACTUAL fetch-start moment AFTER the write and persist it
             // (one follow-up write), so the pacing anchor, the manifest and
             // the cross-process resume seed all agree on the same
-            // conservative post-write instant.
+            // conservative post-write instant. (R20-P1: this persisted value
+            // is the crash-window seed — the pipeline actualizes the
+            // authoritative resume value to the adapter's true fetch-start
+            // moment after the fetch.)
             const actualAt = now();
             runState.last_network_request_attempted_at = actualAt;
             runState.updated_at = actualAt;
             writeRunStateLocked(runState);
-            // Return the actual attempt timestamp: the adapter records it on
-            // the fetch result so the manifest never antedates the request
-            // by the inter-request delay (P2, Codex re-review).
+            // Return the actual attempt timestamp (post-write-1) for
+            // compatibility — the adapter re-stamps the fetch result with its
+            // OWN post-callback moment (R20-P1), so the authoritative
+            // manifest / resume value is the true fetch start.
             return actualAt;
         },
     });
@@ -1274,6 +1309,16 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.updated_at = now();
+            // R20-P1 (Codex re-review on 0bfe90629): ACTUALIZE the persisted
+            // resume seed with the adapter's TRUE fetch-start moment (taken
+            // after every pre-fetch write, microseconds before the native
+            // request). The pre-fetch callback persisted an earlier value
+            // (taken before its own last write); keeping it would make a
+            // cross-process resume wait from a moment one write-duration
+            // before the real request start — the real gap could fall below
+            // delayMs. The manifest and the run-state use the SAME value, so
+            // the single-timestamp invariant is preserved.
+            runState.last_network_request_attempted_at = requestAttemptedAt;
             writeRunStateLocked(runState);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
@@ -1286,6 +1331,14 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.updated_at = now();
+            // R20-P1: the failure path actualizes the seed too — the adapter
+            // attaches the TRUE fetch-start moment to the thrown error (the
+            // attempt DID reach the network, so a resume must wait the full
+            // delay from the real start). Budget-exhausted / contract errors
+            // carry no timestamp (no fetch started) and keep the prior value.
+            if (err && err.requestAttemptedAt) {
+                runState.last_network_request_attempted_at = String(err.requestAttemptedAt);
+            }
             writeRunStateLocked(runState);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')

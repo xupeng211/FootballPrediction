@@ -3741,6 +3741,140 @@ test('R19-P1 (Codex re-review on 52fadcf09): executeCaptureRun anchors pacing on
     }
 });
 
+test('R20-P1 (Codex re-review on 0bfe90629): the fetch result records the TRUE post-callback fetch-start moment — the callback\'s pre-write return is never used as the audit timestamp', async () => {
+    const { createBoundedFetchAdapter } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+    let clockMs = Date.parse(FIXED_CLOCK);
+    const fetchImpl = async (url) => ({
+        status: 200,
+        url: String(url),
+        headers: { get: () => null },
+        arrayBuffer: async () => new TextEncoder().encode('<html>x</html>'),
+        body: new TextEncoder().encode('<html>x</html>'),
+    });
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl,
+        maxRequests: 1,
+        delayMs: 60000,
+        now: () => clockMs,
+        sleepImpl: async () => {},
+        onBeforeFetch: () => {
+            // The callback's own timestamp is taken BEFORE its final
+            // run-state write (the write takes 200 ms): the returned value
+            // antedates the real fetch by one write duration and must NEVER
+            // become the audit timestamp (R20-P1).
+            const preWrite = new Date(clockMs).toISOString();
+            clockMs += 200;
+            return preWrite;
+        },
+    });
+    const result = await adapter.fetchOnce('https://www.fotmob.com/match/4506263');
+    assert.equal(
+        result.requestAttemptedAt, new Date(Date.parse(FIXED_CLOCK) + 200).toISOString(),
+        'the audit timestamp is the post-callback true fetch start, not the pre-write return'
+    );
+});
+
+test('R20-P1 (Codex re-review on 0bfe90629): a FAILED fetch still conveys the TRUE fetch-start moment on the thrown error — the run\'s stop-path state write can actualize the persisted resume seed', async () => {
+    const { createBoundedFetchAdapter } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+    let clockMs = Date.parse(FIXED_CLOCK);
+    const fetchImpl = async () => { throw new Error('NETWORK_TIMEOUT_SIMULATED'); };
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl,
+        maxRequests: 1,
+        delayMs: 60000,
+        now: () => clockMs,
+        sleepImpl: async () => {},
+        onBeforeFetch: () => {
+            clockMs += 200; // the pre-fetch write takes 200 ms
+            return new Date(clockMs).toISOString();
+        },
+    });
+    let caught = null;
+    try {
+        await adapter.fetchOnce('https://www.fotmob.com/match/4506263');
+    } catch (err) {
+        caught = err;
+    }
+    assert.ok(caught, 'the fetch failure surfaces');
+    assert.equal(
+        caught.requestAttemptedAt, new Date(Date.parse(FIXED_CLOCK) + 200).toISOString(),
+        'the error carries the true post-callback fetch-start moment (the attempt DID reach the network)'
+    );
+});
+
+test('R20-P1 (Codex re-review on 0bfe90629): the PERSISTED resume seed is actualized to the true fetch-start after the fetch — a cross-process resume never starts earlier than delayMs after the REAL previous request start (the last run-state write\'s duration is covered)', async () => {
+    const dir = tmpDir('fotmob-r20p1-resume-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        const wrappedFs = {
+            ...fs,
+            writeFileSync: (p, data, enc) => {
+                // The LAST request's run-state writes (network_requests_
+                // attempted = 2 — the second attempt) take 200 ms each — the
+                // finding's scenario: the pre-fetch callback's last write
+                // takes real time, and the persisted seed taken before it
+                // antedates that request's true start by one write duration.
+                if (String(p).includes('run-state')) {
+                    let attempts = 0;
+                    try { attempts = Number(JSON.parse(String(data)).network_requests_attempted || 0); } catch { /* non-JSON write */ }
+                    if (attempts === 2) clockMs += 200;
+                }
+                return fs.writeFileSync(p, data, enc);
+            },
+        };
+        const optionsFor = (fetchImpl) => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r20p1', maxRequests: 3,
+            fetchImpl, sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString(), fsImpl: wrappedFs },
+        });
+        // Process 1 (immutable budget 3): candidate 1 captured, candidate 2
+        // 403s — a real request that consumes budget but never completes, so
+        // the resume keeps exactly one budget unit for its retry. The
+        // persisted resume seed (the LAST request's seed) must equal the REAL
+        // fetch-start moment of that 403 request.
+        const firstRunFetch = mockFetchImpl((url) => {
+            fetchesAt.push(clockMs);
+            if (String(url).includes('4506264')) return { status: 403, body: '<html>forbidden</html>' };
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        });
+        const workingFetch = mockFetchImpl((url) => {
+            fetchesAt.push(clockMs);
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        });
+        const run1 = await executeCaptureRun(optionsFor(firstRunFetch));
+        assert.equal(run1.status, 'stopped');
+        assert.equal(run1.completedCount, 1);
+        const state1 = readStateJson(run1.runDir);
+        assert.equal(
+            state1.last_network_request_attempted_at, new Date(fetchesAt[1]).toISOString(),
+            'the persisted resume seed equals the REAL last request start (R19-P1 code persisted the pre-last-write moment, 200 ms earlier)'
+        );
+        // The operator waits 30 s between the two processes.
+        clockMs += 30000;
+        // Process 2: resume with the SAME immutable budget of 3 — 2 already
+        // consumed, exactly one unit left for the 403'd candidate's retry.
+        const run2 = await executeCaptureRun(optionsFor(workingFetch));
+        assert.equal(run2.status, 'complete');
+        assert.equal(run2.completedCount, 2);
+        assert.equal(fetchesAt.length, 3, 'two real requests in process 1, one in process 2');
+        assert.ok(sleeps.length >= 1, 'the resumed process enforces the inter-request wait');
+        assert.ok(
+            fetchesAt[2] - fetchesAt[1] >= 60000,
+            `the resumed process never starts earlier than delayMs after the REAL previous request start (got ${fetchesAt[2] - fetchesAt[1]}): the actualized seed covers the last run-state write's duration (R19-P1 code yields 59800)`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('R17-P1 (Codex re-review on 317fdb0d8): the declared-length cancel is best-effort — a body without a cancel method still stops the run with the same safety error', async () => {
     const dir = tmpDir('fotmob-r17p1-nocancel-');
     try {
