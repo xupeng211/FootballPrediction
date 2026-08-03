@@ -552,6 +552,41 @@ function checkCompletedPair(args = {}) {
             detail: 'RESUME_PAIR_BUSINESS_HASH_MISMATCH: recomputed payload business hash does not match declared stable_payload_sha256',
         };
     }
+    // P2 (Codex re-review on 670504754): the payload's OWN identity must bind
+    // to the verified manifest, field by field, before the pair can be
+    // treated as completed. The business hash proves the business content is
+    // self-consistent, but a tamperer who recomputes the business hash and
+    // refreshes both file hashes could otherwise swap in a DIFFERENT
+    // candidate / source / observed identity that the business projection
+    // does not cover — resume would count the contaminated pair complete and
+    // only a later replay would reject it. The observed identity must be
+    // response-derived with no conflict, exactly like replay requires.
+    const payloadObserved = isPlainObject(payload.observed_identity) ? payload.observed_identity : {};
+    const identityChecks = [
+        ['payload.source_match_id', payload.source_match_id, manifest.source_match_id],
+        ['payload.candidate_id', payload.candidate_id, manifest.candidate_id],
+        ['payload.observed_identity.observed_match_id', payloadObserved.observed_match_id, manifest.observed_match_id],
+        ['payload.observed_identity.observed_match_id_source', payloadObserved.observed_match_id_source, manifest.observed_match_id_source],
+        ['payload.observed_identity.observed_match_id_conflict', payloadObserved.observed_match_id_conflict, manifest.observed_match_id_conflict],
+        ['payload.observed_identity.observed_match_id_is_response_derived', payloadObserved.observed_match_id_is_response_derived, manifest.observed_match_id_is_response_derived],
+    ];
+    for (const [label, actual, expected] of identityChecks) {
+        if (String(actual ?? '') !== String(expected ?? '')) {
+            return {
+                completed: false,
+                state: 'mismatch',
+                detail: `RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH:${label}`,
+            };
+        }
+    }
+    if (payloadObserved.observed_match_id_is_response_derived !== true ||
+        payloadObserved.observed_match_id_conflict === true) {
+        return {
+            completed: false,
+            state: 'mismatch',
+            detail: 'RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH: observed identity must be response-derived with no conflict',
+        };
+    }
 
     // Exact run-context binding — any field that does not match the current
     // run, plan, artifact, authorization or candidate is a mismatch that
