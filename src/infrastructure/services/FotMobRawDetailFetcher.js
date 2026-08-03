@@ -202,6 +202,48 @@ function containsExpectedMarkers({ externalId, homeTeam, awayTeam, payloadText, 
     return containsExternalId && containsHomeTeam && containsAwayTeam;
 }
 
+// R15-P1 (Codex re-review on 55c450096): the parser derives
+// normalized.home_team / away_team from an ORDERED fallback chain —
+// `general.<side>Team.name` → `header.teams[0|1].name` →
+// `content.lineup.<side>Team.name` → `general.<side>Team.shortName` —
+// exactly as FotMobRawParser.extractTeams() does. The FIRST non-empty name
+// the parser will emit for each side must equal the expected team: a marker
+// that appears somewhere in the payload but in the WRONG position (e.g.
+// reversed header/lineup teams) or an incomplete chain must fail closed —
+// otherwise a page with the right match id but reversed teams would pass
+// the loose anywhere-in-text check and persist swapped home/away.
+function extractParserTeamName(payload, side) {
+    const general = isPlainObject(payload.general) ? payload.general : {};
+    const header = isPlainObject(payload.header) ? payload.header : {};
+    const content = isPlainObject(payload.content) ? payload.content : {};
+    const lineup = isPlainObject(content.lineup) ? content.lineup : {};
+    const teamKey = side === 'home' ? 'homeTeam' : 'awayTeam';
+    const headerIdx = side === 'home' ? 0 : 1;
+    const fromGeneral = isPlainObject(general[teamKey]) ? general[teamKey] : {};
+    const fromHeaderTeams = Array.isArray(header.teams) && isPlainObject(header.teams[headerIdx])
+        ? header.teams[headerIdx] : {};
+    const fromLineup = isPlainObject(lineup[teamKey]) ? lineup[teamKey] : {};
+    const chain = [fromGeneral.name, fromHeaderTeams.name, fromLineup.name, fromGeneral.shortName];
+    for (const candidate of chain) {
+        const name = normalizeText(candidate);
+        if (name) return name.toLowerCase();
+    }
+    return null; // the parser would emit an EMPTY team name — incomplete marker
+}
+
+function expectedTeamMarkersMatch(rawData, expectedHome, expectedAway) {
+    const expectedHomeName = normalizeText(expectedHome).toLowerCase();
+    const expectedAwayName = normalizeText(expectedAway).toLowerCase();
+    if (!expectedHomeName && !expectedAwayName) return true; // nothing to verify
+    const parsedHome = extractParserTeamName(rawData, 'home');
+    const parsedAway = extractParserTeamName(rawData, 'away');
+    if (expectedHomeName && parsedHome === null) return false; // incomplete → fail closed
+    if (expectedAwayName && parsedAway === null) return false;
+    if (expectedHomeName && parsedHome !== expectedHomeName) return false; // wrong position/order
+    if (expectedAwayName && parsedAway !== expectedAwayName) return false;
+    return true;
+}
+
 /**
  * Extract the TRUSTED observed match id from the RAW hydration document,
  * BEFORE any transformer runs (Codex re-review P3-P1).
@@ -485,7 +527,11 @@ function looksLikeValidRawDetail(rawData, input = {}) {
             awayTeam,
             payloadText,
             requestText,
-        })
+        }) &&
+        // R15-P1: the loose anywhere-in-text check is not enough — the
+        // ORDERED parser chain must yield the expected teams (fail closed
+        // on reversed or incomplete markers).
+        expectedTeamMarkersMatch(rawData, homeTeam, awayTeam)
     );
 }
 

@@ -54,6 +54,9 @@ const {
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
 const {
     fetchFotMobRawDetail,
+    looksLikeValidRawDetail,
+    buildRawDataFromStablePayload,
+    buildFetchMetadata,
 } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
 const {
     runPreflight,
@@ -3224,6 +3227,117 @@ test('R14-P1 (Codex re-review on 948e0d23f): a zero-candidate plan fails the CON
         assert.ok(
             check.errors.some((e) => /candidates must not be empty/.test(e)),
             `expected 'candidates must not be empty' in: ${check.errors.join('; ')}`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// Round-13 (Codex re-review on 55c450096) — R15-P1
+// ─────────────────────────────────────────────────────────────
+
+function r15Raw(stablePayload) {
+    return buildRawDataFromStablePayload(
+        { content: {}, general: {}, header: {}, matchId: null, ...stablePayload },
+        buildFetchMetadata({ dataHash: 'x', matchIdSource: 'general.matchId' })
+    );
+}
+
+test('R15-P1 (Codex re-review on 55c450096): reversed header.teams fail closed — both names present somewhere in the payload are NOT enough when the parser\'s ordered chain yields the wrong side', () => {
+    // general provides NO team names, header.teams places them REVERSED:
+    // the loose anywhere-in-text check passes, but FotMobRawParser.
+    // extractTeams() would emit Fulham as home. Must fail.
+    const raw = r15Raw({
+        general: { matchId: '4506263' },
+        header: {
+            teams: [{ name: 'Fulham' }, { name: 'Manchester United' }],
+            homeTeam: { name: 'Fulham' },
+            awayTeam: { name: 'Manchester United' },
+        },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        false,
+        'reversed team placement must not pass the marker gate'
+    );
+});
+
+test('R15-P1 (Codex re-review on 55c450096): correctly-placed header.teams pass — the parser chain yields the expected sides', () => {
+    const raw = r15Raw({
+        general: { matchId: '4506263' },
+        header: {
+            teams: [{ name: 'Manchester United' }, { name: 'Fulham' }],
+            homeTeam: { name: 'Manchester United' },
+            awayTeam: { name: 'Fulham' },
+        },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        true
+    );
+});
+
+test('R15-P1 (Codex re-review on 55c450096): incomplete team markers fail closed — names found only OUTSIDE the parser chain never pass', () => {
+    // Both names appear in the payload text, but NONE of the parser's
+    // fallback sources (general / header.teams / lineup / shortName) carry
+    // them — the parser would emit empty team names. Must fail closed.
+    const raw = r15Raw({
+        general: { matchId: '4506263' },
+        header: {},
+        content: { liveticker: [{ text: 'Manchester United vs Fulham' }] },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        false,
+        'incomplete team markers must fail closed'
+    );
+});
+
+test('R15-P1 (Codex re-review on 55c450096): a page with the correct match id but REVERSED teams stops the capture run with zero retained pairs', async () => {
+    const dir = tmpDir('fotmob-r15p1-e2e-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        // general provides BOTH team names but SWAPPED (home slot holds
+        // the away team), header.teams consistent with the swap: the loose
+        // anywhere-in-text check passes (both names present), the parser
+        // chain yields the wrong sides, and only the ordered marker gate
+        // can stop the run before anything is persisted.
+        const html = makePageHtml({
+            matchId: TWO_CANDIDATES[0].source_match_id,
+            homeTeam: TWO_CANDIDATES[0].home_team,
+            awayTeam: TWO_CANDIDATES[0].away_team,
+            kickoffAt: TWO_CANDIDATES[0].kickoff_at,
+            generalOverride: {
+                homeTeam: { name: TWO_CANDIDATES[0].away_team },
+                awayTeam: { name: TWO_CANDIDATES[0].home_team },
+            },
+            pagePropsExtra: {
+                header: {
+                    teams: [
+                        { name: TWO_CANDIDATES[0].away_team },
+                        { name: TWO_CANDIDATES[0].home_team },
+                    ],
+                    homeTeam: { name: TWO_CANDIDATES[0].away_team },
+                    awayTeam: { name: TWO_CANDIDATES[0].home_team },
+                    status: { utcTime: TWO_CANDIDATES[0].kickoff_at },
+                },
+            },
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r15p1e2e', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(html)),
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /content_validity:/);
+        assert.equal(result.completedCount, 0);
+        assert.equal(
+            fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.payload.json')),
+            false,
+            'no pair may be retained for a page with reversed teams'
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

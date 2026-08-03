@@ -76,7 +76,15 @@ canonical interface.
   `general.matchId`, raw `pageProps.matchId` → `matchId`); the transformer-
   injected `payload.matchId` (a copy of the request-side id) is NEVER trusted
   (R3-P1), the provenance flag `observed_match_id_is_response_derived` is
-  recorded, and an input fallback always fails closed. The collector HEAD must
+  recorded, and an input fallback always fails closed. Team markers are
+  verified against the parser's EXACT ordered fallback chain
+  (`general.<side>Team.name` → `header.teams[0|1].name` →
+  `content.lineup.<side>Team.name` → `general.<side>Team.shortName`,
+  mirroring `FotMobRawParser.extractTeams()`): the first non-empty name the
+  parser will emit for each side must equal the expected team, and
+  incomplete markers fail closed — a page with the right match id but
+  REVERSED or misplaced home/away names can no longer pass the loose
+  anywhere-in-text check and persist swapped teams (round-13 P2). The collector HEAD must
   equal the plan's `generator_code_revision` (`PLAN_REVISION_HEAD_MISMATCH`
   otherwise, before any fetch or run-state write). Retention is
   a **stable allowlisted payload** (`<ordinal>-<source_match_id>.payload.json`,
