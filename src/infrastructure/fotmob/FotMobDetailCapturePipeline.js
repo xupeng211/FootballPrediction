@@ -99,10 +99,15 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
  *   initialUsed? (already-consumed requests from a resumed run; the
  *   budget cap is enforced against the CUMULATIVE count so a resume can
  *   never exceed the declared max-requests budget),
- *   now? ()
+ *   initialLastRequestAt? (ISO timestamp of the last request attempted by a
+ *   prior process; the inter-request delay continues across processes —
+ *   remainingDelay = delayMs - (now - initialLastRequestAt). An invalid
+ *   timestamp fails closed (R3-P2-5)),
+ *   now? (() => ms epoch; defaults to Date.now)
  * }
  * @returns {{ fetchOnce: (url, opts) => Promise<object>, budget: { used, max }, requestCount: () => number }}
  */
+/* eslint-disable-next-line complexity */
 function createBoundedFetchAdapter(options = {}) {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     const maxRequests = Number(options.maxRequests || 0);
@@ -126,8 +131,29 @@ function createBoundedFetchAdapter(options = {}) {
         throw Object.assign(new Error('fetch implementation missing'), { code: 'INPUT_ERROR' });
     }
 
-    let requestCount = 0;
+    // Injectable clock (ms epoch) so cross-process delay tests are
+    // deterministic; the default is the wall clock.
+    const nowMs = options.now || (() => Date.now());
+
+    // R3-P2-5: seed the inter-request delay from the persisted
+    // last_network_request_attempted_at of the prior process, so a resumed
+    // run never issues a request sooner than delayMs after the previous
+    // attempt. An invalid / unparseable timestamp fails closed — guessing
+    // is not an option.
     let lastRequestAt = 0;
+    if (options.initialLastRequestAt !== undefined && options.initialLastRequestAt !== null &&
+        String(options.initialLastRequestAt).trim() !== '') {
+        const parsed = Date.parse(String(options.initialLastRequestAt));
+        if (Number.isNaN(parsed)) {
+            throw Object.assign(
+                new Error(`SAFETY_ERROR:invalid_last_request_attempted_at:${String(options.initialLastRequestAt).slice(0, 80)}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        lastRequestAt = parsed;
+    }
+
+    let requestCount = 0;
 
     // Injectable sleep keeps multi-candidate tests fast while the delayMs
     // value gate (>= 60000) is still enforced on the real path.
@@ -166,16 +192,25 @@ function createBoundedFetchAdapter(options = {}) {
             );
         }
         requestCount += 1;
-        if (options.onBeforeFetch) options.onBeforeFetch(url, requestCount);
 
-        // Serialization: enforce the minimum inter-request delay.
+        // Serialization: enforce the minimum inter-request delay measured
+        // from the previous request's attempt. Runs AFTER the budget gate
+        // (exhaustion raises before any wait) and BEFORE the attempt
+        // timestamp is persisted, so the persisted value is exactly the
+        // moment this request starts (cross-process continuity, R3-P2-5).
+        // A clock that went backwards between processes (now < lastRequestAt)
+        // clamps the elapsed time to zero — the full delay is enforced.
         if (lastRequestAt > 0) {
-            const elapsed = Date.now() - lastRequestAt;
+            const elapsed = Math.max(0, nowMs() - lastRequestAt);
             if (elapsed < delayMs) {
                 await sleepImpl(delayMs - elapsed);
             }
         }
-        lastRequestAt = Date.now();
+        lastRequestAt = nowMs();
+        // The attempt is persisted (budget + timestamp) BEFORE the native
+        // fetch — a timeout / abort / read failure can never be recorded as
+        // zero attempts (P2-4) or as an unrecorded request time (R3-P2-5).
+        if (options.onBeforeFetch) options.onBeforeFetch(url, requestCount);
 
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -672,13 +707,44 @@ async function executeCaptureRun(options = {}) {
     );
     // Budget counts only THIS run's real fetches (resume must not inherit
     // earlier runs' counts); the run-state record keeps the cumulative
-    // ATTEMPTED total for the run id's audit trail. The attempted count is
-    // persisted BEFORE the native fetch (P2-4): a timeout/abort/read failure
-    // can never be recorded as zero.
+    // ATTEMPTED total for the run id's audit trail. The attempted count and
+    // the request timestamp are persisted BEFORE the native fetch is issued
+    // (P2-4 / R3-P2-5): a timeout/abort/read failure can never be recorded
+    // as zero.
     const priorNetworkRequests = Number(runState.network_requests_attempted || 0);
+    // R3-P2-4: response and capture totals are accumulated independently of
+    // attempts — a timed-out or non-200 response is a response, not a
+    // completion, and resume must never infer responses from attempts.
+    const priorResponsesReceived = Number(runState.network_responses_received || 0);
+    const priorCapturesCompleted = Number(runState.captures_completed || 0);
     let runNetworkRequests = 0;
+    let runResponsesReceived = 0;
+    let runCapturesCompleted = 0;
     let stopReason = null;
     let stoppedAtOrdinal = null;
+
+    // R3-P2-5: resume the inter-request delay from the timestamp persisted
+    // by the prior process. The run-state contract requires the timestamp
+    // whenever attempts exist — a missing or invalid timestamp fails closed
+    // (no guessing), and a clock that went backwards yields a full wait.
+    let initialLastRequestAt = null;
+    if (priorNetworkRequests > 0) {
+        initialLastRequestAt = runState.last_network_request_attempted_at || null;
+        if (!initialLastRequestAt) {
+            throw Object.assign(
+                new Error(
+                    'SAFETY_ERROR:run state missing last_network_request_attempted_at despite network_requests_attempted > 0'
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (Number.isNaN(Date.parse(String(initialLastRequestAt)))) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:invalid last_network_request_attempted_at in run state'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
 
     const budgetedFetch = createBoundedFetchAdapter({
         fetchImpl: options.fetchImpl,
@@ -688,14 +754,21 @@ async function executeCaptureRun(options = {}) {
         // can never fetch past the declared max-requests under the same
         // authorization context.
         initialUsed: priorNetworkRequests,
+        initialLastRequestAt,
         delayMs,
         timeoutMs: options.timeoutMs,
         sleepImpl: options.sleepImpl,
+        // The injected ISO clock and the adapter's ms clock derive from the
+        // same source so the persisted timestamp equals the adapter's
+        // lastRequestAt exactly.
+        now: () => Date.parse(now()),
         onBeforeFetch: (url, count) => {
             runNetworkRequests = count;
             runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            runState.last_network_request_attempted_at = now();
+            runState.updated_at = now();
             writeRunState(runDir, runState, fsImpl);
         },
     });
@@ -742,22 +815,29 @@ async function executeCaptureRun(options = {}) {
         let fetchResult;
         try {
             fetchResult = await budgetedFetch.fetchOnce(requestUrl);
-            // A resolved response was received (even non-200): record it.
+            // A resolved response was received (even non-200): record it as
+            // a response. R3-P2-4: responses accumulate INDEPENDENTLY of
+            // attempts — a resolved response counts once, and resume never
+            // infers responses from the attempted total.
             runNetworkRequests = budgetedFetch.requestCount();
+            runResponsesReceived += 1;
             runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
-            runState.network_responses_received = priorNetworkRequests + runNetworkRequests;
+            runState.network_responses_received = priorResponsesReceived + runResponsesReceived;
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            runState.updated_at = now();
             writeRunState(runDir, runState, fsImpl);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
             // violations, timeouts, abort, read failures) stop the run. The
             // attempted count was already persisted before the fetch and is
-            // synced from the adapter so failures are never zero (P2-4).
+            // synced from the adapter so failures are never zero (P2-4). A
+            // failed attempt is NOT a response (R3-P2-4).
             runNetworkRequests = budgetedFetch.requestCount();
             runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
+            runState.updated_at = now();
             writeRunState(runDir, runState, fsImpl);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')
@@ -941,10 +1021,16 @@ async function executeCaptureRun(options = {}) {
         completedOrdinals.add(ordinal);
 
         // Persist run state after each completed candidate (resume safety).
+        // R3-P2-4: captures accumulate independently — only pairs actually
+        // written by this process increment the per-run counter; the
+        // cumulative total always equals the completed ordinals set size.
+        runCapturesCompleted += 1;
         runState.completed_ordinals = [...completedOrdinals].sort((a, b) => a - b);
+        runState.captures_completed = priorCapturesCompleted + runCapturesCompleted;
         runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
         runState.network_requests_made = runState.network_requests_attempted;
         runState.real_fotmob_network_requests = runState.network_requests_attempted;
+        runState.updated_at = now();
         writeRunState(runDir, runState, fsImpl);
     }
 
@@ -956,7 +1042,9 @@ async function executeCaptureRun(options = {}) {
     runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
     runState.network_requests_made = runState.network_requests_attempted;
     runState.real_fotmob_network_requests = runState.network_requests_attempted;
+    runState.captures_completed = priorCapturesCompleted + runCapturesCompleted;
     runState.completed_ordinals = [...completedOrdinals].sort((a, b) => a - b);
+    runState.updated_at = now();
     writeRunState(runDir, runState, fsImpl);
 
     const summary = buildRunSummary(runState, plan, [...completedOrdinals]);

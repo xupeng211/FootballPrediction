@@ -237,6 +237,7 @@ function writeCapturePair(args = {}) {
 // ─────────────────────────────────────────────────────────────
 
 function defaultRunState(plan, options = {}) {
+    const startedAt = String(options.startedAt || '');
     return {
         schema_version: 'fotmob-detail-capture-run-state/v1',
         run_id: String(options.runId || ''),
@@ -246,14 +247,92 @@ function defaultRunState(plan, options = {}) {
         max_requests: Number(options.maxRequests || 0),
         delay_ms: Number(options.delayMs || 0),
         collector_code_revision: String(options.collectorCodeRevision || ''),
-        started_at: String(options.startedAt || ''),
+        started_at: startedAt,
+        created_at: startedAt,
+        updated_at: startedAt,
         completed_ordinals: [],
         stopped_at_ordinal: null,
         stop_reason: null,
         status: 'in_progress',
         network_requests_attempted: 0,
         network_responses_received: 0,
+        // R3-P2-4: cumulative pairs actually persisted (independent of
+        // attempts / responses).
+        captures_completed: 0,
+        // R3-P2-5: ISO timestamp of the last request attempt, persisted
+        // before the native fetch; absent while no attempt exists.
+        last_network_request_attempted_at: null,
     };
+}
+
+/**
+ * Run-state contract validator (Codex re-review R3, spec section 十六).
+ * Enforces the full run-state schema — non-negative counters, monotonic
+ * response/capture totals, unique ordinals, and the request-timestamp
+ * invariant (present whenever attempts exist). NEVER auto-fixes: every
+ * violation fails closed on read.
+ *
+ * @param {object} runState
+ * @returns {{ ok: boolean, errors: string[] }}
+ */
+/* eslint-disable-next-line complexity */
+function validateRunState(runState) {
+    const errors = [];
+    if (!isPlainObject(runState)) {
+        return { ok: false, errors: ['run state is not an object'] };
+    }
+    if (runState.schema_version !== 'fotmob-detail-capture-run-state/v1') {
+        errors.push('run state schema_version must be fotmob-detail-capture-run-state/v1');
+    }
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(String(runState.run_id || ''))) {
+        errors.push('run_id must be a valid identifier');
+    }
+    if (!/^[0-9a-f]{64}$/.test(String(runState.plan_sha256 || ''))) {
+        errors.push('plan_sha256 must be 64 lowercase hex');
+    }
+    if (!/^[0-9a-f]{64}$/.test(String(runState.source_artifact_sha256 || ''))) {
+        errors.push('source_artifact_sha256 must be 64 lowercase hex');
+    }
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(String(runState.authorization_id || ''))) {
+        errors.push('authorization_id must be a valid identifier');
+    }
+    for (const numField of ['max_requests', 'delay_ms', 'network_requests_attempted',
+        'network_responses_received', 'captures_completed']) {
+        const n = Number(runState[numField]);
+        if (!Number.isInteger(n) || n < 0) {
+            errors.push(`${numField} must be a non-negative integer`);
+        }
+    }
+    // Monotonicity: responses can never exceed attempts (a failed attempt
+    // is not a response); captures can never exceed responses (a response
+    // that fails validity is not a capture).
+    if (Number(runState.network_responses_received) > Number(runState.network_requests_attempted)) {
+        errors.push('network_responses_received cannot exceed network_requests_attempted');
+    }
+    if (Number(runState.captures_completed) > Number(runState.network_responses_received)) {
+        errors.push('captures_completed cannot exceed network_responses_received');
+    }
+    const ordinals = Array.isArray(runState.completed_ordinals)
+        ? runState.completed_ordinals.map(Number)
+        : [];
+    if (ordinals.some(o => !Number.isInteger(o) || o < 1)) {
+        errors.push('completed_ordinals must contain positive integers');
+    } else if (new Set(ordinals).size !== ordinals.length) {
+        errors.push('completed_ordinals must be unique');
+    } else if (Number(runState.captures_completed) !== ordinals.length) {
+        errors.push('captures_completed must equal completed_ordinals length');
+    }
+    // Invariant: whenever an attempt exists, the request timestamp must be
+    // present and parseable (R3-P2-5).
+    if (Number(runState.network_requests_attempted) > 0) {
+        const ts = String(runState.last_network_request_attempted_at || '');
+        if (!ts) {
+            errors.push('last_network_request_attempted_at required when network_requests_attempted > 0');
+        } else if (Number.isNaN(Date.parse(ts))) {
+            errors.push('last_network_request_attempted_at must be a parseable timestamp');
+        }
+    }
+    return { ok: errors.length === 0, errors };
 }
 
 function writeRunState(runDir, runState, fsImpl = fs) {
@@ -281,6 +360,15 @@ function readRunState(runDir, fsImpl = fs) {
     const parsed = JSON.parse(fsImpl.readFileSync(statePath, 'utf8'));
     if (!isPlainObject(parsed) || parsed.schema_version !== 'fotmob-detail-capture-run-state/v1') {
         throw Object.assign(new Error('run state has unknown schema'), { code: 'SAFETY_ERROR' });
+    }
+    // The full run-state contract is enforced on every read: a tampered or
+    // internally inconsistent state fails closed, never auto-fixed (R3).
+    const validation = validateRunState(parsed);
+    if (!validation.ok) {
+        throw Object.assign(
+            new Error(`run state invalid: ${validation.errors.join('; ')}`),
+            { code: 'SAFETY_ERROR' }
+        );
     }
     return parsed;
 }
@@ -791,6 +879,7 @@ module.exports = {
     defaultRunState,
     writeRunState,
     readRunState,
+    validateRunState,
     writePlanSnapshot,
     readPlanSnapshot,
     checkCompletedPair,
