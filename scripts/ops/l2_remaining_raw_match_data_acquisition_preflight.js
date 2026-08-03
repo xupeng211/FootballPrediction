@@ -360,6 +360,7 @@ async function recaptureTarget(target, fetcherDeps = {}) {
         raw_data_with_meta_hash: result.raw_data_with_meta_hash || null,
         hash_strategy: result.hash_strategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         match_id_source: result.match_id_source || null,
+        observed_match_id_conflict: result.observed_match_id_conflict === true,
         fetched_at: result.raw_data?._meta?.fetched_at || null,
         data_version: result.raw_data?._meta?.data_version || null,
         payload: result.raw_data || (result.ok ? {} : null),
@@ -410,14 +411,24 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         !Array.isArray(recaptureResult.payload)
             ? recaptureResult.payload
             : recaptureResult;
-    // R3-P1: resolve the trusted observed id from the raw-hydration-shaped
-    // source payload; the fetcher already trusts it, the fallback path must
-    // agree instead of trusting a synthetic payload id.
-    const trustedIdentity = extractTrustedObservedMatchIdentity({ pageProps: sourcePayload });
+    // R3-P1: the live fetcher path is authoritative — recaptureResult carries
+    // the fetcher's pre-transform match_id_source and observed_match_id_conflict
+    // (computed from the RAW hydration, never from a synthetic payload id), so
+    // re-deriving trust from the normalized raw_data shape would relabel an
+    // input_external_id_fallback value as response-derived. Only the offline
+    // path (payload that IS the raw-hydration pageProps shape, i.e. no
+    // match_id_source) re-extracts the trusted id with the shared extractor.
+    const authoritativeMatchIdSource = String(recaptureResult.match_id_source || '');
+    const trustedIdentity = authoritativeMatchIdSource
+        ? null
+        : extractTrustedObservedMatchIdentity({ pageProps: sourcePayload });
     const originalMatchResolution = normalizeMatchId(sourcePayload, fetcherInput, {
         requestUrl: recaptureResult.request_url,
         finalUrl: recaptureResult.final_url,
     }, trustedIdentity);
+    const matchIdSource = authoritativeMatchIdSource || originalMatchResolution.matchIdSource;
+    const observedIdConflict = recaptureResult.observed_match_id_conflict === true ||
+        originalMatchResolution.conflict === true;
     const stableRawPayload =
         recaptureResult.stable_raw_payload &&
         typeof recaptureResult.stable_raw_payload === 'object' &&
@@ -448,16 +459,26 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
             hasLineup: Boolean(stableRawPayload.content?.lineup),
             hasShotmap: Boolean(stableRawPayload.content?.shotmap),
             dataHash: rawDataHash,
-            matchIdSource: recaptureResult.match_id_source || originalMatchResolution.matchIdSource,
+            matchIdSource,
         })
     );
     const rawDataErrors = validateCanonicalRawDataShape(rawData);
     const dataVersion = recaptureResult.data_version || EXPECTED_SCOPE.dataVersion;
 
+    // R3-P1 fail-closed: a page whose observed id is NOT a trusted
+    // response-derived id (input_external_id_fallback / unresolved) or whose
+    // allowlisted raw ids conflict must never be planned as a write — the
+    // capture pipeline's content gate rejects it, the preflight must agree.
     let decision = 'would_insert';
     let reason = 'no existing raw_match_data row for match_id,data_version';
 
-    if (existingRawRow) {
+    if (matchIdSource !== 'general.matchId' && matchIdSource !== 'matchId') {
+        decision = 'identity_untrusted';
+        reason = `observed match id is not a trusted response-derived id (match_id_source=${matchIdSource})`;
+    } else if (observedIdConflict) {
+        decision = 'identity_untrusted';
+        reason = 'observed match id sources conflict — no trusted observed id';
+    } else if (existingRawRow) {
         if (existingRawRow.data_hash === rawDataHash) {
             decision = 'would_skip';
             reason = 'existing raw_match_data row has identical data_hash';
@@ -487,7 +508,8 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         data_hash: rawDataHash,
         stable_raw_payload_hash: rawDataHash,
         raw_data_with_meta_hash: recaptureResult.raw_data_with_meta_hash || null,
-        match_id_source: recaptureResult.match_id_source || originalMatchResolution.matchIdSource,
+        match_id_source: matchIdSource,
+        observed_match_id_conflict: observedIdConflict,
         existing_raw_match_data_found: !!existingRawRow,
         decision,
         reason: rawDataErrors.length > 0 ? `${reason}; ${rawDataErrors.join('; ')}` : reason,
@@ -613,7 +635,8 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
         const entry = buildPerTargetPreflight(target, result, existingRawRow);
         perTarget.push(entry);
 
-        if (entry.hydration_parse_ok && entry.looks_like_valid_match_detail) {
+        if (entry.hydration_parse_ok && entry.looks_like_valid_match_detail &&
+            entry.decision !== 'identity_untrusted') {
             validCount += 1;
         } else {
             failedCount += 1;

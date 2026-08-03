@@ -584,6 +584,9 @@ function checkCompletedPair(args = {}) {
  *   runDir, ordinal, sourceMatchId,
  *   runPlan (validated run-bound plan snapshot — REQUIRED),
  *   parserCodeRevision (40-hex),
+ *   expectedRunId (run-state run_id the pair must be bound to — REQUIRED),
+ *   expectedAuthorizationId (run-state authorization_id the pair must be
+ *     bound to — REQUIRED),
  *   fsImpl?
  * }
  * @returns {{ artifact: object, artifactSha256: string }}

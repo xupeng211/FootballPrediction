@@ -713,8 +713,9 @@ async function executeCaptureRun(options = {}) {
     // as zero.
     const priorNetworkRequests = Number(runState.network_requests_attempted || 0);
     // R3-P2-4: response and capture totals are accumulated independently of
-    // attempts — a timed-out or non-200 response is a response, not a
-    // completion, and resume must never infer responses from attempts.
+    // attempts — a RESOLVED response (even non-200) is a response, a
+    // timeout/abort/read failure is an attempt that is never a response, and
+    // resume must never infer responses from attempts.
     const priorResponsesReceived = Number(runState.network_responses_received || 0);
     const priorCapturesCompleted = Number(runState.captures_completed || 0);
     let runNetworkRequests = 0;
