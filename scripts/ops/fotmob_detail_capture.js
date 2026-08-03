@@ -514,6 +514,19 @@ function runReplay(args, deps = {}) {
             existingStat = fsImpl.lstatSync(entry.artifactPath);
         } catch { /* absent is fine */ }
         if (existingStat) {
+            // P2 (Codex re-review on 9568ea33e): the target must be a REGULAR
+            // file, not just byte-identical through a symlink. readFileSync
+            // follows links, so a symlink to byte-identical content would
+            // pass the content comparison — but writeDetailArtifact rejects
+            // symlinks, which would fail AFTER earlier targets were written
+            // (partial output again). lstat decides: reject any non-regular
+            // target in the pre-check, before ANY artifact is materialized.
+            if (!existingStat.isFile() || existingStat.isSymbolicLink()) {
+                throw Object.assign(
+                    new Error(`replay failed: target is not a regular file: ${entry.artifactPath}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
             const existingBytes = fsImpl.readFileSync(entry.artifactPath);
             if (sha256Bytes(existingBytes) !== entry.artifactSha256) {
                 throw Object.assign(
