@@ -2047,3 +2047,174 @@ test('P2 (Codex re-review on cdcb7ae18): the manifest request_attempted_at is th
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('P2 (Codex round-2 review on 85bc0ee43): resume treats a completed ordinal with a MISSING pair as a safety error — never a re-fetch', async () => {
+    const dir = tmpDir('fotmob-p2-absent-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2absent', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Simulate pair data loss: the run state records the ordinal as
+        // completed, the pair files are gone. Re-fetching would inflate
+        // captures_completed without growing completed_ordinals.
+        fs.rmSync(path.join(run.runDir, 'captures'), { recursive: true, force: true });
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2absent', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'resume stops instead of re-fetching');
+        assert.match(resumed.stopReason, /resume_pair_absent/);
+        const stateAfter = readStateJson(run.runDir);
+        const { validateRunState } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
+        assert.equal(validateRunState(stateAfter).ok, true, 'the failed-closed state stays contract-valid');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 85bc0ee43): manifest stable_raw_payload_sha256 is the fetcher hash computed with the trusted observed identity — never a null-matchId rebuild', async () => {
+    const dir = tmpDir('fotmob-p2-rawhash-');
+    try {
+        const cand = TWO_CANDIDATES[0];
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const page = pageFor(cand);
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2rawhash', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(page)),
+        }));
+        assert.equal(run.status, 'complete');
+
+        // Re-run the fetcher against the SAME cached page to obtain its
+        // authoritative stable-raw-payload hash (computed with the trusted
+        // response-derived identity). The manifest must record exactly that
+        // hash — not a rebuild with an empty context that nulls the matchId.
+        const fetcherResult = await fetchFotMobRawDetail(
+            {
+                externalId: cand.source_match_id,
+                matchId: `${cand.season.replace('/', '')}_${cand.source_match_id}`,
+                homeTeam: cand.home_team,
+                awayTeam: cand.away_team,
+                matchDate: cand.kickoff_at,
+                dataVersion: 'fotmob_capture_v1',
+            },
+            {
+                fetchFn: async () => ({
+                    status: 200,
+                    url: `https://www.fotmob.com/match/${cand.source_match_id}`,
+                    headers: { get: (name) => (String(name).toLowerCase() === 'content-type' ? 'text/html; charset=utf-8' : null) },
+                    body: page,
+                    bodyBytes: Buffer.from(page, 'utf8'),
+                    text: async () => page,
+                    contentType: 'text/html; charset=utf-8',
+                    redirected: false,
+                }),
+                parser: {
+                    extractFromHtml: NextDataParser.extractFromHtml,
+                    transformToApiFormat: NextDataParser.transformToApiFormat,
+                },
+                now: () => FIXED_CLOCK,
+            }
+        );
+        assert.ok(fetcherResult.stable_raw_payload_hash, 'fetcher produced a stable hash');
+        const manifest = JSON.parse(fs.readFileSync(
+            path.join(run.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'
+        ));
+        assert.equal(
+            manifest.stable_raw_payload_sha256, fetcherResult.stable_raw_payload_hash,
+            'manifest hash is the fetcher hash computed with the trusted observed identity'
+        );
+        // The old behavior (empty-context rebuild) nulled the matchId and
+        // diverged — prove the stored hash is NOT that divergent value.
+        const { buildStableRawPayload, sha256StableRawPayload } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
+        const nullMatchIdHash = sha256StableRawPayload(buildStableRawPayload(fetcherResult.raw_data, {}, {}));
+        assert.notEqual(manifest.stable_raw_payload_sha256, nullMatchIdHash, 'hash binds the observed match id');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 85bc0ee43): the attempt timestamp is taken ONCE — manifest time equals the persisted run-state time even on a clock that advances per call', async () => {
+    const dir = tmpDir('fotmob-p2-singlets-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        // A clock that advances 1 ms per call: three separate now() calls in
+        // the pre-fetch callback would produce three different timestamps.
+        let tick = 0;
+        const advancingNow = () => new Date(Date.parse(FIXED_CLOCK) + (tick += 1)).toISOString();
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2singlets', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            extra: { now: advancingNow },
+        }));
+        assert.equal(run.status, 'complete');
+        const state = readStateJson(run.runDir);
+        const manifest = JSON.parse(fs.readFileSync(
+            path.join(run.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'
+        ));
+        assert.equal(
+            manifest.request_attempted_at, state.last_network_request_attempted_at,
+            'single timestamp: manifest and run-state record the same attempt instant'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 85bc0ee43): checkCompletedPair RECOMPUTES the payload business hash — a tampered payload with refreshed file/self hashes is never treated as completed', async () => {
+    const dir = tmpDir('fotmob-p2-rehash-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2rehash', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Tamper a business field; refresh the payload file hash and the
+        // manifest self-hash; KEEP the same declared stable_payload_sha256 in
+        // both payload and manifest (exactly the R3-P2-1 tamper scenario, but
+        // for the RESUME path). Resume must fail closed, not skip the pair.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.normalized.home_team = 'Tampered United';
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2rehash', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'tampered pair stops the resume');
+        assert.match(resumed.stopReason, /RESUME_PAIR_BUSINESS_HASH_MISMATCH/);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 85bc0ee43): replay rejects relative, in-repo and symlink-ancestor run dirs before any read or write', async () => {
+    const dir = tmpDir('fotmob-p2-replaybound-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2bound', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Relative run dir → rejected at the boundary gate.
+        assert.throws(
+            () => runReplay({ 'run-dir': 'relative/run-dir' }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'INPUT_ERROR'
+        );
+        // In-repo absolute path → SAFETY_ERROR before any read/write.
+        const inRepo = path.join(REPO_ROOT, 'some-run-dir');
+        assert.throws(
+            () => runReplay({ 'run-dir': inRepo }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /outside the repository/.test(e.message)
+        );
+        // A valid external run dir still replays.
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
