@@ -264,6 +264,10 @@ function defaultRunState(plan, options = {}) {
         // R3-P2-5: ISO timestamp of the last request attempt, persisted
         // before the native fetch; absent while no attempt exists.
         last_network_request_attempted_at: null,
+        // R20-P1: ISO next-allowed-request DEADLINE (last request start +
+        // delay_ms) persisted alongside the attempt — the resume gate waits
+        // until the deadline, covering the last pre-fetch write's duration.
+        next_allowed_request_at: null,
     };
 }
 
@@ -332,6 +336,18 @@ function validateRunState(runState) {
             errors.push('last_network_request_attempted_at required when network_requests_attempted > 0');
         } else if (Number.isNaN(Date.parse(ts))) {
             errors.push('last_network_request_attempted_at must be a parseable timestamp');
+        }
+    }
+    // R20-P1 (Codex re-review on 0bfe90629): the persisted next-allowed-
+    // request DEADLINE (last request start + delayMs) covers the last pre-
+    // fetch run-state write's duration — the resume gate waits until the
+    // deadline instead of a timestamp that was still pending write. Optional
+    // for backward compatibility with legacy states (they fall back to the
+    // timestamp formula on resume); when present it must be parseable.
+    if (runState.next_allowed_request_at !== undefined && runState.next_allowed_request_at !== null
+        && String(runState.next_allowed_request_at).trim() !== '') {
+        if (Number.isNaN(Date.parse(String(runState.next_allowed_request_at)))) {
+            errors.push('next_allowed_request_at must be a parseable timestamp');
         }
     }
     return { ok: errors.length === 0, errors };

@@ -3857,6 +3857,14 @@ test('R20-P1 (Codex re-review on 0bfe90629): the PERSISTED resume seed is actual
             state1.last_network_request_attempted_at, new Date(fetchesAt[1]).toISOString(),
             'the persisted resume seed equals the REAL last request start (R19-P1 code persisted the pre-last-write moment, 200 ms earlier)'
         );
+        assert.equal(
+            state1.next_allowed_request_at, new Date(fetchesAt[1] + 60000).toISOString(),
+            'the persisted next-allowed-request deadline = true fetch start + delayMs — the resume gate covers the last pre-fetch write\'s duration'
+        );
+        assert.equal(
+            Date.parse(state1.next_allowed_request_at) - Date.parse(state1.last_network_request_attempted_at), 60000,
+            'the deadline and the seed timestamp maintain the delay invariant'
+        );
         // The operator waits 30 s between the two processes.
         clockMs += 30000;
         // Process 2: resume with the SAME immutable budget of 3 — 2 already
@@ -3869,6 +3877,38 @@ test('R20-P1 (Codex re-review on 0bfe90629): the PERSISTED resume seed is actual
         assert.ok(
             fetchesAt[2] - fetchesAt[1] >= 60000,
             `the resumed process never starts earlier than delayMs after the REAL previous request start (got ${fetchesAt[2] - fetchesAt[1]}): the actualized seed covers the last run-state write's duration (R19-P1 code yields 59800)`
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R20-P1 (Codex re-review on 0bfe90629): the persisted next-allowed-request DEADLINE is exactly delayMs after the seed, and a PRESENT-but-invalid deadline fails closed on resume (tampering)', async () => {
+    const dir = tmpDir('fotmob-r20p1-deadline-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleepImpl = async () => {};
+        const optionsFor = () => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r20p1dl', maxRequests: 3,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString() },
+        });
+        const run = await executeCaptureRun(optionsFor());
+        assert.equal(run.status, 'complete');
+        const state = readStateJson(run.runDir);
+        assert.equal(
+            Date.parse(state.next_allowed_request_at) - Date.parse(state.last_network_request_attempted_at), 60000,
+            'the persisted deadline is exactly delayMs after the persisted seed (both the crash-window and the actualized values maintain this invariant)'
+        );
+        // A present-but-invalid deadline fails closed on resume — the
+        // read-side validator and the resume seeding both reject it.
+        state.next_allowed_request_at = 'garbage';
+        writeStateJson(run.runDir, state);
+        await assert.rejects(
+            executeCaptureRun(optionsFor()),
+            (e) => e.code === 'SAFETY_ERROR' && /next_allowed_request_at/.test(e.message)
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

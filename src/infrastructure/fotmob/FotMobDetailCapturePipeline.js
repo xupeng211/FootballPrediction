@@ -1163,6 +1163,24 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 { code: 'SAFETY_ERROR' }
             );
         }
+        // R20-P1 (Codex re-review on 0bfe90629): the persisted
+        // next_allowed_request_at DEADLINE covers the last pre-fetch
+        // run-state write's duration — the effective pacing anchor becomes
+        // deadline − delayMs, so the first resumed request waits until the
+        // deadline (exact for every request whose actualization write
+        // landed). A present-but-invalid deadline fails closed (tampering);
+        // an absent deadline (legacy state) keeps the timestamp formula.
+        const deadlineRaw = runState.next_allowed_request_at;
+        if (deadlineRaw !== undefined && deadlineRaw !== null && String(deadlineRaw).trim() !== '') {
+            const deadlineMs = Date.parse(String(deadlineRaw));
+            if (Number.isNaN(deadlineMs)) {
+                throw Object.assign(
+                    new Error('SAFETY_ERROR:invalid next_allowed_request_at in run state'),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            initialLastRequestAt = new Date(deadlineMs - delayMs).toISOString();
+        }
     }
 
     const budgetedFetch = createBoundedFetchAdapter({
@@ -1197,6 +1215,13 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.last_network_request_attempted_at = attemptAt;
+            // R20-P1 (Codex re-review on 0bfe90629): the persisted
+            // next-allowed-request DEADLINE covers the last pre-fetch
+            // run-state write's duration. EVERY pre-fetch write refreshes it
+            // (a crash mid-path must never leave a stale past deadline from a
+            // previous request); the actualization after the request settles
+            // overwrites it with the exact true-fetch-start deadline.
+            runState.next_allowed_request_at = new Date(Date.parse(attemptAt) + delayMs).toISOString();
             runState.updated_at = attemptAt;
             writeRunStateLocked(runState);
             // R19-P1 (Codex re-review on 52fadcf09): the synchronous write
@@ -1214,6 +1239,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // moment after the fetch.)
             const actualAt = now();
             runState.last_network_request_attempted_at = actualAt;
+            // R20-P1: the crash-window deadline uses the LATEST pre-fetch
+            // moment available (post-write-1, pre-write-2) — the tightest
+            // value a pre-fetch write can carry.
+            runState.next_allowed_request_at = new Date(Date.parse(actualAt) + delayMs).toISOString();
             runState.updated_at = actualAt;
             writeRunStateLocked(runState);
             // Return the actual attempt timestamp (post-write-1) for
@@ -1319,6 +1348,14 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // delayMs. The manifest and the run-state use the SAME value, so
             // the single-timestamp invariant is preserved.
             runState.last_network_request_attempted_at = requestAttemptedAt;
+            // R20-P1: actualize the persisted next-allowed-request deadline
+            // with the SAME true fetch start — the resume gate waits until
+            // F + delayMs exactly; the callback's crash-window deadline is
+            // overwritten here for every request whose process survives.
+            const deadlineMs = Date.parse(String(requestAttemptedAt));
+            if (!Number.isNaN(deadlineMs)) {
+                runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
+            }
             writeRunStateLocked(runState);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
@@ -1338,6 +1375,13 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // carry no timestamp (no fetch started) and keep the prior value.
             if (err && err.requestAttemptedAt) {
                 runState.last_network_request_attempted_at = String(err.requestAttemptedAt);
+                // R20-P1: the failure path actualizes the deadline too — the
+                // attempt DID reach the network, so a resume must wait the
+                // full delay from the real request start.
+                const deadlineMs = Date.parse(String(err.requestAttemptedAt));
+                if (!Number.isNaN(deadlineMs)) {
+                    runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
+                }
             }
             writeRunStateLocked(runState);
             const msg = String(err.message || err);

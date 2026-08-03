@@ -123,7 +123,16 @@ canonical interface.
   the cross-process resume seed all agree on the REAL request start,
   covering the last pre-fetch write's duration — a slower first write used
   to shrink the real gap between two request starts below delayMs, risking
-  server rate limiting (round-16 P2, round-17 P2, round-18 P2)) and
+  server rate limiting (round-16 P2, round-17 P2, round-18 P2). In addition,
+  every pre-fetch run-state write refreshes a persisted
+  `next_allowed_request_at` DEADLINE (= the true fetch start + delayMs — the
+  callback's crash-window value uses its post-write re-taken actualAt, the
+  completion/failure writes actualize the deadline from the adapter's true
+  fetch-start moment), and resume seeds its gate FROM the deadline
+  (initialLastRequestAt = deadline − delayMs), so the persisted gate covers
+  the LAST pre-fetch write's duration even when the run-state write itself
+  is what a crash loses (round-18 P2; a present-but-invalid deadline fails
+  closed, a missing deadline falls back to the timestamp formula) and
   is validated on every read (non-negative, monotonic, unique ordinals, no
   auto-fixing); attempted requests are counted before the fetch, so
   failed/timeout requests are never recorded as zero. On resume, a pair left
