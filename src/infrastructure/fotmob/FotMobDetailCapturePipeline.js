@@ -1208,11 +1208,20 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // died with a request possibly in flight — the gate executes the
             // FULL delay from the recovery moment (Codex's suggested remedy:
             // no assumption about when the write completed, and recovery
-            // always follows the true fetch start). A false or absent marker
-            // means the state was actualized, so the deadline anchor
-            // (deadline − delayMs = the true fetch start) is exact and the
-            // efficient remaining-delay path is preserved.
-            if (runState.fetch_in_flight === true) {
+            // always follows the true fetch start).
+            // R23-P1 (Codex re-review on ab6aca8ca): only an EXPLICIT `false`
+            // is proof of settlement. A MISSING marker is a LEGACY state
+            // written by 0bc69dad9 or earlier — that process could have died
+            // in the crash window (fetch started, actualization never landed)
+            // with its deadline still antedating the true fetch start, so the
+            // absent marker must NOT take the exact deadline path. Absent (or
+            // any non-false) marker → FULL delay from the recovery moment;
+            // explicit `false` → the exact deadline anchor (deadline − delayMs
+            // = the true fetch start), preserving the efficient remaining-
+            // delay path. (An explicit null is rejected by the read-side
+            // validator before seeding; the non-false branch would also treat
+            // it conservatively, belt and suspenders.)
+            if (runState.fetch_in_flight !== false) {
                 initialLastRequestAt = now();
             } else {
                 initialLastRequestAt = new Date(deadlineMs - delayMs).toISOString();

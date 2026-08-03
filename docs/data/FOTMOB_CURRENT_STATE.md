@@ -143,7 +143,13 @@ canonical interface.
   resume then executes the FULL delay from the recovery moment (no
   assumption that the file mtime is the write's completion moment — the
   earlier mtime anchor was removed because temp+rename keeps the TEMP
-  file's mtime on real filesystems, round-20 P2, R22-P1). When both the deadline and
+  file's mtime on real filesystems, round-20 P2, R22-P1). ONLY an explicit
+  `false` takes the exact deadline path; a MISSING marker — a legacy state
+  left by `0bc69dad9` or earlier, whose process may have died in the crash
+  window without any marker — is treated as a possible in-flight request
+  and also waits the FULL delay from the recovery moment, and an explicit
+  `null` fails closed like any other non-boolean (round-21 P2, R23-P1).
+  When both the deadline and
   the persisted request time are present, the read-side validator AND the
   resume seeding enforce the exact invariant
   `next_allowed_request_at === last_network_request_attempted_at + delay_ms`

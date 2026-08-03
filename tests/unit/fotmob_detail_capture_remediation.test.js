@@ -4158,14 +4158,14 @@ test('R22-P1 (Codex re-review on 0bc69dad9): a SETTLED process death (marker cle
     }
 });
 
-test('R22-P1 (Codex re-review on 0bc69dad9): a NON-BOOLEAN fetch_in_flight fails closed on resume — the marker contract is exact, no magic values', async () => {
-    const dir = tmpDir('fotmob-r22p1-marker-');
+test('R23-P1 (Codex re-review on ab6aca8ca): an EXPLICIT NULL fetch_in_flight fails closed exactly like any other non-boolean — only a fully ABSENT property is legacy-tolerated', async () => {
+    const dir = tmpDir('fotmob-r23p1-marker-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         let clockMs = Date.parse(FIXED_CLOCK);
         const sleepImpl = async () => {};
         const optionsFor = () => makeCaptureOptions({
-            dir, plan, planPath, runId: 'run-r22p1-marker', maxRequests: 3,
+            dir, plan, planPath, runId: 'run-r23p1-marker', maxRequests: 3,
             fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
             sleepImpl,
             extra: { now: () => new Date(clockMs).toISOString() },
@@ -4174,19 +4174,83 @@ test('R22-P1 (Codex re-review on 0bc69dad9): a NON-BOOLEAN fetch_in_flight fails
         assert.equal(run.status, 'complete');
         const state = readStateJson(run.runDir);
         assert.equal(state.fetch_in_flight, false, 'a clean run ends with the marker cleared');
+        // R23-P1: an EXPLICIT null must fail closed — a null could only come
+        // from migration or tampering, and treating it as false would route
+        // an in-flight-crash state onto the exact deadline fast path.
+        state.fetch_in_flight = null;
+        writeStateJson(run.runDir, state);
+        await assert.rejects(
+            executeCaptureRun(optionsFor()),
+            (e) => e.code === 'SAFETY_ERROR' && /fetch_in_flight/.test(e.message),
+            'an explicit null marker fails closed — the pipeline can only ever write true or false'
+        );
         state.fetch_in_flight = 'yes';
         writeStateJson(run.runDir, state);
         await assert.rejects(
             executeCaptureRun(optionsFor()),
             (e) => e.code === 'SAFETY_ERROR' && /fetch_in_flight/.test(e.message),
-            'a non-boolean marker fails closed — the pipeline can only ever write true or false'
+            'a non-boolean marker fails closed — same as null'
         );
-        // An ABSENT marker (legacy state) is tolerated and treated as settled
-        // — backward compatible with pre-marker states.
+        // Only a FULLY ABSENT property (a genuine pre-marker legacy state) is
+        // tolerated — it resumes (conservatively: full delay from recovery).
         delete state.fetch_in_flight;
         writeStateJson(run.runDir, state);
         const run2 = await executeCaptureRun(optionsFor());
-        assert.equal(run2.status, 'complete', 'an absent marker is a settled legacy state — resume proceeds');
+        assert.equal(run2.status, 'complete', 'an absent marker is a legacy state — resume proceeds, never fails closed on absence');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R23-P1 (Codex re-review on ab6aca8ca): a LEGACY state WITHOUT the marker (written by 0bc69dad9 or earlier) is treated as a possible crash window — resume waits the FULL delay from the recovery moment; only an explicit false takes the exact deadline path', async () => {
+    const dir = tmpDir('fotmob-r23p1-legacy-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        const optionsFor = (fetchImpl) => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r23p1-legacy', maxRequests: 3,
+            fetchImpl, sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString() },
+        });
+        const run1 = await executeCaptureRun(optionsFor(mockFetchImpl(() => {
+            fetchesAt.push(clockMs);
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        })));
+        assert.equal(run1.status, 'complete');
+        const runDir = run1.runDir;
+        // Simulate the LEGACY crash window left by a pre-marker version: the
+        // request was ATTEMPTED (attempted=1) but never settled (no response,
+        // no pair), the deadline is still the pre-fetch-basis value, and NO
+        // fetch_in_flight field exists anywhere in the state.
+        const state = readStateJson(runDir);
+        delete state.fetch_in_flight;
+        state.network_responses_received = 0;
+        state.captures_completed = 0;
+        state.completed_ordinals = [];
+        writeStateJson(runDir, state);
+        const capturesDir = path.join(runDir, 'captures');
+        for (const f of fs.readdirSync(capturesDir)) fs.rmSync(path.join(capturesDir, f), { force: true });
+        // Resume at an arbitrary time — the missing marker means the prior
+        // process MIGHT have died with the request in flight, so the first
+        // fetch waits the FULL delay from the recovery moment (never the
+        // legacy deadline, which antedates the unknown true fetch start).
+        const recovery = clockMs;
+        sleeps.length = 0;
+        const run2 = await executeCaptureRun(optionsFor(mockFetchImpl(() => {
+            fetchesAt.push(clockMs);
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        })));
+        assert.equal(run2.status, 'complete');
+        assert.equal(fetchesAt.length, 2, 'the missing-pair candidate is re-fetched once');
+        assert.equal(
+            fetchesAt[1] - recovery, 60000,
+            `the legacy state waits the FULL delay from the recovery moment (got ${fetchesAt[1] - recovery}) — the absent marker is never treated as settled`
+        );
+        const state2 = readStateJson(runDir);
+        assert.equal(state2.fetch_in_flight, false, 'the new pipeline rewrites the marker on its own writes');
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }

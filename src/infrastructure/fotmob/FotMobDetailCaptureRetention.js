@@ -373,11 +373,12 @@ function validateRunState(runState) {
         }
     }
     // R22-P1 (Codex re-review on 0bc69dad9): the in-flight marker is a
-    // boolean when present (absent = legacy state, treated as settled/false
-    // by the resume gate). A non-boolean marker fails closed — it could not
-    // have been written by this pipeline.
-    if (runState.fetch_in_flight !== undefined && runState.fetch_in_flight !== null
-        && typeof runState.fetch_in_flight !== 'boolean') {
+    // boolean when present. R23-P1 (Codex re-review on ab6aca8ca): only a
+    // fully ABSENT property is legacy-tolerated — an explicit null is as
+    // abnormal as any other non-boolean (the pipeline only ever writes true
+    // or false; a null could only come from migration or tampering and must
+    // fail closed instead of silently taking the fast path).
+    if (runState.fetch_in_flight !== undefined && typeof runState.fetch_in_flight !== 'boolean') {
         errors.push('fetch_in_flight must be a boolean');
     }
     return { ok: errors.length === 0, errors };
