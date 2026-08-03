@@ -268,6 +268,12 @@ function defaultRunState(plan, options = {}) {
         // delay_ms) persisted alongside the attempt — the resume gate waits
         // until the deadline, covering the last pre-fetch write's duration.
         next_allowed_request_at: null,
+        // R22-P1 (Codex re-review on 0bc69dad9): in-flight marker — TRUE from
+        // the last pre-fetch write until the request settles (both
+        // actualization writes clear it). A true marker on disk means the
+        // prior process died with a request possibly in flight; resume then
+        // executes the FULL delay from the recovery moment.
+        fetch_in_flight: false,
     };
 }
 
@@ -366,6 +372,14 @@ function validateRunState(runState) {
             }
         }
     }
+    // R22-P1 (Codex re-review on 0bc69dad9): the in-flight marker is a
+    // boolean when present (absent = legacy state, treated as settled/false
+    // by the resume gate). A non-boolean marker fails closed — it could not
+    // have been written by this pipeline.
+    if (runState.fetch_in_flight !== undefined && runState.fetch_in_flight !== null
+        && typeof runState.fetch_in_flight !== 'boolean') {
+        errors.push('fetch_in_flight must be a boolean');
+    }
     return { ok: errors.length === 0, errors };
 }
 
@@ -405,28 +419,6 @@ function readRunState(runDir, fsImpl = fs) {
         );
     }
     return parsed;
-}
-
-/**
- * R21-P1 (Codex re-review on 05cd23c55): the run-state file's mtime IS the
- * completion moment of its last write — the one piece of information a
- * pre-fetch write cannot carry about itself. When a process hard-crashes
- * after the native fetch started but before the actualization write, the
- * persisted deadline's basis (taken before the LAST pre-fetch write)
- * antedates the true fetch start by that write's duration; the mtime
- * recovers the write's completion and lets the resume gate anchor there,
- * covering the write's duration without relying on post-settlement
- * correction. Returns the mtime in ms, or null when the file is absent /
- * unreadable / statless (the gate then falls back to the persisted values
- * only — never looser than the deadline formula).
- */
-function runStateMtimeMs(runDir, fsImpl = fs) {
-    const statePath = path.join(runDir, 'run-state.json');
-    try {
-        const stat = fsImpl.statSync(statePath);
-        if (stat && typeof stat.mtimeMs === 'number') return stat.mtimeMs;
-    } catch { /* absent or unreadable */ }
-    return null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1187,7 +1179,6 @@ module.exports = {
     defaultRunState,
     writeRunState,
     readRunState,
-    runStateMtimeMs,
     validateRunState,
     writePlanSnapshot,
     readPlanSnapshot,

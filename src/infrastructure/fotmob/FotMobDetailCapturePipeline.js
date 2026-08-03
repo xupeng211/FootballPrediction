@@ -61,7 +61,6 @@ const {
     defaultRunState,
     writeRunState,
     readRunState,
-    runStateMtimeMs,
     writePlanSnapshot,
     checkCompletedPair,
     buildRunSummary,
@@ -1196,23 +1195,28 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // R21-P1 (Codex re-review on 05cd23c55): the deadline's basis
-            // (the last pre-fetch moment, taken before the follow-up write)
-            // still antedates the TRUE fetch start by that write's duration —
-            // a hard crash after the fetch started but before the
-            // actualization write leaves exactly that gap on disk. The
-            // run-state file's mtime IS that write's completion moment (the
-            // one fact a write cannot carry about itself), so the gate
-            // anchors at max(deadline − delayMs, mtime): the crash window's
-            // wait covers the final pre-fetch write's duration without
-            // relying on post-settlement correction. The mtime can only push
-            // the anchor LATER (conservative direction — never earlier).
-            let anchorMs = deadlineMs - delayMs;
-            const stateMtimeMs = runStateMtimeMs(runDir, fsImpl);
-            if (stateMtimeMs !== null && stateMtimeMs > anchorMs) {
-                anchorMs = stateMtimeMs;
+            // R22-P1 (Codex re-review on 0bc69dad9): the run-state file's
+            // mtime is NOT a reliable write-completion moment — writeRunState
+            // persists via temp+rename and real filesystems keep the TEMP
+            // file's write mtime (rename never refreshes the target's mtime,
+            // and the kernel sets mtime during the write syscalls, before
+            // writeFileSync returns). A gate anchored at mtime could still
+            // antedate the true fetch start. The crash-window decision now
+            // uses the persisted `fetch_in_flight` marker instead: it is set
+            // TRUE by the LAST pre-fetch write and cleared by both
+            // actualization writes. A true marker means the prior process
+            // died with a request possibly in flight — the gate executes the
+            // FULL delay from the recovery moment (Codex's suggested remedy:
+            // no assumption about when the write completed, and recovery
+            // always follows the true fetch start). A false or absent marker
+            // means the state was actualized, so the deadline anchor
+            // (deadline − delayMs = the true fetch start) is exact and the
+            // efficient remaining-delay path is preserved.
+            if (runState.fetch_in_flight === true) {
+                initialLastRequestAt = now();
+            } else {
+                initialLastRequestAt = new Date(deadlineMs - delayMs).toISOString();
             }
-            initialLastRequestAt = new Date(anchorMs).toISOString();
         }
     }
 
@@ -1248,6 +1252,12 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
             runState.last_network_request_attempted_at = attemptAt;
+            // R22-P1 (Codex re-review on 0bc69dad9): no request is in flight
+            // yet at write-1 — the marker stays false until the LAST
+            // pre-fetch write flips it to true, and both actualization
+            // writes clear it. A true marker on disk means the prior process
+            // died with a request possibly in flight.
+            runState.fetch_in_flight = false;
             // R20-P1 (Codex re-review on 0bfe90629): the persisted
             // next-allowed-request DEADLINE covers the last pre-fetch
             // run-state write's duration. EVERY pre-fetch write refreshes it
@@ -1276,6 +1286,13 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // moment available (post-write-1, pre-write-2) — the tightest
             // value a pre-fetch write can carry.
             runState.next_allowed_request_at = new Date(Date.parse(actualAt) + delayMs).toISOString();
+            // R22-P1 (Codex re-review on 0bc69dad9): the LAST pre-fetch
+            // write marks the request as possibly in flight. The native
+            // fetch starts immediately after this write completes; if the
+            // process hard-crashes before the actualization, the resume
+            // gate sees the true marker and executes the FULL delay from
+            // the recovery moment — no mtime assumption.
+            runState.fetch_in_flight = true;
             runState.updated_at = actualAt;
             writeRunStateLocked(runState);
             // Return the actual attempt timestamp (post-write-1) for
@@ -1389,6 +1406,11 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             if (!Number.isNaN(deadlineMs)) {
                 runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
             }
+            // R22-P1 (Codex re-review on 0bc69dad9): the request SETTLED — the
+            // in-flight marker is cleared in the SAME write as the
+            // actualization, so a true marker on disk can only mean the
+            // actualization never landed.
+            runState.fetch_in_flight = false;
             writeRunStateLocked(runState);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
@@ -1416,6 +1438,12 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                     runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
                 }
             }
+            // R22-P1 (Codex re-review on 0bc69dad9): the failure SETTLED (or
+            // no fetch started at all — budget/contract errors) — the
+            // in-flight marker is cleared in the same write as the failure
+            // actualization, so a true marker on disk can only mean the
+            // actualization never landed.
+            runState.fetch_in_flight = false;
             writeRunStateLocked(runState);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')

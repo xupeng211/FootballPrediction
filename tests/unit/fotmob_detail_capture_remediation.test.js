@@ -166,57 +166,17 @@ function okResponse(body, contentType = 'text/html; charset=utf-8') {
     return { status: 200, body, contentType };
 }
 
-// R21-P1 (Codex re-review on 05cd23c55): the resume gate anchors at the
-// run-state file's mtime (the completion moment of its last write). The
-// fake-clock tests' mtimes must live on the SAME clock as the pipeline's
-// injected now(), so every makeCaptureOptions fsImpl is wrapped in a layer
-// that records the effective clock at each successful write and reports it
-// as the file's mtime. The records are module-scoped (keyed by resolved
-// path) so a resumed run in a LATER makeCaptureOptions instance still sees
-// the previous run's write times — exactly what a real file system gives
-// production. Files never written through the layer keep their real stat.
-const fsWriteTimes = new Map();
-function makeWriteTimeFs(baseFs, effNow) {
-    const record = (p) => fsWriteTimes.set(path.resolve(String(p)), Date.parse(effNow()));
-    return {
-        ...baseFs,
-        writeFileSync: (p, data, enc) => {
-            const r = baseFs.writeFileSync(p, data, enc);
-            record(p);
-            return r;
-        },
-        renameSync: (from, to) => {
-            const r = baseFs.renameSync(from, to);
-            record(to);
-            return r;
-        },
-        statSync: (p, ...args) => {
-            const st = baseFs.statSync(p, ...args);
-            const recorded = fsWriteTimes.get(path.resolve(String(p)));
-            if (recorded === undefined) return st;
-            // Preserve the Stats prototype (isFile / isSymbolicLink / … are
-            // used by the pipeline) while reporting the recorded mtime.
-            const clone = Object.create(Object.getPrototypeOf(st));
-            return Object.assign(clone, st, { mtimeMs: recorded });
-        },
-        lstatSync: (p, ...args) => {
-            const st = baseFs.lstatSync(p, ...args);
-            const recorded = fsWriteTimes.get(path.resolve(String(p)));
-            if (recorded === undefined) return st;
-            const clone = Object.create(Object.getPrototypeOf(st));
-            return Object.assign(clone, st, { mtimeMs: recorded });
-        },
-    };
-}
-
 function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoot, env, fetchImpl, sleepImpl, execSync, fsImpl, timeoutMs, extra }) {
+    // R22-P1 (Codex re-review on 0bc69dad9): NO mtime shim. The resume gate
+    // deliberately never assumes the run-state file's mtime is the write's
+    // completion moment (temp+rename keeps the temp file's mtime on real
+    // filesystems), so the crash-window decision comes from the persisted
+    // fetch_in_flight marker — tests use plain fs semantics throughout.
     const effExtra = { ...(extra || {}) };
     const effNow = effExtra.now || (() => FIXED_CLOCK);
     const rawFs = effExtra.fsImpl || fsImpl || fs;
-    // The write-time layer must WIN over any fsImpl the caller passed via
-    // extra — the resume gate reads the run-state mtime through this layer.
     delete effExtra.fsImpl;
-    const effFs = makeWriteTimeFs(rawFs, effNow);
+    const effFs = rawFs;
     return {
         plan,
         planPath,
@@ -3965,7 +3925,7 @@ test('R20-P1 (Codex re-review on 0bfe90629): the persisted next-allowed-request 
     }
 });
 
-test('R21-P1 (Codex re-review on 05cd23c55): a HARD CRASH immediately after the fetch started — before ANY actualization write — still leaves a resume gate that covers the last pre-fetch write: the run-state file mtime (that write\'s completion) anchors the resumed wait', async () => {
+test('R22-P1 (Codex re-review on 0bc69dad9): a HARD CRASH immediately after the fetch started — before ANY actualization write — leaves fetch_in_flight=true on disk, and the resume executes the FULL delay from the recovery moment (no mtime assumption)', async () => {
     const dir = tmpDir('fotmob-r21p1-crash-');
     try {
         const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
@@ -4016,6 +3976,10 @@ test('R21-P1 (Codex re-review on 05cd23c55): a HARD CRASH immediately after the 
         assert.equal(state1.network_requests_attempted, 1);
         assert.equal(state1.captures_completed, 0, 'the actualization never landed — the crash preceded it');
         assert.equal(
+            state1.fetch_in_flight, true,
+            'the LAST pre-fetch write marked the request as possibly in flight — the crash left the marker true'
+        );
+        assert.equal(
             Date.parse(state1.next_allowed_request_at) - Date.parse(state1.last_network_request_attempted_at), 60000,
             'the crash-window deadline keeps the delay invariant'
         );
@@ -4024,14 +3988,18 @@ test('R21-P1 (Codex re-review on 05cd23c55): a HARD CRASH immediately after the 
             fetchesAt[0] - 200 + 60000,
             'the disk deadline = the pre-fetch basis + delayMs = TRUE fetch start + delayMs − (last pre-fetch write duration) — the reviewer\'s exact gap'
         );
-        // The operator resumes 59900 ms after the TRUE fetch start — the
+        // The operator resumes 59900 ms after the TRUE fetch start. The
         // deadline-only gate (anchored at the pre-fetch basis) would already
-        // be satisfied and issue the request 100 ms early.
+        // be satisfied and issue the request 100 ms early; a mtime-anchored
+        // gate would claim to cover the write's duration by assuming mtime is
+        // the write's completion moment — a semantic real filesystems do not
+        // provide (temp+rename keeps the TEMP file's mtime). The in-flight
+        // marker instead forces the FULL delay from the recovery moment.
         clockMs = fetchesAt[0] + 59900;
         sleeps.length = 0;
         crashing = false;
         // Process 2: resume — candidate 1 has no pair (the crash preceded the
-        // pair write), so it is re-fetched AFTER the mtime-anchored wait.
+        // pair write), so it is re-fetched after the full-delay wait.
         const run2 = await executeCaptureRun(optionsFor(mockFetchImpl((url) => {
             fetchesAt.push(clockMs);
             const id = String(url).split('/match/')[1];
@@ -4042,8 +4010,17 @@ test('R21-P1 (Codex re-review on 05cd23c55): a HARD CRASH immediately after the 
         assert.equal(run2.completedCount, 2, 'the retried candidate and the second candidate both complete');
         assert.equal(fetchesAt.length, 3, 'one fetch before the crash, two after the resume');
         assert.equal(
-            fetchesAt[1] - fetchesAt[0], 60000,
-            `the resumed request starts exactly delayMs after the TRUE previous fetch start (got ${fetchesAt[1] - fetchesAt[0]}): the mtime anchor covers the last pre-fetch write's 200 ms (the deadline-only gate yields 59800)`
+            fetchesAt[1] - (fetchesAt[0] + 59900), 60000,
+            `the resumed request waits the FULL delay from the recovery moment (got ${fetchesAt[1] - (fetchesAt[0] + 59900)}): the marker=true crash window never assumes when the last write completed`
+        );
+        assert.equal(
+            fetchesAt[1] - fetchesAt[0], 119900,
+            'the total gap from the TRUE previous fetch start is recovery + full delay — strictly later than any mtime or deadline-only anchor'
+        );
+        const state2 = readStateJson(runDir);
+        assert.equal(
+            state2.fetch_in_flight, false,
+            'the completion actualization cleared the marker — the settled state is unambiguous for a future resume'
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -4094,6 +4071,122 @@ test('R21-P2 (Codex re-review on 05cd23c55): a deadline tampered to a SYNTACTICA
             (e) => e.code === 'SAFETY_ERROR' && /next_allowed_request_at/.test(e.message),
             'a LATE-but-valid deadline also fails closed (the invariant is exact, not one-sided)'
         );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R22-P1 (Codex re-review on 0bc69dad9): a SETTLED process death (marker cleared) resumes with the EXACT deadline anchor — the full-delay-from-recovery path is reserved for the crash window, never wasted on actualized state', async () => {
+    const dir = tmpDir('fotmob-r22p1-settled-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        let runStateWriteCount = 0;
+        let crashing = true;
+        // Writes #2/#3 (candidate 1's pre-fetch writes) take 200 ms each —
+        // same slow-write machinery as the crash test. Candidate 1 fully
+        // settles (write #4 actualization clears the marker, write #5 records
+        // captures_completed=1), the process sleeps out the inter-request
+        // delay, and "dies" at write #6 — candidate 2's write-1, during the
+        // WAIT between two settled requests: the on-disk state is fully
+        // actualized (marker=false) and the crash window does not apply.
+        const wrappedFs = {
+            ...fs,
+            writeFileSync: (p, data, enc) => {
+                if (String(p).includes('run-state')) {
+                    runStateWriteCount += 1;
+                    if (crashing && runStateWriteCount >= 6) {
+                        throw new Error('SIMULATED_HARD_CRASH_AFTER_SETTLEMENT');
+                    }
+                    if (runStateWriteCount === 2 || runStateWriteCount === 3) clockMs += 200;
+                }
+                return fs.writeFileSync(p, data, enc);
+            },
+        };
+        const optionsFor = (fetchImpl) => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r22p1-settled', maxRequests: 3,
+            fetchImpl, sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString(), fsImpl: wrappedFs },
+        });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r22p1-settled');
+        await assert.rejects(
+            executeCaptureRun(optionsFor(mockFetchImpl((url) => {
+                fetchesAt.push(clockMs);
+                const id = String(url).split('/match/')[1];
+                const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }))),
+            (e) => /SIMULATED_HARD_CRASH_AFTER_SETTLEMENT/.test(e.message),
+            'the simulated death stops the run at candidate 2\'s write-1'
+        );
+        assert.equal(fetchesAt.length, 1, 'candidate 1 was captured; candidate 2 never fetched');
+        const state1 = readStateJson(runDir);
+        assert.equal(state1.captures_completed, 1, 'candidate 1 fully captured and actualized');
+        assert.equal(
+            state1.fetch_in_flight, false,
+            'the completion actualization cleared the marker — this is NOT a crash window'
+        );
+        // Resume 59900 ms after the REAL fetch start (1000 ms before the
+        // deadline): the settled state anchors at deadline − delayMs = the
+        // true fetch start, so the resumed request fires at EXACTLY
+        // trueStart + 60000 — the efficient remaining-delay path.
+        clockMs = fetchesAt[0] + 59900;
+        sleeps.length = 0;
+        crashing = false;
+        const run2 = await executeCaptureRun(optionsFor(mockFetchImpl((url) => {
+            fetchesAt.push(clockMs);
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find((c) => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        })));
+        assert.equal(run2.status, 'complete');
+        assert.equal(run2.completedCount, 2, 'candidate 1 completed in run-1, candidate 2 completed in run-2');
+        assert.equal(fetchesAt.length, 2, 'one fetch in run-1, one in run-2 (the completed pair is never re-fetched)');
+        assert.equal(
+            fetchesAt[1] - fetchesAt[0], 60000,
+            `the settled-state resume anchors at the EXACT deadline — the real gap is delayMs, not recovery + delayMs (got ${fetchesAt[1] - fetchesAt[0]})`
+        );
+        assert.ok(
+            sleeps.some((ms) => ms === 100),
+            'the resumed process sleeps only the REMAINING delay (100 ms) — no full-delay waste on actualized state'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R22-P1 (Codex re-review on 0bc69dad9): a NON-BOOLEAN fetch_in_flight fails closed on resume — the marker contract is exact, no magic values', async () => {
+    const dir = tmpDir('fotmob-r22p1-marker-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleepImpl = async () => {};
+        const optionsFor = () => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r22p1-marker', maxRequests: 3,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString() },
+        });
+        const run = await executeCaptureRun(optionsFor());
+        assert.equal(run.status, 'complete');
+        const state = readStateJson(run.runDir);
+        assert.equal(state.fetch_in_flight, false, 'a clean run ends with the marker cleared');
+        state.fetch_in_flight = 'yes';
+        writeStateJson(run.runDir, state);
+        await assert.rejects(
+            executeCaptureRun(optionsFor()),
+            (e) => e.code === 'SAFETY_ERROR' && /fetch_in_flight/.test(e.message),
+            'a non-boolean marker fails closed — the pipeline can only ever write true or false'
+        );
+        // An ABSENT marker (legacy state) is tolerated and treated as settled
+        // — backward compatible with pre-marker states.
+        delete state.fetch_in_flight;
+        writeStateJson(run.runDir, state);
+        const run2 = await executeCaptureRun(optionsFor());
+        assert.equal(run2.status, 'complete', 'an absent marker is a settled legacy state — resume proceeds');
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }

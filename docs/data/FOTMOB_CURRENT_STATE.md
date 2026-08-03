@@ -136,11 +136,14 @@ canonical interface.
   deadline's basis (the last pre-fetch moment) still precedes the write
   that carries it by one write duration — a hard crash right after the
   fetch started, before ANY actualization write, leaves exactly that gap on
-  disk — so the resume gate also anchors at the run-state file's mtime
-  (the completion moment of its last write, recovered via
-  `runStateMtimeMs`): the wait covers the final pre-fetch write's duration
-  without relying on post-settlement correction, and the mtime can only
-  push the anchor LATER (round-19 P2, R21-P1). When both the deadline and
+  disk — so the crash window is decided by a persisted `fetch_in_flight`
+  MARKER instead: the last pre-fetch write sets it true, both actualization
+  writes clear it in the same write as the settlement, and a true marker on
+  disk means the prior process died with a request possibly in flight —
+  resume then executes the FULL delay from the recovery moment (no
+  assumption that the file mtime is the write's completion moment — the
+  earlier mtime anchor was removed because temp+rename keeps the TEMP
+  file's mtime on real filesystems, round-20 P2, R22-P1). When both the deadline and
   the persisted request time are present, the read-side validator AND the
   resume seeding enforce the exact invariant
   `next_allowed_request_at === last_network_request_attempted_at + delay_ms`
