@@ -829,6 +829,9 @@ async function executeCaptureRun(options = {}) {
                 expectedSourceArtifactSha256: String(plan.source_artifact_sha256 || ''),
                 expectedCandidate: candidate,
                 expectedRequestUrl: `${FOTMOB_BASE_URL}${candidate.expected_request_path}`,
+                expectedRequestBudget: binding.maxRequests,
+                expectedDelayMs: delayMs,
+                expectedCollectorCodeRevision: binding.collectorCodeRevision,
                 fsImpl,
             });
             if (pairCheck.state === 'complete') {

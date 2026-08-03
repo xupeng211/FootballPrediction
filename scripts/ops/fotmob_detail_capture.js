@@ -485,6 +485,9 @@ function runReplay(args, deps = {}) {
             parserCodeRevision,
             expectedRunId: String(runState.run_id || ''),
             expectedAuthorizationId: String(runState.authorization_id || ''),
+            expectedRequestBudget: Number(runState.max_requests || 0),
+            expectedDelayMs: Number(runState.delay_ms || 0),
+            expectedCollectorCodeRevision: String(runState.collector_code_revision || ''),
             fsImpl,
         });
         prepared.push({ ordinal, sourceMatchId, result });
@@ -537,6 +540,38 @@ function runReplay(args, deps = {}) {
         }
     }
 
+    // P2 (Codex re-review on a5d63af60): the run summary target is part of
+    // the transactional materialization — pre-check it exactly like the
+    // artifacts (absent, or a regular file with byte-identical deterministic
+    // content) BEFORE any artifact is written. writeRunSummary overwrites
+    // unconditionally, so a differing regular file would otherwise hide a
+    // conflict, and a directory / symlink / other non-regular target would
+    // fail AFTER all artifacts were already materialized (partial output).
+    // The summary is deterministic — it derives only from the run state, the
+    // verified plan and the completed ordinals.
+    const summary = buildRunSummary(runState, runPlan, ordinals);
+    const summaryBytes = Buffer.from(JSON.stringify(summary, null, 2) + '\n', 'utf8');
+    const summarySha256 = sha256Bytes(summaryBytes);
+    const summaryPath = path.join(runDir, 'run-summary.json');
+    let summaryStat = null;
+    try {
+        summaryStat = fsImpl.lstatSync(summaryPath);
+    } catch { /* absent is fine */ }
+    if (summaryStat) {
+        if (!summaryStat.isFile() || summaryStat.isSymbolicLink()) {
+            throw Object.assign(
+                new Error(`replay failed: run summary target is not a regular file: ${summaryPath}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (sha256Bytes(fsImpl.readFileSync(summaryPath)) !== summarySha256) {
+            throw Object.assign(
+                new Error(`replay failed: run summary target exists with different content: ${summaryPath}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
+
     const replayed = [];
     for (const { ordinal, sourceMatchId, result } of materializePlan) {
         const written = writeDetailArtifact({
@@ -559,8 +594,8 @@ function runReplay(args, deps = {}) {
     // scope, not the completed subset — plan_candidate_count must be the
     // verified run plan's selected_candidate_count (e.g. plan=3, completed
     // 1 => plan_candidate_count 3, captures_completed 1). Replay never
-    // shrinks the declared plan.
-    const summary = buildRunSummary(runState, runPlan, ordinals);
+    // shrinks the declared plan. (summary + its target pre-check are built
+    // BEFORE any artifact write — see the pre-check above.)
     writeRunSummary(runDir, summary, fsImpl);
 
     const out = {
