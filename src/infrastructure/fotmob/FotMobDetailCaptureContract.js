@@ -425,6 +425,26 @@ function validateAndRecomputeCapturePlan(plan) {
             if (typeof c.season !== 'string' || !VALID_SEASON_PATTERN.test(c.season)) {
                 errors.push(`${label}: season must be YYYY/YYYY, got ${JSON.stringify(c.season)}`);
             }
+            // P2 (Codex re-review on a5d63af60): per-candidate scope must
+            // CROSS-CHECK the plan's declared authorization scope, not just
+            // be hashed self-consistently. A plan declaring Premier League /
+            // selected_seasons while its candidates carry a different
+            // competition or a season outside the declared set is a
+            // self-consistent but out-of-scope document: the recomputed plan
+            // hash proves internal consistency, not authorization. The
+            // candidate's competition must equal the plan's declared
+            // competition and its season must be one of the declared
+            // selected_seasons — otherwise the CAPTURE gate would authorize
+            // requests for matches the plan never scoped.
+            if (String(c.competition ?? '') !== String(plan.competition ?? '')) {
+                errors.push(
+                    `${label}: competition ${JSON.stringify(c.competition)} must equal the plan's declared competition ${JSON.stringify(plan.competition)}`
+                );
+            }
+            const declaredSeasons = (Array.isArray(plan.selected_seasons) ? plan.selected_seasons : []).map(String);
+            if (!declaredSeasons.includes(String(c.season ?? ''))) {
+                errors.push(`${label}: season ${JSON.stringify(c.season)} must be one of the plan's selected_seasons`);
+            }
             if (typeof c.home_team !== 'string' || c.home_team.trim() === '') {
                 errors.push(`${label}: home_team missing`);
             }
