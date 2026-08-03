@@ -668,6 +668,22 @@ function replayCapturePair(args = {}) {
             { code: 'SAFETY_ERROR' }
         );
     }
+    // P2 (Codex re-review on 9568ea33e): the pair's ordinal must bind to the
+    // snapshot candidate. Lookup by source id alone lets a COPIED pair — e.g.
+    // candidate 2's pair renamed with an ordinal-1 prefix plus a refreshed
+    // request_ordinal and manifest self-hash — replay as ordinal 1 while the
+    // summary claims ordinal 1 completed. The snapshot candidate's ordinal is
+    // the ground truth for the pair's position; any mismatch fails closed
+    // before any artifact or summary write.
+    if (Number(planCandidate.ordinal) !== ordinal) {
+        throw Object.assign(
+            new Error(
+                `replay failed: plan snapshot candidate ordinal mismatch — ` +
+                `candidate ${sourceMatchId} is ordinal ${planCandidate.ordinal}, pair claims ordinal ${ordinal}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
 
     // Payload file hash must match manifest; manifest must be self-valid.
     const payloadBytes = fileSystem.readFileSync(payloadPath);
