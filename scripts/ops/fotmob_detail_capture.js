@@ -42,6 +42,7 @@ const {
 const {
     validateAndRecomputeCapturePlan,
     readAndValidateCandidateArtifact,
+    assertNoSymlinkAncestors,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 
 const NextDataParser = require('../../src/parsers/fotmob/NextDataParser');
@@ -346,6 +347,32 @@ function runReplay(args, deps = {}) {
     const runDir = String(args['run-dir'] || '').trim();
     if (!runDir) {
         throw Object.assign(new Error('--run-dir is required'), { code: 'SAFETY_ERROR' });
+    }
+
+    // P2 (Codex round-2 review on 85bc0ee43): replay writes .detail.json
+    // artifacts and overwrites run-summary.json INSIDE the run directory, so
+    // the run dir must satisfy the same boundary as PLAN/CAPTURE outputs —
+    // absolute, repository-external, no symlink ancestors (the same contract
+    // validateAuthorizationBinding enforces on the output root). A relative
+    // or in-repo path would materialize replay outputs inside the repository.
+    if (!path.isAbsolute(String(runDir))) {
+        throw Object.assign(new Error('replay run dir must be an absolute path'), { code: 'INPUT_ERROR' });
+    }
+    const replayRepositoryRoot = deps.repositoryRoot
+        ? path.resolve(deps.repositoryRoot)
+        : path.resolve(__dirname, '..', '..');
+    const replayAbs = path.resolve(String(runDir));
+    const replayRel = path.relative(replayRepositoryRoot, replayAbs);
+    if (replayRel === '' || (!replayRel.startsWith('..') && !path.isAbsolute(replayRel))) {
+        throw Object.assign(
+            new Error(`replay run dir must be outside the repository: ${replayAbs}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    try {
+        assertNoSymlinkAncestors(replayAbs, deps.fsImpl);
+    } catch (err) {
+        throw Object.assign(new Error(`replay run dir: ${err.message}`), { code: 'SAFETY_ERROR' });
     }
 
     const fsImpl = deps.fsImpl || fs;
