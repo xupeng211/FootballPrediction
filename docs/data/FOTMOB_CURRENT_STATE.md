@@ -136,6 +136,19 @@ canonical interface.
   plan-snapshot or run-state write: `--delay-ms` below 60000, non-integer or
   NaN fails closed with the run directory never created — no poisoned
   run-state.json/plan.json can ever leave a RUN_ID unrecoverable (round-5 P2).
+  The response body is read under a SIZE CAP: an over-limit Content-Length is
+  rejected before any byte is read, a streamed body is aborted as soon as the
+  cap (8 MiB) is exceeded, and a body without a stream is checked after the
+  buffer read — an oversized response stops the run with
+  `SAFETY_ERROR:oversized_response_body` before any pair is retained, so a
+  single oversized page can never consume unbounded memory (round-8 P2). A
+  CROSS-PROCESS EXCLUSIVE LOCK guards every run id: an atomic mkdir lock
+  recording the holder's pid is acquired BEFORE the run state is read and
+  held until the final state write completes (released in `finally` on every
+  path). A live holder stops the competing run with `SAFETY_ERROR` before
+  any fetch or state write — two processes can never interleave state
+  reads/writes for the same run id; a stale lock left by a dead pid is
+  broken exactly once and retried (round-8 P1).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -184,7 +197,18 @@ canonical interface.
   in its ancestor chain, verified BEFORE any existsSync / readdirSync / pair
   read — a completed run whose `captures/` was replaced by a symlink to
   another directory can never replay the link target's pairs as this run's
-  retained evidence (round-5 P2).
+  retained evidence (round-5 P2). Replay ALSO binds the payload's complete
+  PLAN identity — `competition`, `league_id`, `season` and `expected_identity`
+  (home_team, away_team, kickoff_at) — field-by-field to the verified manifest
+  AND the run plan snapshot before any artifact is built: a payload whose
+  plan identity was swapped (with recomputed business hash and refreshed
+  file/self hashes) fails closed with `REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH`
+  and zero artifacts, so a materialized artifact can never declare a plan
+  identity different from the run's real plan (round-8 P2). Resume applies
+  the same plan-identity binding: `payload.competition` / `league_id` /
+  `season` / `expected_identity.*` must equal the manifest's declared values
+  before a pair is treated as completed (`RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH`
+  otherwise — round-8 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked

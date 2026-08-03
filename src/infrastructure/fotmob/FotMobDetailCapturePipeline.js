@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines */
+
 // lifecycle: permanent
 //
 // FotMob bounded detail capture — CAPTURE stage pipeline.
@@ -34,6 +36,7 @@ const {
     GENERATOR_COMPONENT,
     NETWORK_AUTHORIZATION_MODE,
     REQUIRED_LEAGUE_ID,
+    MAX_BODY_BYTES,
     isPlainObject,
     evaluateContentValidity,
     validateAndRecomputeCapturePlan,
@@ -239,8 +242,55 @@ function createBoundedFetchAdapter(options = {}) {
             const finalUrl = String(res.url || u.href);
             const redirected = REDIRECT_STATUSES.has(status);
 
-            // A redirect response counts as the request itself; body is not read.
-            const bodyBytes = redirected ? Buffer.alloc(0) : Buffer.from(await res.arrayBuffer());
+            // P2 (Codex re-review on 047f6afcb): enforce the body-size cap
+            // WHILE reading, not after. Reading the whole body with
+            // arrayBuffer() before the content gates check the cap would let
+            // a single oversized response consume unbounded memory (OOM).
+            // An over-limit Content-Length is rejected up front; otherwise
+            // the stream is accumulated in chunks and aborted as soon as the
+            // cap is exceeded. (A redirect response counts as the request
+            // itself; its body is never read.)
+            let bodyBytes;
+            if (redirected) {
+                bodyBytes = Buffer.alloc(0);
+            } else {
+                const declaredLength = Number(
+                    res.headers && res.headers.get ? (res.headers.get('content-length') || 0) : 0
+                );
+                if (declaredLength > MAX_BODY_BYTES) {
+                    throw Object.assign(
+                        new Error(`SAFETY_ERROR:oversized_response_body:declared_${declaredLength}/${MAX_BODY_BYTES}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+                const stream = res.body && typeof res.body.getReader === 'function' ? res.body.getReader() : null;
+                if (stream) {
+                    const chunks = [];
+                    let total = 0;
+                    for (;;) {
+                        const { done, value } = await stream.read();
+                        if (done) break;
+                        total += value ? value.byteLength : 0;
+                        if (total > MAX_BODY_BYTES) {
+                            throw Object.assign(
+                                new Error(`SAFETY_ERROR:oversized_response_body:stream_${total}/${MAX_BODY_BYTES}`),
+                                { code: 'SAFETY_ERROR' }
+                            );
+                        }
+                        chunks.push(value);
+                    }
+                    bodyBytes = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
+                } else {
+                    const ab = await res.arrayBuffer();
+                    if (ab.byteLength > MAX_BODY_BYTES) {
+                        throw Object.assign(
+                            new Error(`SAFETY_ERROR:oversized_response_body:read_${ab.byteLength}/${MAX_BODY_BYTES}`),
+                            { code: 'SAFETY_ERROR' }
+                        );
+                    }
+                    bodyBytes = Buffer.from(ab);
+                }
+            }
             const body = bodyBytes.toString('utf8');
 
             return {
@@ -619,11 +669,98 @@ function resolveRunDirs(outputRoot, runId) {
  *   delayMs (>= 60000), timeoutMs (default 30000),
  *   fetchImpl? (mock), parser? {extractFromHtml, transformToApiFormat},
  *   now? (), env?, repositoryRoot?, execSync?, fsImpl?,
- *   resume? (default true)
+ *   resume? (default true),
+ *   pid? (run-lock holder pid, default process.pid),
+ *   pidAlive? ((pid) => boolean, injectable for lock tests)
  * }
  * @returns {Promise<object>} run result
  */
+const RUN_LOCK_DIR_NAME = '.capture-run.lock';
+
+// R10-P1 (Codex re-review on 047f6afcb): cross-process exclusive lock for a
+// capture run id. mkdir is atomic, so a dedicated lock directory inside the
+// run dir is an exclusive marker: the first process to create it wins and
+// holds it until releaseRunLock removes it. The holder's pid is persisted
+// inside so a crashed holder can be detected: a pid that is no longer alive
+// marks a STALE lock, which is broken exactly once and retried; a live pid
+// means another process owns the run — the competing run stops with
+// SAFETY_ERROR before it can read or overwrite run state.
 /* eslint-disable-next-line complexity */
+function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {}) {
+    const isPidAlive = pidAlive || ((candidatePid) => {
+        try {
+            process.kill(candidatePid, 0);
+            return true;
+        } catch (err) {
+            // EPERM: the pid exists but belongs to another user — alive.
+            return err && err.code === 'EPERM';
+        }
+    });
+    const lockDir = path.join(runDir, RUN_LOCK_DIR_NAME);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+            fsImpl.mkdirSync(lockDir);
+        } catch (err) {
+            if (!err || err.code !== 'EEXIST') {
+                throw Object.assign(
+                    new Error(`SAFETY_ERROR:run lock could not be created: ${String(err && err.message || err)}`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            // Lock exists: is the holder still alive?
+            let holderPid = null;
+            try {
+                const pidText = String(fsImpl.readFileSync(path.join(lockDir, 'pid'), 'utf8') || '').trim();
+                if (/^\d+$/.test(pidText)) holderPid = Number(pidText);
+            } catch { /* missing / unreadable pid file */ }
+            if (holderPid !== null && holderPid !== Number(pid) && isPidAlive(holderPid)) {
+                throw Object.assign(
+                    new Error(`SAFETY_ERROR:another capture process (pid ${holderPid}) holds the run lock`),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            // Stale (dead holder or unreadable pid): break it exactly once
+            // and retry; a second failure means the lock cannot be taken.
+            if (attempt === 0) {
+                try {
+                    fsImpl.rmSync(lockDir, { recursive: true, force: true });
+                } catch { /* best effort — the retry reports failure */ }
+                continue;
+            }
+            throw Object.assign(
+                new Error('SAFETY_ERROR:run lock could not be acquired'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        // Lock acquired — record the holder pid (best effort: a lock without
+        // a pid file is still exclusive; stale recovery covers missing pids).
+        try {
+            fsImpl.writeFileSync(path.join(lockDir, 'pid'), String(pid), 'utf8');
+        } catch { /* non-fatal: the lock itself remains exclusive */ }
+        return lockDir;
+    }
+    /* istanbul ignore next -- loop always returns or throws */
+    throw Object.assign(new Error('SAFETY_ERROR:run lock could not be acquired'), { code: 'SAFETY_ERROR' });
+}
+
+function releaseRunLock(runDir, lockDir, fsImpl = fs) {
+    if (!lockDir) return;
+    try {
+        // Symlink-safe removal: lstat first — a symlink planted at the lock
+        // location is unlinked (never followed).
+        const st = fsImpl.lstatSync(lockDir);
+        if (st.isSymbolicLink() || !st.isDirectory()) {
+            fsImpl.rmSync(lockDir, { force: true });
+        } else {
+            fsImpl.rmSync(lockDir, { recursive: true, force: true });
+        }
+    } catch {
+        // A failed release is not a run failure: the stale-lock recovery in
+        // acquireRunLock handles it on the next attempt. Never mask the run
+        // result with a cleanup error.
+    }
+}
+
 async function executeCaptureRun(options = {}) {
     const plan = options.plan;
     if (!isPlainObject(plan) || !Array.isArray(plan.candidates)) {
@@ -662,6 +799,32 @@ async function executeCaptureRun(options = {}) {
     ensureRealDirectoryTree(runDir, fsImpl);
     ensureRealDirectoryTree(capturesDir, fsImpl);
     ensureRealDirectoryTree(replayDir, fsImpl);
+
+    // R10-P1 (Codex re-review on 047f6afcb): cross-process exclusive lock
+    // for this run id. Two processes must never interleave run-state reads
+    // and writes — the lock is acquired BEFORE reading run state and held
+    // until the final run-state write completes (released in finally, so
+    // every path — success, error, stop — releases it).
+    const runLock = acquireRunLock(runDir, {
+        fsImpl,
+        pid: options.pid,
+        pidAlive: options.pidAlive,
+    });
+    try {
+        return await executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, now, parser, {
+            runsDir,
+            runDir,
+            capturesDir,
+            replayDir,
+        });
+    } finally {
+        releaseRunLock(runDir, runLock, fsImpl);
+    }
+}
+
+/* eslint-disable-next-line complexity */
+async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, now, parser, dirs) {
+    const { runsDir, runDir, capturesDir, replayDir } = dirs;
 
     // Resume: load existing run state bound to this exact run context.
     let runState = readRunState(runDir, fsImpl);

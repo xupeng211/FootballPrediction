@@ -562,9 +562,25 @@ function checkCompletedPair(args = {}) {
     // only a later replay would reject it. The observed identity must be
     // response-derived with no conflict, exactly like replay requires.
     const payloadObserved = isPlainObject(payload.observed_identity) ? payload.observed_identity : {};
+    const payloadExpected = isPlainObject(payload.expected_identity) ? payload.expected_identity : {};
     const identityChecks = [
         ['payload.source_match_id', payload.source_match_id, manifest.source_match_id],
         ['payload.candidate_id', payload.candidate_id, manifest.candidate_id],
+        // P2 (Codex re-review on 047f6afcb): the payload's complete PLAN
+        // identity — competition, league_id, season and expected_identity
+        // (home_team, away_team, kickoff_at) — must bind to the verified
+        // manifest field by field before the pair can be treated as
+        // completed. The business hash covers these fields, but a tamperer
+        // who recomputes the business hash and refreshes the file/self
+        // hashes could otherwise swap in a payload declaring a DIFFERENT
+        // plan identity; resume would count it complete and a later replay
+        // would emit the wrong plan identity under the run's real plan.
+        ['payload.competition', payload.competition, manifest.competition],
+        ['payload.league_id', payload.league_id, manifest.league_id],
+        ['payload.season', payload.season, manifest.season],
+        ['payload.expected_identity.home_team', payloadExpected.home_team, manifest.home_team],
+        ['payload.expected_identity.away_team', payloadExpected.away_team, manifest.away_team],
+        ['payload.expected_identity.kickoff_at', payloadExpected.kickoff_at, manifest.kickoff_at],
         ['payload.observed_identity.observed_match_id', payloadObserved.observed_match_id, manifest.observed_match_id],
         ['payload.observed_identity.observed_match_id_source', payloadObserved.observed_match_id_source, manifest.observed_match_id_source],
         ['payload.observed_identity.observed_match_id_conflict', payloadObserved.observed_match_id_conflict, manifest.observed_match_id_conflict],
@@ -872,6 +888,46 @@ function replayCapturePair(args = {}) {
     if (payloadObserved.observed_match_id_is_response_derived !== true ||
         payloadObserved.observed_match_id_conflict === true) {
         observedIdentityMismatch('observed identity must be response-derived with no conflict');
+    }
+
+    // R10-P2-2 (Codex re-review on 047f6afcb): bind the payload's complete
+    // PLAN identity — competition, league_id, season and expected_identity
+    // (home_team, away_team, kickoff_at) — to the verified manifest AND the
+    // run plan snapshot, field by field, before any artifact is built. The
+    // business hash covers these fields, but a tamperer who recomputes the
+    // shared projection and refreshes the file/self hashes could otherwise
+    // swap in a payload declaring a different plan identity; the artifact
+    // would then emit the wrong plan identity while the summary claims the
+    // run's real one. Fail closed on any field, including missing values.
+    const payloadExpected = isPlainObject(payload.expected_identity) ? payload.expected_identity : {};
+    const planIdentityMismatch = (field) => {
+        throw Object.assign(
+            new Error(`REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH: ${field}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    };
+    if (String(payload.competition ?? '') !== String(manifest.competition ?? '') ||
+        String(payload.competition ?? '') !== String(planCandidate.competition ?? '')) {
+        planIdentityMismatch('competition does not match verified manifest / run plan snapshot');
+    }
+    if (String(payload.league_id ?? '') !== String(manifest.league_id ?? '')) {
+        planIdentityMismatch('league_id does not match verified manifest');
+    }
+    if (String(payload.season ?? '') !== String(manifest.season ?? '') ||
+        String(payload.season ?? '') !== String(planCandidate.season ?? '')) {
+        planIdentityMismatch('season does not match verified manifest / run plan snapshot');
+    }
+    if (String(payloadExpected.home_team ?? '') !== String(manifest.home_team ?? '') ||
+        String(payloadExpected.home_team ?? '') !== String(planCandidate.home_team ?? '')) {
+        planIdentityMismatch('expected_identity.home_team does not match verified manifest / run plan snapshot');
+    }
+    if (String(payloadExpected.away_team ?? '') !== String(manifest.away_team ?? '') ||
+        String(payloadExpected.away_team ?? '') !== String(planCandidate.away_team ?? '')) {
+        planIdentityMismatch('expected_identity.away_team does not match verified manifest / run plan snapshot');
+    }
+    if (String(payloadExpected.kickoff_at ?? '') !== String(manifest.kickoff_at ?? '') ||
+        String(payloadExpected.kickoff_at ?? '') !== String(planCandidate.kickoff_at ?? '')) {
+        planIdentityMismatch('expected_identity.kickoff_at does not match verified manifest / run plan snapshot');
     }
 
     // Structured payload hash = the payload's own business projection hash

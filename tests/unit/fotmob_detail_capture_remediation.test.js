@@ -2584,3 +2584,239 @@ test('P2 (Codex round-2 review on d95b91d53): replay rejects a symlinked capture
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-8 (Codex re-review on 047f6afcb) — R10-P1 / R10-P2-1 / R10-P2-2
+// ─────────────────────────────────────────────────────────────
+
+test('R10-P2-2 (Codex re-review on 047f6afcb): resume binds the payload PLAN identity to the manifest — a swapped competition with recomputed business hash and refreshed file hashes is never treated as completed', async () => {
+    const dir = tmpDir('fotmob-r10p22-resume-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r10p22a', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Swap the payload's PLAN identity (competition) and recompute its
+        // business hash — the projection includes competition, so the
+        // tamperer stays internally self-consistent. Refresh the payload
+        // file hash and the manifest's declared business hash + self-hash so
+        // every file-level check passes. Only the new per-field
+        // plan-identity binding can catch the swap; the manifest still
+        // declares the real competition.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.competition = 'Some Other League';
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r10p22a', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'swapped payload plan identity stops the resume');
+        assert.match(resumed.stopReason, /RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH:payload\.competition/);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P2-2 (Codex re-review on 047f6afcb): replay binds the payload PLAN identity to the manifest and plan snapshot — a swapped expected_identity with refreshed hashes fails closed with zero artifacts', async () => {
+    const dir = tmpDir('fotmob-r10p22-replay-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r10p22b', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Sanity: a clean replay passes.
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1);
+        fs.rmSync(path.join(run.runDir, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(run.runDir, 'run-summary.json'), { force: true });
+
+        // Swap ONLY the payload's expected_identity.home_team and refresh
+        // every hash replay checks — only the new per-field plan-identity
+        // binding can catch it.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.expected_identity.home_team = 'Tottenham Hotspur';
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH/.test(e.message)
+        );
+        const replayDir = path.join(run.runDir, 'replay');
+        assert.equal(
+            !fs.existsSync(replayDir) || fs.readdirSync(replayDir).length === 0,
+            true,
+            'zero artifacts written for a swapped plan identity'
+        );
+        assert.equal(fs.existsSync(path.join(run.runDir, 'run-summary.json')), false, 'no summary written');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P1 (Codex re-review on 047f6afcb): a live holder of the run lock stops the competing run with SAFETY_ERROR before any fetch or run-state write', async () => {
+    const dir = tmpDir('fotmob-r10p1-live-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r10p1live');
+        fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), '12345', 'utf8');
+
+        const calls = [];
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({
+                dir, plan, planPath, runId: 'run-r10p1live', maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])), calls),
+                extra: { pid: 54321, pidAlive: () => true },
+            })),
+            (e) => e.code === 'SAFETY_ERROR' && /another capture process \(pid 12345\) holds the run lock/.test(e.message)
+        );
+        assert.equal(calls.length, 0, 'no fetch may be issued while another process holds the lock');
+        assert.equal(fs.existsSync(path.join(runDir, 'run-state.json')), false, 'run state is never written by the blocked process');
+        assert.equal(fs.existsSync(path.join(runDir, 'plan.json')), false, 'plan snapshot is never written by the blocked process');
+        assert.equal(fs.existsSync(path.join(runDir, '.capture-run.lock')), true, 'the live holder lock is never removed');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P1 (Codex re-review on 047f6afcb): a stale lock left by a dead holder is broken exactly once and the capture proceeds normally', async () => {
+    const dir = tmpDir('fotmob-r10p1-stale-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r10p1stale');
+        const lockDir = path.join(runDir, '.capture-run.lock');
+        fs.mkdirSync(lockDir, { recursive: true });
+        fs.writeFileSync(path.join(lockDir, 'pid'), '999999', 'utf8');
+
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r10p1stale', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            extra: { pid: 54321, pidAlive: () => false },
+        }));
+        assert.equal(result.status, 'complete');
+        assert.equal(result.completedCount, 1);
+        assert.equal(fs.existsSync(lockDir), false, 'the lock is released after the run');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P1 (Codex re-review on 047f6afcb): the run lock is acquired and released on the normal path — no lock residue after completion', async () => {
+    const dir = tmpDir('fotmob-r10p1-normal-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r10p1normal', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+        assert.equal(fs.existsSync(path.join(run.runDir, '.capture-run.lock')), false, 'no lock residue after completion');
+        assert.deepEqual(
+            fs.readdirSync(run.runDir).sort(),
+            ['captures', 'plan.json', 'replay', 'run-state.json', 'run-summary.json']
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P2-1 (Codex re-review on 047f6afcb): an oversized declared Content-Length stops the run before the body is read', async () => {
+    const dir = tmpDir('fotmob-r10p21-declared-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: (n) => (n === 'content-length' ? String(MAX_BODY_BYTES + 1) : null) },
+            arrayBuffer: async () => { throw new Error('BODY_SHOULD_NOT_BE_READ'); },
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r10p21a', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:declared_/);
+        assert.equal(result.completedCount, 0);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P2-1 (Codex re-review on 047f6afcb): an oversized streamed body is aborted mid-read once the cap is exceeded', async () => {
+    const dir = tmpDir('fotmob-r10p21-stream-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        const { ReadableStream } = require('node:stream/web');
+        const half = Math.floor(MAX_BODY_BYTES / 2);
+        let enqueued = 0;
+        const body = new ReadableStream({
+            start(controller) {
+                controller.enqueue(new Uint8Array(half));
+                enqueued += 1;
+                controller.enqueue(new Uint8Array(half + 1));
+                enqueued += 1;
+                controller.close();
+            },
+        });
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: () => null },
+            body,
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r10p21b', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:stream_/);
+        assert.equal(result.completedCount, 0);
+        assert.equal(enqueued, 2, 'both mock chunks were enqueued; the pipeline aborted while reading them');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R10-P2-1 (Codex re-review on 047f6afcb): a body without a readable stream is size-checked after the buffer read — over the cap stops the run with no retained pair', async () => {
+    const dir = tmpDir('fotmob-r10p21-fallback-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        const big = Buffer.alloc(MAX_BODY_BYTES + 1, 0x61);
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: () => null },
+            arrayBuffer: async () => big,
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r10p21c', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:read_/);
+        assert.equal(result.completedCount, 0);
+        assert.equal(
+            fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.payload.json')),
+            false,
+            'no pair retained for an oversized body'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
