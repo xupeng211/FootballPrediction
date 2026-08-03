@@ -104,7 +104,15 @@ canonical interface.
   own consumer rejects (round-2 P2); the manifest `request_attempted_at` is
   the ACTUAL attempt instant — recorded by the adapter's pre-fetch callback
   after any inter-request delay, immediately before the native request — and
-  always equals the persisted run-state timestamp (round-2 P2).
+  always equals the persisted run-state timestamp; the timestamp is taken ONCE
+  per attempt and used for the run-state record, `updated_at` and the manifest
+  alike, so a real clock can never diverge the three (round-2/round-3 P2). The
+  manifest `stable_raw_payload_sha256` is the FETCHER's hash computed with the
+  trusted response-derived identity (round-3 P2); resume RECOMPUTES the
+  payload business hash with the shared projection before treating a pair as
+  complete (`RESUME_PAIR_BUSINESS_HASH_MISMATCH` otherwise), and a completed
+  ordinal whose pair files are missing fails closed (`resume_pair_absent`) —
+  never a silent re-fetch that would corrupt the counters (round-3 P2).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
@@ -121,7 +129,11 @@ canonical interface.
   summary keeps the FULL plan scope (`plan_candidate_count` from the verified
   plan, not the completed subset — R3-P2-6) and `parsed_at` is derived from the
   capture record — repeated replays are byte-identical. Candidate identity comes
-  exclusively from the verified run plan snapshot, never from file names.
+  exclusively from the verified run plan snapshot, never from file names. The
+  run directory itself must satisfy the same boundary as PLAN/CAPTURE outputs —
+  absolute, repository-external, no symlink ancestors — before any replay read
+  or write, so replay artifacts can never be materialized inside the
+  repository (round-3 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked
