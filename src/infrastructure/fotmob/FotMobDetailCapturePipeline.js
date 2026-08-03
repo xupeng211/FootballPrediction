@@ -1163,38 +1163,16 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 { code: 'SAFETY_ERROR' }
             );
         }
-        // R20-P1 (Codex re-review on 0bfe90629): the persisted
-        // next_allowed_request_at DEADLINE covers the last pre-fetch
-        // run-state write's duration — the effective pacing anchor becomes
-        // deadline − delayMs, so the first resumed request waits until the
-        // deadline (exact for every request whose actualization write
-        // landed). A present-but-invalid deadline fails closed (tampering);
-        // an absent deadline (legacy state) keeps the timestamp formula.
-        const deadlineRaw = runState.next_allowed_request_at;
-        if (deadlineRaw !== undefined && deadlineRaw !== null && String(deadlineRaw).trim() !== '') {
-            const deadlineMs = Date.parse(String(deadlineRaw));
-            if (Number.isNaN(deadlineMs)) {
-                throw Object.assign(
-                    new Error('SAFETY_ERROR:invalid next_allowed_request_at in run state'),
-                    { code: 'SAFETY_ERROR' }
-                );
-            }
-            // R21-P2 (Codex re-review on 05cd23c55): when the deadline is
-            // present it is a fail-closed GATE — it must equal the persisted
-            // request time + delayMs exactly (every legit write maintains
-            // this invariant). A syntactically valid but EARLY deadline
-            // (tampered below last + delayMs) would loosen the gate and let
-            // the next request start before the full delay; the read-side
-            // validator rejects it too, belt and suspenders.
-            const lastMs = Date.parse(String(runState.last_network_request_attempted_at));
-            if (!Number.isNaN(lastMs) && deadlineMs !== lastMs + delayMs) {
-                throw Object.assign(
-                    new Error(
-                        'SAFETY_ERROR:next_allowed_request_at must equal last_network_request_attempted_at + delay_ms in run state'
-                    ),
-                    { code: 'SAFETY_ERROR' }
-                );
-            }
+        // R24-P1 (Codex re-review on 0e0ba8988): the marker decision is made
+        // REGARDLESS of the deadline — a state written before 05cd23c55
+        // carries neither next_allowed_request_at nor fetch_in_flight, and
+        // such a legacy process could have died in the crash window with its
+        // persisted request time still antedating the true fetch start.
+        // Whenever the marker is NOT an explicit `false` (true / null /
+        // absent), the gate executes the FULL delay from the recovery moment
+        // — with or without a deadline. Only an explicit `false` (proof of
+        // settlement) may use the exact anchors below.
+        if (runState.fetch_in_flight !== false) {
             // R22-P1 (Codex re-review on 0bc69dad9): the run-state file's
             // mtime is NOT a reliable write-completion moment — writeRunState
             // persists via temp+rename and real filesystems keep the TEMP
@@ -1215,15 +1193,44 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // in the crash window (fetch started, actualization never landed)
             // with its deadline still antedating the true fetch start, so the
             // absent marker must NOT take the exact deadline path. Absent (or
-            // any non-false) marker → FULL delay from the recovery moment;
-            // explicit `false` → the exact deadline anchor (deadline − delayMs
-            // = the true fetch start), preserving the efficient remaining-
-            // delay path. (An explicit null is rejected by the read-side
-            // validator before seeding; the non-false branch would also treat
-            // it conservatively, belt and suspenders.)
-            if (runState.fetch_in_flight !== false) {
-                initialLastRequestAt = now();
-            } else {
+            // any non-false) marker → FULL delay from the recovery moment.
+            // (An explicit null is rejected by the read-side validator before
+            // seeding; the non-false branch would also treat it
+            // conservatively, belt and suspenders.)
+            initialLastRequestAt = now();
+        } else {
+            // Settled state. R20-P1 (Codex re-review on 0bfe90629): the
+            // persisted next_allowed_request_at DEADLINE is the exact anchor —
+            // deadline − delayMs equals the true fetch start for every request
+            // whose actualization write landed. A present-but-invalid deadline
+            // fails closed (tampering); an absent deadline (a pre-05cd23c55
+            // SETTLED state) keeps the timestamp formula — its actualized
+            // value IS the true fetch start.
+            const deadlineRaw = runState.next_allowed_request_at;
+            if (deadlineRaw !== undefined && deadlineRaw !== null && String(deadlineRaw).trim() !== '') {
+                const deadlineMs = Date.parse(String(deadlineRaw));
+                if (Number.isNaN(deadlineMs)) {
+                    throw Object.assign(
+                        new Error('SAFETY_ERROR:invalid next_allowed_request_at in run state'),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+                // R21-P2 (Codex re-review on 05cd23c55): when the deadline is
+                // present it is a fail-closed GATE — it must equal the
+                // persisted request time + delayMs exactly (every legit write
+                // maintains this invariant). A syntactically valid but EARLY
+                // deadline (tampered below last + delayMs) would loosen the
+                // gate and let the next request start before the full delay;
+                // the read-side validator rejects it too, belt and suspenders.
+                const lastMs = Date.parse(String(runState.last_network_request_attempted_at));
+                if (!Number.isNaN(lastMs) && deadlineMs !== lastMs + delayMs) {
+                    throw Object.assign(
+                        new Error(
+                            'SAFETY_ERROR:next_allowed_request_at must equal last_network_request_attempted_at + delay_ms in run state'
+                        ),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
                 initialLastRequestAt = new Date(deadlineMs - delayMs).toISOString();
             }
         }

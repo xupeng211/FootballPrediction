@@ -149,7 +149,11 @@ canonical interface.
   window without any marker — is treated as a possible in-flight request
   and also waits the FULL delay from the recovery moment, and an explicit
   `null` fails closed like any other non-boolean (round-21 P2, R23-P1).
-  When both the deadline and
+  The marker decision runs BEFORE the deadline branch: a state written
+  before `05cd23c55` carries neither `next_allowed_request_at` nor the
+  marker, and its missing marker still forces the full recovery delay —
+  absence of the deadline never re-enables the possibly-early persisted
+  timestamp (round-22 P2, R24-P1). When both the deadline and
   the persisted request time are present, the read-side validator AND the
   resume seeding enforce the exact invariant
   `next_allowed_request_at === last_network_request_attempted_at + delay_ms`

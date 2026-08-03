@@ -4256,6 +4256,65 @@ test('R23-P1 (Codex re-review on ab6aca8ca): a LEGACY state WITHOUT the marker (
     }
 });
 
+test('R24-P1 (Codex re-review on 0e0ba8988): a state written BEFORE 05cd23c55 carries NEITHER next_allowed_request_at NOR fetch_in_flight — the missing marker must still force the FULL delay from the recovery moment, not fall through to the possibly-early persisted timestamp', async () => {
+    const dir = tmpDir('fotmob-r24p1-nodeadline-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchesAt = [];
+        const optionsFor = (fetchImpl) => makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r24p1-nodeadline', maxRequests: 3,
+            fetchImpl, sleepImpl,
+            extra: { now: () => new Date(clockMs).toISOString() },
+        });
+        const run1 = await executeCaptureRun(optionsFor(mockFetchImpl(() => {
+            fetchesAt.push(clockMs);
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        })));
+        assert.equal(run1.status, 'complete');
+        const runDir = run1.runDir;
+        // Simulate the pre-05cd23c55 crash window: the request was ATTEMPTED
+        // (attempted=1) but never settled (no response, no pair), the
+        // persisted request time is the pre-fetch value, and NEITHER the
+        // deadline NOR the marker field exists anywhere in the state.
+        const state = readStateJson(runDir);
+        delete state.next_allowed_request_at;
+        delete state.fetch_in_flight;
+        state.network_responses_received = 0;
+        state.captures_completed = 0;
+        state.completed_ordinals = [];
+        writeStateJson(runDir, state);
+        const capturesDir = path.join(runDir, 'captures');
+        for (const f of fs.readdirSync(capturesDir)) fs.rmSync(path.join(capturesDir, f), { force: true });
+        // Resume at an arbitrary time. Before this fix the deadline branch was
+        // skipped entirely (no deadline) and the adapter kept the early
+        // persisted timestamp — the gap could fall below delayMs. The marker
+        // decision now runs BEFORE the deadline: absent marker → full delay.
+        const recovery = clockMs;
+        sleeps.length = 0;
+        const run2 = await executeCaptureRun(optionsFor(mockFetchImpl(() => {
+            fetchesAt.push(clockMs);
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        })));
+        assert.equal(run2.status, 'complete');
+        assert.equal(fetchesAt.length, 2, 'the missing-pair candidate is re-fetched once');
+        assert.equal(
+            fetchesAt[1] - recovery, 60000,
+            `the pre-deadline legacy state ALSO waits the FULL delay from the recovery moment (got ${fetchesAt[1] - recovery}) — absence of the deadline never re-enables the early timestamp path`
+        );
+        const state2 = readStateJson(runDir);
+        assert.equal(state2.fetch_in_flight, false, 'the new pipeline rewrites marker and deadline on its own writes');
+        assert.ok(
+            state2.next_allowed_request_at !== undefined && state2.next_allowed_request_at !== null,
+            'the rewritten state carries the deadline again'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('R17-P1 (Codex re-review on 317fdb0d8): the declared-length cancel is best-effort — a body without a cancel method still stops the run with the same safety error', async () => {
     const dir = tmpDir('fotmob-r17p1-nocancel-');
     try {
