@@ -2533,3 +2533,54 @@ test('P2 (Codex round-2 review on a5d63af60): the run-summary target is pre-chec
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('P2 (Codex round-2 review on d95b91d53): the delay contract is validated BEFORE any directory or run-state write — a sub-minimum delay leaves no poisoned run behind', async () => {
+    const dir = tmpDir('fotmob-p2-delaygate-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const fetchCalls = [];
+        const opts = makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2delaygate', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('DELAY_GATE_SHOULD_NOT_FETCH'); }, fetchCalls),
+        });
+        opts.delayMs = 1;
+        await assert.rejects(
+            executeCaptureRun(opts),
+            (e) => e.code === 'SAFETY_ERROR' && /delay-ms must be an integer >= 60000/.test(e.message)
+        );
+        assert.equal(fetchCalls.length, 0, 'zero fetches');
+        assert.ok(
+            !fs.existsSync(path.join(dir, 'out', 'runs', 'run-p2delaygate')),
+            'the run directory must not be created — no run-state.json, no plan.json, no poisoned run'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on d95b91d53): replay rejects a symlinked captures directory before any read — the link target is never treated as this run\'s retained evidence', async () => {
+    const dir = tmpDir('fotmob-p2-capsym-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2capsym', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // A completed run whose captures/ is replaced by a symlink to
+        // another directory. existsSync / readdirSync / pair reads follow
+        // the link; only the lstat check can reject it before any read or
+        // artifact write.
+        const captures = path.join(run.runDir, 'captures');
+        const realCaptures = path.join(dir, 'real-captures');
+        fs.renameSync(captures, realCaptures);
+        fs.symlinkSync(realCaptures, captures, 'dir');
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /captures directory must be a real directory, not a symlink/.test(e.message)
+        );
+        const artifactFiles = fs.readdirSync(path.join(run.runDir, 'replay')).filter(f => f.endsWith('.detail.json'));
+        assert.deepStrictEqual(artifactFiles, [], 'no artifact was materialized from the link target');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
