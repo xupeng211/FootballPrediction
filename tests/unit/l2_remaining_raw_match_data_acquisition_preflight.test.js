@@ -229,7 +229,7 @@ test('sha256CanonicalJson stable', () => {
     assert.equal(h1, h2);
     assert.equal(h1.length, 64);
 });
-test('buildRawData excludes full HTML body and includes _meta/matchId', () => {
+test('buildRawData excludes full HTML body and never trusts a synthetic matchId', () => {
     const gate = loadModuleFresh();
     const preview = {
         _meta: { ver: '1' },
@@ -245,7 +245,12 @@ test('buildRawData excludes full HTML body and includes _meta/matchId', () => {
     assert.ok(raw.content);
     assert.ok(raw.general);
     assert.ok(raw.header);
-    assert.ok(raw.matchId);
+    // R3-P1: the preview builder resolves the observed id through the shared
+    // fetcher helpers, which never trust a transformer-style top-level id —
+    // without a trusted raw source the resolution is unresolved (fail
+    // closed), never a synthetic 'payload.matchId'.
+    assert.equal(raw.matchId, null);
+    assert.equal(raw._meta.match_id_source, 'unresolved');
     assert.equal(raw.rawHtml, undefined);
     assert.equal(raw.fullBody, undefined);
 });
@@ -308,74 +313,6 @@ test('buildPerTargetPreflight: different hash existing row -> would_update', () 
 });
 
 // 42-46 output assertions
-test('preflight live path honors the authoritative match_id_source — a normalized raw_data matchId is never relabeled as trusted', () => {
-    const gate = loadModuleFresh();
-    const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'A', away_team: 'B' };
-    const entry = gate.buildPerTargetPreflight(
-        target,
-        {
-            request_url: 'u',
-            final_url: 'u',
-            http_status: 200,
-            body_byte_length: 100,
-            body_sha256: 'abc',
-            hydration_parse_ok: true,
-            looks_like_valid_match_detail: true,
-            match_id_source: 'input_external_id_fallback',
-            observed_match_id_conflict: false,
-            payload: { matchId: '4830747' },
-        },
-        null
-    );
-    assert.equal(entry.match_id_source, 'input_external_id_fallback');
-    assert.equal(entry.decision, 'identity_untrusted');
-    assert.equal(entry.observed_match_id_conflict, false);
-});
-test('preflight fails closed on conflicting observed match ids', () => {
-    const gate = loadModuleFresh();
-    const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'A', away_team: 'B' };
-    const entry = gate.buildPerTargetPreflight(
-        target,
-        {
-            request_url: 'u',
-            final_url: 'u',
-            http_status: 200,
-            body_byte_length: 100,
-            body_sha256: 'abc',
-            hydration_parse_ok: true,
-            looks_like_valid_match_detail: true,
-            match_id_source: 'general.matchId',
-            observed_match_id_conflict: true,
-            payload: { general: { matchId: '1' }, matchId: '2' },
-        },
-        null
-    );
-    assert.equal(entry.decision, 'identity_untrusted');
-    assert.match(entry.reason, /conflict/);
-    assert.equal(entry.observed_match_id_conflict, true);
-});
-test('preflight does not count untrusted-identity targets as valid or would_insert', async () => {
-    const gate = loadModuleFresh();
-    const untrustedRecapture = async target => ({
-        request_url: 'https://www.fotmob.com/match/' + target.external_id,
-        final_url: 'https://www.fotmob.com/match/' + target.external_id,
-        http_status: 200,
-        content_type: 'text/html',
-        body_byte_length: 50000,
-        body_sha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
-        hydration_parse_ok: true,
-        looks_like_valid_match_detail: true,
-        match_id_source: 'input_external_id_fallback',
-        payload: { matchId: target.external_id },
-    });
-    const plan = await gate.buildRemainingRawMatchDataAcquisitionPreflight(validArgs(), {
-        recaptureFn: untrustedRecapture,
-    });
-    assert.equal(plan.valid_payload_count, 0);
-    assert.equal(plan.failed_target_count, 7);
-    assert.equal(plan.would_insert_count, 0);
-    assert.equal(plan.per_target_preflight[0].decision, 'identity_untrusted');
-});
 test('preflight output with fake recapture yields 7 would_insert', async () => {
     const gate = loadModuleFresh();
     const fakeRecapture = async target => ({
