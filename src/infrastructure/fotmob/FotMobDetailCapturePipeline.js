@@ -258,6 +258,18 @@ function createBoundedFetchAdapter(options = {}) {
                     res.headers && res.headers.get ? (res.headers.get('content-length') || 0) : 0
                 );
                 if (declaredLength > MAX_BODY_BYTES) {
+                    // R17-P1 (Codex re-review on 317fdb0d8): the response is
+                    // already established — CANCEL the body stream BEFORE
+                    // throwing, exactly like the chunked-read path below. A
+                    // server that keeps streaming or never closes the
+                    // connection would otherwise leave the underlying socket
+                    // owned by this unread response, stalling subsequent
+                    // runs; the outer finally only clears the timeout timer.
+                    if (res.body && typeof res.body.cancel === 'function') {
+                        try {
+                            await res.body.cancel();
+                        } catch { /* best effort — the SAFETY_ERROR below is the outcome */ }
+                    }
                     throw Object.assign(
                         new Error(`SAFETY_ERROR:oversized_response_body:declared_${declaredLength}/${MAX_BODY_BYTES}`),
                         { code: 'SAFETY_ERROR' }

@@ -3479,3 +3479,69 @@ test('R16-P2 (Codex re-review on 101028e1a): a whitespace-only name BELOW a corr
         true
     );
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-15 (Codex re-review on 317fdb0d8) — R17-P1
+// ─────────────────────────────────────────────────────────────
+
+test('R17-P1 (Codex re-review on 317fdb0d8): an over-limit DECLARED Content-Length cancels the response body stream BEFORE the safety error — the socket is never left owned by an unread response', async () => {
+    const dir = tmpDir('fotmob-r17p1-cancel-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        const { ReadableStream } = require('node:stream/web');
+        // The response is established (headers received) with a REAL
+        // cancellable body stream; the server declares an over-limit
+        // Content-Length. The branch must cancel the body before throwing —
+        // an uncancelled body would keep the underlying socket owned even
+        // after the run stops.
+        let cancelCalls = 0;
+        const body = new ReadableStream({});
+        const originalCancel = body.cancel.bind(body);
+        body.cancel = async (...args) => {
+            cancelCalls += 1;
+            return originalCancel(...args);
+        };
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: (n) => (n === 'content-length' ? String(MAX_BODY_BYTES + 1) : null) },
+            body,
+            arrayBuffer: async () => { throw new Error('BODY_SHOULD_NOT_BE_READ'); },
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r17p1cancel', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:declared_/);
+        assert.equal(result.completedCount, 0);
+        assert.equal(cancelCalls, 1, 'the response body stream is cancelled before the safety error is thrown');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R17-P1 (Codex re-review on 317fdb0d8): the declared-length cancel is best-effort — a body without a cancel method still stops the run with the same safety error', async () => {
+    const dir = tmpDir('fotmob-r17p1-nocancel-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { MAX_BODY_BYTES } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        // Mock body object that is NOT cancellable (no cancel method): the
+        // branch must degrade gracefully and still fail closed.
+        const fetchImpl = async (url) => ({
+            status: 200,
+            url,
+            headers: { get: (n) => (n === 'content-length' ? String(MAX_BODY_BYTES + 1) : null) },
+            body: { getReader: () => { throw new Error('READER_SHOULD_NOT_BE_CREATED'); } },
+            arrayBuffer: async () => { throw new Error('BODY_SHOULD_NOT_BE_READ'); },
+        });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r17p1nocancel', maxRequests: 1, fetchImpl,
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /fetch_error:SAFETY_ERROR:oversized_response_body:declared_/);
+        assert.equal(result.completedCount, 0);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

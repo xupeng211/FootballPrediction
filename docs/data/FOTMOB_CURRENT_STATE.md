@@ -160,7 +160,12 @@ canonical interface.
   cap (8 MiB) is exceeded, and a body without a stream is checked after the
   buffer read — an oversized response stops the run with
   `SAFETY_ERROR:oversized_response_body` before any pair is retained, so a
-  single oversized page can never consume unbounded memory (round-8 P2). A
+  single oversized page can never consume unbounded memory (round-8 P2).
+  EVERY early-exit path releases the body: the over-limit DECLARED
+  Content-Length branch now CANCELS the response body stream before throwing
+  (round-15 P2), exactly like the chunked-read over-limit path — a server
+  that keeps streaming or never closes the connection can no longer leave
+  the socket owned by an unread response. A
   CROSS-PROCESS EXCLUSIVE LOCK guards every run id: an atomic mkdir lock
   recording the holder's pid is acquired BEFORE the run state is read and
   held until the final state write completes (released in `finally` on every
