@@ -210,7 +210,15 @@ function createBoundedFetchAdapter(options = {}) {
         // The attempt is persisted (budget + timestamp) BEFORE the native
         // fetch — a timeout / abort / read failure can never be recorded as
         // zero attempts (P2-4) or as an unrecorded request time (R3-P2-5).
-        if (options.onBeforeFetch) options.onBeforeFetch(url, requestCount);
+        let requestAttemptedAt = new Date(lastRequestAt).toISOString();
+        if (options.onBeforeFetch) {
+            // P2 (Codex re-review on cdcb7ae18): the pre-fetch callback may
+            // return the ACTUAL attempt timestamp (taken after any inter-
+            // request delay, immediately before the native fetch); that value
+            // is what the manifest records — never the pre-wait moment.
+            const returned = options.onBeforeFetch(url, requestCount);
+            if (typeof returned === 'string' && returned) requestAttemptedAt = returned;
+        }
 
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -255,6 +263,9 @@ function createBoundedFetchAdapter(options = {}) {
                 location,
                 finalUrl,
                 redirected,
+                // Actual attempt instant (after any inter-request delay),
+                // recorded by the adapter and/or its pre-fetch callback.
+                requestAttemptedAt,
             };
         } finally {
             clearTimeout(timer);
@@ -777,6 +788,10 @@ async function executeCaptureRun(options = {}) {
             runState.last_network_request_attempted_at = now();
             runState.updated_at = now();
             writeRunState(runDir, runState, fsImpl);
+            // Return the actual attempt timestamp: the adapter records it on
+            // the fetch result so the manifest never antedates the request
+            // by the inter-request delay (P2, Codex re-review).
+            return now();
         },
     });
 
@@ -827,11 +842,18 @@ async function executeCaptureRun(options = {}) {
         // as a CACHED response — the fetcher's injected fetchFn must never
         // hit the network or consume budget a second time.
         const requestUrl = `${FOTMOB_BASE_URL}${candidate.expected_request_path}`;
-        const requestAttemptedAt = now();
 
         let fetchResult;
+        let requestAttemptedAt = null;
         try {
             fetchResult = await budgetedFetch.fetchOnce(requestUrl);
+            // The manifest timestamp is the adapter's recorded ACTUAL attempt
+            // instant — taken after the inter-request delay, immediately
+            // before the native network request (P2, Codex re-review). Never
+            // the pre-wait moment, which would antedate the audit record by
+            // up to a full delay and diverge from the persisted run-state
+            // time.
+            requestAttemptedAt = fetchResult.requestAttemptedAt || now();
             // A resolved response was received (even non-200): record it as
             // a response. R3-P2-4: responses accumulate INDEPENDENTLY of
             // attempts — a resolved response counts once, and resume never
