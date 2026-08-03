@@ -206,12 +206,20 @@ function containsExpectedMarkers({ externalId, homeTeam, awayTeam, payloadText, 
 // normalized.home_team / away_team from an ORDERED fallback chain —
 // `general.<side>Team.name` → `header.teams[0|1].name` →
 // `content.lineup.<side>Team.name` → `general.<side>Team.shortName` —
-// exactly as FotMobRawParser.extractTeams() does. The FIRST non-empty name
-// the parser will emit for each side must equal the expected team: a marker
+// exactly as FotMobRawParser.extractTeams() does. The FIRST name the
+// parser will emit for each side must equal the expected team: a marker
 // that appears somewhere in the payload but in the WRONG position (e.g.
 // reversed header/lineup teams) or an incomplete chain must fail closed —
 // otherwise a page with the right match id but reversed teams would pass
 // the loose anywhere-in-text check and persist swapped home/away.
+//
+// R16-P2 (Codex re-review on 101028e1a): SELECTION must mirror
+// FotMobRawParser.firstValue() EXACTLY — it skips only undefined / null /
+// the exact empty string. A whitespace-only name (e.g. `general.homeTeam
+// .name === '   '`) IS selected by the parser and persisted as a whitespace
+// normalized.home_team.name, so it must be SELECTED here too: the
+// normalized comparison then fails closed instead of silently skipping to a
+// lower-priority source and letting the gate pass.
 function extractParserTeamName(payload, side) {
     const general = isPlainObject(payload.general) ? payload.general : {};
     const header = isPlainObject(payload.header) ? payload.header : {};
@@ -225,10 +233,12 @@ function extractParserTeamName(payload, side) {
     const fromLineup = isPlainObject(lineup[teamKey]) ? lineup[teamKey] : {};
     const chain = [fromGeneral.name, fromHeaderTeams.name, fromLineup.name, fromGeneral.shortName];
     for (const candidate of chain) {
-        const name = normalizeText(candidate);
-        if (name) return name.toLowerCase();
+        if (candidate === undefined || candidate === null || candidate === '') continue;
+        // The parser's selected value (a whitespace-only name normalizes to
+        // '' here and therefore fails the expected-team comparison below).
+        return normalizeText(candidate).toLowerCase();
     }
-    return null; // the parser would emit an EMPTY team name — incomplete marker
+    return null; // the parser would emit a null name — incomplete marker
 }
 
 function expectedTeamMarkersMatch(rawData, expectedHome, expectedAway) {

@@ -3343,3 +3343,139 @@ test('R15-P1 (Codex re-review on 55c450096): a page with the correct match id bu
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// Round-14 (Codex re-review on 101028e1a) — R16-P1 / R16-P2
+// ─────────────────────────────────────────────────────────────
+
+test('R16-P1 (Codex re-review on 101028e1a): a lock held by the SAME process instance (same pid, same start ticks, different nonce) is a LIVE holder — in-process concurrency fails closed instead of stealing the lock', async () => {
+    const dir = tmpDir('fotmob-r16p1-samepid-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r16p1samepid');
+        const { readProcStarttimeTicks } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        // A concurrent executeCaptureRun() in THIS process wrote its token
+        // first: identical (pid, start ticks) — only the nonce differs. The
+        // old `holderPid !== ourPid` gate skipped the liveness check here
+        // and STOLE the live lock; instance identity must judge it alive.
+        const myTicks = readProcStarttimeTicks(process.pid);
+        assert.notEqual(myTicks, null, 'requires a Linux /proc start-time identity in the test environment');
+        fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), `pid:${process.pid}:${myTicks}:1111`, 'utf8');
+
+        const calls = [];
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({
+                dir, plan, planPath, runId: 'run-r16p1samepid', maxRequests: 2,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])), calls),
+                extra: { pid: process.pid },
+            })),
+            (e) => e.code === 'SAFETY_ERROR'
+                && new RegExp(`another capture process \\(pid ${process.pid}\\) holds the run lock`).test(e.message)
+        );
+        assert.equal(calls.length, 0, 'no fetch — the same-process holder is never displaced');
+        assert.equal(fs.existsSync(path.join(runDir, 'run-state.json')), false, 'run state never written');
+        assert.equal(
+            fs.readFileSync(path.join(runDir, '.capture-run.lock', 'pid'), 'utf8'),
+            `pid:${process.pid}:${myTicks}:1111`,
+            'the live same-process lock is untouched — no takeover'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R16-P1 (Codex re-review on 101028e1a): a SAME-pid lock whose recorded instance is GONE (different start ticks) is still judged STALE — pid equality is decided by instance identity, not blocked outright', async () => {
+    const dir = tmpDir('fotmob-r16p1-samepidrec-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runDir = path.join(dir, 'out', 'runs', 'run-r16p1samepidrec');
+        const { readProcStarttimeTicks } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        // The token records OUR pid with a start-time belonging to NO live
+        // instance (the crashed holder's instance, since recycled to us):
+        // instance identity says stale, so the takeover must still proceed.
+        const myTicks = readProcStarttimeTicks(process.pid);
+        assert.notEqual(myTicks, null, 'requires a Linux /proc start-time identity in the test environment');
+        fs.mkdirSync(path.join(runDir, '.capture-run.lock'), { recursive: true });
+        fs.writeFileSync(path.join(runDir, '.capture-run.lock', 'pid'), `pid:${process.pid}:${myTicks + 1000}:9999`, 'utf8');
+
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r16p1samepidrec', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            extra: { pid: process.pid },
+        }));
+        assert.equal(result.status, 'complete');
+        assert.equal(result.completedCount, 1);
+        assert.equal(
+            fs.existsSync(path.join(runDir, '.capture-run.lock')),
+            false,
+            'the stale same-pid lock is taken over and released'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R16-P2 (Codex re-review on 101028e1a): a WHITESPACE-ONLY general team name is what the parser SELECTS (firstValue skips only exact \'\') — the gate fails closed instead of skipping to header.teams', () => {
+    // FotMobRawParser.firstValue() skips undefined / null / '' but NOT a
+    // whitespace-only string: it selects general.homeTeam.name === '   ' and
+    // persists a whitespace normalized.home_team.name. The old gate trimmed
+    // it away, jumped to header.teams[0].name and PASSED — inconsistent with
+    // the parser output. Selection must mirror firstValue exactly.
+    const raw = r15Raw({
+        general: { matchId: '4506263', homeTeam: { name: '   ' }, awayTeam: { name: '   ' } },
+        header: {
+            teams: [{ name: 'Manchester United' }, { name: 'Fulham' }],
+            homeTeam: { name: 'Manchester United' },
+            awayTeam: { name: 'Fulham' },
+        },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        false,
+        'a whitespace-only name is parser-selected and must fail the expected-team comparison'
+    );
+});
+
+test('R16-P2 (Codex re-review on 101028e1a): whitespace-only names at LOWER chain positions are selected too — the gate never skips to a lower source the parser would not reach', () => {
+    // general carries NO name at all (undefined — skipped), header.teams[0]
+    // carries a whitespace-only name: firstValue selects the whitespace, so
+    // the gate must fail — the parser would emit a whitespace home team
+    // even though a perfectly good name sits in lineup below.
+    const raw = r15Raw({
+        general: { matchId: '4506263' },
+        header: {
+            teams: [{ name: ' ' }, { name: 'Fulham' }],
+            homeTeam: { name: ' ' },
+            awayTeam: { name: 'Fulham' },
+        },
+        content: {
+            lineup: { homeTeam: { name: 'Manchester United' }, awayTeam: { name: 'Fulham' } },
+        },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        false,
+        'a whitespace-only lower-source name is selected (as the parser does) and fails closed'
+    );
+});
+
+test('R16-P2 (Codex re-review on 101028e1a): a whitespace-only name BELOW a correct name does not disturb the gate — the parser selects the first non-empty value and it matches', () => {
+    // general.homeTeam.name is the correct name, header.teams[0].name is
+    // whitespace-only: firstValue stops at general, both sides match → pass.
+    const raw = r15Raw({
+        general: { matchId: '4506263', homeTeam: { name: 'Manchester United' }, awayTeam: { name: 'Fulham' } },
+        header: {
+            teams: [{ name: '   ' }, { name: '   ' }],
+            homeTeam: { name: '   ' },
+            awayTeam: { name: '   ' },
+        },
+        matchId: '4506263',
+    });
+    assert.equal(
+        looksLikeValidRawDetail(raw, { externalId: '4506263', homeTeam: 'Manchester United', awayTeam: 'Fulham' }),
+        true
+    );
+});

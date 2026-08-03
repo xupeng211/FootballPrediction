@@ -822,14 +822,19 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                     { code: 'SAFETY_ERROR' }
                 );
             }
-            // Lock exists: evaluate the CURRENT token. R13-P1: liveness is
-            // decided by PROCESS INSTANCE (recorded start ticks vs the pid's
-            // current /proc identity), never by pid liveness alone — a
-            // recycled pid must not keep a crashed holder's lock alive.
+            // Lock exists: evaluate the CURRENT token. R13-P1 + R16-P1:
+            // liveness is decided by PROCESS INSTANCE (recorded start ticks
+            // vs the pid's current /proc identity), never by pid liveness
+            // alone — a recycled pid must not keep a crashed holder's lock
+            // alive, and PID EQUALITY MUST NOT be treated as takeable: a
+            // concurrent executeCaptureRun() in the SAME process (same pid,
+            // same start ticks, different nonce) is a LIVE holder of the
+            // same run id and fails closed instead of stealing the lock
+            // mid-request (two real requests consumed for one pair).
             const token = readRunLockToken(lockDir, fsImpl);
             const holderPid = parseRunLockToken(token);
             const holderStartTicks = parseRunLockStartTicks(token);
-            if (holderPid !== null && holderPid !== Number(pid)
+            if (holderPid !== null
                 && isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl)) {
                 throw Object.assign(
                     new Error(`SAFETY_ERROR:another capture process (pid ${holderPid}) holds the run lock`),

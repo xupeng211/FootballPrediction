@@ -80,11 +80,16 @@ canonical interface.
   verified against the parser's EXACT ordered fallback chain
   (`general.<side>Team.name` → `header.teams[0|1].name` →
   `content.lineup.<side>Team.name` → `general.<side>Team.shortName`,
-  mirroring `FotMobRawParser.extractTeams()`): the first non-empty name the
+  mirroring `FotMobRawParser.extractTeams()`): the first name the
   parser will emit for each side must equal the expected team, and
   incomplete markers fail closed — a page with the right match id but
   REVERSED or misplaced home/away names can no longer pass the loose
-  anywhere-in-text check and persist swapped teams (round-13 P2). The collector HEAD must
+  anywhere-in-text check and persist swapped teams (round-13 P2).
+  Selection mirrors `FotMobRawParser.firstValue()` EXACTLY (round-14 P2):
+  only undefined / null / the exact empty string are skipped — a
+  whitespace-only `general.<side>Team.name` IS what the parser selects
+  and persists, so the gate selects it too and fails the normalized
+  comparison instead of silently skipping to a lower source. The collector HEAD must
   equal the plan's `generator_code_revision` (`PLAN_REVISION_HEAD_MISMATCH`
   otherwise, before any fetch or run-state write). Retention is
   a **stable allowlisted payload** (`<ordinal>-<source_match_id>.payload.json`,
@@ -191,6 +196,11 @@ canonical interface.
   (its pid was recycled by an unrelated process, `kill(pid, 0)` alone would
   keep the lock alive forever) → the lock is stale and can be taken over;
   legacy tokens without start ticks fall back to pid-liveness (round-11 P2).
+  PID EQUALITY IS NEVER TREATED AS TAKEABLE: a concurrent
+  `executeCaptureRun()` in the SAME process (same pid, same start ticks,
+  different nonce) is judged a LIVE holder by instance identity and fails
+  closed — an in-process competitor can no longer steal a live lock and burn
+  two real requests for one pair (round-14 P1).
 - **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
   snapshot fails closed), verifies payload file hash + manifest self-hash, and
   RECOMPUTES the payload business hash with the same shared projection used at
