@@ -780,16 +780,23 @@ async function executeCaptureRun(options = {}) {
         now: () => Date.parse(now()),
         onBeforeFetch: (url, count) => {
             runNetworkRequests = count;
+            // P2 (Codex round-2 review on 85bc0ee43): the attempt timestamp
+            // is taken ONCE — the same value persists the run-state
+            // timestamp, the updated_at marker, and the manifest's
+            // request_attempted_at. Separate now() calls could straddle a
+            // millisecond boundary on the real clock and make the manifest
+            // time differ from the persisted run-state time.
+            const attemptAt = now();
             runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
             runState.network_requests_made = runState.network_requests_attempted;
             runState.real_fotmob_network_requests = runState.network_requests_attempted;
-            runState.last_network_request_attempted_at = now();
-            runState.updated_at = now();
+            runState.last_network_request_attempted_at = attemptAt;
+            runState.updated_at = attemptAt;
             writeRunState(runDir, runState, fsImpl);
             // Return the actual attempt timestamp: the adapter records it on
             // the fetch result so the manifest never antedates the request
             // by the inter-request delay (P2, Codex re-review).
-            return now();
+            return attemptAt;
         },
     });
 
