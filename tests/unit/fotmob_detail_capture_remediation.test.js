@@ -2321,3 +2321,96 @@ test('P2 (Codex round-2 review on 670504754): capture rejects a RELATIVE output 
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('P2 (Codex round-2 review on 9568ea33e): the replay output pre-check rejects SYMLINK targets — a later symlink with byte-identical content fails closed with zero partial output', async () => {
+    const dir = tmpDir('fotmob-p2-symtarget-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        const calls = [];
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2symtarget', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).match(/(\d+)$/)?.[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }, calls),
+        }));
+        assert.equal(run.status, 'complete');
+
+        // First replay materializes both targets as regular files.
+        const first = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(first.replayed_count, 2);
+        const target1 = path.join(run.runDir, 'replay', '1-4506263.detail.json');
+        const target2 = path.join(run.runDir, 'replay', '2-4506264.detail.json');
+
+        // Scenario from the finding: the EARLIER target is missing (would be
+        // written), the LATER target is a symlink to byte-identical content.
+        // readFileSync follows the link so the content comparison passes; the
+        // pre-check must reject the non-regular target BEFORE any write —
+        // otherwise writeDetailArtifact's symlink rejection would fail after
+        // the earlier artifact was already written (partial output).
+        fs.rmSync(target1);
+        const content2 = fs.readFileSync(target2);
+        fs.rmSync(target2);
+        fs.writeFileSync(path.join(dir, 'target2-copy.bin'), content2);
+        fs.symlinkSync(path.join(dir, 'target2-copy.bin'), target2);
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /not a regular file/.test(e.message)
+        );
+        assert.ok(!fs.existsSync(target1), 'earlier target was never written — zero partial output');
+        assert.ok(fs.lstatSync(target2).isSymbolicLink(), 'conflicting symlink untouched');
+        const leftovers = fs.readdirSync(path.join(run.runDir, 'replay')).filter(f => f.includes('.tmp-'));
+        assert.deepStrictEqual(leftovers, [], 'no partial tmp files remain');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on 9568ea33e): replay binds the pair ordinal to the snapshot candidate — a copied pair replayed under the wrong ordinal fails closed with zero artifacts', async () => {
+    const dir = tmpDir('fotmob-p2-ordbind-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        const calls = [];
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2ordbind', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).match(/(\d+)$/)?.[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }, calls),
+        }));
+        assert.equal(run.status, 'complete');
+        assert.deepStrictEqual(run.completedOrdinals, [1, 2]);
+
+        // Tamper scenario from the finding: candidate 2's pair REPLACES the
+        // ordinal-1 pair (the original 1-4506263 pair is removed so the CLI
+        // still sees exactly one manifest for ordinal 1), its request_ordinal
+        // set to 1 and the manifest self-hash refreshed. Every existing check
+        // (source id lookup, manifest.request_ordinal === file prefix,
+        // self-hash) passes; only the snapshot candidate's ordinal can catch
+        // the swap.
+        fs.rmSync(path.join(run.runDir, 'captures', '1-4506263.payload.json'));
+        fs.rmSync(path.join(run.runDir, 'captures', '1-4506263.manifest.json'));
+        const srcPayload = path.join(run.runDir, 'captures', '2-4506264.payload.json');
+        const srcManifest = path.join(run.runDir, 'captures', '2-4506264.manifest.json');
+        const copyPayload = path.join(run.runDir, 'captures', '1-4506264.payload.json');
+        const copyManifest = path.join(run.runDir, 'captures', '1-4506264.manifest.json');
+        fs.copyFileSync(srcPayload, copyPayload);
+        const copied = JSON.parse(fs.readFileSync(srcManifest, 'utf8'));
+        copied.request_ordinal = 1;
+        copied.capture_manifest_sha256 = computeCaptureManifestSelfHash(copied);
+        fs.writeFileSync(copyManifest, JSON.stringify(copied));
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /ordinal mismatch/.test(e.message)
+        );
+        const replayDir = path.join(run.runDir, 'replay');
+        const artifactFiles = fs.readdirSync(replayDir).filter(f => f.endsWith('.detail.json'));
+        assert.deepStrictEqual(artifactFiles, [], 'no artifact was materialized');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
