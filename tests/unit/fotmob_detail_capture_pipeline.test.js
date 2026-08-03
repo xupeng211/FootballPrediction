@@ -604,7 +604,11 @@ test('CONTENT: complete retained fixture succeeds with full manifest', async () 
         assert.equal(manifest.request_method, 'GET');
         assert.equal(manifest.observed_match_id, '4506263');
         assert.equal(manifest.observed_match_id_match, true);
-        assert.equal(manifest.observed_match_id_source, 'payload.matchId');
+        // R3-P1: the observed id comes from the raw hydration allowlist
+        // (raw pageProps.general.matchId), NEVER from the transformer-
+        // injected payload.matchId.
+        assert.equal(manifest.observed_match_id_source, 'general.matchId');
+        assert.equal(manifest.observed_match_id_is_response_derived, true);
         assert.equal(manifest.observed_match_id_conflict, false);
         assert.equal(manifest.league_id, 47);
         assert.equal(manifest.looks_like_valid_match_detail, true);

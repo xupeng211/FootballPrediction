@@ -153,7 +153,10 @@ function makePayload({ candidate, html, observedOverride }) {
         home_team: g.homeTeam ? g.homeTeam.name : '',
         away_team: g.awayTeam ? g.awayTeam.name : '',
         observed_match_id: String(rawData.matchId),
-        observed_match_id_source: 'payload.matchId',
+        // R3-P1: the fixture page's raw hydration carries
+        // pageProps.general.matchId — the response-derived source.
+        observed_match_id_source: 'general.matchId',
+        observed_match_id_is_response_derived: true,
         observed_match_id_conflict: false,
         ...(observedOverride || {}),
     };
@@ -221,7 +224,8 @@ function makePairFixture(plan, overrides = {}) {
         response_body_byte_size: html.length,
         response_body_sha256: sha256Hex(Buffer.from(html, 'utf8')),
         observed_match_id: candidate.source_match_id,
-        observed_match_id_source: 'payload.matchId',
+        observed_match_id_source: 'general.matchId',
+        observed_match_id_is_response_derived: true,
         observed_match_id_match: true,
         observed_match_id_conflict: false,
         hydration_parse_ok: true,
@@ -673,13 +677,16 @@ test('REPLAY: fully offline deterministic replay produces a valid artifact from 
             sourceMatchId: CANDIDATE.source_match_id,
             runPlan: plan,
             parserCodeRevision: TEST_REVISION,
+            expectedRunId: RUN_ID,
+            expectedAuthorizationId: AUTH_ID,
         });
         const artifact = result.artifact;
         assert.equal(artifact.schema_version, 'fotmob-match-detail-artifact/v1');
         assert.equal(artifact.source_match_id, CANDIDATE.source_match_id);
         assert.equal(artifact.candidate_id, plan.candidates[0].candidate_id);
         assert.equal(artifact.observed_identity.observed_match_id, CANDIDATE.source_match_id);
-        assert.equal(artifact.observed_identity.observed_match_id_source, 'payload.matchId');
+        assert.equal(artifact.observed_identity.observed_match_id_source, 'general.matchId');
+        assert.equal(artifact.observed_identity.observed_match_id_is_response_derived, true);
         assert.equal(artifact.expected_identity.home_team, CANDIDATE.home_team);
         assert.equal(artifact.expected_identity.away_team, CANDIDATE.away_team);
         assert.equal(artifact.expected_identity.kickoff_at, CANDIDATE.kickoff_at);
@@ -697,6 +704,8 @@ test('REPLAY: fully offline deterministic replay produces a valid artifact from 
             sourceMatchId: CANDIDATE.source_match_id,
             runPlan: plan,
             parserCodeRevision: TEST_REVISION,
+            expectedRunId: RUN_ID,
+            expectedAuthorizationId: AUTH_ID,
         });
         assert.equal(again.artifact.structured_payload_sha256, artifact.structured_payload_sha256);
         assert.equal(again.artifact.parsed_at, artifact.parsed_at);
@@ -721,6 +730,8 @@ test('REPLAY: payload file hash mismatch rejected', () => {
                 sourceMatchId: CANDIDATE.source_match_id,
                 runPlan: plan,
                 parserCodeRevision: TEST_REVISION,
+                expectedRunId: RUN_ID,
+                expectedAuthorizationId: AUTH_ID,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /payload file hash does not match/.test(e.message)
         );
@@ -744,6 +755,8 @@ test('REPLAY: manifest validation failure rejected', () => {
                 sourceMatchId: CANDIDATE.source_match_id,
                 runPlan: plan,
                 parserCodeRevision: TEST_REVISION,
+                expectedRunId: RUN_ID,
+                expectedAuthorizationId: AUTH_ID,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /manifest invalid/.test(e.message)
         );
@@ -762,6 +775,8 @@ test('REPLAY: missing run plan snapshot fails closed, no artifact', () => {
                 ordinal: 1,
                 sourceMatchId: CANDIDATE.source_match_id,
                 parserCodeRevision: TEST_REVISION,
+                expectedRunId: RUN_ID,
+                expectedAuthorizationId: AUTH_ID,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /run-bound plan snapshot required/.test(e.message)
         );
@@ -784,6 +799,8 @@ test('REPLAY: plan candidate missing for a pair fails closed', () => {
                 sourceMatchId: CANDIDATE.source_match_id,
                 runPlan: stripped,
                 parserCodeRevision: TEST_REVISION,
+                expectedRunId: RUN_ID,
+                expectedAuthorizationId: AUTH_ID,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /has no candidate/.test(e.message)
         );
@@ -805,6 +822,8 @@ test('REPLAY: manifest bound to a different plan candidate fails closed', () => 
                 sourceMatchId: CANDIDATE.source_match_id,
                 runPlan: otherPlan,
                 parserCodeRevision: TEST_REVISION,
+                expectedRunId: RUN_ID,
+                expectedAuthorizationId: AUTH_ID,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /does not match run plan snapshot/.test(e.message)
         );
@@ -823,6 +842,8 @@ test('REPLAY: atomic write, symlink rejection, no overwrite of different content
             sourceMatchId: CANDIDATE.source_match_id,
             runPlan: plan,
             parserCodeRevision: TEST_REVISION,
+            expectedRunId: RUN_ID,
+            expectedAuthorizationId: AUTH_ID,
         });
         const replayDir = path.join(dir, 'replay');
         const first = writeDetailArtifact({

@@ -121,7 +121,7 @@ function makePlanFixture(dir, candidates, { seasons, matchIds, limit } = {}) {
     return { plan: result.plan, planPath };
 }
 
-function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, generalOverride }) {
+function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, generalOverride, pagePropsExtra }) {
     const safeContent = content !== undefined
         ? content
         : { stats: { periods: ['x'] }, lineup: { lineups: [{ team: homeTeam }] }, shotmap: { shots: [{ x: 1 }] }, liveticker: [] };
@@ -138,7 +138,7 @@ function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, general
         awayTeam: { name: awayTeam },
         status: { utcTime: kickoffAt },
     };
-    const pageProps = { content: safeContent, general, header, ssr: true };
+    const pageProps = { content: safeContent, general, header, ssr: true, ...(pagePropsExtra || {}) };
     const nextData = { props: { pageProps } };
     const json = JSON.stringify(nextData);
     // Sentinel marker the payload must NEVER contain.
@@ -548,7 +548,7 @@ test('P1-3: preflight subcommand is fully offline — validates, prints, creates
 // D. P1-4 — trusted observed match id
 // ─────────────────────────────────────────────────────────────
 
-test('P1-4: fetcher match_id_source comes only from trusted payload fields', async () => {
+test('P1-4: fetcher match_id_source comes only from pre-transform raw hydration fields', async () => {
     const baseTransform = NextDataParser.transformToApiFormat;
     const html = pageFor(TWO_CANDIDATES[0]);
     const mockResponse = () => ({
@@ -565,12 +565,18 @@ test('P1-4: fetcher match_id_source comes only from trusted payload fields', asy
     });
     const input = { externalId: '4506263', matchId: 'm1', homeTeam: 'Manchester United', awayTeam: 'Fulham', matchDate: '2024-08-16T19:00:00Z' };
 
-    // payload.matchId present → trusted.
+    // R3-P1: the transformer INJECTS payload.matchId from the request-side
+    // externalId — it must NEVER be the observed source. The trusted value
+    // comes from the raw hydration allowlist (raw pageProps.general.matchId
+    // → 'general.matchId'), extracted pre-transform.
     const viaPayload = await fetchFotMobRawDetail(input, fetcherDeps(baseTransform));
     assert.equal(viaPayload.ok, true, viaPayload.controlled_error || '');
-    assert.equal(viaPayload.match_id_source, 'payload.matchId');
+    assert.equal(viaPayload.match_id_source, 'general.matchId');
+    assert.equal(viaPayload.observed_match_id_response_derived, true);
+    assert.equal(viaPayload.observed_match_id_conflict, false);
 
-    // general.matchId only → trusted via general.
+    // A transformer that REMOVES the synthetic payload.matchId changes
+    // nothing — the trusted id is already response-derived.
     const noPayloadId = (nextData) => {
         const api = baseTransform(nextData, '4506263');
         delete api.matchId;
@@ -580,13 +586,40 @@ test('P1-4: fetcher match_id_source comes only from trusted payload fields', asy
     assert.equal(generalOnly.ok, true, generalOnly.controlled_error || '');
     assert.equal(generalOnly.match_id_source, 'general.matchId');
 
-    // Conflict between payload.matchId and general.matchId → flagged.
-    const conflictingTransform = (nextData) => {
+    // R3-P1: mutating the TRANSFORMED payload's general.matchId is ignored —
+    // the trusted identity was already extracted from the raw hydration
+    // before the transformer ran (no conflict, source unchanged).
+    const transformedMutation = (nextData) => {
         const api = baseTransform(nextData, '4506263');
         api.general.matchId = '999';
         return api;
     };
-    const conflicting = await fetchFotMobRawDetail(input, fetcherDeps(conflictingTransform));
+    const mutated = await fetchFotMobRawDetail(input, fetcherDeps(transformedMutation));
+    assert.equal(mutated.ok, true, mutated.controlled_error || '');
+    assert.equal(mutated.match_id_source, 'general.matchId');
+    assert.equal(mutated.observed_match_id_conflict, false);
+
+    // Conflict is detected in the RAW hydration: pageProps.general.matchId
+    // vs raw top-level pageProps.matchId disagreeing → flagged.
+    const conflictHtml = makePageHtml({
+        matchId: 4506263,
+        homeTeam: 'Manchester United',
+        awayTeam: 'Fulham',
+        kickoffAt: '2024-08-16T19:00:00Z',
+        pagePropsExtra: { matchId: '999' },
+    });
+    const conflictingResponse = () => ({
+        status: 200,
+        url: 'https://www.fotmob.com/match/4506263',
+        headers: { get: () => 'text/html' },
+        text: async () => conflictHtml,
+        arrayBuffer: async () => Buffer.from(conflictHtml),
+    });
+    const conflicting = await fetchFotMobRawDetail(input, {
+        fetchFn: conflictingResponse,
+        parser: { extractFromHtml: NextDataParser.extractFromHtml, transformToApiFormat: baseTransform },
+        now: () => FIXED_CLOCK,
+    });
     assert.equal(conflicting.ok, true, conflicting.controlled_error || '');
     assert.equal(conflicting.observed_match_id_conflict, true);
 });
@@ -597,7 +630,8 @@ test('P1-4: successful capture records a trusted observed id; conflicting page f
         const candidate = TWO_CANDIDATES[0];
         const { plan, planPath } = makePlanFixture(dir, [candidate], { seasons: ['2024/2025'] });
 
-        // Trusted: payload.matchId, no conflict, matches candidate.
+        // R3-P1: trusted observed id from the raw hydration allowlist
+        // (raw pageProps.general.matchId), no conflict, matches candidate.
         const ok = await executeCaptureRun(makeCaptureOptions({
             dir, plan, planPath, maxRequests: 1,
             fetchImpl: mockFetchImpl(() => okResponse(pageFor(candidate))),
@@ -605,7 +639,8 @@ test('P1-4: successful capture records a trusted observed id; conflicting page f
         assert.equal(ok.status, 'complete');
         const manifest = JSON.parse(fs.readFileSync(path.join(ok.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
         assert.equal(manifest.observed_match_id, '4506263');
-        assert.equal(manifest.observed_match_id_source, 'payload.matchId');
+        assert.equal(manifest.observed_match_id_source, 'general.matchId');
+        assert.equal(manifest.observed_match_id_is_response_derived, true);
         assert.equal(manifest.observed_match_id_match, true);
         assert.equal(manifest.observed_match_id_conflict, false);
 
@@ -762,7 +797,8 @@ test('P2-1: self-hash helper is canonical and single-sourced; missing hash never
             response_body_byte_size: 100,
             response_body_sha256: 'd'.repeat(64),
             observed_match_id: '4506263',
-            observed_match_id_source: 'payload.matchId',
+            observed_match_id_source: 'general.matchId',
+            observed_match_id_is_response_derived: true,
             observed_match_id_match: true,
             observed_match_id_conflict: false,
             hydration_parse_ok: true,
@@ -1256,4 +1292,553 @@ test('R2-P4: structured WAF challenge markers still stop the run before any pair
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
+});
+
+// ─────────────────────────────────────────────────────────────
+// L. R3 final-head review regressions (Codex round 3, 7 findings)
+// ─────────────────────────────────────────────────────────────
+
+function copyDirRecursive(src, dest) {
+    fs.mkdirSync(dest, { recursive: true });
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+        const from = path.join(src, entry.name);
+        const to = path.join(dest, entry.name);
+        if (entry.isDirectory()) copyDirRecursive(from, to);
+        else fs.copyFileSync(from, to);
+    }
+}
+
+function readStateJson(runDir) {
+    return JSON.parse(fs.readFileSync(path.join(runDir, 'run-state.json'), 'utf8'));
+}
+
+function writeStateJson(runDir, state) {
+    fs.writeFileSync(path.join(runDir, 'run-state.json'), JSON.stringify(state));
+}
+
+test('R3-P1: transformer-injected payload.matchId is never trusted — a page with team data but no raw match id is rejected with zero pair writes', async () => {
+    const dir = tmpDir('fotmob-r3p1-synthetic-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        // Raw hydration carries team data but NO general.matchId and NO
+        // top-level matchId; the NextData transformer still injects
+        // payload.matchId from the request-side externalId (4506263).
+        const page = makePageHtml({
+            matchId: undefined,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+            generalOverride: { matchId: undefined },
+        });
+        assert.equal(JSON.stringify(page).includes('"matchId":"undefined"'), false, 'fixture must not smuggle a raw match id');
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r3p1-synth', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(page)),
+        }));
+        // The only match id in the response is the transformer-synthetic
+        // payload.matchId — content validity must fail closed.
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /^content_validity:/);
+        assert.equal(result.completedCount, 0);
+        const capturesDir = path.join(result.runDir, 'captures');
+        assert.equal(
+            fs.readdirSync(capturesDir).filter(f => f.endsWith('.manifest.json')).length,
+            0,
+            'zero pair writes from a page whose only match id is request-injected'
+        );
+        // Positive control: the same page WITH a real raw general.matchId
+        // succeeds and records the response-derived provenance.
+        const ok = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r3p1-ok', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+        }));
+        assert.equal(ok.status, 'complete');
+        const manifest = JSON.parse(fs.readFileSync(
+            path.join(ok.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        assert.equal(manifest.observed_match_id_source, 'general.matchId');
+        assert.equal(manifest.observed_match_id_is_response_derived, true);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P1: extractTrustedObservedMatchIdentity allowlist — raw hydration paths only', () => {
+    const { extractTrustedObservedMatchIdentity } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
+    const general = extractTrustedObservedMatchIdentity({ props: { pageProps: { general: { matchId: '4506263' } } } });
+    assert.deepEqual(general, {
+        observed_match_id: '4506263',
+        observed_match_id_source: 'general.matchId',
+        response_derived: true,
+        conflict: false,
+    });
+    const topLevel = extractTrustedObservedMatchIdentity({ props: { pageProps: { matchId: '4506263' } } });
+    assert.equal(topLevel.observed_match_id_source, 'matchId');
+    assert.equal(topLevel.response_derived, true);
+    const conflicting = extractTrustedObservedMatchIdentity({
+        props: { pageProps: { general: { matchId: '4506263' }, matchId: '999' } },
+    });
+    assert.equal(conflicting.observed_match_id, '4506263');
+    assert.equal(conflicting.conflict, true);
+    const none = extractTrustedObservedMatchIdentity({ props: { pageProps: { content: {} } } });
+    assert.equal(none.observed_match_id, null);
+    assert.equal(none.observed_match_id_source, 'unresolved');
+    assert.equal(none.response_derived, false);
+    assert.equal(none.conflict, false);
+    // Direct pageProps shape (some parsers return it directly) also resolves.
+    const direct = extractTrustedObservedMatchIdentity({ pageProps: { general: { matchId: '4506263' } } });
+    assert.equal(direct.observed_match_id_source, 'general.matchId');
+    assert.equal(direct.response_derived, true);
+});
+
+test('R3-P2-1: replay RECOMPUTES the payload business hash — tampered normalized data with refreshed file hash and manifest self-hash still fails closed', async () => {
+    const dir = tmpDir('fotmob-r3p21-hash-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-r3p21', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Tamper a nested business field; KEEP the old stable_payload_sha256.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.normalized.home_team = 'Tampered United';
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+
+        // Refresh the payload file hash AND the manifest self-hash so every
+        // file-level check passes — only the recomputed business hash can
+        // catch the tampering (manifest.stable_payload_sha256 stays old).
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        // The capture run itself already wrote a summary — remove it so the
+        // failed replay can be proven to have written nothing.
+        fs.rmSync(path.join(run.runDir, 'run-summary.json'), { force: true });
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /business hash does not match/.test(e.message)
+        );
+        const replayDir = path.join(run.runDir, 'replay');
+        assert.equal(
+            !fs.existsSync(replayDir) || fs.readdirSync(replayDir).length === 0,
+            true,
+            'zero artifacts written for a tampered payload'
+        );
+        assert.equal(fs.existsSync(path.join(run.runDir, 'run-summary.json')), false, 'no summary written');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-2: replay is bound to the run state — pairs from another run/authorization are REPLAY_PAIR_CONTEXT_MISMATCH with zero writes', async () => {
+    const dir = tmpDir('fotmob-r3p22-binding-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-a', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Identical context passes.
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1);
+
+        // Copy A's valid pair + run state into run-b, change ONLY the
+        // run-state run_id — A's pair must be rejected under B's identity.
+        const runB = path.join(run.runDir, '..', 'run-b');
+        copyDirRecursive(run.runDir, runB);
+        const stateB = readStateJson(runB);
+        stateB.run_id = 'run-b';
+        writeStateJson(runB, stateB);
+        fs.rmSync(path.join(runB, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(runB, 'run-summary.json'), { force: true });
+        assert.throws(
+            () => runReplay({ 'run-dir': runB }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAIR_CONTEXT_MISMATCH.*capture_run_id/.test(e.message)
+        );
+        assert.equal(fs.existsSync(path.join(runB, 'run-summary.json')), false, 'no summary for a mismatched replay');
+
+        // Different authorization id.
+        const runC = path.join(run.runDir, '..', 'run-c');
+        copyDirRecursive(run.runDir, runC);
+        const stateC = readStateJson(runC);
+        stateC.authorization_id = 'auth-c';
+        writeStateJson(runC, stateC);
+        fs.rmSync(path.join(runC, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(runC, 'run-summary.json'), { force: true });
+        assert.throws(
+            () => runReplay({ 'run-dir': runC }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAIR_CONTEXT_MISMATCH.*authorization_id/.test(e.message)
+        );
+
+        // Both changed → still mismatch, zero artifacts.
+        const runD = path.join(run.runDir, '..', 'run-d');
+        copyDirRecursive(run.runDir, runD);
+        const stateD = readStateJson(runD);
+        stateD.run_id = 'run-d';
+        stateD.authorization_id = 'auth-d';
+        writeStateJson(runD, stateD);
+        fs.rmSync(path.join(runD, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(runD, 'run-summary.json'), { force: true });
+        assert.throws(
+            () => runReplay({ 'run-dir': runD }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAIR_CONTEXT_MISMATCH/.test(e.message)
+        );
+        assert.equal(
+            !fs.existsSync(path.join(runD, 'replay')) || fs.readdirSync(path.join(runD, 'replay')).length === 0,
+            true,
+            'zero artifacts for a mismatched replay'
+        );
+        assert.equal(fs.existsSync(path.join(runD, 'run-summary.json')), false);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-3: capture fails closed with PLAN_REVISION_HEAD_MISMATCH when the collector HEAD differs from the plan generator revision', async () => {
+    const dir = tmpDir('fotmob-r3p23-head-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        assert.equal(plan.generator_code_revision, TEST_REVISION);
+        const calls = [];
+        const fetchImpl = mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])), calls);
+        // Fake git head: a different valid 40-hex revision (never touches
+        // the real repository HEAD).
+        const fakeHeadExec = (cmd) => (String(cmd).includes('rev-parse') ? `${'f'.repeat(40)}\n` : '');
+        await assert.rejects(
+            executeCaptureRun(makeCaptureOptions({
+                dir, plan, planPath, runId: 'run-r3p23', maxRequests: 1, fetchImpl,
+                execSync: fakeHeadExec,
+            })),
+            (e) => e.code === 'SAFETY_ERROR' && /PLAN_REVISION_HEAD_MISMATCH/.test(e.message)
+        );
+        assert.equal(calls.length, 0, 'no native fetch before the revision gate');
+        const runDir = path.join(dir, 'out', 'runs', 'run-r3p23');
+        assert.equal(fs.existsSync(path.join(runDir, 'run-state.json')), false, 'no formal run-state write before the revision gate');
+        assert.equal(fs.existsSync(path.join(runDir, 'plan.json')), false, 'no plan snapshot write before the revision gate');
+
+        // Control: matching HEAD proceeds.
+        const ok = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r3p23-ok', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+        }));
+        assert.equal(ok.status, 'complete');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-4: independent accounting — a timed-out attempt then a successful resume yields attempted=2, responses=1, completed=1', async () => {
+    const dir = tmpDir('fotmob-r3p24-timeout-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const runId = 'run-r3p24';
+        const neverResolves = (url, opts) => new Promise((resolve, reject) => {
+            opts.signal.addEventListener('abort', () => reject(new Error('aborted')));
+        });
+        const first = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId, maxRequests: 2, fetchImpl: neverResolves, timeoutMs: 50,
+        }));
+        assert.equal(first.status, 'stopped');
+        assert.match(first.stopReason, /^fetch_error:/);
+        let state = readStateJson(first.runDir);
+        assert.equal(state.network_requests_attempted, 1, 'the timed-out attempt is recorded');
+        assert.equal(state.network_responses_received, 0, 'a timed-out attempt is NOT a response');
+        assert.equal(state.captures_completed, 0);
+
+        // Resume with a working fetch: the same ordinal is retried; each
+        // counter accumulates independently (never responses=priorAttempted+current).
+        const second = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId, maxRequests: 2,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+        }));
+        assert.equal(second.status, 'complete');
+        assert.equal(second.completedCount, 1);
+        state = readStateJson(second.runDir);
+        assert.equal(state.network_requests_attempted, 2);
+        assert.equal(state.network_responses_received, 1);
+        assert.equal(state.captures_completed, 1);
+        assert.deepEqual(state.completed_ordinals, [1]);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-4: a 403 is a response, never a completion', async () => {
+    const dir = tmpDir('fotmob-r3p24-403-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const result = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r3p24-403', maxRequests: 2,
+            fetchImpl: mockFetchImpl(() => ({ status: 403, body: '<html>forbidden</html>' })),
+        }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /^access_control:http_403/);
+        const state = readStateJson(result.runDir);
+        assert.equal(state.network_requests_attempted, 1);
+        assert.equal(state.network_responses_received, 1, 'a 403 is a resolved response');
+        assert.equal(state.captures_completed, 0, 'a 403 is never a completion');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-4: body-read failure is an attempted non-response; multi-resume accounting stays exact', async () => {
+    const dir = tmpDir('fotmob-r3p24-body-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        const runId = 'run-r3p24-body';
+        // Candidate 1 succeeds; candidate 2's body read throws (the response
+        // resolves, the BODY does not — attempted, not a response).
+        const bodyFailFetch = async (url, opts) => {
+            if (String(url).includes('4506264')) {
+                return {
+                    status: 200,
+                    url,
+                    headers: { get: (n) => (n === 'content-type' ? 'text/html' : null) },
+                    text: async () => { throw new Error('body read failed'); },
+                    arrayBuffer: async () => { throw new Error('body read failed'); },
+                };
+            }
+            return mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0])))(url, opts);
+        };
+        const first = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId, maxRequests: 4, fetchImpl: bodyFailFetch,
+        }));
+        assert.equal(first.status, 'stopped');
+        assert.match(first.stopReason, /^fetch_error:/);
+        let state = readStateJson(first.runDir);
+        assert.equal(state.network_requests_attempted, 2);
+        assert.equal(state.network_responses_received, 1, 'the body-read failure is not a response');
+        assert.equal(state.captures_completed, 1);
+
+        // Resume: c1 skipped, c2 + c3 complete — totals stay exact across
+        // multiple resumes.
+        const second = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId, maxRequests: 4,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).split('/match/')[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }),
+        }));
+        assert.equal(second.status, 'complete');
+        assert.equal(second.completedCount, 2);
+        state = readStateJson(second.runDir);
+        // Two-candidate plan: run 1 attempted c1+c2 (1 response, 1 capture);
+        // resume retried only c2 — totals stay exact across the resume.
+        assert.equal(state.network_requests_attempted, 3);
+        assert.equal(state.network_responses_received, 2);
+        assert.equal(state.captures_completed, 2);
+        assert.deepEqual(state.completed_ordinals, [1, 2]);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-5: the inter-request delay continues across processes from the persisted last_network_request_attempted_at', async () => {
+    const dir = tmpDir('fotmob-r3p25-delay-');
+    try {
+        // A single-candidate plan proves the fresh-run first request never
+        // waits; the two-candidate plan exercises the cross-process resume.
+        const dir1 = path.join(dir, 'plan1');
+        const dir2 = path.join(dir, 'plan2');
+        fs.mkdirSync(dir1, { recursive: true });
+        fs.mkdirSync(dir2, { recursive: true });
+        const { plan: plan1, planPath: planPath1 } = makePlanFixture(dir1, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { plan, planPath } = makePlanFixture(dir2, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const now = () => new Date(clockMs).toISOString();
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        // Each run anchors on candidate 1 and consumes a 403 on candidate 2,
+        // leaving exactly one budget unit for the resume's retry — the
+        // resume must respect max_requests equality (immutable contract) and
+        // re-issue the retry with the persisted inter-request delay.
+        const firstRunFetch = mockFetchImpl((url) => {
+            if (String(url).includes('4506264')) return { status: 403, body: '<html>forbidden</html>' };
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        });
+        const workingFetch = mockFetchImpl((url) => {
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        });
+        const optionsFor = (runId, fetchImpl, extra = {}) => makeCaptureOptions({
+            dir, plan, planPath, runId, maxRequests: 3, fetchImpl, sleepImpl,
+            extra: { now, ...extra },
+        });
+
+        // New run, first request: no wait.
+        const fresh = await executeCaptureRun(makeCaptureOptions({
+            dir, plan: plan1, planPath: planPath1, runId: 'run-r3p25-fresh', maxRequests: 3,
+            fetchImpl: mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))),
+            sleepImpl,
+            extra: { now },
+        }));
+        assert.equal(fresh.status, 'complete', 'single-candidate fresh run completes');
+        assert.equal(sleeps.length, 0, 'first request of a fresh run never waits');
+
+        // 5s after the persisted attempt, delay=60s → sleep ~55s.
+        const runA = await executeCaptureRun(optionsFor('run-r3p25-a', firstRunFetch));
+        assert.equal(runA.completedCount, 1);
+        assert.equal(runA.status, 'stopped');
+        const stateA = readStateJson(runA.runDir);
+        assert.equal(stateA.network_requests_attempted, 2, 'c1 ok + c2 403 = two attempts');
+        assert.equal(stateA.last_network_request_attempted_at, now());
+        clockMs += 5000;
+        sleeps.length = 0;
+        const runB = await executeCaptureRun(optionsFor('run-r3p25-a', workingFetch));
+        assert.equal(runB.status, 'complete');
+        assert.equal(sleeps[0], 55000, '5s after the last attempt → sleep the remaining 55s');
+
+        // >60s since the last attempt → no sleep at all.
+        const runC = await executeCaptureRun(optionsFor('run-r3p25-b', firstRunFetch));
+        assert.equal(runC.completedCount, 1);
+        assert.equal(runC.status, 'stopped');
+        clockMs += 61000;
+        sleeps.length = 0;
+        const runD = await executeCaptureRun(optionsFor('run-r3p25-b', workingFetch));
+        assert.equal(runD.status, 'complete');
+        assert.equal(sleeps.length, 0, 'elapsed 61s > 60s delay → no wait');
+
+        // After a FAILED attempt the wait is still enforced on resume.
+        const neverResolves = (url, opts) => new Promise((resolve, reject) => {
+            opts.signal.addEventListener('abort', () => reject(new Error('aborted')));
+        });
+        const runE = await executeCaptureRun(optionsFor('run-r3p25-c', neverResolves, { timeoutMs: 50 }));
+        assert.equal(runE.status, 'stopped');
+        clockMs += 5000;
+        sleeps.length = 0;
+        const runF = await executeCaptureRun(optionsFor('run-r3p25-c', workingFetch));
+        assert.equal(runF.status, 'complete');
+        assert.equal(sleeps[0], 55000, 'a failed attempt still anchors the cross-process delay');
+
+        // Clock going backwards → full wait (elapsed clamps to zero).
+        const runG = await executeCaptureRun(optionsFor('run-r3p25-d', firstRunFetch));
+        assert.equal(runG.completedCount, 1);
+        assert.equal(runG.status, 'stopped');
+        clockMs = Date.parse(FIXED_CLOCK) - 60000; // clock regression
+        sleeps.length = 0;
+        const runH = await executeCaptureRun(optionsFor('run-r3p25-d', workingFetch));
+        assert.equal(runH.status, 'complete');
+        assert.equal(sleeps[0], 60000, 'clock regression → the full delay is enforced');
+
+        // Invalid persisted timestamp → fail closed at the adapter.
+        const { createBoundedFetchAdapter } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
+        assert.throws(
+            () => createBoundedFetchAdapter({
+                maxRequests: 1, delayMs: 60000, initialLastRequestAt: 'not-a-timestamp',
+                fetchImpl: mockFetchImpl(() => okResponse('x')),
+            }),
+            (e) => e.code === 'SAFETY_ERROR' && /invalid_last_request_attempted_at/.test(e.message)
+        );
+
+        // Run-state with attempts but a garbage timestamp → fail closed.
+        const runI = await executeCaptureRun(optionsFor('run-r3p25-e', firstRunFetch));
+        assert.equal(runI.completedCount, 1);
+        assert.equal(runI.status, 'stopped');
+        const stateI = readStateJson(runI.runDir);
+        stateI.last_network_request_attempted_at = 'garbage';
+        writeStateJson(runI.runDir, stateI);
+        await assert.rejects(
+            executeCaptureRun(optionsFor('run-r3p25-e', 2,
+                mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))))),
+            (e) => e.code === 'SAFETY_ERROR' && /last_network_request_attempted_at/.test(e.message)
+        );
+
+        // Run-state with attempts but NO timestamp → fail closed.
+        const stateJ = readStateJson(runI.runDir);
+        delete stateJ.last_network_request_attempted_at;
+        stateJ.network_requests_attempted = 1;
+        writeStateJson(runI.runDir, stateJ);
+        await assert.rejects(
+            executeCaptureRun(optionsFor('run-r3p25-e', 2,
+                mockFetchImpl(() => okResponse(pageFor(TWO_CANDIDATES[0]))))),
+            (e) => e.code === 'SAFETY_ERROR' && /last_network_request_attempted_at/.test(e.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3-P2-6: replay summary keeps the FULL plan scope — plan=3 completed=1 → plan_candidate_count=3, captures_completed=1; second replay idempotent', async () => {
+    const dir = tmpDir('fotmob-r3p26-plan-');
+    try {
+        const threeCandidates = TWO_CANDIDATES.concat([
+            makeCandidate({ id: 4506265, season: '2024/2025', home: 'Arsenal', away: 'Wolves', kickoff: '2024-08-17T14:00:00Z' }),
+        ]);
+        const { plan, planPath } = makePlanFixture(dir, threeCandidates, { seasons: ['2024/2025'] });
+        assert.equal(plan.candidates.length, 3);
+        // Candidate 1 succeeds; candidate 2 is a 403 → the run stops with
+        // exactly one retained pair.
+        const fetchImpl = mockFetchImpl((url) => {
+            if (String(url).includes('4506264')) return { status: 403, body: '<html>forbidden</html>' };
+            return okResponse(pageFor(TWO_CANDIDATES[0]));
+        });
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-r3p26', maxRequests: 2, fetchImpl,
+        }));
+        assert.equal(run.status, 'stopped');
+        assert.equal(run.completedCount, 1);
+
+        const first = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(first.replayed_count, 1);
+        const summaryPath = path.join(run.runDir, 'run-summary.json');
+        const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+        assert.equal(summary.plan_candidate_count, 3, 'summary keeps the FULL plan scope');
+        assert.equal(summary.captures_completed, 1);
+        assert.equal(summary.completed_count, 1);
+
+        // Second replay: idempotent, identical summary.
+        const second = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(second.replayed_count, 1);
+        const summary2 = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+        assert.deepEqual(summary2, summary);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('R3: run-state validator enforces the contract — non-negative, monotonic, unique ordinals, timestamp invariant, no auto-fixing', () => {
+    const { defaultRunState, validateRunState } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
+    const plan = { plan_business_sha256: 'a'.repeat(64), source_artifact_sha256: 'b'.repeat(64) };
+    const base = defaultRunState(plan, {
+        runId: 'run-v', authorizationId: 'auth-v', maxRequests: 2, delayMs: 60000,
+        collectorCodeRevision: TEST_REVISION, startedAt: FIXED_CLOCK,
+    });
+    assert.equal(validateRunState(base).ok, true, 'fresh default state is valid');
+
+    // responses can never exceed attempts.
+    const badResponses = { ...base, network_requests_attempted: 1, network_responses_received: 2 };
+    assert.equal(validateRunState(badResponses).ok, false);
+    // captures can never exceed responses.
+    const badCaptures = { ...base, network_responses_received: 1, captures_completed: 2, completed_ordinals: [1, 2] };
+    assert.equal(validateRunState(badCaptures).ok, false);
+    // duplicate ordinals rejected.
+    const dupOrdinals = { ...base, captures_completed: 2, completed_ordinals: [1, 1] };
+    assert.equal(validateRunState(dupOrdinals).ok, false);
+    // captures_completed must equal completed_ordinals length.
+    const countMismatch = { ...base, captures_completed: 1, completed_ordinals: [1, 2] };
+    assert.equal(validateRunState(countMismatch).ok, false);
+    // negative counters rejected.
+    const negative = { ...base, network_requests_attempted: -1 };
+    assert.equal(validateRunState(negative).ok, false);
+    // timestamp required once an attempt exists.
+    const noTimestamp = { ...base, network_requests_attempted: 1, last_network_request_attempted_at: null };
+    assert.equal(validateRunState(noTimestamp).ok, false);
+    // garbage timestamp rejected.
+    const garbageTimestamp = { ...base, network_requests_attempted: 1, last_network_request_attempted_at: 'garbage' };
+    assert.equal(validateRunState(garbageTimestamp).ok, false);
+    // consistent state with attempts + timestamp is valid.
+    const validAttempts = {
+        ...base,
+        network_requests_attempted: 2,
+        network_responses_received: 2,
+        captures_completed: 2,
+        completed_ordinals: [1, 2],
+        last_network_request_attempted_at: FIXED_CLOCK,
+    };
+    assert.equal(validateRunState(validAttempts).ok, true);
+    // no auto-fixing: the bad state object is never mutated by validation.
+    assert.equal(badResponses.network_responses_received, 2);
 });
