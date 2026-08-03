@@ -399,8 +399,14 @@ function runReplay(args, deps = {}) {
     const ordinals = (Array.isArray(runState.completed_ordinals) ? runState.completed_ordinals : [])
         .map(Number)
         .sort((a, b) => a - b);
-    const replayed = [];
 
+    // P2 (Codex re-review on cdcb7ae18): replay is TWO-PHASE. Phase 1
+    // validates and builds EVERY pair without touching the replay directory;
+    // phase 2 materializes the artifacts only after all pairs passed. A
+    // mismatch on a later pair (e.g. REPLAY_PAIR_CONTEXT_MISMATCH) must not
+    // leave earlier pairs' artifacts on disk — the zero-write-on-mismatch
+    // guarantee covers the whole replay, not each pair in isolation.
+    const prepared = [];
     for (const ordinal of ordinals) {
         const files = fsImpl.readdirSync(capturesDir);
         const manifestFiles = files.filter(f => f.startsWith(`${ordinal}-`) && f.endsWith('.manifest.json'));
@@ -453,6 +459,12 @@ function runReplay(args, deps = {}) {
             expectedAuthorizationId: String(runState.authorization_id || ''),
             fsImpl,
         });
+        prepared.push({ ordinal, sourceMatchId, result });
+    }
+
+    // Phase 2: every pair validated — only now materialize the artifacts.
+    const replayed = [];
+    for (const { ordinal, sourceMatchId, result } of prepared) {
         const written = writeDetailArtifact({
             artifact: result.artifact,
             replayDir,
