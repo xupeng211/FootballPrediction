@@ -146,7 +146,16 @@ canonical interface.
   materializing: each target must be absent or byte-identical to the
   deterministic artifact this replay would produce, so a conflicting target on
   a later pair fails closed with ZERO partial output — the zero-write guarantee
-  now covers output conflicts, not only input mismatches (round-3 P2).
+  now covers output conflicts, not only input mismatches (round-3 P2). The
+  pre-check additionally requires every existing target to be a REGULAR file
+  (lstat): a symlink to byte-identical content passes a content comparison but
+  would be rejected by the materializer AFTER earlier artifacts were written,
+  so non-regular targets fail closed in the pre-check itself (round-4 P2). The
+  pair's ordinal is bound to the snapshot candidate: replay requires
+  `planCandidate.ordinal === ordinal` — a copied pair replayed under a wrong
+  ordinal (refreshed `request_ordinal` + self-hash) fails closed before any
+  artifact, so the summary can never claim an ordinal the pair does not
+  actually hold (round-4 P2).
 
 No real detail-capture request has been made by the pipeline and no capture has
 been executed in this repository state: every test is mocked
