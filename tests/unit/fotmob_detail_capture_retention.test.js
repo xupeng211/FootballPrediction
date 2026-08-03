@@ -679,6 +679,9 @@ test('REPLAY: fully offline deterministic replay produces a valid artifact from 
             parserCodeRevision: TEST_REVISION,
             expectedRunId: RUN_ID,
             expectedAuthorizationId: AUTH_ID,
+            expectedRequestBudget: 1,
+            expectedDelayMs: 60000,
+            expectedCollectorCodeRevision: TEST_REVISION,
         });
         const artifact = result.artifact;
         assert.equal(artifact.schema_version, 'fotmob-match-detail-artifact/v1');
@@ -706,6 +709,9 @@ test('REPLAY: fully offline deterministic replay produces a valid artifact from 
             parserCodeRevision: TEST_REVISION,
             expectedRunId: RUN_ID,
             expectedAuthorizationId: AUTH_ID,
+            expectedRequestBudget: 1,
+            expectedDelayMs: 60000,
+            expectedCollectorCodeRevision: TEST_REVISION,
         });
         assert.equal(again.artifact.structured_payload_sha256, artifact.structured_payload_sha256);
         assert.equal(again.artifact.parsed_at, artifact.parsed_at);
@@ -732,6 +738,9 @@ test('REPLAY: payload file hash mismatch rejected', () => {
                 parserCodeRevision: TEST_REVISION,
                 expectedRunId: RUN_ID,
                 expectedAuthorizationId: AUTH_ID,
+                expectedRequestBudget: 1,
+                expectedDelayMs: 60000,
+                expectedCollectorCodeRevision: TEST_REVISION,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /payload file hash does not match/.test(e.message)
         );
@@ -757,6 +766,9 @@ test('REPLAY: manifest validation failure rejected', () => {
                 parserCodeRevision: TEST_REVISION,
                 expectedRunId: RUN_ID,
                 expectedAuthorizationId: AUTH_ID,
+                expectedRequestBudget: 1,
+                expectedDelayMs: 60000,
+                expectedCollectorCodeRevision: TEST_REVISION,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /manifest invalid/.test(e.message)
         );
@@ -777,6 +789,9 @@ test('REPLAY: missing run plan snapshot fails closed, no artifact', () => {
                 parserCodeRevision: TEST_REVISION,
                 expectedRunId: RUN_ID,
                 expectedAuthorizationId: AUTH_ID,
+                expectedRequestBudget: 1,
+                expectedDelayMs: 60000,
+                expectedCollectorCodeRevision: TEST_REVISION,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /run-bound plan snapshot required/.test(e.message)
         );
@@ -801,6 +816,9 @@ test('REPLAY: plan candidate missing for a pair fails closed', () => {
                 parserCodeRevision: TEST_REVISION,
                 expectedRunId: RUN_ID,
                 expectedAuthorizationId: AUTH_ID,
+                expectedRequestBudget: 1,
+                expectedDelayMs: 60000,
+                expectedCollectorCodeRevision: TEST_REVISION,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /has no candidate/.test(e.message)
         );
@@ -824,6 +842,9 @@ test('REPLAY: manifest bound to a different plan candidate fails closed', () => 
                 parserCodeRevision: TEST_REVISION,
                 expectedRunId: RUN_ID,
                 expectedAuthorizationId: AUTH_ID,
+                expectedRequestBudget: 1,
+                expectedDelayMs: 60000,
+                expectedCollectorCodeRevision: TEST_REVISION,
             }),
             (e) => e.code === 'SAFETY_ERROR' && /does not match run plan snapshot/.test(e.message)
         );
@@ -844,6 +865,9 @@ test('REPLAY: atomic write, symlink rejection, no overwrite of different content
             parserCodeRevision: TEST_REVISION,
             expectedRunId: RUN_ID,
             expectedAuthorizationId: AUTH_ID,
+            expectedRequestBudget: 1,
+            expectedDelayMs: 60000,
+            expectedCollectorCodeRevision: TEST_REVISION,
         });
         const replayDir = path.join(dir, 'replay');
         const first = writeDetailArtifact({
@@ -907,6 +931,9 @@ test('RETENTION: checkCompletedPair distinguishes complete/partial/mismatch and 
             sourceMatchId: candidate.source_match_id,
             expectedRunId: RUN_ID,
             expectedAuthorizationId: AUTH_ID,
+            expectedRequestBudget: 1,
+            expectedDelayMs: 60000,
+            expectedCollectorCodeRevision: TEST_REVISION,
             expectedPlanSha256: plan.plan_business_sha256,
             expectedSourceArtifactSha256: plan.source_artifact_sha256,
             expectedCandidate: candidate,

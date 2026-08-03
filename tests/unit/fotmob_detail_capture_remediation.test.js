@@ -2414,3 +2414,122 @@ test('P2 (Codex round-2 review on 9568ea33e): replay binds the pair ordinal to t
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('P2 (Codex round-2 review on a5d63af60): the plan validator cross-checks each candidate against the declared scope — a candidate competition outside the plan or a season outside selected_seasons fails even with a recomputed plan hash', () => {
+    const dir = tmpDir('fotmob-p2-scope-');
+    try {
+        const { plan } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const { canonicalJsonHash, computeCapturePlanBusinessProjection, validateAndRecomputeCapturePlan: validate } =
+            require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+
+        // A self-consistent plan whose candidate declares a DIFFERENT
+        // competition: the business hash is recomputed so the hash gate
+        // passes — only the per-candidate scope cross-check can reject it.
+        const planA = JSON.parse(JSON.stringify(plan));
+        planA.candidates[0].competition = 'Championship';
+        planA.plan_business_sha256 = canonicalJsonHash(computeCapturePlanBusinessProjection(planA));
+        const checkA = validate(planA);
+        assert.equal(checkA.ok, false, 'out-of-scope candidate competition must be rejected');
+        assert.ok(checkA.errors.some((e) => /must equal the plan's declared competition/.test(e)),
+            `errors: ${checkA.errors.join('; ')}`);
+
+        // A candidate season outside the plan's declared selected_seasons.
+        const planB = JSON.parse(JSON.stringify(plan));
+        planB.candidates[0].season = '2023/2024';
+        planB.plan_business_sha256 = canonicalJsonHash(computeCapturePlanBusinessProjection(planB));
+        const checkB = validate(planB);
+        assert.equal(checkB.ok, false, 'out-of-scope candidate season must be rejected');
+        assert.ok(checkB.errors.some((e) => /selected_seasons/.test(e)),
+            `errors: ${checkB.errors.join('; ')}`);
+
+        // The untouched plan still validates.
+        const checkOk = validate(plan);
+        assert.equal(checkOk.ok, true, checkOk.errors.join('; '));
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on a5d63af60): resume and replay bind the pair to the FULL execution context — budget mismatch stops resume, revision mismatch stops replay', async () => {
+    const dir = tmpDir('fotmob-p2-execctx-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2execctx', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // (a) Resume: manifest records a DIFFERENT request budget — e.g. a
+        // pair copied from a prior run that ran with budget 1 while this run
+        // binds budget 2. checkCompletedPair must fail closed (it compares
+        // against the current binding, not the declared hash).
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.request_budget = 999;
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2execctx', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'stopped', 'budget mismatch stops the resume');
+        assert.match(resumed.stopReason, /RESUME_PAIR_CONTEXT_MISMATCH:manifest.request_budget/);
+
+        // (b) Replay: manifest collector_code_revision differs from the run
+        // state's — replay must fail closed instead of declaring parser
+        // provenance of the wrong revision.
+        manifest.request_budget = 1;
+        manifest.collector_code_revision = 'b'.repeat(40);
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAIR_REVISION_MISMATCH/.test(e.message)
+        );
+        assert.deepStrictEqual(
+            fs.readdirSync(path.join(run.runDir, 'replay')).filter(f => f.endsWith('.detail.json')),
+            [],
+            'no artifact was materialized'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex round-2 review on a5d63af60): the run-summary target is pre-checked before any artifact write — a conflicting or non-regular summary fails closed with zero partial output', async () => {
+    const dir = tmpDir('fotmob-p2-summary-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2summary', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // First replay materializes the artifact AND the run summary.
+        const first = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(first.replayed_count, 1);
+        const detailPath = path.join(run.runDir, 'replay', '1-4506263.detail.json');
+        const summaryPath = path.join(run.runDir, 'run-summary.json');
+        const detailBytes = fs.readFileSync(detailPath);
+        assert.ok(fs.existsSync(summaryPath));
+
+        // (a) A summary with DIFFERENT content: writeRunSummary overwrites
+        // unconditionally, so only the pre-check can surface the conflict —
+        // and it must do so BEFORE any artifact is written.
+        fs.writeFileSync(summaryPath, '{ "tampered": true }\n');
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /run summary target exists with different content/.test(e.message)
+        );
+        assert.deepStrictEqual(fs.readFileSync(detailPath), detailBytes, 'artifact untouched');
+
+        // (b) A summary target that is a DIRECTORY: the pre-check rejects it
+        // before any artifact write (writeRunSummary would fail AFTER all
+        // artifacts were materialized).
+        fs.rmSync(summaryPath);
+        fs.mkdirSync(summaryPath);
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /run summary target is not a regular file/.test(e.message)
+        );
+        assert.deepStrictEqual(fs.readFileSync(detailPath), detailBytes, 'artifact untouched again');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
