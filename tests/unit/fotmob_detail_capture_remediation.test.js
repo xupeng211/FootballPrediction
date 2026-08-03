@@ -1842,3 +1842,208 @@ test('R3: run-state validator enforces the contract — non-negative, monotonic,
     // no auto-fixing: the bad state object is never mutated by validation.
     assert.equal(badResponses.network_responses_received, 2);
 });
+
+test('P1 (Codex re-review on cdcb7ae18): resume counts a pair left on disk by a crashed prior process, keeping captures_completed === completed_ordinals.length', async () => {
+    const dir = tmpDir('fotmob-p1-resume-count-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        // Run 1: complete the pair.
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p1resume', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Simulate the crash window: the pair file exists on disk but the
+        // run-state update that recorded it never happened (process exited
+        // between writeCapturePair() and writeRunState()). The state is a
+        // valid empty state: no ordinals, zero captures.
+        const state = readStateJson(run.runDir);
+        state.completed_ordinals = [];
+        state.captures_completed = 0;
+        state.status = 'in_progress';
+        writeStateJson(run.runDir, state);
+
+        // Resume: the pre-existing pair must be recognized AND counted, so
+        // the persisted state satisfies the run-state contract. Any fetch
+        // here would be a bug — the pair is already complete.
+        const resumed = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p1resume', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(resumed.status, 'complete', 'resume completes without any fetch');
+        assert.equal(resumed.completedCount, 1);
+
+        const stateAfter = readStateJson(run.runDir);
+        assert.equal(stateAfter.captures_completed, 1, 'crashed-pair capture is counted');
+        assert.deepEqual(stateAfter.completed_ordinals, [1]);
+        const { validateRunState } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
+        assert.equal(validateRunState(stateAfter).ok, true, 'resumed state satisfies the run-state contract');
+
+        // A second resume stays consistent (no double counting).
+        const again = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p1resume', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => { throw new Error('RESUME_SHOULD_NOT_FETCH'); }),
+        }));
+        assert.equal(again.status, 'complete');
+        const stateAgain = readStateJson(run.runDir);
+        assert.equal(stateAgain.captures_completed, 1);
+        assert.equal(validateRunState(stateAgain).ok, true);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex re-review on cdcb7ae18): replay binds the payload observed identity to the verified manifest — a request-side/conflicting identity with recomputed hashes still fails closed', async () => {
+    const dir = tmpDir('fotmob-p2-obsid-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const run = await awaitRunCapture({ dir, plan, planPath, runId: 'run-p2obs', maxRequests: 1 });
+        assert.equal(run.status, 'complete');
+
+        // Sanity: a clean replay passes.
+        const ok = runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION });
+        assert.equal(ok.replayed_count, 1);
+        fs.rmSync(path.join(run.runDir, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(run.runDir, 'run-summary.json'), { force: true });
+
+        // Tamper ONLY the payload's observed identity: swap in a request-side
+        // id with a conflict flag, then refresh EVERY hash replay checks
+        // (payload file hash, payload business hash, manifest business hash,
+        // manifest self-hash). Only the new per-field binding can catch it.
+        const payloadPath = path.join(run.runDir, 'captures', '1-4506263.payload.json');
+        const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+        payload.observed_identity.observed_match_id = '9999999';
+        payload.observed_identity.observed_match_id_source = 'payload.matchId';
+        payload.observed_identity.observed_match_id_conflict = true;
+        payload.observed_identity.observed_match_id_is_response_derived = false;
+        const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+        payload.stable_payload_sha256 = computeStableCapturePayloadSha256(payload);
+        fs.writeFileSync(payloadPath, JSON.stringify(payload, null, 2) + '\n');
+
+        const manifestPath = path.join(run.runDir, 'captures', '1-4506263.manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest.payload_file_sha256 = sha256Text(fs.readFileSync(payloadPath, 'utf8'));
+        manifest.stable_payload_sha256 = payload.stable_payload_sha256;
+        manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+        assert.throws(
+            () => runReplay({ 'run-dir': run.runDir }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAYLOAD_OBSERVED_IDENTITY_MISMATCH/.test(e.message)
+        );
+        const replayDir = path.join(run.runDir, 'replay');
+        assert.equal(
+            !fs.existsSync(replayDir) || fs.readdirSync(replayDir).length === 0,
+            true,
+            'zero artifacts written for a swapped observed identity'
+        );
+        assert.equal(fs.existsSync(path.join(run.runDir, 'run-summary.json')), false, 'no summary written');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex re-review on cdcb7ae18): replay validates ALL pairs before writing ANY artifact — a mismatch on a later pair leaves zero artifacts', async () => {
+    const dir = tmpDir('fotmob-p2-twophase-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        // Complete BOTH candidates.
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2phase', maxRequests: 2,
+            fetchImpl: mockFetchImpl((url) => {
+                const id = String(url).split('/match/')[1];
+                const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+                return okResponse(pageFor(cand));
+            }),
+        }));
+        assert.equal(run.status, 'complete');
+        assert.equal(run.completedCount, 2);
+
+        // Copy the run, then tamper ONLY pair 2's manifest capture_run_id
+        // (refreshing its self-hash so validation stays self-consistent) —
+        // pair 1 stays fully valid. The replay must fail on pair 2 in the
+        // validation phase WITHOUT leaving pair 1's artifact on disk.
+        const runB = path.join(run.runDir, '..', 'run-p2phase-b');
+        copyDirRecursive(run.runDir, runB);
+        const manifest2Path = path.join(runB, 'captures', '2-4506264.manifest.json');
+        const manifest2 = JSON.parse(fs.readFileSync(manifest2Path, 'utf8'));
+        manifest2.capture_run_id = 'some-other-run';
+        manifest2.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest2);
+        fs.writeFileSync(manifest2Path, JSON.stringify(manifest2));
+        fs.rmSync(path.join(runB, 'replay'), { recursive: true, force: true });
+        fs.rmSync(path.join(runB, 'run-summary.json'), { force: true });
+
+        assert.throws(
+            () => runReplay({ 'run-dir': runB }, { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }),
+            (e) => e.code === 'SAFETY_ERROR' && /REPLAY_PAIR_CONTEXT_MISMATCH/.test(e.message)
+        );
+        assert.equal(
+            !fs.existsSync(path.join(runB, 'replay')) || fs.readdirSync(path.join(runB, 'replay')).length === 0,
+            true,
+            'zero artifacts written even though pair 1 validated fine'
+        );
+        assert.equal(fs.existsSync(path.join(runB, 'run-summary.json')), false, 'no summary for a failed replay');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex re-review on cdcb7ae18): the authorization gate rejects ids the run-state contract rejects (/, :, #, space)', () => {
+    const dir = tmpDir('fotmob-p2-authid-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const good = makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-auth', maxRequests: 1,
+            fetchImpl: mockFetchImpl(() => okResponse('x')),
+        });
+        assert.doesNotThrow(
+            () => validateAuthorizationBinding(good),
+            'a contract-valid authorization id passes the gate'
+        );
+        for (const bad of ['auth/one', 'auth:two', 'auth#three', 'auth two', '../auth', '-leading-dash']) {
+            assert.throws(
+                () => validateAuthorizationBinding({ ...good, authorizationId: bad }),
+                (e) => e.code === 'SAFETY_ERROR' && /authorization id must match/.test(e.message),
+                `authorization id ${bad} is rejected by the gate`
+            );
+        }
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2 (Codex re-review on cdcb7ae18): the manifest request_attempted_at is the ACTUAL attempt instant — after the inter-request delay, matching the persisted run-state timestamp', async () => {
+    const dir = tmpDir('fotmob-p2-attemptat-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
+        let clockMs = Date.parse(FIXED_CLOCK);
+        const now = () => new Date(clockMs).toISOString();
+        const sleeps = [];
+        const sleepImpl = async (ms) => { sleeps.push(ms); clockMs += ms; };
+        const fetchImpl = mockFetchImpl((url) => {
+            const id = String(url).split('/match/')[1];
+            const cand = TWO_CANDIDATES.find(c => String(c.source_match_id) === id) || TWO_CANDIDATES[0];
+            return okResponse(pageFor(cand));
+        });
+        const run = await executeCaptureRun(makeCaptureOptions({
+            dir, plan, planPath, runId: 'run-p2attemptat', maxRequests: 2,
+            fetchImpl, sleepImpl, extra: { now },
+        }));
+        assert.equal(run.status, 'complete');
+        assert.equal(sleeps.length, 1, 'the second request waited the inter-request delay');
+
+        const man1 = JSON.parse(fs.readFileSync(path.join(run.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        const man2 = JSON.parse(fs.readFileSync(path.join(run.runDir, 'captures', '2-4506264.manifest.json'), 'utf8'));
+        const state = readStateJson(run.runDir);
+        // First request: no wait — recorded at the run clock start.
+        assert.equal(man1.request_attempted_at, FIXED_CLOCK);
+        // Second request: recorded AFTER the 60s wait — never the pre-wait
+        // moment that would antedate the audit record by a full delay.
+        const afterDelay = new Date(Date.parse(FIXED_CLOCK) + 60000).toISOString();
+        assert.equal(man2.request_attempted_at, afterDelay, 'second attempt recorded after the delay');
+        assert.equal(
+            man2.request_attempted_at, state.last_network_request_attempted_at,
+            'manifest attempt time equals the persisted run-state attempt time'
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
