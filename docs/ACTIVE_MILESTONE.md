@@ -42,6 +42,23 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
+- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审）**：
+  纯离线 detail staging converter/validator 已实现并全量测试 ——
+  `make data-fotmob-detail-staging-{help,build,validate}`（直接 Node CLI
+  `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
+  capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
+  快照：5 个 versioned JSONB sections 逐字节保留、直接复用 pipeline 捕获
+  hashing（无自实现副本）、确定性 observation_id（UUIDv5）+ generated_at
+  取自 manifest、canonical_match_id 恒 null + UNLINKED_NOT_ATTEMPTED、
+  append-only 文件 store + store-state.json 账本（无数据库、无 migration）、
+  原子 tmp+fsync+rename、冲突 fail-closed、-validate 重验 artifact/summary/
+  store ledger。67 项单元测试（52 项契约矩阵）+ 395 项受影响旧测试全绿，
+  ESLint/Prettier/git diff --check 干净；16 场归档（one/five/ten-match pilot
+  archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
+  canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
+  marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
+  变体（真实 16 场均有 4 个）。零网络、零数据库、零采集、无真实 payload/
+  manifest/artifact 提交；PR 保持 Draft、未合并。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器

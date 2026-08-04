@@ -11,6 +11,7 @@
         data-help data-check data-fotmob-candidates-network-export data-m3-canonical-inventory-preflight data-m3-canonical-inventory-disposable-proof data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
+        data-fotmob-detail-staging-help data-fotmob-detail-staging-build data-fotmob-detail-staging-validate \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-large-scale-pageprops-v2-acquisition-strategy-plan data-large-scale-target-inventory-schema-readiness-audit data-single-league-small-batch-target-manifest-plan data-single-league-target-discovery-source-inventory-preflight data-single-league-small-batch-pageprops-v2-preflight data-single-league-pageprops-v2-controlled-write-plan data-single-league-pageprops-v2-controlled-write-execute data-controlled-matches-identity-seed-prerequisite-plan data-controlled-matches-identity-seed-execute data-post-seed-matches-identity-raw-write-readiness-audit data-renewed-pageprops-v2-raw-write-execute data-renewed-pageprops-v2-baseline-proposal-plan data-training-dataset-dry-run data-training-dataset-export \
@@ -443,6 +444,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
+	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<path> OUTPUT_ROOT=<external abs path>  # fully offline staging converter; ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
 	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"
@@ -758,6 +760,27 @@ data-fotmob-detail-capture-replay: ## Fully offline deterministic replay: verifi
 	@$(COMPOSE_DEV) exec -T \
 		-e FOTMOB_DC_RUN_DIR="$(RUN_DIR)" \
 		dev bash -lc 'cd /app; node scripts/ops/fotmob_detail_capture.js replay --run-dir "$$FOTMOB_DC_RUN_DIR"'
+
+data-fotmob-detail-staging-help: ## Show safe FotMob detail staging entrypoint policy (OFFLINE ONLY; ZERO NETWORK; ZERO DATABASE; NO MIGRATION; NO CAPTURE).
+	@echo "FotMob detail staging entrypoints are fully offline (pure Node, no container needed):"
+	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<absolute path> OUTPUT_ROOT=<absolute repository-external path> [STORE_DIR=<path>] [RUN_ID=<plain-identifier>]"
+	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<absolute repository-external path> [STORE_DIR=<path>]"
+	@echo "  make data-fotmob-detail-staging-help"
+	@echo "Hard guarantees: OFFLINE ONLY — ZERO NETWORK (no fetch), ZERO DATABASE (no DB client), NO MIGRATION, NO CAPTURE."
+
+data-fotmob-detail-staging-build: ## Fully offline staging converter: source index -> immutable artifact snapshots + deterministic summary. OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
+	@if [ -z "$(SOURCE_INDEX)" ] || [ -z "$(OUTPUT_ROOT)" ]; then \
+		echo "ERROR: provide SOURCE_INDEX=<absolute path> and OUTPUT_ROOT=<absolute repository-external path>"; \
+		exit 1; \
+	fi
+	@node scripts/ops/fotmob_detail_staging.js build --source-index "$(SOURCE_INDEX)" --output-root "$(OUTPUT_ROOT)" $(if $(STORE_DIR),--store-dir "$(STORE_DIR)",) $(if $(RUN_ID),--run-id "$(RUN_ID)",)
+
+data-fotmob-detail-staging-validate: ## Fully offline staging validator: re-validates every artifact, summary, and store ledger. OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
+	@if [ -z "$(OUTPUT_ROOT)" ]; then \
+		echo "ERROR: provide OUTPUT_ROOT=<absolute repository-external path>"; \
+		exit 1; \
+	fi
+	@node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)" $(if $(STORE_DIR),--store-dir "$(STORE_DIR)",)
 
 data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
 	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \

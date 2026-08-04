@@ -399,6 +399,28 @@ historical four-row audit does not extend a full parser/audit result to all 58
 current `fotmob_live_v1` retained rows. Exact named-writer/run provenance for
 all 58 rows is not uniquely attributable.
 
+### Offline detail staging converter / validator (implemented, tested)
+
+The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
+`src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`)
+converts archived `fotmob-match-detail-capture-payload/v1` +
+`fotmob-match-detail-capture-manifest/v1` pairs into immutable
+`fotmob-detail-staging-artifact/v1` snapshots. It is **pure offline by
+construction**: zero network (no fetcher import), zero database (no DB client,
+no migration, no canonical/staging/odds write), zero capture, no wall-clock
+time in business fields (`generated_at` comes from the manifest's
+`response_received_at`; `observation_id` is a deterministic UUIDv5 over the
+observation key). Canonical make entrypoints: `data-fotmob-detail-staging-help`
+/ `-build` / `-validate` (the direct Node CLI is the internal engine). The
+store is append-only file snapshots + a `store-state.json` ledger; outputs are
+repository-external only, atomic (tmp+fsync+rename), fail-closed on divergent
+content, and validated by `-validate`. 16 archived matches (one/five/ten-match
+pilot archives, e3679262/9bc50640/02635cee) were staged, rebuilt twice,
+validated twice, byte-identical across builds, with all `canonical_match_id`
+null and `UNLINKED_NOT_ATTEMPTED` link status; derived outputs were removed.
+The 16-match validation is an offline verification run only — no new real
+capture happened and no real payload/manifest/artifact was committed.
+
 ### Current safety and documentation status
 
 - This file is the active FotMob current-state source of truth; historical ADG

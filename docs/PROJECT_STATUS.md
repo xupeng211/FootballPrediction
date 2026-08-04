@@ -909,6 +909,21 @@ legacy-writer execution is authorized.
   conflicts support the completed canonical-inventory write design review and
   only a separately authorized writer implementation review next; no legacy
   writer restart or raw-write expansion is recommended.
+- **FotMob detail staging (offline) implemented and tested**: the offline
+  converter/validator (`make data-fotmob-detail-staging-{help,build,validate}`
+  over `scripts/ops/fotmob_detail_staging.js` +
+  `src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`)
+  stages archived capture payload+manifest pairs into immutable
+  `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
+  (no database, no migration). 67 unit tests green (52-item contract matrix
+  incl. direct reuse of the pipeline capture hashing, determinism, idempotency,
+  optional-section re-signed acceptance, atomicity, path safety, CLI/Make);
+  395 affected legacy tests green; ESLint/Prettier/`git diff --check` clean;
+  16 archived matches staged twice + validated twice with byte-identical
+  artifacts and null canonical_match_id (derived outputs removed). Marker
+  events (parser-injected AddedTime/Half minute markers, no id by design)
+  recorded as a legal variant. Zero network, zero database, zero capture:
+  no new real FotMob request and no real payload/manifest/artifact committed.
 
 ## Next recommended sequence
 
