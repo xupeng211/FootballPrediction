@@ -175,6 +175,12 @@ test('retry > 0 blocked', () => {
     const v = fetcher.validateFetchInput({ externalId: '4830747', retry: 1 });
     assert.equal(v.ok, false);
 });
+test('requestUrl override blocked: URL must derive from the numeric external id (Reviewer A P2)', () => {
+    const fetcher = loadFresh();
+    const v = fetcher.validateFetchInput({ externalId: '4830747', requestUrl: 'https://evil.example.com/' });
+    assert.equal(v.ok, false);
+    assert.match(v.errors.join(';'), /requestUrl is not supported/);
+});
 test('browser/proxy runtime blocked', () => {
     const fetcher = loadFresh();
     const v1 = fetcher.validateFetchInput({ externalId: '4830747', allowBrowserRuntime: true });

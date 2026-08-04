@@ -42,6 +42,24 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
+- **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
+  全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
+  PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器
+  共享同一 hash 逻辑）/ PREFLIGHT（完全离线验证 plan、重算 hash、校验
+  git/路径/run id/预算/授权变量，打印候选数与 URL 摘要，零 mkdir/fetch/write）/
+  CAPTURE（授权门、单 URL 网络合同、19 项内容有效性门含可信 observed-match-id
+  来源与冲突检测、稳定 payload+manifest 配对原子保留（不落盘原始 HTML）、
+  run-state 全面绑定校验、run-bound 不可变 plan snapshot、预算只计本次真实
+  fetch、失败请求计入 attempted 计数）/ REPLAY（完全离线，要求 run plan
+  snapshot，从稳定 payload 确定性物化 fotmob-match-detail-artifact/v1，
+  parsed_at 取自捕获记录，重复 replay 字节一致）。canonical 运行时入口为
+  `make data-fotmob-detail-capture-{help,plan,preflight,execute,replay}`；
+  直接 Node CLI 是 internal engine（非 canonical 接口）。复用
+  FotMobCandidateExporter / FotMobRawDetailFetcher / FotMobRouteIdentityReconciler /
+  NextDataParser / FotMobRawParser，未创建重复 parser；不写数据库。
+  **未执行任何真实 detail-capture 请求**（唯一真实 FotMob 网络流量 = 已完成的有界
+  两路径兼容性 probe，2 次请求）：CAPTURE 默认关闭，真实执行仍须单独授权
+  （OWNER_REAL_CAPTURE_AUTHORIZATION=NO）。
 
 ## 未完成 / 未授权（不得自动开始）
 
@@ -61,17 +79,15 @@
    （见"已完成"）；以下各项**不属于**阶段A、本轮未处理：
    P3-3 v1 paired-write 弱点（标注 unchanged scope）、injected filesystem
    path-validation consistency、final readback cleanup semantic inconsistency。
-   阶段A 仅为代码加固：未执行真实 FotMob 网络请求、未生成真实 capture artifact、
-   未完成公共条款 / 使用边界审查、未执行 single-page shape probe（仍需新的用户明确授权）。
-5. **FotMob 公共条款 / 使用边界审查**：属 FOTMOB_REAL_CAPTURE_READINESS 范围，
-   后续独立研究，未授权。
-6. **单页面 shape probe**：必须单独授权（Issue #1793 评论明确 "requires a separate
-   user authorization"）。
-7. **三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。
-8. **生产 import schema 与真实写入**：需后续单独授权（须先满足 status-complete
+   阶段A 仅为代码加固：未执行真实 FotMob 网络请求、未生成真实 capture artifact。
+   公共条款 / 使用边界审查已完成（written permission 缺失）；有界两路径兼容性
+   probe 已完成 = 2 次请求，match detail 路由与 EPL fixtures 路由均兼容，
+   未见 access-control 信号。
+5. **三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。
+6. **生产 import schema 与真实写入**：需后续单独授权（须先满足 status-complete
    artifact、FotMob endpoint/capture/licence provenance、disposable proof、
    dedicated sandbox/ACL/backup-restore 等 Gate，见 Issue #1793 评论）。
-9. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
+7. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
 
 ## 当前授权下一步
 
@@ -85,6 +101,13 @@
 
 - 不执行任何真实网络抓取、浏览器自动化、DB 写入、migration、artifact 写盘、
   训练、预测或生产操作。
+- 不执行 detail capture CAPTURE 的真实 FotMob 请求：即使
+  `make data-fotmob-detail-capture-execute` 已实现，也必须满足全部授权门
+  （--execute、CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1、CONFIRM_MAX_FOTMOB_REQUESTS、
+  authorization-id、expected-plan-sha256、max-requests、clean worktree、40-hex
+  HEAD、仓库外非 symlink 输出根、非 symlink plan、安全 run-id；make 层另要求
+  NETWORK_AUTHORIZATION=yes，任何变量缺失在 Node 之前失败）并另行获得用户明确
+  授权（canonical 入口 ≠ 已获授权）。
 - 不把 FOTMOB_REAL_CAPTURE_READINESS 写成已授权里程碑或已有独立 Issue/tag。
 - 不重建 M3 staging 已完成的任何模块（防重复开发，AGENTS.md §2.1）。
 - 不新增 Phase/ADG 编号脚本、report、manifest（M2 增长冻结，AGENTS.md）。

@@ -673,6 +673,92 @@ data-fotmob-candidates-network-export: ## Explicitly authorized live FotMob cand
 		-e FOTMOB_CANDIDATE_OUTPUT="$(OUTPUT)" \
 		dev bash -lc 'set -eu; set -f; cd /app; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
 
+data-fotmob-detail-capture-help: ## Show safe FotMob detail capture entrypoint policy (PLAN/PREFLIGHT/REPLAY offline; EXECUTE is the only canonical real-network entry).
+	@echo "FotMob detail capture entrypoints are safety-gated."
+	@echo "  make data-fotmob-detail-capture-plan CANDIDATE_ARTIFACT=<path> SEASON=\"2024/2025 ...\" [MATCH_ID=...] [LIMIT=n] OUTPUT=<external path>"
+	@echo "  make data-fotmob-detail-capture-preflight PLAN=<path> EXPECTED_PLAN_SHA256=<64hex> AUTHORIZATION_ID=<id> MAX_REQUESTS=<n> OUTPUT_ROOT=<path> RUN_ID=<id>"
+	@echo "  make data-fotmob-detail-capture-execute PLAN=<path> EXPECTED_PLAN_SHA256=<64hex> AUTHORIZATION_ID=<id> MAX_REQUESTS=<n> DELAY_MS=60000 OUTPUT_ROOT=<path> RUN_ID=<id> CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1 CONFIRM_MAX_FOTMOB_REQUESTS=<n> NETWORK_AUTHORIZATION=yes"
+	@echo "  make data-fotmob-detail-capture-replay RUN_DIR=<path>"
+	@echo "The direct Node CLI (scripts/ops/fotmob_detail_capture.js) is the internal engine;"
+	@echo "the make data-* targets are the canonical entrypoints."
+
+data-fotmob-detail-capture-plan: ## Fully offline deterministic capture plan. Requires explicit candidate artifact, explicit selection, and explicit output.
+	@if [ -z "$(CANDIDATE_ARTIFACT)" ] || [ -z "$(OUTPUT)" ]; then \
+		echo "ERROR: provide CANDIDATE_ARTIFACT=<absolute path visible in dev container> and OUTPUT=<absolute external path>"; \
+		exit 1; \
+	fi
+	@if [ -z "$(SEASON)" ] && [ -z "$(MATCH_ID)" ] && [ -z "$(LIMIT)" ]; then \
+		echo "ERROR: provide at least one explicit selection: SEASON=\"YYYY/YYYY ...\" and/or MATCH_ID=<numeric> and/or LIMIT=<positive integer>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T \
+		-e FOTMOB_DC_CANDIDATE_ARTIFACT="$(CANDIDATE_ARTIFACT)" \
+		-e FOTMOB_DC_SEASONS="$(SEASON)" \
+		-e FOTMOB_DC_MATCH_IDS="$(MATCH_ID)" \
+		-e FOTMOB_DC_LIMIT="$(LIMIT)" \
+		-e FOTMOB_DC_OUTPUT="$(OUTPUT)" \
+		dev bash -lc 'set -eu; set -f; cd /app; set -- plan --candidate-artifact "$$FOTMOB_DC_CANDIDATE_ARTIFACT"; for season in $$FOTMOB_DC_SEASONS; do set -- "$$@" --season "$$season"; done; for id in $$FOTMOB_DC_MATCH_IDS; do set -- "$$@" --match-id "$$id"; done; if [ -n "$$FOTMOB_DC_LIMIT" ]; then set -- "$$@" --limit "$$FOTMOB_DC_LIMIT"; fi; set -- "$$@" --output "$$FOTMOB_DC_OUTPUT"; node scripts/ops/fotmob_detail_capture.js "$$@"'
+
+data-fotmob-detail-capture-preflight: ## Fully offline capture preflight: revalidates plan schema + recomputes plan hash, verifies git/paths/run id/budget/authorization variables, prints candidate count and URL summary. Zero fetch, zero write.
+	@if [ -z "$(PLAN)" ] || [ -z "$(EXPECTED_PLAN_SHA256)" ] || [ -z "$(AUTHORIZATION_ID)" ] || [ -z "$(MAX_REQUESTS)" ] || [ -z "$(OUTPUT_ROOT)" ] || [ -z "$(RUN_ID)" ]; then \
+		echo "ERROR: provide PLAN, EXPECTED_PLAN_SHA256, AUTHORIZATION_ID, MAX_REQUESTS, OUTPUT_ROOT, RUN_ID"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T \
+		-e FOTMOB_DC_PLAN="$(PLAN)" \
+		-e FOTMOB_DC_EXPECTED_PLAN_SHA256="$(EXPECTED_PLAN_SHA256)" \
+		-e FOTMOB_DC_AUTHORIZATION_ID="$(AUTHORIZATION_ID)" \
+		-e FOTMOB_DC_MAX_REQUESTS="$(MAX_REQUESTS)" \
+		-e FOTMOB_DC_OUTPUT_ROOT="$(OUTPUT_ROOT)" \
+		-e FOTMOB_DC_RUN_ID="$(RUN_ID)" \
+		dev bash -lc 'cd /app; node scripts/ops/fotmob_detail_capture.js preflight --plan "$$FOTMOB_DC_PLAN" --expected-plan-sha256 "$$FOTMOB_DC_EXPECTED_PLAN_SHA256" --authorization-id "$$FOTMOB_DC_AUTHORIZATION_ID" --max-requests "$$FOTMOB_DC_MAX_REQUESTS" --output-root "$$FOTMOB_DC_OUTPUT_ROOT" --run-id "$$FOTMOB_DC_RUN_ID"'
+
+data-fotmob-detail-capture-execute: ## Canonical real-network capture entrypoint. Fails in make (before Node) unless every authorization variable is provided; no dangerous defaults.
+	@if [ -z "$(PLAN)" ] || [ -z "$(EXPECTED_PLAN_SHA256)" ] || [ -z "$(AUTHORIZATION_ID)" ] || [ -z "$(MAX_REQUESTS)" ] || [ -z "$(OUTPUT_ROOT)" ] || [ -z "$(RUN_ID)" ] || [ -z "$(DELAY_MS)" ]; then \
+		echo "ERROR: provide PLAN, EXPECTED_PLAN_SHA256, AUTHORIZATION_ID, MAX_REQUESTS, DELAY_MS (>= 60000), OUTPUT_ROOT, RUN_ID"; \
+		exit 1; \
+	fi
+	@if [ "$(NETWORK_AUTHORIZATION)" != "yes" ]; then \
+		echo "BLOCKED: data-fotmob-detail-capture-execute requires NETWORK_AUTHORIZATION=yes before Node execution."; \
+		exit 1; \
+	fi
+	@case "$(DELAY_MS)" in ''|*[!0-9]*) \
+		echo "BLOCKED: DELAY_MS must be an integer >= 60000 before Node execution."; \
+		exit 1;; esac; \
+	if [ "$(DELAY_MS)" -lt 60000 ]; then \
+		echo "BLOCKED: DELAY_MS must be an integer >= 60000 before Node execution."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE)" != "1" ]; then \
+		echo "BLOCKED: data-fotmob-detail-capture-execute requires CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1 before Node execution."; \
+		exit 1; \
+	fi
+	@if [ -z "$(CONFIRM_MAX_FOTMOB_REQUESTS)" ] || [ "$(CONFIRM_MAX_FOTMOB_REQUESTS)" != "$(MAX_REQUESTS)" ]; then \
+		echo "BLOCKED: CONFIRM_MAX_FOTMOB_REQUESTS must equal MAX_REQUESTS before Node execution."; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T \
+		-e NETWORK_AUTHORIZATION="$(NETWORK_AUTHORIZATION)" \
+		-e CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE="$(CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE)" \
+		-e CONFIRM_MAX_FOTMOB_REQUESTS="$(CONFIRM_MAX_FOTMOB_REQUESTS)" \
+		-e FOTMOB_DC_PLAN="$(PLAN)" \
+		-e FOTMOB_DC_EXPECTED_PLAN_SHA256="$(EXPECTED_PLAN_SHA256)" \
+		-e FOTMOB_DC_AUTHORIZATION_ID="$(AUTHORIZATION_ID)" \
+		-e FOTMOB_DC_MAX_REQUESTS="$(MAX_REQUESTS)" \
+		-e FOTMOB_DC_OUTPUT_ROOT="$(OUTPUT_ROOT)" \
+		-e FOTMOB_DC_RUN_ID="$(RUN_ID)" \
+		-e FOTMOB_DC_DELAY_MS="$(DELAY_MS)" \
+		dev bash -lc 'cd /app; node scripts/ops/fotmob_detail_capture.js capture --plan "$$FOTMOB_DC_PLAN" --expected-plan-sha256 "$$FOTMOB_DC_EXPECTED_PLAN_SHA256" --authorization-id "$$FOTMOB_DC_AUTHORIZATION_ID" --max-requests "$$FOTMOB_DC_MAX_REQUESTS" --output-root "$$FOTMOB_DC_OUTPUT_ROOT" --run-id "$$FOTMOB_DC_RUN_ID" --delay-ms "$$FOTMOB_DC_DELAY_MS" --execute'
+
+data-fotmob-detail-capture-replay: ## Fully offline deterministic replay: verifies the run plan snapshot + payload/manifest pairs and materializes detail artifacts (writes replay/ artifacts + run summary). Zero fetch.
+	@if [ -z "$(RUN_DIR)" ]; then \
+		echo "ERROR: provide RUN_DIR=<absolute path to runs/<run-id>>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T \
+		-e FOTMOB_DC_RUN_DIR="$(RUN_DIR)" \
+		dev bash -lc 'cd /app; node scripts/ops/fotmob_detail_capture.js replay --run-dir "$$FOTMOB_DC_RUN_DIR"'
+
 data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
 	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \
 		echo "ERROR: provide ARTIFACT=<absolute path visible in dev container> and ARTIFACT_SHA256=<sha256>"; \

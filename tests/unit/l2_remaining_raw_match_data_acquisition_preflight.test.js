@@ -229,7 +229,7 @@ test('sha256CanonicalJson stable', () => {
     assert.equal(h1, h2);
     assert.equal(h1.length, 64);
 });
-test('buildRawData excludes full HTML body and includes _meta/matchId', () => {
+test('buildRawData excludes full HTML body and never trusts a synthetic matchId', () => {
     const gate = loadModuleFresh();
     const preview = {
         _meta: { ver: '1' },
@@ -245,7 +245,12 @@ test('buildRawData excludes full HTML body and includes _meta/matchId', () => {
     assert.ok(raw.content);
     assert.ok(raw.general);
     assert.ok(raw.header);
-    assert.ok(raw.matchId);
+    // R3-P1: the preview builder resolves the observed id through the shared
+    // fetcher helpers, which never trust a transformer-style top-level id —
+    // without a trusted raw source the resolution is unresolved (fail
+    // closed), never a synthetic 'payload.matchId'.
+    assert.equal(raw.matchId, null);
+    assert.equal(raw._meta.match_id_source, 'unresolved');
     assert.equal(raw.rawHtml, undefined);
     assert.equal(raw.fullBody, undefined);
 });

@@ -19,10 +19,327 @@ V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-co
 FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
   (malformed reason.short fail closed; started+postponed contradiction fail closed;
    core-layer 40-hex collector_code_revision enforcement in buildCaptureManifest)
-Real FotMob network probe = still NOT authorized and NOT executed
-Public terms / usage-boundary review = NOT completed
-Single-page shape probe = NOT executed; requires separate explicit user authorization
+Bounded auditable detail capture pipeline = implemented and fully tested offline
+  (PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
+Real FotMob detail capture = still NOT authorized and NOT executed (CAPTURE default-off)
+Public terms / usage-boundary review = completed
+FotMob written permission = absent (no written permission granted)
+Bounded two-path compatibility probe = completed
+  (actual probe requests = 2; match detail route = compatible at probe time;
+   EPL fixtures route = compatible at probe time; no access-control signal
+   observed in that bounded probe)
+No batch capture executed; no 1,140-match detail capture executed; no database write
+This repository state executes zero real network requests
+  (the probe's 2 requests were a separate authorized one-time action; no code
+   path in this state performs live fetches)
 ```
+
+### Detail capture pipeline
+
+The bounded, auditable detail capture pipeline (`scripts/ops/fotmob_detail_capture.js`
+plus `src/infrastructure/fotmob/FotMobDetailCapture{Plan,Pipeline,Retention,Contract}.js`)
+connects the validated candidate artifact to an auditable four-stage flow. The
+**canonical runtime entrypoints are the `make data-fotmob-detail-capture-*`
+targets** (`-help` / `-plan` / `-preflight` / `-execute` / `-replay`); the direct
+Node CLI (`scripts/ops/fotmob_detail_capture.js`) is the internal engine and is
+marked as such — it is a specialized implementation detail, not the documented
+canonical interface.
+
+- **PLAN** — fully offline; builds a deterministic `fotmob-detail-capture-plan/v1`
+  with `plan_business_sha256`; the hash is always RECOMPUTED from the business
+  fields by the shared `validateAndRecomputeCapturePlan` contract (builder and
+  CAPTURE validator use the same helper); explicit selection required
+  (`--season` / `--match-id` / `--limit`), never silently selects the
+  1,140-candidate population. A filter that matches NOTHING fails as an
+  `INPUT_ERROR` (`selection matched no candidates (season filter (...) /
+  match id filter (...)) — refusing to build an empty capture plan`), and
+  the contract validator independently rejects zero-candidate plans
+  (`candidates must not be empty`) — an empty plan can never pass PLAN /
+  PREFLIGHT / CAPTURE gates, so EXECUTE can never report a zero-request
+  run as `status=complete` (round-12 P2).
+- **PREFLIGHT** — fully offline; re-validates the plan schema and recomputes the
+  plan hash, verifies git revision / output paths / run id / budget /
+  authorization variables, and prints the candidate count and URL-path summary.
+  Creates nothing, fetches nothing, writes nothing.
+- **CAPTURE** — default-off. Every authorization gate (`--execute`,
+  `CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1`, authorization id, expected-plan-sha256,
+  max-requests + `CONFIRM_MAX_FOTMOB_REQUESTS`, clean git worktree, 40-hex HEAD,
+  repository-external non-symlink output root, non-symlink plan, safe run id) is
+  validated before any network call; the make `-execute` target fails in make
+  before Node when any variable is missing. Single allowed URL
+  `https://www.fotmob.com/match/<digits>` (GET, no redirect follow, no
+  cookie/auth/proxy/browser, concurrency 1, retry 0, delay ≥ 60 s, 30 s timeout);
+  19 content-validity gates (incl. trusted observed-match-id provenance and
+  conflict detection) fail closed on empty SSR shells and untrusted identities.
+  The observed match id is extracted from the RAW hydration BEFORE the
+  transformer runs (allowlist: raw `pageProps.general.matchId` →
+  `general.matchId`, raw `pageProps.matchId` → `matchId`); the transformer-
+  injected `payload.matchId` (a copy of the request-side id) is NEVER trusted
+  (R3-P1), the provenance flag `observed_match_id_is_response_derived` is
+  recorded, and an input fallback always fails closed. Team markers are
+  verified against the parser's EXACT ordered fallback chain
+  (`general.<side>Team.name` → `header.teams[0|1].name` →
+  `content.lineup.<side>Team.name` → `general.<side>Team.shortName`,
+  mirroring `FotMobRawParser.extractTeams()`): the first name the
+  parser will emit for each side must equal the expected team, and
+  incomplete markers fail closed — a page with the right match id but
+  REVERSED or misplaced home/away names can no longer pass the loose
+  anywhere-in-text check and persist swapped teams (round-13 P2).
+  Selection mirrors `FotMobRawParser.firstValue()` EXACTLY (round-14 P2):
+  only undefined / null / the exact empty string are skipped — a
+  whitespace-only `general.<side>Team.name` IS what the parser selects
+  and persists, so the gate selects it too and fails the normalized
+  comparison instead of silently skipping to a lower source. The collector HEAD must
+  equal the plan's `generator_code_revision` (`PLAN_REVISION_HEAD_MISMATCH`
+  otherwise, before any fetch or run-state write). Retention is
+  a **stable allowlisted payload** (`<ordinal>-<source_match_id>.payload.json`,
+  schema `fotmob-match-detail-capture-payload/v1`, business hash built by the
+  shared `computeStableCapturePayloadSha256` projection) + manifest paired
+  atomically with rollback/readback; the full HTML response body exists only in
+  memory (hashed for audit, never persisted — no `.html` files, no
+  `__NEXT_DATA__` / `pageProps` / `raw_data` in outputs). Manifest self-hash is
+  required and recomputed; a run-bound immutable plan snapshot
+  (`<run-dir>/plan.json`) is written before any network request; resume binds
+  run id / plan SHA / source artifact SHA / authorization id / budget / delay /
+  collector revision and every completed pair field-by-field (cross-run pairs
+  are `RESUME_PAIR_CONTEXT_MISMATCH`, never completed); attempted / response /
+  capture counters accumulate INDEPENDENTLY (a timeout or 403 is a response but
+  never a completion; resume never infers responses from attempts — R3-P2-4);
+  the run-state contract (`fotmob-detail-capture-run-state/v1`) records
+  `network_requests_attempted`, `network_responses_received`,
+  `captures_completed`, `completed_ordinals`,
+  `last_network_request_attempted_at` (persisted before each native fetch —
+  the inter-request delay continues across processes: remainingDelay =
+  delayMs − (now − lastRequestAt); an invalid or missing timestamp with
+  attempts fails closed, a backwards clock waits the full delay — R3-P2-5;
+  the pacing ANCHOR is the ACTUAL fetch-start moment: the adapter re-takes
+  it AFTER the pre-fetch callback (and its synchronous run-state write)
+  completes, and the callback re-takes and persists a post-write
+  crash-window value (one follow-up write); the ADAPTER's true fetch-start
+  moment is what the manifest records, and the pipeline ACTUALIZES the
+  persisted `last_network_request_attempted_at` to that same moment after
+  the request settles (completion and failure paths — the failure path
+  gets the moment from the thrown error) — so the anchor, the manifest and
+  the cross-process resume seed all agree on the REAL request start,
+  covering the last pre-fetch write's duration — a slower first write used
+  to shrink the real gap between two request starts below delayMs, risking
+  server rate limiting (round-16 P2, round-17 P2, round-18 P2). In addition,
+  every pre-fetch run-state write refreshes a persisted
+  `next_allowed_request_at` DEADLINE (= the true fetch start + delayMs — the
+  callback's crash-window value uses its post-write re-taken actualAt, the
+  completion/failure writes actualize the deadline from the adapter's true
+  fetch-start moment), and resume seeds its gate FROM the deadline
+  (initialLastRequestAt = deadline − delayMs), so the persisted gate covers
+  the LAST pre-fetch write's duration even when the run-state write itself
+  is what a crash loses (round-18 P2; a present-but-invalid deadline fails
+  closed, a missing deadline falls back to the timestamp formula). The
+  deadline's basis (the last pre-fetch moment) still precedes the write
+  that carries it by one write duration — a hard crash right after the
+  fetch started, before ANY actualization write, leaves exactly that gap on
+  disk — so the crash window is decided by a persisted `fetch_in_flight`
+  MARKER instead: the last pre-fetch write sets it true, both actualization
+  writes clear it in the same write as the settlement, and a true marker on
+  disk means the prior process died with a request possibly in flight —
+  resume then executes the FULL delay from the recovery moment (no
+  assumption that the file mtime is the write's completion moment — the
+  earlier mtime anchor was removed because temp+rename keeps the TEMP
+  file's mtime on real filesystems, round-20 P2, R22-P1). ONLY an explicit
+  `false` takes the exact deadline path; a MISSING marker — a legacy state
+  left by `0bc69dad9` or earlier, whose process may have died in the crash
+  window without any marker — is treated as a possible in-flight request
+  and also waits the FULL delay from the recovery moment, and an explicit
+  `null` fails closed like any other non-boolean (round-21 P2, R23-P1).
+  The marker decision runs BEFORE the deadline branch: a state written
+  before `05cd23c55` carries neither `next_allowed_request_at` nor the
+  marker, and its missing marker still forces the full recovery delay —
+  absence of the deadline never re-enables the possibly-early persisted
+  timestamp (round-22 P2, R24-P1). When both the deadline and
+  the persisted request time are present, the read-side validator AND the
+  resume seeding enforce the exact invariant
+  `next_allowed_request_at === last_network_request_attempted_at + delay_ms`
+  — a syntactically valid but EARLY tampered deadline fails closed like any
+  other deviation (round-19 P2, R21-P2) and
+  is validated on every read (non-negative, monotonic, unique ordinals, no
+  auto-fixing); attempted requests are counted before the fetch, so
+  failed/timeout requests are never recorded as zero. On resume, a pair left
+  on disk by a prior process that crashed between the pair write and the
+  run-state update is counted as a completion, so the persisted
+  `captures_completed` always equals `completed_ordinals.length` (round-2 P1);
+  the authorization gate validates the authorization id with the SAME contract
+  as the run-state validator, so an admitted id can never produce a record its
+  own consumer rejects (round-2 P2); the manifest `request_attempted_at` is
+  the ACTUAL attempt instant — recorded by the adapter's pre-fetch callback
+  after any inter-request delay, immediately before the native request — and
+  always equals the persisted run-state timestamp; the timestamp is taken ONCE
+  per attempt and used for the run-state record, `updated_at` and the manifest
+  alike, so a real clock can never diverge the three (round-2/round-3 P2). The
+  manifest `stable_raw_payload_sha256` is the FETCHER's hash computed with the
+  trusted response-derived identity (round-3 P2); resume RECOMPUTES the
+  payload business hash with the shared projection before treating a pair as
+  complete (`RESUME_PAIR_BUSINESS_HASH_MISMATCH` otherwise), and a completed
+  ordinal whose pair files are missing fails closed (`resume_pair_absent`) —
+  never a silent re-fetch that would corrupt the counters (round-3 P2). Resume
+  also binds the payload's OWN identity — `source_match_id`, `candidate_id`
+  and the full `observed_identity` block (match id, source, conflict flag,
+  response-derived flag) — field-by-field to the verified manifest and requires
+  a response-derived identity with no conflict, exactly like replay
+  (`RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH` otherwise — round-3 P2). The capture
+  output root must be an ABSOLUTE path: relative forms are rejected before any
+  resolution, so `OUTPUT_ROOT=../../external/captures` can never be silently
+  converted into a repository-external path whose meaning depends on the
+  working directory (round-3 P2). Resume binds the pair to the FULL execution
+  context, not only run/plan/candidate identity: manifest `request_budget`,
+  `delay_ms` and `collector_code_revision` must equal the current run-state's
+  values (`RESUME_PAIR_CONTEXT_MISMATCH` otherwise) — the plan business hash
+  deliberately excludes the generator revision, so a complete pair copied from
+  a prior run with different budget/delay/revision is never counted complete
+  (round-4 P2). The PLAN validator cross-checks every candidate against the
+  declared scope: candidate `competition` must equal the plan's declared
+  competition and candidate `season` must be one of the declared
+  `selected_seasons` — a self-consistent but out-of-scope plan (recomputed
+  hash included) fails the CAPTURE gate (round-4 P2). The delay contract is
+  enforced in the authorization gate BEFORE any directory creation,
+  plan-snapshot or run-state write: `--delay-ms` below 60000, non-integer or
+  NaN fails closed with the run directory never created — no poisoned
+  run-state.json/plan.json can ever leave a RUN_ID unrecoverable (round-5 P2).
+  The response body is read under a SIZE CAP: an over-limit Content-Length is
+  rejected before any byte is read, a streamed body is aborted as soon as the
+  cap (8 MiB) is exceeded, and a body without a stream is checked after the
+  buffer read — an oversized response stops the run with
+  `SAFETY_ERROR:oversized_response_body` before any pair is retained, so a
+  single oversized page can never consume unbounded memory (round-8 P2).
+  EVERY early-exit path releases the body: the over-limit DECLARED
+  Content-Length branch now CANCELS the response body stream before throwing
+  (round-15 P2), exactly like the chunked-read over-limit path — a server
+  that keeps streaming or never closes the connection can no longer leave
+  the socket owned by an unread response. A
+  CROSS-PROCESS EXCLUSIVE LOCK guards every run id: an atomic mkdir lock
+  recording the holder's pid is acquired BEFORE the run state is read and
+  held until the final state write completes (released in `finally` on every
+  path). A live holder stops the competing run with `SAFETY_ERROR` before
+  any fetch or state write — two processes can never interleave state
+  reads/writes for the same run id; a stale lock left by a dead pid is
+  broken exactly once and retried (round-8 P1). The lock uses an ATOMIC
+  OWNERSHIP TOKEN: the holder writes its pid into a private temp dir and
+  renames the whole dir into place (rename is atomic) — a competing process
+  can never observe a "live lock without an owner" (round-9 P1). Stale
+  takeover unlinks only a verified-dead pid and rmdir's the now-empty dir:
+  a COMPLETE lock (with a pid) is never deleted (rmdir fails ENOTEMPTY on a
+  fresh lock), and the post-acquire ownership re-verification fails closed
+  if the token was lost mid-takeover; release removes only the holder's own
+  token (round-9 P1). The ownership token is NON-REUSABLE (`pid:<pid>:<nonce>`
+  with a monotonic nonce, so an OS-pid-recycled process can never reproduce
+  a dead holder's token), and takeover/release use ATOMIC rename-based
+  grab/verify/restore: the lock dir is renamed to a private trash name,
+  deleted ONLY if the moved dir still carries the exact token that was
+  verified stale (or both absent), otherwise renamed back — a takeover or
+  release can never delete a token it did not verify, so process C can never
+  delete process B's lock (round-10 P1). The holder additionally RE-VERIFIES
+  ownership of the token before EVERY run-state write
+  (`verifyRunLockOwnership` → `SAFETY_ERROR:run lock ownership lost`): a
+  holder displaced mid-run fails closed at its next state write, BEFORE its
+  next fetch can issue — two processes can never both keep fetching under
+  the same run id (round-10 P1). Liveness of a holder is judged by PROCESS
+  INSTANCE, not by pid liveness alone: the token records the holder's
+  kernel process-start identity (`/proc/<pid>/stat` field 22, clock ticks
+  since boot) as `pid:<pid>:<startTicks>:<nonce>`, and the stale judge
+  re-reads `/proc/<pid>/stat` — identical start ticks → the same instance
+  still runs (live); different ticks → the recorded holder instance is GONE
+  (its pid was recycled by an unrelated process, `kill(pid, 0)` alone would
+  keep the lock alive forever) → the lock is stale and can be taken over;
+  legacy tokens without start ticks fall back to pid-liveness (round-11 P2).
+  PID EQUALITY IS NEVER TREATED AS TAKEABLE: a concurrent
+  `executeCaptureRun()` in the SAME process (same pid, same start ticks,
+  different nonce) is judged a LIVE holder by instance identity and fails
+  closed — an in-process competitor can no longer steal a live lock and burn
+  two real requests for one pair (round-14 P1).
+- **REPLAY** — fully offline; validates the run plan snapshot (REQUIRED — missing
+  snapshot fails closed), verifies payload file hash + manifest self-hash, and
+  RECOMPUTES the payload business hash with the same shared projection used at
+  capture time — a tampered normalized field fails closed even when the file
+  hash and manifest self-hash were refreshed (R3-P2-1). The payload's observed
+  identity (match id, source, conflict flag, response-derived flag) is bound
+  field-by-field to the verified manifest and must be response-derived with no
+  conflict (`REPLAY_PAYLOAD_OBSERVED_IDENTITY_MISMATCH` otherwise — round-2 P2).
+  Every replayed pair must be bound to the run state's run id and authorization
+  id (`REPLAY_PAIR_CONTEXT_MISMATCH` otherwise — R3-P2-2); replay is TWO-PHASE:
+  every pair is validated and built BEFORE any artifact is written, so a
+  mismatch on any later pair leaves zero artifacts on disk (round-2 P2); the
+  parser code revision comes from the bound collector revision chain. The run
+  summary keeps the FULL plan scope (`plan_candidate_count` from the verified
+  plan, not the completed subset — R3-P2-6) and `parsed_at` is derived from the
+  capture record — repeated replays are byte-identical. Candidate identity comes
+  exclusively from the verified run plan snapshot, never from file names. The
+  run directory itself must satisfy the same boundary as PLAN/CAPTURE outputs —
+  absolute, repository-external, no symlink ancestors — before any replay read
+  or write, so replay artifacts can never be materialized inside the
+  repository (round-3 P2). Replay ALSO pre-checks every output target before
+  materializing: each target must be absent or byte-identical to the
+  deterministic artifact this replay would produce, so a conflicting target on
+  a later pair fails closed with ZERO partial output — the zero-write guarantee
+  now covers output conflicts, not only input mismatches (round-3 P2). The
+  pre-check additionally requires every existing target to be a REGULAR file
+  (lstat): a symlink to byte-identical content passes a content comparison but
+  would be rejected by the materializer AFTER earlier artifacts were written,
+  so non-regular targets fail closed in the pre-check itself (round-4 P2). The
+  pair's ordinal is bound to the snapshot candidate: replay requires
+  `planCandidate.ordinal === ordinal` — a copied pair replayed under a wrong
+  ordinal (refreshed `request_ordinal` + self-hash) fails closed before any
+  artifact, so the summary can never claim an ordinal the pair does not
+  actually hold (round-4 P2). Replay also binds the pair to the FULL execution
+  context recorded in the run state: manifest `request_budget`, `delay_ms` and
+  `collector_code_revision` must equal the run state's values
+  (`REPLAY_PAIR_CONTEXT_MISMATCH` / `REPLAY_PAIR_REVISION_MISMATCH`
+  otherwise) — a pair captured under a different budget, delay or collector
+  revision is never replayed, so artifacts never declare parser provenance of
+  the wrong revision (round-4 P2). The run-summary target is part of the
+  transactional materialization: `run-summary.json` is pre-checked BEFORE any
+  artifact write (absent, or a regular file with byte-identical deterministic
+  content; differing content or a directory/symlink fails closed) — the
+  zero-write guarantee now covers the summary too (round-4 P2). The captures
+  directory itself must be a REAL directory (lstat) with no symlink anywhere
+  in its ancestor chain, verified BEFORE any existsSync / readdirSync / pair
+  read — a completed run whose `captures/` was replaced by a symlink to
+  another directory can never replay the link target's pairs as this run's
+  retained evidence (round-5 P2). Replay ALSO binds the payload's complete
+  PLAN identity — `competition`, `league_id`, `season` and `expected_identity`
+  (home_team, away_team, kickoff_at) — field-by-field to the verified manifest
+  AND the run plan snapshot before any artifact is built: a payload whose
+  plan identity was swapped (with recomputed business hash and refreshed
+  file/self hashes) fails closed with `REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH`
+  and zero artifacts, so a materialized artifact can never declare a plan
+  identity different from the run's real plan (round-8 P2). Resume applies
+  the same plan-identity binding: `payload.competition` / `league_id` /
+  `season` / `expected_identity.*` must equal the manifest's declared values
+  before a pair is treated as completed (`RESUME_PAIR_PAYLOAD_IDENTITY_MISMATCH`
+  otherwise — round-8 P2). Resume binds the plan identity DIRECTLY to the
+  current plan candidate, not only to the manifest: a tamperer who swaps the
+  SAME identity fields in BOTH files (recomputing business/file/self hashes
+  and keeping the original candidate_identity_sha256, which nothing
+  recomputes from manifest fields) still fails closed — manifest AND payload
+  `competition` / `league_id` / `season` / home/away/kickoff are each
+  compared against `expectedCandidate` (round-9 P2). Replay binds `league_id`
+  to the run plan's TOP-LEVEL league id in addition to the
+  payload↔manifest comparison — a synchronized league swap in both files
+  fails closed with `REPLAY_PAYLOAD_PLAN_IDENTITY_MISMATCH` and zero
+  artifacts, so the artifact's structured hash can never bind to the wrong
+  league (round-9 P2). An oversized streamed body CANCELS the underlying
+  reader before the run stops — a chunked server that keeps streaming past
+  the 8 MiB cap can no longer hold the socket or block connection reuse
+  (round-9 P2). Replay SHARES THE SAME cross-process run lock as capture:
+  `runReplay` acquires the identical `acquireRunLock` BEFORE reading the run
+  state and holds it until every replay write (detail artifacts + run
+  summary) completes, releasing in `finally` — a concurrent capture or
+  replay of the same run id fails closed instead of interleaving state or
+  artifact writes, and replay re-verifies lock ownership before the
+  artifact loop and before the summary write (round-10 P2).
+
+No real detail-capture request has been made by the pipeline and no capture has
+been executed in this repository state: every test is mocked
+(`REAL_NETWORK_FORBIDDEN_IN_TEST` global fetch), the only real FotMob network
+traffic is the completed two-path compatibility probe (2 requests), the run
+summary records `database_writes: 0`, and real CAPTURE requires a new explicit
+user authorization (`OWNER_REAL_CAPTURE_AUTHORIZATION=NO`).
 
 ### Current read-only retained inventory
 
@@ -176,10 +493,11 @@ artifact contract and raw response provenance retention is implemented
 code hardening is implemented and fully tested (malformed `reason.short` fail
 closed, started+postponed contradiction fail closed, core-layer 40-hex
 `collector_code_revision` enforcement). Phase A is code hardening only: no real
-FotMob network request has been made, no real capture artifact has been
-generated, the FotMob public terms / usage-boundary review is not complete, and
-the single-page shape probe still requires a new explicit user authorization.
-Future inventory is 1,140 candidates; the next step is a
+capture has been executed and no real capture artifact has been generated (the
+only real FotMob network traffic is the completed two-path compatibility probe
+= 2 requests). The FotMob public terms / usage-boundary review is complete (no
+written permission granted); a real batch capture still requires a new explicit
+user authorization. Future inventory is 1,140 candidates; the next step is a
 separate future canonical FotMob writer as a `data-*`-gated business milestone.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.

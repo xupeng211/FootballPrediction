@@ -93,6 +93,12 @@ function validateFetchInput(input = {}) {
     if (input.retry > 0) {
         errors.push('retry > 0 is blocked');
     }
+    if (input.requestUrl !== undefined && input.requestUrl !== null) {
+        // Internal Reviewer A (P2): the request URL must always be derived
+        // from the numeric external id — a free-form URL override would let
+        // a direct caller target an arbitrary host. Rejected fail-closed.
+        errors.push('requestUrl is not supported: the request URL is derived from the numeric external id');
+    }
     if (input.allowBrowserRuntime === true) {
         errors.push('browser runtime is blocked');
     }
@@ -196,6 +202,115 @@ function containsExpectedMarkers({ externalId, homeTeam, awayTeam, payloadText, 
     return containsExternalId && containsHomeTeam && containsAwayTeam;
 }
 
+// R15-P1 (Codex re-review on 55c450096): the parser derives
+// normalized.home_team / away_team from an ORDERED fallback chain —
+// `general.<side>Team.name` → `header.teams[0|1].name` →
+// `content.lineup.<side>Team.name` → `general.<side>Team.shortName` —
+// exactly as FotMobRawParser.extractTeams() does. The FIRST name the
+// parser will emit for each side must equal the expected team: a marker
+// that appears somewhere in the payload but in the WRONG position (e.g.
+// reversed header/lineup teams) or an incomplete chain must fail closed —
+// otherwise a page with the right match id but reversed teams would pass
+// the loose anywhere-in-text check and persist swapped home/away.
+//
+// R16-P2 (Codex re-review on 101028e1a): SELECTION must mirror
+// FotMobRawParser.firstValue() EXACTLY — it skips only undefined / null /
+// the exact empty string. A whitespace-only name (e.g. `general.homeTeam
+// .name === '   '`) IS selected by the parser and persisted as a whitespace
+// normalized.home_team.name, so it must be SELECTED here too: the
+// normalized comparison then fails closed instead of silently skipping to a
+// lower-priority source and letting the gate pass.
+function extractParserTeamName(payload, side) {
+    const general = isPlainObject(payload.general) ? payload.general : {};
+    const header = isPlainObject(payload.header) ? payload.header : {};
+    const content = isPlainObject(payload.content) ? payload.content : {};
+    const lineup = isPlainObject(content.lineup) ? content.lineup : {};
+    const teamKey = side === 'home' ? 'homeTeam' : 'awayTeam';
+    const headerIdx = side === 'home' ? 0 : 1;
+    const fromGeneral = isPlainObject(general[teamKey]) ? general[teamKey] : {};
+    const fromHeaderTeams = Array.isArray(header.teams) && isPlainObject(header.teams[headerIdx])
+        ? header.teams[headerIdx] : {};
+    const fromLineup = isPlainObject(lineup[teamKey]) ? lineup[teamKey] : {};
+    const chain = [fromGeneral.name, fromHeaderTeams.name, fromLineup.name, fromGeneral.shortName];
+    for (const candidate of chain) {
+        if (candidate === undefined || candidate === null || candidate === '') continue;
+        // The parser's selected value (a whitespace-only name normalizes to
+        // '' here and therefore fails the expected-team comparison below).
+        return normalizeText(candidate).toLowerCase();
+    }
+    return null; // the parser would emit a null name — incomplete marker
+}
+
+function expectedTeamMarkersMatch(rawData, expectedHome, expectedAway) {
+    const expectedHomeName = normalizeText(expectedHome).toLowerCase();
+    const expectedAwayName = normalizeText(expectedAway).toLowerCase();
+    if (!expectedHomeName && !expectedAwayName) return true; // nothing to verify
+    const parsedHome = extractParserTeamName(rawData, 'home');
+    const parsedAway = extractParserTeamName(rawData, 'away');
+    if (expectedHomeName && parsedHome === null) return false; // incomplete → fail closed
+    if (expectedAwayName && parsedAway === null) return false;
+    if (expectedHomeName && parsedHome !== expectedHomeName) return false; // wrong position/order
+    if (expectedAwayName && parsedAway !== expectedAwayName) return false;
+    return true;
+}
+
+/**
+ * Extract the TRUSTED observed match id from the RAW hydration document,
+ * BEFORE any transformer runs (Codex re-review P3-P1).
+ *
+ * The NextData transformer is allowed to inject the request-side match id
+ * as payload.matchId (apiFormat.matchId = the passed-in externalId), so a
+ * post-transform payload.matchId is SYNTHETIC and must never be treated as
+ * observed identity. Only raw response fields qualify:
+ *
+ *   - raw pageProps.general.matchId → source name 'general.matchId'
+ *   - raw top-level pageProps.matchId → source name 'matchId'
+ *
+ * When both raw fields are present and disagree, the resolution is a
+ * conflict — fail-closed consumers must not treat either as observed.
+ * Returns { observed_match_id, observed_match_id_source, response_derived,
+ * conflict } where response_derived is true iff a raw allowlisted field
+ * produced the id (untrusted fallbacks are never response-derived).
+ */
+function extractTrustedObservedMatchIdentity(rawHydration = {}) {
+    // __NEXT_DATA__ nests pageProps under props ({ props: { pageProps } });
+    // some parsers hand back the pageProps object directly. Both shapes
+    // resolve to the same allowlist paths below.
+    const raw = isPlainObject(rawHydration) ? rawHydration : {};
+    const props = raw.props && isPlainObject(raw.props.pageProps)
+        ? raw.props.pageProps
+        : (isPlainObject(raw.pageProps) ? raw.pageProps : {});
+    const generalMatchId = normalizeText(props.general && props.general.matchId);
+    const topLevelMatchId = normalizeText(props.matchId);
+    const conflict =
+        isNumericId(generalMatchId) && isNumericId(topLevelMatchId) && generalMatchId !== topLevelMatchId;
+
+    if (isNumericId(generalMatchId)) {
+        return {
+            observed_match_id: generalMatchId,
+            // raw path: pageProps.general.matchId (spec section 八 wording)
+            observed_match_id_source: 'general.matchId',
+            response_derived: true,
+            conflict,
+        };
+    }
+    if (isNumericId(topLevelMatchId)) {
+        return {
+            observed_match_id: topLevelMatchId,
+            // raw path: pageProps.matchId (top-level, extracted pre-transform)
+            observed_match_id_source: 'matchId',
+            response_derived: true,
+            conflict,
+        };
+    }
+    return {
+        observed_match_id: null,
+        observed_match_id_source: 'unresolved',
+        response_derived: false,
+        conflict,
+    };
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // HTML hydration extraction
 // ══════════════════════════════════════════════════════════════════════════════
@@ -222,6 +337,12 @@ function extractHydrationPayload(html, parserDeps = {}, input = {}) {
         return { ok: false, error: 'HYDRATION_PARSE_FAILED: no NextData payload found' };
     }
 
+    // R3-P1: capture the trusted observed match id from the RAW hydration
+    // BEFORE the transformer runs. The transformer may inject the request
+    // side id as payload.matchId (synthetic) — that value must never become
+    // the trusted observed identity.
+    const trustedIdentity = extractTrustedObservedMatchIdentity(extracted.data);
+
     let transformed;
     try {
         transformed = transformFn(
@@ -236,37 +357,46 @@ function extractHydrationPayload(html, parserDeps = {}, input = {}) {
         return { ok: false, error: 'TRANSFORM_FAILED: no structured match data' };
     }
 
-    return { ok: true, data: transformed };
+    return { ok: true, data: transformed, trustedIdentity };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // raw_data construction
 // ══════════════════════════════════════════════════════════════════════════════
 
-function normalizeMatchId(payload = {}, input = {}, context = {}) {
+/**
+ * Resolve the observed match id for the stable raw payload.
+ *
+ * R3-P1: the ONLY trusted sources are raw-hydration response fields
+ * extracted pre-transform (pageProps.general.matchId / pageProps.matchId),
+ * passed in as `trustedIdentity`. The transformed payload's own
+ * payload.matchId is SYNTHETIC (the request-side id injected by
+ * NextDataParser.transformToApiFormat) and is NEVER trusted.
+ *
+ * The untrusted input-external-id fallback remains as a marker-checked
+ * derivation, but it is not a trusted observed id (consumers must fail
+ * closed on it — it is not in TRUSTED_OBSERVED_ID_SOURCES).
+ */
+function normalizeMatchId(payload = {}, input = {}, context = {}, trustedIdentity = null) {
     const safePayload = isPlainObject(payload) ? payload : {};
-    const payloadMatchId = normalizeText(safePayload.matchId);
-    const generalMatchId = normalizeText(safePayload.general && safePayload.general.matchId);
     const externalId = normalizeText(input.externalId);
     const homeTeam = normalizeText(input.homeTeam).toLowerCase();
     const awayTeam = normalizeText(input.awayTeam).toLowerCase();
     const payloadText = buildPayloadSearchText(safePayload);
     const requestText = buildRequestSearchText(context);
 
-    if (isNumericId(payloadMatchId)) {
+    // Trusted branch: response-derived id from the raw hydration allowlist,
+    // extracted before any transformer could inject a request-side id.
+    if (trustedIdentity && isNumericId(trustedIdentity.observed_match_id)) {
         return {
-            matchId: payloadMatchId,
-            matchIdSource: 'payload.matchId',
+            matchId: trustedIdentity.observed_match_id,
+            matchIdSource: trustedIdentity.observed_match_id_source,
+            conflict: trustedIdentity.conflict === true,
         };
     }
 
-    if (isNumericId(generalMatchId)) {
-        return {
-            matchId: generalMatchId,
-            matchIdSource: 'general.matchId',
-        };
-    }
-
+    // Untrusted fallback: request input id when every expected marker is
+    // found in the response. Never a trusted observed identity (P1-4).
     if (
         isNumericId(externalId) &&
         containsExpectedMarkers({
@@ -280,18 +410,20 @@ function normalizeMatchId(payload = {}, input = {}, context = {}) {
         return {
             matchId: externalId,
             matchIdSource: 'input_external_id_fallback',
+            conflict: false,
         };
     }
 
     return {
         matchId: null,
         matchIdSource: 'unresolved',
+        conflict: false,
     };
 }
 
-function buildStableRawPayload(payload = {}, input = {}, context = {}) {
+function buildStableRawPayload(payload = {}, input = {}, context = {}, trustedIdentity = null) {
     const safePayload = isPlainObject(payload) ? payload : {};
-    const matchIdResolution = normalizeMatchId(safePayload, input, context);
+    const matchIdResolution = normalizeMatchId(safePayload, input, context, trustedIdentity);
 
     return {
         content: jsonClone(safePayload.content),
@@ -405,7 +537,11 @@ function looksLikeValidRawDetail(rawData, input = {}) {
             awayTeam,
             payloadText,
             requestText,
-        })
+        }) &&
+        // R15-P1: the loose anywhere-in-text check is not enough — the
+        // ORDERED parser chain must yield the expected teams (fail closed
+        // on reversed or incomplete markers).
+        expectedTeamMarkersMatch(rawData, homeTeam, awayTeam)
     );
 }
 
@@ -520,7 +656,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const now = dependencies.now || (() => new Date().toISOString());
     const v = inputValidation.value;
     const request = buildFotMobHtmlHydrationRequest(v.externalId);
-    const requestUrl = v.requestUrl || request.url;
+    const requestUrl = request.url;
     const fetchedAt = now();
 
     let response;
@@ -618,8 +754,11 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         };
     }
 
-    const matchIdResolution = normalizeMatchId(extraction.data, v, { requestUrl, finalUrl });
-    const stableRawPayload = buildStableRawPayload(extraction.data, v, { requestUrl, finalUrl });
+    // R3-P1: the trusted observed id comes from the raw hydration (captured
+    // pre-transform in extractHydrationPayload), never from the synthetic
+    // post-transform payload.matchId.
+    const matchIdResolution = normalizeMatchId(extraction.data, v, { requestUrl, finalUrl }, extraction.trustedIdentity);
+    const stableRawPayload = buildStableRawPayload(extraction.data, v, { requestUrl, finalUrl }, extraction.trustedIdentity);
     const stableHash = sha256StableRawPayload(stableRawPayload);
     const meta = buildFetchMetadata({
         requestedRoute: v.route,
@@ -674,6 +813,10 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         hash_strategy: hashInfo.hash_strategy,
         metadata_hash_excluded_fields: hashInfo.metadata_hash_excluded_fields,
         match_id_source: matchIdResolution.matchIdSource,
+        observed_match_id_conflict: matchIdResolution.conflict === true,
+        observed_match_id_response_derived:
+            matchIdResolution.matchIdSource === 'general.matchId' ||
+            matchIdResolution.matchIdSource === 'matchId',
         contains_external_id: valid,
         contains_home_team: valid,
         contains_away_team: valid,
@@ -697,6 +840,7 @@ module.exports = {
     HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
     METADATA_HASH_EXCLUDED_FIELDS,
     extractHydrationPayload,
+    extractTrustedObservedMatchIdentity,
     normalizeMatchId,
     buildStableRawPayload,
     buildFetchMetadata,
