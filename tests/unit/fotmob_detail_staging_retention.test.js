@@ -2205,6 +2205,9 @@ test('R8-P2-2b: commitObservations refuses ok:false with an accepted classificat
     const dir = tmpDir('fotmob-r8p22-okflag-');
     const ok = pairResult('3901023');
     const lying = { ...ok, ok: false };
+    // R9-P2-1 (Codex round 9): the raw result gate fires BEFORE classification
+    // — ok:false must declare a rejected or quarantine state, so this
+    // accepted-claiming "failed" result is refused at the raw contract layer.
     assert.throws(
         () =>
             commitObservations({
@@ -2214,7 +2217,7 @@ test('R8-P2-2b: commitObservations refuses ok:false with an accepted classificat
                 runId: 'run-1',
                 builtAt: '2026-08-04T12:00:00.000Z',
             }),
-        err => err.code === 'INPUT_ERROR' && /ok:false result cannot classify as accepted/.test(err.message)
+        err => err.code === 'INPUT_ERROR' && /ok:false result must declare a rejected or quarantine/.test(err.message)
     );
     assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an inconsistent ok flag');
 });
@@ -2238,6 +2241,65 @@ test('R8-P2-2c (legal control): a plain REJECTED_SCHEMA_UNKNOWN result still com
     });
     assert.strictEqual(summary.business_projection.rejected_count, 1);
     assert.strictEqual(summary.business_projection.processed_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+// ── R9-P2-1 (Codex round 9): raw result contract gate ─────────
+
+test('R9-P2-1a: commitObservations refuses a NON-BOOLEAN ok — a string "false" is truthy and must not classify as success', () => {
+    const dir = tmpDir('fotmob-r9p21-okstr-');
+    const ok = pairResult('3901023');
+    // classifyAgainstStore branches on result.ok TRUTHINESS: the string
+    // 'false' is truthy, so without the raw gate this result would be
+    // classified ACCEPTED_NEW and committed as an immutable snapshot.
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, ok: 'false' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /ok must be a boolean/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a non-boolean ok');
+});
+
+test('R9-P2-1b: commitObservations refuses ok:true declaring a REJECTED raw terminal_state — the discarded raw state must not be upgraded to accepted', () => {
+    const dir = tmpDir('fotmob-r9p21-rawstate-');
+    const ok = pairResult('3901023');
+    // For ok:true, classifyAgainstStore DISCARDS the raw terminal_state and
+    // derives it against the store — without the raw gate this
+    // self-contradictory result (ok:true + REJECTED_SCHEMA_UNKNOWN) would
+    // commit an accepted snapshot.
+    const lying = { ...ok, terminal_state: 'REJECTED_SCHEMA_UNKNOWN' };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [lying],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /ok:true result must declare terminal_state ACCEPTED_NEW/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a self-contradictory ok:true result');
+});
+
+test('R9-P2-1c (legal control): a genuine converter result (ok:true + ACCEPTED_NEW raw) still commits and validates PASS', () => {
+    const dir = tmpDir('fotmob-r9p21-legal-');
+    const ok = pairResult('3901023');
+    const summary = commitObservations({
+        results: [ok],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
     const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
     assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
 });

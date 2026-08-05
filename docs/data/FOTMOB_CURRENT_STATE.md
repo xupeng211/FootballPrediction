@@ -409,7 +409,8 @@ pairs into immutable `fotmob-detail-staging-artifact/v1` snapshots. It is
 **pure offline by construction**: zero network (no fetcher import), zero
 database (no DB client, no migration, no canonical/staging/odds write), zero
 capture, no wall-clock time in business fields (`generated_at` comes from the
-manifest's `source_response_received_at`; `observation_id` is a deterministic
+manifest's `response_received_at`, recorded on the artifact as
+`source_response_received_at`; `observation_id` is a deterministic
 RFC 4122 UUIDv5 over the observation key). Canonical make entrypoints:
 `data-fotmob-detail-staging-help` / `-receipt` / `-build` / `-validate`, all
 run container-first via `$(COMPOSE_DEV) exec -T dev` (the direct Node CLI is
@@ -449,7 +450,8 @@ committed.
   D quarantine 29–33, E commit 34–38), run unconditionally even when state
   errors exist. FINDING_6 — LAYER_A: observation_id recomputed as RFC 4122
   UUIDv5 over the observation key and generated_at enforced as byte-exact
-  strict ISO equal to the manifest's source_response_received_at; LAYER_B:
+  strict ISO equal to the artifact's source_response_received_at (which
+  itself derives byte-exact from the manifest's `response_received_at`); LAYER_B:
   artifact_integrity_sha256 over every artifact field except itself
   (integrity hash, not a signature). FINDING_7 — SC-002 status corrected:
   SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
@@ -482,7 +484,7 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 267 staging unit tests (92 retention incl. fault-injection and
+Test counts: 270 staging unit tests (95 retention incl. fault-injection and
 tamper + 57 source verification + 77 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
@@ -499,7 +501,16 @@ LINKED_*/unknown terminal states (ok:false results pass through verbatim —
 the pre-loop now whitelists accepted/rejected/quarantine only, constrains ok
 vs classification, and self-validates the summary BEFORE any write). Both
 remediated with production tests; 267 staging tests green under umask 022 and
-0002. 16-match offline revalidation on the
+0002. Codex round-9 (head 8b1fc9034) found 1 new P2 (R9-P2-1: the raw result
+contract is now enforced BEFORE classification — `ok` must be a real boolean
+(a truthy string 'false' no longer classifies as success), ok:true must declare
+ACCEPTED_NEW (retention derives EXACT/EQUIVALENT/identity-conflict; a raw
+rejected claim can no longer be discarded and committed as accepted), and
+ok:false cannot claim an accepted state — 3 new zero-write regressions + legal
+control; 270 staging tests green under umask 022 and 0002) and 1 non-blocking
+P3 (R9-P3-1: doc field-name accuracy — generated_at derives from the manifest's
+`response_received_at`, recorded on the artifact as `source_response_received_at`;
+both docs corrected). 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
 new artifacts and byte-identical old artifacts; RUN_3 synthetic new

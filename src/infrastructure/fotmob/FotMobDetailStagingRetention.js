@@ -935,6 +935,55 @@ function commitObservations(args = {}) {
     const storeState = committed.latestLedger;
     const seq = committed.latestSeq + 1;
 
+    // R9-P2-1 (Codex round 9): the RAW result contract is enforced BEFORE
+    // classification — classifyAgainstStore branches on result.ok TRUTHINESS
+    // (a string 'false' or 1 is truthy success) and DISCARDS the raw
+    // terminal_state for ok:true results (deriving it against the store), so
+    // type-mismatched or self-contradictory results would otherwise be
+    // silently upgraded to committed accepted snapshots. The exported API
+    // must speak the exact converter contract:
+    //   - ok is a REAL boolean;
+    //   - ok:true declares ACCEPTED_NEW — retention then derives
+    //     EXACT/EQUIVALENT/identity-conflict from the store state;
+    //   - ok:false must not claim an accepted state — a "failed" result can
+    //     never commit an artifact (LINKED_*/unknown states still fall
+    //     through to the retainable-state whitelist below).
+    for (const result of results) {
+        if (typeof result.ok !== 'boolean') {
+            throw Object.assign(
+                new Error(
+                    `result.ok must be a boolean (got '${String(result.ok)}' of type ${typeof result.ok})`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        if (result.ok) {
+            if (result.terminal_state !== TERMINAL_STATES.ACCEPTED_NEW) {
+                throw Object.assign(
+                    new Error(
+                        `ok:true result must declare terminal_state ACCEPTED_NEW (got '${String(
+                            result.terminal_state
+                        )}') — final states are derived against the store`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+        } else if (
+            result.terminal_state === TERMINAL_STATES.ACCEPTED_NEW ||
+            result.terminal_state === TERMINAL_STATES.ACCEPTED_REPEAT_EXACT ||
+            result.terminal_state === TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT
+        ) {
+            throw Object.assign(
+                new Error(
+                    `ok:false result must declare a rejected or quarantine terminal_state (got '${String(
+                        result.terminal_state
+                    )}')`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+    }
+
     // ── 1. classify every result against the ledger (pure, no writes) ──
     const classified = results.map(result => ({
         result,

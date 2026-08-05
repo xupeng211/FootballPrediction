@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 267 staging
-  unit tests green (92 retention fault-injection/tamper + 57 source
+  (no database, no migration). Current test baseline: 270 staging
+  unit tests green (95 retention fault-injection/tamper + 57 source
   verification + 77 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
   R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
@@ -956,7 +956,7 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 267 staging tests (92 retention
+  targets; P3-1 docs/PR-body rewrite. 270 staging tests (95 retention
   fault-injection/tamper + 57 source verification + 77 contract [54 declared
   + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
   + 3 R7-P3-2 id-length + 1 R8-P2-1 strict array plainness] + 17 converter
@@ -965,7 +965,12 @@ legacy-writer execution is authorized.
   the direct accepted and REPEAT_EQUIVALENT rebuild paths) and R8-P2-2
   (unretainable LINKED_*/unknown terminal states refused in the pre-loop with
   ok-vs-classification consistency and pre-write summary self-validation)
-  both remediated with zero-write regressions);
+  both remediated with zero-write regressions; Codex round-9 (head 8b1fc9034)
+  findings R9-P2-1 (raw result contract gate before classification: boolean
+  `ok`, ok:true declares ACCEPTED_NEW, ok:false cannot claim accepted — 3 new
+  zero-write regressions + legal control) and R9-P3-1 (doc field-name
+  accuracy: generated_at derives from manifest `response_received_at`, recorded
+  as artifact `source_response_received_at`) both remediated);
   runtime counts = node --test # pass, the only gap vs static test()
   declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
   tests green; ESLint clean. 16-match offline revalidation on the fixed

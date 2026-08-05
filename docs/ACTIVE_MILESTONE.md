@@ -49,7 +49,8 @@
   capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
   快照：5 个 versioned JSONB sections 逐字节保留、直接复用 pipeline 捕获
   hashing（无自实现副本）、确定性 observation_id（RFC 4122 UUIDv5）+ generated_at
-  字节精确取自 manifest 的 source_response_received_at、canonical_match_id 恒
+  字节精确取自 manifest 的 response_received_at（并记录为 artifact 的
+  source_response_received_at 字段）、canonical_match_id 恒
   null + UNLINKED_NOT_ATTEMPTED、append-only 文件 store + 编号
   store-state-<seq>.json 账本版本（无数据库、无 migration）、每次写入
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
@@ -76,7 +77,7 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  267 项 staging 测试（92 retention 故障注入/篡改 + 57 source verification +
+  270 项 staging 测试（95 retention 故障注入/篡改 + 57 source verification +
   77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
@@ -86,8 +87,16 @@
   重建两条路径均补零写入回归）、R8-P2-2 commit 预检拒绝不可保留的
   LINKED_*/未知 terminal state（ok:false 逐字透传时唯一拦截点；白名单
   accepted/rejected/quarantine + ok 与分类一致性 + 写入前 summary 自校验，
-  均补零写入回归与合法对照）—— 全部离线修复；运行时计数 = node --test
-  # pass，与静态 test() 声明的差异仅来自循环生成测试）+
+  均补零写入回归与合法对照）—— 全部离线修复；Codex round-9（head
+  8b1fc9034）1 项新 P2 + 1 项 P3 —— R9-P2-1 分类前 raw result 契约门
+  （ok 必须为真布尔，truthy 字符串 'false' 不再视为成功；ok:true 必须声明
+  ACCEPTED_NEW（最终状态由 retention 对 store 派生，原始 rejected 声明
+  不得被丢弃后按 accepted 提交）；ok:false 不得声明 accepted —— 补 3 项
+  零写入回归 + 合法对照）、R9-P3-1 文档字段名准确性（generated_at 取自
+  manifest 的 response_received_at 并记录为 artifact 的
+  source_response_received_at，两处文档已修正）—— 全部离线修复；
+  运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
+  循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；
   ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
