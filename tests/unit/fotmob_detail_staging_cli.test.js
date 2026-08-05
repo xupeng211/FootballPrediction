@@ -563,3 +563,57 @@ test('P1-5: single-artifact validate reports integrity and UNANCHORED authentici
     assert.strictEqual(result.authenticity_status, 'UNANCHORED');
     assert.strictEqual(result.integrity_status, 'INTACT');
 });
+
+test('G56 (R4-P1-1): a two-pair archive with one receipt builds both pairs end-to-end (per-entry member selectors)', async () => {
+    // Codex round-4 finding: one receipt names ONE payload_member/
+    // manifest_member globally, so a second pair of the same archive/package
+    // compared its files against the FIRST pair's members and died with E008 —
+    // contradicting the five/ten-match archive claim. The source index now
+    // carries per-entry payload_member/manifest_member selectors
+    // (buildSourceIndexFromArchive emits them); the CLI build must accept
+    // BOTH pairs.
+    const dir = tmpDir('fotmob-cli-multipair-');
+    const pairA = buildPair({ source_match_id: '3901023' });
+    const pairB = buildPair({ source_match_id: '3900933' });
+    const archiveInfo = writeFixtureArchive(
+        dir,
+        [
+            { sourceMatchId: '3901023', pair: pairA },
+            { sourceMatchId: '3900933', pair: pairB },
+        ],
+        { packageId: 'pkg-multi' }
+    );
+    writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-multi',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const index = buildSourceIndexFromArchive(
+        [
+            { sourceMatchId: '3901023', pair: pairA },
+            { sourceMatchId: '3900933', pair: pairB },
+        ],
+        archiveInfo,
+        { packageId: 'pkg-multi', receiptPath: path.join(dir, 'receipt.json') }
+    );
+    // the entry-level selectors must be present and equal each pair's members
+    assert.strictEqual(index.entries[1].payload_member, archiveInfo.payloadMembers['3900933']);
+    assert.strictEqual(index.entries[1].manifest_member, archiveInfo.manifestMembers['3900933']);
+    const indexFile = path.join(dir, 'source-index.json');
+    fs.writeFileSync(indexFile, JSON.stringify(index, null, 2) + '\n');
+    const outputRoot = path.join(dir, 'out');
+
+    const result = await runBuild({
+        'source-index': indexFile,
+        'output-root': outputRoot,
+    });
+    assert.strictEqual(result.status, 'complete');
+    assert.strictEqual(result.accepted_new_count, 2, JSON.stringify(result.errors));
+    assert.strictEqual(result.rejected_count, 0);
+    assert.strictEqual(fs.readdirSync(outputRoot).filter(f => f.startsWith('observation-')).length, 2);
+    assert.strictEqual(result.zero_network, true);
+    assert.strictEqual(result.zero_database, true);
+});

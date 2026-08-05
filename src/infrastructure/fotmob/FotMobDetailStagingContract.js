@@ -200,6 +200,20 @@ const DOUBLE_BINDING_FIELDS = ACTUAL_DOUBLE_BOUND_FIELDS;
  * @returns {{ ok: boolean, errors: string[], entries: Array }}
  */
 /* eslint-disable-next-line complexity */
+/**
+ * R4-P1-1: light member-name safety check for source-index entry selectors
+ * (payload_member / manifest_member). Contract.js must not import the
+ * source-verification module (dependency direction: verification imports
+ * contract), so this mirrors the tar reader's rejection shape without the
+ * full machinery: plain relative member path, no NUL / backslash / leading
+ * slash / ".." segments.
+ */
+function isSafeIndexMemberName(name) {
+    if (typeof name !== 'string' || name === '') return false;
+    if (name.includes('\0') || name.includes('\\') || name.startsWith('/')) return false;
+    return !name.split('/').some(seg => seg === '..');
+}
+
 function validateSourceIndex(index) {
     const errors = [];
     if (!isPlainObject(index)) {
@@ -258,6 +272,19 @@ function validateSourceIndex(index) {
             for (const f of ['payload_file', 'manifest_file']) {
                 if (typeof entry[f] !== 'string' || entry[f] === '') {
                     errors.push(`${label}: ${f} must be a non-empty path string`);
+                }
+            }
+            // R4-P1-1: optional per-entry archive member selectors. A receipt
+            // declares ONE payload_member/manifest_member, so a multi-pair
+            // archive (one package, many pairs) needs each entry to name ITS
+            // members. When present they must be plain safe member paths —
+            // the same shape the tar reader rejects at inspection time.
+            for (const f of ['payload_member', 'manifest_member']) {
+                if (entry[f] === undefined || entry[f] === null) continue;
+                if (typeof entry[f] !== 'string' || !isSafeIndexMemberName(entry[f])) {
+                    errors.push(
+                        `${label}: ${f} must be a safe archive member path (no leading '/', no '\\\\', no '..', no NUL)`
+                    );
                 }
             }
             // P2-2 (Codex review 4863122944): both declared file hashes are

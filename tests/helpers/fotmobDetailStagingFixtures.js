@@ -379,7 +379,19 @@ function buildSourceIndexFromArchive(pairs, archiveInfo, options = {}) {
             sourceMatchId,
             archiveInfo.payloadFiles[sourceMatchId],
             archiveInfo.manifestFiles[sourceMatchId],
-            { package: packageId, ...(options.extraEntry || {}) }
+            {
+                package: packageId,
+                // R4-P1-1: a multi-pair archive (one package, many pairs)
+                // needs each entry to select ITS archive members — the
+                // receipt declares only the first pair's members globally.
+                ...(archiveInfo.payloadMembers && archiveInfo.payloadMembers[sourceMatchId]
+                    ? { payload_member: archiveInfo.payloadMembers[sourceMatchId] }
+                    : {}),
+                ...(archiveInfo.manifestMembers && archiveInfo.manifestMembers[sourceMatchId]
+                    ? { manifest_member: archiveInfo.manifestMembers[sourceMatchId] }
+                    : {}),
+                ...(options.extraEntry || {}),
+            }
         )
     );
     return buildSourceIndex(entries, {
@@ -481,6 +493,8 @@ function writeFixtureArchive(dir, pairs, options = {}) {
     const packageId = options.packageId || 'ten-match';
     const payloadFiles = {};
     const manifestFiles = {};
+    const payloadMembers = {};
+    const manifestMembers = {};
     const members = [];
     for (const { sourceMatchId, pair } of pairs) {
         const payloadFile = path.join(dir, `${sourceMatchId}.payload.json`);
@@ -491,6 +505,11 @@ function writeFixtureArchive(dir, pairs, options = {}) {
         manifestFiles[sourceMatchId] = manifestFile;
         const payloadMember = `pairs/1-${sourceMatchId}.payload.json`;
         const manifestMember = `pairs/1-${sourceMatchId}.manifest.json`;
+        // R4-P1-1: per-match member names — a multi-pair archive needs each
+        // source-index entry to select ITS members, not the receipt's global
+        // (first-pair) selectors.
+        payloadMembers[sourceMatchId] = payloadMember;
+        manifestMembers[sourceMatchId] = manifestMember;
         members.push({ name: payloadMember, content: pair.payloadBytes });
         members.push({
             name: manifestMember,
@@ -510,6 +529,8 @@ function writeFixtureArchive(dir, pairs, options = {}) {
         manifestFile: manifestFiles[first.sourceMatchId],
         payloadFiles,
         manifestFiles,
+        payloadMembers,
+        manifestMembers,
     };
 }
 

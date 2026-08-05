@@ -349,3 +349,48 @@ test('R3-P1-1: a source index entry whose source_match_id does not bind the load
     assert.strictEqual(accepted.ok, true);
     assert.ok(accepted.artifact);
 });
+
+test('R4-P2-1: array payload/manifest keep the P2-4 schema classification (E001), not the E007 identity path', async () => {
+    // Codex round-4 finding: `typeof value === 'object'` also matches arrays,
+    // so an array payload was treated as a parsed document and rejected as
+    // REJECTED_PROVENANCE_BROKEN/E007 — but JSON structured garbage must
+    // follow the P2-4 contract: REJECTED_SCHEMA_UNKNOWN/E001 from L1.
+    const pair = buildPair({ source_match_id: '3901023' });
+    const index = buildSourceIndex(
+        [
+            sourceIndexEntry('3901023', '/tmp/1.payload.json', '/tmp/1.manifest.json', {
+                package: 'pkg',
+                payload_file_sha256: 'a'.repeat(64),
+                manifest_file_sha256: 'b'.repeat(64),
+            }),
+        ],
+        {
+            pkg: { sha256: '0'.repeat(64), path: '/tmp/archive.tar.gz', receipt: '/tmp/receipt.json' },
+        }
+    );
+    // loader yields an ARRAY payload (legal-shaped manifest) — garbage shape
+    const arrayPayloadResult = await convertAll({
+        sourceIndex: index,
+        loader: async () => ({ payload: [], manifest: pair.manifest, payloadBytes: pair.payloadBytes }),
+    });
+    const arrayPayload = arrayPayloadResult.results[0];
+    assert.strictEqual(arrayPayload.ok, false);
+    assert.strictEqual(arrayPayload.terminal_state, TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN);
+    assert.strictEqual(arrayPayload.error_code, ERROR_CODES.E001);
+    assert.ok(!arrayPayload.errors[0].message.includes('does not bind'), 'identity binding must not fire for arrays');
+    // loader yields an ARRAY manifest (legal-shaped payload)
+    const arrayManifestResult = await convertAll({
+        sourceIndex: index,
+        loader: async () => ({ payload: pair.payload, manifest: [], payloadBytes: pair.payloadBytes }),
+    });
+    const arrayManifest = arrayManifestResult.results[0];
+    assert.strictEqual(arrayManifest.ok, false);
+    assert.strictEqual(arrayManifest.terminal_state, TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN);
+    assert.strictEqual(arrayManifest.error_code, ERROR_CODES.E001);
+    // genuine object documents still pass the identity binding and convert
+    const okResult = await convertAll({
+        sourceIndex: index,
+        loader: async () => pairArgs(pair),
+    });
+    assert.strictEqual(okResult.results[0].ok, true);
+});

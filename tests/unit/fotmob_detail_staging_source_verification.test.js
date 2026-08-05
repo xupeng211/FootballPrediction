@@ -1335,3 +1335,105 @@ test('V41 (P1-1): PAX path override forming a traversal path is rejected', () =>
         err => err.code === 'SAFETY_ERROR' && /unsafe tar member name/.test(err.message)
     );
 });
+
+test('V56 (R4-P1-1): a multi-pair archive needs per-entry member selectors — the receipt names only the first pair globally', () => {
+    const dir = tmpDir('fotmob-ver-multipair-');
+    const pairA = buildPair({ source_match_id: '3901023' });
+    const pairB = buildPair({ source_match_id: '3900933' });
+    const info = writeFixtureArchive(
+        dir,
+        [
+            { sourceMatchId: '3901023', pair: pairA },
+            { sourceMatchId: '3900933', pair: pairB },
+        ],
+        { packageId: 'pkg-multi' }
+    );
+    // ONE receipt for the whole archive — its global selectors name the
+    // FIRST pair only (this is exactly what the `receipt` CLI command emits
+    // for a multi-pair archive).
+    const receiptPath = path.join(dir, 'receipt.json');
+    writeFixtureReceipt({
+        archivePath: info.archivePath,
+        archiveSha256: info.archiveSha256,
+        packageId: 'pkg-multi',
+        payloadMember: info.payloadMember,
+        manifestMember: info.manifestMember,
+        receiptPath,
+    });
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    const binding = { sha256: info.archiveSha256, path: info.archivePath, receipt: receiptPath };
+    const outputRoot = path.join(dir, 'out');
+    const baseEntry = id => ({
+        source_match_id: id,
+        payload_file: info.payloadFiles[id],
+        manifest_file: info.manifestFiles[id],
+        package: 'pkg-multi',
+    });
+    // first pair: no selectors needed (receipt global = first pair)
+    const a = verifyEntryAgainstReceipt({
+        entry: baseEntry('3901023'),
+        binding,
+        receipt,
+        payloadFile: info.payloadFiles['3901023'],
+        manifestFile: info.manifestFiles['3901023'],
+        outputRoot,
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.strictEqual(a.payload.source_match_id, '3901023');
+    // second pair WITHOUT per-entry selectors must fail closed: its file
+    // hash cannot match the receipt's global (first-pair) member — this was
+    // the R4-P1-1 E008 batch-killer for two-pair archives.
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: baseEntry('3900933'),
+                binding,
+                receipt,
+                payloadFile: info.payloadFiles['3900933'],
+                manifestFile: info.manifestFiles['3900933'],
+                outputRoot,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+    // second pair WITH per-entry selectors binds ITS members (receipt hash
+    // map + live archive) and passes.
+    const b = verifyEntryAgainstReceipt({
+        entry: {
+            ...baseEntry('3900933'),
+            payload_member: info.payloadMembers['3900933'],
+            manifest_member: info.manifestMembers['3900933'],
+        },
+        binding,
+        receipt,
+        payloadFile: info.payloadFiles['3900933'],
+        manifestFile: info.manifestFiles['3900933'],
+        outputRoot,
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.strictEqual(b.payload.source_match_id, '3900933');
+    assert.strictEqual(b.payloadFileSha256.length, 64);
+});
+
+test('V57 (R4-P3-2): GNU L long-name records with the standard trailing NUL are accepted; embedded NULs fail closed', () => {
+    const dir = tmpDir('fotmob-ver-lnul-');
+    // Real GNU tar writes `path\0` + NUL padding to the block boundary.
+    const realName = 'pairs/1-3901023.payload.json';
+    const nulTerminated = Buffer.concat([Buffer.from(realName + '\0', 'utf8'), Buffer.alloc(511 - realName.length)]);
+    const longNameBlock = rawTarBlock(rawTarHeader('', 'L', nulTerminated.length), nulTerminated);
+    const content = rawTarBlock(rawTarHeader('short-name', '0', 3), Buffer.from('abc'));
+    const archive = path.join(dir, 'gnu-l-nul.tar.gz');
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([longNameBlock, content, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members[0].name, realName, 'trailing NUL padding stripped, no NUL in the resolved name');
+
+    // Embedded NUL inside the long-name payload is not padding — fail closed.
+    const evilName = Buffer.from('pairs/1-3901023.payload\0.json', 'utf8');
+    const evilBlock = rawTarBlock(rawTarHeader('', 'L', evilName.length), evilName);
+    const evilArchive = path.join(dir, 'gnu-l-embedded-nul.tar.gz');
+    fs.writeFileSync(evilArchive, gzipOf(Buffer.concat([evilBlock, content, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(evilArchive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+});

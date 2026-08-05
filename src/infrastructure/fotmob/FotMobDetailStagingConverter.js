@@ -171,10 +171,21 @@ async function convertAll(args = {}) {
         // documents that actually parsed (null/garbage documents fall through
         // to the schema classification, preserving P2-4 semantics).
         const entryId = String(entry.source_match_id ?? '');
+        // R4-P2-1: `typeof === 'object'` also matches ARRAYS — an array
+        // payload is JSON structured garbage and must keep the P2-4 schema
+        // classification (E001/REJECTED_SCHEMA_UNKNOWN from L1), not be
+        // treated as a parsed document that "breaks identity" (E007). Only
+        // plain object documents participate in the identity binding.
         const payloadIsDoc =
-            loaded.payload !== null && loaded.payload !== undefined && typeof loaded.payload === 'object';
+            loaded.payload !== null &&
+            loaded.payload !== undefined &&
+            typeof loaded.payload === 'object' &&
+            !Array.isArray(loaded.payload);
         const manifestIsDoc =
-            loaded.manifest !== null && loaded.manifest !== undefined && typeof loaded.manifest === 'object';
+            loaded.manifest !== null &&
+            loaded.manifest !== undefined &&
+            typeof loaded.manifest === 'object' &&
+            !Array.isArray(loaded.manifest);
         const payloadId =
             payloadIsDoc && loaded.payload.source_match_id !== null && loaded.payload.source_match_id !== undefined
                 ? String(loaded.payload.source_match_id)

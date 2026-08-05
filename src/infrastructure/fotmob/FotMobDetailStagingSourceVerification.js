@@ -336,8 +336,15 @@ function inspectArchive(archivePath, options = {}) {
         }
 
         if (typeflag === 'L') {
-            // GNU long name: the next data block holds the real name.
-            pendingLongName = tar.subarray(contentStart, contentStart + size).toString('utf8');
+            // GNU long name: the next data block holds the real name, stored
+            // NUL-terminated and NUL-padded to the block boundary (real GNU
+            // tar emits `path\0` + padding). R4-P3-2: strip the trailing NUL
+            // padding so the resolved name is the actual path — the safety
+            // validator must NOT see the padding as part of the name;
+            // embedded NULs inside the name remain a fail-closed rejection
+            // (isSafeMemberName).
+            const rawLongName = tar.subarray(contentStart, contentStart + size).toString('utf8');
+            pendingLongName = rawLongName.replace(/\0+$/, '');
             offset = contentStart + paddedSize;
             continue;
         }
@@ -775,21 +782,31 @@ function verifyEntryAgainstReceipt(args = {}) {
     const manifestBytes = readFileSafeNoFollow(manifestAbs, { fsImpl: fileSystem }).bytes;
     const payloadSha = sha256Hex(payloadBytes);
     const manifestSha = sha256Hex(manifestBytes);
+    // R4-P1-1: a receipt declares ONE payload_member / manifest_member, but a
+    // single archive/package can hold MANY pairs. The source-index ENTRY may
+    // carry its own payload_member / manifest_member selectors — use them
+    // when present so each entry of the same package compares against ITS
+    // archive member (both in the receipt hash map and in the live archive);
+    // entries without selectors fall back to the receipt's global selectors
+    // (single-pair receipts keep working; a second pair without selectors
+    // still fails closed on the member-hash mismatch below).
+    const payloadMember = String(entry.payload_member || receipt.payload_member || '');
+    const manifestMember = String(entry.manifest_member || receipt.manifest_member || '');
     const liveByName = new Map(inspected.members.map(m => [m.name, m]));
-    const livePayload = liveByName.get(String(receipt.payload_member || ''));
-    const liveManifest = liveByName.get(String(receipt.manifest_member || ''));
-    if (payloadSha !== receipt.members[receipt.payload_member] || (livePayload && payloadSha !== livePayload.sha256)) {
+    const livePayload = liveByName.get(payloadMember);
+    const liveManifest = liveByName.get(manifestMember);
+    if (payloadSha !== receipt.members[payloadMember] || (livePayload && payloadSha !== livePayload.sha256)) {
         throw Object.assign(
             new Error(
-                `payload file sha256 ${payloadSha} does not match archive member ${receipt.payload_member} (receipt ${receipt.members[receipt.payload_member]}, live ${livePayload ? livePayload.sha256 : 'missing'})`
+                `payload file sha256 ${payloadSha} does not match archive member ${payloadMember} (receipt ${receipt.members[payloadMember]}, live ${livePayload ? livePayload.sha256 : 'missing'})`
             ),
             { code: 'SAFETY_ERROR' }
         );
     }
-    if (manifestSha !== receipt.members[receipt.manifest_member] || (liveManifest && manifestSha !== liveManifest.sha256)) {
+    if (manifestSha !== receipt.members[manifestMember] || (liveManifest && manifestSha !== liveManifest.sha256)) {
         throw Object.assign(
             new Error(
-                `manifest file sha256 ${manifestSha} does not match archive member ${receipt.manifest_member} (receipt ${receipt.members[receipt.manifest_member]}, live ${liveManifest ? liveManifest.sha256 : 'missing'})`
+                `manifest file sha256 ${manifestSha} does not match archive member ${manifestMember} (receipt ${receipt.members[manifestMember]}, live ${liveManifest ? liveManifest.sha256 : 'missing'})`
             ),
             { code: 'SAFETY_ERROR' }
         );
