@@ -25,7 +25,11 @@ const {
     validateOutputRoot,
     emptyStoreState,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingRetention');
-const { TERMINAL_STATES } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+const {
+    TERMINAL_STATES,
+    computeStagingArtifactBusinessHash,
+    computeStagingArtifactIntegrityHash,
+} = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
 const { buildPair } = require('../helpers/fotmobDetailStagingFixtures');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -1763,6 +1767,24 @@ function mutateLedger(dir, mutate) {
     fs.writeFileSync(path.join(dir, ledgerFile), JSON.stringify(ledger, null, 2) + '\n');
 }
 
+// R11-P3-2 (Codex round 11): after a tamper, recompute the commit marker's
+// bound file hashes so the SEMANTIC check under test is the only failing
+// layer (marker-consistent mutation). Files are stored as
+// JSON.stringify(doc, null, 2) + '\n', so re-hashing the raw bytes of each
+// bound file matches collectCommittedState's byte verification.
+function rehashMarker(dir) {
+    const crypto = require('node:crypto');
+    const markerFile = fs.readdirSync(dir).find(f => f.startsWith('commit-'));
+    const marker = JSON.parse(fs.readFileSync(path.join(dir, markerFile), 'utf8'));
+    for (const entry of marker.files) {
+        entry.sha256 = crypto
+            .createHash('sha256')
+            .update(fs.readFileSync(path.join(dir, entry.name), 'utf8'))
+            .digest('hex');
+    }
+    fs.writeFileSync(path.join(dir, markerFile), JSON.stringify(marker, null, 2) + '\n');
+}
+
 test('R6-P2-2a: validate rejects a ledger quarantine entry whose source_match_id disagrees with its key', () => {
     const dir = commitQuarantined(tmpDir('fotmob-r6p22-id-'));
     mutateLedger(dir, ledger => {
@@ -2420,7 +2442,13 @@ test('R10-P2-1e: a tampered quarantine recorded_at is detected by validate (stri
     const q = JSON.parse(fs.readFileSync(path.join(dir, qFile), 'utf8'));
     q.recorded_at = 'not-a-timestamp';
     fs.writeFileSync(path.join(dir, qFile), JSON.stringify(q, null, 2) + '\n');
-    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    // R11-P3-2: recompute the marker so the semantic D-group check is the
+    // ONLY failing layer — no MARKER_FILE_MISMATCH masks the verdict.
+    rehashMarker(dir);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    });
     assert.strictEqual(result.ok, false);
     assert.ok(
         result.errors.some(e => e.code === 'QUARANTINE_INVALID' && /recorded_at/.test(e.message)),
@@ -2435,7 +2463,13 @@ test('R10-P2-2a: a ledger whose observations is an ARRAY is rejected as LEDGER_I
     mutateLedger(dir, ledger => {
         ledger.observations = [];
     });
-    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    // R11-P3-2: marker-recomputed mutation — the semantic B-group check is
+    // the ONLY failing layer, and the validator must not throw.
+    rehashMarker(dir);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    });
     assert.strictEqual(result.ok, false);
     assert.ok(
         result.errors.some(e => e.code === 'LEDGER_INVALID' && /observations must be a plain object/.test(e.message)),
@@ -2449,11 +2483,157 @@ test('R10-P2-2b: a null observation entry returns LEDGER_INVALID instead of cras
         const firstKey = Object.keys(ledger.observations)[0];
         ledger.observations[firstKey] = null;
     });
-    // Must NOT throw — the validator fails closed with a structured error.
-    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    // R11-P3-2: marker-recomputed mutation — must NOT throw; the validator
+    // fails closed with a structured error and no marker mismatch masks it.
+    rehashMarker(dir);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    });
     assert.strictEqual(result.ok, false);
     assert.ok(
         result.errors.some(e => e.code === 'LEDGER_INVALID' && /is not an object/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+// ── R11-P2-1 (Codex round 11): free-text entry points on the exported
+//    commitObservations API — envelope must be plain JSON, snapshotted, and
+//    accepted results must not carry an error_code ─────────────────────────
+
+test('R11-P2-1a: an accepted ok:true result carrying a non-null error_code is refused — the summary would persist it verbatim', () => {
+    const dir = tmpDir('fotmob-r11p21-acceptedcode-');
+    const ok = pairResult('3901023');
+    // The converter emits error_code: null on ok:true results; a direct
+    // caller injecting free text here would write it into
+    // summary.business_projection.observations[].error_code.
+    const injected = { ...ok, error_code: '<html>RAW</html>' };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [injected],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /ok:true result must not carry an error_code/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an accepted result with an error_code');
+});
+
+test('R11-P2-1b: an accessor-backed result envelope is refused — a getter could return a legal code at gate time and injected text at write time', () => {
+    const dir = tmpDir('fotmob-r11p21-getter-');
+    const ok = pairResult('3901023');
+    // Scenario 2 from the finding: the first read of error_code looks legal
+    // (E011), later reads return injected bytes. The envelope itself must be
+    // plain JSON data — accessors fail that check BEFORE any field is read.
+    let reads = 0;
+    const getterResult = { ...ok, error_code: null };
+    Object.defineProperty(getterResult, 'error_code', {
+        enumerable: true,
+        get() {
+            reads += 1;
+            return reads === 1 ? 'E011' : '<html>RAW</html>';
+        },
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [getterResult],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /result envelope must be strict plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a non-plain result envelope');
+});
+
+test('R11-P2-1c: a non-identifier runId is refused — converter_run_id is persisted into the summary', () => {
+    const dir = tmpDir('fotmob-r11p21-runid-');
+    const ok = pairResult('3901023');
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [ok],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: '<html>RAW</html>',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /runId must be a plain identifier/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an illegal runId');
+});
+
+test('R11-P2-1d (legal control): a genuine converter result with a legal runId still commits and validates PASS', () => {
+    const dir = tmpDir('fotmob-r11p21-legal-');
+    const ok = pairResult('3901023');
+    const summary = commitObservations({
+        results: [ok],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-20260806',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    assert.strictEqual(summary.operations.converter_run_id, 'run-20260806');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+// ── R11-P2-2 (Codex round 11): L8-equivalent content scan on the FULL
+//    artifact — recomputable hashes cannot mask raw-content injection ──────
+
+test('R11-P2-2a: an artifact with raw HTML in a section is refused even with RECOMPUTED hashes — L8 applies to committed artifacts', () => {
+    const dir = tmpDir('fotmob-r11p22-rawcontent-');
+    const ok = pairResult('3901023');
+    // Recompute business + integrity hashes over the tampered artifact so
+    // every hash check would PASS — the content scan is the only gate left.
+    // sections.*.json are arrays, so the injection is a real array ELEMENT
+    // (a non-index key would be dropped by JSON serialization).
+    const artifact = JSON.parse(JSON.stringify(ok.artifact));
+    artifact.sections.events.json.push({ injected_raw_field: '<html>RAW FULL RESPONSE</html>' });
+    artifact.business_hash = computeStagingArtifactBusinessHash(artifact);
+    artifact.artifact_integrity_sha256 = computeStagingArtifactIntegrityHash(artifact);
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /prohibited raw content signature/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a raw-content artifact');
+});
+
+// ── R11-P3-1 (Codex round 11): quarantine_reason must derive from the
+//    validated error code and agree between evidence file and ledger ───────
+
+test('R11-P3-1a: a marker-consistent free-text quarantine_reason tamper (evidence + ledger) is detected by the D-group', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r11p31-reason-'));
+    const qFile = fs.readdirSync(dir).find(f => f.startsWith('quarantine-'));
+    const q = JSON.parse(fs.readFileSync(path.join(dir, qFile), 'utf8'));
+    q.quarantine_reason = 'free text reason';
+    fs.writeFileSync(path.join(dir, qFile), JSON.stringify(q, null, 2) + '\n');
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], quarantine_reason: 'free text reason' };
+    });
+    // Marker-consistent mutation: only the SEMANTIC D-group check may fire.
+    rehashMarker(dir);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'QUARANTINE_INVALID' && /quarantine_reason does not derive/.test(e.message)),
         JSON.stringify(result.errors)
     );
 });

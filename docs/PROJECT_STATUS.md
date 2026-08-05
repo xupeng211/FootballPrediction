@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 279 staging
-  unit tests green (102 retention fault-injection/tamper + 59 source
+  (no database, no migration). Current test baseline: 286 staging
+  unit tests green (108 retention fault-injection/tamper + 60 source
   verification + 77 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
   R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
@@ -956,8 +956,8 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 279 staging tests (102 retention
-  fault-injection/tamper + 59 source verification + 77 contract [54 declared
+  targets; P3-1 docs/PR-body rewrite. 286 staging tests (108 retention
+  fault-injection/tamper + 60 source verification + 77 contract [54 declared
   + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
   + 3 R7-P3-2 id-length + 1 R8-P2-1 strict array plainness] + 17 converter
   + 24 CLI; Codex round-8 (head 7bbbd7658) findings R8-P2-1 (non-plain arrays
@@ -979,7 +979,17 @@ legacy-writer execution is authorized.
   hardening → LEDGER_INVALID, no crash — 2 mutation tests), R10-P3-1
   (CAPABILITY_INDEX.md:70 + PR body field-name closure, counts 279),
   R10-P3-2 (tar dangling GNU L / PAX x at EOF → SAFETY_ERROR — 2 EOF tests)
-  all remediated);
+  all remediated); Codex round-11 (head d9a47e1, 18 commits) findings
+  R11-P2-1 (result-envelope injection closure for direct commitObservations
+  callers — descriptor scan + scalar snapshot before any read (accessor/proxy
+  → INPUT_ERROR), ok:true must not carry error_code, runId must be a plain
+  identifier — 4 regressions + legal control, zero writes), R11-P2-2
+  (validateStagingArtifact runs the prohibited raw content scan E013 on the
+  whole artifact — 1 tamper regression), R11-P3-1 (D-group quarantine_reason
+  must derive from the registry error_code whitelist AND agree with the
+  ledger — 1 regression), R11-P3-2 (marker-tamper regression rehashes the
+  marker after tampering — test-helper fix), R11-P3-3 (tar PAX multibyte
+  UTF-8 path support — 1 regression); counts synced to 286, all remediated);
   runtime counts = node --test # pass, the only gap vs static test()
   declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
   tests green; ESLint clean. 16-match offline revalidation on the fixed

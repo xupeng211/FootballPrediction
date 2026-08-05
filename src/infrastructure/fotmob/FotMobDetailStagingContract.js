@@ -1730,6 +1730,17 @@ function validateStagingArtifact(artifact) {
     if (!isPlainObject(artifact.coverage_record)) {
         errors.push('coverage_record must be an object');
     }
+    // R11-P2-2 (Codex round 11): L8-equivalent content scan over the FULL
+    // artifact document — business/integrity hashes are RECOMPUTABLE, not
+    // signatures, so a direct caller can rewrite `sections.*.json` (or any
+    // string field) with raw HTML / raw-data bytes and re-fill the exported
+    // hashes. The same prohibited key/value signatures the converter's L8
+    // enforces on payloads must hold on every committed artifact document.
+    const prohibitedErrors = [];
+    scanProhibitedContent(artifact, 'artifact', prohibitedErrors);
+    for (const prohibitedError of prohibitedErrors) {
+        errors.push(prohibitedError.message);
+    }
     // Business hash recomputation — fails on any tampering.
     const recomputed = computeStagingArtifactBusinessHash(artifact);
     if (recomputed !== String(artifact.business_hash || '')) {

@@ -77,7 +77,7 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  279 项 staging 测试（102 retention 故障注入/篡改 + 59 source verification +
+  286 项 staging 测试（108 retention 故障注入/篡改 + 60 source verification +
   77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
@@ -108,6 +108,16 @@
   received_at → artifact source_response_received_at；计数同步 279）、
   R10-P3-2 tar parser 悬空 GNU L / PAX x 元数据 EOF 拒绝（SAFETY_ERROR，
   补 2 项 EOF fixture 测试）—— 全部离线修复；
+  Codex round-11（head d9a47e1，18 个 commit）2 项新 P2 + 3 项新 P3 ——
+  R11-P2-1 直接调用 commitObservations 的结果信封注入面收敛（每个 result
+  在读取前先做 descriptor 扫描 + 标量快照，accessor/proxy 一律
+  INPUT_ERROR；ok:true 不得携带 error_code；runId 必须为纯标识符 ——
+  补 4 项回归 + 合法对照）、R11-P2-2 validateStagingArtifact 对整份
+  artifact 执行 prohibited raw content 扫描（E013：HTML/凭据签名 ——
+  补 1 项篡改回归）、R11-P3-1 D-group quarantine_reason 必须由注册表
+  error_code 白名单派生且与账本一致（补 1 项回归）、R11-P3-2 marker
+  篡改回归改用重算哈希的 marker（测试辅助修复）、R11-P3-3 tar PAX 路径
+  支持多字节 UTF-8 名称（补 1 项回归）—— 全部离线修复；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

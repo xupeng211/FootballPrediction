@@ -190,25 +190,35 @@ function parseOctal(bytes, offset, length) {
  * a silent skip (a skipped record could smuggle a path override).
  */
 function parsePaxRecords(data) {
+    // R11-P3-3 (Codex round 11): PAX lengths are defined in BYTES, but the
+    // previous implementation decoded the whole block to a UTF-8 string and
+    // measured with string.length (UTF-16 code units) — a legal non-ASCII
+    // path (e.g. `16 path=é.json\n`: 16 bytes, 15 UTF-16 units) was wrongly
+    // rejected as out of bounds. Records are now split at BYTE boundaries on
+    // the Buffer (data is a Buffer, not a string) and each record is decoded
+    // separately, so the length math is byte-accurate.
+    // A string input (direct unit tests) is converted to bytes; the
+    // production call site passes a Buffer slice.
+    const bytes = typeof data === 'string' ? Buffer.from(data, 'utf8') : data;
     const records = {};
     let idx = 0;
-    while (idx < data.length) {
-        const space = data.indexOf(' ', idx);
+    while (idx < bytes.length) {
+        const space = bytes.indexOf(0x20, idx); // ' '
         if (space === -1) {
             throw Object.assign(new Error('PAX record missing length separator'), { code: 'SAFETY_ERROR' });
         }
-        const digits = data.slice(idx, space);
+        const digits = bytes.subarray(idx, space).toString('utf8');
         if (!/^[0-9]+$/.test(digits)) {
             throw Object.assign(new Error('PAX record length is not a positive integer'), { code: 'SAFETY_ERROR' });
         }
         const len = Number(digits);
-        if (len <= 0 || len > data.length - idx) {
+        if (len <= 0 || len > bytes.length - idx) {
             throw Object.assign(new Error('PAX record length out of bounds'), { code: 'SAFETY_ERROR' });
         }
-        if (data[idx + len - 1] !== '\n') {
+        if (bytes[idx + len - 1] !== 0x0a) {
             throw Object.assign(new Error('PAX record must end with a newline'), { code: 'SAFETY_ERROR' });
         }
-        const record = data.slice(space + 1, idx + len - 1);
+        const record = bytes.subarray(space + 1, idx + len - 1).toString('utf8');
         const eq = record.indexOf('=');
         if (eq !== -1) {
             records[record.slice(0, eq)] = record.slice(eq + 1);
@@ -351,7 +361,10 @@ function inspectArchive(archivePath, options = {}) {
         if (typeflag === 'x') {
             // PAX extended headers: path= may override the name; linkpath= means
             // a link target is being recorded — links are forbidden, fail closed.
-            const pax = parsePaxRecords(tar.subarray(contentStart, contentStart + size).toString('utf8'));
+            // R11-P3-3 (Codex round 11): parse at BYTE boundaries — PAX
+            // lengths count bytes, and a pre-decoded UTF-8 string would
+            // measure non-ASCII paths in UTF-16 code units instead.
+            const pax = parsePaxRecords(tar.subarray(contentStart, contentStart + size));
             if (pax.linkpath !== undefined) {
                 throw Object.assign(new Error(`tar member declares a link target (not allowed): ${abs}`), {
                     code: 'SAFETY_ERROR',

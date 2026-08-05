@@ -83,7 +83,10 @@ function rawTarHeader(name, typeflag, size) {
 function paxRecordFor(key, value) {
     for (let n = 10; n < 1000; n += 1) {
         const rec = `${n} ${key}=${value}\n`;
-        if (rec.length === n) return rec;
+        // R11-P3-3 (Codex round 11): PAX lengths are BYTE lengths — a
+        // non-ASCII value (é = 2 UTF-8 bytes) must be measured with
+        // Buffer.byteLength, not string.length (UTF-16 code units).
+        if (Buffer.byteLength(rec) === n) return rec;
     }
     throw new Error('pax record too long');
 }
@@ -1468,4 +1471,19 @@ test('R10-P3-2b: a DANGLING PAX x path record at end-of-archive fails closed (no
         () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
         err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX name override/.test(err.message)
     );
+});
+
+test('R11-P3-3a: PAX path records are split at BYTE boundaries — a legal non-ASCII path is accepted', () => {
+    const dir = tmpDir('fotmob-ver-pax-utf8-');
+    const archive = path.join(dir, 'pax-utf8.tar.gz');
+    // `é` is 2 UTF-8 bytes: the record length counts bytes, and the parser
+    // must not measure it in UTF-16 code units (which would make the record
+    // one unit shorter and reject it as out of bounds).
+    const unicodeName = 'pairs/1-3901023-é.payload.json';
+    const paxRecord = paxRecordFor('path', unicodeName);
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', Buffer.byteLength(paxRecord)), Buffer.from(paxRecord, 'utf8'));
+    const content = rawTarBlock(rawTarHeader('short-name', '0', 3), Buffer.from('abc'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, content, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members[0].name, unicodeName, 'byte-boundary parsing keeps the non-ASCII path intact');
 });

@@ -929,6 +929,15 @@ function commitObservations(args = {}) {
         }
     }
     const runId = String(args.runId || 'offline-staging-run');
+    // R11-P2-1 (Codex round 11): runId is persisted into
+    // summary.operations.converter_run_id — the CLI help already documents
+    // `--run-id=<plain-identifier>`, so the exported API enforces the same
+    // contract: a finite plain identifier, never arbitrary text.
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(runId)) {
+        throw Object.assign(new Error(`runId must be a plain identifier (got '${runId}')`), {
+            code: 'INPUT_ERROR',
+        });
+    }
     const results = Array.isArray(args.results) ? args.results : [];
     const builtAt = String(args.builtAt || '');
     // R10-P2-1 (Codex round 10): builtAt is persisted as `recorded_at` on
@@ -972,7 +981,43 @@ function commitObservations(args = {}) {
     //   - ok:false must not claim an accepted state — a "failed" result can
     //     never commit an artifact (LINKED_*/unknown states still fall
     //     through to the retainable-state whitelist below).
-    for (const result of results) {
+    // R11-P2-1 (Codex round 11): SNAPSHOT every result — one materialized
+    // read of every field. An accessor/proxy-backed envelope could otherwise
+    // return a legal `error_code` at gate time and injected text at write
+    // time. Accessor-backed envelope scalars are refused upfront via a
+    // descriptor scan (never invoking the getter); the remaining scalars are
+    // then materialized by a JSON round-trip. `artifact` and `artifactInputs`
+    // keep their ORIGINAL references — the artifact passes its own strict
+    // plainness gate + full validator + content scan before any byte is
+    // written (R7-P2-1 / R8-P2-1 non-plain rejection semantics preserved),
+    // and everything derived from artifactInputs is re-validated and
+    // re-hashed by the REPEAT_EQUIVALENT rebuild. Every gate and every
+    // write-phase read below uses the snapshot only — the caller's object is
+    // never read again. A non-JSON-serializable envelope (cyclic, function
+    // values) fails closed as INPUT_ERROR.
+    let snapshots;
+    try {
+        snapshots = results.map(result => {
+            for (const key of Object.keys(result)) {
+                if (key === 'artifact' || key === 'artifactInputs') continue;
+                const descriptor = Object.getOwnPropertyDescriptor(result, key);
+                if (!descriptor || !('value' in descriptor)) {
+                    throw new TypeError('accessor envelope field');
+                }
+            }
+            const { artifact, artifactInputs, ...scalars } = result;
+            return { ...JSON.parse(JSON.stringify(scalars)), artifact, artifactInputs };
+        });
+    } catch {
+        throw Object.assign(
+            new Error(
+                'result envelope must be strict plain JSON data (no accessors, no inherited props, no proxies)'
+            ),
+            { code: 'INPUT_ERROR' }
+        );
+    }
+    for (const snapshot of snapshots) {
+        const result = snapshot;
         if (typeof result.ok !== 'boolean') {
             throw Object.assign(
                 new Error(
@@ -988,6 +1033,20 @@ function commitObservations(args = {}) {
                         `ok:true result must declare terminal_state ACCEPTED_NEW (got '${String(
                             result.terminal_state
                         )}') — final states are derived against the store`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            // R11-P2-1 (Codex round 11): an accepted raw result must not
+            // carry a non-null error_code — buildSummary persists
+            // `error_code: result.error_code || null` into the committed
+            // summary, so a free-text error_code on an accepted result would
+            // write arbitrary bytes into the marker-bound summary. The
+            // converter emits null here; null/absent is the only legal value.
+            if (result.error_code !== undefined && result.error_code !== null) {
+                throw Object.assign(
+                    new Error(
+                        `ok:true result must not carry an error_code (got '${String(result.error_code)}')`
                     ),
                     { code: 'INPUT_ERROR' }
                 );
@@ -1009,7 +1068,10 @@ function commitObservations(args = {}) {
     }
 
     // ── 1. classify every result against the ledger (pure, no writes) ──
-    const classified = results.map(result => ({
+    // The snapshots are the ONLY objects downstream code ever reads — the
+    // classification, summary rows, quarantine evidence, ledger merge and
+    // write plan all derive from these materialized values.
+    const classified = snapshots.map(result => ({
         result,
         classification: classifyAgainstStore({ result, storeState }),
     }));
@@ -2180,6 +2242,24 @@ function validateOutputRoot(outputRoot, options = {}) {
                 errors.push({
                     code: 'QUARANTINE_INVALID',
                     message: `quarantine ${quarantineFile} recorded_at disagrees with ledger`,
+                });
+            }
+            // R11-P3-1 (Codex round 11): the reason is a DETERMINISTIC
+            // function of the validated error code — a free-text
+            // quarantine_reason is tamper even when every other field is
+            // legal, so the D-group enforces the fixed mapping on the
+            // evidence file AND its agreement with the ledger entry.
+            const expectedReason = QUARANTINE_REASON_BY_CODE[String(quarantine.error_code ?? '')];
+            if (expectedReason !== undefined && String(quarantine.quarantine_reason ?? '') !== expectedReason) {
+                errors.push({
+                    code: 'QUARANTINE_INVALID',
+                    message: `quarantine ${quarantineFile} quarantine_reason does not derive from error code ${quarantine.error_code}`,
+                });
+            }
+            if (String(quarantine.quarantine_reason ?? '') !== String(entry.quarantine_reason ?? '')) {
+                errors.push({
+                    code: 'QUARANTINE_INVALID',
+                    message: `quarantine ${quarantineFile} quarantine_reason disagrees with ledger`,
                 });
             }
             // 30. quarantine evidence never contains the full payload.
