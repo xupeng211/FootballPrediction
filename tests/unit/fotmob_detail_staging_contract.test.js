@@ -1209,3 +1209,93 @@ test('R12-P3-1c: validateQuarantineRules reports a cyclic payload as a structure
         JSON.stringify(result.errors)
     );
 });
+
+// ── R13-P2-3 (Codex round 13): the artifact VALIDATOR carries the same
+//    plain-data / cycle / depth gate as the commit path — a cyclic or
+//    over-deep artifact is a structured validation error, never an
+//    unbounded hash-traversal RangeError, and validate agrees with the
+//    commit gate (PLAIN_JSON_DEPTH_LIMIT=128) ─────────────────────────
+
+function validArtifact() {
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const result = convertPair({ ...pairToValidationArgs(buildPair()) });
+    assert.strictEqual(result.ok, true);
+    return result.artifact;
+}
+
+test('R13-P2-3a: validateStagingArtifact refuses a CYCLIC artifact as a structured error, never a RangeError', () => {
+    const artifact = validArtifact();
+    // a cycle inside the artifact document: sections.events.json points back
+    // at the whole artifact — the L8 scan and the hash recomputations would
+    // recurse without bound.
+    const cyclic = { ...artifact, sections: { ...artifact.sections } };
+    cyclic.sections.events = { json: cyclic };
+    let validation;
+    assert.doesNotThrow(() => {
+        validation = validateStagingArtifact(cyclic);
+    });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => /strict plain JSON data/.test(e)),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R13-P2-3b: validateStagingArtifact refuses an over-deep artifact (depth > 128) without throwing', () => {
+    // 200 levels of nesting — beyond PLAIN_JSON_DEPTH_LIMIT=128. The commit
+    // path already refuses this; the direct-API validator must agree instead
+    // of running the content scan + hash traversal into unbounded recursion.
+    let deep = null;
+    let cursor = null;
+    for (let i = 0; i < 200; i += 1) {
+        const node = { v: i };
+        if (cursor === null) deep = node;
+        else cursor.child = node;
+        cursor = node;
+    }
+    let validation;
+    assert.doesNotThrow(() => {
+        validation = validateStagingArtifact(deep);
+    });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => /strict plain JSON data/.test(e)),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R13-P2-3c (legal control): a real converter artifact still validates clean under the new gate', () => {
+    const artifact = validArtifact();
+    const validation = validateStagingArtifact(artifact);
+    assert.strictEqual(validation.ok, true, validation.errors.join('; '));
+});
+
+// ── R13-P3-2 (Codex round 13): scanProhibitedContent refuses a
+//    proxy-wrapped ARRAY as a structured E013 (the array branch previously
+//    ran before the proxy check) ──────────────────────────────────────
+
+test('R13-P3-2: validateQuarantineRules refuses a proxy-wrapped array as a structured E013, never a RangeError', () => {
+    // a transparent Proxy array with prohibited content behind its index
+    // traps — the array dispatch used to run first, so the traps executed
+    // unfiltered and the proxy was never structurally rejected.
+    const proxied = new Proxy(['<html>'], {});
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateQuarantineRules({ nested: proxied });
+    });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === ERROR_CODES.E013 && /proxy-wrapped value/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+    // legal control: the same content as a PLAIN array is refused as a
+    // content-signature E013 (not a proxy error), and a clean payload passes.
+    const plain = validateQuarantineRules({ nested: ['<html>'] });
+    assert.strictEqual(plain.ok, false);
+    assert.ok(
+        plain.errors.some(e => e.code === ERROR_CODES.E013 && /prohibited raw content signature/.test(e.message)),
+        JSON.stringify(plain.errors)
+    );
+    const clean = validateQuarantineRules({ nested: ['ordinary'] });
+    assert.strictEqual(clean.ok, true, JSON.stringify(clean.errors));
+});

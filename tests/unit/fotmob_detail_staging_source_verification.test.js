@@ -1557,3 +1557,109 @@ test('R12-P2-2e (legal control): a normal archive passes inspection under the DE
     assert.strictEqual(inspected.members.length, 2);
     assert.strictEqual(inspected.members[0].name, 'pairs/1-3901023.payload.json');
 });
+
+// ── R13-P2-1 (Codex round 13): the receipt entry's first SHA pass is
+//    bounded like inspectArchive — a big archive is refused BEFORE any
+//    allocation (runReceipt calls verifyArchive before the bounded
+//    inspectArchive) ─────────────────────────────────────────────────
+
+test('R13-P2-1a: verifyArchive refuses a compressed archive larger than maxCompressedBytes (receipt first pass)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r13p21-size-'));
+    // Incompressible content — the gzipped tar stays near its raw size, so
+    // the pre-read fstat limit is what must fire in verifyArchive's SHA
+    // pass, exactly like R12-P2-2b does for inspectArchive.
+    const archive = createTarGz([
+        { name: 'pairs/1-3901023.payload.json', content: crypto.randomBytes(2048) },
+    ]);
+    const archivePath = path.join(dir, 'big.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    assert.throws(
+        () =>
+            verifyArchive(archivePath, sha256Hex(archive), {
+                repositoryRoot: REPO_ROOT,
+                limits: { maxCompressedBytes: 64 },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /input file exceeds the size limit/.test(err.message)
+    );
+});
+
+test('R13-P2-1b (legal control): verifyArchive passes a real archive under the DEFAULT limits', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r13p21-legal-'));
+    const pair = buildPair();
+    const info = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-a' });
+    const verified = verifyArchive(info.archivePath, info.archiveSha256, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(verified.archive_sha256, info.archiveSha256);
+    assert.strictEqual(verified.archive_path, info.archivePath);
+});
+
+// ── R13-P2-2 (Codex round 13): the receipt↔binding SHA and the capability
+//    path are enforced even when a registered live-verification capability
+//    is supplied (the CLI's per-run cache skips live re-verification) ──
+
+test('R13-P2-2a: a genuine capability does not bypass the receipt↔binding SHA check', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r13p22-shacap-'));
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-a' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-a',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    // The attack: a GENUINE capability (archive A) with a binding whose
+    // declared SHA is wrong. Before R13-P2-2 this PASSED — the SHA equality
+    // check only ran inside verifyLiveArchiveAgainstReceipt, which the
+    // capability branch skips entirely.
+    const forgedBinding = { sha256: 'e'.repeat(64), path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-a' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding: forgedBinding,
+                receipt,
+                inspected: live,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /does not match binding/.test(err.message)
+    );
+});
+
+test('R13-P2-2b: a genuine capability for archive A is refused with a binding pointing at another archive', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r13p22-pathcap-'));
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-a' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-a',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    // a second, DIFFERENT archive whose path the forged binding points at
+    // (declared SHA still A's — only the path lies)
+    const pairB = buildPair({ source_match_id: '3901024' });
+    const otherInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901024', pair: pairB }], { packageId: 'pkg-b' });
+    const forgedBinding = { sha256: archiveInfo.archiveSha256, path: otherInfo.archivePath, receipt: '' };
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-a' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding: forgedBinding,
+                receipt,
+                inspected: live,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /does not match the binding path/.test(err.message)
+    );
+});

@@ -484,10 +484,12 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 297 staging unit tests (111 retention incl. fault-injection and
-tamper + 65 source verification + 80 contract [54 declared + 16 loop-generated
+Test counts: 307 staging unit tests (113 retention incl. fault-injection and
+tamper + 69 source verification + 84 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
-+ 1 R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
++ 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
+R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal] + 17 converter
++ 24 CLI;
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
 on the remediation head; ESLint clean. Codex round-8 (head 7bbbd7658) found 2
@@ -548,7 +550,31 @@ via the PRE-READ fstat before any allocation, gunzipSync maxOutputLength,
 tar member-count / single-member / total-content caps, all fail-closed
 SAFETY_ERROR — 4 regressions + legal control), R12-P3-1 (isPlainJsonData
 and the prohibited-content scan refuse cycles / depth overflow / proxies
-as structured failures — 3 regressions); counts synced to 297.
+as structured failures — 3 regressions); counts synced to 297. Codex
+round-13 (head c00343a58) found 4 new P2 + 3 new P3, all remediated on the
+current head: R13-P2-1 (verifyArchive now merges DEFAULT_ARCHIVE_LIMITS and
+passes maxCompressedBytes to the pre-read fstat — the receipt CLI's first
+SHA pass can no longer read a whole oversized archive into memory before
+the bounded inspectArchive; 1 regression + legal control), R13-P2-2 (the
+receipt↔binding SHA is enforced UNCONDITIONALLY even when a registered
+live-verification capability is supplied, and the capability now carries
+the canonical archive_path of the verified archive — a binding with a wrong
+SHA or pointing at another archive is refused; 2 regressions), R13-P2-3
+(validateStagingArtifact starts with an isPlainJsonData depth/cycle/plain
+gate, so a direct-API/CLI/store-validator call agrees with the commit's
+128-level gate and a cyclic or over-deep artifact is a structured
+validation error instead of an unbounded hash-traversal RangeError;
+2 regressions + legal control), R13-P2-4 (validateSummaryDoc validates every
+observation is a non-array object before any field read — a raw/null row is
+a structured SUMMARY_INVALID with short-circuit, and validateOutputRoot
+skips malformed rows instead of throwing; 1 marker-consistent mutation
+regression), R13-P3-1 (the result ENVELOPE itself is refused when
+util.types.isProxy — before any field of the caller's object is read;
+1 zero-write regression), R13-P3-2 (scanProhibitedContent refuses
+proxy-wrapped values BEFORE the array/object dispatch, so a Proxy ARRAY is
+a structured E013 too; 1 regression + legal control), R13-P3-3
+(PROJECT_STATUS.md current-baseline contract count corrected 77→80);
+counts synced to 307.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

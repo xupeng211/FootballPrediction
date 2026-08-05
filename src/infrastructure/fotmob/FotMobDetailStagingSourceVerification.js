@@ -304,7 +304,7 @@ function isSafeMemberName(name, rawParts = []) {
  *
  * @param {string} archivePath - absolute repository-external archive path
  * @param {object} options - { repositoryRoot, fsImpl }
- * @returns {{ archive_sha256: string, members: Array<{name,size,sha256}> }}
+ * @returns {{ archive_sha256: string, archive_path: string, members: Array<{name,size,sha256}> }}
  */
 function inspectArchive(archivePath, options = {}) {
     const fileSystem = options.fsImpl || fs;
@@ -553,7 +553,11 @@ function inspectArchive(archivePath, options = {}) {
         });
     }
 
-    return { archive_sha256: archiveSha256, members };
+    // R13-P2-2 (Codex round 13): the inspection carries the CANONICAL path
+    // of the verified archive — the live-verification capability is then
+    // bound to content AND location, so a capability minted against archive
+    // A can never be presented with a binding pointing at another archive.
+    return { archive_sha256: archiveSha256, archive_path: abs, members };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -571,11 +575,19 @@ function inspectArchive(archivePath, options = {}) {
  */
 function verifyArchive(archivePath, expectedSha256, options = {}) {
     const fileSystem = options.fsImpl || fs;
+    const limits = { ...DEFAULT_ARCHIVE_LIMITS, ...(options.limits || {}) };
     const abs = verifyRepositoryExternalRegularFile(archivePath, options);
     if (!/^[0-9a-f]{64}$/.test(String(expectedSha256 || ''))) {
         throw Object.assign(new Error('expected archive sha256 must be 64 lowercase hex'), { code: 'INPUT_ERROR' });
     }
-    const actual = sha256Hex(readFileSafeNoFollow(abs, { fsImpl: fileSystem }).bytes);
+    // R13-P2-1 (Codex round 13): the receipt entry previously read the whole
+    // archive UNBOUNDED here (first SHA pass), then re-read it through the
+    // bounded inspectArchive — a >256 MiB (or compressed-bomb) external
+    // archive allocated the full file before any limit could fire. The same
+    // pre-read fstat cap as inspectArchive now bounds the SHA pass too.
+    const actual = sha256Hex(
+        readFileSafeNoFollow(abs, { fsImpl: fileSystem, maxBytes: limits.maxCompressedBytes }).bytes
+    );
     if (actual !== String(expectedSha256).toLowerCase()) {
         throw Object.assign(new Error(`archive sha256 mismatch: declared ${expectedSha256}, actual ${actual}`), {
             code: 'SAFETY_ERROR',
@@ -835,6 +847,22 @@ function verifyEntryAgainstReceipt(args = {}) {
         });
     }
 
+    // R13-P2-2 (Codex round 13): the receipt↔binding SHA equality is
+    // enforced UNCONDITIONALLY, before the inspected-capability branch —
+    // previously it only ran inside verifyLiveArchiveAgainstReceipt, so a
+    // supplied registered capability (the CLI's per-run cache) skipped it
+    // entirely: a binding with a wrong SHA or pointing at another archive
+    // passed against a genuine capability. The single-package provenance
+    // chain is receipt → binding SHA → capability (live archive content +
+    // canonical path) → payload/manifest member hashes — every hop must be
+    // enforced regardless of the capability cache.
+    if (String(receipt.archive_sha256 || '') !== String(binding.sha256 || '')) {
+        throw Object.assign(
+            new Error(`receipt archive sha ${receipt.archive_sha256} does not match binding ${binding.sha256}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
     // P0-1: bind the receipt to the LIVE archive. `inspected` is accepted
     // ONLY when it is the module-private live-verification capability
     // (R1-P0-1, hardened in R2-P0-1): it must be the exact object registered
@@ -853,6 +881,21 @@ function verifyEntryAgainstReceipt(args = {}) {
         if (String(args.inspected.archive_sha256 || '') !== String(receipt.archive_sha256 || '')) {
             throw Object.assign(
                 new Error('inspected archive sha256 does not match the receipt archive sha256'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        // R13-P2-2 (Codex round 13): the capability is bound to the archive's
+        // CANONICAL path too — the CLI caches one capability per package, so
+        // without this a genuine capability for archive A could be presented
+        // with a binding whose path points at a different archive (content
+        // check passes; the declared single-package binding is a lie). The
+        // binding path goes through the SAME input gate as every read.
+        if (
+            String(args.inspected.archive_path || '') !==
+            verifyRepositoryExternalRegularFile(String(binding.path || ''), options)
+        ) {
+            throw Object.assign(
+                new Error('inspected archive path does not match the binding path'),
                 { code: 'SAFETY_ERROR' }
             );
         }

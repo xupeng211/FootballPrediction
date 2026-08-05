@@ -70,6 +70,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const util = require('node:util');
 
 const {
     TERMINAL_STATES,
@@ -1022,6 +1023,15 @@ function commitObservations(args = {}) {
     let snapshots;
     try {
         snapshots = results.map(result => {
+            // R13-P3-1 (Codex round 13): the RESULT ENVELOPE itself must not
+            // be a Proxy — a transparent proxy passes Object.keys, descriptor
+            // reads, destructuring and the JSON round-trip below and commits
+            // today, contradicting the R11/R12 contract promise ("envelope
+            // proxy → INPUT_ERROR"). Rejected before ANY field of the
+            // caller's object is read — the snapshot below is the only read.
+            if (util.types.isProxy(result)) {
+                throw new TypeError('result envelope is a proxy');
+            }
             for (const key of Object.keys(result)) {
                 if (key === 'artifact' || key === 'artifactInputs') continue;
                 const descriptor = Object.getOwnPropertyDescriptor(result, key);
@@ -1744,6 +1754,27 @@ function validateSummaryDoc(summary, errors) {
         errors.push({ code: 'SUMMARY_INVALID', message: 'summary business_projection.observations missing' });
         return;
     }
+    // R13-P2-4 (Codex round 13): every observation must be a non-array
+    // object BEFORE any field read — a raw/null row previously threw at
+    // observation.terminal_state instead of yielding a structured
+    // SUMMARY_INVALID, so a tampered store crashed programmatic callers.
+    // Each malformed index is reported, then this summary's remaining field
+    // reads are short-circuited (the hash recomputation, counts, sort and
+    // duplicate checks below all assume well-formed rows).
+    let malformedObservation = false;
+    for (let i = 0; i < bp.observations.length; i += 1) {
+        const observation = bp.observations[i];
+        if (!observation || typeof observation !== 'object' || Array.isArray(observation)) {
+            malformedObservation = true;
+            errors.push({
+                code: 'SUMMARY_INVALID',
+                message: `summary observation at index ${i} must be an object`,
+            });
+        }
+    }
+    if (malformedObservation) {
+        return;
+    }
     // 2. business projection hash recomputation.
     const projectionCopy = { ...bp };
     delete projectionCopy.business_projection_sha256;
@@ -2384,7 +2415,20 @@ function validateOutputRoot(outputRoot, options = {}) {
 
     // ── summary ↔ artifact / ledger consistency (25./26./27./28.) ──
     for (const summary of summaries) {
-        for (const observation of summary.business_projection.observations) {
+        // R13-P2-4 (Codex round 13): a summary whose business_projection is
+        // missing or whose observations is not an array was already reported
+        // as SUMMARY_INVALID by validateSummaryDoc — never let the field
+        // reads below crash on it (for...of over null/undefined throws).
+        const summaryObservations =
+            summary && summary.business_projection && Array.isArray(summary.business_projection.observations)
+                ? summary.business_projection.observations
+                : [];
+        for (const observation of summaryObservations) {
+            // R13-P2-4: a malformed row is already reported as SUMMARY_INVALID
+            // above — skip it here instead of throwing at the field reads.
+            if (!observation || typeof observation !== 'object' || Array.isArray(observation)) {
+                continue;
+            }
             const state = String(observation.terminal_state || '');
             const artifactFile = observation.artifact_file;
             if (

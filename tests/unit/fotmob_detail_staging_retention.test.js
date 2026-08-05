@@ -2709,3 +2709,70 @@ test('R12-P2-1c (legal control): a plain artifact still commits and the committe
     const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
     assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
 });
+
+// ── R13-P2-4 (Codex round 13): a summary observation that is a raw/null
+//    row yields a structured SUMMARY_INVALID — the full validator must
+//    never crash on a tampered store ─────────────────────────────────
+
+test('R13-P2-4: a null summary observation is reported as SUMMARY_INVALID instead of throwing at observation.terminal_state', () => {
+    const dir = tmpDir('fotmob-r13p24-summary-null-');
+    const ok = pairResult('3901023');
+    commitObservations({
+        results: [ok],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const summaryFile = fs.readdirSync(dir).find(f => f.startsWith('summary-') && f.endsWith('.json'));
+    const summary = JSON.parse(fs.readFileSync(path.join(dir, summaryFile), 'utf8'));
+    // The tamper: one observation row becomes a raw null. R10-P2-2 hardened
+    // the LEDGER observations; the summary side previously threw at
+    // observation.terminal_state (unstructured crash) instead of returning a
+    // structured SUMMARY_INVALID. Recompute the projection hash so the
+    // mutation is marker-consistent and only the semantics are under test.
+    summary.business_projection.observations = [null];
+    const { canonicalJsonHash } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+    const projectionCopy = { ...summary.business_projection };
+    delete projectionCopy.business_projection_sha256;
+    summary.business_projection.business_projection_sha256 = canonicalJsonHash(projectionCopy);
+    fs.writeFileSync(path.join(dir, summaryFile), JSON.stringify(summary, null, 2) + '\n');
+    rehashMarker(dir);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(
+            e => e.code === 'SUMMARY_INVALID' && /at index 0 must be an object/.test(e.message)
+        ),
+        JSON.stringify(result.errors)
+    );
+});
+
+// ── R13-P3-1 (Codex round 13): the result ENVELOPE itself must not be a
+//    Proxy — a transparent proxy previously committed successfully,
+//    contradicting the R11/R12 "envelope proxy → INPUT_ERROR" contract ──
+
+test('R13-P3-1: a transparent Proxy result envelope is refused as INPUT_ERROR — zero writes', () => {
+    const dir = tmpDir('fotmob-r13p31-envproxy-');
+    const ok = pairResult('3901023');
+    // A transparent proxy passes Object.keys, descriptor reads, destructuring
+    // and the JSON round-trip of the snapshot block — before R13-P3-1 this
+    // committed successfully even though the artifact deep snapshot already
+    // blocked serialization-time injection.
+    const envelopeProxy = new Proxy({ ...ok }, {});
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [envelopeProxy],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /result envelope must be strict plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a proxy result envelope');
+});

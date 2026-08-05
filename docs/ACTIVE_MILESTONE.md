@@ -77,10 +77,11 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  297 项 staging 测试（111 retention 故障注入/篡改 + 65 source verification +
-  77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
+  307 项 staging 测试（113 retention 故障注入/篡改 + 69 source verification +
+  84 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
-  严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
+  严格数组 plainness + 3 个 R12-P3-1 cycle/深度守卫 + 3 个 R13-P2-3 validator
+  深度门 + 1 个 R13-P3-2 proxy 数组拒绝] + 17 converter + 24 CLI；Codex round-8（head
   7bbbd7658）2 项新 P2 —— R8-P2-1 isPlainJsonData 严格数组语义
   （非枚举 own toJSON / 空洞 / symbol / 额外 key / 非 Array 原型 / 非有限
   数字全部拒绝，.every() 无法覆盖，direct accepted 与 REPEAT_EQUIVALENT
@@ -128,6 +129,24 @@
   对照）、R12-P3-1 isPlainJsonData / 禁止内容扫描的 cycle/深度/Proxy 守卫
   （循环或超深 → 结构化 INPUT_ERROR/E013，而非 RangeError —— 补 3 项回归）
   —— 全部离线修复；计数同步 297；
+  Codex round-13（head c00343a58，19 个 commit）4 项新 P2 + 3 项新 P3 ——
+  R13-P2-1 verifyArchive 合并 DEFAULT_ARCHIVE_LIMITS 并把 maxCompressedBytes
+  传给读前 fstat（receipt 首遍 SHA 不再无界读入整个归档 —— 补 1 项回归 +
+  合法对照）、R13-P2-2 提供已注册 inspected capability 时无条件校验
+  receipt↔binding SHA，且 capability 携带已验证 archive 的规范路径
+  （archive_path 入 inspect 结果 + 深冻结），与 binding 路径不一致即拒绝
+  （补 2 项回归）、R13-P2-3 validateStagingArtifact 开头增加
+  isPlainJsonData 深度/cycle/plain 门（直接 API/CLI/store validator 与
+  commit 的 128 层门一致，循环/超深 → 结构化 validation error 且跳过
+  canonicalJsonHash 无界遍历 —— 补 2 项回归 + 合法对照）、R13-P2-4
+  validateSummaryDoc 在遍历前校验每个 observation 为非数组 object，
+  null/raw 行 → SUMMARY_INVALID 并短路，validateOutputRoot 对畸形行跳过
+  而非抛异常（补 1 项 marker-consistent mutation 回归）、R13-P3-1 result
+  envelope 本身拒绝 Proxy（util.types.isProxy，读取任何字段之前 —— 补
+  1 项零写入回归）、R13-P3-2 scanProhibitedContent 的 Proxy 拒绝移到
+  array/object 分派之前（Proxy 数组也结构化 E013 —— 补 1 项回归 +
+  合法对照）、R13-P3-3 PROJECT_STATUS.md current-baseline 段 contract
+  计数 77→80（含 R12-P3-1）—— 全部离线修复；计数同步 307；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

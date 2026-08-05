@@ -1244,6 +1244,18 @@ const PROHIBITED_SCAN_DEPTH_LIMIT = 256;
 /* eslint-disable-next-line complexity */
 function scanProhibitedContent(value, path, errors, _seen = null, _depth = 0) {
     if (value === null || value === undefined) return;
+    // R13-P3-2 (Codex round 13): a proxy-wrapped value is refused BEFORE the
+    // array/object dispatch — the array branch previously ran first, so a
+    // Proxy ARRAY's length/index traps executed unfiltered and a transparent
+    // proxy array was not structurally rejected. R12's "proxy → E013"
+    // promise now holds for arrays and objects alike.
+    if (util.types.isProxy(value)) {
+        errors.push({
+            code: ERROR_CODES.E013,
+            message: `proxy-wrapped value at ${path}`,
+        });
+        return;
+    }
     if (typeof value === 'string') {
         const lower = value.toLowerCase();
         for (const sig of PROHIBITED_VALUE_SIGNATURES) {
@@ -1293,15 +1305,8 @@ function scanProhibitedContent(value, path, errors, _seen = null, _depth = 0) {
             });
             return;
         }
-        if (util.types.isProxy(value)) {
-            // R12-P2-1: a proxy-wrapped node can return different values on
-            // re-read — fail closed instead of trusting the first read.
-            errors.push({
-                code: ERROR_CODES.E013,
-                message: `proxy-wrapped object at ${path}`,
-            });
-            return;
-        }
+        // Note: proxy refusal lives at the function top (R13-P3-2) so arrays
+        // are covered too; R12-P2-1's object-only check was subsumed by it.
         if (_seen === null) _seen = new WeakSet();
         if (_seen.has(value)) {
             errors.push({
@@ -1821,6 +1826,22 @@ function validateStagingArtifact(artifact) {
     const errors = [];
     if (!isPlainObject(artifact)) {
         return { ok: false, errors: ['artifact is not an object'] };
+    }
+    // R13-P2-3 (Codex round 13): strict plain-data / cycle / depth gate
+    // BEFORE any recursive traversal. A cyclic or over-deep artifact would
+    // otherwise drive the content scan and the hash recomputations below
+    // into unbounded recursion (RangeError), and a 129-level artifact would
+    // be reported valid here while the commit gate (isPlainJsonData,
+    // PLAIN_JSON_DEPTH_LIMIT=128) refuses it — validator/writer divergence.
+    // The predicate walks descriptors only (never JSON.stringify/toJSON),
+    // refuses accessors, proxies, inherited props, cycles and nesting
+    // beyond the depth limit; on failure the artifact is invalid, period —
+    // fail closed with ONE structured error and skip all hash traversal.
+    if (!isPlainJsonData(artifact)) {
+        errors.push(
+            'artifact must be strict plain JSON data (no inherited props, no accessors, no proxies, no cycles, depth ≤ 128)'
+        );
+        return { ok: false, errors };
     }
     if (artifact.schema_version !== STAGING_ARTIFACT_SCHEMA_VERSION) {
         errors.push(`schema_version must be ${STAGING_ARTIFACT_SCHEMA_VERSION}`);
