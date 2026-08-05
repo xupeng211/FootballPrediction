@@ -617,3 +617,75 @@ test('G56 (R4-P1-1): a two-pair archive with one receipt builds both pairs end-t
     assert.strictEqual(result.zero_network, true);
     assert.strictEqual(result.zero_database, true);
 });
+
+// ── R6-P1-1 (Codex round 6): validation failure must NOT exit 0 ──────────
+
+test('R6-P1-1a: a failed validate (wrong anchor) exits NON-ZERO from the CLI', async () => {
+    // The old main() returned 0 for `validate` regardless of the JSON result —
+    // automation keying on the exit code treated a tampered store as success.
+    const dir = tmpDir('fotmob-r6p11-fail-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const spawned = spawnSync(
+        process.execPath,
+        [CLI_PATH, 'validate', '--output-root', outputRoot, '--expected-latest-marker-sha256', 'a'.repeat(64)],
+        { encoding: 'utf8', timeout: 30000 }
+    );
+    assert.strictEqual(spawned.status, 1, `exit code must be 1, got ${spawned.status}`);
+    const parsed = JSON.parse(spawned.stdout);
+    assert.strictEqual(parsed.status, 'invalid');
+    assert.strictEqual(parsed.ok, false);
+});
+
+test('R6-P1-1b: a fully valid validate exits ZERO from the CLI', async () => {
+    const dir = tmpDir('fotmob-r6p11-ok-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const spawned = spawnSync(process.execPath, [CLI_PATH, 'validate', '--output-root', outputRoot], {
+        encoding: 'utf8',
+        timeout: 30000,
+    });
+    assert.strictEqual(spawned.status, 0, `exit code must be 0, got ${spawned.status}`);
+    const parsed = JSON.parse(spawned.stdout);
+    assert.strictEqual(parsed.status, 'valid');
+    assert.strictEqual(parsed.ok, true);
+});
+
+// ── R6-P3-1 (Codex round 6): archive input must pass the overlap gate ────
+
+test('R6-P3-1a: build rejects an archive located INSIDE the output root at the input gate', async () => {
+    const dir = tmpDir('fotmob-r6p31-overlap-');
+    const outputRoot = path.join(dir, 'out');
+    fs.mkdirSync(outputRoot);
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'ten-match',
+    });
+    writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'ten-match',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const index = buildSourceIndexFromArchive(
+        [{ sourceMatchId: '3901023', pair }],
+        archiveInfo,
+        { packageId: 'ten-match', receiptPath: path.join(dir, 'receipt.json') }
+    );
+    // the archive now lives INSIDE the output root — the input gate must
+    // reject it before any live archive inspection or commit attempt
+    const inRootArchive = path.join(outputRoot, 'archive.tar.gz');
+    fs.copyFileSync(archiveInfo.archivePath, inRootArchive);
+    index.archive_bindings['ten-match'].path = inRootArchive;
+    const indexFile = path.join(dir, 'source-index.json');
+    fs.writeFileSync(indexFile, JSON.stringify(index, null, 2) + '\n');
+
+    await assert.rejects(
+        () => runBuild({ 'source-index': indexFile, 'output-root': outputRoot }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+    // nothing may be committed inside the root
+    assert.deepStrictEqual(fs.readdirSync(outputRoot), ['archive.tar.gz']);
+});

@@ -456,6 +456,21 @@ function validateIdentityBinding(payload) {
             message: `match_external_id ${externalId} must equal observed_match_id ${observedMatchId}`,
         });
     }
+    // R6-P1-2 (Codex round 6): observed team names must be REQUIRED — the
+    // old code compared expected vs observed only when both were truthy, so
+    // `observed_identity: { home_team: '', away_team: '' }` silently skipped
+    // the binding and produced an artifact whose observed teams are empty.
+    if (
+        typeof observed.home_team !== 'string' ||
+        typeof observed.away_team !== 'string' ||
+        observed.home_team.trim() === '' ||
+        observed.away_team.trim() === ''
+    ) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: 'observed_identity home_team/away_team required',
+        });
+    }
     const expHome = String(expected.home_team ?? '').trim();
     const expAway = String(expected.away_team ?? '').trim();
     const obsHome = String(observed.home_team ?? '').trim();
@@ -1556,6 +1571,55 @@ function validateStagingArtifact(artifact) {
     }
     if (artifact.canonical_match_id !== null && typeof artifact.canonical_match_id !== 'string') {
         errors.push('canonical_match_id must be null or a string');
+    }
+    // R6-P1-2 (Codex round 6): the artifact carries source/expected/observed
+    // identity — validate the BASIC semantics here so the committed artifact
+    // (and not only the in-memory conversion) can never be one whose
+    // observed teams are empty or whose observed id contradicts the source.
+    if (!/^\d+$/.test(String(artifact.source_match_id ?? ''))) {
+        errors.push('source_match_id must be numeric');
+    }
+    const artifactExpected = artifact.expected_identity || {};
+    const artifactObserved = artifact.observed_identity || {};
+    for (const [label, team] of [
+        ['home_team', artifactExpected.home_team],
+        ['away_team', artifactExpected.away_team],
+    ]) {
+        if (typeof team !== 'string' || team.trim() === '') {
+            errors.push(`expected_identity.${label} required`);
+        }
+    }
+    for (const [label, team] of [
+        ['home_team', artifactObserved.home_team],
+        ['away_team', artifactObserved.away_team],
+    ]) {
+        if (typeof team !== 'string' || team.trim() === '') {
+            errors.push(`observed_identity.${label} required`);
+        }
+    }
+    const artifactObservedId = String(artifactObserved.observed_match_id ?? '');
+    if (!/^\d+$/.test(artifactObservedId)) {
+        errors.push('observed_identity.observed_match_id must be numeric');
+    } else if (artifactObservedId !== String(artifact.source_match_id ?? '')) {
+        errors.push('observed_identity.observed_match_id must equal source_match_id');
+    }
+    if (
+        typeof artifactExpected.home_team === 'string' &&
+        artifactExpected.home_team.trim() !== '' &&
+        typeof artifactObserved.home_team === 'string' &&
+        artifactObserved.home_team.trim() !== '' &&
+        normalizeTeamName(artifactExpected.home_team) !== normalizeTeamName(artifactObserved.home_team)
+    ) {
+        errors.push('observed_identity.home_team must equal expected_identity.home_team');
+    }
+    if (
+        typeof artifactExpected.away_team === 'string' &&
+        artifactExpected.away_team.trim() !== '' &&
+        typeof artifactObserved.away_team === 'string' &&
+        artifactObserved.away_team.trim() !== '' &&
+        normalizeTeamName(artifactExpected.away_team) !== normalizeTeamName(artifactObserved.away_team)
+    ) {
+        errors.push('observed_identity.away_team must equal expected_identity.away_team');
     }
     if (!isPlainObject(artifact.sections)) {
         errors.push('sections must be an object');

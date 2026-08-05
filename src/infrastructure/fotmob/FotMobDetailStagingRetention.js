@@ -952,11 +952,21 @@ function commitObservations(args = {}) {
     // otherwise escape outputRoot via path.join. Fail closed:
     //   - the effective source id (result, falling back to the artifact) must
     //     be numeric — filenames embed it raw;
-    //   - result.source_match_id and artifact.source_match_id must agree;
-    //   - artifact stable_payload_sha256 must be 64 lowercase hex;
-    //   - error_code must be E###.
+    //   - result.source_match_id and artifact.source_match_id must agree.
+    // R6-P2-1 (Codex round 6): the input contract must close COMPLETELY —
+    // no conditional/truthy checks that a non-string or falsy value can slip
+    // through (a numeric `stable_payload_sha256` or a falsy `error_code`
+    // previously skipped validation and was stringified into file names):
+    //   - accepted-classified results must carry a PLAIN artifact whose
+    //     stable_payload_sha256 is a string of 64 lowercase hex, and the
+    //     artifact must pass the FULL artifact validator (the same one the
+    //     store validator applies to committed artifacts);
+    //   - quarantine-classified results must carry a REGISTRY error_code
+    //     (string `E###` in ERROR_CODES — no silent E013 fallback), a
+    //     quarantine terminal state, and `quarantine_status === 'quarantined'`.
     for (const item of classified) {
         const result = item.result;
+        const cls = item.classification;
         const artifact = result.artifact;
         const resultId =
             result.source_match_id === undefined || result.source_match_id === null
@@ -981,19 +991,73 @@ function commitObservations(args = {}) {
                 { code: 'INPUT_ERROR' }
             );
         }
-        if (
-            artifact &&
-            typeof artifact.stable_payload_sha256 === 'string' &&
-            !/^[0-9a-f]{64}$/.test(artifact.stable_payload_sha256)
-        ) {
-            throw Object.assign(new Error('artifact stable_payload_sha256 must be 64 lowercase hex'), {
-                code: 'INPUT_ERROR',
-            });
+        const isAccepted =
+            cls.terminal_state === TERMINAL_STATES.ACCEPTED_NEW ||
+            cls.terminal_state === TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT ||
+            cls.terminal_state === TERMINAL_STATES.ACCEPTED_REPEAT_EXACT;
+        const isQuarantine =
+            cls.terminal_state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL ||
+            cls.terminal_state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH;
+        if (isAccepted) {
+            if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
+                throw Object.assign(
+                    new Error('accepted result must carry a plain artifact object'),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            if (
+                typeof artifact.stable_payload_sha256 !== 'string' ||
+                !/^[0-9a-f]{64}$/.test(artifact.stable_payload_sha256)
+            ) {
+                throw Object.assign(
+                    new Error('artifact stable_payload_sha256 must be a 64-lowercase-hex string'),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            // R6-P2-1: full artifact validation — a direct caller's tampered
+            // artifact (bad hashes, bad identity, broken integrity) is
+            // rejected before any filename is derived or any byte is written.
+            const artifactValidation = validateStagingArtifact(artifact);
+            if (!artifactValidation.ok) {
+                throw Object.assign(
+                    new Error(`artifact invalid: ${artifactValidation.errors.join('; ')}`),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
         }
-        if (result.error_code && !/^E\d{3}$/.test(String(result.error_code))) {
-            throw Object.assign(new Error(`error_code must be E### (got '${result.error_code}')`), {
-                code: 'INPUT_ERROR',
-            });
+        if (isQuarantine) {
+            const errorCode = result.error_code;
+            if (
+                typeof errorCode !== 'string' ||
+                !/^E\d{3}$/.test(errorCode) ||
+                !Object.values(ERROR_CODES).includes(errorCode)
+            ) {
+                throw Object.assign(
+                    new Error(
+                        `quarantined result must carry a registry error_code (got '${String(errorCode)}')`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            if (
+                result.terminal_state !== TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL &&
+                result.terminal_state !== TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
+            ) {
+                throw Object.assign(
+                    new Error(
+                        `quarantined result terminal_state must be a quarantine state (got '${String(
+                            result.terminal_state
+                        )}')`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            if (result.quarantine_status !== 'quarantined') {
+                throw Object.assign(
+                    new Error(`quarantined result quarantine_status must be 'quarantined'`),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
         }
     }
 
@@ -1227,6 +1291,17 @@ function buildSummary(args = {}) {
             reason: cls.reason,
             error_code: result.error_code || null,
         };
+        if (
+            state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL ||
+            state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
+        ) {
+            // R6-P2-2 (Codex round 6): the summary quarantine row binds to the
+            // ledger by the SAME derived key/file name the ledger uses — the
+            // validator cross-checks `source_match_id:error_code` key and the
+            // quarantine file against the ledger + marker.
+            const errorCode = result.error_code || ERROR_CODES.E013;
+            observation.quarantine_file = quarantineFileName(sourceMatchId, errorCode);
+        }
         if (cls.artifact) {
             observation.stable_payload_sha256 = cls.artifact.stable_payload_sha256;
             observation.business_hash = cls.artifact.business_hash;
@@ -1537,6 +1612,49 @@ function validateOutputRoot(outputRoot, options = {}) {
                         message: `ledger quarantine entry ${key} has no valid error_code`,
                     });
                 }
+                // R6-P2-2 (Codex round 6): SEMANTIC binding — the key must
+                // derive from the entry, and the file name must derive from
+                // the key. Format-legal but self-contradictory records
+                // (key `123:E001` with entry source_match_id `456`,
+                // error_code `E002`, quarantine_file for `789:E003`) are
+                // tamper and must fail closed.
+                const keyParts = String(key).split(':');
+                const keyId = keyParts[0];
+                const keyCode = keyParts[1];
+                if (String(entry.source_match_id ?? '') !== keyId) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine key ${key} source_match_id disagrees with its entry`,
+                    });
+                }
+                if (String(entry.error_code ?? '') !== keyCode) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine key ${key} error_code disagrees with its entry`,
+                    });
+                }
+                const derivedQuarantineFile = quarantineFileName(keyId, keyCode);
+                if (String(entry.quarantine_file ?? '') !== derivedQuarantineFile) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} quarantine_file must be ${derivedQuarantineFile}`,
+                    });
+                }
+                if (
+                    entry.terminal_state !== TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL &&
+                    entry.terminal_state !== TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
+                ) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} terminal_state must be a quarantine state`,
+                    });
+                }
+                if (!Object.values(ERROR_CODES).includes(String(entry.error_code ?? ''))) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} error_code must be a registry error code`,
+                    });
+                }
             }
         }
         for (const [key, entry] of Object.entries(ledger.observations)) {
@@ -1661,6 +1779,14 @@ function validateOutputRoot(outputRoot, options = {}) {
     for (const [key, entry] of Object.entries(
         latestLedger && latestLedger.quarantines ? latestLedger.quarantines : {}
     )) {
+        // R6-P2-2 hardening: a null/non-object entry is already reported as
+        // LEDGER_INVALID by the B-group — the D-group must fail closed
+        // gracefully instead of crashing on `entry.quarantine_file`, and
+        // must not publish the malformed entry into the ledger map the
+        // summary cross-check reads.
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+            continue;
+        }
         quarantineLedger.set(key, entry);
         const quarantineFile = String(entry.quarantine_file || '');
         if (!isQuarantineFileName(quarantineFile)) {
@@ -1686,7 +1812,27 @@ function validateOutputRoot(outputRoot, options = {}) {
                 message: `quarantine file unreadable: ${quarantineFile} (${error.message})`,
             });
         }
+        // R6-P2-2 (Codex round 6): the physical file name must be exactly the
+        // name derived from the ledger entry's id + error code — a renamed or
+        // mismatched quarantine file is tamper even when every field reads
+        // format-legal.
+        const derivedQuarantineName = quarantineFileName(
+            String(entry.source_match_id ?? ''),
+            String(entry.error_code ?? '')
+        );
+        if (quarantineFile !== derivedQuarantineName) {
+            errors.push({
+                code: 'QUARANTINE_INVALID',
+                message: `quarantine ${quarantineFile} filename must derive from ledger entry (${derivedQuarantineName})`,
+            });
+        }
         if (quarantine) {
+            if (String(quarantine.quarantine_status ?? '') !== 'quarantined') {
+                errors.push({
+                    code: 'QUARANTINE_INVALID',
+                    message: `quarantine ${quarantineFile} quarantine_status must be 'quarantined'`,
+                });
+            }
             if (String(quarantine.terminal_state ?? '') !== String(entry.terminal_state ?? '')) {
                 errors.push({
                     code: 'QUARANTINE_INVALID',
@@ -1794,6 +1940,41 @@ function validateOutputRoot(outputRoot, options = {}) {
         for (const observation of summary.business_projection.observations) {
             const state = String(observation.terminal_state || '');
             const artifactFile = observation.artifact_file;
+            if (
+                state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL ||
+                state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
+            ) {
+                // R6-P2-2 (Codex round 6): a summary quarantine row must bind
+                // to the ledger by the derived `source_match_id:error_code`
+                // key, carry the SAME quarantine file the ledger records, and
+                // that file must be marker-committed.
+                const quarantineKey = `${observation.source_match_id}:${observation.error_code}`;
+                const quarantineEntry = quarantineLedger.get(quarantineKey);
+                if (!quarantineEntry) {
+                    errors.push({
+                        code: 'STATE_MISMATCH',
+                        message: `summary quarantine observation ${observation.source_match_id} has no ledger quarantine entry (${quarantineKey})`,
+                    });
+                } else if (
+                    String(quarantineEntry.quarantine_file ?? '') !==
+                    String(observation.quarantine_file ?? '')
+                ) {
+                    errors.push({
+                        code: 'STATE_MISMATCH',
+                        message: `summary quarantine observation ${observation.source_match_id} quarantine_file disagrees with the ledger`,
+                    });
+                } else if (
+                    !Object.prototype.hasOwnProperty.call(
+                        committed.markerBoundFiles,
+                        String(observation.quarantine_file ?? '')
+                    )
+                ) {
+                    errors.push({
+                        code: 'STATE_MISMATCH',
+                        message: `summary quarantine observation ${observation.source_match_id} references an uncommitted quarantine file`,
+                    });
+                }
+            }
             if (
                 (state === TERMINAL_STATES.ACCEPTED_NEW || state === TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT) &&
                 (artifactFile === undefined || artifactFile === null || artifactFile === '')

@@ -243,6 +243,16 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
                 code: 'SAFETY_ERROR',
             });
         }
+        // R6-P3-1 (Codex round 6): the archive path itself must pass the SAME
+        // input gate as every other input — repository-external regular file
+        // with no symlink leaf/ancestor, and no overlap with the output root —
+        // BEFORE any live archive inspection reads its bytes. Without this,
+        // an archive inside the output root was only rejected late (residue
+        // scan at commit time) instead of at the input gate.
+        verifyRepositoryExternalRegularFile(binding.path, { repositoryRoot });
+        if (outputRoot) {
+            assertInputOutputNonOverlap(binding.path, outputRoot);
+        }
         let receipt = receiptCache.get(packageId);
         if (!receipt) {
             // P1-3: the receipt path goes through the SAME input safety gate
@@ -536,24 +546,36 @@ async function main(argv = process.argv.slice(2)) {
         return 0;
     }
     if (subcommand === 'validate') {
-        print(await runValidate(args));
-        return 0;
+        // R6-P1-1 (Codex round 6): a validation failure must NOT exit 0 —
+        // automation and CI gates key on the exit code, not the JSON report.
+        // `invalid` (tampered store / anchor mismatch) and `blocked` both
+        // fail closed with a non-zero code; only a fully valid store is 0.
+        const result = await runValidate(args);
+        print(result);
+        return result.ok && result.status === 'valid' ? 0 : 1;
     }
     throw new Error(`unknown subcommand: ${subcommand}`);
 }
 
 if (require.main === module) {
-    main().catch(error => {
-        print({
-            status: 'blocked',
-            code: error.code || 'OPERATOR_FAILURE',
-            message: error.message,
-            offline_only: true,
-            zero_network: true,
-            zero_database: true,
+    main()
+        .then(code => {
+            // R6-P1-1: the fulfilled return code (0 for success, non-zero for
+            // a failed validate) must reach the process exit code — the old
+            // wiring only handled the rejected-promise path.
+            process.exitCode = code;
+        })
+        .catch(error => {
+            print({
+                status: 'blocked',
+                code: error.code || 'OPERATOR_FAILURE',
+                message: error.message,
+                offline_only: true,
+                zero_network: true,
+                zero_database: true,
+            });
+            process.exitCode = 1;
         });
-        process.exitCode = 1;
-    });
 }
 
 module.exports = { main, parseArgs, runReceipt, runBuild, runValidate, USAGE };

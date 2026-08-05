@@ -1567,3 +1567,370 @@ test('R5-P3-1b: validate rejects a ledger quarantine key with an invalid format'
     assert.strictEqual(result.ok, false);
     assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantine key has invalid format/.test(e.message)));
 });
+
+// ── R6-P2-1 (Codex round 6): strict input contract — no falsy/conditional
+//    bypass on the exported commitObservations() ──────────────────────────
+
+function quarantinedPairResult() {
+    const pair = buildPair({
+        normalized: {
+            match_external_id: '3901023',
+            home_team: { id: 1, name: 'AFC Bournemouth', score: 0 },
+            away_team: { id: 2, name: 'Leicester City', score: 0 },
+            events: [
+                {
+                    id: 9,
+                    minute: 500,
+                    homeScore: 0,
+                    awayScore: 0,
+                    event_kind: 'real_event',
+                },
+            ],
+            stats: [{ key: 'shots', homeValue: 0, awayValue: 0, period: 'All' }],
+            lineup: {
+                home: { coach: null, starters: [], subs: [] },
+                away: { coach: null, starters: [], subs: [] },
+            },
+            shotmap: { shots: [] },
+        },
+    });
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const result = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(result.quarantine_status, 'quarantined');
+    return result;
+}
+
+test('R6-P2-1a: commitObservations rejects an accepted result whose stable_payload_sha256 is a NON-STRING (number) — no conditional bypass', () => {
+    const dir = tmpDir('fotmob-r6p21-numhash-');
+    const ok = pairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact: { ...ok.artifact, stable_payload_sha256: 7 } }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /stable_payload_sha256/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'nothing is written');
+});
+
+test('R6-P2-1b: commitObservations rejects a quarantined result with a FALSY error_code (0) — no silent E013 fallback', () => {
+    const dir = tmpDir('fotmob-r6p21-falsy-');
+    const bad = quarantinedPairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...bad, error_code: 0 }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /registry error_code/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'nothing is written');
+});
+
+test('R6-P2-1c: commitObservations rejects a quarantined result with a NON-REGISTRY error_code (E999)', () => {
+    const dir = tmpDir('fotmob-r6p21-e999-');
+    const bad = quarantinedPairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...bad, error_code: 'E999' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /registry error_code/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'nothing is written');
+});
+
+test('R6-P2-1d: commitObservations rejects a quarantined result whose quarantine_status is not quarantined', () => {
+    const dir = tmpDir('fotmob-r6p21-status-');
+    const bad = quarantinedPairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...bad, quarantine_status: 'not_quarantined' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /quarantine_status/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'nothing is written');
+});
+
+test('R6-P2-1e (legal control): a genuine quarantined result still commits through the strict gate and validates clean', () => {
+    const dir = tmpDir('fotmob-r6p21-legal-');
+    const bad = quarantinedPairResult();
+    const summary = commitObservations({
+        results: [bad],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.quarantined_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+// ── PATH_TRAVERSAL_TESTS (task section 11): extended R5-P2-1 surface ─────
+
+test('R6-P2-1f: commitObservations rejects backslash traversal source_match_id (..\\..\\escaped)', () => {
+    const dir = tmpDir('fotmob-r6p21-backslash-');
+    const ok = pairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, source_match_id: '..\\..\\escaped' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /source_match_id must be numeric/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+    assert.ok(!fs.existsSync(path.join(dir, '..', 'escaped-E011.json')), 'no escape through backslashes');
+});
+
+test('R6-P2-1g: commitObservations rejects an EMPTY source_match_id', () => {
+    const dir = tmpDir('fotmob-r6p21-empty-');
+    const ok = pairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, source_match_id: '' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /source_match_id must be numeric/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+test('R6-P2-1h: commitObservations rejects a non-numeric alphanumeric source_match_id', () => {
+    const dir = tmpDir('fotmob-r6p21-alpha-');
+    const ok = pairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, source_match_id: '12ab34' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /source_match_id must be numeric/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+// ── R6-P2-2 (Codex round 6): quarantine key/entry/file/summary SEMANTIC
+//    three-way binding ────────────────────────────────────────────────────
+
+function commitQuarantined(dir) {
+    const bad = quarantinedPairResult();
+    commitObservations({
+        results: [bad],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    return dir;
+}
+
+function mutateLedger(dir, mutate) {
+    const ledgerFile = fs.readdirSync(dir).find(f => f.startsWith('store-state-'));
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, ledgerFile), 'utf8'));
+    mutate(ledger);
+    fs.writeFileSync(path.join(dir, ledgerFile), JSON.stringify(ledger, null, 2) + '\n');
+}
+
+test('R6-P2-2a: validate rejects a ledger quarantine entry whose source_match_id disagrees with its key', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p22-id-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], source_match_id: '456' };
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /source_match_id disagrees/.test(e.message)));
+});
+
+test('R6-P2-2b: validate rejects a ledger quarantine entry whose quarantine_file does not derive from its key', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p22-file-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], quarantine_file: 'quarantine-999-E003.json' };
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantine_file must be/.test(e.message)));
+});
+
+test('R6-P2-2c: validate rejects a ledger quarantine entry whose error_code disagrees with its key', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p22-code-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], error_code: 'E002' };
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /error_code disagrees/.test(e.message)));
+});
+
+test('R6-P2-2d: validate rejects a summary quarantine observation with no matching ledger quarantine entry', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p22-summary-'));
+    const summaryFile = fs.readdirSync(dir).find(f => f.startsWith('summary-'));
+    const summary = JSON.parse(fs.readFileSync(path.join(dir, summaryFile), 'utf8'));
+    summary.business_projection.observations[0] = {
+        ...summary.business_projection.observations[0],
+        error_code: 'E002',
+        quarantine_file: 'quarantine-3901023-E002.json',
+    };
+    fs.writeFileSync(path.join(dir, summaryFile), JSON.stringify(summary, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'STATE_MISMATCH' && /no ledger quarantine entry/.test(e.message)));
+});
+
+test('R6-P2-2e (legal control): the summary quarantine row carries the derived quarantine_file and binds cleanly', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p22-summary-legal-'));
+    const summaryFile = fs.readdirSync(dir).find(f => f.startsWith('summary-'));
+    const summary = JSON.parse(fs.readFileSync(path.join(dir, summaryFile), 'utf8'));
+    const observation = summary.business_projection.observations[0];
+    assert.strictEqual(observation.quarantine_file, 'quarantine-3901023-E011.json');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+// ── LEDGER_QUARANTINE_SHAPE_TESTS (task section 11): extended R5-P3-1
+//    surface — plain-object, key format, entry shape, enum, prototype ─────
+
+test('R6-P2-3a: validate rejects ledger quarantines = null', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-null-'));
+    mutateLedger(dir, ledger => {
+        ledger.quarantines = null;
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantines must be a plain object/.test(e.message)));
+});
+
+test('R6-P2-3b: validate rejects ledger quarantines = "string"', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-string-'));
+    mutateLedger(dir, ledger => {
+        ledger.quarantines = 'quarantined';
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantines must be a plain object/.test(e.message)));
+});
+
+test('R6-P2-3c: validate rejects a quarantine entry that is null', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-entry-null-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = null;
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /is not an object/.test(e.message)));
+});
+
+test('R6-P2-3d: validate rejects a quarantine entry that is an array', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-entry-array-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = [];
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /is not an object/.test(e.message)));
+});
+
+test('R6-P2-3e: validate rejects a quarantine entry whose terminal_state is not a quarantine state (ACCEPTED_NEW)', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-state-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], terminal_state: 'ACCEPTED_NEW' };
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /terminal_state must be a quarantine state/.test(e.message)));
+});
+
+test('R6-P2-3f: validate rejects a quarantine entry whose error_code is not a registry error code (E999)', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-e999-'));
+    mutateLedger(dir, ledger => {
+        const qKey = Object.keys(ledger.quarantines)[0];
+        ledger.quarantines[qKey] = { ...ledger.quarantines[qKey], error_code: 'E999' };
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /registry error code/.test(e.message)));
+});
+
+test('R6-P2-3g: prototype-key safety — a quarantines "__proto__" key is rejected (invalid format, no prototype pollution)', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r6p23-proto-'));
+    mutateLedger(dir, ledger => {
+        Object.defineProperty(ledger.quarantines, '__proto__', {
+            value: { source_match_id: '1', error_code: 'E011', terminal_state: 'QUARANTINED_VALIDATION_FAIL', quarantine_file: 'quarantine-1-E011.json' },
+            enumerable: true,
+            configurable: true,
+            writable: true,
+        });
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantine key has invalid format/.test(e.message)));
+});
+
+test('R6-P2-3h (idempotency control): re-running the same quarantined input stays byte-identical (R3-P2-1 surface intact)', () => {
+    const dir = tmpDir('fotmob-r6p23-idem-');
+    const bad = quarantinedPairResult();
+    commitObservations({
+        results: [bad],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const before = fs.readdirSync(dir).sort().map(f => [f, fs.readFileSync(path.join(dir, f))]);
+    commitObservations({
+        results: [quarantinedPairResult()],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T13:00:00.000Z',
+    });
+    const after = fs.readdirSync(dir).sort().map(f => [f, fs.readFileSync(path.join(dir, f))]);
+    // run-2 adds a new summary + a new ledger version — quarantine files and
+    // ledger quarantine entries must be byte-identical (single evidence).
+    assert.strictEqual(fs.readdirSync(dir).filter(f => f.startsWith('quarantine-')).length, 1);
+    const latestLedger = JSON.parse(
+        fs.readFileSync(path.join(dir, fs.readdirSync(dir).filter(f => f.startsWith('store-state-')).sort().pop()), 'utf8')
+    );
+    assert.deepStrictEqual(Object.keys(latestLedger.quarantines), ['3901023:E011']);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+    void before;
+    void after;
+});

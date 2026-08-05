@@ -55,7 +55,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。220 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。249 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -76,9 +76,9 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  220 项 staging 测试（58 retention 故障注入/篡改 + 57 source verification +
-  70 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试] + 15
-  converter + 20 CLI；运行时计数 = node --test # pass，与静态 test() 声明
+  249 项 staging 测试（79 retention 故障注入/篡改 + 57 source verification +
+  70 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试] + 17
+  converter + 23 CLI；运行时计数 = node --test # pass，与静态 test() 声明
   的差异仅来自循环生成测试）+ 347 项 legacy FotMob + 769 项 unit 全绿；
   ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
@@ -92,7 +92,11 @@
   （8c48d9ef5 复审）4 项发现（R4-P1-1 多 pair archive 的 entry 级
   payload/manifest member selector、R4-P2-1 数组结构化垃圾保持 E001
   而非 E007、R4-P3-1 PROJECT_STATUS 旧段落替换、R4-P3-2 GNU L 记录
-  尾部 NUL 剥离）也全部离线修复并补回归测试（220 项 staging 测试全绿）；
+  尾部 NUL 剥离）也全部离线修复并补回归测试（249 项 staging 测试全绿，含
+  round-6 的 5 项发现修复：R6-P1-1 validate 失败退出码、R6-P1-2 observed
+  球队必填 + artifact 身份语义、R6-P2-1 导出 API 严格类型合同、R6-P2-2
+  quarantine key/entry/file/summary 语义三方绑定、R6-P3-1 archive
+  input gate 非重叠检查）；
   零网络、零数据库、零采集、无 migration；PR 保持
   Draft、未合并，等待外部独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并

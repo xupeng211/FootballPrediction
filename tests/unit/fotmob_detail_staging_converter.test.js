@@ -394,3 +394,39 @@ test('R4-P2-1: array payload/manifest keep the P2-4 schema classification (E001)
     });
     assert.strictEqual(okResult.results[0].ok, true);
 });
+
+test('R6-P1-2a: payloads with EMPTY observed home/away teams are rejected (E007 identity binding), not accepted', async () => {
+    // Codex round-6 finding: observed team names were only compared when
+    // truthy — `observed_identity: { home_team: '', away_team: '' }` skipped
+    // the binding and produced an accepted artifact with empty observed teams.
+    const pair = buildPair({
+        observed: {
+            home_team: '',
+            away_team: '',
+        },
+    });
+    const result = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.terminal_state, 'REJECTED_IDENTITY_INCONSISTENT');
+    assert.strictEqual(result.error_code, 'E007');
+    assert.ok(
+        result.errors.some(e => /observed_identity home_team\/away_team required/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+test('R6-P1-2b (legal control): payloads with present observed teams still convert and commit', async () => {
+    const pair = buildPair();
+    const result = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.artifact.observed_identity.home_team, 'AFC Bournemouth');
+    assert.strictEqual(result.artifact.observed_identity.away_team, 'Leicester City');
+});

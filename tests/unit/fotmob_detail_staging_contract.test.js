@@ -997,3 +997,54 @@ test('P2-4: the L1 message names the actual received type of each side', () => {
         JSON.stringify(validation.errors)
     );
 });
+
+test('R6-P1-2b: validateStagingArtifact rejects an artifact whose observed teams are empty (identity semantics)', async () => {
+    // Codex round-6 finding (part 2): the artifact validator must enforce the
+    // same identity semantics the converter enforces — an artifact whose
+    // observed_identity teams are empty must never validate.
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(ok.ok, true);
+    const tampered = {
+        ...ok.artifact,
+        observed_identity: { ...ok.artifact.observed_identity, home_team: '', away_team: '' },
+    };
+    const validation = validateStagingArtifact(tampered);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => e.includes('observed_identity.home_team required')));
+    assert.ok(validation.errors.some(e => e.includes('observed_identity.away_team required')));
+});
+
+test('R6-P1-2c: validateStagingArtifact rejects an artifact whose observed_match_id contradicts source_match_id', async () => {
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    const tampered = {
+        ...ok.artifact,
+        observed_identity: { ...ok.artifact.observed_identity, observed_match_id: '9999999' },
+    };
+    const validation = validateStagingArtifact(tampered);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => e.includes('observed_identity.observed_match_id must equal source_match_id')));
+});
+
+test('R6-P1-2d (legal control): a converter-built artifact passes the identity semantics', async () => {
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    const validation = validateStagingArtifact(ok.artifact);
+    assert.strictEqual(validation.ok, true, validation.errors.join('; '));
+});
