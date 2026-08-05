@@ -487,9 +487,10 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 324 staging unit tests (114 retention incl. fault-injection and
-tamper + 79 source verification [75 + 4 R17-P2-1 PAX size-override regressions
-(a/b/c/d)] + 89 contract [54 declared + 16 loop-generated
+Test counts: 330 staging unit tests (117 retention incl. fault-injection and
+tamper [114 + 3 R18-P2-1 short-write injections (a/b/c)] + 82 source
+verification [75 + 4 R17-P2-1 PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX
+merge-semantics (e/f/g)] + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
@@ -657,6 +658,32 @@ a future maintainer to resurrect an unsafe cache) is gone; V34f now asserts
 the plain mutable return. R17-P3-2 (non-blocking): stale "once per package
 per run" comments corrected to per-entry in the source docstring, the CLI
 loader block, and this document. Counts synced to 324.
+Codex round-18 (head 8f1113b5a, 24 commits) rechecked R17 fully RESOLVED and
+found 1 new blocking P2 — R18-P2-1: `writeJsonAtomically` ignored the return
+count of `fs.writeSync(fd, bytes)`, which may legally be a SHORT write; a
+truncated tmp could then be fsynced, renamed and reported written:true while
+the artifact or commit marker carried partial content (validate would only
+discover it later, leaving an un-committable store — violating "marker is
+the only commit point, failure rolls back"). Fixed: the buffer write loops
+until the whole document is persisted, and a non-integer/zero/negative
+(no-progress) or overshooting return throws SAFETY_ERROR through the
+existing cleanup (unlink tmp, rethrow) — the marker is never written on a
+failed persistence. The store-lock PID write got the same loop (a truncated
+PID could make isHolderAlive() misjudge a LIVE holder as dead and clear its
+lock), and an acquire-time write failure now removes our OWN lock file
+instead of leaving an unresolvable empty lock that would fail-close every
+future commit. Regressions via the REAL production paths: R18-P2-1a (1-byte
+short writes loop to a full artifact + marker, store validates clean),
+R18-P2-1b (zero-progress fails closed on writeJsonAtomically AND an
+end-to-end commit — no tmp, no file, no marker, no lock residue), R18-P2-1c
+(no-progress landing exactly on the commit-marker write rolls back every
+written file). Codex's non-blocking suggestion was also taken: three
+production inspectArchive regressions locking the PAX merge semantics —
+R17-P2-1e (consecutive x headers accumulate: path from the first, size from
+the second), R17-P2-1f (a pending size override survives a GNU long-name
+record, x(size) → L → member), R17-P2-1g (a PAX record before a directory
+member is consumed by it — no dangling, following member intact). Counts
+synced to 330.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

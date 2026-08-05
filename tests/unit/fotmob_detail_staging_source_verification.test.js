@@ -1637,6 +1637,78 @@ test('R17-P2-1d: a DANGLING PAX size record at end-of-archive fails closed (no m
     );
 });
 
+test('R17-P2-1e: consecutive PAX x headers accumulate — path from the first, size from the second (GNU tar merge)', () => {
+    const dir = tmpDir('fotmob-ver-pax-x-x-');
+    const archive = path.join(dir, 'pax-x-x.tar.gz');
+    // Two extended headers in a row: the records MERGE for the next member
+    // (GNU tar applies the accumulated records to the next file entry; a
+    // later record wins) — path from the first x header, size from the
+    // second, both consumed by the one member that follows.
+    const pathPax = paxRecordFor('path', 'merged.bin');
+    const sizePax = paxRecordFor('size', '4');
+    const block1 = rawTarBlock(rawTarHeader('', 'x', pathPax.length), Buffer.from(pathPax, 'utf8'));
+    const block2 = rawTarBlock(rawTarHeader('', 'x', sizePax.length), Buffer.from(sizePax, 'utf8'));
+    const fileBlock = rawTarBlock(rawTarHeader('raw.bin', '0', 0), Buffer.from('data', 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([block1, block2, fileBlock, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    const member = inspected.members.find(m => m.name === 'merged.bin');
+    assert.ok(member, 'path from the first x header applies');
+    assert.strictEqual(member.size, 4);
+    assert.strictEqual(
+        member.sha256,
+        crypto.createHash('sha256').update('data').digest('hex'),
+        'size from the second x header applies to content bounds and hash'
+    );
+});
+
+test('R17-P2-1f: a pending PAX size override survives a GNU long-name record (x(size) → L → member)', () => {
+    const dir = tmpDir('fotmob-ver-pax-l-size-');
+    const archive = path.join(dir, 'pax-l-size.tar.gz');
+    // The size override arrives BEFORE the GNU long-name record; it must
+    // stay pending across the L metadata record and apply to the real
+    // member that follows (GNU tar merge semantics), while the member NAME
+    // comes from the L record.
+    const longName = 'nested/deep/dir/a-very-long-member-name-that-overflows-the-100-byte-name-field.json';
+    const sizePax = paxRecordFor('size', '6');
+    const xBlock = rawTarBlock(rawTarHeader('', 'x', sizePax.length), Buffer.from(sizePax, 'utf8'));
+    const lName = `${longName}\0`;
+    const lBlock = rawTarBlock(rawTarHeader('', 'L', Buffer.byteLength(lName)), Buffer.from(lName, 'utf8'));
+    const fileBlock = rawTarBlock(rawTarHeader('short', '0', 0), Buffer.from('abcdef', 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([xBlock, lBlock, fileBlock, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    const member = inspected.members.find(m => m.name === longName);
+    assert.ok(member, 'GNU long name applies after the PAX record');
+    assert.strictEqual(member.size, 6);
+    assert.strictEqual(
+        member.sha256,
+        crypto.createHash('sha256').update('abcdef').digest('hex'),
+        'pending size override applies after the L record'
+    );
+});
+
+test('R17-P2-1g: a PAX record before a DIRECTORY member is consumed by it (no dangling, following member intact)', () => {
+    const dir = tmpDir('fotmob-ver-pax-dir-');
+    const archive = path.join(dir, 'pax-dir.tar.gz');
+    // A local-PAX record (path override + size=0) immediately before a
+    // directory entry: the directory consumes the pending metadata (no
+    // dangling error), has no content hash, and the member that follows is
+    // parsed intact with the correct effective size.
+    const paxBytes = Buffer.from(paxRecordFor('path', 'assets/') + paxRecordFor('size', '0'), 'utf8');
+    const xBlock = rawTarBlock(rawTarHeader('', 'x', paxBytes.length), paxBytes);
+    const dirBlock = rawTarBlock(rawTarHeader('assets', '5', 0), null);
+    const fileBlock = rawTarBlock(rawTarHeader('assets/logo.json', '0', 2), Buffer.from('{}', 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([xBlock, dirBlock, fileBlock, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    const member = inspected.members.find(m => m.name === 'assets/logo.json');
+    assert.ok(member, 'member after the directory is present');
+    assert.strictEqual(member.size, 2);
+    assert.strictEqual(
+        member.sha256,
+        crypto.createHash('sha256').update('{}').digest('hex'),
+        'following member parsed with the correct content'
+    );
+});
+
 test('R11-P3-3a: PAX path records are split at BYTE boundaries — a legal non-ASCII path is accepted', () => {
     const dir = tmpDir('fotmob-ver-pax-utf8-');
     const archive = path.join(dir, 'pax-utf8.tar.gz');

@@ -287,7 +287,28 @@ function writeJsonAtomically(filePath, doc, options = {}) {
         // keeps the publish on one filesystem (no cross-device copy window).
         fd = fileSystem.openSync(tmp, 'wx');
         try {
-            fileSystem.writeSync(fd, bytes);
+            // R18-P2-1 (Codex round 18): fs.writeSync may legally return a
+            // SHORT write — fewer bytes than requested. The return count was
+            // previously ignored, so a truncated tmp could be fsynced,
+            // renamed and reported written:true while the artifact or the
+            // commit marker carried partial content (validate would only
+            // discover the mismatch later, leaving an un-committable store).
+            // Loop until the whole buffer is written; a non-integer, zero or
+            // negative return (no progress) or an overshoot is an immediate
+            // failure through the existing cleanup (unlink tmp, rethrow) —
+            // the marker stays the single commit point, never written on a
+            // failed persistence.
+            let written = 0;
+            while (written < bytes.length) {
+                const n = fileSystem.writeSync(fd, bytes, written, bytes.length - written);
+                if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0 || n > bytes.length - written) {
+                    throw Object.assign(
+                        new Error(`short write made no progress while writing: ${abs}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+                written += n;
+            }
             fileSystem.fsyncSync(fd);
         } finally {
             fileSystem.closeSync(fd);
@@ -437,10 +458,42 @@ function withStoreLock(outputRoot, fsImpl, work) {
     const acquire = () => {
         try {
             lockFd = fsImpl.openSync(lockPath, 'wx');
-            fsImpl.writeSync(lockFd, String(process.pid));
+            // R18-P2-1 (Codex round 18): same short-write discipline as
+            // writeJsonAtomically — a truncated PID in the lock file could
+            // make isHolderAlive() misjudge a LIVE holder as dead and clear
+            // its lock. Loop until the full PID is written; no-progress
+            // fails the acquisition.
+            const pidBytes = Buffer.from(String(process.pid));
+            let pidWritten = 0;
+            while (pidWritten < pidBytes.length) {
+                const n = fsImpl.writeSync(lockFd, pidBytes, pidWritten, pidBytes.length - pidWritten);
+                if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0 || n > pidBytes.length - pidWritten) {
+                    throw Object.assign(
+                        new Error(`short write made no progress while writing the store lock: ${lockPath}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+                pidWritten += n;
+            }
         } catch (error) {
             if (error && error.code === 'EEXIST') {
                 return false;
+            }
+            // R18-P2-1: the lock was CREATED by us ('wx') — a failed write
+            // leaves an EMPTY or partial lock that parseInt cannot resolve,
+            // which isHolderAlive() then treats as held forever (permanent
+            // fail-closed, no auto-recovery). Since no other process can
+            // hold it (EEXIST would have returned above), remove our own
+            // lock before propagating the failure.
+            try {
+                fsImpl.closeSync(lockFd);
+            } catch {
+                /* best effort */
+            }
+            try {
+                fsImpl.unlinkSync(lockPath);
+            } catch {
+                /* best effort — a stale lock is recovered on the next commit */
             }
             throw error;
         }

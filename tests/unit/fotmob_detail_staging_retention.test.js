@@ -631,6 +631,104 @@ test('F5: atomic rename failure fails the commit with no staged residue', () => 
     assertDirEmpty(dir);
 });
 
+// R18-P2-1 (Codex round 18): fs.writeSync may LEGALLY return a short
+// write (fewer bytes than requested). The old code ignored the return
+// count, so a truncated tmp could be fsynced, renamed and reported
+// written:true while the artifact or marker carried partial content.
+// The fix loops the buffer write until the whole document is persisted;
+// the wrappers below inject both failure modes through the REAL
+// production paths (writeJsonAtomically / commitObservations).
+function shortWritingFs(maxBytesPerCall) {
+    const wrapped = { ...fs };
+    wrapped.writeSync = (fd, buffer, offset = 0, length = buffer.length) => {
+        if (maxBytesPerCall <= 0) return 0; // zero-progress (fail closed)
+        return fs.writeSync(fd, buffer, offset, Math.min(length, maxBytesPerCall));
+    };
+    return wrapped;
+}
+
+test('R18-P2-1a: fs.writeSync short writes are looped until the FULL document is persisted (artifact AND marker)', () => {
+    const dir = tmpDir('fotmob-r18-shortwrite-');
+    // Every Buffer write delegates only 1 byte per call — a legal short
+    // write. Pre-fix this truncated every artifact to 1 byte and left a
+    // marker claiming the full-size SHA; post-fix the loop persists the
+    // complete document and the store validates clean.
+    const s = commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+        fsImpl: shortWritingFs(1),
+    });
+    assert.strictEqual(s.schema_version, 'fotmob-detail-staging-summary/v1');
+    const entries = fs.readdirSync(dir);
+    assert.ok(entries.includes('commit-1.json'), 'marker written');
+    for (const name of entries) {
+        assert.ok(fs.readFileSync(path.join(dir, name)).length > 0, `file ${name} is non-empty`);
+    }
+    // The marker binds the exact full-file hashes → the validator passes.
+    const validation = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(validation.ok, true);
+});
+
+test('R18-P2-1b: a zero-progress writeSync fails closed (no tmp, no file, no marker)', () => {
+    const dir = tmpDir('fotmob-r18-noprogress-');
+    const zeroFs = shortWritingFs(0);
+    // Direct writeJsonAtomically: the tmp is created, the first write
+    // makes no progress → SAFETY_ERROR, tmp cleaned up, target never
+    // appears.
+    const target = path.join(dir, 'x.json');
+    assert.throws(
+        () => writeJsonAtomically(target, { a: 1 }, { repositoryRoot: REPO_ROOT, fsImpl: zeroFs }),
+        err => err.code === 'SAFETY_ERROR' && /short write made no progress/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+    // End-to-end commit: the first artifact write fails closed; no
+    // marker is ever written and the store stays empty.
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+                fsImpl: shortWritingFs(0),
+            }),
+        err => err.code === 'SAFETY_ERROR' && /short write made no progress/.test(err.message)
+    );
+    assertDirEmpty(dir);
+});
+
+test('R18-P2-1c: a zero-progress writeSync on the COMMIT MARKER fails closed and rolls back every written file', () => {
+    const dir = tmpDir('fotmob-r18-markershort-');
+    // The marker document's first chunk carries its schema string; every
+    // other document keeps persisting normally, so the no-progress
+    // failure lands EXACTLY on the marker write — the only commit point.
+    const markerKillingFs = { ...fs };
+    markerKillingFs.writeSync = (fd, buffer, offset = 0, length = buffer.length) => {
+        if (buffer.subarray(0, 128).toString('utf8').includes('fotmob-detail-staging-commit-marker/v1')) {
+            return 0;
+        }
+        return fs.writeSync(fd, buffer, offset, length);
+    };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+                fsImpl: markerKillingFs,
+            }),
+        err => err.code === 'SAFETY_ERROR' && /short write made no progress/.test(err.message)
+    );
+    // No marker → no commit point → the artifact/summary/ledger written
+    // before it must all be rolled back (F1 protocol).
+    assertDirEmpty(dir);
+});
 test('F6: quarantine write failure rolls back with no quarantine residue', () => {
     const dir = tmpDir('fotmob-fi-quarantine-');
     const pair = buildPair({
