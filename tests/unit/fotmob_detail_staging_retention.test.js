@@ -729,6 +729,52 @@ test('R18-P2-1c: a zero-progress writeSync on the COMMIT MARKER fails closed and
     // before it must all be rolled back (F1 protocol).
     assertDirEmpty(dir);
 });
+
+test('R19-P2-1: a non-EEXIST openSync failure on the store lock must NOT delete a lock we did not create', () => {
+    const dir = tmpDir('fotmob-r19-lockopen-');
+    // A pre-existing LIVE lock (current pid — the classic live-holder
+    // setup). The injected fsImpl makes openSync on the lock path fail
+    // with EIO BEFORE creating anything; pre-fix the catch unconditionally
+    // unlinked the path, deleting the live holder's lock and letting a
+    // third commit acquire a stolen lock.
+    const lockPath = path.join(dir, '.staging-write.lock');
+    fs.writeFileSync(lockPath, String(process.pid));
+    const eioFs = { ...fs };
+    eioFs.openSync = (p, ...rest) => {
+        if (String(p).endsWith('.staging-write.lock')) {
+            throw Object.assign(new Error('injected EIO on lock open'), { code: 'EIO' });
+        }
+        return fs.openSync(p, ...rest);
+    };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+                fsImpl: eioFs,
+            }),
+        err => err.code === 'EIO'
+    );
+    // The lock we did NOT create must survive intact...
+    assert.strictEqual(fs.readFileSync(lockPath, 'utf8'), String(process.pid));
+    // ...and the next commit with a NORMAL fs still sees the live holder
+    // and fails closed instead of acquiring the stolen lock.
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => /another process holds the store lock/.test(err.message)
+    );
+});
+
 test('F6: quarantine write failure rolls back with no quarantine residue', () => {
     const dir = tmpDir('fotmob-fi-quarantine-');
     const pair = buildPair({

@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-28
+Last updated: 2026-08-06
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -916,9 +916,9 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 330 staging
-  unit tests green (117 retention fault-injection/tamper [114 + 3 R18-P2-1
-  short-write injections (a/b/c)] + 82 source verification [75 + 4 R17-P2-1
+  (no database, no migration). Current test baseline: 331 staging
+  unit tests green (118 retention fault-injection/tamper [114 + 3 R18-P2-1
+  short-write injections (a/b/c) + 1 R19-P2-1 lockCreated regression] + 82 source verification [75 + 4 R17-P2-1
   PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX merge-semantics (e/f/g)] +
   89 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
@@ -936,6 +936,10 @@ legacy-writer execution is authorized.
   events (parser-injected AddedTime/Half minute markers, no id by design)
   recorded as a legal variant. Zero network, zero database, zero capture:
   no new real FotMob request and no real payload/manifest/artifact committed.
+  Per-round Codex remediation timeline (R13–R19, counts 297→331) with
+  per-finding mappings, regression evidence and Production Gate rows:
+  docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
+  this paragraph's remediation narrative is a historical baseline).
 
 - **FotMob detail staging (offline) PR #1817 blocker remediation (Draft,
   unmerged, pending external implementation acceptance)**: all 8 independent

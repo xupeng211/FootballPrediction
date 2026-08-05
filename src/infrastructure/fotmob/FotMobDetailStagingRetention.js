@@ -456,8 +456,16 @@ function withStoreLock(outputRoot, fsImpl, work) {
     const lockPath = path.join(outputRoot, STAGING_LOCK_FILE_NAME);
     let lockFd = null;
     const acquire = () => {
+        // R19-P2-1 (Codex round 19): lockCreated gates EVERY cleanup — the
+        // lock path is only ever touched when openSync('wx') actually
+        // created it. A non-EEXIST openSync failure (I/O, permissions,
+        // fault injection) happens BEFORE creation: the path may belong to
+        // ANOTHER live holder, and unlinking it would break the per-store
+        // exclusivity.
+        let lockCreated = false;
         try {
             lockFd = fsImpl.openSync(lockPath, 'wx');
+            lockCreated = true;
             // R18-P2-1 (Codex round 18): same short-write discipline as
             // writeJsonAtomically — a truncated PID in the lock file could
             // make isHolderAlive() misjudge a LIVE holder as dead and clear
@@ -477,11 +485,18 @@ function withStoreLock(outputRoot, fsImpl, work) {
             }
         } catch (error) {
             if (error && error.code === 'EEXIST') {
+                // The lock already existed when openSync failed — we did
+                // NOT create it; report contention for the holder check.
                 return false;
             }
-            // R18-P2-1: the lock was CREATED by us ('wx') — a failed write
-            // leaves an EMPTY or partial lock that parseInt cannot resolve,
-            // which isHolderAlive() then treats as held forever (permanent
+            if (!lockCreated) {
+                // openSync failed before creating the lock: the path is not
+                // ours — never close/unlink it.
+                throw error;
+            }
+            // The lock was CREATED by us ('wx') — a failed write leaves an
+            // EMPTY or partial lock that parseInt cannot resolve, which
+            // isHolderAlive() then treats as held forever (permanent
             // fail-closed, no auto-recovery). Since no other process can
             // hold it (EEXIST would have returned above), remove our own
             // lock before propagating the failure.

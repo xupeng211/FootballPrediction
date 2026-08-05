@@ -487,8 +487,9 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 330 staging unit tests (117 retention incl. fault-injection and
-tamper [114 + 3 R18-P2-1 short-write injections (a/b/c)] + 82 source
+Test counts: 331 staging unit tests (118 retention incl. fault-injection and
+tamper [114 + 3 R18-P2-1 short-write injections (a/b/c) + 1 R19-P2-1
+lockCreated regression] + 82 source
 verification [75 + 4 R17-P2-1 PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX
 merge-semantics (e/f/g)] + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
@@ -684,6 +685,25 @@ the second), R17-P2-1f (a pending size override survives a GNU long-name
 record, x(size) → L → member), R17-P2-1g (a PAX record before a directory
 member is consumed by it — no dangling, following member intact). Counts
 synced to 330.
+Codex round-19 (head 5b2166c79, 25 commits) rechecked R18 fully RESOLVED and
+found 1 new blocking P2 + 1 non-blocking P3 — R19-P2-1: the R18 acquire-time
+lock cleanup unlinked the lock path on ANY non-EEXIST openSync failure,
+even when the failure happened BEFORE the lock was created (I/O error,
+permission error, fault injection) — that path could belong to ANOTHER live
+holder, and unlinking it would silently break per-store exclusivity
+(TOCTOU window between failed open and unlink). Fixed: a `lockCreated` flag
+gates every cleanup — the lock path is only ever closed/unlinked when
+openSync('wx') actually created it; EEXIST stays contention (return false,
+touch nothing); any other pre-creation failure rethrows without touching
+the path. Regression R19-P2-1a (a pre-created live lock owned by the
+current pid + injected EIO on openSync for the lock path: the EIO
+propagates, the lock file survives byte-identical, and the next normal
+commit fails closed with "another process holds the store lock" — the live
+holder is never cleared by a failed acquirer). R19-P3-1 (non-blocking):
+docs remediation timelines are now labeled as historical cutoffs and link
+the authoritative current-state document (PROJECT_STATUS.md and
+ACTIVE_MILESTONE.md point to this file for rounds R16–R19; stale "Last
+updated" timestamps refreshed). Counts synced to 331.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

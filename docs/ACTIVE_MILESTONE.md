@@ -56,7 +56,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。330 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。331 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -77,8 +77,8 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  330 项 staging 测试（117 retention 故障注入/篡改（含 3 个 R18-P2-1
-  短写注入回归 a/b/c）+ 82 source verification（含 4 个 R17-P2-1 PAX size
+  331 项 staging 测试（118 retention 故障注入/篡改（含 3 个 R18-P2-1
+  短写注入回归 a/b/c + 1 个 R19-P2-1 lockCreated 回归）+ 82 source verification（含 4 个 R17-P2-1 PAX size
   覆盖回归 a/b/c/d + 3 个 R17-P2-1 PAX 合并语义回归 e/f/g）+
   89 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
@@ -180,6 +180,9 @@
   顺序注释精确收窄为"在 payload/manifest 输入文件 gate/read 前"（归档本身
   在其自有上限下先行 live-inspect —— P3 不阻塞合并）—— 全部离线修复；
   计数同步 315；
+  （本段 remediation 叙述为历史截止点：round-16..19（计数 315→320→324→330→331）
+  的逐轮 finding、映射、回归与 Production Gate 行见权威 current-state 文档
+  docs/data/FOTMOB_CURRENT_STATE.md——当前 head 的完整 Codex 闭环状态以其为准。）
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；
