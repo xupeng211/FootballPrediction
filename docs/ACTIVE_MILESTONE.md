@@ -56,7 +56,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。260 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。310 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -77,11 +77,12 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  307 项 staging 测试（113 retention 故障注入/篡改 + 69 source verification +
-  84 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
+  310 项 staging 测试（113 retention 故障注入/篡改 + 70 source verification +
+  85 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness + 3 个 R12-P3-1 cycle/深度守卫 + 3 个 R13-P2-3 validator
-  深度门 + 1 个 R13-P3-2 proxy 数组拒绝] + 17 converter + 24 CLI；Codex round-8（head
+  深度门 + 1 个 R13-P3-2 proxy 数组拒绝 + 1 个 R14-P3-1 Symbol own key 拒绝]
+  + 17 converter + 25 CLI；Codex round-8（head
   7bbbd7658）2 项新 P2 —— R8-P2-1 isPlainJsonData 严格数组语义
   （非枚举 own toJSON / 空洞 / symbol / 额外 key / 非 Array 原型 / 非有限
   数字全部拒绝，.every() 无法覆盖，direct accepted 与 REPEAT_EQUIVALENT
@@ -147,6 +148,15 @@
   array/object 分派之前（Proxy 数组也结构化 E013 —— 补 1 项回归 +
   合法对照）、R13-P3-3 PROJECT_STATUS.md current-baseline 段 contract
   计数 77→80（含 R12-P3-1）—— 全部离线修复；计数同步 307；
+  Codex round-14（head 35a1409b2，20 个 commit）1 项新 P2 + 2 项新 P3 ——
+  R14-P2-1 payload/manifest 读前大小上限（entry selector 先于任何读取解析，
+  读上限取自 live archive member size（本身受 archive limits 约束）、缺失
+  member 封顶 0，超大外部文件在 fstat 大小门 SAFETY_ERROR 拒绝、读入内存之前
+  —— 补 direct API（R14-P2-1a）+ CLI/build（G57，E008 REJECTED_PROVENANCE_BROKEN
+  批次隔离、零接受）+ 合法对照）、R14-P3-1 isPlainJsonData 与
+  snapshotStrictPlainData 的 object 分支改用 Reflect.ownKeys 拒绝 Symbol own
+  keys（snapshot 不再静默丢弃 —— 补回归 + 合法对照）、R14-P3-2 当前概述
+  计数 260→307 —— 全部离线修复；计数同步 310；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

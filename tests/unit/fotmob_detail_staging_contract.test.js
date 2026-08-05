@@ -26,6 +26,7 @@ const {
     sameInstant,
     isStrictAbsoluteTimestamp,
     isPlainJsonData,
+    snapshotStrictPlainData,
     validateQuarantineRules,
     TERMINAL_STATES,
     ERROR_CODES,
@@ -1268,6 +1269,38 @@ test('R13-P2-3c (legal control): a real converter artifact still validates clean
     const artifact = validArtifact();
     const validation = validateStagingArtifact(artifact);
     assert.strictEqual(validation.ok, true, validation.errors.join('; '));
+});
+
+// ── R14-P3-1 (Codex round 14): object branches refuse Symbol own keys —
+//    isPlainJsonData and snapshotStrictPlainData used
+//    Object.getOwnPropertyNames(), which silently SKIPS symbols (the array
+//    branch already refused them since R8-P2-1) ────────────────────────
+
+test('R14-P3-1: an object with an own Symbol key is refused by isPlainJsonData, snapshotStrictPlainData, and validateStagingArtifact', () => {
+    // a valid artifact augmented with an enumerable own Symbol property —
+    // Object.getOwnPropertyNames() used to skip it, so the object branch
+    // reported "strict plain JSON" while the snapshot silently dropped it
+    const withSymbol = validArtifact();
+    withSymbol[Symbol('unexpected')] = 'hidden';
+    // predicate: same rule as the array branch — a symbol own key is not
+    // plain JSON data
+    assert.strictEqual(isPlainJsonData(withSymbol), false);
+    // snapshot: refuses instead of silently dropping the property
+    assert.throws(
+        () => snapshotStrictPlainData(withSymbol),
+        err => err instanceof TypeError && /symbol own key/.test(err.message)
+    );
+    // direct-API validator: structured rejection, same message family as the
+    // cycle/depth gates
+    const validation = validateStagingArtifact(withSymbol);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => /strict plain JSON data/.test(e)),
+        JSON.stringify(validation.errors)
+    );
+    // legal control: the identical artifact WITHOUT the symbol still passes
+    const clean = validateStagingArtifact(validArtifact());
+    assert.strictEqual(clean.ok, true, clean.errors.join('; '));
 });
 
 // ── R13-P3-2 (Codex round 13): scanProhibitedContent refuses a

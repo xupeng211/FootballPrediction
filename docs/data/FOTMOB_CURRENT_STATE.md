@@ -484,12 +484,13 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 307 staging unit tests (113 retention incl. fault-injection and
-tamper + 69 source verification + 84 contract [54 declared + 16 loop-generated
+Test counts: 310 staging unit tests (113 retention incl. fault-injection and
+tamper + 70 source verification + 85 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
-R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal] + 17 converter
-+ 24 CLI;
+R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
+R14-P3-1 symbol own key refusal] + 17 converter
++ 25 CLI;
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
 on the remediation head; ESLint clean. Codex round-8 (head 7bbbd7658) found 2
@@ -575,6 +576,17 @@ proxy-wrapped values BEFORE the array/object dispatch, so a Proxy ARRAY is
 a structured E013 too; 1 regression + legal control), R13-P3-3
 (PROJECT_STATUS.md current-baseline contract count corrected 77→80);
 counts synced to 307.
+Codex round-14 (head 35a1409b2, 20 commits) found 1 new P2 + 2 new P3 —
+R14-P2-1: payload/manifest reads are now capped by their LIVE ARCHIVE MEMBER
+size before the read (entry selectors resolved first; missing member caps at
+0 — an external file larger than the tar member is refused with SAFETY_ERROR
+at the fstat size gate before its bytes are allocated; direct-API regression
+R14-P2-1a + CLI/build regression G57 asserting E008 REJECTED_PROVENANCE_BROKEN
+batch isolation with zero accepts + legal control), R14-P3-1: isPlainJsonData
+and snapshotStrictPlainData object branches now use Reflect.ownKeys to refuse
+Symbol own keys (snapshot never silently drops them; regression + legal
+control), R14-P3-2: ACTIVE_MILESTONE current-overview count corrected
+260→307; counts synced to 310.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

@@ -911,7 +911,10 @@ test('V31 (P0-1): external payload copy differing from the archive member is rej
         receiptPath,
     });
     // replace the EXTERNAL payload copy with different bytes (the archive
-    // member is untouched) — must be rejected
+    // member is untouched) — must be rejected. R14-P2-1 (Codex round 14):
+    // the added field also makes the file LARGER than its archive member,
+    // so the member-derived read cap legitimately fires FIRST (the earlier
+    // fail-closed layer); both layers are SAFETY_ERROR.
     const tamperedPayload = Buffer.from(JSON.stringify({ ...pair.payload, extra: 'tampered' }, null, 2) + '\n', 'utf8');
     fs.writeFileSync(archiveInfo.payloadFile, tamperedPayload);
     const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
@@ -925,7 +928,7 @@ test('V31 (P0-1): external payload copy differing from the archive member is rej
             outputRoot: path.join(dir, 'out'),
             options: { repositoryRoot: REPO_ROOT },
         }),
-        err => err.code === 'SAFETY_ERROR' && /payload file sha256/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /payload file sha256|input file exceeds the size limit/.test(err.message)
     );
 });
 
@@ -947,6 +950,8 @@ test('V32 (P0-1): external manifest copy differing from the archive member is re
     const tamperedManifest = Buffer.from(JSON.stringify({ ...pair.manifest, extra: 'tampered' }, null, 2) + '\n', 'utf8');
     fs.writeFileSync(archiveInfo.manifestFile, tamperedManifest);
     const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    // R14-P2-1: the tampered file is larger than its member, so the
+    // member-derived read cap fires first; both layers are SAFETY_ERROR.
     assert.throws(
         () => verifyEntryAgainstReceipt({
             entry: { package: 'pkg-mandiff' },
@@ -957,7 +962,7 @@ test('V32 (P0-1): external manifest copy differing from the archive member is re
             outputRoot: path.join(dir, 'out'),
             options: { repositoryRoot: REPO_ROOT },
         }),
-        err => err.code === 'SAFETY_ERROR' && /manifest file sha256/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /manifest file sha256|input file exceeds the size limit/.test(err.message)
     );
 });
 
@@ -978,6 +983,9 @@ test('V33 (P0-1): entry bound to the wrong package is rejected', () => {
     });
     // entry claims package pkg-a but points its files at package pkg-b's pair
     const bindingA = { sha256: archiveA.archiveSha256, path: archiveA.archivePath, receipt: receiptPathA };
+    // R14-P2-1: if pair B's files happen to exceed member A's sizes the
+    // member-derived read cap fires first; otherwise the member-hash
+    // mismatch does — both layers are SAFETY_ERROR.
     assert.throws(
         () => verifyEntryAgainstReceipt({
             entry: { package: 'pkg-a' },
@@ -988,8 +996,64 @@ test('V33 (P0-1): entry bound to the wrong package is rejected', () => {
             outputRoot: path.join(dir, 'out'),
             options: { repositoryRoot: REPO_ROOT },
         }),
-        err => err.code === 'SAFETY_ERROR' && /payload file sha256|manifest file sha256/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /payload file sha256|manifest file sha256|input file exceeds the size limit/.test(err.message)
     );
+});
+
+// ── R14-P2-1 (Codex round 14): payload/manifest read pre-cap derived from
+//    the LIVE ARCHIVE MEMBER size — an external file larger than its member
+//    is refused at the fstat size gate BEFORE the read ─────────────────
+
+test('R14-P2-1a: an external payload file larger than its live archive member is refused by the size gate before the SHA comparison', () => {
+    const dir = tmpDir('fotmob-r14-p2-1a-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-r14-p2-1a',
+    });
+    const receiptPath = path.join(dir, 'receipt.json');
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-r14-p2-1a',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath,
+    });
+    // The archive member is untouched; the EXTERNAL copy is padded well
+    // beyond the member size. The read cap is derived from the LIVE member
+    // (itself bounded by the archive limits), so the file must be refused
+    // with SAFETY_ERROR at the fstat size gate — before any SHA comparison,
+    // i.e. before the oversized bytes are ever allocated into memory.
+    const oversizedPayload = Buffer.concat([
+        fs.readFileSync(archiveInfo.payloadFile),
+        Buffer.from('\n'.repeat(4096), 'utf8'),
+    ]);
+    fs.writeFileSync(archiveInfo.payloadFile, oversizedPayload);
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-r14-p2-1a' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /input file exceeds the size limit/.test(err.message)
+    );
+    // legal control: restoring the exact member-size copy goes through clean
+    fs.writeFileSync(archiveInfo.payloadFile, pair.payloadBytes);
+    const loaded = verifyEntryAgainstReceipt({
+        entry: { package: 'pkg-r14-p2-1a' },
+        payloadFile: archiveInfo.payloadFile,
+        manifestFile: archiveInfo.manifestFile,
+        binding,
+        receipt,
+        outputRoot: path.join(dir, 'out'),
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.strictEqual(loaded.payloadFileSha256, receipt.members[archiveInfo.payloadMember]);
 });
 
 test('V34 (P0-1): archive_inventory_sha256 is required in the receipt schema', () => {

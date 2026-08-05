@@ -905,6 +905,21 @@ function verifyEntryAgainstReceipt(args = {}) {
 
     // Extracted input files: safe + live SHA equals the receipt member SHA
     // AND the live archive member hash (both directions).
+    // R4-P1-1: a receipt declares ONE payload_member / manifest_member, but a
+    // single archive/package can hold MANY pairs. The source-index ENTRY may
+    // carry its own payload_member / manifest_member selectors — use them
+    // when present so each entry of the same package compares against ITS
+    // archive member (both in the receipt hash map and in the live archive);
+    // entries without selectors fall back to the receipt's global selectors
+    // (single-pair receipts keep working; a second pair without selectors
+    // still fails closed on the member-hash mismatch below).
+    // The selectors are resolved BEFORE any file read so the read bound
+    // below can come from the VERIFIED archive, never from the input file.
+    const payloadMember = String(entry.payload_member || receipt.payload_member || '');
+    const manifestMember = String(entry.manifest_member || receipt.manifest_member || '');
+    const liveByName = new Map(inspected.members.map(m => [m.name, m]));
+    const livePayload = liveByName.get(payloadMember);
+    const liveManifest = liveByName.get(manifestMember);
     const payloadAbs = verifyRepositoryExternalRegularFile(args.payloadFile, options);
     const manifestAbs = verifyRepositoryExternalRegularFile(args.manifestFile, options);
     if (outputRoot) {
@@ -915,23 +930,26 @@ function verifyEntryAgainstReceipt(args = {}) {
     // P1-4: payload/manifest bytes come from no-follow fds with dev/inode
     // identity checks — the bytes hashed are the same inodes that were
     // verified, and a mid-run swap of either file fails closed.
-    const payloadBytes = readFileSafeNoFollow(payloadAbs, { fsImpl: fileSystem }).bytes;
-    const manifestBytes = readFileSafeNoFollow(manifestAbs, { fsImpl: fileSystem }).bytes;
+    // R14-P2-1 (Codex round 14): the extracted files are bounded by THEIR
+    // LIVE ARCHIVE MEMBER SIZE before the read — an external file far larger
+    // than the tar member would otherwise be fully allocated into memory
+    // before the SHA comparison failed (R12/R13 caps cover the archive, not
+    // the extracted files). Member sizes are themselves bounded by the
+    // archive limits (maxMemberBytes / maxTotalMemberBytes), so the cap is
+    // derived from the verified archive, never from the attacker's file. A
+    // missing member caps at 0 — any non-empty file fails the size gate, an
+    // empty one proceeds to the member-hash mismatch below; both fail closed
+    // without allocating attacker-controlled bytes.
+    const payloadBytes = readFileSafeNoFollow(payloadAbs, {
+        fsImpl: fileSystem,
+        maxBytes: livePayload ? livePayload.size : 0,
+    }).bytes;
+    const manifestBytes = readFileSafeNoFollow(manifestAbs, {
+        fsImpl: fileSystem,
+        maxBytes: liveManifest ? liveManifest.size : 0,
+    }).bytes;
     const payloadSha = sha256Hex(payloadBytes);
     const manifestSha = sha256Hex(manifestBytes);
-    // R4-P1-1: a receipt declares ONE payload_member / manifest_member, but a
-    // single archive/package can hold MANY pairs. The source-index ENTRY may
-    // carry its own payload_member / manifest_member selectors — use them
-    // when present so each entry of the same package compares against ITS
-    // archive member (both in the receipt hash map and in the live archive);
-    // entries without selectors fall back to the receipt's global selectors
-    // (single-pair receipts keep working; a second pair without selectors
-    // still fails closed on the member-hash mismatch below).
-    const payloadMember = String(entry.payload_member || receipt.payload_member || '');
-    const manifestMember = String(entry.manifest_member || receipt.manifest_member || '');
-    const liveByName = new Map(inspected.members.map(m => [m.name, m]));
-    const livePayload = liveByName.get(payloadMember);
-    const liveManifest = liveByName.get(manifestMember);
     if (payloadSha !== receipt.members[payloadMember] || (livePayload && payloadSha !== livePayload.sha256)) {
         throw Object.assign(
             new Error(

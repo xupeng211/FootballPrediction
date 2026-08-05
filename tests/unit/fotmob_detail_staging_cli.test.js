@@ -729,3 +729,80 @@ test('R6-P3-1a: build rejects an archive located INSIDE the output root at the i
         'no commit, no ledger, no summary, no observation may appear'
     );
 });
+
+test('G57 (R14-P2-1): build refuses an external payload file larger than its live archive member (size gate before the read)', async () => {
+    // Codex round-14 finding: the extracted payload/manifest files had no
+    // pre-read size cap — a source index pointing payload_file at a file far
+    // larger than the corresponding tar member was fully read into memory
+    // before the SHA comparison failed. The cap is derived from the LIVE
+    // archive member size (itself bounded by the archive limits), so the
+    // loader refuses the oversized file at the fstat size gate — before the
+    // oversized bytes are ever allocated. The batch model folds the refusal
+    // into an E008 REJECTED_PROVENANCE_BROKEN entry (one bad input never
+    // crashes the batch, and never enters the store): the build completes
+    // with zero accepts and the summary records the E008 provenance refusal.
+    // The message-level discriminator ('input file exceeds the size limit'
+    // vs a late SHA mismatch) is asserted in R14-P2-1a on the SAME
+    // production function the loader calls (verifyEntryAgainstReceipt).
+    const dir = tmpDir('fotmob-cli-r14-p2-1-');
+    const pair = buildPair();
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'ten-match' });
+    writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'ten-match',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const indexFile = path.join(dir, 'source-index.json');
+    fs.writeFileSync(
+        indexFile,
+        JSON.stringify(
+            buildSourceIndexFromArchive([{ sourceMatchId: '3901023', pair }], archiveInfo, {
+                packageId: 'ten-match',
+                receiptPath: path.join(dir, 'receipt.json'),
+            }),
+            null,
+            2
+        ) + '\n'
+    );
+    const outputRoot = path.join(dir, 'out');
+    // pad the EXTERNAL payload copy beyond its member size (the archive is
+    // untouched) — the member-derived cap fires before the SHA comparison
+    const oversized = Buffer.concat([
+        fs.readFileSync(archiveInfo.payloadFile),
+        Buffer.from('\n'.repeat(4096), 'utf8'),
+    ]);
+    fs.writeFileSync(archiveInfo.payloadFile, oversized);
+    const refused = await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    assert.strictEqual(refused.status, 'complete');
+    assert.strictEqual(refused.accepted_new_count, 0);
+    assert.strictEqual(refused.rejected_count, 1);
+    assert.strictEqual(refused.zero_network, true);
+    assert.strictEqual(refused.zero_database, true);
+    // nothing from the oversized input may enter the store: no observation,
+    // and the summary must record the E008 provenance refusal
+    const rootFiles = fs.readdirSync(outputRoot);
+    assert.strictEqual(rootFiles.filter(f => f.startsWith('observation-')).length, 0);
+    const summaryFile = rootFiles.find(f => f.startsWith('summary-') && f.endsWith('.json'));
+    assert.ok(summaryFile, 'summary must exist for the completed build');
+    const summary = JSON.parse(fs.readFileSync(path.join(outputRoot, summaryFile), 'utf8'));
+    assert.deepStrictEqual(
+        summary.business_projection.observations[0],
+        {
+            source_match_id: '3901023',
+            terminal_state: 'REJECTED_PROVENANCE_BROKEN',
+            reason: 'rejected',
+            error_code: 'E008',
+        }
+    );
+    // legal control: restoring the exact member-size copy → the build succeeds
+    fs.writeFileSync(archiveInfo.payloadFile, pair.payloadBytes);
+    const result = await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    assert.strictEqual(result.status, 'complete');
+    assert.strictEqual(result.accepted_new_count, 1);
+    assert.strictEqual(result.rejected_count, 0);
+    assert.strictEqual(result.zero_network, true);
+    assert.strictEqual(result.zero_database, true);
+});

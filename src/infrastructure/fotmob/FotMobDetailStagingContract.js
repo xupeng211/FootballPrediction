@@ -514,7 +514,15 @@ function isPlainJsonData(value, _seen = null, _depth = 0) {
     }
     _seen.add(value);
     try {
-        for (const key of Object.getOwnPropertyNames(value)) {
+        // R14-P3-1 (Codex round 14): Reflect.ownKeys surfaces Symbol keys
+        // that Object.getOwnPropertyNames silently skips — an own Symbol
+        // property is never JSON data (JSON.stringify omits it), so a value
+        // carrying one must not be judged "strict plain JSON". The array
+        // branch already refuses symbols; the object branch now does too.
+        for (const key of Reflect.ownKeys(value)) {
+            if (typeof key !== 'string') {
+                return false;
+            }
             const descriptor = Object.getOwnPropertyDescriptor(value, key);
             if (
                 !descriptor ||
@@ -615,7 +623,14 @@ function snapshotStrictPlainData(value, label = 'value', _seen = null, _depth = 
     _seen.add(value);
     try {
         const out = {};
-        for (const key of Object.getOwnPropertyNames(value)) {
+        // R14-P3-1 (Codex round 14): same Reflect.ownKeys discipline as
+        // isPlainJsonData — an own Symbol key is refused (never copied),
+        // because JSON.stringify would drop it while the strict-plainness
+        // gate must not admit values it cannot serialize verbatim.
+        for (const key of Reflect.ownKeys(value)) {
+            if (typeof key !== 'string') {
+                throw new TypeError(`${label}: symbol own key is not plain JSON data`);
+            }
             const descriptor = Object.getOwnPropertyDescriptor(value, key);
             if (
                 !descriptor ||
