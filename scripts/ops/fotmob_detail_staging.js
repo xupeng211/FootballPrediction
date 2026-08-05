@@ -409,6 +409,57 @@ function resolveExternalAnchor(args, repositoryRoot, outputRoot) {
     return null;
 }
 
+/**
+ * P1-5 MODE_2: compare the store's latest commit-marker SHA — re-hashed from
+ * the PHYSICAL marker file via a no-follow fd read rather than trusting the
+ * validator's report alone — against the external anchor. Returns the
+ * combined outcome so runValidate stays under the ESLint complexity budget.
+ *
+ * @param {string} outputRoot - store root
+ * @param {string|null} anchor - external anchor sha256, or null for MODE_1
+ * @param {object} result - validateOutputRoot result
+ * @param {string} repositoryRoot - repo root (safety gates)
+ * @returns {{authenticityStatus: string, ok: boolean, errors: Array}}
+ */
+function applyAnchorToResult(outputRoot, anchor, result, repositoryRoot) {
+    const errors = [...result.errors];
+    let ok = result.ok;
+    if (anchor === null) {
+        return { authenticityStatus: 'UNANCHORED', ok, errors };
+    }
+    if (!result.latest_marker_sha256) {
+        return {
+            authenticityStatus: 'ANCHOR_MISMATCH',
+            ok: false,
+            errors: [...errors, { code: 'ANCHOR_MISMATCH', message: 'anchor provided but the store has no commit marker' }],
+        };
+    }
+    let physicalMarkerSha = null;
+    try {
+        const markerFile = path.join(outputRoot, markerFileNameForSeq(result.marker_count));
+        physicalMarkerSha = crypto
+            .createHash('sha256')
+            .update(readFileSafeNoFollow(markerFile, { repositoryRoot }).bytes)
+            .digest('hex');
+    } catch {
+        /* reported as mismatch below */
+    }
+    if (physicalMarkerSha !== anchor) {
+        return {
+            authenticityStatus: 'ANCHOR_MISMATCH',
+            ok: false,
+            errors: [
+                ...errors,
+                {
+                    code: 'ANCHOR_MISMATCH',
+                    message: `latest commit marker sha256 ${physicalMarkerSha || 'unreadable'} does not match external anchor ${anchor}`,
+                },
+            ],
+        };
+    }
+    return { authenticityStatus: 'ANCHORED', ok, errors };
+}
+
 async function runValidate(args) {
     const outputRoot = args['output-root'];
     const artifactPath = args.artifact;
@@ -449,43 +500,13 @@ async function runValidate(args) {
     // P1-5 MODE_2: the anchor is compared against the store's latest
     // commit-marker SHA — which we RE-HASH from the physical marker file
     // (no-follow fd read) rather than trusting the validator's report alone.
-    let authenticityStatus = 'UNANCHORED';
-    let ok = result.ok;
-    const errors = [...result.errors];
-    if (anchor !== null) {
-        if (!result.latest_marker_sha256) {
-            authenticityStatus = 'ANCHOR_MISMATCH';
-            ok = false;
-            errors.push({ code: 'ANCHOR_MISMATCH', message: 'anchor provided but the store has no commit marker' });
-        } else {
-            let physicalMarkerSha = null;
-            try {
-                const markerFile = path.join(outputRoot, markerFileNameForSeq(result.marker_count));
-                physicalMarkerSha = crypto
-                    .createHash('sha256')
-                    .update(readFileSafeNoFollow(markerFile, { repositoryRoot }).bytes)
-                    .digest('hex');
-            } catch {
-                /* reported as mismatch below */
-            }
-            if (physicalMarkerSha !== anchor) {
-                authenticityStatus = 'ANCHOR_MISMATCH';
-                ok = false;
-                errors.push({
-                    code: 'ANCHOR_MISMATCH',
-                    message: `latest commit marker sha256 ${physicalMarkerSha || 'unreadable'} does not match external anchor ${anchor}`,
-                });
-            } else {
-                authenticityStatus = 'ANCHORED';
-            }
-        }
-    }
+    const anchored = applyAnchorToResult(outputRoot, anchor, result, repositoryRoot);
     return {
-        status: ok ? 'valid' : 'invalid',
-        ok,
-        errors,
+        status: anchored.ok ? 'valid' : 'invalid',
+        ok: anchored.ok,
+        errors: anchored.errors,
         integrity_status: result.ok ? 'INTACT' : 'VIOLATED',
-        authenticity_status: authenticityStatus,
+        authenticity_status: anchored.authenticityStatus,
         latest_marker_sha256: result.latest_marker_sha256,
         anchor_mode: anchor === null ? 'MODE_1_UNANCHORED' : 'MODE_2_EXTERNALLY_ANCHORED',
         marker_count: result.marker_count,
