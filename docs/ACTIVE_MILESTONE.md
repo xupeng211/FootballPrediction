@@ -42,8 +42,8 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
-- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审）**：
-  纯离线 detail staging converter/validator 已实现并全量测试 ——
+- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审；PR #1817 阻塞问题修复已离线完成）**：
+  独立评审 8 项阻塞问题全部离线修复 —— 纯离线 detail staging converter/validator 已实现并全量测试 ——
   `make data-fotmob-detail-staging-{help,build,validate}`（直接 Node CLI
   `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
   capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
@@ -59,6 +59,27 @@
   marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
   变体（真实 16 场均有 4 个）。零网络、零数据库、零采集、无真实 payload/
   manifest/artifact 提交；PR 保持 Draft、未合并。
+
+  修复内容：F1 逻辑 commit-marker 原子提交/回滚（commit-<seq>.json 为唯一提交点、
+  最后写入、绑定文件列表+sha256 链、回滚只删本次写入文件、residue 扫描 fail-closed）；
+  F2 REPEAT_EQUIVALENT 重建 artifact（business/integrity hash 重算、旧 artifact
+  字节不变）；F3 VERIFIED_PACKAGE_RECEIPT（真实 archive SHA-256 验证 + 纯 Node
+  安全 tar reader、无 child_process，每条 entry 绑定唯一 package）；F4 所有输入
+  类型 symlink-ancestor 检查 + 输入输出非重叠规则；F5 完整 A–E 38 项 validator
+  （无条件深检 + 13 项篡改测试）；F6 LAYER_A observation_id UUIDv5 重算 +
+  generated_at 严格 ISO 等于 source_response_received_at，LAYER_B
+  artifact_integrity_sha256 覆盖除自身外全部字段（7 项篡改测试）；F7 SC-002 状态
+  更正（SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
+  F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
+  EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
+  125 项 staging 测试（25 source verification + 39 retention 故障注入/篡改 +
+  38 contract + 11 converter + 12 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
+  ESLint/Prettier 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
+  RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
+  REPEAT_EQUIVALENT（SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO），
+  三轮 validate 全部 PASS、零 residue。零网络、零数据库、零采集、无 migration；
+  PR 保持 Draft、未合并，等待外部独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器

@@ -925,6 +925,30 @@ legacy-writer execution is authorized.
   recorded as a legal variant. Zero network, zero database, zero capture:
   no new real FotMob request and no real payload/manifest/artifact committed.
 
+- **FotMob detail staging (offline) PR #1817 blocker remediation (Draft,
+  unmerged, pending external implementation acceptance)**: all 8 independent
+  review findings fixed offline — F1 logical commit-marker atomic
+  commit/rollback (marker written last, bound to file list + sha256 chain,
+  rollback removes only this attempt's files, residue scan fail-closed);
+  F2 REPEAT_EQUIVALENT rebuilds the artifact with recomputed hashes (old
+  artifacts byte-untouched); F3 verified package receipts (real archive
+  SHA-256 + safe pure-Node tar reader, every entry bound to one package);
+  F4 symlink-ancestor + input/output non-overlap checks on all input types;
+  F5 full A–E validator (38 checks, unconditional, 13 tamper tests);
+  F6 LAYER_A observation_id/generated_at recomputation + LAYER_B
+  artifact_integrity_sha256 (7 tamper tests); F7 SC-002 status correction
+  (ENFORCEMENT_INFRASTRUCTURE=COMPLETE / STAGING_PRODUCTION_ROLE_DEPLOYMENT=
+  PENDING / PR1817_CHANGES_SC002=NO); F8 Claude post-remediation self-review
+  P0/P1/P2 = 0 with EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and
+  READY_TO_MERGE=NO. 125 staging tests (25 source verification + 39 retention
+  fault-injection/tamper + 38 contract + 11 converter + 12 CLI) + 347 legacy
+  FotMob + 769 unit tests green; ESLint/Prettier clean. 16-match offline
+  revalidation on the fixed archives: RUN_1 16 ACCEPTED_NEW, RUN_2 16
+  REPEAT_EXACT byte-identical, RUN_3 synthetic REPEAT_EQUIVALENT
+  (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO); all stores
+  validate PASS with zero residue. Zero network, zero database, zero capture,
+  no migration; PR stays Draft and unmerged.
+
 ## Next recommended sequence
 
 1. SC-002 closure plan phase0 completed. See `docs/SC002_CLOSURE_PLAN.md` for the
