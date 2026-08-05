@@ -330,6 +330,64 @@ test('quarantine observations write lightweight evidence records (never full pay
     assert.ok(!JSON.stringify(evidence).includes('normalized'));
 });
 
+test('R3-P2-1: re-running the same quarantined input reuses the immutable first evidence recording (idempotent)', () => {
+    const dir = tmpDir('fotmob-ret-quarantine-idem-');
+    const outputRoot = path.join(dir, 'out');
+
+    const pair = buildPair({
+        normalized: {
+            match_external_id: '3901023',
+            home_team: { id: 1, name: 'AFC Bournemouth', score: 0 },
+            away_team: { id: 2, name: 'Leicester City', score: 0 },
+            events: [{ id: 9, minute: 500, homeScore: 0, awayScore: 0, event_kind: 'real_event' }],
+            stats: [{ key: 'shots', homeValue: 0, awayValue: 0, period: 'All' }],
+            lineup: { home: { coach: null, starters: [], subs: [] }, away: { coach: null, starters: [], subs: [] } },
+            shotmap: { shots: [] },
+        },
+    });
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const result = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(result.quarantine_status, 'quarantined');
+
+    // first build: writes the E011 evidence file + ledger entry
+    commitObservations({
+        results: [result],
+        outputRoot,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    // second build of the SAME quarantined input (later wall clock): the
+    // quarantine file name is (source_match_id, error_code) but its content
+    // carries a per-run recorded_at — the R3-P2-1 failure mode was a
+    // divergent OUTPUT_CONFLICT that killed the whole batch. The first
+    // evidence recording is immutable: the re-run must reuse it.
+    const summary2 = commitObservations({
+        results: [result],
+        outputRoot,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T12:05:00.000Z',
+    });
+    const quarantineFiles = fs.readdirSync(outputRoot).filter(f => f.startsWith('quarantine-'));
+    assert.strictEqual(quarantineFiles.length, 1, 'the evidence file is written exactly once');
+    assert.strictEqual(summary2.business_projection.quarantined_count, 1);
+    // the ledger keeps the SAME single quarantine entry (no churn) and the
+    // full validator passes on the twice-built store
+    const validation = validateOutputRoot(outputRoot, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(validation.ok, true, JSON.stringify(validation.errors));
+    const ledgers = fs
+        .readdirSync(outputRoot)
+        .filter(f => f.startsWith('store-state-'))
+        .sort();
+    const latestLedger = JSON.parse(fs.readFileSync(path.join(outputRoot, ledgers[ledgers.length - 1]), 'utf8'));
+    assert.deepStrictEqual(Object.keys(latestLedger.quarantines || {}), ['3901023:E011']);
+});
+
 test('C27: terminal state arithmetic is consistent across the summary', () => {
     const dir = tmpDir('fotmob-ret-arithmetic-');
     const outputRoot = path.join(dir, 'out');

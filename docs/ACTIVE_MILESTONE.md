@@ -44,7 +44,7 @@
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
 - **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审；PR #1817 阻塞问题修复已离线完成）**：
   独立评审 8 项阻塞问题全部离线修复 —— 纯离线 detail staging converter/validator 已实现并全量测试 ——
-  `make data-fotmob-detail-staging-{help,build,validate}`（直接 Node CLI
+  `make data-fotmob-detail-staging-{help,receipt,build,validate}`（直接 Node CLI
   `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
   capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
   快照：5 个 versioned JSONB sections 逐字节保留、直接复用 pipeline 捕获
@@ -55,7 +55,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。209 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。211 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -76,15 +76,21 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  209 项 staging 测试（52 retention 故障注入/篡改 + 55 source verification +
-  70 contract + 13 converter + 19 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
+  211 项 staging 测试（53 retention 故障注入/篡改 + 55 source verification +
+  70 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试] + 14
+  converter + 19 CLI；运行时计数 = node --test # pass，与静态 test() 声明
+  的差异仅来自循环生成测试）+ 347 项 legacy FotMob + 769 项 unit 全绿；
   ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
   REPEAT_EQUIVALENT（SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO），
   三轮 validate 全部 PASS、零 residue。Codex 独立复审 4863122944 的 13 项发现
   （P0-1/P0-2/P1-1..P1-5/P2-1..P2-5/P3-1）已全部离线修复并补回归测试；
-  零网络、零数据库、零采集、无 migration；PR 保持 Draft、未合并，等待外部
-  独立实现验收。
+  Codex 复审轮 2（4863831437）3 项发现、轮 3（4863962003）4 项发现
+  （R3-P1-1 source index source_match_id 身份绑定、R3-P2-1 quarantine
+  证据 (source_match_id, error_code) 键隔离复用 + ledger Object.fromEntries
+  修复、R3-P3-1 ACTIVE_MILESTONE 入口表、R3-P3-2 测试计数核算）也全部离线
+  修复并补回归测试；零网络、零数据库、零采集、无 migration；PR 保持
+  Draft、未合并，等待外部独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器

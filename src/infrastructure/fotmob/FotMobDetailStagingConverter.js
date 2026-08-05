@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 // lifecycle: permanent
@@ -154,6 +155,50 @@ async function convertAll(args = {}) {
                     {
                         code: ERROR_CODES.E008,
                         message: `input load failed: ${error.message}`,
+                    },
+                ],
+            });
+            continue;
+        }
+        // R3-P1-1 (Codex round 3): the source-index entry's source_match_id
+        // MUST bind the loaded documents. The loader verifies archive/receipt
+        // provenance but not the DOCUMENT identity — an index entry writing
+        // `3901024` while referencing a legal, receipt-bound `3901023`
+        // payload would otherwise produce a "complete" build whose ledger and
+        // filenames disagree with the artifacts (only a later validate would
+        // notice). Fail this entry closed: entry id must equal the payload's
+        // AND the manifest's source_match_id. The binding applies only to
+        // documents that actually parsed (null/garbage documents fall through
+        // to the schema classification, preserving P2-4 semantics).
+        const entryId = String(entry.source_match_id ?? '');
+        const payloadIsDoc =
+            loaded.payload !== null && loaded.payload !== undefined && typeof loaded.payload === 'object';
+        const manifestIsDoc =
+            loaded.manifest !== null && loaded.manifest !== undefined && typeof loaded.manifest === 'object';
+        const payloadId =
+            payloadIsDoc && loaded.payload.source_match_id !== null && loaded.payload.source_match_id !== undefined
+                ? String(loaded.payload.source_match_id)
+                : '';
+        const manifestId =
+            manifestIsDoc && loaded.manifest.source_match_id !== null && loaded.manifest.source_match_id !== undefined
+                ? String(loaded.manifest.source_match_id)
+                : '';
+        if (
+            entryId === '' ||
+            (payloadIsDoc && entryId !== payloadId) ||
+            (manifestIsDoc && entryId !== manifestId)
+        ) {
+            results.push({
+                ok: false,
+                source_match_id: entryId,
+                terminal_state: TERMINAL_STATES.REJECTED_PROVENANCE_BROKEN,
+                error_code: ERROR_CODES.E007,
+                quarantine_status: 'not_quarantined',
+                artifact: null,
+                errors: [
+                    {
+                        code: ERROR_CODES.E007,
+                        message: `source index source_match_id ${entryId} does not bind the loaded documents (payload ${payloadId}, manifest ${manifestId})`,
                     },
                 ],
             });

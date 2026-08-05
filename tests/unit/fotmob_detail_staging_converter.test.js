@@ -303,3 +303,49 @@ test('P2-4: a loader SAFETY_ERROR (e.g. forged package receipt at live archive v
     assert.strictEqual(accepted.ok, true);
     assert.ok(accepted.artifact);
 });
+
+test('R3-P1-1: a source index entry whose source_match_id does not bind the loaded documents is rejected as E007 (identity binding)', async () => {
+    // Codex round-3 finding: convertAll overwrote the result with the INDEX's
+    // source_match_id, so an entry claiming `3901024` while referencing a
+    // legal, receipt-bound `3901023` payload produced a "complete" build whose
+    // ledger/filenames disagreed with the artifacts (only a later validate
+    // would notice). The loader-level check must fail this entry closed.
+    const pairs = [buildPair({ source_match_id: '3901023' }), buildPair({ source_match_id: '3900933' })];
+    const index = buildSourceIndex(
+        [
+            sourceIndexEntry('3901024', '/tmp/1.payload.json', '/tmp/1.manifest.json', {
+                package: 'pkg',
+                payload_file_sha256: 'a'.repeat(64),
+                manifest_file_sha256: 'b'.repeat(64),
+            }),
+            sourceIndexEntry('3900933', '/tmp/2.payload.json', '/tmp/2.manifest.json', {
+                package: 'pkg',
+                payload_file_sha256: 'c'.repeat(64),
+                manifest_file_sha256: 'd'.repeat(64),
+            }),
+        ],
+        {
+            pkg: { sha256: '0'.repeat(64), path: '/tmp/archive.tar.gz', receipt: '/tmp/receipt.json' },
+        }
+    );
+    const result = await convertAll({
+        sourceIndex: index,
+        loader: async entry => {
+            // the loader resolves the index's claim (3901024) to the LEGAL
+            // pair 3901023 — exactly the R3-P1-1 mismatch scenario
+            if (entry.source_match_id === '3901024') {
+                return pairArgs(pairs[0]);
+            }
+            return pairArgs(pairs[1]); // 3900933 resolves to its own pair
+        },
+    });
+    assert.strictEqual(result.results.length, 2, 'both entries are processed, the batch does not crash');
+    const mismatched = result.results.find(r => r.source_match_id === '3901024');
+    assert.strictEqual(mismatched.ok, false);
+    assert.strictEqual(mismatched.terminal_state, TERMINAL_STATES.REJECTED_PROVENANCE_BROKEN);
+    assert.strictEqual(mismatched.error_code, ERROR_CODES.E007);
+    assert.ok(mismatched.errors[0].message.includes('does not bind the loaded documents'));
+    const accepted = result.results.find(r => r.source_match_id === '3900933');
+    assert.strictEqual(accepted.ok, true);
+    assert.ok(accepted.artifact);
+});

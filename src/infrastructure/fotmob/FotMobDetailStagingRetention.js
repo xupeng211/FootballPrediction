@@ -935,6 +935,15 @@ function commitObservations(args = {}) {
     const newObservations = {};
     const quarantineEntries = [];
     const newObservationKeys = new Set();
+    // R3-P2-1: quarantine evidence is keyed by (source_match_id, error_code)
+    // and its content carries a per-run recorded_at — re-running the same
+    // quarantined input would otherwise collide with the committed evidence
+    // file (divergent bytes → OUTPUT_CONFLICT) and rewrite the ledger key.
+    // The FIRST recording is immutable evidence: committed or in-batch keys
+    // are reused (no duplicate write, no ledger churn), exactly like
+    // byte-identical artifact EXACT replay.
+    const committedQuarantines = storeState.quarantines || {};
+    const inBatchQuarantineKeys = new Set();
 
     for (const item of classified) {
         const result = item.result;
@@ -994,24 +1003,40 @@ function commitObservations(args = {}) {
         ) {
             const errorCode = result.error_code || ERROR_CODES.E013;
             const fileName = quarantineFileName(sourceMatchId, errorCode);
-            const quarantineDoc = {
-                schema_version: 'fotmob-detail-staging-quarantine/v1',
-                source_match_id: sourceMatchId,
-                terminal_state: cls.terminal_state,
-                error_code: errorCode,
-                quarantine_status: 'quarantined',
-                quarantine_reason: result.errors && result.errors[0] ? result.errors[0].message : 'validation fail',
-                recorded_at: builtAt,
-                // Evidence is the identity + error, never the full payload.
-            };
-            quarantineWrites.push({ name: fileName, doc: quarantineDoc });
-            quarantineEntries.push({
-                key: `${sourceMatchId}:${errorCode}`,
-                entry: {
-                    ...quarantineDoc,
-                    quarantine_file: fileName,
-                },
-            });
+            const quarantineKey = `${sourceMatchId}:${errorCode}`;
+            if (
+                !Object.prototype.hasOwnProperty.call(committedQuarantines, quarantineKey) &&
+                !inBatchQuarantineKeys.has(quarantineKey)
+            ) {
+                // R3-P2-1: first recording of this (source_match_id,
+                // error_code) — write the evidence file + ledger entry. A
+                // re-run of the same quarantined input reuses the immutable
+                // first recording instead of colliding on the file.
+                inBatchQuarantineKeys.add(quarantineKey);
+                const quarantineDoc = {
+                    schema_version: 'fotmob-detail-staging-quarantine/v1',
+                    source_match_id: sourceMatchId,
+                    terminal_state: cls.terminal_state,
+                    error_code: errorCode,
+                    quarantine_status: 'quarantined',
+                    quarantine_reason: result.errors && result.errors[0] ? result.errors[0].message : 'validation fail',
+                    recorded_at: builtAt,
+                    // Evidence is the identity + error, never the full payload.
+                };
+                quarantineWrites.push({ name: fileName, doc: quarantineDoc });
+                // R3-P2-1: [key, entry] pairs — Object.fromEntries requires
+                // array pairs, not {key, entry} objects (the old shape
+                // silently produced {undefined: undefined}, which
+                // JSON.stringify drops, so the ledger never recorded
+                // quarantine evidence at all).
+                quarantineEntries.push([
+                    quarantineKey,
+                    {
+                        ...quarantineDoc,
+                        quarantine_file: fileName,
+                    },
+                ]);
+            }
         }
     }
 
