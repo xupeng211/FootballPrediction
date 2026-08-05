@@ -484,8 +484,8 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 315 staging unit tests (114 retention incl. fault-injection and
-tamper + 70 source verification + 89 contract [54 declared + 16 loop-generated
+Test counts: 320 staging unit tests (114 retention incl. fault-injection and
+tamper + 75 source verification + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
@@ -605,6 +605,29 @@ convert→commit→validate preserves the field on disk and stripping it is now
 a detected tamper). R15-P3-1: selector-order comment narrowed to "before the
 payload/manifest input files are gated or read" (non-blocking); counts
 synced to 315.
+Codex round-16 (head 0cff9b262, 22 commits) found 1 new P1 + 1 new P2 + 1
+new P3 — R16-P1-1: the exported verifyEntryAgainstReceipt no longer accepts
+a reusable inspected capability (WeakSet identity proves only "once
+produced by this module", not "reflects the CURRENT archive bytes"; an
+archive replaced at the same path after a capability was issued bypassed
+re-verification). Fixed: the API always freshly re-inspects the live
+archive per entry and refuses ANY supplied inspected (SAFETY_ERROR); the
+CLI loader's liveInspectionCache was removed (receipt document cache kept;
+archive re-read per entry under the same bounded limits). Regression
+R16-P1-1a (replace-archive attack: old capability refused + fresh
+re-inspection catches the live SHA mismatch; V34a/b/c/d/e updated to the
+new API contract). R16-P2-1: buildPackageReceipt's memberHashes lost a
+legal member named "__proto__" through the legacy setter (incl. PAX
+path=__proto__), so legal archives could never complete staging — fixed
+with Object.defineProperty writes + hasOwnProperty existence checks in
+buildPackageReceipt AND verifyPackageReceipt. Regressions R16-P2-1a (PAX
+path=__proto__ member through receipt → live reverify → entry load
+end-to-end), R16-P2-1b (missing "__proto__" member reference →
+INPUT_ERROR), R16-P2-1c (validator member-reference fail-closed).
+R16-P3-1: parsePaxRecords now fails closed on a length-valid record
+without a key=value separator (SAFETY_ERROR; previously silently ignored),
+and a legal "__proto__" PAX key is preserved as an own data property
+(non-blocking). Counts synced to 320.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

@@ -1109,7 +1109,7 @@ test('V34b (R1-P0-1): a fabricated inspected member table is rejected (no capabi
                 receipt,
                 inspected,
             }),
-        err => err.code === 'SAFETY_ERROR' && /registered by this module/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
     );
 });
 
@@ -1142,7 +1142,7 @@ test('V34e (R2-P0-1): spreading a GENUINE live result and replacing members is r
                 receipt,
                 inspected: forged,
             }),
-        err => err.code === 'SAFETY_ERROR' && /registered by this module/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
     );
 });
 
@@ -1216,11 +1216,11 @@ test('V34c (R1-P0-1): a GENUINE capability from a different archive is rejected 
                 receipt,
                 inspected: liveOther,
             }),
-        err => err.code === 'SAFETY_ERROR' && /archive sha256 does not match the receipt/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
     );
 });
 
-test('V34d (R1-P0-1): a GENUINE capability is accepted (the per-run cached path is not regressed)', () => {
+test('V34d (R16-P1-1): a GENUINE registered capability is REFUSED by the exported API; the direct API loads clean', () => {
     const dir = tmpDir('fotmob-r1-p0-1-goodcap-');
     const pair = buildPair({ source_match_id: '3901023' });
     const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
@@ -1234,13 +1234,33 @@ test('V34d (R1-P0-1): a GENUINE capability is accepted (the per-run cached path 
     });
     const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
     const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    // R16-P1-1 (Codex round 16): the exported API must not accept a reusable
+    // capability — even a GENUINE one — because a WeakSet-registered object
+    // proves only "once produced by this module", not "reflects the CURRENT
+    // archive bytes" (the archive is mutable; see R16-P1-1a for the
+    // replace-then-reuse attack). The per-entry path always freshly
+    // re-inspects.
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-cap' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding,
+                receipt,
+                inspected: live,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
+    );
+    // legal control: the same entry WITHOUT an inspected capability loads
+    // clean (fresh re-inspection passes for the un-replaced archive)
     const loaded = verifyEntryAgainstReceipt({
         entry: { package: 'pkg-cap' },
         payloadFile: archiveInfo.payloadFile,
         manifestFile: archiveInfo.manifestFile,
         binding,
         receipt,
-        inspected: live,
         options: { repositoryRoot: REPO_ROOT },
     });
     assert.strictEqual(loaded.payload.source_match_id, '3901023');
@@ -1713,6 +1733,10 @@ test('R13-P2-2b: a genuine capability for archive A is refused with a binding po
     const pairB = buildPair({ source_match_id: '3901024' });
     const otherInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901024', pair: pairB }], { packageId: 'pkg-b' });
     const forgedBinding = { sha256: archiveInfo.archiveSha256, path: otherInfo.archivePath, receipt: '' };
+    // R16-P1-1 supersedes the binding-path capability check: the exported
+    // API refuses ANY supplied capability (the path lie could never be
+    // reached — a capability proves nothing about the CURRENT archive), so
+    // this attack is closed at the API boundary
     assert.throws(
         () =>
             verifyEntryAgainstReceipt({
@@ -1724,6 +1748,217 @@ test('R13-P2-2b: a genuine capability for archive A is refused with a binding po
                 inspected: live,
                 options: { repositoryRoot: REPO_ROOT },
             }),
-        err => err.code === 'SAFETY_ERROR' && /does not match the binding path/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
     );
+});
+
+// ── R16-P1-1 (Codex round 16): the exported entry-verification API must
+//    not accept a reusable inspected capability — an archive replaced at the
+//    same path after a capability was issued would otherwise skip the
+//    current re-verification. The live archive is always freshly
+//    re-inspected per entry. ─────────────────────────────────────────
+
+test('R16-P1-1a: an archive REPLACED at the same path after a capability was issued is caught by the fresh re-inspection', () => {
+    const dir = tmpDir('fotmob-r16p11-replace-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-replace' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-replace',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    // issue a GENUINE capability while the archive is still archive A
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    assert.strictEqual(live.archive_sha256, archiveInfo.archiveSha256);
+    // the attacker replaces the archive AT THE SAME PATH with different
+    // bytes (same member names so the member selectors still resolve) while
+    // the receipt + payload/manifest files stay A's
+    const replacedBytes = createTarGz([
+        { name: archiveInfo.payloadMember, content: Buffer.concat([pair.payloadBytes, Buffer.from(' ')]) },
+        { name: archiveInfo.manifestMember, content: '{"replaced":true}' },
+    ]);
+    fs.writeFileSync(archiveInfo.archivePath, replacedBytes);
+    // 1) the OLD capability is refused outright by the exported API
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-replace' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding,
+                receipt,
+                inspected: live,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /not accepted by the exported API/.test(err.message)
+    );
+    // 2) the direct API (no capability) re-inspects the CURRENT bytes and
+    //    catches the replacement — the attack is closed at the API boundary
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-replace' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding,
+                receipt,
+                options: { repositoryRoot: REPO_ROOT },
+            }),
+        err => err.code === 'SAFETY_ERROR' && /live archive sha256/.test(err.message)
+    );
+});
+
+// ── R16-P2-1 (Codex round 16): a legal archive member named "__proto__"
+//    (including a PAX path=__proto__ override) must keep its own hash in
+//    the receipt — the old `{}` + `[name] =` write dropped it through the
+//    legacy __proto__ setter, so legal archives could never complete
+//    staging. ─────────────────────────────────────────────────────
+
+test('R16-P2-1a: a PAX path=__proto__ member survives receipt → live reverify → entry load end-to-end', () => {
+    const dir = tmpDir('fotmob-r16p21-paxproto-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const payloadFile = path.join(dir, '3901023.payload.json');
+    const manifestFile = path.join(dir, '3901023.manifest.json');
+    fs.writeFileSync(payloadFile, pair.payloadBytes);
+    fs.writeFileSync(manifestFile, JSON.stringify(pair.manifest, null, 2) + '\n');
+    const payloadMember = 'pairs/1-3901023.payload.json';
+    const manifestMember = 'pairs/1-3901023.manifest.json';
+    // legal member named "__proto__" via a PAX path= override (V12-style)
+    const paxRecord = paxRecordFor('path', '__proto__');
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+    const protoContent = Buffer.from('{}', 'utf8');
+    const protoBlock = rawTarBlock(rawTarHeader('__proto__', '0', protoContent.length), protoContent);
+    const archiveBytes = gzipOf(
+        Buffer.concat([
+            rawTarBlock(rawTarHeader(payloadMember, '0', pair.payloadBytes.length), pair.payloadBytes),
+            rawTarBlock(
+                rawTarHeader(manifestMember, '0', Buffer.byteLength(JSON.stringify(pair.manifest, null, 2) + '\n')),
+                Buffer.from(JSON.stringify(pair.manifest, null, 2) + '\n', 'utf8')
+            ),
+            paxBlock,
+            protoBlock,
+            Buffer.alloc(1024),
+        ])
+    );
+    const archivePath = path.join(dir, 'fixture-pax-proto.tar.gz');
+    fs.writeFileSync(archivePath, archiveBytes);
+    const archiveSha256 = sha256Hex(archiveBytes);
+
+    // receipt built via the REAL production path: inspectArchive (3 members)
+    // → buildPackageReceipt — pre-fix the "__proto__" hash was dropped and
+    // the receipt recorded only 2 members
+    verifyArchive(archivePath, archiveSha256);
+    const inspected = inspectArchive(archivePath, { repositoryRoot: REPO_ROOT });
+    assert.deepStrictEqual(
+        inspected.members.map(m => m.name).sort(),
+        ['__proto__', payloadMember, manifestMember].sort()
+    );
+    const receipt = buildPackageReceipt({
+        packageId: 'pkg-pax-proto',
+        archivePath,
+        archiveSha256,
+        members: inspected.members,
+        payloadMember,
+        manifestMember,
+    });
+    // the receipt must carry the "__proto__" member as an own hash
+    assert.ok(Object.prototype.hasOwnProperty.call(receipt.members, '__proto__'));
+    assert.match(receipt.members.__proto__, /^[0-9a-f]{64}$/);
+    assert.strictEqual(verifyPackageReceipt(receipt).ok, true);
+
+    // live reverify: 3 members on both sides, hashes match (pre-fix this
+    // failed with a member-set mismatch: live 3 vs receipt 2)
+    const binding = { sha256: archiveSha256, path: archivePath, receipt: '' };
+    assert.doesNotThrow(() => verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } }));
+
+    // end-to-end: the entry loads — the "__proto__" member is part of the
+    // managed inventory but is never extracted as payload/manifest
+    const loaded = verifyEntryAgainstReceipt({
+        entry: { package: 'pkg-pax-proto' },
+        payloadFile,
+        manifestFile,
+        binding,
+        receipt,
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.strictEqual(loaded.payload.source_match_id, '3901023');
+});
+
+test('R16-P2-1b: buildPackageReceipt rejects a payloadMember reference to a MISSING "__proto__" member (hasOwnProperty, not the inherited accessor)', () => {
+    const pair = buildPair({ source_match_id: '3901023' });
+    const members = [
+        { name: 'pairs/1-3901023.payload.json', sha256: 'a'.repeat(64) },
+        { name: 'pairs/1-3901023.manifest.json', sha256: 'b'.repeat(64) },
+    ];
+    // pre-fix: `memberHashes['__proto__']` read through the inherited
+    // Object.prototype accessor (truthy) even though no such member exists —
+    // the receipt was built with a phantom reference
+    assert.throws(
+        () =>
+            buildPackageReceipt({
+                packageId: 'pkg-missing-proto',
+                archivePath: '/tmp/any.tar.gz',
+                archiveSha256: 'c'.repeat(64),
+                members,
+                payloadMember: '__proto__',
+                manifestMember: 'pairs/1-3901023.manifest.json',
+            }),
+        err => err.code === 'INPUT_ERROR' && /payload member not found/.test(err.message)
+    );
+});
+
+test('R16-P2-1c: verifyPackageReceipt fails closed when a parsed receipt references "__proto__" with no own member', () => {
+    const pair = buildPair({ source_match_id: '3901023' });
+    const valid = buildPackageReceipt({
+        packageId: 'pkg-validator-proto',
+        archivePath: '/tmp/any.tar.gz',
+        archiveSha256: 'd'.repeat(64),
+        members: [
+            { name: 'pairs/1-3901023.payload.json', sha256: 'a'.repeat(64) },
+            { name: 'pairs/1-3901023.manifest.json', sha256: 'b'.repeat(64) },
+        ],
+        payloadMember: 'pairs/1-3901023.payload.json',
+        manifestMember: 'pairs/1-3901023.manifest.json',
+    });
+    // tamper: the receipt now references a member named "__proto__" that has
+    // no own hash in the members table — the parsed doc has no own
+    // "__proto__" member, so the inherited accessor must NOT satisfy it
+    const tampered = JSON.parse(JSON.stringify(valid));
+    tampered.payload_member = '__proto__';
+    // receipt_sha256 intentionally left stale — the member-reference check
+    // fires independently of the business-hash recomputation
+    const validation = verifyPackageReceipt(tampered);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => /payload_member must reference an existing member/.test(e)),
+        JSON.stringify(validation.errors)
+    );
+});
+
+// ── R16-P3-1 (Codex round 16): strict PAX parsing — a length-valid record
+//    WITHOUT a key=value separator is malformed and must fail closed. ──
+
+test('R16-P3-1: a length-valid PAX record without a key=value separator is rejected as SAFETY_ERROR', () => {
+    // "9 broken\n": length field 9 is in bounds and the newline is present,
+    // but there is no '=' — pre-fix this was silently ignored (empty records)
+    assert.throws(
+        () => parsePaxRecords('9 broken\n'),
+        err => err.code === 'SAFETY_ERROR' && /missing key=value separator/.test(err.message)
+    );
+    // empty key (`=x`) is also malformed
+    assert.throws(
+        () => parsePaxRecords('5 =x\n'),
+        err => err.code === 'SAFETY_ERROR' && /missing key=value separator/.test(err.message)
+    );
+    // legal control: well-formed records still parse
+    const records = parsePaxRecords(paxRecordFor('path', 'pairs/1-3901023.payload.json'));
+    assert.strictEqual(records.path, 'pairs/1-3901023.payload.json');
+    // a legal PAX key "__proto__" is preserved as an own data property
+    const proto = parsePaxRecords(paxRecordFor('__proto__', 'kept'));
+    assert.ok(Object.prototype.hasOwnProperty.call(proto, '__proto__'));
+    assert.strictEqual(proto.__proto__, 'kept');
 });

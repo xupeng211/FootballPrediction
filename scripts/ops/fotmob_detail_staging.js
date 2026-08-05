@@ -61,7 +61,6 @@ const {
     inspectArchive,
     buildPackageReceipt,
     verifyPackageReceipt,
-    verifyLiveArchiveAgainstReceipt,
     verifyEntryAgainstReceipt,
     assertInputOutputNonOverlap,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
@@ -228,13 +227,16 @@ function runReceipt(args) {
  * (FINDING_3 / FINDING_4).
  */
 function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
-    // Per-run in-memory caches: each package's receipt document and its LIVE
-    // re-inspection are computed ONCE per run and shared across entries of
-    // the same package. Nothing is ever trusted across runs — every new run
-    // re-verifies the live archive from its physical bytes (P0-1: a receipt
-    // can never be the sole trusted source).
+    // Per-run in-memory cache: each package's receipt DOCUMENT is read and
+    // validated once per run (the receipt is a static document). The LIVE
+    // archive is NEVER cached — R16-P1-1 (Codex round 16): verifyEntryAgainstReceipt
+    // rejects any supplied `inspected` capability and always freshly
+    // re-inspects the archive per entry, so a capability issued for an
+    // archive that was later replaced at the same path can never bypass the
+    // current re-verification. Nothing is ever trusted across runs — every
+    // new run re-verifies the live archive from its physical bytes (P0-1: a
+    // receipt can never be the sole trusted source).
     const receiptCache = new Map();
-    const liveInspectionCache = new Map();
     return async entry => {
         const packageId = String(entry.package || '');
         const binding = sourceIndex.archive_bindings[packageId];
@@ -271,23 +273,14 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
             }
             receiptCache.set(packageId, receipt);
         }
-        if (!liveInspectionCache.has(packageId)) {
-            // P0-1: live re-verification of the archive against the receipt —
-            // archive SHA, full member inventory and per-member hashes must
-            // match the receipt exactly.
-            const inspected = verifyLiveArchiveAgainstReceipt({
-                binding,
-                receipt,
-                options: { repositoryRoot },
-            });
-            liveInspectionCache.set(packageId, inspected);
-        }
-
+        // P0-1: verifyEntryAgainstReceipt always re-verifies the live
+        // archive against the receipt per entry (archive SHA, full member
+        // inventory and per-member hashes) — R16-P1-1: no capability cache,
+        // so an archive replaced after any earlier verification is caught.
         const loaded = verifyEntryAgainstReceipt({
             entry,
             binding,
             receipt,
-            inspected: liveInspectionCache.get(packageId),
             payloadFile: entry.payload_file,
             manifestFile: entry.manifest_file,
             outputRoot,

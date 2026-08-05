@@ -56,7 +56,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。315 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。320 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -77,7 +77,7 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  315 项 staging 测试（114 retention 故障注入/篡改 + 70 source verification +
+  320 项 staging 测试（114 retention 故障注入/篡改 + 75 source verification +
   89 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness + 3 个 R12-P3-1 cycle/深度守卫 + 3 个 R13-P2-3 validator

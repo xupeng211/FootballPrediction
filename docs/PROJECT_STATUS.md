@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 315 staging
-  unit tests green (114 retention fault-injection/tamper + 70 source
+  (no database, no migration). Current test baseline: 320 staging
+  unit tests green (114 retention fault-injection/tamper + 75 source
   verification + 89 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
   R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3

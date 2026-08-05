@@ -241,9 +241,20 @@ function parsePaxRecords(data) {
         }
         const record = bytes.subarray(space + 1, idx + len - 1).toString('utf8');
         const eq = record.indexOf('=');
-        if (eq !== -1) {
-            records[record.slice(0, eq)] = record.slice(eq + 1);
+        // R16-P3-1 (Codex round 16): a length-valid record WITHOUT a
+        // key=value separator is malformed — fail closed instead of silently
+        // ignoring it (the parser contract is strict `<len> <key>=<value>\n`).
+        if (eq <= 0) {
+            throw Object.assign(new Error('PAX record missing key=value separator'), { code: 'SAFETY_ERROR' });
         }
+        // R16-P2-1 discipline: a legal PAX key "__proto__" must be preserved
+        // as an own data property, not routed through the legacy setter.
+        Object.defineProperty(records, record.slice(0, eq), {
+            value: record.slice(eq + 1),
+            enumerable: true,
+            writable: true,
+            configurable: true,
+        });
         // The length field counts the whole record INCLUDING its own digits
         // and the space, so the next record starts exactly at idx + len.
         idx = idx + len;
@@ -641,16 +652,30 @@ function buildPackageReceipt(args = {}) {
         if (!/^[0-9a-f]{64}$/.test(String(member.sha256 || ''))) {
             throw Object.assign(new Error(`invalid member hash: ${member && member.name}`), { code: 'INPUT_ERROR' });
         }
-        memberHashes[member.name] = member.sha256;
+        // R16-P2-1 (Codex round 16): a legal member named "__proto__"
+        // (including a PAX path=__proto__ override) must keep its own hash —
+        // plain `memberHashes[name] = sha` routes through the legacy
+        // __proto__ setter and silently drops it, so the receipt recorded a
+        // member set smaller than the live archive and legal archives could
+        // never complete staging. defineProperty creates an ordinary
+        // enumerable data property (same discipline as the R15 fix).
+        Object.defineProperty(memberHashes, member.name, {
+            value: member.sha256,
+            enumerable: true,
+            writable: true,
+            configurable: true,
+        });
     }
     const payloadMember = String(args.payloadMember || '');
     const manifestMember = String(args.manifestMember || '');
-    if (!memberHashes[payloadMember]) {
+    // hasOwnProperty: a missing member named "__proto__" must NOT read as
+    // present through the inherited Object.prototype accessor.
+    if (!Object.prototype.hasOwnProperty.call(memberHashes, payloadMember)) {
         throw Object.assign(new Error(`payload member not found in archive: ${payloadMember}`), {
             code: 'INPUT_ERROR',
         });
     }
-    if (!memberHashes[manifestMember]) {
+    if (!Object.prototype.hasOwnProperty.call(memberHashes, manifestMember)) {
         throw Object.assign(new Error(`manifest member not found in archive: ${manifestMember}`), {
             code: 'INPUT_ERROR',
         });
@@ -712,7 +737,10 @@ function verifyPackageReceipt(receipt) {
             }
         }
         for (const memberField of ['payload_member', 'manifest_member']) {
-            if (!receipt.members[receipt[memberField]]) {
+            // R16-P2-1: hasOwnProperty — a member reference named "__proto__"
+            // must not read as present through the inherited accessor when
+            // the parsed receipt has no own "__proto__" member.
+            if (!Object.prototype.hasOwnProperty.call(receipt.members, String(receipt[memberField] || ''))) {
                 errors.push(`receipt ${memberField} must reference an existing member`);
             }
         }
@@ -815,8 +843,10 @@ function verifyLiveArchiveAgainstReceipt(args = {}) {
  * inputs whose live SHA equals BOTH the receipt's member hashes AND the live
  * archive member hashes.
  *
- * @param {object} args - { entry, binding, receipt, inspected, payloadFile,
- *                          manifestFile, outputRoot, options }
+ * @param {object} args - { entry, binding, receipt, payloadFile,
+ *                          manifestFile, outputRoot, options } — an
+ *                          `inspected` capability is REFUSED (R16-P1-1):
+ *                          the live archive is always freshly re-inspected
  * @returns {{ payload, manifest, payloadBytes, payloadFileSha256, manifestFileSha256 }}
  */
 function verifyEntryAgainstReceipt(args = {}) {
@@ -863,45 +893,25 @@ function verifyEntryAgainstReceipt(args = {}) {
         );
     }
 
-    // P0-1: bind the receipt to the LIVE archive. `inspected` is accepted
-    // ONLY when it is the module-private live-verification capability
-    // (R1-P0-1, hardened in R2-P0-1): it must be the exact object registered
-    // by THIS module's own verifyLiveArchiveAgainstReceipt in this run
-    // (WeakSet identity — a spread copy or fabricated object is rejected),
-    // and its archive SHA must be the receipt's archive SHA. If no inspected
-    // is supplied (direct API use), the live archive is re-verified here —
-    // fail closed either way.
+    // R16-P1-1 (Codex round 16): the live archive is ALWAYS freshly
+    // re-inspected here — the exported API never accepts a reusable
+    // `inspected` capability. A WeakSet-registered capability proves only
+    // that the object was once produced by this module, not that it reflects
+    // the CURRENT bytes at its path: an archive replaced after the
+    // capability was issued would pass the identity/SHA/path checks while
+    // the new archive was never re-verified (the direct-API time-of-check /
+    // time-of-use hole). The R1-P0-1/R2-P0-1 capability discipline is
+    // preserved for the internal inspection registry, but the public entry
+    // path always re-reads the archive under the same bounded limits and
+    // re-binds receipt → binding SHA → live archive content + member table
+    // → payload/manifest member hashes, fail closed.
     if (args.inspected !== undefined) {
-        if (!liveVerifyRegistry.has(args.inspected)) {
-            throw Object.assign(
-                new Error('inspected must be a live-verification capability registered by this module (object identity; spreads and fabricated objects are rejected)'),
-                { code: 'SAFETY_ERROR' }
-            );
-        }
-        if (String(args.inspected.archive_sha256 || '') !== String(receipt.archive_sha256 || '')) {
-            throw Object.assign(
-                new Error('inspected archive sha256 does not match the receipt archive sha256'),
-                { code: 'SAFETY_ERROR' }
-            );
-        }
-        // R13-P2-2 (Codex round 13): the capability is bound to the archive's
-        // CANONICAL path too — the CLI caches one capability per package, so
-        // without this a genuine capability for archive A could be presented
-        // with a binding whose path points at a different archive (content
-        // check passes; the declared single-package binding is a lie). The
-        // binding path goes through the SAME input gate as every read.
-        if (
-            String(args.inspected.archive_path || '') !==
-            verifyRepositoryExternalRegularFile(String(binding.path || ''), options)
-        ) {
-            throw Object.assign(
-                new Error('inspected archive path does not match the binding path'),
-                { code: 'SAFETY_ERROR' }
-            );
-        }
+        throw Object.assign(
+            new Error('inspected capability is not accepted by the exported API — the live archive is always freshly re-inspected per entry'),
+            { code: 'SAFETY_ERROR' }
+        );
     }
-    const inspected =
-        args.inspected || verifyLiveArchiveAgainstReceipt({ binding, receipt, options });
+    const inspected = verifyLiveArchiveAgainstReceipt({ binding, receipt, options });
 
     // Extracted input files: safe + live SHA equals the receipt member SHA
     // AND the live archive member hash (both directions).
