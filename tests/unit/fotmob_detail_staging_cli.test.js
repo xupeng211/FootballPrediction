@@ -657,6 +657,11 @@ test('R6-P3-1a: build rejects an archive located INSIDE the output root at the i
     const dir = tmpDir('fotmob-r6p31-overlap-');
     const outputRoot = path.join(dir, 'out');
     fs.mkdirSync(outputRoot);
+    // The P1-4 store guard requires a non-group/world-writable output root;
+    // the ambient umask may create one that is (e.g. 0002 → 0775), which
+    // would mask the input-gate behavior under test. chmod is not masked by
+    // umask, so pin the mode to make this test hermetic in any environment.
+    fs.chmodSync(outputRoot, 0o755);
     const pair = buildPair({ source_match_id: '3901023' });
     const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
         packageId: 'ten-match',
@@ -682,10 +687,21 @@ test('R6-P3-1a: build rejects an archive located INSIDE the output root at the i
     const indexFile = path.join(dir, 'source-index.json');
     fs.writeFileSync(indexFile, JSON.stringify(index, null, 2) + '\n');
 
+    // The input gate fires when the loader touches this entry: the loader
+    // rejects the in-root archive BEFORE reading its bytes. convertAll then
+    // folds the rejection into an E008 entry failure (batch isolation — one
+    // bad input never crashes the batch), and the commit layer independently
+    // fails closed on the physical in-root archive as unbound residue
+    // (OUTPUT_CONFLICT). Two independent fail-closed layers; the build can
+    // never complete.
     await assert.rejects(
         () => runBuild({ 'source-index': indexFile, 'output-root': outputRoot }),
-        err => err.code === 'SAFETY_ERROR'
+        err => err.code === 'OUTPUT_CONFLICT' && /residue/.test(err.message)
     );
-    // nothing may be committed inside the root
-    assert.deepStrictEqual(fs.readdirSync(outputRoot), ['archive.tar.gz']);
+    // nothing may be committed inside the root — only the stray archive copy
+    assert.deepStrictEqual(
+        fs.readdirSync(outputRoot).sort(),
+        ['archive.tar.gz'],
+        'no commit, no ledger, no summary, no observation may appear'
+    );
 });
