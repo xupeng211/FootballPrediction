@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 286 staging
-  unit tests green (108 retention fault-injection/tamper + 60 source
+  (no database, no migration). Current test baseline: 297 staging
+  unit tests green (111 retention fault-injection/tamper + 65 source
   verification + 77 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
   R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
@@ -956,8 +956,8 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 286 staging tests (108 retention
-  fault-injection/tamper + 60 source verification + 77 contract [54 declared
+  targets; P3-1 docs/PR-body rewrite. 297 staging tests (111 retention
+  fault-injection/tamper + 65 source verification + 77 contract [54 declared
   + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
   + 3 R7-P3-2 id-length + 1 R8-P2-1 strict array plainness] + 17 converter
   + 24 CLI; Codex round-8 (head 7bbbd7658) findings R8-P2-1 (non-plain arrays
@@ -990,6 +990,14 @@ legacy-writer execution is authorized.
   ledger — 1 regression), R11-P3-2 (marker-tamper regression rehashes the
   marker after tampering — test-helper fix), R11-P3-3 (tar PAX multibyte
   UTF-8 path support — 1 regression); counts synced to 286, all remediated);
+  Codex round-12 (head 1350ef4de) findings R12-P2-1 (artifact deep
+  snapshot — descriptor-driven copy, util.types.isProxy refusal, no
+  toJSON/JSON.stringify on the caller's object, cycles/depth → structured
+  INPUT_ERROR — 2 regressions + legal control), R12-P2-2 (bounded archive
+  inspection — pre-read compressed-size fstat, gunzipSync maxOutputLength,
+  tar member/size/total caps, fail-closed SAFETY_ERROR — 4 regressions +
+  legal control), R12-P3-1 (isPlainJsonData + content-scan cycle/depth/
+  proxy guards — 3 regressions); counts synced to 297, all remediated);
   runtime counts = node --test # pass, the only gap vs static test()
   declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
   tests green; ESLint clean. 16-match offline revalidation on the fixed

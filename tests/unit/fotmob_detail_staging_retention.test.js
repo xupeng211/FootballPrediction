@@ -2637,3 +2637,75 @@ test('R11-P3-1a: a marker-consistent free-text quarantine_reason tamper (evidenc
         JSON.stringify(result.errors)
     );
 });
+
+// ── R12-P2-1 (Codex round 12): the artifact is deep-snapshotted — a Proxy
+//    artifact can no longer inject raw content at serialization time ───────
+
+test('R12-P2-1a: an artifact wrapped in a transparent Proxy with a toJSON trap is refused — serialization can never swap validated bytes for injected bytes', () => {
+    const dir = tmpDir('fotmob-r12p21-proxy-');
+    const ok = pairResult('3901023');
+    // The proxy passes every read through to the legal artifact but answers
+    // `toJSON` with a replacement object carrying raw content. Without the
+    // deep snapshot + proxy refusal, JSON.stringify at write time would
+    // write the injected bytes (and the marker would agree with them).
+    const injected = { ...ok.artifact, raw_data: '<html>RAW FULL RESPONSE</html>' };
+    const artifactProxy = new Proxy(ok.artifact, {
+        get(target, prop) {
+            if (prop === 'toJSON') return () => injected;
+            return Reflect.get(target, prop);
+        },
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact: artifactProxy }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /artifact must be strict plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(
+        fs.readdirSync(dir),
+        [],
+        'no artifact, summary, ledger or marker may land for a proxy artifact'
+    );
+});
+
+test('R12-P2-1b (R12-P3-1 commit path): a cyclic artifact is refused as INPUT_ERROR — never an unstructured RangeError', () => {
+    const dir = tmpDir('fotmob-r12p21-cycle-');
+    const ok = pairResult('3901023');
+    const artifact = JSON.parse(JSON.stringify(ok.artifact));
+    artifact.sections.events.json.push(artifact); // self reference
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /artifact must be strict plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a cyclic artifact');
+});
+
+test('R12-P2-1c (legal control): a plain artifact still commits and the committed artifact bytes contain no injected content', () => {
+    const dir = tmpDir('fotmob-r12p21-legal-');
+    const ok = pairResult('3901023');
+    const summary = commitObservations({
+        results: [{ ...ok, artifact: { ...ok.artifact } }],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    const artifactFile = fs.readdirSync(dir).find(f => f.endsWith('.artifact.json'));
+    const committed = fs.readFileSync(path.join(dir, artifactFile), 'utf8');
+    assert.ok(!committed.includes('<html>'), 'committed artifact bytes must never carry injected content');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});

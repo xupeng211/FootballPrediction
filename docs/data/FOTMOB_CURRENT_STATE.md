@@ -484,8 +484,8 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 286 staging unit tests (108 retention incl. fault-injection and
-tamper + 60 source verification + 77 contract [54 declared + 16 loop-generated
+Test counts: 297 staging unit tests (111 retention incl. fault-injection and
+tamper + 65 source verification + 80 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
 runtime counts = node --test
@@ -507,7 +507,7 @@ contract is now enforced BEFORE classification — `ok` must be a real boolean
 ACCEPTED_NEW (retention derives EXACT/EQUIVALENT/identity-conflict; a raw
 rejected claim can no longer be discarded and committed as accepted), and
 ok:false cannot claim an accepted state — 3 new zero-write regressions + legal
-control; 286 staging tests green under umask 022 and 0002) and 1 non-blocking
+control; 297 staging tests green under umask 022 and 0002) and 1 non-blocking
 P3 (R9-P3-1: doc field-name accuracy — generated_at derives from the manifest's
 `response_received_at`, recorded on the artifact as `source_response_received_at`;
 both docs corrected). Codex round-10 (head 4c1609945) found 2 new P2 + 2 new
@@ -535,7 +535,21 @@ derive from the registry error_code whitelist AND agree with the ledger — 1
 regression), R11-P3-2 (marker-tamper regression rehashes the marker after
 tampering instead of trusting stale marker bytes — test-helper fix),
 R11-P3-3 (tar PAX path records support multibyte UTF-8 names — 1
-regression); counts synced to 286. 16-match offline revalidation on the
+regression); counts synced to 286. Codex round-12 (head 1350ef4de) found 2
+new P2 + 1 new P3, all remediated on the current head: R12-P2-1 (the
+artifact is now DEEP-snapshotted, not kept as the caller's reference — a
+descriptor-driven deep copy built without ever invoking JSON.stringify/
+toJSON on the caller's object, plus util.types.isProxy refusal, so a
+transparent Proxy artifact can no longer pass every gate on legal bytes
+and inject raw content at serialization time; cycles and excessive depth
+are structured INPUT_ERRORs, never RangeError — 2 regressions + legal
+control), R12-P2-2 (bounded archive inspection — compressed size checked
+via the PRE-READ fstat before any allocation, gunzipSync maxOutputLength,
+tar member-count / single-member / total-content caps, all fail-closed
+SAFETY_ERROR — 4 regressions + legal control), R12-P3-1 (isPlainJsonData
+and the prohibited-content scan refuse cycles / depth overflow / proxies
+as structured failures — 3 regressions); counts synced to 297.
+16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
 new artifacts and byte-identical old artifacts; RUN_3 synthetic new

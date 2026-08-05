@@ -77,7 +77,7 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  286 项 staging 测试（108 retention 故障注入/篡改 + 60 source verification +
+  297 项 staging 测试（111 retention 故障注入/篡改 + 65 source verification +
   77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
@@ -118,6 +118,16 @@
   error_code 白名单派生且与账本一致（补 1 项回归）、R11-P3-2 marker
   篡改回归改用重算哈希的 marker（测试辅助修复）、R11-P3-3 tar PAX 路径
   支持多字节 UTF-8 名称（补 1 项回归）—— 全部离线修复；
+  Codex round-12（head 1350ef4de，review relay 4867154234 后新 commit，18 个
+  commit）2 项新 P2 + 1 项新 P3 —— R12-P2-1 artifact 深快照（artifact 不再保留
+  调用者原引用：descriptor 驱动深拷贝 + util.types.isProxy 拒绝 + 从不调用
+  调用者对象上的 JSON.stringify/toJSON，验证、hash、写入、marker 全部读取同一份
+  物化字节 —— 补 2 项回归 + 合法对照）、R12-P2-2 inspectArchive 资源上限
+  （压缩文件读前 fstat 大小上限、gunzipSync maxOutputLength、tar 成员数/
+  单成员/累计大小上限，全部 fail-closed SAFETY_ERROR —— 补 4 项回归 + 合法
+  对照）、R12-P3-1 isPlainJsonData / 禁止内容扫描的 cycle/深度/Proxy 守卫
+  （循环或超深 → 结构化 INPUT_ERROR/E013，而非 RangeError —— 补 3 项回归）
+  —— 全部离线修复；计数同步 297；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

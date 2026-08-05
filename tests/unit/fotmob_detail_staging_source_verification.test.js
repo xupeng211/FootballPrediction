@@ -15,6 +15,7 @@ global.fetch = () => {
 
 const { test } = require('node:test');
 const assert = require('node:assert');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -1486,4 +1487,73 @@ test('R11-P3-3a: PAX path records are split at BYTE boundaries — a legal non-A
     fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, content, Buffer.alloc(1024)])));
     const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
     assert.strictEqual(inspected.members[0].name, unicodeName, 'byte-boundary parsing keeps the non-ASCII path intact');
+});
+
+// ── R12-P2-2 (Codex round 12): bounded archive inspection — a compression
+//    bomb or oversized tar can never exhaust the process ───────────────────
+
+test('R12-P2-2a: inspectArchive refuses a gzip whose decompressed size exceeds maxDecompressedBytes (SAFETY_ERROR)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r12p22-bomb-'));
+    const archive = createTarGz([{ name: 'pairs/1-3901023.payload.json', content: Buffer.alloc(4096, 1) }]);
+    const archivePath = path.join(dir, 'bomb.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    assert.throws(
+        () => inspectArchive(archivePath, { repositoryRoot: REPO_ROOT, limits: { maxDecompressedBytes: 1024 } }),
+        err => err.code === 'SAFETY_ERROR' && /archive decompressed size exceeds the limit/.test(err.message)
+    );
+});
+
+test('R12-P2-2b: inspectArchive refuses a compressed archive larger than maxCompressedBytes BEFORE reading it (SAFETY_ERROR)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r12p22-size-'));
+    // Incompressible content — the gzipped tar stays near its raw size, so
+    // the pre-read fstat limit is what must fire.
+    const archive = createTarGz([
+        { name: 'pairs/1-3901023.payload.json', content: crypto.randomBytes(2048) },
+    ]);
+    const archivePath = path.join(dir, 'big.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    assert.throws(
+        () => inspectArchive(archivePath, { repositoryRoot: REPO_ROOT, limits: { maxCompressedBytes: 64 } }),
+        err => err.code === 'SAFETY_ERROR' && /input file exceeds the size limit/.test(err.message)
+    );
+});
+
+test('R12-P2-2c: inspectArchive refuses an archive with more members than maxMembers (SAFETY_ERROR)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r12p22-members-'));
+    const archive = createTarGz([
+        { name: 'pairs/1-3901023.payload.json', content: 'a' },
+        { name: 'pairs/1-3901023.manifest.json', content: 'b' },
+    ]);
+    const archivePath = path.join(dir, 'many.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    assert.throws(
+        () => inspectArchive(archivePath, { repositoryRoot: REPO_ROOT, limits: { maxMembers: 1 } }),
+        err => err.code === 'SAFETY_ERROR' && /tar member count exceeds the limit/.test(err.message)
+    );
+});
+
+test('R12-P2-2d: inspectArchive refuses a member larger than maxMemberBytes (SAFETY_ERROR)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r12p22-member-size-'));
+    const archive = createTarGz([
+        { name: 'pairs/1-3901023.payload.json', content: Buffer.alloc(512, 1) },
+    ]);
+    const archivePath = path.join(dir, 'big-member.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    assert.throws(
+        () => inspectArchive(archivePath, { repositoryRoot: REPO_ROOT, limits: { maxMemberBytes: 64 } }),
+        err => err.code === 'SAFETY_ERROR' && /tar member size exceeds the limit/.test(err.message)
+    );
+});
+
+test('R12-P2-2e (legal control): a normal archive passes inspection under the DEFAULT limits', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fotmob-r12p22-legal-'));
+    const archive = createTarGz([
+        { name: 'pairs/1-3901023.payload.json', content: 'payload-bytes' },
+        { name: 'pairs/1-3901023.manifest.json', content: 'manifest-bytes' },
+    ]);
+    const archivePath = path.join(dir, 'legal.tar.gz');
+    fs.writeFileSync(archivePath, archive);
+    const inspected = inspectArchive(archivePath, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members.length, 2);
+    assert.strictEqual(inspected.members[0].name, 'pairs/1-3901023.payload.json');
 });

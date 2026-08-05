@@ -76,6 +76,7 @@ const {
     ERROR_CODES,
     MAX_SOURCE_MATCH_ID_LENGTH,
     isPlainJsonData,
+    snapshotStrictPlainData,
     isStrictAbsoluteTimestamp,
     validateStagingArtifact,
     buildStagingArtifact,
@@ -358,6 +359,18 @@ function readFileSafeNoFollow(filePath, options = {}) {
             throw Object.assign(new Error(`input must be a regular file, not a symlink: ${abs}`), {
                 code: 'SAFETY_ERROR',
             });
+        }
+        // R12-P2-2 (Codex round 12): an optional size bound enforced via the
+        // PRE-READ fstat — the file is never read into memory if it exceeds
+        // the limit (a compression-bomb archive must fail before any
+        // allocation, not after).
+        if (options.maxBytes !== undefined && before.size > options.maxBytes) {
+            throw Object.assign(
+                new Error(
+                    `input file exceeds the size limit (${before.size} > ${options.maxBytes} bytes): ${abs}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
         }
         bytes = fileSystem.readFileSync(fd);
         const after = fileSystem.fstatSync(fd);
@@ -986,12 +999,23 @@ function commitObservations(args = {}) {
     // return a legal `error_code` at gate time and injected text at write
     // time. Accessor-backed envelope scalars are refused upfront via a
     // descriptor scan (never invoking the getter); the remaining scalars are
-    // then materialized by a JSON round-trip. `artifact` and `artifactInputs`
-    // keep their ORIGINAL references — the artifact passes its own strict
-    // plainness gate + full validator + content scan before any byte is
-    // written (R7-P2-1 / R8-P2-1 non-plain rejection semantics preserved),
-    // and everything derived from artifactInputs is re-validated and
-    // re-hashed by the REPEAT_EQUIVALENT rebuild. Every gate and every
+    // then materialized by a JSON round-trip. `artifactInputs` keeps its
+    // ORIGINAL reference — everything derived from it is re-validated and
+    // re-hashed by the REPEAT_EQUIVALENT rebuild into a fresh plain object
+    // before any byte is written.
+    // R12-P2-1 (Codex round 12): the artifact is DEEP-SNAPSHOTTED here too,
+    // not kept as the caller's reference — a transparent Proxy artifact
+    // could otherwise return legal bytes to every descriptor read and then
+    // inject raw content through a toJSON trap at the moment JSON.stringify
+    // serializes the artifact file (validation, hashing and the marker
+    // would all agree on bytes that differ from the written artifact).
+    // snapshotStrictPlainData builds a deep copy from own-property
+    // descriptors ONLY (JSON.stringify is never invoked on the caller's
+    // object), and refuses accessors, proxies, non-plain prototypes,
+    // non-finite numbers, cyclic references and excessive nesting — so the
+    // artifact gate + validator + content scan + hashing + serialization
+    // all read the SAME materialized bytes, and a cycle is a structured
+    // INPUT_ERROR (R12-P3-1), never a RangeError. Every gate and every
     // write-phase read below uses the snapshot only — the caller's object is
     // never read again. A non-JSON-serializable envelope (cyclic, function
     // values) fails closed as INPUT_ERROR.
@@ -1006,9 +1030,19 @@ function commitObservations(args = {}) {
                 }
             }
             const { artifact, artifactInputs, ...scalars } = result;
-            return { ...JSON.parse(JSON.stringify(scalars)), artifact, artifactInputs };
+            return {
+                ...JSON.parse(JSON.stringify(scalars)),
+                artifact: snapshotStrictPlainData(artifact ?? null, 'artifact'),
+                artifactInputs,
+            };
         });
-    } catch {
+    } catch (error) {
+        if (error instanceof TypeError && String(error.message || '').startsWith('artifact')) {
+            throw Object.assign(
+                new Error(`artifact must be strict plain JSON data (${error.message})`),
+                { code: 'INPUT_ERROR' }
+            );
+        }
         throw Object.assign(
             new Error(
                 'result envelope must be strict plain JSON data (no accessors, no inherited props, no proxies)'

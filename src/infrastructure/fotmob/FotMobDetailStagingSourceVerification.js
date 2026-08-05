@@ -52,6 +52,27 @@ const PACKAGE_RECEIPT_SCHEMA = 'fotmob-detail-staging-package-receipt/v1';
 
 const TAR_BLOCK = 512;
 
+// R12-P2-2 (Codex round 12): bounded archive inspection. A bound archive is
+// attacker-sized input (the receipt binds its SHA, but a same-repo operator
+// could archive a compression bomb) — every allocation and every loop is
+// capped so a single archive can never exhaust the process:
+//   maxCompressedBytes    — compressed archive size, enforced via the
+//                           PRE-READ fstat (readFileSafeNoFollow maxBytes)
+//                           so the file is never allocated into memory;
+//   maxDecompressedBytes  — gunzipSync maxOutputLength;
+//   maxMembers            — tar entry count (metadata AND file entries);
+//   maxMemberBytes        — single entry declared content size;
+//   maxTotalMemberBytes   — sum of all declared entry sizes.
+// Defaults leave wide headroom over every legitimate run archive (the pilot
+// archives are a few hundred KB); operators can raise them via options.limits.
+const DEFAULT_ARCHIVE_LIMITS = {
+    maxCompressedBytes: 256 * 1024 * 1024,
+    maxDecompressedBytes: 1024 * 1024 * 1024,
+    maxMembers: 10000,
+    maxMemberBytes: 256 * 1024 * 1024,
+    maxTotalMemberBytes: 1024 * 1024 * 1024,
+};
+
 // R1-P0-1 / R2-P0-1 (Codex rounds 1-2): a live inspection result may be
 // reused ONLY if it came from this module's own live verification in this
 // run. R1's enumerable Symbol property was forgeable by object spread
@@ -287,16 +308,34 @@ function isSafeMemberName(name, rawParts = []) {
  */
 function inspectArchive(archivePath, options = {}) {
     const fileSystem = options.fsImpl || fs;
+    const limits = { ...DEFAULT_ARCHIVE_LIMITS, ...(options.limits || {}) };
     const abs = verifyRepositoryExternalRegularFile(archivePath, options);
     // P1-4: read through a no-follow fd with dev/inode identity check — the
     // archive bytes hashed here are the same inode that was validated.
-    const bytes = readFileSafeNoFollow(abs, { fsImpl: fileSystem }).bytes;
+    // R12-P2-2: the compressed size is bounded BEFORE the read via the
+    // pre-read fstat — a bomb archive fails without ever being allocated.
+    const bytes = readFileSafeNoFollow(abs, {
+        fsImpl: fileSystem,
+        maxBytes: limits.maxCompressedBytes,
+    }).bytes;
     const archiveSha256 = sha256Hex(bytes);
 
     let tar;
     try {
-        tar = zlib.gunzipSync(bytes);
-    } catch {
+        tar = zlib.gunzipSync(bytes, { maxOutputLength: limits.maxDecompressedBytes });
+    } catch (error) {
+        if (
+            error &&
+            (error.code === 'ERR_BUFFER_TOO_LARGE' ||
+                /output buffer overflow|maxOutputLength|buffer too large/i.test(String(error.message || '')))
+        ) {
+            throw Object.assign(
+                new Error(
+                    `archive decompressed size exceeds the limit (${limits.maxDecompressedBytes} bytes): ${abs}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         throw Object.assign(new Error(`archive is not a valid gzip stream: ${abs}`), { code: 'INPUT_ERROR' });
     }
 
@@ -305,6 +344,11 @@ function inspectArchive(archivePath, options = {}) {
     let offset = 0;
     let pendingLongName = null;
     let pendingPaxPath = null;
+    // R12-P2-2: tar-loop resource bounds — every entry (metadata or file)
+    // counts toward the member cap and its declared size toward the total
+    // cap, so a bomb cannot force unbounded hashing or iteration either.
+    let memberCount = 0;
+    let totalMemberBytes = 0;
 
     while (offset + TAR_BLOCK <= tar.length) {
         const header = tar.subarray(offset, offset + TAR_BLOCK);
@@ -328,6 +372,31 @@ function inspectArchive(archivePath, options = {}) {
             throw Object.assign(new Error(`tar member size field is not valid octal: ${abs}`), {
                 code: 'SAFETY_ERROR',
             });
+        }
+        // R12-P2-2: resource bounds — enforced BEFORE the content bounds so
+        // an oversized declaration fails fast, and counted for EVERY entry
+        // (GNU L / PAX x metadata included) so a metadata bomb is bounded.
+        memberCount += 1;
+        if (memberCount > limits.maxMembers) {
+            throw Object.assign(
+                new Error(`tar member count exceeds the limit (${limits.maxMembers}): ${abs}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (size > limits.maxMemberBytes) {
+            throw Object.assign(
+                new Error(`tar member size exceeds the limit (${limits.maxMemberBytes} bytes): ${abs}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        totalMemberBytes += size;
+        if (totalMemberBytes > limits.maxTotalMemberBytes) {
+            throw Object.assign(
+                new Error(
+                    `tar total member content exceeds the limit (${limits.maxTotalMemberBytes} bytes): ${abs}`
+                ),
+                { code: 'SAFETY_ERROR' }
+            );
         }
         const paddedSize = Math.ceil(size / TAR_BLOCK) * TAR_BLOCK;
         const contentStart = offset + TAR_BLOCK;

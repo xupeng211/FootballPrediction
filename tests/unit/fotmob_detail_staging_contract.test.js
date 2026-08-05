@@ -26,6 +26,7 @@ const {
     sameInstant,
     isStrictAbsoluteTimestamp,
     isPlainJsonData,
+    validateQuarantineRules,
     TERMINAL_STATES,
     ERROR_CODES,
     VALIDATION_LAYERS,
@@ -1156,4 +1157,55 @@ test('R8-P2-1d: isPlainJsonData refuses non-plain arrays (own toJSON, holes, sym
     // dense standard arrays (and their elements) still pass.
     assert.strictEqual(isPlainJsonData([1, 2, 'three', null, true, { a: [4, 5] }]), true);
     assert.strictEqual(isPlainJsonData([]), true);
+});
+
+// ── R12-P3-1 (Codex round 12): cycles and excessive depth are structured
+//    failures, never unstructured RangeErrors ──────────────────────────────
+
+test('R12-P3-1a: isPlainJsonData refuses a cyclic structure without throwing', () => {
+    const cyclic = { a: { b: {} } };
+    cyclic.a.b.self = cyclic;
+    assert.strictEqual(isPlainJsonData(cyclic), false);
+    const cyclicArray = [1];
+    cyclicArray.push(cyclicArray);
+    assert.strictEqual(isPlainJsonData(cyclicArray), false);
+    // shared (non-cyclic) references remain legal JSON data.
+    const shared = { x: 1 };
+    assert.strictEqual(isPlainJsonData({ a: shared, b: shared }), true);
+});
+
+test('R12-P3-1b: isPlainJsonData refuses nesting beyond the depth limit without throwing', () => {
+    let root = null;
+    let cursor = null;
+    for (let i = 0; i < 200; i += 1) {
+        const node = { v: i };
+        if (cursor === null) root = node;
+        else cursor.child = node;
+        cursor = node;
+    }
+    assert.strictEqual(isPlainJsonData(root), false);
+    // legal depth (real artifacts nest ~15 levels) still passes.
+    let lroot = null;
+    let lcursor = null;
+    for (let i = 0; i < 64; i += 1) {
+        const node = { v: i };
+        if (lcursor === null) lroot = node;
+        else lcursor.child = node;
+        lcursor = node;
+    }
+    assert.strictEqual(isPlainJsonData(lroot), true);
+});
+
+test('R12-P3-1c: validateQuarantineRules reports a cyclic payload as a structured E013, never a RangeError', () => {
+    const cyclic = { normalized: { events: [] } };
+    cyclic.normalized.events.push(cyclic);
+    let result;
+    assert.doesNotThrow(() => {
+        result = validateQuarantineRules(cyclic);
+    });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === ERROR_CODES.E013 && /cyclic prohibited-content structure/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
 });

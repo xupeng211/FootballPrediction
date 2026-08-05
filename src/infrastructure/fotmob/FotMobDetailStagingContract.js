@@ -28,6 +28,7 @@
 // error-code-registry).
 
 const crypto = require('node:crypto');
+const util = require('node:util');
 
 const {
     PAYLOAD_SCHEMA_VERSION,
@@ -409,6 +410,11 @@ function sameInstant(a, b) {
     return a === b;
 }
 
+// R12-P3-1 (Codex round 12): depth bound for the recursive plainness
+// predicate / snapshot — an extremely deep (or cyclic) structure must fail
+// closed as a predicate, never as an unstructured RangeError.
+const PLAIN_JSON_DEPTH_LIMIT = 128;
+
 // R7-P2-1 (Codex round 7): strict plain-JSON-data predicate. Only values
 // JSON.stringify serializes VERBATIM qualify: null, strings, numbers,
 // booleans, arrays, and objects built from Object.prototype (or null
@@ -416,7 +422,17 @@ function sameInstant(a, b) {
 // plain-JSON-data values. Inherited properties (Object.create(valid)) and
 // accessors (getters that return one value at validation and another at
 // write time) can never smuggle fields past validation into the store.
-function isPlainJsonData(value) {
+// R12-P2-1 (Codex round 12): a Proxy-wrapped value is refused outright —
+// a proxy can return legal bytes to every descriptor read and still swap
+// them at serialization time via a toJSON trap.
+// R12-P3-1 (Codex round 12): cyclic references and nesting beyond
+// PLAIN_JSON_DEPTH_LIMIT are refused as plain (false), not RangeError —
+// the WeakSet is path-local (add/delete around each subtree), so shared
+// non-cyclic references remain legal JSON data.
+function isPlainJsonData(value, _seen = null, _depth = 0) {
+    if (_depth > PLAIN_JSON_DEPTH_LIMIT) {
+        return false;
+    }
     if (value === null || typeof value === 'boolean') {
         return true;
     }
@@ -439,58 +455,181 @@ function isPlainJsonData(value) {
         // JSON.stringify INVOKES toJSON at write time, so a "valid" array
         // could be serialized as tampered bytes. Reflect.ownKeys surfaces
         // every own key including non-enumerables and symbols.
-        if (Object.getPrototypeOf(value) !== Array.prototype) {
+        if (util.types.isProxy(value) || Object.getPrototypeOf(value) !== Array.prototype) {
             return false;
         }
-        let indexKeys = 0;
-        for (const key of Reflect.ownKeys(value)) {
-            if (key === 'length') {
-                continue;
-            }
-            if (typeof key !== 'string' || !/^(0|[1-9]\d*)$/.test(key)) {
-                // symbol keys and non-index string keys — never JSON data.
-                return false;
-            }
-            const index = Number(key);
-            if (index >= value.length) {
-                // own key beyond the element range (e.g. inflated length).
-                return false;
-            }
-            indexKeys += 1;
-            const descriptor = Object.getOwnPropertyDescriptor(value, key);
-            if (
-                !descriptor ||
-                !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
-                descriptor.enumerable !== true ||
-                !isPlainJsonData(descriptor.value)
-            ) {
-                return false;
-            }
+        if (_seen === null) _seen = new WeakSet();
+        if (_seen.has(value)) {
+            // R12-P3-1: cyclic array — the recursion would never bottom out.
+            return false;
         }
-        // no holes and no inflated length: every slot 0..length-1 must exist
-        // as an own data element (holes would serialize as null).
-        return indexKeys === value.length;
+        _seen.add(value);
+        try {
+            let indexKeys = 0;
+            for (const key of Reflect.ownKeys(value)) {
+                if (key === 'length') {
+                    continue;
+                }
+                if (typeof key !== 'string' || !/^(0|[1-9]\d*)$/.test(key)) {
+                    // symbol keys and non-index string keys — never JSON data.
+                    return false;
+                }
+                const index = Number(key);
+                if (index >= value.length) {
+                    // own key beyond the element range (e.g. inflated length).
+                    return false;
+                }
+                indexKeys += 1;
+                const descriptor = Object.getOwnPropertyDescriptor(value, key);
+                if (
+                    !descriptor ||
+                    !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+                    descriptor.enumerable !== true ||
+                    !isPlainJsonData(descriptor.value, _seen, _depth + 1)
+                ) {
+                    return false;
+                }
+            }
+            // no holes and no inflated length: every slot 0..length-1 must
+            // exist as an own data element (holes would serialize as null).
+            return indexKeys === value.length;
+        } finally {
+            _seen.delete(value);
+        }
     }
     if (typeof value !== 'object') {
         // undefined, functions, symbols, bigints — never JSON data.
+        return false;
+    }
+    if (util.types.isProxy(value)) {
+        return false;
+    }
+    if (_seen === null) _seen = new WeakSet();
+    if (_seen.has(value)) {
         return false;
     }
     const proto = Object.getPrototypeOf(value);
     if (proto !== Object.prototype && proto !== null) {
         return false;
     }
-    for (const key of Object.getOwnPropertyNames(value)) {
-        const descriptor = Object.getOwnPropertyDescriptor(value, key);
-        if (
-            !descriptor ||
-            !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
-            descriptor.enumerable !== true ||
-            !isPlainJsonData(descriptor.value)
-        ) {
-            return false;
+    _seen.add(value);
+    try {
+        for (const key of Object.getOwnPropertyNames(value)) {
+            const descriptor = Object.getOwnPropertyDescriptor(value, key);
+            if (
+                !descriptor ||
+                !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+                descriptor.enumerable !== true ||
+                !isPlainJsonData(descriptor.value, _seen, _depth + 1)
+            ) {
+                return false;
+            }
+        }
+        return true;
+    } finally {
+        _seen.delete(value);
+    }
+}
+
+// R12-P2-1 (Codex round 12): materialize a deep plain-JSON-data COPY of a
+// value WITHOUT ever invoking JSON.stringify on the source — a transparent
+// Proxy could otherwise pass every gate on its legal target and then inject
+// raw content through a toJSON trap at the moment the artifact file is
+// serialized (the written bytes would differ from the validated bytes).
+// The copy is built purely from own-property descriptors (accessors,
+// proxies, non-plain prototypes, non-finite numbers, cycles and nesting
+// beyond PLAIN_JSON_DEPTH_LIMIT all throw TypeError → the caller fails
+// closed as INPUT_ERROR), so validation, hashing and serialization all see
+// the SAME materialized bytes. Shared non-cyclic references are legal.
+function snapshotStrictPlainData(value, label = 'value', _seen = null, _depth = 0) {
+    if (_depth > PLAIN_JSON_DEPTH_LIMIT) {
+        throw new TypeError(`${label}: nesting depth exceeds ${PLAIN_JSON_DEPTH_LIMIT}`);
+    }
+    if (value === null || typeof value === 'boolean' || typeof value === 'string') {
+        return value;
+    }
+    if (typeof value === 'number') {
+        if (!Number.isFinite(value)) {
+            throw new TypeError(`${label}: non-finite number`);
+        }
+        return value;
+    }
+    if (Array.isArray(value)) {
+        if (util.types.isProxy(value) || Object.getPrototypeOf(value) !== Array.prototype) {
+            throw new TypeError(`${label}: proxy-wrapped or foreign-prototype array`);
+        }
+        if (_seen === null) _seen = new WeakSet();
+        if (_seen.has(value)) {
+            throw new TypeError(`${label}: cyclic reference`);
+        }
+        _seen.add(value);
+        try {
+            let indexKeys = 0;
+            for (const key of Reflect.ownKeys(value)) {
+                if (key === 'length') {
+                    continue;
+                }
+                if (typeof key !== 'string' || !/^(0|[1-9]\d*)$/.test(key)) {
+                    throw new TypeError(`${label}: array carries a non-index own key`);
+                }
+                const index = Number(key);
+                if (index >= value.length) {
+                    throw new TypeError(`${label}: array carries an out-of-range own key`);
+                }
+                indexKeys += 1;
+                const descriptor = Object.getOwnPropertyDescriptor(value, key);
+                if (
+                    !descriptor ||
+                    !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+                    descriptor.enumerable !== true
+                ) {
+                    throw new TypeError(`${label}: array slot is not an enumerable data property`);
+                }
+            }
+            if (indexKeys !== value.length) {
+                throw new TypeError(`${label}: sparse array (holes are not JSON data)`);
+            }
+            const out = [];
+            for (let i = 0; i < value.length; i += 1) {
+                out.push(snapshotStrictPlainData(value[i], `${label}[${i}]`, _seen, _depth + 1));
+            }
+            return out;
+        } finally {
+            _seen.delete(value);
         }
     }
-    return true;
+    if (typeof value !== 'object') {
+        throw new TypeError(`${label}: ${typeof value} is not plain JSON data`);
+    }
+    if (util.types.isProxy(value)) {
+        throw new TypeError(`${label}: proxy-wrapped object is not plain JSON data`);
+    }
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+        throw new TypeError(`${label}: non-plain object prototype`);
+    }
+    if (_seen === null) _seen = new WeakSet();
+    if (_seen.has(value)) {
+        throw new TypeError(`${label}: cyclic reference`);
+    }
+    _seen.add(value);
+    try {
+        const out = {};
+        for (const key of Object.getOwnPropertyNames(value)) {
+            const descriptor = Object.getOwnPropertyDescriptor(value, key);
+            if (
+                !descriptor ||
+                !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+                descriptor.enumerable !== true
+            ) {
+                throw new TypeError(`${label}: own property '${key}' is not an enumerable data property`);
+            }
+            out[key] = snapshotStrictPlainData(descriptor.value, `${label}.${key}`, _seen, _depth + 1);
+        }
+        return out;
+    } finally {
+        _seen.delete(value);
+    }
 }
 
 /**
@@ -1098,8 +1237,12 @@ function assessDriftVariants(payload) {
 // L8 — quarantine rules / prohibited retention
 // ─────────────────────────────────────────────────────────────
 
+// R12-P3-1 (Codex round 12): depth bound for the recursive content scan —
+// a path deeper than this fails closed with E013, never a RangeError.
+const PROHIBITED_SCAN_DEPTH_LIMIT = 256;
+
 /* eslint-disable-next-line complexity */
-function scanProhibitedContent(value, path, errors) {
+function scanProhibitedContent(value, path, errors, _seen = null, _depth = 0) {
     if (value === null || value === undefined) return;
     if (typeof value === 'string') {
         const lower = value.toLowerCase();
@@ -1115,20 +1258,71 @@ function scanProhibitedContent(value, path, errors) {
         return;
     }
     if (Array.isArray(value)) {
-        for (let i = 0; i < value.length; i += 1) {
-            scanProhibitedContent(value[i], `${path}[${i}]`, errors);
+        if (_depth > PROHIBITED_SCAN_DEPTH_LIMIT) {
+            errors.push({
+                code: ERROR_CODES.E013,
+                message: `prohibited-content scan exceeded depth limit at ${path}`,
+            });
+            return;
+        }
+        if (_seen === null) _seen = new WeakSet();
+        if (_seen.has(value)) {
+            // R12-P3-1: a cyclic structure must be a structured E013, never
+            // an unstructured RangeError from unbounded recursion.
+            errors.push({
+                code: ERROR_CODES.E013,
+                message: `cyclic prohibited-content structure at ${path}`,
+            });
+            return;
+        }
+        _seen.add(value);
+        try {
+            for (let i = 0; i < value.length; i += 1) {
+                scanProhibitedContent(value[i], `${path}[${i}]`, errors, _seen, _depth + 1);
+            }
+        } finally {
+            _seen.delete(value);
         }
         return;
     }
     if (isPlainObject(value)) {
-        for (const [key, child] of Object.entries(value)) {
-            if (PROHIBITED_KEY_NAMES.includes(key)) {
-                errors.push({
-                    code: ERROR_CODES.E013,
-                    message: `prohibited key name ${key} at ${path}`,
-                });
+        if (_depth > PROHIBITED_SCAN_DEPTH_LIMIT) {
+            errors.push({
+                code: ERROR_CODES.E013,
+                message: `prohibited-content scan exceeded depth limit at ${path}`,
+            });
+            return;
+        }
+        if (util.types.isProxy(value)) {
+            // R12-P2-1: a proxy-wrapped node can return different values on
+            // re-read — fail closed instead of trusting the first read.
+            errors.push({
+                code: ERROR_CODES.E013,
+                message: `proxy-wrapped object at ${path}`,
+            });
+            return;
+        }
+        if (_seen === null) _seen = new WeakSet();
+        if (_seen.has(value)) {
+            errors.push({
+                code: ERROR_CODES.E013,
+                message: `cyclic prohibited-content structure at ${path}`,
+            });
+            return;
+        }
+        _seen.add(value);
+        try {
+            for (const [key, child] of Object.entries(value)) {
+                if (PROHIBITED_KEY_NAMES.includes(key)) {
+                    errors.push({
+                        code: ERROR_CODES.E013,
+                        message: `prohibited key name ${key} at ${path}`,
+                    });
+                }
+                scanProhibitedContent(child, `${path}.${key}`, errors, _seen, _depth + 1);
             }
-            scanProhibitedContent(child, `${path}.${key}`, errors);
+        } finally {
+            _seen.delete(value);
         }
     }
 }
@@ -1796,6 +1990,7 @@ module.exports = {
     ERROR_CODES,
     MAX_SOURCE_MATCH_ID_LENGTH,
     isPlainJsonData,
+    snapshotStrictPlainData,
     SECTIONS,
     DOUBLE_BINDING_FIELDS,
     DOUBLE_BOUND_FIELD_PAIRS,
