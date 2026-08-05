@@ -484,12 +484,13 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 310 staging unit tests (113 retention incl. fault-injection and
-tamper + 70 source verification + 85 contract [54 declared + 16 loop-generated
+Test counts: 315 staging unit tests (114 retention incl. fault-injection and
+tamper + 70 source verification + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
-R14-P3-1 symbol own key refusal] + 17 converter
+R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
+regressions (a/b/c/d)] + 17 converter
 + 25 CLI;
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
@@ -587,6 +588,23 @@ and snapshotStrictPlainData object branches now use Reflect.ownKeys to refuse
 Symbol own keys (snapshot never silently drops them; regression + legal
 control), R14-P3-2: ACTIVE_MILESTONE current-overview count corrected
 260→307; counts synced to 310.
+Codex round-15 (head ec2f29037, 21 commits) found 1 new P2 + 1 new P3 —
+R15-P2-1: a legal own "__proto__" key (JSON.parse-generated) was silently
+dropped by the `{}` + `target[key] = value` write patterns — the shared
+canonicalizeJson (FotMobRawDetailFetcher.js, the staging artifact hash chain's
+shared base via canonicalJsonHash → sha256CanonicalJson → canonicalizeJson),
+snapshotStrictPlainData and both artifact hash projections now create the
+property with Object.defineProperty (enumerable data property; behavior
+identical for every other key; the retention newObservations key is
+internally derived as sourceMatchId:sha256 and structurally cannot be
+"__proto__"). Regressions R15-P2-1a/b/c/d (contract: JSON.parse scalar +
+object-value snapshot preservation with intact prototype, artifact-level
+hash sensitivity + legal-control validation, nested section value exercising
+only the shared canonicalizeJson) + R15-P2-1e (retention end-to-end:
+convert→commit→validate preserves the field on disk and stripping it is now
+a detected tamper). R15-P3-1: selector-order comment narrowed to "before the
+payload/manifest input files are gated or read" (non-blocking); counts
+synced to 315.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

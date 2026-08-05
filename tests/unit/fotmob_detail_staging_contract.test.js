@@ -19,6 +19,7 @@ const {
     validateObservation,
     validateStagingArtifact,
     computeStagingArtifactBusinessHash,
+    computeStagingArtifactIntegrityHash,
     DOUBLE_BOUND_FIELD_PAIRS,
     ACTUAL_DOUBLE_BOUND_FIELDS,
     uuidV5,
@@ -1331,4 +1332,88 @@ test('R13-P3-2: validateQuarantineRules refuses a proxy-wrapped array as a struc
     );
     const clean = validateQuarantineRules({ nested: ['ordinary'] });
     assert.strictEqual(clean.ok, true, JSON.stringify(clean.errors));
+});
+
+// ── R15-P2-1 (Codex round 15): a legal own "__proto__" key must survive
+//    strict snapshots and participate in artifact hashes. Pre-fix, the
+//    `{}` + `target[key] = value` write patterns routed "__proto__" through
+//    the legacy setter: scalar values were silently dropped and object
+//    values swapped the temporary object's prototype. ────────────────
+
+test('R15-P2-1a: a JSON.parse-generated own "__proto__" SCALAR key survives snapshotStrictPlainData as a data property', () => {
+    // exactly what a parser would produce from wire bytes: an OWN enumerable
+    // data property named "__proto__" (JSON.parse uses CreateDataProperty)
+    const fromJson = JSON.parse('{"__proto__":"kept","a":1}');
+    assert.ok(Object.prototype.hasOwnProperty.call(fromJson, '__proto__'));
+    assert.strictEqual(Object.getOwnPropertyDescriptor(fromJson, '__proto__').enumerable, true);
+    // strict plainness admits it: own data properties are plain JSON
+    assert.strictEqual(isPlainJsonData(fromJson), true);
+    const snap = snapshotStrictPlainData(fromJson);
+    // preserved as a data property, NOT routed through the __proto__ setter
+    const descriptor = Object.getOwnPropertyDescriptor(snap, '__proto__');
+    assert.ok(descriptor, 'own __proto__ key must be preserved');
+    assert.ok(descriptor.enumerable);
+    assert.strictEqual(descriptor.value, 'kept');
+    // the snapshot object's own prototype is untouched
+    assert.strictEqual(Object.getPrototypeOf(snap), Object.prototype);
+    assert.strictEqual(snap.a, 1);
+});
+
+test('R15-P2-1b: a JSON.parse-generated own "__proto__" OBJECT value survives the snapshot without clobbering the prototype', () => {
+    const fromJson = JSON.parse('{"__proto__":{"inner":"kept"},"a":1}');
+    assert.strictEqual(isPlainJsonData(fromJson), true);
+    const snap = snapshotStrictPlainData(fromJson);
+    const descriptor = Object.getOwnPropertyDescriptor(snap, '__proto__');
+    assert.ok(descriptor, 'own __proto__ key must be preserved');
+    assert.ok(descriptor.enumerable);
+    assert.strictEqual(descriptor.value.inner, 'kept');
+    // the object VALUE must stay a plain data value — the old bug made it
+    // the snapshot's prototype instead of a value
+    assert.strictEqual(Object.getPrototypeOf(snap), Object.prototype);
+    assert.strictEqual(Object.getPrototypeOf(descriptor.value), Object.prototype);
+    assert.strictEqual(snap.a, 1);
+});
+
+test('R15-P2-1c: a "__proto__" field changes the artifact hashes and validates clean (hash sensitivity + legal control)', () => {
+    // two artifacts identical except for an own "__proto__" field
+    const without = validArtifact();
+    const withProto = validArtifact();
+    Object.defineProperty(withProto, '__proto__', {
+        value: 'kept',
+        enumerable: true,
+        writable: true,
+        configurable: true,
+    });
+    // the business/integrity hashes must SEE the field (the shared
+    // canonicalization chain canonicalJsonHash → sha256CanonicalJson →
+    // canonicalizeJson in FotMobRawDetailFetcher.js is exercised here)
+    assert.notStrictEqual(computeStagingArtifactBusinessHash(withProto), without.business_hash);
+    assert.notStrictEqual(computeStagingArtifactIntegrityHash(withProto), without.artifact_integrity_sha256);
+    // legal control: a field-bearing artifact validates clean once its
+    // hashes are recomputed — zero false rejection of legal extra fields
+    withProto.business_hash = computeStagingArtifactBusinessHash(withProto);
+    withProto.artifact_integrity_sha256 = computeStagingArtifactIntegrityHash(withProto);
+    const validation = validateStagingArtifact(withProto);
+    assert.strictEqual(validation.ok, true, validation.errors.join('; '));
+});
+
+test('R15-P2-1d: a nested "__proto__" inside a section VALUE changes the business hash (shared canonicalizeJson path)', () => {
+    // the projections are SHALLOW copies — a nested field inside
+    // sections.*.json is only ever seen by canonicalizeJson during hashing,
+    // so this is the pure shared-helper discriminator
+    const artifact = validArtifact();
+    const events = JSON.parse(JSON.stringify(artifact.sections.events.json));
+    const eventWithProto = JSON.parse(JSON.stringify(events[0]));
+    Object.defineProperty(eventWithProto, '__proto__', {
+        value: 'kept',
+        enumerable: true,
+        writable: true,
+        configurable: true,
+    });
+    events[0] = eventWithProto;
+    artifact.sections = {
+        ...artifact.sections,
+        events: { ...artifact.sections.events, json: events },
+    };
+    assert.notStrictEqual(computeStagingArtifactBusinessHash(artifact), artifact.business_hash);
 });

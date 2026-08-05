@@ -56,7 +56,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。310 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。315 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -77,11 +77,12 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  310 项 staging 测试（113 retention 故障注入/篡改 + 70 source verification +
-  85 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
+  315 项 staging 测试（114 retention 故障注入/篡改 + 70 source verification +
+  89 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness + 3 个 R12-P3-1 cycle/深度守卫 + 3 个 R13-P2-3 validator
-  深度门 + 1 个 R13-P3-2 proxy 数组拒绝 + 1 个 R14-P3-1 Symbol own key 拒绝]
+  深度门 + 1 个 R13-P3-2 proxy 数组拒绝 + 1 个 R14-P3-1 Symbol own key 拒绝
+  + 4 个 R15-P2-1 __proto__ own-key 回归（R15-P2-1a/b/c/d）]
   + 17 converter + 25 CLI；Codex round-8（head
   7bbbd7658）2 项新 P2 —— R8-P2-1 isPlainJsonData 严格数组语义
   （非枚举 own toJSON / 空洞 / symbol / 额外 key / 非 Array 原型 / 非有限
@@ -157,6 +158,26 @@
   snapshotStrictPlainData 的 object 分支改用 Reflect.ownKeys 拒绝 Symbol own
   keys（snapshot 不再静默丢弃 —— 补回归 + 合法对照）、R14-P3-2 当前概述
   计数 260→307 —— 全部离线修复；计数同步 310；
+  Codex round-15（head ec2f29037，21 个 commit）1 项新 P2 + 1 项新 P3 ——
+  R15-P2-1 合法 own "__proto__" key 处理（`{}` + `target[key] = value` 写入
+  模式触发 legacy __proto__ setter：标量被静默丢弃、对象值改变临时对象原型；
+  影响 shared `canonicalizeJson`（FotMobRawDetailFetcher.js，staging artifact
+  hash 链 canonicalJsonHash → sha256CanonicalJson → canonicalizeJson 的共享
+  底层）、snapshotStrictPlainData（Contract.js）与两个 artifact hash
+  projection —— 全部改为 Object.defineProperty 安全创建 enumerable data
+  property（行为对非 "__proto__" 输入完全不变；Retention 的
+  newObservations 键为 sourceMatchId:sha256 内部派生、结构性含冒号、不
+  可达 —— 无需修改），补 5 项回归：R15-P2-1a JSON.parse 生成的 own
+  "__proto__" 标量经 snapshot 保留为 data property（原型不被劫持）、
+  R15-P2-1b 对象值变体（值保持为 plain 值而非原型）、R15-P2-1c artifact
+  级 hash 敏感性（business/integrity hash 对该字段敏感）+ 合法对照
+  validateStagingArtifact ok:true、R15-P2-1d section 内嵌套 "__proto__"
+  只经 shared canonicalizeJson 路径的 hash 敏感性判别、R15-P2-1e 端到端
+  convert→commit→validate 保留（字段落盘为 own enumerable data property，
+  剥离该字段成为被检测的篡改 —— 修复前恰可通过校验）、R15-P3-1 selector
+  顺序注释精确收窄为"在 payload/manifest 输入文件 gate/read 前"（归档本身
+  在其自有上限下先行 live-inspect —— P3 不阻塞合并）—— 全部离线修复；
+  计数同步 315；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

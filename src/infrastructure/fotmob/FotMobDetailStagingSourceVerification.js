@@ -913,8 +913,12 @@ function verifyEntryAgainstReceipt(args = {}) {
     // entries without selectors fall back to the receipt's global selectors
     // (single-pair receipts keep working; a second pair without selectors
     // still fails closed on the member-hash mismatch below).
-    // The selectors are resolved BEFORE any file read so the read bound
-    // below can come from the VERIFIED archive, never from the input file.
+    // R15-P3-1 (Codex round 15): the selectors are resolved before the
+    // payload/manifest INPUT files are gated or read (the read bound below
+    // comes from the VERIFIED archive, never from the input file); the
+    // archive itself is live-inspected earlier under its own bounded
+    // limits (compressed/decompressed/member/total), so "any file read"
+    // would overstate the ordering.
     const payloadMember = String(entry.payload_member || receipt.payload_member || '');
     const manifestMember = String(entry.manifest_member || receipt.manifest_member || '');
     const liveByName = new Map(inspected.members.map(m => [m.name, m]));

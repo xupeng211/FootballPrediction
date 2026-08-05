@@ -2776,3 +2776,62 @@ test('R13-P3-1: a transparent Proxy result envelope is refused as INPUT_ERROR �
     );
     assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a proxy result envelope');
 });
+
+// ── R15-P2-1 (Codex round 15): end-to-end preservation of a legal own
+//    "__proto__" field. Pre-fix the commit snapshot (snapshotStrictPlainData)
+//    silently DROPPED a scalar "__proto__" own key and the hash
+//    canonicalization ignored it, so the on-disk artifact lacked the field
+//    yet still validated — a silent loss of legal input data. ────────
+
+test('R15-P2-1e: a JSON.parse-generated own "__proto__" field survives convert→commit→validate and is hash-covered', () => {
+    const dir = tmpDir('fotmob-ret-proto-');
+    const outputRoot = path.join(dir, 'out');
+    const { buildPayload, buildManifest } = require('../helpers/fotmobDetailStagingFixtures');
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+
+    // a legal unknown-extra field inside an event, generated exactly as a
+    // real parser would: JSON.parse of wire bytes with an own "__proto__" key
+    const norm = buildPayload({ source_match_id: '3901023' }).normalized;
+    norm.events = [
+        JSON.parse('{"id":9434327,"minute":11,"homeScore":0,"awayScore":0,"event_kind":"real_event","__proto__":"kept"}'),
+    ];
+    const payload = buildPayload({ source_match_id: '3901023', normalized: norm });
+    const payloadBytes = Buffer.from(JSON.stringify(payload, null, 2) + '\n', 'utf8');
+    const manifest = buildManifest(payload);
+    const result = convertPair({ payload, manifest, payloadBytes });
+    assert.strictEqual(result.ok, true);
+    const event = result.artifact.sections.events.json[0];
+    assert.ok(Object.prototype.hasOwnProperty.call(event, '__proto__'));
+
+    const summary = commitObservations({
+        results: [result],
+        outputRoot,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-06T00:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+
+    // the field survives the snapshot + atomic write: it is an own
+    // enumerable data property of the artifact file ON DISK
+    const artifactFile = summary.business_projection.observations[0].artifact_file;
+    const onDisk = JSON.parse(fs.readFileSync(path.join(outputRoot, artifactFile), 'utf8'));
+    const diskEvent = onDisk.sections.events.json[0];
+    const diskDescriptor = Object.getOwnPropertyDescriptor(diskEvent, '__proto__');
+    assert.ok(diskDescriptor, 'own __proto__ key must reach the on-disk artifact');
+    assert.ok(diskDescriptor.enumerable);
+    assert.strictEqual(diskDescriptor.value, 'kept');
+    assert.strictEqual(Object.getPrototypeOf(diskEvent), Object.prototype);
+
+    // three-way consistency: the field-bearing artifact validates clean
+    const validation = validateOutputRoot(outputRoot, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(validation.ok, true, JSON.stringify(validation.errors));
+
+    // the hashes now COVER the field: deleting it from the on-disk artifact
+    // is a detected tamper (pre-fix the canonicalization ignored it, so a
+    // field-stripped artifact still validated — the exact silent-loss bug)
+    delete diskEvent.__proto__;
+    fs.writeFileSync(path.join(outputRoot, artifactFile), JSON.stringify(onDisk, null, 2) + '\n');
+    const after = validateOutputRoot(outputRoot, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(after.ok, false);
+});

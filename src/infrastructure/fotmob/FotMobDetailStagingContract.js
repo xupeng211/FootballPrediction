@@ -639,7 +639,18 @@ function snapshotStrictPlainData(value, label = 'value', _seen = null, _depth = 
             ) {
                 throw new TypeError(`${label}: own property '${key}' is not an enumerable data property`);
             }
-            out[key] = snapshotStrictPlainData(descriptor.value, `${label}.${key}`, _seen, _depth + 1);
+            // R15-P2-1 (Codex round 15): defineProperty instead of
+            // `out[key] = ...` — an own string key "__proto__" is a legal
+            // plain-JSON key and must be preserved as an enumerable data
+            // property, not routed through the legacy __proto__ setter
+            // (which silently dropped scalar values and swapped the
+            // prototype for object values).
+            Object.defineProperty(out, key, {
+                value: snapshotStrictPlainData(descriptor.value, `${label}.${key}`, _seen, _depth + 1),
+                enumerable: true,
+                writable: true,
+                configurable: true,
+            });
         }
         return out;
     } finally {
@@ -1679,7 +1690,16 @@ function computeStagingArtifactBusinessProjection(artifact) {
         ) {
             continue;
         }
-        projection[key] = value;
+        // R15-P2-1: defineProperty — an own "__proto__" field on the
+        // artifact must stay in the projection as a data property (same
+        // discipline as snapshotStrictPlainData), or the business hash would
+        // silently ignore a legal extra field.
+        Object.defineProperty(projection, key, {
+            value,
+            enumerable: true,
+            writable: true,
+            configurable: true,
+        });
     }
     return projection;
 }
@@ -1699,7 +1719,13 @@ function computeStagingArtifactIntegrityHash(artifact) {
     const projection = {};
     for (const [key, value] of Object.entries(artifact)) {
         if (key === 'artifact_integrity_sha256') continue;
-        projection[key] = value;
+        // R15-P2-1: defineProperty (see computeStagingArtifactBusinessProjection)
+        Object.defineProperty(projection, key, {
+            value,
+            enumerable: true,
+            writable: true,
+            configurable: true,
+        });
     }
     return canonicalJsonHash(projection);
 }
