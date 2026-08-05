@@ -1437,3 +1437,35 @@ test('V57 (R4-P3-2): GNU L long-name records with the standard trailing NUL are 
         err => err.code === 'SAFETY_ERROR'
     );
 });
+
+test('R10-P3-2a: a DANGLING GNU L long-name record at end-of-archive fails closed (no member consumes it)', () => {
+    const dir = tmpDir('fotmob-ver-dangling-gnu-l-');
+    const archive = path.join(dir, 'dangling-gnu-l.tar.gz');
+    // A legal GNU long-name record followed DIRECTLY by the end-of-archive
+    // zero blocks: the override names a member that never follows. The
+    // parser must reject it, not silently drop the pending name.
+    const realName = 'pairs/1-3901023.payload.json';
+    const nulTerminated = Buffer.concat([Buffer.from(realName + '\0', 'utf8'), Buffer.alloc(511 - realName.length)]);
+    const longNameBlock = rawTarBlock(rawTarHeader('', 'L', nulTerminated.length), nulTerminated);
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([longNameBlock, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX name override/.test(err.message)
+    );
+});
+
+test('R10-P3-2b: a DANGLING PAX x path record at end-of-archive fails closed (no member consumes it)', () => {
+    const dir = tmpDir('fotmob-ver-dangling-pax-');
+    const archive = path.join(dir, 'dangling-pax.tar.gz');
+    // A legal PAX `path=../unsafe` record followed directly by the end
+    // blocks: even though the record itself would be unsafe when applied,
+    // the failure mode here is that NO member follows to consume it — the
+    // dangling metadata must itself be a SAFETY_ERROR.
+    const paxRecord = paxRecordFor('path', '../unsafe');
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX name override/.test(err.message)
+    );
+});

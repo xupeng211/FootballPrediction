@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 270 staging
-  unit tests green (95 retention fault-injection/tamper + 57 source
+  (no database, no migration). Current test baseline: 279 staging
+  unit tests green (102 retention fault-injection/tamper + 59 source
   verification + 77 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
   R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
@@ -956,8 +956,8 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 270 staging tests (95 retention
-  fault-injection/tamper + 57 source verification + 77 contract [54 declared
+  targets; P3-1 docs/PR-body rewrite. 279 staging tests (102 retention
+  fault-injection/tamper + 59 source verification + 77 contract [54 declared
   + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
   + 3 R7-P3-2 id-length + 1 R8-P2-1 strict array plainness] + 17 converter
   + 24 CLI; Codex round-8 (head 7bbbd7658) findings R8-P2-1 (non-plain arrays
@@ -970,7 +970,16 @@ legacy-writer execution is authorized.
   `ok`, ok:true declares ACCEPTED_NEW, ok:false cannot claim accepted — 3 new
   zero-write regressions + legal control) and R9-P3-1 (doc field-name
   accuracy: generated_at derives from manifest `response_received_at`, recorded
-  as artifact `source_response_received_at`) both remediated);
+  as artifact `source_response_received_at`) both remediated); Codex round-10
+  (head 4c1609945) findings R10-P2-1 (injection surface: quarantine_reason
+  derived from the validated error_code — caller error text never persisted;
+  rejected envelopes require a registry E### code; strict-ISO builtAt; every
+  write-plan document isPlainJsonData; D-group recorded_at ISO + agreement —
+  5 tests + legal control), R10-P2-2 (validator observations array/null-entry
+  hardening → LEDGER_INVALID, no crash — 2 mutation tests), R10-P3-1
+  (CAPABILITY_INDEX.md:70 + PR body field-name closure, counts 279),
+  R10-P3-2 (tar dangling GNU L / PAX x at EOF → SAFETY_ERROR — 2 EOF tests)
+  all remediated);
   runtime counts = node --test # pass, the only gap vs static test()
   declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
   tests green; ESLint clean. 16-match offline revalidation on the fixed

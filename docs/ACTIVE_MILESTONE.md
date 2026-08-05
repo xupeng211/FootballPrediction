@@ -77,7 +77,7 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  270 项 staging 测试（95 retention 故障注入/篡改 + 57 source verification +
+  279 项 staging 测试（102 retention 故障注入/篡改 + 59 source verification +
   77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
   R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
   严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
@@ -95,6 +95,19 @@
   零写入回归 + 合法对照）、R9-P3-1 文档字段名准确性（generated_at 取自
   manifest 的 response_received_at 并记录为 artifact 的
   source_response_received_at，两处文档已修正）—— 全部离线修复；
+  Codex round-10（head 4c1609945，17 个 commit）2 项新 P2 + 2 项新 P3
+  —— R10-P2-1 直接调用 commitObservations 的注入面收敛（quarantine_reason
+  不再持久化调用者提供的 errors[0].message，改为由已验证 error_code 派生
+  的固定白名单 reason；rejected ok:false envelope 必须携带注册表 E###
+  error_code；builtAt 非严格 ISO 拒绝；写入计划中每个 commit 文档强制
+  isPlainJsonData；D-group 校验 recorded_at 严格 ISO + 文件与账本一致 ——
+  补 5 项回归 + 合法对照）、R10-P2-2 validator observations 形状硬化
+  （数组 observations 拒绝为 LEDGER_INVALID；null/非对象 entry 返回
+  LEDGER_INVALID 而非抛异常 —— 补 2 项 mutation 回归）、R10-P3-1 字段名
+  收口（CAPABILITY_INDEX.md:70 与 PR body 统一为 manifest response_
+  received_at → artifact source_response_received_at；计数同步 279）、
+  R10-P3-2 tar parser 悬空 GNU L / PAX x 元数据 EOF 拒绝（SAFETY_ERROR，
+  补 2 项 EOF fixture 测试）—— 全部离线修复；
   运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
   循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；

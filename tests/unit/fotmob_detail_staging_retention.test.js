@@ -2303,3 +2303,157 @@ test('R9-P2-1c (legal control): a genuine converter result (ok:true + ACCEPTED_N
     const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
     assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
 });
+
+// ── R10-P2-1 (Codex round 10): caller-supplied error text / timestamps can
+//    never be persisted into committed evidence; rejected envelope carries a
+//    registry error_code ──────────────────────────────────────────────────
+
+test('R10-P2-1a: a caller-supplied raw error message is NEVER persisted — quarantine_reason derives from the validated error code', () => {
+    const dir = tmpDir('fotmob-r10p21-inject-');
+    const bad = quarantinedPairResult();
+    // The raw gate and the quarantine envelope checks pass on this shape; the
+    // only caller-controlled free text is errors[0].message — which must not
+    // reach the committed evidence, ledger or summary.
+    const injected = {
+        ...bad,
+        errors: [{ message: '<html>RAW FULL RESPONSE</html>' }],
+    };
+    const summary = commitObservations({
+        results: [injected],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.quarantined_count, 1);
+    const qFile = fs.readdirSync(dir).find(f => f.startsWith('quarantine-'));
+    assert.ok(qFile, 'a quarantine evidence file must exist');
+    const q = JSON.parse(fs.readFileSync(path.join(dir, qFile), 'utf8'));
+    const qSerialized = JSON.stringify(q);
+    assert.ok(!qSerialized.includes('<html>'), 'raw HTML must never be persisted');
+    assert.ok(!qSerialized.includes('RAW FULL RESPONSE'), 'raw caller message must never be persisted');
+    assert.strictEqual(
+        q.quarantine_reason,
+        'value sanity fail (E011)',
+        'reason must derive from the validated error code'
+    );
+    assert.strictEqual(q.recorded_at, '2026-08-04T12:00:00.000Z');
+    const ledgerFile = fs.readdirSync(dir).find(f => f.startsWith('store-state-'));
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, ledgerFile), 'utf8'));
+    const qKey = Object.keys(ledger.quarantines)[0];
+    const entrySerialized = JSON.stringify(ledger.quarantines[qKey]);
+    assert.ok(!entrySerialized.includes('<html>'), 'ledger entry must never carry the raw message');
+    assert.ok(!entrySerialized.includes('RAW FULL RESPONSE'));
+    assert.strictEqual(ledger.quarantines[qKey].quarantine_reason, 'value sanity fail (E011)');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('R10-P2-1b: a rejected ok:false result without a registry error_code is refused before any write', () => {
+    const dir = tmpDir('fotmob-r10p21-rejcode-');
+    const bad = quarantinedPairResult();
+    const rejected = {
+        ...bad,
+        terminal_state: 'REJECTED_SCHEMA_UNKNOWN',
+        quarantine_status: 'rejected',
+        error_code: undefined,
+    };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [rejected],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /rejected result must carry a registry error_code/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a rejected result without a code');
+});
+
+test('R10-P2-1c (legal control): a genuine quarantine commit persists the DERIVED reason and a strict recorded_at, and validates PASS', () => {
+    const dir = tmpDir('fotmob-r10p21-legal-');
+    const bad = quarantinedPairResult();
+    commitObservations({
+        results: [bad],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const qFile = fs.readdirSync(dir).find(f => f.startsWith('quarantine-'));
+    const q = JSON.parse(fs.readFileSync(path.join(dir, qFile), 'utf8'));
+    assert.strictEqual(q.quarantine_reason, 'value sanity fail (E011)');
+    assert.strictEqual(q.recorded_at, '2026-08-04T12:00:00.000Z');
+    const ledgerFile = fs.readdirSync(dir).find(f => f.startsWith('store-state-'));
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, ledgerFile), 'utf8'));
+    assert.strictEqual(
+        ledger.quarantines[Object.keys(ledger.quarantines)[0]].recorded_at,
+        '2026-08-04T12:00:00.000Z',
+        'ledger recorded_at must agree with the evidence file'
+    );
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('R10-P2-1d: a non-ISO builtAt is refused — recorded_at could otherwise inject arbitrary bytes into committed evidence', () => {
+    const dir = tmpDir('fotmob-r10p21-builtat-');
+    const bad = quarantinedPairResult();
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [bad],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '<html>not-a-timestamp</html>',
+            }),
+        err => err.code === 'INPUT_ERROR' && /builtAt must be a strict ISO-8601 absolute timestamp/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a non-ISO builtAt');
+});
+
+test('R10-P2-1e: a tampered quarantine recorded_at is detected by validate (strict ISO + ledger agreement)', () => {
+    const dir = commitQuarantined(tmpDir('fotmob-r10p21-recordedat-'));
+    const qFile = fs.readdirSync(dir).find(f => f.startsWith('quarantine-'));
+    const q = JSON.parse(fs.readFileSync(path.join(dir, qFile), 'utf8'));
+    q.recorded_at = 'not-a-timestamp';
+    fs.writeFileSync(path.join(dir, qFile), JSON.stringify(q, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'QUARANTINE_INVALID' && /recorded_at/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+// ── R10-P2-2 (Codex round 10): validator observations shape hardening ────
+
+test('R10-P2-2a: a ledger whose observations is an ARRAY is rejected as LEDGER_INVALID (an array would silently pass the empty Object.entries path)', () => {
+    const dir = committedDir('fotmob-r10p22-obsarr-');
+    mutateLedger(dir, ledger => {
+        ledger.observations = [];
+    });
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'LEDGER_INVALID' && /observations must be a plain object/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+test('R10-P2-2b: a null observation entry returns LEDGER_INVALID instead of crashing the validator', () => {
+    const dir = committedDir('fotmob-r10p22-nullentry-');
+    mutateLedger(dir, ledger => {
+        const firstKey = Object.keys(ledger.observations)[0];
+        ledger.observations[firstKey] = null;
+    });
+    // Must NOT throw — the validator fails closed with a structured error.
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'LEDGER_INVALID' && /is not an object/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});

@@ -76,6 +76,7 @@ const {
     ERROR_CODES,
     MAX_SOURCE_MATCH_ID_LENGTH,
     isPlainJsonData,
+    isStrictAbsoluteTimestamp,
     validateStagingArtifact,
     buildStagingArtifact,
     canonicalJsonHash,
@@ -887,6 +888,18 @@ const QUARANTINE_STATE_ERROR_CODES = Object.freeze({
     [TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH]: Object.freeze([ERROR_CODES.E008]),
 });
 
+// R10-P2-1 (Codex round 10): quarantine evidence NEVER persists caller-
+// supplied error text. The pre-loop has already validated that the code is
+// the EXACT code defining the declared terminal state (QUARANTINE_STATE_
+// ERROR_CODES), so the reason derives deterministically from the validated
+// code — a direct API caller injecting `errors:[{message:'<html>…'}]` can
+// no longer write raw content into the evidence file, ledger or marker.
+// The fallback is deterministic too (unreachable with the current map).
+const QUARANTINE_REASON_BY_CODE = Object.freeze({
+    [ERROR_CODES.E011]: 'value sanity fail (E011)',
+    [ERROR_CODES.E008]: 'provenance hash mismatch (E008)',
+});
+
 /**
  * Stage converted observations into a single output root with the
  * LOGICAL_COMMIT_MARKER protocol. storeDir (if given) must equal outputRoot:
@@ -918,6 +931,17 @@ function commitObservations(args = {}) {
     const runId = String(args.runId || 'offline-staging-run');
     const results = Array.isArray(args.results) ? args.results : [];
     const builtAt = String(args.builtAt || '');
+    // R10-P2-1 (Codex round 10): builtAt is persisted as `recorded_at` on
+    // quarantine evidence — a direct caller could otherwise inject arbitrary
+    // bytes into committed files through this free string. A non-empty
+    // builtAt must be a strict ISO-8601 absolute timestamp (the CLI always
+    // passes one); empty stays allowed for callers that omit it.
+    if (builtAt !== '' && !isStrictAbsoluteTimestamp(builtAt)) {
+        throw Object.assign(
+            new Error(`builtAt must be a strict ISO-8601 absolute timestamp (got '${builtAt}')`),
+            { code: 'INPUT_ERROR' }
+        );
+    }
 
     ensureRealDirectoryTree(outputRoot, fileSystem);
 
@@ -1208,6 +1232,28 @@ function commitObservations(args = {}) {
                 );
             }
         }
+        // R10-P2-1 (Codex round 10): the REJECTED envelope is tightened too —
+        // the summary records `error_code` for rejected observations, so a
+        // direct caller could otherwise inject arbitrary text into the
+        // committed summary the same way quarantine_reason allowed. Only
+        // ok:false raw-declared rejections are gated (ok:true-derived
+        // REJECTED_IDENTITY_INCONSISTENT carries the incoming version's
+        // null error_code by design).
+        if (isRejected && !result.ok) {
+            const errorCode = result.error_code;
+            if (
+                typeof errorCode !== 'string' ||
+                !/^E\d{3}$/.test(errorCode) ||
+                !Object.values(ERROR_CODES).includes(errorCode)
+            ) {
+                throw Object.assign(
+                    new Error(
+                        `rejected result must carry a registry error_code (got '${String(errorCode)}')`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+        }
     }
 
     for (const item of classified) {
@@ -1339,7 +1385,12 @@ function commitObservations(args = {}) {
                     terminal_state: cls.terminal_state,
                     error_code: errorCode,
                     quarantine_status: 'quarantined',
-                    quarantine_reason: result.errors && result.errors[0] ? result.errors[0].message : 'validation fail',
+                    // R10-P2-1: the reason derives from the VALIDATED error
+                    // code — the caller-supplied errors[0].message is never
+                    // persisted (a direct caller could otherwise inject raw
+                    // HTML/payload bytes into the committed evidence).
+                    quarantine_reason:
+                        QUARANTINE_REASON_BY_CODE[errorCode] || `quarantined (${errorCode})`,
                     recorded_at: builtAt,
                     // Evidence is the identity + error, never the full payload.
                 };
@@ -1422,6 +1473,18 @@ function commitObservations(args = {}) {
             throw Object.assign(new Error(`commit file name escapes the output root: ${name}`), {
                 code: 'INPUT_ERROR',
             });
+        }
+        // R10-P2-1 (Codex round 10): every document this commit persists —
+        // artifact, quarantine evidence, summary AND ledger — must be strict
+        // plain JSON data before any byte is written. The per-class gates
+        // already check artifacts; this covers the remaining documents so a
+        // direct caller cannot smuggle raw payload bytes into a committed
+        // file through a document the per-class gates never inspected.
+        if (!isPlainJsonData(write.doc)) {
+            throw Object.assign(
+                new Error(`commit document is not plain JSON data: ${write.name}`),
+                { code: 'INPUT_ERROR' }
+            );
         }
     }
 
@@ -1784,13 +1847,19 @@ function validateOutputRoot(outputRoot, options = {}) {
     ledgerVersions = committed.ledgerVersions;
     let previousLedger = null;
     for (const ledger of ledgerVersions) {
-        if (
-            !ledger ||
-            ledger.schema_version !== STORE_STATE_SCHEMA ||
-            !ledger.observations ||
-            typeof ledger.observations !== 'object'
-        ) {
+        if (!ledger || ledger.schema_version !== STORE_STATE_SCHEMA) {
             errors.push({ code: 'LEDGER_INVALID', message: 'ledger schema_version invalid' });
+            continue;
+        }
+        // R10-P2-2 (Codex round 10): observations must be a non-array plain
+        // object — `typeof [] === 'object'` lets an array silently pass the
+        // empty Object.entries() path and validate as an empty store.
+        if (
+            !ledger.observations ||
+            typeof ledger.observations !== 'object' ||
+            Array.isArray(ledger.observations)
+        ) {
+            errors.push({ code: 'LEDGER_INVALID', message: 'ledger observations must be a plain object' });
             continue;
         }
         // R5-P3-1 (Codex round 5): quarantines must be a PLAIN OBJECT on every
@@ -1877,9 +1946,32 @@ function validateOutputRoot(outputRoot, options = {}) {
                         message: `ledger quarantine entry ${key} error_code must be a registry error code`,
                     });
                 }
+                // R10-P2-1 (Codex round 10): recorded_at is committed into
+                // both the ledger entry and the evidence file — a direct
+                // caller could inject arbitrary bytes through it. Non-empty
+                // recorded_at must be a strict ISO-8601 absolute timestamp
+                // (the commit path already enforces this on builtAt).
+                const ledgerRecordedAt = String(entry.recorded_at ?? '');
+                if (ledgerRecordedAt !== '' && !isStrictAbsoluteTimestamp(ledgerRecordedAt)) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} recorded_at must be a strict ISO-8601 timestamp`,
+                    });
+                }
             }
         }
         for (const [key, entry] of Object.entries(ledger.observations)) {
+            // R10-P2-2 (Codex round 10): a null / non-object / array entry
+            // is reported as LEDGER_INVALID, never a validator crash — a
+            // marker-consistent but semantically illegal ledger must fail
+            // closed with a structured error, not throw a TypeError.
+            if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+                errors.push({
+                    code: 'LEDGER_INVALID',
+                    message: `ledger observation entry ${key} is not an object`,
+                });
+                continue;
+            }
             // 12./13. key format and derivation.
             const expectedKey = observationKey(
                 String(entry.source_match_id ?? ''),
@@ -2071,6 +2163,23 @@ function validateOutputRoot(outputRoot, options = {}) {
                 errors.push({
                     code: 'QUARANTINE_INVALID',
                     message: `quarantine ${quarantineFile} source match id disagrees with ledger`,
+                });
+            }
+            // R10-P2-1 (Codex round 10): the evidence file's recorded_at must
+            // be a strict ISO-8601 absolute timestamp and agree with the
+            // ledger entry — the commit path derives both from builtAt, so a
+            // disagreement means tamper.
+            const fileRecordedAt = String(quarantine.recorded_at ?? '');
+            if (fileRecordedAt !== '' && !isStrictAbsoluteTimestamp(fileRecordedAt)) {
+                errors.push({
+                    code: 'QUARANTINE_INVALID',
+                    message: `quarantine ${quarantineFile} recorded_at must be a strict ISO-8601 timestamp`,
+                });
+            }
+            if (fileRecordedAt !== String(entry.recorded_at ?? '')) {
+                errors.push({
+                    code: 'QUARANTINE_INVALID',
+                    message: `quarantine ${quarantineFile} recorded_at disagrees with ledger`,
                 });
             }
             // 30. quarantine evidence never contains the full payload.

@@ -434,6 +434,18 @@ function inspectArchive(archivePath, options = {}) {
         offset = contentStart + paddedSize;
     }
 
+    // R10-P3-2 (Codex round 10): a dangling GNU long-name (L) or PAX path
+    // override (x) at end-of-archive — metadata record followed directly by
+    // the zero end blocks, with no data member to consume it — must fail
+    // closed. Without this, the parser accepts an archive that ends in an
+    // unconsumed name override.
+    if (pendingLongName !== null || pendingPaxPath !== null) {
+        throw Object.assign(
+            new Error(`tar ends with a dangling GNU/PAX name override (no member follows): ${abs}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+
     // Canonical end-of-archive: the loop exits EITHER on the first zero block
     // or by running out of buffer. The tar spec requires TWO consecutive
     // 512-byte zero blocks (1024 zero bytes) as the end marker; everything

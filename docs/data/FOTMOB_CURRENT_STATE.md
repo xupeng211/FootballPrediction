@@ -484,8 +484,8 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 270 staging unit tests (95 retention incl. fault-injection and
-tamper + 57 source verification + 77 contract [54 declared + 16 loop-generated
+Test counts: 279 staging unit tests (102 retention incl. fault-injection and
+tamper + 59 source verification + 77 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
 runtime counts = node --test
@@ -507,10 +507,22 @@ contract is now enforced BEFORE classification — `ok` must be a real boolean
 ACCEPTED_NEW (retention derives EXACT/EQUIVALENT/identity-conflict; a raw
 rejected claim can no longer be discarded and committed as accepted), and
 ok:false cannot claim an accepted state — 3 new zero-write regressions + legal
-control; 270 staging tests green under umask 022 and 0002) and 1 non-blocking
+control; 279 staging tests green under umask 022 and 0002) and 1 non-blocking
 P3 (R9-P3-1: doc field-name accuracy — generated_at derives from the manifest's
 `response_received_at`, recorded on the artifact as `source_response_received_at`;
-both docs corrected). 16-match offline revalidation on the
+both docs corrected). Codex round-10 (head 4c1609945) found 2 new P2 + 2 new
+P3, all remediated on the current head: R10-P2-1 (direct commitObservations
+injection surface closed — quarantine_reason derives from the validated
+error_code instead of persisting caller-supplied errors[0].message, rejected
+ok:false envelopes must carry a registry E### error_code, non-ISO builtAt
+refused, every write-plan document forced through isPlainJsonData, D-group
+validates recorded_at strict ISO + file/ledger agreement — 5 new tests + legal
+control), R10-P2-2 (validator observations shape hardening — array
+observations → LEDGER_INVALID, null/non-object entries → LEDGER_INVALID
+instead of a crash — 2 mutation regressions), R10-P3-1 (CAPABILITY_INDEX.md:70
+and PR body field-name closure + counts synced to 279), R10-P3-2 (tar parser
+rejects dangling GNU L / PAX x metadata records at end-of-archive with
+SAFETY_ERROR — 2 EOF fixture tests). 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
 new artifacts and byte-identical old artifacts; RUN_3 synthetic new
