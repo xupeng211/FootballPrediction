@@ -73,6 +73,52 @@ const DEFAULT_ARCHIVE_LIMITS = {
     maxTotalMemberBytes: 1024 * 1024 * 1024,
 };
 
+// R20-P2-2 (Codex round 20): operators may RAISE the defaults (via the
+// canonical CLI --limits-file or the module options.limits), but never
+// beyond these safety ceilings — bounded-archive handling is an invariant,
+// not a tunable. Every allocation/loop cap stays inside its intended bound
+// even when a direct API caller supplies an out-of-cap override.
+const HARD_ARCHIVE_LIMIT_CAP = {
+    maxCompressedBytes: 4 * 1024 * 1024 * 1024, // 4 GiB
+    maxDecompressedBytes: 16 * 1024 * 1024 * 1024, // 16 GiB
+    maxMembers: 100000,
+    maxMemberBytes: 4 * 1024 * 1024 * 1024, // 4 GiB
+    maxTotalMemberBytes: 16 * 1024 * 1024 * 1024, // 16 GiB
+};
+
+/**
+ * R20-P2-2: merge the operator limits over the defaults with STRICT
+ * validation. Every provided value must be a positive safe integer and may
+ * never exceed the hard cap for its key; a violation fails closed with a
+ * structured INPUT_ERROR before any archive byte is read. Used by every
+ * merge site (inspectArchive, verifyArchive) so a direct API caller cannot
+ * bypass the caps, and by the canonical CLI --limits-file loader.
+ *
+ * @param {object} options - { limits?: Partial<typeof DEFAULT_ARCHIVE_LIMITS> }
+ * @returns {typeof DEFAULT_ARCHIVE_LIMITS} fully-populated validated limits
+ */
+function mergeArchiveLimits(options = {}) {
+    const merged = { ...DEFAULT_ARCHIVE_LIMITS, ...(options.limits || {}) };
+    for (const key of Object.keys(DEFAULT_ARCHIVE_LIMITS)) {
+        const value = merged[key];
+        if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+            throw Object.assign(
+                new Error(`archive limit ${key} must be a positive safe integer (got ${String(value)})`),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        if (value > HARD_ARCHIVE_LIMIT_CAP[key]) {
+            throw Object.assign(
+                new Error(
+                    `archive limit ${key} exceeds the hard cap (${HARD_ARCHIVE_LIMIT_CAP[key]}): ${value}`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+    }
+    return merged;
+}
+
 // R17-P3-1 (Codex round 17): the R1-P0-1 / R2-P0-1 capability registry
 // (module-private WeakSet + deep-freeze) was REMOVED. After R16-P1-1 the
 // exported entry API refuses ANY supplied `inspected` and always freshly
@@ -321,7 +367,7 @@ function isSafeMemberName(name, rawParts = []) {
  */
 function inspectArchive(archivePath, options = {}) {
     const fileSystem = options.fsImpl || fs;
-    const limits = { ...DEFAULT_ARCHIVE_LIMITS, ...(options.limits || {}) };
+    const limits = mergeArchiveLimits(options);
     const abs = verifyRepositoryExternalRegularFile(archivePath, options);
     // P1-4: read through a no-follow fd with dev/inode identity check — the
     // archive bytes hashed here are the same inode that was validated.
@@ -628,7 +674,7 @@ function inspectArchive(archivePath, options = {}) {
  */
 function verifyArchive(archivePath, expectedSha256, options = {}) {
     const fileSystem = options.fsImpl || fs;
-    const limits = { ...DEFAULT_ARCHIVE_LIMITS, ...(options.limits || {}) };
+    const limits = mergeArchiveLimits(options);
     const abs = verifyRepositoryExternalRegularFile(archivePath, options);
     if (!/^[0-9a-f]{64}$/.test(String(expectedSha256 || ''))) {
         throw Object.assign(new Error('expected archive sha256 must be 64 lowercase hex'), { code: 'INPUT_ERROR' });
@@ -1038,6 +1084,9 @@ function verifyEntryAgainstReceipt(args = {}) {
 
 module.exports = {
     PACKAGE_RECEIPT_SCHEMA,
+    DEFAULT_ARCHIVE_LIMITS,
+    HARD_ARCHIVE_LIMIT_CAP,
+    mergeArchiveLimits,
     assertNoSymlinkAncestors,
     verifyRepositoryExternalRegularFile,
     verifyRepositoryExternalDirectory,

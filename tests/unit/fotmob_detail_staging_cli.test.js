@@ -15,7 +15,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const { main, parseArgs, runBuild, runValidate, USAGE } = require('../../scripts/ops/fotmob_detail_staging');
+const { main, parseArgs, runReceipt, runBuild, runValidate, USAGE } = require('../../scripts/ops/fotmob_detail_staging');
 const {
     buildPair,
     buildSourceIndex,
@@ -23,6 +23,7 @@ const {
     writeFixtureArchive,
     writeFixtureReceipt,
     buildSourceIndexFromArchive,
+    createTarGz,
 } = require('../helpers/fotmobDetailStagingFixtures');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');

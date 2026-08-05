@@ -1561,21 +1561,88 @@ test('P1-4: a live foreign store lock fails the commit closed (no lock, no write
     assert.deepStrictEqual(fs.readdirSync(dir).sort(), ['.staging-write.lock']);
 });
 
-test('P1-4: a stale (dead-holder) store lock is recovered and the commit proceeds', () => {
-    const dir = tmpDir('fotmob-p14-lockstale-');
-    fs.writeFileSync(path.join(dir, '.staging-write.lock'), '999999999'); // dead pid
-    const summary = commitObservations({
-        results: [pairResult('3901023')],
-        outputRoot: dir,
-        repositoryRoot: REPO_ROOT,
-        runId: 'run-1',
-        builtAt: '2026-08-04T12:00:00.000Z',
-    });
+test('R20-P1-1: a stale (dead-holder) store lock FAILS CLOSED and is only cleared by manual cleanup', () => {
+    const dir = tmpDir('fotmob-r20p11-lockstale-');
+    const lockPath = path.join(dir, '.staging-write.lock');
+    fs.writeFileSync(lockPath, '999999999'); // dead pid
+    const commit = () =>
+        commitObservations({
+            results: [pairResult('3901023')],
+            outputRoot: dir,
+            repositoryRoot: REPO_ROOT,
+            runId: 'run-1',
+            builtAt: '2026-08-04T12:00:00.000Z',
+        });
+    // The dead holder's lock fails closed with a manual-cleanup instruction
+    // (R20-P1-1: check-then-unlink auto-recovery was racy — two recoverers
+    // could unlink each other's FRESH locks).
+    assert.throws(
+        commit,
+        err => err.code === 'SAFETY_ERROR' && /stale \(holder pid 999999999 is not alive\)/.test(err.message)
+    );
+    // The stale lock is left byte-identical and still blocks every retry.
+    assert.strictEqual(fs.readFileSync(lockPath, 'utf8'), '999999999');
+    assert.throws(commit, err => err.code === 'SAFETY_ERROR' && /stale/.test(err.message));
+    // Manual cleanup (the documented operator action) restores the store.
+    fs.unlinkSync(lockPath);
+    const summary = commit();
     assert.strictEqual(summary.business_projection.accepted_new_count, 1);
-    assert.ok(!fs.existsSync(path.join(dir, '.staging-write.lock')), 'lock released after commit');
+    assert.ok(!fs.existsSync(lockPath), 'lock released after commit');
     const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
     assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
     assert.strictEqual(result.residue_files.length, 0);
+});
+
+test('R20-P1-1: a failed acquirer never unlinks a stale lock — a live lock created in the meantime survives', () => {
+    const dir = tmpDir('fotmob-r20p11-lockrace-');
+    const lockPath = path.join(dir, '.staging-write.lock');
+    fs.writeFileSync(lockPath, '999999999'); // dead pid
+    const commit = () =>
+        commitObservations({
+            results: [pairResult('3901023')],
+            outputRoot: dir,
+            repositoryRoot: REPO_ROOT,
+            runId: 'run-1',
+            builtAt: '2026-08-04T12:00:00.000Z',
+        });
+    // A: sees the dead lock → fails closed, and its injected fsImpl counts
+    // every unlinkSync — the stale path must NEVER touch the lock path.
+    const unlinkCalls = [];
+    const countingFs = { ...fs };
+    countingFs.unlinkSync = p => {
+        unlinkCalls.push(String(p));
+        return fs.unlinkSync(p);
+    };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+                fsImpl: countingFs,
+            }),
+        err => err.code === 'SAFETY_ERROR' && /stale/.test(err.message)
+    );
+    assert.deepStrictEqual(
+        unlinkCalls.filter(p => p.endsWith('.staging-write.lock')),
+        [],
+        'the stale lock path is never unlinked by a failed acquirer'
+    );
+    // B (the operator, after confirming the holder is dead) clears the stale
+    // copy and starts committing — the lock now carries B's LIVE pid while
+    // the write is in flight.
+    fs.unlinkSync(lockPath);
+    fs.writeFileSync(lockPath, String(process.pid));
+    // A retries: a LIVE holder must be reported as contention and B's lock
+    // must survive untouched — A can no longer delete it (pre-fix it would,
+    // because it remembered the lock as dead).
+    assert.throws(
+        commit,
+        err => err.code === 'SAFETY_ERROR' && /another process holds the store lock/.test(err.message)
+    );
+    assert.strictEqual(fs.readFileSync(lockPath, 'utf8'), String(process.pid));
 });
 
 test('P1-4: the commit lock is released and never appears as residue', () => {
@@ -2754,6 +2821,89 @@ test('R11-P2-2a: an artifact with raw HTML in a section is refused even with REC
         err => err.code === 'INPUT_ERROR' && /prohibited raw content signature/.test(err.message)
     );
     assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a raw-content artifact');
+});
+
+// ── R20-P2-1 (Codex round 20): the FINAL artifact must agree with the
+//    classification it is committed under, and stay inside the staging-only
+//    capability boundary (canonical_match_id null + UNLINKED_NOT_ATTEMPTED).
+//    validateStagingArtifact accepts the FULL terminal-state domain and a
+//    canonical_match_id that is null OR a string — pre-fix, a direct caller
+//    could commit an ok:true/ACCEPTED_NEW artifact whose
+//    import_terminal_state was LINKED_CANONICAL with a non-null canonical id
+//    and linked status: the commit succeeded while validateOutputRoot later
+//    reported the terminal-state disagreement ──────────────────────────────
+
+function signedTamperedArtifact(base, mutate) {
+    const artifact = JSON.parse(JSON.stringify(base.artifact));
+    mutate(artifact);
+    // Recompute business + integrity hashes over the tampered artifact so
+    // EVERY hash check would pass — only the R20-P2-1 final-artifact gate
+    // can refuse it.
+    artifact.business_hash = computeStagingArtifactBusinessHash(artifact);
+    artifact.artifact_integrity_sha256 = computeStagingArtifactIntegrityHash(artifact);
+    return artifact;
+}
+
+test('R20-P2-1a: an ok:true artifact declaring LINKED_CANONICAL is refused before any write — even with recomputed hashes', () => {
+    const dir = tmpDir('fotmob-r20p21-linked-');
+    const ok = pairResult('3901023');
+    const artifact = signedTamperedArtifact(ok, a => {
+        a.import_terminal_state = 'LINKED_CANONICAL';
+        a.canonical_match_id = '4821300';
+        a.canonical_link_status = 'LINKED_EXACT_ID_MATCH';
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /disagrees with classification 'ACCEPTED_NEW'/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a linked-state artifact');
+});
+
+test('R20-P2-1b: an ok:true artifact with a non-null canonical_match_id is refused — even with recomputed hashes', () => {
+    const dir = tmpDir('fotmob-r20p21-canonid-');
+    const ok = pairResult('3901023');
+    const artifact = signedTamperedArtifact(ok, a => {
+        a.canonical_match_id = '4821300';
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /canonical_match_id must be null/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a canonical-id artifact');
+});
+
+test('R20-P2-1c: an ok:true artifact with a linked canonical_link_status is refused — even with recomputed hashes', () => {
+    const dir = tmpDir('fotmob-r20p21-linkstatus-');
+    const ok = pairResult('3901023');
+    const artifact = signedTamperedArtifact(ok, a => {
+        a.canonical_link_status = 'LINKED_EXACT_ID_MATCH';
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /canonical_link_status must be UNLINKED_NOT_ATTEMPTED/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a linked-status artifact');
 });
 
 // ── R11-P3-1 (Codex round 11): quarantine_reason must derive from the

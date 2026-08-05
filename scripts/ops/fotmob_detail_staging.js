@@ -64,6 +64,8 @@ const {
     verifyPackageReceipt,
     verifyEntryAgainstReceipt,
     assertInputOutputNonOverlap,
+    mergeArchiveLimits,
+    DEFAULT_ARCHIVE_LIMITS,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
 
 const USAGE = [
@@ -74,12 +76,14 @@ const USAGE = [
     '    --package-id=<plain-identifier> \\',
     '    --payload-member=<tar member path> \\',
     '    --manifest-member=<tar member path> \\',
-    '    --receipt-out=/absolute/external/receipt-<id>.json',
+    '    --receipt-out=/absolute/external/receipt-<id>.json \\',
+    '    [--limits-file=/absolute/external/archive-limits.json]',
     '',
     '  node scripts/ops/fotmob_detail_staging.js build \\',
     '    --source-index=/absolute/external/path/source-index.json \\',
     '    --output-root=/absolute/external/path/out \\',
-    '    [--run-id=<plain-identifier>]',
+    '    [--run-id=<plain-identifier>] \\',
+    '    [--limits-file=/absolute/external/archive-limits.json]',
     '',
     '  node scripts/ops/fotmob_detail_staging.js validate \\',
     '    --output-root=/absolute/external/path/out \\',
@@ -109,6 +113,13 @@ const USAGE = [
     '  as committed (no false physical both-or-neither claim).',
     '  Every source-index entry must be bound to exactly one verified archive',
     '  package via a package receipt (VERIFIED_PACKAGE_RECEIPT).',
+    '  Archive resource limits (R20-P2-2): defaults are',
+    `  ${JSON.stringify(DEFAULT_ARCHIVE_LIMITS)}. Operators can raise them for`,
+    '  receipt/build with --limits-file=<external JSON> — the file must be a',
+    '  repository-external JSON object of the same keys (each a positive safe',
+    '  integer) and may never exceed the hard safety caps; it is propagated to',
+    '  the receipt SHA pass, live archive re-inspection AND every per-entry',
+    '  loader. Any invalid value fails closed before an archive is touched.',
     '  Anchoring (P1-5): validate WITHOUT an anchor reports integrity as',
     '  MODE_1_UNANCHORED (authenticity_status=UNANCHORED). Pass',
     '  --expected-latest-marker-sha256 or --anchor-checkpoint (a file OUTSIDE',
@@ -160,6 +171,41 @@ function builtAtNow() {
 }
 
 /**
+ * R20-P2-2: resolve the optional --limits-file into validated archive
+ * limits, or return undefined when absent. The file goes through the SAME
+ * repository-external input gate as every other input (regular file, no
+ * symlink leaf/ancestor, no overlap with the output root), must contain a
+ * JSON object, and every provided limit must be a positive safe integer
+ * within the hard safety caps — mergeArchiveLimits enforces this HERE,
+ * before any archive byte is read (the library re-checks on every merge, so
+ * a direct API caller cannot bypass the caps either).
+ *
+ * @param {object} args - parsed CLI args
+ * @param {string} repositoryRoot - repo root for the external-path gate
+ * @param {string|null} outputRoot - output root for non-overlap checks
+ * @returns {object|undefined} validated partial limits or undefined
+ */
+function loadArchiveLimits(args, repositoryRoot, outputRoot) {
+    const limitsPath = String(args['limits-file'] || '');
+    if (limitsPath === '') {
+        return undefined;
+    }
+    verifyRepositoryExternalPath(limitsPath, { repositoryRoot });
+    verifyRepositoryExternalRegularFile(limitsPath, { repositoryRoot });
+    if (outputRoot) {
+        assertInputOutputNonOverlap(limitsPath, outputRoot);
+    }
+    const { parsed } = readJsonFile(limitsPath, { repositoryRoot });
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw Object.assign(
+            new Error('--limits-file must contain a JSON object of archive limit overrides'),
+            { code: 'INPUT_ERROR' }
+        );
+    }
+    return mergeArchiveLimits({ limits: parsed });
+}
+
+/**
  * Build a verified package receipt for one archive: live archive SHA-256
  * against the declared value, safe tar member inspection (rejects absolute
  * paths, traversal, links and special files), and a deterministic receipt
@@ -189,9 +235,12 @@ function runReceipt(args) {
     const repositoryRoot = path.resolve(__dirname, '..', '..');
     verifyRepositoryExternalPath(archive, { repositoryRoot });
     verifyRepositoryExternalPath(receiptOut, { repositoryRoot });
+    // R20-P2-2: validated --limits-file overrides (if any) apply to the
+    // receipt SHA pass AND the live archive inspection.
+    const limits = loadArchiveLimits(args, repositoryRoot, null);
 
-    const verified = verifyArchive(archive, expectedSha256, { repositoryRoot });
-    const inspected = inspectArchive(archive, { repositoryRoot });
+    const verified = verifyArchive(archive, expectedSha256, { repositoryRoot, limits });
+    const inspected = inspectArchive(archive, { repositoryRoot, limits });
     const receipt = buildPackageReceipt({
         packageId,
         archivePath: verified.archive_path,
@@ -227,7 +276,7 @@ function runReceipt(args) {
  * safe inputs whose SHA-256 equals the receipt's archive member hashes
  * (FINDING_3 / FINDING_4).
  */
-function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
+function makePairLoader(sourceIndex, repositoryRoot, outputRoot, limits) {
     // Per-run in-memory cache: each package's receipt DOCUMENT is read and
     // validated once per run (the receipt is a static document). The LIVE
     // archive is NEVER cached — R16-P1-1 (Codex round 16): verifyEntryAgainstReceipt
@@ -277,6 +326,8 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
         // P0-1: verifyEntryAgainstReceipt always re-verifies the live
         // archive against the receipt per entry (archive SHA, full member
         // inventory and per-member hashes) — R16-P1-1: no capability cache,
+        // R20-P2-2: the validated --limits-file overrides flow into this
+        // re-verification and the per-member extraction bounds too,
         // so an archive replaced after any earlier verification is caught.
         const loaded = verifyEntryAgainstReceipt({
             entry,
@@ -285,7 +336,7 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
             payloadFile: entry.payload_file,
             manifestFile: entry.manifest_file,
             outputRoot,
-            options: { repositoryRoot },
+            options: { repositoryRoot, limits },
         });
 
         // P2-2: both declared file hashes are now REQUIRED and must equal the
@@ -324,6 +375,9 @@ async function runBuild(args) {
         });
     }
     assertInputOutputNonOverlap(sourceIndexPath, outputRoot);
+    // R20-P2-2: validated --limits-file overrides (if any) flow into the
+    // per-entry loader (live archive re-verification + member extraction).
+    const limits = loadArchiveLimits(args, repositoryRoot, outputRoot);
 
     const { parsed: sourceIndex } = readJsonFile(sourceIndexPath);
     const indexValidation = validateSourceIndex(sourceIndex);
@@ -337,7 +391,7 @@ async function runBuild(args) {
 
     const conversion = await convertAll({
         sourceIndex,
-        loader: makePairLoader(sourceIndex, repositoryRoot, outputRoot),
+        loader: makePairLoader(sourceIndex, repositoryRoot, outputRoot, limits),
     });
 
     const summary = commitObservations({

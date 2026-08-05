@@ -487,9 +487,12 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 331 staging unit tests (118 retention incl. fault-injection and
+Test counts: 339 staging unit tests (122 retention incl. fault-injection and
 tamper [114 + 3 R18-P2-1 short-write injections (a/b/c) + 1 R19-P2-1
-lockCreated regression] + 82 source
+lockCreated regression + 2 R20-P1-1 stale-lock fail-closed regressions + 3
+R20-P2-1 final-artifact gate regressions; the former P1-4 stale
+auto-recovery test was reworked into the R20-P1-1 fail-closed regressions]
++ 82 source
 verification [75 + 4 R17-P2-1 PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX
 merge-semantics (e/f/g)] + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
@@ -497,7 +500,8 @@ per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
 R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
 regressions (a/b/c/d)] + 17 converter
-+ 25 CLI;
++ 29 CLI (25 + 4 R20-P2-2 --limits-file regressions in the dedicated
+fotmob_detail_staging_cli_limits.test.js);
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
 on the remediation head; ESLint clean. Codex round-8 (head 7bbbd7658) found 2
@@ -704,6 +708,46 @@ docs remediation timelines are now labeled as historical cutoffs and link
 the authoritative current-state document (PROJECT_STATUS.md and
 ACTIVE_MILESTONE.md point to this file for rounds R16–R19; stale "Last
 updated" timestamps refreshed). Counts synced to 331.
+Codex round-20 (head 38dfd57ff, 26 commits) rechecked R19 fully RESOLVED
+and found 1 new blocking P1 + 2 new blocking P2 + 1 non-blocking P3 —
+R20-P1-1: the stale (dead-holder) lock auto-recovery was a check-then-unlink
+TOCTOU — two concurrent recoverers both observe the same dead PID, one
+unlinks and creates its OWN live lock, the other then unlinks that FRESH
+lock (release paths even delete each other's locks) — per-store exclusivity
+breaks and commits interleave. Fixed: dead locks are NEVER auto-recovered;
+the acquisition fails closed with a manual-cleanup instruction and the lock
+file is left byte-identical (regressions: stale lock fails closed + blocks
+every retry until manual cleanup, and a failed acquirer never unlinks a
+stale lock — a live lock created in the meantime survives; the former P1-4
+auto-recovery test was reworked into these). R20-P2-1: the writer could
+commit an artifact its own validator later rejects — validateStagingArtifact
+accepts the FULL terminal-state domain (incl. downstream LINKED_CANONICAL)
+and a canonical_match_id that is null OR a string, so a direct caller could
+commit an ok:true/ACCEPTED_NEW artifact declaring a linked state with a
+non-null canonical id: the commit succeeded while validateOutputRoot later
+reported the terminal-state disagreement. Fixed: a final-artifact gate in
+commitObservations enforces import_terminal_state === classification
+terminal state and pins canonical_match_id null +
+canonical_link_status UNLINKED_NOT_ATTEMPTED on the EXACT snapshot that is
+written (ACCEPTED_NEW original AND the REPEAT_EQUIVALENT rebuild), failing
+closed before any byte is written (regressions R20-P2-1a/b/c via the real
+production commit path with recomputed hashes). R20-P2-2: the module
+documented `options.limits` but the canonical Make/CLI had no way to raise
+DEFAULT_ARCHIVE_LIMITS — a legal archive above the defaults (compressed >
+256 MiB, member > 256 MiB, > 10000 members) was refused with no operator
+surface. Fixed: the canonical CLI accepts --limits-file (repository-external
+JSON through the same input gate, strictly validated: positive safe
+integers, never above the new HARD_ARCHIVE_LIMIT_CAP), propagated to the
+receipt SHA pass, the live archive inspection AND every per-entry loader;
+mergeArchiveLimits centralizes the merge + validation so a direct API
+caller cannot bypass the caps either (regressions: >10000-member archive
+refused by default then accepted via raised cap, 1-byte compressed cap
+fails the first SHA pass, tight member cap folds to E008 in build, invalid
+limit values/hard-cap violations/limits-file inside the repo all fail
+closed). R20-P3-1 (non-blocking, ACCEPTED): GNU global PAX (g) rejection
+stays a documented fail-closed input boundary — Codex explicitly judged it
+acceptable as-is and recorded it as future compatibility work; no code
+change. Counts synced to 339.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

@@ -916,9 +916,12 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 331 staging
-  unit tests green (118 retention fault-injection/tamper [114 + 3 R18-P2-1
-  short-write injections (a/b/c) + 1 R19-P2-1 lockCreated regression] + 82 source verification [75 + 4 R17-P2-1
+  (no database, no migration). Current test baseline: 339 staging
+  unit tests green (122 retention fault-injection/tamper [incl. 3 R18-P2-1
+  short-write injections (a/b/c) + 1 R19-P2-1 lockCreated regression + 2
+  R20-P1-1 stale-lock fail-closed regressions + 3 R20-P2-1 final-artifact
+  gate regressions; the former P1-4 stale auto-recovery test was reworked
+  into the R20-P1-1 fail-closed regressions] + 82 source verification [75 + 4 R17-P2-1
   PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX merge-semantics (e/f/g)] +
   89 contract [54 declared + 16 loop-generated per-field
   conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
@@ -926,7 +929,8 @@ legacy-writer execution is authorized.
   R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
   R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
   regressions (a/b/c/d)] + 17
-  converter + 25 CLI;
+  converter + 29 CLI (25 + 4 R20-P2-2 --limits-file regressions in the
+  dedicated fotmob_detail_staging_cli_limits.test.js);
   runtime counts = node --test
   # pass), incl. direct reuse of the pipeline capture hashing, determinism,
   idempotency, optional-section re-signed acceptance, atomicity, path safety,
@@ -936,7 +940,7 @@ legacy-writer execution is authorized.
   events (parser-injected AddedTime/Half minute markers, no id by design)
   recorded as a legal variant. Zero network, zero database, zero capture:
   no new real FotMob request and no real payload/manifest/artifact committed.
-  Per-round Codex remediation timeline (R13–R19, counts 297→331) with
+  Per-round Codex remediation timeline (R13–R20, counts 297→339) with
   per-finding mappings, regression evidence and Production Gate rows:
   docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
   this paragraph's remediation narrative is a historical baseline).

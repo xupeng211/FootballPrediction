@@ -74,6 +74,7 @@ const util = require('node:util');
 
 const {
     TERMINAL_STATES,
+    LINK_STATUSES,
     ERROR_CODES,
     MAX_SOURCE_MATCH_ID_LENGTH,
     isPlainJsonData,
@@ -437,10 +438,13 @@ function readJsonFile(filePath, options = {}) {
 /**
  * P1-4: exclusive per-store lock. The lock file is created with O_EXCL
  * inside the (already validated, controlled, private) output root; a live
- * holder is refused (fail closed), a dead holder's stale lock is removed and
- * retried ONCE. The lock is held for the DURATION of the whole commit
- * (residue scan → writes → marker), not per file, so two concurrent commits
- * into the same store cannot interleave their multi-file transactions.
+ * holder is refused (fail closed), and R20-P1-1: a dead holder's stale lock
+ * is NEVER auto-recovered — the acquisition fails closed with a manual-
+ * cleanup instruction (the old check-then-unlink let two concurrent
+ * recoverers race: one deletes the other's FRESH live lock). The lock is
+ * held for the DURATION of the whole commit (residue scan → writes →
+ * marker), not per file, so two concurrent commits into the same store
+ * cannot interleave their multi-file transactions.
  * Honest limitation: this serializes OUR writer protocol; it does not stop a
  * same-uid attacker from writing into the store by other means (their files
  * are then detected as residue / unbound files by the next commit and the
@@ -449,7 +453,7 @@ function readJsonFile(filePath, options = {}) {
 // P1-4: the exclusive store lock file name. An OPERATIONAL control file —
 // created only while a commit holds the lock, never bound by any commit
 // marker, excluded from the residue scan (collectCommittedState), removed on
-// release, stale copies recovered on next acquisition.
+// release; a stale copy fails closed (manual cleanup, R20-P1-1).
 const STAGING_LOCK_FILE_NAME = '.staging-write.lock';
 
 function withStoreLock(outputRoot, fsImpl, work) {
@@ -508,7 +512,8 @@ function withStoreLock(outputRoot, fsImpl, work) {
             try {
                 fsImpl.unlinkSync(lockPath);
             } catch {
-                /* best effort — a stale lock is recovered on the next commit */
+                /* best effort — a leftover stale copy fails closed with a
+                   manual-cleanup message on the next commit (R20-P1-1) */
             }
             throw error;
         }
@@ -538,17 +543,29 @@ function withStoreLock(outputRoot, fsImpl, work) {
                 { code: 'SAFETY_ERROR' }
             );
         }
+        // R20-P1-1 (Codex round 20): a dead holder's lock is NEVER
+        // auto-recovered. The old check-then-unlink was racy: A and B both
+        // see the same dead PID; B unlinks, creates its OWN live lock and
+        // starts committing; A then unlinks B's live lock and acquires —
+        // per-store exclusivity breaks and two commits interleave (their
+        // release paths even delete each other's locks). The only safe
+        // handling is fail-closed: require manual cleanup after confirming
+        // no live holder. The lock file is left byte-identical.
+        let holderPid = 'unknown';
         try {
-            fsImpl.unlinkSync(lockPath);
+            const parsed = parseInt(fsImpl.readFileSync(lockPath, 'utf8'), 10);
+            if (Number.isFinite(parsed)) {
+                holderPid = String(parsed);
+            }
         } catch {
-            /* raced away — the retry decides */
+            /* unreadable lock — keep the generic message */
         }
-        if (!acquire()) {
-            throw Object.assign(
-                new Error(`store lock is contended and could not be acquired: ${lockPath}`),
-                { code: 'SAFETY_ERROR' }
-            );
-        }
+        throw Object.assign(
+            new Error(
+                `store lock is stale (holder pid ${holderPid} is not alive); remove ${lockPath} manually after confirming no live holder`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
     }
     try {
         return work();
@@ -561,7 +578,8 @@ function withStoreLock(outputRoot, fsImpl, work) {
         try {
             fsImpl.unlinkSync(lockPath);
         } catch {
-            /* best effort — a stale lock is recovered on the next commit */
+            /* best effort — we own the lock (acquire succeeded); a leftover
+               copy fails closed with a manual-cleanup message (R20-P1-1) */
         }
     }
 }
@@ -1512,6 +1530,50 @@ function commitObservations(args = {}) {
                 // before (ACCEPTED_NEW) artifact and the three records would
                 // silently disagree.
                 item.classification = { ...cls, artifact };
+            }
+            // R20-P2-1 (Codex round 20): the FINAL artifact — the exact
+            // snapshot that will be written, ledgered and markered — must
+            // agree with the classification it is committed under and stay
+            // inside the staging-only capability boundary.
+            // validateStagingArtifact accepts the FULL terminal-state domain
+            // (incl. downstream LINKED_CANONICAL) and a canonical_match_id
+            // that is null OR a string, so a direct caller could previously
+            // commit an ok:true/ACCEPTED_NEW artifact whose
+            // import_terminal_state was LINKED_CANONICAL with a non-null
+            // canonical_match_id and linked status: the commit succeeded
+            // while the store validator later reported the terminal-state
+            // disagreement ("terminal state disagrees with its artifact").
+            // This staging store never writes those states — fail closed
+            // BEFORE any byte is written (this gate is the only place that
+            // sees the FINAL artifact: ACCEPTED_NEW's original and
+            // REPEAT_EQUIVALENT's rebuilt one).
+            if (artifact.import_terminal_state !== cls.terminal_state) {
+                throw Object.assign(
+                    new Error(
+                        `artifact import_terminal_state '${String(
+                            artifact.import_terminal_state
+                        )}' disagrees with classification '${String(cls.terminal_state)}'`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            if (artifact.canonical_match_id !== null) {
+                throw Object.assign(
+                    new Error(
+                        'staging artifact canonical_match_id must be null (no canonical DB in this task)'
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            if (artifact.canonical_link_status !== LINK_STATUSES.UNLINKED_NOT_ATTEMPTED) {
+                throw Object.assign(
+                    new Error(
+                        `staging artifact canonical_link_status must be UNLINKED_NOT_ATTEMPTED (got '${String(
+                            artifact.canonical_link_status
+                        )}')`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
             }
             const key = observationKey(sourceMatchId, artifact.stable_payload_sha256);
             if (newObservationKeys.has(key)) {
