@@ -482,12 +482,24 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 260 staging unit tests (86 retention incl. fault-injection and
-tamper + 57 source verification + 76 contract [54 declared + 16 loop-generated
-per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length] + 17 converter + 24 CLI;
+Test counts: 267 staging unit tests (92 retention incl. fault-injection and
+tamper + 57 source verification + 77 contract [54 declared + 16 loop-generated
+per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
++ 1 R8-P2-1 strict array plainness] + 17 converter + 24 CLI;
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
-on the remediation head; ESLint clean. 16-match offline revalidation on the
+on the remediation head; ESLint clean. Codex round-8 (head 7bbbd7658) found 2
+new P2 items — R8-P2-1: isPlainJsonData now rejects non-plain arrays
+(non-enumerable own toJSON / holes / symbols / extra keys / non-Array
+prototypes / non-finite numbers — .every() alone skipped them, so a tampered
+array could be written as bytes its artifact hash disagrees with), enforced on
+both the direct accepted and the REPEAT_EQUIVALENT rebuild paths with
+zero-write regressions; R8-P2-2: commitObservations refuses unretainable
+LINKED_*/unknown terminal states (ok:false results pass through verbatim —
+the pre-loop now whitelists accepted/rejected/quarantine only, constrains ok
+vs classification, and self-validates the summary BEFORE any write). Both
+remediated with production tests; 267 staging tests green under umask 022 and
+0002. 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
 new artifacts and byte-identical old artifacts; RUN_3 synthetic new

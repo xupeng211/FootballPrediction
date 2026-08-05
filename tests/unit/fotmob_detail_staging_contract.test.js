@@ -25,6 +25,7 @@ const {
     deterministicObservationId,
     sameInstant,
     isStrictAbsoluteTimestamp,
+    isPlainJsonData,
     TERMINAL_STATES,
     ERROR_CODES,
     VALIDATION_LAYERS,
@@ -1108,4 +1109,51 @@ test('R7-P3-2c (legal control): a normal source_match_id still passes both valid
     );
     const indexValidation = validateSourceIndex(index);
     assert.strictEqual(indexValidation.ok, true, indexValidation.errors.join('; '));
+});
+
+// ── R8-P2-1 (Codex round 8): strict array semantics of isPlainJsonData ────
+
+test('R8-P2-1d: isPlainJsonData refuses non-plain arrays (own toJSON, holes, symbols, extra keys, wrong prototype, non-finite numbers)', () => {
+    // non-enumerable own toJSON — invisible to .every(), invoked by
+    // JSON.stringify at write time.
+    const withToJSON = [1, 2];
+    Object.defineProperty(withToJSON, 'toJSON', { enumerable: false, value: () => ({ tampered: true }) });
+    assert.strictEqual(isPlainJsonData(withToJSON), false);
+    // holes serialize as null — not verbatim (built programmatically: the
+    // sparse literal form trips no-sparse-arrays).
+    const sparse = new Array(3);
+    sparse[0] = 1;
+    sparse[2] = 3;
+    assert.strictEqual(isPlainJsonData(sparse), false);
+    assert.strictEqual(isPlainJsonData(new Array(3)), false);
+    // symbol own keys never serialize — not plain data.
+    const withSymbol = [1, 2];
+    withSymbol[Symbol.iterator] = undefined;
+    assert.strictEqual(isPlainJsonData(withSymbol), false);
+    // non-index string own keys.
+    const withExtra = [1, 2];
+    withExtra.extra = 3;
+    assert.strictEqual(isPlainJsonData(withExtra), false);
+    // non-standard prototypes: an exotic-array-detector must see the plain
+    // object with an Array prototype (rejected by the object branch) and an
+    // exotic array whose prototype was swapped off Array.prototype (rejected
+    // by the array branch).
+    assert.strictEqual(isPlainJsonData(Object.create(Array.prototype)), false);
+    const swappedProto = [1, 2];
+    Object.setPrototypeOf(swappedProto, {});
+    assert.strictEqual(isPlainJsonData(swappedProto), false);
+    // dense standard arrays still pass (undefined elements never do).
+    assert.strictEqual(isPlainJsonData(Array.from({ length: 2 }, (_, i) => i)), true);
+    // inflated length (own elements do not cover every slot).
+    const inflated = [1, 2];
+    Object.defineProperty(inflated, 'length', { value: 5 });
+    assert.strictEqual(isPlainJsonData(inflated), false);
+    // non-finite numbers serialize as null — never plain data.
+    assert.strictEqual(isPlainJsonData(NaN), false);
+    assert.strictEqual(isPlainJsonData(Infinity), false);
+    assert.strictEqual(isPlainJsonData(-Infinity), false);
+    assert.strictEqual(isPlainJsonData([1, NaN]), false);
+    // dense standard arrays (and their elements) still pass.
+    assert.strictEqual(isPlainJsonData([1, 2, 'three', null, true, { a: [4, 5] }]), true);
+    assert.strictEqual(isPlainJsonData([]), true);
 });

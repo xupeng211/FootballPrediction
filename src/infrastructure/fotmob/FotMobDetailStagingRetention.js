@@ -1022,6 +1022,54 @@ function commitObservations(args = {}) {
         const isQuarantine =
             cls.terminal_state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL ||
             cls.terminal_state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH;
+        const isRejected =
+            cls.terminal_state === TERMINAL_STATES.REJECTED_IDENTITY_INCONSISTENT ||
+            cls.terminal_state === TERMINAL_STATES.REJECTED_PROVENANCE_BROKEN ||
+            cls.terminal_state === TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN;
+        // R8-P2-2 (Codex round 8): this store retains EXACTLY the
+        // accepted/rejected/quarantine terminal states — LINKED_*/LINK_*
+        // are downstream canonical-link states the validator's count
+        // arithmetic does not recognize, so a commit that wrote one would
+        // succeed while producing a store its own validator rejects
+        // (processed_count=1 but every bucket 0). classifyAgainstStore
+        // passes the result's terminal_state through VERBATIM for ok:false
+        // results, so this gate is the only place the exported API's
+        // unretainable states (LINKED_CANONICAL, LINK_PENDING, LINK_BLOCKED,
+        // or any typo) can be refused BEFORE any summary/ledger/marker byte
+        // is written.
+        if (!isAccepted && !isRejected && !isQuarantine) {
+            throw Object.assign(
+                new Error(
+                    `result terminal_state '${String(cls.terminal_state)}' is not retainable by the staging store (accepted/rejected/quarantined only)`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        // R8-P2-2 (Codex round 8): `ok` and the classified state must agree.
+        // classifyAgainstStore derives accepted states (and
+        // REJECTED_IDENTITY_INCONSISTENT, the identity-conflict-with-staged-
+        // observation path) ONLY from ok:true results and passes
+        // rejected/quarantine states through ONLY from ok:false results —
+        // any other pairing is an exported-API caller lying about the result
+        // (e.g. ok:false with a valid accepted artifact would otherwise
+        // commit an artifact from a "failed" result).
+        if (result.ok) {
+            if (!isAccepted && cls.terminal_state !== TERMINAL_STATES.REJECTED_IDENTITY_INCONSISTENT) {
+                throw Object.assign(
+                    new Error(
+                        `ok:true result cannot classify as '${String(cls.terminal_state)}' (accepted or REJECTED_IDENTITY_INCONSISTENT only)`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+        } else if (isAccepted) {
+            throw Object.assign(
+                new Error(
+                    `ok:false result cannot classify as accepted state '${String(cls.terminal_state)}'`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
         if (isAccepted) {
             if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
                 throw Object.assign(
@@ -1282,6 +1330,22 @@ function commitObservations(args = {}) {
         builtAt,
         storeState: nextStoreState,
     });
+
+    // R8-P2-2 (Codex round 8): the summary is the document the store
+    // validator re-checks (A-group) — validate it HERE, before any byte is
+    // written, so a commit can never succeed while producing a summary its
+    // own validator rejects. Defense in depth behind the pre-loop
+    // terminal-state gate: any future state/arithmetic drift between
+    // buildSummary and validateSummaryDoc fails closed at commit time
+    // instead of being committed as an invalid store.
+    const summaryErrors = [];
+    validateSummaryDoc(summary, summaryErrors);
+    if (summaryErrors.length > 0) {
+        throw Object.assign(
+            new Error(`summary failed self-validation: ${summaryErrors.map(e => e.message).join('; ')}`),
+            { code: 'INPUT_ERROR' }
+        );
+    }
 
     // ── 3. write everything (per-file atomic), marker LAST ──
     const writePlan = [

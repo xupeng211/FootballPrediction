@@ -417,11 +417,59 @@ function sameInstant(a, b) {
 // accessors (getters that return one value at validation and another at
 // write time) can never smuggle fields past validation into the store.
 function isPlainJsonData(value) {
-    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    if (value === null || typeof value === 'boolean') {
         return true;
     }
+    if (typeof value === 'string') {
+        return true;
+    }
+    if (typeof value === 'number') {
+        // R8-P2-1 (Codex round 8): non-finite numbers are NOT JSON data —
+        // JSON.stringify(NaN/±Infinity) emits `null`, so they would not
+        // serialize verbatim and a pre-checked "valid" value could be
+        // written as a different value.
+        return Number.isFinite(value);
+    }
     if (Array.isArray(value)) {
-        return value.every(isPlainJsonData);
+        // R8-P2-1 (Codex round 8): a plain array is a standard Array whose
+        // ONLY own properties are `length` and the consecutive numeric index
+        // data elements 0..length-1. value.every(...) alone skips holes and
+        // ignores own properties entirely — a non-enumerable own `toJSON`
+        // (or accessor, symbol, extra key) is invisible to every() but
+        // JSON.stringify INVOKES toJSON at write time, so a "valid" array
+        // could be serialized as tampered bytes. Reflect.ownKeys surfaces
+        // every own key including non-enumerables and symbols.
+        if (Object.getPrototypeOf(value) !== Array.prototype) {
+            return false;
+        }
+        let indexKeys = 0;
+        for (const key of Reflect.ownKeys(value)) {
+            if (key === 'length') {
+                continue;
+            }
+            if (typeof key !== 'string' || !/^(0|[1-9]\d*)$/.test(key)) {
+                // symbol keys and non-index string keys — never JSON data.
+                return false;
+            }
+            const index = Number(key);
+            if (index >= value.length) {
+                // own key beyond the element range (e.g. inflated length).
+                return false;
+            }
+            indexKeys += 1;
+            const descriptor = Object.getOwnPropertyDescriptor(value, key);
+            if (
+                !descriptor ||
+                !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+                descriptor.enumerable !== true ||
+                !isPlainJsonData(descriptor.value)
+            ) {
+                return false;
+            }
+        }
+        // no holes and no inflated length: every slot 0..length-1 must exist
+        // as an own data element (holes would serialize as null).
+        return indexKeys === value.length;
     }
     if (typeof value !== 'object') {
         // undefined, functions, symbols, bigints — never JSON data.

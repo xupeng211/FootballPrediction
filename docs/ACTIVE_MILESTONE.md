@@ -76,11 +76,18 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  260 项 staging 测试（86 retention 故障注入/篡改 + 57 source verification +
-  76 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
-  R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限] + 17 converter +
-  24 CLI；运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
-  循环生成测试）+
+  267 项 staging 测试（92 retention 故障注入/篡改 + 57 source verification +
+  77 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
+  R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
+  严格数组 plainness] + 17 converter + 24 CLI；Codex round-8（head
+  7bbbd7658）2 项新 P2 —— R8-P2-1 isPlainJsonData 严格数组语义
+  （非枚举 own toJSON / 空洞 / symbol / 额外 key / 非 Array 原型 / 非有限
+  数字全部拒绝，.every() 无法覆盖，direct accepted 与 REPEAT_EQUIVALENT
+  重建两条路径均补零写入回归）、R8-P2-2 commit 预检拒绝不可保留的
+  LINKED_*/未知 terminal state（ok:false 逐字透传时唯一拦截点；白名单
+  accepted/rejected/quarantine + ok 与分类一致性 + 写入前 summary 自校验，
+  均补零写入回归与合法对照）—— 全部离线修复；运行时计数 = node --test
+  # pass，与静态 test() 声明的差异仅来自循环生成测试）+
   347 项 legacy FotMob + 769 项 unit 全绿；
   ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
@@ -94,11 +101,11 @@
   （8c48d9ef5 复审）4 项发现（R4-P1-1 多 pair archive 的 entry 级
   payload/manifest member selector、R4-P2-1 数组结构化垃圾保持 E001
   而非 E007、R4-P3-1 PROJECT_STATUS 旧段落替换、R4-P3-2 GNU L 记录
-  尾部 NUL 剥离）也全部离线修复并补回归测试（260 项 staging 测试全绿，含
-  round-6 的 5 项发现修复：R6-P1-1 validate 失败退出码、R6-P1-2 observed
-  球队必填 + artifact 身份语义、R6-P2-1 导出 API 严格类型合同、R6-P2-2
-  quarantine key/entry/file/summary 语义三方绑定、R6-P3-1 archive
-  input gate 非重叠检查）；
+  尾部 NUL 剥离）也全部离线修复并补回归测试（round-7 完成时 260 项 staging
+  测试全绿，含 round-6 的 5 项发现修复：R6-P1-1 validate 失败退出码、
+  R6-P1-2 observed 球队必填 + artifact 身份语义、R6-P2-1 导出 API 严格类型
+  合同、R6-P2-2 quarantine key/entry/file/summary 语义三方绑定、
+  R6-P3-1 archive input gate 非重叠检查）；
   零网络、零数据库、零采集、无 migration；PR 保持
   Draft、未合并，等待外部独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并

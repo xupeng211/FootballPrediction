@@ -2086,3 +2086,158 @@ test('R7-P3-2a: commitObservations refuses an over-length source_match_id BEFORE
     );
     assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an over-length id');
 });
+
+// ── R8-P2-1 / R8-P2-2 (Codex round 8) ────────────────────────
+
+test('R8-P2-1a: commitObservations rejects an accepted artifact whose nested section ARRAY carries a non-enumerable own toJSON — no array smuggling', () => {
+    const dir = tmpDir('fotmob-r8p21-tojson-');
+    const ok = pairResult();
+    // JSON.stringify INVOKES toJSON on arrays at write time, but the
+    // pre-check hash recomputation (canonicalizeJson) does not — a
+    // non-enumerable own toJSON is invisible to .every() and would write
+    // tampered bytes into a store whose artifact hash then disagrees.
+    const tampered = { ...ok, artifact: { ...ok.artifact } };
+    Object.defineProperty(tampered.artifact.sections.events.json, 'toJSON', {
+        enumerable: false,
+        value: () => ({ tampered: true }),
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [tampered],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a non-plain artifact');
+});
+
+test('R8-P2-1b: REPEAT_EQUIVALENT rebuild refuses artifactInputs whose payload array carries a non-enumerable own toJSON — zero writes', () => {
+    const dir = tmpDir('fotmob-r8p21-eqv-');
+    commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const before = fs.readdirSync(dir).sort();
+    const second = pairResultOf(secondVersionPair('3901023'));
+    // The rebuilt artifact copies normalized sections BY REFERENCE — clone the
+    // rebuild inputs so only the REBUILD source is tampered (the incoming
+    // converter artifact must stay legal so the refusal is provably the
+    // rebuild gate, not the pre-loop).
+    const rebuiltInputs = JSON.parse(JSON.stringify(second.artifactInputs));
+    Object.defineProperty(rebuiltInputs.payload.normalized.events, 'toJSON', {
+        enumerable: false,
+        value: () => ({ tampered: true }),
+    });
+    const tampered = { ...second, artifactInputs: rebuiltInputs };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [tampered],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-2',
+                builtAt: '2026-08-04T12:00:01.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /rebuilt REPEAT_EQUIVALENT artifact is not plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(
+        fs.readdirSync(dir).sort(),
+        before,
+        'a refused rebuild must not write, ledger, summary or marker anything'
+    );
+});
+
+test('R8-P2-1c (legal control): dense standard arrays in a JSON round-tripped artifact still commit and validate PASS', () => {
+    const dir = tmpDir('fotmob-r8p21-dense-');
+    const ok = pairResult('3901023');
+    // JSON round-trip produces exactly the dense standard arrays the strict
+    // array gate must keep accepting.
+    const roundTripped = { ...ok, artifact: JSON.parse(JSON.stringify(ok.artifact)) };
+    const summary = commitObservations({
+        results: [roundTripped],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('R8-P2-2a: commitObservations refuses an unretainable LINKED_* terminal state — no summary/ledger/marker write', () => {
+    const dir = tmpDir('fotmob-r8p22-linked-');
+    // classifyAgainstStore passes ok:false terminal states through verbatim —
+    // a direct caller can claim LINKED_CANONICAL, a downstream canonical-link
+    // state the store validator's count arithmetic does not recognize. The
+    // pre-loop must refuse it BEFORE any byte is written.
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [
+                    {
+                        ok: false,
+                        source_match_id: '3901023',
+                        terminal_state: 'LINKED_CANONICAL',
+                        error_code: null,
+                        quarantine_status: 'not_quarantined',
+                        artifact: null,
+                    },
+                ],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /not retainable/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an unretainable terminal state');
+});
+
+test('R8-P2-2b: commitObservations refuses ok:false with an accepted classification — a "failed" result cannot commit an artifact', () => {
+    const dir = tmpDir('fotmob-r8p22-okflag-');
+    const ok = pairResult('3901023');
+    const lying = { ...ok, ok: false };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [lying],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /ok:false result cannot classify as accepted/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an inconsistent ok flag');
+});
+
+test('R8-P2-2c (legal control): a plain REJECTED_SCHEMA_UNKNOWN result still commits and validates PASS', () => {
+    const dir = tmpDir('fotmob-r8p22-rejected-');
+    const rejected = {
+        ok: false,
+        source_match_id: '3901023',
+        terminal_state: 'REJECTED_SCHEMA_UNKNOWN',
+        error_code: 'E002',
+        quarantine_status: 'not_quarantined',
+        artifact: null,
+    };
+    const summary = commitObservations({
+        results: [rejected],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.rejected_count, 1);
+    assert.strictEqual(summary.business_projection.processed_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
