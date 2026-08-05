@@ -159,12 +159,35 @@ async function convertAll(args = {}) {
             });
             continue;
         }
-        const converted = convertPair({
-            payload: loaded.payload,
-            manifest: loaded.manifest,
-            payloadBytes: loaded.payloadBytes,
-            payloadFileSha256: loaded.payloadFileSha256,
-        });
+        let converted;
+        try {
+            converted = convertPair({
+                payload: loaded.payload,
+                manifest: loaded.manifest,
+                payloadBytes: loaded.payloadBytes,
+                payloadFileSha256: loaded.payloadFileSha256,
+            });
+        } catch (error) {
+            // P2-4: one pathological input must never crash the whole batch.
+            // convertPair is expected to return structured failures for every
+            // legal-and-illegal input; a THROW means an unexpected shape
+            // escaped the validator — fail THIS entry closed and continue.
+            results.push({
+                ok: false,
+                source_match_id: String(entry.source_match_id ?? ''),
+                terminal_state: TERMINAL_STATES.REJECTED_PROVENANCE_BROKEN,
+                error_code: ERROR_CODES.E008,
+                quarantine_status: 'not_quarantined',
+                artifact: null,
+                errors: [
+                    {
+                        code: ERROR_CODES.E008,
+                        message: `conversion failed: ${error.message}`,
+                    },
+                ],
+            });
+            continue;
+        }
         results.push({
             ...converted,
             source_match_id: String(entry.source_match_id ?? ''),

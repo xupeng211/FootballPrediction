@@ -27,6 +27,19 @@
 //   - summary-<seq>.json  — one immutable per-run summary per commit;
 //   - observation-*.artifact.json / quarantine-*.json — immutable snapshots;
 //
+// P1-4 TOCTOU posture (honest threat model): inputs are read through
+// O_NOFOLLOW fds with dev/inode verified before and after the read; outputs
+// go to a controlled private directory (owner-checked, group/world-writable
+// rejected) via O_EXCL tmp + same-filesystem rename with a pre/post write
+// directory identity check; every commit runs under an exclusive per-store
+// lock. These mitigations shrink the check-to-use windows to the width of a
+// single syscall and make a mid-write swap detectable. They are NOT a
+// defense against a same-uid adversary who can sustain a race across
+// ancestor walks, or against a hostile mount point — that requires a trusted
+// kernel/FUSE layer and is explicitly out of scope for this offline
+// operator tool. The commit-marker protocol guarantees that any tampering
+// that does slip through leaves detectable residue / chain breaks.
+//
 // Failures:
 //   - a failed commit removes the files it wrote and leaves NO marker —
 //     the old committed state stays valid and byte-identical;
@@ -123,7 +136,11 @@ function ensureRealDirectoryTree(absDirPath, fsImpl = fs) {
                 });
             }
         } else {
-            fsImpl.mkdirSync(current);
+            // P1-4: directories the tool creates are PRIVATE (0700) so the
+            // controlled-private-directory check can never be defeated by a
+            // permissive umask. Operator-created directories must pass the
+            // owner + not-group/world-writable checks themselves.
+            fsImpl.mkdirSync(current, { mode: 0o700 });
             let created = null;
             try {
                 created = fsImpl.lstatSync(current);
@@ -141,7 +158,35 @@ function ensureRealDirectoryTree(absDirPath, fsImpl = fs) {
             code: 'SAFETY_ERROR',
         });
     }
+    // P1-4: the write target must be a controlled private directory — owned
+    // by the current uid and not group/world writable. A group- or world-
+    // writable store directory would let a less-privileged peer plant files
+    // the commit protocol would then bind or report as residue.
+    assertControlledPrivateDirectory(finalStat, abs);
     return abs;
+}
+
+/**
+ * P1-4: a controlled store/output directory must be owned by the current
+ * process and must NOT be group- or world-writable. Honest limitation (see
+ * module header): this and the fd-based read + dev/inode checks shrink the
+ * race windows; they do not defend against a same-uid attacker who can race
+ * a rename at any point — that requires a trusted mount point / FUSE layer
+ * and is explicitly out of scope for an offline operator tool.
+ */
+function assertControlledPrivateDirectory(stat, abs) {
+    if (typeof stat.uid === 'number' && typeof process.getuid === 'function' && stat.uid !== process.getuid()) {
+        throw Object.assign(
+            new Error(`output directory must be owned by the current user: ${abs}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if ((stat.mode & 0o022) !== 0) {
+        throw Object.assign(
+            new Error(`output directory must not be group/world writable: ${abs}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
 }
 
 /**
@@ -189,6 +234,17 @@ function writeJsonAtomically(filePath, doc, options = {}) {
     const dir = path.dirname(abs);
     ensureRealDirectoryTree(dir, fileSystem);
 
+    // P1-4: root dev/inode is captured BEFORE the write and re-verified AFTER
+    // the rename — if the output directory itself was swapped (bind mount or
+    // rename-over of the directory) while we wrote, the run fails closed
+    // instead of committing into a directory we never validated.
+    let dirBefore = null;
+    try {
+        dirBefore = fileSystem.lstatSync(dir);
+    } catch {
+        /* reported by ensureRealDirectoryTree above */
+    }
+
     let finalStat = null;
     try {
         finalStat = fileSystem.lstatSync(abs);
@@ -221,6 +277,9 @@ function writeJsonAtomically(filePath, doc, options = {}) {
     }
     let fd;
     try {
+        // P1-4: 'wx' = O_CREAT|O_EXCL — the tmp is created fresh, never
+        // follows or reuses an existing inode; same-directory tmp + rename
+        // keeps the publish on one filesystem (no cross-device copy window).
         fd = fileSystem.openSync(tmp, 'wx');
         try {
             fileSystem.writeSync(fd, bytes);
@@ -237,33 +296,96 @@ function writeJsonAtomically(filePath, doc, options = {}) {
         }
         throw error;
     }
+    // P1-4: root dev/inode AFTER the write must equal the pre-write identity.
+    if (dirBefore) {
+        let dirAfter = null;
+        try {
+            dirAfter = fileSystem.lstatSync(dir);
+        } catch {
+            /* fail closed below */
+        }
+        if (!dirAfter || dirAfter.dev !== dirBefore.dev || dirAfter.ino !== dirBefore.ino) {
+            throw Object.assign(
+                new Error(`output directory identity changed during write: ${dir}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
     return { written: true, reason: 'written', sha256: fileSha };
 }
 
 /**
- * Read a JSON file with FULL input safety (PR1817 FINDING_4): absolute path,
- * regular file, leaf not a symlink, and ALL ancestors free of symlinks.
+ * P1-4: read a file with no-follow + identity-checked semantics. The read
+ * goes through an fd opened with O_NOFOLLOW (a leaf symlink can never be
+ * followed at open time), the fd is fstat'd (regular-file check on the SAME
+ * inode we read), the bytes are read THROUGH the fd (a rename-over of the
+ * directory entry after open cannot redirect the read), and the dev/inode
+ * captured before the read must equal the dev/inode after the read — a
+ * swapped or replaced file fails closed.
+ *
+ * Honest limitation: this mitigates the leaf-swap window (the check-to-use
+ * race on the file itself). A same-uid attacker who can race the ancestor
+ * walk or rename the DIRECTORY between validation and open remains able to
+ * swap targets — the ancestor walk is realpath-verified, and the
+ * write-path directory identity check below detects directory swaps at
+ * commit time, but a sustained same-uid adversary is NOT a defense target
+ * of this tool (see the module header).
+ *
+ * @param {string} filePath - absolute repository-external file path
+ * @param {object} options - { fsImpl }
+ * @returns {{ bytes: Buffer, abs: string, dev: number, ino: number }}
  */
-function readJsonFile(filePath, options = {}) {
+function readFileSafeNoFollow(filePath, options = {}) {
     const fileSystem = options.fsImpl || fs;
     const abs = assertNoSymlinkAncestors(String(filePath), fileSystem);
-    let stat;
+    const noFollow = fileSystem.constants && fileSystem.constants.O_NOFOLLOW ? fileSystem.constants.O_NOFOLLOW : 0;
+    let fd;
     try {
-        stat = fileSystem.lstatSync(abs);
-    } catch {
-        throw Object.assign(new Error(`file not readable: ${abs}`), {
+        fd = fileSystem.openSync(abs, fileSystem.constants.O_RDONLY | noFollow);
+    } catch (error) {
+        throw Object.assign(new Error(`file not readable (no-follow open failed): ${abs}`), {
             code: 'INPUT_ERROR',
         });
     }
-    if (stat.isSymbolicLink() || !stat.isFile()) {
-        throw Object.assign(new Error(`input must be a regular file, not a symlink: ${abs}`), { code: 'SAFETY_ERROR' });
+    let before = null;
+    let bytes;
+    try {
+        before = fileSystem.fstatSync(fd);
+        if (!before || before.isSymbolicLink() || !before.isFile()) {
+            throw Object.assign(new Error(`input must be a regular file, not a symlink: ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
+        bytes = fileSystem.readFileSync(fd);
+        const after = fileSystem.fstatSync(fd);
+        if (!after || after.dev !== before.dev || after.ino !== before.ino) {
+            throw Object.assign(new Error(`input file identity changed during read: ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
+    } finally {
+        try {
+            fileSystem.closeSync(fd);
+        } catch {
+            /* best effort */
+        }
     }
-    const bytes = fileSystem.readFileSync(abs);
+    return { bytes, abs, dev: before.dev, ino: before.ino };
+}
+
+/**
+ * Read a JSON file with FULL input safety (PR1817 FINDING_4): absolute path,
+ * regular file, leaf not a symlink, ALL ancestors free of symlinks, and the
+ * bytes read through a no-follow fd whose dev/inode is verified before and
+ * after the read (P1-4).
+ */
+function readJsonFile(filePath, options = {}) {
+    const { bytes } = readFileSafeNoFollow(filePath, options);
     let parsed;
     try {
         parsed = JSON.parse(bytes.toString('utf8'));
     } catch (error) {
-        throw Object.assign(new Error(`file is not valid JSON: ${abs}`), {
+        throw Object.assign(new Error(`file is not valid JSON: ${filePath}`), {
             code: 'INPUT_ERROR',
         });
     }
@@ -272,6 +394,91 @@ function readJsonFile(filePath, options = {}) {
         bytes,
         sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
     };
+}
+
+/**
+ * P1-4: exclusive per-store lock. The lock file is created with O_EXCL
+ * inside the (already validated, controlled, private) output root; a live
+ * holder is refused (fail closed), a dead holder's stale lock is removed and
+ * retried ONCE. The lock is held for the DURATION of the whole commit
+ * (residue scan → writes → marker), not per file, so two concurrent commits
+ * into the same store cannot interleave their multi-file transactions.
+ * Honest limitation: this serializes OUR writer protocol; it does not stop a
+ * same-uid attacker from writing into the store by other means (their files
+ * are then detected as residue / unbound files by the next commit and the
+ * validator).
+ */
+// P1-4: the exclusive store lock file name. An OPERATIONAL control file —
+// created only while a commit holds the lock, never bound by any commit
+// marker, excluded from the residue scan (collectCommittedState), removed on
+// release, stale copies recovered on next acquisition.
+const STAGING_LOCK_FILE_NAME = '.staging-write.lock';
+
+function withStoreLock(outputRoot, fsImpl, work) {
+    const lockPath = path.join(outputRoot, STAGING_LOCK_FILE_NAME);
+    let lockFd = null;
+    const acquire = () => {
+        try {
+            lockFd = fsImpl.openSync(lockPath, 'wx');
+            fsImpl.writeSync(lockFd, String(process.pid));
+        } catch (error) {
+            if (error && error.code === 'EEXIST') {
+                return false;
+            }
+            throw error;
+        }
+        return true;
+    };
+    const isHolderAlive = () => {
+        let pid = null;
+        try {
+            pid = parseInt(fsImpl.readFileSync(lockPath, 'utf8'), 10);
+        } catch {
+            return true; // unreadable lock → assume held (fail closed)
+        }
+        if (!Number.isFinite(pid)) {
+            return true;
+        }
+        try {
+            process.kill(pid, 0);
+            return true;
+        } catch (error) {
+            return error.code === 'EPERM'; // EPERM = exists, ESRCH = dead
+        }
+    };
+    if (!acquire()) {
+        if (isHolderAlive()) {
+            throw Object.assign(
+                new Error(`another process holds the store lock: ${lockPath}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        try {
+            fsImpl.unlinkSync(lockPath);
+        } catch {
+            /* raced away — the retry decides */
+        }
+        if (!acquire()) {
+            throw Object.assign(
+                new Error(`store lock is contended and could not be acquired: ${lockPath}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
+    try {
+        return work();
+    } finally {
+        try {
+            fsImpl.closeSync(lockFd);
+        } catch {
+            /* best effort */
+        }
+        try {
+            fsImpl.unlinkSync(lockPath);
+        } catch {
+            /* best effort — a stale lock is recovered on the next commit */
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -537,9 +744,16 @@ function collectCommittedState(root, options = {}) {
     }
 
     // Residue scan: any non-marker file not bound by a valid marker.
+    // P1-4: the exclusive store lock (`.staging-write.lock`) is an
+    // OPERATIONAL control file, not store data: it exists only while a
+    // commit holds the lock, is never bound by a marker, and is removed on
+    // release (a stale lock left by a crash is recovered by the next
+    // acquisition). Every OTHER unbound file — including a straggler tmp
+    // from a failed write — is residue.
     const residue = [];
     for (const name of entries) {
         if (isMarkerFileName(name)) continue;
+        if (name === STAGING_LOCK_FILE_NAME) continue;
         if (!Object.prototype.hasOwnProperty.call(markerBoundFiles, name)) {
             residue.push(name);
         }
@@ -694,6 +908,12 @@ function commitObservations(args = {}) {
 
     ensureRealDirectoryTree(outputRoot, fileSystem);
 
+    // P1-4: the whole commit — residue scan, artifact/summary/ledger writes
+    // AND the commit marker — runs under the exclusive per-store lock, so two
+    // concurrent commits into the same store can never interleave their
+    // multi-file transactions (one is refused via the lock or the
+    // same-seq marker conflict).
+    return withStoreLock(outputRoot, fileSystem, () => {
     // Fail closed on an invalid or residue-laden existing state.
     const committed = loadCommittedState(outputRoot, {
         fsImpl: fileSystem,
@@ -738,6 +958,14 @@ function commitObservations(args = {}) {
                     payloadFileSha256: inputs.payloadFileSha256,
                     terminalState: TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT,
                 });
+                // P0-2: write the FINAL artifact back into the classification so
+                // the summary (buildSummary reads cls.artifact) and everything
+                // downstream derive from the SAME artifact the ledger records
+                // and the artifact file stores. Without this write-back the
+                // summary business hash would keep referencing the rebuilt-
+                // before (ACCEPTED_NEW) artifact and the three records would
+                // silently disagree.
+                item.classification = { ...cls, artifact };
             }
             const key = observationKey(sourceMatchId, artifact.stable_payload_sha256);
             if (newObservationKeys.has(key)) {
@@ -872,6 +1100,7 @@ function commitObservations(args = {}) {
     }
 
     return summary;
+    });
 }
 
 /**
@@ -1464,16 +1693,89 @@ function validateOutputRoot(outputRoot, options = {}) {
                 } catch {
                     /* already reported */
                 }
-                if (artifact && artifact.import_terminal_state !== state) {
+                if (artifact) {
+                    // P0-2: full three-way cross-comparison — summary ↔
+                    // artifact ↔ ledger. The summary must reference the SAME
+                    // final artifact (source id, stable hash, business hash,
+                    // terminal state) that the ledger records, and the ledger
+                    // entry must reference the same artifact file.
+                    if (artifact.import_terminal_state !== state) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} terminal state disagrees with its artifact`,
+                        });
+                    }
+                    if (String(artifact.source_match_id ?? '') !== String(observation.source_match_id ?? '')) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} source_match_id disagrees with its artifact`,
+                        });
+                    }
+                    if (
+                        String(artifact.stable_payload_sha256 ?? '') !==
+                        String(observation.stable_payload_sha256 ?? '')
+                    ) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} stable_payload_sha256 disagrees with its artifact`,
+                        });
+                    }
+                    if (String(artifact.business_hash ?? '') !== String(observation.business_hash ?? '')) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} business_hash disagrees with its artifact`,
+                        });
+                    }
+                }
+                // Ledger side: the artifact file must be referenced by exactly
+                // one ledger entry whose recorded fields agree with the
+                // summary observation.
+                let ledgerEntry = null;
+                for (const [, entry] of ledgerEntriesByKey) {
+                    if (String(entry.artifact_file || '') === artifactFile) {
+                        ledgerEntry = entry;
+                        break;
+                    }
+                }
+                if (!ledgerEntry) {
                     errors.push({
                         code: 'STATE_MISMATCH',
-                        message: `summary observation ${observation.source_match_id} terminal state disagrees with its artifact`,
+                        message: `summary observation ${observation.source_match_id} artifact ${artifactFile} has no ledger entry`,
                     });
+                } else {
+                    if (String(ledgerEntry.business_hash ?? '') !== String(observation.business_hash ?? '')) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} business_hash disagrees with the ledger`,
+                        });
+                    }
+                    if (String(ledgerEntry.source_match_id ?? '') !== String(observation.source_match_id ?? '')) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} source_match_id disagrees with the ledger`,
+                        });
+                    }
+                    if (
+                        String(ledgerEntry.stable_payload_sha256 ?? '') !==
+                        String(observation.stable_payload_sha256 ?? '')
+                    ) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} stable_payload_sha256 disagrees with the ledger`,
+                        });
+                    }
+                    if (String(ledgerEntry.terminal_state ?? '') !== state) {
+                        errors.push({
+                            code: 'STATE_MISMATCH',
+                            message: `summary observation ${observation.source_match_id} terminal state disagrees with the ledger`,
+                        });
+                    }
                 }
             }
         }
     }
 
+    const latestMarker = committed.markers.length > 0 ? committed.markers[committed.markers.length - 1] : null;
     return {
         ok: errors.length === 0,
         errors,
@@ -1485,6 +1787,13 @@ function validateOutputRoot(outputRoot, options = {}) {
         artifact_check_count: ledgerEntriesByKey.size,
         quarantine_check_count: quarantineLedger.size,
         residue_files: committed.residue,
+        // P1-5: the EXACT file SHA-256 of the latest valid commit marker —
+        // the value an externally anchored validator compares its
+        // --expected-latest-marker-sha256 against. Computed here from the
+        // store's committed state (and independently re-hashed by the CLI
+        // via readFileSafeNoFollow before comparison — never trusted from
+        // the store alone).
+        latest_marker_sha256: latestMarker ? latestMarker.fileSha : null,
     };
 }
 
@@ -1496,6 +1805,8 @@ module.exports = {
     verifyRepositoryExternalPath,
     writeJsonAtomically,
     readJsonFile,
+    readFileSafeNoFollow,
+    withStoreLock,
     observationKey,
     artifactFileName,
     quarantineFileName,

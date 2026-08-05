@@ -125,31 +125,61 @@ const EXPECTED_GOALS_MIN = 0.0;
 const PROHIBITED_KEY_NAMES = ['__NEXT_DATA__', 'pageProps', 'raw_data', 'translations', 'set-cookie', 'authorization'];
 const PROHIBITED_VALUE_SIGNATURES = ['<html', '<body', '<script', '<div', 'text/html; charset', 'x-csrf-token'];
 
-// 20-field provenance double binding — provenance-contract.md. Each field is
-// read from BOTH the payload document and the manifest document; any
-// disagreement fails closed.
-const DOUBLE_BINDING_FIELDS = Object.freeze([
-    'schema_version',
-    'source_provider',
-    'source_match_id',
-    'candidate_id',
-    'competition',
-    'league_id',
-    'season',
-    'expected_identity_sha256',
-    'observed_identity_sha256',
-    'stable_payload_sha256',
-    'payload_file_sha256',
-    'capture_manifest_sha256',
-    'observed_match_id_source',
-    'observed_match_id_conflict',
-    'observed_match_id_is_response_derived',
-    'parser_version',
-    'parser_output_contract_version',
-    'capture_run_id',
-    'authorization_id',
-    'collector_code_revision',
+// Provenance double binding (Codex review 4863122944 P1-2).
+//
+// The ORIGINAL constant claimed a "20-field double binding" but several of
+// those fields do not exist on both documents (parser_output_contract_version
+// is payload-only; capture_run_id / authorization_id / collector_code_revision
+// are manifest-only), so no equality check was ever possible for them — the
+// claim overstated the implementation. The matrix below is the ACTUAL set of
+// fields present on BOTH documents and compared for equality:
+//
+//   A. PAYLOAD_AND_MANIFEST_DOUBLE_BOUND (16 fields):
+//      source_provider, source_match_id, candidate_id, competition,
+//      league_id, season, parser_component, parser_version,
+//      home_team, away_team, kickoff_at,
+//      observed_match_id, observed_match_id_source,
+//      observed_match_id_conflict, observed_match_id_is_response_derived,
+//      stable_payload_sha256 (recomputed live by L4, compared on both).
+//   B. PAYLOAD_ONLY (validated on the payload side, never claimed as
+//      double-bound): schema_version, parser_output_contract_version,
+//      expected_identity_sha256, observed_identity_sha256, normalized.
+//   C. MANIFEST_ONLY (validated on the manifest side, never claimed as
+//      double-bound): schema_version, capture_run_id, authorization_id,
+//      collector_code_revision, source_plan_sha256, source_artifact_sha256,
+//      request/response fields.
+//   D. DERIVED_AND_RECOMPUTED (recomputed live and compared):
+//      candidate_identity_sha256, expected_identity_sha256,
+//      payload_file_sha256, capture_manifest_sha256, stable_payload_sha256.
+//
+// Each matrix row is [manifestPath, payloadPath]; '.'-separated payload
+// paths index into expected_identity / observed_identity.
+const DOUBLE_BOUND_FIELD_PAIRS = Object.freeze([
+    ['source_provider', 'source_provider'],
+    ['source_match_id', 'source_match_id'],
+    ['candidate_id', 'candidate_id'],
+    ['competition', 'competition'],
+    ['league_id', 'league_id'],
+    ['season', 'season'],
+    ['parser_component', 'parser_component'],
+    ['parser_version', 'parser_version'],
+    ['home_team', 'expected_identity.home_team'],
+    ['away_team', 'expected_identity.away_team'],
+    ['kickoff_at', 'expected_identity.kickoff_at'],
+    ['observed_match_id', 'observed_identity.observed_match_id'],
+    ['observed_match_id_source', 'observed_identity.observed_match_id_source'],
+    ['observed_match_id_conflict', 'observed_identity.observed_match_id_conflict'],
+    ['observed_match_id_is_response_derived', 'observed_identity.observed_match_id_is_response_derived'],
+    ['stable_payload_sha256', 'stable_payload_sha256'],
 ]);
+
+// ACTUAL_DOUBLE_BOUND_FIELDS — authoritative count of the A-class matrix.
+const ACTUAL_DOUBLE_BOUND_FIELDS = Object.freeze(
+    DOUBLE_BOUND_FIELD_PAIRS.map(([manifestPath]) => manifestPath)
+);
+
+// Kept as an alias for compatibility: the A-class field names.
+const DOUBLE_BINDING_FIELDS = ACTUAL_DOUBLE_BOUND_FIELDS;
 
 // ─────────────────────────────────────────────────────────────
 // Source index contract (fotmob-detail-source-index/v1)
@@ -223,17 +253,15 @@ function validateSourceIndex(index) {
                     errors.push(`${label}: ${f} must be a non-empty path string`);
                 }
             }
-            if (
-                entry.payload_file_sha256 !== undefined &&
-                !/^[0-9a-f]{64}$/.test(String(entry.payload_file_sha256 || ''))
-            ) {
-                errors.push(`${label}: payload_file_sha256 must be 64 lowercase hex`);
+            // P2-2 (Codex review 4863122944): both declared file hashes are
+            // REQUIRED and are verified LIVE at build time against the actual
+            // external file bytes (which themselves must equal the receipt
+            // member hash and the live archive member hash).
+            if (!/^[0-9a-f]{64}$/.test(String(entry.payload_file_sha256 || ''))) {
+                errors.push(`${label}: payload_file_sha256 is required and must be 64 lowercase hex`);
             }
-            if (
-                entry.manifest_file_sha256 !== undefined &&
-                !/^[0-9a-f]{64}$/.test(String(entry.manifest_file_sha256 || ''))
-            ) {
-                errors.push(`${label}: manifest_file_sha256 must be 64 lowercase hex`);
+            if (!/^[0-9a-f]{64}$/.test(String(entry.manifest_file_sha256 || ''))) {
+                errors.push(`${label}: manifest_file_sha256 is required and must be 64 lowercase hex`);
             }
             // PR1817 remediation (FINDING_3): every entry MUST be bound to exactly
             // one archive package; the package must exist in archive_bindings and
@@ -321,12 +349,20 @@ function isStrictAbsoluteTimestamp(value) {
 }
 
 function sameInstant(a, b) {
-    // Instants compared exactly (epoch ms), no tolerance band. Mirrors the
-    // .000Z instant comparison discipline of matchesCandidateExactly.
+    // P2-3 (Codex review 4863122944): strict timestamp binding — the two
+    // strings must be CANONICAL and BYTE-EQUAL. Date.parse() (millisecond
+    // precision) is never used, so two distinct nanosecond timestamps can
+    // never collapse to "equal". Contract decision: timezone-equivalent but
+    // textually different strings are REJECTED (fail-closed) — the fixture
+    // pipeline copies these values verbatim, so byte equality holds for
+    // legitimate data.
+    if (typeof a !== 'string' || typeof b !== 'string') {
+        return false;
+    }
     if (!isStrictAbsoluteTimestamp(a) || !isStrictAbsoluteTimestamp(b)) {
         return false;
     }
-    return Date.parse(a) === Date.parse(b);
+    return a === b;
 }
 
 /**
@@ -483,8 +519,11 @@ function validateProvenanceHashChain(payload, manifest, payloadBytes) {
 }
 
 /**
- * 20-field provenance double binding between payload and manifest
- * (provenance-contract.md). Disagreement fails closed.
+ * Provenance double binding between payload and manifest — driven by the
+ * ACTUAL DOUBLE_BOUND_FIELD_PAIRS matrix (16 fields that exist on BOTH
+ * documents, compared for equality; Codex review 4863122944 P1-2).
+ * Disagreement fails closed. Fields present on only ONE side are validated
+ * on their own side below and are explicitly NOT claimed as double-bound.
  */
 /* eslint-disable-next-line complexity */
 function validateDoubleBinding(payload, manifest) {
@@ -502,6 +541,44 @@ function validateDoubleBinding(payload, manifest) {
             message: 'manifest schema_version not capture manifest v1',
         });
     }
+
+    /**
+     * Resolve a '.'-separated payload path (expected_identity.x /
+     * observed_identity.x / top-level) with a safe default.
+     */
+    const payloadAt = pPath => {
+        const parts = String(pPath).split('.');
+        let value = payload;
+        for (const part of parts) {
+            if (value === null || value === undefined || typeof value !== 'object') return undefined;
+            value = value[part];
+        }
+        return value;
+    };
+
+    // A-class: every matrix row must exist on both documents and agree.
+    for (const [mField, pField] of DOUBLE_BOUND_FIELD_PAIRS) {
+        const mVal = manifest[mField];
+        const pVal = payloadAt(pField);
+        const mStr = mVal === null || mVal === undefined ? '' : String(mVal);
+        const pStr = pVal === null || pVal === undefined ? '' : String(pVal);
+        if (mStr === '' || pStr === '') {
+            errors.push({
+                code: ERROR_CODES.E009,
+                message: `double binding ${mField}: missing in one document`,
+            });
+            continue;
+        }
+        const agrees = mField === 'kickoff_at' ? sameInstant(mStr, pStr) : mStr === pStr;
+        if (!agrees) {
+            errors.push({
+                code: ERROR_CODES.E009,
+                message: `double binding ${mField} disagrees: manifest ${mStr} vs payload ${pStr}`,
+            });
+        }
+    }
+    // source_provider is additionally pinned to the fixed contract constant
+    // on BOTH sides (equality alone would accept two identical wrong values).
     if (
         String(manifest.source_provider ?? '') !== REQUIRED_SOURCE_PROVIDER ||
         String(payload.source_provider ?? '') !== REQUIRED_SOURCE_PROVIDER
@@ -509,80 +586,6 @@ function validateDoubleBinding(payload, manifest) {
         errors.push({
             code: ERROR_CODES.E009,
             message: 'source_provider must be FotMob in both documents',
-        });
-    }
-
-    const pairFields = [
-        ['source_match_id', 'source_match_id'],
-        ['candidate_id', 'candidate_id'],
-        ['competition', 'competition'],
-        ['league_id', 'league_id'],
-        ['season', 'season'],
-    ];
-    for (const [mField, pField] of pairFields) {
-        const mVal = String(manifest[mField] ?? '');
-        const pVal = String(payload[pField] ?? '');
-        if (mVal === '' || pVal === '') {
-            errors.push({
-                code: ERROR_CODES.E009,
-                message: `double binding ${mField}: missing in one document`,
-            });
-        } else if (mVal !== pVal) {
-            errors.push({
-                code: ERROR_CODES.E009,
-                message: `double binding ${mField} disagrees: manifest ${mVal} vs payload ${pVal}`,
-            });
-        }
-    }
-
-    // identity-bearing manifest fields vs payload expected_identity.
-    const expected = payload.expected_identity || {};
-    const identityPairs = [
-        ['home_team', 'home_team'],
-        ['away_team', 'away_team'],
-        ['kickoff_at', 'kickoff_at'],
-    ];
-    for (const [mField, pField] of identityPairs) {
-        const mVal = String(manifest[mField] ?? '');
-        const pVal = String(expected[pField] ?? '');
-        if (mVal === '' || pVal === '') {
-            errors.push({
-                code: ERROR_CODES.E009,
-                message: `double binding expected_identity.${pField}: missing`,
-            });
-        } else if (pField === 'kickoff_at' ? !sameInstant(mVal, pVal) : mVal !== pVal) {
-            errors.push({
-                code: ERROR_CODES.E009,
-                message: `double binding expected_identity.${pField} disagrees: manifest ${mVal} vs payload ${pVal}`,
-            });
-        }
-    }
-
-    // observed id provenance mirrors.
-    const observed = payload.observed_identity || {};
-    const oid = String(manifest.observed_match_id ?? '');
-    if (oid === '' || oid !== String(observed.observed_match_id ?? '')) {
-        errors.push({
-            code: ERROR_CODES.E009,
-            message: 'double binding observed_match_id disagrees',
-        });
-    }
-    if (String(manifest.observed_match_id_source ?? '') !== String(observed.observed_match_id_source ?? '')) {
-        errors.push({
-            code: ERROR_CODES.E009,
-            message: 'double binding observed_match_id_source disagrees',
-        });
-    }
-    if (manifest.observed_match_id_conflict !== observed.observed_match_id_conflict) {
-        errors.push({
-            code: ERROR_CODES.E009,
-            message: 'double binding observed_match_id_conflict disagrees',
-        });
-    }
-    if (manifest.observed_match_id_is_response_derived !== observed.observed_match_id_is_response_derived) {
-        errors.push({
-            code: ERROR_CODES.E009,
-            message: 'double binding observed_match_id_is_response_derived disagrees',
         });
     }
 
@@ -603,7 +606,9 @@ function validateDoubleBinding(payload, manifest) {
         });
     }
 
-    // stability hashes over the identity projections (fields 8/9).
+    // stability hashes over the identity projections (D-class recomputed).
+    const expected = payload.expected_identity || {};
+    const observed = payload.observed_identity || {};
     const expectedHash = canonicalJsonHash(payload.expected_identity || {});
     const observedHash = canonicalJsonHash({
         home_team: String(observed.home_team ?? ''),
@@ -625,7 +630,10 @@ function validateDoubleBinding(payload, manifest) {
         });
     }
 
-    // version / run fields recorded verbatim (16–20).
+    // B-class (PAYLOAD_ONLY) and C-class (MANIFEST_ONLY) fields: validated on
+    // their own side — presence, format, fixed contract values. These are
+    // NOT double-bound (they do not exist on both documents).
+    // parser_version / parser_component are A-class (matrix rows above).
     if (String(payload.parser_version ?? '') === '') {
         errors.push({ code: ERROR_CODES.E009, message: 'parser_version missing' });
     }
@@ -984,6 +992,19 @@ function validateQuarantineRules(payload) {
  *                     coverage: {...}, checks: {...}, hashes: {...} }
  */
 /* eslint-disable-next-line complexity */
+/**
+ * P2-4: human- and test-readable description of a received document value —
+ * used in the L1 rejection message so structured garbage (null, array,
+ * string, number, boolean) is reported by its ACTUAL type instead of a
+ * generic phrase.
+ */
+function describeValueType(value) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (Array.isArray(value)) return `array(${value.length})`;
+    return typeof value;
+}
+
 function validateObservation(args = {}) {
     const payload = args.payload;
     const manifest = args.manifest;
@@ -992,18 +1013,26 @@ function validateObservation(args = {}) {
     const layers = {};
     const allErrors = [];
 
+    // P2-4: structured garbage (null / [] / "string" / 123 / true / missing)
+    // must be REJECTED_SCHEMA_UNKNOWN, never a crash. The shape check guards
+    // every deeper layer: none of the internals are ever invoked with a
+    // non-object, so a hostile document cannot throw its way out of
+    // validation. The message names the ACTUAL received type of each side.
+    const shapeOk = isPlainObject(payload) && isPlainObject(manifest);
+
     // L1 — document shape.
     layers.L1_DOCUMENT_SHAPE = { layer: VALIDATION_LAYERS.L1_DOCUMENT_SHAPE };
-    if (!isPlainObject(payload) || !isPlainObject(manifest)) {
+    if (!shapeOk) {
         allErrors.push({
             code: ERROR_CODES.E001,
-            message: 'payload/manifest must be JSON objects',
+            message: `payload/manifest must be JSON objects (payload=${describeValueType(payload)}, manifest=${describeValueType(manifest)})`,
         });
     }
-    layers.L1_DOCUMENT_SHAPE.ok = allErrors.length === 0;
+    layers.L1_DOCUMENT_SHAPE.ok = shapeOk;
+    layers.L1_DOCUMENT_SHAPE.errors = shapeOk ? [] : [allErrors[allErrors.length - 1]];
 
     // L2 — schema identity (payload only; manifest validated below).
-    const l2 = validateSchemaIdentity(payload);
+    const l2 = shapeOk ? validateSchemaIdentity(payload) : { ok: false, errors: [] };
     layers.L2_SCHEMA_IDENTITY = {
         layer: VALIDATION_LAYERS.L2_SCHEMA_IDENTITY,
         ok: l2.ok,
@@ -1012,7 +1041,7 @@ function validateObservation(args = {}) {
     allErrors.push(...l2.errors);
 
     // L3 — identity binding.
-    const l3 = validateIdentityBinding(payload);
+    const l3 = shapeOk ? validateIdentityBinding(payload) : { ok: false, errors: [] };
     layers.L3_IDENTITY_BINDING = {
         layer: VALIDATION_LAYERS.L3_IDENTITY_BINDING,
         ok: l3.ok,
@@ -1024,8 +1053,13 @@ function validateObservation(args = {}) {
     const manifestValidation = isPlainObject(manifest)
         ? validateCaptureManifest(manifest)
         : { ok: false, errors: ['manifest is not an object'] };
-    const l4 = validateProvenanceHashChain(payload, manifest, payloadBytes || Buffer.alloc(0));
-    const binding = validateDoubleBinding(payload, manifest);
+    const l4 = shapeOk
+        ? validateProvenanceHashChain(payload, manifest, payloadBytes || Buffer.alloc(0))
+        : { ok: false, errors: [] };
+    // P2-4: the double-binding matrix and every later payload validator are
+    // shape-guarded the same way — structured garbage yields a structured
+    // rejection, never a TypeError escape.
+    const binding = shapeOk ? validateDoubleBinding(payload, manifest) : { ok: false, errors: [] };
     const l4Errors = [
         ...(manifestValidation.ok
             ? []
@@ -1045,7 +1079,7 @@ function validateObservation(args = {}) {
     allErrors.push(...l4Errors);
 
     // L5 — section presence (never fails; records coverage).
-    const coverage = buildCoverageRecord(payload);
+    const coverage = shapeOk ? buildCoverageRecord(payload) : { record: {}, present: [], absent: [] };
     layers.L5_SECTION_PRESENCE = {
         layer: VALIDATION_LAYERS.L5_SECTION_PRESENCE,
         ok: true,
@@ -1055,7 +1089,7 @@ function validateObservation(args = {}) {
     };
 
     // L6 — value sanity (quarantine layer).
-    const l6 = validateValueSanity(payload);
+    const l6 = shapeOk ? validateValueSanity(payload) : { ok: false, errors: [] };
     layers.L6_VALUE_SANITY = {
         layer: VALIDATION_LAYERS.L6_VALUE_SANITY,
         ok: l6.ok,
@@ -1064,7 +1098,7 @@ function validateObservation(args = {}) {
     allErrors.push(...l6.errors);
 
     // L7 — drift tolerance (accepted by design).
-    const l7 = assessDriftVariants(payload);
+    const l7 = shapeOk ? assessDriftVariants(payload) : { ok: true, variants: [] };
     layers.L7_DRIFT_TOLERANCE = {
         layer: VALIDATION_LAYERS.L7_DRIFT_TOLERANCE,
         ok: true,
@@ -1072,7 +1106,7 @@ function validateObservation(args = {}) {
     };
 
     // L8 — quarantine rules.
-    const l8 = validateQuarantineRules(payload);
+    const l8 = shapeOk ? validateQuarantineRules(payload) : { ok: false, errors: [] };
     layers.L8_QUARANTINE_RULES = {
         layer: VALIDATION_LAYERS.L8_QUARANTINE_RULES,
         ok: l8.ok,
@@ -1209,18 +1243,42 @@ function classifyTerminalState(layers) {
 /**
  * Deterministic UUID v5 over the observation key — no wall clock anywhere in
  * the business output (ERRATA_3 byte determinism).
+ *
+ * P2-3 (Codex review 4863122944): RFC 4122-compliant UUIDv5 — the SHA-1 name
+ * input is the 16-byte NAMESPACE UUID (DNS) followed by the name bytes
+ * (UTF-8), not the namespace text string. Verified against the official RFC
+ * test vector (DNS namespace + "www.example.com" → 2ed6657d-e927-568b-95e1-
+ * 2665a8aea6a2) in the contract tests.
  */
-function deterministicObservationId(sourceMatchId, stablePayloadSha256) {
-    const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // DNS namespace, fixed
+const DNS_NAMESPACE_HEX = '6ba7b8109dad11d180b400c04fd430c8';
+
+/**
+ * RFC 4122 UUIDv5 over a 16-byte namespace UUID + a UTF-8 name.
+ * Exported for direct verification against the official RFC test vectors.
+ *
+ * @param {string} namespaceHex - 32-hex namespace UUID (no dashes)
+ * @param {string} name - UTF-8 name
+ * @returns {string} canonical UUID string
+ */
+function uuidV5(namespaceHex, name) {
+    const namespaceBytes = Buffer.from(String(namespaceHex).replace(/-/g, ''), 'hex');
+    if (namespaceBytes.length !== 16) {
+        throw Object.assign(new Error('uuidv5 namespace must be a 16-byte UUID'), { code: 'INPUT_ERROR' });
+    }
+    const nameBytes = Buffer.from(String(name), 'utf8');
     const hash = crypto
         .createHash('sha1')
-        .update(namespace + ':' + sourceMatchId + ':' + stablePayloadSha256)
+        .update(Buffer.concat([namespaceBytes, nameBytes]))
         .digest();
     const bytes = Buffer.from(hash.subarray(0, 16));
     bytes[6] = (bytes[6] & 0x0f) | 0x50; // version 5
     bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant
     const hex = bytes.toString('hex');
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function deterministicObservationId(sourceMatchId, stablePayloadSha256) {
+    return uuidV5(DNS_NAMESPACE_HEX, `${String(sourceMatchId)}:${String(stablePayloadSha256)}`);
 }
 
 /**
@@ -1512,6 +1570,8 @@ module.exports = {
     ERROR_CODES,
     SECTIONS,
     DOUBLE_BINDING_FIELDS,
+    DOUBLE_BOUND_FIELD_PAIRS,
+    ACTUAL_DOUBLE_BOUND_FIELDS,
     ARTIFACT_REQUIRED_FIELDS,
     validateSourceIndex,
     validateSchemaIdentity,
@@ -1524,6 +1584,7 @@ module.exports = {
     validateQuarantineRules,
     validateObservation,
     classifyTerminalState,
+    uuidV5,
     deterministicObservationId,
     computeStagingArtifactBusinessProjection,
     computeStagingArtifactBusinessHash,

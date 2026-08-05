@@ -18,12 +18,21 @@ const {
     validateObservation,
     validateStagingArtifact,
     computeStagingArtifactBusinessHash,
+    DOUBLE_BOUND_FIELD_PAIRS,
+    ACTUAL_DOUBLE_BOUND_FIELDS,
+    uuidV5,
+    deterministicObservationId,
+    sameInstant,
+    isStrictAbsoluteTimestamp,
     TERMINAL_STATES,
     ERROR_CODES,
     VALIDATION_LAYERS,
     SECTIONS,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
-const { computeStableCapturePayloadSha256 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+const {
+    computeStableCapturePayloadSha256,
+    computeCaptureManifestSelfHash,
+} = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 const {
     buildPair,
     buildPayload,
@@ -633,6 +642,8 @@ test('source index helper builds a legal index', () => {
         [
             sourceIndexEntry('3901023', '/tmp/pairs/1.payload.json', '/tmp/pairs/1.manifest.json', {
                 package: 'ten-match',
+                payload_file_sha256: '0'.repeat(64),
+                manifest_file_sha256: '1'.repeat(64),
             }),
         ],
         {
@@ -646,6 +657,28 @@ test('source index helper builds a legal index', () => {
     const validation = validateSourceIndex(index);
     assert.strictEqual(validation.ok, true, validation.errors.join('; '));
     assert.strictEqual(validation.entries.length, 1);
+});
+
+test('C20b (P2-2): source index entries missing manifest_file_sha256 are rejected', () => {
+    const index = buildSourceIndex(
+        [
+            sourceIndexEntry('3901023', '/tmp/pairs/1.payload.json', '/tmp/pairs/1.manifest.json', {
+                package: 'ten-match',
+                payload_file_sha256: '0'.repeat(64),
+                manifest_file_sha256: undefined,
+            }),
+        ],
+        {
+            'ten-match': {
+                sha256: '0'.repeat(64),
+                path: '/tmp/pairs/archive.tar.gz',
+                receipt: '/tmp/pairs/receipt.json',
+            },
+        }
+    );
+    const validation = validateSourceIndex(index);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => /manifest_file_sha256/.test(e)), validation.errors.join('; '));
 });
 
 // ── FINDING_6: artifact integrity protection (LAYER_A + LAYER_B) ──
@@ -737,4 +770,182 @@ test('I9: integrity hash covers observation_id and generated_at (not just busine
         observation_id: artifact.observation_id.replace(/./, '9'),
     };
     assert.notStrictEqual(computeStagingArtifactIntegrityHash(changed), artifact.artifact_integrity_sha256);
+});
+
+// ── P1-2: ACTUAL double-binding matrix (Codex review 4863122944 P1-2) ──
+
+test('P1-2 matrix: 16 ACTUAL_DOUBLE_BOUND_FIELDS are declared', () => {
+    const { ACTUAL_DOUBLE_BOUND_FIELDS, DOUBLE_BOUND_FIELD_PAIRS } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    assert.strictEqual(DOUBLE_BOUND_FIELD_PAIRS.length, 16);
+    assert.strictEqual(ACTUAL_DOUBLE_BOUND_FIELDS.length, 16);
+    const expected = [
+        'source_provider', 'source_match_id', 'candidate_id', 'competition',
+        'league_id', 'season', 'parser_component', 'parser_version',
+        'home_team', 'away_team', 'kickoff_at',
+        'observed_match_id', 'observed_match_id_source',
+        'observed_match_id_conflict', 'observed_match_id_is_response_derived',
+        'stable_payload_sha256',
+    ];
+    assert.deepStrictEqual([...ACTUAL_DOUBLE_BOUND_FIELDS], expected);
+});
+
+// One single-field conflict test per double-bound field. Each conflict
+// RE-RECOMPUTES the manifest self-hash (capture_manifest_sha256), proving
+// that a re-signed manifest cannot smuggle a disagreement through.
+const PAIRS = DOUBLE_BOUND_FIELD_PAIRS;
+
+function pairWithSingleFieldConflict(manifestPath, payloadPath, conflictValue) {
+    const pair = buildPair();
+    const payloadAt = pPath => {
+        const parts = String(pPath).split('.');
+        let value = pair.payload;
+        for (const part of parts) {
+            if (value === null || typeof value !== 'object') return undefined;
+            value = value[part];
+        }
+        return value;
+    };
+    const original = payloadAt(payloadPath);
+    // apply the conflict on the MANIFEST side (payload stays legal)
+    const manifest = { ...pair.manifest, [manifestPath]: conflictValue };
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+    return { payload: pair.payload, manifest, payloadBytes: pair.payloadBytes, original };
+}
+
+for (const [mField, pField] of PAIRS) {
+    test(`P1-2 conflict: ${mField} disagrees with payload (${pField}) and is rejected even with a recomputed manifest self-hash`, () => {
+        const conflictValue = mField === 'observed_match_id_conflict' ? true : mField === 'observed_match_id_is_response_derived' ? false : 'CONFLICT_VALUE';
+        const { payload, manifest, payloadBytes } = pairWithSingleFieldConflict(mField, pField, conflictValue);
+        const validation = validateObservation({ payload, manifest, payloadBytes });
+        assert.strictEqual(validation.ok, false, `${mField} conflict must be rejected`);
+        assert.strictEqual(validation.terminal_state, 'REJECTED_PROVENANCE_BROKEN');
+        assert.ok(
+            validation.errors.some(e => e.message.includes(`double binding ${mField} disagrees`)),
+            JSON.stringify(validation.errors)
+        );
+    });
+}
+
+test('P1-2: kickoff_at byte-inequality is rejected (nanosecond precision)', () => {
+    const pair = buildPair();
+    const manifest = {
+        ...pair.manifest,
+        kickoff_at: '2026-08-04T19:30:00.000001Z', // 1 microsecond off
+    };
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+    const validation = validateObservation({
+        payload: pair.payload,
+        manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => e.message.includes('double binding kickoff_at disagrees')));
+});
+
+test('P1-2: manifest-only fields are validated but NOT claimed as double-bound', () => {
+    const { ACTUAL_DOUBLE_BOUND_FIELDS } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    for (const singleSide of ['parser_output_contract_version', 'capture_run_id', 'authorization_id', 'collector_code_revision']) {
+        assert.ok(!ACTUAL_DOUBLE_BOUND_FIELDS.includes(singleSide), `${singleSide} must not be claimed double-bound`);
+    }
+    // capture_run_id empty -> rejected (C-class presence check)
+    const pair = buildPair();
+    const manifest = { ...pair.manifest, capture_run_id: '' };
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+    const validation = validateObservation({ payload: pair.payload, manifest, payloadBytes: pair.payloadBytes });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => e.message.includes('capture_run_id missing')));
+});
+
+// ── P2-3: RFC 4122 UUIDv5 + strict timestamp binding (Codex review
+// ── 4863122944 P2-3) ─────────────────────────────────────────────────
+
+test('P2-3: UUIDv5 matches the official RFC 4122 test vector (DNS namespace, www.example.com)', () => {
+    const { uuidV5 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    // RFC 4122 Appendix B: UUIDv5(DNS, "www.example.com") =
+    // 2ed6657d-e927-568b-95e1-2665a8aea6a2
+    assert.strictEqual(
+        uuidV5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'www.example.com'),
+        '2ed6657d-e927-568b-95e1-2665a8aea6a2'
+    );
+});
+
+test('P2-3: deterministicObservationId is deterministic and input-sensitive', () => {
+    const { deterministicObservationId } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    const a = deterministicObservationId('3901023', 'a'.repeat(64));
+    const b = deterministicObservationId('3901023', 'a'.repeat(64));
+    const c = deterministicObservationId('3901023', 'b'.repeat(64));
+    const d = deterministicObservationId('3901024', 'a'.repeat(64));
+    assert.strictEqual(a, b);
+    assert.notStrictEqual(a, c);
+    assert.notStrictEqual(a, d);
+    assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+});
+
+test('P2-3: nanosecond-different timestamps are NOT equal (no ms-precision collapse)', () => {
+    const { sameInstant } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    assert.strictEqual(sameInstant('2026-08-04T12:00:00.123456789Z', '2026-08-04T12:00:00.123456788Z'), false);
+    assert.strictEqual(sameInstant('2026-08-04T12:00:00.000000001Z', '2026-08-04T12:00:00.000000002Z'), false);
+});
+
+test('P2-3: timezone-equivalent but textually different strings are rejected (contract decision)', () => {
+    const { sameInstant } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    assert.strictEqual(sameInstant('2026-08-04T12:00:00.000Z', '2026-08-04T12:00:00Z'), false);
+    assert.strictEqual(sameInstant('2026-08-04T12:00:00Z', '2026-08-04T14:00:00+02:00'), false);
+});
+
+test('P2-3: illegal timestamps are rejected', () => {
+    const { sameInstant, isStrictAbsoluteTimestamp } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    for (const bad of ['not-a-date', '2026-08-04', '2026-08-04T12:00:00', '2026-13-04T12:00:00Z', '']) {
+        assert.strictEqual(isStrictAbsoluteTimestamp(bad), false, bad);
+        assert.strictEqual(sameInstant(bad, '2026-08-04T12:00:00Z'), false, bad);
+    }
+    // equal canonical strings ARE the same instant
+    assert.strictEqual(sameInstant('2026-08-04T12:00:00.537Z', '2026-08-04T12:00:00.537Z'), true);
+});
+
+// ── P2-4: structured garbage fails closed (Codex review 4863122944 P2-4) ──
+
+test('P2-4: null / array / string / number / boolean payload is REJECTED_SCHEMA_UNKNOWN (never throws)', () => {
+    const pair = buildPair();
+    for (const garbage of [null, [], 'string', 123, true, undefined]) {
+        const validation = validateObservation({
+            payload: garbage,
+            manifest: pair.manifest,
+            payloadBytes: pair.payloadBytes,
+        });
+        assert.strictEqual(validation.ok, false, String(garbage));
+        assert.strictEqual(validation.terminal_state, TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN, String(garbage));
+        assert.strictEqual(validation.error_code, ERROR_CODES.E001, String(garbage));
+        assert.ok(
+            validation.errors.some(e => e.message.includes('must be JSON objects')),
+            JSON.stringify(validation.errors)
+        );
+    }
+});
+
+test('P2-4: structured garbage manifest is REJECTED_SCHEMA_UNKNOWN (never throws)', () => {
+    const pair = buildPair();
+    for (const garbage of [null, [], 'manifest', 42, false]) {
+        const validation = validateObservation({
+            payload: pair.payload,
+            manifest: garbage,
+            payloadBytes: pair.payloadBytes,
+        });
+        assert.strictEqual(validation.ok, false, String(garbage));
+        assert.strictEqual(validation.terminal_state, TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN, String(garbage));
+        assert.strictEqual(validation.error_code, ERROR_CODES.E001, String(garbage));
+    }
+});
+
+test('P2-4: the L1 message names the actual received type of each side', () => {
+    const pair = buildPair();
+    const validation = validateObservation({
+        payload: null,
+        manifest: [1, 2],
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.ok(
+        validation.errors.some(e => /payload=null, manifest=array\(2\)/.test(e.message)),
+        JSON.stringify(validation.errors)
+    );
 });

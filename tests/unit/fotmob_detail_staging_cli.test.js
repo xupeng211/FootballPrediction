@@ -214,21 +214,31 @@ test('G51b: single-artifact validate detects tampering', async () => {
     assert.strictEqual(tampered.status, 'invalid');
 });
 
-test('G52: Makefile staging targets contain no capture/network/DB commands', () => {
+test('G52: Makefile staging targets run container-first via $(COMPOSE_DEV) exec -T dev', () => {
     const makefile = fs.readFileSync(path.join(REPO_ROOT, 'Makefile'), 'utf8');
     const start = makefile.indexOf('data-fotmob-detail-staging-help:');
     assert.ok(start !== -1, 'data-fotmob-detail-staging-help target exists');
     // The block covers all three staging targets (help through validate).
     const end = makefile.indexOf('data-m3-canonical-inventory-preflight:', start);
     const block = makefile.slice(start, end === -1 ? makefile.length : end);
-    // Command-level prohibition: the staging targets must not invoke the
-    // capture pipeline, any network tool, any DB client, or the container.
-    // (The literal phrase "NO CAPTURE" is required by the offline contract,
-    // so the check targets commands, not substrings.)
-    assert.doesNotMatch(block, /fotmob_detail_capture|curl|psql|pg_dump|pg_ctl|docker|playwright|compose/i);
+    // P2-5: the authoritative rule is container-first (CLAUDE.md) — every
+    // staging command target must go through $(COMPOSE_DEV) exec -T dev;
+    // no host-side `node` invocation may be self-declared as an exception.
     assert.match(block, /OFFLINE ONLY|ZERO NETWORK|ZERO DATABASE|NO MIGRATION|NO CAPTURE/);
-    assert.match(block, /node scripts\/ops\/fotmob_detail_staging\.js build/);
-    assert.match(block, /node scripts\/ops\/fotmob_detail_staging\.js validate/);
+    const recipes = block.split('\n').filter(line => line.startsWith('\t@'));
+    for (const recipe of recipes) {
+        // Echo (help prose) and @if guard lines are not business commands.
+        // Every line that INVOKES the staging CLI must run container-first.
+        if (!recipe.includes('fotmob_detail_staging.js')) continue;
+        assert.match(
+            recipe,
+            /^\t@\$\(COMPOSE_DEV\) exec -T dev node scripts\/ops\/fotmob_detail_staging\.js/,
+            `staging command must run inside the dev container: ${recipe.trim()}`
+        );
+    }
+    assert.match(block, /\$\(COMPOSE_DEV\) exec -T dev node scripts\/ops\/fotmob_detail_staging\.js build/);
+    assert.match(block, /\$\(COMPOSE_DEV\) exec -T dev node scripts\/ops\/fotmob_detail_staging\.js validate/);
+    assert.match(block, /\$\(COMPOSE_DEV\) exec -T dev node scripts\/ops\/fotmob_detail_staging\.js receipt/);
 });
 
 test('G52b: data-help lists the three staging targets as offline entries', () => {
@@ -345,6 +355,8 @@ test('E2E: FIRST_IMPORT → ACCEPTED_NEW; SECOND_LEGAL → REPEAT_EQUIVALENT (ol
         source_match_id: '3901024',
         payload_file: a2.payloadFiles['3901024'],
         manifest_file: a2.manifestFiles['3901024'],
+        payload_file_sha256: sha(a2.payloadFiles['3901024']),
+        manifest_file_sha256: sha(a2.manifestFiles['3901024']),
         package: 'pkg-b',
     });
     const index1File = path.join(dir, 'index-1.json');
@@ -397,4 +409,138 @@ test('E2E: FIRST_IMPORT → ACCEPTED_NEW; SECOND_LEGAL → REPEAT_EQUIVALENT (ol
     assert.strictEqual(sha(oldArtifactPath), oldHash);
     v = await runValidate({ 'output-root': outputRoot });
     assert.strictEqual(v.status, 'valid', JSON.stringify(v.errors));
+});
+
+// ── P1-5: MODE_1_UNANCHORED / MODE_2_EXTERNALLY_ANCHORED ────
+
+function buildOneMatchStore(dir, sourceMatchId = '3901023') {
+    const pair = buildPair({ source_match_id: sourceMatchId });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId, pair }], { packageId: 'ten-match' });
+    writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'ten-match',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const indexFile = path.join(dir, 'source-index.json');
+    fs.writeFileSync(
+        indexFile,
+        JSON.stringify(
+            buildSourceIndexFromArchive([{ sourceMatchId, pair }], archiveInfo, {
+                packageId: 'ten-match',
+                receiptPath: path.join(dir, 'receipt.json'),
+            }),
+            null,
+            2
+        ) + '\n'
+    );
+    const outputRoot = path.join(dir, 'out');
+    return { indexFile, outputRoot };
+}
+
+const sha256File = p => require('node:crypto').createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+
+test('P1-5: validate without an anchor reports MODE_1_UNANCHORED with INTACT integrity', async () => {
+    const dir = tmpDir('fotmob-p15-mode1-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const result = await runValidate({ 'output-root': outputRoot });
+    assert.strictEqual(result.status, 'valid');
+    assert.strictEqual(result.anchor_mode, 'MODE_1_UNANCHORED');
+    assert.strictEqual(result.authenticity_status, 'UNANCHORED');
+    assert.strictEqual(result.integrity_status, 'INTACT');
+});
+
+test('P1-5: correct --expected-latest-marker-sha256 anchors the store (MODE_2, ANCHORED)', async () => {
+    const dir = tmpDir('fotmob-p15-anchored-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const markerPath = path.join(outputRoot, 'commit-1.json');
+    const anchor = sha256File(markerPath);
+    const result = await runValidate({
+        'output-root': outputRoot,
+        'expected-latest-marker-sha256': anchor,
+    });
+    assert.strictEqual(result.status, 'valid', JSON.stringify(result.errors));
+    assert.strictEqual(result.anchor_mode, 'MODE_2_EXTERNALLY_ANCHORED');
+    assert.strictEqual(result.authenticity_status, 'ANCHORED');
+    assert.strictEqual(result.integrity_status, 'INTACT');
+    assert.strictEqual(result.latest_marker_sha256, anchor);
+});
+
+test('P1-5: a wrong anchor fails closed (ANCHOR_MISMATCH) even when integrity is intact', async () => {
+    const dir = tmpDir('fotmob-p15-wronganchor-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const result = await runValidate({
+        'output-root': outputRoot,
+        'expected-latest-marker-sha256': 'a'.repeat(64),
+    });
+    assert.strictEqual(result.status, 'invalid');
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.authenticity_status, 'ANCHOR_MISMATCH');
+    assert.strictEqual(result.integrity_status, 'INTACT', 'internal integrity still verifies');
+    assert.ok(result.errors.some(e => e.code === 'ANCHOR_MISMATCH'));
+});
+
+test('P1-5: anchor checkpoint file (outside the store) anchors; store-internal checkpoint is rejected', async () => {
+    const dir = tmpDir('fotmob-p15-checkpoint-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const markerPath = path.join(outputRoot, 'commit-1.json');
+    const anchor = sha256File(markerPath);
+    const checkpoint = path.join(dir, 'checkpoint.json');
+    fs.writeFileSync(checkpoint, JSON.stringify({ latest_marker_sha256: anchor }, null, 2) + '\n');
+
+    const good = await runValidate({ 'output-root': outputRoot, 'anchor-checkpoint': checkpoint });
+    assert.strictEqual(good.status, 'valid', JSON.stringify(good.errors));
+    assert.strictEqual(good.authenticity_status, 'ANCHORED');
+
+    // checkpoint INSIDE the store directory must be rejected by the overlap gate
+    const insideStore = path.join(outputRoot, 'checkpoint.json');
+    fs.writeFileSync(insideStore, JSON.stringify({ latest_marker_sha256: anchor }, null, 2) + '\n');
+    await assert.rejects(
+        () => runValidate({ 'output-root': outputRoot, 'anchor-checkpoint': insideStore }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+});
+
+test('P1-5: malformed anchors are rejected as INPUT_ERROR', async () => {
+    const dir = tmpDir('fotmob-p15-badanchor-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    await assert.rejects(
+        () => runValidate({ 'output-root': outputRoot, 'expected-latest-marker-sha256': 'not-hex' }),
+        err => err.code === 'INPUT_ERROR'
+    );
+    const badCheckpoint = path.join(dir, 'bad-checkpoint.json');
+    fs.writeFileSync(badCheckpoint, JSON.stringify({ other: 1 }, null, 2) + '\n');
+    await assert.rejects(
+        () => runValidate({ 'output-root': outputRoot, 'anchor-checkpoint': badCheckpoint }),
+        err => err.code === 'INPUT_ERROR'
+    );
+    await assert.rejects(
+        () =>
+            runValidate({
+                'output-root': outputRoot,
+                'anchor-checkpoint': path.join(dir, 'missing.json'),
+            }),
+        err => err.code === 'INPUT_ERROR' || err.code === 'SAFETY_ERROR'
+    );
+});
+
+test('P1-5: single-artifact validate reports integrity and UNANCHORED authenticity', async () => {
+    const dir = tmpDir('fotmob-p15-artifact-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    const artifactPath = path.join(
+        outputRoot,
+        fs.readdirSync(outputRoot).find(f => f.startsWith('observation-'))
+    );
+    const result = await runValidate({ artifact: artifactPath });
+    assert.strictEqual(result.status, 'valid');
+    assert.strictEqual(result.authenticity_status, 'UNANCHORED');
+    assert.strictEqual(result.integrity_status, 'INTACT');
 });

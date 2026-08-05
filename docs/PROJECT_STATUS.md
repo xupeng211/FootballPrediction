@@ -940,14 +940,24 @@ legacy-writer execution is authorized.
   (ENFORCEMENT_INFRASTRUCTURE=COMPLETE / STAGING_PRODUCTION_ROLE_DEPLOYMENT=
   PENDING / PR1817_CHANGES_SC002=NO); F8 Claude post-remediation self-review
   P0/P1/P2 = 0 with EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and
-  READY_TO_MERGE=NO. 125 staging tests (25 source verification + 39 retention
-  fault-injection/tamper + 38 contract + 11 converter + 12 CLI) + 347 legacy
-  FotMob + 769 unit tests green; ESLint/Prettier clean. 16-match offline
-  revalidation on the fixed archives: RUN_1 16 ACCEPTED_NEW, RUN_2 16
-  REPEAT_EXACT byte-identical, RUN_3 synthetic REPEAT_EQUIVALENT
-  (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO); all stores
-  validate PASS with zero residue. Zero network, zero database, zero capture,
-  no migration; PR stays Draft and unmerged.
+  READY_TO_MERGE=NO. Codex closed-loop round (independent review 4863122944,
+  13 findings): P0-1 live archive↔receipt re-verification with inventory
+  hash; P0-2 REPEAT_EQUIVALENT final-classification write-back + three-way
+  validator cross-checks; P1-1 two-level tar member-name validation; P1-2
+  ACTUAL 16-field double-binding matrix; P1-3 receipt path through the
+  unified input gate; P1-4 TOCTOU mitigation (no-follow fd reads, controlled
+  private dirs, exclusive store lock, honest threat model); P1-5 anchored
+  validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
+  required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
+  timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
+  targets; P3-1 docs/PR-body rewrite. 194 staging tests (52 retention
+  fault-injection/tamper + 46 source verification + 66 contract + 12
+  converter + 18 CLI) + 347 legacy FotMob + 769 unit tests green; ESLint
+  clean. 16-match offline revalidation on the fixed archives: RUN_1 16
+  ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
+  REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);
+  all stores validate PASS with zero residue. Zero network, zero database,
+  zero capture, no migration; PR stays Draft and unmerged.
 
 ## Next recommended sequence
 

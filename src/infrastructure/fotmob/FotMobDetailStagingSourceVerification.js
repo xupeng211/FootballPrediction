@@ -41,7 +41,11 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 
-const { verifyRepositoryExternalPath, assertNoSymlinkAncestors } = require('./FotMobDetailStagingRetention');
+const {
+    verifyRepositoryExternalPath,
+    assertNoSymlinkAncestors,
+    readFileSafeNoFollow,
+} = require('./FotMobDetailStagingRetention');
 const { canonicalJsonHash, sha256Hex } = require('./FotMobDetailCaptureContract');
 
 const PACKAGE_RECEIPT_SCHEMA = 'fotmob-detail-staging-package-receipt/v1';
@@ -154,23 +158,39 @@ function parseOctal(bytes, offset, length) {
     return value;
 }
 
+/**
+ * Strict PAX record parser (P2-1, Codex review 4863122944): every record is
+ * `<len> <key>=<value>\n` where len counts the ENTIRE record including its
+ * own digits. Any malformed record — non-integer length, length out of the
+ * data bounds, missing trailing newline — is a FAIL-CLOSED rejection, never
+ * a silent skip (a skipped record could smuggle a path override).
+ */
 function parsePaxRecords(data) {
     const records = {};
     let idx = 0;
     while (idx < data.length) {
         const space = data.indexOf(' ', idx);
-        if (space === -1) break;
-        const len = Number(data.slice(idx, space));
-        if (!Number.isFinite(len) || len <= 0) break;
-        const record = data.slice(space + 1, idx + len - 1); // strip trailing newline
+        if (space === -1) {
+            throw Object.assign(new Error('PAX record missing length separator'), { code: 'SAFETY_ERROR' });
+        }
+        const digits = data.slice(idx, space);
+        if (!/^[0-9]+$/.test(digits)) {
+            throw Object.assign(new Error('PAX record length is not a positive integer'), { code: 'SAFETY_ERROR' });
+        }
+        const len = Number(digits);
+        if (len <= 0 || len > data.length - idx) {
+            throw Object.assign(new Error('PAX record length out of bounds'), { code: 'SAFETY_ERROR' });
+        }
+        if (data[idx + len - 1] !== '\n') {
+            throw Object.assign(new Error('PAX record must end with a newline'), { code: 'SAFETY_ERROR' });
+        }
+        const record = data.slice(space + 1, idx + len - 1);
         const eq = record.indexOf('=');
         if (eq !== -1) {
             records[record.slice(0, eq)] = record.slice(eq + 1);
         }
         // The length field counts the whole record INCLUDING its own digits
-        // and the space, so the next record starts exactly at idx + len
-        // (idx = space + 1 + len would land past the first digit of the
-        // following record and silently drop every later record).
+        // and the space, so the next record starts exactly at idx + len.
         idx = idx + len;
     }
     return records;
@@ -178,19 +198,44 @@ function parsePaxRecords(data) {
 
 function ustarName(header) {
     const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
-    // ustar magic at 257..262 — if absent, prefix is not valid.
+    // P1-1 (Codex review 4863122944): the ustar magic at 257..262 is SIX
+    // bytes — standard ustar is `ustar\0`, GNU tar writes `ustar ` (space).
+    // Comparing against the five-byte string 'ustar' never matched, which
+    // silently DISABLED the prefix check (a prefix=../ traversal could be
+    // smuggled through the 155-byte prefix field). Both magic variants now
+    // enable prefix processing, and the COMBINED name is validated.
     const magic = header.subarray(257, 263).toString('utf8');
-    if (magic !== 'ustar') return name;
+    if (magic !== 'ustar\0' && magic !== 'ustar ') return name;
     const prefix = header.subarray(345, 500).toString('utf8').replace(/\0.*$/, '');
     return prefix ? `${prefix}/${name}` : name;
 }
 
-function isSafeMemberName(name) {
+/**
+ * Two-level member-name safety (P1-1):
+ *   1. RAW semantics — every original path segment (including the ustar
+ *      prefix and the GNU/PAX override) must be free of `..` segments, NUL
+ *      bytes, backslashes and absolute-path escapes;
+ *   2. COMBINED normalized path — after prefix+name (or PAX/GNU override)
+ *      composition, the normalized POSIX path must stay inside the archive
+ *      root (no `..`, no leading `/`) and must not be empty.
+ *
+ * @param {string} name - final combined member path
+ * @param {Array<string>} rawParts - original uncombined path strings
+ * @returns {boolean} true when safe
+ */
+function isSafeMemberName(name, rawParts = []) {
     if (typeof name !== 'string' || name === '') return false;
-    if (name.startsWith('/') || name.startsWith('\\')) return false;
-    if (name.includes('\\')) return false;
+    const parts = rawParts.length > 0 ? rawParts : [name];
+    for (const raw of parts) {
+        if (typeof raw !== 'string' || raw === '') return false;
+        if (raw.includes('\0')) return false;
+        if (raw.includes('\\')) return false;
+        if (raw.startsWith('/')) return false;
+        const segments = raw.split('/');
+        if (segments.some(seg => seg === '..')) return false;
+    }
     const normalized = path.posix.normalize(name);
-    if (normalized === '..' || normalized.startsWith('../') || normalized.startsWith('/')) {
+    if (normalized === '' || normalized === '..' || normalized.startsWith('../') || normalized.startsWith('/')) {
         return false;
     }
     return true;
@@ -209,7 +254,9 @@ function isSafeMemberName(name) {
 function inspectArchive(archivePath, options = {}) {
     const fileSystem = options.fsImpl || fs;
     const abs = verifyRepositoryExternalRegularFile(archivePath, options);
-    const bytes = fileSystem.readFileSync(abs);
+    // P1-4: read through a no-follow fd with dev/inode identity check — the
+    // archive bytes hashed here are the same inode that was validated.
+    const bytes = readFileSafeNoFollow(abs, { fsImpl: fileSystem }).bytes;
     const archiveSha256 = sha256Hex(bytes);
 
     let tar;
@@ -239,9 +286,30 @@ function inspectArchive(archivePath, options = {}) {
             });
         }
         const typeflag = String.fromCharCode(header[156]);
-        const size = parseOctal(header, 124, 12) || 0;
+        // P2-1: the size field is REQUIRED to be valid octal — a corrupt
+        // size silently defaulting to 0 would accept a truncated member as
+        // empty. `|| 0` is a security bug, never a fallback here.
+        const size = parseOctal(header, 124, 12);
+        if (size === null) {
+            throw Object.assign(new Error(`tar member size field is not valid octal: ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
         const paddedSize = Math.ceil(size / TAR_BLOCK) * TAR_BLOCK;
         const contentStart = offset + TAR_BLOCK;
+        // P2-1: explicit bounds — both the declared content and its padding
+        // must physically exist in the buffer. subarray() would silently
+        // clamp, so every length must be verified BEFORE any slice.
+        if (contentStart + size > tar.length) {
+            throw Object.assign(new Error(`tar member content extends beyond the archive (truncated): ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
+        if (contentStart + paddedSize > tar.length) {
+            throw Object.assign(new Error(`tar member padding is incomplete (truncated): ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
 
         if (typeflag === 'L') {
             // GNU long name: the next data block holds the real name.
@@ -249,7 +317,7 @@ function inspectArchive(archivePath, options = {}) {
             offset = contentStart + paddedSize;
             continue;
         }
-        if (typeflag === 'x' || typeflag === 'g') {
+        if (typeflag === 'x') {
             // PAX extended headers: path= may override the name; linkpath= means
             // a link target is being recorded — links are forbidden, fail closed.
             const pax = parsePaxRecords(tar.subarray(contentStart, contentStart + size).toString('utf8'));
@@ -262,16 +330,42 @@ function inspectArchive(archivePath, options = {}) {
             offset = contentStart + paddedSize;
             continue;
         }
+        if (typeflag === 'g') {
+            // P2-1: GLOBAL PAX headers are not implemented — they apply to
+            // every subsequent member (e.g. a global path prefix), so
+            // ignoring them could silently miss a name override. Fail closed.
+            throw Object.assign(new Error(`tar declares a GLOBAL PAX header (not supported): ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
         if (typeflag === 'K') {
             throw Object.assign(new Error(`tar member declares a GNU long link (not allowed): ${abs}`), {
                 code: 'SAFETY_ERROR',
             });
         }
 
-        let name = pendingPaxPath || pendingLongName || ustarName(header);
+        // P1-1: compose the member name from the RAW path fields (ustar
+        // name+prefix, GNU long name, PAX path override) and validate BOTH
+        // the raw segments AND the combined normalized path.
+        let name;
+        let rawParts;
+        if (pendingPaxPath !== null) {
+            name = pendingPaxPath;
+            rawParts = [pendingPaxPath];
+        } else if (pendingLongName !== null) {
+            name = pendingLongName;
+            rawParts = [pendingLongName];
+        } else {
+            const rawName = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+            const magic = header.subarray(257, 263).toString('utf8');
+            const hasUstar = magic === 'ustar\0' || magic === 'ustar ';
+            const rawPrefix = hasUstar ? header.subarray(345, 500).toString('utf8').replace(/\0.*$/, '') : '';
+            name = rawPrefix ? `${rawPrefix}/${rawName}` : rawName;
+            rawParts = rawPrefix ? [rawPrefix, rawName] : [rawName];
+        }
         pendingLongName = null;
         pendingPaxPath = null;
-        if (!isSafeMemberName(name)) {
+        if (!isSafeMemberName(name, rawParts)) {
             throw Object.assign(new Error(`unsafe tar member name: ${name}`), { code: 'SAFETY_ERROR' });
         }
 
@@ -290,17 +384,41 @@ function inspectArchive(archivePath, options = {}) {
         if (typeflag !== '0' && typeflag !== '\0') {
             throw Object.assign(new Error(`unsupported tar typeflag '${typeflag}': ${name}`), { code: 'SAFETY_ERROR' });
         }
-        if (seen.has(name)) {
-            throw Object.assign(new Error(`duplicate tar member name: ${name}`), { code: 'SAFETY_ERROR' });
+        // P1-1: duplicate detection on the NORMALIZED path — 'a/./b.json'
+        // and 'a/b.json' are the same member and must be rejected as one.
+        const normalizedName = path.posix.normalize(name);
+        if (seen.has(normalizedName)) {
+            throw Object.assign(new Error(`duplicate tar member path: ${name} (normalized ${normalizedName})`), {
+                code: 'SAFETY_ERROR',
+            });
         }
-        seen.add(name);
+        seen.add(normalizedName);
         const content = tar.subarray(contentStart, contentStart + size);
         members.push({
             name,
+            type: 'file',
             size,
             sha256: crypto.createHash('sha256').update(content).digest('hex'),
         });
         offset = contentStart + paddedSize;
+    }
+
+    // Canonical end-of-archive: the loop exits EITHER on the first zero block
+    // (the two zero end blocks) or by running out of buffer. If it ran out of
+    // buffer without ever seeing the end blocks the archive is truncated and
+    // must be rejected (P2-1). If it broke on a zero block, the tail must be
+    // zero padding only — trailing non-zero data means a mangled archive.
+    if (offset + TAR_BLOCK <= tar.length) {
+        const tail = tar.subarray(offset);
+        if (!tail.every(b => b === 0)) {
+            throw Object.assign(new Error(`tar has non-canonical end (trailing data after end blocks): ${abs}`), {
+                code: 'SAFETY_ERROR',
+            });
+        }
+    } else {
+        throw Object.assign(new Error(`tar has no canonical end-of-archive blocks (truncated): ${abs}`), {
+            code: 'SAFETY_ERROR',
+        });
     }
 
     return { archive_sha256: archiveSha256, members };
@@ -325,13 +443,36 @@ function verifyArchive(archivePath, expectedSha256, options = {}) {
     if (!/^[0-9a-f]{64}$/.test(String(expectedSha256 || ''))) {
         throw Object.assign(new Error('expected archive sha256 must be 64 lowercase hex'), { code: 'INPUT_ERROR' });
     }
-    const actual = sha256Hex(fileSystem.readFileSync(abs));
+    const actual = sha256Hex(readFileSafeNoFollow(abs, { fsImpl: fileSystem }).bytes);
     if (actual !== String(expectedSha256).toLowerCase()) {
         throw Object.assign(new Error(`archive sha256 mismatch: declared ${expectedSha256}, actual ${actual}`), {
             code: 'SAFETY_ERROR',
         });
     }
     return { archive_path: abs, archive_sha256: actual };
+}
+
+/**
+ * PR1817 remediation (P0-1): deterministic inventory hash over the FULL
+ * managed member list — stable-sorted rows of {member_path, member_type,
+ * member_size, member_sha256}. The inventory is bound into the package
+ * receipt and RE-COMPUTED from the live archive on every build run, so a
+ * receipt whose member table does not exactly match the archive's real
+ * members can never pass (a receipt hash alone proves nothing).
+ *
+ * @param {Array<{name,type,size,sha256}>} members - inspected archive members
+ * @returns {string} 64-hex inventory hash
+ */
+function computeArchiveInventory(members) {
+    const rows = members
+        .map(m => ({
+            member_path: String(m.name),
+            member_type: String(m.type || 'file'),
+            member_size: Number(m.size),
+            member_sha256: String(m.sha256),
+        }))
+        .sort((a, b) => (a.member_path < b.member_path ? -1 : 1));
+    return canonicalJsonHash(rows);
 }
 
 /**
@@ -378,6 +519,9 @@ function buildPackageReceipt(args = {}) {
         package_id: packageId,
         archive_sha256: String(args.archiveSha256).toLowerCase(),
         archive_file: path.basename(String(args.archivePath || '')),
+        // P0-1: inventory over the COMPLETE managed member set; any member
+        // drift between the receipt and the live archive fails closed.
+        archive_inventory_sha256: computeArchiveInventory(members),
         payload_member: payloadMember,
         manifest_member: manifestMember,
         members: memberHashes,
@@ -409,6 +553,11 @@ function verifyPackageReceipt(receipt) {
     if (!/^[0-9a-f]{64}$/.test(String(receipt.archive_sha256 || ''))) {
         errors.push('receipt archive_sha256 must be 64 lowercase hex');
     }
+    // P0-1: the archive inventory hash is REQUIRED — a receipt without it
+    // cannot bind the live archive's member table and is rejected.
+    if (!/^[0-9a-f]{64}$/.test(String(receipt.archive_inventory_sha256 || ''))) {
+        errors.push('receipt archive_inventory_sha256 must be 64 lowercase hex');
+    }
     if (!receipt.members || typeof receipt.members !== 'object') {
         errors.push('receipt members must be an object');
     } else {
@@ -438,15 +587,88 @@ function verifyPackageReceipt(receipt) {
 }
 
 /**
+ * PR1817 remediation (P0-1): re-verify a package's LIVE archive against its
+ * receipt. Called once per package per build run (the result may be shared
+ * across entries of the same package WITHIN one run, never across runs):
+ *
+ *   1. safe re-inspection of the live archive (no cache of past runs);
+ *   2. live archive SHA-256 must equal the receipt's AND the binding's;
+ *   3. live member inventory must equal the receipt's
+ *      archive_inventory_sha256 (binds the full member table);
+ *   4. per-member comparison: the receipt's member name set must equal the
+ *      live archive's member name set (no extras, no missing managed
+ *      members), and every shared member must have the same sha256.
+ *
+ * @param {object} args - { binding, receipt, options }
+ * @returns {object} inspected - { archive_sha256, members: [{name,type,size,sha256}] }
+ */
+function verifyLiveArchiveAgainstReceipt(args = {}) {
+    const binding = args.binding || {};
+    const receipt = args.receipt || {};
+    const options = args.options || {};
+
+    const inspected = inspectArchive(String(binding.path || ''), options);
+    if (inspected.archive_sha256 !== String(receipt.archive_sha256 || '')) {
+        throw Object.assign(
+            new Error(
+                `live archive sha256 ${inspected.archive_sha256} does not match receipt archive sha256 ${receipt.archive_sha256}`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (String(receipt.archive_sha256 || '') !== String(binding.sha256 || '')) {
+        throw Object.assign(
+            new Error(`receipt archive sha ${receipt.archive_sha256} does not match binding ${binding.sha256}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    const liveInventory = computeArchiveInventory(inspected.members);
+    if (liveInventory !== String(receipt.archive_inventory_sha256 || '')) {
+        throw Object.assign(
+            new Error(
+                `live archive member inventory does not match receipt archive_inventory_sha256 (receipt members disagree with the real archive)`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    const liveByName = new Map(inspected.members.map(m => [m.name, m]));
+    const receiptNames = Object.keys(receipt.members || {}).sort();
+    const liveNames = [...liveByName.keys()].sort();
+    if (receiptNames.length !== liveNames.length || receiptNames.some((n, i) => n !== liveNames[i])) {
+        const missing = liveNames.filter(n => !receipt.members[n]);
+        const extra = receiptNames.filter(n => !liveByName.has(n));
+        throw Object.assign(
+            new Error(
+                `receipt member set disagrees with live archive (missing from receipt: ${missing.join(', ') || 'none'}; not in archive: ${extra.join(', ') || 'none'})`
+            ),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    for (const name of liveNames) {
+        const live = liveByName.get(name);
+        if (String(receipt.members[name]) !== String(live.sha256)) {
+            throw Object.assign(
+                new Error(`receipt member hash disagrees with live archive for member: ${name}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
+    return inspected;
+}
+
+/**
  * Bind ONE source-index entry to its package: the entry uses exactly ONE
  * package (single-package rule); the receipt must be valid; the receipt's
- * archive SHA must equal the binding's declared SHA; the archive must be
- * live-verified against that SHA; and the extracted payload/manifest files
- * must be safe inputs whose live SHA equals the receipt's member hashes.
+ * archive SHA must equal the binding's declared SHA; the LIVE archive must be
+ * re-inspected and its SHA + full member table (inventory + per-member
+ * hashes) must equal the receipt (P0-1 — the receipt can never be the sole
+ * trusted source); and the extracted payload/manifest files must be safe
+ * inputs whose live SHA equals BOTH the receipt's member hashes AND the live
+ * archive member hashes.
  *
- * @param {object} args - { entry, binding, receipt, payloadFile, manifestFile,
- *                          outputRoot, options }
- * @returns {{ payload, manifest, payloadBytes, payloadFileSha256 }}
+ * @param {object} args - { entry, binding, receipt, inspected, payloadFile,
+ *                          manifestFile, outputRoot, options }
+ * @returns {{ payload, manifest, payloadBytes, payloadFileSha256, manifestFileSha256 }}
  */
 function verifyEntryAgainstReceipt(args = {}) {
     const entry = args.entry || {};
@@ -475,16 +697,15 @@ function verifyEntryAgainstReceipt(args = {}) {
             code: 'SAFETY_ERROR',
         });
     }
-    if (String(receipt.archive_sha256 || '') !== String(binding.sha256 || '')) {
-        throw Object.assign(
-            new Error(`receipt archive sha ${receipt.archive_sha256} does not match binding ${binding.sha256}`),
-            { code: 'SAFETY_ERROR' }
-        );
-    }
-    // Live-verify the archive itself against the declared SHA.
-    verifyArchive(String(binding.path || ''), String(binding.sha256 || ''), options);
 
-    // Extracted input files: safe + live SHA equals the receipt member SHA.
+    // P0-1: bind the receipt to the LIVE archive. `inspected` comes from the
+    // per-package-per-run re-verification in the CLI; if the caller did not
+    // provide it (direct API use), re-verify here — fail closed either way.
+    const inspected =
+        args.inspected || verifyLiveArchiveAgainstReceipt({ binding, receipt, options });
+
+    // Extracted input files: safe + live SHA equals the receipt member SHA
+    // AND the live archive member hash (both directions).
     const payloadAbs = verifyRepositoryExternalRegularFile(args.payloadFile, options);
     const manifestAbs = verifyRepositoryExternalRegularFile(args.manifestFile, options);
     if (outputRoot) {
@@ -492,22 +713,28 @@ function verifyEntryAgainstReceipt(args = {}) {
         assertInputOutputNonOverlap(manifestAbs, outputRoot);
     }
     const fileSystem = options.fsImpl || fs;
-    const payloadBytes = fileSystem.readFileSync(payloadAbs);
-    const manifestBytes = fileSystem.readFileSync(manifestAbs);
+    // P1-4: payload/manifest bytes come from no-follow fds with dev/inode
+    // identity checks — the bytes hashed are the same inodes that were
+    // verified, and a mid-run swap of either file fails closed.
+    const payloadBytes = readFileSafeNoFollow(payloadAbs, { fsImpl: fileSystem }).bytes;
+    const manifestBytes = readFileSafeNoFollow(manifestAbs, { fsImpl: fileSystem }).bytes;
     const payloadSha = sha256Hex(payloadBytes);
     const manifestSha = sha256Hex(manifestBytes);
-    if (payloadSha !== receipt.members[receipt.payload_member]) {
+    const liveByName = new Map(inspected.members.map(m => [m.name, m]));
+    const livePayload = liveByName.get(String(receipt.payload_member || ''));
+    const liveManifest = liveByName.get(String(receipt.manifest_member || ''));
+    if (payloadSha !== receipt.members[receipt.payload_member] || (livePayload && payloadSha !== livePayload.sha256)) {
         throw Object.assign(
             new Error(
-                `payload file sha256 ${payloadSha} does not match archive member ${receipt.payload_member} (${receipt.members[receipt.payload_member]})`
+                `payload file sha256 ${payloadSha} does not match archive member ${receipt.payload_member} (receipt ${receipt.members[receipt.payload_member]}, live ${livePayload ? livePayload.sha256 : 'missing'})`
             ),
             { code: 'SAFETY_ERROR' }
         );
     }
-    if (manifestSha !== receipt.members[receipt.manifest_member]) {
+    if (manifestSha !== receipt.members[receipt.manifest_member] || (liveManifest && manifestSha !== liveManifest.sha256)) {
         throw Object.assign(
             new Error(
-                `manifest file sha256 ${manifestSha} does not match archive member ${receipt.manifest_member} (${receipt.members[receipt.manifest_member]})`
+                `manifest file sha256 ${manifestSha} does not match archive member ${receipt.manifest_member} (receipt ${receipt.members[receipt.manifest_member]}, live ${liveManifest ? liveManifest.sha256 : 'missing'})`
             ),
             { code: 'SAFETY_ERROR' }
         );
@@ -518,6 +745,7 @@ function verifyEntryAgainstReceipt(args = {}) {
         manifest,
         payloadBytes,
         payloadFileSha256: payloadSha,
+        manifestFileSha256: manifestSha,
     };
 }
 
@@ -535,5 +763,7 @@ module.exports = {
     verifyArchive,
     buildPackageReceipt,
     verifyPackageReceipt,
+    computeArchiveInventory,
+    verifyLiveArchiveAgainstReceipt,
     verifyEntryAgainstReceipt,
 };

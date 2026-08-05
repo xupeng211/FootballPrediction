@@ -763,35 +763,37 @@ data-fotmob-detail-capture-replay: ## Fully offline deterministic replay: verifi
 		dev bash -lc 'cd /app; node scripts/ops/fotmob_detail_capture.js replay --run-dir "$$FOTMOB_DC_RUN_DIR"'
 
 data-fotmob-detail-staging-help: ## Show safe FotMob detail staging entrypoint policy (OFFLINE ONLY; ZERO NETWORK; ZERO DATABASE; NO MIGRATION; NO CAPTURE).
-	@echo "FotMob detail staging entrypoints are fully offline (pure Node, no container needed):"
-	@echo "  make data-fotmob-detail-staging-receipt ARCHIVE=<abs path> EXPECTED_SHA256=<64-hex> PACKAGE_ID=<id> PAYLOAD_MEMBER=<tar member> MANIFEST_MEMBER=<tar member> RECEIPT_OUT=<abs external path>"
-	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<absolute path> OUTPUT_ROOT=<absolute repository-external path> [RUN_ID=<plain-identifier>]"
-	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<absolute repository-external path>"
+	@echo "FotMob detail staging entrypoints run inside the dev container per the project rule:"
+	@echo "all Node commands go through \$$(COMPOSE_DEV) exec -T dev (no host-side business logic)."
+	@echo "  make data-fotmob-detail-staging-receipt ARCHIVE=<abs path visible in dev container> EXPECTED_SHA256=<64-hex> PACKAGE_ID=<id> PAYLOAD_MEMBER=<tar member> MANIFEST_MEMBER=<tar member> RECEIPT_OUT=<abs external path visible in dev container>"
+	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<absolute path visible in dev container> OUTPUT_ROOT=<absolute repository-external path visible in dev container> [RUN_ID=<plain-identifier>]"
+	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<absolute repository-external path visible in dev container> [EXPECTED_LATEST_MARKER_SHA256=<64hex>]"
 	@echo "  make data-fotmob-detail-staging-help"
 	@echo "Hard guarantees: OFFLINE ONLY — ZERO NETWORK (no fetch), ZERO DATABASE (no DB client), NO MIGRATION, NO CAPTURE."
 	@echo "Commit model: LOGICAL_COMMIT_MARKER (commit marker is the only commit point; residue reported, never treated as committed)."
 	@echo "Archive model: VERIFIED_PACKAGE_RECEIPT (live archive SHA-256 + safe tar member binding; every entry bound to one package)."
+	@echo "Anchoring: validate without EXPECTED_LATEST_MARKER_SHA256 = MODE_1_UNANCHORED; with it = MODE_2_EXTERNALLY_ANCHORED (anchor mismatch fails)."
 
 data-fotmob-detail-staging-receipt: ## Fully offline archive verification: builds a VERIFIED_PACKAGE_RECEIPT binding archive SHA-256 + safe tar member hashes. OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
 	@if [ -z "$(ARCHIVE)" ] || [ -z "$(EXPECTED_SHA256)" ] || [ -z "$(PACKAGE_ID)" ] || [ -z "$(PAYLOAD_MEMBER)" ] || [ -z "$(MANIFEST_MEMBER)" ] || [ -z "$(RECEIPT_OUT)" ]; then \
 		echo "ERROR: provide ARCHIVE, EXPECTED_SHA256, PACKAGE_ID, PAYLOAD_MEMBER, MANIFEST_MEMBER, RECEIPT_OUT"; \
 		exit 1; \
 	fi
-	@node scripts/ops/fotmob_detail_staging.js receipt --archive "$(ARCHIVE)" --expected-sha256 "$(EXPECTED_SHA256)" --package-id "$(PACKAGE_ID)" --payload-member "$(PAYLOAD_MEMBER)" --manifest-member "$(MANIFEST_MEMBER)" --receipt-out "$(RECEIPT_OUT)"
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js receipt --archive "$(ARCHIVE)" --expected-sha256 "$(EXPECTED_SHA256)" --package-id "$(PACKAGE_ID)" --payload-member "$(PAYLOAD_MEMBER)" --manifest-member "$(MANIFEST_MEMBER)" --receipt-out "$(RECEIPT_OUT)"
 
 data-fotmob-detail-staging-build: ## Fully offline staging converter: verified archive-bound source index -> immutable artifact snapshots + deterministic summary (LOGICAL_COMMIT_MARKER store). OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
 	@if [ -z "$(SOURCE_INDEX)" ] || [ -z "$(OUTPUT_ROOT)" ]; then \
 		echo "ERROR: provide SOURCE_INDEX=<absolute path> and OUTPUT_ROOT=<absolute repository-external path>"; \
 		exit 1; \
 	fi
-	@node scripts/ops/fotmob_detail_staging.js build --source-index "$(SOURCE_INDEX)" --output-root "$(OUTPUT_ROOT)" $(if $(RUN_ID),--run-id "$(RUN_ID)",)
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js build --source-index "$(SOURCE_INDEX)" --output-root "$(OUTPUT_ROOT)" $(if $(RUN_ID),--run-id "$(RUN_ID)",)
 
 data-fotmob-detail-staging-validate: ## Fully offline staging validator: re-validates commit markers, every artifact, every summary, and every store ledger version (full consistency). OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
 	@if [ -z "$(OUTPUT_ROOT)" ]; then \
 		echo "ERROR: provide OUTPUT_ROOT=<absolute repository-external path>"; \
 		exit 1; \
 	fi
-	@node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)"
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)" $(if $(EXPECTED_LATEST_MARKER_SHA256),--expected-latest-marker-sha256 "$(EXPECTED_LATEST_MARKER_SHA256)",)
 
 data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
 	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \

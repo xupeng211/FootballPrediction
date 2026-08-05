@@ -35,6 +35,7 @@ const {
     createTarGz,
     writeFixtureArchive,
     writeFixtureReceipt,
+    sha256Hex,
 } = require('../helpers/fotmobDetailStagingFixtures');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -248,9 +249,8 @@ test('V12: inspectArchive resolves GNU long names and PAX path records', () => {
     const longNameBlock = rawTarBlock(rawTarHeader('', 'L', realName.length), Buffer.from(realName, 'utf8'));
     const paxRecord = paxRecordFor('path', realName);
     const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
-    const gBlock = rawTarBlock(rawTarHeader('', 'g', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
     const content = rawTarBlock(rawTarHeader('short-name', '0', 3), Buffer.from('abc'));
-    fs.writeFileSync(archive, gzipOf(Buffer.concat([longNameBlock, paxBlock, gBlock, content, Buffer.alloc(1024)])));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([longNameBlock, paxBlock, content, Buffer.alloc(1024)])));
     const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
     const names = inspected.members.map(m => m.name);
     assert.ok(names.includes(realName), `resolved names: ${names.join(',')}`);
@@ -583,4 +583,536 @@ test('V25: parsePaxRecords parses length-prefixed key=value records', () => {
     );
     assert.strictEqual(records.path, 'pairs/1-3901023.payload.json');
     assert.strictEqual(records.mtime, '1234567890');
+});
+
+// ── P2-1: strict tar parsing (Codex review 4863122944 P2-1) ──
+
+test('P2-1: GLOBAL PAX headers are rejected (not implemented, fail closed)', () => {
+    const dir = tmpDir('fotmob-ver-globalpax-');
+    const archive = path.join(dir, 'global-pax.tar.gz');
+    const paxRecord = paxRecordFor('path', 'pairs/1-3901023.payload.json');
+    const gBlock = rawTarBlock(rawTarHeader('', 'g', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+    const content = rawTarBlock(rawTarHeader('short-name', '0', 3), Buffer.from('abc'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([gBlock, content, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /GLOBAL PAX/.test(err.message)
+    );
+});
+
+test('P2-1: a non-octal size field is rejected, never defaulted to zero', () => {
+    const dir = tmpDir('fotmob-ver-badsize-');
+    const archive = path.join(dir, 'bad-size.tar.gz');
+    const header = rawTarHeader('pairs/x.json', '0', 3);
+    header.fill(0x20, 124, 136); // overwrite size bytes WITHOUT breaking the checksum
+    header.write('not-octal', 124, 'ascii');
+    // recompute the header checksum over the tampered bytes (checksum field
+    // counts as spaces) so the size-field check is what fires, not checksum.
+    let sum = 0;
+    for (let i = 0; i < 512; i += 1) {
+        sum += i >= 148 && i < 156 ? 32 : header[i];
+    }
+    header.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 'utf8');
+    const tar = rawTarBlock(header, Buffer.from('abc'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /size field is not valid octal/.test(err.message)
+    );
+});
+
+test('P2-1: member content extending past the buffer (truncated tar) is rejected', () => {
+    const dir = tmpDir('fotmob-ver-trunc-');
+    const archive = path.join(dir, 'truncated.tar.gz');
+    // header declares 10 bytes of content but the archive ends at the header
+    const header = rawTarHeader('pairs/x.json', '0', 10);
+    const tar = rawTarBlock(header, Buffer.alloc(0));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /beyond the archive/.test(err.message)
+    );
+});
+
+test('P2-1: incomplete padding block (content without its 512-block padding) is rejected', () => {
+    const dir = tmpDir('fotmob-ver-pad-');
+    const archive = path.join(dir, 'pad.tar.gz');
+    const header = rawTarHeader('pairs/x.json', '0', 513);
+    const content = Buffer.alloc(513, 0x41);
+    // rawTarBlock would auto-pad; build the truncated layout by hand:
+    // header + 513 content bytes with NO padding block.
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([header, content])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /padding is incomplete/.test(err.message)
+    );
+});
+
+test('P2-1: strict PAX rejects malformed length and missing trailing newline', () => {
+    assert.throws(() => parsePaxRecords('abc'), err => err.code === 'SAFETY_ERROR');
+    // length in bounds but the record does not end with newline
+    assert.throws(
+        () => parsePaxRecords('12 path=abcd'),
+        err => err.code === 'SAFETY_ERROR' && /newline/.test(err.message)
+    );
+    assert.throws(
+        () => parsePaxRecords('9999 path=x\n'),
+        err => err.code === 'SAFETY_ERROR' && /out of bounds/.test(err.message)
+    );
+    // truncation of the last record is an error, not a silent stop
+    assert.throws(() => parsePaxRecords('16 path=xy'), err => err.code === 'SAFETY_ERROR');
+});
+
+// ── P0-1: receipt ↔ LIVE archive strong binding (Codex review 4863122944
+// ── P0-1) ─────────────────────────────────────────────────────────
+
+/**
+ * Build a package receipt document whose member table is forged relative to
+ * the live archive: real archive SHA-256, but `members` describe files that
+ * do not exist in the archive, with hashes of external legal files. The
+ * receipt business hash and inventory hash are recomputed over the forged
+ * content so the receipt is FULLY self-consistent — the exact P0-1 attack.
+ */
+function forgedSelfConsistentReceipt(archivePath, archiveSha256, members, payloadMember, manifestMember, packageId) {
+    const { buildPackageReceipt } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    const forged = buildPackageReceipt({
+        packageId,
+        archivePath,
+        archiveSha256,
+        members,
+        payloadMember,
+        manifestMember,
+    });
+    // self-consistency re-check: the forged receipt must pass
+    // verifyPackageReceipt (its own business hash is recomputed correctly)
+    const { verifyPackageReceipt: verify } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    const check = verify(forged);
+    assert.strictEqual(check.ok, true, 'forged receipt must be self-consistent for this test to be meaningful');
+    return forged;
+}
+
+test('V26 (P0-1): self-consistent forged receipt is rejected by live archive verification', () => {
+    const dir = tmpDir('fotmob-p0-1-forged-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-forged',
+    });
+    // The forged receipt claims the archive contains DIFFERENT members with
+    // the hashes of unrelated external files, while keeping the REAL archive
+    // SHA-256. All hashes are recomputed (receipt_sha256 AND
+    // archive_inventory_sha256) — a receipt that only looks consistent.
+    const externalPayload = Buffer.from('{"fake":"payload"}', 'utf8');
+    const externalManifest = Buffer.from('{"fake":"manifest"}', 'utf8');
+    const forged = forgedSelfConsistentReceipt(
+        archiveInfo.archivePath,
+        archiveInfo.archiveSha256,
+        [
+            { name: 'not-in-archive.json', sha256: sha256Hex(externalPayload) },
+            { name: 'also-not-in-archive.json', sha256: sha256Hex(externalManifest) },
+        ],
+        'not-in-archive.json',
+        'also-not-in-archive.json',
+        'pkg-forged'
+    );
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-forged' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt: forged,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /member inventory|member set/.test(err.message),
+        'forged receipt must be rejected against the live archive'
+    );
+});
+
+test('V27 (P0-1): receipt whose inventory omits a managed archive member is rejected', () => {
+    const dir = tmpDir('fotmob-p0-1-missing-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-missing',
+    });
+    const { buildPackageReceipt, computeArchiveInventory } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    const receipt = buildPackageReceipt({
+        packageId: 'pkg-missing',
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        members: [
+            { name: archiveInfo.payloadMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.payloadFile)) },
+            { name: archiveInfo.manifestMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.manifestFile)) },
+        ],
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+    });
+    // Forge the receipt so its archive_inventory_sha256 covers ONLY the
+    // payload member (the managed manifest member is missing from the
+    // inventory), then recompute the receipt business hash — the receipt is
+    // fully self-consistent, but the live archive (two members) disagrees.
+    const forged = {
+        ...receipt,
+        archive_inventory_sha256: computeArchiveInventory([
+            { name: archiveInfo.payloadMember, type: 'file', size: 0, sha256: receipt.members[archiveInfo.payloadMember] },
+        ]),
+    };
+    forged.receipt_sha256 = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract').canonicalJsonHash(
+        (() => { const c = { ...forged }; delete c.receipt_sha256; return c; })()
+    );
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-missing' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt: forged,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /member inventory/.test(err.message)
+    );
+});
+
+test('V28 (P0-1): receipt member hash correct but path wrong is rejected', () => {
+    const dir = tmpDir('fotmob-p0-1-pathswap-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-pathswap',
+    });
+    const { buildPackageReceipt } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    // swap the two members' PATHS while keeping their hashes: the receipt is
+    // self-consistent but disagrees with the live archive member table
+    const swapped = buildPackageReceipt({
+        packageId: 'pkg-pathswap',
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        members: [
+            { name: archiveInfo.manifestMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.payloadFile)) },
+            { name: archiveInfo.payloadMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.manifestFile)) },
+        ],
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-pathswap' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt: swapped,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /member inventory|member set/.test(err.message)
+    );
+});
+
+test('V29 (P0-1): archive member content changed is rejected even with synchronized SHA forgery', () => {
+    const dir = tmpDir('fotmob-p0-1-content-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-content',
+    });
+    const { buildPackageReceipt } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    const receipt = buildPackageReceipt({
+        packageId: 'pkg-content',
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        members: [
+            { name: archiveInfo.payloadMember, sha256: '0'.repeat(64) },
+            { name: archiveInfo.manifestMember, sha256: '1'.repeat(64) },
+        ],
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-content' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /member inventory|member set|member hash/.test(err.message)
+    );
+});
+
+test('V30 (P0-1): archive bytes changed with SHA + receipt archive_sha256 both updated is rejected (inventory mismatch)', () => {
+    const dir = tmpDir('fotmob-p0-1-tampered-archive-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-tampered',
+    });
+    const { buildPackageReceipt } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    const receipt = buildPackageReceipt({
+        packageId: 'pkg-tampered',
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        members: [
+            { name: archiveInfo.payloadMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.payloadFile)) },
+            { name: archiveInfo.manifestMember, sha256: sha256Hex(fs.readFileSync(archiveInfo.manifestFile)) },
+        ],
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+    });
+    // attacker tampers the archive bytes AND updates both the binding SHA and
+    // the receipt archive_sha256 to the new value — but cannot make the
+    // members table match the changed archive content
+    const bytes = fs.readFileSync(archiveInfo.archivePath);
+    const tampered = Buffer.concat([bytes.subarray(0, bytes.length - 2), Buffer.from([0, 0])]);
+    fs.writeFileSync(archiveInfo.archivePath, tampered);
+    const newSha = sha256Hex(tampered);
+    const forgedReceipt = { ...receipt, archive_sha256: newSha };
+    forgedReceipt.receipt_sha256 = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract').canonicalJsonHash(
+        (() => { const c = { ...forgedReceipt }; delete c.receipt_sha256; return c; })()
+    );
+    const binding = { sha256: newSha, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-tampered' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt: forgedReceipt,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /member inventory/.test(err.message)
+    );
+});
+
+test('V31 (P0-1): external payload copy differing from the archive member is rejected', () => {
+    const dir = tmpDir('fotmob-p0-1-payldiff-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-payldiff',
+    });
+    const receiptPath = path.join(dir, 'receipt.json');
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-payldiff',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath,
+    });
+    // replace the EXTERNAL payload copy with different bytes (the archive
+    // member is untouched) — must be rejected
+    const tamperedPayload = Buffer.from(JSON.stringify({ ...pair.payload, extra: 'tampered' }, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(archiveInfo.payloadFile, tamperedPayload);
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-payldiff' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /payload file sha256/.test(err.message)
+    );
+});
+
+test('V32 (P0-1): external manifest copy differing from the archive member is rejected', () => {
+    const dir = tmpDir('fotmob-p0-1-mandiff-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], {
+        packageId: 'pkg-mandiff',
+    });
+    const receiptPath = path.join(dir, 'receipt.json');
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-mandiff',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath,
+    });
+    const tamperedManifest = Buffer.from(JSON.stringify({ ...pair.manifest, extra: 'tampered' }, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(archiveInfo.manifestFile, tamperedManifest);
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-mandiff' },
+            payloadFile: archiveInfo.payloadFile,
+            manifestFile: archiveInfo.manifestFile,
+            binding,
+            receipt,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /manifest file sha256/.test(err.message)
+    );
+});
+
+test('V33 (P0-1): entry bound to the wrong package is rejected', () => {
+    const dir = tmpDir('fotmob-p0-1-wrongpkg-');
+    const pairA = buildPair({ source_match_id: '3901023' });
+    const pairB = buildPair({ source_match_id: '3901024' });
+    const archiveA = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair: pairA }], { packageId: 'pkg-a' });
+    const archiveB = writeFixtureArchive(dir, [{ sourceMatchId: '3901024', pair: pairB }], { packageId: 'pkg-b' });
+    const receiptPathA = path.join(dir, 'receipt-a.json');
+    const receiptA = writeFixtureReceipt({
+        archivePath: archiveA.archivePath,
+        archiveSha256: archiveA.archiveSha256,
+        packageId: 'pkg-a',
+        payloadMember: archiveA.payloadMember,
+        manifestMember: archiveA.manifestMember,
+        receiptPath: receiptPathA,
+    });
+    // entry claims package pkg-a but points its files at package pkg-b's pair
+    const bindingA = { sha256: archiveA.archiveSha256, path: archiveA.archivePath, receipt: receiptPathA };
+    assert.throws(
+        () => verifyEntryAgainstReceipt({
+            entry: { package: 'pkg-a' },
+            payloadFile: archiveB.payloadFile,
+            manifestFile: archiveB.manifestFile,
+            binding: bindingA,
+            receipt: receiptA,
+            outputRoot: path.join(dir, 'out'),
+            options: { repositoryRoot: REPO_ROOT },
+        }),
+        err => err.code === 'SAFETY_ERROR' && /payload file sha256|manifest file sha256/.test(err.message)
+    );
+});
+
+test('V34 (P0-1): archive_inventory_sha256 is required in the receipt schema', () => {
+    const dir = tmpDir('fotmob-p0-1-schema-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-schema' });
+    const receiptPath = path.join(dir, 'receipt.json');
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-schema',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath,
+    });
+    // old-format receipt (no inventory field) must be rejected
+    const { archive_inventory_sha256, ...oldFormat } = receipt;
+    const validation = verifyPackageReceipt(oldFormat);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(validation.errors.some(e => /archive_inventory_sha256/.test(e)), JSON.stringify(validation.errors));
+});
+
+// ── P1-1: ustar magic / prefix / normalized-path safety (Codex review
+// ── 4863122944 P1-1) ───────────────────────────────────────────────
+
+/**
+ * Raw ustar header with a PREFIX field (155 bytes at 345) and configurable
+ * magic ('ustar\0' standard or 'ustar ' GNU).
+ */
+function rawTarHeaderWithPrefix(name, prefix, typeflag, size, magic = 'ustar\0') {
+    const buf = Buffer.alloc(512);
+    buf.write(String(name), 0, 'utf8');
+    buf.write('0000644\0', 100, 'utf8');
+    buf.write('0000000\0', 108, 'utf8');
+    buf.write('0000000\0', 116, 'utf8');
+    buf.write(Number(size).toString(8).padStart(11, '0') + '\0', 124, 'utf8');
+    buf.write('00000000000\0', 136, 'utf8');
+    buf.write(String(typeflag), 156, 'utf8');
+    buf.write(magic, 257, 'utf8');
+    buf.write('00', 263, 'utf8');
+    buf.write(String(prefix), 345, 'utf8');
+    let sum = 0;
+    for (let i = 0; i < 512; i += 1) {
+        sum += i >= 148 && i < 156 ? 32 : buf[i];
+    }
+    buf.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 'utf8');
+    return buf;
+}
+
+test('V35 (P1-1): ustar prefix=../ combined with name is rejected (traversal via prefix)', () => {
+    const dir = tmpDir('fotmob-p1-1-prefixtrav-');
+    const archive = path.join(dir, 'hostile.tar.gz');
+    // standard ustar\0 magic, prefix=../ — the OLD code ignored prefix (its
+    // 5-byte 'ustar' comparison never matched) and accepted this archive
+    const tar = rawTarBlock(rawTarHeaderWithPrefix('payload.json', '../', '0', 1), Buffer.from('x'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /unsafe tar member name/.test(err.message)
+    );
+});
+
+test('V36 (P1-1): ustar absolute prefix is rejected', () => {
+    const dir = tmpDir('fotmob-p1-1-prefixabs-');
+    const archive = path.join(dir, 'hostile.tar.gz');
+    const tar = rawTarBlock(rawTarHeaderWithPrefix('payload.json', '/etc', '0', 1), Buffer.from('x'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /unsafe tar member name/.test(err.message)
+    );
+});
+
+test('V37 (P1-1): ustar prefix containing a backslash is rejected', () => {
+    const dir = tmpDir('fotmob-p1-1-prefixback-');
+    const archive = path.join(dir, 'hostile.tar.gz');
+    const tar = rawTarBlock(rawTarHeaderWithPrefix('payload.json', '..\\..\\etc', '0', 1), Buffer.from('x'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /unsafe tar member name/.test(err.message)
+    );
+});
+
+test('V38 (P1-1): prefix+name combination duplicating another member is rejected', () => {
+    const dir = tmpDir('fotmob-p1-1-dupnorm-');
+    const archive = path.join(dir, 'hostile.tar.gz');
+    // member 1: 'captures/x.json'; member 2: prefix 'captures', name
+    // './x.json' → combined 'captures/./x.json' → normalized 'captures/x.json'
+    const m1 = rawTarBlock(rawTarHeader('captures/x.json', '0', 1), Buffer.from('x'));
+    const m2 = rawTarBlock(rawTarHeaderWithPrefix('./x.json', 'captures', '0', 1), Buffer.from('y'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([m1, m2, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /duplicate tar member path/.test(err.message)
+    );
+});
+
+test('V39 (P1-1): standard ustar\\0 magic with a legal prefix is accepted and combined', () => {
+    const dir = tmpDir('fotmob-p1-1-prefixok-');
+    const archive = path.join(dir, 'legal.tar.gz');
+    const tar = rawTarBlock(rawTarHeaderWithPrefix('payload.json', 'captures', '0', 1), Buffer.from('x'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members.length, 1);
+    assert.strictEqual(inspected.members[0].name, 'captures/payload.json');
+});
+
+test('V40 (P1-1): GNU ustar-space magic with a legal prefix is accepted and combined', () => {
+    const dir = tmpDir('fotmob-p1-1-gnumagic-');
+    const archive = path.join(dir, 'legal-gnu.tar.gz');
+    const tar = rawTarBlock(rawTarHeaderWithPrefix('manifest.json', 'captures', '0', 1, 'ustar '), Buffer.from('y'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members[0].name, 'captures/manifest.json');
+});
+
+test('V41 (P1-1): PAX path override forming a traversal path is rejected', () => {
+    const dir = tmpDir('fotmob-p1-1-paxtrav-');
+    const archive = path.join(dir, 'hostile-pax.tar.gz');
+    const paxRecord = paxRecordFor('path', '../evil.json');
+    const paxHeader = rawTarHeader('pax-override', 'x', paxRecord.length);
+    const dataHeader = rawTarHeader('innocent.json', '0', 1);
+    const tar = Buffer.concat([
+        rawTarBlock(paxHeader, Buffer.from(paxRecord, 'utf8')),
+        rawTarBlock(dataHeader, Buffer.from('x')),
+    ]);
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /unsafe tar member name/.test(err.message)
+    );
 });

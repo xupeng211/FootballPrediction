@@ -20,15 +20,25 @@
 //     archive SHA-256 + safe tar member inspection);
 //   - `build` binds every entry to exactly one package (FINDING_3): the
 //     receipt must be valid, the receipt archive SHA must equal the declared
-//     binding SHA, the archive is live-verified, and the extracted
-//     payload/manifest files must hash-equal their archive members;
+//     binding SHA, the archive is live-verified (P0-1: per-run live
+//     re-inspection with the member inventory hash, never trusting a cached
+//     receipt), and the extracted payload/manifest files must hash-equal
+//     their archive members;
 //   - every input path (source index, archive, receipt, payload, manifest)
 //     is checked as a repository-external regular file with no symlink
-//     ancestors and no overlap with the output root (FINDING_4);
+//     ancestors and no overlap with the output root (FINDING_4 / P1-3);
+//   - inputs are read through O_NOFOLLOW fds with dev/inode identity checks
+//     and outputs go to a controlled private directory under an exclusive
+//     per-store lock (P1-4 TOCTOU posture — honest threat model: not a
+//     defense against a same-uid sustained-race attacker);
+//   - `validate` supports MODE_1_UNANCHORED (default) and
+//     MODE_2_EXTERNALLY_ANCHORED via --expected-latest-marker-sha256 or a
+//     repository-external --anchor-checkpoint (P1-5);
 //   - the store is the output root itself (single root, commit-marker
 //     protocol — LOGICAL_COMMIT_MARKER, FINDING_1).
 
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const {
     validateSourceIndex,
@@ -38,16 +48,20 @@ const {
 const { convertAll } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
 const {
     readJsonFile,
+    readFileSafeNoFollow,
     verifyRepositoryExternalPath,
     writeJsonAtomically,
     commitObservations,
     validateOutputRoot,
+    markerFileNameForSeq,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingRetention');
 const {
+    verifyRepositoryExternalRegularFile,
     verifyArchive,
     inspectArchive,
     buildPackageReceipt,
     verifyPackageReceipt,
+    verifyLiveArchiveAgainstReceipt,
     verifyEntryAgainstReceipt,
     assertInputOutputNonOverlap,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
@@ -68,7 +82,8 @@ const USAGE = [
     '    [--run-id=<plain-identifier>]',
     '',
     '  node scripts/ops/fotmob_detail_staging.js validate \\',
-    '    --output-root=/absolute/external/path/out',
+    '    --output-root=/absolute/external/path/out \\',
+    '    [--expected-latest-marker-sha256=<64hex> | --anchor-checkpoint=/external/checkpoint.json]',
     '',
     '  node scripts/ops/fotmob_detail_staging.js validate \\',
     '    --artifact=/absolute/external/path/observation-<id>-<hash>.artifact.json',
@@ -83,11 +98,24 @@ const USAGE = [
     '  regular files only; symlinks (leaf AND all ancestors) are rejected;',
     '  inputs must not overlap the output root; existing divergent outputs',
     '  fail closed.',
+    '  TOCTOU posture (P1-4): inputs are read through O_NOFOLLOW fds with',
+    '  dev/inode checks; outputs go to a controlled private directory via',
+    '  O_EXCL tmp + same-fs rename with a pre/post directory identity check;',
+    '  every commit runs under an exclusive per-store lock. These shrink the',
+    '  race windows — they are NOT a defense against a same-uid attacker who',
+    '  can sustain a race (honest threat model, see module headers).',
     '  Commits use the LOGICAL_COMMIT_MARKER protocol: a commit marker is the',
     '  only commit point; uncommitted residue is reported and never treated',
     '  as committed (no false physical both-or-neither claim).',
     '  Every source-index entry must be bound to exactly one verified archive',
     '  package via a package receipt (VERIFIED_PACKAGE_RECEIPT).',
+    '  Anchoring (P1-5): validate WITHOUT an anchor reports integrity as',
+    '  MODE_1_UNANCHORED (authenticity_status=UNANCHORED). Pass',
+    '  --expected-latest-marker-sha256 or --anchor-checkpoint (a file OUTSIDE',
+    '  the store) to run MODE_2_EXTERNALLY_ANCHORED: the latest commit',
+    '  marker SHA is re-hashed from the store and compared to the anchor; a',
+    '  mismatch fails validation. The anchor is never read from inside the',
+    '  store directory.',
     '  Canonical operator entry: make data-fotmob-detail-staging-{help,receipt,build,validate}.',
 ].join('\n');
 
@@ -200,8 +228,13 @@ function runReceipt(args) {
  * (FINDING_3 / FINDING_4).
  */
 function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
+    // Per-run in-memory caches: each package's receipt document and its LIVE
+    // re-inspection are computed ONCE per run and shared across entries of
+    // the same package. Nothing is ever trusted across runs — every new run
+    // re-verifies the live archive from its physical bytes (P0-1: a receipt
+    // can never be the sole trusted source).
     const receiptCache = new Map();
-    const archiveCache = new Map();
+    const liveInspectionCache = new Map();
     return async entry => {
         const packageId = String(entry.package || '');
         const binding = sourceIndex.archive_bindings[packageId];
@@ -212,6 +245,13 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
         }
         let receipt = receiptCache.get(packageId);
         if (!receipt) {
+            // P1-3: the receipt path goes through the SAME input safety gate
+            // as every other input (repository-external regular file, no
+            // symlink leaf or ancestor, no overlap with the output root).
+            verifyRepositoryExternalRegularFile(binding.receipt, { repositoryRoot });
+            if (outputRoot) {
+                assertInputOutputNonOverlap(binding.receipt, outputRoot);
+            }
             receipt = readJsonFile(binding.receipt, { repositoryRoot }).parsed;
             const receiptValidation = verifyPackageReceipt(receipt);
             if (!receiptValidation.ok) {
@@ -219,30 +259,41 @@ function makePairLoader(sourceIndex, repositoryRoot, outputRoot) {
                     code: 'SAFETY_ERROR',
                 });
             }
-            if (String(receipt.archive_sha256 || '') !== String(binding.sha256 || '')) {
-                throw Object.assign(new Error(`receipt archive sha does not match binding for package ${packageId}`), {
-                    code: 'SAFETY_ERROR',
-                });
-            }
-            if (!archiveCache.has(packageId)) {
-                // Live-verify the archive once per package per run.
-                archiveCache.set(packageId, verifyArchive(binding.path, binding.sha256, { repositoryRoot }));
-            }
             receiptCache.set(packageId, receipt);
+        }
+        if (!liveInspectionCache.has(packageId)) {
+            // P0-1: live re-verification of the archive against the receipt —
+            // archive SHA, full member inventory and per-member hashes must
+            // match the receipt exactly.
+            const inspected = verifyLiveArchiveAgainstReceipt({
+                binding,
+                receipt,
+                options: { repositoryRoot },
+            });
+            liveInspectionCache.set(packageId, inspected);
         }
 
         const loaded = verifyEntryAgainstReceipt({
             entry,
             binding,
             receipt,
+            inspected: liveInspectionCache.get(packageId),
             payloadFile: entry.payload_file,
             manifestFile: entry.manifest_file,
             outputRoot,
             options: { repositoryRoot },
         });
 
-        if (entry.payload_file_sha256 && entry.payload_file_sha256 !== loaded.payloadFileSha256) {
+        // P2-2: both declared file hashes are now REQUIRED and must equal the
+        // live file SHA (which itself equals the receipt member hash and the
+        // live archive member hash — enforced by verifyEntryAgainstReceipt).
+        if (entry.payload_file_sha256 !== loaded.payloadFileSha256) {
             throw Object.assign(new Error(`payload_file_sha256 mismatch for ${entry.payload_file}`), {
+                code: 'INPUT_ERROR',
+            });
+        }
+        if (entry.manifest_file_sha256 !== loaded.manifestFileSha256) {
+            throw Object.assign(new Error(`manifest_file_sha256 mismatch for ${entry.manifest_file}`), {
                 code: 'INPUT_ERROR',
             });
         }
@@ -312,6 +363,52 @@ async function runBuild(args) {
     };
 }
 
+/**
+ * P1-5: resolve the external anchor (if any) for MODE_2_EXTERNALLY_ANCHORED
+ * validation. Two accepted sources, both OUTSIDE the store directory:
+ *   - --expected-latest-marker-sha256=<64hex>  (direct operator value), or
+ *   - --anchor-checkpoint=<external-json>      ({latest_marker_sha256})
+ * The anchor is never read from inside the store; a checkpoint path goes
+ * through the regular-file input gate and the no-follow fd read.
+ *
+ * @returns {string|null} 64-hex anchor, or null for MODE_1_UNANCHORED
+ */
+function resolveExternalAnchor(args, repositoryRoot, outputRoot) {
+    const direct = String(args['expected-latest-marker-sha256'] || '');
+    const checkpoint = String(args['anchor-checkpoint'] || '');
+    if (direct !== '' && checkpoint !== '') {
+        throw Object.assign(
+            new Error('provide only one of --expected-latest-marker-sha256 or --anchor-checkpoint'),
+            { code: 'INPUT_ERROR' }
+        );
+    }
+    if (direct !== '') {
+        if (!/^[0-9a-f]{64}$/.test(direct)) {
+            throw Object.assign(new Error('--expected-latest-marker-sha256 must be 64 lowercase hex'), {
+                code: 'INPUT_ERROR',
+            });
+        }
+        return direct;
+    }
+    if (checkpoint !== '') {
+        verifyRepositoryExternalPath(checkpoint, { repositoryRoot });
+        verifyRepositoryExternalRegularFile(checkpoint, { repositoryRoot });
+        if (outputRoot) {
+            assertInputOutputNonOverlap(checkpoint, outputRoot);
+        }
+        const { parsed: checkpointDoc } = readJsonFile(checkpoint, { repositoryRoot });
+        const anchor = String((checkpointDoc && checkpointDoc.latest_marker_sha256) || '');
+        if (!/^[0-9a-f]{64}$/.test(anchor)) {
+            throw Object.assign(
+                new Error(`anchor checkpoint must contain latest_marker_sha256 as 64 hex: ${checkpoint}`),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        return anchor;
+    }
+    return null;
+}
+
 async function runValidate(args) {
     const outputRoot = args['output-root'];
     const artifactPath = args.artifact;
@@ -322,13 +419,17 @@ async function runValidate(args) {
     const repositoryRoot = path.resolve(__dirname, '..', '..');
     if (artifactPath) {
         verifyRepositoryExternalPath(artifactPath, { repositoryRoot });
-        const { parsed: artifact } = readJsonFile(artifactPath);
+        const { parsed: artifact } = readJsonFile(artifactPath, { repositoryRoot });
         const validation = validateStagingArtifact(artifact);
+        // P1-5: a single artifact has no store/commit-marker chain — the
+        // integrity hash is verified, authenticity stays UNANCHORED.
         return {
             status: validation.ok ? 'valid' : 'invalid',
             artifact: artifactPath,
             ok: validation.ok,
             errors: validation.errors,
+            integrity_status: validation.ok ? 'INTACT' : 'VIOLATED',
+            authenticity_status: 'UNANCHORED',
             business_hash: artifact.business_hash,
             artifact_integrity_sha256: artifact.artifact_integrity_sha256,
             source_match_id: artifact.source_match_id,
@@ -342,11 +443,51 @@ async function runValidate(args) {
             code: 'INPUT_ERROR',
         });
     }
+    const anchor = resolveExternalAnchor(args, repositoryRoot, outputRoot);
     const result = validateOutputRoot(outputRoot, { storeDir, repositoryRoot });
+
+    // P1-5 MODE_2: the anchor is compared against the store's latest
+    // commit-marker SHA — which we RE-HASH from the physical marker file
+    // (no-follow fd read) rather than trusting the validator's report alone.
+    let authenticityStatus = 'UNANCHORED';
+    let ok = result.ok;
+    const errors = [...result.errors];
+    if (anchor !== null) {
+        if (!result.latest_marker_sha256) {
+            authenticityStatus = 'ANCHOR_MISMATCH';
+            ok = false;
+            errors.push({ code: 'ANCHOR_MISMATCH', message: 'anchor provided but the store has no commit marker' });
+        } else {
+            let physicalMarkerSha = null;
+            try {
+                const markerFile = path.join(outputRoot, markerFileNameForSeq(result.marker_count));
+                physicalMarkerSha = crypto
+                    .createHash('sha256')
+                    .update(readFileSafeNoFollow(markerFile, { repositoryRoot }).bytes)
+                    .digest('hex');
+            } catch {
+                /* reported as mismatch below */
+            }
+            if (physicalMarkerSha !== anchor) {
+                authenticityStatus = 'ANCHOR_MISMATCH';
+                ok = false;
+                errors.push({
+                    code: 'ANCHOR_MISMATCH',
+                    message: `latest commit marker sha256 ${physicalMarkerSha || 'unreadable'} does not match external anchor ${anchor}`,
+                });
+            } else {
+                authenticityStatus = 'ANCHORED';
+            }
+        }
+    }
     return {
-        status: result.ok ? 'valid' : 'invalid',
-        ok: result.ok,
-        errors: result.errors,
+        status: ok ? 'valid' : 'invalid',
+        ok,
+        errors,
+        integrity_status: result.ok ? 'INTACT' : 'VIOLATED',
+        authenticity_status: authenticityStatus,
+        latest_marker_sha256: result.latest_marker_sha256,
+        anchor_mode: anchor === null ? 'MODE_1_UNANCHORED' : 'MODE_2_EXTERNALLY_ANCHORED',
         marker_count: result.marker_count,
         ledger_version_count: result.ledger_version_count,
         summary_count: result.summary_count,

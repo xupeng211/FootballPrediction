@@ -48,12 +48,15 @@
   `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
   capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
   快照：5 个 versioned JSONB sections 逐字节保留、直接复用 pipeline 捕获
-  hashing（无自实现副本）、确定性 observation_id（UUIDv5）+ generated_at
-  取自 manifest、canonical_match_id 恒 null + UNLINKED_NOT_ATTEMPTED、
-  append-only 文件 store + store-state.json 账本（无数据库、无 migration）、
-  原子 tmp+fsync+rename、冲突 fail-closed、-validate 重验 artifact/summary/
-  store ledger。67 项单元测试（52 项契约矩阵）+ 395 项受影响旧测试全绿，
-  ESLint/Prettier/git diff --check 干净；16 场归档（one/five/ten-match pilot
+  hashing（无自实现副本）、确定性 observation_id（RFC 4122 UUIDv5）+ generated_at
+  字节精确取自 manifest 的 source_response_received_at、canonical_match_id 恒
+  null + UNLINKED_NOT_ATTEMPTED、append-only 文件 store + 编号
+  store-state-<seq>.json 账本版本（无数据库、无 migration）、每次写入
+  O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
+  冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
+  -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
+  MODE_2_EXTERNALLY_ANCHORED）。194 项 staging 测试 + 395 项受影响旧测试全绿，
+  ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
   marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
@@ -73,13 +76,15 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  125 项 staging 测试（25 source verification + 39 retention 故障注入/篡改 +
-  38 contract + 11 converter + 12 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
-  ESLint/Prettier 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
+  194 项 staging 测试（52 retention 故障注入/篡改 + 46 source verification +
+  66 contract + 12 converter + 18 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
+  ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
   REPEAT_EQUIVALENT（SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO），
-  三轮 validate 全部 PASS、零 residue。零网络、零数据库、零采集、无 migration；
-  PR 保持 Draft、未合并，等待外部独立实现验收。
+  三轮 validate 全部 PASS、零 residue。Codex 独立复审 4863122944 的 13 项发现
+  （P0-1/P0-2/P1-1..P1-5/P2-1..P2-5/P3-1）已全部离线修复并补回归测试；
+  零网络、零数据库、零采集、无 migration；PR 保持 Draft、未合并，等待外部
+  独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器

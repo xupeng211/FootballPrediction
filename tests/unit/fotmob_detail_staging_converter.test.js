@@ -58,6 +58,8 @@ test('C21: shuffled source index order produces identical outputs', async () => 
     const entries = pairs.map((p, i) =>
         sourceIndexEntry(p.payload.source_match_id, `/tmp/p${i}.payload.json`, `/tmp/p${i}.manifest.json`, {
             package: 'pkg',
+            payload_file_sha256: String(i).repeat(64).slice(0, 64),
+            manifest_file_sha256: String(i + 10).repeat(64).slice(0, 64),
         })
     );
     const run = async order => {
@@ -215,4 +217,89 @@ test('C27: per-observation business hashes are stable across rebuilds (aggregate
             .sort()
             .join('');
     assert.strictEqual(hashOf(r1), hashOf(r2));
+});
+
+// ── P2-4: convertAll never lets one pathological input crash the batch ──
+
+test('P2-4: convertAll with a structured-garbage loader entry rejects that entry and converts the rest', async () => {
+    const pairs = [buildPair({ source_match_id: '3900932' }), buildPair({ source_match_id: '3900933' })];
+    const index = buildSourceIndex(
+        pairs.map((p, i) =>
+            sourceIndexEntry(p.payload.source_match_id, `/tmp/${i}.payload.json`, `/tmp/${i}.manifest.json`, {
+                package: 'pkg',
+                payload_file_sha256: `${i}`.repeat(64).slice(0, 64),
+                manifest_file_sha256: `${i + 10}`.repeat(64).slice(0, 64),
+            })
+        ),
+        {
+            pkg: {
+                sha256: '0'.repeat(64),
+                path: '/tmp/archive.tar.gz',
+                receipt: '/tmp/receipt.json',
+            },
+        }
+    );
+    const result = await convertAll({
+        sourceIndex: index,
+        loader: async entry => {
+            if (entry.source_match_id === '3900932') {
+                return { payload: null, manifest: null, payloadBytes: Buffer.alloc(0) };
+            }
+            const pair = pairs.find(p => p.payload.source_match_id === entry.source_match_id);
+            return pairArgs(pair);
+        },
+    });
+    assert.strictEqual(result.ok, false, 'a batch with one bad entry is not all-ok');
+    assert.strictEqual(result.results.length, 2, 'both entries are processed, the batch does not crash');
+    const rejected = result.results.find(r => r.source_match_id === '3900932');
+    assert.strictEqual(rejected.ok, false);
+    assert.strictEqual(rejected.terminal_state, TERMINAL_STATES.REJECTED_SCHEMA_UNKNOWN);
+    assert.strictEqual(rejected.artifact, null);
+    const accepted = result.results.find(r => r.source_match_id === '3900933');
+    assert.strictEqual(accepted.ok, true);
+    assert.ok(accepted.artifact);
+});
+
+test('P2-4: a loader SAFETY_ERROR (e.g. forged package receipt at live archive verification) rejects only that entry as E008 and converts the rest', async () => {
+    // RUN_D revalidation evidence: the package-level guard
+    // (verifyLiveArchiveAgainstReceipt) throws SAFETY_ERROR; convertAll's
+    // per-entry isolation records the failing entry as
+    // REJECTED_PROVENANCE_BROKEN/E008 and continues the batch — a forged
+    // receipt can never produce an accepted observation.
+    const pairs = [buildPair({ source_match_id: '3900932' }), buildPair({ source_match_id: '3900933' })];
+    const index = buildSourceIndex(
+        pairs.map((p, i) =>
+            sourceIndexEntry(p.payload.source_match_id, `/tmp/${i}.payload.json`, `/tmp/${i}.manifest.json`, {
+                package: i === 0 ? 'forged' : 'good',
+                payload_file_sha256: `${i}`.repeat(64).slice(0, 64),
+                manifest_file_sha256: `${i + 10}`.repeat(64).slice(0, 64),
+            })
+        ),
+        {
+            forged: { sha256: '1'.repeat(64), path: '/tmp/forged.tar.gz', receipt: '/tmp/forged-receipt.json' },
+            good: { sha256: '0'.repeat(64), path: '/tmp/good.tar.gz', receipt: '/tmp/good-receipt.json' },
+        }
+    );
+    const result = await convertAll({
+        sourceIndex: index,
+        loader: async entry => {
+            if (entry.source_match_id === '3900932') {
+                throw Object.assign(
+                    new Error('live archive member inventory does not match receipt archive_inventory_sha256'),
+                    { code: 'SAFETY_ERROR' }
+                );
+            }
+            const pair = pairs.find(p => p.payload.source_match_id === entry.source_match_id);
+            return pairArgs(pair);
+        },
+    });
+    assert.strictEqual(result.results.length, 2, 'both entries are processed, the batch does not crash');
+    const rejected = result.results.find(r => r.source_match_id === '3900932');
+    assert.strictEqual(rejected.ok, false);
+    assert.strictEqual(rejected.terminal_state, TERMINAL_STATES.REJECTED_PROVENANCE_BROKEN);
+    assert.strictEqual(rejected.error_code, ERROR_CODES.E008);
+    assert.ok(rejected.errors[0].message.startsWith('input load failed:'), 'the underlying cause is preserved');
+    const accepted = result.results.find(r => r.source_match_id === '3900933');
+    assert.strictEqual(accepted.ok, true);
+    assert.ok(accepted.artifact);
 });

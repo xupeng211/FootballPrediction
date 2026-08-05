@@ -392,13 +392,24 @@ function buildSourceIndexFromArchive(pairs, archiveInfo, options = {}) {
 }
 
 function sourceIndexEntry(sourceMatchId, payloadFile, manifestFile, extra = {}) {
-    return {
+    const entry = {
         source_match_id: String(sourceMatchId),
         payload_file: payloadFile,
         manifest_file: manifestFile,
         package: extra.package || 'ten-match',
         ...extra,
     };
+    // P2-2 (Codex review 4863122944): payload_file_sha256 and
+    // manifest_file_sha256 are REQUIRED by the source index contract and are
+    // verified live at build time; fixtures compute them from the real files
+    // (unless a test overrides them via extra).
+    if (entry.payload_file_sha256 === undefined && payloadFile && fs.existsSync(payloadFile)) {
+        entry.payload_file_sha256 = sha256Text(fs.readFileSync(payloadFile, 'utf8'));
+    }
+    if (entry.manifest_file_sha256 === undefined && manifestFile && fs.existsSync(manifestFile)) {
+        entry.manifest_file_sha256 = sha256Text(fs.readFileSync(manifestFile, 'utf8'));
+    }
+    return entry;
 }
 
 // ─────────────────────────────────────────────────────────────

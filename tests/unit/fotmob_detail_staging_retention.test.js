@@ -1053,3 +1053,337 @@ test('T13: a second ledger version deleting a committed observation is detected'
         JSON.stringify(result.errors)
     );
 });
+
+// ── P0-2: REPEAT_EQUIVALENT three-way consistency (summary ↔ artifact ↔
+// ── ledger) — Codex review 4863122944 P0-2 ──────────────────────────
+
+/**
+ * A legal SECOND version of the same source match: same identity fields,
+ * different stable payload hash (an extra synthetic event in the normalized
+ * projection, hashes recomputed by the real pipeline helpers).
+ */
+function secondVersionPair(sourceMatchId = '3901023') {
+    const {
+        computeStableCapturePayloadSha256,
+        computeCaptureManifestSelfHash,
+    } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+    const pair = buildPair({ source_match_id: sourceMatchId });
+    pair.payload.normalized.events.push({
+        id: 999999002,
+        minute: 88,
+        homeScore: 1,
+        awayScore: 0,
+        event_kind: 'synthetic_derived_test',
+        assistPlayerId: null,
+        card: null,
+        outcome: null,
+        playerName: 'SYNTHETIC_DERIVED_TEST_PLAYER_2',
+        synthetic_event_key: 'synthetic:p0-2-t15:1',
+        synthetic_derived: true,
+        source_has_native_id: false,
+    });
+    pair.payload.stable_payload_sha256 = computeStableCapturePayloadSha256(pair.payload);
+    pair.payloadBytes = Buffer.from(JSON.stringify(pair.payload, null, 2) + '\n', 'utf8');
+    pair.manifest.stable_payload_sha256 = String(pair.payload.stable_payload_sha256);
+    pair.manifest.payload_file_sha256 = require('node:crypto')
+        .createHash('sha256')
+        .update(pair.payloadBytes)
+        .digest('hex');
+    pair.manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(pair.manifest);
+    return pair;
+}
+
+function pairResultOf(pair) {
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    return convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+}
+
+test('T14 (P0-2): FIRST_IMPORT -> ACCEPTED_NEW -> validate PASS', () => {
+    const dir = tmpDir('fotmob-p0-2-first-');
+    const summary = commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('T15 (P0-2): LEGAL_SECOND_VERSION -> REPEAT_EQUIVALENT, new artifact, old bytes unchanged, three-way hash agreement, validate PASS', () => {
+    const dir = tmpDir('fotmob-p0-2-eqv-');
+    // run 1: v1 ACCEPTED_NEW
+    const first = pairResult('3901023');
+    commitObservations({
+        results: [first],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const v1Artifacts = fs.readdirSync(dir).filter(f => f.startsWith('observation-'));
+    assert.strictEqual(v1Artifacts.length, 1);
+    const v1ArtifactPath = path.join(dir, v1Artifacts[0]);
+    const v1Bytes = fs.readFileSync(v1ArtifactPath);
+    const v1Artifact = JSON.parse(v1Bytes.toString('utf8'));
+    assert.strictEqual(v1Artifact.import_terminal_state, 'ACCEPTED_NEW');
+
+    // run 2: legal v2 -> ACCEPTED_REPEAT_EQUIVALENT, new artifact written
+    const second = secondVersionPair('3901023');
+    const summary2 = commitObservations({
+        results: [pairResultOf(second)],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T12:00:01.000Z',
+    });
+    assert.strictEqual(summary2.business_projection.accepted_repeat_equivalent_count, 1);
+    const v2Artifacts = fs.readdirSync(dir).filter(f => f.startsWith('observation-'));
+    assert.strictEqual(v2Artifacts.length, 2, 'REPEAT_EQUIVALENT must produce a NEW immutable artifact');
+    const v2ArtifactPath = path.join(dir, v2Artifacts.find(f => f !== v1Artifacts[0]));
+    const v2Artifact = JSON.parse(fs.readFileSync(v2ArtifactPath, 'utf8'));
+    assert.strictEqual(v2Artifact.import_terminal_state, 'ACCEPTED_REPEAT_EQUIVALENT');
+    // old artifact bytes must be unchanged
+    assert.ok(v1Bytes.equals(fs.readFileSync(v1ArtifactPath)), 'old artifact must stay byte-identical');
+
+    // three-way agreement: summary observation, ledger entry, artifact file
+    const summaryDoc = JSON.parse(fs.readFileSync(path.join(dir, 'summary-2.json'), 'utf8'));
+    const summaryObs = summaryDoc.business_projection.observations.find(o => o.artifact_file === v2Artifacts.find(f => f !== v1Artifacts[0]));
+    assert.ok(summaryObs, 'summary must reference the new artifact');
+    assert.strictEqual(summaryObs.terminal_state, 'ACCEPTED_REPEAT_EQUIVALENT');
+    assert.strictEqual(summaryObs.business_hash, v2Artifact.business_hash);
+    assert.strictEqual(summaryObs.stable_payload_sha256, v2Artifact.stable_payload_sha256);
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, 'store-state-2.json'), 'utf8'));
+    const ledgerEntry = Object.values(ledger.observations).find(e => e.artifact_file === v2Artifacts.find(f => f !== v1Artifacts[0]));
+    assert.ok(ledgerEntry, 'ledger must reference the new artifact');
+    assert.strictEqual(ledgerEntry.business_hash, v2Artifact.business_hash);
+    assert.strictEqual(ledgerEntry.business_hash, summaryObs.business_hash, 'summary and ledger must agree');
+    assert.strictEqual(ledgerEntry.stable_payload_sha256, v2Artifact.stable_payload_sha256);
+    assert.strictEqual(ledgerEntry.terminal_state, 'ACCEPTED_REPEAT_EQUIVALENT');
+    assert.notStrictEqual(v1Artifact.business_hash, v2Artifact.business_hash);
+
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('T16 (P0-2): tampered summary business_hash is detected (three-way mismatch)', () => {
+    const dir = tmpDir('fotmob-p0-2-sumtamper-');
+    commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const second = secondVersionPair('3901023');
+    commitObservations({
+        results: [pairResultOf(second)],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T12:00:01.000Z',
+    });
+    // tamper ONLY the summary's business_hash (recompute the projection hash
+    // so the summary self-check stays green — the cross-check must catch it)
+    const summaryFile = path.join(dir, 'summary-2.json');
+    const doc = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));
+    const obs = doc.business_projection.observations.find(o => o.business_hash !== null);
+    obs.business_hash = 'a'.repeat(64);
+    const { canonicalJsonHash } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
+    const projectionCopy = { ...doc.business_projection };
+    delete projectionCopy.business_projection_sha256;
+    doc.business_projection.business_projection_sha256 = canonicalJsonHash(projectionCopy);
+    fs.writeFileSync(summaryFile, JSON.stringify(doc, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'STATE_MISMATCH' && /business_hash disagrees with its artifact/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+test('T17 (P0-2): tampered ledger business_hash is detected (three-way mismatch)', () => {
+    const dir = tmpDir('fotmob-p0-2-ledtamper-');
+    commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const second = secondVersionPair('3901023');
+    commitObservations({
+        results: [pairResultOf(second)],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T12:00:01.000Z',
+    });
+    // tamper ONLY the ledger's business_hash
+    const ledgerFile = path.join(dir, 'store-state-2.json');
+    const ledger = JSON.parse(fs.readFileSync(ledgerFile, 'utf8'));
+    Object.values(ledger.observations)[1].business_hash = 'b'.repeat(64);
+    fs.writeFileSync(ledgerFile, JSON.stringify(ledger, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+        result.errors.some(e => e.code === 'LEDGER_INVALID' && /business hash disagrees with its artifact/.test(e.message)),
+        JSON.stringify(result.errors)
+    );
+});
+
+test('T18 (P0-2): THIRD_EXACT_REPLAY -> ACCEPTED_REPEAT_EXACT, 0 new artifacts, validate PASS', () => {
+    const dir = tmpDir('fotmob-p0-2-replay-');
+    const v1 = pairResult('3901023');
+    commitObservations({
+        results: [v1],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const v2 = secondVersionPair('3901023');
+    commitObservations({
+        results: [pairResultOf(v2)],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-2',
+        builtAt: '2026-08-04T12:00:01.000Z',
+    });
+    const before = fs.readdirSync(dir).filter(f => f.startsWith('observation-')).length;
+    // run 3: exact replay of v2 -> REPEAT_EXACT, no new artifact
+    const summary3 = commitObservations({
+        results: [pairResultOf(v2)],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-3',
+        builtAt: '2026-08-04T12:00:02.000Z',
+    });
+    assert.strictEqual(summary3.business_projection.accepted_repeat_exact_count, 1);
+    const after = fs.readdirSync(dir).filter(f => f.startsWith('observation-')).length;
+    assert.strictEqual(after, before, 'REPEAT_EXACT must not produce a new artifact');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+// ── P1-4: TOCTOU posture (Codex review 4863122944 P1-4) ──────
+
+test('P1-4: readJsonFile refuses a symlink leaf via the no-follow fd (even pointing at a valid file)', () => {
+    const dir = tmpDir('fotmob-p14-link-');
+    const real = path.join(dir, 'real.json');
+    const link = path.join(dir, 'link.json');
+    fs.writeFileSync(real, '{}\n');
+    fs.symlinkSync(real, link);
+    const { readJsonFile } = require('../../src/infrastructure/fotmob/FotMobDetailStagingRetention');
+    assert.throws(
+        () => readJsonFile(link, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+});
+
+test('P1-4: readJsonFile refuses a directory and a missing file', () => {
+    const dir = tmpDir('fotmob-p14-dir-');
+    const { readJsonFile } = require('../../src/infrastructure/fotmob/FotMobDetailStagingRetention');
+    assert.throws(
+        () => readJsonFile(dir, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+    assert.throws(
+        () => readJsonFile(path.join(dir, 'missing.json'), { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'INPUT_ERROR'
+    );
+});
+
+test('P1-4: readJsonFile reads through a symlink-free path and returns the exact bytes', () => {
+    const dir = tmpDir('fotmob-p14-read-');
+    const file = path.join(dir, 'doc.json');
+    const bytes = Buffer.from('{"a":1}\n', 'utf8');
+    fs.writeFileSync(file, bytes);
+    const { readJsonFile } = require('../../src/infrastructure/fotmob/FotMobDetailStagingRetention');
+    const { parsed, sha256 } = readJsonFile(file, { repositoryRoot: REPO_ROOT });
+    assert.deepStrictEqual(parsed, { a: 1 });
+    assert.strictEqual(
+        sha256,
+        require('node:crypto').createHash('sha256').update(bytes).digest('hex')
+    );
+});
+
+test('P1-4: writeJsonAtomically refuses a group/world-writable output directory', () => {
+    const dir = tmpDir('fotmob-p14-mode-');
+    fs.chmodSync(dir, 0o777);
+    assert.throws(
+        () => writeJsonAtomically(path.join(dir, 'doc.json'), { a: 1 }, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+});
+
+test('P1-4: writeJsonAtomically creates private directories (0700) and writes through them', () => {
+    const dir = tmpDir('fotmob-p14-private-');
+    const outputRoot = path.join(dir, 'out', 'nested');
+    const result = writeJsonAtomically(
+        path.join(outputRoot, 'doc.json'),
+        { a: 1 },
+        { repositoryRoot: REPO_ROOT }
+    );
+    assert.strictEqual(result.written, true);
+    const stat = fs.lstatSync(outputRoot);
+    assert.strictEqual(stat.mode & 0o777, 0o700);
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(outputRoot, 'doc.json'), 'utf8')), { a: 1 });
+});
+
+test('P1-4: a live foreign store lock fails the commit closed (no lock, no writes)', () => {
+    const dir = tmpDir('fotmob-p14-locklive-');
+    // Simulate another live process holding the exclusive store lock.
+    fs.writeFileSync(path.join(dir, '.staging-write.lock'), String(process.pid));
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [pairResult('3901023')],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'SAFETY_ERROR'
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir).sort(), ['.staging-write.lock']);
+});
+
+test('P1-4: a stale (dead-holder) store lock is recovered and the commit proceeds', () => {
+    const dir = tmpDir('fotmob-p14-lockstale-');
+    fs.writeFileSync(path.join(dir, '.staging-write.lock'), '999999999'); // dead pid
+    const summary = commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    assert.ok(!fs.existsSync(path.join(dir, '.staging-write.lock')), 'lock released after commit');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+    assert.strictEqual(result.residue_files.length, 0);
+});
+
+test('P1-4: the commit lock is released and never appears as residue', () => {
+    const dir = tmpDir('fotmob-p14-lockres-');
+    commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const names = fs.readdirSync(dir);
+    assert.ok(!names.includes('.staging-write.lock'));
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+    assert.strictEqual(result.residue_files.length, 0);
+});

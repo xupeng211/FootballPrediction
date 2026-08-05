@@ -402,67 +402,97 @@ all 58 rows is not uniquely attributable.
 ### Offline detail staging converter / validator (implemented, tested; PR #1817 blocker remediation in Draft)
 
 The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
-`src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`)
-converts archived `fotmob-match-detail-capture-payload/v1` +
-`fotmob-match-detail-capture-manifest/v1` pairs into immutable
-`fotmob-detail-staging-artifact/v1` snapshots. It is **pure offline by
-construction**: zero network (no fetcher import), zero database (no DB client,
-no migration, no canonical/staging/odds write), zero capture, no wall-clock
-time in business fields (`generated_at` comes from the manifest's
-`response_received_at`; `observation_id` is a deterministic UUIDv5 over the
-observation key). Canonical make entrypoints: `data-fotmob-detail-staging-help`
-/ `-build` / `-validate` (the direct Node CLI is the internal engine). The
-store is append-only file snapshots + a `store-state.json` ledger; outputs are
-repository-external only, atomic (tmp+fsync+rename), fail-closed on divergent
-content, and validated by `-validate`. 16 archived matches (one/five/ten-match
-pilot archives, e3679262/9bc50640/02635cee) were staged, rebuilt twice,
-validated twice, byte-identical across builds, with all `canonical_match_id`
-null and `UNLINKED_NOT_ATTEMPTED` link status; derived outputs were removed.
-The 16-match validation is an offline verification run only — no new real
-capture happened and no real payload/manifest/artifact was committed.
-
-**PR #1817 blocker remediation (offline-only, Draft, unmerged)**: the
-independent review's 8 blocker findings were all fixed. FINDING_1 — logical
-commit-marker atomicity: `commit-<seq>.json` (schema
-fotmob-detail-staging-commit-marker/v1) is the single commit point, written
-last after artifacts → quarantines → summary → ledger; the marker binds the
-exact file list with per-file sha256 plus the previous marker sha256 chain;
-rollback removes only the files this attempt wrote (pre-existing identical
-files are never deleted); residue scan fails closed. FINDING_2 — on
-REPEAT_EQUIVALENT the artifact is REBUILT with recomputed business and
-integrity hashes; old artifacts stay byte-untouched and summary / artifact /
-store ledger stay consistent. FINDING_3 — verified package receipts: real
-archive SHA-256 verification plus a safe pure-Node tar reader (no
-child_process; absolute/../symlink/hardlink/special/duplicate members
-rejected; GNU long-name and PAX records handled); every index entry is bound
-to exactly one package whose receipt and live archive/member hashes are
-re-verified per run. FINDING_4 — symlink-ancestor checks on every input type
-and an input/output non-overlap rule; help text matches the implementation.
-FINDING_5 — full validator with 38 checks in five groups (A summary 1–10,
-B store ledger 11–20, C artifact 21–28, D quarantine 29–33, E commit 34–38),
-run unconditionally even when state errors exist, with 13 tamper tests.
-FINDING_6 — LAYER_A: observation_id recomputed as UUIDv5 over the
-observation key and generated_at enforced as strict ISO equal to the
-manifest's source_response_received_at; LAYER_B: artifact_integrity_sha256
-over every artifact field except itself (integrity hash, not a signature),
-with 7 tamper tests. FINDING_7 — SC-002 status corrected:
-SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
-SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, PR1817_CHANGES_SC002=NO.
-FINDING_8 — Claude post-remediation self-review named
-CLAUDE_POST_REMEDIATION_SELF_REVIEW with P0/P1/P2 = 0;
-EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and READY_TO_MERGE=NO.
-Test counts: 125 staging unit tests (25 source verification + 39 retention
-fault-injection/tamper + 38 contract + 11 converter + 12 CLI) plus 347
-legacy FotMob tests and 769 unit tests green; ESLint and Prettier clean.
-16-match offline revalidation on the fixed archives (e3679262/9bc50640/
-02635cee): RUN_1 FIRST_IMPORT → 16 ACCEPTED_NEW (validate PASS); RUN_2
-EXACT_REPLAY → 16 REPEAT_EXACT with zero new artifacts and byte-identical
-old artifacts; RUN_3 synthetic new observation → 1 REPEAT_EQUIVALENT + 15
-REPEAT_EXACT, marked SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO
-(no claim of a real new observation). All three stores validate PASS with
-zero residue. No real FotMob access, no database connection or write, no
-migration, no training/backtest/prediction; no real payload/manifest/artifact
+`src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
+and `FotMobDetailStagingSourceVerification.js`) converts archived
+`fotmob-match-detail-capture-payload/v1` + `fotmob-match-detail-capture-manifest/v1`
+pairs into immutable `fotmob-detail-staging-artifact/v1` snapshots. It is
+**pure offline by construction**: zero network (no fetcher import), zero
+database (no DB client, no migration, no canonical/staging/odds write), zero
+capture, no wall-clock time in business fields (`generated_at` comes from the
+manifest's `source_response_received_at`; `observation_id` is a deterministic
+RFC 4122 UUIDv5 over the observation key). Canonical make entrypoints:
+`data-fotmob-detail-staging-help` / `-receipt` / `-build` / `-validate`, all
+run container-first via `$(COMPOSE_DEV) exec -T dev` (the direct Node CLI is
+the internal engine). The store is append-only file snapshots plus numbered
+`store-state-<seq>.json` ledger versions; outputs are repository-external
+only, written with per-file atomicity (O_EXCL tmp + fsync + same-filesystem
+rename) under an exclusive per-store lock, fail-closed on divergent content,
+committed by the LOGICAL_COMMIT_MARKER protocol (the `commit-<seq>.json`
+marker is the ONLY commit point; uncommitted residue is reported, never
+treated as committed), and re-validated by `-validate`. 16 archived matches
+(one/five/ten-match pilot archives, e3679262/9bc50640/02635cee) were staged,
+rebuilt twice, validated twice, byte-identical across builds, with all
+`canonical_match_id` null and `UNLINKED_NOT_ATTEMPTED` link status; derived
+outputs were removed. The 16-match validation is an offline verification run
+only — no new real capture happened and no real payload/manifest/artifact was
 committed.
+
+**PR #1817 remediation history (offline-only, Draft, unmerged)**:
+- Blockers round (8 findings of the independent review of head c8a0489f7):
+  FINDING_1 — logical commit-marker atomicity: `commit-<seq>.json` (schema
+  fotmob-detail-staging-commit-marker/v1) is the single commit point, written
+  last after artifacts → quarantines → summary → ledger; the marker binds the
+  exact file list with per-file sha256 plus the previous marker sha256 chain;
+  rollback removes only the files this attempt wrote (pre-existing identical
+  files are never deleted); residue scan fails closed. FINDING_2 — on
+  REPEAT_EQUIVALENT the artifact is REBUILT with recomputed business and
+  integrity hashes and the FINAL classification is written back; old
+  artifacts stay byte-untouched and summary / artifact / store ledger are
+  three-way cross-checked by the validator. FINDING_3 — verified package
+  receipts: real archive SHA-256 verification plus a safe pure-Node tar
+  reader (no child_process; absolute/../symlink/hardlink/special/duplicate
+  members rejected); every index entry is bound to exactly one package whose
+  receipt and live archive/member hashes are re-verified per run.
+  FINDING_4 — symlink-ancestor checks on every input type and an
+  input/output non-overlap rule. FINDING_5 — full validator with 38 checks in
+  five groups (A summary 1–10, B store ledger 11–20, C artifact 21–28,
+  D quarantine 29–33, E commit 34–38), run unconditionally even when state
+  errors exist. FINDING_6 — LAYER_A: observation_id recomputed as RFC 4122
+  UUIDv5 over the observation key and generated_at enforced as byte-exact
+  strict ISO equal to the manifest's source_response_received_at; LAYER_B:
+  artifact_integrity_sha256 over every artifact field except itself
+  (integrity hash, not a signature). FINDING_7 — SC-002 status corrected:
+  SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, PR1817_CHANGES_SC002=NO
+  (SC-002 is partial mitigation only). FINDING_8 — Claude post-remediation
+  self-review named CLAUDE_POST_REMEDIATION_SELF_REVIEW;
+  EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and READY_TO_MERGE=NO.
+- Codex closed-loop round (independent review 4863122944 of head
+  a3a916fdd): 13 findings remediated — P0-1 live archive re-verification
+  against the receipt (SHA-256 + stable-sorted member inventory hash
+  `archive_inventory_sha256`, per-run, cache never trusted across runs);
+  P0-2 REPEAT_EQUIVALENT final-classification write-back + validator
+  three-way summary↔artifact↔ledger cross-comparison; P1-1 two-level tar
+  member-name validation (raw segments + combined normalized path, ustar
+  `ustar\0`/`ustar ` magics, GNU long name, local PAX, normalized duplicates);
+  P1-2 ACTUAL 16-field double-binding matrix (A/B/C/D) with per-field
+  conflict tests; P1-3 receipt path through the unified input safety gate;
+  P1-4 TOCTOU mitigation (O_NOFOLLOW fd reads with dev/inode checks,
+  controlled private output directories, O_EXCL tmp, exclusive per-store
+  lock, pre/post directory identity check — honest threat model: NOT a
+  defense against a same-uid sustained-race attacker); P1-5
+  MODE_1_UNANCHORED / MODE_2_EXTERNALLY_ANCHORED validation
+  (`--expected-latest-marker-sha256` / repo-external `--anchor-checkpoint`);
+  P2-1 strict tar parsing (octal size required, explicit content/padding
+  bounds, canonical end blocks, strict PAX lengths, GLOBAL PAX rejected);
+  P2-2 payload_file_sha256 / manifest_file_sha256 REQUIRED and three-source
+  consistent; P2-3 RFC 4122 UUIDv5 with the official DNS-namespace test
+  vector + byte-exact timestamp binding; P2-4 structured garbage
+  (null/[]/string/number/boolean) → REJECTED_SCHEMA_UNKNOWN without throwing,
+  convertAll never lets one bad input crash the batch; P2-5 Makefile staging
+  targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
+  body rewritten to match the real implementation.
+Test counts: 195 staging unit tests (52 retention incl. fault-injection and
+tamper + 46 source verification + 66 contract + 13 converter + 18 CLI) green
+on the remediation head; ESLint clean. 16-match offline revalidation on the
+fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
+ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
+new artifacts and byte-identical old artifacts; RUN_3 synthetic new
+observation → 1 REPEAT_EQUIVALENT + 15 REPEAT_EXACT, marked
+SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO (no claim of a
+real new observation). All three stores validate PASS with zero residue.
+No real FotMob access, no database connection or write, no migration, no
+training/backtest/prediction; no real payload/manifest/artifact committed.
 
 ### Current safety and documentation status
 
