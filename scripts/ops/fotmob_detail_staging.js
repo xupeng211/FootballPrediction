@@ -20,9 +20,10 @@
 //     archive SHA-256 + safe tar member inspection);
 //   - `build` binds every entry to exactly one package (FINDING_3): the
 //     receipt must be valid, the receipt archive SHA must equal the declared
-//     binding SHA, the archive is live-verified (P0-1: per-run live
-//     re-inspection with the member inventory hash, never trusting a cached
-//     receipt), and the extracted payload/manifest files must hash-equal
+//     binding SHA, the archive is live-verified (P0-1: per-entry live
+//     re-inspection with the member inventory hash — R16-P1-1: every entry
+//     call freshly re-reads the archive; never trusting a cached receipt),
+//     and the extracted payload/manifest files must hash-equal
 //     their archive members;
 //   - every input path (source index, archive, receipt, payload, manifest)
 //     is checked as a repository-external regular file with no symlink

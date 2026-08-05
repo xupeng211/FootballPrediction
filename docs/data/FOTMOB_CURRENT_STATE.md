@@ -443,7 +443,8 @@ committed.
   receipts: real archive SHA-256 verification plus a safe pure-Node tar
   reader (no child_process; absolute/../symlink/hardlink/special/duplicate
   members rejected); every index entry is bound to exactly one package whose
-  receipt and live archive/member hashes are re-verified per run.
+  receipt and live archive/member hashes are re-verified per entry
+  (R16-P1-1: every entry call freshly re-inspects the live archive).
   FINDING_4 — symlink-ancestor checks on every input type and an
   input/output non-overlap rule. FINDING_5 — full validator with 38 checks in
   five groups (A summary 1–10, B store ledger 11–20, C artifact 21–28,
@@ -462,7 +463,9 @@ committed.
 - Codex closed-loop round (independent review 4863122944 of head
   a3a916fdd): 13 findings remediated — P0-1 live archive re-verification
   against the receipt (SHA-256 + stable-sorted member inventory hash
-  `archive_inventory_sha256`, per-run, cache never trusted across runs);
+  `archive_inventory_sha256`; the per-run sharing model described at review
+  time is pre-R16 behavior — superseded by R16-P1-1 per-entry fresh
+  re-inspection, cache never trusted across runs);
   P0-2 REPEAT_EQUIVALENT final-classification write-back + validator
   three-way summary↔artifact↔ledger cross-comparison; P1-1 two-level tar
   member-name validation (raw segments + combined normalized path, ustar
@@ -484,8 +487,9 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 320 staging unit tests (114 retention incl. fault-injection and
-tamper + 75 source verification + 89 contract [54 declared + 16 loop-generated
+Test counts: 324 staging unit tests (114 retention incl. fault-injection and
+tamper + 79 source verification [75 + 4 R17-P2-1 PAX size-override regressions
+(a/b/c/d)] + 89 contract [54 declared + 16 loop-generated
 per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 + 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
@@ -628,6 +632,31 @@ R16-P3-1: parsePaxRecords now fails closed on a length-valid record
 without a key=value separator (SAFETY_ERROR; previously silently ignored),
 and a legal "__proto__" PAX key is preserved as an own data property
 (non-blocking). Counts synced to 320.
+Codex round-17 (head 36202a549, 23 commits) rechecked R16 fully RESOLVED and
+found 1 new blocking P2 + 2 non-blocking P3 — R17-P2-1: a legal local-PAX
+`size=` override was not honored (the parser consumed only path/linkpath, so
+a size-overflow archive — GNU tar leaves the header octal size 0 and carries
+the real size in the extended header — failed content/padding/hash handling).
+Fixed: the FULL local-PAX pending metadata is kept (consecutive x headers
+merge, later record wins, defineProperty-safe spread), `size=` is strictly
+parsed as an unsigned decimal safe integer at the extended header
+(SAFETY_ERROR on anything else), and the effective size replaces the header
+size EVERYWHERE for the member itself — resource limits, content bounds,
+padding and the content hash — while metadata entries (L/x) always use their
+own header size; unconsumed local-PAX metadata (path or size) at
+end-of-archive is now a dangling error (R10-P3-2 rule extended from
+path-only to any pending record; message now "dangling GNU/PAX metadata
+override"). Regressions via production inspectArchive: R17-P2-1a size-only
+override (header size 0, PAX size=3 → member size/hash correct),
+R17-P2-1b size + mtime + UTF-8 path records merged, R17-P2-1c non-decimal /
+unsafe sizes (abc/-3/+3/3.0/1e3/overflow) fail closed, R17-P2-1d dangling
+size record fails closed. R17-P3-1 (non-blocking): the R1/R2 WeakSet
+capability registry + deep-freeze were REMOVED — after R16-P1-1 no reusable
+capability ever leaves the module, so the dead machinery (which could invite
+a future maintainer to resurrect an unsafe cache) is gone; V34f now asserts
+the plain mutable return. R17-P3-2 (non-blocking): stale "once per package
+per run" comments corrected to per-entry in the source docstring, the CLI
+loader block, and this document. Counts synced to 324.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

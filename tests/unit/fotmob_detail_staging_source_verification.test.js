@@ -1146,7 +1146,7 @@ test('V34e (R2-P0-1): spreading a GENUINE live result and replacing members is r
     );
 });
 
-test('V34f (R2-P0-1): the registered inspection is deep-frozen (in-place member replacement is impossible)', () => {
+test('V34f (R17-P3-1): the inspection returned by verifyLiveArchiveAgainstReceipt is a PLAIN object — no reusable capability contract', () => {
     const dir = tmpDir('fotmob-r2-p0-1-frozen-');
     const pair = buildPair({ source_match_id: '3901023' });
     const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
@@ -1160,21 +1160,16 @@ test('V34f (R2-P0-1): the registered inspection is deep-frozen (in-place member 
     });
     const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
     const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
-    assert.strictEqual(Object.isFrozen(live), true);
-    assert.strictEqual(Object.isFrozen(live.members), true);
-    assert.strictEqual(Object.isFrozen(live.members[0]), true);
-    assert.throws(
-        () => {
-            live.members[0].sha256 = '0'.repeat(64); // strict-mode mutation of a frozen row
-        },
-        TypeError
-    );
-    assert.throws(
-        () => {
-            live.members.length = 0; // frozen array
-        },
-        TypeError
-    );
+    // R17-P3-1 (Codex round 17): the WeakSet registry and the deep-freeze
+    // were REMOVED — the module never hands out a reusable capability, so
+    // there is nothing left to register or freeze. The returned inspection
+    // is an ordinary mutable object consumed only inside the call that
+    // produced it; verifyEntryAgainstReceipt (the exported entry API) never
+    // accepts it back (R16-P1-1, V34a-e).
+    assert.strictEqual(Object.isFrozen(live), false);
+    assert.strictEqual(Object.isFrozen(live.members), false);
+    live.members[0].sha256 = '0'.repeat(64); // mutable — not a capability
+    assert.strictEqual(live.members[0].sha256, '0'.repeat(64));
 });
 
 test('V34c (R1-P0-1): a GENUINE capability from a different archive is rejected (bound to the receipt archive)', () => {
@@ -1538,7 +1533,7 @@ test('R10-P3-2a: a DANGLING GNU L long-name record at end-of-archive fails close
     fs.writeFileSync(archive, gzipOf(Buffer.concat([longNameBlock, Buffer.alloc(1024)])));
     assert.throws(
         () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
-        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX name override/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX metadata override/.test(err.message)
     );
 });
 
@@ -1554,7 +1549,91 @@ test('R10-P3-2b: a DANGLING PAX x path record at end-of-archive fails closed (no
     fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, Buffer.alloc(1024)])));
     assert.throws(
         () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
-        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX name override/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX metadata override/.test(err.message)
+    );
+});
+
+test('R17-P2-1a: a legal PAX size= override is applied as the member effective size (content, padding, hash)', () => {
+    const dir = tmpDir('fotmob-ver-pax-size-');
+    const archive = path.join(dir, 'pax-size.tar.gz');
+    // The GNU-tar size-overflow shape: the PAX `x` header carries size=3,
+    // and the following file header's OWN octal size field is 0 (the real
+    // size lives only in the PAX record). The 3 content bytes exist in the
+    // archive after the file header. Pre-fix, the parser read the header
+    // size 0, advanced nothing, and hit a checksum mismatch on the content
+    // bytes read as the next header — a legal archive could not stage.
+    const paxRecord = paxRecordFor('size', '3');
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+    const fileBlock = rawTarBlock(rawTarHeader('data.bin', '0', 0), Buffer.from('abc', 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, fileBlock, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    const member = inspected.members.find(m => m.name === 'data.bin');
+    assert.ok(member, 'data.bin member is present');
+    assert.strictEqual(member.size, 3);
+    assert.strictEqual(
+        member.sha256,
+        crypto.createHash('sha256').update('abc').digest('hex'),
+        'content hash covers the PAX-effective 3 bytes'
+    );
+});
+
+test('R17-P2-1b: PAX size + mtime + UTF-8 path records merge and apply to the next member', () => {
+    const dir = tmpDir('fotmob-ver-pax-size-mixed-');
+    const archive = path.join(dir, 'pax-size-mixed.tar.gz');
+    // A legal record mix in ONE extended header: path override (non-ASCII),
+    // size override, and an mtime record that is carried but unused. All
+    // records must parse and the size override must win over the header's
+    // 0-byte size field.
+    const paxBytes = Buffer.from(
+        paxRecordFor('path', '数据.json') + paxRecordFor('size', '5') + paxRecordFor('mtime', '1234567890'),
+        'utf8'
+    );
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxBytes.length), paxBytes);
+    const fileBlock = rawTarBlock(rawTarHeader('ignored.json', '0', 0), Buffer.from('hello', 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, fileBlock, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    const member = inspected.members.find(m => m.name === '数据.json');
+    assert.ok(member, 'PAX path override applies');
+    assert.strictEqual(member.size, 5);
+    assert.strictEqual(
+        member.sha256,
+        crypto.createHash('sha256').update('hello').digest('hex'),
+        'content hash covers the PAX-effective 5 bytes'
+    );
+});
+
+test('R17-P2-1c: a non-decimal / unsafe PAX size override fails closed', () => {
+    const dir = tmpDir('fotmob-ver-pax-badsize-');
+    // POSIX pax size is an unsigned decimal integer — a sign, whitespace,
+    // a decimal point, an exponent or an overflow beyond the safe-integer
+    // range must fail closed at the extended header, never be coerced into
+    // a content bound.
+    for (const bad of ['abc', '-3', '+3', '3.0', '1e3', '99999999999999999999']) {
+        const archive = path.join(dir, `bad-${bad.replace(/[^0-9a-zA-Z]/g, '_')}.tar.gz`);
+        const paxRecord = paxRecordFor('size', bad);
+        const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+        fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, Buffer.alloc(1024)])));
+        assert.throws(
+            () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+            err => err.code === 'SAFETY_ERROR' && /PAX size override is not a safe decimal integer/.test(err.message),
+            `size=${bad} must fail closed`
+        );
+    }
+});
+
+test('R17-P2-1d: a DANGLING PAX size record at end-of-archive fails closed (no member consumes it)', () => {
+    const dir = tmpDir('fotmob-ver-dangling-pax-size-');
+    const archive = path.join(dir, 'dangling-pax-size.tar.gz');
+    // A legal PAX `size=3` record followed directly by the end blocks: no
+    // member follows to consume it — the unconsumed local-PAX metadata must
+    // itself be a SAFETY_ERROR (R17-P2-1 extends the R10-P3-2 dangling rule
+    // from path-only overrides to ANY pending local-PAX record).
+    const paxRecord = paxRecordFor('size', '3');
+    const paxBlock = rawTarBlock(rawTarHeader('', 'x', paxRecord.length), Buffer.from(paxRecord, 'utf8'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([paxBlock, Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /dangling GNU\/PAX metadata override/.test(err.message)
     );
 });
 

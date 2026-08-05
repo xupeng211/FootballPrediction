@@ -73,23 +73,14 @@ const DEFAULT_ARCHIVE_LIMITS = {
     maxTotalMemberBytes: 1024 * 1024 * 1024,
 };
 
-// R1-P0-1 / R2-P0-1 (Codex rounds 1-2): a live inspection result may be
-// reused ONLY if it came from this module's own live verification in this
-// run. R1's enumerable Symbol property was forgeable by object spread
-// (`{ ...live, members: [...] }` copied the symbol), so round 2 hardened
-// this to unforgeable OBJECT IDENTITY: the registry is a module-private
-// WeakSet, and every registered inspection is deep-frozen (top object +
-// members array + each member row), so a spread copy is a different object
-// (not in the set -> rejected) and in-place member replacement is
-// impossible. A fabricated {members:[...]} table can never satisfy either.
-const liveVerifyRegistry = new WeakSet();
-
-function deepFreezeInspection(inspected) {
-    for (const member of inspected.members) Object.freeze(member);
-    Object.freeze(inspected.members);
-    Object.freeze(inspected);
-    return inspected;
-}
+// R17-P3-1 (Codex round 17): the R1-P0-1 / R2-P0-1 capability registry
+// (module-private WeakSet + deep-freeze) was REMOVED. After R16-P1-1 the
+// exported entry API refuses ANY supplied `inspected` and always freshly
+// re-inspects the live archive per entry, so no reusable capability ever
+// leaves this module — there is nothing left to register or freeze. Keeping
+// the dead machinery would only invite a future maintainer to resurrect an
+// unsafe capability cache; the returned inspection is now an ordinary
+// object consumed inside the call that produced it.
 
 // ─────────────────────────────────────────────────────────────
 // Generic input path gates (FINDING_4)
@@ -262,6 +253,17 @@ function parsePaxRecords(data) {
     return records;
 }
 
+// R17-P2-1 (Codex round 17): POSIX pax `size` is an unsigned DECIMAL
+// integer — no sign, no whitespace, no octal/exponent notation. Anything
+// else (or a value beyond Number.MAX_SAFE_INTEGER) fails closed instead of
+// being coerced: a bogus override must never become a bound that reads more
+// or less content than the archive actually holds.
+function parseSafePaxSize(raw) {
+    if (!/^[0-9]+$/.test(raw)) return null;
+    const n = Number(raw);
+    return Number.isSafeInteger(n) ? n : null;
+}
+
 function ustarName(header) {
     const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
     // P1-1 (Codex review 4863122944): the ustar magic at 257..262 is SIX
@@ -354,7 +356,11 @@ function inspectArchive(archivePath, options = {}) {
     const seen = new Set();
     let offset = 0;
     let pendingLongName = null;
-    let pendingPaxPath = null;
+    // R17-P2-1 (Codex round 17): pending local-PAX metadata — the FULL
+    // record set from the last `x` extended header(s), kept until the next
+    // real member consumes it (path override, size override, plus any other
+    // legal records such as mtime). `null` = no pending override.
+    let pendingPax = null;
     // R12-P2-2: tar-loop resource bounds — every entry (metadata or file)
     // counts toward the member cap and its declared size toward the total
     // cap, so a bomb cannot force unbounded hashing or iteration either.
@@ -394,13 +400,29 @@ function inspectArchive(archivePath, options = {}) {
                 { code: 'SAFETY_ERROR' }
             );
         }
-        if (size > limits.maxMemberBytes) {
+        // R17-P2-1 (Codex round 17): the member's EFFECTIVE size is the
+        // header's octal size, or a pending local-PAX `size=` override when
+        // one precedes this member (POSIX pax: the extended header replaces
+        // the following header's size field — GNU tar emits size= when the
+        // real size overflows the octal field, leaving the header size 0).
+        // The override applies everywhere: resource limits, content bounds,
+        // padding and the content hash. Metadata entries (L / x) always use
+        // their own header size — it IS their record length — and a pending
+        // override accumulates across a second metadata record for the next
+        // real member, matching GNU tar's extended-header merge.
+        const declaredSize =
+            typeflag === 'L' || typeflag === 'x'
+                ? size
+                : pendingPax !== null && pendingPax.size !== undefined
+                  ? pendingPax.size
+                  : size;
+        if (declaredSize > limits.maxMemberBytes) {
             throw Object.assign(
                 new Error(`tar member size exceeds the limit (${limits.maxMemberBytes} bytes): ${abs}`),
                 { code: 'SAFETY_ERROR' }
             );
         }
-        totalMemberBytes += size;
+        totalMemberBytes += declaredSize;
         if (totalMemberBytes > limits.maxTotalMemberBytes) {
             throw Object.assign(
                 new Error(
@@ -409,12 +431,12 @@ function inspectArchive(archivePath, options = {}) {
                 { code: 'SAFETY_ERROR' }
             );
         }
-        const paddedSize = Math.ceil(size / TAR_BLOCK) * TAR_BLOCK;
+        const paddedSize = Math.ceil(declaredSize / TAR_BLOCK) * TAR_BLOCK;
         const contentStart = offset + TAR_BLOCK;
         // P2-1: explicit bounds — both the declared content and its padding
         // must physically exist in the buffer. subarray() would silently
         // clamp, so every length must be verified BEFORE any slice.
-        if (contentStart + size > tar.length) {
+        if (contentStart + declaredSize > tar.length) {
             throw Object.assign(new Error(`tar member content extends beyond the archive (truncated): ${abs}`), {
                 code: 'SAFETY_ERROR',
             });
@@ -444,13 +466,32 @@ function inspectArchive(archivePath, options = {}) {
             // R11-P3-3 (Codex round 11): parse at BYTE boundaries — PAX
             // lengths count bytes, and a pre-decoded UTF-8 string would
             // measure non-ASCII paths in UTF-16 code units instead.
+            // R17-P2-1 (Codex round 17): keep the FULL local-PAX pending
+            // metadata (not just path) — POSIX pax may override the next
+            // header's `size` too. Consecutive extended headers accumulate
+            // (GNU tar applies the merged records to the next file entry; a
+            // later record wins). The size= value is strictly parsed NOW as
+            // an unsigned decimal safe integer; the spread merge is
+            // defineProperty-safe, so a legal record key "__proto__" (R16-P2-1)
+            // stays an own data property.
             const pax = parsePaxRecords(tar.subarray(contentStart, contentStart + size));
             if (pax.linkpath !== undefined) {
                 throw Object.assign(new Error(`tar member declares a link target (not allowed): ${abs}`), {
                     code: 'SAFETY_ERROR',
                 });
             }
-            if (pax.path !== undefined) pendingPaxPath = pax.path;
+            const merged = { ...(pendingPax || {}), ...pax };
+            if (pax.size !== undefined) {
+                const parsedSize = parseSafePaxSize(pax.size);
+                if (parsedSize === null) {
+                    throw Object.assign(
+                        new Error(`PAX size override is not a safe decimal integer: ${abs}`),
+                        { code: 'SAFETY_ERROR' }
+                    );
+                }
+                merged.size = parsedSize;
+            }
+            pendingPax = merged;
             offset = contentStart + paddedSize;
             continue;
         }
@@ -473,9 +514,9 @@ function inspectArchive(archivePath, options = {}) {
         // the raw segments AND the combined normalized path.
         let name;
         let rawParts;
-        if (pendingPaxPath !== null) {
-            name = pendingPaxPath;
-            rawParts = [pendingPaxPath];
+        if (pendingPax !== null && pendingPax.path !== undefined) {
+            name = pendingPax.path;
+            rawParts = [pendingPax.path];
         } else if (pendingLongName !== null) {
             name = pendingLongName;
             rawParts = [pendingLongName];
@@ -488,7 +529,7 @@ function inspectArchive(archivePath, options = {}) {
             rawParts = rawPrefix ? [rawPrefix, rawName] : [rawName];
         }
         pendingLongName = null;
-        pendingPaxPath = null;
+        pendingPax = null; // R17-P2-1: full local-PAX metadata consumed by this member
         if (!isSafeMemberName(name, rawParts)) {
             throw Object.assign(new Error(`unsafe tar member name: ${name}`), { code: 'SAFETY_ERROR' });
         }
@@ -517,24 +558,25 @@ function inspectArchive(archivePath, options = {}) {
             });
         }
         seen.add(normalizedName);
-        const content = tar.subarray(contentStart, contentStart + size);
+        const content = tar.subarray(contentStart, contentStart + declaredSize);
         members.push({
             name,
             type: 'file',
-            size,
+            size: declaredSize,
             sha256: crypto.createHash('sha256').update(content).digest('hex'),
         });
         offset = contentStart + paddedSize;
     }
 
-    // R10-P3-2 (Codex round 10): a dangling GNU long-name (L) or PAX path
-    // override (x) at end-of-archive — metadata record followed directly by
-    // the zero end blocks, with no data member to consume it — must fail
-    // closed. Without this, the parser accepts an archive that ends in an
-    // unconsumed name override.
-    if (pendingLongName !== null || pendingPaxPath !== null) {
+    // R10-P3-2 (Codex round 10) + R17-P2-1 (Codex round 17): a dangling GNU
+    // long-name (L) or PAX metadata override (x — path AND/OR size, i.e. any
+    // unconsumed local-PAX record) at end-of-archive — metadata record
+    // followed directly by the zero end blocks, with no data member to
+    // consume it — must fail closed. Without this, the parser accepts an
+    // archive that ends in an unconsumed override.
+    if (pendingLongName !== null || pendingPax !== null) {
         throw Object.assign(
-            new Error(`tar ends with a dangling GNU/PAX name override (no member follows): ${abs}`),
+            new Error(`tar ends with a dangling GNU/PAX metadata override (no member follows): ${abs}`),
             { code: 'SAFETY_ERROR' }
         );
     }
@@ -760,8 +802,12 @@ function verifyPackageReceipt(receipt) {
 
 /**
  * PR1817 remediation (P0-1): re-verify a package's LIVE archive against its
- * receipt. Called once per package per build run (the result may be shared
- * across entries of the same package WITHIN one run, never across runs):
+ * receipt. Freshly re-inspected PER ENTRY (R16-P1-1 / R17-P3-2): every call
+ * re-reads the archive from its physical bytes under the same bounded
+ * limits, and the result is never shared with, or accepted back by, any
+ * other call — the pre-R16 "once per package per build run" sharing model
+ * was removed because a reused capability could outlive a same-path archive
+ * replacement:
  *
  *   1. safe re-inspection of the live archive (no cache of past runs);
  *   2. live archive SHA-256 must equal the receipt's AND the binding's;
@@ -825,12 +871,12 @@ function verifyLiveArchiveAgainstReceipt(args = {}) {
             );
         }
     }
-    // R1-P0-1 / R2-P0-1: register the inspected object BY IDENTITY and deep
-    // freeze it before handing it out — the registry membership is the
-    // unforgeable capability; a spread copy is a different object and is
-    // rejected, and the frozen members table cannot be replaced in place.
-    liveVerifyRegistry.add(inspected);
-    return deepFreezeInspection(inspected);
+    // R17-P3-1 (Codex round 17): the returned inspection is a PLAIN object —
+    // the WeakSet registry and deep-freeze were removed. The exported entry
+    // API never accepts it back (R16-P1-1), so it is consumed only inside
+    // the call that produced it; freezing would imply a reusable capability
+    // contract that no longer exists.
+    return inspected;
 }
 
 /**
@@ -895,16 +941,16 @@ function verifyEntryAgainstReceipt(args = {}) {
 
     // R16-P1-1 (Codex round 16): the live archive is ALWAYS freshly
     // re-inspected here — the exported API never accepts a reusable
-    // `inspected` capability. A WeakSet-registered capability proves only
-    // that the object was once produced by this module, not that it reflects
-    // the CURRENT bytes at its path: an archive replaced after the
-    // capability was issued would pass the identity/SHA/path checks while
-    // the new archive was never re-verified (the direct-API time-of-check /
-    // time-of-use hole). The R1-P0-1/R2-P0-1 capability discipline is
-    // preserved for the internal inspection registry, but the public entry
-    // path always re-reads the archive under the same bounded limits and
-    // re-binds receipt → binding SHA → live archive content + member table
-    // → payload/manifest member hashes, fail closed.
+    // `inspected` capability. A registered capability proves only that the
+    // object was once produced by this module, not that it reflects the
+    // CURRENT bytes at its path: an archive replaced after the capability
+    // was issued would pass the identity/SHA/path checks while the new
+    // archive was never re-verified (the direct-API time-of-check /
+    // time-of-use hole). The R1-P0-1/R2-P0-1 capability registry itself was
+    // removed in R17-P3-1 — no reusable capability exists anywhere in the
+    // module; the entry path always re-reads the archive under the same
+    // bounded limits and re-binds receipt → binding SHA → live archive
+    // content + member table → payload/manifest member hashes, fail closed.
     if (args.inspected !== undefined) {
         throw Object.assign(
             new Error('inspected capability is not accepted by the exported API — the live archive is always freshly re-inspected per entry'),
