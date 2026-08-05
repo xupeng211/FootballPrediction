@@ -916,8 +916,8 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 215 staging
-  unit tests green (53 retention fault-injection/tamper + 57 source
+  (no database, no migration). Current test baseline: 220 staging
+  unit tests green (58 retention fault-injection/tamper + 57 source
   verification + 70 contract [54 declared + 16 loop-generated per-field
   conflict tests] + 15 converter + 20 CLI; runtime counts = node --test
   # pass), incl. direct reuse of the pipeline capture hashing, determinism,
@@ -954,7 +954,7 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 215 staging tests (53 retention
+  targets; P3-1 docs/PR-body rewrite. 220 staging tests (58 retention
   fault-injection/tamper + 57 source verification + 70 contract [54 declared
   + 16 loop-generated per-field conflict tests] + 15 converter + 20 CLI;
   runtime counts = node --test # pass, the only gap vs static test()

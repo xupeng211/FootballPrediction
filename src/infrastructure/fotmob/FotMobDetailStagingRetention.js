@@ -945,6 +945,58 @@ function commitObservations(args = {}) {
     const committedQuarantines = storeState.quarantines || {};
     const inBatchQuarantineKeys = new Set();
 
+    // R5-P2-1 (Codex round 5): commitObservations is an EXPORTED runtime API —
+    // results are not only produced by the converter, so every result must be
+    // validated BEFORE any filename is derived from it. A direct caller
+    // passing an illegal source_match_id (e.g. `x/../../escaped`) could
+    // otherwise escape outputRoot via path.join. Fail closed:
+    //   - the effective source id (result, falling back to the artifact) must
+    //     be numeric — filenames embed it raw;
+    //   - result.source_match_id and artifact.source_match_id must agree;
+    //   - artifact stable_payload_sha256 must be 64 lowercase hex;
+    //   - error_code must be E###.
+    for (const item of classified) {
+        const result = item.result;
+        const artifact = result.artifact;
+        const resultId =
+            result.source_match_id === undefined || result.source_match_id === null
+                ? ''
+                : String(result.source_match_id);
+        const artifactId =
+            artifact && artifact.source_match_id !== undefined && artifact.source_match_id !== null
+                ? String(artifact.source_match_id)
+                : '';
+        const effectiveId = String(result.source_match_id ?? (artifact && artifact.source_match_id) ?? '');
+        if (!/^\d+$/.test(effectiveId)) {
+            throw Object.assign(
+                new Error(`result source_match_id must be numeric (got '${effectiveId}')`),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        if (resultId !== '' && artifactId !== '' && resultId !== artifactId) {
+            throw Object.assign(
+                new Error(
+                    `result.source_match_id ${resultId} disagrees with artifact.source_match_id ${artifactId}`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        if (
+            artifact &&
+            typeof artifact.stable_payload_sha256 === 'string' &&
+            !/^[0-9a-f]{64}$/.test(artifact.stable_payload_sha256)
+        ) {
+            throw Object.assign(new Error('artifact stable_payload_sha256 must be 64 lowercase hex'), {
+                code: 'INPUT_ERROR',
+            });
+        }
+        if (result.error_code && !/^E\d{3}$/.test(String(result.error_code))) {
+            throw Object.assign(new Error(`error_code must be E### (got '${result.error_code}')`), {
+                code: 'INPUT_ERROR',
+            });
+        }
+    }
+
     for (const item of classified) {
         const result = item.result;
         const cls = item.classification;
@@ -1073,6 +1125,21 @@ function commitObservations(args = {}) {
         { name: summaryFileNameForSeq(seq), doc: summary },
         { name: ledgerFileNameForSeq(seq), doc: nextStoreState },
     ];
+
+    // R5-P2-1: final containment gate on EVERY file this commit writes — the
+    // name must be a plain basename (no separators) and its resolved path
+    // must stay inside outputRoot. Defense in depth: even if a future code
+    // path derived a name from unvalidated input, the write cannot escape
+    // the store.
+    const resolvedRoot = path.resolve(outputRoot);
+    for (const write of writePlan) {
+        const name = String(write.name || '');
+        if (name !== path.basename(name) || !path.resolve(resolvedRoot, name).startsWith(resolvedRoot + path.sep)) {
+            throw Object.assign(new Error(`commit file name escapes the output root: ${name}`), {
+                code: 'INPUT_ERROR',
+            });
+        }
+    }
 
     const writtenFiles = [];
     try {
@@ -1428,6 +1495,49 @@ function validateOutputRoot(outputRoot, options = {}) {
         ) {
             errors.push({ code: 'LEDGER_INVALID', message: 'ledger schema_version invalid' });
             continue;
+        }
+        // R5-P3-1 (Codex round 5): quarantines must be a PLAIN OBJECT on every
+        // ledger version — an array (`quarantines: []`) would silently pass
+        // the empty Object.entries() path. Keys are `id:E###` and each entry
+        // must carry the evidence-file reference and terminal-state fields the
+        // D-group cross-checks rely on.
+        const quarantinesDoc = ledger.quarantines;
+        if (
+            quarantinesDoc === undefined ||
+            quarantinesDoc === null ||
+            typeof quarantinesDoc !== 'object' ||
+            Array.isArray(quarantinesDoc)
+        ) {
+            errors.push({ code: 'LEDGER_INVALID', message: 'ledger quarantines must be a plain object' });
+        } else {
+            for (const [key, entry] of Object.entries(quarantinesDoc)) {
+                if (!/^\d+:E\d{3}$/.test(String(key))) {
+                    errors.push({ code: 'LEDGER_INVALID', message: `ledger quarantine key has invalid format: ${key}` });
+                    continue;
+                }
+                if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+                    errors.push({ code: 'LEDGER_INVALID', message: `ledger quarantine entry ${key} is not an object` });
+                    continue;
+                }
+                if (!isQuarantineFileName(String(entry.quarantine_file || ''))) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} references illegal file: ${entry.quarantine_file}`,
+                    });
+                }
+                if (typeof entry.terminal_state !== 'string' || entry.terminal_state === '') {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} has no terminal_state`,
+                    });
+                }
+                if (!/^E\d{3}$/.test(String(entry.error_code || ''))) {
+                    errors.push({
+                        code: 'LEDGER_INVALID',
+                        message: `ledger quarantine entry ${key} has no valid error_code`,
+                    });
+                }
+            }
         }
         for (const [key, entry] of Object.entries(ledger.observations)) {
             // 12./13. key format and derivation.

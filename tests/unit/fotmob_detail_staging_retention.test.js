@@ -1445,3 +1445,125 @@ test('P1-4: the commit lock is released and never appears as residue', () => {
     assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
     assert.strictEqual(result.residue_files.length, 0);
 });
+
+test('R5-P2-1a: commitObservations rejects an illegal (path-traversal) source_match_id before any write', () => {
+    const dir = tmpDir('fotmob-r5p21-traversal-');
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    // direct API abuse: legal artifact + escaped id — must fail closed BEFORE
+    // any filename is derived (the old code would write
+    // observation-x-../../escaped-<hash>.artifact.json outside outputRoot)
+    const escaped = { ...ok, source_match_id: 'x/../../escaped' };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [escaped],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /source_match_id must be numeric/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'nothing is written (no commit, no residue)');
+    assert.ok(!fs.existsSync(path.join(dir, '..', 'escaped-E011.json')), 'nothing escapes the output root');
+});
+
+test('R5-P2-1b: commitObservations rejects result/artifact source_match_id disagreement', () => {
+    const dir = tmpDir('fotmob-r5p21-mismatch-');
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, source_match_id: '3900933' }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /disagrees with artifact/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+test('R5-P2-1c: commitObservations rejects an artifact with a malformed stable_payload_sha256', () => {
+    const dir = tmpDir('fotmob-r5p21-hash-');
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact: { ...ok.artifact, stable_payload_sha256: 'not-a-hash' } }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /stable_payload_sha256/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+test('R5-P3-1a: validate rejects a ledger whose quarantines is an array (not a plain object)', () => {
+    const dir = committedDir('fotmob-r5p31-array-');
+    const ledgerFile = fs.readdirSync(dir).find(f => f.startsWith('store-state-'));
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, ledgerFile), 'utf8'));
+    ledger.quarantines = [];
+    fs.writeFileSync(path.join(dir, ledgerFile), JSON.stringify(ledger, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantines must be a plain object/.test(e.message)));
+});
+
+test('R5-P3-1b: validate rejects a ledger quarantine key with an invalid format', () => {
+    const dir = tmpDir('fotmob-r5p31-key-');
+    const pair = buildPair({
+        normalized: {
+            match_external_id: '3901023',
+            home_team: { id: 1, name: 'AFC Bournemouth', score: 0 },
+            away_team: { id: 2, name: 'Leicester City', score: 0 },
+            events: [{ id: 9, minute: 500, homeScore: 0, awayScore: 0, event_kind: 'real_event' }],
+            stats: [{ key: 'shots', homeValue: 0, awayValue: 0, period: 'All' }],
+            lineup: { home: { coach: null, starters: [], subs: [] }, away: { coach: null, starters: [], subs: [] } },
+            shotmap: { shots: [] },
+        },
+    });
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const bad = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    commitObservations({
+        results: [bad],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const ledgerFile = fs.readdirSync(dir).find(f => f.startsWith('store-state-'));
+    const ledger = JSON.parse(fs.readFileSync(path.join(dir, ledgerFile), 'utf8'));
+    const qKey = Object.keys(ledger.quarantines)[0];
+    ledger.quarantines[`../../${qKey}`] = ledger.quarantines[qKey];
+    delete ledger.quarantines[qKey];
+    fs.writeFileSync(path.join(dir, ledgerFile), JSON.stringify(ledger, null, 2) + '\n');
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.errors.some(e => e.code === 'LEDGER_INVALID' && /quarantine key has invalid format/.test(e.message)));
+});
