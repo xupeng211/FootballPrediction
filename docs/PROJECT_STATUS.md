@@ -916,10 +916,10 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 249 staging
-  unit tests green (79 retention fault-injection/tamper + 57 source
-  verification + 73 contract [54 declared + 16 loop-generated per-field
-  conflict tests + 3 R6-P1-2 identity-semantics] + 17 converter + 23 CLI;
+  (no database, no migration). Current test baseline: 260 staging
+  unit tests green (86 retention fault-injection/tamper + 57 source
+  verification + 76 contract [54 declared + 16 loop-generated per-field
+  conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length] + 17 converter + 24 CLI;
   runtime counts = node --test
   # pass), incl. direct reuse of the pipeline capture hashing, determinism,
   idempotency, optional-section re-signed acceptance, atomicity, path safety,
@@ -955,10 +955,10 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 249 staging tests (79 retention
-  fault-injection/tamper + 57 source verification + 73 contract [54 declared
-  + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics]
-  + 17 converter + 23 CLI;
+  targets; P3-1 docs/PR-body rewrite. 260 staging tests (86 retention
+  fault-injection/tamper + 57 source verification + 76 contract [54 declared
+  + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
+  + 3 R7-P3-2 id-length] + 17 converter + 24 CLI;
   runtime counts = node --test # pass, the only gap vs static test()
   declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
   tests green; ESLint clean. 16-match offline revalidation on the fixed

@@ -482,9 +482,9 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 249 staging unit tests (79 retention incl. fault-injection and
-tamper + 57 source verification + 73 contract [54 declared + 16 loop-generated
-per-field conflict tests + 3 R6-P1-2 identity-semantics] + 17 converter + 23 CLI;
+Test counts: 260 staging unit tests (86 retention incl. fault-injection and
+tamper + 57 source verification + 76 contract [54 declared + 16 loop-generated
+per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length] + 17 converter + 24 CLI;
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
 on the remediation head; ESLint clean. 16-match offline revalidation on the

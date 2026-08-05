@@ -1048,3 +1048,64 @@ test('R6-P1-2d (legal control): a converter-built artifact passes the identity s
     const validation = validateStagingArtifact(ok.artifact);
     assert.strictEqual(validation.ok, true, validation.errors.join('; '));
 });
+
+// ── R7-P3-2 (Codex round 7): source-match-id length cap shared by the
+//    source index, artifact and ledger-key/filename validators ────────────
+
+test('R7-P3-2a: validateStagingArtifact rejects an artifact whose source_match_id exceeds the shared cap', async () => {
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    const longId = '9'.repeat(33);
+    const tampered = { ...ok.artifact, source_match_id: longId };
+    const validation = validateStagingArtifact(tampered);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => e.includes('source_match_id exceeds')),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R7-P3-2b: validateSourceIndex rejects a source index entry whose source_match_id exceeds the shared cap', () => {
+    const pair = buildPair();
+    const longId = '8'.repeat(33);
+    const index = buildSourceIndex([
+        sourceIndexEntry(longId, '/tmp/p.payload.json', '/tmp/p.manifest.json'),
+    ]);
+    const validation = validateSourceIndex(index);
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => e.includes('source_match_id exceeds')),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R7-P3-2c (legal control): a normal source_match_id still passes both validators', () => {
+    const pair = buildPair();
+    const { convertPair } = require('../../src/infrastructure/fotmob/FotMobDetailStagingConverter');
+    const ok = convertPair({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    const validation = validateStagingArtifact(ok.artifact);
+    assert.strictEqual(validation.ok, true, validation.errors.join('; '));
+    const index = buildSourceIndex(
+        [
+            sourceIndexEntry('3901023', '/tmp/p.payload.json', '/tmp/p.manifest.json', {
+                package: 'ten-match',
+                payload_file_sha256: 'a'.repeat(64),
+                manifest_file_sha256: 'b'.repeat(64),
+            }),
+        ],
+        {
+            'ten-match': { sha256: '0'.repeat(64), path: '/tmp/archive.tar.gz', receipt: '/tmp/receipt.json' },
+        }
+    );
+    const indexValidation = validateSourceIndex(index);
+    assert.strictEqual(indexValidation.ok, true, indexValidation.errors.join('; '));
+});

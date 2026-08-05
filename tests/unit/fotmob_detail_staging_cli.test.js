@@ -278,6 +278,30 @@ test('spawned CLI prints JSON status and exits non-zero on error (no network/DB)
     assert.strictEqual(parsed.zero_database, true);
 });
 
+test('R7-P1-1a: a build that is STRUCTURALLY blocked (schema-invalid source index) exits NON-ZERO from the CLI', () => {
+    // Codex round-7 finding: runBuild() returns {status:'blocked'} for a
+    // readable but schema-invalid source index WITHOUT throwing — the old
+    // main() still returned 0, so `make data-fotmob-detail-staging-build`
+    // reported success for an explicitly refused build. Only a `complete`
+    // build may exit 0.
+    const dir = tmpDir('fotmob-r7p11-blocked-');
+    const outputRoot = path.join(dir, 'out');
+    const indexFile = path.join(dir, 'source-index.json');
+    fs.writeFileSync(indexFile, JSON.stringify({ entries: 'not-an-array', packages: {} }, null, 2) + '\n');
+    const result = spawnSync(
+        process.execPath,
+        [CLI_PATH, 'build', '--source-index', indexFile, '--output-root', outputRoot],
+        { encoding: 'utf8', timeout: 30000 }
+    );
+    assert.strictEqual(result.status, 1, `blocked build must exit 1, got ${result.status}`);
+    const parsed = JSON.parse(result.stdout);
+    assert.strictEqual(parsed.status, 'blocked');
+    assert.strictEqual(parsed.code, 'E001');
+    assert.match(parsed.message, /source index invalid/);
+    // nothing may be created in the output root
+    assert.strictEqual(fs.existsSync(outputRoot), false);
+});
+
 // ── FINDING_2 end-to-end: new-observation lifecycle (offline) ──
 
 test('E2E: FIRST_IMPORT → ACCEPTED_NEW; SECOND_LEGAL → REPEAT_EQUIVALENT (old artifact byte-identical); THIRD_EXACT_REPLAY → REPEAT_EXACT with zero new artifacts', async () => {

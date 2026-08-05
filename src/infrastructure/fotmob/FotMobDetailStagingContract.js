@@ -111,6 +111,14 @@ const ERROR_CODES = Object.freeze({
 
 const SECTIONS = ['events', 'lineup', 'player_stats', 'shotmap', 'stats'];
 
+// R7-P3-2 (Codex round 7): source match ids are embedded RAW into artifact
+// and quarantine file names and ledger keys — bound them so an arbitrarily
+// long id fails closed with a structured INPUT_ERROR instead of reaching the
+// filesystem (ENAMETOOLONG). Real FotMob ids are 7 digits; 32 is generous
+// and shared by the source index, artifact, ledger key and filename
+// validators.
+const MAX_SOURCE_MATCH_ID_LENGTH = 32;
+
 // L1: event minute sanity bound (real matches never exceed 130 with added
 // time; generous on purpose — L6 is a quarantine layer, not a rejection).
 const MAX_EVENT_MINUTE = 130;
@@ -264,6 +272,8 @@ function validateSourceIndex(index) {
             const sourceMatchId = String(entry.source_match_id ?? '');
             if (!/^\d+$/.test(sourceMatchId)) {
                 errors.push(`${label}: source_match_id must be numeric`);
+            } else if (sourceMatchId.length > MAX_SOURCE_MATCH_ID_LENGTH) {
+                errors.push(`${label}: source_match_id exceeds ${MAX_SOURCE_MATCH_ID_LENGTH} digits`);
             } else if (seenIds.has(sourceMatchId)) {
                 errors.push(`${label}: duplicate source_match_id ${sourceMatchId}`);
             } else {
@@ -397,6 +407,42 @@ function sameInstant(a, b) {
         return false;
     }
     return a === b;
+}
+
+// R7-P2-1 (Codex round 7): strict plain-JSON-data predicate. Only values
+// JSON.stringify serializes VERBATIM qualify: null, strings, numbers,
+// booleans, arrays, and objects built from Object.prototype (or null
+// prototype) whose OWN properties are all enumerable data properties with
+// plain-JSON-data values. Inherited properties (Object.create(valid)) and
+// accessors (getters that return one value at validation and another at
+// write time) can never smuggle fields past validation into the store.
+function isPlainJsonData(value) {
+    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return true;
+    }
+    if (Array.isArray(value)) {
+        return value.every(isPlainJsonData);
+    }
+    if (typeof value !== 'object') {
+        // undefined, functions, symbols, bigints — never JSON data.
+        return false;
+    }
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+        return false;
+    }
+    for (const key of Object.getOwnPropertyNames(value)) {
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        if (
+            !descriptor ||
+            !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+            descriptor.enumerable !== true ||
+            !isPlainJsonData(descriptor.value)
+        ) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -1578,6 +1624,8 @@ function validateStagingArtifact(artifact) {
     // observed teams are empty or whose observed id contradicts the source.
     if (!/^\d+$/.test(String(artifact.source_match_id ?? ''))) {
         errors.push('source_match_id must be numeric');
+    } else if (String(artifact.source_match_id ?? '').length > MAX_SOURCE_MATCH_ID_LENGTH) {
+        errors.push(`source_match_id exceeds ${MAX_SOURCE_MATCH_ID_LENGTH} digits`);
     }
     const artifactExpected = artifact.expected_identity || {};
     const artifactObserved = artifact.observed_identity || {};
@@ -1687,6 +1735,8 @@ module.exports = {
     LINK_STATUSES,
     VALIDATION_LAYERS,
     ERROR_CODES,
+    MAX_SOURCE_MATCH_ID_LENGTH,
+    isPlainJsonData,
     SECTIONS,
     DOUBLE_BINDING_FIELDS,
     DOUBLE_BOUND_FIELD_PAIRS,

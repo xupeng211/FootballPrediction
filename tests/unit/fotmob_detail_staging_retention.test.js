@@ -1934,3 +1934,155 @@ test('R6-P2-3h (idempotency control): re-running the same quarantined input stay
     void before;
     void after;
 });
+
+// ── R7-P1-2 / R7-P2-1 / R7-P2-2 / R7-P3-2 (Codex round 7) ────────────────
+
+test('R7-P1-2a: commitObservations validates the FINAL rebuilt REPEAT_EQUIVALENT artifact — tampered artifactInputs refused, zero writes', () => {
+    const dir = tmpDir('fotmob-r7p12-tamper-');
+    commitObservations({
+        results: [pairResult('3901023')],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    const before = fs.readdirSync(dir).sort();
+    const second = pairResultOf(secondVersionPair('3901023'));
+    // the exported API caller controls artifactInputs — the rebuild must be
+    // validated as the EXACT snapshot that would be written, ledgered and
+    // markered. Garbage inputs rebuild an artifact with an empty stable hash.
+    const tampered = { ...second, artifactInputs: { payload: {}, manifest: {} } };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [tampered],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-2',
+                builtAt: '2026-08-04T12:00:01.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /rebuilt REPEAT_EQUIVALENT artifact/.test(err.message)
+    );
+    assert.deepStrictEqual(
+        fs.readdirSync(dir).sort(),
+        before,
+        'a refused rebuild must not write, ledger, summary or marker anything'
+    );
+});
+
+test('R7-P2-1a: commitObservations rejects an accepted artifact built with INHERITED properties (Object.create) — no proto smuggling', () => {
+    const dir = tmpDir('fotmob-r7p21-proto-');
+    const ok = pairResult();
+    // Object.create(valid) has NO own fields — every `field in artifact`
+    // check sees the prototype chain, but JSON.stringify writes nothing.
+    const protoArtifact = Object.create(ok.artifact);
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact: protoArtifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for a non-plain artifact');
+});
+
+test('R7-P2-1b: commitObservations rejects an accepted artifact carrying ACCESSOR properties (getters)', () => {
+    const dir = tmpDir('fotmob-r7p21-getter-');
+    const ok = pairResult();
+    // A getter can return a valid value during validation and a different one
+    // at write time — the plain-JSON gate must refuse it outright.
+    const getterArtifact = { ...ok.artifact };
+    Object.defineProperty(getterArtifact, 'business_hash', {
+        get: () => ok.artifact.business_hash,
+        enumerable: true,
+        configurable: true,
+    });
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [{ ...ok, artifact: getterArtifact }],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /plain JSON data/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+test('R7-P2-1c (legal control): a plain-spread legal artifact still commits', () => {
+    const dir = tmpDir('fotmob-r7p21-plain-');
+    const ok = pairResult('3901023');
+    const summary = commitObservations({
+        results: [{ ...ok, artifact: { ...ok.artifact } }],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.accepted_new_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('R7-P2-2a: commitObservations refuses E013 on QUARANTINED_VALIDATION_FAIL — registry-valid but state-mismatched code, zero writes', () => {
+    const dir = tmpDir('fotmob-r7p22-e013-');
+    const bad = quarantinedPairResult(); // E011 / QUARANTINED_VALIDATION_FAIL
+    const tampered = { ...bad, error_code: 'E013' };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [tampered],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /does not match terminal_state/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no evidence file, no ledger, no summary, no marker');
+});
+
+test('R7-P2-2b (legal control): QUARANTINED_PROVENANCE_MISMATCH carries exactly E008 and commits valid evidence', () => {
+    const dir = tmpDir('fotmob-r7p22-provmatch-');
+    const bad = quarantinedPairResult();
+    const prov = { ...bad, terminal_state: 'QUARANTINED_PROVENANCE_MISMATCH', error_code: 'E008' };
+    const summary = commitObservations({
+        results: [prov],
+        outputRoot: dir,
+        repositoryRoot: REPO_ROOT,
+        runId: 'run-1',
+        builtAt: '2026-08-04T12:00:00.000Z',
+    });
+    assert.strictEqual(summary.business_projection.quarantined_count, 1);
+    const result = validateOutputRoot(dir, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('R7-P3-2a: commitObservations refuses an over-length source_match_id BEFORE any filename derives from it', () => {
+    const dir = tmpDir('fotmob-r7p32-longid-');
+    const ok = pairResult('3901023');
+    const longId = '1'.repeat(33);
+    const tampered = {
+        ...ok,
+        source_match_id: longId,
+        artifact: { ...ok.artifact, source_match_id: longId },
+    };
+    assert.throws(
+        () =>
+            commitObservations({
+                results: [tampered],
+                outputRoot: dir,
+                repositoryRoot: REPO_ROOT,
+                runId: 'run-1',
+                builtAt: '2026-08-04T12:00:00.000Z',
+            }),
+        err => err.code === 'INPUT_ERROR' && /exceeds/.test(err.message)
+    );
+    assert.deepStrictEqual(fs.readdirSync(dir), [], 'no write may happen for an over-length id');
+});

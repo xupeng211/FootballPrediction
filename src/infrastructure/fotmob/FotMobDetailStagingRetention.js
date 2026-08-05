@@ -74,6 +74,8 @@ const crypto = require('node:crypto');
 const {
     TERMINAL_STATES,
     ERROR_CODES,
+    MAX_SOURCE_MATCH_ID_LENGTH,
+    isPlainJsonData,
     validateStagingArtifact,
     buildStagingArtifact,
     canonicalJsonHash,
@@ -874,6 +876,17 @@ function compareSummaryObservations(a, b) {
     return 0;
 }
 
+// R7-P2-2 (Codex round 7): a quarantine terminal state carries EXACTLY the
+// error code that defines it. E013 (INTERNAL_CONTRACT_VIOLATION) is a
+// "should never happen" sentinel — NOT a legal quarantine code — and a
+// fallback that stringifies it into evidence files would commit records the
+// D-group validator then rejects. The map is the single source of truth for
+// the writer pre-loop and the D-group validator.
+const QUARANTINE_STATE_ERROR_CODES = Object.freeze({
+    [TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL]: Object.freeze([ERROR_CODES.E011]),
+    [TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH]: Object.freeze([ERROR_CODES.E008]),
+});
+
 /**
  * Stage converted observations into a single output root with the
  * LOGICAL_COMMIT_MARKER protocol. storeDir (if given) must equal outputRoot:
@@ -983,6 +996,17 @@ function commitObservations(args = {}) {
                 { code: 'INPUT_ERROR' }
             );
         }
+        // R7-P3-2 (Codex round 7): bound the id BEFORE any filename or ledger
+        // key derives from it — an arbitrarily long digit id must fail here
+        // with a structured error, not at the filesystem (ENAMETOOLONG).
+        if (effectiveId.length > MAX_SOURCE_MATCH_ID_LENGTH) {
+            throw Object.assign(
+                new Error(
+                    `result source_match_id exceeds ${MAX_SOURCE_MATCH_ID_LENGTH} digits (got ${effectiveId.length})`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
         if (resultId !== '' && artifactId !== '' && resultId !== artifactId) {
             throw Object.assign(
                 new Error(
@@ -1002,6 +1026,18 @@ function commitObservations(args = {}) {
             if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
                 throw Object.assign(
                     new Error('accepted result must carry a plain artifact object'),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
+            // R7-P2-1 (Codex round 7): "plain object" is not enough —
+            // Object.create(validArtifact) inherits every field, and getters
+            // can return valid values at validation time and different ones
+            // at write time. Only strict plain JSON data passes.
+            if (!isPlainJsonData(artifact)) {
+                throw Object.assign(
+                    new Error(
+                        'accepted result artifact must be plain JSON data (no inherited props, no accessors)'
+                    ),
                     { code: 'INPUT_ERROR' }
                 );
             }
@@ -1058,6 +1094,22 @@ function commitObservations(args = {}) {
                     { code: 'INPUT_ERROR' }
                 );
             }
+            // R7-P2-2 (Codex round 7): the code must be the EXACT code that
+            // defines the declared terminal state — a registry-valid but
+            // mismatched code (E013 on QUARANTINED_VALIDATION_FAIL) would
+            // otherwise be written as evidence the D-group validator then
+            // rejects. No fallback can mask a mismatched pair.
+            const allowedCodes = QUARANTINE_STATE_ERROR_CODES[result.terminal_state] || [];
+            if (!allowedCodes.includes(errorCode)) {
+                throw Object.assign(
+                    new Error(
+                        `quarantined result error_code ${errorCode} does not match terminal_state ${result.terminal_state} (allowed: ${allowedCodes.join(
+                            '/'
+                        )})`
+                    ),
+                    { code: 'INPUT_ERROR' }
+                );
+            }
         }
     }
 
@@ -1083,6 +1135,58 @@ function commitObservations(args = {}) {
                     payloadFileSha256: inputs.payloadFileSha256,
                     terminalState: TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT,
                 });
+                // R7-P1-2 (Codex round 7): the FINAL artifact — the exact
+                // snapshot that will be written, ledgered and markered — must
+                // pass the same contract as the pre-checked input. The rebuild
+                // derives from `artifactInputs`, which an exported-API caller
+                // fully controls: a rebuild missing its stable hash, identity,
+                // terminal state or required fields is refused BEFORE any byte
+                // is written. Summary, ledger and writer all keep referencing
+                // this same snapshot (P0-2 write-back below).
+                if (!isPlainJsonData(artifact)) {
+                    throw Object.assign(
+                        new Error('rebuilt REPEAT_EQUIVALENT artifact is not plain JSON data'),
+                        { code: 'INPUT_ERROR' }
+                    );
+                }
+                if (
+                    typeof artifact.stable_payload_sha256 !== 'string' ||
+                    !/^[0-9a-f]{64}$/.test(artifact.stable_payload_sha256)
+                ) {
+                    throw Object.assign(
+                        new Error(
+                            'rebuilt REPEAT_EQUIVALENT artifact stable_payload_sha256 must be a 64-lowercase-hex string'
+                        ),
+                        { code: 'INPUT_ERROR' }
+                    );
+                }
+                if (String(artifact.source_match_id ?? '') !== sourceMatchId) {
+                    throw Object.assign(
+                        new Error(
+                            `rebuilt REPEAT_EQUIVALENT artifact source_match_id ${String(
+                                artifact.source_match_id
+                            )} disagrees with ${sourceMatchId}`
+                        ),
+                        { code: 'INPUT_ERROR' }
+                    );
+                }
+                if (artifact.import_terminal_state !== TERMINAL_STATES.ACCEPTED_REPEAT_EQUIVALENT) {
+                    throw Object.assign(
+                        new Error(
+                            `rebuilt REPEAT_EQUIVALENT artifact import_terminal_state must be ACCEPTED_REPEAT_EQUIVALENT`
+                        ),
+                        { code: 'INPUT_ERROR' }
+                    );
+                }
+                const rebuiltValidation = validateStagingArtifact(artifact);
+                if (!rebuiltValidation.ok) {
+                    throw Object.assign(
+                        new Error(
+                            `rebuilt REPEAT_EQUIVALENT artifact invalid: ${rebuiltValidation.errors.join('; ')}`
+                        ),
+                        { code: 'INPUT_ERROR' }
+                    );
+                }
                 // P0-2: write the FINAL artifact back into the classification so
                 // the summary (buildSummary reads cls.artifact) and everything
                 // downstream derive from the SAME artifact the ledger records
@@ -1117,7 +1221,10 @@ function commitObservations(args = {}) {
             cls.terminal_state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL ||
             cls.terminal_state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
         ) {
-            const errorCode = result.error_code || ERROR_CODES.E013;
+            // R7-P2-2 (Codex round 7): the pre-loop gate has already verified
+            // this code matches the declared quarantine terminal state — no
+            // E013 fallback can substitute for a mismatched or missing code.
+            const errorCode = result.error_code;
             const fileName = quarantineFileName(sourceMatchId, errorCode);
             const quarantineKey = `${sourceMatchId}:${errorCode}`;
             if (
@@ -1299,7 +1406,9 @@ function buildSummary(args = {}) {
             // ledger by the SAME derived key/file name the ledger uses — the
             // validator cross-checks `source_match_id:error_code` key and the
             // quarantine file against the ledger + marker.
-            const errorCode = result.error_code || ERROR_CODES.E013;
+            // R7-P2-2 (Codex round 7): no E013 fallback — the commit pre-loop
+            // has already validated the exact code for this terminal state.
+            const errorCode = result.error_code;
             observation.quarantine_file = quarantineFileName(sourceMatchId, errorCode);
         }
         if (cls.artifact) {
@@ -1859,19 +1968,21 @@ function validateOutputRoot(outputRoot, options = {}) {
                     message: `quarantine file contains payload content: ${quarantineFile}`,
                 });
             }
-            // 31. error code / terminal state coherence.
+            // 31. error code / terminal state coherence — the SAME map the
+            // commit pre-loop enforces (R7-P2-2), so a quarantine record whose
+            // code does not define its state can never be committed OR
+            // accepted by the validator.
             const state = String(quarantine.terminal_state ?? '');
             const code = String(quarantine.error_code ?? '');
-            if (state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL && code !== ERROR_CODES.E011) {
-                errors.push({
-                    code: 'QUARANTINE_INVALID',
-                    message: `quarantine ${quarantineFile}: QUARANTINED_VALIDATION_FAIL must carry E011`,
-                });
-            }
-            if (
-                state !== TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL &&
-                state !== TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH
-            ) {
+            const allowedCodes = QUARANTINE_STATE_ERROR_CODES[state] || [];
+            if (state === TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL || state === TERMINAL_STATES.QUARANTINED_PROVENANCE_MISMATCH) {
+                if (!allowedCodes.includes(code)) {
+                    errors.push({
+                        code: 'QUARANTINE_INVALID',
+                        message: `quarantine ${quarantineFile}: ${state} must carry ${allowedCodes.join('/')}`,
+                    });
+                }
+            } else {
                 errors.push({
                     code: 'QUARANTINE_INVALID',
                     message: `quarantine ${quarantineFile}: unknown quarantine terminal state ${state}`,

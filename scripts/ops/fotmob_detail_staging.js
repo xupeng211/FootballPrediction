@@ -542,8 +542,14 @@ async function main(argv = process.argv.slice(2)) {
         return 0;
     }
     if (subcommand === 'build') {
-        print(await runBuild(args));
-        return 0;
+        // R7-P1-1 (Codex round 7): a build that is explicitly refused must NOT
+        // exit 0 — runBuild() returns `{status:'blocked'}` (e.g. a schema-
+        // invalid source index) without throwing, and automation keying on
+        // the exit code would treat the refusal as success. Only a fully
+        // completed build is 0.
+        const result = await runBuild(args);
+        print(result);
+        return result.status === 'complete' ? 0 : 1;
     }
     if (subcommand === 'validate') {
         // R6-P1-1 (Codex round 6): a validation failure must NOT exit 0 —
