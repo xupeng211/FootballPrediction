@@ -1041,7 +1041,71 @@ test('V34b (R1-P0-1): a fabricated inspected member table is rejected (no capabi
                 receipt,
                 inspected,
             }),
-        err => err.code === 'SAFETY_ERROR' && /live verification capability/.test(err.message)
+        err => err.code === 'SAFETY_ERROR' && /registered by this module/.test(err.message)
+    );
+});
+
+test('V34e (R2-P0-1): spreading a GENUINE live result and replacing members is rejected (identity, not a symbol)', () => {
+    const dir = tmpDir('fotmob-r2-p0-1-spread-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-cap',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    // the R2-P0-1 attack: `{ ...live, members: [...] }` copies any plain
+    // enumerable property — the R1 symbol design was forgeable this way.
+    // With the WeakSet identity registry the SPREAD OBJECT is a different
+    // object and must be rejected outright.
+    const forged = { ...live, members: [{ name: 'x.json', type: 'file', sha256: 'a'.repeat(64) }] };
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-cap' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding,
+                receipt,
+                inspected: forged,
+            }),
+        err => err.code === 'SAFETY_ERROR' && /registered by this module/.test(err.message)
+    );
+});
+
+test('V34f (R2-P0-1): the registered inspection is deep-frozen (in-place member replacement is impossible)', () => {
+    const dir = tmpDir('fotmob-r2-p0-1-frozen-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-cap',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    assert.strictEqual(Object.isFrozen(live), true);
+    assert.strictEqual(Object.isFrozen(live.members), true);
+    assert.strictEqual(Object.isFrozen(live.members[0]), true);
+    assert.throws(
+        () => {
+            live.members[0].sha256 = '0'.repeat(64); // strict-mode mutation of a frozen row
+        },
+        TypeError
+    );
+    assert.throws(
+        () => {
+            live.members.length = 0; // frozen array
+        },
+        TypeError
     );
 });
 

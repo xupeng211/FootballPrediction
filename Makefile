@@ -446,6 +446,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-fotmob-detail-staging-receipt ARCHIVE=<path> EXPECTED_SHA256=<sha> PACKAGE_ID=<id> PAYLOAD_MEMBER=<tar member> MANIFEST_MEMBER=<tar member> RECEIPT_OUT=<external abs path>  # fully offline archive verification (VERIFIED_PACKAGE_RECEIPT)"
 	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<path> OUTPUT_ROOT=<external abs path>  # fully offline staging converter; ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE"
+	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<external abs path> [EXPECTED_LATEST_MARKER_SHA256=<64hex> | ANCHOR_CHECKPOINT=<external abs path>]  # fully offline staging validator; anchors are mutually exclusive"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
 	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"

@@ -52,13 +52,23 @@ const PACKAGE_RECEIPT_SCHEMA = 'fotmob-detail-staging-package-receipt/v1';
 
 const TAR_BLOCK = 512;
 
-// R1-P0-1 (Codex round 1): the live inspection result handed across the
-// module boundary carries a module-private, unforgeable capability. A caller
-// may reuse an inspection ONLY if it came from this module's own live
-// verification in this run; a fabricated {members:[...]} table cannot carry
-// the symbol and is rejected, so the receipt can never be checked against
-// forged member tables. The symbol is created here and never exported.
-const LIVE_VERIFY_CAPABILITY = Symbol('fotmob.live-verified-inspection');
+// R1-P0-1 / R2-P0-1 (Codex rounds 1-2): a live inspection result may be
+// reused ONLY if it came from this module's own live verification in this
+// run. R1's enumerable Symbol property was forgeable by object spread
+// (`{ ...live, members: [...] }` copied the symbol), so round 2 hardened
+// this to unforgeable OBJECT IDENTITY: the registry is a module-private
+// WeakSet, and every registered inspection is deep-frozen (top object +
+// members array + each member row), so a spread copy is a different object
+// (not in the set -> rejected) and in-place member replacement is
+// impossible. A fabricated {members:[...]} table can never satisfy either.
+const liveVerifyRegistry = new WeakSet();
+
+function deepFreezeInspection(inspected) {
+    for (const member of inspected.members) Object.freeze(member);
+    Object.freeze(inspected.members);
+    Object.freeze(inspected);
+    return inspected;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Generic input path gates (FINDING_4)
@@ -674,7 +684,12 @@ function verifyLiveArchiveAgainstReceipt(args = {}) {
             );
         }
     }
-    return { ...inspected, live_verify_capability: LIVE_VERIFY_CAPABILITY };
+    // R1-P0-1 / R2-P0-1: register the inspected object BY IDENTITY and deep
+    // freeze it before handing it out — the registry membership is the
+    // unforgeable capability; a spread copy is a different object and is
+    // rejected, and the frozen members table cannot be replaced in place.
+    liveVerifyRegistry.add(inspected);
+    return deepFreezeInspection(inspected);
 }
 
 /**
@@ -720,16 +735,17 @@ function verifyEntryAgainstReceipt(args = {}) {
     }
 
     // P0-1: bind the receipt to the LIVE archive. `inspected` is accepted
-    // ONLY when it carries the module-private live-verification capability
-    // (R1-P0-1): it must have come from THIS module's own
-    // verifyLiveArchiveAgainstReceipt in this run, and its archive SHA must
-    // be the receipt's archive SHA. A fabricated member table cannot carry
-    // the symbol and is rejected; if no inspected is supplied (direct API
-    // use), the live archive is re-verified here — fail closed either way.
+    // ONLY when it is the module-private live-verification capability
+    // (R1-P0-1, hardened in R2-P0-1): it must be the exact object registered
+    // by THIS module's own verifyLiveArchiveAgainstReceipt in this run
+    // (WeakSet identity — a spread copy or fabricated object is rejected),
+    // and its archive SHA must be the receipt's archive SHA. If no inspected
+    // is supplied (direct API use), the live archive is re-verified here —
+    // fail closed either way.
     if (args.inspected !== undefined) {
-        if (args.inspected.live_verify_capability !== LIVE_VERIFY_CAPABILITY) {
+        if (!liveVerifyRegistry.has(args.inspected)) {
             throw Object.assign(
-                new Error('inspected must carry the module-private live verification capability'),
+                new Error('inspected must be a live-verification capability registered by this module (object identity; spreads and fabricated objects are rejected)'),
                 { code: 'SAFETY_ERROR' }
             );
         }
