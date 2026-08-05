@@ -531,6 +531,25 @@ test('P1-5: malformed anchors are rejected as INPUT_ERROR', async () => {
     );
 });
 
+test('R1-P1-2: --anchor-checkpoint and --expected-latest-marker-sha256 together are rejected (mutually exclusive)', async () => {
+    const dir = tmpDir('fotmob-r1-p12-bothanchor-');
+    const { indexFile, outputRoot } = buildOneMatchStore(dir);
+    await runBuild({ 'source-index': indexFile, 'output-root': outputRoot });
+    // a real checkpoint file: the mutual-exclusion check fires before the
+    // file is read, so even a valid checkpoint cannot be combined with the
+    // direct marker sha
+    fs.writeFileSync(path.join(dir, 'checkpoint.json'), JSON.stringify({ latest_marker_sha256: '0'.repeat(64) }) + '\n');
+    await assert.rejects(
+        () =>
+            runValidate({
+                'output-root': outputRoot,
+                'expected-latest-marker-sha256': '1'.repeat(64),
+                'anchor-checkpoint': path.join(dir, 'checkpoint.json'),
+            }),
+        err => err.code === 'INPUT_ERROR' && /only one of/.test(err.message)
+    );
+});
+
 test('P1-5: single-artifact validate reports integrity and UNANCHORED authenticity', async () => {
     const dir = tmpDir('fotmob-p15-artifact-');
     const { indexFile, outputRoot } = buildOneMatchStore(dir);

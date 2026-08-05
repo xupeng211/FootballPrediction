@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 // lifecycle: permanent
@@ -25,9 +26,11 @@ const {
     buildPackageReceipt,
     verifyPackageReceipt,
     verifyEntryAgainstReceipt,
+    verifyLiveArchiveAgainstReceipt,
     verifyRepositoryExternalRegularFile,
     verifyRepositoryExternalDirectory,
     assertInputOutputNonOverlap,
+    parseOctal,
     parsePaxRecords,
 } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
 const {
@@ -1003,6 +1006,158 @@ test('V34 (P0-1): archive_inventory_sha256 is required in the receipt schema', (
     const validation = verifyPackageReceipt(oldFormat);
     assert.strictEqual(validation.ok, false);
     assert.ok(validation.errors.some(e => /archive_inventory_sha256/.test(e)), JSON.stringify(validation.errors));
+});
+
+// ── R1-P0-1: unforgeable live-verification capability (Codex round 1) ──
+
+test('V34b (R1-P0-1): a fabricated inspected member table is rejected (no capability, no bypass)', () => {
+    const dir = tmpDir('fotmob-r1-p0-1-forgedinsp-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-cap',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    // The forged inspected is fully self-consistent with the receipt — real
+    // archive SHA, real member names and real per-member hashes — so the ONLY
+    // thing missing is the module-private live-verification capability. This
+    // is the exact R1-P0-1 bypass attempt: a fabricated member table would
+    // otherwise skip the live archive check entirely.
+    const inspected = {
+        archive_sha256: receipt.archive_sha256,
+        members: Object.entries(receipt.members).map(([name, sha256]) => ({ name, type: 'file', sha256 })),
+    };
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-cap' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding: { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' },
+                receipt,
+                inspected,
+            }),
+        err => err.code === 'SAFETY_ERROR' && /live verification capability/.test(err.message)
+    );
+});
+
+test('V34c (R1-P0-1): a GENUINE capability from a different archive is rejected (bound to the receipt archive)', () => {
+    const dir = tmpDir('fotmob-r1-p0-1-crosscap-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-a' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-a',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt-a.json'),
+    });
+    // a second archive, live-verified, yields a REAL capability — but for a
+    // DIFFERENT archive than this receipt's
+    const pairB = buildPair({ source_match_id: '3901024' });
+    const otherInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901024', pair: pairB }], { packageId: 'pkg-b' });
+    const otherReceipt = writeFixtureReceipt({
+        archivePath: otherInfo.archivePath,
+        archiveSha256: otherInfo.archiveSha256,
+        packageId: 'pkg-b',
+        payloadMember: otherInfo.payloadMember,
+        manifestMember: otherInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt-b.json'),
+    });
+    const liveOther = verifyLiveArchiveAgainstReceipt({
+        binding: { sha256: otherInfo.archiveSha256, path: otherInfo.archivePath, receipt: '' },
+        receipt: otherReceipt,
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.throws(
+        () =>
+            verifyEntryAgainstReceipt({
+                entry: { package: 'pkg-a' },
+                payloadFile: archiveInfo.payloadFile,
+                manifestFile: archiveInfo.manifestFile,
+                binding: { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' },
+                receipt,
+                inspected: liveOther,
+            }),
+        err => err.code === 'SAFETY_ERROR' && /archive sha256 does not match the receipt/.test(err.message)
+    );
+});
+
+test('V34d (R1-P0-1): a GENUINE capability is accepted (the per-run cached path is not regressed)', () => {
+    const dir = tmpDir('fotmob-r1-p0-1-goodcap-');
+    const pair = buildPair({ source_match_id: '3901023' });
+    const archiveInfo = writeFixtureArchive(dir, [{ sourceMatchId: '3901023', pair }], { packageId: 'pkg-cap' });
+    const receipt = writeFixtureReceipt({
+        archivePath: archiveInfo.archivePath,
+        archiveSha256: archiveInfo.archiveSha256,
+        packageId: 'pkg-cap',
+        payloadMember: archiveInfo.payloadMember,
+        manifestMember: archiveInfo.manifestMember,
+        receiptPath: path.join(dir, 'receipt.json'),
+    });
+    const binding = { sha256: archiveInfo.archiveSha256, path: archiveInfo.archivePath, receipt: '' };
+    const live = verifyLiveArchiveAgainstReceipt({ binding, receipt, options: { repositoryRoot: REPO_ROOT } });
+    const loaded = verifyEntryAgainstReceipt({
+        entry: { package: 'pkg-cap' },
+        payloadFile: archiveInfo.payloadFile,
+        manifestFile: archiveInfo.manifestFile,
+        binding,
+        receipt,
+        inspected: live,
+        options: { repositoryRoot: REPO_ROOT },
+    });
+    assert.strictEqual(loaded.payload.source_match_id, '3901023');
+});
+
+// ── R1-P2-1 / R1-P2-2: strict octal sizes + two zero end blocks (Codex
+// ── round 1) ─────────────────────────────────────────────────────
+
+test('R1-P2-1: parseOctal returns null for an all-NUL/space field (empty is not zero)', () => {
+    assert.strictEqual(parseOctal(Buffer.alloc(12), 0, 12), null);
+    assert.strictEqual(parseOctal(Buffer.alloc(12, 32), 0, 12), null); // spaces
+    assert.strictEqual(parseOctal(Buffer.from('00000000000\0', 'utf8'), 0, 12), 0); // explicit zero IS a digit
+    assert.strictEqual(parseOctal(Buffer.from('00000000123\0', 'utf8'), 0, 12), 83); // 0o123
+});
+
+test('R1-P2-1: an archive member with an all-NUL size field is rejected, not read as zero bytes', () => {
+    const dir = tmpDir('fotmob-r1-p2-1-emptysize-');
+    const archive = path.join(dir, 'emptysize.tar.gz');
+    const header = rawTarHeader('payload.json', '0', 5);
+    header.fill(0, 124, 136); // erase the size field (12 bytes all-NUL)
+    let sum = 0;
+    for (let i = 0; i < 512; i += 1) sum += i >= 148 && i < 156 ? 32 : header[i];
+    header.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 'utf8');
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([rawTarBlock(header, Buffer.from('hello')), Buffer.alloc(1024)])));
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /not valid octal/.test(err.message)
+    );
+});
+
+test('R1-P2-2: a single zero end block is rejected (truncated end-of-archive marker)', () => {
+    const dir = tmpDir('fotmob-r1-p2-2-singlezero-');
+    const archive = path.join(dir, 'singlezero.tar.gz');
+    const tar = rawTarBlock(rawTarHeader('payload.json', '0', 3), Buffer.from('abc'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(512)]))); // ONE zero block only
+    assert.throws(
+        () => inspectArchive(archive, { repositoryRoot: REPO_ROOT }),
+        err => err.code === 'SAFETY_ERROR' && /two zero blocks required/.test(err.message)
+    );
+});
+
+test('R1-P2-2: the same archive with two zero end blocks is accepted (control)', () => {
+    const dir = tmpDir('fotmob-r1-p2-2-twozero-');
+    const archive = path.join(dir, 'twozero.tar.gz');
+    const tar = rawTarBlock(rawTarHeader('payload.json', '0', 3), Buffer.from('abc'));
+    fs.writeFileSync(archive, gzipOf(Buffer.concat([tar, Buffer.alloc(1024)])));
+    const inspected = inspectArchive(archive, { repositoryRoot: REPO_ROOT });
+    assert.strictEqual(inspected.members.length, 1);
+    assert.strictEqual(inspected.members[0].size, 3);
 });
 
 // ── P1-1: ustar magic / prefix / normalized-path safety (Codex review

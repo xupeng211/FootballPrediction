@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 // lifecycle: permanent
@@ -825,6 +826,53 @@ for (const [mField, pField] of PAIRS) {
         );
     });
 }
+
+// ── R1-P1-1: type-strict double binding for boolean fields (Codex round 1)
+// ── The OLD code String()-coerced both sides, so boolean `true` and string
+// ── `"true"` compared equal — while the artifact writer used `=== true` and
+// ── silently wrote `false`. ──────────────────────────────────────────
+
+test('R1-P1-1: payload string "true" for a boolean double-bound field is a type mismatch, not equality', () => {
+    const pair = buildPair();
+    pair.payload.observed_identity.observed_match_id_is_response_derived = 'true'; // string, not boolean
+    pair.payloadBytes = Buffer.from(JSON.stringify(pair.payload, null, 2) + '\n', 'utf8');
+    const validation = validateObservation({ payload: pair.payload, manifest: pair.manifest, payloadBytes: pair.payloadBytes });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => e.message.includes('must be a boolean on both documents')),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R1-P1-1: manifest string "true" for a boolean double-bound field is rejected', () => {
+    const pair = buildPair();
+    const manifest = { ...pair.manifest, observed_match_id_is_response_derived: 'true' };
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+    const validation = validateObservation({ payload: pair.payload, manifest, payloadBytes: pair.payloadBytes });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => e.message.includes('must be a boolean on both documents')),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R1-P1-1: manifest string "false" and payload boolean false are still a type mismatch', () => {
+    const pair = buildPair();
+    const manifest = { ...pair.manifest, observed_match_id_conflict: 'false' };
+    manifest.capture_manifest_sha256 = computeCaptureManifestSelfHash(manifest);
+    const validation = validateObservation({ payload: pair.payload, manifest, payloadBytes: pair.payloadBytes });
+    assert.strictEqual(validation.ok, false);
+    assert.ok(
+        validation.errors.some(e => e.message.includes('must be a boolean on both documents')),
+        JSON.stringify(validation.errors)
+    );
+});
+
+test('R1-P1-1: genuine booleans on both sides still pass the double binding (no regression)', () => {
+    const pair = buildPair();
+    const validation = validateObservation({ payload: pair.payload, manifest: pair.manifest, payloadBytes: pair.payloadBytes });
+    assert.strictEqual(validation.ok, true, JSON.stringify(validation.errors));
+});
 
 test('P1-2: kickoff_at byte-inequality is rejected (nanosecond precision)', () => {
     const pair = buildPair();

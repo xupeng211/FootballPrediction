@@ -767,12 +767,12 @@ data-fotmob-detail-staging-help: ## Show safe FotMob detail staging entrypoint p
 	@echo "all Node commands go through \$$(COMPOSE_DEV) exec -T dev (no host-side business logic)."
 	@echo "  make data-fotmob-detail-staging-receipt ARCHIVE=<abs path visible in dev container> EXPECTED_SHA256=<64-hex> PACKAGE_ID=<id> PAYLOAD_MEMBER=<tar member> MANIFEST_MEMBER=<tar member> RECEIPT_OUT=<abs external path visible in dev container>"
 	@echo "  make data-fotmob-detail-staging-build SOURCE_INDEX=<absolute path visible in dev container> OUTPUT_ROOT=<absolute repository-external path visible in dev container> [RUN_ID=<plain-identifier>]"
-	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<absolute repository-external path visible in dev container> [EXPECTED_LATEST_MARKER_SHA256=<64hex>]"
+	@echo "  make data-fotmob-detail-staging-validate OUTPUT_ROOT=<absolute repository-external path visible in dev container> [EXPECTED_LATEST_MARKER_SHA256=<64hex>] [ANCHOR_CHECKPOINT=<absolute external checkpoint json>]"
 	@echo "  make data-fotmob-detail-staging-help"
 	@echo "Hard guarantees: OFFLINE ONLY — ZERO NETWORK (no fetch), ZERO DATABASE (no DB client), NO MIGRATION, NO CAPTURE."
 	@echo "Commit model: LOGICAL_COMMIT_MARKER (commit marker is the only commit point; residue reported, never treated as committed)."
 	@echo "Archive model: VERIFIED_PACKAGE_RECEIPT (live archive SHA-256 + safe tar member binding; every entry bound to one package)."
-	@echo "Anchoring: validate without EXPECTED_LATEST_MARKER_SHA256 = MODE_1_UNANCHORED; with it = MODE_2_EXTERNALLY_ANCHORED (anchor mismatch fails)."
+	@echo "Anchoring: validate without EXPECTED_LATEST_MARKER_SHA256 or ANCHOR_CHECKPOINT = MODE_1_UNANCHORED; with either = MODE_2_EXTERNALLY_ANCHORED (anchor mismatch fails). The two anchor variables are mutually exclusive."
 
 data-fotmob-detail-staging-receipt: ## Fully offline archive verification: builds a VERIFIED_PACKAGE_RECEIPT binding archive SHA-256 + safe tar member hashes. OFFLINE ONLY / ZERO NETWORK / ZERO DATABASE / NO MIGRATION / NO CAPTURE.
 	@if [ -z "$(ARCHIVE)" ] || [ -z "$(EXPECTED_SHA256)" ] || [ -z "$(PACKAGE_ID)" ] || [ -z "$(PAYLOAD_MEMBER)" ] || [ -z "$(MANIFEST_MEMBER)" ] || [ -z "$(RECEIPT_OUT)" ]; then \
@@ -793,7 +793,11 @@ data-fotmob-detail-staging-validate: ## Fully offline staging validator: re-vali
 		echo "ERROR: provide OUTPUT_ROOT=<absolute repository-external path>"; \
 		exit 1; \
 	fi
-	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)" $(if $(EXPECTED_LATEST_MARKER_SHA256),--expected-latest-marker-sha256 "$(EXPECTED_LATEST_MARKER_SHA256)",)
+	@if [ -n "$(EXPECTED_LATEST_MARKER_SHA256)" ] && [ -n "$(ANCHOR_CHECKPOINT)" ]; then \
+		echo "ERROR: provide only one of EXPECTED_LATEST_MARKER_SHA256 or ANCHOR_CHECKPOINT (they are mutually exclusive anchoring modes)"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)" $(if $(EXPECTED_LATEST_MARKER_SHA256),--expected-latest-marker-sha256 "$(EXPECTED_LATEST_MARKER_SHA256)",)$(if $(ANCHOR_CHECKPOINT),--anchor-checkpoint "$(ANCHOR_CHECKPOINT)",)
 
 data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
 	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \

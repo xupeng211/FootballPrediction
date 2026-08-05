@@ -55,7 +55,7 @@
   O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
   冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
   -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
-  MODE_2_EXTERNALLY_ANCHORED）。194 项 staging 测试 + 395 项受影响旧测试全绿，
+  MODE_2_EXTERNALLY_ANCHORED）。207 项 staging 测试 + 395 项受影响旧测试全绿，
   ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
   archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
@@ -76,8 +76,8 @@
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
   F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
-  194 项 staging 测试（52 retention 故障注入/篡改 + 46 source verification +
-  66 contract + 12 converter + 18 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
+  207 项 staging 测试（52 retention 故障注入/篡改 + 53 source verification +
+  70 contract + 13 converter + 19 CLI）+ 347 项 legacy FotMob + 769 项 unit 全绿；
   ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
   RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
   REPEAT_EQUIVALENT（SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO），

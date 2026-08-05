@@ -482,8 +482,8 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 195 staging unit tests (52 retention incl. fault-injection and
-tamper + 46 source verification + 66 contract + 13 converter + 18 CLI) green
+Test counts: 207 staging unit tests (52 retention incl. fault-injection and
+tamper + 53 source verification + 70 contract + 13 converter + 19 CLI) green
 on the remediation head; ESLint clean. 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero

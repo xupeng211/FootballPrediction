@@ -52,6 +52,14 @@ const PACKAGE_RECEIPT_SCHEMA = 'fotmob-detail-staging-package-receipt/v1';
 
 const TAR_BLOCK = 512;
 
+// R1-P0-1 (Codex round 1): the live inspection result handed across the
+// module boundary carries a module-private, unforgeable capability. A caller
+// may reuse an inspection ONLY if it came from this module's own live
+// verification in this run; a fabricated {members:[...]} table cannot carry
+// the symbol and is rejected, so the receipt can never be checked against
+// forged member tables. The symbol is created here and never exported.
+const LIVE_VERIFY_CAPABILITY = Symbol('fotmob.live-verified-inspection');
+
 // ─────────────────────────────────────────────────────────────
 // Generic input path gates (FINDING_4)
 // ─────────────────────────────────────────────────────────────
@@ -149,13 +157,19 @@ function assertInputOutputNonOverlap(inputFile, outputRoot) {
 
 function parseOctal(bytes, offset, length) {
     let value = 0;
+    let sawDigit = false;
     for (let i = offset; i < offset + length; i += 1) {
         const ch = bytes[i];
         if (ch === 0 || ch === 32) continue; // NUL or space padding
         if (ch < 48 || ch > 55) return null; // not octal digit
+        sawDigit = true;
         value = value * 8 + (ch - 48);
     }
-    return value;
+    // R1-P2-1 (Codex round 1): an all-NUL/space field is NOT "size 0" — a
+    // numeric field must contain at least one octal digit. Returning null
+    // lets the size consumer fail closed (invalid octal) instead of
+    // accepting an empty size field as a zero-byte member.
+    return sawDigit ? value : null;
 }
 
 /**
@@ -404,11 +418,18 @@ function inspectArchive(archivePath, options = {}) {
     }
 
     // Canonical end-of-archive: the loop exits EITHER on the first zero block
-    // (the two zero end blocks) or by running out of buffer. If it ran out of
-    // buffer without ever seeing the end blocks the archive is truncated and
-    // must be rejected (P2-1). If it broke on a zero block, the tail must be
-    // zero padding only — trailing non-zero data means a mangled archive.
+    // or by running out of buffer. The tar spec requires TWO consecutive
+    // 512-byte zero blocks (1024 zero bytes) as the end marker; everything
+    // after them must be zero padding only. If the buffer runs out without
+    // the end blocks, or the marker has only one zero block, the archive is
+    // truncated and must be rejected (P2-1; R1-P2-2 for the two-block rule).
     if (offset + TAR_BLOCK <= tar.length) {
+        if (offset + 2 * TAR_BLOCK > tar.length) {
+            throw Object.assign(
+                new Error(`tar end-of-archive marker is truncated (two zero blocks required): ${abs}`),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
         const tail = tar.subarray(offset);
         if (!tail.every(b => b === 0)) {
             throw Object.assign(new Error(`tar has non-canonical end (trailing data after end blocks): ${abs}`), {
@@ -653,7 +674,7 @@ function verifyLiveArchiveAgainstReceipt(args = {}) {
             );
         }
     }
-    return inspected;
+    return { ...inspected, live_verify_capability: LIVE_VERIFY_CAPABILITY };
 }
 
 /**
@@ -698,9 +719,27 @@ function verifyEntryAgainstReceipt(args = {}) {
         });
     }
 
-    // P0-1: bind the receipt to the LIVE archive. `inspected` comes from the
-    // per-package-per-run re-verification in the CLI; if the caller did not
-    // provide it (direct API use), re-verify here — fail closed either way.
+    // P0-1: bind the receipt to the LIVE archive. `inspected` is accepted
+    // ONLY when it carries the module-private live-verification capability
+    // (R1-P0-1): it must have come from THIS module's own
+    // verifyLiveArchiveAgainstReceipt in this run, and its archive SHA must
+    // be the receipt's archive SHA. A fabricated member table cannot carry
+    // the symbol and is rejected; if no inspected is supplied (direct API
+    // use), the live archive is re-verified here — fail closed either way.
+    if (args.inspected !== undefined) {
+        if (args.inspected.live_verify_capability !== LIVE_VERIFY_CAPABILITY) {
+            throw Object.assign(
+                new Error('inspected must carry the module-private live verification capability'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(args.inspected.archive_sha256 || '') !== String(receipt.archive_sha256 || '')) {
+            throw Object.assign(
+                new Error('inspected archive sha256 does not match the receipt archive sha256'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    }
     const inspected =
         args.inspected || verifyLiveArchiveAgainstReceipt({ binding, receipt, options });
 

@@ -950,9 +950,9 @@ legacy-writer execution is authorized.
   validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
   required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
   timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
-  targets; P3-1 docs/PR-body rewrite. 194 staging tests (52 retention
-  fault-injection/tamper + 46 source verification + 66 contract + 12
-  converter + 18 CLI) + 347 legacy FotMob + 769 unit tests green; ESLint
+  targets; P3-1 docs/PR-body rewrite. 207 staging tests (52 retention
+  fault-injection/tamper + 53 source verification + 70 contract + 13
+  converter + 19 CLI) + 347 legacy FotMob + 769 unit tests green; ESLint
   clean. 16-match offline revalidation on the fixed archives: RUN_1 16
   ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
   REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);

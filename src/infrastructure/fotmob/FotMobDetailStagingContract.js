@@ -173,6 +173,13 @@ const DOUBLE_BOUND_FIELD_PAIRS = Object.freeze([
     ['stable_payload_sha256', 'stable_payload_sha256'],
 ]);
 
+// R1-P1-1: matrix rows whose values are booleans on BOTH documents. These
+// are compared type-strict in the A-class loop (never String()-coerced).
+const DOUBLE_BOUND_BOOLEAN_FIELDS = new Set([
+    'observed_match_id_conflict',
+    'observed_match_id_is_response_derived',
+]);
+
 // ACTUAL_DOUBLE_BOUND_FIELDS — authoritative count of the A-class matrix.
 const ACTUAL_DOUBLE_BOUND_FIELDS = Object.freeze(
     DOUBLE_BOUND_FIELD_PAIRS.map(([manifestPath]) => manifestPath)
@@ -557,9 +564,30 @@ function validateDoubleBinding(payload, manifest) {
     };
 
     // A-class: every matrix row must exist on both documents and agree.
+    // R1-P1-1: the two observed-identity provenance fields are BOOLEANS on
+    // both documents. Stringifying them would accept `true` vs `"true"` as
+    // equal (and later `=== true` artifact writes would silently invert the
+    // value), so boolean fields are compared type-strict: both sides must be
+    // the boolean type and agree exactly.
     for (const [mField, pField] of DOUBLE_BOUND_FIELD_PAIRS) {
         const mVal = manifest[mField];
         const pVal = payloadAt(pField);
+        if (DOUBLE_BOUND_BOOLEAN_FIELDS.has(mField)) {
+            if (typeof mVal !== 'boolean' || typeof pVal !== 'boolean') {
+                errors.push({
+                    code: ERROR_CODES.E009,
+                    message: `double binding ${mField}: must be a boolean on both documents (manifest ${typeof mVal}, payload ${typeof pVal})`,
+                });
+                continue;
+            }
+            if (mVal !== pVal) {
+                errors.push({
+                    code: ERROR_CODES.E009,
+                    message: `double binding ${mField} disagrees: manifest ${mVal} vs payload ${pVal}`,
+                });
+            }
+            continue;
+        }
         const mStr = mVal === null || mVal === undefined ? '' : String(mVal);
         const pStr = pVal === null || pVal === undefined ? '' : String(pVal);
         if (mStr === '' || pStr === '') {
