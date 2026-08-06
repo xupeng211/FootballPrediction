@@ -44,6 +44,10 @@ const {
 } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureRetention');
 
 const {
+    readTransportObservationsFile,
+} = require('../../src/infrastructure/fotmob/FotMobTransportObservation');
+
+const {
     validateAndRecomputeCapturePlan,
     readAndValidateCandidateArtifact,
     assertNoSymlinkAncestors,
@@ -589,8 +593,29 @@ function runReplayLocked(args, deps, runDir, fsImpl, runLock) {
     // conflict, and a directory / symlink / other non-regular target would
     // fail AFTER all artifacts were already materialized (partial output).
     // The summary is deterministic — it derives only from the run state, the
-    // verified plan and the completed ordinals.
-    const summary = buildRunSummary(runState, runPlan, ordinals);
+    // verified plan, the completed ordinals and (additively) the bounded
+    // transport observations file. REPLAY reads the SAME observations file
+    // the capture wrote (run_id-bound), so the rebuilt summary is
+    // byte-identical to the capture summary. An unreadable or foreign
+    // observations file fails closed rather than producing a divergent
+    // summary. A missing file is fine — runs without observations replay
+    // byte-identically to the old v1 schema.
+    let observationsDoc = null;
+    try {
+        observationsDoc = readTransportObservationsFile(runDir, fsImpl);
+    } catch (err) {
+        throw Object.assign(
+            new Error(`replay failed: transport observations file unreadable: ${String(err.message)}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (observationsDoc && String(observationsDoc.run_id || '') !== String(runState.run_id || '')) {
+        throw Object.assign(
+            new Error('replay failed: transport observations run id mismatch'),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    const summary = buildRunSummary(runState, runPlan, ordinals, observationsDoc);
     const summaryBytes = Buffer.from(JSON.stringify(summary, null, 2) + '\n', 'utf8');
     const summarySha256 = sha256Bytes(summaryBytes);
     const summaryPath = path.join(runDir, 'run-summary.json');

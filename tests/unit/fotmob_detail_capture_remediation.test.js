@@ -2745,7 +2745,16 @@ test('R10-P1 (Codex re-review on 047f6afcb): the run lock is acquired and releas
         assert.equal(fs.existsSync(path.join(run.runDir, '.capture-run.lock')), false, 'no lock residue after completion');
         assert.deepEqual(
             fs.readdirSync(run.runDir).sort(),
-            ['captures', 'plan.json', 'replay', 'run-state.json', 'run-summary.json']
+            [
+                'captures',
+                'plan.json',
+                'replay',
+                'run-state.json',
+                'run-summary.json',
+                // Bounded transport telemetry — the new observations file is
+                // part of every run that performed at least one fetch.
+                'transport-observations.json',
+            ]
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

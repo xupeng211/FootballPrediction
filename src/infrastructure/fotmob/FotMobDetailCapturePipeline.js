@@ -68,6 +68,14 @@ const {
     sha256Bytes,
 } = require('./FotMobDetailCaptureRetention');
 
+const {
+    buildTransportObservation,
+    defaultObservationsDoc,
+    readTransportObservationsFile,
+    writeTransportObservationsFile,
+    settleObservationInDoc,
+} = require('./FotMobTransportObservation');
+
 // ─────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────
@@ -169,7 +177,10 @@ function createBoundedFetchAdapter(options = {}) {
      * @returns {Promise<object>} response-like { status, url, headers.get, text, body, bodyBytes }
      */
     // eslint-disable-next-line complexity
-    async function fetchOnce(url) {
+    async function fetchOnce(url, opts = {}) {
+        // Optional per-attempt context for the transport observation
+        // (ordinal + source match id). Never part of the URL / request.
+        const { ordinal = null, sourceMatchId = null } = opts || {};
         const u = new URL(String(url));
         if (u.protocol !== 'https:') {
             throw Object.assign(new Error(`SAFETY_ERROR:protocol_not_https:${u.protocol}`), { code: 'SAFETY_ERROR' });
@@ -245,10 +256,36 @@ function createBoundedFetchAdapter(options = {}) {
         // thrown error.
         requestAttemptedAt = new Date(lastRequestAt).toISOString();
         fetchStartIso = requestAttemptedAt;
+        const startedMs = lastRequestAt;
+
+        // ── Transport-phase observation (bounded, redacted, persistable) ──
+        // Phases are set by ACTUAL code-execution boundaries below — never
+        // inferred from error text. The local timer callback flips
+        // timeoutTriggered BEFORE aborting, so a request timeout is
+        // recognized by the flag, not by matching error.message (owner
+        // contract: never guess the phase or the timeout from error text).
+        let lastReliablePhase = 'REQUEST_STARTED';
+        let timeoutTriggered = false;
+        let responseHeadersReceived = false;
+        let responseHeadersReceivedAt = null;
+        let httpStatus = null;
+        let bodyReadingStarted = false;
+        let bodyReadingStartedAt = null;
+        let bodyBytesReceived = 0;
+        let bodyCompleted = false;
+        let bodyCompletedAt = null;
+        let responseMetadata = null;
 
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        const timer = setTimeout(() => {
+            timeoutTriggered = true;
+            ctrl.abort();
+        }, timeoutMs);
         try {
+            // Phase boundary: the request is now WAITING for response
+            // headers. A failure or timeout from here until the fetch
+            // resolves happens in AWAITING_RESPONSE_HEADERS.
+            lastReliablePhase = 'AWAITING_RESPONSE_HEADERS';
             const res = await fetchImpl(u.href, {
                 method: 'GET',
                 redirect: 'manual',
@@ -261,11 +298,30 @@ function createBoundedFetchAdapter(options = {}) {
                     referer: FOTMOB_BASE_URL,
                 },
             });
+            // Phase boundary: the response headers are IN — the request
+            // stopped waiting. Only allowlisted metadata is captured
+            // (content type bounded, declared length as a NUMBER, location
+            // presence, redirect flag); raw headers are never persisted.
+            lastReliablePhase = 'RESPONSE_HEADERS_RECEIVED';
+            responseHeadersReceived = true;
+            responseHeadersReceivedAt = new Date(nowMs()).toISOString();
             const status = Number(res.status || 0);
+            httpStatus = status;
             const contentType = String(res.headers && res.headers.get ? (res.headers.get('content-type') || '') : '');
             const location = String(res.headers && res.headers.get ? (res.headers.get('location') || '') : '');
             const finalUrl = String(res.url || u.href);
             const redirected = REDIRECT_STATUSES.has(status);
+            const declaredLength = Number(
+                res.headers && res.headers.get ? (res.headers.get('content-length') || 0) : 0
+            );
+            responseMetadata = {
+                content_type: String(contentType).slice(0, 200),
+                declared_content_length: Number.isSafeInteger(declaredLength) && declaredLength >= 0
+                    ? declaredLength
+                    : null,
+                location_present: location !== '',
+                redirected,
+            };
 
             // P2 (Codex re-review on 047f6afcb): enforce the body-size cap
             // WHILE reading, not after. Reading the whole body with
@@ -277,11 +333,15 @@ function createBoundedFetchAdapter(options = {}) {
             // itself; its body is never read.)
             let bodyBytes;
             if (redirected) {
+                // A redirect response counts as the request itself; its body
+                // is never read — body reading stays false in the
+                // observation, exactly as the transport behaved.
                 bodyBytes = Buffer.alloc(0);
             } else {
-                const declaredLength = Number(
-                    res.headers && res.headers.get ? (res.headers.get('content-length') || 0) : 0
-                );
+                // Phase boundary: the response body read started.
+                lastReliablePhase = 'READING_RESPONSE_BODY';
+                bodyReadingStarted = true;
+                bodyReadingStartedAt = new Date(nowMs()).toISOString();
                 if (declaredLength > MAX_BODY_BYTES) {
                     // R17-P1 (Codex re-review on 317fdb0d8): the response is
                     // already established — CANCEL the body stream BEFORE
@@ -308,6 +368,10 @@ function createBoundedFetchAdapter(options = {}) {
                         const { done, value } = await stream.read();
                         if (done) break;
                         total += value ? value.byteLength : 0;
+                        // bodyBytesReceived mirrors the cap counter exactly —
+                        // a timeout / abort mid-read keeps the last completed
+                        // chunk count as the actual received byte count.
+                        bodyBytesReceived = total;
                         if (total > MAX_BODY_BYTES) {
                             // R11-P2-3 (Codex re-review on abf6fbc65): cancel
                             // the underlying stream BEFORE throwing — a
@@ -330,6 +394,7 @@ function createBoundedFetchAdapter(options = {}) {
                     bodyBytes = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
                 } else {
                     const ab = await res.arrayBuffer();
+                    bodyBytesReceived = ab.byteLength;
                     if (ab.byteLength > MAX_BODY_BYTES) {
                         throw Object.assign(
                             new Error(`SAFETY_ERROR:oversized_response_body:read_${ab.byteLength}/${MAX_BODY_BYTES}`),
@@ -339,7 +404,45 @@ function createBoundedFetchAdapter(options = {}) {
                     bodyBytes = Buffer.from(ab);
                 }
             }
+            // Phase boundary: the response body completed. NEVER for
+            // redirect responses — their bodies are not read, so the last
+            // reliable phase stays RESPONSE_HEADERS_RECEIVED and the body
+            // fields stay false/0, exactly as the transport behaved.
+            if (!redirected) {
+                lastReliablePhase = 'RESPONSE_BODY_COMPLETED';
+                bodyCompleted = true;
+                bodyCompletedAt = new Date(nowMs()).toISOString();
+            }
             const body = bodyBytes.toString('utf8');
+
+            // Transport observation for the COMPLETED outcome — phases and
+            // byte counts come from the boundaries above, never from guesses.
+            const finishedMs = nowMs();
+            const transportObservation = buildTransportObservation({
+                ordinal,
+                sourceMatchId,
+                requestStartedAtIso: requestAttemptedAt,
+                requestFinishedAtIso: new Date(finishedMs).toISOString(),
+                elapsedMs: Math.max(0, finishedMs - startedMs),
+                lastReliablePhase,
+                terminalOutcome: 'COMPLETED',
+                responseHeadersReceived,
+                responseHeadersReceivedAt,
+                httpStatus,
+                bodyReadingStarted,
+                bodyReadingStartedAt,
+                bodyBytesReceived,
+                bodyCompleted,
+                bodyCompletedAt,
+                timeoutConfiguredMs: timeoutMs,
+                timeoutTriggered,
+                abortSource: null,
+                errorName: null,
+                errorCode: null,
+                errorCauseName: null,
+                errorCauseCode: null,
+                responseMetadata,
+            });
 
             return {
                 status,
@@ -362,8 +465,96 @@ function createBoundedFetchAdapter(options = {}) {
                 // Actual attempt instant (after any inter-request delay),
                 // recorded by the adapter and/or its pre-fetch callback.
                 requestAttemptedAt,
+                transportObservation,
             };
         } catch (err) {
+            // Transport-phase classification. The timeout signal comes ONLY
+            // from the local timer flag (timeoutTriggered) or the abort
+            // mechanics it drives — never from matching error text, so a
+            // same-message error from another source cannot be mislabeled
+            // REQUEST_TIMEOUT (owner scenario: headers-vs-body evidence).
+            // Classification priority: timeout > safety > external abort >
+            // body read error > generic fetch error. Observation fields
+            // never mutate the original error and never swallow it.
+            const isSafetyError = Boolean(err && typeof err === 'object' && err.code === 'SAFETY_ERROR');
+            const errName = String((err && typeof err === 'object' && err.name) || 'Error');
+            const isAbortError =
+                errName === 'AbortError' ||
+                errName === 'DOMException' ||
+                (err && typeof err === 'object' && err.message && String(err.message).toLowerCase().includes('aborted')) ||
+                Boolean(err && typeof err === 'object' && err.signal && err.signal.aborted) ||
+                ctrl.signal.aborted;
+
+            let terminalOutcome;
+            let abortSource = null;
+            let errorName = null;
+            let errorCode = null;
+            let errorCauseName = null;
+            let errorCauseCode = null;
+            if (timeoutTriggered && !isSafetyError) {
+                terminalOutcome = 'TIMEOUT';
+                abortSource = 'REQUEST_TIMEOUT';
+                // AWAITING vs READING must come from code boundaries, not
+                // from error text: whichever PROGRESS phase was reached last
+                // is kept; REQUEST_ABORTED_BY_TIMEOUT is the vocabulary
+                // terminal marker the validator accepts for this outcome.
+                lastReliablePhase =
+                    lastReliablePhase === 'READING_RESPONSE_BODY' ? 'READING_RESPONSE_BODY' : 'AWAITING_RESPONSE_HEADERS';
+            } else if (isSafetyError) {
+                terminalOutcome = 'SAFETY_ERROR';
+                lastReliablePhase = lastReliablePhase === 'READING_RESPONSE_BODY' ? 'READING_RESPONSE_BODY' : lastReliablePhase;
+            } else if (isAbortError) {
+                terminalOutcome = 'ABORTED';
+                abortSource = 'EXTERNAL_ABORT';
+            } else if (bodyReadingStarted) {
+                terminalOutcome = 'BODY_READ_ERROR';
+            } else {
+                terminalOutcome = 'FETCH_ERROR';
+            }
+            if (terminalOutcome !== 'COMPLETED' && terminalOutcome !== 'TIMEOUT' && !isSafetyError) {
+                // Non-timeout failure: the most specific PROGRESS phase that
+                // was actually reached stays the last reliable phase.
+                if (bodyReadingStarted) lastReliablePhase = 'READING_RESPONSE_BODY';
+                else if (responseHeadersReceived) lastReliablePhase = 'RESPONSE_HEADERS_RECEIVED';
+                else lastReliablePhase = 'AWAITING_RESPONSE_HEADERS';
+            }
+            errorName = errName;
+            errorCode = String((err && typeof err === 'object' && err.code) || '');
+            if (err && typeof err === 'object' && err.cause && typeof err.cause === 'object') {
+                errorCauseName = String(err.cause.name || '');
+                errorCauseCode = String(err.cause.code || '');
+            }
+            const finishedMs = nowMs();
+            const transportObservation = buildTransportObservation({
+                ordinal,
+                sourceMatchId,
+                requestStartedAtIso: requestAttemptedAt,
+                requestFinishedAtIso: new Date(finishedMs).toISOString(),
+                elapsedMs: Math.max(0, finishedMs - startedMs),
+                lastReliablePhase,
+                terminalOutcome,
+                responseHeadersReceived,
+                responseHeadersReceivedAt,
+                httpStatus,
+                bodyReadingStarted,
+                bodyReadingStartedAt,
+                bodyBytesReceived,
+                bodyCompleted,
+                bodyCompletedAt,
+                timeoutConfiguredMs: timeoutMs,
+                timeoutTriggered,
+                abortSource,
+                errorName,
+                errorCode,
+                errorCauseName,
+                errorCauseCode,
+                responseMetadata,
+            });
+            if (err !== null && typeof err === 'object') {
+                try {
+                    err.transportObservation = transportObservation;
+                } catch { /* frozen error object — observation is attached or lost */ }
+            }
             // R20-P1 (Codex re-review on 0bfe90629): convey the TRUE
             // fetch-start moment even on failure — the run's stop-path state
             // write actualizes the persisted resume seed with it, so a resume
@@ -1116,6 +1307,73 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         writeRunStateLocked(runState);
     }
 
+    // Transport observations document: same bindings as run state. It is a
+    // NEW bounded telemetry file (the run-state schema is unchanged — resume
+    // semantics of old v1 runs are untouched); a stale or foreign
+    // observations file must fail closed rather than be silently adopted.
+    let observationsDoc = null;
+    try {
+        observationsDoc = readTransportObservationsFile(runDir, fsImpl);
+    } catch (err) {
+        throw Object.assign(
+            new Error(`SAFETY_ERROR:transport observations file unreadable: ${String(err.message)}`),
+            { code: 'SAFETY_ERROR' }
+        );
+    }
+    if (observationsDoc) {
+        if (String(observationsDoc.run_id || '') !== binding.runId) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:transport observations run id mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(observationsDoc.plan_sha256 || '') !== plan.plan_business_sha256) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:transport observations plan SHA mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(observationsDoc.authorization_id || '') !== binding.authorizationId) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:transport observations authorization id mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (Number(observationsDoc.max_requests) !== binding.maxRequests) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:transport observations max-requests contract mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+        if (String(observationsDoc.collector_code_revision || '') !== binding.collectorCodeRevision) {
+            throw Object.assign(
+                new Error('SAFETY_ERROR:transport observations collector revision mismatch — refusing to continue'),
+                { code: 'SAFETY_ERROR' }
+            );
+        }
+    } else {
+        observationsDoc = defaultObservationsDoc({
+            runId: binding.runId,
+            planSha256: plan.plan_business_sha256,
+            authorizationId: binding.authorizationId,
+            maxRequests: binding.maxRequests,
+            collectorCodeRevision: binding.collectorCodeRevision,
+        });
+    }
+    // Base doc = the file as it exists at run start (null when absent).
+    // In-place settlement evolves it; the final write passes it back so a
+    // resume's in-place evolution is recognized as the run's own write and
+    // never refused as "different valid content".
+    const baseObservationsDoc = observationsDoc;
+    // Diagnostic-only settlement: a telemetry persistence failure NEVER
+    // changes the run outcome or fail-stop behavior of the capture itself.
+    const settleObservation = (observation) => {
+        if (!observation) return;
+        try {
+            observationsDoc = settleObservationInDoc(observationsDoc, observation);
+        } catch { /* diagnostic-only — the run continues unchanged */ }
+    };
+
     // Run-bound immutable plan snapshot BEFORE any real network request:
     // REPLAY binds candidate identity to this snapshot (P2-6).
     writePlanSnapshot({ runDir, plan, fsImpl });
@@ -1385,7 +1643,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         let fetchResult;
         let requestAttemptedAt = null;
         try {
-            fetchResult = await budgetedFetch.fetchOnce(requestUrl);
+            fetchResult = await budgetedFetch.fetchOnce(requestUrl, {
+                ordinal,
+                sourceMatchId: candidate.source_match_id,
+            });
             // The manifest timestamp is the adapter's recorded ACTUAL attempt
             // instant — taken after the inter-request delay, immediately
             // before the native network request (P2, Codex re-review). Never
@@ -1428,6 +1689,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // actualization never landed.
             runState.fetch_in_flight = false;
             writeRunStateLocked(runState);
+            // Diagnostic-only: settle the success-path transport observation
+            // into the in-memory document (never persisted here — the final
+            // settlement happens once at run end).
+            settleObservation(fetchResult.transportObservation);
         } catch (err) {
             // Fetch adapter errors (budget exhausted, protocol/host/path
             // violations, timeouts, abort, read failures) stop the run. The
@@ -1461,6 +1726,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // actualization never landed.
             runState.fetch_in_flight = false;
             writeRunStateLocked(runState);
+            // Diagnostic-only: settle the failure-path transport observation
+            // (timeout / abort / safety / read / fetch errors) into the
+            // in-memory document. The observation never changes fail-stop.
+            settleObservation(err.transportObservation);
             const msg = String(err.message || err);
             stopReason = msg.includes('budget_exhausted')
                 ? 'budget_exhausted'
@@ -1675,7 +1944,18 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     runState.updated_at = now();
     writeRunStateLocked(runState);
 
-    const summary = buildRunSummary(runState, plan, [...completedOrdinals]);
+    // Final settlement: exactly one bounded observations file per run,
+    // written only when at least one observation exists, crash-safe and
+    // never silently overwriting different content. Persistence failure is
+    // diagnostic-only — the run outcome and fail-stop behavior are already
+    // finalized above and cannot be changed by telemetry.
+    if (observationsDoc.observations.length > 0) {
+        try {
+            writeTransportObservationsFile(runDir, observationsDoc, fsImpl, baseObservationsDoc);
+        } catch { /* diagnostic-only — the run continues unchanged */ }
+    }
+
+    const summary = buildRunSummary(runState, plan, [...completedOrdinals], observationsDoc);
     writeRunSummary(runDir, summary, fsImpl);
 
     return {
