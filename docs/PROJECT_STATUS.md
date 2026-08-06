@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-28
+Last updated: 2026-08-06
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -909,6 +909,118 @@ legacy-writer execution is authorized.
   conflicts support the completed canonical-inventory write design review and
   only a separately authorized writer implementation review next; no legacy
   writer restart or raw-write expansion is recommended.
+- **FotMob detail staging (offline) implemented and tested**: the offline
+  converter/validator (`make data-fotmob-detail-staging-{help,receipt,build,validate}`
+  over `scripts/ops/fotmob_detail_staging.js` +
+  `src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
+  + `FotMobDetailStagingSourceVerification.js`)
+  stages archived capture payload+manifest pairs into immutable
+  `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
+  (no database, no migration). Current test baseline: 340 staging
+  unit tests green (122 retention fault-injection/tamper [incl. 3 R18-P2-1
+  short-write injections (a/b/c) + 1 R19-P2-1 lockCreated regression + 2
+  R20-P1-1 stale-lock fail-closed regressions + 3 R20-P2-1 final-artifact
+  gate regressions; the former P1-4 stale auto-recovery test was reworked
+  into the R20-P1-1 fail-closed regressions] + 82 source verification [75 + 4 R17-P2-1
+  PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX merge-semantics (e/f/g)] +
+  89 contract [54 declared + 16 loop-generated per-field
+  conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length + 1
+  R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
+  R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
+  R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
+  regressions (a/b/c/d)] + 17
+  converter + 30 CLI (25 + 4 R20-P2-2 --limits-file regressions + 1
+  R21-P3-2 frozen-cap regression in the dedicated
+  fotmob_detail_staging_cli_limits.test.js);
+  runtime counts = node --test
+  # pass), incl. direct reuse of the pipeline capture hashing, determinism,
+  idempotency, optional-section re-signed acceptance, atomicity, path safety,
+  CLI/Make; 395 affected legacy tests green; ESLint/`git diff --check` clean;
+  16 archived matches staged twice + validated twice with byte-identical
+  artifacts and null canonical_match_id (derived outputs removed). Marker
+  events (parser-injected AddedTime/Half minute markers, no id by design)
+  recorded as a legal variant. Zero network, zero database, zero capture:
+  no new real FotMob request and no real payload/manifest/artifact committed.
+  Per-round Codex remediation timeline (R13–R21, counts 297→340) with
+  per-finding mappings, regression evidence and Production Gate rows:
+  docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
+  this paragraph's remediation narrative is a historical baseline).
+
+- **FotMob detail staging (offline) PR #1817 blocker remediation (Draft,
+  unmerged, pending external implementation acceptance)**: all 8 independent
+  review findings fixed offline — F1 logical commit-marker atomic
+  commit/rollback (marker written last, bound to file list + sha256 chain,
+  rollback removes only this attempt's files, residue scan fail-closed);
+  F2 REPEAT_EQUIVALENT rebuilds the artifact with recomputed hashes (old
+  artifacts byte-untouched); F3 verified package receipts (real archive
+  SHA-256 + safe pure-Node tar reader, every entry bound to one package);
+  F4 symlink-ancestor + input/output non-overlap checks on all input types;
+  F5 full A–E validator (38 checks, unconditional, 13 tamper tests);
+  F6 LAYER_A observation_id/generated_at recomputation + LAYER_B
+  artifact_integrity_sha256 (7 tamper tests); F7 SC-002 status correction
+  (ENFORCEMENT_INFRASTRUCTURE=COMPLETE / STAGING_PRODUCTION_ROLE_DEPLOYMENT=
+  PENDING / PR1817_CHANGES_SC002=NO); F8 Claude post-remediation self-review
+  P0/P1/P2 = 0 with EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and
+  READY_TO_MERGE=NO. Codex closed-loop round (independent review 4863122944,
+  13 findings): P0-1 live archive↔receipt re-verification with inventory
+  hash; P0-2 REPEAT_EQUIVALENT final-classification write-back + three-way
+  validator cross-checks; P1-1 two-level tar member-name validation; P1-2
+  ACTUAL 16-field double-binding matrix; P1-3 receipt path through the
+  unified input gate; P1-4 TOCTOU mitigation (no-follow fd reads, controlled
+  private dirs, exclusive store lock, honest threat model); P1-5 anchored
+  validation modes; P2-1 strict tar parsing (global PAX rejected); P2-2
+  required three-source file hashes; P2-3 RFC 4122 UUIDv5 + byte-exact
+  timestamps; P2-4 structured garbage fail-closed; P2-5 container-first make
+  targets; P3-1 docs/PR-body rewrite. 297 staging tests (111 retention
+  fault-injection/tamper + 65 source verification + 77 contract [54 declared
+  + 16 loop-generated per-field conflict tests + 3 R6-P1-2 identity-semantics
+  + 3 R7-P3-2 id-length + 1 R8-P2-1 strict array plainness] + 17 converter
+  + 24 CLI; Codex round-8 (head 7bbbd7658) findings R8-P2-1 (non-plain arrays
+  rejected — own toJSON/holes/symbols/extra keys/non-finite numbers, on both
+  the direct accepted and REPEAT_EQUIVALENT rebuild paths) and R8-P2-2
+  (unretainable LINKED_*/unknown terminal states refused in the pre-loop with
+  ok-vs-classification consistency and pre-write summary self-validation)
+  both remediated with zero-write regressions; Codex round-9 (head 8b1fc9034)
+  findings R9-P2-1 (raw result contract gate before classification: boolean
+  `ok`, ok:true declares ACCEPTED_NEW, ok:false cannot claim accepted — 3 new
+  zero-write regressions + legal control) and R9-P3-1 (doc field-name
+  accuracy: generated_at derives from manifest `response_received_at`, recorded
+  as artifact `source_response_received_at`) both remediated); Codex round-10
+  (head 4c1609945) findings R10-P2-1 (injection surface: quarantine_reason
+  derived from the validated error_code — caller error text never persisted;
+  rejected envelopes require a registry E### code; strict-ISO builtAt; every
+  write-plan document isPlainJsonData; D-group recorded_at ISO + agreement —
+  5 tests + legal control), R10-P2-2 (validator observations array/null-entry
+  hardening → LEDGER_INVALID, no crash — 2 mutation tests), R10-P3-1
+  (CAPABILITY_INDEX.md:70 + PR body field-name closure, counts 279),
+  R10-P3-2 (tar dangling GNU L / PAX x at EOF → SAFETY_ERROR — 2 EOF tests)
+  all remediated); Codex round-11 (head d9a47e1, 18 commits) findings
+  R11-P2-1 (result-envelope injection closure for direct commitObservations
+  callers — descriptor scan + scalar snapshot before any read (accessor/proxy
+  → INPUT_ERROR), ok:true must not carry error_code, runId must be a plain
+  identifier — 4 regressions + legal control, zero writes), R11-P2-2
+  (validateStagingArtifact runs the prohibited raw content scan E013 on the
+  whole artifact — 1 tamper regression), R11-P3-1 (D-group quarantine_reason
+  must derive from the registry error_code whitelist AND agree with the
+  ledger — 1 regression), R11-P3-2 (marker-tamper regression rehashes the
+  marker after tampering — test-helper fix), R11-P3-3 (tar PAX multibyte
+  UTF-8 path support — 1 regression); counts synced to 286, all remediated);
+  Codex round-12 (head 1350ef4de) findings R12-P2-1 (artifact deep
+  snapshot — descriptor-driven copy, util.types.isProxy refusal, no
+  toJSON/JSON.stringify on the caller's object, cycles/depth → structured
+  INPUT_ERROR — 2 regressions + legal control), R12-P2-2 (bounded archive
+  inspection — pre-read compressed-size fstat, gunzipSync maxOutputLength,
+  tar member/size/total caps, fail-closed SAFETY_ERROR — 4 regressions +
+  legal control), R12-P3-1 (isPlainJsonData + content-scan cycle/depth/
+  proxy guards — 3 regressions); counts synced to 297, all remediated);
+  runtime counts = node --test # pass, the only gap vs static test()
+  declarations is the loop-generated pair) + 347 legacy FotMob + 769 unit
+  tests green; ESLint clean. 16-match offline revalidation on the fixed
+  archives: RUN_1 16
+  ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
+  REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);
+  all stores validate PASS with zero residue. Zero network, zero database,
+  zero capture, no migration; PR stays Draft and unmerged.
 
 ## Next recommended sequence
 

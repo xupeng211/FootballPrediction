@@ -42,6 +42,173 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
+- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审；PR #1817 阻塞问题修复已离线完成）**：
+  独立评审 8 项阻塞问题全部离线修复 —— 纯离线 detail staging converter/validator 已实现并全量测试 ——
+  `make data-fotmob-detail-staging-{help,receipt,build,validate}`（直接 Node CLI
+  `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
+  capture payload+manifest 对转换为不可变 `fotmob-detail-staging-artifact/v1`
+  快照：5 个 versioned JSONB sections 逐字节保留、直接复用 pipeline 捕获
+  hashing（无自实现副本）、确定性 observation_id（RFC 4122 UUIDv5）+ generated_at
+  字节精确取自 manifest 的 response_received_at（并记录为 artifact 的
+  source_response_received_at 字段）、canonical_match_id 恒
+  null + UNLINKED_NOT_ATTEMPTED、append-only 文件 store + 编号
+  store-state-<seq>.json 账本版本（无数据库、无 migration）、每次写入
+  O_EXCL tmp+fsync+同文件系统 rename 的 per-file 原子写 + 独占 per-store lock、
+  冲突 fail-closed、LOGICAL_COMMIT_MARKER 唯一提交点（residue 报告不当作已提交）、
+  -validate 重验 artifact/summary/store ledger（MODE_1_UNANCHORED /
+  MODE_2_EXTERNALLY_ANCHORED）。340 项 staging 测试 + 395 项受影响旧测试全绿，
+  ESLint/git diff --check 干净；16 场归档（one/five/ten-match pilot
+  archives）两次 build + 两次 validate 字节一致、ID set 精确一致、
+  canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
+  marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
+  变体（真实 16 场均有 4 个）。零网络、零数据库、零采集、无真实 payload/
+  manifest/artifact 提交；PR 保持 Draft、未合并。
+
+  修复内容：F1 逻辑 commit-marker 原子提交/回滚（commit-<seq>.json 为唯一提交点、
+  最后写入、绑定文件列表+sha256 链、回滚只删本次写入文件、residue 扫描 fail-closed）；
+  F2 REPEAT_EQUIVALENT 重建 artifact（business/integrity hash 重算、旧 artifact
+  字节不变）；F3 VERIFIED_PACKAGE_RECEIPT（真实 archive SHA-256 验证 + 纯 Node
+  安全 tar reader、无 child_process，每条 entry 绑定唯一 package）；F4 所有输入
+  类型 symlink-ancestor 检查 + 输入输出非重叠规则；F5 完整 A–E 38 项 validator
+  （无条件深检 + 13 项篡改测试）；F6 LAYER_A observation_id UUIDv5 重算 +
+  generated_at 严格 ISO 等于 source_response_received_at，LAYER_B
+  artifact_integrity_sha256 覆盖除自身外全部字段（7 项篡改测试）；F7 SC-002 状态
+  更正（SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO）；
+  F8 CLAUDE_POST_REMEDIATION_SELF_REVIEW P0/P1/P2=0、
+  EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING、READY_TO_MERGE=NO。
+  340 项 staging 测试（122 retention 故障注入/篡改（含 3 个 R18-P2-1
+  短写注入回归 a/b/c + 1 个 R19-P2-1 lockCreated 回归 + 2 个 R20-P1-1
+  stale-lock fail-closed 回归 + 3 个 R20-P2-1 final-artifact 一致性回归；
+  原 P1-4 stale 自动恢复测试已改写为 R20-P1-1 fail-closed 回归）+ 82 source verification（含 4 个 R17-P2-1 PAX size
+  覆盖回归 a/b/c/d + 3 个 R17-P2-1 PAX 合并语义回归 e/f/g）+
+  89 contract [54 个显式声明 + 16 个 PAIRS 循环生成的逐字段冲突测试 + 3 个
+  R6-P1-2 身份语义（R6-P1-2b/c/d）+ 3 个 R7-P3-2 长度上限 + 1 个 R8-P2-1
+  严格数组 plainness + 3 个 R12-P3-1 cycle/深度守卫 + 3 个 R13-P2-3 validator
+  深度门 + 1 个 R13-P3-2 proxy 数组拒绝 + 1 个 R14-P3-1 Symbol own key 拒绝
+  + 4 个 R15-P2-1 __proto__ own-key 回归（R15-P2-1a/b/c/d）]
+  + 17 converter + 30 CLI（25 + 4 个 R20-P2-2 limits-file 回归
+  + 1 个 R21-P3-2 frozen-cap 回归，
+  独立文件 fotmob_detail_staging_cli_limits.test.js）；Codex round-8（head
+  7bbbd7658）2 项新 P2 —— R8-P2-1 isPlainJsonData 严格数组语义
+  （非枚举 own toJSON / 空洞 / symbol / 额外 key / 非 Array 原型 / 非有限
+  数字全部拒绝，.every() 无法覆盖，direct accepted 与 REPEAT_EQUIVALENT
+  重建两条路径均补零写入回归）、R8-P2-2 commit 预检拒绝不可保留的
+  LINKED_*/未知 terminal state（ok:false 逐字透传时唯一拦截点；白名单
+  accepted/rejected/quarantine + ok 与分类一致性 + 写入前 summary 自校验，
+  均补零写入回归与合法对照）—— 全部离线修复；Codex round-9（head
+  8b1fc9034）1 项新 P2 + 1 项 P3 —— R9-P2-1 分类前 raw result 契约门
+  （ok 必须为真布尔，truthy 字符串 'false' 不再视为成功；ok:true 必须声明
+  ACCEPTED_NEW（最终状态由 retention 对 store 派生，原始 rejected 声明
+  不得被丢弃后按 accepted 提交）；ok:false 不得声明 accepted —— 补 3 项
+  零写入回归 + 合法对照）、R9-P3-1 文档字段名准确性（generated_at 取自
+  manifest 的 response_received_at 并记录为 artifact 的
+  source_response_received_at，两处文档已修正）—— 全部离线修复；
+  Codex round-10（head 4c1609945，17 个 commit）2 项新 P2 + 2 项新 P3
+  —— R10-P2-1 直接调用 commitObservations 的注入面收敛（quarantine_reason
+  不再持久化调用者提供的 errors[0].message，改为由已验证 error_code 派生
+  的固定白名单 reason；rejected ok:false envelope 必须携带注册表 E###
+  error_code；builtAt 非严格 ISO 拒绝；写入计划中每个 commit 文档强制
+  isPlainJsonData；D-group 校验 recorded_at 严格 ISO + 文件与账本一致 ——
+  补 5 项回归 + 合法对照）、R10-P2-2 validator observations 形状硬化
+  （数组 observations 拒绝为 LEDGER_INVALID；null/非对象 entry 返回
+  LEDGER_INVALID 而非抛异常 —— 补 2 项 mutation 回归）、R10-P3-1 字段名
+  收口（CAPABILITY_INDEX.md:70 与 PR body 统一为 manifest response_
+  received_at → artifact source_response_received_at；计数同步 279）、
+  R10-P3-2 tar parser 悬空 GNU L / PAX x 元数据 EOF 拒绝（SAFETY_ERROR，
+  补 2 项 EOF fixture 测试）—— 全部离线修复；
+  Codex round-11（head d9a47e1，18 个 commit）2 项新 P2 + 3 项新 P3 ——
+  R11-P2-1 直接调用 commitObservations 的结果信封注入面收敛（每个 result
+  在读取前先做 descriptor 扫描 + 标量快照，accessor/proxy 一律
+  INPUT_ERROR；ok:true 不得携带 error_code；runId 必须为纯标识符 ——
+  补 4 项回归 + 合法对照）、R11-P2-2 validateStagingArtifact 对整份
+  artifact 执行 prohibited raw content 扫描（E013：HTML/凭据签名 ——
+  补 1 项篡改回归）、R11-P3-1 D-group quarantine_reason 必须由注册表
+  error_code 白名单派生且与账本一致（补 1 项回归）、R11-P3-2 marker
+  篡改回归改用重算哈希的 marker（测试辅助修复）、R11-P3-3 tar PAX 路径
+  支持多字节 UTF-8 名称（补 1 项回归）—— 全部离线修复；
+  Codex round-12（head 1350ef4de，review relay 4867154234 后新 commit，18 个
+  commit）2 项新 P2 + 1 项新 P3 —— R12-P2-1 artifact 深快照（artifact 不再保留
+  调用者原引用：descriptor 驱动深拷贝 + util.types.isProxy 拒绝 + 从不调用
+  调用者对象上的 JSON.stringify/toJSON，验证、hash、写入、marker 全部读取同一份
+  物化字节 —— 补 2 项回归 + 合法对照）、R12-P2-2 inspectArchive 资源上限
+  （压缩文件读前 fstat 大小上限、gunzipSync maxOutputLength、tar 成员数/
+  单成员/累计大小上限，全部 fail-closed SAFETY_ERROR —— 补 4 项回归 + 合法
+  对照）、R12-P3-1 isPlainJsonData / 禁止内容扫描的 cycle/深度/Proxy 守卫
+  （循环或超深 → 结构化 INPUT_ERROR/E013，而非 RangeError —— 补 3 项回归）
+  —— 全部离线修复；计数同步 297；
+  Codex round-13（head c00343a58，19 个 commit）4 项新 P2 + 3 项新 P3 ——
+  R13-P2-1 verifyArchive 合并 DEFAULT_ARCHIVE_LIMITS 并把 maxCompressedBytes
+  传给读前 fstat（receipt 首遍 SHA 不再无界读入整个归档 —— 补 1 项回归 +
+  合法对照）、R13-P2-2 提供已注册 inspected capability 时无条件校验
+  receipt↔binding SHA，且 capability 携带已验证 archive 的规范路径
+  （archive_path 入 inspect 结果 + 深冻结），与 binding 路径不一致即拒绝
+  （补 2 项回归）、R13-P2-3 validateStagingArtifact 开头增加
+  isPlainJsonData 深度/cycle/plain 门（直接 API/CLI/store validator 与
+  commit 的 128 层门一致，循环/超深 → 结构化 validation error 且跳过
+  canonicalJsonHash 无界遍历 —— 补 2 项回归 + 合法对照）、R13-P2-4
+  validateSummaryDoc 在遍历前校验每个 observation 为非数组 object，
+  null/raw 行 → SUMMARY_INVALID 并短路，validateOutputRoot 对畸形行跳过
+  而非抛异常（补 1 项 marker-consistent mutation 回归）、R13-P3-1 result
+  envelope 本身拒绝 Proxy（util.types.isProxy，读取任何字段之前 —— 补
+  1 项零写入回归）、R13-P3-2 scanProhibitedContent 的 Proxy 拒绝移到
+  array/object 分派之前（Proxy 数组也结构化 E013 —— 补 1 项回归 +
+  合法对照）、R13-P3-3 PROJECT_STATUS.md current-baseline 段 contract
+  计数 77→80（含 R12-P3-1）—— 全部离线修复；计数同步 307；
+  Codex round-14（head 35a1409b2，20 个 commit）1 项新 P2 + 2 项新 P3 ——
+  R14-P2-1 payload/manifest 读前大小上限（entry selector 先于任何读取解析，
+  读上限取自 live archive member size（本身受 archive limits 约束）、缺失
+  member 封顶 0，超大外部文件在 fstat 大小门 SAFETY_ERROR 拒绝、读入内存之前
+  —— 补 direct API（R14-P2-1a）+ CLI/build（G57，E008 REJECTED_PROVENANCE_BROKEN
+  批次隔离、零接受）+ 合法对照）、R14-P3-1 isPlainJsonData 与
+  snapshotStrictPlainData 的 object 分支改用 Reflect.ownKeys 拒绝 Symbol own
+  keys（snapshot 不再静默丢弃 —— 补回归 + 合法对照）、R14-P3-2 当前概述
+  计数 260→307 —— 全部离线修复；计数同步 310；
+  Codex round-15（head ec2f29037，21 个 commit）1 项新 P2 + 1 项新 P3 ——
+  R15-P2-1 合法 own "__proto__" key 处理（`{}` + `target[key] = value` 写入
+  模式触发 legacy __proto__ setter：标量被静默丢弃、对象值改变临时对象原型；
+  影响 shared `canonicalizeJson`（FotMobRawDetailFetcher.js，staging artifact
+  hash 链 canonicalJsonHash → sha256CanonicalJson → canonicalizeJson 的共享
+  底层）、snapshotStrictPlainData（Contract.js）与两个 artifact hash
+  projection —— 全部改为 Object.defineProperty 安全创建 enumerable data
+  property（行为对非 "__proto__" 输入完全不变；Retention 的
+  newObservations 键为 sourceMatchId:sha256 内部派生、结构性含冒号、不
+  可达 —— 无需修改），补 5 项回归：R15-P2-1a JSON.parse 生成的 own
+  "__proto__" 标量经 snapshot 保留为 data property（原型不被劫持）、
+  R15-P2-1b 对象值变体（值保持为 plain 值而非原型）、R15-P2-1c artifact
+  级 hash 敏感性（business/integrity hash 对该字段敏感）+ 合法对照
+  validateStagingArtifact ok:true、R15-P2-1d section 内嵌套 "__proto__"
+  只经 shared canonicalizeJson 路径的 hash 敏感性判别、R15-P2-1e 端到端
+  convert→commit→validate 保留（字段落盘为 own enumerable data property，
+  剥离该字段成为被检测的篡改 —— 修复前恰可通过校验）、R15-P3-1 selector
+  顺序注释精确收窄为"在 payload/manifest 输入文件 gate/read 前"（归档本身
+  在其自有上限下先行 live-inspect —— P3 不阻塞合并）—— 全部离线修复；
+  计数同步 315；
+  （本段 remediation 叙述为历史截止点：round-16..21（计数 315→320→324→330→331→339→340）
+  的逐轮 finding、映射、回归与 Production Gate 行见权威 current-state 文档
+  docs/data/FOTMOB_CURRENT_STATE.md——当前 head 的完整 Codex 闭环状态以其为准。）
+  运行时计数 = node --test # pass，与静态 test() 声明的差异仅来自
+  循环生成测试）+
+  347 项 legacy FotMob + 769 项 unit 全绿；
+  ESLint 干净。16 场离线复验（固定归档 e3679262/9bc50640/02635cee）：
+  RUN_1 16 ACCEPTED_NEW、RUN_2 16 REPEAT_EXACT 字节一致、RUN_3 synthetic
+  REPEAT_EQUIVALENT（SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO），
+  三轮 validate 全部 PASS、零 residue。Codex 独立复审 4863122944 的 13 项发现
+  （P0-1/P0-2/P1-1..P1-5/P2-1..P2-5/P3-1）已全部离线修复并补回归测试；
+  Codex 复审轮 2（4863831437）3 项发现、轮 3（4863962003）4 项发现
+  （R3-P1-1 source index source_match_id 身份绑定、R3-P2-1 quarantine
+  证据 (source_match_id, error_code) 键隔离复用 + ledger Object.fromEntries
+  修复、R3-P3-1 ACTIVE_MILESTONE 入口表、R3-P3-2 测试计数核算）、轮 4
+  （8c48d9ef5 复审）4 项发现（R4-P1-1 多 pair archive 的 entry 级
+  payload/manifest member selector、R4-P2-1 数组结构化垃圾保持 E001
+  而非 E007、R4-P3-1 PROJECT_STATUS 旧段落替换、R4-P3-2 GNU L 记录
+  尾部 NUL 剥离）也全部离线修复并补回归测试（round-7 完成时 260 项 staging
+  测试全绿，含 round-6 的 5 项发现修复：R6-P1-1 validate 失败退出码、
+  R6-P1-2 observed 球队必填 + artifact 身份语义、R6-P2-1 导出 API 严格类型
+  合同、R6-P2-2 quarantine key/entry/file/summary 语义三方绑定、
+  R6-P3-1 archive input gate 非重叠检查）；
+  零网络、零数据库、零采集、无 migration；PR 保持
+  Draft、未合并，等待外部独立实现验收。
 - **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器

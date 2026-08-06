@@ -149,7 +149,19 @@ function canonicalizeJson(value) {
     if (Array.isArray(value)) return value.map(canonicalizeJson);
     const sorted = {};
     for (const key of Object.keys(value).sort()) {
-        sorted[key] = canonicalizeJson(value[key]);
+        // R15-P2-1 (Codex round 15): plain `sorted[key] = ...` would route a
+        // legal JSON own key "__proto__" through the legacy __proto__ setter
+        // (scalar values silently dropped, object values swapping the
+        // prototype), so the canonical hash ignored the field. defineProperty
+        // creates an ordinary enumerable data property — output identical
+        // for every other key. Shared with the staging artifact hash path
+        // (sha256CanonicalJson → canonicalJsonHash → staging projections).
+        Object.defineProperty(sorted, key, {
+            value: canonicalizeJson(value[key]),
+            enumerable: true,
+            writable: true,
+            configurable: true,
+        });
     }
     return sorted;
 }

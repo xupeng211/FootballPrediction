@@ -399,6 +399,374 @@ historical four-row audit does not extend a full parser/audit result to all 58
 current `fotmob_live_v1` retained rows. Exact named-writer/run provenance for
 all 58 rows is not uniquely attributable.
 
+### Offline detail staging converter / validator (implemented, tested; PR #1817 blocker remediation in Draft)
+
+The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
+`src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
+and `FotMobDetailStagingSourceVerification.js`) converts archived
+`fotmob-match-detail-capture-payload/v1` + `fotmob-match-detail-capture-manifest/v1`
+pairs into immutable `fotmob-detail-staging-artifact/v1` snapshots. It is
+**pure offline by construction**: zero network (no fetcher import), zero
+database (no DB client, no migration, no canonical/staging/odds write), zero
+capture, no wall-clock time in business fields (`generated_at` comes from the
+manifest's `response_received_at`, recorded on the artifact as
+`source_response_received_at`; `observation_id` is a deterministic
+RFC 4122 UUIDv5 over the observation key). Canonical make entrypoints:
+`data-fotmob-detail-staging-help` / `-receipt` / `-build` / `-validate`, all
+run container-first via `$(COMPOSE_DEV) exec -T dev` (the direct Node CLI is
+the internal engine). The store is append-only file snapshots plus numbered
+`store-state-<seq>.json` ledger versions; outputs are repository-external
+only, written with per-file atomicity (O_EXCL tmp + fsync + same-filesystem
+rename) under an exclusive per-store lock, fail-closed on divergent content,
+committed by the LOGICAL_COMMIT_MARKER protocol (the `commit-<seq>.json`
+marker is the ONLY commit point; uncommitted residue is reported, never
+treated as committed), and re-validated by `-validate`. 16 archived matches
+(one/five/ten-match pilot archives, e3679262/9bc50640/02635cee) were staged,
+rebuilt twice, validated twice, byte-identical across builds, with all
+`canonical_match_id` null and `UNLINKED_NOT_ATTEMPTED` link status; derived
+outputs were removed. The 16-match validation is an offline verification run
+only — no new real capture happened and no real payload/manifest/artifact was
+committed.
+
+**PR #1817 remediation history (offline-only, Draft, unmerged)**:
+- Blockers round (8 findings of the independent review of head c8a0489f7):
+  FINDING_1 — logical commit-marker atomicity: `commit-<seq>.json` (schema
+  fotmob-detail-staging-commit-marker/v1) is the single commit point, written
+  last after artifacts → quarantines → summary → ledger; the marker binds the
+  exact file list with per-file sha256 plus the previous marker sha256 chain;
+  rollback removes only the files this attempt wrote (pre-existing identical
+  files are never deleted); residue scan fails closed. FINDING_2 — on
+  REPEAT_EQUIVALENT the artifact is REBUILT with recomputed business and
+  integrity hashes and the FINAL classification is written back; old
+  artifacts stay byte-untouched and summary / artifact / store ledger are
+  three-way cross-checked by the validator. FINDING_3 — verified package
+  receipts: real archive SHA-256 verification plus a safe pure-Node tar
+  reader (no child_process; absolute/../symlink/hardlink/special/duplicate
+  members rejected); every index entry is bound to exactly one package whose
+  receipt and live archive/member hashes are re-verified per entry
+  (R16-P1-1: every entry call freshly re-inspects the live archive).
+  FINDING_4 — symlink-ancestor checks on every input type and an
+  input/output non-overlap rule. FINDING_5 — full validator with 38 checks in
+  five groups (A summary 1–10, B store ledger 11–20, C artifact 21–28,
+  D quarantine 29–33, E commit 34–38), run unconditionally even when state
+  errors exist. FINDING_6 — LAYER_A: observation_id recomputed as RFC 4122
+  UUIDv5 over the observation key and generated_at enforced as byte-exact
+  strict ISO equal to the artifact's source_response_received_at (which
+  itself derives byte-exact from the manifest's `response_received_at`); LAYER_B:
+  artifact_integrity_sha256 over every artifact field except itself
+  (integrity hash, not a signature). FINDING_7 — SC-002 status corrected:
+  SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, PR1817_CHANGES_SC002=NO
+  (SC-002 is partial mitigation only). FINDING_8 — Claude post-remediation
+  self-review named CLAUDE_POST_REMEDIATION_SELF_REVIEW;
+  EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and READY_TO_MERGE=NO.
+- Codex closed-loop round (independent review 4863122944 of head
+  a3a916fdd): 13 findings remediated — P0-1 live archive re-verification
+  against the receipt (SHA-256 + stable-sorted member inventory hash
+  `archive_inventory_sha256`; the per-run sharing model described at review
+  time is pre-R16 behavior — superseded by R16-P1-1 per-entry fresh
+  re-inspection, cache never trusted across runs);
+  P0-2 REPEAT_EQUIVALENT final-classification write-back + validator
+  three-way summary↔artifact↔ledger cross-comparison; P1-1 two-level tar
+  member-name validation (raw segments + combined normalized path, ustar
+  `ustar\0`/`ustar ` magics, GNU long name, local PAX, normalized duplicates);
+  P1-2 ACTUAL 16-field double-binding matrix (A/B/C/D) with per-field
+  conflict tests; P1-3 receipt path through the unified input safety gate;
+  P1-4 TOCTOU mitigation (O_NOFOLLOW fd reads with dev/inode checks,
+  controlled private output directories, O_EXCL tmp, exclusive per-store
+  lock, pre/post directory identity check — honest threat model: NOT a
+  defense against a same-uid sustained-race attacker); P1-5
+  MODE_1_UNANCHORED / MODE_2_EXTERNALLY_ANCHORED validation
+  (`--expected-latest-marker-sha256` / repo-external `--anchor-checkpoint`);
+  P2-1 strict tar parsing (octal size required, explicit content/padding
+  bounds, canonical end blocks, strict PAX lengths, GLOBAL PAX rejected);
+  P2-2 payload_file_sha256 / manifest_file_sha256 REQUIRED and three-source
+  consistent; P2-3 RFC 4122 UUIDv5 with the official DNS-namespace test
+  vector + byte-exact timestamp binding; P2-4 structured garbage
+  (null/[]/string/number/boolean) → REJECTED_SCHEMA_UNKNOWN without throwing,
+  convertAll never lets one bad input crash the batch; P2-5 Makefile staging
+  targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
+  body rewritten to match the real implementation.
+Test counts: 340 staging unit tests (122 retention incl. fault-injection and
+tamper [114 + 3 R18-P2-1 short-write injections (a/b/c) + 1 R19-P2-1
+lockCreated regression + 2 R20-P1-1 stale-lock fail-closed regressions + 3
+R20-P2-1 final-artifact gate regressions; the former P1-4 stale
+auto-recovery test was reworked into the R20-P1-1 fail-closed regressions]
++ 82 source
+verification [75 + 4 R17-P2-1 PAX size-override (a/b/c/d) + 3 R17-P2-1 PAX
+merge-semantics (e/f/g)] + 89 contract [54 declared + 16 loop-generated
+per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
++ 1 R8-P2-1 strict array plainness + 3 R12-P3-1 cycle/depth guards + 3
+R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
+R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
+regressions (a/b/c/d)] + 17 converter
++ 30 CLI (25 + 4 R20-P2-2 --limits-file regressions + 1 R21-P3-2 frozen-cap regression in the dedicated
+fotmob_detail_staging_cli_limits.test.js);
+runtime counts = node --test
+# pass; the only gap vs static test() declarations is the loop-generated pair) green
+on the remediation head; ESLint clean. Codex round-8 (head 7bbbd7658) found 2
+new P2 items — R8-P2-1: isPlainJsonData now rejects non-plain arrays
+(non-enumerable own toJSON / holes / symbols / extra keys / non-Array
+prototypes / non-finite numbers — .every() alone skipped them, so a tampered
+array could be written as bytes its artifact hash disagrees with), enforced on
+both the direct accepted and the REPEAT_EQUIVALENT rebuild paths with
+zero-write regressions; R8-P2-2: commitObservations refuses unretainable
+LINKED_*/unknown terminal states (ok:false results pass through verbatim —
+the pre-loop now whitelists accepted/rejected/quarantine only, constrains ok
+vs classification, and self-validates the summary BEFORE any write). Both
+remediated with production tests; 267 staging tests green under umask 022 and
+0002. Codex round-9 (head 8b1fc9034) found 1 new P2 (R9-P2-1: the raw result
+contract is now enforced BEFORE classification — `ok` must be a real boolean
+(a truthy string 'false' no longer classifies as success), ok:true must declare
+ACCEPTED_NEW (retention derives EXACT/EQUIVALENT/identity-conflict; a raw
+rejected claim can no longer be discarded and committed as accepted), and
+ok:false cannot claim an accepted state — 3 new zero-write regressions + legal
+control; 297 staging tests green under umask 022 and 0002) and 1 non-blocking
+P3 (R9-P3-1: doc field-name accuracy — generated_at derives from the manifest's
+`response_received_at`, recorded on the artifact as `source_response_received_at`;
+both docs corrected). Codex round-10 (head 4c1609945) found 2 new P2 + 2 new
+P3, all remediated on the current head: R10-P2-1 (direct commitObservations
+injection surface closed — quarantine_reason derives from the validated
+error_code instead of persisting caller-supplied errors[0].message, rejected
+ok:false envelopes must carry a registry E### error_code, non-ISO builtAt
+refused, every write-plan document forced through isPlainJsonData, D-group
+validates recorded_at strict ISO + file/ledger agreement — 5 new tests + legal
+control), R10-P2-2 (validator observations shape hardening — array
+observations → LEDGER_INVALID, null/non-object entries → LEDGER_INVALID
+instead of a crash — 2 mutation regressions), R10-P3-1 (CAPABILITY_INDEX.md:70
+and PR body field-name closure + counts synced to 279), R10-P3-2 (tar parser
+rejects dangling GNU L / PAX x metadata records at end-of-archive with
+SAFETY_ERROR — 2 EOF fixture tests). Codex round-11 (head d9a47e1, 18
+commits) found 2 new P2 + 3 new P3, all remediated on the current head:
+R11-P2-1 (result-envelope injection closure for direct commitObservations
+callers — every result is descriptor-scanned and scalar-snapshotted BEFORE
+any read (accessor/proxy → INPUT_ERROR), ok:true results must not carry an
+error_code, runId must be a plain identifier — 4 regressions + legal
+control, zero writes), R11-P2-2 (validateStagingArtifact now runs the
+prohibited raw content scan (E013: HTML/credential signatures) on the whole
+artifact — 1 tamper regression), R11-P3-1 (D-group quarantine_reason must
+derive from the registry error_code whitelist AND agree with the ledger — 1
+regression), R11-P3-2 (marker-tamper regression rehashes the marker after
+tampering instead of trusting stale marker bytes — test-helper fix),
+R11-P3-3 (tar PAX path records support multibyte UTF-8 names — 1
+regression); counts synced to 286. Codex round-12 (head 1350ef4de) found 2
+new P2 + 1 new P3, all remediated on the current head: R12-P2-1 (the
+artifact is now DEEP-snapshotted, not kept as the caller's reference — a
+descriptor-driven deep copy built without ever invoking JSON.stringify/
+toJSON on the caller's object, plus util.types.isProxy refusal, so a
+transparent Proxy artifact can no longer pass every gate on legal bytes
+and inject raw content at serialization time; cycles and excessive depth
+are structured INPUT_ERRORs, never RangeError — 2 regressions + legal
+control), R12-P2-2 (bounded archive inspection — compressed size checked
+via the PRE-READ fstat before any allocation, gunzipSync maxOutputLength,
+tar member-count / single-member / total-content caps, all fail-closed
+SAFETY_ERROR — 4 regressions + legal control), R12-P3-1 (isPlainJsonData
+and the prohibited-content scan refuse cycles / depth overflow / proxies
+as structured failures — 3 regressions); counts synced to 297. Codex
+round-13 (head c00343a58) found 4 new P2 + 3 new P3, all remediated on the
+current head: R13-P2-1 (verifyArchive now merges DEFAULT_ARCHIVE_LIMITS and
+passes maxCompressedBytes to the pre-read fstat — the receipt CLI's first
+SHA pass can no longer read a whole oversized archive into memory before
+the bounded inspectArchive; 1 regression + legal control), R13-P2-2 (the
+receipt↔binding SHA is enforced UNCONDITIONALLY even when a registered
+live-verification capability is supplied, and the capability now carries
+the canonical archive_path of the verified archive — a binding with a wrong
+SHA or pointing at another archive is refused; 2 regressions), R13-P2-3
+(validateStagingArtifact starts with an isPlainJsonData depth/cycle/plain
+gate, so a direct-API/CLI/store-validator call agrees with the commit's
+128-level gate and a cyclic or over-deep artifact is a structured
+validation error instead of an unbounded hash-traversal RangeError;
+2 regressions + legal control), R13-P2-4 (validateSummaryDoc validates every
+observation is a non-array object before any field read — a raw/null row is
+a structured SUMMARY_INVALID with short-circuit, and validateOutputRoot
+skips malformed rows instead of throwing; 1 marker-consistent mutation
+regression), R13-P3-1 (the result ENVELOPE itself is refused when
+util.types.isProxy — before any field of the caller's object is read;
+1 zero-write regression), R13-P3-2 (scanProhibitedContent refuses
+proxy-wrapped values BEFORE the array/object dispatch, so a Proxy ARRAY is
+a structured E013 too; 1 regression + legal control), R13-P3-3
+(PROJECT_STATUS.md current-baseline contract count corrected 77→80);
+counts synced to 307.
+Codex round-14 (head 35a1409b2, 20 commits) found 1 new P2 + 2 new P3 —
+R14-P2-1: payload/manifest reads are now capped by their LIVE ARCHIVE MEMBER
+size before the read (entry selectors resolved first; missing member caps at
+0 — an external file larger than the tar member is refused with SAFETY_ERROR
+at the fstat size gate before its bytes are allocated; direct-API regression
+R14-P2-1a + CLI/build regression G57 asserting E008 REJECTED_PROVENANCE_BROKEN
+batch isolation with zero accepts + legal control), R14-P3-1: isPlainJsonData
+and snapshotStrictPlainData object branches now use Reflect.ownKeys to refuse
+Symbol own keys (snapshot never silently drops them; regression + legal
+control), R14-P3-2: ACTIVE_MILESTONE current-overview count corrected
+260→307; counts synced to 310.
+Codex round-15 (head ec2f29037, 21 commits) found 1 new P2 + 1 new P3 —
+R15-P2-1: a legal own "__proto__" key (JSON.parse-generated) was silently
+dropped by the `{}` + `target[key] = value` write patterns — the shared
+canonicalizeJson (FotMobRawDetailFetcher.js, the staging artifact hash chain's
+shared base via canonicalJsonHash → sha256CanonicalJson → canonicalizeJson),
+snapshotStrictPlainData and both artifact hash projections now create the
+property with Object.defineProperty (enumerable data property; behavior
+identical for every other key; the retention newObservations key is
+internally derived as sourceMatchId:sha256 and structurally cannot be
+"__proto__"). Regressions R15-P2-1a/b/c/d (contract: JSON.parse scalar +
+object-value snapshot preservation with intact prototype, artifact-level
+hash sensitivity + legal-control validation, nested section value exercising
+only the shared canonicalizeJson) + R15-P2-1e (retention end-to-end:
+convert→commit→validate preserves the field on disk and stripping it is now
+a detected tamper). R15-P3-1: selector-order comment narrowed to "before the
+payload/manifest input files are gated or read" (non-blocking); counts
+synced to 315.
+Codex round-16 (head 0cff9b262, 22 commits) found 1 new P1 + 1 new P2 + 1
+new P3 — R16-P1-1: the exported verifyEntryAgainstReceipt no longer accepts
+a reusable inspected capability (WeakSet identity proves only "once
+produced by this module", not "reflects the CURRENT archive bytes"; an
+archive replaced at the same path after a capability was issued bypassed
+re-verification). Fixed: the API always freshly re-inspects the live
+archive per entry and refuses ANY supplied inspected (SAFETY_ERROR); the
+CLI loader's liveInspectionCache was removed (receipt document cache kept;
+archive re-read per entry under the same bounded limits). Regression
+R16-P1-1a (replace-archive attack: old capability refused + fresh
+re-inspection catches the live SHA mismatch; V34a/b/c/d/e updated to the
+new API contract). R16-P2-1: buildPackageReceipt's memberHashes lost a
+legal member named "__proto__" through the legacy setter (incl. PAX
+path=__proto__), so legal archives could never complete staging — fixed
+with Object.defineProperty writes + hasOwnProperty existence checks in
+buildPackageReceipt AND verifyPackageReceipt. Regressions R16-P2-1a (PAX
+path=__proto__ member through receipt → live reverify → entry load
+end-to-end), R16-P2-1b (missing "__proto__" member reference →
+INPUT_ERROR), R16-P2-1c (validator member-reference fail-closed).
+R16-P3-1: parsePaxRecords now fails closed on a length-valid record
+without a key=value separator (SAFETY_ERROR; previously silently ignored),
+and a legal "__proto__" PAX key is preserved as an own data property
+(non-blocking). Counts synced to 320.
+Codex round-17 (head 36202a549, 23 commits) rechecked R16 fully RESOLVED and
+found 1 new blocking P2 + 2 non-blocking P3 — R17-P2-1: a legal local-PAX
+`size=` override was not honored (the parser consumed only path/linkpath, so
+a size-overflow archive — GNU tar leaves the header octal size 0 and carries
+the real size in the extended header — failed content/padding/hash handling).
+Fixed: the FULL local-PAX pending metadata is kept (consecutive x headers
+merge, later record wins, defineProperty-safe spread), `size=` is strictly
+parsed as an unsigned decimal safe integer at the extended header
+(SAFETY_ERROR on anything else), and the effective size replaces the header
+size EVERYWHERE for the member itself — resource limits, content bounds,
+padding and the content hash — while metadata entries (L/x) always use their
+own header size; unconsumed local-PAX metadata (path or size) at
+end-of-archive is now a dangling error (R10-P3-2 rule extended from
+path-only to any pending record; message now "dangling GNU/PAX metadata
+override"). Regressions via production inspectArchive: R17-P2-1a size-only
+override (header size 0, PAX size=3 → member size/hash correct),
+R17-P2-1b size + mtime + UTF-8 path records merged, R17-P2-1c non-decimal /
+unsafe sizes (abc/-3/+3/3.0/1e3/overflow) fail closed, R17-P2-1d dangling
+size record fails closed. R17-P3-1 (non-blocking): the R1/R2 WeakSet
+capability registry + deep-freeze were REMOVED — after R16-P1-1 no reusable
+capability ever leaves the module, so the dead machinery (which could invite
+a future maintainer to resurrect an unsafe cache) is gone; V34f now asserts
+the plain mutable return. R17-P3-2 (non-blocking): stale "once per package
+per run" comments corrected to per-entry in the source docstring, the CLI
+loader block, and this document. Counts synced to 324.
+Codex round-18 (head 8f1113b5a, 24 commits) rechecked R17 fully RESOLVED and
+found 1 new blocking P2 — R18-P2-1: `writeJsonAtomically` ignored the return
+count of `fs.writeSync(fd, bytes)`, which may legally be a SHORT write; a
+truncated tmp could then be fsynced, renamed and reported written:true while
+the artifact or commit marker carried partial content (validate would only
+discover it later, leaving an un-committable store — violating "marker is
+the only commit point, failure rolls back"). Fixed: the buffer write loops
+until the whole document is persisted, and a non-integer/zero/negative
+(no-progress) or overshooting return throws SAFETY_ERROR through the
+existing cleanup (unlink tmp, rethrow) — the marker is never written on a
+failed persistence. The store-lock PID write got the same loop (a truncated
+PID could make isHolderAlive() misjudge a LIVE holder as dead and clear its
+lock), and an acquire-time write failure now removes our OWN lock file
+instead of leaving an unresolvable empty lock that would fail-close every
+future commit. Regressions via the REAL production paths: R18-P2-1a (1-byte
+short writes loop to a full artifact + marker, store validates clean),
+R18-P2-1b (zero-progress fails closed on writeJsonAtomically AND an
+end-to-end commit — no tmp, no file, no marker, no lock residue), R18-P2-1c
+(no-progress landing exactly on the commit-marker write rolls back every
+written file). Codex's non-blocking suggestion was also taken: three
+production inspectArchive regressions locking the PAX merge semantics —
+R17-P2-1e (consecutive x headers accumulate: path from the first, size from
+the second), R17-P2-1f (a pending size override survives a GNU long-name
+record, x(size) → L → member), R17-P2-1g (a PAX record before a directory
+member is consumed by it — no dangling, following member intact). Counts
+synced to 330.
+Codex round-19 (head 5b2166c79, 25 commits) rechecked R18 fully RESOLVED and
+found 1 new blocking P2 + 1 non-blocking P3 — R19-P2-1: the R18 acquire-time
+lock cleanup unlinked the lock path on ANY non-EEXIST openSync failure,
+even when the failure happened BEFORE the lock was created (I/O error,
+permission error, fault injection) — that path could belong to ANOTHER live
+holder, and unlinking it would silently break per-store exclusivity
+(TOCTOU window between failed open and unlink). Fixed: a `lockCreated` flag
+gates every cleanup — the lock path is only ever closed/unlinked when
+openSync('wx') actually created it; EEXIST stays contention (return false,
+touch nothing); any other pre-creation failure rethrows without touching
+the path. Regression R19-P2-1a (a pre-created live lock owned by the
+current pid + injected EIO on openSync for the lock path: the EIO
+propagates, the lock file survives byte-identical, and the next normal
+commit fails closed with "another process holds the store lock" — the live
+holder is never cleared by a failed acquirer). R19-P3-1 (non-blocking):
+docs remediation timelines are now labeled as historical cutoffs and link
+the authoritative current-state document (PROJECT_STATUS.md and
+ACTIVE_MILESTONE.md point to this file for rounds R16–R19; stale "Last
+updated" timestamps refreshed). Counts synced to 331.
+Codex round-20 (head 38dfd57ff, 26 commits) rechecked R19 fully RESOLVED
+and found 1 new blocking P1 + 2 new blocking P2 + 1 non-blocking P3 —
+R20-P1-1: the stale (dead-holder) lock auto-recovery was a check-then-unlink
+TOCTOU — two concurrent recoverers both observe the same dead PID, one
+unlinks and creates its OWN live lock, the other then unlinks that FRESH
+lock (release paths even delete each other's locks) — per-store exclusivity
+breaks and commits interleave. Fixed: dead locks are NEVER auto-recovered;
+the acquisition fails closed with a manual-cleanup instruction and the lock
+file is left byte-identical (regressions: stale lock fails closed + blocks
+every retry until manual cleanup, and a failed acquirer never unlinks a
+stale lock — a live lock created in the meantime survives; the former P1-4
+auto-recovery test was reworked into these). R20-P2-1: the writer could
+commit an artifact its own validator later rejects — validateStagingArtifact
+accepts the FULL terminal-state domain (incl. downstream LINKED_CANONICAL)
+and a canonical_match_id that is null OR a string, so a direct caller could
+commit an ok:true/ACCEPTED_NEW artifact declaring a linked state with a
+non-null canonical id: the commit succeeded while validateOutputRoot later
+reported the terminal-state disagreement. Fixed: a final-artifact gate in
+commitObservations enforces import_terminal_state === classification
+terminal state and pins canonical_match_id null +
+canonical_link_status UNLINKED_NOT_ATTEMPTED on the EXACT snapshot that is
+written (ACCEPTED_NEW original AND the REPEAT_EQUIVALENT rebuild), failing
+closed before any byte is written (regressions R20-P2-1a/b/c via the real
+production commit path with recomputed hashes). R20-P2-2: the module
+documented `options.limits` but the canonical Make/CLI had no way to raise
+DEFAULT_ARCHIVE_LIMITS — a legal archive above the defaults (compressed >
+256 MiB, member > 256 MiB, > 10000 members) was refused with no operator
+surface. Fixed: the canonical CLI accepts --limits-file (repository-external
+JSON through the same input gate, strictly validated: positive safe
+integers, never above the new HARD_ARCHIVE_LIMIT_CAP), propagated to the
+receipt SHA pass, the live archive inspection AND every per-entry loader;
+mergeArchiveLimits centralizes the merge + validation so a direct API
+caller cannot bypass the caps either (regressions: >10000-member archive
+refused by default then accepted via raised cap, 1-byte compressed cap
+fails the first SHA pass, tight member cap folds to E008 in build, invalid
+limit values/hard-cap violations/limits-file inside the repo all fail
+closed). R20-P3-1 (non-blocking, ACCEPTED): GNU global PAX (g) rejection
+stays a documented fail-closed input boundary — Codex explicitly judged it
+acceptable as-is and recorded it as future compatibility work; no code
+change. Counts synced to 339.
+Round-21 (head 4d3be869d, re-launched 2026-08-06 after a Codex quota reset):
+R20-P1-1 RESOLVED / R20-P2-1 RESOLVED / R20-P2-2 PARTIALLY_RESOLVED /
+R20-P3-1 ACCEPTED per round-21 re-verification. New findings: R21-P2-1
+(canonical Make targets now expose LIMITS_FILE for receipt/build, appended
+conditionally as --limits-file, documented in data-help + data-*-staging-help
++ README + CAPABILITY_INDEX), R21-P3-1 (stale-lock comment corrected to the
+fail-closed manual-cleanup contract), R21-P3-2 (DEFAULT_ARCHIVE_LIMITS and
+HARD_ARCHIVE_LIMIT_CAP are now Object.freeze'd, with a direct-API mutation
+regression). Counts synced to 340.
+16-match offline revalidation on the
+fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
+ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
+new artifacts and byte-identical old artifacts; RUN_3 synthetic new
+observation → 1 REPEAT_EQUIVALENT + 15 REPEAT_EXACT, marked
+SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO (no claim of a
+real new observation). All three stores validate PASS with zero residue.
+No real FotMob access, no database connection or write, no migration, no
+training/backtest/prediction; no real payload/manifest/artifact committed.
+
 ### Current safety and documentation status
 
 - This file is the active FotMob current-state source of truth; historical ADG

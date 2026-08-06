@@ -17,6 +17,7 @@
         "odds:sniper": "node scripts/ops/odds_sniper.js",
         "odds:staging:dry-run": "node scripts/ops/odds_staging_dry_run.js",
         "fotmob:candidates:export": "node scripts/ops/fotmob_candidates_export.js",
+        "fotmob:detail:staging": "docker compose -f docker-compose.dev.yml exec -T dev node scripts/ops/fotmob_detail_staging.js",
         "canonical:inventory:writer": "node scripts/ops/canonical_inventory_writer.js",
         "harvest:production": "node scripts/ops/run_production.js",
         "titan:total-war": "node scripts/ops/total_war_pipeline.js",
