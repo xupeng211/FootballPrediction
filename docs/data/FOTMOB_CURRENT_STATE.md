@@ -9,19 +9,34 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-08-02
+## Current authoritative status — 2026-08-06
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+Current main = fd60117d283a2af9e103990f733e436fda53b100
 V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-complete, raw retention)
+  (PR #1813, merged)
 FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
   (malformed reason.short fail closed; started+postponed contradiction fail closed;
    core-layer 40-hex collector_code_revision enforcement in buildCaptureManifest)
-Bounded auditable detail capture pipeline = implemented and fully tested offline
-  (PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
+Bounded auditable detail capture pipeline = implemented, tested, MERGED
+  (PR #1816, squash merge b6f9f385124eab7476157777517fcd5bf01a93ab, 2026-08-04;
+   PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
+Offline detail staging converter / validator = implemented, tested, MERGED
+  (PR #1817, squash merge fd60117d283a2af9e103990f733e436fda53b100, 2026-08-06;
+   post-merge main Production Gate run 31075669344 = SUCCESS;
+   see "Offline detail staging converter / validator" below)
+Chain available on main = PLAN → PREFLIGHT → bounded CAPTURE → REPLAY →
+  verified archive/receipt → offline staging conversion → append-only retention →
+  full validator
 Real FotMob detail capture = still NOT authorized and NOT executed (CAPTURE default-off)
+Next recommended data task = one finished match, single-request, controlled real
+  FotMob detail end-to-end trial (repository-external output, zero database) —
+  requires NEW explicit user authorization
+  (OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=NO at this time);
+  do not start automatically
 Public terms / usage-boundary review = completed
 FotMob written permission = absent (no written permission granted)
 Bounded two-path compatibility probe = completed
@@ -29,6 +44,12 @@ Bounded two-path compatibility probe = completed
    EPL fixtures route = compatible at probe time; no access-control signal
    observed in that bounded probe)
 No batch capture executed; no 1,140-match detail capture executed; no database write
+Not occurred since PR #1817 merge: no new real FotMob detail capture, no season
+  capture, no business database write, no migration, no canonical linkage write,
+  no training, no backtest, no prediction
+SC-002 = SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO
+Issue #1793 (M3 historical odds staging and import foundation) = remains OPEN
 This repository state executes zero real network requests
   (the probe's 2 requests were a separate authorized one-time action; no code
    path in this state performs live fetches)
@@ -399,7 +420,7 @@ historical four-row audit does not extend a full parser/audit result to all 58
 current `fotmob_live_v1` retained rows. Exact named-writer/run provenance for
 all 58 rows is not uniquely attributable.
 
-### Offline detail staging converter / validator (implemented, tested; PR #1817 blocker remediation in Draft)
+### Offline detail staging converter / validator (implemented, tested, merged via PR #1817)
 
 The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
 `src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
@@ -428,7 +449,10 @@ outputs were removed. The 16-match validation is an offline verification run
 only — no new real capture happened and no real payload/manifest/artifact was
 committed.
 
-**PR #1817 remediation history (offline-only, Draft, unmerged)**:
+**PR #1817 remediation history (offline-only; PR #1817 MERGED 2026-08-06, squash
+merge commit `fd60117d283a2af9e103990f733e436fda53b100`, post-merge main
+Production Gate run 31075669344 = SUCCESS — the per-finding narrative below is
+the pre-merge record)**:
 - Blockers round (8 findings of the independent review of head c8a0489f7):
   FINDING_1 — logical commit-marker atomicity: `commit-<seq>.json` (schema
   fotmob-detail-staging-commit-marker/v1) is the single commit point, written
@@ -857,16 +881,35 @@ training/backtest/prediction; no real payload/manifest/artifact committed.
 Do not start automatically. Recommended next task only after user confirmation:
 the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`
 artifact contract and raw response provenance retention is implemented
-(PR #1813, merged), and the FOTMOB_REAL_CAPTURE_READINESS Phase A pre-capture
+(PR #1813, merged), the FOTMOB_REAL_CAPTURE_READINESS Phase A pre-capture
 code hardening is implemented and fully tested (malformed `reason.short` fail
 closed, started+postponed contradiction fail closed, core-layer 40-hex
-`collector_code_revision` enforcement). Phase A is code hardening only: no real
-capture has been executed and no real capture artifact has been generated (the
-only real FotMob network traffic is the completed two-path compatibility probe
-= 2 requests). The FotMob public terms / usage-boundary review is complete (no
-written permission granted); a real batch capture still requires a new explicit
-user authorization. Future inventory is 1,140 candidates; the next step is a
-separate future canonical FotMob writer as a `data-*`-gated business milestone.
+`collector_code_revision` enforcement), the bounded auditable detail capture
+pipeline is merged (PR #1816, squash merge `b6f9f385…`), and the offline
+detail staging converter/validator is merged (PR #1817, squash merge
+`fd60117d2…`, post-merge main Production Gate 31075669344 success). The chain
+available on main is PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified
+archive/receipt → offline staging conversion → append-only retention → full
+validator. No new real FotMob detail capture has been executed: the only real
+FotMob network traffic remains the completed two-path compatibility probe
+(= 2 requests). The FotMob public terms / usage-boundary review is complete (no
+written permission granted).
+
+The next recommended data task is exactly one: **a controlled real FotMob
+detail end-to-end trial for one already-finished match** — single match,
+single request (`MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
+`MATCH_STATUS=FINISHED`), repository-external output, zero database
+connections/writes, zero SQL, zero migrations, zero training/backtest/
+prediction — running PLAN → PREFLIGHT → user confirmation of the exact match
+id and budget → CAPTURE → package/archive/receipt → offline staging build →
+staging validate → repeat offline build → deterministic-output comparison →
+evidence review → stop. This trial is **not yet authorized**: it requires a
+new explicit user authorization
+(`OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`; currently NO)
+and must not auto-expand to 5 or 16 matches. A real batch capture and a
+separate future canonical FotMob writer as a `data-*`-gated business milestone
+remain separately authorized future steps. Future inventory is 1,140
+candidates.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
 No network, database write, migration, canonical-linkage persistence or

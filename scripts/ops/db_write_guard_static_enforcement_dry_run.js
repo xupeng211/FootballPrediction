@@ -174,7 +174,9 @@ const PHASE1_SKIPPED = Object.freeze([
  * The full-scan `should_fail` is always false for these entries.
  * Changed-files enforcement also respects these as skip entries.
  *
- * SC-002 remains partial mitigation only. These are NOT "fixed".
+ * SC-002 two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+ * SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING.
+ * These allowlist entries are historical baselines, NOT "fixed".
  */
 function loadLegacyAllowlist() {
     const allowlistPath = path.join(__dirname, 'helpers', 'db_write_guard_legacy_allowlist.json');
@@ -823,7 +825,7 @@ function printReport(results, summary) {
     console.log(`  SC-002 guarded:    ${summary.sc002_guarded_total} / 66 (Phase1-7)`);
     console.log(`  SC-002 complex:    ${summary.sc002_remaining_complex} remaining (categorized, NOT fixed)`);
     console.log('');
-    console.log('SC-002 status: partial mitigation only — NOT fully fixed.');
+    console.log('SC-002 status: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING.');
     console.log('Changed-files enforcement: hard fail on new unguarded JS scripts/ops.');
     console.log('Historical full-scan candidates: exempt from hard fail.');
     console.log('This is a dry-run scan. The ai_workflow_gate reads should_fail for enforcement.');
@@ -937,9 +939,13 @@ function scanAdvisory(changedFiles = []) {
                 : 'OK: changed scripts/ops JS files are read-only, complex/skipped, or non-write.',
         // Historical debt disclaimer — always present
         historical_debt_note:
-            'SC-002 remains partial mitigation only. The full-scan historical '
-            + 'remaining candidates are NOT subject to changed-files hard fail. '
-            + 'This enforcement only applies to changed files in this diff.',
+            'SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE. Changed-file '
+            + 'enforcement is active. '
+            + 'SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING. Historical '
+            + 'full-scan candidates remain outside changed-file hard-fail '
+            + 'scope until the separately authorized production-role '
+            + 'deployment stage. This enforcement only applies to changed '
+            + 'files in this diff.',
     };
 }
 

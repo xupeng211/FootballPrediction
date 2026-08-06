@@ -420,10 +420,12 @@ test('Phase2 I1: enforcement output has all required fields', (t) => {
     }
     assert.equal(result.mode, 'changed_files_enforcement');
     assert.equal(result.enforcement_level, 'hard_fail_on_new_unguarded_js_ops');
-    assert.ok(result.historical_debt_note.includes('SC-002'),
-        'historical_debt_note must mention SC-002');
-    assert.ok(result.historical_debt_note.includes('partial mitigation'),
-        'historical_debt_note must say partial mitigation');
+    assert.ok(result.historical_debt_note.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
+        'historical_debt_note must state SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE');
+    assert.ok(result.historical_debt_note.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
+        'historical_debt_note must state SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING');
+    assert.ok(!result.historical_debt_note.includes('partial mitigation'),
+        'historical_debt_note must not use the stale "partial mitigation" framing');
 });
 
 test('Phase2 I2: violation entries have required fields', (t) => {

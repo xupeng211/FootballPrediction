@@ -14,10 +14,14 @@
 
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
-- 本任务基线（PR base；main 在合并本 PR 后将前移，不再等于该 SHA）：
-  `635773a7e8015b8e4e4e4293fa4ac4db8cb7f7a9`（PR #1813 merge 后；
-  post-merge main gate 结果以主会话最终核验为准）
-- 最近完成：**PR #1813** — FotMob v2 provenance export（provider status、dual hash、
+- 当前 main 基线：
+  `fd60117d283a2af9e103990f733e436fda53b100`（PR #1817 squash merge；
+  post-merge main Production Gate 31075669344 success）
+- 最近完成：**PR #1817** — FotMob offline detail staging converter/validator
+  （squash merge `fd60117d2…`，post-merge main Production Gate 31075669344
+  success，staging 能力已在 main 上可用）；**PR #1816** — bounded auditable
+  FotMob detail capture pipeline（squash merge `b6f9f385…`，真实抓取仍需单独授权）；
+  此前为 **PR #1813** — FotMob v2 provenance export（provider status、dual hash、
   raw retention + capture manifest、clean-worktree 40-hex git revision 绑定、
   unknown / started fail closed、v1 输出路径不变）
 - 关键 current-state 文档：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md
@@ -42,7 +46,7 @@
   核心层强制 40-hex `collector_code_revision`（直接核心调用 / 依赖注入不可绕过，
   非法 revision 不产生任何文件）。`ALLOWED_PROVIDER_STATUSES` /
   `STATUS_MAPPING_VERSION` / identity-v1 输出 / 双 hash 均未变。
-- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（Draft PR，待评审；PR #1817 阻塞问题修复已离线完成）**：
+- **FOTMOB_DETAIL_STAGING_CONTRACT_IMPLEMENTATION_REVIEW_OFFLINE_ONLY（PR #1817 已于 2026-08-06 squash 合并入 main：merge commit `fd60117d2…`，post-merge main Production Gate 31075669344 success；以下为合并前的实现/修复记录）**：
   独立评审 8 项阻塞问题全部离线修复 —— 纯离线 detail staging converter/validator 已实现并全量测试 ——
   `make data-fotmob-detail-staging-{help,receipt,build,validate}`（直接 Node CLI
   `scripts/ops/fotmob_detail_staging.js` 为 internal engine）将归档的
@@ -62,7 +66,7 @@
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
   marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
   变体（真实 16 场均有 4 个）。零网络、零数据库、零采集、无真实 payload/
-  manifest/artifact 提交；PR 保持 Draft、未合并。
+  manifest/artifact 提交；PR #1817 已合并入 main（见上）。
 
   修复内容：F1 逻辑 commit-marker 原子提交/回滚（commit-<seq>.json 为唯一提交点、
   最后写入、绑定文件列表+sha256 链、回滚只删本次写入文件、residue 扫描 fail-closed）；
@@ -207,9 +211,10 @@
   R6-P1-2 observed 球队必填 + artifact 身份语义、R6-P2-1 导出 API 严格类型
   合同、R6-P2-2 quarantine key/entry/file/summary 语义三方绑定、
   R6-P3-1 archive input gate 非重叠检查）；
-  零网络、零数据库、零采集、无 migration；PR 保持
-  Draft、未合并，等待外部独立实现验收。
-- **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（本 PR，待合并）**：已实现并
+  零网络、零数据库、零采集、无 migration；PR #1817 已于 2026-08-06 squash
+  合并入 main（merge commit `fd60117d2…`），post-merge main Production
+  Gate 31075669344 success；staging 能力已在 main 上可用。
+- **FOTMOB_BOUNDED_AUDITABLE_DETAIL_CAPTURE_PIPELINE（PR #1816，已于 2026-08-04 squash 合并入 main：merge commit `b6f9f385…`）**：已实现并
   全量离线测试的有界、可审计、可恢复 detail capture 流水线 —— 四阶段
   PLAN（确定性 plan + 重算 plan_business_sha256，PLAN 构建器与 CAPTURE 校验器
   共享同一 hash 逻辑）/ PREFLIGHT（完全离线验证 plan、重算 hash、校验
@@ -251,10 +256,18 @@
    probe 已完成 = 2 次请求，match detail 路由与 EPL fixtures 路由均兼容，
    未见 access-control 信号。
 5. **三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。
-6. **生产 import schema 与真实写入**：需后续单独授权（须先满足 status-complete
+6. **一场已结束比赛的受控真实 FotMob 详情端到端试运行（下一项推荐的数据任务）**：
+   单场、单请求、MATCH_STATUS=FINISHED、仓库外输出、零数据库连接/写入、
+   零 SQL、零 migration、零训练/回测/预测；流程为 PLAN → PREFLIGHT → 用户确认
+   精确 match id 与预算 → CAPTURE 一场 → package/archive/receipt → offline
+   staging build → staging validate → repeat offline build → 确定性输出比对 →
+   证据评审 → 停止。**尚未授权**：需要新的明确用户授权标识
+   `OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`（当前=NO），
+   不得自动开始，不得自动扩展到 5 场或 16 场。
+7. **生产 import schema 与真实写入**：需后续单独授权（须先满足 status-complete
    artifact、FotMob endpoint/capture/licence provenance、disposable proof、
    dedicated sandbox/ACL/backup-restore 等 Gate，见 Issue #1793 评论）。
-7. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
+8. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
 
 ## 当前授权下一步
 

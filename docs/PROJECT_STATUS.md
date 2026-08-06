@@ -902,6 +902,20 @@ legacy-writer execution is authorized.
   new dependencies.
 - No network acquisition, database write, browser automation, parser
   implementation, migration, training or prediction is authorized.
+- **PR #1816 (bounded auditable FotMob detail capture pipeline) and PR #1817
+  (offline detail staging converter/validator) are MERGED**: PR #1816 squash
+  merge commit `b6f9f385124eab7476157777517fcd5bf01a93ab` (2026-08-04); PR #1817
+  squash merge commit `fd60117d283a2af9e103990f733e436fda53b100` (2026-08-06),
+  post-merge main Production Gate run 31075669344 success. Current main =
+  `fd60117d283a2af9e103990f733e436fda53b100`. The chain available on main is
+  PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified archive/receipt →
+  offline staging conversion → append-only retention → full validator. No new
+  real FotMob detail capture, season capture, business database write,
+  migration, canonical linkage write, training, backtest or prediction has
+  occurred. The next recommended data task is a single-match, single-request,
+  FINISHED-status, repository-external-output, zero-database real end-to-end
+  FotMob detail trial, which still requires new explicit user authorization
+  (not granted; do not start automatically).
 - The completed M3 offline cross-source audit derived its bounded population
   from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
@@ -946,8 +960,11 @@ legacy-writer execution is authorized.
   docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
   this paragraph's remediation narrative is a historical baseline).
 
-- **FotMob detail staging (offline) PR #1817 blocker remediation (Draft,
-  unmerged, pending external implementation acceptance)**: all 8 independent
+- **FotMob detail staging (offline) PR #1817 blocker remediation (PR #1817
+  MERGED 2026-08-06, squash merge commit
+  `fd60117d283a2af9e103990f733e436fda53b100`; post-merge main Production Gate
+  run 31075669344 success; the narrative below is the pre-merge remediation
+  record)**: all 8 independent
   review findings fixed offline — F1 logical commit-marker atomic
   commit/rollback (marker written last, bound to file list + sha256 chain,
   rollback removes only this attempt's files, residue scan fail-closed);
@@ -1020,7 +1037,8 @@ legacy-writer execution is authorized.
   ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
   REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);
   all stores validate PASS with zero residue. Zero network, zero database,
-  zero capture, no migration; PR stays Draft and unmerged.
+  zero capture, no migration; PR #1817 is merged into main (squash merge
+  commit `fd60117d2…`; post-merge main Production Gate 31075669344 success).
 
 ## Next recommended sequence
 

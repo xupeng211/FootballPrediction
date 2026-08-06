@@ -389,3 +389,85 @@ test('Scenario 13f: advisory mode — production host hard block still active', 
     delete process.env.ALLOW_RAW_MATCH_DATA_WRITE; delete process.env.DRY_RUN;
     assert.equal(r.allowed, false);
 });
+
+// ── Scenario 14: SC-002 two-layer status messaging (post-PR1817 reconciliation) ──
+// The scanner output must state the accurate two-layer SC-002 state
+// (ENFORCEMENT_INFRASTRUCTURE=COMPLETE / STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING)
+// instead of the stale blanket "partial mitigation only" framing, while the
+// changed-file enforcement semantics and pass/fail judgment stay unchanged.
+
+const SC002_MSG_REPO_ROOT = path.resolve(__dirname, '../..');
+
+test('Scenario 14a: historical_debt_note states two-layer SC-002 status, not stale phrase', (t) => {
+    const result = scanAdvisory(['scripts/ops/purge_orphans.js']);
+    const note = result.historical_debt_note;
+    assert.ok(typeof note === 'string' && note.length > 0,
+        'historical_debt_note must be present');
+    // 1. Stale phrases must be gone
+    assert.ok(!note.includes('remains partial mitigation only'),
+        'stale phrase "remains partial mitigation only" must not be output');
+    assert.ok(!note.includes('partial mitigation'),
+        'stale "partial mitigation" framing must not be output');
+    // 2. COMPLETE infrastructure state must be output
+    assert.ok(note.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
+        'note must state SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE');
+    // 3. PENDING production-role deployment state must be output
+    assert.ok(note.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
+        'note must state SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING');
+    // 4. Changed-file enforcement semantics preserved
+    assert.ok(note.includes('Changed-file') && note.includes('enforcement is active'),
+        'note must state changed-file enforcement is active');
+    assert.ok(note.includes('only applies to changed files'),
+        'note must keep the changed-files-only scope');
+    // 5. Historical full-scan candidate limit still accurate
+    assert.ok(note.includes('full-scan candidates remain outside changed-file hard-fail scope'),
+        'note must keep historical full-scan candidates outside the hard-fail scope');
+    assert.ok(note.includes('separately authorized production-role deployment'),
+        'note must tie the remaining scope to the separately authorized production-role deployment');
+});
+
+test('Scenario 14b: scanner source no longer contains stale SC-002 phrases', (t) => {
+    const scannerSrc = fs.readFileSync(
+        path.join(SC002_MSG_REPO_ROOT, 'scripts/ops/db_write_guard_static_enforcement_dry_run.js'),
+        'utf8',
+    );
+    assert.ok(!scannerSrc.includes('SC-002 remains partial mitigation only'),
+        'scanner source must not contain the stale gate log phrase');
+    assert.ok(!scannerSrc.includes('SC-002 status: partial mitigation only'),
+        'human-readable report must not claim partial-mitigation-only status');
+    assert.ok(scannerSrc.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
+        'scanner source must state COMPLETE enforcement infrastructure');
+    assert.ok(scannerSrc.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
+        'scanner source must state PENDING production role deployment');
+});
+
+test('Scenario 14c: pass/fail judgment unchanged — guarded file still passes', (t) => {
+    const result = scanAdvisory(['scripts/ops/purge_orphans.js']);
+    assert.equal(result.should_fail, false,
+        'guarded historical file must still pass (should_fail=false)');
+    assert.equal(result.mode, 'changed_files_enforcement');
+    assert.equal(result.enforcement_level, 'hard_fail_on_new_unguarded_js_ops');
+});
+
+test('Scenario 14d: pass/fail judgment unchanged — unguarded write-risk file still fails', (t) => {
+    const content = `
+        const { Pool } = require('pg');
+        const pool = new Pool();
+        async function write() {
+            await pool.query(\`${KW.IN} raw_match_data (match_id) VALUES (1)\`);
+        }
+        module.exports = { write };
+    `;
+    const relPath = 'scripts/ops/_test_sc002_msg_unguarded_fixture.js';
+    const absPath = path.join(SC002_MSG_REPO_ROOT, relPath);
+    fs.writeFileSync(absPath, content, 'utf8');
+    try {
+        const result = scanAdvisory([relPath]);
+        assert.equal(result.should_fail, true,
+            'unguarded changed file with DB write risk must still hard fail');
+        assert.ok(result.violation_count >= 1,
+            'violation must still be reported');
+    } finally {
+        cleanup(absPath);
+    }
+});
