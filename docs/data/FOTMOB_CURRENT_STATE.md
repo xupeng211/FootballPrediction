@@ -53,6 +53,14 @@ Issue #1793 (M3 historical odds staging and import foundation) = remains OPEN
 This repository state executes zero real network requests
   (the probe's 2 requests were a separate authorized one-time action; no code
    path in this state performs live fetches)
+Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
+  (out of authorized scope; owner-authorized follow-up required) =
+  CLAUDE.md:62, .github/pull_request_template.md:127,
+  scripts/ops/helpers/agent_workflow_hardening_checks.py:175,
+  scripts/ops/helpers/python_db_write_enforcement_check.py:68,178,
+  scripts/ops/helpers/sql_migration_policy_enforcement_check.py:94,125,
+  config/python_db_write_allowlist.json, config/sql_migration_policy_allowlist.json,
+  docs/SC002_CLOSURE_PLAN.md:10
 ```
 
 ### Detail capture pipeline
@@ -481,7 +489,9 @@ the pre-merge record)**:
   (integrity hash, not a signature). FINDING_7 — SC-002 status corrected:
   SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, PR1817_CHANGES_SC002=NO
-  (SC-002 is partial mitigation only). FINDING_8 — Claude post-remediation
+  (the pre-correction wording in the original blocker record said "SC-002 is
+  partial mitigation only"; the corrected two-layer state above supersedes it).
+  FINDING_8 — Claude post-remediation
   self-review named CLAUDE_POST_REMEDIATION_SELF_REVIEW;
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and READY_TO_MERGE=NO.
 - Codex closed-loop round (independent review 4863122944 of head
@@ -899,8 +909,10 @@ The next recommended data task is exactly one: **a controlled real FotMob
 detail end-to-end trial for one already-finished match** — single match,
 single request (trial bounds `MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
 `MATCH_STATUS=FINISHED`; expressed through the canonical entrypoint as
-`MAX_REQUESTS=1` + `CONFIRM_MAX_FOTMOB_REQUESTS=1` on preflight/execute and
-`MATCH_ID=<exact id>` + `LIMIT=1` on plan; FINISHED is a pre-execution
+`MAX_REQUESTS=1` on preflight, `MAX_REQUESTS=1` +
+`CONFIRM_MAX_FOTMOB_REQUESTS=1` on execute — the confirmation variable is
+enforced only on execute — and `MATCH_ID=<exact id>` + `LIMIT=1` on plan;
+FINISHED is a pre-execution
 human-confirmation condition, not a capture-script filter),
 repository-external output, zero database
 connections/writes, zero SQL, zero migrations, zero training/backtest/

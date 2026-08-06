@@ -262,8 +262,9 @@
    零训练/回测/预测。任务边界（MATCH_COUNT=1 / MAX_FOTMOB_REQUESTS=1 /
    MATCH_STATUS=FINISHED）经 canonical 入口表达为：plan 阶段
    `make data-fotmob-detail-capture-plan`（`MATCH_ID=<精确 match id>` +
-   `LIMIT=1` 选择单场）、preflight/execute 预算 `MAX_REQUESTS=1` 且
-   `CONFIRM_MAX_FOTMOB_REQUESTS=1`、FINISHED 为执行前用户确认环节核实
+   `LIMIT=1` 选择单场）、execute 预算 `MAX_REQUESTS=1` 且
+   `CONFIRM_MAX_FOTMOB_REQUESTS=1`（确认变量仅 execute 强制；preflight
+   仅 `MAX_REQUESTS=1`）、FINISHED 为执行前用户确认环节核实
    的人工确认条件（capture 脚本无该 filter 参数）。流程为 PLAN → PREFLIGHT
    → 用户确认精确 match id 与预算 → CAPTURE 一场（execute 需全部授权变量
    与 `NETWORK_AUTHORIZATION=yes`）→ package/archive/receipt → offline
