@@ -174,7 +174,9 @@ const PHASE1_SKIPPED = Object.freeze([
  * The full-scan `should_fail` is always false for these entries.
  * Changed-files enforcement also respects these as skip entries.
  *
- * SC-002 remains partial mitigation only. These are NOT "fixed".
+ * SC-002 two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+ * SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING.
+ * These allowlist entries are historical baselines, NOT "fixed".
  */
 function loadLegacyAllowlist() {
     const allowlistPath = path.join(__dirname, 'helpers', 'db_write_guard_legacy_allowlist.json');
@@ -689,15 +691,18 @@ function buildSummary(results) {
     }
 
     // SC-002 status
-    summary.sc002_status = 'partial_mitigation_only';
+    summary.sc002_status = 'enforcement_infrastructure_complete';
     summary.sc002_guarded_total = summary.guarded_count + summary.guarded_but_needs_review_count;
     summary.sc002_remaining_complex = summary.legacy_allowlist_count;
     summary.sc002_note =
-        'SC-002 is NOT fully fixed. Guarded scripts are per-script opt-in. '
-        + 'Remaining complex candidates are categorized (NOT fixed). '
+        'SC-002 two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; '
+        + 'SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING. '
+        + 'Guarded scripts are per-script opt-in. '
+        + 'Remaining complex candidates are categorized historical baselines (NOT "fixed"). '
         + 'Changed-files enforcement is active for new/modified scripts/ops JS. '
         + 'Historical full-scan candidates do not trigger hard fail. '
-        + 'Python/SQL/migration enforcement not yet designed.';
+        + 'Python/SQL/migration enforcement is covered by the separate '
+        + 'PYTHON-DB-WRITE / SQL-MIGRATION gate outputs.';
 
     return summary;
 }
@@ -823,7 +828,7 @@ function printReport(results, summary) {
     console.log(`  SC-002 guarded:    ${summary.sc002_guarded_total} / 66 (Phase1-7)`);
     console.log(`  SC-002 complex:    ${summary.sc002_remaining_complex} remaining (categorized, NOT fixed)`);
     console.log('');
-    console.log('SC-002 status: partial mitigation only — NOT fully fixed.');
+    console.log('SC-002 status: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING.');
     console.log('Changed-files enforcement: hard fail on new unguarded JS scripts/ops.');
     console.log('Historical full-scan candidates: exempt from hard fail.');
     console.log('This is a dry-run scan. The ai_workflow_gate reads should_fail for enforcement.');
@@ -937,8 +942,11 @@ function scanAdvisory(changedFiles = []) {
                 : 'OK: changed scripts/ops JS files are read-only, complex/skipped, or non-write.',
         // Historical debt disclaimer — always present
         historical_debt_note:
-            'SC-002 remains partial mitigation only. The full-scan historical '
-            + 'remaining candidates are NOT subject to changed-files hard fail. '
+            'SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE. Changed-file '
+            + 'enforcement is active. '
+            + 'SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING. Historical '
+            + 'full-scan candidates remain outside changed-file hard-fail '
+            + 'scope; any expansion of that scope is a separate decision. '
             + 'This enforcement only applies to changed files in this diff.',
     };
 }
@@ -1022,7 +1030,7 @@ function main(argv = process.argv.slice(2)) {
                     }
                 }
                 console.log('[DB-WRITE-GUARD ENFORCEMENT] Hard fail: unguarded DB write risk in changed files.');
-                console.log('[DB-WRITE-GUARD ENFORCEMENT] SC-002 is NOT fully fixed. Historical candidates exempt.');
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING. Historical full-scan candidates exempt from changed-file hard fail.');
             } else if (output.violation_count === 0 && output.guarded_changed_js_ops.length > 0) {
                 console.log('[DB-WRITE-GUARD ENFORCEMENT] OK: all changed scripts/ops JS files are guarded.');
             } else {

@@ -307,7 +307,7 @@ legacy-writer execution is authorized.
   - `.env.example`: Guard documentation added
   - Tests: 15 new static tests (`TestInitSqlGuardGateB`), 54 total dev POC tests
   - Gate B: init_db.sql guard implemented.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Next task: `sc002_final_closure_check`. Do not start automatically.
 
@@ -324,7 +324,7 @@ legacy-writer execution is authorized.
   - Conservative detection: guarded-but-unallowlisted files flagged; DB-importing files flagged.
   - All tests use temp fixture files inside REPO_ROOT — never modify real code.
   - Criterion #2: Substantially met.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Next task: `deploy_docker_init_sql_guard`. Do not start automatically.
 
@@ -346,7 +346,7 @@ legacy-writer execution is authorized.
       (scraper_or_browser_only → read_only — static file classifier, no browser/network/DB).
   - Criterion #1: Substantially met — deep per-script verification complete.
   - Criterion #3: Substantially met — deep verification complete.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Next task: `changed_files_negative_case_enforcement_test`. Do not start automatically.
 
@@ -369,7 +369,7 @@ legacy-writer execution is authorized.
     - `football_gatekeeper` — SELECT only (CI/test temporary probes)
   - **No DB connection. No SQL execution. No real permission changes.**
   - **No real secrets. No production config modifications.**
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Criterion #6: Reviewed + Dev POC. Remains unmet for staging/production.
   - Training / data expansion / real DB write remain blocked.
 
@@ -392,7 +392,7 @@ legacy-writer execution is authorized.
   - Recommended target model: 6 specialized roles (owner, app, ingestion, training, reader,
     gatekeeper) with least-privilege grants.
   - Next step: Apply role model in Docker dev environment as proof-of-concept.
-  - SC-002 remains partial mitigation only. Criterion #6 now reviewed (remains unmet for implementation).
+  - SC-002 was partial mitigation only at that task's completion. Criterion #6 now reviewed (remains unmet for implementation).
   - Training / data expansion / real DB write remain blocked.
 
 ## sc002_overall_closure_assessment completed
@@ -413,7 +413,7 @@ legacy-writer execution is authorized.
     - DB role/permission model not reviewed
     - `deploy/docker/init_db.sql` needs guard (Gate B)
   - Next recommended task: `runtime_db_role_permission_review_phase1` (low effort, documentation only)
-  - SC-002 remains partial mitigation only. Cannot be closed.
+  - SC-002 was partial mitigation only at that task's completion. Cannot be closed.
   - Training / data expansion / real DB write remain blocked.
 
 ## sc002_alembic_migration_runtime_guard completed
@@ -433,7 +433,7 @@ legacy-writer execution is authorized.
   - **Python write paths guarded: 18/20 (was 17/20).**
   - **All 20 Python write paths now classified and resolved. 0 unreviewed. 0 pending.**
   - This task did NOT run Alembic, migration, SQL, DB connection, or real DB write.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Next task: None from Python track — all 20 Python write paths resolved.
     SC-002 overall closure criteria assessment when remaining non-Python criteria are met.
@@ -467,7 +467,7 @@ legacy-writer execution is authorized.
   - **Python write paths guarded count: still 17/20** (unchanged — no guard added).
   - **1 path now has precise classification with implementation plan** (was generic
     `pending_runtime_guard`).
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Next task: `sc002_alembic_migration_runtime_guard_implementation`.
     Do not start automatically.
@@ -489,7 +489,7 @@ legacy-writer execution is authorized.
   - Updated `_runtime_guard_status`: **17/20** Python write paths now runtime guarded.
   - Docs updated: `SC002_MANUAL_REVIEW_PHASE2D.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
   - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
 
 ## python_manual_review_phase2d completed
@@ -516,7 +516,7 @@ legacy-writer execution is authorized.
   - Guard implementation for 2 write_needs_guard paths deferred to `python_manual_review_guard_phase2e`.
   - Python write paths guarded count: **still 15/20** (unchanged).
   - **2 next guard candidates** identified (reprocess_from_local.py, prometheus_metrics.py).
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
 
 ## python_indirect_write_path_guard_phase2 completed
@@ -541,7 +541,7 @@ legacy-writer execution is authorized.
   - Updated `_runtime_guard_status` in allowlist: **15 of 20 Python write paths now runtime guarded** (9 confirmed + 6 indirect).
   - Docs updated: `SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
   - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
-  - **5 manual review candidates NOT processed.** SC-002 remains partial mitigation only.
+  - **5 manual review candidates NOT processed.** SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
 
 ## python_indirect_write_path_design_phase1 completed
@@ -572,7 +572,7 @@ legacy-writer execution is authorized.
     (unsafe default).
   - Guard implementation for 6 needs_guard paths deferred to `python_indirect_write_path_guard_phase2`.
   - Confirmed Python write paths guarded count: **still 9/14** (unchanged).
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - 5 manual review candidates NOT processed.
 
@@ -595,7 +595,7 @@ legacy-writer execution is authorized.
     - **0 dynamic/unknown consumers** (categories D, E)
   - Next guard implementation candidates: none from this audit — all write consumers already guarded.
     Remaining 5 confirmed Python write paths in Phase2C batch4 still need guard implementation.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
   - Indirect write paths (8) NOT processed.
   - Manual review candidates (5) NOT processed.
@@ -614,7 +614,7 @@ legacy-writer execution is authorized.
   - Does NOT change 8 indirect write paths.
   - Does NOT change 5 manual review candidates.
   - Does NOT unlock training / data expansion / real DB write.
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - Training / data expansion / real DB write remain blocked.
 
 ## Current baseline
@@ -633,7 +633,7 @@ legacy-writer execution is authorized.
      - Forbidden safety claims (prematurely declaring SC-002 resolved or training/DB write unblocked)
      - Large risky change detection (deletion/rename/scanner-count thresholds)
      - Existing gates preserved (Phase2A Python, Phase2B SQL, Phase2 JS DB write)
-  - SC-002 remains partial mitigation only.
+  - SC-002 was partial mitigation only at that task's completion.
   - training / data expansion / real DB write remain blocked.
 - `main` includes PR #1464 (local CI gatekeeper entrypoint).
 - `main` includes PR #1567 (authoritative workflow enforcement dry-run).
@@ -641,7 +641,7 @@ legacy-writer execution is authorized.
 - `p0_db_write_guard_hardening_production_host_block` hardens the guard: production-like
   DB hosts are now blocked by default (previously warning-only). No production override exists.
 - `p0_db_write_safety_gate_fix_phase2` adds guard to 8 more P0 scripts/ops entrypoints.
-  Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase7 = 43 scripts now protected. SC-002 remains partial mitigation only.
+  Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase7 = 43 scripts now protected. SC-002 was partial mitigation only at that task's completion.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
 - AI workflow governance rules are enforced by:
@@ -654,8 +654,10 @@ legacy-writer execution is authorized.
 
 ## Current SC-002 status (DB write safety gate)
 
-- SC-002 is **enforcement complete**. See `docs/SC002_FINAL_CLOSURE_CHECK.md`.
-  Training / data expansion / real DB write remain blocked (require separate authorization).
+- SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. See
+  `docs/SC002_FINAL_CLOSURE_CHECK.md`. Training / data expansion / real DB write
+  remain blocked (require separate authorization).
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - Production-like DB host (RDS, Cloud SQL, Supabase, etc.) is hard blocked by default.
   No production override exists. No `ALLOW_PRODUCTION_DB_WRITE` bypass variable exists.
@@ -676,8 +678,10 @@ legacy-writer execution is authorized.
   scripts/ops JS files now cause CI failure. Historical full-scan candidates are
   explicitly categorized (NOT fixed) and exempt from hard fail.
 - **sc002_closure_plan_phase0** (#1584): SC-002 closure plan documented in
-  `docs/SC002_CLOSURE_PLAN.md`. This is the authoritative SC-002 status reference.
-  SC-002 remains partial mitigation only. 43/66 guarded. 22 categorized, not fixed.
+  `docs/SC002_CLOSURE_PLAN.md`. At the time this record was written that doc
+  was the authoritative SC-002 status reference (current authoritative status:
+  `docs/data/FOTMOB_CURRENT_STATE.md`).
+  SC-002 was partial mitigation only at that task's completion. 43/66 guarded. 22 categorized, not fixed.
   21 additional browser/Playwright scripts identified as skipped_complex (total 43).
   Training, data expansion, and real DB write remain blocked.
 - **specialized_browser_fotmob_pageprops_audit_phase1** (#1585): Static audit of all
@@ -685,7 +689,7 @@ legacy-writer execution is authorized.
   Key findings: 20 confirmed DB write paths, 14 read-only/no-DB, 4 need manual review,
   3 shared modules, 1 scraper/browser only, 1 possible indirect write.
   The gap is now precisely characterized: 28 scripts need guard/exclusion action.
-  SC-002 remains partial mitigation only.
+  SC-002 was partial mitigation only at that task's completion.
 - **confirmed_write_path_guard_phase1_high_risk_browser_db** (#1586): Guard integration
   complete for the 2 highest-risk browser+DB skipped_complex scripts:
   `odds_sniper.js` and `fixture_harvester_l1.js`. Both now call `assertDbWriteAllowed()`
@@ -697,7 +701,7 @@ legacy-writer execution is authorized.
   `remaining_seeded_pageprops_v2_controlled_write.js`,
   `single_league_pageprops_v2_controlled_write_execute.js`.
   Remaining confirmed_write_path_needs_guard: 15 of 20.
-  SC-002 remains partial mitigation only.
+  SC-002 was partial mitigation only at that task's completion.
 - **confirmed_write_path_guard_phase2_batch2** (this PR): Guard integration for 1
   FotMob raw JSON DB storage script with INSERT INTO fotmob_raw_match_payloads:
   `fotmob_adg60_raw_json_db_storage_no_feature_parse.js`.
@@ -706,7 +710,7 @@ legacy-writer execution is authorized.
   Deep static analysis revealed that 10+ of the remaining
   "confirmed_write_path_needs_guard" scripts are false positives (SELECT-only with
   active SQL enforcement wrappers, or no DB connection at all).
-  SC-002 remains partial mitigation only.
+  SC-002 was partial mitigation only at that task's completion.
 - **sc002_allowlist_cleanup_phase1** (this PR): Formal reclassification of 15 scripts
   from `confirmed_write_path_needs_guard` to verified false positive categories:
   - 11 false_positive_select_only_with_active_wrapper (SELECT-only + queryReadOnly/safeSelect)
@@ -716,7 +720,7 @@ legacy-writer execution is authorized.
   All 20 original confirmed_write_path classifications are now resolved (6 guarded, 14
   reclassified). **0 still_needs_guard remain.**
   4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
-  possible_indirect_write unchanged. SC-002 remains partial mitigation only.
+  possible_indirect_write unchanged. SC-002 was partial mitigation only at that task's completion.
   Training, data expansion, and real DB write remain blocked.
 - **shared_module_db_write_boundary_implementation_phase1** (#1592): HIGH priority
   guard implemented for `odds_harvest_pipeline.js` — the unguarded consumer discovered
@@ -724,8 +728,9 @@ legacy-writer execution is authorized.
   BEGIN transaction, guarding INSERT/UPSERT on `matches_oddsportal_mapping` and `odds`
   tables. Same pattern as `odds_sniper.js` (Phase 1). Gatekeeper.js / gatekeeper.sh
   still pending. 8 needs_manual_review consumers still pending. No target script
-  executed. No DB connection. No Playwright/browser run. SC-002 remains partial
-  mitigation only. Training, data expansion, real DB write remain blocked.
+  executed. No DB connection. No Playwright/browser run. SC-002 was partial
+  mitigation only at that task's completion. Training, data expansion, real DB
+  write remain blocked.
 - **gatekeeper_boundary_implementation** (this PR): MEDIUM priority guard implemented
   for `gatekeeper.js` and `gatekeeper.sh` — the CI infrastructure consumers of
   `dbBlueprint.js`. Both entrypoints now call `assertDbWriteAllowed()` before
@@ -737,8 +742,8 @@ legacy-writer execution is authorized.
   pattern for gatekeeper.sh with script 'gatekeeper.sh'). dbBlueprint.js unchanged.
   No target script executed. No DB connection. No real DB write. No scraper/browser run.
   No training. No data expansion. No schema migration. 9 needs_manual_review consumers
-  still pending (corrected count — PR body typo said 8). SC-002 remains partial mitigation
-  only. Training, data expansion,
+  still pending (corrected count — PR body typo said 8). SC-002 was partial
+  mitigation only at that task's completion. Training, data expansion,
   real DB write remain blocked.
 - **manual_review_phase1** (this PR): Static review and reclassification of all 14
   remaining `needs_manual_review` / `possible_indirect_write` scripts from both the
@@ -759,8 +764,9 @@ legacy-writer execution is authorized.
   - Count mismatch resolved: previous PR said "8" (typo), actual design-doc count is 9;
     combined with audit-doc 5 = 14 total reviewed
   - No guard implemented (all already guarded). No target script executed. No DB
-    connection. No real DB write. No scraper/browser. SC-002 remains partial mitigation
-    only. Training, data expansion, real DB write remain blocked.
+    connection. No real DB write. No scraper/browser. SC-002 was partial
+    mitigation only at that task's completion. Training, data expansion, real DB
+    write remain blocked.
 - **shared_module_db_write_boundary_design_phase1** (#1591): Static design of shared
   module DB write boundary completed. 3 shared modules mapped with full consumer
   entrypoint inventory:
@@ -772,7 +778,7 @@ legacy-writer execution is authorized.
   write SQL from the shared module (not in any prior audit or guard phase).
   `gatekeeper.js`/`gatekeeper.sh` use `runColdStartBlueprintCheck` (DB write path) with
   no guard. Consumer entrypoint map recommends guard at consumer level, not module level.
-  No runtime behavior changed. SC-002 remains partial mitigation only.
+  No runtime behavior changed. SC-002 was partial mitigation only at that task's completion.
   Training, data expansion, and real DB write remain blocked.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
@@ -781,15 +787,22 @@ legacy-writer execution is authorized.
   - `dry_run_or_audit` (8): dry-run, audit, preflight scripts
   - Plus 21 browser/Playwright scripts previously classified as `skipped_complex`
 - Each remaining candidate has: explicit category, reason, reviewed_at, future_action.
-  These are NOT counted as "guarded" and SC-002 is NOT "fully fixed".
-- DB write safety status: **blocked / partial phase1-7 guards added**.
+  These are NOT counted as "guarded". SC-002 two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
+- DB write safety: changed-file hard-fail enforcement active; phase1-7 guards
+  added (43/66 scripts/ops JS entrypoints); staging/production role deployment
+  pending.
 - Guard remains opt-in per script for historical files. New scripts touching
   `scripts/ops/` with DB write risk MUST integrate the guard or be explicitly
   allowlisted — enforced via CI hard fail on changed-files.
 - Training and data expansion remain blocked.
 - No real DB write is authorized.
-- Changed-files hard fail scope: **scripts/ops/\*\*/\*.js only**. Python, SQL, and
-  migration enforcement is not yet designed.
+- Changed-files hard fail scope: **scripts/ops/\*\*/\*.js only** for the JS
+  scanner; Python and SQL/migration enforcement runs via the separate
+  PYTHON-DB-WRITE and SQL-MIGRATION gate outputs
+  (`python_db_write_enforcement_check.py`, `sql_migration_policy_enforcement_check.py`,
+  invoked by `scripts/ops/ai_workflow_gate.py`).
 
 ## Current operating rules
 
@@ -837,7 +850,7 @@ legacy-writer execution is authorized.
 | `docs/DOCUMENTATION_GOVERNANCE.md` | active |
 | `docs/data/FOTMOB_CURRENT_STATE.md` | active — read for FotMob state |
 | `docs/AGENT_WORKFLOW.md` | active |
-| `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
+| `docs/SC002_CLOSURE_PLAN.md` | active — SC-002 closure criteria / release gates / next tasks (current SC-002 two-layer status: `docs/data/FOTMOB_CURRENT_STATE.md`) |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` | active — deep per-script verification of all 43 skipped_complex scripts |
 | `docs/SC002_FINAL_CLOSURE_CHECK.md` | active — final per-criterion SC-002 closure verification |
@@ -873,8 +886,10 @@ legacy-writer execution is authorized.
   write safety dry-run found 122 production DB-write risk files, including 66 P0
   files and 110 files with no safety gate. Phase1+Phase2+Phase3+Phase4+Phase5+Phase7 = 43 scripts/ops
   now guarded (Phase1+Phase2+Phase3+Phase4+Phase5+Phase7 = 43/66). A static enforcement dry-run scanner
-  has been added to audit remaining coverage. SC-002 is partially mitigated, NOT
-  fully fixed. Remaining scripts need Phase8+ or static enforcement.
+  has been added to audit remaining coverage. SC-002 two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. Remaining scripts need
+  Phase8+ or static enforcement.
 - Authoritative document backflow: fix phase1 starts enforcement through the PR
   template, AI Workflow Gate, Documentation Governance, Codex Workflow, and this
   current-state update.
@@ -885,7 +900,7 @@ legacy-writer execution is authorized.
 |---|---|
 | `formal_training_cohort_inventory_dry_run` | Formal training remains blocked; only 58 smoke-level candidates were found and formal candidates with odds = 0. |
 | `technical_debt_workflow_audit_dry_run` | P0 technical debt blocks data expansion and formal training; priority debt is DB write safety, cutoff strategy, training eligibility, and schema/init alignment. |
-| `p0_db_write_safety_gate_dry_run` | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates, SC-002 remains unfixed. |
+| `p0_db_write_safety_gate_dry_run` | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates. SC-002 was unfixed at dry-run time (two-layer state now: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). |
 | `authoritative_workflow_enforcement_dry_run` | The project already has authoritative docs, but `_reports` has overgrown and AI agents were not forced to maintain current-state docs. |
 
 ## Current FotMob status
@@ -902,6 +917,20 @@ legacy-writer execution is authorized.
   new dependencies.
 - No network acquisition, database write, browser automation, parser
   implementation, migration, training or prediction is authorized.
+- **PR #1816 (bounded auditable FotMob detail capture pipeline) and PR #1817
+  (offline detail staging converter/validator) are MERGED**: PR #1816 squash
+  merge commit `b6f9f385124eab7476157777517fcd5bf01a93ab` (2026-08-04); PR #1817
+  squash merge commit `fd60117d283a2af9e103990f733e436fda53b100` (2026-08-06),
+  post-merge main Production Gate run 31075669344 success. Current main =
+  `fd60117d283a2af9e103990f733e436fda53b100`. The chain available on main is
+  PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified archive/receipt →
+  offline staging conversion → append-only retention → full validator. No new
+  real FotMob detail capture, season capture, business database write,
+  migration, canonical linkage write, training, backtest or prediction has
+  occurred. The next recommended data task is a single-match, single-request,
+  FINISHED-status, repository-external-output, zero-database real end-to-end
+  FotMob detail trial, which still requires new explicit user authorization
+  (not granted; do not start automatically).
 - The completed M3 offline cross-source audit derived its bounded population
   from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
@@ -946,8 +975,11 @@ legacy-writer execution is authorized.
   docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
   this paragraph's remediation narrative is a historical baseline).
 
-- **FotMob detail staging (offline) PR #1817 blocker remediation (Draft,
-  unmerged, pending external implementation acceptance)**: all 8 independent
+- **FotMob detail staging (offline) PR #1817 blocker remediation (PR #1817
+  MERGED 2026-08-06, squash merge commit
+  `fd60117d283a2af9e103990f733e436fda53b100`; post-merge main Production Gate
+  run 31075669344 success; the narrative below is the pre-merge remediation
+  record)**: all 8 independent
   review findings fixed offline — F1 logical commit-marker atomic
   commit/rollback (marker written last, bound to file list + sha256 chain,
   rollback removes only this attempt's files, residue scan fail-closed);
@@ -1020,13 +1052,16 @@ legacy-writer execution is authorized.
   ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
   REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);
   all stores validate PASS with zero residue. Zero network, zero database,
-  zero capture, no migration; PR stays Draft and unmerged.
+  zero capture, no migration; at submission time PR #1817 stayed Draft and
+  unmerged, pending external implementation acceptance (merged 2026-08-06:
+  squash commit `fd60117d2…`; post-merge main Production Gate 31075669344
+  success).
 
 ## Next recommended sequence
 
-1. SC-002 closure plan phase0 completed. See `docs/SC002_CLOSURE_PLAN.md` for the
-   authoritative SC-002 status, closure criteria, release gates, and recommended
-   next tasks.
+1. SC-002 closure plan phase0 completed. See `docs/data/FOTMOB_CURRENT_STATE.md`
+   for the authoritative current SC-002 two-layer status; `docs/SC002_CLOSURE_PLAN.md`
+   documents the closure criteria, release gates, and recommended next tasks.
 2. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
 3. Static enforcement dry-run scanner deployed for coverage auditing.
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
@@ -1051,14 +1086,18 @@ legacy-writer execution is authorized.
       guard at callers; 2 write callers already guarded in batch3)
     - See `docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md` for full analysis.
     - **0 new runtime guards added. 0 files marked safe.**
-    - **SC-002 remains partial mitigation only. training / data expansion / real DB write remain blocked.**
+    - **SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+      `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. Training / data
+      expansion / real DB write remain blocked.**
 12. **python_indirect_write_path_design_phase1 completed** — static design classification
    of all 8 indirect Python write paths. Key finding: 6 of 8 are actually DIRECT write paths
    (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
    No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
-   SC-002 remains partial mitigation only.
+   SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+   `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
 13. **runtime_db_role_permission_dev_poc completed** — 6-role dev-only POC in Docker environment.
-14. SC-002 remains partial mitigation only.
+14. SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+    `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
 15. Next recommended tasks (in priority order):
     - `python_indirect_write_path_guard_phase2` — implement runtime guard for 6 newly confirmed direct write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates

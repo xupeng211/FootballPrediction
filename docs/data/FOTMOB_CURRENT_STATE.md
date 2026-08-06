@@ -9,19 +9,34 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-08-02
+## Current authoritative status — 2026-08-06
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+Current main = fd60117d283a2af9e103990f733e436fda53b100
 V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-complete, raw retention)
+  (PR #1813, merged)
 FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
   (malformed reason.short fail closed; started+postponed contradiction fail closed;
    core-layer 40-hex collector_code_revision enforcement in buildCaptureManifest)
-Bounded auditable detail capture pipeline = implemented and fully tested offline
-  (PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
+Bounded auditable detail capture pipeline = implemented, tested, MERGED
+  (PR #1816, squash merge b6f9f385124eab7476157777517fcd5bf01a93ab, 2026-08-04;
+   PLAN / PREFLIGHT / CAPTURE / REPLAY; see "Detail capture pipeline" below)
+Offline detail staging converter / validator = implemented, tested, MERGED
+  (PR #1817, squash merge fd60117d283a2af9e103990f733e436fda53b100, 2026-08-06;
+   post-merge main Production Gate run 31075669344 = SUCCESS;
+   see "Offline detail staging converter / validator" below)
+Chain available on main = PLAN → PREFLIGHT → bounded CAPTURE → REPLAY →
+  verified archive/receipt → offline staging conversion → append-only retention →
+  full validator
 Real FotMob detail capture = still NOT authorized and NOT executed (CAPTURE default-off)
+Next recommended data task = one finished match, single-request, controlled real
+  FotMob detail end-to-end trial (repository-external output, zero database) —
+  requires NEW explicit user authorization
+  (OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=NO at this time);
+  do not start automatically
 Public terms / usage-boundary review = completed
 FotMob written permission = absent (no written permission granted)
 Bounded two-path compatibility probe = completed
@@ -29,9 +44,71 @@ Bounded two-path compatibility probe = completed
    EPL fixtures route = compatible at probe time; no access-control signal
    observed in that bounded probe)
 No batch capture executed; no 1,140-match detail capture executed; no database write
+Not occurred since PR #1817 merge: no new real FotMob detail capture, no season
+  capture, no business database write, no migration, no canonical linkage write,
+  no training, no backtest, no prediction
+SC-002 = SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO
+Issue #1793 (M3 historical odds staging and import foundation) = remains OPEN
 This repository state executes zero real network requests
   (the probe's 2 requests were a separate authorized one-time action; no code
    path in this state performs live fetches)
+Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
+  (NON-EXHAUSTIVE inventory — every listed entry verified; surfaces are out of
+  authorized scope for PR #1818, owner-authorized follow-up required;
+  dated historical reports under docs/_reports/ are excluded as time-accurate
+  records, e.g. docs/_reports/db_write_guard_static_enforcement_dry_run_20260621.md:142) =
+  CLAUDE.md:62, .github/pull_request_template.md:127,
+  scripts/ops/helpers/agent_workflow_hardening_checks.py:175,
+  scripts/ops/helpers/python_db_write_enforcement_check.py:68,178,
+  scripts/ops/helpers/sql_migration_policy_enforcement_check.py:94,125,
+  config/python_db_write_allowlist.json, config/sql_migration_policy_allowlist.json,
+  docs/SC002_CLOSURE_PLAN.md:10,62,118,393-394,432,444,471,510,523,537,561,592,
+  631,661,689,715,737,756,780,796,798,832,866,892,956,967,972
+  (393-394 repeats the superseded "Python/SQL/migration enforcement not yet
+  designed"; 956/967/972 Status Wording Rules still mandate "partial mitigation
+  only" and forbid "complete" — conflicts with the adopted
+  SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE layer), docs/CODEX_WORKFLOW.md:259,
+  docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md:38,324,406,
+  docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md:8,430,
+  docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md:393,410,
+  docs/SC002_MANUAL_REVIEW_PHASE1.md:422,441 (422 states "Python/SQL/migration
+  enforcement not yet designed" — superseded: ai_workflow_gate.py runs
+  PYTHON-DB-WRITE and SQL-MIGRATION checks),
+  docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md:70,71,132,678,
+  docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md:26,330,
+  docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md:8,
+  docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md:52,566,606,
+  docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md:251,258,
+  docs/SC002_MANUAL_REVIEW_PHASE2D.md:119,
+  docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md:344,
+  docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md:177,
+  docs/SC002_FINAL_CLOSURE_CHECK.md:207 (references PROJECT_STATUS wording,
+  superseded by the PROJECT_STATUS correction in this PR),
+  tests asserting the stale allowlist/doc wording:
+  tests/unit/test_sc002_alembic_migration_runtime_guard.py:241-245,
+  tests/unit/test_sc002_alembic_migration_guard_design.py:299-302,
+  tests/unit/test_runtime_db_role_permission_dev_poc.py:352-355,419-424,
+  tests/unit/test_manual_review_phase2d.py:263-266,
+  tests/unit/test_manual_review_guard_phase2e.py:183-185,
+  tests/unit/test_runtime_db_role_permission_review_phase1.py:130-133,
+  tests/unit/test_changed_files_negative_case_enforcement.py:668,
+  tests/unit/gatekeeper_boundary_implementation_static.test.js:349-353,391-397,
+  tests/unit/manual_review_phase1_static.test.js:179-183,320-328,
+  tests/unit/python_sql_migration_enforcement_design_phase1_static.test.js:185-230,
+  tests/unit/shared_module_db_write_boundary_design_phase1_static.test.js:101-105,160-161,197-217,
+  tests/unit/shared_module_db_write_boundary_implementation_phase1_static.test.js:153-157,186-192,
+  tests/unit/test_consumer_level_guard_audit_db_pool_sync_sql_store.py:140-142,
+  tests/unit/test_indirect_write_path_design_phase1.py:167-170,
+  tests/unit/test_indirect_write_path_guard_phase2.py:281-284,
+  tests/unit/test_python_confirmed_write_paths_design_phase2c_batch4.py:305-307,376-381,
+  tests/unit/test_sc002_alembic_migration_guard_design.py:186-189,
+  tests/unit/test_sc002_browser_fotmob_pageprops_playwright_deep_audit.py:105-108,407-450,
+  tests/unit/test_sc002_overall_closure_assessment.py:103-110
+  (several of these tests enforce stale current-state semantics on
+  PROJECT_STATUS/CLOSURE_PLAN wording and would fail once the two-layer
+  wording is applied to those docs — owner decision required before touching
+  those docs)
 ```
 
 ### Detail capture pipeline
@@ -399,7 +476,7 @@ historical four-row audit does not extend a full parser/audit result to all 58
 current `fotmob_live_v1` retained rows. Exact named-writer/run provenance for
 all 58 rows is not uniquely attributable.
 
-### Offline detail staging converter / validator (implemented, tested; PR #1817 blocker remediation in Draft)
+### Offline detail staging converter / validator (implemented, tested, merged via PR #1817)
 
 The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
 `src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
@@ -428,7 +505,10 @@ outputs were removed. The 16-match validation is an offline verification run
 only — no new real capture happened and no real payload/manifest/artifact was
 committed.
 
-**PR #1817 remediation history (offline-only, Draft, unmerged)**:
+**PR #1817 remediation history (offline-only; PR #1817 MERGED 2026-08-06, squash
+merge commit `fd60117d283a2af9e103990f733e436fda53b100`, post-merge main
+Production Gate run 31075669344 = SUCCESS — the per-finding narrative below is
+the pre-merge record)**:
 - Blockers round (8 findings of the independent review of head c8a0489f7):
   FINDING_1 — logical commit-marker atomicity: `commit-<seq>.json` (schema
   fotmob-detail-staging-commit-marker/v1) is the single commit point, written
@@ -457,7 +537,9 @@ committed.
   (integrity hash, not a signature). FINDING_7 — SC-002 status corrected:
   SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE,
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, PR1817_CHANGES_SC002=NO
-  (SC-002 is partial mitigation only). FINDING_8 — Claude post-remediation
+  (the pre-correction wording in the original blocker record said "SC-002 is
+  partial mitigation only"; the corrected two-layer state above supersedes it).
+  FINDING_8 — Claude post-remediation
   self-review named CLAUDE_POST_REMEDIATION_SELF_REVIEW;
   EXTERNAL_IMPLEMENTATION_ACCEPTANCE=PENDING and READY_TO_MERGE=NO.
 - Codex closed-loop round (independent review 4863122944 of head
@@ -857,16 +939,41 @@ training/backtest/prediction; no real payload/manifest/artifact committed.
 Do not start automatically. Recommended next task only after user confirmation:
 the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`
 artifact contract and raw response provenance retention is implemented
-(PR #1813, merged), and the FOTMOB_REAL_CAPTURE_READINESS Phase A pre-capture
+(PR #1813, merged), the FOTMOB_REAL_CAPTURE_READINESS Phase A pre-capture
 code hardening is implemented and fully tested (malformed `reason.short` fail
 closed, started+postponed contradiction fail closed, core-layer 40-hex
-`collector_code_revision` enforcement). Phase A is code hardening only: no real
-capture has been executed and no real capture artifact has been generated (the
-only real FotMob network traffic is the completed two-path compatibility probe
-= 2 requests). The FotMob public terms / usage-boundary review is complete (no
-written permission granted); a real batch capture still requires a new explicit
-user authorization. Future inventory is 1,140 candidates; the next step is a
-separate future canonical FotMob writer as a `data-*`-gated business milestone.
+`collector_code_revision` enforcement), the bounded auditable detail capture
+pipeline is merged (PR #1816, squash merge `b6f9f385…`), and the offline
+detail staging converter/validator is merged (PR #1817, squash merge
+`fd60117d2…`, post-merge main Production Gate 31075669344 success). The chain
+available on main is PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified
+archive/receipt → offline staging conversion → append-only retention → full
+validator. No new real FotMob detail capture has been executed: the only real
+FotMob network traffic remains the completed two-path compatibility probe
+(= 2 requests). The FotMob public terms / usage-boundary review is complete (no
+written permission granted).
+
+The next recommended data task is exactly one: **a controlled real FotMob
+detail end-to-end trial for one already-finished match** — single match,
+single request (trial bounds `MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
+`MATCH_STATUS=FINISHED`; expressed through the canonical entrypoint as
+`MAX_REQUESTS=1` on preflight, `MAX_REQUESTS=1` +
+`CONFIRM_MAX_FOTMOB_REQUESTS=1` on execute — the confirmation variable is
+enforced only on execute — and `MATCH_ID=<exact id>` + `LIMIT=1` on plan;
+FINISHED is a pre-execution
+human-confirmation condition, not a capture-script filter),
+repository-external output, zero database
+connections/writes, zero SQL, zero migrations, zero training/backtest/
+prediction — running PLAN → PREFLIGHT → user confirmation of the exact match
+id and budget → CAPTURE → package/archive/receipt → offline staging build →
+staging validate → repeat offline build → deterministic-output comparison →
+evidence review → stop. This trial is **not yet authorized**: it requires a
+new explicit user authorization
+(`OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`; currently NO)
+and must not auto-expand to 5 or 16 matches. A real batch capture and a
+separate future canonical FotMob writer as a `data-*`-gated business milestone
+remain separately authorized future steps. Future inventory is 1,140
+candidates.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
 No network, database write, migration, canonical-linkage persistence or
