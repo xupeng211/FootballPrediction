@@ -654,8 +654,10 @@ legacy-writer execution is authorized.
 
 ## Current SC-002 status (DB write safety gate)
 
-- SC-002 is **enforcement complete**. See `docs/SC002_FINAL_CLOSURE_CHECK.md`.
-  Training / data expansion / real DB write remain blocked (require separate authorization).
+- SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. See
+  `docs/SC002_FINAL_CLOSURE_CHECK.md`. Training / data expansion / real DB write
+  remain blocked (require separate authorization).
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - Production-like DB host (RDS, Cloud SQL, Supabase, etc.) is hard blocked by default.
   No production override exists. No `ALLOW_PRODUCTION_DB_WRITE` bypass variable exists.
@@ -873,8 +875,10 @@ legacy-writer execution is authorized.
   write safety dry-run found 122 production DB-write risk files, including 66 P0
   files and 110 files with no safety gate. Phase1+Phase2+Phase3+Phase4+Phase5+Phase7 = 43 scripts/ops
   now guarded (Phase1+Phase2+Phase3+Phase4+Phase5+Phase7 = 43/66). A static enforcement dry-run scanner
-  has been added to audit remaining coverage. SC-002 is partially mitigated, NOT
-  fully fixed. Remaining scripts need Phase8+ or static enforcement.
+  has been added to audit remaining coverage. SC-002 two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. Remaining scripts need
+  Phase8+ or static enforcement.
 - Authoritative document backflow: fix phase1 starts enforcement through the PR
   template, AI Workflow Gate, Documentation Governance, Codex Workflow, and this
   current-state update.
@@ -1071,14 +1075,18 @@ legacy-writer execution is authorized.
       guard at callers; 2 write callers already guarded in batch3)
     - See `docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md` for full analysis.
     - **0 new runtime guards added. 0 files marked safe.**
-    - **SC-002 remains partial mitigation only. training / data expansion / real DB write remain blocked.**
+    - **SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+      `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`. Training / data
+      expansion / real DB write remain blocked.**
 12. **python_indirect_write_path_design_phase1 completed** — static design classification
    of all 8 indirect Python write paths. Key finding: 6 of 8 are actually DIRECT write paths
    (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
    No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
-   SC-002 remains partial mitigation only.
+   SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+   `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
 13. **runtime_db_role_permission_dev_poc completed** — 6-role dev-only POC in Docker environment.
-14. SC-002 remains partial mitigation only.
+14. SC-002 two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+    `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
 15. Next recommended tasks (in priority order):
     - `python_indirect_write_path_guard_phase2` — implement runtime guard for 6 newly confirmed direct write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates

@@ -60,7 +60,14 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   scripts/ops/helpers/python_db_write_enforcement_check.py:68,178,
   scripts/ops/helpers/sql_migration_policy_enforcement_check.py:94,125,
   config/python_db_write_allowlist.json, config/sql_migration_policy_allowlist.json,
-  docs/SC002_CLOSURE_PLAN.md:10
+  docs/SC002_CLOSURE_PLAN.md:10, docs/CODEX_WORKFLOW.md:259,
+  docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md:38,324,406,
+  docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md:430,
+  docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md:393,410,
+  docs/SC002_MANUAL_REVIEW_PHASE1.md:441,
+  docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md:70,132,678,
+  docs/SC002_FINAL_CLOSURE_CHECK.md:207 (references PROJECT_STATUS wording,
+  superseded by the PROJECT_STATUS correction in this PR)
 ```
 
 ### Detail capture pipeline
