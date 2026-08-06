@@ -278,7 +278,7 @@ test('Phase2 F1: full scan JSON output does NOT have should_fail=true', async (t
         'SC-002 guarded total should be at least 43');
     assert.ok(data.summary.sc002_remaining_complex > 0,
         'SC-002 remaining complex should be > 0 (categorized, not fixed)');
-    assert.equal(data.summary.sc002_status, 'partial_mitigation_only');
+    assert.equal(data.summary.sc002_status, 'enforcement_infrastructure_complete');
 });
 
 test('Phase2 F2: full scan summary shows categorized not fixed', async (t) => {
@@ -289,8 +289,12 @@ test('Phase2 F2: full scan summary shows categorized not fixed', async (t) => {
         { cwd: REPO_ROOT, encoding: 'utf8', timeout: 30000 }
     );
     const data = JSON.parse(output);
-    assert.ok(data.summary.sc002_note.includes('NOT fully fixed'),
-        'SC-002 note must say NOT fully fixed');
+    assert.ok(data.summary.sc002_note.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
+        'SC-002 note must state COMPLETE enforcement infrastructure');
+    assert.ok(data.summary.sc002_note.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
+        'SC-002 note must state PENDING production role deployment');
+    assert.ok(!data.summary.sc002_note.includes('NOT fully fixed'),
+        'SC-002 note must not use the stale NOT fully fixed framing');
     assert.ok(data.summary.skipped_complex_by_category,
         'must have skipped_complex_by_category breakdown');
     const cats = Object.keys(data.summary.skipped_complex_by_category);

@@ -1037,8 +1037,10 @@ legacy-writer execution is authorized.
   ACCEPTED_NEW, RUN_2 16 REPEAT_EXACT byte-identical, RUN_3 synthetic
   REPEAT_EQUIVALENT (SYNTHETIC_DERIVED_TEST=YES / REAL_NEW_OBSERVATION_CLAIM=NO);
   all stores validate PASS with zero residue. Zero network, zero database,
-  zero capture, no migration; PR #1817 is merged into main (squash merge
-  commit `fd60117d2…`; post-merge main Production Gate 31075669344 success).
+  zero capture, no migration; at submission time PR #1817 stayed Draft and
+  unmerged, pending external implementation acceptance (merged 2026-08-06:
+  squash commit `fd60117d2…`; post-merge main Production Gate 31075669344
+  success).
 
 ## Next recommended sequence
 

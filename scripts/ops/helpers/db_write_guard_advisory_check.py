@@ -52,8 +52,10 @@ def _emit_violation_errors(violations: list[dict]) -> list[str]:
         if suggested:
             errors.extend(f"  {line.strip()}" for line in suggested.split("\n") if line.strip())
     errors.append(
-        "[DB-WRITE-GUARD ENFORCEMENT] SC-002 is NOT fully fixed. "
-        "Historical full-scan candidates are exempt from this hard fail. "
+        "[DB-WRITE-GUARD ENFORCEMENT] "
+        "SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+        "SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING. "
+        "Historical full-scan candidates are exempt from this changed-file hard fail. "
         "This enforcement only applies to changed files in this diff."
     )
     return errors

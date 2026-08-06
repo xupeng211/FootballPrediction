@@ -422,8 +422,8 @@ test('Scenario 14a: historical_debt_note states two-layer SC-002 status, not sta
     // 5. Historical full-scan candidate limit still accurate
     assert.ok(note.includes('full-scan candidates remain outside changed-file hard-fail scope'),
         'note must keep historical full-scan candidates outside the hard-fail scope');
-    assert.ok(note.includes('separately authorized production-role deployment'),
-        'note must tie the remaining scope to the separately authorized production-role deployment');
+    assert.ok(note.includes('any expansion of that scope is a separate decision'),
+        'note must tie the remaining scope to a separate decision, not an automatic follow-on');
 });
 
 test('Scenario 14b: scanner source no longer contains stale SC-002 phrases', (t) => {
@@ -435,10 +435,27 @@ test('Scenario 14b: scanner source no longer contains stale SC-002 phrases', (t)
         'scanner source must not contain the stale gate log phrase');
     assert.ok(!scannerSrc.includes('SC-002 status: partial mitigation only'),
         'human-readable report must not claim partial-mitigation-only status');
+    assert.ok(!scannerSrc.includes('SC-002 is NOT fully fixed'),
+        'human-readable FAIL branch must not claim "NOT fully fixed"');
+    assert.ok(!scannerSrc.includes('partial_mitigation_only'),
+        'full-scan JSON must not use partial_mitigation_only status');
     assert.ok(scannerSrc.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
         'scanner source must state COMPLETE enforcement infrastructure');
     assert.ok(scannerSrc.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
         'scanner source must state PENDING production role deployment');
+});
+
+test('Scenario 14e: advisory helper no longer emits stale SC-002 phrase', (t) => {
+    const advisorySrc = fs.readFileSync(
+        path.join(SC002_MSG_REPO_ROOT, 'scripts/ops/helpers/db_write_guard_advisory_check.py'),
+        'utf8',
+    );
+    assert.ok(!advisorySrc.includes('SC-002 is NOT fully fixed'),
+        'advisory helper must not claim "NOT fully fixed"');
+    assert.ok(advisorySrc.includes('SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE'),
+        'advisory helper must state COMPLETE enforcement infrastructure');
+    assert.ok(advisorySrc.includes('SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING'),
+        'advisory helper must state PENDING production role deployment');
 });
 
 test('Scenario 14c: pass/fail judgment unchanged — guarded file still passes', (t) => {

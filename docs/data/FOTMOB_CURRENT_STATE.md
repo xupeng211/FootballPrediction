@@ -897,8 +897,12 @@ written permission granted).
 
 The next recommended data task is exactly one: **a controlled real FotMob
 detail end-to-end trial for one already-finished match** — single match,
-single request (`MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
-`MATCH_STATUS=FINISHED`), repository-external output, zero database
+single request (trial bounds `MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
+`MATCH_STATUS=FINISHED`; expressed through the canonical entrypoint as
+`MAX_REQUESTS=1` + `CONFIRM_MAX_FOTMOB_REQUESTS=1` on preflight/execute and
+`MATCH_ID=<exact id>` + `LIMIT=1` on plan; FINISHED is a pre-execution
+human-confirmation condition, not a capture-script filter),
+repository-external output, zero database
 connections/writes, zero SQL, zero migrations, zero training/backtest/
 prediction — running PLAN → PREFLIGHT → user confirmation of the exact match
 id and budget → CAPTURE → package/archive/receipt → offline staging build →

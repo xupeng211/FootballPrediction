@@ -66,7 +66,8 @@
   canonical_match_id 全 null、无 HTML/凭据/绝对路径，派生输出已删除。
   marker_event（parser 注入 AddedTime/Half 分钟标记、无 id 设计）记录为合法
   变体（真实 16 场均有 4 个）。零网络、零数据库、零采集、无真实 payload/
-  manifest/artifact 提交；PR #1817 已合并入 main（见上）。
+  manifest/artifact 提交；提交时 PR #1817 保持 Draft、未合并（等待外部独立
+  实现验收；该 PR 已于 2026-08-06 合并入 main，见上）。
 
   修复内容：F1 逻辑 commit-marker 原子提交/回滚（commit-<seq>.json 为唯一提交点、
   最后写入、绑定文件列表+sha256 链、回滚只删本次写入文件、residue 扫描 fail-closed）；
@@ -257,9 +258,15 @@
    未见 access-control 信号。
 5. **三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。
 6. **一场已结束比赛的受控真实 FotMob 详情端到端试运行（下一项推荐的数据任务）**：
-   单场、单请求、MATCH_STATUS=FINISHED、仓库外输出、零数据库连接/写入、
-   零 SQL、零 migration、零训练/回测/预测；流程为 PLAN → PREFLIGHT → 用户确认
-   精确 match id 与预算 → CAPTURE 一场 → package/archive/receipt → offline
+   单场、单请求、仓库外输出、零数据库连接/写入、零 SQL、零 migration、
+   零训练/回测/预测。任务边界（MATCH_COUNT=1 / MAX_FOTMOB_REQUESTS=1 /
+   MATCH_STATUS=FINISHED）经 canonical 入口表达为：plan 阶段
+   `make data-fotmob-detail-capture-plan`（`MATCH_ID=<精确 match id>` +
+   `LIMIT=1` 选择单场）、preflight/execute 预算 `MAX_REQUESTS=1` 且
+   `CONFIRM_MAX_FOTMOB_REQUESTS=1`、FINISHED 为执行前用户确认环节核实
+   的人工确认条件（capture 脚本无该 filter 参数）。流程为 PLAN → PREFLIGHT
+   → 用户确认精确 match id 与预算 → CAPTURE 一场（execute 需全部授权变量
+   与 `NETWORK_AUTHORIZATION=yes`）→ package/archive/receipt → offline
    staging build → staging validate → repeat offline build → 确定性输出比对 →
    证据评审 → 停止。**尚未授权**：需要新的明确用户授权标识
    `OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`（当前=NO），
