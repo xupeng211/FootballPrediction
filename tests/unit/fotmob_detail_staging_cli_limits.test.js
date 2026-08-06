@@ -190,3 +190,35 @@ test('R20-P2-2d: --limits-file values are strictly validated (hard caps, safe in
         err => /outside the repository|repository/.test(err.message)
     );
 });
+
+// R21-P3-2 (Codex round 21): the archive limit constants are frozen so a
+// direct API caller cannot silently raise the hard safety ceilings. The
+// mutation attempt fails (strict mode) / is a no-op (sloppy mode), the
+// constants stay frozen, and mergeArchiveLimits still enforces the cap.
+test('R21-P3-2: DEFAULT_ARCHIVE_LIMITS and HARD_ARCHIVE_LIMIT_CAP are frozen and cannot be raised by direct API callers', () => {
+    const {
+        DEFAULT_ARCHIVE_LIMITS,
+        HARD_ARCHIVE_LIMIT_CAP,
+        mergeArchiveLimits,
+    } = require('../../src/infrastructure/fotmob/FotMobDetailStagingSourceVerification');
+    assert.strictEqual(Object.isFrozen(DEFAULT_ARCHIVE_LIMITS), true);
+    assert.strictEqual(Object.isFrozen(HARD_ARCHIVE_LIMIT_CAP), true);
+    // A mutation attempt must not raise the cap (sloppy mode no-op; strict
+    // mode would throw TypeError — either way the frozen value survives).
+    assert.throws(() => {
+        'use strict';
+        HARD_ARCHIVE_LIMIT_CAP.maxMembers = Number.MAX_SAFE_INTEGER;
+    }, TypeError);
+    assert.strictEqual(HARD_ARCHIVE_LIMIT_CAP.maxMembers, 100000);
+    // mergeArchiveLimits still rejects an over-cap override.
+    assert.throws(
+        () => mergeArchiveLimits({ limits: { maxMembers: Number.MAX_SAFE_INTEGER } }),
+        err => err.code === 'INPUT_ERROR' && /exceeds the hard cap/.test(err.message)
+    );
+    // The defaults are likewise immutable.
+    assert.throws(() => {
+        'use strict';
+        DEFAULT_ARCHIVE_LIMITS.maxMembers = 1;
+    }, TypeError);
+    assert.strictEqual(DEFAULT_ARCHIVE_LIMITS.maxMembers, 10000);
+});

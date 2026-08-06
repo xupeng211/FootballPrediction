@@ -850,9 +850,10 @@ function collectCommittedState(root, options = {}) {
     // P1-4: the exclusive store lock (`.staging-write.lock`) is an
     // OPERATIONAL control file, not store data: it exists only while a
     // commit holds the lock, is never bound by a marker, and is removed on
-    // release (a stale lock left by a crash is recovered by the next
-    // acquisition). Every OTHER unbound file — including a straggler tmp
-    // from a failed write — is residue.
+    // release (a stale copy left by a crash FAILS CLOSED with a
+    // manual-cleanup message on the next acquisition — R20-P1-1; it is
+    // never auto-recovered). Every OTHER unbound file — including a
+    // straggler tmp from a failed write — is residue.
     const residue = [];
     for (const name of entries) {
         if (isMarkerFileName(name)) continue;

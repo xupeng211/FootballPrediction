@@ -65,26 +65,32 @@ const TAR_BLOCK = 512;
 //   maxTotalMemberBytes   — sum of all declared entry sizes.
 // Defaults leave wide headroom over every legitimate run archive (the pilot
 // archives are a few hundred KB); operators can raise them via options.limits.
-const DEFAULT_ARCHIVE_LIMITS = {
+const DEFAULT_ARCHIVE_LIMITS = Object.freeze({
     maxCompressedBytes: 256 * 1024 * 1024,
     maxDecompressedBytes: 1024 * 1024 * 1024,
     maxMembers: 10000,
     maxMemberBytes: 256 * 1024 * 1024,
     maxTotalMemberBytes: 1024 * 1024 * 1024,
-};
+});
 
 // R20-P2-2 (Codex round 20): operators may RAISE the defaults (via the
 // canonical CLI --limits-file or the module options.limits), but never
 // beyond these safety ceilings — bounded-archive handling is an invariant,
 // not a tunable. Every allocation/loop cap stays inside its intended bound
 // even when a direct API caller supplies an out-of-cap override.
-const HARD_ARCHIVE_LIMIT_CAP = {
+// R21-P3-2 (Codex round 21): both limit constants are frozen so a direct
+// API caller cannot silently raise the safety ceilings — consistent with the
+// other frozen capability constants (TERMINAL_STATES, LINK_STATUSES,
+// ERROR_CODES). A mutation attempt throws in strict mode / silently fails in
+// sloppy mode, and mergeArchiveLimits keeps validating against the frozen
+// cap either way.
+const HARD_ARCHIVE_LIMIT_CAP = Object.freeze({
     maxCompressedBytes: 4 * 1024 * 1024 * 1024, // 4 GiB
     maxDecompressedBytes: 16 * 1024 * 1024 * 1024, // 16 GiB
     maxMembers: 100000,
     maxMemberBytes: 4 * 1024 * 1024 * 1024, // 4 GiB
     maxTotalMemberBytes: 16 * 1024 * 1024 * 1024, // 16 GiB
-};
+});
 
 /**
  * R20-P2-2: merge the operator limits over the defaults with STRICT

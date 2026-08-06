@@ -916,7 +916,7 @@ legacy-writer execution is authorized.
   + `FotMobDetailStagingSourceVerification.js`)
   stages archived capture payload+manifest pairs into immutable
   `fotmob-detail-staging-artifact/v1` snapshots with an append-only file store
-  (no database, no migration). Current test baseline: 339 staging
+  (no database, no migration). Current test baseline: 340 staging
   unit tests green (122 retention fault-injection/tamper [incl. 3 R18-P2-1
   short-write injections (a/b/c) + 1 R19-P2-1 lockCreated regression + 2
   R20-P1-1 stale-lock fail-closed regressions + 3 R20-P2-1 final-artifact
@@ -929,8 +929,9 @@ legacy-writer execution is authorized.
   R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
   R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
   regressions (a/b/c/d)] + 17
-  converter + 29 CLI (25 + 4 R20-P2-2 --limits-file regressions in the
-  dedicated fotmob_detail_staging_cli_limits.test.js);
+  converter + 30 CLI (25 + 4 R20-P2-2 --limits-file regressions + 1
+  R21-P3-2 frozen-cap regression in the dedicated
+  fotmob_detail_staging_cli_limits.test.js);
   runtime counts = node --test
   # pass), incl. direct reuse of the pipeline capture hashing, determinism,
   idempotency, optional-section re-signed acceptance, atomicity, path safety,
@@ -940,7 +941,7 @@ legacy-writer execution is authorized.
   events (parser-injected AddedTime/Half minute markers, no id by design)
   recorded as a legal variant. Zero network, zero database, zero capture:
   no new real FotMob request and no real payload/manifest/artifact committed.
-  Per-round Codex remediation timeline (R13–R20, counts 297→339) with
+  Per-round Codex remediation timeline (R13–R21, counts 297→340) with
   per-finding mappings, regression evidence and Production Gate rows:
   docs/data/FOTMOB_CURRENT_STATE.md (authoritative current-state document;
   this paragraph's remediation narrative is a historical baseline).

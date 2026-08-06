@@ -487,7 +487,7 @@ committed.
   convertAll never lets one bad input crash the batch; P2-5 Makefile staging
   targets container-first via `$(COMPOSE_DEV) exec -T dev`; P3-1 docs and PR
   body rewritten to match the real implementation.
-Test counts: 339 staging unit tests (122 retention incl. fault-injection and
+Test counts: 340 staging unit tests (122 retention incl. fault-injection and
 tamper [114 + 3 R18-P2-1 short-write injections (a/b/c) + 1 R19-P2-1
 lockCreated regression + 2 R20-P1-1 stale-lock fail-closed regressions + 3
 R20-P2-1 final-artifact gate regressions; the former P1-4 stale
@@ -500,7 +500,7 @@ per-field conflict tests + 3 R6-P1-2 identity-semantics + 3 R7-P3-2 id-length
 R13-P2-3 validator depth gate + 1 R13-P3-2 proxy array refusal + 1
 R14-P3-1 symbol own key refusal + 4 R15-P2-1 __proto__ own-key
 regressions (a/b/c/d)] + 17 converter
-+ 29 CLI (25 + 4 R20-P2-2 --limits-file regressions in the dedicated
++ 30 CLI (25 + 4 R20-P2-2 --limits-file regressions + 1 R21-P3-2 frozen-cap regression in the dedicated
 fotmob_detail_staging_cli_limits.test.js);
 runtime counts = node --test
 # pass; the only gap vs static test() declarations is the loop-generated pair) green
@@ -748,6 +748,15 @@ closed). R20-P3-1 (non-blocking, ACCEPTED): GNU global PAX (g) rejection
 stays a documented fail-closed input boundary — Codex explicitly judged it
 acceptable as-is and recorded it as future compatibility work; no code
 change. Counts synced to 339.
+Round-21 (head 4d3be869d, re-launched 2026-08-06 after a Codex quota reset):
+R20-P1-1 RESOLVED / R20-P2-1 RESOLVED / R20-P2-2 PARTIALLY_RESOLVED /
+R20-P3-1 ACCEPTED per round-21 re-verification. New findings: R21-P2-1
+(canonical Make targets now expose LIMITS_FILE for receipt/build, appended
+conditionally as --limits-file, documented in data-help + data-*-staging-help
++ README + CAPABILITY_INDEX), R21-P3-1 (stale-lock comment corrected to the
+fail-closed manual-cleanup contract), R21-P3-2 (DEFAULT_ARCHIVE_LIMITS and
+HARD_ARCHIVE_LIMIT_CAP are now Object.freeze'd, with a direct-API mutation
+regression). Counts synced to 340.
 16-match offline revalidation on the
 fixed archives (e3679262/9bc50640/02635cee): RUN_1 FIRST_IMPORT → 16
 ACCEPTED_NEW (validate PASS); RUN_2 EXACT_REPLAY → 16 REPEAT_EXACT with zero
