@@ -60,11 +60,13 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   scripts/ops/helpers/python_db_write_enforcement_check.py:68,178,
   scripts/ops/helpers/sql_migration_policy_enforcement_check.py:94,125,
   config/python_db_write_allowlist.json, config/sql_migration_policy_allowlist.json,
-  docs/SC002_CLOSURE_PLAN.md:10, docs/CODEX_WORKFLOW.md:259,
+  docs/SC002_CLOSURE_PLAN.md:10,62,118, docs/CODEX_WORKFLOW.md:259,
   docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md:38,324,406,
   docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md:8,430,
   docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md:393,410,
-  docs/SC002_MANUAL_REVIEW_PHASE1.md:441,
+  docs/SC002_MANUAL_REVIEW_PHASE1.md:422,441 (422 states "Python/SQL/migration
+  enforcement not yet designed" — superseded: ai_workflow_gate.py runs
+  PYTHON-DB-WRITE and SQL-MIGRATION checks),
   docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md:70,132,678,
   docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md:26,330,
   docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md:8,
@@ -74,7 +76,15 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md:344,
   docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md:177,
   docs/SC002_FINAL_CLOSURE_CHECK.md:207 (references PROJECT_STATUS wording,
-  superseded by the PROJECT_STATUS correction in this PR)
+  superseded by the PROJECT_STATUS correction in this PR),
+  tests asserting the stale allowlist/doc wording:
+  tests/unit/test_sc002_alembic_migration_runtime_guard.py:241-245,
+  tests/unit/test_sc002_alembic_migration_guard_design.py:299-302,
+  tests/unit/test_runtime_db_role_permission_dev_poc.py:352-355,419-424,
+  tests/unit/test_manual_review_phase2d.py:263-266,
+  tests/unit/test_manual_review_guard_phase2e.py:183-185,
+  tests/unit/test_runtime_db_role_permission_review_phase1.py:130-133,
+  tests/unit/test_changed_files_negative_case_enforcement.py:668
 ```
 
 ### Detail capture pipeline
