@@ -21,9 +21,14 @@
   （squash merge `fd60117d2…`，post-merge main Production Gate 31075669344
   success，staging 能力已在 main 上可用）；**PR #1816** — bounded auditable
   FotMob detail capture pipeline（squash merge `b6f9f385…`，真实抓取仍需单独授权）；
-  此前为 **PR #1813** — FotMob v2 provenance export（provider status、dual hash、
-  raw retention + capture manifest、clean-worktree 40-hex git revision 绑定、
-  unknown / started fail closed、v1 输出路径不变）
+  此前为 **PR #1815** — pre-capture status/revision hardening（squash merge
+  `a7da729fd…`，阶段A 三项代码加固：malformed reason fail closed、
+  started+postponed 矛盾 fail closed、核心层 40-hex collector_code_revision）；
+  **PR #1814** — docs knowledge map + stale-document safety guardrails（squash
+  merge `49469ba10…`）；再此前为 **PR #1813** — FotMob v2 provenance export
+  （provider status、dual hash、raw retention + capture manifest、
+  clean-worktree 40-hex git revision 绑定、unknown / started fail closed、
+  v1 输出路径不变）
 - 关键 current-state 文档：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md
 
 ## 已完成（勿重复）

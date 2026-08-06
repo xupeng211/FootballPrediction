@@ -54,20 +54,28 @@ This repository state executes zero real network requests
   (the probe's 2 requests were a separate authorized one-time action; no code
    path in this state performs live fetches)
 Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
-  (out of authorized scope; owner-authorized follow-up required) =
+  (NON-EXHAUSTIVE inventory — every listed entry verified; surfaces are out of
+  authorized scope for PR #1818, owner-authorized follow-up required;
+  dated historical reports under docs/_reports/ are excluded as time-accurate
+  records, e.g. docs/_reports/db_write_guard_static_enforcement_dry_run_20260621.md:142) =
   CLAUDE.md:62, .github/pull_request_template.md:127,
   scripts/ops/helpers/agent_workflow_hardening_checks.py:175,
   scripts/ops/helpers/python_db_write_enforcement_check.py:68,178,
   scripts/ops/helpers/sql_migration_policy_enforcement_check.py:94,125,
   config/python_db_write_allowlist.json, config/sql_migration_policy_allowlist.json,
-  docs/SC002_CLOSURE_PLAN.md:10,62,118, docs/CODEX_WORKFLOW.md:259,
+  docs/SC002_CLOSURE_PLAN.md:10,62,118,393-394,432,444,471,510,523,537,561,592,
+  631,661,689,715,737,756,780,796,798,832,866,892,956,967,972
+  (393-394 repeats the superseded "Python/SQL/migration enforcement not yet
+  designed"; 956/967/972 Status Wording Rules still mandate "partial mitigation
+  only" and forbid "complete" — conflicts with the adopted
+  SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE layer), docs/CODEX_WORKFLOW.md:259,
   docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md:38,324,406,
   docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md:8,430,
   docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md:393,410,
   docs/SC002_MANUAL_REVIEW_PHASE1.md:422,441 (422 states "Python/SQL/migration
   enforcement not yet designed" — superseded: ai_workflow_gate.py runs
   PYTHON-DB-WRITE and SQL-MIGRATION checks),
-  docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md:70,132,678,
+  docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md:70,71,132,678,
   docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md:26,330,
   docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md:8,
   docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md:52,566,606,
@@ -84,7 +92,23 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   tests/unit/test_manual_review_phase2d.py:263-266,
   tests/unit/test_manual_review_guard_phase2e.py:183-185,
   tests/unit/test_runtime_db_role_permission_review_phase1.py:130-133,
-  tests/unit/test_changed_files_negative_case_enforcement.py:668
+  tests/unit/test_changed_files_negative_case_enforcement.py:668,
+  tests/unit/gatekeeper_boundary_implementation_static.test.js:349-353,391-397,
+  tests/unit/manual_review_phase1_static.test.js:179-183,320-328,
+  tests/unit/python_sql_migration_enforcement_design_phase1_static.test.js:185-230,
+  tests/unit/shared_module_db_write_boundary_design_phase1_static.test.js:101-105,160-161,197-217,
+  tests/unit/shared_module_db_write_boundary_implementation_phase1_static.test.js:153-157,186-192,
+  tests/unit/test_consumer_level_guard_audit_db_pool_sync_sql_store.py:140-142,
+  tests/unit/test_indirect_write_path_design_phase1.py:167-170,
+  tests/unit/test_indirect_write_path_guard_phase2.py:281-284,
+  tests/unit/test_python_confirmed_write_paths_design_phase2c_batch4.py:305-307,376-381,
+  tests/unit/test_sc002_alembic_migration_guard_design.py:186-189,
+  tests/unit/test_sc002_browser_fotmob_pageprops_playwright_deep_audit.py:105-108,407-450,
+  tests/unit/test_sc002_overall_closure_assessment.py:103-110
+  (several of these tests enforce stale current-state semantics on
+  PROJECT_STATUS/CLOSURE_PLAN wording and would fail once the two-layer
+  wording is applied to those docs — owner decision required before touching
+  those docs)
 ```
 
 ### Detail capture pipeline

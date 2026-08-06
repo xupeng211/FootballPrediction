@@ -728,8 +728,9 @@ legacy-writer execution is authorized.
   BEGIN transaction, guarding INSERT/UPSERT on `matches_oddsportal_mapping` and `odds`
   tables. Same pattern as `odds_sniper.js` (Phase 1). Gatekeeper.js / gatekeeper.sh
   still pending. 8 needs_manual_review consumers still pending. No target script
-  executed. No DB connection. No Playwright/browser run. SC-002 remains partial
-  mitigation only. Training, data expansion, real DB write remain blocked.
+  executed. No DB connection. No Playwright/browser run. SC-002 was partial
+  mitigation only at that task's completion. Training, data expansion, real DB
+  write remain blocked.
 - **gatekeeper_boundary_implementation** (this PR): MEDIUM priority guard implemented
   for `gatekeeper.js` and `gatekeeper.sh` — the CI infrastructure consumers of
   `dbBlueprint.js`. Both entrypoints now call `assertDbWriteAllowed()` before
