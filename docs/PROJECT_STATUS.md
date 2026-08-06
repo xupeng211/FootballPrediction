@@ -783,15 +783,22 @@ legacy-writer execution is authorized.
   - `dry_run_or_audit` (8): dry-run, audit, preflight scripts
   - Plus 21 browser/Playwright scripts previously classified as `skipped_complex`
 - Each remaining candidate has: explicit category, reason, reviewed_at, future_action.
-  These are NOT counted as "guarded" and SC-002 is NOT "fully fixed".
-- DB write safety status: **blocked / partial phase1-7 guards added**.
+  These are NOT counted as "guarded". SC-002 two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`.
+- DB write safety: changed-file hard-fail enforcement active; phase1-7 guards
+  added (43/66 scripts/ops JS entrypoints); staging/production role deployment
+  pending.
 - Guard remains opt-in per script for historical files. New scripts touching
   `scripts/ops/` with DB write risk MUST integrate the guard or be explicitly
   allowlisted — enforced via CI hard fail on changed-files.
 - Training and data expansion remain blocked.
 - No real DB write is authorized.
-- Changed-files hard fail scope: **scripts/ops/\*\*/\*.js only**. Python, SQL, and
-  migration enforcement is not yet designed.
+- Changed-files hard fail scope: **scripts/ops/\*\*/\*.js only** for the JS
+  scanner; Python and SQL/migration enforcement runs via the separate
+  PYTHON-DB-WRITE and SQL-MIGRATION gate outputs
+  (`python_db_write_enforcement_check.py`, `sql_migration_policy_enforcement_check.py`,
+  invoked by `scripts/ops/ai_workflow_gate.py`).
 
 ## Current operating rules
 
@@ -889,7 +896,7 @@ legacy-writer execution is authorized.
 |---|---|
 | `formal_training_cohort_inventory_dry_run` | Formal training remains blocked; only 58 smoke-level candidates were found and formal candidates with odds = 0. |
 | `technical_debt_workflow_audit_dry_run` | P0 technical debt blocks data expansion and formal training; priority debt is DB write safety, cutoff strategy, training eligibility, and schema/init alignment. |
-| `p0_db_write_safety_gate_dry_run` | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates, SC-002 remains unfixed. |
+| `p0_db_write_safety_gate_dry_run` | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates. SC-002 was unfixed at dry-run time (two-layer state now: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). |
 | `authoritative_workflow_enforcement_dry_run` | The project already has authoritative docs, but `_reports` has overgrown and AI agents were not forced to maintain current-state docs. |
 
 ## Current FotMob status
