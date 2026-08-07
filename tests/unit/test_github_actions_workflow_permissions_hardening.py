@@ -41,6 +41,13 @@ def _workflow_raw_text() -> str:
     return WORKFLOW_FILE.read_text(encoding="utf-8")
 
 
+def _ai_gate_step(raw: str) -> str:
+    """Return the raw text of the AI Workflow Gate (P0) step."""
+    step_start = raw.index("      - name: AI Workflow Gate (P0)")
+    step_end = raw.index("\n      - name:", step_start + 1)
+    return raw[step_start:step_end]
+
+
 def _doc_text(path: Path) -> str:
     """Return the full document text."""
     return path.read_text(encoding="utf-8")
@@ -163,15 +170,14 @@ def test_ai_gate_skips_body_metadata_only_for_non_pr_events():
     the explicit base_sha input resolved by ai_gate_event_refs.py.
     """
     raw = _workflow_raw_text()
-    step_start = raw.index("      - name: AI Workflow Gate (P0)")
-    step_end = raw.index("\n      - name:", step_start + 1)
-    ai_gate_step = raw[step_start:step_end]
+    ai_gate_step = _ai_gate_step(raw)
     pull_request_block, dispatch_block = ai_gate_step.split(
-        '          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then',
+        '          elif [ "${GATE_EVENT_NAME}" = "workflow_dispatch" ]; then',
         maxsplit=1,
     )
     dispatch_block, push_block = dispatch_block.split(
-        "          else\n            # Push event on main", maxsplit=1
+        '          elif [ "${GATE_EVENT_NAME}" = "push" ]; then',
+        maxsplit=1,
     )
 
     assert "--block-matrix" in pull_request_block
@@ -191,6 +197,59 @@ def test_workflow_dispatch_requires_explicit_base_sha_input():
     base_input = dispatch_cfg["inputs"].get("base_sha")
     assert base_input is not None, "workflow_dispatch must declare base_sha input"
     assert base_input.get("required") is True, "base_sha input must be required"
+
+
+def test_workflow_dispatch_has_no_head_sha_input():
+    """F1: head must ALWAYS be GITHUB_SHA — there is NO user-supplied head input.
+
+    The dispatch REF selects the revision GitHub runs; the AI Gate analyzes
+    that same revision.  An operator can never point the AI Gate at a
+    revision different from the one actually dispatched and tested.
+    """
+    wf = _parse_workflow()
+    triggers = wf.get("on") or wf.get(True)
+    dispatch_cfg = triggers.get("workflow_dispatch")
+    dispatch_inputs = dispatch_cfg.get("inputs", {})
+    assert "head_sha" not in dispatch_inputs, "workflow_dispatch must NOT declare a head_sha input"
+
+
+def test_ai_gate_step_plumbs_refs_via_env():
+    """F3: workflow inputs are passed via step env, never embedded in run text."""
+    raw = _workflow_raw_text()
+    step = _ai_gate_step(raw)
+    assert "GATE_DISPATCH_BASE_SHA: ${{ inputs.base_sha }}" in step
+    assert "GATE_GITHUB_SHA: ${{ github.sha }}" in step
+    assert "GATE_EVENT_NAME: ${{ github.event_name }}" in step
+    assert "GATE_PR_NUMBER: ${{ github.event.pull_request.number }}" in step
+    assert "GATE_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}" in step
+    assert "GATE_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}" in step
+    assert "GATE_PUSH_BEFORE: ${{ github.event.before }}" in step
+    assert "GATE_PUSH_AFTER: ${{ github.event.after }}" in step
+
+
+def test_ai_gate_run_script_has_no_direct_interpolation():
+    """F3: the run script must contain zero '${{ }}' workflow interpolation."""
+    raw = _workflow_raw_text()
+    step = _ai_gate_step(raw)
+    _, run_script = step.split("        run: |", maxsplit=1)
+    assert "${{" not in run_script, "run script must not interpolate workflow inputs directly"
+    assert "${GATE_DISPATCH_BASE_SHA}" in run_script
+    assert "${GATE_GITHUB_SHA}" in run_script
+    assert "${GATE_EVENT_NAME}" in run_script
+
+
+def test_ai_gate_step_fails_closed_on_unknown_event():
+    """F4: an explicit else branch exits 1 for any unsupported event."""
+    raw = _workflow_raw_text()
+    step = _ai_gate_step(raw)
+    _, run_script = step.split("        run: |", maxsplit=1)
+    assert "Unsupported event" in run_script
+    assert "failing closed" in run_script
+    assert "exit 1" in run_script
+    # All three supported events are dispatched explicitly; nothing else can pass.
+    assert '"${GATE_EVENT_NAME}" = "pull_request"' in run_script
+    assert '"${GATE_EVENT_NAME}" = "workflow_dispatch"' in run_script
+    assert '"${GATE_EVENT_NAME}" = "push"' in run_script
 
 
 # ---------------------------------------------------------------------------
