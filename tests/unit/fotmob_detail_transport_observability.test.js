@@ -2095,3 +2095,222 @@ test('P2-1: read-back uncertainty — final write throws after the rename landed
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// P2-LSTAT: only ENOENT means absent — all other lstatSync failures
+// fail closed (SAFETY_ERROR) on both read and write paths, and the
+// pipeline fails BEFORE any network request when a pre-existing
+// telemetry target cannot be inspected.
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * fsImpl wrapper that fails lstatSync for the transport-observations target
+ * with a chosen error code (ENOENT / EACCES / EIO / ...). With `once: true`
+ * only the FIRST such lstat fails (the "ENOENT first inspection sees absent"
+ * case — the write and its read-back then proceed normally); with
+ * `once: false` every observations-path lstat fails. Also counts
+ * observations-path writeFileSync / renameSync / readFileSync calls so
+ * tests can prove no write or read is ever attempted after an inspection
+ * failure. Every other fs operation passes through to the base fs.
+ */
+function observationsLstatFailingFsImpl({ code, once = false }, base = fs) {
+    let failed = false;
+    const calls = { writeFileSync: 0, renameSync: 0, readFileSync: 0 };
+    return {
+        calls,
+        fsImpl: new Proxy(base, {
+            get(target, prop) {
+                const value = target[prop];
+                if (prop === 'lstatSync') {
+                    return (...args) => {
+                        const p = String(args[0] || '');
+                        if (p.includes(OBSERVATIONS_FILE_NAME) && (!once || !failed)) {
+                            failed = true;
+                            const err = new Error(`simulated lstat failure: ${code}`);
+                            err.code = code;
+                            throw err;
+                        }
+                        return value.apply(target, args);
+                    };
+                }
+                if (prop === 'writeFileSync' || prop === 'renameSync' || prop === 'readFileSync') {
+                    return (...args) => {
+                        const p = String(args[0] || '');
+                        if (p.includes(OBSERVATIONS_FILE_NAME)) {
+                            calls[prop] += 1;
+                        }
+                        return value.apply(target, args);
+                    };
+                }
+                return typeof value === 'function' ? value.bind(target) : value;
+            },
+        }),
+    };
+}
+
+test('P2-LSTAT A: read — ENOENT is valid absence, returns null, no safety failure', () => {
+    const dir = tmpDir('p22-lstat-a-');
+    try {
+        const { fsImpl } = observationsLstatFailingFsImpl({ code: 'ENOENT' });
+        assert.equal(readTransportObservationsFile(dir, fsImpl), null);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT B: read — EACCES fails closed with SAFETY_ERROR, no readFileSync attempted', () => {
+    const dir = tmpDir('p22-lstat-b-');
+    try {
+        const { calls, fsImpl } = observationsLstatFailingFsImpl({ code: 'EACCES' });
+        assert.throws(
+            () => readTransportObservationsFile(dir, fsImpl),
+            err => {
+                assert.equal(err.code, 'SAFETY_ERROR');
+                assert.ok(
+                    String(err.message).includes('cannot inspect transport observations target'),
+                    'error identifies the uninspectable observations target'
+                );
+                assert.ok(String(err.message).includes('EACCES'), 'error carries the bounded code');
+                return true;
+            }
+        );
+        assert.equal(calls.readFileSync, 0, 'no readFileSync after a failed inspection');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT C: read — EIO fails closed with SAFETY_ERROR, no readFileSync attempted', () => {
+    const dir = tmpDir('p22-lstat-c-');
+    try {
+        const { calls, fsImpl } = observationsLstatFailingFsImpl({ code: 'EIO' });
+        assert.throws(
+            () => readTransportObservationsFile(dir, fsImpl),
+            err => {
+                assert.equal(err.code, 'SAFETY_ERROR');
+                assert.ok(String(err.message).includes('cannot inspect transport observations target'));
+                assert.ok(String(err.message).includes('EIO'));
+                return true;
+            }
+        );
+        assert.equal(calls.readFileSync, 0, 'no readFileSync after a failed inspection');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT D: write — ENOENT target inspection allows the normal first write', () => {
+    const dir = tmpDir('p22-lstat-d-');
+    try {
+        const doc = makeObsDocFixture({
+            runId: 'run-p22-d',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        const { fsImpl } = observationsLstatFailingFsImpl({ code: 'ENOENT', once: true });
+        assert.equal(writeTransportObservationsFile(dir, doc, fsImpl), 'written');
+        assert.ok(fs.existsSync(OBSERVATIONS_PATH(dir)), 'intended file was created');
+        const readBack = readTransportObservationsFile(dir, fs);
+        assert.equal(readBack.run_id, 'run-p22-d');
+        assert.equal(readBack.observations.length, 0);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT E: write — EACCES fails closed, NO temp write, NO rename, target untouched', () => {
+    const dir = tmpDir('p22-lstat-e-');
+    try {
+        const doc = makeObsDocFixture({
+            runId: 'run-p22-e',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        const { calls, fsImpl } = observationsLstatFailingFsImpl({ code: 'EACCES' });
+        assert.throws(
+            () => writeTransportObservationsFile(dir, doc, fsImpl),
+            err => {
+                assert.equal(err.code, 'SAFETY_ERROR');
+                assert.ok(String(err.message).includes('cannot inspect transport observations target'));
+                return true;
+            }
+        );
+        assert.equal(calls.writeFileSync, 0, 'temp file write NEVER called after inspection failure');
+        assert.equal(calls.renameSync, 0, 'renameSync NEVER called after inspection failure');
+        assert.equal(fs.existsSync(OBSERVATIONS_PATH(dir)), false, 'target remains untouched (absent)');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT F: write — EIO fails closed, NO temp write, NO rename, target untouched', () => {
+    const dir = tmpDir('p22-lstat-f-');
+    try {
+        const doc = makeObsDocFixture({
+            runId: 'run-p22-f',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        const { calls, fsImpl } = observationsLstatFailingFsImpl({ code: 'EIO' });
+        assert.throws(
+            () => writeTransportObservationsFile(dir, doc, fsImpl),
+            err => {
+                assert.equal(err.code, 'SAFETY_ERROR');
+                assert.ok(String(err.message).includes('cannot inspect transport observations target'));
+                return true;
+            }
+        );
+        assert.equal(calls.writeFileSync, 0, 'temp file write NEVER called after inspection failure');
+        assert.equal(calls.renameSync, 0, 'renameSync NEVER called after inspection failure');
+        assert.equal(fs.existsSync(OBSERVATIONS_PATH(dir)), false, 'target remains untouched (absent)');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-LSTAT G: pipeline — uninspectable pre-existing telemetry fails closed BEFORE any network request', async () => {
+    const dir = tmpDir('p22-lstat-g-');
+    try {
+        const cand = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const runId = 'run-p22-g';
+        const calls = [];
+        const { fsImpl } = observationsLstatFailingFsImpl({ code: 'EACCES' });
+        await assert.rejects(
+            executeCaptureRun(
+                makeCaptureOptions({
+                    dir,
+                    plan,
+                    planPath,
+                    runId,
+                    maxRequests: 1,
+                    fetchImpl: mockFetchImpl(() => okResponse(pageFor(cand)), calls),
+                    fsImpl,
+                })
+            ),
+            err => {
+                assert.equal(err.code, 'SAFETY_ERROR');
+                assert.ok(
+                    String(err.message).includes('cannot inspect transport observations target'),
+                    'pipeline surfaces the uninspectable telemetry target'
+                );
+                return true;
+            }
+        );
+        assert.equal(calls.length, 0, 'fetch implementation NEVER called — fail closed before any request');
+        const runDir = path.join(dir, 'out', 'runs', runId);
+        assert.equal(fs.existsSync(OBSERVATIONS_PATH(runDir)), false, 'no telemetry target written');
+        const capturesDir = path.join(runDir, 'captures');
+        if (fs.existsSync(capturesDir)) {
+            assert.deepEqual(fs.readdirSync(capturesDir), [], 'no capture pair produced');
+        }
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

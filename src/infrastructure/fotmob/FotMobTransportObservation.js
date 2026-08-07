@@ -577,19 +577,37 @@ function validateObservationsDoc(doc) {
 const toSafetyError = message => Object.assign(new Error(`SAFETY_ERROR:${message}`), { code: 'SAFETY_ERROR' });
 
 /**
- * Read the observations file for a run dir. Absent → null. Symlink / non-
- * regular target, unparseable JSON, schema / invariant violations or a
- * self-hash mismatch all fail closed with SAFETY_ERROR — the file is never
- * guessed at, and a tampered/corrupted file is a loud signal.
+ * lstat the observations target. ONLY `ENOENT` means the target is absent
+ * (returns null). Every other `lstatSync` failure (EACCES / EIO / EPERM /
+ * ...) fails closed with SAFETY_ERROR — an un-inspectable pre-existing
+ * artifact must never be treated as absent, on either the read or the
+ * write path. Classification is by `err.code` only, never by message text;
+ * the surfaced error stays bounded (error code + fixed target path, no
+ * unbounded filesystem error text).
+ */
+function lstatObservationsTarget(filePath, fsImpl) {
+    try {
+        return fsImpl.lstatSync(filePath);
+    } catch (err) {
+        if (err && err.code === 'ENOENT') {
+            return null;
+        }
+        throw toSafetyError(
+            `cannot inspect transport observations target (${String((err && err.code) || 'UNKNOWN')}): ${filePath}`
+        );
+    }
+}
+
+/**
+ * Read the observations file for a run dir. Absent (ENOENT) → null. Any
+ * other lstat failure, symlink / non-regular target, unparseable JSON,
+ * schema / invariant violations or a self-hash mismatch all fail closed
+ * with SAFETY_ERROR — the file is never guessed at, and a tampered,
+ * corrupted or un-inspectable file is a loud signal.
  */
 function readTransportObservationsFile(runDir, fsImpl = fs) {
     const filePath = path.join(runDir, OBSERVATIONS_FILE_NAME);
-    let stat = null;
-    try {
-        stat = fsImpl.lstatSync(filePath);
-    } catch {
-        /* absent is fine */
-    }
+    const stat = lstatObservationsTarget(filePath, fsImpl);
     if (!stat) return null;
     if (stat.isSymbolicLink() || !stat.isFile()) {
         throw toSafetyError(`transport observations target is not a regular file: ${filePath}`);
@@ -637,12 +655,11 @@ function writeTransportObservationsFile(runDir, doc, fsImpl = fs, baseDoc = null
     const filePath = path.join(runDir, OBSERVATIONS_FILE_NAME);
     const bytes = serializeDoc(doc);
 
-    let existingStat = null;
-    try {
-        existingStat = fsImpl.lstatSync(filePath);
-    } catch {
-        /* absent is fine */
-    }
+    // Only ENOENT means the target is absent. Any other lstatSync failure
+    // (EACCES / EIO / EPERM / ...) fails closed BEFORE the temp-file write
+    // and rename below — the code must never proceed as if an
+    // un-inspectable target did not exist.
+    const existingStat = lstatObservationsTarget(filePath, fsImpl);
     if (existingStat) {
         if (existingStat.isSymbolicLink() || !existingStat.isFile()) {
             throw toSafetyError(`transport observations target is not a regular file: ${filePath}`);
