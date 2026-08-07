@@ -155,19 +155,42 @@ def test_pull_request_trigger_exists():
     assert "pull_request" in triggers, "pull_request trigger must still be present"
 
 
-def test_ai_gate_skips_body_metadata_only_for_main_pushes():
-    """A PR with an empty body must fail instead of silently becoming diff-only."""
+def test_ai_gate_skips_body_metadata_only_for_non_pr_events():
+    """A PR with an empty body must fail instead of silently becoming diff-only.
+
+    Only non-PR events (push, workflow_dispatch) use diff-only
+    (--skip-body-checks) validation; workflow_dispatch additionally requires
+    the explicit base_sha input resolved by ai_gate_event_refs.py.
+    """
     raw = _workflow_raw_text()
     step_start = raw.index("      - name: AI Workflow Gate (P0)")
     step_end = raw.index("\n      - name:", step_start + 1)
     ai_gate_step = raw[step_start:step_end]
-    pull_request_block, push_block = ai_gate_step.split(
+    pull_request_block, dispatch_block = ai_gate_step.split(
+        '          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then',
+        maxsplit=1,
+    )
+    dispatch_block, push_block = dispatch_block.split(
         "          else\n            # Push event on main", maxsplit=1
     )
 
     assert "--block-matrix" in pull_request_block
     assert "--skip-body-checks" not in pull_request_block
+    assert "--skip-body-checks" in dispatch_block
+    assert "ai_gate_event_refs.py" in dispatch_block
     assert "--skip-body-checks" in push_block
+
+
+def test_workflow_dispatch_requires_explicit_base_sha_input():
+    """workflow_dispatch must declare a required base_sha input."""
+    wf = _parse_workflow()
+    triggers = wf.get("on") or wf.get(True)
+    dispatch_cfg = triggers.get("workflow_dispatch")
+    assert isinstance(dispatch_cfg, dict), "workflow_dispatch must be a mapping"
+    assert "inputs" in dispatch_cfg, "workflow_dispatch must declare inputs"
+    base_input = dispatch_cfg["inputs"].get("base_sha")
+    assert base_input is not None, "workflow_dispatch must declare base_sha input"
+    assert base_input.get("required") is True, "base_sha input must be required"
 
 
 # ---------------------------------------------------------------------------
