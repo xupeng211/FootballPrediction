@@ -419,7 +419,10 @@ guarded, and all remaining classified-as-review scripts are verified non-write.
   sufficient in all execution contexts.
 - **Production-like host block still not tested.** The guard helper's production host
   detection has not been tested against actual production hostnames.
-- **Python/SQL/migration enforcement not yet designed.** This review only covers
+- **Python/SQL/migration enforcement is a separate workstream, now covered by
+  the two-layer SC-002 state (`SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+  `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`; overall partial
+  mitigation only).** This review only covers
   `scripts/ops/**/*.js` files. Python scripts, SQL migration files, and migration
   runner scripts remain outside the current guard scope.
 
@@ -438,7 +441,7 @@ Do not start automatically. Recommended next task only after user confirmation.
 
 ## SC-002 status impact
 
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **0 needs_manual_review scripts remain** after this review.
 - **0 possible_indirect_write scripts remain** after this review.
 - **All 7 write-capable reviewed consumers are already guarded.**

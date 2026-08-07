@@ -3,7 +3,7 @@
   "_created": "2026-06-23",
   "_owner_task": "sql_migration_policy_implementation_phase2B",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-  "_sc002_status": "partial mitigation only",
+  "_sc002_status": "partial mitigation only — two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING",
   "_sql_execution_authorized": false,
   "_destructive_migrations_found": 0,
   "_destructive_policy": "Any new destructive SQL/migration (DROP DATABASE, DROP TABLE, TRUNCATE, DELETE without WHERE, GRANT ALL, REVOKE) MUST fail changed-files gate even if allowlisted. The sole exception is an exact, explicitly reviewed PUBLIC EXECUTE revocation on the V26.10 disposable-only canonical lock function; it does not authorize any execution outside that proof.",

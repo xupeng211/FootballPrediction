@@ -65,9 +65,13 @@ def _build_violation_errors(violations: list[dict]) -> list[str]:
             f"with complete classification or implement runtime guard."
         )
     errors.append(
-        "[PYTHON-DB-WRITE ENFORCEMENT] SC-002 remains partial mitigation only. "
-        "Historical baseline files are exempt via allowlist. "
-        "Python runtime guard is NOT yet implemented."
+        "[PYTHON-DB-WRITE ENFORCEMENT] "
+        "SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+        "SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; "
+        "SC-002 overall remains partial mitigation only. "
+        "Historical baseline files are exempt via allowlist; "
+        "runtime-guarded files still require ALLOW_DB_WRITE=yes and "
+        "FINAL_DB_WRITE_CONFIRMATION=yes for a real write run."
     )
     return errors
 
@@ -156,7 +160,10 @@ def check_python_db_write_enforcement(
                 f"[PYTHON-DB-WRITE ENFORCEMENT] {path}: {cls} — "
                 f"in allowlist (historical baseline). Signals: {signals}. "
                 f"Allowlist does NOT authorize runtime DB writes. "
-                f"Runtime guard NOT implemented."
+                f"Runtime guard implemented via assert_db_write_allowed(). "
+                f"SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+                f"SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; "
+                f"SC-002 overall remains partial mitigation only."
             )
         elif allowlist_status == "not_in_allowlist":
             allowlist_complete = v.get("allowlist_entry_complete", True)
@@ -175,7 +182,9 @@ def check_python_db_write_enforcement(
                     f"Signals: {signals}. "
                     f"Either add to config/python_db_write_allowlist.json "
                     f"with complete classification or implement runtime guard. "
-                    f"SC-002 remains partial mitigation only."
+                    f"SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+                    f"SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; "
+                    f"SC-002 overall remains partial mitigation only."
                 )
 
     return errors, warnings

@@ -174,7 +174,7 @@ are **no new guard implementation candidates** from this audit.
 - [x] No runtime guards were added
 - [x] No files were marked `runtime_guarded`
 - [x] No files were marked `safe`
-- [x] SC-002 remains partial mitigation only
+- [x] SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`)
 - [x] Training / data expansion / real DB write remain blocked
 - [x] Indirect write paths were NOT processed
 - [x] Manual review candidates were NOT processed

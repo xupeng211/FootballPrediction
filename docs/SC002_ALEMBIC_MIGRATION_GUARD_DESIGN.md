@@ -14,8 +14,8 @@ This document provides the **design, classification, and implementation plan** f
 remaining SC-002 Python write path: `src/database/migrations/env.py` (Alembic migration
 environment).
 
-`env.py` is the **last remaining unclassified Python write path** in the SC-002 Python
-track. It is currently classified as `pending_runtime_guard` in
+`env.py` was, at the time of this design, the **last remaining unclassified Python write path**
+in the SC-002 Python track. It was classified as `pending_runtime_guard` in
 `config/python_db_write_allowlist.json` and has been deferred through multiple guard
 phases (Phase2C batch1-4, indirect write guard phase2, manual review guard phase2e)
 because it requires a fundamentally different guard approach from the standard
@@ -49,7 +49,7 @@ This task does NOT:
 | Safe reclassified (read_only, false_positive) | 3 |
 | Remaining unclassified | **1** (`src/database/migrations/env.py`) |
 | Manual review candidates unreviewed | 0 |
-| SC-002 status | partial mitigation only |
+| SC-002 status | partial mitigation only — two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING |
 | Training / data expansion / real DB write | blocked |
 
 ## Static Analysis of env.py
@@ -563,7 +563,7 @@ When production schema migrations are needed in the future:
 ### What This Design Does NOT Change
 
 - env.py runtime behavior — NO GUARD ADDED (this is design only)
-- SC-002 status — remains partial mitigation only
+- SC-002 status — remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`)
 - Python write paths guarded count — still 17 / 20
 - Training / data expansion / real DB write — remain blocked
 - Any database — no connection, no SQL, no migration execution
@@ -603,7 +603,7 @@ tests that verify:
 1. `env.py` is classified as `alembic_migration_needs_specialized_runtime_guard` in the allowlist
 2. Python write paths guarded count is 17 out of 20
 3. `env.py` is the only remaining unclassified Python write path
-4. SC-002 remains partial mitigation only
+4. SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`)
 5. Training / data expansion / real DB write remain blocked
 6. The design document exists and has required sections
 

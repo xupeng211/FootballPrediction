@@ -5,7 +5,7 @@
 - created: 2026-06-25
 - task: runtime_db_role_permission_dev_poc
 - review_type: static audit / documentation — no DB connection, no permission changes
-- sc002_status: partial mitigation only
+- sc002_status: partial mitigation only — two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING
 
 ## Summary
 

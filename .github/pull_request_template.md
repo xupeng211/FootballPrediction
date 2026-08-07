@@ -124,7 +124,8 @@ N/A — no reports added or changed.
 
 ## SC-002 status
 
-- SC-002 is partial mitigation only.
+- SC-002 is partial mitigation only (two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE` / `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - This PR does / does not change SC-002 guard coverage.
 - This PR does / does not claim SC-002 is complete.
 - training / data expansion / real DB write remain blocked.

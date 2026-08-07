@@ -302,10 +302,15 @@ The init_db.sql guard is verified at the static level (not runtime-tested agains
 | 9 | PROJECT_STATUS.md matches closure state | **Good standing** | Will verify at closure |
 | 10 | CI green after closure PR merge | **Good standing** | Per-PR check |
 
-**SC-002 overall verdict: enforcement complete.**
-Per `docs/SC002_FINAL_CLOSURE_CHECK.md`, all 10 criteria are satisfied or substantially met.
-- 9 criteria fully satisfied (1, 2, 3, 4, 5, 7, 8, 9, 10).
-- 1 criterion substantially met (6 — staging/production deployment pending).
+**SC-002 overall verdict: enforcement complete at the infrastructure layer**
+(two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`;
+`SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`); overall SC-002 remains
+partial mitigation only.
+Per the summary table above (cross-checked with `docs/SC002_FINAL_CLOSURE_CHECK.md`):
+- 3 criteria Met (5, 7, 8).
+- 4 criteria Substantially met (1, 2, 3, 4).
+- 1 criterion Reviewed + Dev POC, staging/production deployment pending (6).
+- 2 criteria Good standing, verified per-PR (9, 10).
 - 0 criteria not met or unsatisfied.
 - Training / data expansion / real DB write remain blocked (require separate authorization).
 
@@ -341,5 +346,5 @@ This assessment does NOT:
 - Claim SC-002 is complete, resolved, or fully fixed
 - Claim "safe to train," "safe to write," or "production ready"
 
-SC-002 remains **partial mitigation only**. Training, data expansion, and real DB write
+SC-002 remains **partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). This assessment does NOT close SC-002. Training, data expansion, and real DB write
 remain **blocked**.

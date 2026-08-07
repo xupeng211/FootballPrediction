@@ -20,7 +20,8 @@ deployment of the DB role permission model — is a deployment/operations task t
 requires production environment access and is outside the scope of SC-002
 enforcement design.**
 
-SC-002 status transitions from "partial mitigation only" to "enforcement complete."
+SC-002 status: enforcement infrastructure complete (`SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`);
+overall SC-002 remains partial mitigation only (`SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 ## Per-Criterion Final Verification
 
@@ -204,7 +205,9 @@ Evidence:
   - `browser_fotmob_pageprops_playwright_deep_audit`
   - `changed_files_negative_case_enforcement_test`
   - `deploy_docker_init_sql_guard`
-- Consistently states "SC-002 remains partial mitigation only" (20+ occurrences) and
+- Consistently states the two-layer SC-002 status (SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING, overall partial mitigation only) across
+  PROJECT_STATUS.md (7 two-layer markers, 23 "partial mitigation only" mentions) and
   "Training / data expansion / real DB write remain blocked."
 - Current baseline section documents the full SC-002 history.
 - Source-of-truth docs table includes all SC-002 documents.
@@ -247,7 +250,9 @@ staging deployment pending). 0 criteria unsatisfied or not met.
 
 **Previous status:** partial mitigation only
 
-**New status:** enforcement complete
+**New status:** enforcement complete at the infrastructure layer (two-layer state:
+`SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`;
+overall SC-002 remains partial mitigation only)
 
 The SC-002 DB write safety gate enforcement infrastructure is now complete:
 - All DB write entrypoints across JS, Python, and SQL tracks are guarded or formally classified as non-write.
@@ -305,8 +310,8 @@ explicit, scoped authorization.
 
 ## Closure Recommendation
 
-SC-002 enforcement infrastructure is complete and should transition from
-"partial mitigation only" to **"enforcement complete."**
+SC-002 enforcement infrastructure is complete (`SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`);
+overall SC-002 remains partial mitigation only (`SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 The remaining staging/production role deployment (Criterion #6) is a deployment/operations
 task that requires production environment access. It should be tracked as a separate task,

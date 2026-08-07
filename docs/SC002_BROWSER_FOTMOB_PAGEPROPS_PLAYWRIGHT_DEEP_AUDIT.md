@@ -5,7 +5,7 @@
 - created: 2026-06-25
 - task: browser_fotmob_pageprops_playwright_deep_audit
 - audit_type: static deep per-script verification / classification / gap analysis
-- sc002_status: partial mitigation only
+- sc002_status: partial mitigation only — two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING
 
 ## Summary
 
@@ -427,7 +427,7 @@ accounted for in the remaining 43 slots.
 
 ## SC-002 Status
 
-- **SC-002 remains partial mitigation only.** This deep audit is verification, not closure.
+- **SC-002 remains partial mitigation only.** Two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE` (enforcement infrastructure complete); `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING` (staging/production role deployment pending). This deep audit is verification, not closure — it does NOT close SC-002.
 - **This audit does NOT close SC-002.**
 - **This audit does NOT unlock training.**
 - **This audit does NOT unlock data expansion.**

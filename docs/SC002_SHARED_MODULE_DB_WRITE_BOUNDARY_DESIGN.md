@@ -390,7 +390,7 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
 
 ## SC-002 Status Impact
 
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **1 HIGH priority guard implemented:** `odds_harvest_pipeline.js` now calls
   `assertDbWriteAllowed()` before INSERT/UPSERT write SQL on `matches_oddsportal_mapping`
   and `odds` tables. Guard follows the same pattern as `odds_sniper.js` (Phase 1).
@@ -407,5 +407,5 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
   guard design covers JS shared modules (`scripts/ops/helpers/*.js`) only. Python scripts,
   SQL migration files, and migration runner scripts are a separate governance layer,
   now designed in `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`
-  (python_sql_migration_enforcement_design_phase1). SC-002 remains partial mitigation only.
+  (python_sql_migration_enforcement_design_phase1). SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - Training, data expansion, real DB write, scraper/browser remain BLOCKED.

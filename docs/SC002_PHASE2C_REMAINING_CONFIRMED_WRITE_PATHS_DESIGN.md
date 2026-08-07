@@ -23,7 +23,7 @@ step.
 - 0 files classified as `confirmed_direct_write_needs_guard` — none of the 5 are suitable
   for direct guard implementation without further design
 - **No runtime guards were added in this task.**
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **training / data expansion / real DB write remain blocked.**
 
 ## Scope
@@ -327,7 +327,7 @@ Do not start automatically. Recommended next tasks only after user confirmation:
 - No database connection was established during this analysis.
 - No SQL/migration was executed during this analysis.
 - No real DB write was performed.
-- SC-002 remains partial mitigation only.
+- SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - training / data expansion / real DB write remain blocked.
 - 9 of 14 confirmed Python write paths are runtime_guarded (batch1+batch2+batch3).
 - 5 remaining confirmed Python write paths have been classified in this design task.

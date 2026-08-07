@@ -91,7 +91,10 @@ def run_sql_migration_policy_gate_check(changed: set[str], errors: list[str]) ->
                 f"[SQL-MIGRATION ENFORCEMENT] FAIL: {path}: DESTRUCTIVE SQL detected. "
                 f"Signals: {signals}. Classification: {cls}. "
                 f"Destructive operations (DROP DATABASE, DROP TABLE, TRUNCATE, etc.) "
-                f"require explicit policy review. SC-002 remains partial mitigation only."
+                f"require explicit policy review. "
+                f"SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+                f"SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; "
+                f"SC-002 overall remains partial mitigation only."
             )
         elif has_destructive and not would_fail:
             # File is in allowlist with proper classification — would_fail is False.
@@ -122,7 +125,9 @@ def run_sql_migration_policy_gate_check(changed: set[str], errors: list[str]) ->
                     f"Signals: {signals}. "
                     f"Add to config/sql_migration_policy_allowlist.json "
                     f"with complete classification. "
-                    f"SC-002 remains partial mitigation only."
+                    f"SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+                    f"SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; "
+                    f"SC-002 overall remains partial mitigation only."
                 )
 
 
