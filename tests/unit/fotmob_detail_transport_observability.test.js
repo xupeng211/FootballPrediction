@@ -49,6 +49,7 @@ const {
     computeObservationsSelfHash,
     readTransportObservationsFile,
     writeTransportObservationsFile,
+    reconcilePersistedObservationsDoc,
     OBSERVATIONS_FILE_NAME,
     OBSERVATION_ENTRY_SCHEMA,
 } = require('../../src/infrastructure/fotmob/FotMobTransportObservation');
@@ -310,6 +311,65 @@ const signalFetchImpl = buildResponse => async (url, opts) => buildResponse({ ur
 function readObservations(runDir) {
     const doc = readTransportObservationsFile(runDir, fs);
     return doc;
+}
+
+// ─────────────────────────────────────────────────────────────
+// P2-1 failure-injection fsImpl wrappers (telemetry paths only)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * fsImpl wrapper that fails ONLY the transport-observations file WRITE
+ * paths (writeFileSync / renameSync when the target path carries the
+ * observations file name — including the temp+rename names). Every other
+ * fs operation passes through to the base fs. Simulates a final telemetry
+ * write failure (e.g. ENOSPC) while the rest of the run writes normally.
+ */
+function observationsWriteFailingFsImpl(base = fs) {
+    return new Proxy(base, {
+        get(target, prop) {
+            const value = target[prop];
+            if (prop === 'writeFileSync' || prop === 'renameSync') {
+                return (...args) => {
+                    const p = String(args[0] || '');
+                    if (p.includes(OBSERVATIONS_FILE_NAME)) {
+                        const err = new Error('ENOSPC: simulated telemetry write failure');
+                        err.code = 'ENOSPC';
+                        throw err;
+                    }
+                    return value.apply(target, args);
+                };
+            }
+            return typeof value === 'function' ? value.bind(target) : value;
+        },
+    });
+}
+
+/**
+ * fsImpl wrapper that fails the FIRST read of the transport-observations
+ * file (simulates the write-internal read-back failing after the rename
+ * landed — "read-back uncertainty where the intended document DID land").
+ * Later reads pass through to the base fs.
+ */
+function observationsFirstReadFailingFsImpl(base = fs) {
+    let failedOnce = false;
+    return new Proxy(base, {
+        get(target, prop) {
+            const value = target[prop];
+            if (prop === 'readFileSync') {
+                return (...args) => {
+                    const p = String(args[0] || '');
+                    if (p.includes(OBSERVATIONS_FILE_NAME) && !failedOnce) {
+                        failedOnce = true;
+                        const err = new Error('EIO: simulated telemetry read-back failure');
+                        err.code = 'EIO';
+                        throw err;
+                    }
+                    return value.apply(target, args);
+                };
+            }
+            return typeof value === 'function' ? value.bind(target) : value;
+        },
+    });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1671,4 +1731,367 @@ const { createBoundedFetchAdapter } = require(${JSON.stringify(modulePath)});
     assert.equal(child.status, 0, `child must exit 0: ${child.stderr}`);
     assert.ok(child.stdout.includes('FAST_OK'), 'fast success completed');
     assert.ok(child.stdout.includes('TIMEOUT_OK'), 'timeout path completed');
+});
+
+// ─────────────────────────────────────────────────────────────
+// P2-1 remediation: run-summary telemetry linkage reflects the
+// VERIFIED FINAL ON-DISK state, never the pending in-memory doc
+// (Codex F2-1: a final telemetry write failure must not produce a
+// summary that references an unwritten observations file).
+// ─────────────────────────────────────────────────────────────
+
+function makeObsDocFixture({ runId, planSha, authId, maxRequests, revision }) {
+    return defaultObservationsDoc({
+        runId,
+        planSha256: planSha,
+        authorizationId: authId,
+        maxRequests,
+        collectorCodeRevision: revision,
+    });
+}
+
+test('P2-1 helper: absent file → null (no telemetry linkage claim possible)', () => {
+    const dir = tmpDir('p21-helper-absent-');
+    try {
+        const expected = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        assert.equal(reconcilePersistedObservationsDoc({ runDir: dir, expectedDoc: expected }), null);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1 helper: valid persisted doc with matching bindings → the ACTUAL doc is returned', () => {
+    const dir = tmpDir('p21-helper-valid-');
+    try {
+        const doc = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        assert.equal(writeTransportObservationsFile(dir, doc, fs), 'written');
+        const persisted = reconcilePersistedObservationsDoc({ runDir: dir, expectedDoc: doc });
+        assert.ok(persisted, 'persisted doc must be returned');
+        assert.equal(persisted.run_id, 'run-p21');
+        assert.equal(persisted.observations.length, 0);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1 helper: foreign valid doc (binding mismatch) → null, file untouched', () => {
+    const dir = tmpDir('p21-helper-foreign-');
+    try {
+        const doc = makeObsDocFixture({
+            runId: 'run-foreign',
+            planSha: 'a'.repeat(64),
+            authId: 'other-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        assert.equal(writeTransportObservationsFile(dir, doc, fs), 'written');
+        const expected = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        assert.equal(
+            reconcilePersistedObservationsDoc({ runDir: dir, expectedDoc: expected }),
+            null,
+            'a foreign valid doc is never claimed'
+        );
+        // The foreign file is NOT overwritten or deleted.
+        assert.deepEqual(readTransportObservationsFile(dir, fs).run_id, 'run-foreign');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1 helper: unreadable / invalid file → null, file untouched', () => {
+    const dir = tmpDir('p21-helper-invalid-');
+    try {
+        const expected = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        fs.writeFileSync(OBSERVATIONS_PATH(dir), '{ not valid json\n', 'utf8');
+        assert.equal(reconcilePersistedObservationsDoc({ runDir: dir, expectedDoc: expected }), null);
+        assert.equal(fs.readFileSync(OBSERVATIONS_PATH(dir), 'utf8'), '{ not valid json\n');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1 helper: symlink / non-regular target → null, target untouched', () => {
+    const dir = tmpDir('p21-helper-symlink-');
+    try {
+        const expected = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        const targetDir = path.join(dir, 'target');
+        fs.mkdirSync(targetDir);
+        const doc = makeObsDocFixture({
+            runId: 'run-p21',
+            planSha: 'a'.repeat(64),
+            authId: 'test-authorization-id',
+            maxRequests: 1,
+            revision: TEST_REVISION,
+        });
+        writeTransportObservationsFile(targetDir, doc, fs);
+        fs.symlinkSync(path.join(targetDir, OBSERVATIONS_FILE_NAME), OBSERVATIONS_PATH(dir));
+        assert.equal(reconcilePersistedObservationsDoc({ runDir: dir, expectedDoc: expected }), null);
+        assert.ok(fs.lstatSync(OBSERVATIONS_PATH(dir)).isSymbolicLink(), 'symlink untouched');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1: normal fresh telemetry write — summary links to the ACTUAL persisted file, count matches, replay byte-identical', async () => {
+    const dir = tmpDir('p21-fresh-');
+    try {
+        const cand1 = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const cand2 = makeCandidate({ id: 4506625, season: '2024/2025', home: 'C', away: 'D', kickoff: '2024-08-17T11:30:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand1, cand2], { seasons: ['2024/2025'] });
+        const calls = [];
+        const fetchImpl = mockFetchImpl(
+            url => (String(url).includes('4506625') ? okResponse(pageFor(cand2)) : okResponse(pageFor(cand1))),
+            calls
+        );
+        const run = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId: 'run-p21-fresh', maxRequests: 2, fetchImpl })
+        );
+        assert.equal(run.status, 'complete');
+        assert.equal(calls.length, 2);
+        const persisted = readObservations(run.runDir);
+        assert.equal(persisted.observations.length, 2);
+        const summary = JSON.parse(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'));
+        assert.equal(summary.transport_observations_file, OBSERVATIONS_FILE_NAME);
+        assert.equal(summary.transport_observations_count, persisted.observations.length, 'count matches the ACTUAL persisted file');
+        // Replay reads the SAME file — rebuilt summary byte-identical.
+        const summaryBefore = fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8');
+        const { runReplay } = require('../../scripts/ops/fotmob_detail_capture');
+        const replay = runReplay(
+            { 'run-dir': run.runDir },
+            { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }
+        );
+        assert.equal(replay.replayed_count, 2);
+        assert.equal(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'), summaryBefore);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1: final write reports unchanged — summary reflects the ACTUAL persisted doc', async () => {
+    const dir = tmpDir('p21-unchanged-');
+    try {
+        const cand = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const run1 = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-p21-unchanged',
+                maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(cand))),
+            })
+        );
+        assert.equal(run1.status, 'complete');
+        const summary1 = fs.readFileSync(path.join(run1.runDir, 'run-summary.json'), 'utf8');
+        // Resume: everything is already complete — the final write returns
+        // 'unchanged' (identical bytes); the summary still reflects the
+        // ACTUAL persisted doc.
+        const calls2 = [];
+        const run2 = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-p21-unchanged',
+                maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(cand)), calls2),
+            })
+        );
+        assert.equal(run2.status, 'complete');
+        assert.equal(calls2.length, 0, 'no re-fetch on resume');
+        const persisted = readObservations(run2.runDir);
+        const summary2 = JSON.parse(fs.readFileSync(path.join(run2.runDir, 'run-summary.json'), 'utf8'));
+        assert.equal(summary2.transport_observations_count, persisted.observations.length, 'summary reflects the actual persisted doc');
+        assert.equal(fs.readFileSync(path.join(run2.runDir, 'run-summary.json'), 'utf8'), summary1, 'resume summary byte-identical');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1: fresh run + FINAL telemetry write failure + no file persisted — primary outcome unchanged, summary has NO phantom linkage, replay byte-identical', async () => {
+    const dir = tmpDir('p21-failfresh-');
+    try {
+        const cand = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const calls = [];
+        const run = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-p21-failfresh',
+                maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(cand)), calls),
+                fsImpl: observationsWriteFailingFsImpl(),
+            })
+        );
+        // Primary capture outcome unchanged: complete, one request, one capture.
+        assert.equal(run.status, 'complete');
+        assert.equal(run.completedCount, 1);
+        assert.equal(calls.length, 1, 'no extra network request');
+        assert.equal(fs.existsSync(OBSERVATIONS_PATH(run.runDir)), false, 'no file persisted');
+        const summary = JSON.parse(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'));
+        assert.equal(summary.status, 'complete');
+        assert.equal(summary.network_requests_attempted, 1);
+        assert.equal(summary.captures_completed, 1);
+        assert.equal(summary.database_writes, 0);
+        assert.equal(summary.transport_observations_file, undefined, 'NO phantom file link');
+        assert.equal(summary.transport_observations_count, undefined, 'NO phantom count');
+        // CAPTURE ↔ REPLAY consistency on the failure path: replay reads the
+        // same disk truth (absent file) and rebuilds the same summary.
+        const summaryBefore = fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8');
+        const { runReplay } = require('../../scripts/ops/fotmob_detail_capture');
+        const replay = runReplay(
+            { 'run-dir': run.runDir },
+            { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }
+        );
+        assert.equal(replay.replayed_count, 1);
+        assert.equal(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'), summaryBefore);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1: resume + valid base observations file + evolved final write fails — summary reflects the ACTUAL persisted base doc, not the failed in-memory evolution; replay byte-identical', async () => {
+    const dir = tmpDir('p21-failresume-');
+    try {
+        const cand1 = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const cand2 = makeCandidate({ id: 4506625, season: '2024/2025', home: 'C', away: 'D', kickoff: '2024-08-17T11:30:00Z' });
+        const cand3 = makeCandidate({ id: 4506265, season: '2024/2025', home: 'E', away: 'F', kickoff: '2024-08-17T14:00:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand1, cand2, cand3], { seasons: ['2024/2025'] });
+
+        // Cycle 1: ordinal 1 completes, ordinal 2 is 403 → access-control
+        // stop; the persisted base file has exactly 2 observations.
+        const calls1 = [];
+        const fetchImpl1 = mockFetchImpl(
+            url => (String(url).includes('4506625') ? { status: 403, body: '<html>forbidden</html>' } : okResponse(pageFor(cand1))),
+            calls1
+        );
+        const run1 = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId: 'run-p21-failresume', maxRequests: 4, fetchImpl: fetchImpl1 })
+        );
+        assert.equal(run1.status, 'stopped');
+        assert.equal(run1.completedCount, 1);
+        assert.equal(calls1.length, 2);
+        const baseDoc = readObservations(run1.runDir);
+        assert.equal(baseDoc.observations.length, 2);
+
+        // Cycle 2 (resume) with failing observations WRITES: ordinals 2 and
+        // 3 succeed in memory (pending doc would hold 3 observations), but
+        // the FINAL telemetry write fails. The old valid base file remains
+        // on disk — the summary must reflect THAT ACTUAL persisted state.
+        const calls2 = [];
+        const fetchImpl2 = mockFetchImpl(
+            url => okResponse(pageFor(String(url).includes('4506625') ? cand2 : cand3)),
+            calls2
+        );
+        const run2 = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-p21-failresume',
+                maxRequests: 4,
+                fetchImpl: fetchImpl2,
+                fsImpl: observationsWriteFailingFsImpl(),
+            })
+        );
+        assert.equal(run2.status, 'complete');
+        assert.equal(run2.completedCount, 3);
+        assert.equal(calls2.length, 2, 'ordinal 1 skipped on resume; ordinals 2 and 3 fetched — no extra request');
+        const persistedAfter = readObservations(run2.runDir);
+        assert.equal(persistedAfter.observations.length, 2, 'old persisted base file remains (2 entries)');
+        const summary = JSON.parse(fs.readFileSync(path.join(run2.runDir, 'run-summary.json'), 'utf8'));
+        assert.equal(summary.status, 'complete');
+        assert.equal(summary.network_requests_attempted, 4, 'primary attempt counts unchanged by telemetry failure (2 in cycle 1 + 2 in cycle 2)');
+        assert.equal(summary.captures_completed, 3);
+        assert.equal(
+            summary.transport_observations_count,
+            persistedAfter.observations.length,
+            'summary count matches the ACTUAL persisted base doc — it does NOT claim the failed in-memory newer observation (3)'
+        );
+        // Replay reads the same base file → same summary, byte-identical.
+        const summaryBefore = fs.readFileSync(path.join(run2.runDir, 'run-summary.json'), 'utf8');
+        const { runReplay } = require('../../scripts/ops/fotmob_detail_capture');
+        const replay = runReplay(
+            { 'run-dir': run2.runDir },
+            { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }
+        );
+        assert.equal(replay.replayed_count, 3);
+        assert.equal(fs.readFileSync(path.join(run2.runDir, 'run-summary.json'), 'utf8'), summaryBefore);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('P2-1: read-back uncertainty — final write throws after the rename landed but the file re-reads and validates → reconciliation uses the ACTUAL validated file', async () => {
+    const dir = tmpDir('p21-readback-');
+    try {
+        const cand = makeCandidate({ id: 4193752, season: '2024/2025', home: 'A', away: 'B', kickoff: '2024-08-16T19:00:00Z' });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const calls = [];
+        const run = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-p21-readback',
+                maxRequests: 1,
+                fetchImpl: mockFetchImpl(() => okResponse(pageFor(cand)), calls),
+                fsImpl: observationsFirstReadFailingFsImpl(),
+            })
+        );
+        assert.equal(run.status, 'complete');
+        assert.equal(calls.length, 1, 'no extra network request');
+        assert.equal(fs.existsSync(OBSERVATIONS_PATH(run.runDir)), true, 'the intended document DID land');
+        const persisted = readObservations(run.runDir);
+        assert.equal(persisted.observations.length, 1);
+        const summary = JSON.parse(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'));
+        assert.equal(
+            summary.transport_observations_count,
+            persisted.observations.length,
+            'summary links the ACTUAL validated persisted document, not an assumption'
+        );
+        const summaryBefore = fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8');
+        const { runReplay } = require('../../scripts/ops/fotmob_detail_capture');
+        const replay = runReplay(
+            { 'run-dir': run.runDir },
+            { stdout: { write: () => {} }, parserCodeRevision: TEST_REVISION }
+        );
+        assert.equal(replay.replayed_count, 1);
+        assert.equal(fs.readFileSync(path.join(run.runDir, 'run-summary.json'), 'utf8'), summaryBefore);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
 });

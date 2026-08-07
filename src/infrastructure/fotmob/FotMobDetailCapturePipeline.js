@@ -74,6 +74,7 @@ const {
     readTransportObservationsFile,
     writeTransportObservationsFile,
     settleObservationInDoc,
+    reconcilePersistedObservationsDoc,
 } = require('./FotMobTransportObservation');
 
 // ─────────────────────────────────────────────────────────────
@@ -1365,8 +1366,12 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     // resume's in-place evolution is recognized as the run's own write and
     // never refused as "different valid content".
     const baseObservationsDoc = observationsDoc;
-    // Diagnostic-only settlement: a telemetry persistence failure NEVER
-    // changes the run outcome or fail-stop behavior of the capture itself.
+    // In-memory settlement only — observations are NOT persisted per settle
+    // (they are written once as a bounded final run-local document at run
+    // end). A settlement failure is diagnostic-only: it never changes the
+    // run outcome or fail-stop behavior of the capture itself. (At run
+    // START, by contrast, an unreadable or foreign pre-existing
+    // observations file fails closed before any request — see above.)
     const settleObservation = (observation) => {
         if (!observation) return;
         try {
@@ -1948,14 +1953,23 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     // written only when at least one observation exists, crash-safe and
     // never silently overwriting different content. Persistence failure is
     // diagnostic-only — the run outcome and fail-stop behavior are already
-    // finalized above and cannot be changed by telemetry.
+    // finalized above and cannot be changed by telemetry. The run summary's
+    // telemetry linkage NEVER uses the pending in-memory doc: it is built
+    // from the VERIFIED final on-disk state (reconciled below), so the
+    // summary cannot claim a file or count that is not actually persisted —
+    // CAPTURE and REPLAY therefore derive from the same disk truth (P2-1).
     if (observationsDoc.observations.length > 0) {
         try {
             writeTransportObservationsFile(runDir, observationsDoc, fsImpl, baseObservationsDoc);
-        } catch { /* diagnostic-only — the run continues unchanged */ }
+        } catch { /* diagnostic-only — reconciled from actual disk state below */ }
     }
+    const persistedObservationsDoc = reconcilePersistedObservationsDoc({
+        runDir,
+        expectedDoc: observationsDoc,
+        fsImpl,
+    });
 
-    const summary = buildRunSummary(runState, plan, [...completedOrdinals], observationsDoc);
+    const summary = buildRunSummary(runState, plan, [...completedOrdinals], persistedObservationsDoc);
     writeRunSummary(runDir, summary, fsImpl);
 
     return {

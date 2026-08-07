@@ -51,7 +51,14 @@
 //     hash validation is refused (fail closed) — never guessed at;
 //   - the file is derived data only: it can never turn a failed pair into a
 //     capture pair, and its writes never alter the business payload,
-//     capture manifest, run state or run summary hashes.
+//     capture manifest, run state or run summary hashes;
+//   - telemetry can affect the RUN only at start: an unreadable or foreign
+//     pre-existing observations file fails closed before any request. After
+//     the primary capture outcome is finalized, failure of the FINAL
+//     telemetry persistence never changes that outcome — the run summary
+//     then links telemetry only from the verified final on-disk document
+//     (or omits the linkage entirely), never from the pending in-memory
+//     doc. A later REPLAY fails closed on an invalid/foreign artifact.
 //
 // Phase vocabulary (last_reliable_phase values):
 //   REQUEST_STARTED               — the request began (timer armed)
@@ -78,10 +85,13 @@
 //
 // Persistence: runs/<run-id>/transport-observations.json
 //   schema fotmob-detail-transport-observations/v1, one final observation
-//   per attempt (last attempt per ordinal wins on resume), entries appended
-//   incrementally by the pipeline and written atomically per settle; the
-//   run summary references the file and the observation count when any
-//   observation exists.
+//   per attempt (last attempt per ordinal wins on resume). Observations are
+//   SETTLED IN MEMORY during the run and persisted exactly once, at run end,
+//   as a bounded final run-local document (atomic temp + rename, 'wx'
+//   creation) — there is no per-settle file write. The run summary links
+//   the file and the observation count ONLY from the verified final
+//   on-disk document (reconcilePersistedObservationsDoc), never from the
+//   pending in-memory doc.
 
 const crypto = require('node:crypto');
 const path = require('node:path');
@@ -697,6 +707,66 @@ function writeTransportObservationsFile(runDir, doc, fsImpl = fs, baseDoc = null
     return 'written';
 }
 
+/**
+ * Reconcile the ACTUAL final on-disk observations state for run-summary
+ * linkage (P2-1 remediation: RUN SUMMARY TELEMETRY LINKAGE MUST REFLECT
+ * VERIFIED FINAL ON-DISK STATE, NOT THE PENDING IN-MEMORY OBSERVATIONS DOC).
+ *
+ * Returns the validated doc actually present on disk, or null when no usable
+ * persisted doc exists — the ONLY doc buildRunSummary may receive for
+ * telemetry linkage. Never throws: this runs after the primary run outcome
+ * is finalized, and a telemetry reconciliation failure must not change that
+ * outcome.
+ *
+ * Cases:
+ *   A. No file on disk → null (fresh run whose final write failed, or no
+ *      observations) — the summary must not claim telemetry it cannot
+ *      verify.
+ *   B. Resume: the valid base doc read at run start remains on disk (the
+ *      evolved final write failed) → the ACTUAL base doc is returned (its
+ *      bindings match), so the summary reflects what REPLAY will later read,
+ *      not the newer in-memory doc.
+ *   C. Final write returned 'unchanged' / the file equals the intended doc →
+ *      the ACTUAL validated doc is returned.
+ *   D. Write threw after the rename landed (read-back uncertainty) but the
+ *      final file safely re-reads and validates → the ACTUAL validated doc
+ *      is returned — verified by the production reader, never assumed.
+ *   E. File unreadable / symlink / invalid / a foreign VALID doc (any
+ *      binding mismatch) → null: the summary never lies, and the file is
+ *      NEVER overwritten or deleted merely to make telemetry look
+ *      consistent. A later REPLAY of this run fails closed on the
+ *      invalid/foreign artifact (module contract above).
+ *
+ * @param {object} args - { runDir, expectedDoc, fsImpl? }
+ * @param {object} args.expectedDoc - the run's pending doc (bindings to
+ *   verify against the persisted file: run_id, plan_sha256,
+ *   authorization_id, max_requests, collector_code_revision)
+ * @returns {object|null} the verified persisted doc, or null
+ */
+function reconcilePersistedObservationsDoc({ runDir, expectedDoc, fsImpl = fs }) {
+    let persisted = null;
+    try {
+        persisted = readTransportObservationsFile(runDir, fsImpl);
+    } catch {
+        return null; // E: unusable on-disk artifact — no linkage claim, file untouched
+    }
+    if (!persisted) {
+        return null; // A: no persisted file
+    }
+    const bindingGetters = [
+        doc => String(doc.run_id || ''),
+        doc => String(doc.plan_sha256 || ''),
+        doc => String(doc.authorization_id || ''),
+        doc => Number(doc.max_requests),
+        doc => String(doc.collector_code_revision || ''),
+    ];
+    const bindingsOk = bindingGetters.every((get, i) => get(persisted) === get(expectedDoc));
+    if (!bindingsOk) {
+        return null; // E: foreign valid doc — never claim it
+    }
+    return persisted;
+}
+
 module.exports = {
     OBSERVATIONS_FILE_NAME,
     OBSERVATIONS_DOC_SCHEMA,
@@ -714,4 +784,5 @@ module.exports = {
     computeObservationsSelfHash,
     readTransportObservationsFile,
     writeTransportObservationsFile,
+    reconcilePersistedObservationsDoc,
 };
