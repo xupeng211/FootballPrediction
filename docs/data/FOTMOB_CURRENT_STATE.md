@@ -9,13 +9,22 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-08-06
+## Current authoritative status — 2026-08-07
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
-Current main = fd60117d283a2af9e103990f733e436fda53b100
+PR #1819 baseline main at reconciliation =
+  d3bcf3f158463b8c0c66cd03e46676b94586d4a5 (historical baseline of the #1819
+  feature branch — not a claim about what main is after any merge)
+Bounded transport-phase observability = implemented and tested in this
+  repository revision via PR #1819 (branch fix/fotmob-detail-transport-
+  observability; 30 s timeout unchanged, retry 0, redirect manual; telemetry
+  persists NO payload/credentials; distinguishes waiting-headers vs
+  reading-body; cannot distinguish DNS/TCP/TLS; diagnostic/audit observability
+  — not a capture authorization; 4193752/4506625 NOT re-requested; five-match
+  real trial stays 3/5; 16-match / DB / training remain not authorized)
 V2 provenance exporter = implemented (canonical-inventory-artifact/v2, status-complete, raw retention)
   (PR #1813, merged)
 FOTMOB_REAL_CAPTURE_READINESS Phase A code hardening = implemented and tested
@@ -417,6 +426,47 @@ been executed in this repository state: every test is mocked
 traffic is the completed two-path compatibility probe (2 requests), the run
 summary records `database_writes: 0`, and real CAPTURE requires a new explicit
 user authorization (`OWNER_REAL_CAPTURE_AUTHORIZATION=NO`).
+
+### Transport-phase observability (bounded diagnostic/audit layer, PR #1819)
+
+A bounded transport-phase observation layer is part of this repository
+revision (PR #1819): the detail CAPTURE adapter
+(`src/infrastructure/fotmob/FotMobTransportObservation.js` + pipeline wiring,
+branch `fix/fotmob-detail-transport-observability`). When this revision is
+present, every real fetch attempt persists ONE redacted observation entry in
+a NEW bounded run-local file `transport-observations.json` (≤ max_requests
+entries, self-hashed, crash-safe, fail-closed reads; the run-state schema is
+UNCHANGED — old v1 runs resume and replay byte-identically):
+
+- Phases are set by actual code-execution boundaries only:
+  REQUEST_STARTED → AWAITING_RESPONSE_HEADERS → RESPONSE_HEADERS_RECEIVED →
+  READING_RESPONSE_BODY → RESPONSE_BODY_COMPLETED (plus vocabulary terminal
+  markers REQUEST_FAILED / REQUEST_ABORTED_BY_TIMEOUT). Future timeout
+  evidence can therefore distinguish **waiting for response headers** from
+  **reading the response body**, with real
+  response-headers-received / body-reading-started / body-bytes-received /
+  local-timer-fired / last-reliable-phase fields. The layer CANNOT
+  distinguish DNS from TCP from TLS — those phases are never claimed.
+- **The real-request safety contract is unchanged**: REQUEST_TIMEOUT_MS=30 s,
+  retry 0, redirect manual, delay ≥ 60 s, concurrency 1, GET-only, budget
+  unchanged. Telemetry NEVER persists cookies, authorization headers, full
+  headers, tokens, sessions, proxy credentials, body fragments, HTML or URL
+  query — only an allowlist (content type bounded to 200 chars, declared
+  content length, location presence, redirect flag) plus non-negative
+  safe-integer counters and null/enum fields. Strings are bounded, numbers
+  are non-negative safe ints, unknown fields are null/enum.
+- Diagnostic/audit only, bounded: an unreadable or foreign pre-existing
+  observations file FAILS CLOSED at run start (before any request); once the
+  primary capture outcome is finalized, failure of the FINAL telemetry
+  persistence never changes that outcome, and the run summary links
+  telemetry only from the verified final on-disk document (never from the
+  pending in-memory state). It is NOT a new capture authorization, and the
+  timeouts of runs 4193752 / 4506625 are **NOT re-requested**; the
+  five-match real trial evidence stays **3/5**; 16-match capture, database
+  writes and training remain **not authorized**.
+- SC-002 status is unchanged by this PR
+  (SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
+  SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING).
 
 ### Current read-only retained inventory
 

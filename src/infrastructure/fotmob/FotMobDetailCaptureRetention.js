@@ -1133,8 +1133,8 @@ function writeDetailArtifact(args = {}) {
 // Run summary
 // ─────────────────────────────────────────────────────────────
 
-function buildRunSummary(runState, plan, completedOrdinals) {
-    return {
+function buildRunSummary(runState, plan, completedOrdinals, observationsDoc = null) {
+    const summary = {
         schema_version: 'fotmob-detail-capture-run-summary/v1',
         run_id: runState.run_id,
         plan_sha256: runState.plan_sha256,
@@ -1155,6 +1155,14 @@ function buildRunSummary(runState, plan, completedOrdinals) {
         real_fotmob_network_requests: Number(runState.real_fotmob_network_requests || 0),
         database_writes: 0,
     };
+    // ADDITIVE telemetry linkage fields — present ONLY when observations
+    // exist, so summaries of runs without the new telemetry (and all old v1
+    // replays) are byte-identical to the prior schema.
+    if (observationsDoc && Array.isArray(observationsDoc.observations) && observationsDoc.observations.length > 0) {
+        summary.transport_observations_file = 'transport-observations.json';
+        summary.transport_observations_count = observationsDoc.observations.length;
+    }
+    return summary;
 }
 
 function writeRunSummary(runDir, summary, fsImpl = fs) {
