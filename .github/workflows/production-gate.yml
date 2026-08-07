@@ -5,8 +5,19 @@ on:
     branches:
       - main
   pull_request:
-  # Manual trigger for fallback when push event is not processed by Actions
+  # Manual trigger for fallback when push event is not processed by Actions.
+  # workflow_dispatch carries no push/PR event refs, so base_sha is required.
+  # The dispatch REF selects the revision GitHub runs; the AI Gate head is
+  # always that same revision (GITHUB_SHA).  There is NO user-supplied head.
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: >-
+          Full 40-hex base commit SHA for the incremental diff (required).
+          Must resolve to a commit in the repository, must not equal the
+          dispatched commit, and must be an ancestor of it.
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -159,29 +170,69 @@ jobs:
       - name: AI Workflow Gate (P0)
         env:
           GH_TOKEN: ${{ github.token }}
+          GATE_EVENT_NAME: ${{ github.event_name }}
+          GATE_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GATE_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GATE_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GATE_PUSH_BEFORE: ${{ github.event.before }}
+          GATE_PUSH_AFTER: ${{ github.event.after }}
+          GATE_DISPATCH_BASE_SHA: ${{ inputs.base_sha }}
+          GATE_GITHUB_SHA: ${{ github.sha }}
         run: |
           PR_BODY_FILE="$(mktemp -t pr-body.XXXXXX)"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "[AI Workflow Gate] Fetching PR body via gh CLI for PR #${{ github.event.pull_request.number }}"
-            gh pr view "${{ github.event.pull_request.number }}" --json body --jq '.body' > "${PR_BODY_FILE}"
+          if [ "${GATE_EVENT_NAME}" = "pull_request" ]; then
+            echo "[AI Workflow Gate] Fetching PR body via gh CLI for PR #${GATE_PR_NUMBER}"
+            gh pr view "${GATE_PR_NUMBER}" --json body --jq '.body' > "${PR_BODY_FILE}"
             echo "[AI Workflow Gate] PR body fetched ($(wc -l < "${PR_BODY_FILE}") lines, $(wc -c < "${PR_BODY_FILE}") bytes)."
             # Pull-request events always require PR metadata.  An empty body
             # must fail inside ai_workflow_gate.py rather than downgrading the
             # event to diff-only validation.
+            AI_GATE_REFS="$(python3 scripts/ops/helpers/ai_gate_event_refs.py \
+              pull_request \
+              "${GATE_PR_BASE_SHA}" \
+              "${GATE_PR_HEAD_SHA}")" || exit $?
+            read -r AI_GATE_BASE_REF AI_GATE_HEAD_REF <<< "${AI_GATE_REFS}"
             python3 scripts/ops/ai_workflow_gate.py \
               --pr-body-file "${PR_BODY_FILE}" \
-              --base-ref "${{ github.event.pull_request.base.sha }}" \
-              --head-ref "${{ github.event.pull_request.head.sha }}" \
+              --base-ref "${AI_GATE_BASE_REF}" \
+              --head-ref "${AI_GATE_HEAD_REF}" \
               --block-matrix
-          else
+          elif [ "${GATE_EVENT_NAME}" = "workflow_dispatch" ]; then
+            # Manual dispatch — explicit base_sha input is required and must
+            # be a full 40-hex ancestor of the dispatched commit.  The head
+            # is ALWAYS the dispatched revision (GATE_GITHUB_SHA), the exact
+            # revision actions/checkout tested.  No PR body exists, so run
+            # git-diff checks only (same semantics as the push path).
+            echo "[AI Workflow Gate] Manual dispatch event. Resolving explicit base/head refs."
+            touch "${PR_BODY_FILE}"
+            AI_GATE_REFS="$(python3 scripts/ops/helpers/ai_gate_event_refs.py \
+              workflow_dispatch \
+              "${GATE_DISPATCH_BASE_SHA}" \
+              "${GATE_GITHUB_SHA}")" || exit $?
+            read -r AI_GATE_BASE_REF AI_GATE_HEAD_REF <<< "${AI_GATE_REFS}"
+            python3 scripts/ops/ai_workflow_gate.py \
+              --pr-body-file "${PR_BODY_FILE}" \
+              --base-ref "${AI_GATE_BASE_REF}" \
+              --head-ref "${AI_GATE_HEAD_REF}" \
+              --skip-body-checks
+          elif [ "${GATE_EVENT_NAME}" = "push" ]; then
             # Push event on main — run git-diff-based checks only
             echo "[AI Workflow Gate] Push event. Running git-diff checks only."
             touch "${PR_BODY_FILE}"
+            AI_GATE_REFS="$(python3 scripts/ops/helpers/ai_gate_event_refs.py \
+              push \
+              "${GATE_PUSH_BEFORE}" \
+              "${GATE_PUSH_AFTER}")" || exit $?
+            read -r AI_GATE_BASE_REF AI_GATE_HEAD_REF <<< "${AI_GATE_REFS}"
             python3 scripts/ops/ai_workflow_gate.py \
               --pr-body-file "${PR_BODY_FILE}" \
-              --base-ref "${{ github.event.before }}" \
-              --head-ref "${{ github.event.after }}" \
+              --base-ref "${AI_GATE_BASE_REF}" \
+              --head-ref "${AI_GATE_HEAD_REF}" \
               --skip-body-checks
+          else
+            # Unknown event type — fail closed instead of guessing a baseline.
+            echo "[AI Workflow Gate] Unsupported event '${GATE_EVENT_NAME}' — failing closed." >&2
+            exit 1
           fi
           rm -f "${PR_BODY_FILE}"
 
