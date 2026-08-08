@@ -999,14 +999,22 @@ test('VALIDATION: redirected is status-derived — locationless 302 valid, tampe
 // ─────────────────────────────────────────────────────────────
 // B2. Builder ↔ validator bound re-enforcement (TD-02)
 //
-// The builder bounds every persisted string (MAX_MATCH_ID_LEN=32 /
-// MAX_SHORT_STRING_LEN=64 / MAX_STRING_LEN=200, all present since the
+// TD-02 covers the persisted string fields for which the builder already
+// has an explicit max-length bound (source_match_id → MAX_MATCH_ID_LEN=32,
+// request_finished_at → MAX_STRING_LEN=200, error_* → MAX_SHORT_STRING_LEN=64,
+// response_metadata.content_type → MAX_STRING_LEN=200; all present since the
 // module's #1819 introduction). The validator must fail closed on an
 // externally supplied over-bound value — without being stricter than the
 // builder for legitimate builder output.
+//
+// Some timestamp fields (request_started_at, response_headers_received_at,
+// body_reading_started_at, body_completed_at) have NO builder max-length
+// bound (raw String() / || null passthrough) and are intentionally outside
+// TD-02: the validator has no builder bound to re-enforce there, and TD-02
+// does not invent one (SEPARATE_BUILDER_BOUND_GAP — recorded, not fixed).
 // ─────────────────────────────────────────────────────────────
 
-test('BOUNDS: builder oversized input → bounded output → still valid (all 7 bounded string fields)', () => {
+test('BOUNDS: builder behavior remains unchanged at existing string bounds (6 bounded-valid fields; request_finished_at truncation preserved)', () => {
     const mk = (overrides = {}) =>
         buildTransportObservation({
             ordinal: 1,
@@ -1087,9 +1095,34 @@ test('BOUNDS: builder oversized input → bounded output → still valid (all 7 
     const ct = mk({ responseMetadata: { content_type: 'w'.repeat(500), declared_content_length: 100, location_present: false, redirected: false } });
     assert.equal(ct.response_metadata.content_type.length, 200);
     assert.ok(validateTransportObservation(ct).ok);
+
+    // request_finished_at: an oversized input is truncated to MAX_STRING_LEN=200,
+    // but the truncated value can become ISO-invalid. This is a PRE-EXISTING
+    // builder truncation property: bounding an oversized timestamp string can
+    // destroy ISO validity. TD-02 does not change the builder — it only
+    // re-enforces the builder's existing max-length bound at validation time.
+    // This is not a new failure, not a TD-02 failure, and not a validator
+    // regression; the behavior is identical before and after TD-02.
+    const finishBig = mk({ requestFinishedAtIso: '2026-08-02T12:00:00.000Z' + 'y'.repeat(500) });
+    assert.equal(finishBig.request_finished_at.length, 200, 'oversized requestFinishedAtIso must be truncated to exactly 200');
+    const finishCheck = validateTransportObservation(finishBig);
+    assert.equal(finishCheck.ok, false);
+    assert.ok(
+        finishCheck.errors.some(e => /valid ISO/.test(e)),
+        'the truncated 200-char timestamp is ISO-invalid (pre-existing builder truncation property)'
+    );
+    // A realistic in-bounds ISO input still produces a validator-valid entry.
+    assert.ok(validateTransportObservation(mk()).ok);
 });
 
 test('BOUNDS: direct persisted MAX accepted, MAX+1 rejected specifically for the length bound', () => {
+    // Validator explicit bound fields = 7 (source_match_id, request_finished_at,
+    // error_name/error_code/error_cause_name/error_cause_code, content_type).
+    // This is distinct from the 6 builder oversized→bounded→valid cases in the
+    // previous test: request_finished_at has a builder max, but an oversized
+    // timestamp input is truncated into an ISO-invalid value there, so it is
+    // NOT counted among the builder-valid cases while it IS counted among the
+    // 7 validator boundary contracts (length rule verified directly here).
     const good = buildTransportObservation({
         ordinal: 1,
         sourceMatchId: '4193752',
@@ -1769,7 +1802,12 @@ test('REDACTION: no cookies / auth / tokens / body / headers / secrets anywhere 
         const doc = readObservations(result.runDir);
         const obs = doc.observations[0];
         assert.equal(obs.error_name, 'Error');
-        // Every persisted string is bounded.
+        // Observed values in this real-run document stay within the builder
+        // max-length bounds for the fields that have them (error_name → 64,
+        // source_match_id → 32). request_started_at is a builder-passthrough
+        // timestamp with NO builder max-length bound (see B2 / the recorded
+        // SEPARATE_BUILDER_BOUND_GAP) — the 40-char value here is a runtime
+        // observation, not a contract.
         assert.ok(obs.error_name.length <= 64);
         assert.ok(obs.source_match_id.length <= 32);
         assert.ok(obs.request_started_at.length <= 40);
