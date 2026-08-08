@@ -3371,3 +3371,137 @@ test('TD-03: run path — executeCaptureRun with hostile getters: original error
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+test('TD-03: F-01 — falsy diagnostic metadata preserves the historical fallback semantics (name → Error, code/cause → empty)', async () => {
+    // Historical semantics were `err.name || 'Error'` and `err.code || ''`
+    // (likewise cause.name / cause.code): EVERY falsy value (undefined,
+    // null, '', 0, false, NaN) falls back — the literal strings '0' /
+    // 'false' / 'NaN' must never be persisted (TD-03 reconciliation F-01).
+    const FALSY_VALUES = ['', 0, false, null, undefined, NaN];
+    for (const v of FALSY_VALUES) {
+        // falsy name → 'Error'
+        const thrownName = { name: v, code: 'E_X' };
+        const errName = await adapterRejectsWith(async () => {
+            throw thrownName;
+        });
+        const obsName = errName.transportObservation;
+        assert.equal(obsName.error_name, 'Error', `falsy name ${String(v)} falls back to Error, not "${String(v)}"`);
+        assert.equal(obsName.error_code, 'E_X', 'readable code is unaffected by a falsy name');
+        assert.ok(validateTransportObservation(obsName).ok);
+        // falsy code → ''
+        const thrownCode = { name: 'NamedError', code: v };
+        const errCode = await adapterRejectsWith(async () => {
+            throw thrownCode;
+        });
+        const obsCode = errCode.transportObservation;
+        assert.equal(obsCode.error_code, '', `falsy code ${String(v)} falls back to empty string`);
+        assert.equal(obsCode.error_name, 'NamedError', 'readable name is unaffected by a falsy code');
+        assert.ok(validateTransportObservation(obsCode).ok);
+        // falsy cause.name → ''
+        const thrownCauseName = { cause: { name: v, code: 'E_CAUSE' } };
+        const errCauseName = await adapterRejectsWith(async () => {
+            throw thrownCauseName;
+        });
+        const obsCauseName = errCauseName.transportObservation;
+        assert.equal(obsCauseName.error_cause_name, '', `falsy cause.name ${String(v)} falls back to empty string`);
+        assert.equal(obsCauseName.error_cause_code, 'E_CAUSE', 'readable cause code is unaffected by a falsy cause name');
+        assert.ok(validateTransportObservation(obsCauseName).ok);
+        // falsy cause.code → ''
+        const thrownCauseCode = { cause: { name: 'CauseError', code: v } };
+        const errCauseCode = await adapterRejectsWith(async () => {
+            throw thrownCauseCode;
+        });
+        const obsCauseCode = errCauseCode.transportObservation;
+        assert.equal(obsCauseCode.error_cause_code, '', `falsy cause.code ${String(v)} falls back to empty string`);
+        assert.equal(obsCauseCode.error_cause_name, 'CauseError', 'readable cause name is unaffected by a falsy cause code');
+        assert.ok(validateTransportObservation(obsCauseCode).ok);
+    }
+    // A truthy-but-hostile name/code coercion still falls back — never crashes.
+    const hostileTruthyValue = {
+        name: { [Symbol.toPrimitive]() { throw sentinelError('f01.toPrimitive'); } },
+        code: { [Symbol.toPrimitive]() { throw sentinelError('f01.toPrimitive'); } },
+    };
+    const hostileTruthy = await adapterRejectsWith(async () => {
+        throw hostileTruthyValue;
+    });
+    const obsHostile = hostileTruthy.transportObservation;
+    assert.equal(obsHostile.error_name, 'Error', 'hostile truthy name coercion falls back to Error');
+    assert.equal(obsHostile.error_code, '', 'hostile truthy code coercion falls back to empty string');
+    assert.ok(validateTransportObservation(obsHostile).ok);
+});
+
+// Run one full capture run whose fetch rejects with *thrown*; returns the
+// derived stop reason (the upper-layer handler's safe text derivation).
+async function runStopReasonWith(thrown) {
+    const dir = tmpDir('td03-stopreason-');
+    try {
+        const cand = makeCandidate({
+            id: 4193752,
+            season: '2024/2025',
+            home: 'A',
+            away: 'B',
+            kickoff: '2024-08-16T19:00:00Z',
+        });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const result = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-td03-stopreason',
+                maxRequests: 1,
+                fetchImpl: async () => {
+                    throw thrown;
+                },
+            })
+        );
+        assert.equal(result.status, 'stopped');
+        return result.stopReason;
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+}
+
+test('TD-03: F-02 — stopReason preserves the historical `String(err.message || err)` fallback', async () => {
+    // Case A — a normal readable Error message passes through unchanged.
+    assert.equal(
+        await runStopReasonWith(new Error('ordinary fetch failure')),
+        'fetch_error:ordinary fetch failure',
+        'readable message flows into the stop reason'
+    );
+    // Case B — a plain object without a message falls back to the ORIGINAL
+    // value's string coercion, exactly like `String(err.message || err)`.
+    assert.equal(
+        await runStopReasonWith({ code: 'E_X' }),
+        'fetch_error:[object Object]',
+        'plain object without message falls back to [object Object]'
+    );
+    // Case C — a FALSY message ('') also falls back to the original value,
+    // never silently to the empty string.
+    assert.equal(
+        await runStopReasonWith({ message: '', code: 'E_X' }),
+        'fetch_error:[object Object]',
+        'falsy message falls back to the original object coercion'
+    );
+    // Case D — a throwing message getter on a plain object: no getter
+    // sentinel escapes; the plain-object coercion stays safe and historical.
+    const hostileMessage = { code: 'E_X' };
+    Object.defineProperty(hostileMessage, 'message', {
+        configurable: true,
+        get() {
+            throw sentinelError('f02.message');
+        },
+    });
+    const srD = await runStopReasonWith(hostileMessage);
+    assert.ok(!srD.includes(SENTINEL_PREFIX), 'no getter sentinel leaks into the stop reason');
+    assert.equal(srD, 'fetch_error:[object Object]', 'plain-object coercion stays safe and historical');
+    // Case E — a hostile Symbol.toPrimitive on the ORIGINAL value: contained,
+    // no secondary exception, safe empty fallback allowed.
+    const hostileCoercion = { code: 'E_X' };
+    hostileCoercion[Symbol.toPrimitive] = () => {
+        throw sentinelError('f02.toPrimitive');
+    };
+    const srE = await runStopReasonWith(hostileCoercion);
+    assert.ok(!srE.includes(SENTINEL_PREFIX), 'no coercion sentinel leaks into the stop reason');
+    assert.equal(srE, 'fetch_error:', 'hostile original coercion is contained — empty fallback allowed');
+});

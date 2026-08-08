@@ -543,13 +543,16 @@ function createBoundedFetchAdapter(options = {}) {
                   };
 
             const isSafetyError = snap.code === 'SAFETY_ERROR';
-            // A readable-but-missing name (no name property, `name: null`,
-            // Proxy trap returning undefined) is exactly as unavailable as a
-            // throwing getter: it falls back to 'Error' — never the literal
-            // strings 'undefined' / 'null' (TD-03 F-01, Codex P3).
-            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.name === null || snap.name === undefined
+            // Historical falsy fallback semantics (TD-03 reconciliation
+            // F-01): `err.name || 'Error'` — any falsy name (undefined /
+            // null / '' / 0 / false / NaN), exactly like an unreadable one,
+            // falls back to 'Error' — never the literal strings 'undefined'
+            // / 'null' / '0' / 'false'. Truthy names coerce safely; a
+            // hostile coercion yields 'Error'. The snapshot value is never
+            // re-read.
+            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.name
                 ? 'Error'
-                : safeStringify(snap.name, 'Error') || 'Error';
+                : safeStringify(snap.name, 'Error');
             const messageAbort = (() => {
                 if (snap.message === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.message === null || snap.message === undefined) return false;
                 return safeStringify(snap.message, '').toLowerCase().includes('aborted');
@@ -600,13 +603,18 @@ function createBoundedFetchAdapter(options = {}) {
                 else lastReliablePhase = 'AWAITING_RESPONSE_HEADERS';
             }
             errorName = errName;
-            errorCode = snap.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.code === null || snap.code === undefined
+            // Same historical falsy semantics for code metadata (F-01):
+            // `err.code || ''`, `err.cause.name || ''`, `err.cause.code ||
+            // ''` — falsy values (undefined / null / '' / 0 / false / NaN)
+            // persist '', never the literal strings '0' / 'false'. Truthy
+            // values coerce safely; hostile coercions yield ''.
+            errorCode = snap.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.code
                 ? ''
                 : safeStringify(snap.code, '');
-            errorCauseName = snapCause.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snapCause.name === null || snapCause.name === undefined
+            errorCauseName = snapCause.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.name
                 ? ''
                 : safeStringify(snapCause.name, '');
-            errorCauseCode = snapCause.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snapCause.code === null || snapCause.code === undefined
+            errorCauseCode = snapCause.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.code
                 ? ''
                 : safeStringify(snapCause.code, '');
             const finishedMs = nowMs();
@@ -1833,12 +1841,21 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             if (transportObs !== DIAGNOSTIC_PROPERTY_UNAVAILABLE) {
                 settleObservation(transportObs);
             }
-            // TD-03: derive the stop-reason text without ever letting a
-            // hostile message getter / coercion replace the thrown value.
+            // TD-03 reconciliation F-02: preserve the historical
+            // `String(err.message || err)` fallback — a falsy message
+            // (undefined / null / '' / 0 / false / NaN) or an unreadable one
+            // falls back to the ORIGINAL thrown value's own string coercion
+            // (a plain object yields '[object Object]', as it always did),
+            // never silently to the empty string. A truthy message coerces
+            // safely from the single snapshot. Hostile original coercions
+            // stay contained: no getter sentinel, no secondary exception, ''
+            // is allowed. The thrown value is never replaced.
             let msg = '';
             if (err !== null && typeof err === 'object') {
                 const em = safeReadProperty(err, 'message');
-                msg = em === DIAGNOSTIC_PROPERTY_UNAVAILABLE || em === null || em === undefined ? '' : safeStringify(em, '');
+                msg = em === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !em
+                    ? safeStringify(err, '')
+                    : safeStringify(em, '');
             } else if (err !== undefined && err !== null) {
                 msg = safeStringify(err, '');
             }
