@@ -271,14 +271,21 @@ function validateTransportObservation(entry) {
     if (!isPositiveSafeInt(entry.ordinal)) {
         errors.push('ordinal must be a positive safe integer');
     }
-    if (typeof entry.source_match_id !== 'string' || entry.source_match_id.length === 0) {
-        errors.push('source_match_id must be a non-empty string');
+    if (
+        typeof entry.source_match_id !== 'string' ||
+        entry.source_match_id.length === 0 ||
+        entry.source_match_id.length > MAX_MATCH_ID_LEN
+    ) {
+        errors.push(`source_match_id must be a non-empty string of at most ${MAX_MATCH_ID_LEN} characters`);
     }
     if (!isIsoTimestamp(entry.request_started_at)) {
         errors.push('request_started_at must be a valid ISO timestamp');
     }
     if (!isIsoTimestamp(entry.request_finished_at)) {
         errors.push('request_finished_at must be a valid ISO timestamp');
+    }
+    if (typeof entry.request_finished_at === 'string' && entry.request_finished_at.length > MAX_STRING_LEN) {
+        errors.push(`request_finished_at must be at most ${MAX_STRING_LEN} characters`);
     }
     if (!isNonNegativeSafeInt(entry.elapsed_ms)) {
         errors.push('elapsed_ms must be a non-negative safe integer');
@@ -352,6 +359,9 @@ function validateTransportObservation(entry) {
         if (entry[key] !== null && typeof entry[key] !== 'string') {
             errors.push(`${key} must be null or a string`);
         }
+        if (typeof entry[key] === 'string' && entry[key].length > MAX_SHORT_STRING_LEN) {
+            errors.push(`${key} must be at most ${MAX_SHORT_STRING_LEN} characters`);
+        }
     }
     if (entry.response_metadata !== null && entry.response_metadata !== undefined) {
         if (!isPlainObject(entry.response_metadata)) {
@@ -365,6 +375,9 @@ function validateTransportObservation(entry) {
             const meta = entry.response_metadata;
             if (meta.content_type !== null && typeof meta.content_type !== 'string') {
                 errors.push('response_metadata.content_type must be null or a string');
+            }
+            if (typeof meta.content_type === 'string' && meta.content_type.length > MAX_STRING_LEN) {
+                errors.push(`response_metadata.content_type must be at most ${MAX_STRING_LEN} characters`);
             }
             if (meta.declared_content_length !== null && !isNonNegativeSafeInt(meta.declared_content_length)) {
                 errors.push('response_metadata.declared_content_length must be null or a non-negative safe integer');
