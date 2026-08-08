@@ -997,24 +997,28 @@ test('VALIDATION: redirected is status-derived — locationless 302 valid, tampe
 });
 
 // ─────────────────────────────────────────────────────────────
-// B2. Builder ↔ validator bound re-enforcement (TD-02)
+// B2. Builder ↔ validator bound re-enforcement (TD-02 + #1826 follow-up)
 //
-// TD-02 covers the persisted string fields for which the builder already
-// has an explicit max-length bound (source_match_id → MAX_MATCH_ID_LEN=32,
+// TD-02 covered the persisted string fields for which the builder already
+// had an explicit max-length bound (source_match_id → MAX_MATCH_ID_LEN=32,
 // request_finished_at → MAX_STRING_LEN=200, error_* → MAX_SHORT_STRING_LEN=64,
 // response_metadata.content_type → MAX_STRING_LEN=200; all present since the
 // module's #1819 introduction). The validator must fail closed on an
 // externally supplied over-bound value — without being stricter than the
 // builder for legitimate builder output.
 //
-// Some timestamp fields (request_started_at, response_headers_received_at,
-// body_reading_started_at, body_completed_at) have NO builder max-length
-// bound (raw String() / || null passthrough) and are intentionally outside
-// TD-02: the validator has no builder bound to re-enforce there, and TD-02
-// does not invent one (SEPARATE_BUILDER_BOUND_GAP — recorded, not fixed).
+// The remaining timestamp fields (request_started_at, response_headers_received_at,
+// body_reading_started_at, body_completed_at) had NO builder max-length bound
+// (raw String() / || null passthrough) — the SEPARATE_BUILDER_BOUND_GAP,
+// recorded in TD-02 and fixed by #1826. #1826's follow-up additionally
+// eliminated the pre-existing request_finished_at TRUNCATION edge (an
+// oversized timestamp truncated to 200 could silently re-parse into a
+// different valid instant). All 5 persisted timestamps now use the same
+// fail-closed builder bound (TIMESTAMP_TOO_LONG marker) plus an explicit
+// validator length check.
 // ─────────────────────────────────────────────────────────────
 
-test('BOUNDS: builder behavior remains unchanged at existing string bounds (6 bounded-valid fields; request_finished_at truncation preserved)', () => {
+test('BOUNDS: builder behavior remains unchanged at existing string bounds (6 bounded-valid fields; request_finished_at fail-closed marker)', () => {
     const mk = (overrides = {}) =>
         buildTransportObservation({
             ordinal: 1,
@@ -1096,20 +1100,19 @@ test('BOUNDS: builder behavior remains unchanged at existing string bounds (6 bo
     assert.equal(ct.response_metadata.content_type.length, 200);
     assert.ok(validateTransportObservation(ct).ok);
 
-    // request_finished_at: an oversized input is truncated to MAX_STRING_LEN=200,
-    // but the truncated value can become ISO-invalid. This is a PRE-EXISTING
-    // builder truncation property: bounding an oversized timestamp string can
-    // destroy ISO validity. TD-02 does not change the builder — it only
-    // re-enforces the builder's existing max-length bound at validation time.
-    // This is not a new failure, not a TD-02 failure, and not a validator
-    // regression; the behavior is identical before and after TD-02.
+    // request_finished_at: an oversized input is NOT truncated — it yields the
+    // deterministic fail-closed marker TIMESTAMP_TOO_LONG (18 chars, ≤200,
+    // ISO-invalid), so validation rejects the entry. Truncating an oversized
+    // timestamp was the pre-existing #1825 builder property; it could silently
+    // re-parse into a DIFFERENT valid instant (e.g. a long-fraction ISO losing
+    // its trailing 'Z'), so timestamps are now bounded fail-closed instead.
     const finishBig = mk({ requestFinishedAtIso: '2026-08-02T12:00:00.000Z' + 'y'.repeat(500) });
-    assert.equal(finishBig.request_finished_at.length, 200, 'oversized requestFinishedAtIso must be truncated to exactly 200');
+    assert.equal(finishBig.request_finished_at, 'TIMESTAMP_TOO_LONG', 'oversized requestFinishedAtIso must fail closed, never truncated');
     const finishCheck = validateTransportObservation(finishBig);
     assert.equal(finishCheck.ok, false);
     assert.ok(
         finishCheck.errors.some(e => /valid ISO/.test(e)),
-        'the truncated 200-char timestamp is ISO-invalid (pre-existing builder truncation property)'
+        'the fail-closed marker is ISO-invalid and rejected'
     );
     // A realistic in-bounds ISO input still produces a validator-valid entry.
     assert.ok(validateTransportObservation(mk()).ok);
@@ -1119,8 +1122,8 @@ test('BOUNDS: direct persisted MAX accepted, MAX+1 rejected specifically for the
     // Validator explicit bound fields = 7 (source_match_id, request_finished_at,
     // error_name/error_code/error_cause_name/error_cause_code, content_type).
     // This is distinct from the 6 builder oversized→bounded→valid cases in the
-    // previous test: request_finished_at has a builder max, but an oversized
-    // timestamp input is truncated into an ISO-invalid value there, so it is
+    // previous test: request_finished_at fail-closes at the builder (an oversized
+    // timestamp input yields the ISO-invalid TIMESTAMP_TOO_LONG marker), so it is
     // NOT counted among the builder-valid cases while it IS counted among the
     // 7 validator boundary contracts (length rule verified directly here).
     const good = buildTransportObservation({
@@ -1338,20 +1341,23 @@ test('BOUNDS: persisted read fails closed on an over-bound entry — recomputing
 // B3. Timestamp builder-bound gap (TD-02 follow-up)
 //
 // All 5 persisted timestamp strings must share the builder's existing
-// MAX_STRING_LEN=200 contract. Before this fix the builder emitted 4 of
-// them unbound (request_started_at via raw String(), the three optional
-// *_at fields via || null passthrough) — and because V8's Date.parse
-// accepts arbitrarily long fractional-second digits, a >200-char string
-// like '2026-08-02T12:00:00.' + 200 zeros + 'Z' is ISO-valid, so the
-// validator's ISO rule alone did NOT fail closed: such an entry passed
-// validation and was persisted. The fix bounds the 4 builder outputs
-// FAIL-CLOSED (an over-bound timestamp yields a deterministically
-// ISO-invalid marker, never a truncated value that could re-parse as a
-// different instant) and gives the validator an explicit length check per
-// timestamp, independent of ISO validity.
+// MAX_STRING_LEN=200 contract. Before #1826 the builder emitted 4 of them
+// unbound (request_started_at via raw String(), the three optional *_at
+// fields via || null passthrough) — and because V8's Date.parse accepts
+// arbitrarily long fractional-second digits, a >200-char string like
+// '2026-08-02T12:00:00.' + 200 zeros + 'Z' is ISO-valid, so the validator's
+// ISO rule alone did NOT fail closed: such an entry passed validation and
+// was persisted. The 5th field (request_finished_at) was truncated to 200
+// by boundString, but the truncated prefix could also silently re-parse as
+// a different valid instant (a long-fraction ISO losing its trailing 'Z'
+// becomes an offset-less local datetime). #1826's follow-up now bounds all
+// 5 builder outputs FAIL-CLOSED (an over-bound timestamp yields a
+// deterministically ISO-invalid marker, never a truncated value that could
+// re-parse as a different instant) and gives the validator an explicit
+// length check per timestamp, independent of ISO validity.
 // ─────────────────────────────────────────────────────────────
 
-test('BOUNDS: builder fails closed on over-bound timestamps instead of rewriting evidence (4 fields)', () => {
+test('BOUNDS: builder fails closed on over-bound timestamps instead of rewriting evidence (5 fields)', () => {
     const longIso = '2026-08-02T12:00:00.' + '0'.repeat(200) + 'Z'; // 221 chars, ISO-valid in V8
     assert.equal(Number.isNaN(Date.parse(longIso)), false, 'precondition: long-fraction ISO is parseable');
     // Precondition for the fail-closed design: a naive truncation of longIso to
@@ -1415,13 +1421,34 @@ test('BOUNDS: builder fails closed on over-bound timestamps instead of rewriting
     assert.equal(e4.body_completed_at, 'TIMESTAMP_TOO_LONG');
     assert.equal(validateTransportObservation(e4).ok, false);
 
-    // request_finished_at keeps its pre-existing #1825 builder bound
-    // (truncation to 200). Its truncation can also re-parse as a different
-    // valid instant — a PRE-EXISTING edge (unchanged here, recorded in the PR
-    // body remaining risks) — so it is pinned as-is, not extended to the new
-    // fail-closed rule in this PR.
+    // request_finished_at: same fail-closed rule. The pre-existing #1825
+    // truncation edge (a 200-char truncated prefix could re-parse as a
+    // different valid instant, e.g. losing the trailing 'Z') is eliminated —
+    // the over-bound input now yields the ISO-invalid marker and the entry
+    // fails validation, so a silently rewritten finish timestamp can never be
+    // persisted.
     const e5 = mk({ requestFinishedAtIso: longIso });
-    assert.equal(e5.request_finished_at.length, 200, 'request_finished_at unchanged: truncated to 200');
+    assert.equal(e5.request_finished_at, 'TIMESTAMP_TOO_LONG', 'request_finished_at must fail closed, never truncated to a re-parseable prefix');
+    assert.equal(e5.request_finished_at.length <= 200, true);
+    assert.equal(validateTransportObservation(e5).ok, false, 'an over-bound request_finished_at must fail closed');
+
+    // Normal runtime inputs are unaffected: ordinary 24-char toISOString
+    // timestamps pass through byte-for-byte and the complete observation still
+    // validates (the fail-closed rule only triggers on over-bound inputs).
+    const runtimeIso = '2026-08-02T12:00:00.000Z';
+    const runtime = mk({
+        requestStartedAtIso: runtimeIso,
+        requestFinishedAtIso: runtimeIso,
+        responseHeadersReceivedAt: runtimeIso,
+        bodyReadingStartedAt: runtimeIso,
+        bodyCompletedAt: runtimeIso,
+    });
+    assert.equal(runtime.request_started_at, runtimeIso);
+    assert.equal(runtime.request_finished_at, runtimeIso);
+    assert.equal(runtime.response_headers_received_at, runtimeIso);
+    assert.equal(runtime.body_reading_started_at, runtimeIso);
+    assert.equal(runtime.body_completed_at, runtimeIso);
+    assert.ok(validateTransportObservation(runtime).ok, 'normal runtime timestamps still validate');
 });
 
 test('BOUNDS: validator rejects over-bound timestamps with explicit length violations (5 fields)', () => {

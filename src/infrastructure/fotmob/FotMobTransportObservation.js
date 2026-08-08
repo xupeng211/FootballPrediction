@@ -241,7 +241,7 @@ function buildTransportObservation(inputs = {}) {
         ordinal: nonNegativeInt(inputs.ordinal),
         source_match_id: boundString(inputs.sourceMatchId, MAX_MATCH_ID_LEN),
         request_started_at: boundTimestamp(started, MAX_STRING_LEN),
-        request_finished_at: boundString(inputs.requestFinishedAtIso, MAX_STRING_LEN),
+        request_finished_at: boundTimestamp(inputs.requestFinishedAtIso, MAX_STRING_LEN),
         elapsed_ms: nonNegativeInt(inputs.elapsedMs),
         last_reliable_phase: inputs.lastReliablePhase || 'REQUEST_STARTED',
         terminal_outcome: inputs.terminalOutcome || 'FETCH_ERROR',
