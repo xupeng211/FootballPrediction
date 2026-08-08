@@ -35,7 +35,7 @@ categorized.
 - Phase 2 batch 2: `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` (FotMob raw JSON DB storage)
 **sc002_allowlist_cleanup_phase1** (this PR): 15 scripts reclassified as false positives.
 All original 20 "confirmed_write_path" classifications are now resolved (6 guarded, 14 reclassified).
-0 still_needs_guard remain. SC-002 remains partial mitigation only.
+0 still_needs_guard remain. SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 ## Scope
 
@@ -321,8 +321,8 @@ All 20 originally identified confirmed write paths are now resolved:
 - **14 reclassified as false positives** (allowlist_cleanup_phase1)
 
 This means there are **0 remaining confirmed_write_path_needs_guard** scripts.
-SC-002 remains partial mitigation only (4 needs_manual_review, 3 shared_module,
-1 possible_indirect_write, and Python/SQL/migration enforcement still not designed).
+SC-002 remains partial mitigation only (two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING; 4 needs_manual_review, 3 shared_module,
+1 possible_indirect_write, and Python/SQL/migration enforcement covered by the enforcement infrastructure).
 
 ### Read-Only / No DB (14 scripts)
 
@@ -403,7 +403,7 @@ All 9 needs_manual_review shared-module consumers also reviewed and reclassified
 
 ## SC-002 Impact
 
-- **SC-002 remains partial mitigation only.** This audit is evidence input, not a fix.
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). This audit is evidence input, not a fix.
 - **This audit does NOT close SC-002.**
 - **This audit does NOT unlock training.**
 - **This audit does NOT unlock data expansion.**

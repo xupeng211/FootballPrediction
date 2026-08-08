@@ -116,7 +116,7 @@ Guard details:
 
 ## SC-002 Status After Phase2E
 
-- SC-002 remains **partial mitigation only**.
+- SC-002 remains **partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **17/20** Python write paths runtime guarded.
 - **3 of 5** manual review candidates reclassified as safe (no guard needed).
 - **2 of 5** manual review candidates now guarded in Phase2E.

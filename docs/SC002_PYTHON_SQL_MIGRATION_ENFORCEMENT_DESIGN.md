@@ -67,8 +67,12 @@ The JS side of SC-002 is now substantially addressed across multiple phases:
 - **Changed-files hard fail** active for `scripts/ops/**/*.js`
 - **Production-like DB host hard block** enabled
 
-However, SC-002 remains **partial mitigation only** because Python, SQL, and migration enforcement
-is not yet designed or implemented. This document addresses that gap.
+However, at the time this design was written, SC-002 remained **partial mitigation only** because
+Python, SQL, and migration enforcement had not yet been designed or implemented; the enforcement
+infrastructure has since been implemented (`SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`), while
+staging/production role deployment remains pending (`SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
+SC-002 overall remains partial mitigation only. This document
+addresses that gap.
 
 ## Python candidate inventory
 
@@ -129,7 +133,7 @@ under the exact M3 sandbox prefix, `file_type` is `sql_other`, scope is
 is false, review status is explicit, and every detected operation is listed. DROP operations,
 TRUNCATE, DML, COPY, GRANT ALL, CREATE EXTENSION, and ALTER ROLE remain fail-closed even if named
 in an entry. Formal migrations, Docker init SQL, production, staging, existing dev databases, and
-third unreviewed sandbox files cannot use this classification. SC-002 remains partial mitigation.
+third unreviewed sandbox files cannot use this classification. SC-002 remains partial mitigation (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 ### Scan methodology
 
@@ -675,7 +679,7 @@ This design phase explicitly does NOT:
 
 ## SC-002 status impact
 
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Python and SQL/migration enforcement design is complete.**
 - **Python Phase2A static scanner completed. Phase2B SQL/migration scanner completed.**
 - **Python Phase2C batch1 runtime guard completed: 3 of 14 confirmed write paths guarded.**

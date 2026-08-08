@@ -248,14 +248,14 @@ This task is a **design/classification** task only. It is explicitly NOT:
 
 ## SC-002 Status
 
-- SC-002 remains **partial mitigation only**.
+- SC-002 remains **partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - training / data expansion / real DB write remain **blocked**.
 - **15/20** Python write paths now have runtime guard (9 confirmed + 6 indirect).
 - 5 remaining confirmed paths classified (2 read_only, 3 infrastructure).
 - 2 of 8 indirect paths reclassified as safe (1 read_only, 1 false_positive).
 - 6 of 8 indirect paths now runtime guarded (completed via `python_indirect_write_path_guard_phase2`).
 - 5 manual review candidates NOT processed.
-- SC-002 is NOT complete. Production DB write still requires explicit authorization.
+- SC-002 is NOT complete (two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING). Production DB write still requires explicit authorization.
 
 ## Next Recommended Task
 

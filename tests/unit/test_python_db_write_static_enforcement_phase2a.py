@@ -15,6 +15,7 @@ Tests cover:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -222,9 +223,17 @@ class TestAllowlist:
                 assert "safe" not in cls.lower(), (
                     f"Confirmed write path {path} must not be marked safe: {cls}"
                 )
-                assert "pending_runtime_guard" in cls, (
-                    f"Confirmed write path {path} must have 'pending_runtime_guard' "
-                    f"in classification: {cls}"
+                # Two-layer state: enforcement infrastructure is COMPLETE — no
+                # confirmed write path may remain in the pre-guard pending state.
+                assert "pending" not in cls.lower(), (
+                    f"Confirmed write path {path} must not be pending: {cls}"
+                )
+                # Historical baseline entries carry the baseline prefix and an
+                # explicit resolved state (runtime_guarded / reclassified /
+                # read_only_candidate).
+                assert cls.startswith("historical_python_"), (
+                    f"Confirmed write path {path} missing historical baseline "
+                    f"prefix in classification: {cls}"
                 )
 
     def test_manual_review_candidates_not_claimed_safe(self, allowlist_data):
@@ -333,9 +342,18 @@ class TestChangedFilesEnforcement:
         passed = result["passed"]
         assert len(passed) > 0
         allowlist_cls = passed[0].get("allowlist_classification", "")
-        assert "needs_manual_review" in allowlist_cls, (
-            f"Manual review file should retain needs_manual_review classification, "
-            f"got: {allowlist_cls}"
+        # Manual review candidates were resolved in Phase2D/E: each retained
+        # its manual-origin classification with an explicit resolved state.
+        assert "manual_" in allowlist_cls, (
+            f"Manual review file should retain manual-origin classification, got: {allowlist_cls}"
+        )
+        assert "pending" not in allowlist_cls, (
+            f"Manual review file must not remain pending, got: {allowlist_cls}"
+        )
+        # reprocess_from_local.py was runtime-guarded in Phase2E
+        # (python_manual_review_guard_phase2e).
+        assert "runtime_guarded" in allowlist_cls, (
+            f"Manual review file should be runtime guarded, got: {allowlist_cls}"
         )
 
 
@@ -394,28 +412,35 @@ class TestSC002DocConsistency:
                 f"{doc_path} must not claim 'safe to train'"
             )
 
-    def test_runtime_guard_still_not_implemented(self):
-        """Verify no Python runtime guard was created."""
-        guard_path = _REPO_ROOT / "scripts" / "ops" / "helpers" / "db_write_guard.py"
-        if guard_path.exists():
-            content = guard_path.read_text()
-            # If the file exists, it should be the advisory check (JS scanner wrapper)
-            # not a Python runtime guard implementation
-            has_runtime_guard = (
-                "assert_db_write_allowed" in content or "def assert_db_write_allowed" in content
-            )
-            assert not has_runtime_guard, (
-                "Python runtime guard should NOT be implemented in Phase2A"
-            )
+    def test_runtime_guard_implemented_in_unified_helper(self):
+        """Python runtime guard is implemented in the unified guard helper."""
+        guard_path = _REPO_ROOT / "scripts" / "ops" / "helpers" / "python_db_write_guard.py"
+        assert guard_path.exists(), "Unified Python DB write guard helper missing"
+        content = guard_path.read_text()
+        assert "def assert_db_write_allowed" in content, (
+            "python_db_write_guard.py must implement assert_db_write_allowed()"
+        )
 
     def test_allowlist_does_not_authorize_runtime_writes(self):
         """Allowlist explicitly states it does not authorize runtime DB writes."""
         allowlist = _REPO_ROOT / "config" / "python_db_write_allowlist.json"
-        content = allowlist.read_text()
-        assert "DOES NOT AUTHORIZE" in content.upper() or "does not authorize" in content.lower(), (
+        data = json.loads(allowlist.read_text())
+        description = data.get("_description", "")
+        assert "DOES NOT AUTHORIZE" in description.upper(), (
             "Allowlist must explicitly state it does not authorize runtime DB writes"
         )
-        assert "NOT IMPLEMENTED" in content, "Allowlist must state runtime guard is NOT IMPLEMENTED"
+        # Two-layer state: enforcement infrastructure is COMPLETE — the
+        # runtime guard is implemented, so no write path may remain pending.
+        runtime_status = data.get("_runtime_guard_status", "")
+        assert "0 pending" in runtime_status, (
+            "Allowlist must record zero pending write paths (runtime guard implemented)"
+        )
+        # Layer 2 remains pending: staging/production role deployment is not
+        # done, so SC-002 overall stays partial mitigation.
+        sc002_status = data.get("_sc002_status", "")
+        assert "partial" in sc002_status.lower(), (
+            "Allowlist must record SC-002 as partial mitigation only"
+        )
 
 
 # ── Allowlist validation via CLI ─────────────────────────────────────────────

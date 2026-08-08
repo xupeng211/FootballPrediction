@@ -3,8 +3,8 @@
   "_created": "2026-06-23",
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-  "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "ALL 20 PYTHON WRITE PATHS CLASSIFIED AND RESOLVED. 18 runtime guarded, 2 safe reclassified. Phase2C batch1-4 completed (9 guarded + 5 classified). indirect_write_path_guard_phase2 completed (6 guarded). manual_review_guard_phase2e completed (2 guarded). sc002_alembic_migration_runtime_guard completed (1 guarded — env.py guard in run_migrations_online() before any DB engine/connection). 3 safe reclassified (1 read_only, 2 false_positive). 0 pending. 0 unreviewed. SC-002 remains partial mitigation only.",
+  "_sc002_status": "partial mitigation only — two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING",
+  "_runtime_guard_status": "ALL 30 ALLOWLIST ENTRIES CLASSIFIED AND RESOLVED. 18 runtime guarded, 6 read-only candidates, 3 false-positive candidates, 3 infrastructure-only (caller guard required). Phase2C batch1-4 completed (9 guarded + 5 classified). indirect_write_path_guard_phase2 completed (6 guarded). manual_review_guard_phase2e completed (2 guarded). sc002_alembic_migration_runtime_guard completed (1 guarded — env.py guard in run_migrations_online() before any DB engine/connection). 0 pending. 0 unreviewed. SC-002 remains partial mitigation only.",
   "entries": [
     {
       "path": "src/database/schema_manager.py",

@@ -432,8 +432,8 @@ class TestDeepAuditSafetyBoundaries:
         assert "partial mitigation only" in assessment, (
             "Assessment must state SC-002 is partial mitigation only."
         )
-        assert "cannot be closed" in assessment.lower() or "Cannot be closed" in assessment, (
-            "Assessment must state SC-002 cannot be closed."
+        assert "does not close" in assessment.lower(), (
+            "Assessment must state the audit does not close SC-002."
         )
 
     def test_closure_plan_not_claim_sc002_complete(self):

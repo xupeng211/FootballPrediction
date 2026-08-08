@@ -15,9 +15,15 @@
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
 - 当前 main 基线：
-  `fd60117d283a2af9e103990f733e436fda53b100`（PR #1817 squash merge；
-  post-merge main Production Gate 31075669344 success）
-- 最近完成：**PR #1817** — FotMob offline detail staging converter/validator
+  `b5e6d8bf9f334ff3254c14e14c701607ee3cbc5c`（PR #1819 squash merge；
+  post-merge main Production Gate 31204100182 success）
+- 最近完成：**PR #1819** — FotMob bounded transport-phase observability
+  （squash merge `b5e6d8bf9…`，post-merge main Production Gate 31204100182
+  success）；**PR #1820** — Production Gate manual-dispatch baseline resolution
+  （squash merge `d3bcf3f15…`，post-merge main Production Gate 31153912121
+  success）；**PR #1818** — post-PR1817 state + SC-002 messaging reconciliation
+  （squash merge `b64df1fe0…`，post-merge main Production Gate 31100339588
+  success）；此前为 **PR #1817** — FotMob offline detail staging converter/validator
   （squash merge `fd60117d2…`，post-merge main Production Gate 31075669344
   success，staging 能力已在 main 上可用）；**PR #1816** — bounded auditable
   FotMob detail capture pipeline（squash merge `b6f9f385…`，真实抓取仍需单独授权）；

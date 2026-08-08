@@ -59,8 +59,11 @@ Use `make dev-up` / `make dev-shell` for environment setup.
 
 ## SC-002 and growth freeze
 
-- SC-002 is partial mitigation only.
-- SC-002 enforcement is complete. Training / data expansion / real DB write remain blocked.
+- SC-002 is partial mitigation only (two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE` — enforcement infrastructure
+  is complete; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING` —
+  staging/production role deployment remains pending).
+- Training / data expansion / real DB write remain blocked.
 - M2 governance growth freeze is active (PR1 #1790). New Phase/ADG-numbered scripts,
   reports, manifests, and `src → scripts/ops` reverse dependencies are blocked.
 - Allowlists are historical baselines, not safety approvals.

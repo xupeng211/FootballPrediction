@@ -381,7 +381,9 @@ def _apply_allowlist(
                 cls = entry.get("classification", "")
                 if cls.startswith("historical_python_"):
                     result["would_fail_changed_files_gate"] = False
-                    result["recommended_next_action"] = "historical_baseline_pending_runtime_guard"
+                    result["recommended_next_action"] = (
+                        "historical_baseline_allowlisted_gate_disarmed"
+                    )
         else:
             result["allowlist_status"] = "not_in_allowlist"
     return results

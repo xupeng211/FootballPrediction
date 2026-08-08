@@ -7,7 +7,7 @@
 
 ## Summary
 
-SC-002 (DB write safety gate) is **partial mitigation only**.
+SC-002 (DB write safety gate) is **partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 - **43 of 66 P0 scripts/ops JS entrypoints** have integrated the unified DB write guard
   (`scripts/ops/helpers/db_write_guard.js`).
@@ -59,7 +59,7 @@ are satisfied.
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
 | Consumer-level guard audit (infrastructure) | consumer_level_guard_audit_db_pool_sync_sql_store completed: static audit of all consumers of db_pool.py, sync_db_pool.py, sql_store.py. 11 consumers classified. 2 write consumers already guarded (batch3). 6 read-only verified. 0 unguarded write consumers found. 0 dynamic/unknown. SQLStore has zero active consumers. SyncDatabasePool utils aliases have zero downstream consumers. No new guards needed from this audit. Does not change 9/14 guarded count. Does not process 8 indirect or 5 manual review candidates.
-| SC-002 overall closure assessment | `sc002_overall_closure_assessment` completed. Per-criterion gap analysis documented in `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`. 4 criteria met/good-standing, 4 partial, 2 not met. SC-002 remains partial mitigation only. Next: `runtime_db_role_permission_review_phase1`. |
+| SC-002 overall closure assessment | `sc002_overall_closure_assessment` completed. Per-criterion gap analysis documented in `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`. 4 criteria met/good-standing, 4 partial, 2 not met. SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). Next: `runtime_db_role_permission_review_phase1`. |
 
 ## What Is Actually Protected
 
@@ -115,7 +115,7 @@ are satisfied.
    0 unreviewed. The Alembic migration env.py now has a guard in `run_migrations_online()`
    before any DB engine creation. Python guard helper enforces the same env-var gate model
    as the JS guard. All guarded Python paths still require explicit authorization for real
-   DB write. SC-002 remains partial mitigation only.
+   DB write. SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 5. **SQL / migration paths are partially covered.** The Alembic migration orchestrator
    (`env.py`) is now guarded. Static SQL migration files have CI enforcement
@@ -390,8 +390,8 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   were false positives — they have active SELECT-only wrappers, READ ONLY transactions,
   or no DB connection. 0 scripts remain unguarded with confirmed DB write capability.
   All remaining needs_manual_review (4) and possible_indirect_write (1) were resolved by
-  manual_review_phase1. SC-002 remains partial mitigation only (Python/SQL/migration
-  enforcement not yet designed).
+  manual_review_phase1. SC-002 remains partial mitigation only (two-layer state:
+  `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **This cleanup does NOT:**
   - Guard any scripts (that was Phase1/Phase2)
   - Close SC-002
@@ -429,7 +429,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Results:** `assertDbWriteAllowed()` now gates all write SQL in the script.
   Gatekeeper.js / gatekeeper.sh remain pending. 8 needs_manual_review consumers
   remain pending. No target script executed.
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 ### 4b. gatekeeper_boundary_implementation ✅ COMPLETED
 
@@ -441,7 +441,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Results:** Both consumer entrypoints now guarded. All 3 active write-capable
   shared-module consumers now guarded (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh).
   No target script executed. No DB connection. No real DB write.
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 ### 4c. manual_review_phase1 ✅ COMPLETED
 
@@ -468,7 +468,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   reviewed = 14. See `docs/SC002_MANUAL_REVIEW_PHASE1.md` for full per-script evidence.
 - **No guard implemented** — all 7 write-capable scripts were already guarded in Phase1-7.
 - **No target script executed.** No DB connection. No real DB write. No scraper/browser.
-- **SC-002 remains partial mitigation only.**
+- **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Training, data expansion, real DB write remain blocked.**
 
 ### 4. shared_module_db_write_boundary_design_phase1 ✅ COMPLETED
@@ -507,7 +507,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Recommended enforcement: Hybrid model (Python guard equivalent + static scanner + CI policy)
   - Phased implementation plan: Phase 2A (static scanner) → 2B (SQL migration policy) → 2C (Python guard helper) → 2D (manual review)
 - **No runtime behavior changed. No target script executed. No DB connection. No real DB write.**
-- **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
+- **SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). Training, data expansion, real DB write remain blocked.**
 - **Next step:** `python_sql_migration_enforcement_implementation_phase2A` ✅ **COMPLETED** (see below).
 
 ### 5a. python_sql_migration_enforcement_implementation_phase2A ✅ COMPLETED
@@ -519,8 +519,8 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - AI Workflow Gate integration: `check_python_db_write_enforcement()` in `scripts/ops/ai_workflow_gate.py`
   - Changed-files enforcement: new/modified Python files with DB write signals fail CI unless in allowlist
   - Scanner supports: JSON output, allowlist, changed-files mode, full-scan mode, comment/docstring awareness
-  - **No runtime guard implemented.** No target script executed. No DB connection. No real DB write.
-  - **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
+  - **No runtime guard implemented (at the time of Phase2A).** No target script executed. No DB connection. No real DB write.
+  - **SC-002 current status: partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). Training, data expansion, real DB write remain blocked.**
 - **Next step:** `python_runtime_guard_implementation_phase2C` — Python runtime guard for 14 confirmed + 8 indirect write paths. Also `sql_migration_policy_implementation_phase2B` ✅ COMPLETED (see below).
 
 ### 5b. sql_migration_policy_implementation_phase2B ✅ COMPLETED
@@ -534,7 +534,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - 0 destructive migrations found; destructive SQL always fails gate
   - 1 seed SQL needs gate (deploy/docker/init_db.sql)
   - **No SQL executed. No migration run. No DB connection. No real DB write.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `python_runtime_guard_implementation_phase2C`. Do not start automatically.
 
 ### 5c. python_runtime_guard_implementation_phase2C_batch1 ✅ COMPLETED
@@ -558,7 +558,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **5 manual review candidates NOT processed.**
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `python_runtime_guard_implementation_phase2C_batch2`. Do not start
   automatically.
 
@@ -589,7 +589,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     were reviewed and excluded from batch2 — they require different handling.
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `python_runtime_guard_implementation_phase2C_batch3`. Do not start
   automatically.
 
@@ -628,7 +628,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     unclear (read-only in practice, SQL-string-only, or infrastructure-level).
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `python_confirmed_write_paths_design_phase2C_batch4`. Do not start
   automatically.
 
@@ -658,7 +658,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     observed_operations, direct_write_boundary, recommended_next_action.
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** Consumer-level guard audit for sync_db_pool/db_pool callers,
   `python_indirect_write_path_design_phase1`, or `python_manual_review_phase2D`.
   Do not start automatically.
@@ -686,7 +686,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Allowlist updated: 8 entries reclassified with analysis_task, evidence, observed_operations, direct_write_boundary, recommended_next_action.
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `python_indirect_write_path_guard_phase2` — implement runtime guard for
   the 6 newly confirmed direct write paths. Do not start automatically.
 
@@ -712,7 +712,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Allowlist updated: env.py reclassified with full evidence and design doc reference.
   - **No Alembic run. No migration. No SQL. No DB connection. No real DB write.**
   - **No scraper/browser run. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** ✅ COMPLETED — see section 5i below.
 
 ### 5i. sc002_alembic_migration_runtime_guard_implementation ✅ COMPLETED
@@ -734,7 +734,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **No scraper/browser run. No training. No data expansion.**
   - **All 20 Python write paths now classified and resolved (18 guarded, 2 safe).**
   - **0 pending. 0 unreviewed.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** ✅ COMPLETED — see section 5j below.
 
 ### 5j. sc002_overall_closure_assessment ✅ COMPLETED
@@ -753,7 +753,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     - **Not met (2):** #2 negative-case testing (no deliberate CI test with known-unguarded
       file), #6 DB role/permission review (task defined but not executed).
   - Additional risk: `deploy/docker/init_db.sql` needs guard (Gate B concern, not Python/SQL track).
-  - **SC-002 overall verdict: partial mitigation only. Cannot be closed.**
+  - **SC-002 overall verdict: partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE`; `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`). Cannot be closed.**
   - Next recommended task: `runtime_db_role_permission_review_phase1` — lowest effort,
     documentation only, unblocks criterion #6.
   - **No Alembic run. No migration. No SQL. No DB connection. No real DB write.**
@@ -777,7 +777,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     - **Target model designed:** 6 specialized roles with least-privilege grants.
   - Next step: Implement role model as dev proof-of-concept in Docker environment.
   - **No DB connection. No SQL. No permission changes. No secrets output.**
-  - SC-002 remains partial mitigation only.
+  - SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 - **Next step:** `runtime_db_role_permission_dev_poc` — apply target role model to
   `deploy/docker/init_db.sql` and `docker-compose.dev.yml`.
   Do not start automatically.
@@ -793,9 +793,9 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - All passwords are dev-only placeholders (`*_dev_poc`).
   - **No real secrets.** No production configuration.
   - Static tests validate: roles defined, reader read-only, owner/app separated,
-    env example safe, docs explicitly dev-only, SC-002 partial mitigation only.
+    env example safe, docs explicitly dev-only, SC-002 partial mitigation only (two-layer state: SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING).
   - **No DB connection. No SQL. No permission changes. No secrets output.**
-  - SC-002 remains partial mitigation only.
+  - SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
   - Training / data expansion / real DB write remain blocked.
 - **Next step:** Not yet defined. Staging deployment of role separation is the logical
   next step but requires explicit authorization and production environment knowledge.
@@ -829,7 +829,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Tests: static tests for deep audit doc existence, all-paths-classified, safety boundaries.
   - **No browser run. No Playwright. No DB connection. No SQL. No real DB write.**
   - **No scraper/browser. No training. No data expansion.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
   - Criterion #1: Substantially met (deep per-script verification complete).
   - Criterion #3: Substantially met (deep verification complete; browser-layer non-DB risks remain).
 - **Next step:** `changed_files_negative_case_enforcement_test` — Criterion #2.
@@ -863,7 +863,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     - Temp fixture files inside REPO_ROOT, cleaned up after tests
     - No real business files modified
   - **No browser run. No Playwright. No DB connection. No SQL. No real DB write.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
   - Criterion #2: Substantially met (static negative-case tests complete).
 - **Next step:** `deploy_docker_init_sql_guard` — Gate B: guard init_db.sql against non-dev execution.
   Do not start automatically.
@@ -889,7 +889,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
     `PROJECT_STATUS.md`
   - **No DB connection. No SQL execution. No psql run. No docker compose run.**
   - **No real DB write. No migration/Alembic. No permission changes.**
-  - **SC-002 remains partial mitigation only.**
+  - **SC-002 remains partial mitigation only** (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
   - Gate B: init_db.sql guard implemented.
 - **Next step:** `sc002_final_closure_check` ✅ **COMPLETED** — see section 6e below.
 	  Do not start automatically.
@@ -959,13 +959,15 @@ To prevent ambiguity, the following wording rules apply to all SC-002 documentat
 | guarded | Script has integrated `assertDbWriteAllowed()` |
 | changed-files enforcement enabled | CI hard-fails on new/modified unguarded JS |
 | production host hard block enabled | Guard denies write to production-like DB hosts |
+| `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE` | Enforcement infrastructure (scanner, allowlist, runtime guards) is implemented |
+| `SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING` | Staging/production role deployment is not done |
 
 ### Forbidden terms
 
 | Term | Why forbidden |
 |---|---|
 | fully fixed | SC-002 is not fully fixed |
-| complete | Closure criteria are not all met |
+| complete (bare) | Closure criteria are not all met; the precise two-layer term `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE` is allowed for the infrastructure layer only |
 | safe to train | Training remains blocked |
 | safe to write | Real DB write remains blocked |
 | production ready | Production write is not authorized |

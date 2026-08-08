@@ -256,7 +256,7 @@ ingestion, shared modules, dry-run/audit scripts, browser automation scripts) ar
 explicitly categorized in the allowlist and are exempt from changed-files hard fail.
 If a new script is a false positive, it must be added to the allowlist with an
 explicit category, reason, and future_action — silent bypass is not allowed.
-SC-002 remains partial mitigation only.
+SC-002 remains partial mitigation only (two-layer state: `SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING`).
 
 Test-debt work must be handled in a separate audit or repair task. Do not fix
 tests as part of workflow hardening unless the task explicitly scopes governance

@@ -239,10 +239,17 @@ class TestAlembicMigrationRuntimeGuard:
     # ---- SC-002 status tests ----
 
     def test_allowlist_sc002_status_partial_mitigation(self):
-        """Allowlist header must state SC-002 is partial mitigation only."""
+        """Allowlist header must state the two-layer SC-002 status."""
         allowlist = _load_allowlist()
-        assert allowlist["_sc002_status"] == "partial mitigation only", (
-            "Allowlist _sc002_status must remain 'partial mitigation only'."
+        status = allowlist["_sc002_status"]
+        assert "partial mitigation only" in status, (
+            "Allowlist _sc002_status must retain 'partial mitigation only'."
+        )
+        assert "SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE" in status, (
+            "Allowlist _sc002_status must record the enforcement infrastructure layer."
+        )
+        assert "SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING" in status, (
+            "Allowlist _sc002_status must record the staging/production role deployment layer."
         )
 
     def test_allowlist_header_no_runtime_write_authorization(self):

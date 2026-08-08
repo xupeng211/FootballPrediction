@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-08-06
+Last updated: 2026-08-08
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 

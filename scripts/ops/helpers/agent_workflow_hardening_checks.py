@@ -172,10 +172,13 @@ def check_forbidden_safety_claims(pr_body: str) -> list[str]:
     body_lower = pr_body.lower()
     return [
         f"Forbidden safety claim detected: '{claim}'. "
-        "SC-002 is partial mitigation only. Do not claim SC-002 "
-        "complete, safe to train/write, production ready, or "
-        "training/data expansion unblocked unless an approved "
-        "release closure task with satisfied closure criteria exists."
+        "SC-002 is partial mitigation only "
+        "(SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE; "
+        "SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING). "
+        "Do not claim SC-002 fully fixed, safe to train, safe to write, "
+        "production ready, real DB write ready, data expansion ready, "
+        "or training unblocked unless an approved release closure task "
+        "with satisfied closure criteria exists."
         for claim in FORBIDDEN_SAFETY_CLAIMS
         if claim.lower() in body_lower
     ]
