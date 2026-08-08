@@ -375,8 +375,8 @@ function validateTransportObservation(entry) {
             if (typeof meta.redirected !== 'boolean') {
                 errors.push('response_metadata.redirected must be a boolean');
             }
-            if (meta.redirected !== (meta.location_present && HTTP_REDIRECT_STATUSES.has(entry.http_status))) {
-                errors.push('response_metadata.redirected must match location_present and the http status');
+            if (meta.redirected !== HTTP_REDIRECT_STATUSES.has(entry.http_status)) {
+                errors.push('response_metadata.redirected must match the http status');
             }
         }
     }
