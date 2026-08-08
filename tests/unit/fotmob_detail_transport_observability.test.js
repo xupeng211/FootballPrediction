@@ -997,6 +997,311 @@ test('VALIDATION: redirected is status-derived — locationless 302 valid, tampe
 });
 
 // ─────────────────────────────────────────────────────────────
+// B2. Builder ↔ validator bound re-enforcement (TD-02)
+//
+// The builder bounds every persisted string (MAX_MATCH_ID_LEN=32 /
+// MAX_SHORT_STRING_LEN=64 / MAX_STRING_LEN=200, all present since the
+// module's #1819 introduction). The validator must fail closed on an
+// externally supplied over-bound value — without being stricter than the
+// builder for legitimate builder output.
+// ─────────────────────────────────────────────────────────────
+
+test('BOUNDS: builder oversized input → bounded output → still valid (all 7 bounded string fields)', () => {
+    const mk = (overrides = {}) =>
+        buildTransportObservation({
+            ordinal: 1,
+            sourceMatchId: '4193752',
+            requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+            requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+            elapsedMs: 262,
+            lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+            terminalOutcome: 'COMPLETED',
+            responseHeadersReceived: true,
+            responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+            httpStatus: 200,
+            bodyReadingStarted: true,
+            bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+            bodyBytesReceived: 100,
+            bodyCompleted: true,
+            bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+            timeoutConfiguredMs: 30000,
+            timeoutTriggered: false,
+            abortSource: null,
+            errorName: null,
+            errorCode: null,
+            errorCauseName: null,
+            errorCauseCode: null,
+            responseMetadata: {
+                content_type: 'text/html; charset=utf-8',
+                declared_content_length: 100,
+                location_present: false,
+                redirected: false,
+            },
+            ...overrides,
+        });
+    const mkErr = (overrides = {}) =>
+        buildTransportObservation({
+            ordinal: 1,
+            sourceMatchId: '4193752',
+            requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+            requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+            elapsedMs: 5,
+            lastReliablePhase: 'REQUEST_STARTED',
+            terminalOutcome: 'FETCH_ERROR',
+            responseHeadersReceived: false,
+            httpStatus: null,
+            bodyReadingStarted: false,
+            bodyBytesReceived: 0,
+            bodyCompleted: false,
+            timeoutConfiguredMs: 30000,
+            timeoutTriggered: false,
+            abortSource: null,
+            errorName: 'boom',
+            errorCode: 'E1',
+            errorCauseName: 'cause',
+            errorCauseCode: 'C1',
+            responseMetadata: null,
+            ...overrides,
+        });
+
+    // source_match_id: 60-char input → bounded to 32 → valid.
+    const matchId = mk({ sourceMatchId: 'm'.repeat(60) });
+    assert.equal(matchId.source_match_id.length, 32);
+    assert.ok(validateTransportObservation(matchId).ok);
+
+    // error fields (4): 80-char inputs → bounded to 64 → valid (per-field).
+    const e1 = mkErr({ errorName: 'z'.repeat(80) });
+    assert.equal(e1.error_name.length, 64);
+    assert.ok(validateTransportObservation(e1).ok);
+    const e2 = mkErr({ errorCode: 'z'.repeat(80) });
+    assert.equal(e2.error_code.length, 64);
+    assert.ok(validateTransportObservation(e2).ok);
+    const e3 = mkErr({ errorCauseName: 'z'.repeat(80) });
+    assert.equal(e3.error_cause_name.length, 64);
+    assert.ok(validateTransportObservation(e3).ok);
+    const e4 = mkErr({ errorCauseCode: 'z'.repeat(80) });
+    assert.equal(e4.error_cause_code.length, 64);
+    assert.ok(validateTransportObservation(e4).ok);
+
+    // content_type: 500-char input → bounded to 200 → valid.
+    const ct = mk({ responseMetadata: { content_type: 'w'.repeat(500), declared_content_length: 100, location_present: false, redirected: false } });
+    assert.equal(ct.response_metadata.content_type.length, 200);
+    assert.ok(validateTransportObservation(ct).ok);
+});
+
+test('BOUNDS: direct persisted MAX accepted, MAX+1 rejected specifically for the length bound', () => {
+    const good = buildTransportObservation({
+        ordinal: 1,
+        sourceMatchId: '4193752',
+        requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+        requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+        elapsedMs: 262,
+        lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+        terminalOutcome: 'COMPLETED',
+        responseHeadersReceived: true,
+        responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+        httpStatus: 200,
+        bodyReadingStarted: true,
+        bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+        bodyBytesReceived: 100,
+        bodyCompleted: true,
+        bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+        timeoutConfiguredMs: 30000,
+        timeoutTriggered: false,
+        abortSource: null,
+        errorName: null,
+        errorCode: null,
+        errorCauseName: null,
+        errorCauseCode: null,
+        responseMetadata: {
+            content_type: 'text/html; charset=utf-8',
+            declared_content_length: 100,
+            location_present: false,
+            redirected: false,
+        },
+    });
+    const errGood = buildTransportObservation({
+        ordinal: 1,
+        sourceMatchId: '4193752',
+        requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+        requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+        elapsedMs: 5,
+        lastReliablePhase: 'REQUEST_STARTED',
+        terminalOutcome: 'FETCH_ERROR',
+        responseHeadersReceived: false,
+        httpStatus: null,
+        bodyReadingStarted: false,
+        bodyBytesReceived: 0,
+        bodyCompleted: false,
+        timeoutConfiguredMs: 30000,
+        timeoutTriggered: false,
+        abortSource: null,
+        errorName: 'boom',
+        errorCode: 'E1',
+        errorCauseName: 'cause',
+        errorCauseCode: 'C1',
+        responseMetadata: null,
+    });
+    const clone = o => JSON.parse(JSON.stringify(o));
+
+    // source_match_id: 32 accepted, 33 rejected for length.
+    const smid = clone(good);
+    smid.source_match_id = 'x'.repeat(32);
+    assert.ok(validateTransportObservation(smid).ok, '32-char source_match_id must validate');
+    const smidOver = clone(good);
+    smidOver.source_match_id = 'x'.repeat(33);
+    const smidCheck = validateTransportObservation(smidOver);
+    assert.equal(smidCheck.ok, false);
+    assert.ok(smidCheck.errors.some(e => /at most 32/.test(e)), '33-char source_match_id must be rejected for the length bound');
+
+    // error fields (4): 64 accepted, 65 rejected for length.
+    for (const field of ['error_name', 'error_code', 'error_cause_name', 'error_cause_code']) {
+        const atMax = clone(errGood);
+        atMax[field] = 'y'.repeat(64);
+        assert.ok(validateTransportObservation(atMax).ok, `${field} at 64 must validate`);
+        const over = clone(errGood);
+        over[field] = 'y'.repeat(65);
+        const ck = validateTransportObservation(over);
+        assert.equal(ck.ok, false);
+        assert.ok(ck.errors.some(e => /at most 64/.test(e)), `${field} at 65 must be rejected for the length bound`);
+    }
+
+    // content_type: 200 accepted, 201 rejected for length.
+    const ct = clone(good);
+    ct.response_metadata.content_type = 'z'.repeat(200);
+    assert.ok(validateTransportObservation(ct).ok, '200-char content_type must validate');
+    const ctOver = clone(good);
+    ctOver.response_metadata.content_type = 'z'.repeat(201);
+    const ctCheck = validateTransportObservation(ctOver);
+    assert.equal(ctCheck.ok, false);
+    assert.ok(ctCheck.errors.some(e => /at most 200/.test(e)), '201-char content_type must be rejected for the length bound');
+
+    // request_finished_at: a normal ISO timestamp (well within 200) accepted;
+    // an over-bound value produces an explicit max-length violation.
+    assert.ok(validateTransportObservation(good).ok, 'normal request_finished_at must validate');
+    const finOver = clone(good);
+    finOver.request_finished_at = '2026-08-02T12:00:00.000Z' + ' '.repeat(200);
+    const finCheck = validateTransportObservation(finOver);
+    assert.equal(finCheck.ok, false);
+    assert.ok(
+        finCheck.errors.some(e => /at most 200/.test(e)),
+        'over-bound request_finished_at must carry the explicit max-length violation'
+    );
+});
+
+test('BOUNDS: nested document fails closed on an over-bound entry even with a recomputed self-hash', () => {
+    const good = buildTransportObservation({
+        ordinal: 1,
+        sourceMatchId: '4193752',
+        requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+        requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+        elapsedMs: 262,
+        lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+        terminalOutcome: 'COMPLETED',
+        responseHeadersReceived: true,
+        responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+        httpStatus: 200,
+        bodyReadingStarted: true,
+        bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+        bodyBytesReceived: 100,
+        bodyCompleted: true,
+        bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+        timeoutConfiguredMs: 30000,
+        timeoutTriggered: false,
+        abortSource: null,
+        errorName: null,
+        errorCode: null,
+        errorCauseName: null,
+        errorCauseCode: null,
+        responseMetadata: {
+            content_type: 'text/html; charset=utf-8',
+            declared_content_length: 100,
+            location_present: false,
+            redirected: false,
+        },
+    });
+    const doc = defaultObservationsDoc({
+        runId: 'run-td02-nested',
+        planSha256: '0'.repeat(64),
+        authorizationId: 'test-authorization-id',
+        maxRequests: 2,
+        collectorCodeRevision: TEST_REVISION,
+    });
+    const tampered = JSON.parse(JSON.stringify(good));
+    tampered.source_match_id = 'x'.repeat(33);
+    const nestedDoc = { ...doc, observations: [tampered] };
+    nestedDoc.observations_sha256 = computeObservationsSelfHash(nestedDoc);
+    const check = validateObservationsDoc(nestedDoc);
+    assert.equal(check.ok, false, 'an over-bound entry must fail the nested doc validation');
+    assert.ok(
+        check.errors.some(e => /at most 32/.test(e)),
+        'the nested validation must surface the length-bound violation'
+    );
+});
+
+test('BOUNDS: persisted read fails closed on an over-bound entry — recomputing the self-hash cannot bypass', () => {
+    const dir = tmpDir('obs-td02-read-');
+    try {
+        const good = buildTransportObservation({
+            ordinal: 1,
+            sourceMatchId: '4193752',
+            requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+            requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+            elapsedMs: 262,
+            lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+            terminalOutcome: 'COMPLETED',
+            responseHeadersReceived: true,
+            responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+            httpStatus: 200,
+            bodyReadingStarted: true,
+            bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+            bodyBytesReceived: 100,
+            bodyCompleted: true,
+            bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+            timeoutConfiguredMs: 30000,
+            timeoutTriggered: false,
+            abortSource: null,
+            errorName: null,
+            errorCode: null,
+            errorCauseName: null,
+            errorCauseCode: null,
+            responseMetadata: {
+                content_type: 'text/html; charset=utf-8',
+                declared_content_length: 100,
+                location_present: false,
+                redirected: false,
+            },
+        });
+        const doc = defaultObservationsDoc({
+            runId: 'run-td02-read',
+            planSha256: '0'.repeat(64),
+            authorizationId: 'test-authorization-id',
+            maxRequests: 2,
+            collectorCodeRevision: TEST_REVISION,
+        });
+        const tampered = JSON.parse(JSON.stringify(good));
+        tampered.response_metadata.content_type = 'z'.repeat(201);
+        const nestedDoc = { ...doc, observations: [tampered] };
+        nestedDoc.observations_sha256 = computeObservationsSelfHash(nestedDoc);
+        // The write path refuses the invalid doc (fail closed)…
+        assert.throws(
+            () => writeTransportObservationsFile(dir, nestedDoc, fs, null),
+            /SAFETY_ERROR:refusing to persist invalid transport observations/
+        );
+        // …and a hand-written file with a valid JSON shape, valid schema and a
+        // correct recomputed self-hash still fails closed on read.
+        const filePath = path.join(dir, OBSERVATIONS_FILE_NAME);
+        fs.writeFileSync(filePath, JSON.stringify(nestedDoc, null, 2) + '\n', 'utf8');
+        assert.throws(
+            () => readTransportObservationsFile(dir, fs),
+            err => err.code === 'SAFETY_ERROR' && /at most 200/.test(err.message)
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
 // C. Run-level integration: budget, fail-stop, resume, summary
 // ─────────────────────────────────────────────────────────────
 
