@@ -28,7 +28,9 @@ ENV_PY_PATH = "src/database/migrations/env.py"
 EXPECTED_ENV_PY_CLASSIFICATION = "historical_python_alembic_migration_runtime_guarded"
 EXPECTED_TOTAL_RUNTIME_GUARDED = 18  # was 17, +1 for env.py guard
 EXPECTED_TOTAL_PYTHON_WRITE_PATHS = 20
-EXPECTED_TOTAL_ALLOWLIST_ENTRIES = 28
+EXPECTED_TOTAL_ALLOWLIST_ENTRIES = (
+    30  # current baseline: 18 guarded + 6 read-only + 3 false-positive + 3 infra
+)
 
 FORBIDDEN_TERMS = [
     "SC-002 is complete",
@@ -132,15 +134,15 @@ class TestAlembicMigrationGuardDesign:
             f"found {runtime_guarded}. Guarded count must NOT change in this design task."
         )
 
-    def test_total_python_write_paths_is_20(self):
-        """Total Python write paths in allowlist must be 20 (confirmed + indirect + manual)."""
-        # Verify total entries count — 28 entries
-        # (14 confirmed + 8 indirect + 5 manual + 1 env.py)
+    def test_total_allowlist_entries(self):
+        """Total allowlist entries must match the current baseline (30)."""
+        # Verify total entries count — 30 entries
+        # (18 runtime guarded + 6 read-only + 3 false-positive + 3 infrastructure-only)
         total_entries = len(_load_allowlist()["entries"])
         assert total_entries == EXPECTED_TOTAL_ALLOWLIST_ENTRIES, (
             f"Expected {EXPECTED_TOTAL_ALLOWLIST_ENTRIES} total entries, "
             f"found {total_entries}. "
-            f"Total count must not change in this design task."
+            f"Total count must not change."
         )
 
     def test_env_py_is_only_pending(self):

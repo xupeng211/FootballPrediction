@@ -31,7 +31,9 @@ ENFORCEMENT_DESIGN_PATH = PROJECT_ROOT / "docs" / "SC002_PYTHON_SQL_MIGRATION_EN
 ENV_PY_KEY = "src/database/migrations/env.py"
 EXPECTED_CLASSIFICATION = "historical_python_alembic_migration_runtime_guarded"
 EXPECTED_RUNTIME_GUARDED = 18
-EXPECTED_TOTAL_ENTRIES = 28
+EXPECTED_TOTAL_ENTRIES = (
+    30  # current baseline: 18 guarded + 6 read-only + 3 false-positive + 3 infra
+)
 
 FORBIDDEN_TERMS = [
     "SC-002 is complete",

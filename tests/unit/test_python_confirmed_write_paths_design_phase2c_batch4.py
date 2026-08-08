@@ -251,35 +251,45 @@ class TestExistingGuardedFilesIntact:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-class TestOtherCategoriesUnchanged:
-    """Indirect, manual review, and env.py categories unchanged."""
+class TestOtherCategoriesResolved:
+    """Indirect, manual review, and env.py categories carry resolved states."""
 
-    def test_indirect_paths_not_marked_guarded(self, allowlist_entries):
-        """Indirect write paths still NOT marked runtime_guarded."""
+    def test_indirect_paths_guard_state(self, allowlist_entries):
+        """Indirect write paths carry the post-phase2 guard classification."""
         indirect = [e for e in allowlist_entries if "indirect" in e.get("classification", "")]
         assert len(indirect) == 8, f"Expected 8 indirect paths, got {len(indirect)}"
+        # phase2 indirect guard implemented: 6 runtime guarded, 1 false-positive, 1 read-only
+        guarded = [e["path"] for e in indirect if "runtime_guarded" in e["classification"]]
+        assert len(guarded) == 6, (
+            f"Expected 6 guarded indirect paths, got {len(guarded)}: {guarded}"
+        )
         for entry in indirect:
-            assert "guarded" not in entry["classification"], (
-                f"Indirect path {entry['path']} must not be guarded"
+            assert "pending" not in entry["classification"], (
+                f"Indirect path {entry['path']} must not be pending"
             )
 
-    def test_manual_review_not_marked_safe(self, allowlist_entries):
-        """Manual review candidates still NOT marked safe."""
-        manual = [e for e in allowlist_entries if "manual_review" in e.get("classification", "")]
-        assert len(manual) == 5, f"Expected 5 manual review candidates, got {len(manual)}"
+    def test_manual_review_resolved_state(self, allowlist_entries):
+        """Manual review candidates carry the post-phase2D/E resolved classification."""
+        manual = [e for e in allowlist_entries if "manual" in e.get("classification", "")]
+        assert len(manual) == 6, f"Expected 6 manual review candidates, got {len(manual)}"
         for entry in manual:
             assert "safe" not in entry["classification"], (
                 f"Manual review candidate {entry['path']} must not be marked safe"
             )
+            assert "pending" not in entry["classification"], (
+                f"Manual review candidate {entry['path']} must not be pending"
+            )
 
-    def test_env_py_still_pending(self, allowlist_entries):
-        """Alembic env.py (Phase2B) is still pending."""
+    def test_env_py_runtime_guarded(self, allowlist_entries):
+        """Alembic env.py (Phase2B) is runtime guarded."""
         env_entry = next(
             (e for e in allowlist_entries if e["path"] == "src/database/migrations/env.py"), None
         )
         assert env_entry is not None, "env.py must be in allowlist"
-        # env.py is Phase2B, not affected by Phase2C batch4
-        assert "guarded" not in env_entry["classification"], "env.py must not be guarded"
+        # sc002_alembic_migration_runtime_guard implemented: env.py runtime guarded
+        assert "runtime_guarded" in env_entry["classification"], (
+            f"env.py must be runtime guarded, got: {env_entry['classification']}"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -366,10 +376,13 @@ class TestAllowlistHeaderConsistency:
     """Allowlist header metadata is consistent with design task outcome."""
 
     def test_header_reflects_batch4(self, allowlist_data):
-        """Allowlist header references design phase batch4."""
+        """Allowlist header references design phase batch1-4 completion."""
         status = allowlist_data.get("_runtime_guard_status", "")
-        assert "batch4" in status.lower(), (
-            f"Allowlist header should reference batch4, got: {status}"
+        assert "batch1-4" in status.lower(), (
+            f"Allowlist header should reference batch1-4 completion, got: {status}"
+        )
+        assert "completed" in status.lower(), (
+            f"Allowlist header should record batch completion, got: {status}"
         )
 
     def test_header_still_sc002_partial(self, allowlist_data):
@@ -449,12 +462,12 @@ class TestClassificationCoverage:
     """Classification categories are correctly populated."""
 
     def test_read_only_candidate_count(self, allowlist_entries):
-        """Exactly 2 files are read_only_candidate."""
+        """Exactly 6 files are read_only_candidate (current baseline)."""
         read_only = [
             e for e in allowlist_entries if "read_only_candidate" in e.get("classification", "")
         ]
-        assert len(read_only) == 2, (
-            f"Expected 2 read_only_candidate, got {len(read_only)}: {[e['path'] for e in read_only]}"
+        assert len(read_only) == 6, (
+            f"Expected 6 read_only_candidate, got {len(read_only)}: {[e['path'] for e in read_only]}"
         )
         read_only_paths = {e["path"] for e in read_only}
         assert "scripts/maintenance/odds_integrity_guard.py" in read_only_paths

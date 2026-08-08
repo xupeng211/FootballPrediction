@@ -251,6 +251,9 @@ This review does NOT:
 - Claim SC-002 is complete
 - Claim "safe to train," "safe to write," or "production ready"
 
+Training and data expansion remain blocked (require separate authorization).
+SC-002 remains partial mitigation only.
+
 ## Dev POC Implementation (Phase 2 — Completed)
 
 The dev-only proof-of-concept has been implemented in the following files:

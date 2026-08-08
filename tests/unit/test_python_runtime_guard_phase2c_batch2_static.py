@@ -252,38 +252,45 @@ class TestAllowlistRemainingFiles:
     """Remaining confirmed write paths, indirect paths, and manual review candidates
     are correctly classified."""
 
-    def test_remaining_confirmed_still_pending(self, allowlist_entries):
-        """Remaining confirmed write paths are still pending_runtime_guard (not guarded)."""
+    def test_no_confirmed_write_paths_pending(self, allowlist_entries):
+        """No confirmed write paths remain pending after phase2C batch1-4 + alembic guard."""
         pending = [
             e
             for e in allowlist_entries
             if e["classification"] == "historical_python_confirmed_write_path_pending_runtime_guard"
         ]
-        # After batch4 design: 5 reclassified (2 read_only, 3 infrastructure), only env.py remains
-        assert len(pending) >= 1, (
-            f"Expected at least 1 remaining confirmed pending (env.py), got {len(pending)}"
+        assert len(pending) == 0, (
+            f"Expected 0 remaining confirmed pending, got {len(pending)}: {[e['path'] for e in pending]}"
         )
         paths = [e["path"] for e in pending]
         # Batch1 and batch2 files must NOT be in pending
         for bp in BATCH1_PATHS + BATCH2_PATHS:
             assert bp not in paths, f"Guarded file {bp} must not be in pending"
 
-    def test_indirect_paths_not_marked_guarded(self, allowlist_entries):
-        """Indirect write paths are NOT marked runtime_guarded."""
+    def test_indirect_paths_guard_state(self, allowlist_entries):
+        """Indirect write paths carry the post-phase2 guard classification."""
         indirect = [e for e in allowlist_entries if "indirect" in e.get("classification", "")]
         assert len(indirect) == 8, f"Expected 8 indirect paths, got {len(indirect)}"
+        # phase2 indirect guard implemented: 6 runtime guarded, 1 false-positive, 1 read-only
+        guarded = [e["path"] for e in indirect if "runtime_guarded" in e["classification"]]
+        assert len(guarded) == 6, (
+            f"Expected 6 guarded indirect paths, got {len(guarded)}: {guarded}"
+        )
         for entry in indirect:
-            assert "guarded" not in entry["classification"], (
-                f"Indirect path {entry['path']} must not be marked guarded"
+            assert "pending" not in entry["classification"], (
+                f"Indirect path {entry['path']} must not be pending"
             )
 
-    def test_manual_review_not_marked_safe(self, allowlist_entries):
-        """Manual review candidates are NOT marked safe."""
-        manual = [e for e in allowlist_entries if "manual_review" in e.get("classification", "")]
-        assert len(manual) == 5, f"Expected 5 manual review candidates, got {len(manual)}"
+    def test_manual_review_resolved_state(self, allowlist_entries):
+        """Manual review candidates carry the post-phase2D/E resolved classification."""
+        manual = [e for e in allowlist_entries if "manual" in e.get("classification", "")]
+        assert len(manual) == 6, f"Expected 6 manual review candidates, got {len(manual)}"
         for entry in manual:
             assert "safe" not in entry["classification"], (
                 f"Manual review candidate {entry['path']} must not be marked safe"
+            )
+            assert "pending" not in entry["classification"], (
+                f"Manual review candidate {entry['path']} must not be pending"
             )
 
     def test_runtime_guarded_count_is_at_least_6(self, allowlist_entries):
