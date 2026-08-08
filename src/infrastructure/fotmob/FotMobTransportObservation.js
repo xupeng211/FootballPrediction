@@ -149,6 +149,23 @@ function boundString(value, maxLen) {
     return s.length > maxLen ? s.slice(0, maxLen) : s;
 }
 
+// Timestamps are evidence fields, not diagnostic text: truncating an
+// over-bound timestamp can silently re-parse into a DIFFERENT valid instant
+// (e.g. dropping the trailing 'Z' of a long-fraction ISO turns UTC into an
+// offset-less local datetime, shifting the persisted instant by the machine
+// timezone). Timestamps are therefore bounded FAIL-CLOSED — an over-bound
+// input yields a deterministically ISO-invalid marker (never a rewritten
+// timestamp), so validation rejects the entry instead of persisting a
+// silently altered phase timestamp. Normal runtime inputs
+// (new Date().toISOString(), 24 chars) are unaffected.
+const TIMESTAMP_TOO_LONG = 'TIMESTAMP_TOO_LONG';
+
+function boundTimestamp(value, maxLen) {
+    if (value === null || value === undefined) return null;
+    const s = String(value);
+    return s.length > maxLen ? TIMESTAMP_TOO_LONG : s;
+}
+
 function isIsoTimestamp(value) {
     if (value === null || value === undefined) return false;
     if (typeof value !== 'string' || value.length === 0) return false;
@@ -223,22 +240,28 @@ function buildTransportObservation(inputs = {}) {
         schema_version: OBSERVATION_ENTRY_SCHEMA,
         ordinal: nonNegativeInt(inputs.ordinal),
         source_match_id: boundString(inputs.sourceMatchId, MAX_MATCH_ID_LEN),
-        request_started_at: String(started),
-        request_finished_at: boundString(inputs.requestFinishedAtIso, MAX_STRING_LEN),
+        request_started_at: boundTimestamp(started, MAX_STRING_LEN),
+        request_finished_at: boundTimestamp(inputs.requestFinishedAtIso, MAX_STRING_LEN),
         elapsed_ms: nonNegativeInt(inputs.elapsedMs),
         last_reliable_phase: inputs.lastReliablePhase || 'REQUEST_STARTED',
         terminal_outcome: inputs.terminalOutcome || 'FETCH_ERROR',
         response_headers_received: inputs.responseHeadersReceived === true,
-        response_headers_received_at: inputs.responseHeadersReceivedAt || null,
+        response_headers_received_at: inputs.responseHeadersReceivedAt
+            ? boundTimestamp(inputs.responseHeadersReceivedAt, MAX_STRING_LEN)
+            : null,
         http_status:
             Number.isInteger(inputs.httpStatus) && inputs.httpStatus >= 100 && inputs.httpStatus <= 599
                 ? inputs.httpStatus
                 : null,
         body_reading_started: inputs.bodyReadingStarted === true,
-        body_reading_started_at: inputs.bodyReadingStartedAt || null,
+        body_reading_started_at: inputs.bodyReadingStartedAt
+            ? boundTimestamp(inputs.bodyReadingStartedAt, MAX_STRING_LEN)
+            : null,
         body_bytes_received: nonNegativeInt(inputs.bodyBytesReceived),
         body_completed: inputs.bodyCompleted === true,
-        body_completed_at: inputs.bodyCompletedAt || null,
+        body_completed_at: inputs.bodyCompletedAt
+            ? boundTimestamp(inputs.bodyCompletedAt, MAX_STRING_LEN)
+            : null,
         timeout_configured_ms: isPositiveSafeInt(inputs.timeoutConfiguredMs) ? inputs.timeoutConfiguredMs : 0,
         timeout_triggered: inputs.timeoutTriggered === true,
         abort_source: ABORT_SOURCES.includes(inputs.abortSource) ? inputs.abortSource : null,
@@ -281,6 +304,9 @@ function validateTransportObservation(entry) {
     if (!isIsoTimestamp(entry.request_started_at)) {
         errors.push('request_started_at must be a valid ISO timestamp');
     }
+    if (typeof entry.request_started_at === 'string' && entry.request_started_at.length > MAX_STRING_LEN) {
+        errors.push(`request_started_at must be at most ${MAX_STRING_LEN} characters`);
+    }
     if (!isIsoTimestamp(entry.request_finished_at)) {
         errors.push('request_finished_at must be a valid ISO timestamp');
     }
@@ -303,6 +329,12 @@ function validateTransportObservation(entry) {
         if (!isIsoTimestamp(entry.response_headers_received_at)) {
             errors.push('response_headers_received_at must be a valid ISO timestamp when headers were received');
         }
+        if (
+            typeof entry.response_headers_received_at === 'string' &&
+            entry.response_headers_received_at.length > MAX_STRING_LEN
+        ) {
+            errors.push(`response_headers_received_at must be at most ${MAX_STRING_LEN} characters`);
+        }
         if (!Number.isInteger(entry.http_status) || entry.http_status < 100 || entry.http_status > 599) {
             errors.push('http_status must be an integer in 100..599 when headers were received');
         }
@@ -320,6 +352,12 @@ function validateTransportObservation(entry) {
     if (entry.body_reading_started) {
         if (!isIsoTimestamp(entry.body_reading_started_at)) {
             errors.push('body_reading_started_at must be a valid ISO timestamp when body reading started');
+        }
+        if (
+            typeof entry.body_reading_started_at === 'string' &&
+            entry.body_reading_started_at.length > MAX_STRING_LEN
+        ) {
+            errors.push(`body_reading_started_at must be at most ${MAX_STRING_LEN} characters`);
         }
         if (!entry.response_headers_received) {
             errors.push('body reading can only start after response headers are received');
@@ -339,6 +377,12 @@ function validateTransportObservation(entry) {
     if (entry.body_completed) {
         if (!isIsoTimestamp(entry.body_completed_at)) {
             errors.push('body_completed_at must be a valid ISO timestamp when the body completed');
+        }
+        if (
+            typeof entry.body_completed_at === 'string' &&
+            entry.body_completed_at.length > MAX_STRING_LEN
+        ) {
+            errors.push(`body_completed_at must be at most ${MAX_STRING_LEN} characters`);
         }
         if (!entry.body_reading_started) {
             errors.push('the body can only complete after body reading started');
