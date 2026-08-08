@@ -2063,7 +2063,6 @@ function validateOutputRoot(outputRoot, options = {}) {
         });
     }
 
-    let summaryFiles = [];
     let summaries = [];
     let ledgerVersions = [];
     const ledgerEntriesByKey = new Map();
@@ -2074,10 +2073,6 @@ function validateOutputRoot(outputRoot, options = {}) {
     // broken marker chain) must not hide the remaining A–E checks — the
     // validator reports every problem it can, not just the first one.
     // ── A. summaries (one per committed marker) ──
-    summaryFiles = committed.markers.map(marker => {
-        const summaryName = summaryFileNameForSeq(marker.seq);
-        return marker.doc.files.find(f => f.name === summaryName) ? summaryName : null;
-    });
     for (const marker of committed.markers) {
         const summaryName = summaryFileNameForSeq(marker.seq);
         const bound = marker.doc.files.find(f => f.name === summaryName);
