@@ -1335,6 +1335,228 @@ test('BOUNDS: persisted read fails closed on an over-bound entry — recomputing
 });
 
 // ─────────────────────────────────────────────────────────────
+// B3. Timestamp builder-bound gap (TD-02 follow-up)
+//
+// All 5 persisted timestamp strings must share the builder's existing
+// MAX_STRING_LEN=200 contract. Before this fix the builder emitted 4 of
+// them unbound (request_started_at via raw String(), the three optional
+// *_at fields via || null passthrough) — and because V8's Date.parse
+// accepts arbitrarily long fractional-second digits, a >200-char string
+// like '2026-08-02T12:00:00.' + 200 zeros + 'Z' is ISO-valid, so the
+// validator's ISO rule alone did NOT fail closed: such an entry passed
+// validation and was persisted. The fix bounds the 4 builder outputs
+// FAIL-CLOSED (an over-bound timestamp yields a deterministically
+// ISO-invalid marker, never a truncated value that could re-parse as a
+// different instant) and gives the validator an explicit length check per
+// timestamp, independent of ISO validity.
+// ─────────────────────────────────────────────────────────────
+
+test('BOUNDS: builder fails closed on over-bound timestamps instead of rewriting evidence (4 fields)', () => {
+    const longIso = '2026-08-02T12:00:00.' + '0'.repeat(200) + 'Z'; // 221 chars, ISO-valid in V8
+    assert.equal(Number.isNaN(Date.parse(longIso)), false, 'precondition: long-fraction ISO is parseable');
+    // Precondition for the fail-closed design: a naive truncation of longIso to
+    // 200 chars would drop the trailing 'Z' and RE-PARSE as a valid offset-less
+    // local datetime (a different instant, shifted by the machine timezone).
+    // Truncation would therefore rewrite evidence instead of failing closed.
+    const truncated = longIso.slice(0, 200);
+    assert.equal(truncated.endsWith('Z'), false);
+    assert.equal(Number.isNaN(Date.parse(truncated)), false, 'naive truncation would silently re-parse as a different valid instant');
+    const mk = (overrides = {}) =>
+        buildTransportObservation({
+            ordinal: 1,
+            sourceMatchId: '4193752',
+            requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+            requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+            elapsedMs: 262,
+            lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+            terminalOutcome: 'COMPLETED',
+            responseHeadersReceived: true,
+            responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+            httpStatus: 200,
+            bodyReadingStarted: true,
+            bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+            bodyBytesReceived: 100,
+            bodyCompleted: true,
+            bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+            timeoutConfiguredMs: 30000,
+            timeoutTriggered: false,
+            abortSource: null,
+            errorName: null,
+            errorCode: null,
+            errorCauseName: null,
+            errorCauseCode: null,
+            responseMetadata: {
+                content_type: 'text/html; charset=utf-8',
+                declared_content_length: 100,
+                location_present: false,
+                redirected: false,
+            },
+            ...overrides,
+        });
+
+    // request_started_at: over-bound input → bounded but deterministically
+    // ISO-invalid marker (never a truncated timestamp that could re-parse as a
+    // different instant) → the entry fails validation, fail closed.
+    const e1 = mk({ requestStartedAtIso: longIso });
+    assert.equal(e1.request_started_at, 'TIMESTAMP_TOO_LONG');
+    assert.equal(e1.request_started_at.length <= 200, true);
+    assert.equal(validateTransportObservation(e1).ok, false, 'an over-bound request_started_at must fail closed');
+
+    // The three optional timestamps follow the same fail-closed rule.
+    const e2 = mk({ responseHeadersReceivedAt: longIso });
+    assert.equal(e2.response_headers_received_at, 'TIMESTAMP_TOO_LONG');
+    assert.equal(validateTransportObservation(e2).ok, false);
+
+    const e3 = mk({ bodyReadingStartedAt: longIso });
+    assert.equal(e3.body_reading_started_at, 'TIMESTAMP_TOO_LONG');
+    assert.equal(validateTransportObservation(e3).ok, false);
+
+    const e4 = mk({ bodyCompletedAt: longIso });
+    assert.equal(e4.body_completed_at, 'TIMESTAMP_TOO_LONG');
+    assert.equal(validateTransportObservation(e4).ok, false);
+
+    // request_finished_at keeps its pre-existing #1825 builder bound
+    // (truncation to 200). Its truncation can also re-parse as a different
+    // valid instant — a PRE-EXISTING edge (unchanged here, recorded in the PR
+    // body remaining risks) — so it is pinned as-is, not extended to the new
+    // fail-closed rule in this PR.
+    const e5 = mk({ requestFinishedAtIso: longIso });
+    assert.equal(e5.request_finished_at.length, 200, 'request_finished_at unchanged: truncated to 200');
+});
+
+test('BOUNDS: validator rejects over-bound timestamps with explicit length violations (5 fields)', () => {
+    const longIso = '2026-08-02T12:00:00.' + '0'.repeat(200) + 'Z'; // 221 chars, ISO-valid in V8
+    assert.equal(Number.isNaN(Date.parse(longIso)), false, 'precondition: long-fraction ISO is parseable');
+    const good = buildTransportObservation({
+        ordinal: 1,
+        sourceMatchId: '4193752',
+        requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+        requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+        elapsedMs: 262,
+        lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+        terminalOutcome: 'COMPLETED',
+        responseHeadersReceived: true,
+        responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+        httpStatus: 200,
+        bodyReadingStarted: true,
+        bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+        bodyBytesReceived: 100,
+        bodyCompleted: true,
+        bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+        timeoutConfiguredMs: 30000,
+        timeoutTriggered: false,
+        abortSource: null,
+        errorName: null,
+        errorCode: null,
+        errorCauseName: null,
+        errorCauseCode: null,
+        responseMetadata: {
+            content_type: 'text/html; charset=utf-8',
+            declared_content_length: 100,
+            location_present: false,
+            redirected: false,
+        },
+    });
+    const clone = o => JSON.parse(JSON.stringify(o));
+
+    // request_started_at: 221-char ISO-valid value → explicit length violation.
+    const e1 = clone(good);
+    e1.request_started_at = longIso;
+    const c1 = validateTransportObservation(e1);
+    assert.equal(c1.ok, false);
+    assert.ok(c1.errors.some(e => /at most 200/.test(e)), 'request_started_at must carry the explicit max-length violation');
+
+    // request_finished_at: 221-char ISO-valid value → explicit length violation (matrix completeness).
+    const e2 = clone(good);
+    e2.request_finished_at = longIso;
+    const c2 = validateTransportObservation(e2);
+    assert.equal(c2.ok, false);
+    assert.ok(c2.errors.some(e => /at most 200/.test(e)), 'request_finished_at must carry the explicit max-length violation');
+
+    // response_headers_received_at (headers were received): explicit length violation.
+    const e3 = clone(good);
+    e3.response_headers_received_at = longIso;
+    const c3 = validateTransportObservation(e3);
+    assert.equal(c3.ok, false);
+    assert.ok(c3.errors.some(e => /at most 200/.test(e)), 'response_headers_received_at must carry the explicit max-length violation');
+
+    // body_reading_started_at (body reading started): explicit length violation.
+    const e4 = clone(good);
+    e4.body_reading_started_at = longIso;
+    const c4 = validateTransportObservation(e4);
+    assert.equal(c4.ok, false);
+    assert.ok(c4.errors.some(e => /at most 200/.test(e)), 'body_reading_started_at must carry the explicit max-length violation');
+
+    // body_completed_at (body completed): explicit length violation.
+    const e5 = clone(good);
+    e5.body_completed_at = longIso;
+    const c5 = validateTransportObservation(e5);
+    assert.equal(c5.ok, false);
+    assert.ok(c5.errors.some(e => /at most 200/.test(e)), 'body_completed_at must carry the explicit max-length violation');
+});
+
+test('BOUNDS: nested document fails closed on an over-bound timestamp even with a recomputed self-hash', () => {
+    const longIso = '2026-08-02T12:00:00.' + '0'.repeat(200) + 'Z'; // 221 chars, ISO-valid in V8
+    const good = buildTransportObservation({
+        ordinal: 1,
+        sourceMatchId: '4193752',
+        requestStartedAtIso: '2026-08-02T12:00:00.000Z',
+        requestFinishedAtIso: '2026-08-02T12:00:00.000Z',
+        elapsedMs: 262,
+        lastReliablePhase: 'RESPONSE_BODY_COMPLETED',
+        terminalOutcome: 'COMPLETED',
+        responseHeadersReceived: true,
+        responseHeadersReceivedAt: '2026-08-02T12:00:00.000Z',
+        httpStatus: 200,
+        bodyReadingStarted: true,
+        bodyReadingStartedAt: '2026-08-02T12:00:00.000Z',
+        bodyBytesReceived: 100,
+        bodyCompleted: true,
+        bodyCompletedAt: '2026-08-02T12:00:00.000Z',
+        timeoutConfiguredMs: 30000,
+        timeoutTriggered: false,
+        abortSource: null,
+        errorName: null,
+        errorCode: null,
+        errorCauseName: null,
+        errorCauseCode: null,
+        responseMetadata: {
+            content_type: 'text/html; charset=utf-8',
+            declared_content_length: 100,
+            location_present: false,
+            redirected: false,
+        },
+    });
+    const tampered = JSON.parse(JSON.stringify(good));
+    tampered.request_started_at = longIso;
+    const doc = defaultObservationsDoc({
+        runId: 'run-td02f-nested',
+        planSha256: '0'.repeat(64),
+        authorizationId: 'test-authorization-id',
+        maxRequests: 2,
+        collectorCodeRevision: TEST_REVISION,
+    });
+    const nestedDoc = { ...doc, observations: [tampered] };
+    nestedDoc.observations_sha256 = computeObservationsSelfHash(nestedDoc);
+    const check = validateObservationsDoc(nestedDoc);
+    assert.equal(check.ok, false, 'an over-bound timestamp must fail the nested doc validation');
+    assert.ok(
+        check.errors.some(e => /at most 200/.test(e)),
+        'the nested validation must surface the length-bound violation'
+    );
+    // The persistence path also fails closed for the same doc.
+    const dir = tmpDir('obs-td02f-nested-');
+    try {
+        assert.throws(
+            () => writeTransportObservationsFile(dir, nestedDoc, fs, null),
+            /SAFETY_ERROR:refusing to persist invalid transport observations/
+        );
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
 // C. Run-level integration: budget, fail-stop, resume, summary
 // ─────────────────────────────────────────────────────────────
 
