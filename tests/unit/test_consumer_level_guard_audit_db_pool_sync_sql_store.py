@@ -232,18 +232,28 @@ class TestReadOnlyCandidatesNotChanged:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-class TestIndirectWritePathsNotChanged:
-    """Indirect write paths have not been changed to guarded."""
+_INDIRECT_PATH_COUNT = 8
+_INDIRECT_GUARDED_COUNT = 6
 
-    def test_indirect_write_paths_not_guarded(self, allowlist_entries):
-        """No indirect write path has been changed to runtime_guarded."""
-        for entry in allowlist_entries:
-            classification = entry.get("classification", "")
-            path = entry.get("path", "")
-            if "indirect" in classification.lower():
-                assert "runtime_guarded" not in classification, (
-                    f"Indirect write path {path} must not be runtime_guarded"
-                )
+
+class TestIndirectWritePathsGuardState:
+    """Indirect write paths carry the post-phase2 guard classification."""
+
+    def test_indirect_write_paths_guard_state(self, allowlist_entries):
+        """Indirect write paths carry the post-phase2 guard classification."""
+        indirect = [e for e in allowlist_entries if "indirect" in e.get("classification", "")]
+        assert len(indirect) == _INDIRECT_PATH_COUNT, (
+            f"Expected {_INDIRECT_PATH_COUNT} indirect paths, got {len(indirect)}"
+        )
+        # phase2 indirect guard implemented: 6 runtime guarded, 1 false-positive, 1 read-only
+        guarded = [e["path"] for e in indirect if "runtime_guarded" in e["classification"]]
+        assert len(guarded) == _INDIRECT_GUARDED_COUNT, (
+            f"Expected {_INDIRECT_GUARDED_COUNT} guarded indirect paths, got {len(guarded)}: {guarded}"
+        )
+        for entry in indirect:
+            assert "pending" not in entry["classification"], (
+                f"Indirect write path {entry['path']} must not be pending"
+            )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

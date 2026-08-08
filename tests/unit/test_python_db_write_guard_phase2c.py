@@ -169,6 +169,9 @@ class TestCheckProductionDbHost:
         assert suspicious
 
     def test_heroku_blocked(self, monkeypatch):
+        # DB_HOST takes precedence over DATABASE_URL in the guard; clear it so the
+        # DATABASE_URL production-host pattern is actually exercised.
+        monkeypatch.delenv("DB_HOST", raising=False)
         monkeypatch.setenv("DATABASE_URL", "postgres://user:pass@ec2-1.heroku.com/db")
         suspicious, _warnings = _check_production_db_host()
         assert suspicious

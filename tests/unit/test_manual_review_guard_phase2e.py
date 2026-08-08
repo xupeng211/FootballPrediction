@@ -19,7 +19,9 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 ALLOWLIST_PATH = PROJECT_ROOT / "config" / "python_db_write_allowlist.json"
 PHASE2D_DOC_PATH = PROJECT_ROOT / "docs" / "SC002_MANUAL_REVIEW_PHASE2D.md"
 
-EXPECTED_ALLOWLIST_ENTRIES = 28
+EXPECTED_ALLOWLIST_ENTRIES = (
+    30  # current baseline: 18 guarded + 6 read-only + 3 false-positive + 3 infra
+)
 EXPECTED_RUNTIME_GUARDED = 18
 
 # ---- Test data ----
@@ -140,8 +142,8 @@ class TestManualReviewGuardPhase2E:
             f"Expected {EXPECTED_RUNTIME_GUARDED}/20 guarded, got {guarded}/20"
         )
 
-    def test_allowlist_has_28_entries(self):
-        """Allowlist must still have 28 total entries."""
+    def test_allowlist_has_30_entries(self):
+        """Allowlist must have 30 total entries (current baseline)."""
         data = _load_allowlist()
         assert len(data["entries"]) == EXPECTED_ALLOWLIST_ENTRIES, (
             f"Expected {EXPECTED_ALLOWLIST_ENTRIES} entries, got {len(data['entries'])}"

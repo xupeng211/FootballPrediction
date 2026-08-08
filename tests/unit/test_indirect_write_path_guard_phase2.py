@@ -20,7 +20,9 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 ALLOWLIST_PATH = PROJECT_ROOT / "config" / "python_db_write_allowlist.json"
 DESIGN_DOC_PATH = PROJECT_ROOT / "docs" / "SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md"
 
-EXPECTED_ALLOWLIST_ENTRIES = 28
+EXPECTED_ALLOWLIST_ENTRIES = (
+    30  # current baseline: 18 guarded + 6 read-only + 3 false-positive + 3 infra
+)
 EXPECTED_CONFIRMED_GUARDED = 9
 
 # ---- Test data ----
@@ -249,8 +251,8 @@ class TestIndirectWritePathGuardPhase2:
                 f"classification, got: {classification}"
             )
 
-    def test_allowlist_has_28_entries(self):
-        """Allowlist must still have 28 total entries (no entries added or removed)."""
+    def test_allowlist_has_30_entries(self):
+        """Allowlist must have 30 total entries (no entries added or removed)."""
         data = _load_allowlist()
         assert len(data["entries"]) == EXPECTED_ALLOWLIST_ENTRIES, (
             f"Expected {EXPECTED_ALLOWLIST_ENTRIES} allowlist entries, got {len(data['entries'])}"

@@ -367,10 +367,12 @@ class TestAssessmentCriterionUpdates:
         """Summary table must reflect updated criteria statuses."""
         assessment = _load_doc(ASSESSMENT_PATH)
         assert "Substantially met" in assessment, "Summary table must show updated statuses."
-        # Verify the new count of criteria
-        assert "4 criteria substantially met" in assessment or "4 criteria met" in assessment, (
-            "Assessment summary must reflect updated criteria counts."
-        )
+        # Verify the new count of criteria (case-insensitive: doc uses "Substantially met")
+        assessment_lower = assessment.lower()
+        assert (
+            "4 criteria substantially met" in assessment_lower
+            or "4 criteria met" in assessment_lower
+        ), "Assessment summary must reflect updated criteria counts."
 
     def test_next_recommended_task_is_negative_case(self):
         """Next recommended task must be changed_files_negative_case_enforcement_test."""
