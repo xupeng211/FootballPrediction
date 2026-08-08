@@ -543,7 +543,11 @@ function createBoundedFetchAdapter(options = {}) {
                   };
 
             const isSafetyError = snap.code === 'SAFETY_ERROR';
-            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE
+            // A readable-but-missing name (no name property, `name: null`,
+            // Proxy trap returning undefined) is exactly as unavailable as a
+            // throwing getter: it falls back to 'Error' — never the literal
+            // strings 'undefined' / 'null' (TD-03 F-01, Codex P3).
+            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.name === null || snap.name === undefined
                 ? 'Error'
                 : safeStringify(snap.name, 'Error') || 'Error';
             const messageAbort = (() => {

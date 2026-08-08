@@ -3255,6 +3255,28 @@ test('TD-03: M — normal FETCH_ERROR classification unchanged; primitive throws
         throw primitive;
     });
     assert.strictEqual(err2, primitive, 'primitive thrown values are rethrown unchanged, never wrapped');
+
+    // 3) A thrown object without a `name` property (or with `name: null`)
+    //    must fall back to 'Error' — never the literal strings 'undefined' /
+    //    'null' (TD-03 F-01, Codex P3), matching the pre-fix behavior.
+    const nameless = { message: 'boom' };
+    const err3 = await adapterRejectsWith(async () => {
+        throw nameless;
+    });
+    assert.strictEqual(err3, nameless, 'plain thrown objects are rethrown unchanged');
+    const obs3 = err3.transportObservation;
+    assert.equal(obs3.terminal_outcome, 'FETCH_ERROR');
+    assert.equal(obs3.error_name, 'Error', 'missing name falls back to Error, not "undefined"');
+    assert.equal(obs3.error_code, '', 'missing code falls back to empty string');
+    assert.ok(validateTransportObservation(obs3).ok);
+
+    const nullName = { name: null, message: 'boom' };
+    const err4 = await adapterRejectsWith(async () => {
+        throw nullName;
+    });
+    const obs4 = err4.transportObservation;
+    assert.equal(obs4.error_name, 'Error', 'null name falls back to Error, not "null"');
+    assert.ok(validateTransportObservation(obs4).ok);
 });
 
 test('TD-03: N — normal BODY_READ_ERROR classification unchanged', async () => {
