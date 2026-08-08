@@ -94,6 +94,39 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 // Block markers are imported from the shared contract module (single source).
 
 // ─────────────────────────────────────────────────────────────
+// Safe diagnostic error inspection (TD-03)
+// ─────────────────────────────────────────────────────────────
+//
+// Transport diagnostics must never let a throwing getter / Proxy get trap /
+// hostile value coercion REPLACE the original thrown error. Every
+// diagnostic property is therefore read through a snapshot: an unreadable
+// property yields the UNAVAILABLE sentinel (deterministic fallback), never
+// a new exception to propagate, and each property is read AT MOST ONCE per
+// snapshot so a stateful getter cannot be re-triggered with inconsistent
+// results. The original thrown value is always rethrown unchanged.
+const DIAGNOSTIC_PROPERTY_UNAVAILABLE = Symbol('diagnostic_property_unavailable');
+
+// Read one diagnostic property exactly once without ever throwing: a
+// throwing getter / Proxy get trap yields the UNAVAILABLE sentinel.
+function safeReadProperty(object, key) {
+    try {
+        return object[key];
+    } catch {
+        return DIAGNOSTIC_PROPERTY_UNAVAILABLE;
+    }
+}
+
+// Coerce a diagnostic value to string without ever throwing: a hostile
+// Symbol.toPrimitive / toString throws yield the fallback.
+function safeStringify(value, fallback) {
+    try {
+        return String(value);
+    } catch {
+        return fallback;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Bounded fetch adapter
 // ─────────────────────────────────────────────────────────────
 
@@ -477,13 +510,63 @@ function createBoundedFetchAdapter(options = {}) {
             // Classification priority: timeout > safety > external abort >
             // body read error > generic fetch error. Observation fields
             // never mutate the original error and never swallow it.
-            const isSafetyError = Boolean(err && typeof err === 'object' && err.code === 'SAFETY_ERROR');
-            const errName = String((err && typeof err === 'object' && err.name) || 'Error');
+            //
+            // TD-03: every diagnostic property is read through the safe
+            // snapshot below, AT MOST ONCE per snapshot (a stateful getter
+            // must not be re-triggered). A throwing getter / Proxy get trap
+            // / hostile coercion yields UNAVAILABLE and the classification
+            // continues from the remaining trustworthy evidence (phase
+            // flags + the local ctrl.signal). The original thrown value is
+            // rethrown unchanged at the end of this block.
+            const errObj = err !== null && typeof err === 'object' ? err : null;
+            const snap = errObj === null
+                ? {}
+                : {
+                    code: safeReadProperty(errObj, 'code'),
+                    name: safeReadProperty(errObj, 'name'),
+                    message: safeReadProperty(errObj, 'message'),
+                    signal: safeReadProperty(errObj, 'signal'),
+                    cause: safeReadProperty(errObj, 'cause'),
+                  };
+            // cause.* is read from the ONE cause snapshot; unreadable cause
+            // metadata is unavailable, never re-read or re-triggered.
+            const causeObj = snap.cause !== DIAGNOSTIC_PROPERTY_UNAVAILABLE
+                && snap.cause !== null
+                && typeof snap.cause === 'object'
+                ? snap.cause
+                : null;
+            const snapCause = causeObj === null
+                ? {}
+                : {
+                    name: safeReadProperty(causeObj, 'name'),
+                    code: safeReadProperty(causeObj, 'code'),
+                  };
+
+            const isSafetyError = snap.code === 'SAFETY_ERROR';
+            // Historical falsy fallback semantics (TD-03 reconciliation
+            // F-01): `err.name || 'Error'` — any falsy name (undefined /
+            // null / '' / 0 / false / NaN), exactly like an unreadable one,
+            // falls back to 'Error' — never the literal strings 'undefined'
+            // / 'null' / '0' / 'false'. Truthy names coerce safely; a
+            // hostile coercion yields 'Error'. The snapshot value is never
+            // re-read.
+            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.name
+                ? 'Error'
+                : safeStringify(snap.name, 'Error');
+            const messageAbort = (() => {
+                if (snap.message === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.message === null || snap.message === undefined) return false;
+                return safeStringify(snap.message, '').toLowerCase().includes('aborted');
+            })();
+            const errSignalAborted = (() => {
+                if (snap.signal === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.signal === null || snap.signal === undefined || typeof snap.signal !== 'object') return false;
+                const aborted = safeReadProperty(snap.signal, 'aborted');
+                return aborted !== DIAGNOSTIC_PROPERTY_UNAVAILABLE && Boolean(aborted);
+            })();
             const isAbortError =
                 errName === 'AbortError' ||
                 errName === 'DOMException' ||
-                (err && typeof err === 'object' && err.message && String(err.message).toLowerCase().includes('aborted')) ||
-                Boolean(err && typeof err === 'object' && err.signal && err.signal.aborted) ||
+                messageAbort ||
+                errSignalAborted ||
                 ctrl.signal.aborted;
 
             let terminalOutcome;
@@ -520,11 +603,20 @@ function createBoundedFetchAdapter(options = {}) {
                 else lastReliablePhase = 'AWAITING_RESPONSE_HEADERS';
             }
             errorName = errName;
-            errorCode = String((err && typeof err === 'object' && err.code) || '');
-            if (err && typeof err === 'object' && err.cause && typeof err.cause === 'object') {
-                errorCauseName = String(err.cause.name || '');
-                errorCauseCode = String(err.cause.code || '');
-            }
+            // Same historical falsy semantics for code metadata (F-01):
+            // `err.code || ''`, `err.cause.name || ''`, `err.cause.code ||
+            // ''` — falsy values (undefined / null / '' / 0 / false / NaN)
+            // persist '', never the literal strings '0' / 'false'. Truthy
+            // values coerce safely; hostile coercions yield ''.
+            errorCode = snap.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.code
+                ? ''
+                : safeStringify(snap.code, '');
+            errorCauseName = snapCause.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.name
+                ? ''
+                : safeStringify(snapCause.name, '');
+            errorCauseCode = snapCause.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.code
+                ? ''
+                : safeStringify(snapCause.code, '');
             const finishedMs = nowMs();
             const transportObservation = buildTransportObservation({
                 ordinal,
@@ -1714,14 +1806,23 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // attempt DID reach the network, so a resume must wait the full
             // delay from the real start). Budget-exhausted / contract errors
             // carry no timestamp (no fetch started) and keep the prior value.
-            if (err && err.requestAttemptedAt) {
-                runState.last_network_request_attempted_at = String(err.requestAttemptedAt);
-                // R20-P1: the failure path actualizes the deadline too — the
-                // attempt DID reach the network, so a resume must wait the
-                // full delay from the real request start.
-                const deadlineMs = Date.parse(String(err.requestAttemptedAt));
-                if (!Number.isNaN(deadlineMs)) {
-                    runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
+            // TD-03: read the attached fetch-start moment safely, ONCE (a
+            // Proxy-intercepted read must not replace the original thrown
+            // value; the value itself is a plain ISO string we attached).
+            const attemptedAt = err !== null && typeof err === 'object'
+                ? safeReadProperty(err, 'requestAttemptedAt')
+                : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
+            if (attemptedAt !== DIAGNOSTIC_PROPERTY_UNAVAILABLE && attemptedAt) {
+                const attemptedAtStr = safeStringify(attemptedAt, null);
+                if (attemptedAtStr !== null) {
+                    runState.last_network_request_attempted_at = attemptedAtStr;
+                    // R20-P1: the failure path actualizes the deadline too —
+                    // the attempt DID reach the network, so a resume must
+                    // wait the full delay from the real request start.
+                    const deadlineMs = Date.parse(attemptedAtStr);
+                    if (!Number.isNaN(deadlineMs)) {
+                        runState.next_allowed_request_at = new Date(deadlineMs + delayMs).toISOString();
+                    }
                 }
             }
             // R22-P1 (Codex re-review on 0bc69dad9): the failure SETTLED (or
@@ -1734,8 +1835,30 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // Diagnostic-only: settle the failure-path transport observation
             // (timeout / abort / safety / read / fetch errors) into the
             // in-memory document. The observation never changes fail-stop.
-            settleObservation(err.transportObservation);
-            const msg = String(err.message || err);
+            const transportObs = err !== null && typeof err === 'object'
+                ? safeReadProperty(err, 'transportObservation')
+                : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
+            if (transportObs !== DIAGNOSTIC_PROPERTY_UNAVAILABLE) {
+                settleObservation(transportObs);
+            }
+            // TD-03 reconciliation F-02: preserve the historical
+            // `String(err.message || err)` fallback — a falsy message
+            // (undefined / null / '' / 0 / false / NaN) or an unreadable one
+            // falls back to the ORIGINAL thrown value's own string coercion
+            // (a plain object yields '[object Object]', as it always did),
+            // never silently to the empty string. A truthy message coerces
+            // safely from the single snapshot. Hostile original coercions
+            // stay contained: no getter sentinel, no secondary exception, ''
+            // is allowed. The thrown value is never replaced.
+            let msg = '';
+            if (err !== null && typeof err === 'object') {
+                const em = safeReadProperty(err, 'message');
+                msg = em === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !em
+                    ? safeStringify(err, '')
+                    : safeStringify(em, '');
+            } else if (err !== undefined && err !== null) {
+                msg = safeStringify(err, '');
+            }
             stopReason = msg.includes('budget_exhausted')
                 ? 'budget_exhausted'
                 : `fetch_error:${msg.slice(0, 200)}`;

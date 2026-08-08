@@ -3006,3 +3006,502 @@ test('P2-LSTAT G: pipeline — uninspectable pre-existing telemetry fails closed
         fs.rmSync(dir, { recursive: true, force: true });
     }
 });
+
+// ─────────────────────────────────────────────────────────────
+// TD-03 / EXOTIC ERROR DIAGNOSTIC SAFETY
+// ─────────────────────────────────────────────────────────────
+// Owner contract (TD-03): diagnostic inspection must NEVER mask or replace
+// the original thrown value — even when a diagnostic property getter / Proxy
+// get trap / value coercion throws. Throwing diagnostic getters are treated
+// as unreadable metadata: classification continues from the remaining
+// trustworthy evidence (phase flags + the local ctrl.signal), each diagnostic
+// property is read AT MOST ONCE per snapshot (a stateful getter must not be
+// re-triggered), and the ORIGINAL thrown value is rethrown unchanged
+// (identity `error === original`). All tests offline: mocked fetchImpl only;
+// global.fetch throws (REAL_FOTMOB_REQUESTS=0).
+
+const SENTINEL_PREFIX = 'SENTINEL_GETTER_';
+
+function sentinelError(name) {
+    return new Error(SENTINEL_PREFIX + name);
+}
+
+function throwingGetter(obj, key, sentinel) {
+    Object.defineProperty(obj, key, {
+        configurable: true,
+        get() {
+            throw sentinel;
+        },
+    });
+    return obj;
+}
+
+// A fresh, fully-readable transport error used as the base "original thrown
+// value" for the hostile variants.
+function originalTransportError() {
+    const e = new Error('original transport failure');
+    e.name = 'OriginalTransportError';
+    e.code = 'E_ORIGINAL';
+    const cause = new Error('original cause failure');
+    cause.name = 'CauseError';
+    cause.code = 'E_CAUSE';
+    e.cause = cause;
+    return e;
+}
+
+// Run one adapter fetch that must reject; returns the outward (rethrown)
+// value.
+async function adapterRejectsWith(fetchImpl, { timeoutMs = 30000 } = {}) {
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl,
+        maxRequests: 1,
+        delayMs: 60000,
+        sleepImpl: async () => {},
+        timeoutMs,
+    });
+    let err = null;
+    try {
+        await adapter.fetchOnce('https://www.fotmob.com/match/4193752', { ordinal: 1, sourceMatchId: '4193752' });
+    } catch (e) {
+        err = e;
+    }
+    assert.ok(err !== null, 'the adapter must reject');
+    return err;
+}
+
+// Matrix A–I: [label, decorate, expectedFallbacks]. Default expectations for
+// the readable base error; each case overrides the fields whose getters are
+// hostile (unavailable metadata must fall back deterministically).
+const TD03_HOSTILE_CASES = [
+    // A: err.code getter throws → code unavailable ('' fallback, never
+    //    misclassified as SAFETY_ERROR), rest readable.
+    ['A_CODE_GETTER', e => throwingGetter(e, 'code', sentinelError('code')), { error_code: '' }],
+    // B: err.name getter throws → name falls back to 'Error' (never guessed
+    //    as AbortError from nothing).
+    ['B_NAME_GETTER', e => throwingGetter(e, 'name', sentinelError('name')), { error_name: 'Error' }],
+    // C: err.message getter throws → abort-text heuristic unavailable (no
+    //    misclassification from unavailable text).
+    ['C_MESSAGE_GETTER', e => throwingGetter(e, 'message', sentinelError('message')), {}],
+    // D: err.signal getter throws → signal-abort heuristic unavailable.
+    ['D_SIGNAL_GETTER', e => throwingGetter(e, 'signal', sentinelError('signal')), {}],
+    // E: err.cause getter throws → whole cause metadata unavailable (''), the
+    //    cause getter is never re-triggered.
+    ['E_CAUSE_GETTER', e => throwingGetter(e, 'cause', sentinelError('cause')), { error_cause_name: '', error_cause_code: '' }],
+    // F: err.cause.name getter throws → cause name unavailable, cause code
+    //    still readable. (The decorator returns the ORIGINAL error — the
+    //    cause is only decorated, never substituted.)
+    ['F_CAUSE_NAME_GETTER', e => {
+        throwingGetter(e.cause, 'name', sentinelError('cause.name'));
+        return e;
+    }, { error_cause_name: '' }],
+    // G: err.cause.code getter throws → cause code unavailable, cause name
+    //    still readable.
+    ['G_CAUSE_CODE_GETTER', e => {
+        throwingGetter(e.cause, 'code', sentinelError('cause.code'));
+        return e;
+    }, { error_cause_code: '' }],
+    // H: Proxy get trap throwing on the diagnostic core (code/name/message).
+    ['H_PROXY_GET_TRAP', e => new Proxy(e, {
+        get(target, key, receiver) {
+            if (key === 'code' || key === 'name' || key === 'message') throw sentinelError('proxy.trap');
+            return Reflect.get(target, key, receiver);
+        },
+    }), { error_code: '', error_name: 'Error' }],
+    // I: hostile Symbol.toPrimitive coercion on err.code — the value itself
+    //    reads fine, only String() throws → '' fallback, never a crash.
+    ['I_HOSTILE_COERCION_CODE', e => {
+        e.code = { [Symbol.toPrimitive]() { throw sentinelError('toPrimitive'); } };
+        return e;
+    }, { error_code: '' }],
+];
+
+const TD03_DEFAULT_EXPECTED = {
+    error_name: 'OriginalTransportError',
+    error_code: 'E_ORIGINAL',
+    error_cause_name: 'CauseError',
+    error_cause_code: 'E_CAUSE',
+};
+
+test('TD-03: matrix A–I — throwing diagnostic getters / Proxy trap / hostile coercion: original identity preserved, safe fallbacks, no sentinel leakage', async () => {
+    for (const [label, decorate, expectedOverrides] of TD03_HOSTILE_CASES) {
+        const original = originalTransportError();
+        const hostile = decorate(original);
+        const err = await adapterRejectsWith(async () => {
+            throw hostile;
+        });
+        // 1) The ORIGINAL thrown value is rethrown unchanged — identity,
+        //    never a message/name/code comparison that could be spoofed.
+        assert.strictEqual(err, hostile, `${label}: original error identity preserved`);
+        // 2) A getter sentinel must never escape outward.
+        let outwardMsg = null;
+        try {
+            outwardMsg = String(err.message);
+        } catch {
+            /* unreadable message getter — the identity check above is authoritative */
+        }
+        if (outwardMsg !== null) {
+            assert.ok(!outwardMsg.includes(SENTINEL_PREFIX), `${label}: no sentinel leaks outward`);
+        }
+        // 3) The observation rides the original error, validates, and the
+        //    classification never crashes.
+        const obs = err.transportObservation;
+        assert.ok(obs, `${label}: observation attaches to the original error`);
+        assert.ok(validateTransportObservation(obs).ok, `${label}: observation validates`);
+        assert.equal(obs.terminal_outcome, 'FETCH_ERROR', `${label}: stays FETCH_ERROR (no guessed classification)`);
+        // 4) Unreadable metadata falls back deterministically.
+        const expected = { ...TD03_DEFAULT_EXPECTED, ...expectedOverrides };
+        assert.equal(obs.error_code, expected.error_code, `${label}: error_code fallback`);
+        assert.equal(obs.error_name, expected.error_name, `${label}: error_name fallback`);
+        assert.equal(obs.error_cause_name, expected.error_cause_name, `${label}: error_cause_name fallback`);
+        assert.equal(obs.error_cause_code, expected.error_cause_code, `${label}: error_cause_code fallback`);
+        // 5) No raw hostile value is persisted into telemetry.
+        for (const key of ['error_code', 'error_name', 'error_cause_name', 'error_cause_code']) {
+            assert.ok(!String(obs[key] || '').includes(SENTINEL_PREFIX), `${label}: no sentinel text in ${key}`);
+        }
+    }
+});
+
+test('TD-03: snapshot-once — every diagnostic property is read AT MOST ONCE per snapshot', async () => {
+    const counts = {};
+    const e = originalTransportError();
+    const makeCountingGetter = (obj, key, countKey) => {
+        const value = obj[key];
+        Object.defineProperty(obj, key, {
+            configurable: true,
+            get() {
+                counts[countKey] = (counts[countKey] || 0) + 1;
+                return value;
+            },
+        });
+        return obj;
+    };
+    makeCountingGetter(e, 'code', 'code');
+    makeCountingGetter(e, 'name', 'name');
+    makeCountingGetter(e, 'message', 'message');
+    makeCountingGetter(e, 'signal', 'signal');
+    // Capture the cause object BEFORE installing the counting getter on
+    // `cause` — argument evaluation would otherwise re-read the getter and
+    // pollute the read count.
+    const causeObj = e.cause;
+    makeCountingGetter(e, 'cause', 'cause');
+    makeCountingGetter(causeObj, 'name', 'causeName');
+    makeCountingGetter(causeObj, 'code', 'causeCode');
+    const err = await adapterRejectsWith(async () => {
+        throw e;
+    });
+    assert.strictEqual(err, e, 'identity preserved through the snapshot reads');
+    assert.equal(counts.code, 1, 'err.code read exactly once');
+    assert.equal(counts.name, 1, 'err.name read exactly once');
+    assert.equal(counts.message, 1, 'err.message read exactly once');
+    assert.equal(counts.signal, 1, 'err.signal read exactly once');
+    assert.equal(counts.cause, 1, 'err.cause read exactly once');
+    assert.equal(counts.causeName, 1, 'err.cause.name read exactly once');
+    assert.equal(counts.causeCode, 1, 'err.cause.code read exactly once');
+    const obs = err.transportObservation;
+    assert.equal(obs.error_name, 'OriginalTransportError', 'readable metadata still flows through');
+    assert.equal(obs.error_code, 'E_ORIGINAL');
+    assert.ok(validateTransportObservation(obs).ok);
+});
+
+test('TD-03: J — frozen original error: identity preserved, attachment loss acceptable, no crash', async () => {
+    const e = Object.freeze(originalTransportError());
+    const err = await adapterRejectsWith(async () => {
+        throw e;
+    });
+    assert.strictEqual(err, e, 'frozen original error rethrown unchanged');
+    assert.equal(err.transportObservation, undefined, 'frozen error cannot carry the observation — attachment loss is acceptable, identity is not');
+});
+
+test('TD-03: K — normal SAFETY_ERROR classification unchanged', async () => {
+    const e = new Error('safety gate');
+    e.code = 'SAFETY_ERROR';
+    const err = await adapterRejectsWith(async () => {
+        throw e;
+    });
+    assert.strictEqual(err, e);
+    const obs = err.transportObservation;
+    assert.equal(obs.terminal_outcome, 'SAFETY_ERROR');
+    assert.equal(obs.error_code, 'SAFETY_ERROR');
+    assert.equal(obs.error_name, 'Error');
+    assert.ok(validateTransportObservation(obs).ok);
+});
+
+test('TD-03: L — normal AbortError classification unchanged', async () => {
+    const e = new Error('This operation was aborted');
+    e.name = 'AbortError';
+    const err = await adapterRejectsWith(async () => {
+        throw e;
+    });
+    assert.strictEqual(err, e);
+    const obs = err.transportObservation;
+    assert.equal(obs.terminal_outcome, 'ABORTED');
+    assert.equal(obs.abort_source, 'EXTERNAL_ABORT');
+    assert.equal(obs.error_name, 'AbortError');
+    assert.ok(validateTransportObservation(obs).ok);
+});
+
+test('TD-03: M — normal FETCH_ERROR classification unchanged; primitive throws are never wrapped', async () => {
+    const err1 = await adapterRejectsWith(async () => {
+        throw new TypeError('fetch failed');
+    });
+    const obs1 = err1.transportObservation;
+    assert.equal(obs1.terminal_outcome, 'FETCH_ERROR');
+    assert.equal(obs1.error_name, 'TypeError');
+    assert.equal(obs1.error_code, '');
+    assert.ok(validateTransportObservation(obs1).ok);
+
+    const primitive = 'plain-string';
+    const err2 = await adapterRejectsWith(async () => {
+        throw primitive;
+    });
+    assert.strictEqual(err2, primitive, 'primitive thrown values are rethrown unchanged, never wrapped');
+
+    // 3) A thrown object without a `name` property (or with `name: null`)
+    //    must fall back to 'Error' — never the literal strings 'undefined' /
+    //    'null' (TD-03 F-01, Codex P3), matching the pre-fix behavior.
+    const nameless = { message: 'boom' };
+    const err3 = await adapterRejectsWith(async () => {
+        throw nameless;
+    });
+    assert.strictEqual(err3, nameless, 'plain thrown objects are rethrown unchanged');
+    const obs3 = err3.transportObservation;
+    assert.equal(obs3.terminal_outcome, 'FETCH_ERROR');
+    assert.equal(obs3.error_name, 'Error', 'missing name falls back to Error, not "undefined"');
+    assert.equal(obs3.error_code, '', 'missing code falls back to empty string');
+    assert.ok(validateTransportObservation(obs3).ok);
+
+    const nullName = { name: null, message: 'boom' };
+    const err4 = await adapterRejectsWith(async () => {
+        throw nullName;
+    });
+    const obs4 = err4.transportObservation;
+    assert.equal(obs4.error_name, 'Error', 'null name falls back to Error, not "null"');
+    assert.ok(validateTransportObservation(obs4).ok);
+});
+
+test('TD-03: N — normal BODY_READ_ERROR classification unchanged', async () => {
+    const err = await adapterRejectsWith(
+        signalFetchImpl(() =>
+            makeResponse({
+                status: 200,
+                reader: {
+                    async read() {
+                        throw Object.assign(new Error('stream corrupt'), { name: 'StreamCorruptError' });
+                    },
+                },
+            })
+        )
+    );
+    assert.equal(err.name, 'StreamCorruptError');
+    const obs = err.transportObservation;
+    assert.equal(obs.terminal_outcome, 'BODY_READ_ERROR');
+    assert.equal(obs.body_reading_started, true, 'the body-read phase was entered before the failure');
+    assert.equal(obs.error_name, 'StreamCorruptError');
+    assert.ok(validateTransportObservation(obs).ok);
+});
+
+test('TD-03: O — TIMEOUT classification survives hostile getters on the abort error', async () => {
+    const hostile = originalTransportError();
+    throwingGetter(hostile, 'code', sentinelError('code'));
+    throwingGetter(hostile, 'name', sentinelError('name'));
+    throwingGetter(hostile, 'message', sentinelError('message'));
+    throwingGetter(hostile, 'signal', sentinelError('signal'));
+    throwingGetter(hostile, 'cause', sentinelError('cause'));
+    const err = await adapterRejectsWith(
+        (url, opts) =>
+            new Promise((resolve, reject) => {
+                opts.signal.addEventListener('abort', () => reject(hostile));
+            }),
+        { timeoutMs: 60 }
+    );
+    assert.strictEqual(err, hostile, 'identity preserved under TIMEOUT');
+    const obs = err.transportObservation;
+    assert.ok(obs, 'observation rides the original error');
+    assert.equal(obs.terminal_outcome, 'TIMEOUT', 'the local timeout flag keeps priority');
+    assert.equal(obs.abort_source, 'REQUEST_TIMEOUT');
+    assert.equal(obs.timeout_triggered, true);
+    assert.equal(obs.error_code, '', 'unavailable code falls back');
+    assert.equal(obs.error_name, 'Error', 'unavailable name falls back');
+    assert.equal(obs.error_cause_name, '', 'unavailable cause metadata falls back');
+    assert.equal(obs.error_cause_code, '');
+    assert.ok(validateTransportObservation(obs).ok);
+});
+
+test('TD-03: run path — executeCaptureRun with hostile getters: original error preserved end-to-end, safe stop reason, observation settled', async () => {
+    const dir = tmpDir('td03-run-');
+    try {
+        const cand = makeCandidate({
+            id: 4193752,
+            season: '2024/2025',
+            home: 'A',
+            away: 'B',
+            kickoff: '2024-08-16T19:00:00Z',
+        });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const hostile = originalTransportError();
+        throwingGetter(hostile, 'code', sentinelError('code'));
+        throwingGetter(hostile, 'name', sentinelError('name'));
+        throwingGetter(hostile, 'message', sentinelError('message'));
+        const result = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-td03',
+                maxRequests: 1,
+                fetchImpl: async () => {
+                    throw hostile;
+                },
+            })
+        );
+        assert.equal(result.status, 'stopped');
+        assert.equal(result.stoppedAtOrdinal, 1);
+        assert.match(result.stopReason, /^fetch_error:/, 'stop reason derived safely — no getter exception replaces the run outcome');
+        const doc = readObservations(result.runDir);
+        assert.equal(doc.observations.length, 1);
+        const obs = doc.observations[0];
+        assert.equal(obs.terminal_outcome, 'FETCH_ERROR');
+        assert.equal(obs.error_code, '', 'unavailable code falls back in the persisted telemetry');
+        assert.equal(obs.error_name, 'Error', 'unavailable name falls back');
+        assert.ok(validateTransportObservation(obs).ok);
+        const state = JSON.parse(fs.readFileSync(path.join(result.runDir, 'run-state.json'), 'utf8'));
+        assert.equal(state.network_requests_attempted, 1);
+        assert.match(state.last_network_request_attempted_at, /^\d{4}-\d{2}-\d{2}T/, 'requestAttemptedAt safely read and actualized');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('TD-03: F-01 — falsy diagnostic metadata preserves the historical fallback semantics (name → Error, code/cause → empty)', async () => {
+    // Historical semantics were `err.name || 'Error'` and `err.code || ''`
+    // (likewise cause.name / cause.code): EVERY falsy value (undefined,
+    // null, '', 0, false, NaN) falls back — the literal strings '0' /
+    // 'false' / 'NaN' must never be persisted (TD-03 reconciliation F-01).
+    const FALSY_VALUES = ['', 0, false, null, undefined, NaN];
+    for (const v of FALSY_VALUES) {
+        // falsy name → 'Error'
+        const thrownName = { name: v, code: 'E_X' };
+        const errName = await adapterRejectsWith(async () => {
+            throw thrownName;
+        });
+        const obsName = errName.transportObservation;
+        assert.equal(obsName.error_name, 'Error', `falsy name ${String(v)} falls back to Error, not "${String(v)}"`);
+        assert.equal(obsName.error_code, 'E_X', 'readable code is unaffected by a falsy name');
+        assert.ok(validateTransportObservation(obsName).ok);
+        // falsy code → ''
+        const thrownCode = { name: 'NamedError', code: v };
+        const errCode = await adapterRejectsWith(async () => {
+            throw thrownCode;
+        });
+        const obsCode = errCode.transportObservation;
+        assert.equal(obsCode.error_code, '', `falsy code ${String(v)} falls back to empty string`);
+        assert.equal(obsCode.error_name, 'NamedError', 'readable name is unaffected by a falsy code');
+        assert.ok(validateTransportObservation(obsCode).ok);
+        // falsy cause.name → ''
+        const thrownCauseName = { cause: { name: v, code: 'E_CAUSE' } };
+        const errCauseName = await adapterRejectsWith(async () => {
+            throw thrownCauseName;
+        });
+        const obsCauseName = errCauseName.transportObservation;
+        assert.equal(obsCauseName.error_cause_name, '', `falsy cause.name ${String(v)} falls back to empty string`);
+        assert.equal(obsCauseName.error_cause_code, 'E_CAUSE', 'readable cause code is unaffected by a falsy cause name');
+        assert.ok(validateTransportObservation(obsCauseName).ok);
+        // falsy cause.code → ''
+        const thrownCauseCode = { cause: { name: 'CauseError', code: v } };
+        const errCauseCode = await adapterRejectsWith(async () => {
+            throw thrownCauseCode;
+        });
+        const obsCauseCode = errCauseCode.transportObservation;
+        assert.equal(obsCauseCode.error_cause_code, '', `falsy cause.code ${String(v)} falls back to empty string`);
+        assert.equal(obsCauseCode.error_cause_name, 'CauseError', 'readable cause name is unaffected by a falsy cause code');
+        assert.ok(validateTransportObservation(obsCauseCode).ok);
+    }
+    // A truthy-but-hostile name/code coercion still falls back — never crashes.
+    const hostileTruthyValue = {
+        name: { [Symbol.toPrimitive]() { throw sentinelError('f01.toPrimitive'); } },
+        code: { [Symbol.toPrimitive]() { throw sentinelError('f01.toPrimitive'); } },
+    };
+    const hostileTruthy = await adapterRejectsWith(async () => {
+        throw hostileTruthyValue;
+    });
+    const obsHostile = hostileTruthy.transportObservation;
+    assert.equal(obsHostile.error_name, 'Error', 'hostile truthy name coercion falls back to Error');
+    assert.equal(obsHostile.error_code, '', 'hostile truthy code coercion falls back to empty string');
+    assert.ok(validateTransportObservation(obsHostile).ok);
+});
+
+// Run one full capture run whose fetch rejects with *thrown*; returns the
+// derived stop reason (the upper-layer handler's safe text derivation).
+async function runStopReasonWith(thrown) {
+    const dir = tmpDir('td03-stopreason-');
+    try {
+        const cand = makeCandidate({
+            id: 4193752,
+            season: '2024/2025',
+            home: 'A',
+            away: 'B',
+            kickoff: '2024-08-16T19:00:00Z',
+        });
+        const { plan, planPath } = makePlanFixture(dir, [cand], { seasons: ['2024/2025'] });
+        const result = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                runId: 'run-td03-stopreason',
+                maxRequests: 1,
+                fetchImpl: async () => {
+                    throw thrown;
+                },
+            })
+        );
+        assert.equal(result.status, 'stopped');
+        return result.stopReason;
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+}
+
+test('TD-03: F-02 — stopReason preserves the historical `String(err.message || err)` fallback', async () => {
+    // Case A — a normal readable Error message passes through unchanged.
+    assert.equal(
+        await runStopReasonWith(new Error('ordinary fetch failure')),
+        'fetch_error:ordinary fetch failure',
+        'readable message flows into the stop reason'
+    );
+    // Case B — a plain object without a message falls back to the ORIGINAL
+    // value's string coercion, exactly like `String(err.message || err)`.
+    assert.equal(
+        await runStopReasonWith({ code: 'E_X' }),
+        'fetch_error:[object Object]',
+        'plain object without message falls back to [object Object]'
+    );
+    // Case C — a FALSY message ('') also falls back to the original value,
+    // never silently to the empty string.
+    assert.equal(
+        await runStopReasonWith({ message: '', code: 'E_X' }),
+        'fetch_error:[object Object]',
+        'falsy message falls back to the original object coercion'
+    );
+    // Case D — a throwing message getter on a plain object: no getter
+    // sentinel escapes; the plain-object coercion stays safe and historical.
+    const hostileMessage = { code: 'E_X' };
+    Object.defineProperty(hostileMessage, 'message', {
+        configurable: true,
+        get() {
+            throw sentinelError('f02.message');
+        },
+    });
+    const srD = await runStopReasonWith(hostileMessage);
+    assert.ok(!srD.includes(SENTINEL_PREFIX), 'no getter sentinel leaks into the stop reason');
+    assert.equal(srD, 'fetch_error:[object Object]', 'plain-object coercion stays safe and historical');
+    // Case E — a hostile Symbol.toPrimitive on the ORIGINAL value: contained,
+    // no secondary exception, safe empty fallback allowed.
+    const hostileCoercion = { code: 'E_X' };
+    hostileCoercion[Symbol.toPrimitive] = () => {
+        throw sentinelError('f02.toPrimitive');
+    };
+    const srE = await runStopReasonWith(hostileCoercion);
+    assert.ok(!srE.includes(SENTINEL_PREFIX), 'no coercion sentinel leaks into the stop reason');
+    assert.equal(srE, 'fetch_error:', 'hostile original coercion is contained — empty fallback allowed');
+});
