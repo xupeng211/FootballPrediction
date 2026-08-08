@@ -934,6 +934,68 @@ test('TRANSPORT: redirect stays manual — not followed, single request, observa
     assert.ok(validateTransportObservation(obs).ok);
 });
 
+test('TRANSPORT: locationless redirect — 302 without a Location header still records redirected with no body read and validates', async () => {
+    const calls = [];
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl: mockFetchImpl(() => ({ status: 302, body: 'mock-redirect-body-not-read' }), calls),
+        maxRequests: 2,
+        delayMs: 60000,
+        sleepImpl: async () => {},
+        timeoutMs: 30000,
+    });
+    const res = await adapter.fetchOnce('https://www.fotmob.com/match/123', { ordinal: 1, sourceMatchId: '123' });
+    assert.equal(res.status, 302);
+    assert.equal(res.redirected, true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].opts.redirect, 'manual');
+    const obs = res.transportObservation;
+    assert.equal(obs.terminal_outcome, 'COMPLETED');
+    assert.equal(obs.http_status, 302);
+    assert.equal(obs.body_reading_started, false, 'a redirect body is never read');
+    assert.equal(obs.body_completed, false);
+    assert.equal(obs.body_bytes_received, 0);
+    assert.equal(obs.response_metadata.redirected, true, 'redirected is derived from the http status alone');
+    assert.equal(obs.response_metadata.location_present, false, 'no Location header was sent');
+    assert.ok(validateTransportObservation(obs).ok, 'a locationless redirect observation must validate');
+});
+
+test('VALIDATION: redirected is status-derived — locationless 302 valid, tampered redirected=false rejected, 200 with Location valid', async () => {
+    // Case B: 302 without Location — the fixed contract (redirected=true, location_present=false).
+    const callsB = [];
+    const adapterB = createBoundedFetchAdapter({
+        fetchImpl: mockFetchImpl(() => ({ status: 302, body: 'mock-redirect-body-not-read' }), callsB),
+        maxRequests: 2,
+        delayMs: 60000,
+        sleepImpl: async () => {},
+        timeoutMs: 30000,
+    });
+    const obsB = (await adapterB.fetchOnce('https://www.fotmob.com/match/123', { ordinal: 1, sourceMatchId: '123' })).transportObservation;
+    assert.equal(validateTransportObservation(obsB).ok, true, '302 without Location must validate');
+    assert.equal(obsB.response_metadata.redirected, true);
+    assert.equal(obsB.response_metadata.location_present, false);
+
+    // Case C: tampering redirected=false on a 302 is still rejected — the invariant is guarded.
+    const tampered = JSON.parse(JSON.stringify(obsB));
+    tampered.response_metadata.redirected = false;
+    const checkC = validateTransportObservation(tampered);
+    assert.equal(checkC.ok, false);
+    assert.ok(checkC.errors.some(e => /redirected must match the http status/.test(e)), 'tampered redirected must be caught');
+
+    // Case D: 200 with a Location header stays a non-redirect and validates.
+    const callsD = [];
+    const adapterD = createBoundedFetchAdapter({
+        fetchImpl: mockFetchImpl(() => ({ status: 200, body: '<html>ok</html>', location: 'https://www.fotmob.com/other' }), callsD),
+        maxRequests: 2,
+        delayMs: 60000,
+        sleepImpl: async () => {},
+        timeoutMs: 30000,
+    });
+    const obsD = (await adapterD.fetchOnce('https://www.fotmob.com/match/123', { ordinal: 1, sourceMatchId: '123' })).transportObservation;
+    assert.equal(validateTransportObservation(obsD).ok, true, '200 with Location must validate');
+    assert.equal(obsD.response_metadata.redirected, false);
+    assert.equal(obsD.response_metadata.location_present, true);
+});
+
 // ─────────────────────────────────────────────────────────────
 // C. Run-level integration: budget, fail-stop, resume, summary
 // ─────────────────────────────────────────────────────────────
@@ -982,6 +1044,44 @@ test('RUN: budget — telemetry never adds request count; exhausted budget perfo
         // The run summary references the telemetry.
         const summary = JSON.parse(fs.readFileSync(path.join(result.runDir, 'run-summary.json'), 'utf8'));
         assert.equal(summary.transport_observations_file, OBSERVATIONS_FILE_NAME);
+        assert.equal(summary.transport_observations_count, 1);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('RUN: locationless 3xx — observation survives to persistence while the access-control stop is unchanged', async () => {
+    const dir = tmpDir('obs-locationless-redirect-');
+    try {
+        const cand1 = makeCandidate({
+            id: 4193752,
+            season: '2024/2025',
+            home: 'A',
+            away: 'B',
+            kickoff: '2024-08-16T19:00:00Z',
+        });
+        const { plan, planPath } = makePlanFixture(dir, [cand1], { seasons: ['2024/2025'] });
+        const calls = [];
+        const fetchImpl = mockFetchImpl(() => ({ status: 302, body: 'mock-redirect-body-not-read' }), calls);
+        const result = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId: 'run-obs-locationless', maxRequests: 2, fetchImpl })
+        );
+        // The 3xx policy is unchanged: the run stops exactly as before...
+        assert.equal(result.status, 'stopped');
+        assert.equal(result.stopReason, 'access_control:redirect_302');
+        assert.equal(result.networkRequestsMade, 1);
+        assert.equal(calls.length, 1, 'one and only one fetch — the redirect is never followed');
+        // ...and the transport observation now survives to the normal settlement/persistence path.
+        const doc = readObservations(result.runDir);
+        const obs = doc.observations.find(o => o.ordinal === 1);
+        assert.ok(obs, 'the locationless-redirect observation must be persisted');
+        assert.equal(obs.http_status, 302);
+        assert.equal(obs.body_reading_started, false, 'the redirect body is never read');
+        assert.equal(obs.response_metadata.redirected, true);
+        assert.equal(obs.response_metadata.location_present, false);
+        assert.ok(validateTransportObservation(obs).ok);
+        // The summary telemetry linkage reflects the persisted observation.
+        const summary = JSON.parse(fs.readFileSync(path.join(result.runDir, 'run-summary.json'), 'utf8'));
         assert.equal(summary.transport_observations_count, 1);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });

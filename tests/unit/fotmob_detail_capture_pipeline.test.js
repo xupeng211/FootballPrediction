@@ -287,6 +287,24 @@ test('NETWORK: 403 stops the run immediately; next candidate not fetched', async
     }
 });
 
+test('NETWORK: locationless 3xx stops the run exactly like a located redirect — access_control:redirect_302, single request, body never read', async () => {
+    const dir = tmpDir('fotmob-net-redirect-noloc-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const calls = [];
+        const fetchImpl = mockFetchImpl(() => ({ status: 302, body: 'mock-redirect-body-not-read' }), calls);
+        const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 2, fetchImpl }));
+        assert.equal(result.status, 'stopped');
+        assert.equal(result.stopReason, 'access_control:redirect_302');
+        assert.equal(result.completedCount, 0);
+        assert.equal(result.stoppedAtOrdinal, 1);
+        assert.equal(calls.length, 1, 'one and only one fetch — the redirect is never followed');
+        assert.equal(calls[0].opts.redirect, 'manual');
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('NETWORK: 429 stops the run immediately', async () => {
     const dir = tmpDir('fotmob-net-429-');
     try {
