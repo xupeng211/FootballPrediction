@@ -27,6 +27,7 @@
         "titan:audit": "docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/audit_dataset.js",
         "titan:watch": "node scripts/ops/sentinel_watch.js",
         "train": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py",
+        "value:mvp1": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/model_training/value_mvp_baseline_vs_closing.py",
         "train:fast": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py --estimators 100 --depth 4",
         "train:deep": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py --estimators 500 --depth 8 --lr 0.03",
         "predict": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/predict_pipeline.py",
