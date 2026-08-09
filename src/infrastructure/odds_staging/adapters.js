@@ -13,7 +13,10 @@ const {
     parseAndValidateDate,
     validateKickoffTimeInterpretation,
 } = require('./footballDataIdentity');
-const { applyProviderContractToGroup } = require('./footballDataProviderContract');
+const {
+    FOOTBALL_DATA_PROVIDER_CONTRACT,
+    applyProviderContractToGroup,
+} = require('./footballDataProviderContract');
 
 const ADAPTER_VERSIONS = Object.freeze({
     // 1.3.0: M3-R2 —— 对 manifest 声明 provider contract 适用的 canonical 源，
@@ -454,14 +457,19 @@ function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber)
 /**
  * 该源是否声明 Football-Data provider contract 适用（canonical 恢复源由
  * buildCanonicalSourceManifest 写入；generic bundle 没有该块 → fail closed）。
- * provider_id 必须与 committed contract 精确一致，防止伪 manifest 冒用。
+ * provider_id 与 contract_id 都必须与 committed contract 精确一致（Codex F-04），
+ * 防止伪 manifest 用自声明 identity 冒用官方取证语义。
  */
 function resolveProviderContractApplicable(manifest) {
     const contract = manifest && manifest.provider_contract;
     if (!contract || typeof contract !== 'object') {
         return false;
     }
-    return contract.applicable === true && contract.provider_id === 'football-data.co.uk';
+    return (
+        contract.applicable === true &&
+        contract.provider_id === FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id &&
+        contract.contract_id === FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id
+    );
 }
 
 function adaptFootballDataCsv(rawText, context = {}) {
@@ -699,4 +707,5 @@ module.exports = {
     adaptFootballDataCsv,
     adaptOddsPortalExplicitEnvelopeHtml,
     getAdapter,
+    resolveProviderContractApplicable,
 };

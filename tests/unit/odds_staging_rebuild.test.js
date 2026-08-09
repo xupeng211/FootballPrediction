@@ -19,6 +19,7 @@ const {
     main,
     runRebuild,
     validateRebuildReceipt,
+    verifyRebuildReceiptAgainstOutput,
 } = require('../../scripts/ops/odds_staging/historical_odds_rebuild');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -358,6 +359,46 @@ test('rebuild: a manifest declaring the provider contract applies C=closing and 
     assert.equal(receipt.temporal_semantics.c_series_closing_status, 'proven');
     assert.equal(receipt.temporal_semantics.plain_series_first_collection_status, 'proven');
     assert.equal(receipt.temporal_semantics.plain_series_opening_status, 'not_proven');
+    // F-02: applicable_sources 由 ACTUAL 源 manifest 计算 —— 声明 contract 的 bundle
+    // 源必须出现在列表中（不是无条件 []），且验证路径会重读发射 manifest 交叉核验。
+    assert.deepEqual(receipt.provider_semantic_contract.applicable_sources, ['fixture']);
+    const verification = verifyRebuildReceiptAgainstOutput(bundle.emitDirectory, fs, {
+        validateReceipt: validateRebuildReceipt,
+    });
+    assert.deepEqual(verification, { valid: true, errors: [] });
+});
+
+test('rebuild: applicable_sources is recomputed from emitted manifests and tamper is REJECTED', t => {
+    const bundle = writeBundle(t, {
+        manifest: (rawPath, directory) => {
+            const manifestPath = writeHistoricalManifest(t, rawPath, directory);
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            manifest.provider_contract = {
+                contract_id: 'football-data-provider-contract/v1',
+                provider_id: 'football-data.co.uk',
+                applicable: true,
+                effective_from_season: '2019/20',
+                evidence_checked_at: '2026-08-09',
+            };
+            fs.writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`, 'utf8');
+            return manifestPath;
+        },
+    });
+    runRebuild({
+        bundle: bundle.directory,
+        candidates: bundle.candidatesPath,
+        emitDir: bundle.emitDirectory,
+        ingestedAt: INGESTED_AT,
+    });
+    const receiptPath = path.join(bundle.emitDirectory, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.provider_semantic_contract.applicable_sources = [];
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyRebuildReceiptAgainstOutput(bundle.emitDirectory, fs, {
+        validateReceipt: validateRebuildReceipt,
+    });
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('applicable_sources')));
 });
 
 test('rebuild: captured_at stays null and capture_time_status stays unknown on every observation', t => {

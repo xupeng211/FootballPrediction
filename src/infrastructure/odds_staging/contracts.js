@@ -18,6 +18,10 @@ const OPTIONAL_IDEMPOTENCY_FIELDS = Object.freeze([
     'capture_time_status',
     'source_quote_series',
     'kickoff_time_interpretation_evidence',
+    // M3-R2: provider 采集阶段是语义的一部分 —— 同一报价在 contract 声明与否两种
+    // 重建下的幂等键必须不同，否则 first_collection/closing 相位会被 exact-duplicate
+    // 合并而静默丢失（只有真实存在时才写入 payload，保持旧输出键不变）。
+    'provider_collection_phase',
 ]);
 
 const IDEMPOTENCY_FIELDS = Object.freeze([

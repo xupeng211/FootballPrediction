@@ -22,6 +22,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { OfflineStagingError } = require('../../../src/infrastructure/odds_staging/sourceManifest');
+const { resolveProviderContractApplicable } = require('../../../src/infrastructure/odds_staging/adapters');
 const {
     buildSemanticMatchIdentity,
     isStrictAbsoluteTimestamp,
@@ -840,7 +841,24 @@ function collectTemporalConsistencyErrors(facts, receipt) {
     if (receipt.provider_semantic_contract && receipt.provider_semantic_contract.contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
         errors.push(`provider_semantic_contract.contract_id ${receipt.provider_semantic_contract.contract_id} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
     }
+    collectSeriesDistributionErrors(facts, receipt, errors);
     return errors;
+}
+
+/**
+ * series_semantics_distribution is a pure projection of the facts: recompute it
+ * so a hand-edited distribution (e.g. closing 0 vs facts 27) fails closed
+ * exactly like the other receipt fields (Codex F-01).
+ */
+function collectSeriesDistributionErrors(facts, receipt, errors) {
+    const derivedDistribution = stableCanonicalize({
+        closing_observation_count: facts.closing_observation_count,
+        first_collection_observation_count: facts.first_collection_observation_count,
+        unknown_temporal_semantics_observation_count: facts.unknown_temporal_semantics_observation_count,
+    });
+    if (!deepStableEqual(derivedDistribution, stableCanonicalize(receipt.series_semantics_distribution))) {
+        errors.push('series_semantics_distribution recomputed from the observation facts does not match the receipt');
+    }
 }
 
 function collectPinnedIdentityErrors(entry, pinned) {
@@ -919,6 +937,41 @@ function collectCanonicalContractErrors(receipt, gitReader, sourceSpecs) {
 }
 
 /**
+ * M3-R2 (Codex F-02): provider_semantic_contract.applicable_sources 必须与 ACTUAL
+ * 发射的 normalized manifest 一致 —— 从每个 source 目录重读 manifest，重新判定
+ * provider contract 适用性（与 adapter 同一判定函数），与收据列表比对（fail closed）。
+ */
+function collectProviderContractApplicableSourceErrors(receipt, emitDirectory, fileSystem) {
+    const errors = [];
+    const declared = Array.isArray(receipt.provider_semantic_contract?.applicable_sources)
+        ? [...receipt.provider_semantic_contract.applicable_sources].sort()
+        : null;
+    if (declared === null) {
+        errors.push('receipt.provider_semantic_contract.applicable_sources missing');
+        return errors;
+    }
+    const recomputed = [];
+    for (const source of receipt.sources || []) {
+        const manifestPath = path.join(emitDirectory, source.id, 'source-manifest.normalized.json');
+        let manifest = null;
+        try {
+            manifest = JSON.parse(fileSystem.readFileSync(manifestPath, 'utf8'));
+        } catch {
+            errors.push(`source ${source.id}: missing or unparseable emitted normalized manifest for provider contract re-verification`);
+            continue;
+        }
+        if (resolveProviderContractApplicable(manifest)) {
+            recomputed.push(source.id);
+        }
+    }
+    recomputed.sort();
+    if (!deepStableEqual(recomputed, declared)) {
+        errors.push(`provider_semantic_contract.applicable_sources ${JSON.stringify(declared)} does not match the emitted normalized manifests (recomputed ${JSON.stringify(recomputed)})`);
+    }
+    return errors;
+}
+
+/**
  * GAP-02：收据 output-aware 自验证。dependencies.validateReceipt 必须由调用方注入
  * （主入口的 validateRebuildReceipt；避免本模块与主入口循环依赖）。
  * 重算：per-source 发射计数、population、linkage、observation facts、temporal
@@ -963,6 +1016,7 @@ function verifyRebuildReceiptAgainstOutput(emitDirectory, fileSystem, dependenci
     errors.push(...collectPopulationAndLinkageErrors(entries, receipt));
     const facts = computeObservationFacts(acceptedAll, quarantineAll);
     errors.push(...collectTemporalConsistencyErrors(facts, receipt));
+    errors.push(...collectProviderContractApplicableSourceErrors(receipt, emitDirectory, fileSystem));
     if (receipt.rebuild_mode === 'canonical_git_history') {
         try {
             const repositoryRoot = dependencies.repositoryRoot || path.resolve(__dirname, '../../..');

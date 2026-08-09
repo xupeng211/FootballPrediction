@@ -13,6 +13,7 @@ const {
     stableCanonicalize,
 } = require('./contracts');
 const { validateKickoffTimeInterpretation } = require('./footballDataIdentity');
+const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('./footballDataProviderContract');
 
 class OfflineStagingError extends Error {
     constructor(code, message) {
@@ -188,11 +189,13 @@ function appendProviderContractErrors(manifest, errors) {
         errors.push('provider_contract must be a plain object');
         return;
     }
-    if (typeof contract.contract_id !== 'string' || contract.contract_id === '') {
-        errors.push('provider_contract.contract_id must be a non-empty string');
+    // M3-R2 (Codex F-04): contract_id 必须与 committed 官方 contract 精确一致 ——
+    // 伪 manifest 不得用自声明 contract_id 冒用官方取证语义。
+    if (contract.contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
+        errors.push(`provider_contract.contract_id must be exactly ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
     }
-    if (typeof contract.provider_id !== 'string' || contract.provider_id === '') {
-        errors.push('provider_contract.provider_id must be a non-empty string');
+    if (contract.provider_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id) {
+        errors.push(`provider_contract.provider_id must be exactly ${FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id}`);
     }
     if (contract.applicable !== true) {
         errors.push('provider_contract.applicable must be true (fail closed: never claim applicability otherwise)');

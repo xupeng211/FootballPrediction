@@ -17,7 +17,7 @@ const {
     parseSeasonStartYear,
 } = require('../../src/infrastructure/odds_staging/footballDataProviderContract');
 const { adaptFootballDataCsv } = require('../../src/infrastructure/odds_staging/adapters');
-const { createCanonicalObservation } = require('../../src/infrastructure/odds_staging/contracts');
+const { buildIdempotencyKey, createCanonicalObservation } = require('../../src/infrastructure/odds_staging/contracts');
 const { validateSourceManifest } = require('../../src/infrastructure/odds_staging/sourceManifest');
 const { validateObservation } = require('../../src/infrastructure/odds_staging/validators');
 
@@ -262,6 +262,19 @@ test('manifest: a well-formed provider_contract block passes source manifest val
     assert.deepEqual(validateSourceManifest(manifest).errors, []);
 });
 
+test('manifest: a non-official contract_id is rejected and never gets the overlay (Codex F-04)', t => {
+    const manifest = contractManifest();
+    manifest.provider_contract = {
+        ...VALID_PROVIDER_CONTRACT_BLOCK,
+        contract_id: 'tampered-contract/v999',
+    };
+    const result = adapt(CONTRACT_CSV, manifest);
+    for (const observation of result.observations) {
+        assert.equal(observation.snapshot_type, 'unknown');
+        assert.ok(!Object.prototype.hasOwnProperty.call(observation, 'provider_collection_phase'));
+    }
+});
+
 test('manifest: provider_contract.applicable=false fails closed', t => {
     const manifest = {
         schema_version: 'odds-source-manifest/v1',
@@ -326,6 +339,49 @@ test('manifest: provider_contract missing required identity fields is rejected',
     const result = validateSourceManifest(manifest);
     assert.equal(result.valid, false);
     assert.ok(result.errors.some(error => error.includes('contract_id')));
+});
+
+// ---- idempotency (Codex F-03) ------------------------------------------------
+
+test('idempotency: provider_collection_phase is part of the idempotency key when present', t => {
+    const base = {
+        source_provider: 'football-data-csv',
+        source_url: 'git+repository://x',
+        source_match_id: 'm1',
+        competition: 'Premier League',
+        season: '2023/2024',
+        kickoff_at: '2023-08-05T14:00:00Z',
+        home_team: 'Alpha FC',
+        away_team: 'Beta FC',
+        bookmaker: 'Bet365',
+        bookmaker_source_id: 'B365',
+        market: '1X2',
+        selection: 'home',
+        line: null,
+        decimal_odds: 2.1,
+        snapshot_type: 'unknown',
+        source_observed_at: null,
+        captured_at: null,
+        source_timezone: 'unknown',
+        raw_sha256: 'a'.repeat(64),
+        raw_record_locator: 'csv:row=2:unit',
+        adapter: 'football-data-csv',
+        adapter_version: '1.3.0',
+    };
+    const noPhase = createCanonicalObservation({ ...base });
+    const firstPhase = createCanonicalObservation({ ...base, provider_collection_phase: FIRST_COLLECTION_PHASE });
+    const closingPhase = createCanonicalObservation({
+        ...base,
+        snapshot_type: 'closing',
+        provider_collection_phase: CLOSING_PHASE,
+    });
+    const keys = new Set([
+        buildIdempotencyKey(noPhase),
+        buildIdempotencyKey(firstPhase),
+        buildIdempotencyKey(closingPhase),
+    ]);
+    // 同一报价在三种语义下的键必须互不相同，否则 exact-duplicate 合并会静默丢失相位。
+    assert.equal(keys.size, 3);
 });
 
 // ---- observation validator --------------------------------------------------

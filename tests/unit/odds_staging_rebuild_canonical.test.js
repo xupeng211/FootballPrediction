@@ -781,6 +781,25 @@ test('temporal: hand-edited provider_contract_id is REJECTED by output-aware ver
     assert.ok(result.errors.some(error => error.includes('provider_contract_id') || error.includes('contract_id')));
 });
 
+test('temporal: hand-edited series_semantics_distribution is REJECTED by output-aware verification', t => {
+    // Codex F-01: the distribution is a pure projection of the facts; a tampered
+    // distribution (closing 0 vs facts 27) must fail even though facts/semantics
+    // still match the emitted output.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.series_semantics_distribution = {
+        closing_observation_count: 0,
+        first_collection_observation_count: 54,
+        unknown_temporal_semantics_observation_count: 0,
+    };
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('series_semantics_distribution')));
+});
+
 test('temporal: hand-edited readiness dimensions are REJECTED by output-aware verification', t => {
     const fixture = canonicalFixture(t);
     runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));

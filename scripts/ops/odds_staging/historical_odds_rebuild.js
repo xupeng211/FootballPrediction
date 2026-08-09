@@ -41,6 +41,7 @@ const {
     stableStringify,
 } = require('../../../src/infrastructure/odds_staging/contracts');
 const { emitDeterministicResult, loadCandidatesForRun, runOfflineStaging } = require('../../../src/infrastructure/odds_staging/pipeline');
+const { resolveProviderContractApplicable } = require('../../../src/infrastructure/odds_staging/adapters');
 const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('../../../src/infrastructure/odds_staging/footballDataProviderContract');
 const {
     CANONICAL_CANDIDATE_BASELINE,
@@ -417,6 +418,12 @@ function bindFrozenCandidates(candidatesArtifact) {
     }
 }
 
+function appendContractApplicableSource(source, manifest, applicableSources) {
+    if (resolveProviderContractApplicable(manifest)) {
+        applicableSources.push(source.id);
+    }
+}
+
 function buildCandidatesArtifactRecord(candidatesArtifact) {
     if (!candidatesArtifact) {
         return null;
@@ -456,9 +463,14 @@ function runRebuild(options = {}, dependencies = {}) {
     const allQuarantineRecords = [];
     const createdDirectories = [];
     const receiptSources = [];
+    // M3-R2 (Codex F-02): applicable_sources 由 ACTUAL 源 manifest 计算 —— canonical
+    // 模式恒为 pinned 三源；generic 模式只有声明 provider_contract 的源才进入列表
+    // （无声明 → []），绝不从发射观测倒推，也绝不无条件使用官方契约。
+    const providerContractApplicableSources = [];
     try {
         for (const source of resolved.sources) {
             const manifest = loadManifestJson(source.manifest, source.id, fileSystem);
+            appendContractApplicableSource(source, manifest, providerContractApplicableSources);
             const result = runOfflineStaging(
                 {
                     sourcePath: source.csv,
@@ -519,7 +531,7 @@ function runRebuild(options = {}, dependencies = {}) {
                 exact_capture_timestamp_available: FOOTBALL_DATA_PROVIDER_CONTRACT.exact_capture_timestamp_available,
                 applicable_sources: resolved.canonical
                     ? resolved.canonicalContract.sources.map(source => source.id).sort()
-                    : [],
+                    : providerContractApplicableSources.sort(),
             },
             series_semantics_distribution: seriesSemanticsDistribution,
             evaluation_readiness: {
