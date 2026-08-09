@@ -81,8 +81,11 @@
   NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION（closing 语义 YES / exact timestamp NO /
   strict decision-time NO / benchmark YES）。详见 docs/PROJECT_STATUS.md M3-R2 节。
 - **VALUE_MVP-1 — offline probability benchmark: prematch baseline vs closing 1X2 market
-  （IMPLEMENTED，Draft PR 已建立待 Owner 验收；VALUE_MVP_1_STATUS=
-  IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动 Mark Ready / Merge / 开始下一步）**：
+  （IMPLEMENTED，Draft PR #1831 已建立待 Owner 验收；VALUE_MVP_1_STATUS=
+  IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；final code `1c53a00b7`（门禁两轮修复后）；
+  门禁闭环节点：PR body 已按仓库模板对齐（Task type=source-code），本地 gate 预验证
+  PASS，待自然 synchronize Production Gate exact-head 通过；不得自动 Mark Ready /
+  Merge / 开始下一步）**：
   回答 "a simple football-only prematch model 是否包含与 provider 定义 closing 1X2 market
   竞争力相当的可预测信息"；offline probability benchmark evaluation（非 executable
   betting backtest）；zero DB / zero network / zero new data；13 个 football-only feature

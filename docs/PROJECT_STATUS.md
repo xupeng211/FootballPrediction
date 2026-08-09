@@ -307,7 +307,7 @@ legacy-writer execution is authorized.
 
 ## VALUE_MVP-1 — Offline probability benchmark: prematch baseline vs closing 1X2 market
 
-- **VALUE_MVP_1_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE（Draft PR 已建立待 Owner 验收；
+- **VALUE_MVP_1_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE（Draft PR #1831 已建立待 Owner 验收；
   M3_R2_STATUS=COMPLETE；不得自动 Mark Ready / Merge / 开始下一步）** — 回答业务问题：
   "Does a simple football-only prematch model contain predictive information competitive
   with the provider-defined closing 1X2 market?"（mandate VALUE_MVP-1，evidence 目录
@@ -341,8 +341,9 @@ legacy-writer execution is authorized.
   环境指纹与收敛记录交叉核验）；3 个 tamper 探针（receipt pooled 块翻转、summary.md
   摘要篡改、coordinated CI 伪造）REJECTED；Codex Round 1（§69，pre-execution）
   P0=P1=P2=0、Round 2（§70，post-OOS）P0=P1=P2=0；84 个 value_mvp 单元测试 +
-  全套 2700 收集通过；ruff/格式干净。最终代码（7f21c4f5）重跑真实 OOS 与
-  Round-1 证据数值逐位一致（protocol 未变，无 §90 语义变更）；run-receipt v2
+  全套 2700 收集通过；ruff/格式干净。最终代码（1c53a00b7；经 cc96af12e 收据
+  拆分、1c53a00b7 门禁 mypy type-clean 两轮修复，业务输出与 7f21c4f5 逐位一致）
+  重跑真实 OOS 与 Round-1 证据数值逐位一致（protocol 未变，无 §90 语义变更）；run-receipt v2
   记录环境指纹（python 3.11.15 / sklearn 1.8.0 / numpy 2.3.5 / scipy 1.16.3）
   与 lbfgs 收敛状态（fold1 31/2000、fold2 21/2000，converged=True）。
 - **入口**：`scripts/model_training/value_mvp_baseline_vs_closing.py`（internal research
@@ -350,6 +351,15 @@ legacy-writer execution is authorized.
   permanent）。
 - 未改变：no-write 默认、无 DB/网络/训练/回测执行、无 migration、M3 core
   （`src/infrastructure/odds_staging/*`）未修改；README Backtest 行未升级为 established。
+- **门禁状态（2026-08-10 更新）**：最终代码修订 `1c53a00b7a9c8533470af0fa1b26d1a2b33ecb78`
+  （经 `cc96af12e` 收据拆分、`1c53a00b7` 门禁 mypy type-clean 两轮修复，业务输出逐位一致）。
+  三次自然 exact-head Production Gate：31333103854（Gatekeeper >800 行）、31333795940
+  （static-quality mypy 19 NEW）、31334605515（AI Workflow Gate PR body 6 项模板错误）。
+  PR #1831 body 已按仓库模板对齐（11 个必需 section + `| Task type | source-code |`），
+  本地 ai_workflow_gate.py --block-matrix 预验证 PASS；待下一次自然 pull_request
+  synchronize gate 验证 exact head 通过后置
+  `VALUE_MVP_1_STATUS=IMPLEMENTATION_VALIDATED / EXACT_HEAD_PRODUCTION_GATE=GREEN`，
+  仍为 Draft、不 Merge、不 Mark Ready（等待 Owner + ChatGPT 独立验收）。
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
