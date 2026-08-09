@@ -271,6 +271,12 @@ function createCanonicalObservation(fields = {}) {
     if (captureTimeStatus !== null) {
         observation.capture_time_status = captureTimeStatus;
     }
+    // M3-R2: provider 声明的采集阶段（first_collection_after_market_open / closing）。
+    // 可选字段只在真实存在时写入；它是语义标签，不是时间戳。
+    const providerCollectionPhase = nullableText(fields.provider_collection_phase);
+    if (providerCollectionPhase !== null) {
+        observation.provider_collection_phase = providerCollectionPhase;
+    }
     const interpretationEvidence = stableCanonicalize(fields.kickoff_time_interpretation_evidence);
     if (interpretationEvidence !== null) {
         observation.kickoff_time_interpretation_evidence = interpretationEvidence;

@@ -478,7 +478,7 @@ test('聚合列不是博彩公司；不完整列组 quarantine；全空值组不
 });
 
 test('adapter 版本纪律：旧 1.0.0 manifest 被明确拒绝，不静默降级', t => {
-    assert.equal(ADAPTER_VERSIONS['football-data-csv'], '1.2.0');
+    assert.equal(ADAPTER_VERSIONS['football-data-csv'], '1.3.0');
     const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, {
         adapter_version: '1.0.0',
     });
@@ -491,7 +491,7 @@ test('adapter 版本纪律：旧 1.0.0 manifest 被明确拒绝，不静默降�
                 candidates: [],
                 ingestedAt: FIXED_INGESTED_AT,
             }),
-        /adapter_version 1\.0\.0 is not supported.*football-data-csv@1\.2\.0/
+        /adapter_version 1\.0\.0 is not supported.*football-data-csv@1\.3\.0/
     );
 });
 

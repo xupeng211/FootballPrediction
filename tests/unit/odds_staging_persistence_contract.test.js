@@ -25,7 +25,7 @@ function resultFixture() {
         home_team: 'Manchester United', away_team: 'Fulham', bookmaker: 'Bet365', bookmaker_source_id: 'B365',
         market: '1X2', selection: 'home', decimal_odds: 2.1, snapshot_type: 'unknown', source_observed_at: null,
         captured_at: null, capture_time_status: 'unknown', source_timezone: 'unknown', raw_sha256: 'a'.repeat(64),
-        raw_record_locator: 'csv:row=2', adapter: 'football-data-csv', adapter_version: '1.2.0',
+        raw_record_locator: 'csv:row=2', adapter: 'football-data-csv', adapter_version: '1.3.0',
         extraction_method: 'football_data_explicit_column', provenance_status: 'declared', ingested_at: '2026-07-22T00:00:00Z',
         match_link: { status: 'matched', method: 'historical_identity', candidate_ids: ['candidate-1'], matched_id: 'candidate-1', evidence: {} },
         kickoff_time_interpretation_evidence: { timezone: 'Europe/London', method: 'source_local_calendar_time' },

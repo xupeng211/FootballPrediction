@@ -267,7 +267,7 @@ test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
             kickoff_time_interpretation: { status: 'derived' },
             acquisition_mode: 'historical_git_recovery',
             adapter: 'football-data-csv',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             source_timezone: 'unknown',
         })
     );
@@ -277,7 +277,7 @@ test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
         !isInterpretationApplicable({
             acquisition_mode: 'historical_git_recovery',
             adapter: 'football-data-csv',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             source_timezone: 'unknown',
         })
     );
@@ -287,7 +287,7 @@ test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
             kickoff_time_interpretation: {},
             acquisition_mode: 'historical_git_recovery',
             adapter: 'football-data-csv',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             source_timezone: 'UTC',
         })
     );
@@ -297,7 +297,7 @@ test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
             kickoff_time_interpretation: {},
             acquisition_mode: 'live',
             adapter: 'football-data-csv',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             source_timezone: 'unknown',
         })
     );
@@ -307,7 +307,7 @@ test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
             kickoff_time_interpretation: {},
             acquisition_mode: 'historical_git_recovery',
             adapter: 'oddsportal-explicit-envelope-html',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             source_timezone: 'unknown',
         })
     );
@@ -327,7 +327,7 @@ test('manifest 实际 scope 在 alias 前逐行生效', () => {
     const manifest = {
         acquisition_mode: 'historical_git_recovery',
         adapter: 'football-data-csv',
-        adapter_version: '1.2.0',
+        adapter_version: '1.3.0',
         source_timezone: 'unknown',
         kickoff_time_interpretation: validInterpretation({ allowed_seasons: ['2022/2023'] }),
     };

@@ -13,18 +13,29 @@ const {
     parseAndValidateDate,
     validateKickoffTimeInterpretation,
 } = require('./footballDataIdentity');
+const { applyProviderContractToGroup } = require('./footballDataProviderContract');
 
 const ADAPTER_VERSIONS = Object.freeze({
-    'football-data-csv': '1.2.0',
+    // 1.3.0: M3-R2 —— 对 manifest 声明 provider contract 适用的 canonical 源，
+    // 按 Football-Data 官方文档（Level A）对 C 系列列应用 snapshot_type=closing、
+    // 对第一组列应用 provider_collection_phase=first_collection_after_market_open；
+    // 无 contract 的 generic 源保持全部 unknown。exact timestamps 仍不可得。
+    'football-data-csv': '1.3.0',
     'oddsportal-explicit-envelope-html': '1.0.0',
 });
 
 const EXPLICIT_HTML_SCHEMA_VERSION = 'oddsportal-explicit-envelope-html/v1';
 
 // Football-Data 历史 CSV 的真实逐公司 1X2 列：普通列与 C 变体列是同一公司的两个
-// source-native quote series，来源没有声明各自的观察时间，因此都保持 snapshot_type=unknown；
-// 禁止把普通列解释为 opening、把 C 列解释为 closing。聚合列（Max*/Avg*/BbAv*/BbMx*）与
-// 交易所列（BFE*）没有单一博彩公司报价身份，不进入 mapping。
+// source-native quote series。M3-R1 起没有采集证据，全部保持 snapshot_type=unknown，
+// 禁止把普通列解释为 opening、把 C 列解释为 closing。
+// M3-R2：对 manifest 声明 provider contract 适用的 canonical 源，官方文档（Level A，
+// downloadm.php + notes.txt，2026-08-09 取证）证明：
+//   - 第一组 = market opening 之后按 fixtures 页时间采集（first_collection_after_market_open，
+//     不是 opening price）→ snapshot_type 保持 unknown + provider_collection_phase 标注；
+//   - C 系列 = provider-defined closing odds（notes.txt: B365CH = closing Bet365 home win odds）
+//     → snapshot_type=closing + provider_collection_phase=closing。
+// 聚合列（Max*/Avg*/BbAv*/BbMx*）与交易所列（BFE*）没有单一博彩公司报价身份，不进入 mapping。
 const HISTORICAL_BOOKMAKER_COLUMN_FAMILIES = Object.freeze([
     { key: 'bet365', bookmaker: 'Bet365', source_id: 'B365', prefix: 'B365', snake: 'b365' },
     { key: 'bwin', bookmaker: 'Bwin', source_id: 'BW', prefix: 'BW', snake: 'bw' },
@@ -398,6 +409,19 @@ function buildAdapterQuarantine(locator, reasons, evidence = {}) {
     };
 }
 
+/**
+ * M3-R2: 仅当 manifest 声明 provider contract 适用且该行 season 在 contract
+ * 范围内时应用语义 overlay（C → closing；第一组 → first_collection_after_market_open）。
+ * 无 overlay → 保持 group 自身 snapshot_type（unknown）+ 无 phase。
+ */
+function resolveEffectiveCsvGroup(group, identity, providerContractApplicable) {
+    const contractOverlay = applyProviderContractToGroup(group, {
+        applicable: providerContractApplicable,
+        season: identity.season,
+    });
+    return contractOverlay ? { ...group, ...contractOverlay } : group;
+}
+
 function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber) {
     const obs = {
         ...identity,
@@ -414,11 +438,30 @@ function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber)
         extraction_method: `explicit_csv_columns:${group.id}`,
         adapter_quarantine_reasons: identity.identity_reason ? [identity.identity_reason] : [],
     };
+    // M3-R2: provider contract phase（first_collection_after_market_open / closing）只在该
+    // 源 manifest 声明 provider contract 适用且 season 在范围内时存在；它表达 provider
+    // 声明的采集阶段，绝不含任何时间戳语义。
+    if (group.provider_collection_phase) {
+        obs.provider_collection_phase = group.provider_collection_phase;
+    }
     // Carry kickoff_time_interpretation if present (for audit trail in observations)
     if (identity.kickoff_time_interpretation) {
         obs.kickoff_time_interpretation_evidence = identity.kickoff_time_interpretation;
     }
     return obs;
+}
+
+/**
+ * 该源是否声明 Football-Data provider contract 适用（canonical 恢复源由
+ * buildCanonicalSourceManifest 写入；generic bundle 没有该块 → fail closed）。
+ * provider_id 必须与 committed contract 精确一致，防止伪 manifest 冒用。
+ */
+function resolveProviderContractApplicable(manifest) {
+    const contract = manifest && manifest.provider_contract;
+    if (!contract || typeof contract !== 'object') {
+        return false;
+    }
+    return contract.applicable === true && contract.provider_id === 'football-data.co.uk';
 }
 
 function adaptFootballDataCsv(rawText, context = {}) {
@@ -444,6 +487,7 @@ function adaptFootballDataCsv(rawText, context = {}) {
 
     const observations = [];
     const quarantine = [];
+    const providerContractApplicable = resolveProviderContractApplicable(context.manifest || {});
     for (const entry of parsed.rows) {
         const identity = buildCsvIdentity(entry.row, context.manifest || {});
         if (identity.source_match_id_conflict) {
@@ -501,11 +545,13 @@ function adaptFootballDataCsv(rawText, context = {}) {
                 continue;
             }
 
+            const effectiveGroup = resolveEffectiveCsvGroup(group, identity, providerContractApplicable);
+
             for (const selection of ['home', 'draw', 'away']) {
                 observations.push(
                     buildCsvObservation(
                         identity,
-                        group,
+                        effectiveGroup,
                         selection,
                         parseDecimal(entry.row[group.columns[selection]]),
                         entry.row_number

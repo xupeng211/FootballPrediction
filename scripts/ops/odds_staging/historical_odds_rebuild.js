@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+/* eslint-disable max-lines -- 有界重建 CLI（usage/解析/发射/收据 v3 schema 验证器/出口代码）
+   是单一 audit gate：全部验证路径保留在同文件以便一位评审者端到端追踪 fail-closed 行为。 */
 // lifecycle: permanent；M3-R1 有界重建入口：把多个 historical_git_recovery 来源
 // 一次性确定性重建为 repo-external 发射输出 + 重建收据。
 //
@@ -39,6 +41,7 @@ const {
     stableStringify,
 } = require('../../../src/infrastructure/odds_staging/contracts');
 const { emitDeterministicResult, loadCandidatesForRun, runOfflineStaging } = require('../../../src/infrastructure/odds_staging/pipeline');
+const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('../../../src/infrastructure/odds_staging/footballDataProviderContract');
 const {
     CANONICAL_CANDIDATE_BASELINE,
     CANONICAL_GIT_REPOSITORY,
@@ -63,7 +66,11 @@ const {
 } = require('./historical_odds_rebuild_canonical');
 
 const BUNDLE_SCHEMA_VERSION = 'm3-historical-odds-rebuild-bundle/v1';
-const RECEIPT_SCHEMA_VERSION = 'm3-historical-odds-rebuild-receipt/v2';
+// v3 (M3-R2): provider_semantic_contract、series_semantics_distribution、
+// 多维度 readiness（closing_odds_semantics_ready / exact timestamp / strict
+// decision-time / closing_market_benchmark_semantics_ready）加入收据 —— 结构变化，
+// 因此 bump，不沿用 v2。
+const RECEIPT_SCHEMA_VERSION = 'm3-historical-odds-rebuild-receipt/v3';
 
 const EXIT_CODES = Object.freeze({
     success: 0,
@@ -476,6 +483,11 @@ function runRebuild(options = {}, dependencies = {}) {
         const temporalSemantics = buildTemporalSemantics(observationFacts);
         const readiness = classifyTemporalEvaluationReadiness(observationFacts, temporalSemantics);
         const rebuildMode = resolved.canonical ? 'canonical_git_history' : 'generic_external_bundle';
+        const seriesSemanticsDistribution = stableCanonicalize({
+            closing_observation_count: observationFacts.closing_observation_count,
+            first_collection_observation_count: observationFacts.first_collection_observation_count,
+            unknown_temporal_semantics_observation_count: observationFacts.unknown_temporal_semantics_observation_count,
+        });
         const receipt = stableCanonicalize({
             schema_version: RECEIPT_SCHEMA_VERSION,
             rebuild_mode: rebuildMode,
@@ -495,8 +507,29 @@ function runRebuild(options = {}, dependencies = {}) {
                 default_mode: 'dry_run_no_write',
             },
             canonical_source_contract: resolved.canonicalContract,
+            // M3-R2: 机器可读 provider semantic contract 追溯（runtime 不联网；
+            // official_source_urls 只作为 provenance metadata 存在于 committed contract）。
+            provider_semantic_contract: {
+                contract_id: FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id,
+                provider_id: FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id,
+                evidence_type: FOOTBALL_DATA_PROVIDER_CONTRACT.evidence_type,
+                evidence_checked_at: FOOTBALL_DATA_PROVIDER_CONTRACT.evidence_checked_at,
+                effective_from_season: FOOTBALL_DATA_PROVIDER_CONTRACT.effective_from_season,
+                exact_observation_timestamp_available: FOOTBALL_DATA_PROVIDER_CONTRACT.exact_observation_timestamp_available,
+                exact_capture_timestamp_available: FOOTBALL_DATA_PROVIDER_CONTRACT.exact_capture_timestamp_available,
+                applicable_sources: resolved.canonical
+                    ? resolved.canonicalContract.sources.map(source => source.id).sort()
+                    : [],
+            },
+            series_semantics_distribution: seriesSemanticsDistribution,
             evaluation_readiness: {
                 temporal_value_evaluation: readiness.temporal_value_evaluation,
+                closing_odds_semantics_ready: readiness.closing_odds_semantics_ready,
+                first_collection_semantics_ready: readiness.first_collection_semantics_ready,
+                exact_observation_timestamp_ready: readiness.exact_observation_timestamp_ready,
+                exact_capture_timestamp_ready: readiness.exact_capture_timestamp_ready,
+                strict_decision_time_value_evaluation_ready: readiness.strict_decision_time_value_evaluation_ready,
+                closing_market_benchmark_semantics_ready: readiness.closing_market_benchmark_semantics_ready,
                 reasons: readiness.reasons,
                 observation_facts: observationFacts,
             },
@@ -589,7 +622,7 @@ function validateReceiptBoundary(boundary) {
 
 function validateReceiptObservationFacts(facts) {
     const errors = [];
-    for (const field of ['observation_count', 'accepted_count', 'quarantine_count', 'snapshot_type_unknown_count', 'known_snapshot_type_count', 'known_source_observed_at_count', 'known_captured_at_count', 'capture_time_status_unknown_count']) {
+    for (const field of ['observation_count', 'accepted_count', 'quarantine_count', 'snapshot_type_unknown_count', 'known_snapshot_type_count', 'known_source_observed_at_count', 'known_captured_at_count', 'capture_time_status_unknown_count', 'closing_observation_count', 'first_collection_observation_count', 'unknown_temporal_semantics_observation_count']) {
         if (!Number.isSafeInteger(facts[field]) || facts[field] < 0) {
             errors.push(`receipt.evaluation_readiness.observation_facts.${field} must be a non-negative safe integer`);
         }
@@ -597,8 +630,56 @@ function validateReceiptObservationFacts(facts) {
     if (Number.isSafeInteger(facts.accepted_count) && Number.isSafeInteger(facts.quarantine_count) && Number.isSafeInteger(facts.observation_count) && facts.accepted_count + facts.quarantine_count !== facts.observation_count) {
         errors.push('receipt.evaluation_readiness.observation_facts: observation_count must equal accepted_count + quarantine_count');
     }
+    if (Number.isSafeInteger(facts.closing_observation_count) && Number.isSafeInteger(facts.first_collection_observation_count) && Number.isSafeInteger(facts.unknown_temporal_semantics_observation_count) && Number.isSafeInteger(facts.observation_count) && facts.closing_observation_count + facts.first_collection_observation_count + facts.unknown_temporal_semantics_observation_count !== facts.observation_count) {
+        errors.push('receipt.evaluation_readiness.observation_facts: closing + first_collection + unknown_temporal_semantics must equal observation_count');
+    }
     return errors;
 }
+
+function validateReceiptProviderSemanticContract(contract) {
+    const errors = [];
+    if (!contract || typeof contract !== 'object') {
+        return ['receipt.provider_semantic_contract must be a plain object'];
+    }
+    for (const field of ['contract_id', 'provider_id', 'evidence_type', 'evidence_checked_at', 'effective_from_season']) {
+        if (typeof contract[field] !== 'string' || contract[field] === '') {
+            errors.push(`receipt.provider_semantic_contract.${field} must be a non-empty string`);
+        }
+    }
+    for (const field of ['exact_observation_timestamp_available', 'exact_capture_timestamp_available']) {
+        if (contract[field] !== false) {
+            errors.push(`receipt.provider_semantic_contract.${field} must be false`);
+        }
+    }
+    if (!Array.isArray(contract.applicable_sources)) {
+        errors.push('receipt.provider_semantic_contract.applicable_sources must be an array');
+    } else if (contract.applicable_sources.some(source => typeof source !== 'string' || source === '')) {
+        errors.push('receipt.provider_semantic_contract.applicable_sources must contain non-empty strings');
+    }
+    return errors;
+}
+
+function validateReceiptSeriesSemanticsDistribution(distribution) {
+    const errors = [];
+    if (!distribution || typeof distribution !== 'object' || Array.isArray(distribution)) {
+        return ['receipt.series_semantics_distribution must be a plain object'];
+    }
+    for (const field of ['closing_observation_count', 'first_collection_observation_count', 'unknown_temporal_semantics_observation_count']) {
+        if (!Number.isSafeInteger(distribution[field]) || distribution[field] < 0) {
+            errors.push(`receipt.series_semantics_distribution.${field} must be a non-negative safe integer`);
+        }
+    }
+    return errors;
+}
+
+const TEMPORAL_READINESS_DIMENSIONS = Object.freeze([
+    'closing_odds_semantics_ready',
+    'first_collection_semantics_ready',
+    'exact_observation_timestamp_ready',
+    'exact_capture_timestamp_ready',
+    'strict_decision_time_value_evaluation_ready',
+    'closing_market_benchmark_semantics_ready',
+]);
 
 function validateReceiptReadiness(evaluationReadiness) {
     const errors = [];
@@ -608,6 +689,12 @@ function validateReceiptReadiness(evaluationReadiness) {
     const value = evaluationReadiness.temporal_value_evaluation;
     if (value !== TEMPORAL_READINESS_NOT_READY && value !== TEMPORAL_READINESS_READY) {
         errors.push(`receipt.evaluation_readiness.temporal_value_evaluation must be one of ${TEMPORAL_READINESS_NOT_READY}, ${TEMPORAL_READINESS_READY}`);
+    }
+    for (const field of TEMPORAL_READINESS_DIMENSIONS) {
+        const dimensionValue = evaluationReadiness[field];
+        if (dimensionValue !== 'YES' && dimensionValue !== 'NO') {
+            errors.push(`receipt.evaluation_readiness.${field} must be one of YES, NO`);
+        }
     }
     if (!Array.isArray(evaluationReadiness.reasons) || evaluationReadiness.reasons.some(reason => typeof reason !== 'string' || reason === '')) {
         errors.push('receipt.evaluation_readiness.reasons must be an array of non-empty strings');
@@ -633,10 +720,13 @@ function validateReceiptSemantics(semantics) {
             errors.push(`receipt.temporal_semantics.${field} must be one of unknown, known, mixed`);
         }
     }
-    for (const field of ['plain_series_opening_status', 'c_series_closing_status']) {
+    for (const field of ['plain_series_opening_status', 'c_series_closing_status', 'plain_series_first_collection_status']) {
         if (!['not_proven', 'proven'].includes(semantics[field])) {
             errors.push(`receipt.temporal_semantics.${field} must be one of not_proven, proven`);
         }
+    }
+    if (typeof semantics.provider_contract_id !== 'string' || semantics.provider_contract_id === '') {
+        errors.push('receipt.temporal_semantics.provider_contract_id must be a non-empty string');
     }
     return errors;
 }
@@ -749,6 +839,8 @@ function validateRebuildReceipt(receipt) {
     errors.push(...validateReceiptBoundary(receipt.boundary));
     errors.push(...validateReceiptRebuildStatus(receipt.rebuild_status, receipt));
     errors.push(...validateReceiptReadiness(receipt.evaluation_readiness));
+    errors.push(...validateReceiptProviderSemanticContract(receipt.provider_semantic_contract));
+    errors.push(...validateReceiptSeriesSemanticsDistribution(receipt.series_semantics_distribution));
     errors.push(...validateReceiptSemantics(receipt.temporal_semantics));
     errors.push(...validateReceiptCanonicalContract(receipt.canonical_source_contract, receipt.rebuild_mode));
     return { valid: errors.length === 0, errors };

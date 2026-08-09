@@ -1,5 +1,8 @@
 'use strict';
 
+/* eslint-disable max-lines -- canonical git 恢复、temporal facts、readiness classifier 与
+   output-aware 收据验证是单一 audit gate：同文件保留全部 fail-closed 路径以便一位评审者
+   端到端追踪；复杂度已通过 helper 抽取控制在 15 以内。 */
 // lifecycle: permanent；M3-R1 canonical 恢复 + temporal contract 辅助模块
 // （historical_odds_rebuild.js 的 sibling 模块：把 canonical git 恢复、观察级
 // temporal facts、fail-closed readiness classifier 与 output-aware 收据验证
@@ -25,6 +28,21 @@ const {
     stableCanonicalize,
     stableStringify,
 } = require('../../../src/infrastructure/odds_staging/contracts');
+const {
+    CLOSING_PHASE,
+    FIRST_COLLECTION_PHASE,
+    FOOTBALL_DATA_PROVIDER_CONTRACT,
+} = require('../../../src/infrastructure/odds_staging/footballDataProviderContract');
+
+// M3-R2: canonical 源的 Football-Data official provider contract 声明（写入 manifest）。
+// evidence_checked_at 记录官方文档取证日期；runtime 不联网（contract 是 committed 语义来源）。
+const CANONICAL_PROVIDER_CONTRACT = Object.freeze({
+    contract_id: FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id,
+    provider_id: FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id,
+    applicable: true,
+    effective_from_season: FOOTBALL_DATA_PROVIDER_CONTRACT.effective_from_season,
+    evidence_checked_at: FOOTBALL_DATA_PROVIDER_CONTRACT.evidence_checked_at,
+});
 
 // M3-R1 canonical source identities（来自 current main 的不可变 Git 对象，已逐一核验：
 // rev-parse commit:path == expectedBlobSha，字节数与行数与历史审计证据一致）。
@@ -208,10 +226,13 @@ function buildCanonicalSourceManifest(spec, rawPath, ingestedAt, commitTimestamp
         raw_size_bytes: rawSizeBytes,
         raw_sha256: rawSha256,
         adapter: 'football-data-csv',
-        adapter_version: '1.2.0',
+        adapter_version: '1.3.0',
         provenance_status: 'declared',
         upstream_provenance_status: 'unverified',
         license_status: 'unverified',
+        // M3-R2: 官方 provider contract 适用声明。adapter 只在存在本块且 applicable=true 时
+        // 应用语义升级（C → closing；第一组 → first_collection_after_market_open）。
+        provider_contract: { ...CANONICAL_PROVIDER_CONTRACT },
         repository_provenance: {
             repository: CANONICAL_GIT_REPOSITORY,
             commit_sha: spec.sourceCommit,
@@ -415,51 +436,87 @@ function classifyLinkage(entries) {
  * 已证实的 snapshot 语义，按 snapshot_type unknown 计数（除非其 parsed fields
  * 另有陈述）。真实数据下该组合给出 38,832 / 0 / 0（全部 unknown）。
  */
+function countProviderCollectionPhase(value) {
+    return value === CLOSING_PHASE ? 'closing' : value === FIRST_COLLECTION_PHASE ? 'first_collection' : 'unknown';
+}
+
+function createFactCounters() {
+    return {
+        snapshotTypeUnknownCount: 0,
+        knownSnapshotTypeCount: 0,
+        knownSourceObservedAtCount: 0,
+        knownCapturedAtCount: 0,
+        captureTimeStatusUnknownCount: 0,
+        // M3-R2: provider collection phase 分布（从 ACTUAL 发射的观测计算，绝不硬编码）。
+        closingSemanticsCount: 0,
+        firstCollectionSemanticsCount: 0,
+        unknownTemporalSemanticsCount: 0,
+    };
+}
+
+function accumulateObservationFactCounts(counters, snapshotType, sourceObservedAt, capturedAt, captureTimeStatus, providerCollectionPhase) {
+    // Fail-closed: a missing/null snapshot_type counts as unknown — it must
+    // never be counted as neither known nor unknown (which would under-count
+    // unknowns and let the readiness classifier be bypassed).
+    if (snapshotType && snapshotType !== 'unknown') {
+        counters.knownSnapshotTypeCount += 1;
+    } else {
+        counters.snapshotTypeUnknownCount += 1;
+    }
+    if (sourceObservedAt) {
+        counters.knownSourceObservedAtCount += 1;
+    }
+    if (capturedAt) {
+        counters.knownCapturedAtCount += 1;
+    }
+    if (captureTimeStatus === 'unknown') {
+        counters.captureTimeStatusUnknownCount += 1;
+    }
+    const phaseBucket = countProviderCollectionPhase(providerCollectionPhase);
+    if (phaseBucket === 'closing') {
+        counters.closingSemanticsCount += 1;
+    } else if (phaseBucket === 'first_collection') {
+        counters.firstCollectionSemanticsCount += 1;
+    } else {
+        counters.unknownTemporalSemanticsCount += 1;
+    }
+}
+
 function computeObservationFacts(acceptedObservations, quarantineRecords) {
-    let snapshotTypeUnknownCount = 0;
-    let knownSnapshotTypeCount = 0;
-    let knownSourceObservedAtCount = 0;
-    let knownCapturedAtCount = 0;
-    let captureTimeStatusUnknownCount = 0;
+    const counters = createFactCounters();
     for (const observation of acceptedObservations) {
-        // Fail-closed: a missing/null snapshot_type counts as unknown — it must
-        // never be counted as neither known nor unknown (which would under-count
-        // unknowns and let the readiness classifier be bypassed).
-        if (observation.snapshot_type && observation.snapshot_type !== 'unknown') {
-            knownSnapshotTypeCount += 1;
-        } else {
-            snapshotTypeUnknownCount += 1;
-        }
-        if (observation.source_observed_at) {
-            knownSourceObservedAtCount += 1;
-        }
-        if (observation.captured_at) {
-            knownCapturedAtCount += 1;
-        }
-        if (observation.capture_time_status === 'unknown') {
-            captureTimeStatusUnknownCount += 1;
-        }
+        accumulateObservationFactCounts(
+            counters,
+            observation.snapshot_type,
+            observation.source_observed_at,
+            observation.captured_at,
+            observation.capture_time_status,
+            observation.provider_collection_phase
+        );
     }
     for (const record of quarantineRecords) {
         const parsedFields = record.evidence?.parsed_fields || {};
         // Fail-closed: only a genuinely proven snapshot statement in the parsed
         // fields counts as known; absent or 'unknown' stays unknown.
-        const parsedSnapshotType = parsedFields.snapshot_type;
-        if (parsedSnapshotType && parsedSnapshotType !== 'unknown') {
-            knownSnapshotTypeCount += 1;
-        } else {
-            snapshotTypeUnknownCount += 1;
-        }
-        if (parsedFields.source_observed_at) {
-            knownSourceObservedAtCount += 1;
-        }
-        if (parsedFields.captured_at) {
-            knownCapturedAtCount += 1;
-        }
-        if (parsedFields.capture_time_status === 'unknown') {
-            captureTimeStatusUnknownCount += 1;
-        }
+        accumulateObservationFactCounts(
+            counters,
+            parsedFields.snapshot_type,
+            parsedFields.source_observed_at,
+            parsedFields.captured_at,
+            parsedFields.capture_time_status,
+            parsedFields.provider_collection_phase
+        );
     }
+    const {
+        snapshotTypeUnknownCount,
+        knownSnapshotTypeCount,
+        knownSourceObservedAtCount,
+        knownCapturedAtCount,
+        captureTimeStatusUnknownCount,
+        closingSemanticsCount,
+        firstCollectionSemanticsCount,
+        unknownTemporalSemanticsCount,
+    } = counters;
     return stableCanonicalize({
         observation_count: acceptedObservations.length + quarantineRecords.length,
         accepted_count: acceptedObservations.length,
@@ -469,14 +526,19 @@ function computeObservationFacts(acceptedObservations, quarantineRecords) {
         known_source_observed_at_count: knownSourceObservedAtCount,
         known_captured_at_count: knownCapturedAtCount,
         capture_time_status_unknown_count: captureTimeStatusUnknownCount,
+        closing_observation_count: closingSemanticsCount,
+        first_collection_observation_count: firstCollectionSemanticsCount,
+        unknown_temporal_semantics_observation_count: unknownTemporalSemanticsCount,
     });
 }
 
 /**
  * 从 observation facts 推导 machine-readable temporal semantics。三个时序字段
  * 都是 facts 的纯函数：全部 unknown → 'unknown'；全部 known → 'known'；
- * 部分 known → 'mixed'。plain/C 的 opening/closing 状态是 provenance 证据的
- * 结论（当前无任何捕获契约证据，一律 not_proven），不是 facts 的函数。
+ * 部分 known → 'mixed'。
+ * M3-R2: plain opening 状态保持 not_proven（provider 从未把第一组称为 opening odds）；
+ * C closing 与第一组 first-collection 状态是 facts 的函数 —— 只有实际发射的观测携带
+ * 对应 provider_collection_phase 才算 proven（fail closed：无观测即不证明）。
  */
 function buildTemporalSemantics(observationFacts) {
     return stableCanonicalize({
@@ -484,7 +546,11 @@ function buildTemporalSemantics(observationFacts) {
         source_observed_at: temporalFieldSemantics(observationFacts.known_source_observed_at_count, observationFacts.observation_count),
         capture_time: temporalFieldSemantics(observationFacts.known_captured_at_count, observationFacts.observation_count),
         plain_series_opening_status: 'not_proven',
-        c_series_closing_status: 'not_proven',
+        c_series_closing_status:
+            observationFacts.closing_observation_count > 0 ? 'proven' : 'not_proven',
+        plain_series_first_collection_status:
+            observationFacts.first_collection_observation_count > 0 ? 'proven' : 'not_proven',
+        provider_contract_id: FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id,
     });
 }
 
@@ -496,11 +562,16 @@ function temporalFieldSemantics(knownCount, totalCount) {
 }
 
 /**
- * 最小 deterministic temporal-readiness classifier（fail closed）：
- * 只有全部必要条件都满足时才可能给出 READY —— 可靠 observation 时间戳、
- * 已证实的 temporal snapshot 语义、有效的 prematch decision-time 解释
- * （plain opening / C closing 必须 proven）。当前契约任何一项都不满足，
- * 因此必然 NOT_READY；手改收据值为 READY 会被 --validate 拒绝。
+ * 最小 deterministic temporal-readiness classifier（fail closed）。
+ *
+ * M3-R2 拆分为三个互不混淆的问题（mandate §27）：
+ *  A. closing_odds_semantics_ready —— C series 的业务含义是否已证明为 provider closing odds；
+ *  B. exact_observation/capture timestamp ready —— 是否有 per-row 精确观察/采集时间（当前 NO）；
+ *  C. strict_decision_time_value_evaluation_ready —— 是否能做严格决策时刻价值评估（当前 NO，
+ *     因为无 precise observation/capture time，且 plain 永不称为 opening）。
+ *
+ * 复合值 temporal_value_evaluation 保留为"严格决策时刻评估"的 fail-closed 汇总：
+ * 任一必要条件不满足即 NOT_READY；手改收据值为 READY 会被 --validate 拒绝。
  */
 function classifyTemporalEvaluationReadiness(facts, semantics) {
     const reasons = [];
@@ -516,11 +587,24 @@ function classifyTemporalEvaluationReadiness(facts, semantics) {
     if (semantics.plain_series_opening_status !== 'proven') {
         reasons.push('plain series opening status is not proven');
     }
-    if (semantics.c_series_closing_status !== 'proven') {
-        reasons.push('C series closing status is not proven');
-    }
+    const closingSemanticsProven = semantics.c_series_closing_status === 'proven' && facts.closing_observation_count > 0;
+    const firstCollectionProven =
+        semantics.plain_series_first_collection_status === 'proven' && facts.first_collection_observation_count > 0;
     return stableCanonicalize({
         temporal_value_evaluation: reasons.length === 0 ? TEMPORAL_READINESS_READY : TEMPORAL_READINESS_NOT_READY,
+        // A. C series 是否已证明为 provider closing odds（provider 官方文档 + 源 provenance）。
+        closing_odds_semantics_ready: closingSemanticsProven ? 'YES' : 'NO',
+        // 第一组（pre-closing/first collection）语义是否已证明（≠ opening price）。
+        first_collection_semantics_ready: firstCollectionProven ? 'YES' : 'NO',
+        // B. 精确时间戳维度。
+        exact_observation_timestamp_ready: facts.known_source_observed_at_count > 0 ? 'YES' : 'NO',
+        exact_capture_timestamp_ready: facts.known_captured_at_count > 0 ? 'YES' : 'NO',
+        // C. 严格决策时刻价值评估（需 precise observation/capture time + 完整快照语义）。
+        strict_decision_time_value_evaluation_ready:
+            reasons.length === 0 ? 'YES' : 'NO',
+        // C series 可作为 provider-defined closing market benchmark 的赔率语义来源
+        // （≠ CLV/回测 ready；CLV 还需另一个被比较价格及其时间语义）。
+        closing_market_benchmark_semantics_ready: closingSemanticsProven ? 'YES' : 'NO',
         reasons,
     });
 }
@@ -719,20 +803,42 @@ function collectTemporalConsistencyErrors(facts, receipt) {
         }
     }
     const readiness = classifyTemporalEvaluationReadiness(facts, receipt.temporal_semantics);
-    // Compare the full classifier output (value AND reasons): hand-edited reasons
-    // must fail even when the declared value happens to match the classifier.
+    // Compare the full classifier output (value AND all readiness dimensions AND
+    // reasons): hand-edited reasons or any hand-edited dimension must fail even
+    // when the declared composite value happens to match the classifier.
     const declaredReadiness = stableCanonicalize({
         temporal_value_evaluation: receipt.evaluation_readiness.temporal_value_evaluation,
+        closing_odds_semantics_ready: receipt.evaluation_readiness.closing_odds_semantics_ready,
+        first_collection_semantics_ready: receipt.evaluation_readiness.first_collection_semantics_ready,
+        exact_observation_timestamp_ready: receipt.evaluation_readiness.exact_observation_timestamp_ready,
+        exact_capture_timestamp_ready: receipt.evaluation_readiness.exact_capture_timestamp_ready,
+        strict_decision_time_value_evaluation_ready: receipt.evaluation_readiness.strict_decision_time_value_evaluation_ready,
+        closing_market_benchmark_semantics_ready: receipt.evaluation_readiness.closing_market_benchmark_semantics_ready,
         reasons: receipt.evaluation_readiness.reasons,
     });
     if (!deepStableEqual(readiness, declaredReadiness)) {
         errors.push('temporal evaluation readiness classifier rejects the receipt-declared readiness (fail closed)');
     }
-    if (receipt.temporal_semantics.plain_series_opening_status === 'proven' && facts.known_snapshot_type_count === 0) {
-        errors.push('temporal_semantics claims plain series opening proven while no observation has proven snapshot semantics (contradiction)');
+    if (receipt.temporal_semantics.plain_series_opening_status === 'proven') {
+        // M3-R2: provider 官方措辞是 "collected after market opening"，从未把第一组
+        // 称为 opening odds —— plain 系列 opening 在任何受 contract 覆盖的语义下都不
+        // 可证明；即使观测快照语义已知也必须拒绝（hand-edit 无法绕过）。
+        errors.push('temporal_semantics claims plain series opening proven while the provider contract never defines the first set as opening odds (contradiction)');
     }
     if (receipt.temporal_semantics.c_series_closing_status === 'proven' && facts.known_snapshot_type_count === 0) {
         errors.push('temporal_semantics claims C series closing proven while no observation has proven snapshot semantics (contradiction)');
+    }
+    if (receipt.temporal_semantics.c_series_closing_status === 'proven' && facts.closing_observation_count === 0) {
+        errors.push('temporal_semantics claims C series closing proven while no emitted observation carries the closing phase (contradiction)');
+    }
+    if (receipt.temporal_semantics.plain_series_first_collection_status === 'proven' && facts.first_collection_observation_count === 0) {
+        errors.push('temporal_semantics claims plain series first-collection proven while no emitted observation carries the first-collection phase (contradiction)');
+    }
+    if (receipt.temporal_semantics.provider_contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
+        errors.push(`temporal_semantics.provider_contract_id ${receipt.temporal_semantics.provider_contract_id} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
+    }
+    if (receipt.provider_semantic_contract && receipt.provider_semantic_contract.contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
+        errors.push(`provider_semantic_contract.contract_id ${receipt.provider_semantic_contract.contract_id} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
     }
     return errors;
 }
@@ -873,6 +979,7 @@ function verifyRebuildReceiptAgainstOutput(emitDirectory, fileSystem, dependenci
 module.exports = {
     CANONICAL_CANDIDATE_BASELINE,
     CANONICAL_GIT_REPOSITORY,
+    CANONICAL_PROVIDER_CONTRACT,
     CANONICAL_SOURCES,
     TEMPORAL_READINESS_NOT_READY,
     TEMPORAL_READINESS_READY,

@@ -283,7 +283,7 @@ function isInterpretationApplicable(manifest) {
     if (!manifest.kickoff_time_interpretation) return false;
     if (manifest.acquisition_mode !== 'historical_git_recovery') return false;
     if (manifest.adapter !== 'football-data-csv') return false;
-    if (manifest.adapter_version !== '1.2.0') return false;
+    if (manifest.adapter_version !== '1.3.0') return false;
     if (String(manifest.source_timezone || '').toUpperCase() !== 'UNKNOWN') return false;
     return true;
 }
