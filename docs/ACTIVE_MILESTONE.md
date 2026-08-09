@@ -15,9 +15,11 @@
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
 - 当前 main 基线：
-  `b5e6d8bf9f334ff3254c14e14c701607ee3cbc5c`（PR #1819 squash merge；
-  post-merge main Production Gate 31204100182 success）
-- 最近完成：**PR #1819** — FotMob bounded transport-phase observability
+  `2532a7b95fb9e52e065619b904a2865dc56649c2`（PR #1830 squash merge；
+  post-merge main Production Gate 31327367581 success）
+- 最近完成：**PR #1830** — M3-R2 official provider temporal contract reconciliation
+  （squash merge `2532a7b95…`，post-merge main Production Gate 31327367581
+  success）；**PR #1819** — FotMob bounded transport-phase observability
   （squash merge `b5e6d8bf9…`，post-merge main Production Gate 31204100182
   success）；**PR #1820** — Production Gate manual-dispatch baseline resolution
   （squash merge `d3bcf3f15…`，post-merge main Production Gate 31153912121
@@ -67,6 +69,31 @@
   2023/2024 Interwetten 稀疏；上游 provenance/license/capture time 未验证）。68 回归测试；
   Codex focused review 2 轮（cap，P0/P1/P2=0，round-2 修复各附定向测试）；eslint 8.57.1 全绿；
   git diff --check 干净；本地 gatekeeper commit-mode 门禁通过。
+- **M3-R2 — official provider temporal contract reconciliation（COMPLETE：PR #1830
+  squash-merged `2532a7b95`，post-merge push Production Gate `31327367581` success；
+  M3_R2_STATUS=COMPLETE；M3_R2_CLOSEOUT_COMPLETE=YES）**：
+  Football-Data.co.uk 官方文档核验 C 系列 = provider 定义 closing、普通系列 =
+  first_collection_after_market_open（per-source 判定，无全局 C 后缀推断）；
+  机器可读合同模块 `footballDataProviderContract.js`（fail closed）+ 适配器
+  1.3.0 overlay + 收据 v3（provider_semantic_contract / series_semantics_distribution /
+  7 维 evaluation_readiness）；population 不变量与业务哈希 40b02195… 不变；
+  BUILD_A/B 字节一致 + 6/6 tamper probes REJECTED；readiness =
+  NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION（closing 语义 YES / exact timestamp NO /
+  strict decision-time NO / benchmark YES）。详见 docs/PROJECT_STATUS.md M3-R2 节。
+- **VALUE_MVP-1 — offline probability benchmark: prematch baseline vs closing 1X2 market
+  （IMPLEMENTED，Draft PR 已建立待 Owner 验收；VALUE_MVP_1_STATUS=
+  IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动 Mark Ready / Merge / 开始下一步）**：
+  回答 "a simple football-only prematch model 是否包含与 provider 定义 closing 1X2 market
+  竞争力相当的可预测信息"；offline probability benchmark evaluation（非 executable
+  betting backtest）；zero DB / zero network / zero new data；13 个 football-only feature
+  （无任何 odds feature）；walk-forward by season；protocol 冻结
+  （PROTOCOL_SHA256=`c6716e91…`）后真实 OOS：RUN_A/RUN_B 字节一致、pooled n=511
+  delta log loss 0.1268463858（95% CI [0.0846640358, 0.1691520672]）→
+  **FINAL CLASSIFICATION = MARKET_BETTER_THAN_MODEL**（合法结果）；validator 17 项
+  全 PASS + 3 个 tamper 探针 REJECTED（含 coordinated CI 伪造）；Codex Round 1/2 均
+  P0=P1=P2=0；run-receipt v2 记录环境指纹与 lbfgs 收敛状态；
+  入口 `scripts/model_training/value_mvp_baseline_vs_closing.py`（internal，未登记
+  README canonical 表）。详见 docs/PROJECT_STATUS.md VALUE_MVP-1 节。
 - PR #1810：canonical inventory 写入设计评审（已结案）。
 - PR #1811：canonical inventory writer proof（已结案）。
 - PR #1812：disposable canonical proof SQL scan 范围修复（已结案）。
@@ -269,10 +296,10 @@
 
 ## 未完成 / 未授权（不得自动开始）
 
-1. **M3-R2（official provider temporal contract reconciliation）待 Owner 验收**：Issue
-   #1793 保持 open。M3-R1 已完成（COMPLETE）；M3-R2 Draft PR 待验收
-   （M3_R2_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）。
-   验收前不得开始 historical odds → production import 集成。
+1. **VALUE_MVP-1（offline probability benchmark: prematch baseline vs closing 1X2
+   market）待 Owner 验收**：Draft PR 已建立；M3-R2 已 COMPLETE（PR #1830，见"已完成"）；
+   VALUE_MVP_1_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动 Mark Ready /
+   Merge / 开始下一步。验收前不得开始 historical odds → production import 集成。
 2. **historical odds production import 集成（NOT_ESTABLISHED）**：与 canonical
    inventory writer 分开 —— CanonicalInventoryWriter、V26.10 canonical inventory
    contract（artifact / import-run / lineage 表）与 disposable canonical writer proof

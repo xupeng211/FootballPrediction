@@ -253,8 +253,9 @@ legacy-writer execution is authorized.
 
 ## M3-R2 — Official provider temporal contract reconciliation (Issue #1793)
 
-- **M3-R2 IMPLEMENTED — AWAITING_OWNER_ACCEPTANCE（Draft PR 待 Owner 验收；Issue #1793 链接；
-  M3_R2_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）** —
+- **M3-R2 COMPLETE（PR #1830 squash merge `2532a7b95fb9e52e065619b904a2865dc56649c2`，
+  post-merge push Production Gate `31327367581` success（event=push，exact merge commit）；
+  M3_R2_STATUS=COMPLETE；M3_R2_CLOSEOUT_COMPLETE=YES）** —
   Football-Data.co.uk 官方 provider 时序语义合同对账（mandate M3-R2，evidence 目录
   `footballprediction-m3-r2-provider-temporal-contract-20260809T162422Z/`）。
 - **官方证据（Level A primary provider documentation，2026-08-09 核验，无网络运行时）**：
@@ -303,6 +304,52 @@ legacy-writer execution is authorized.
 - **legacy 脚本未改动**：`fetch_and_adapt_euro_leagues.js` 等保持原状；M3-R2 仅在新 canonical
   语义链上叠加合同。
 - 未改变：no-write 默认、无 DB/网络/训练/回测执行、无 migration、SC-002 状态不变。
+
+## VALUE_MVP-1 — Offline probability benchmark: prematch baseline vs closing 1X2 market
+
+- **VALUE_MVP_1_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE（Draft PR 已建立待 Owner 验收；
+  M3_R2_STATUS=COMPLETE；不得自动 Mark Ready / Merge / 开始下一步）** — 回答业务问题：
+  "Does a simple football-only prematch model contain predictive information competitive
+  with the provider-defined closing 1X2 market?"（mandate VALUE_MVP-1，evidence 目录
+  `footballprediction-value-mvp1-baseline-vs-closing-20260809T190028Z/`）。
+  这是 **offline probability benchmark evaluation**，**不是** executable betting backtest /
+  ROI / profitability / CLV 声明（README Backtest 行保持 Not yet established）。
+- **实验纪律**：zero DB / zero network / zero new data；odds 不做模型 feature（13 个
+  football-only feature：elo + 近 5 场滚动统计）；无 random split（walk-forward by season：
+  fold1 train 2022/23 → test 2023/24；fold2 train 2022/23+2023/24 → test 2024/25）；
+  protocol 在 OOS 前冻结（`config/value_mvp_1_evaluation_protocol.json`，
+  PROTOCOL_SHA256=`c6716e911aa5fb32daab748a84ebd61313ae08acfb4e65a34994092d4b8732e8`）；
+  imputer/scaler 仅 fit training 行；primary metric = multiclass log loss；INCONCLUSIVE
+  为合法结果。
+- **市场基准**：provider 定义 closing（消费 M3-R2 合同收据
+  `m3-historical-odds-rebuild-receipt/v3`，CLOSING_MARKET_BENCHMARK_SEMANTICS_READY=YES；
+  exact timestamps 未 proven → STRICT_DECISION_TIME_VALUE_EVALUATION_READY=NO，
+  不发表任何 decision-time 声明）；每场至少 2 家 bookmaker，no-vig = 各家概率
+  归一后取均值（MEAN_OF_BOOKMAKER_NO_VIG_PROBABILITIES）。
+- **Phase 0（probe，888 场全部 7 项 gate PASS）**：closing log loss 0.9497299286 <
+  first_collection 0.9548984998，closing mean overround 1.0510876522，无 §68 市场异常。
+- **真实 OOS（protocol 冻结后，RUN_A/RUN_B 11 个业务输出文件字节一致）**：
+  pooled OOS n=511 — model log loss 1.0691605748 vs closing market 0.9423141889，
+  class-frequency 1.0729885322，delta log loss 0.1268463858
+  （95% CI [0.0846640358, 0.1691520672]）；delta Brier 0.071739634
+  （CI [0.0481335828, 0.0958094571]）；fold1（n=379）model 1.04464815 /
+  market 0.9028403071 / delta 0.141807843；fold2（n=132）model 1.1395409458 /
+  market 1.055652077 / delta 0.0838888688；**FINAL CLASSIFICATION =
+  MARKET_BETTER_THAN_MODEL**（合法结果，任务技术成功 ≠ model wins；
+  不自行加 feature / 换模型 / 调参 / 引入赔率 / 扩数据）。
+- **验证**：validator 17 项检查全 PASS（含 bootstrap Brier CI 重算、calibration 重算、
+  环境指纹与收敛记录交叉核验）；3 个 tamper 探针（receipt pooled 块翻转、summary.md
+  摘要篡改、coordinated CI 伪造）REJECTED；Codex Round 1（§69，pre-execution）
+  P0=P1=P2=0、Round 2（§70，post-OOS）P0=P1=P2=0；84 个 value_mvp 单元测试 +
+  全套 2700 收集通过；ruff/格式干净。最终代码（7f21c4f5）重跑真实 OOS 与
+  Round-1 证据数值逐位一致（protocol 未变，无 §90 语义变更）；run-receipt v2
+  记录环境指纹（python 3.11.15 / sklearn 1.8.0 / numpy 2.3.5 / scipy 1.16.3）
+  与 lbfgs 收敛状态（fold1 31/2000、fold2 21/2000，converged=True）。
+- **入口**：`scripts/model_training/value_mvp_baseline_vs_closing.py`（internal research
+  evaluation 入口，未登记 README canonical 表；实现 `src/ml/value_mvp/`，lifecycle:
+  permanent）。
+- 未改变：no-write 默认、无 DB/网络/训练/回测执行、无 migration、M3 core
+  （`src/infrastructure/odds_staging/*`）未修改；README Backtest 行未升级为 established。
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
