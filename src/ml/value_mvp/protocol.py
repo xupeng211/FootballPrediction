@@ -130,11 +130,14 @@ def feature_contract_violations(protocol: dict) -> list[str]:
     return violations
 
 
+_SEASON_RULE_PREFIX = "kickoff_at month >= 8 -> YYYY/YYYY+1 else (YYYY-1)/YYYY"
+
+
 def season_of_kickoff(kickoff_at: str, rule: str) -> str:
     """Assign season from an ISO kickoff string using the protocol rule."""
     year = int(kickoff_at[:4])
     month = int(kickoff_at[5:7])
-    if rule == "kickoff_at month >= 8 -> YYYY/YYYY+1 else (YYYY-1)/YYYY":
+    if rule.startswith(_SEASON_RULE_PREFIX):
         start = year if month >= _SEASON_RULE_START_MONTH else year - 1
     else:
         raise ValueError(f"unrecognized season rule: {rule}")

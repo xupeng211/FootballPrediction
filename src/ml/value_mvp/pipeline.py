@@ -131,10 +131,9 @@ def _verify_receipt(observations_dir: Path) -> dict:
         raise ValueError(f"receipt hash mismatch: {actual_receipt_hash} != {RECEIPT_HASH}")
     with receipt.open("r", encoding="utf-8") as handle:
         receipt_content = json.load(handle)
-    if receipt_content.get("schema") != RECEIPT_SCHEMA:
-        raise ValueError(
-            f"receipt schema mismatch: {receipt_content.get('schema')} != {RECEIPT_SCHEMA}"
-        )
+    actual_schema = receipt_content.get("schema_version") or receipt_content.get("schema")
+    if actual_schema != RECEIPT_SCHEMA:
+        raise ValueError(f"receipt schema mismatch: {actual_schema} != {RECEIPT_SCHEMA}")
     readiness = (receipt_content.get("evaluation_readiness") or {}).get(
         "closing_market_benchmark_semantics_ready"
     )
@@ -143,7 +142,7 @@ def _verify_receipt(observations_dir: Path) -> dict:
     return {
         "sha256": actual_receipt_hash,
         "pinned": RECEIPT_HASH,
-        "schema": receipt_content.get("schema"),
+        "schema": actual_schema,
         "closing_market_benchmark_semantics_ready": readiness,
     }
 
