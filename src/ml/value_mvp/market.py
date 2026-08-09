@@ -9,6 +9,7 @@ closing bookmakers are MARKET_BENCHMARK_INELIGIBLE and are never imputed.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 from src.ml.value_mvp.protocol import CLASS_LABELS
@@ -26,7 +27,7 @@ def valid_triple(selections: dict) -> tuple[float, float, float] | None:
     odds = []
     for selection in CLASS_LABELS:
         value = selections[selection]
-        if not isinstance(value, (int, float)) or value <= 1.0:
+        if not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 1.0:
             return None
         odds.append(float(value))
     return tuple(odds)  # type: ignore[return-value]

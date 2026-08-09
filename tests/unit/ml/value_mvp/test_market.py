@@ -41,6 +41,9 @@ def test_valid_triple_rejects_incomplete_and_bad_odds():
     assert valid_triple({"home": 2.0, "draw": 3.4}) is None
     assert valid_triple({"home": 0.9, "draw": 3.4, "away": 3.8}) is None
     assert valid_triple({"home": "x", "draw": 3.4, "away": 3.8}) is None
+    # non-finite odds must be rejected, not converted into a zero probability
+    assert valid_triple({"home": float("inf"), "draw": 3.4, "away": 3.8}) is None
+    assert valid_triple({"home": float("nan"), "draw": 3.4, "away": 3.8}) is None
 
 
 def test_no_vig_proportional_and_overround():

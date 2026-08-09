@@ -91,27 +91,28 @@ def check_predictions_invariants(predictions: list[dict], fold_name: str) -> Non
     for row in predictions:
         probs = [row[f"model_p_{sel}"] for sel in ("home", "draw", "away")]
         for key in probs:
-            if not _is_finite_float(key):
-                raise ValueError(f"{fold_name}: non-finite model probability {key}")
+            if not _is_bounded_probability(key):
+                raise ValueError(f"{fold_name}: invalid model probability {key}")
         total = sum(float(key) for key in probs)
         if not abs(total - 1.0) <= _MAX_ROW_SUM_DEVIATION:
             raise ValueError(f"{fold_name}: model probabilities do not sum to 1 ({total})")
         market = [row[f"market_p_{sel}"] for sel in ("home", "draw", "away")]
         for key in market:
-            if not _is_finite_float(key):
-                raise ValueError(f"{fold_name}: non-finite market probability {key}")
+            if not _is_bounded_probability(key):
+                raise ValueError(f"{fold_name}: invalid market probability {key}")
         if row["actual_result"] not in _LABEL_INDEX:
             raise ValueError(f"{fold_name}: invalid actual_result {row['actual_result']}")
         if int(row["valid_closing_bookmaker_count"]) < _MIN_CLOSING_BOOKMAKERS:
             raise ValueError(f"{fold_name}: closing benchmark count below minimum")
 
 
-def _is_finite_float(value: str) -> bool:
+def _is_bounded_probability(value: str) -> bool:
+    """Finite AND within [0, 1] (mirrors evaluation.validate_probability_matrix)."""
     try:
         parsed = float(value)
     except ValueError:
         return False
-    return np.isfinite(parsed)
+    return np.isfinite(parsed) and 0.0 <= parsed <= 1.0
 
 
 def check_fold_assignments(
@@ -259,13 +260,15 @@ def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision
     check_bootstrap(combined, pooled_market, protocol, recorded_bootstrap)
 
     recorded_receipt = _read_json(output_dir / "run-receipt.json")
-    recomputed_receipt_sha = hashlib.sha256(
-        json.dumps(recorded_manifest, sort_keys=True).encode("utf-8")
-    ).hexdigest()
-    if recomputed_receipt_sha != recorded_receipt.get("input_manifest_sha256"):
-        raise ValueError(
-            f"run-receipt input_manifest_sha256 mismatch: {recomputed_receipt_sha} != {recorded_receipt.get('input_manifest_sha256')}"
-        )
+    check_receipt_contents(
+        output_dir,
+        recorded_manifest,
+        recorded_population,
+        recorded_fold1,
+        recorded_fold2,
+        recorded_pooled,
+        recorded_receipt,
+    )
 
     return {
         "status": "OK",
@@ -281,8 +284,67 @@ def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision
             "bootstrap_ci",
             "final_classification",
             "run_receipt",
+            "run_receipt_contents",
+            "output_digests",
         ],
     }
+
+
+def check_receipt_contents(
+    output_dir: Path,
+    recorded_manifest: dict,
+    recorded_population: dict,
+    recorded_fold1: dict,
+    recorded_fold2: dict,
+    recorded_pooled: dict,
+    recorded_receipt: dict,
+) -> None:
+    """Cross-check the run receipt against every file it summarizes."""
+    recomputed_receipt_sha = hashlib.sha256(
+        json.dumps(recorded_manifest, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    if recomputed_receipt_sha != recorded_receipt.get("input_manifest_sha256"):
+        raise ValueError(
+            f"run-receipt input_manifest_sha256 mismatch: {recomputed_receipt_sha} != "
+            f"{recorded_receipt.get('input_manifest_sha256')}"
+        )
+
+    frozen_sha = (output_dir / "protocol-sha256.txt").read_text(encoding="utf-8").strip()
+    if recorded_receipt.get("protocol_sha256") != frozen_sha:
+        raise ValueError(
+            f"run-receipt protocol_sha256 mismatch: {recorded_receipt.get('protocol_sha256')} "
+            f"!= frozen {frozen_sha}"
+        )
+    if recorded_receipt.get("evaluation_population_hash") != recorded_population.get(
+        "evaluation_population_hash"
+    ):
+        raise ValueError("run-receipt evaluation_population_hash mismatch")
+
+    checks = {
+        "fold1": (recorded_receipt.get("fold1"), recorded_fold1),
+        "fold2": (recorded_receipt.get("fold2"), recorded_fold2),
+        "pooled": (recorded_receipt.get("pooled"), recorded_pooled),
+        "bootstrap": (
+            recorded_receipt.get("bootstrap"),
+            _read_json(output_dir / "bootstrap.json"),
+        ),
+        "calibration": (
+            recorded_receipt.get("calibration"),
+            _read_json(output_dir / "calibration.json"),
+        ),
+    }
+    for key, (receipt_value, file_value) in checks.items():
+        if receipt_value != file_value:
+            raise ValueError(f"run-receipt {key} block does not match its file")
+
+    recorded_digests = recorded_receipt.get("output_digests") or {}
+    for name, expected in recorded_digests.items():
+        path = output_dir / name
+        if not path.exists():
+            raise ValueError(f"run-receipt digest target missing: {name}")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != expected:
+            raise ValueError(f"run-receipt output digest mismatch for {name}")
 
 
 def _load_inputs(input_dir: Path, protocol: dict) -> tuple[list[Match], dict]:

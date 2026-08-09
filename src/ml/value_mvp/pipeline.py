@@ -45,6 +45,17 @@ OBSERVATION_COUNTS = {
     "raw_odds_2324.jsonl": 12510,
     "real_odds_raw.jsonl": 12534,
 }
+# Content pins for the M3-R2 canonical accepted observations and receipt
+# (fail-closed: counts alone do not protect the odds that the benchmark
+# compares against). Values are the SHA256 of the M3-R2 rebuild-BUILD_A
+# byte-deterministic exports (A == B verified).
+OBSERVATION_HASHES = {
+    "raw_odds_2223.jsonl": "ae2fffe64813eefa8be3719299dec550a473b2b7e603dfd3ed7d8522e0c21f2f",
+    "raw_odds_2324.jsonl": "1e33be60a9a68bac0a2bc657f6d0f1488f91d1a621d2c490a8f37c0ce19c0a58",
+    "real_odds_raw.jsonl": "c2730fbd12308bb7b02cde8df2dc701c623fdad17603afb8e930c9904ee7d859",
+}
+RECEIPT_HASH = "c2141746a08ec58aaa3453810b8a4a4da0184383949fa4817d377736328c1b9d"
+RECEIPT_SCHEMA = "m3-historical-odds-rebuild-receipt/v3"
 CONTRACT_ID = "football-data-provider-contract/v1"
 
 DATA_GATES = {
@@ -53,6 +64,8 @@ DATA_GATES = {
     "fold2_oos_min": 100,
     "pooled_oos_min": 400,
 }
+
+_LABEL_INDEX = {"H": 0, "D": 1, "A": 2}
 
 
 def _round_json(value: float) -> float:
@@ -78,8 +91,70 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _verify_observation_files(observations_dir: Path) -> tuple[dict, set[str]]:
+    """Pin-count and pin-hash each observation JSONL; collect matched ids."""
+    record: dict = {}
+    distinct_matched_ids: set[str] = set()
+    for name, expected_count in OBSERVATION_COUNTS.items():
+        path = observations_dir / name
+        count = 0
+        with path.open("r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                count += 1
+                obs = json.loads(line)
+                match_link = obs.get("match_link") or {}
+                mid = match_link.get("matched_id")
+                if mid:
+                    distinct_matched_ids.add(mid)
+        if count != expected_count:
+            raise ValueError(f"observation count mismatch {name}: {count} != {expected_count}")
+        actual = sha256_file(path)
+        expected_hash = OBSERVATION_HASHES.get(name)
+        if expected_hash is None:
+            raise ValueError(f"no pinned observation hash for {name}")
+        if actual != expected_hash:
+            raise ValueError(f"observation hash mismatch {name}: {actual} != {expected_hash}")
+        record[name] = {"lines": count, "sha256": actual, "pinned": expected_hash}
+    return record, distinct_matched_ids
+
+
+def _verify_receipt(observations_dir: Path) -> dict:
+    """Pin-hash the receipt and validate its schema + readiness declaration."""
+    receipt = observations_dir / "receipt.json"
+    if not receipt.exists():
+        raise FileNotFoundError("missing receipt.json")
+    actual_receipt_hash = sha256_file(receipt)
+    if actual_receipt_hash != RECEIPT_HASH:
+        raise ValueError(f"receipt hash mismatch: {actual_receipt_hash} != {RECEIPT_HASH}")
+    with receipt.open("r", encoding="utf-8") as handle:
+        receipt_content = json.load(handle)
+    if receipt_content.get("schema") != RECEIPT_SCHEMA:
+        raise ValueError(
+            f"receipt schema mismatch: {receipt_content.get('schema')} != {RECEIPT_SCHEMA}"
+        )
+    readiness = (receipt_content.get("evaluation_readiness") or {}).get(
+        "closing_market_benchmark_semantics_ready"
+    )
+    if readiness != "YES":
+        raise ValueError(f"receipt closing benchmark readiness: {readiness!r} != 'YES'")
+    return {
+        "sha256": actual_receipt_hash,
+        "pinned": RECEIPT_HASH,
+        "schema": receipt_content.get("schema"),
+        "closing_market_benchmark_semantics_ready": readiness,
+    }
+
+
 def verify_inputs(input_dir: Path) -> dict:
-    """Verify pinned input hashes/counts; return an input identity record."""
+    """Verify pinned input hashes/counts; return an input identity record.
+
+    Fail-closed: CSV files, observation JSONL files AND receipt.json are all
+    pinned by SHA256 (not just counts); the receipt's schema and its closing
+    benchmark readiness declaration are validated against the contract.
+    """
     csv_dir = input_dir / "csv"
     observations_dir = input_dir / "observations"
     record: dict = {"csv_files": {}, "observation_files": {}}
@@ -89,21 +164,10 @@ def verify_inputs(input_dir: Path) -> dict:
         if actual != expected:
             raise ValueError(f"input hash mismatch {name}: {actual} != {expected}")
         record["csv_files"][name] = {"sha256": actual, "pinned": expected}
-    for name, expected_count in OBSERVATION_COUNTS.items():
-        path = observations_dir / name
-        count = sum(1 for line in path.open("r", encoding="utf-8") if line.strip())
-        if count != expected_count:
-            raise ValueError(f"observation count mismatch {name}: {count} != {expected_count}")
-        record["observation_files"][name] = {"lines": count, "sha256": sha256_file(path)}
-    receipt = observations_dir / "receipt.json"
-    if not receipt.exists():
-        raise FileNotFoundError("missing receipt.json")
-    record["receipt.json"] = {"sha256": sha256_file(receipt)}
-    record["source_population"] = {
-        "unique_candidates": 892,
-        "exact_links": 888,
-        "per_season": {"2022/23": 380, "2023/24": 380, "2024/25": 132},
-    }
+    observation_files, distinct_matched_ids = _verify_observation_files(observations_dir)
+    record["observation_files"] = observation_files
+    record["receipt.json"] = _verify_receipt(observations_dir)
+    record["source_population_derived"] = {"distinct_matched_ids": len(distinct_matched_ids)}
     return record
 
 
@@ -154,18 +218,60 @@ def check_contract_module(repo_root: Path) -> str:
     return sha256_file(contract_path)
 
 
-def population_gates(matches: list[Match]) -> dict:
-    """Evaluate the mandatory data gates (fail closed)."""
+def _closing_coverage(matches: list[Match], protocol: dict) -> int:
+    """Count matches with a valid closing consensus (min bookmaker count)."""
+    return sum(1 for match in matches if closing_consensus(match, protocol) is not None)
+
+
+def _split_invariant(matches: list[Match], protocol: dict) -> dict:
+    """Per-fold assertion: max(train kickoff) < min(test kickoff), by ISO string."""
+    results: dict[str, str] = {}
+    for fold_name, fold in protocol["season_split_policy"].items():
+        if not fold_name.startswith("fold"):
+            continue  # policy-level keys (e.g. no_random_split) are not folds
+        if not isinstance(fold, dict):
+            raise TypeError(f"season_split_policy entry not a dict: {fold_name}")
+        train_seasons, test_seasons = fold.get("train", []), fold.get("test", [])
+        if not train_seasons or not test_seasons:
+            results[fold_name] = "FAIL: empty train or test seasons"
+            continue
+        train_kickoffs = [m.kickoff_at for m in matches if m.season in train_seasons]
+        test_kickoffs = [m.kickoff_at for m in matches if m.season in test_seasons]
+        if not train_kickoffs or not test_kickoffs:
+            results[fold_name] = "FAIL: no matches in train or test seasons"
+            continue
+        if max(train_kickoffs) >= min(test_kickoffs):
+            results[fold_name] = (
+                f"FAIL: max(train) {max(train_kickoffs)} >= min(test) {min(test_kickoffs)}"
+            )
+        else:
+            results[fold_name] = "PASS"
+    return results
+
+
+def population_gates(
+    matches: list[Match],
+    protocol: dict,
+    contract_status: dict,
+    inputs_verified: bool = True,
+) -> dict:
+    """Evaluate the mandatory data gates from actual data (fail closed).
+
+    Every status is the result of a performed check; no literal PASS exists.
+    """
     counts = season_counts(matches)
-    gates = {
-        "CANONICAL_SOURCE_RECOVERY": "PASS",
-        "M3_PROVIDER_CONTRACT": "PASS",
-        "SOURCE_POPULATION_NO_DRIFT": "YES",
-        "VALID_LABELS_SUFFICIENT": "YES",
-        "SEASON_SPLIT_VALID": "PASS",
+    gates: dict = {
         "season_counts": counts,
         "total_matches": len(matches),
+        "CANONICAL_SOURCE_RECOVERY": "PASS" if inputs_verified else "FAIL",
+        "M3_PROVIDER_CONTRACT": "FAIL",
+        "SOURCE_POPULATION_NO_DRIFT": "NO",
+        "VALID_LABELS_SUFFICIENT": "NO",
+        "SEASON_SPLIT_VALID": "FAIL",
+        "CLOSING_BENCHMARK_COVERAGE": "FAIL",
     }
+
+    # Data-gate thresholds (mandate §67)
     if len(matches) < DATA_GATES["total_eligible_min"]:
         raise ValueError(
             f"data gate failed: total {len(matches)} < {DATA_GATES['total_eligible_min']}"
@@ -187,6 +293,46 @@ def population_gates(matches: list[Match]) -> dict:
     gates["fold1_oos"] = fold1_test
     gates["fold2_oos"] = fold2_test
     gates["pooled_oos"] = fold1_test + fold2_test
+
+    # M3 provider contract module (checked against the actual repo)
+    if contract_status is None or contract_status.get("status") != "PASS":
+        raise ValueError(
+            f"data gate failed: M3 provider contract "
+            f"{'not checked' if contract_status is None else contract_status.get('reason')}"
+        )
+    gates["M3_PROVIDER_CONTRACT"] = "PASS"
+    gates["contract_sha256"] = contract_status.get("contract_sha256")
+
+    # Source population drift vs the frozen protocol expectation
+    expected = protocol["population_policy"]["expected_population"]
+    if len(matches) != expected["total"] or counts != expected["per_season"]:
+        raise ValueError(
+            f"data gate failed: population drift {len(matches)}/{counts} != "
+            f"{expected['total']}/{expected['per_season']}"
+        )
+    gates["SOURCE_POPULATION_NO_DRIFT"] = "YES"
+
+    # Labels: every match carries a valid FTR label from its pinned source rows
+    if not all(match.label_str in _LABEL_INDEX for match in matches):
+        raise ValueError("data gate failed: some matches lack a valid FTR label")
+    gates["VALID_LABELS_SUFFICIENT"] = "YES"
+
+    # Chronological walk-forward split invariant
+    split_results = _split_invariant(matches, protocol)
+    if any(result != "PASS" for result in split_results.values()):
+        raise ValueError(f"data gate failed: season split invalid: {split_results}")
+    gates["SEASON_SPLIT_VALID"] = "PASS"
+    gates["split_details"] = split_results
+
+    # Closing-benchmark eligibility for EVERY match (not only test rows)
+    covered = _closing_coverage(matches, protocol)
+    if covered != len(matches):
+        raise ValueError(
+            f"data gate failed: closing benchmark coverage {covered}/{len(matches)} != total"
+        )
+    gates["CLOSING_BENCHMARK_COVERAGE"] = "PASS"
+    gates["closing_benchmark_covered"] = covered
+
     gates["population_hash"] = evaluation_population_hash(matches)
     return gates
 
@@ -580,11 +726,36 @@ def run_oos(
     write_json(output_dir / "evaluation-dataset-manifest.json", population_manifest)
 
     receipt = build_run_receipt(
-        pooled, fold1, fold2, protocol, manifest, population_manifest, git_revision
+        pooled,
+        fold1,
+        fold2,
+        protocol,
+        manifest,
+        population_manifest,
+        git_revision,
+        output_dir,
+        compute_digests=False,
     )
-    write_json(output_dir / "run-receipt.json", receipt)
     write_summary(output_dir / "summary.md", receipt)
+    receipt["output_digests"] = {
+        name: sha256_file(output_dir / name) for name in _RECEIPT_OUTPUT_FILES
+    }
+    write_json(output_dir / "run-receipt.json", receipt)
     return receipt
+
+
+_RECEIPT_OUTPUT_FILES = (
+    "fold1-predictions.csv",
+    "fold2-predictions.csv",
+    "fold1-metrics.json",
+    "fold2-metrics.json",
+    "pooled-metrics.json",
+    "bootstrap.json",
+    "calibration.json",
+    "input-manifest.json",
+    "evaluation-dataset-manifest.json",
+    "summary.md",
+)
 
 
 def build_run_receipt(
@@ -595,8 +766,16 @@ def build_run_receipt(
     manifest: dict,
     population_manifest: dict,
     git_revision: str,
+    output_dir: Path,
+    compute_digests: bool = True,
 ) -> dict:
-    """Assemble the run receipt (all business results + hashes; no wall-clock)."""
+    """Assemble the run receipt (all business results + hashes; no wall-clock).
+
+    output_digests binds the receipt to the exact bytes of every summarized
+    file, so tampering with either side is rejected by the validator. The
+    caller passes compute_digests=False before summary.md exists, then fills
+    the digests in before writing the receipt.
+    """
     return {
         "schema": "value-mvp-1-run-receipt/v1",
         "task": protocol["task"],
@@ -606,6 +785,11 @@ def build_run_receipt(
             json.dumps(manifest, sort_keys=True).encode("utf-8")
         ).hexdigest(),
         "evaluation_population_hash": population_manifest["evaluation_population_hash"],
+        "output_digests": (
+            {name: sha256_file(output_dir / name) for name in _RECEIPT_OUTPUT_FILES}
+            if compute_digests
+            else {}
+        ),
         "fold1": fold1["metrics"],
         "fold2": fold2["metrics"],
         "pooled": pooled["metrics"],
@@ -663,12 +847,20 @@ def _metrics_lines(metrics: dict) -> list[str]:
 
 
 def build_phase0_outputs(
-    matches: list[Match], protocol: dict, input_dir: Path, output_dir: Path, git_revision: str
+    matches: list[Match],
+    protocol: dict,
+    input_dir: Path,
+    output_dir: Path,
+    git_revision: str,
+    contract_status: dict,
 ) -> dict:
     """Phase 0 run: manifests + market probe + gates (no model)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     probe = phase0_probe(matches, protocol)
-    gates = population_gates(matches)
+    # Manifest first: verify_inputs (pinned content hashes + receipt schema)
+    # must succeed before any gate can be reported PASS.
+    manifest = build_input_manifest(input_dir, protocol, matches, git_revision)
+    gates = population_gates(matches, protocol, contract_status, inputs_verified=True)
     violations = feature_contract_violations(protocol)
     if violations:
         raise ValueError(f"feature contract violations: {violations}")
@@ -679,7 +871,6 @@ def build_phase0_outputs(
     gates["feature_contract_violations"] = violations
     write_json(output_dir / "market-probe.json", probe)
     write_json(output_dir / "phase0-gates.json", gates)
-    manifest = build_input_manifest(input_dir, protocol, matches, git_revision)
     write_json(output_dir / "input-manifest.json", manifest)
     write_json(
         output_dir / "evaluation-dataset-manifest.json",

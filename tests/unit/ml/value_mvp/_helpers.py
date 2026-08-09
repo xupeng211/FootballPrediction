@@ -24,7 +24,10 @@ def synthetic_protocol() -> dict:
         "task_type": "BUSINESS_RESEARCH_IMPLEMENTATION",
         "claim_boundary": "test only",
         "population_policy": {
-            "expected_population": {"total": 0, "per_season": {}},
+            "expected_population": {
+                "total": 8,
+                "per_season": {"2022/23": 6, "2023/24": 1, "2024/25": 1},
+            },
             "primary": "test",
             "bookmaker_exclusion": ["Max", "Avg"],
             "bookmaker_exclusion_reason": "test",
@@ -277,9 +280,17 @@ def write_synthetic_inputs(tmp_path: Path) -> dict:
             for row in csv_rows[source]:
                 handle.write(f"{row['FTR']},{row['FTHG']},{row['FTAG']}\n")
 
-    # verify_inputs requires a receipt; content is only hashed, not parsed.
+    # verify_inputs requires a receipt whose schema + closing benchmark
+    # readiness declaration are validated against the contract.
     (observations_dir / "receipt.json").write_text(
-        json.dumps({"schema": "m3-historical-odds-rebuild-receipt/v3", "dummy": True}) + "\n",
+        json.dumps(
+            {
+                "schema": "m3-historical-odds-rebuild-receipt/v3",
+                "evaluation_readiness": {"closing_market_benchmark_semantics_ready": "YES"},
+                "dummy": True,
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
 

@@ -21,10 +21,17 @@ def staged_inputs(tmp_path, monkeypatch):
     for path in paths["csv_dir"].glob("*.csv"):
         new_input_hashes[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
     new_counts = {}
+    new_observation_hashes = {}
     for path in paths["observations_dir"].glob("*.jsonl"):
         new_counts[path.name] = sum(1 for _ in path.open("r", encoding="utf-8"))
+        new_observation_hashes[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    receipt_path = paths["observations_dir"] / "receipt.json"
     monkeypatch.setattr(pipeline, "INPUT_HASHES", new_input_hashes)
     monkeypatch.setattr(pipeline, "OBSERVATION_COUNTS", new_counts)
+    monkeypatch.setattr(pipeline, "OBSERVATION_HASHES", new_observation_hashes)
+    monkeypatch.setattr(
+        pipeline, "RECEIPT_HASH", hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+    )
     monkeypatch.setattr(
         pipeline,
         "DATA_GATES",

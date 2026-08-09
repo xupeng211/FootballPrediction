@@ -32,12 +32,22 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.ml.value_mvp import leakage  # noqa: E402
 from src.ml.value_mvp.pipeline import (  # noqa: E402
     build_phase0_outputs,
+    check_contract_module,
     freeze_protocol,
     load_inputs,
     run_oos,
 )
 from src.ml.value_mvp.protocol import load_protocol, protocol_sha256  # noqa: E402
 from src.ml.value_mvp.validator import validate_run  # noqa: E402
+
+
+def _contract_status(source_root: Path) -> dict:
+    """Check the M3 provider contract module; fail-closed result object."""
+    try:
+        contract_sha = check_contract_module(source_root)
+    except (FileNotFoundError, ValueError) as exc:
+        return {"status": "FAIL", "reason": str(exc)}
+    return {"status": "PASS", "contract_sha256": contract_sha}
 
 
 def _stdout_summary(obj: dict) -> None:
@@ -55,7 +65,10 @@ def action_phase0(
     if violations:
         raise SystemExit(f"random-split construct found in business path: {violations}")
     matches, _population = load_inputs(input_dir, protocol)
-    results = build_phase0_outputs(matches, protocol, input_dir, output_dir, git_revision)
+    contract_status = _contract_status(source_root)
+    results = build_phase0_outputs(
+        matches, protocol, input_dir, output_dir, git_revision, contract_status
+    )
     freeze_protocol(protocol, output_dir)
     _stdout_summary(
         {

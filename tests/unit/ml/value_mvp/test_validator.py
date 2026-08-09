@@ -100,8 +100,48 @@ def test_validate_rejects_protocol_drift(completed_run):
 def test_check_predictions_invariants_detects_nonfinite(completed_run):
     rows = load_predictions(completed_run["output_dir"] / "fold1-predictions.csv")
     rows[0]["model_p_away"] = "nan"
-    with pytest.raises(ValueError, match="non-finite"):
+    with pytest.raises(ValueError, match="invalid model probability"):
         check_predictions_invariants(rows, "fold1")
+
+
+def test_check_predictions_invariants_detects_out_of_bounds(completed_run):
+    rows = load_predictions(completed_run["output_dir"] / "fold1-predictions.csv")
+    rows[0]["model_p_home"] = "1.5"
+    rows[0]["model_p_draw"] = "-0.3"
+    with pytest.raises(ValueError, match="invalid model probability"):
+        check_predictions_invariants(rows, "fold1")
+
+
+def test_validate_rejects_tampered_receipt(completed_run):
+    """The receipt summarizes the metric files; flipping a result must fail."""
+    path = completed_run["output_dir"] / "run-receipt.json"
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    receipt["pooled"]["final_classification"] = (
+        "MODEL_BETTER_THAN_CLOSING"
+        if receipt["pooled"]["final_classification"] != "MODEL_BETTER_THAN_CLOSING"
+        else "MARKET_BETTER_THAN_MODEL"
+    )
+    path.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+    with pytest.raises(ValueError, match="pooled block"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_tampered_output_digest(completed_run):
+    """summary.md is bound to the receipt only by its digest."""
+    path = completed_run["output_dir"] / "summary.md"
+    path.write_text(path.read_text(encoding="utf-8") + "\n# tampered\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="output digest mismatch"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
 
 
 def test_check_protocol_frozen_requires_records(tmp_path):

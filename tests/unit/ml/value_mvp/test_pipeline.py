@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import TYPE_CHECKING
 
 import pytest
 
+from src.ml.value_mvp import pipeline
 from src.ml.value_mvp.features import build_feature_frame
 from src.ml.value_mvp.pipeline import (
     freeze_protocol,
@@ -43,14 +45,70 @@ def test_verify_inputs_rejects_wrong_hash(tmp_path):
         verify_inputs(tmp_path)
 
 
+def _contract_ok() -> dict:
+    return {"status": "PASS", "contract_sha256": "a" * 64}
+
+
 def test_population_gates_pass_with_synthetic_data(staged_inputs):
     protocol = synthetic_protocol()
     matches = _matches(staged_inputs, protocol)
-    gates = population_gates(matches)
+    gates = population_gates(matches, protocol, _contract_ok())
     assert gates["CANONICAL_SOURCE_RECOVERY"] == "PASS"
+    assert gates["M3_PROVIDER_CONTRACT"] == "PASS"
+    assert gates["SOURCE_POPULATION_NO_DRIFT"] == "YES"
+    assert gates["VALID_LABELS_SUFFICIENT"] == "YES"
+    assert gates["SEASON_SPLIT_VALID"] == "PASS"
+    assert gates["CLOSING_BENCHMARK_COVERAGE"] == "PASS"
     assert gates["fold1_oos"] == 1
     assert gates["fold2_oos"] == 1
     assert gates["pooled_oos"] == 2
+    assert gates["split_details"]["fold1"] == "PASS"
+    assert gates["split_details"]["fold2"] == "PASS"
+
+
+def test_population_gates_rejects_contract_failure(staged_inputs):
+    protocol = synthetic_protocol()
+    matches = _matches(staged_inputs, protocol)
+    with pytest.raises(ValueError, match="contract"):
+        population_gates(matches, protocol, {"status": "FAIL", "reason": "missing module"})
+
+
+def test_population_gates_rejects_split_violation(staged_inputs):
+    protocol = synthetic_protocol()
+    protocol["season_split_policy"]["fold2"]["test"] = ["2023/24"]
+    matches = _matches(staged_inputs, protocol)
+    with pytest.raises(ValueError, match="season split invalid"):
+        population_gates(matches, protocol, _contract_ok())
+
+
+def test_population_gates_rejects_closing_coverage_gap(staged_inputs):
+    protocol = synthetic_protocol()
+    protocol["minimum_bookmaker_count"] = 3
+    matches = _matches(staged_inputs, protocol)
+    with pytest.raises(ValueError, match="closing benchmark coverage"):
+        population_gates(matches, protocol, _contract_ok())
+
+
+def test_verify_inputs_rejects_wrong_observation_hash(staged_inputs):
+    target = staged_inputs / "observations" / "raw_odds_2223.jsonl"
+    content = target.read_text(encoding="utf-8")
+    tampered = content.replace('"decimal_odds": 1.8', '"decimal_odds": 1.9', 1)
+    assert tampered != content
+    target.write_text(tampered, encoding="utf-8")
+    with pytest.raises(ValueError, match="observation hash mismatch"):
+        verify_inputs(staged_inputs)
+
+
+def test_verify_inputs_rejects_bad_receipt_schema(staged_inputs, monkeypatch):
+    """A receipt with the wrong schema must be rejected even if its hash pins."""
+    receipt_path = staged_inputs / "observations" / "receipt.json"
+    tampered = '{"schema": "wrong-schema"}\n'
+    receipt_path.write_text(tampered, encoding="utf-8")
+    monkeypatch.setattr(
+        pipeline, "RECEIPT_HASH", hashlib.sha256(tampered.encode("utf-8")).hexdigest()
+    )
+    with pytest.raises(ValueError, match="receipt schema mismatch"):
+        verify_inputs(staged_inputs)
 
 
 def test_phase0_probe_reports_coverage_and_metrics(staged_inputs):
