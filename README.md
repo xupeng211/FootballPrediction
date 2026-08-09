@@ -212,7 +212,8 @@ this section rather than maintaining duplicate command lists.
   `npm run odds:sniper`, `npm run smelt`, `predict:dry`, `train:fast`). M3 odds-staging offline entries belong here
   too: `npm run odds:staging:dry-run` (single-source offline import, fail-closed/no-write) and
   `npm run odds:staging:rebuild` (multi-source deterministic reconstruction, repo-external bundle/emit-dir only,
-  no-write default).
+  no-write default; `--canonical-history` recovers the pinned sources from immutable git objects via a bounded
+  read-only git child process; `--validate` recomputes every receipt fact from the emitted output).
 - **Legacy / Admin-only** — retained but **must not** become a new code dependency:
   `scripts/ops/run_production.js`, `scripts/ops/titan_discovery.js`,
   `scripts/ops/total_war_pipeline.js`, and Phase/ADG-numbered scripts as a category.

@@ -1,7 +1,7 @@
 'use strict';
 
 // lifecycle: permanent；M3-R1 有界重建入口回归测试（source identity ×4、output safety ×3、
-// semantic boundary ×5、determinism ×2、receipt ×4、no-forbidden-capability ×2）。
+// semantic boundary ×5、determinism ×2、receipt ×6、no-forbidden-capability ×2）。
 // 全部使用运行时生成的临时 bundle fixture；不写入仓库、不访问网络/数据库。
 
 const assert = require('node:assert/strict');
@@ -24,6 +24,10 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const REBUILD_SCRIPT = path.join(
     PROJECT_ROOT,
     'scripts/ops/odds_staging/historical_odds_rebuild.js'
+);
+const REBUILD_CANONICAL_SCRIPT = path.join(
+    PROJECT_ROOT,
+    'scripts/ops/odds_staging/historical_odds_rebuild_canonical.js'
 );
 const INGESTED_AT = '2026-08-09T06:15:00Z';
 
@@ -75,8 +79,8 @@ function writeCandidates(t, directory) {
     return candidatesPath;
 }
 
-function writeHistoricalManifest(t, rawPath, directory) {
-    const manifestPath = path.join(directory, 'source.manifest.json');
+function writeHistoricalManifest(t, rawPath, directory, name = 'source.manifest.json') {
+    const manifestPath = path.join(directory, name);
     fs.writeFileSync(
         manifestPath,
         `${JSON.stringify({
@@ -329,9 +333,11 @@ test('rebuild: kickoff conflict quarantine carries only the conflict reason, nev
 
 test('rebuild: emitted receipt and observations never claim temporal semantics', t => {
     const { bundle, receipt } = runBundle(t);
-    const receiptText = JSON.stringify(receipt);
-    assert.ok(!receiptText.includes('opening'), 'receipt must not contain opening claims');
-    assert.ok(!receiptText.includes('closing'), 'receipt must not contain closing claims');
+    // Receipt v2 carries the machine-readable temporal contract: opening/closing
+    // conclusions are named as status fields and must be not_proven — never a positive claim.
+    assert.equal(receipt.temporal_semantics.plain_series_opening_status, 'not_proven');
+    assert.equal(receipt.temporal_semantics.c_series_closing_status, 'not_proven');
+    assert.equal(receipt.evaluation_readiness.temporal_value_evaluation, 'NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION');
     for (const observation of readEmittedObservations(bundle)) {
         assert.ok(!JSON.stringify(observation).includes('opening'));
         assert.ok(!JSON.stringify(observation).includes('closing'));
@@ -383,11 +389,12 @@ test('rebuild: observation idempotency keys are identical across deterministic r
 
 // ---- receipt ×4 ------------------------------------------------------------
 
-test('rebuild: produced receipt validates as m3-historical-odds-rebuild-receipt/v1', t => {
+test('rebuild: produced receipt validates as m3-historical-odds-rebuild-receipt/v2', t => {
     const { receipt } = runBundle(t);
     const validation = validateRebuildReceipt(receipt);
     assert.deepEqual(validation, { valid: true, errors: [] });
-    assert.equal(receipt.schema_version, 'm3-historical-odds-rebuild-receipt/v1');
+    assert.equal(receipt.schema_version, 'm3-historical-odds-rebuild-receipt/v2');
+    assert.equal(receipt.rebuild_mode, 'generic_external_bundle');
 });
 
 test('rebuild: receipt validation rejects an unsupported schema version', t => {
@@ -415,6 +422,29 @@ test('rebuild: receipt validation rejects wrong field types', t => {
     const validation = validateRebuildReceipt(mutated);
     assert.equal(validation.valid, false);
     assert.ok(validation.errors.some(error => error.includes('quarantine_count')));
+});
+
+test('rebuild: generic bundle receipts never claim canonical mode', t => {
+    const { receipt } = runBundle(t);
+    assert.equal(receipt.rebuild_mode, 'generic_external_bundle');
+    assert.equal(receipt.canonical_source_contract, null);
+    assert.equal(validateRebuildReceipt(receipt).valid, true);
+});
+
+test('rebuild: a generic receipt carrying a canonical contract is rejected', t => {
+    const { receipt } = runBundle(t);
+    const mutated = { ...receipt, canonical_source_contract: { satisfied: true, sources: [] } };
+    const validation = validateRebuildReceipt(mutated);
+    assert.equal(validation.valid, false);
+    assert.ok(validation.errors.some(error => error.includes('canonical_source_contract')));
+});
+
+test('rebuild: a source id that could escape the emit directory is rejected', t => {
+    const { receipt } = runBundle(t);
+    const mutated = { ...receipt, sources: [{ ...receipt.sources[0], id: '../escape' }] };
+    const validation = validateRebuildReceipt(mutated);
+    assert.equal(validation.valid, false);
+    assert.ok(validation.errors.some(error => error.includes('safe path segment')));
 });
 
 // ---- codex round-2 regression fixes ----------------------------------------
@@ -501,7 +531,6 @@ test('rebuild: orchestrator source imports no network, browser, or database capa
         'node:tls',
         'node:dgram',
         'node:dns',
-        'node:child_process',
         'node:worker_threads',
         "'pg'",
         '"pg"',
@@ -517,7 +546,30 @@ test('rebuild: orchestrator source imports no network, browser, or database capa
         assert.ok(!source.includes(token), `forbidden import token present: ${token}`);
     }
     assert.ok(!/fetch\(/.test(source), 'no global fetch usage');
-    assert.ok(!/child_process|spawn|exec/.test(source), 'no process execution');
+    assert.ok(!/spawn\(|exec\(|execFile\(|fork\(/.test(source), 'no generic process execution');
+});
+
+test('rebuild: canonical git access is a bounded read-only child process', t => {
+    const source = fs.readFileSync(REBUILD_SCRIPT, 'utf8');
+    const canonicalSource = fs.readFileSync(REBUILD_CANONICAL_SCRIPT, 'utf8');
+    // The bounded reader lives in the canonical sibling module: node:child_process execFileSync only.
+    assert.ok(canonicalSource.includes('node:child_process'), 'bounded git reader must use execFileSync from node:child_process');
+    assert.ok(canonicalSource.includes('execFileSync'), 'bounded git reader must use execFileSync');
+    assert.ok(!/shell\s*:\s*true/.test(source) && !/shell\s*:\s*true/.test(canonicalSource), 'no command may run through a shell');
+    assert.ok(canonicalSource.includes('shell: false'), 'every git invocation must be shell: false');
+    // Only the three fixed read-only command shapes are permitted.
+    assert.ok(canonicalSource.includes('rev-parse'), 'bounded git reader must use rev-parse');
+    assert.ok(canonicalSource.includes('cat-file'), 'bounded git reader must use cat-file');
+    assert.ok(canonicalSource.includes("'blob'"), 'bounded git reader must use cat-file blob');
+    assert.ok(canonicalSource.includes("'show'"), 'bounded git reader must use show -s');
+    assert.ok(canonicalSource.includes("'-s'"), 'bounded git reader must use show -s');
+    assert.ok(canonicalSource.includes('--format=%cI'), 'bounded git reader must read the committer timestamp via %cI');
+    // No mutating / network git verb may be invoked (either file).
+    const combined = `${source}\n${canonicalSource}`;
+    assert.ok(
+        !/\bgit\s+(checkout|reset|clean|fetch|pull|push|merge|rebase|switch|restore|add|rm|commit|tag|branch|clone|gc|prune)\b/.test(combined),
+        'no mutating or network git command may be used'
+    );
 });
 
 test('rebuild: receipt boundary declares no network, no database, no repository write', t => {

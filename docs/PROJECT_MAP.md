@@ -50,7 +50,7 @@
 
 | 目录 | 职责 | 说明 |
 |---|---|---|
-| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1 离线确定性重建入口 `historical_odds_rebuild.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
+| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1 离线确定性重建入口 `historical_odds_rebuild.js` + 同级 canonical 模块 `historical_odds_rebuild_canonical.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
 | `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（12 个模块）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
 | `src/ml/` | 训练、特征、推理 | 训练 / 预测需显式授权 |
 | `src/feature_engine/` | Node 侧特征工程 | |

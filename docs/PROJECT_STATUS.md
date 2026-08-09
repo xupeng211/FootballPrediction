@@ -197,18 +197,27 @@ legacy-writer execution is authorized.
 
 ## M3-R1 — Historical odds current-main reproducibility (reproducible rebuild entrypoint)
 
-- **M3-R1 COMPLETE（Draft PR awaiting owner acceptance，Issue #1793 链接；M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE）** — current-main
-  historical odds reconstruction made deterministic and reproducible with a committed entrypoint
-  `npm run odds:staging:rebuild`（`scripts/ops/odds_staging/historical_odds_rebuild.js`，lifecycle: permanent）。
+- **M3-R1 IMPLEMENTED — AWAITING_OWNER_ACCEPTANCE（Draft PR #1829；Issue #1793 链接；
+  M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；M3_R1_CLOSEOUT_COMPLETE=NO；不得改写为 M3-R1 COMPLETE）** —
+  current-main historical odds reconstruction made deterministic and reproducible with a committed
+  entrypoint `npm run odds:staging:rebuild`（`scripts/ops/odds_staging/historical_odds_rebuild.js` +
+  sibling `historical_odds_rebuild_canonical.js`，lifecycle: permanent）。
+- **Canonical self-recovering mode（GAP-01）**：`--canonical-history` 不要求任何预准备的 CSV bundle —
+  直接从本仓库不可变 Git 对象恢复三个固定来源（CANONICAL_SOURCES 的 commit+path → blob SHA →
+  核验 SHA-256/字节数/行数 → 物化到 repo 外确定性 staging 目录 → 构造 manifest → 复用
+  runOfflineStaging）。只经有界只读 git 子进程（仅 rev-parse / cat-file blob / show -s；
+  shell=false；限时/限量；剥离 GIT_* 环境；GIT_NO_LAZY_FETCH=1 + GIT_ALLOW_PROTOCOL=none；
+  绝不接受用户命令）。candidates artifact 绑定到冻结基线（1140 + eff8817284…，fail closed，
+  声明数量与数组实际数量必须一致）。
 - Reproduces the entire frozen mandate baseline from current main: **38,832 observations total /
   38,616 accepted / 216 quarantined** (144×15m + 72×30m); per-source 13,680/13,572/108,
   12,546/12,510/36, 12,606/12,534/72; **892 unique source candidates** (380/380/132, all
   canonical_match_identity, zero synthetic IDs); linkage **888 exact / 3×15m + 1×30m kickoff
-  conflicts / 0 unmatched / 0 ambiguous**; 888 distinct FotMob IDs. Two independent rebuilds
-  (BUILD_A / BUILD_B) are **byte-identical**; receipt schema m3-historical-odds-rebuild-receipt/v1
-  records actuals only (no hard-coded baseline constants).
+  conflicts / 0 unmatched / 0 ambiguous**; 888 distinct FotMob IDs. Two independent canonical
+  rebuilds (BUILD_A / BUILD_B, real data) are **byte-identical**; receipt schema
+  m3-historical-odds-rebuild-receipt/v2 records actuals only (no hard-coded baseline constants).
 - **Source population business hash（M3-R1 canonical composition）: `40b02195cd5828d43b2be9778aa32b4bb896cf32da4e132386a8e18c8a0d2e06`** —
-  sha256 over the documented sorted projection; locale-invariant sort; stable across codex rounds 2-3 refactors.
+  sha256 over the documented sorted projection; locale-invariant sort; stable across all refactors.
   The legacy D4F hash `07e579ed…` remains **NOT reproducible** (its composition was never retained in the repo);
   count-level reproducibility is fully verified, hash-level composition is not verifiable from current main.
 - **Temporal evaluation readiness: NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION** — every observation is
@@ -218,9 +227,27 @@ legacy-writer execution is authorized.
   (no Interwetten, no VC Bet); 2023/2024 Interwetten sparse (840 observations). Provenance: git blob
   verified per source; acquisition mode declared (`historical_git_recovery`); upstream provider provenance,
   license and capture time unverified/unknown.
-- Local validation: 24/24 regression tests; Codex review rounds 1-3 (max per mandate) with all findings
-  fixed offline (P1/P2/P3 incl. CI-blocking complexity P1 — verified against the repo's own eslint
-  8.57.1 `complexity: ["error", 15]` gate with positive control); `git diff --check` clean.
+- **Machine-readable temporal contract（GAP-03，receipt v2）**：receipt 携带
+  `evaluation_readiness { temporal_value_evaluation, reasons, observation_facts }`（facts 从实际发射
+  observations 计算：真实数据 38,832 unknown / 0 known）与 `temporal_semantics`（snapshot_type /
+  source_observed_at / capture_time 全部 unknown；plain_series_opening_status / c_series_closing_status
+  均 not_proven）；`rebuild_status { source_rebuild: SUCCESS, linkage_rebuild: EXECUTED|NOT_EXECUTED }`。
+  fail-closed classifier：只有 facts 与语义全部 proven 才可能 READY；手改 READY / 语义 / facts /
+  reasons 全部被 --validate 拒绝。
+- **Output-aware self-verification（GAP-02，--validate）**：从发射目录重算每个事实 — per-source
+  计数、emitted_digest（accepted/quarantine/summary/manifest 四文件字节摘要）、source population
+  业务哈希 / identity_mode / per_season、linkage 分类 / distinct ids / conflict samples（code-unit
+  排序）、manifest 派生字段（raw_sha256 / raw_size_bytes / repository_provenance）、quarantine
+  reasons、temporal semantics 与 readiness（含 reasons）；canonical 模式下还交叉核对 pinned 身份
+  （commit/path/blob/SHA-256/字节/行数）并对每个声明对象重新 git 验证。任何手改收据 / 发射文件 /
+  变更哈希都会被拒绝（确定性一致性，非密码学真实性）。真实数据验收：BUILD_A/B 字节一致、
+  VERIFY_BUILD_A/B PASS、篡改探针（计数 +1 与发射行内容修改）REJECTED —— 证据见
+  `acceptance-remediation-20260809T113656Z/`。
+- Local validation: 68 regression tests（odds_staging_rebuild.test.js + odds_staging_rebuild_canonical.test.js）；
+  Codex focused review 2 rounds（cap）—— round 1：2 P0 + 6 P1 + 3 P2 + 3 P3 全部修复；
+  round 2（verification）：2 P1 + 6 P2 全部修复并各自附带回归测试；round-2 修复经
+  10 个定向新测试 + 全套 286 回归 + 真实数据验收验证。eslint 8.57.1 `complexity: ["error", 15]`
+  全绿（含 positive control）；`git diff --check` clean；本地 gatekeeper commit-mode 门禁通过。
 - 未改变：M3_D4F 冻结合同计数不变、no-write 默认不变、无 DB/网络/训练/回测执行、无 migration。
 - Next (blocked on owner acceptance): M3-R1 Draft PR 验收；historical odds → production import
   integration remains **NOT_ESTABLISHED**（独立授权 + 独立 Gate，见下）。
