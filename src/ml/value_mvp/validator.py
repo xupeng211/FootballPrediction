@@ -22,13 +22,9 @@ from src.ml.value_mvp.bootstrap import (
     season_stratified_bootstrap_deltas,
 )
 from src.ml.value_mvp.market import closing_consensus
-from src.ml.value_mvp.pipeline import (
-    _RECEIPT_SCHEMA,
-    _environment_fingerprint,
-    build_input_manifest,
-    verify_inputs,
-)
+from src.ml.value_mvp.pipeline import build_input_manifest, verify_inputs
 from src.ml.value_mvp.protocol import protocol_sha256
+from src.ml.value_mvp.receipt import _RECEIPT_SCHEMA, _environment_fingerprint
 from src.ml.value_mvp.sources import (
     Match,
     build_dataset,
