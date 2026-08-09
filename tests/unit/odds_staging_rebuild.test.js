@@ -1,7 +1,8 @@
 'use strict';
 
-// lifecycle: permanent；M3-R1 有界重建入口回归测试（source identity ×4、output safety ×3、
-// semantic boundary ×5、determinism ×2、receipt ×6、no-forbidden-capability ×2）。
+// lifecycle: permanent；M3-R1 有界重建入口回归测试 + M3-R2 provider contract overlay
+// （source identity ×4、output safety ×3、semantic boundary ×6、determinism ×2、
+// receipt ×7、no-forbidden-capability ×2）。
 // 全部使用运行时生成的临时 bundle fixture；不写入仓库、不访问网络/数据库。
 
 const assert = require('node:assert/strict');
@@ -18,6 +19,7 @@ const {
     main,
     runRebuild,
     validateRebuildReceipt,
+    verifyRebuildReceiptAgainstOutput,
 } = require('../../scripts/ops/odds_staging/historical_odds_rebuild');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -99,7 +101,7 @@ function writeHistoricalManifest(t, rawPath, directory, name = 'source.manifest.
             raw_size_bytes: fs.readFileSync(rawPath).length,
             raw_sha256: sha256File(rawPath),
             adapter: 'football-data-csv',
-            adapter_version: '1.2.0',
+            adapter_version: '1.3.0',
             provenance_status: 'declared',
             upstream_provenance_status: 'unverified',
             license_status: 'unverified',
@@ -294,15 +296,109 @@ test('rebuild: non-empty emit directory is refused and mid-run failure rolls bac
 // ---- semantic boundary ×5 --------------------------------------------------
 
 test('rebuild: plain and C-series columns stay snapshot_type unknown with their own quote series', t => {
+    // Bundle mode without a declared provider_contract: fail closed — C columns
+    // must NOT be inferred as closing from the bare 'C' suffix (M3-R1 rule,
+    // unchanged by M3-R2 which only applies the overlay to declared sources).
     const { bundle } = runBundle(t);
     const observations = readEmittedObservations(bundle);
     assert.equal(observations.length, 12);
     const seriesCounts = {};
     for (const observation of observations) {
         assert.equal(observation.snapshot_type, 'unknown');
+        assert.ok(!Object.prototype.hasOwnProperty.call(observation, 'provider_collection_phase'));
         seriesCounts[observation.source_quote_series] = (seriesCounts[observation.source_quote_series] || 0) + 1;
     }
     assert.deepEqual(seriesCounts, { B365: 6, B365C: 6 });
+});
+
+test('rebuild: a manifest declaring the provider contract applies C=closing and plain=first_collection', t => {
+    const bundle = writeBundle(t, {
+        manifest: (rawPath, directory) => {
+            const manifestPath = writeHistoricalManifest(t, rawPath, directory);
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            manifest.provider_contract = {
+                contract_id: 'football-data-provider-contract/v1',
+                provider_id: 'football-data.co.uk',
+                applicable: true,
+                effective_from_season: '2019/20',
+                evidence_checked_at: '2026-08-09',
+            };
+            fs.writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`, 'utf8');
+            return manifestPath;
+        },
+    });
+    const receipt = runRebuild({
+        bundle: bundle.directory,
+        candidates: bundle.candidatesPath,
+        emitDir: bundle.emitDirectory,
+        ingestedAt: INGESTED_AT,
+    });
+    const observations = readEmittedObservations(bundle);
+    const bySeries = { B365: [], B365C: [] };
+    for (const observation of observations) {
+        bySeries[observation.source_quote_series].push(observation);
+    }
+    assert.equal(bySeries.B365.length, 6);
+    assert.equal(bySeries.B365C.length, 6);
+    for (const plain of bySeries.B365) {
+        assert.equal(plain.snapshot_type, 'unknown');
+        assert.equal(plain.provider_collection_phase, 'first_collection_after_market_open');
+    }
+    for (const closing of bySeries.B365C) {
+        assert.equal(closing.snapshot_type, 'closing');
+        assert.equal(closing.provider_collection_phase, 'closing');
+    }
+    // The distribution is computed from the ACTUAL emitted observations
+    // (accepted 12 + quarantine 6 — the kickoff-conflict match still carries its
+    // phase in parsed_fields), 9 plain + 9 C-series.
+    assert.deepEqual(receipt.series_semantics_distribution, {
+        closing_observation_count: 9,
+        first_collection_observation_count: 9,
+        unknown_temporal_semantics_observation_count: 0,
+    });
+    assert.equal(receipt.temporal_semantics.c_series_closing_status, 'proven');
+    assert.equal(receipt.temporal_semantics.plain_series_first_collection_status, 'proven');
+    assert.equal(receipt.temporal_semantics.plain_series_opening_status, 'not_proven');
+    // F-02: applicable_sources 由 ACTUAL 源 manifest 计算 —— 声明 contract 的 bundle
+    // 源必须出现在列表中（不是无条件 []），且验证路径会重读发射 manifest 交叉核验。
+    assert.deepEqual(receipt.provider_semantic_contract.applicable_sources, ['fixture']);
+    const verification = verifyRebuildReceiptAgainstOutput(bundle.emitDirectory, fs, {
+        validateReceipt: validateRebuildReceipt,
+    });
+    assert.deepEqual(verification, { valid: true, errors: [] });
+});
+
+test('rebuild: applicable_sources is recomputed from emitted manifests and tamper is REJECTED', t => {
+    const bundle = writeBundle(t, {
+        manifest: (rawPath, directory) => {
+            const manifestPath = writeHistoricalManifest(t, rawPath, directory);
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            manifest.provider_contract = {
+                contract_id: 'football-data-provider-contract/v1',
+                provider_id: 'football-data.co.uk',
+                applicable: true,
+                effective_from_season: '2019/20',
+                evidence_checked_at: '2026-08-09',
+            };
+            fs.writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`, 'utf8');
+            return manifestPath;
+        },
+    });
+    runRebuild({
+        bundle: bundle.directory,
+        candidates: bundle.candidatesPath,
+        emitDir: bundle.emitDirectory,
+        ingestedAt: INGESTED_AT,
+    });
+    const receiptPath = path.join(bundle.emitDirectory, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.provider_semantic_contract.applicable_sources = [];
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyRebuildReceiptAgainstOutput(bundle.emitDirectory, fs, {
+        validateReceipt: validateRebuildReceipt,
+    });
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('applicable_sources')));
 });
 
 test('rebuild: captured_at stays null and capture_time_status stays unknown on every observation', t => {
@@ -389,12 +485,23 @@ test('rebuild: observation idempotency keys are identical across deterministic r
 
 // ---- receipt ×4 ------------------------------------------------------------
 
-test('rebuild: produced receipt validates as m3-historical-odds-rebuild-receipt/v2', t => {
+test('rebuild: produced receipt validates as m3-historical-odds-rebuild-receipt/v3', t => {
     const { receipt } = runBundle(t);
     const validation = validateRebuildReceipt(receipt);
     assert.deepEqual(validation, { valid: true, errors: [] });
-    assert.equal(receipt.schema_version, 'm3-historical-odds-rebuild-receipt/v2');
+    assert.equal(receipt.schema_version, 'm3-historical-odds-rebuild-receipt/v3');
     assert.equal(receipt.rebuild_mode, 'generic_external_bundle');
+    // M3-R2: v3 carries the machine-readable provider semantic contract, the
+    // series semantics distribution, and the seven readiness dimensions.
+    assert.equal(receipt.provider_semantic_contract.contract_id, 'football-data-provider-contract/v1');
+    assert.deepEqual(receipt.provider_semantic_contract.applicable_sources, []);
+    assert.deepEqual(receipt.series_semantics_distribution, {
+        closing_observation_count: 0,
+        first_collection_observation_count: 0,
+        unknown_temporal_semantics_observation_count: 18,
+    });
+    assert.equal(receipt.evaluation_readiness.exact_observation_timestamp_ready, 'NO');
+    assert.equal(receipt.evaluation_readiness.exact_capture_timestamp_ready, 'NO');
 });
 
 test('rebuild: receipt validation rejects an unsupported schema version', t => {

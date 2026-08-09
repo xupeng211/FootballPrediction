@@ -13,6 +13,7 @@ const {
     stableCanonicalize,
 } = require('./contracts');
 const { validateKickoffTimeInterpretation } = require('./footballDataIdentity');
+const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('./footballDataProviderContract');
 
 class OfflineStagingError extends Error {
     constructor(code, message) {
@@ -158,6 +159,7 @@ function appendManifestValueErrors(manifest, errors) {
     }
 
     appendKickoffInterpretationErrors(manifest, errors);
+    appendProviderContractErrors(manifest, errors);
 }
 
 function appendKickoffInterpretationErrors(manifest, errors) {
@@ -166,7 +168,7 @@ function appendKickoffInterpretationErrors(manifest, errors) {
     const context = {
         acquisition_mode: HISTORICAL_GIT_RECOVERY_ACQUISITION_MODE,
         adapter: 'football-data-csv',
-        adapter_version: '1.2.0',
+        adapter_version: '1.3.0',
         source_timezone: 'unknown',
     };
     for (const [field, expected] of Object.entries(context)) {
@@ -178,6 +180,29 @@ function appendKickoffInterpretationErrors(manifest, errors) {
     }
     const validation = validateKickoffTimeInterpretation(interpretation);
     errors.push(...validation.errors);
+}
+
+function appendProviderContractErrors(manifest, errors) {
+    if (!Object.prototype.hasOwnProperty.call(manifest, 'provider_contract')) return;
+    const contract = manifest.provider_contract;
+    if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
+        errors.push('provider_contract must be a plain object');
+        return;
+    }
+    // M3-R2 (Codex F-04): contract_id 必须与 committed 官方 contract 精确一致 ——
+    // 伪 manifest 不得用自声明 contract_id 冒用官方取证语义。
+    if (contract.contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
+        errors.push(`provider_contract.contract_id must be exactly ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
+    }
+    if (contract.provider_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id) {
+        errors.push(`provider_contract.provider_id must be exactly ${FOOTBALL_DATA_PROVIDER_CONTRACT.provider_id}`);
+    }
+    if (contract.applicable !== true) {
+        errors.push('provider_contract.applicable must be true (fail closed: never claim applicability otherwise)');
+    }
+    if (typeof contract.evidence_checked_at !== 'string' || contract.evidence_checked_at === '') {
+        errors.push('provider_contract.evidence_checked_at must be a non-empty string');
+    }
 }
 
 function appendManifestPathErrors(manifest, errors) {

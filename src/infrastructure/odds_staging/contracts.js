@@ -18,6 +18,10 @@ const OPTIONAL_IDEMPOTENCY_FIELDS = Object.freeze([
     'capture_time_status',
     'source_quote_series',
     'kickoff_time_interpretation_evidence',
+    // M3-R2: provider 采集阶段是语义的一部分 —— 同一报价在 contract 声明与否两种
+    // 重建下的幂等键必须不同，否则 first_collection/closing 相位会被 exact-duplicate
+    // 合并而静默丢失（只有真实存在时才写入 payload，保持旧输出键不变）。
+    'provider_collection_phase',
 ]);
 
 const IDEMPOTENCY_FIELDS = Object.freeze([
@@ -270,6 +274,12 @@ function createCanonicalObservation(fields = {}) {
     const captureTimeStatus = nullableText(fields.capture_time_status);
     if (captureTimeStatus !== null) {
         observation.capture_time_status = captureTimeStatus;
+    }
+    // M3-R2: provider 声明的采集阶段（first_collection_after_market_open / closing）。
+    // 可选字段只在真实存在时写入；它是语义标签，不是时间戳。
+    const providerCollectionPhase = nullableText(fields.provider_collection_phase);
+    if (providerCollectionPhase !== null) {
+        observation.provider_collection_phase = providerCollectionPhase;
     }
     const interpretationEvidence = stableCanonicalize(fields.kickoff_time_interpretation_evidence);
     if (interpretationEvidence !== null) {

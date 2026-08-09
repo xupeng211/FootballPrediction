@@ -1,8 +1,8 @@
 'use strict';
 
 // lifecycle: permanent；M3-R1 canonical 恢复 / candidate 绑定 / output-aware 收据验证 /
-// temporal contract 回归测试（canonical ×8、canonical-vs-generic ×1、binding ×3、
-// verify ×6、temporal ×7）。sibling 文件 odds_staging_rebuild.test.js 保留 bundle 模式
+// M3-R2 temporal contract 回归测试（canonical ×8、canonical-vs-generic ×1、binding ×3、
+// verify ×6、temporal ×11）。sibling 文件 odds_staging_rebuild.test.js 保留 bundle 模式
 // 回归；两者共同覆盖 historical_odds_rebuild.js + historical_odds_rebuild_canonical.js。
 // 全部使用运行时生成的 fixture git 仓库 / 临时 bundle；不写入仓库、不访问网络/数据库。
 
@@ -614,24 +614,46 @@ test('verify: an invented linkage block on a no-candidates receipt is REJECTED',
 test('temporal: observation facts are computed from the actual emitted canonical fixture data', t => {
     // Three canonical sources, no candidate artifact: every emitted observation
     // quarantines as match_link_unmatched (18 per fixture CSV — the alias pair
-    // collapses at adapter level) and carries no proven temporal semantics —
-    // the facts must be computed, never assumed.
+    // collapses at adapter level). M3-R2: canonical manifests declare the provider
+    // contract applicable, so the 9 plain per-source observations carry
+    // provider_collection_phase=first_collection_after_market_open (snapshot_type
+    // stays unknown) and the 9 C-series observations carry snapshot_type=closing +
+    // provider_collection_phase=closing — the facts must be computed, never assumed.
     const fixture = canonicalFixture(t);
     const receipt = runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
     const facts = receipt.evaluation_readiness.observation_facts;
     assert.equal(facts.observation_count, 54);
     assert.equal(facts.accepted_count, 0);
     assert.equal(facts.quarantine_count, 54);
-    assert.equal(facts.snapshot_type_unknown_count, 54);
-    assert.equal(facts.known_snapshot_type_count, 0);
+    assert.equal(facts.snapshot_type_unknown_count, 27);
+    assert.equal(facts.known_snapshot_type_count, 27);
     assert.equal(facts.known_source_observed_at_count, 0);
     assert.equal(facts.known_captured_at_count, 0);
+    assert.equal(facts.closing_observation_count, 27);
+    assert.equal(facts.first_collection_observation_count, 27);
+    assert.equal(facts.unknown_temporal_semantics_observation_count, 0);
     assert.equal(receipt.evaluation_readiness.temporal_value_evaluation, 'NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION');
-    assert.equal(receipt.temporal_semantics.snapshot_type, 'unknown');
+    assert.equal(receipt.evaluation_readiness.closing_odds_semantics_ready, 'YES');
+    assert.equal(receipt.evaluation_readiness.first_collection_semantics_ready, 'YES');
+    assert.equal(receipt.evaluation_readiness.exact_observation_timestamp_ready, 'NO');
+    assert.equal(receipt.evaluation_readiness.exact_capture_timestamp_ready, 'NO');
+    assert.equal(receipt.evaluation_readiness.strict_decision_time_value_evaluation_ready, 'NO');
+    assert.equal(receipt.evaluation_readiness.closing_market_benchmark_semantics_ready, 'YES');
+    assert.equal(receipt.temporal_semantics.snapshot_type, 'mixed');
     assert.equal(receipt.temporal_semantics.source_observed_at, 'unknown');
     assert.equal(receipt.temporal_semantics.capture_time, 'unknown');
     assert.equal(receipt.temporal_semantics.plain_series_opening_status, 'not_proven');
-    assert.equal(receipt.temporal_semantics.c_series_closing_status, 'not_proven');
+    assert.equal(receipt.temporal_semantics.c_series_closing_status, 'proven');
+    assert.equal(receipt.temporal_semantics.plain_series_first_collection_status, 'proven');
+    assert.equal(receipt.temporal_semantics.provider_contract_id, 'football-data-provider-contract/v1');
+    assert.deepEqual(receipt.series_semantics_distribution, {
+        closing_observation_count: 27,
+        first_collection_observation_count: 27,
+        unknown_temporal_semantics_observation_count: 0,
+    });
+    assert.deepEqual(receipt.provider_semantic_contract.applicable_sources, ['src0', 'src1', 'src2']);
+    assert.equal(receipt.provider_semantic_contract.exact_observation_timestamp_available, false);
+    assert.equal(receipt.provider_semantic_contract.exact_capture_timestamp_available, false);
 });
 
 test('temporal: the classifier returns NOT_READY with concrete reasons for the fixture facts', t => {
@@ -639,31 +661,46 @@ test('temporal: the classifier returns NOT_READY with concrete reasons for the f
         observation_count: 18,
         accepted_count: 12,
         quarantine_count: 6,
-        snapshot_type_unknown_count: 18,
-        known_snapshot_type_count: 0,
+        snapshot_type_unknown_count: 9,
+        known_snapshot_type_count: 9,
         known_source_observed_at_count: 0,
         known_captured_at_count: 0,
         capture_time_status_unknown_count: 18,
+        closing_observation_count: 9,
+        first_collection_observation_count: 9,
+        unknown_temporal_semantics_observation_count: 0,
     };
-    const semantics = { snapshot_type: 'unknown', source_observed_at: 'unknown', capture_time: 'unknown', plain_series_opening_status: 'not_proven', c_series_closing_status: 'not_proven' };
+    const semantics = { snapshot_type: 'mixed', source_observed_at: 'unknown', capture_time: 'unknown', plain_series_opening_status: 'not_proven', c_series_closing_status: 'proven', plain_series_first_collection_status: 'proven', provider_contract_id: 'football-data-provider-contract/v1' };
     const readiness = classifyTemporalEvaluationReadiness(facts, semantics);
     assert.equal(readiness.temporal_value_evaluation, 'NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION');
     assert.ok(readiness.reasons.length >= 3);
+    assert.equal(readiness.closing_odds_semantics_ready, 'YES');
+    assert.equal(readiness.first_collection_semantics_ready, 'YES');
+    assert.equal(readiness.exact_observation_timestamp_ready, 'NO');
+    assert.equal(readiness.exact_capture_timestamp_ready, 'NO');
+    assert.equal(readiness.strict_decision_time_value_evaluation_ready, 'NO');
+    assert.equal(readiness.closing_market_benchmark_semantics_ready, 'YES');
 });
 
-test('temporal: proven opening/closing semantics cannot rescue unknown observation facts (fail closed)', t => {
+test('temporal: proven closing semantics cannot rescue missing timestamps or plain opening (fail closed)', t => {
     const facts = {
         observation_count: 18,
         accepted_count: 12,
         quarantine_count: 6,
-        snapshot_type_unknown_count: 18,
-        known_snapshot_type_count: 0,
+        snapshot_type_unknown_count: 9,
+        known_snapshot_type_count: 9,
         known_source_observed_at_count: 0,
         known_captured_at_count: 0,
         capture_time_status_unknown_count: 18,
+        closing_observation_count: 9,
+        first_collection_observation_count: 9,
+        unknown_temporal_semantics_observation_count: 0,
     };
-    const semantics = { snapshot_type: 'known', source_observed_at: 'known', capture_time: 'known', plain_series_opening_status: 'proven', c_series_closing_status: 'proven' };
-    assert.equal(classifyTemporalEvaluationReadiness(facts, semantics).temporal_value_evaluation, 'NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION');
+    const semantics = { snapshot_type: 'mixed', source_observed_at: 'known', capture_time: 'known', plain_series_opening_status: 'not_proven', c_series_closing_status: 'proven', plain_series_first_collection_status: 'proven', provider_contract_id: 'football-data-provider-contract/v1' };
+    const readiness = classifyTemporalEvaluationReadiness(facts, semantics);
+    assert.equal(readiness.temporal_value_evaluation, 'NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION');
+    // 即便 C closing 已证明：facts 的观察/采集时间缺失 + plain opening 不可证明 → NOT_READY。
+    assert.ok(readiness.reasons.some(reason => reason.includes('plain series opening status is not proven')));
 });
 
 test('temporal: the classifier is a genuine function — READY is reachable only with proven facts and semantics', t => {
@@ -676,9 +713,18 @@ test('temporal: the classifier is a genuine function — READY is reachable only
         known_source_observed_at_count: 2,
         known_captured_at_count: 2,
         capture_time_status_unknown_count: 0,
+        closing_observation_count: 2,
+        first_collection_observation_count: 0,
+        unknown_temporal_semantics_observation_count: 0,
     };
-    const semantics = { snapshot_type: 'known', source_observed_at: 'known', capture_time: 'known', plain_series_opening_status: 'proven', c_series_closing_status: 'proven' };
-    assert.equal(classifyTemporalEvaluationReadiness(facts, semantics).temporal_value_evaluation, 'READY_FOR_TEMPORAL_VALUE_EVALUATION');
+    const semantics = { snapshot_type: 'known', source_observed_at: 'known', capture_time: 'known', plain_series_opening_status: 'proven', c_series_closing_status: 'proven', plain_series_first_collection_status: 'proven', provider_contract_id: 'football-data-provider-contract/v1' };
+    const readiness = classifyTemporalEvaluationReadiness(facts, semantics);
+    assert.equal(readiness.temporal_value_evaluation, 'READY_FOR_TEMPORAL_VALUE_EVALUATION');
+    assert.equal(readiness.strict_decision_time_value_evaluation_ready, 'YES');
+    assert.equal(readiness.closing_odds_semantics_ready, 'YES');
+    assert.equal(readiness.closing_market_benchmark_semantics_ready, 'YES');
+    // 语义声称 first_collection proven 但没有观测携带该 phase → 该维度必须 NO（fail closed）。
+    assert.equal(readiness.first_collection_semantics_ready, 'NO');
 });
 
 test('temporal: a hand-edited READY receipt is REJECTED by output-aware verification', t => {
@@ -693,17 +739,109 @@ test('temporal: a hand-edited READY receipt is REJECTED by output-aware verifica
     assert.ok(result.errors.some(error => error.includes('classifier')));
 });
 
-test('temporal: proven semantics contradicting unknown observation facts are REJECTED', t => {
+test('temporal: hand-edited plain-series opening=proven is REJECTED unconditionally', t => {
+    // M3-R2: provider 官方措辞 "collected after market opening"，第一组永不称为 opening；
+    // 即使观测快照语义已 known（C series closing），plain opening 仍不可证明。
     const fixture = canonicalFixture(t);
     runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
     const receiptPath = path.join(fixture.emitDir, 'receipt.json');
     const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
     receipt.temporal_semantics.plain_series_opening_status = 'proven';
-    receipt.temporal_semantics.c_series_closing_status = 'proven';
     fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
     const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
     assert.equal(result.valid, false);
     assert.ok(result.errors.some(error => error.includes('contradiction')));
+});
+
+test('temporal: hand-edited c_series_closing_status=not_proven against proven closing facts is REJECTED', t => {
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    // The classifier recomputes closing_odds_semantics_ready from the facts: a
+    // receipt claiming closing not proven while 27 emitted observations carry the
+    // closing phase fails the classifier comparison (fail closed on downgrade too).
+    receipt.temporal_semantics.c_series_closing_status = 'not_proven';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('classifier') || error.includes('contradiction')));
+});
+
+test('temporal: hand-edited provider_contract_id is REJECTED by output-aware verification', t => {
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.temporal_semantics.provider_contract_id = 'tampered-contract/v999';
+    receipt.provider_semantic_contract.contract_id = 'tampered-contract/v999';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('provider_contract_id') || error.includes('contract_id')));
+});
+
+test('temporal: hand-edited series_semantics_distribution is REJECTED by output-aware verification', t => {
+    // Codex F-01: the distribution is a pure projection of the facts; a tampered
+    // distribution (closing 0 vs facts 27) must fail even though facts/semantics
+    // still match the emitted output.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.series_semantics_distribution = {
+        closing_observation_count: 0,
+        first_collection_observation_count: 54,
+        unknown_temporal_semantics_observation_count: 0,
+    };
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('series_semantics_distribution')));
+});
+
+test('temporal: a consistently downgraded receipt (closing not_proven + readiness NO) is REJECTED', t => {
+    // Codex R2 F-01: status fields are pure functions of the facts — a hand-edit
+    // that downgrades c_series_closing_status AND flips the readiness dimensions
+    // consistently must still fail, otherwise audits trust under-claimed semantics.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.temporal_semantics.c_series_closing_status = 'not_proven';
+    receipt.evaluation_readiness.closing_odds_semantics_ready = 'NO';
+    receipt.evaluation_readiness.closing_market_benchmark_semantics_ready = 'NO';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('c_series_closing_status')));
+});
+
+test('temporal: hand-edited provider_semantic_contract provenance fields are REJECTED', t => {
+    // Codex R2 F-02: every provenance field must match the committed contract,
+    // not just contract_id.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.provider_semantic_contract.provider_id = 'some-other-provider';
+    receipt.provider_semantic_contract.evidence_checked_at = '2020-01-01';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('provider_id') && error.includes('committed provider contract')));
+});
+
+test('temporal: hand-edited readiness dimensions are REJECTED by output-aware verification', t => {
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.evaluation_readiness.closing_odds_semantics_ready = 'NO';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('classifier')));
 });
 
 test('temporal: recovery provenance (recovered_at / commit_timestamp) cannot make readiness READY', t => {

@@ -146,6 +146,9 @@ function createObservationQuarantine(observation) {
                 // 可选合同字段只在真实存在时进入证据，保持旧 quarantine 输出不变。
                 ...(observation.source_quote_series ? { source_quote_series: observation.source_quote_series } : {}),
                 ...(observation.capture_time_status ? { capture_time_status: observation.capture_time_status } : {}),
+                ...(observation.provider_collection_phase
+                    ? { provider_collection_phase: observation.provider_collection_phase }
+                    : {}),
                 ...(observation.kickoff_time_interpretation_evidence
                     ? { kickoff_time_interpretation_evidence: observation.kickoff_time_interpretation_evidence }
                     : {}),

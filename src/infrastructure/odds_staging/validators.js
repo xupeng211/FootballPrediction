@@ -8,6 +8,9 @@ const {
     isStrictAbsoluteTimestamp,
     nullableText,
 } = require('./contracts');
+const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('./footballDataProviderContract');
+
+const ALLOWED_PROVIDER_COLLECTION_PHASES = new Set(FOOTBALL_DATA_PROVIDER_CONTRACT.collection_phase_values);
 
 const MARKET_SELECTIONS = Object.freeze({
     '1X2': ['home', 'draw', 'away'],
@@ -85,6 +88,13 @@ function validateTimeAndProvenance(observation) {
     const reasons = [];
     if (!ALLOWED_SNAPSHOT_TYPES.has(observation.snapshot_type)) {
         reasons.push('snapshot_type_invalid');
+    }
+    if (
+        observation.provider_collection_phase !== null &&
+        observation.provider_collection_phase !== undefined &&
+        !ALLOWED_PROVIDER_COLLECTION_PHASES.has(observation.provider_collection_phase)
+    ) {
+        reasons.push('provider_collection_phase_invalid');
     }
     if (observation.source_observed_at && !isStrictAbsoluteTimestamp(observation.source_observed_at)) {
         reasons.push('source_observed_at_invalid');
