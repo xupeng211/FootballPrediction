@@ -8,14 +8,16 @@ byte-deterministic for a fixed input order.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
 def season_stratified_bootstrap_deltas(
-    deltas_by_season: dict[str, np.ndarray],
+    deltas_by_season: dict[str, np.ndarray[Any, Any]],
     replicates: int,
     seed: int,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Return replicate pooled-mean deltas from season-stratified resampling."""
     rng = np.random.default_rng(seed)
     season_keys = sorted(deltas_by_season)
@@ -35,7 +37,9 @@ def season_stratified_bootstrap_deltas(
     return replicate_means
 
 
-def percentile_ci(replicate_means: np.ndarray, percentiles: list[float]) -> tuple[float, float]:
+def percentile_ci(
+    replicate_means: np.ndarray[Any, Any], percentiles: list[float]
+) -> tuple[float, float]:
     """Percentile confidence interval over bootstrap replicates."""
     low, high = np.percentile(replicate_means, percentiles)
     return float(low), float(high)

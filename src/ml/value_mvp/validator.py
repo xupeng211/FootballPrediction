@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv as csv_module
 import hashlib
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -57,14 +57,18 @@ _ALLOWED_META_KEYS = {
 }
 
 
-def load_predictions(path: Path) -> list[dict]:
+def load_predictions(path: Path) -> list[dict[str, Any]]:
     """Read a predictions CSV back as list of dicts (strings preserved)."""
     with path.open("r", encoding="utf-8") as handle:
         return list(csv_module.DictReader(handle))
 
 
 def check_input_manifest(
-    input_dir: Path, protocol: dict, matches: list[Match], git_revision: str, recorded: dict
+    input_dir: Path,
+    protocol: dict[str, Any],
+    matches: list[Match],
+    git_revision: str,
+    recorded: dict[str, Any],
 ) -> None:
     """Recompute the input manifest and compare with the recorded one."""
     recomputed = build_input_manifest(input_dir, protocol, matches, git_revision)
@@ -72,7 +76,7 @@ def check_input_manifest(
         raise ValueError("input manifest mismatch (inputs tampered or different inputs used)")
 
 
-def check_population_hash(matches: list[Match], recorded: dict) -> None:
+def check_population_hash(matches: list[Match], recorded: dict[str, Any]) -> None:
     """Recompute the evaluation population hash and compare."""
     actual = evaluation_population_hash(matches)
     if actual != recorded.get("evaluation_population_hash"):
@@ -81,7 +85,7 @@ def check_population_hash(matches: list[Match], recorded: dict) -> None:
         )
 
 
-def check_protocol_frozen(protocol: dict, output_dir: Path) -> None:
+def check_protocol_frozen(protocol: dict[str, Any], output_dir: Path) -> None:
     """Compare the loaded protocol against the frozen copy + sha file."""
     sha_file = output_dir / "protocol-sha256.txt"
     copy_file = output_dir / "protocol-copy.json"
@@ -99,7 +103,7 @@ def check_protocol_frozen(protocol: dict, output_dir: Path) -> None:
         raise ValueError("protocol-copy.json does not match the frozen protocol sha")
 
 
-def check_predictions_invariants(predictions: list[dict], fold_name: str) -> None:
+def check_predictions_invariants(predictions: list[dict[str, Any]], fold_name: str) -> None:
     """Structural invariants on a predictions CSV (no metrics yet)."""
     mids = [row["match_identity"] for row in predictions]
     if len(mids) != len(set(mids)):
@@ -132,7 +136,7 @@ def _is_bounded_probability(value: str) -> bool:
 
 
 def check_fold_assignments(
-    predictions: list[dict], expected_seasons: set[str], fold_name: str
+    predictions: list[dict[str, Any]], expected_seasons: set[str], fold_name: str
 ) -> None:
     """All rows in a fold must belong to the fold's test seasons."""
     actual = {row["season"] for row in predictions}
@@ -141,7 +145,10 @@ def check_fold_assignments(
 
 
 def recompute_market_probabilities(
-    matches: list[Match], predictions: list[dict], fold_name: str, protocol: dict
+    matches: list[Match],
+    predictions: list[dict[str, Any]],
+    fold_name: str,
+    protocol: dict[str, Any],
 ) -> list[list[float]]:
     """Recompute closing consensus per prediction row from raw observations."""
     by_mid = {match.mid: match for match in matches}
@@ -166,12 +173,12 @@ def recompute_market_probabilities(
 
 
 def recompute_metrics(
-    predictions: list[dict],
+    predictions: list[dict[str, Any]],
     market_rows: list[list[float]],
-    recorded: dict,
-    protocol: dict,
-    expected_ci: dict | None = None,
-) -> dict:
+    recorded: dict[str, Any],
+    protocol: dict[str, Any],
+    expected_ci: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Recompute fold/pooled metrics from predictions and compare with recorded.
 
     Strict by design (F-01): every recomputed key must be present in the
@@ -203,7 +210,7 @@ def recompute_metrics(
     return recomputed
 
 
-def _check_computed_keys(recomputed: dict, recorded: dict) -> None:
+def _check_computed_keys(recomputed: dict[str, Any], recorded: dict[str, Any]) -> None:
     """Every recomputed key must be present in the recorded metrics and equal."""
     for key, value in recomputed.items():
         if key not in recorded:
@@ -214,7 +221,7 @@ def _check_computed_keys(recomputed: dict, recorded: dict) -> None:
             )
 
 
-def _check_ci_keys(recorded: dict, expected_ci: dict | None) -> None:
+def _check_ci_keys(recorded: dict[str, Any], expected_ci: dict[str, Any] | None) -> None:
     """CI keys are cross-checked against the bootstrap record (never skipped)."""
     if expected_ci is None:
         for key in _CI_KEYS:
@@ -232,7 +239,7 @@ def _check_ci_keys(recorded: dict, expected_ci: dict | None) -> None:
             )
 
 
-def _check_unknown_keys(recomputed: dict, recorded: dict) -> None:
+def _check_unknown_keys(recomputed: dict[str, Any], recorded: dict[str, Any]) -> None:
     """Recorded keys outside the known set are rejected outright."""
     allowed = set(recomputed) | set(_CI_KEYS) | _ALLOWED_META_KEYS
     for key in recorded:
@@ -241,11 +248,11 @@ def _check_unknown_keys(recomputed: dict, recorded: dict) -> None:
 
 
 def check_bootstrap(
-    predictions: list[dict],
+    predictions: list[dict[str, Any]],
     market_rows: list[list[float]],
-    protocol: dict,
-    recorded_bootstrap: dict,
-    recorded_pooled: dict,
+    protocol: dict[str, Any],
+    recorded_bootstrap: dict[str, Any],
+    recorded_pooled: dict[str, Any],
 ) -> None:
     """Recompute the season-stratified bootstrap CIs from prediction rows.
 
@@ -265,17 +272,17 @@ def check_bootstrap(
     per_row_brier_deltas = evaluation.per_row_brier(model_probs, labels) - evaluation.per_row_brier(
         market_probs, labels
     )
-    deltas_by_season: dict[str, np.ndarray] = {}
-    brier_by_season: dict[str, np.ndarray] = {}
+    deltas_by_season: dict[str, list[float]] = {}
+    brier_by_season: dict[str, list[float]] = {}
     for i, row in enumerate(predictions):
         deltas_by_season.setdefault(row["season"], []).append(per_row_deltas[i])
         brier_by_season.setdefault(row["season"], []).append(per_row_brier_deltas[i])
-    deltas_by_season = {season: np.array(values) for season, values in deltas_by_season.items()}
-    brier_by_season = {season: np.array(values) for season, values in brier_by_season.items()}
+    season_deltas = {season: np.array(values) for season, values in deltas_by_season.items()}
+    season_brier = {season: np.array(values) for season, values in brier_by_season.items()}
     replicates = int(protocol["bootstrap"]["replicates"])
     seed = int(protocol["bootstrap"]["seed"])
     percentiles = protocol["bootstrap"]["ci_percentiles"]
-    ll_replicates = season_stratified_bootstrap_deltas(deltas_by_season, replicates, seed)
+    ll_replicates = season_stratified_bootstrap_deltas(season_deltas, replicates, seed)
     low, high = percentile_ci(ll_replicates, percentiles)
     if abs(low - float(recorded_bootstrap["delta_log_loss_ci95_low"])) > _TOLERANCE:
         raise ValueError(
@@ -285,7 +292,7 @@ def check_bootstrap(
         raise ValueError(
             f"bootstrap CI high mismatch: {high} != {recorded_bootstrap['delta_log_loss_ci95_high']}"
         )
-    brier_replicates = season_stratified_bootstrap_deltas(brier_by_season, replicates, seed)
+    brier_replicates = season_stratified_bootstrap_deltas(season_brier, replicates, seed)
     brier_low, brier_high = percentile_ci(brier_replicates, percentiles)
     if abs(brier_low - float(recorded_bootstrap["delta_brier_ci95_low"])) > _TOLERANCE:
         raise ValueError(
@@ -309,10 +316,10 @@ def check_bootstrap(
 
 
 def check_calibration(
-    predictions: list[dict],
+    predictions: list[dict[str, Any]],
     market_rows: list[list[float]],
-    protocol: dict,
-    recorded_calibration: dict,
+    protocol: dict[str, Any],
+    recorded_calibration: dict[str, Any],
 ) -> None:
     """Recompute the fixed-bin calibration summary from the prediction rows.
 
@@ -333,7 +340,9 @@ def check_calibration(
         raise ValueError("calibration summary mismatch (recomputed from predictions)")
 
 
-def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision: str) -> dict:
+def validate_run(
+    input_dir: Path, output_dir: Path, protocol: dict[str, Any], git_revision: str
+) -> dict[str, Any]:
     """Full independent validation; raises ValueError on any tamper/divergence."""
     matches, _ = _load_inputs(input_dir, protocol)
     check_protocol_frozen(protocol, output_dir)
@@ -412,7 +421,7 @@ def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision
     }
 
 
-def _check_environment_and_convergence(recorded_receipt: dict) -> None:
+def _check_environment_and_convergence(recorded_receipt: dict[str, Any]) -> None:
     """F-02: the receipt must carry the pinned schema, the runtime environment
     fingerprint and a self-consistent per-fold optimizer convergence record."""
     if recorded_receipt.get("schema") != _RECEIPT_SCHEMA:
@@ -435,12 +444,12 @@ def _check_environment_and_convergence(recorded_receipt: dict) -> None:
 
 def check_receipt_contents(
     output_dir: Path,
-    recorded_manifest: dict,
-    recorded_population: dict,
-    recorded_fold1: dict,
-    recorded_fold2: dict,
-    recorded_pooled: dict,
-    recorded_receipt: dict,
+    recorded_manifest: dict[str, Any],
+    recorded_population: dict[str, Any],
+    recorded_fold1: dict[str, Any],
+    recorded_fold2: dict[str, Any],
+    recorded_pooled: dict[str, Any],
+    recorded_receipt: dict[str, Any],
 ) -> None:
     """Cross-check the run receipt against every file it summarizes."""
     _check_environment_and_convergence(recorded_receipt)
@@ -492,7 +501,7 @@ def check_receipt_contents(
             raise ValueError(f"run-receipt output digest mismatch for {name}")
 
 
-def _load_inputs(input_dir: Path, protocol: dict) -> tuple[list[Match], dict]:
+def _load_inputs(input_dir: Path, protocol: dict[str, Any]) -> tuple[list[Match], dict[str, Any]]:
     """Load and build inputs like the pipeline does (fail on drift)."""
     csv_rows = load_csv_rows(input_dir / "csv")
     observations = load_observations(input_dir / "observations")
@@ -500,12 +509,12 @@ def _load_inputs(input_dir: Path, protocol: dict) -> tuple[list[Match], dict]:
     return matches, verify_inputs(input_dir)
 
 
-def _read_json(path: Path) -> dict:
+def _read_json(path: Path) -> dict[str, Any]:
     """Read a JSON record; fail loudly when missing."""
     if not path.exists():
         raise ValueError(f"missing recorded output: {path}")
     with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        return dict(json.load(handle))
 
 
 def validate_single_file_probe(probe_path: Path) -> None:

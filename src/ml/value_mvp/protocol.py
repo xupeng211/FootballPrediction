@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -80,15 +80,15 @@ _REQUIRED_TOP_LEVEL_KEYS: tuple[str, ...] = (
 )
 
 
-def load_protocol(path: Path) -> dict:
+def load_protocol(path: Path) -> dict[str, Any]:
     """Load and structurally validate the protocol contract from a JSON file."""
     with path.open("r", encoding="utf-8") as handle:
         protocol = json.load(handle)
     validate_protocol(protocol)
-    return protocol
+    return dict(protocol)
 
 
-def validate_protocol(protocol: dict) -> None:
+def validate_protocol(protocol: dict[str, Any]) -> None:
     """Raise ValueError when the protocol is missing required fields."""
     for key in _REQUIRED_TOP_LEVEL_KEYS:
         if key not in protocol:
@@ -106,17 +106,17 @@ def validate_protocol(protocol: dict) -> None:
         raise ValueError("primary metric must be multiclass_log_loss (pre-registered)")
 
 
-def _canonical_json(obj: dict) -> str:
+def _canonical_json(obj: dict[str, Any]) -> str:
     """Canonical JSON serialization: sorted keys, no whitespace, ascii."""
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
-def protocol_sha256(protocol: dict) -> str:
+def protocol_sha256(protocol: dict[str, Any]) -> str:
     """Deterministic SHA256 of the protocol's canonical JSON (no wall-clock)."""
     return hashlib.sha256(_canonical_json(protocol).encode("utf-8")).hexdigest()
 
 
-def feature_contract_violations(protocol: dict) -> list[str]:
+def feature_contract_violations(protocol: dict[str, Any]) -> list[str]:
     """Return feature-contract violations (forbidden keyword hits)."""
     violations: list[str] = []
     features = protocol.get("feature_contract", {}).get("features", [])

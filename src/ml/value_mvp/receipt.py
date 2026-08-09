@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 _RECEIPT_SCHEMA = "value-mvp-1-run-receipt/v2"
 
 
-def write_json(path: Path, obj: dict) -> None:
+def write_json(path: Path, obj: dict[str, Any]) -> None:
     """Write byte-stable canonical JSON (sorted keys, rounded floats)."""
     path.write_text(
         json.dumps(obj, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
@@ -42,7 +42,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _environment_fingerprint() -> dict:
+def _environment_fingerprint() -> dict[str, Any]:
     """Runtime environment facts bound into the run receipt (no wall-clock).
 
     The frozen hyperparameters include max_iter=2000; on the real data lbfgs
@@ -53,7 +53,7 @@ def _environment_fingerprint() -> dict:
     """
     import platform  # noqa: PLC0415
 
-    import scipy  # noqa: PLC0415
+    import scipy  # type: ignore[import-untyped]  # noqa: PLC0415
     import sklearn  # noqa: PLC0415
 
     return {
@@ -80,16 +80,16 @@ _RECEIPT_OUTPUT_FILES = (
 
 
 def build_run_receipt(
-    pooled: dict,
-    fold1: dict,
-    fold2: dict,
-    protocol: dict,
-    manifest: dict,
-    population_manifest: dict,
+    pooled: dict[str, Any],
+    fold1: dict[str, Any],
+    fold2: dict[str, Any],
+    protocol: dict[str, Any],
+    manifest: dict[str, Any],
+    population_manifest: dict[str, Any],
     git_revision: str,
     output_dir: Path,
     compute_digests: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Assemble the run receipt (all business results + hashes; no wall-clock).
 
     output_digests binds the receipt to the exact bytes of every summarized
@@ -126,7 +126,7 @@ def build_run_receipt(
     }
 
 
-def write_summary(path: Path, receipt: dict) -> None:
+def write_summary(path: Path, receipt: dict[str, Any]) -> None:
     """Human-readable summary (markdown) of the run receipt."""
     pooled = receipt["pooled"]
     lines = [
@@ -173,7 +173,7 @@ def write_summary(path: Path, receipt: dict) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _metrics_lines(metrics: dict) -> list[str]:
+def _metrics_lines(metrics: dict[str, Any]) -> list[str]:
     """Markdown lines for a metrics block."""
     return [
         f"- OOS count: {metrics.get('oos_count')}",

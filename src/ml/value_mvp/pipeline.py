@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import csv as csv_module
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import joblib
+import joblib  # type: ignore[import-untyped]
 import numpy as np
 
 from src.ml.value_mvp import evaluation, leakage
@@ -74,16 +74,16 @@ DATA_GATES = {
 _LABEL_INDEX = {"H": 0, "D": 1, "A": 2}
 
 
-def _round_json(value: float) -> float:
+def _round_json(value: float | None) -> float | None:
     """Round for deterministic byte-stable serialization (None for NaN)."""
     if value is None:
-        return None  # type: ignore[return-value]
+        return None
     return evaluation.safe_round(value)
 
 
-def _verify_observation_files(observations_dir: Path) -> tuple[dict, set[str]]:
+def _verify_observation_files(observations_dir: Path) -> tuple[dict[str, Any], set[str]]:
     """Pin-count and pin-hash each observation JSONL; collect matched ids."""
-    record: dict = {}
+    record: dict[str, Any] = {}
     distinct_matched_ids: set[str] = set()
     for name, expected_count in OBSERVATION_COUNTS.items():
         path = observations_dir / name
@@ -111,7 +111,7 @@ def _verify_observation_files(observations_dir: Path) -> tuple[dict, set[str]]:
     return record, distinct_matched_ids
 
 
-def _verify_receipt(observations_dir: Path) -> dict:
+def _verify_receipt(observations_dir: Path) -> dict[str, Any]:
     """Pin-hash the receipt and validate its schema + readiness declaration."""
     receipt = observations_dir / "receipt.json"
     if not receipt.exists():
@@ -137,7 +137,7 @@ def _verify_receipt(observations_dir: Path) -> dict:
     }
 
 
-def verify_inputs(input_dir: Path) -> dict:
+def verify_inputs(input_dir: Path) -> dict[str, Any]:
     """Verify pinned input hashes/counts; return an input identity record.
 
     Fail-closed: CSV files, observation JSONL files AND receipt.json are all
@@ -146,7 +146,7 @@ def verify_inputs(input_dir: Path) -> dict:
     """
     csv_dir = input_dir / "csv"
     observations_dir = input_dir / "observations"
-    record: dict = {"csv_files": {}, "observation_files": {}}
+    record: dict[str, Any] = {"csv_files": {}, "observation_files": {}}
     for name, expected in INPUT_HASHES.items():
         path = csv_dir / name
         actual = sha256_file(path)
@@ -160,7 +160,7 @@ def verify_inputs(input_dir: Path) -> dict:
     return record
 
 
-def load_inputs(input_dir: Path, protocol: dict) -> tuple[list[Match], dict]:
+def load_inputs(input_dir: Path, protocol: dict[str, Any]) -> tuple[list[Match], dict[str, Any]]:
     """Load observations + CSVs, build the dataset, verify population invariants."""
     csv_rows = load_csv_rows(input_dir / "csv")
     observations = load_observations(input_dir / "observations")
@@ -175,8 +175,8 @@ def load_inputs(input_dir: Path, protocol: dict) -> tuple[list[Match], dict]:
 
 
 def build_input_manifest(
-    input_dir: Path, protocol: dict, matches: list[Match], git_revision: str
-) -> dict:
+    input_dir: Path, protocol: dict[str, Any], matches: list[Match], git_revision: str
+) -> dict[str, Any]:
     """Assemble the input manifest (source identities, hashes, population)."""
     inputs = verify_inputs(input_dir)
     return {
@@ -207,12 +207,12 @@ def check_contract_module(repo_root: Path) -> str:
     return sha256_file(contract_path)
 
 
-def _closing_coverage(matches: list[Match], protocol: dict) -> int:
+def _closing_coverage(matches: list[Match], protocol: dict[str, Any]) -> int:
     """Count matches with a valid closing consensus (min bookmaker count)."""
     return sum(1 for match in matches if closing_consensus(match, protocol) is not None)
 
 
-def _split_invariant(matches: list[Match], protocol: dict) -> dict:
+def _split_invariant(matches: list[Match], protocol: dict[str, Any]) -> dict[str, Any]:
     """Per-fold assertion: max(train kickoff) < min(test kickoff), by ISO string."""
     results: dict[str, str] = {}
     for fold_name, fold in protocol["season_split_policy"].items():
@@ -240,16 +240,16 @@ def _split_invariant(matches: list[Match], protocol: dict) -> dict:
 
 def population_gates(
     matches: list[Match],
-    protocol: dict,
-    contract_status: dict,
+    protocol: dict[str, Any],
+    contract_status: dict[str, Any],
     inputs_verified: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Evaluate the mandatory data gates from actual data (fail closed).
 
     Every status is the result of a performed check; no literal PASS exists.
     """
     counts = season_counts(matches)
-    gates: dict = {
+    gates: dict[str, Any] = {
         "season_counts": counts,
         "total_matches": len(matches),
         "CANONICAL_SOURCE_RECOVERY": "PASS" if inputs_verified else "FAIL",
@@ -326,10 +326,10 @@ def population_gates(
     return gates
 
 
-def phase0_probe(matches: list[Match], protocol: dict) -> dict:
+def phase0_probe(matches: list[Match], protocol: dict[str, Any]) -> dict[str, Any]:
     """Market probe: first-collection vs closing consensus performance, per season."""
     excluded = tuple(protocol["population_policy"]["bookmaker_exclusion"])
-    per_season: dict[str, dict] = {}
+    per_season: dict[str, dict[str, Any]] = {}
     for season in sorted({m.season for m in matches}):
         season_matches = [m for m in matches if m.season == season]
         per_season[season] = _phase_stats(season_matches, protocol)
@@ -349,7 +349,7 @@ def phase0_probe(matches: list[Match], protocol: dict) -> dict:
     }
 
 
-def _phase_stats(matches: list[Match], protocol: dict) -> dict:
+def _phase_stats(matches: list[Match], protocol: dict[str, Any]) -> dict[str, Any]:
     """Phase statistics for a match set (both phases)."""
     closing_vectors = []
     first_vectors = []
@@ -373,7 +373,7 @@ def _phase_stats(matches: list[Match], protocol: dict) -> dict:
             if overround is not None:
                 first_overrounds.append(overround)
 
-    def metrics(vectors: list) -> dict:
+    def metrics(vectors: list[tuple[Match, np.ndarray[Any, Any]]]) -> dict[str, Any]:
         if not vectors:
             return {"count": 0}
         probs = np.array([vec for _match, vec in vectors])
@@ -410,10 +410,10 @@ def run_fold(
     train_seasons: list[str],
     test_seasons: list[str],
     matches: list[Match],
-    feature_rows: list[dict],
-    protocol: dict,
+    feature_rows: list[dict[str, Any]],
+    protocol: dict[str, Any],
     artifacts_dir: Path,
-) -> dict:
+) -> dict[str, Any]:
     """Train on train_seasons, predict on test_seasons; return fold results."""
     # Function-level sklearn imports: tests/unit/ml/test_training_no_write_guard.py
     # stubs sys.modules["sklearn"] with __path__=[] at import time, which would
@@ -456,8 +456,8 @@ def run_fold(
     model_probs = model.predict_proba(x_test_scaled)
     evaluation.validate_probability_matrix(model_probs, f"{fold_name} model")
 
-    predictions: list[dict] = []
-    market_rows: list[dict] = []
+    predictions: list[dict[str, Any]] = []
+    market_rows: list[dict[str, Any]] = []
     for position, match in enumerate([matches[i] for i in test_indices]):
         closing = closing_consensus(match, protocol)
         if closing is None:
@@ -493,8 +493,12 @@ def run_fold(
 
 
 def _prediction_row(
-    fold_name: str, match: Match, model_p: np.ndarray, market_p: tuple, n_bookmakers: int
-) -> dict:
+    fold_name: str,
+    match: Match,
+    model_p: np.ndarray[Any, Any],
+    market_p: tuple[float, float, float],
+    n_bookmakers: int,
+) -> dict[str, Any]:
     """One auditable OOS prediction row (protocol section 53)."""
     return {
         "match_identity": match.mid,
@@ -515,8 +519,11 @@ def _prediction_row(
 
 
 def _fold_metrics(
-    model_probs: np.ndarray, market_probs: np.ndarray, labels: np.ndarray, protocol: dict
-) -> dict:
+    model_probs: np.ndarray[Any, Any],
+    market_probs: np.ndarray[Any, Any],
+    labels: np.ndarray[Any, Any],
+    protocol: dict[str, Any],
+) -> dict[str, Any]:
     """Per-fold metrics for model, market and the class-frequency baseline."""
     eps = protocol.get("log_loss_eps", 1e-15)
     class_frequency = evaluation.class_frequency_probabilities(labels)
@@ -542,12 +549,12 @@ def _fold_metrics(
     }
 
 
-def _dump_artifact(directory: Path, name: str, obj) -> None:
+def _dump_artifact(directory: Path, name: str, obj: object) -> None:
     """Persist a model artifact (research evidence, never committed)."""
     joblib.dump(obj, directory / name)
 
 
-def write_predictions_csv(path: Path, predictions: list[dict]) -> None:
+def write_predictions_csv(path: Path, predictions: list[dict[str, Any]]) -> None:
     """Write auditable prediction rows as deterministic CSV."""
     columns = [
         "match_identity",
@@ -572,7 +579,9 @@ def write_predictions_csv(path: Path, predictions: list[dict]) -> None:
             writer.writerow({key: row[key] for key in columns})
 
 
-def pooled_results(fold1: dict, fold2: dict, protocol: dict) -> dict:
+def pooled_results(
+    fold1: dict[str, Any], fold2: dict[str, Any], protocol: dict[str, Any]
+) -> dict[str, Any]:
     """Pool fold OOS rows and recompute metrics + bootstrap + claim."""
     combined = fold1["predictions"] + fold2["predictions"]
     eps = protocol.get("log_loss_eps", 1e-15)
@@ -594,21 +603,21 @@ def pooled_results(fold1: dict, fold2: dict, protocol: dict) -> dict:
     per_row_market_brier = evaluation.per_row_brier(market_probs, labels)
     delta_brier = per_row_model_brier - per_row_market_brier
 
-    deltas_by_season: dict[str, np.ndarray] = {}
-    brier_by_season: dict[str, np.ndarray] = {}
+    deltas_by_season: dict[str, list[float]] = {}
+    brier_by_season: dict[str, list[float]] = {}
     for i, row in enumerate(combined):
         season = row["season"]
         deltas_by_season.setdefault(season, []).append(delta_log_loss[i])
         brier_by_season.setdefault(season, []).append(delta_brier[i])
-    deltas_by_season = {season: np.array(values) for season, values in deltas_by_season.items()}
-    brier_by_season = {season: np.array(values) for season, values in brier_by_season.items()}
+    season_deltas = {season: np.array(values) for season, values in deltas_by_season.items()}
+    season_brier = {season: np.array(values) for season, values in brier_by_season.items()}
 
     replicates = int(protocol["bootstrap"]["replicates"])
     seed = int(protocol["bootstrap"]["seed"])
     percentiles = protocol["bootstrap"]["ci_percentiles"]
-    ll_replicates = season_stratified_bootstrap_deltas(deltas_by_season, replicates, seed)
+    ll_replicates = season_stratified_bootstrap_deltas(season_deltas, replicates, seed)
     ll_low, ll_high = percentile_ci(ll_replicates, percentiles)
-    brier_replicates = season_stratified_bootstrap_deltas(brier_by_season, replicates, seed)
+    brier_replicates = season_stratified_bootstrap_deltas(season_brier, replicates, seed)
     brier_low, brier_high = percentile_ci(brier_replicates, percentiles)
 
     metrics = _fold_metrics(model_probs, market_probs, labels, protocol)
@@ -646,7 +655,7 @@ def pooled_results(fold1: dict, fold2: dict, protocol: dict) -> dict:
     }
 
 
-def freeze_protocol(protocol: dict, output_dir: Path) -> None:
+def freeze_protocol(protocol: dict[str, Any], output_dir: Path) -> None:
     """Write protocol-copy.json + protocol-sha256.txt (pre-OOS freeze record)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     write_json(output_dir / "protocol-copy.json", protocol)
@@ -655,7 +664,7 @@ def freeze_protocol(protocol: dict, output_dir: Path) -> None:
     )
 
 
-def verify_frozen_protocol(protocol: dict, freeze_dir: Path) -> None:
+def verify_frozen_protocol(protocol: dict[str, Any], freeze_dir: Path) -> None:
     """Abort when the loaded protocol does not match the frozen protocol hash."""
     sha_file = freeze_dir / "protocol-sha256.txt"
     if not sha_file.exists():
@@ -670,12 +679,12 @@ def verify_frozen_protocol(protocol: dict, freeze_dir: Path) -> None:
 
 def run_oos(
     matches: list[Match],
-    protocol: dict,
+    protocol: dict[str, Any],
     output_dir: Path,
     git_revision: str,
     input_dir: Path,
     freeze_dir: Path,
-) -> dict:
+) -> dict[str, Any]:
     """Full OOS run: folds, pooled, bootstrap, calibration, receipts."""
     output_dir.mkdir(parents=True, exist_ok=True)
     verify_frozen_protocol(protocol, freeze_dir)
@@ -750,12 +759,12 @@ def run_oos(
 
 def build_phase0_outputs(
     matches: list[Match],
-    protocol: dict,
+    protocol: dict[str, Any],
     input_dir: Path,
     output_dir: Path,
     git_revision: str,
-    contract_status: dict,
-) -> dict:
+    contract_status: dict[str, Any],
+) -> dict[str, Any]:
     """Phase 0 run: manifests + market probe + gates (no model)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     probe = phase0_probe(matches, protocol)

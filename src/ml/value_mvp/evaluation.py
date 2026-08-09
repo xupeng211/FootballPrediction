@@ -9,48 +9,53 @@ from __future__ import annotations
 
 from itertools import pairwise
 import math
+from typing import Any
 
 import numpy as np
 
 
 def per_row_log_loss(
-    probabilities: np.ndarray, labels: np.ndarray, eps: float = 1e-15
-) -> np.ndarray:
+    probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], eps: float = 1e-15
+) -> np.ndarray[Any, Any]:
     """Per-match multiclass log loss: -log(p_actual) with p clipped to [eps, 1]."""
     n = probabilities.shape[0]
     clipped = np.maximum(probabilities, eps)
     actual = clipped[np.arange(n), labels]
-    return -np.log(actual)
+    return np.asarray(-np.log(actual))
 
 
-def log_loss_score(probabilities: np.ndarray, labels: np.ndarray, eps: float = 1e-15) -> float:
+def log_loss_score(
+    probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], eps: float = 1e-15
+) -> float:
     """Mean multiclass log loss over matches."""
     return float(np.mean(per_row_log_loss(probabilities, labels, eps)))
 
 
-def per_row_brier(probabilities: np.ndarray, labels: np.ndarray) -> np.ndarray:
+def per_row_brier(
+    probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
     """Per-match multiclass Brier: sum_k (p_k - y_k)^2."""
     one_hot = np.zeros_like(probabilities)
     one_hot[np.arange(probabilities.shape[0]), labels] = 1.0
-    return np.sum((probabilities - one_hot) ** 2, axis=1)
+    return np.asarray(np.sum((probabilities - one_hot) ** 2, axis=1))
 
 
-def brier_score(probabilities: np.ndarray, labels: np.ndarray) -> float:
+def brier_score(probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]) -> float:
     """Mean multiclass Brier over matches."""
     return float(np.mean(per_row_brier(probabilities, labels)))
 
 
-def accuracy(probabilities: np.ndarray, labels: np.ndarray) -> float:
+def accuracy(probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]) -> float:
     """Fraction of matches where argmax probability equals the outcome."""
     predictions = np.argmax(probabilities, axis=1)
     return float(np.mean(predictions == labels))
 
 
 def calibration_summary(
-    probabilities: np.ndarray, labels: np.ndarray, bins: list[float]
-) -> list[dict]:
+    probabilities: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], bins: list[float]
+) -> list[dict[str, Any]]:
     """Fixed-bin calibration per class: predicted mean, observed frequency, count."""
-    summary: list[dict] = []
+    summary: list[dict[str, Any]] = []
     for class_index in range(probabilities.shape[1]):
         values = probabilities[:, class_index]
         actual = (labels == class_index).astype(float)
@@ -77,16 +82,18 @@ def calibration_summary(
     return summary
 
 
-def class_frequency_probabilities(labels: np.ndarray) -> np.ndarray:
+def class_frequency_probabilities(
+    labels: np.ndarray[Any, Any],
+) -> np.ndarray[Any, Any]:
     """Training-fold class frequencies as a sanity baseline probability vector."""
     counts = np.bincount(labels, minlength=3)
     total = counts.sum()
     if total == 0:
         raise ValueError("cannot compute class frequencies from an empty label set")
-    return counts.astype(float) / total
+    return np.asarray(counts.astype(float) / total)
 
 
-def validate_probability_matrix(probabilities: np.ndarray, name: str) -> None:
+def validate_probability_matrix(probabilities: np.ndarray[Any, Any], name: str) -> None:
     """Assert finite probabilities in [0,1] with rows summing to ~1."""
     if not np.all(np.isfinite(probabilities)):
         raise ValueError(f"{name}: non-finite probabilities present")

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 import hashlib
 import json
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.ml.value_mvp.protocol import season_of_kickoff
 
@@ -41,13 +41,15 @@ class Match:
     label_str: str
     home_goals: int = 0
     away_goals: int = 0
-    odds: dict = field(default_factory=dict)  # phase -> bookmaker -> selection -> odds
-    sources: tuple = field(default_factory=tuple)  # (source, csv_row) pairs
+    odds: dict[str, dict[str, dict[str, float]]] = field(
+        default_factory=dict
+    )  # phase -> bookmaker -> selection -> odds
+    sources: tuple[tuple[str, int], ...] = field(default_factory=tuple)  # (source, csv_row) pairs
 
 
-def load_observations(observations_dir: Path) -> list[dict]:
+def load_observations(observations_dir: Path) -> list[dict[str, Any]]:
     """Load all accepted observations; tag each with its source file name."""
-    observations: list[dict] = []
+    observations: list[dict[str, Any]] = []
     for source in OBSERVATION_SOURCES:
         path = observations_dir / f"{source}.jsonl"
         if not path.exists():
@@ -63,9 +65,9 @@ def load_observations(observations_dir: Path) -> list[dict]:
     return observations
 
 
-def load_csv_rows(csv_dir: Path) -> dict[str, list[dict]]:
+def load_csv_rows(csv_dir: Path) -> dict[str, list[dict[str, Any]]]:
     """Load the pinned CSV rows per source."""
-    rows_by_source: dict[str, list[dict]] = {}
+    rows_by_source: dict[str, list[dict[str, Any]]] = {}
     for source in OBSERVATION_SOURCES:
         path = csv_dir / f"{source}.csv"
         if not path.exists():
@@ -83,7 +85,7 @@ def _locator_row(locator: str) -> int:
     return int(match.group(1))
 
 
-def csv_row_for(csv_rows: dict[str, list[dict]], source: str, row: int) -> dict:
+def csv_row_for(csv_rows: dict[str, list[dict[str, Any]]], source: str, row: int) -> dict[str, Any]:
     """Return the CSV data row for locator row N (N = CSV line, header = line 1)."""
     rows = csv_rows[source]
     index = row - 2
@@ -93,7 +95,9 @@ def csv_row_for(csv_rows: dict[str, list[dict]], source: str, row: int) -> dict:
 
 
 def build_dataset(
-    observations: list[dict], csv_rows: dict[str, list[dict]], protocol: dict
+    observations: list[dict[str, Any]],
+    csv_rows: dict[str, list[dict[str, Any]]],
+    protocol: dict[str, Any],
 ) -> list[Match]:
     """Build the match-level evaluation dataset from observations and CSVs.
 
@@ -102,7 +106,7 @@ def build_dataset(
     or observations referencing CSV rows outside the pinned files.
     """
     season_rule = protocol["season_assignment_rule"]
-    by_mid: dict[str, dict] = {}
+    by_mid: dict[str, dict[str, Any]] = {}
 
     for obs in observations:
         match_link = obs.get("match_link") or {}
@@ -156,7 +160,7 @@ def build_dataset(
 
 
 def _join_label_and_goals(
-    mid: str, entry: dict, csv_rows: dict[str, list[dict]]
+    mid: str, entry: dict[str, Any], csv_rows: dict[str, list[dict[str, Any]]]
 ) -> tuple[str, int, int]:
     """Join FTR label and goals from the pinned CSV rows behind a match."""
     label_str: str | None = None
@@ -176,10 +180,12 @@ def _join_label_and_goals(
             home_goals, away_goals = goals
         elif goals != (home_goals, away_goals):
             raise ValueError(f"conflicting goals for {mid}: {goals} vs {(home_goals, away_goals)}")
+    if label_str is None:
+        raise ValueError(f"no FTR label resolved for {mid}")
     return label_str, home_goals or 0, away_goals or 0
 
 
-def _goals_pair(row_dict: dict, source: str, row: int, mid: str) -> tuple[int, int]:
+def _goals_pair(row_dict: dict[str, Any], source: str, row: int, mid: str) -> tuple[int, int]:
     """Parse FTHG/FTAG from a pinned CSV row as the match's goal label data."""
     try:
         return int(row_dict["FTHG"]), int(row_dict["FTAG"])

@@ -27,7 +27,7 @@ _RANDOM_SPLIT_MARKERS = (
 
 def feature_name_violations(feature_names: tuple[str, ...] = FEATURE_NAMES) -> list[str]:
     """Return feature names that collide with forbidden source keywords."""
-    violations = []
+    violations: list[str] = []
     violations.extend(
         f"{feature} collides with forbidden keyword {keyword}"
         for feature in feature_names

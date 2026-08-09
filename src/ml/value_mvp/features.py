@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.ml.value_mvp.sources import Match
@@ -32,15 +32,15 @@ class TeamState:
     """Per-team sequential state: Elo, rolling result windows, exposure."""
 
     elo: float = INITIAL_ELO
-    results: deque = field(default_factory=deque)  # (points, goals_for, goals_against)
-    home_results: deque = field(default_factory=deque)  # points of home matches
-    away_results: deque = field(default_factory=deque)  # points of away matches
+    results: deque[Any] = field(default_factory=deque)  # (points, goals_for, goals_against)
+    home_results: deque[Any] = field(default_factory=deque)  # points of home matches
+    away_results: deque[Any] = field(default_factory=deque)  # points of away matches
     matches_seen: int = 0
 
 
 def _expected_score(rating: float, opponent_rating: float) -> float:
     """Elo expected score for rating vs opponent_rating."""
-    return 1.0 / (1.0 + 10.0 ** ((opponent_rating - rating) / 400.0))
+    return float(1.0 / (1.0 + 10.0 ** ((opponent_rating - rating) / 400.0)))
 
 
 def _mean(values: list[float]) -> float:
@@ -50,7 +50,7 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values)
 
 
-def _points_ppg(window: deque) -> float:
+def _points_ppg(window: deque[Any]) -> float:
     """Mean points per game over the window; NaN when empty."""
     if not window:
         return _MISSING
@@ -58,14 +58,14 @@ def _points_ppg(window: deque) -> float:
     return _mean(values)
 
 
-def _goals_for(window: deque) -> float:
+def _goals_for(window: deque[Any]) -> float:
     """Mean goals scored per game over the window; NaN when empty."""
     if not window:
         return _MISSING
     return _mean([item[1] for item in window])
 
 
-def _goals_against(window: deque) -> float:
+def _goals_against(window: deque[Any]) -> float:
     """Mean goals conceded per game over the window; NaN when empty."""
     if not window:
         return _MISSING
