@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -249,3 +250,31 @@ def test_validate_run_accepts_full_synthetic_run(staged_inputs, tmp_path):
     run_oos(matches, protocol, output_dir, "test-sha", staged_inputs, freeze_dir)
     result = validate_run(staged_inputs, output_dir, protocol, "test-sha")
     assert result["status"] == "OK"
+
+
+def test_run_oos_receipt_records_environment_and_convergence(staged_inputs, tmp_path):
+    """F-02 regression: the receipt must bind the environment fingerprint and
+    per-fold optimizer convergence status (lbfgs iteration limit)."""
+    protocol = synthetic_protocol()
+    matches = _matches(staged_inputs, protocol)
+    freeze_dir = tmp_path / "freeze"
+    freeze_protocol(protocol, freeze_dir)
+    output_dir = tmp_path / "runs"
+    run_oos(matches, protocol, output_dir, "test-sha", staged_inputs, freeze_dir)
+
+    receipt = json.loads((output_dir / "run-receipt.json").read_text(encoding="utf-8"))
+    assert receipt["schema"] == "value-mvp-1-run-receipt/v2"
+    env = receipt["environment"]
+    for key in ("python", "platform", "sklearn", "numpy", "scipy"):
+        assert isinstance(env.get(key), str), key
+        assert env[key], key
+    for fold_name in ("fold1", "fold2"):
+        entry = receipt["model_convergence"][fold_name]
+        assert isinstance(entry["iterations"], int)
+        assert isinstance(entry["max_iter"], int)
+        assert entry["iterations"] <= entry["max_iter"]
+        assert entry["converged"] == (entry["iterations"] < entry["max_iter"])
+    # validator must accept the environment + convergence records
+    result = validate_run(staged_inputs, output_dir, protocol, "test-sha")
+    assert "environment_fingerprint" in result["verified"]
+    assert "model_convergence" in result["verified"]

@@ -10,7 +10,6 @@ random-split constructs. Both are enforced at runtime and tested in unit tests.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from src.ml.value_mvp.protocol import FEATURE_NAMES, FORBIDDEN_FEATURE_KEYWORDS
 

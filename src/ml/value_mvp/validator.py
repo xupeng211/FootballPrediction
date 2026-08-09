@@ -22,7 +22,12 @@ from src.ml.value_mvp.bootstrap import (
     season_stratified_bootstrap_deltas,
 )
 from src.ml.value_mvp.market import closing_consensus
-from src.ml.value_mvp.pipeline import build_input_manifest, verify_inputs
+from src.ml.value_mvp.pipeline import (
+    _RECEIPT_SCHEMA,
+    _environment_fingerprint,
+    build_input_manifest,
+    verify_inputs,
+)
 from src.ml.value_mvp.protocol import protocol_sha256
 from src.ml.value_mvp.sources import (
     Match,
@@ -39,6 +44,21 @@ _LABEL_INDEX = {"H": 0, "D": 1, "A": 2}
 _TOLERANCE = 1e-9
 _MAX_ROW_SUM_DEVIATION = 1e-6
 _MIN_CLOSING_BOOKMAKERS = 2
+_CI_KEYS = (
+    "delta_log_loss_ci95_low",
+    "delta_log_loss_ci95_high",
+    "delta_brier_ci95_low",
+    "delta_brier_ci95_high",
+)
+_ALLOWED_META_KEYS = {
+    "delta_log_loss",
+    "delta_brier",
+    "fold",
+    "final_classification",
+    "power_statement",
+    "test_seasons",
+    "train_seasons",
+}
 
 
 def load_predictions(path: Path) -> list[dict]:
@@ -150,9 +170,19 @@ def recompute_market_probabilities(
 
 
 def recompute_metrics(
-    predictions: list[dict], market_rows: list[list[float]], recorded: dict, protocol: dict
+    predictions: list[dict],
+    market_rows: list[list[float]],
+    recorded: dict,
+    protocol: dict,
+    expected_ci: dict | None = None,
 ) -> dict:
-    """Recompute fold/pooled metrics from predictions and compare with recorded."""
+    """Recompute fold/pooled metrics from predictions and compare with recorded.
+
+    Strict by design (F-01): every recomputed key must be present in the
+    recorded metrics and equal; CI keys are cross-checked against the bootstrap
+    record (expected_ci) instead of being skipped; unknown recorded keys are
+    rejected outright.
+    """
     eps = float(protocol.get("log_loss_eps", 1e-15))
     labels = np.array([_LABEL_INDEX[row["actual_result"]] for row in predictions])
     model_probs = np.array(
@@ -171,14 +201,47 @@ def recompute_metrics(
         "market_accuracy": evaluation.accuracy(market_probs, labels),
         "oos_count": len(labels),
     }
+    _check_computed_keys(recomputed, recorded)
+    _check_ci_keys(recorded, expected_ci)
+    _check_unknown_keys(recomputed, recorded)
+    return recomputed
+
+
+def _check_computed_keys(recomputed: dict, recorded: dict) -> None:
+    """Every recomputed key must be present in the recorded metrics and equal."""
     for key, value in recomputed.items():
         if key not in recorded:
-            continue
+            raise ValueError(f"metric {key} missing from recorded metrics")
         if abs(value - float(recorded[key])) > _TOLERANCE:
             raise ValueError(
                 f"metric mismatch {key}: recomputed {value} != recorded {recorded[key]}"
             )
-    return recomputed
+
+
+def _check_ci_keys(recorded: dict, expected_ci: dict | None) -> None:
+    """CI keys are cross-checked against the bootstrap record (never skipped)."""
+    if expected_ci is None:
+        for key in _CI_KEYS:
+            if key in recorded:
+                raise ValueError(f"unexpected CI key {key} in fold metrics")
+        return
+    for key in _CI_KEYS:
+        if key not in expected_ci:
+            continue
+        if key not in recorded:
+            raise ValueError(f"CI key {key} missing from recorded metrics")
+        if abs(float(recorded[key]) - float(expected_ci[key])) > _TOLERANCE:
+            raise ValueError(
+                f"metric mismatch {key}: recorded {recorded[key]} != bootstrap {expected_ci[key]}"
+            )
+
+
+def _check_unknown_keys(recomputed: dict, recorded: dict) -> None:
+    """Recorded keys outside the known set are rejected outright."""
+    allowed = set(recomputed) | set(_CI_KEYS) | _ALLOWED_META_KEYS
+    for key in recorded:
+        if key not in allowed:
+            raise ValueError(f"unexpected recorded metric key {key}")
 
 
 def check_bootstrap(
@@ -186,8 +249,14 @@ def check_bootstrap(
     market_rows: list[list[float]],
     protocol: dict,
     recorded_bootstrap: dict,
+    recorded_pooled: dict,
 ) -> None:
-    """Recompute the season-stratified bootstrap CI from prediction rows."""
+    """Recompute the season-stratified bootstrap CIs from prediction rows.
+
+    F-01: the Brier CI is recomputed too (previously only recorded), and the
+    pooled-metrics CI fields must equal the bootstrap record (cross-source,
+    not self-referential).
+    """
     eps = float(protocol.get("log_loss_eps", 1e-15))
     labels = np.array([_LABEL_INDEX[row["actual_result"]] for row in predictions])
     model_probs = np.array(
@@ -197,10 +266,16 @@ def check_bootstrap(
     per_row_deltas = evaluation.per_row_log_loss(
         model_probs, labels, eps
     ) - evaluation.per_row_log_loss(market_probs, labels, eps)
+    per_row_brier_deltas = evaluation.per_row_brier(model_probs, labels) - evaluation.per_row_brier(
+        market_probs, labels
+    )
     deltas_by_season: dict[str, np.ndarray] = {}
+    brier_by_season: dict[str, np.ndarray] = {}
     for i, row in enumerate(predictions):
         deltas_by_season.setdefault(row["season"], []).append(per_row_deltas[i])
+        brier_by_season.setdefault(row["season"], []).append(per_row_brier_deltas[i])
     deltas_by_season = {season: np.array(values) for season, values in deltas_by_season.items()}
+    brier_by_season = {season: np.array(values) for season, values in brier_by_season.items()}
     replicates = int(protocol["bootstrap"]["replicates"])
     seed = int(protocol["bootstrap"]["seed"])
     percentiles = protocol["bootstrap"]["ci_percentiles"]
@@ -214,12 +289,52 @@ def check_bootstrap(
         raise ValueError(
             f"bootstrap CI high mismatch: {high} != {recorded_bootstrap['delta_log_loss_ci95_high']}"
         )
+    brier_replicates = season_stratified_bootstrap_deltas(brier_by_season, replicates, seed)
+    brier_low, brier_high = percentile_ci(brier_replicates, percentiles)
+    if abs(brier_low - float(recorded_bootstrap["delta_brier_ci95_low"])) > _TOLERANCE:
+        raise ValueError(
+            f"bootstrap brier CI low mismatch: {brier_low} != "
+            f"{recorded_bootstrap['delta_brier_ci95_low']}"
+        )
+    if abs(brier_high - float(recorded_bootstrap["delta_brier_ci95_high"])) > _TOLERANCE:
+        raise ValueError(
+            f"bootstrap brier CI high mismatch: {brier_high} != "
+            f"{recorded_bootstrap['delta_brier_ci95_high']}"
+        )
+    for key in _CI_KEYS:
+        if abs(float(recorded_pooled[key]) - float(recorded_bootstrap[key])) > _TOLERANCE:
+            raise ValueError(f"pooled-metrics {key} does not match bootstrap.json {key}")
     classification = classify_claim(low, high)
-    recorded_classification = recorded_bootstrap.get("final_classification")
+    recorded_classification = recorded_pooled.get("final_classification")
     if classification != recorded_classification:
         raise ValueError(
             f"final classification mismatch: {classification} != {recorded_classification}"
         )
+
+
+def check_calibration(
+    predictions: list[dict],
+    market_rows: list[list[float]],
+    protocol: dict,
+    recorded_calibration: dict,
+) -> None:
+    """Recompute the fixed-bin calibration summary from the prediction rows.
+
+    F-01: calibration was previously bound only by file digest and the
+    self-referential receipt block; now it must equal the recomputation.
+    """
+    labels = np.array([_LABEL_INDEX[row["actual_result"]] for row in predictions])
+    model_probs = np.array(
+        [[float(row[f"model_p_{sel}"]) for sel in ("home", "draw", "away")] for row in predictions]
+    )
+    market_probs = np.array(market_rows)
+    bins = protocol["calibration_bins"]
+    recomputed = {
+        "model": evaluation.calibration_summary(model_probs, labels, bins),
+        "market": evaluation.calibration_summary(market_probs, labels, bins),
+    }
+    if recomputed != recorded_calibration:
+        raise ValueError("calibration summary mismatch (recomputed from predictions)")
 
 
 def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision: str) -> dict:
@@ -253,11 +368,18 @@ def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision
     combined = fold1 + fold2
     pooled_market = market1 + market2
     recorded_pooled = _read_json(output_dir / "pooled-metrics.json")
-    recompute_metrics(combined, pooled_market, recorded_pooled, protocol)
-
     recorded_bootstrap = _read_json(output_dir / "bootstrap.json")
-    recorded_bootstrap["final_classification"] = recorded_pooled["final_classification"]
-    check_bootstrap(combined, pooled_market, protocol, recorded_bootstrap)
+    recompute_metrics(
+        combined, pooled_market, recorded_pooled, protocol, expected_ci=recorded_bootstrap
+    )
+
+    check_bootstrap(combined, pooled_market, protocol, recorded_bootstrap, recorded_pooled)
+    check_calibration(
+        combined,
+        pooled_market,
+        protocol,
+        _read_json(output_dir / "calibration.json"),
+    )
 
     recorded_receipt = _read_json(output_dir / "run-receipt.json")
     check_receipt_contents(
@@ -282,12 +404,37 @@ def validate_run(input_dir: Path, output_dir: Path, protocol: dict, git_revision
             "fold_metrics",
             "pooled_metrics",
             "bootstrap_ci",
+            "bootstrap_brier_ci",
+            "calibration_recomputed",
             "final_classification",
             "run_receipt",
             "run_receipt_contents",
             "output_digests",
+            "environment_fingerprint",
+            "model_convergence",
         ],
     }
+
+
+def _check_environment_and_convergence(recorded_receipt: dict) -> None:
+    """F-02: the receipt must carry the pinned schema, the runtime environment
+    fingerprint and a self-consistent per-fold optimizer convergence record."""
+    if recorded_receipt.get("schema") != _RECEIPT_SCHEMA:
+        raise ValueError(
+            f"run-receipt schema mismatch: {recorded_receipt.get('schema')} != {_RECEIPT_SCHEMA}"
+        )
+    if recorded_receipt.get("environment") != _environment_fingerprint():
+        raise ValueError("run-receipt environment fingerprint mismatch")
+    convergence = recorded_receipt.get("model_convergence") or {}
+    for fold_name in ("fold1", "fold2"):
+        entry = convergence.get(fold_name)
+        if not isinstance(entry, dict):
+            raise TypeError(f"run-receipt model_convergence missing {fold_name}")
+        iterations, max_iter = entry.get("iterations"), entry.get("max_iter")
+        if not isinstance(iterations, int) or not isinstance(max_iter, int):
+            raise TypeError(f"run-receipt model_convergence {fold_name} malformed")
+        if entry.get("converged") != (iterations < max_iter):
+            raise ValueError(f"run-receipt model_convergence {fold_name} inconsistent")
 
 
 def check_receipt_contents(
@@ -300,6 +447,8 @@ def check_receipt_contents(
     recorded_receipt: dict,
 ) -> None:
     """Cross-check the run receipt against every file it summarizes."""
+    _check_environment_and_convergence(recorded_receipt)
+
     recomputed_receipt_sha = hashlib.sha256(
         json.dumps(recorded_manifest, sort_keys=True).encode("utf-8")
     ).hexdigest()

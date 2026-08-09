@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
@@ -150,3 +151,121 @@ def test_check_protocol_frozen_requires_records(tmp_path):
     empty_dir.mkdir()
     with pytest.raises(ValueError, match="frozen protocol records missing"):
         check_protocol_frozen(protocol, empty_dir)
+
+
+def _rewrite_json(path, data):
+    path.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
+
+
+def test_validate_rejects_tampered_pooled_ci(completed_run):
+    """F-01: pooled CI must match the bootstrap record (cross-source)."""
+    path = completed_run["output_dir"] / "pooled-metrics.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["delta_log_loss_ci95_low"] = 0.01
+    _rewrite_json(path, data)
+    with pytest.raises(ValueError, match="delta_log_loss_ci95_low"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_consistent_ci_tamper(completed_run):
+    """F-01 regression: coordinated pooled+bootstrap CI tamper that used to
+    pass is now caught by the brier CI recomputed from predictions."""
+    for name in ("bootstrap.json", "pooled-metrics.json"):
+        path = completed_run["output_dir"] / name
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["delta_brier_ci95_low"] = 0.01
+        data["delta_brier_ci95_high"] = 0.02
+        _rewrite_json(path, data)
+    with pytest.raises(ValueError, match="bootstrap brier CI"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_tampered_calibration(completed_run):
+    """F-01: calibration must equal the recomputation from predictions, even
+    when the receipt block and digest are tampered in concert."""
+    path = completed_run["output_dir"] / "calibration.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["model"][0]["bins"][0]["count"] += 1
+    _rewrite_json(path, data)
+    receipt_path = completed_run["output_dir"] / "run-receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["calibration"] = data
+    receipt["output_digests"]["calibration.json"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    _rewrite_json(receipt_path, receipt)
+    with pytest.raises(ValueError, match="calibration summary mismatch"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_unknown_metric_key(completed_run):
+    """F-01: recorded keys outside the known set must be rejected outright."""
+    path = completed_run["output_dir"] / "pooled-metrics.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["bogus_key"] = 1
+    _rewrite_json(path, data)
+    with pytest.raises(ValueError, match="unexpected recorded metric key"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_tampered_environment(completed_run):
+    """F-02: the receipt environment fingerprint must equal the runtime one."""
+    path = completed_run["output_dir"] / "run-receipt.json"
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    receipt["environment"]["sklearn"] = "9.9.9"
+    _rewrite_json(path, receipt)
+    with pytest.raises(ValueError, match="environment fingerprint mismatch"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_inconsistent_convergence(completed_run):
+    """F-02: convergence flag inconsistent with iterations/max_iter is rejected."""
+    path = completed_run["output_dir"] / "run-receipt.json"
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    entry = receipt["model_convergence"]["fold1"]
+    entry["converged"] = not entry["converged"]
+    _rewrite_json(path, receipt)
+    with pytest.raises(ValueError, match="model_convergence"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )
+
+
+def test_validate_rejects_wrong_receipt_schema(completed_run):
+    path = completed_run["output_dir"] / "run-receipt.json"
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    receipt["schema"] = "value-mvp-1-run-receipt/v1"
+    _rewrite_json(path, receipt)
+    with pytest.raises(ValueError, match="run-receipt schema mismatch"):
+        validate_run(
+            completed_run["input_dir"],
+            completed_run["output_dir"],
+            completed_run["protocol"],
+            "test-sha",
+        )

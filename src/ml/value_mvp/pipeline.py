@@ -451,6 +451,16 @@ def run_fold(
     hyperparameters = dict(protocol["model_hyperparameters"])
     model = LogisticRegression(**hyperparameters)
     model.fit(x_train_scaled, y_train)
+    # Record optimizer convergence: with lbfgs the fitted coefficients can stop
+    # at the iteration limit (ConvergenceWarning), making probabilities depend
+    # on the optimizer trajectory and therefore on the pinned environment.
+    iterations = int(max(model.n_iter_))
+    max_iter = int(hyperparameters.get("max_iter", 0))
+    convergence = {
+        "converged": iterations < max_iter,
+        "iterations": iterations,
+        "max_iter": max_iter,
+    }
 
     x_test_scaled = scaler.transform(imputer.transform(x_test))
     model_probs = model.predict_proba(x_test_scaled)
@@ -484,7 +494,12 @@ def run_fold(
     for name, obj in (("imputer", imputer), ("scaler", scaler), ("model", model)):
         _dump_artifact(artifacts_dir, f"{fold_name}_{name}.joblib", obj)
 
-    return {"metrics": metrics, "predictions": predictions, "labels": labels.tolist()}
+    return {
+        "metrics": metrics,
+        "predictions": predictions,
+        "labels": labels.tolist(),
+        "convergence": convergence,
+    }
 
 
 def _prediction_row(
@@ -743,6 +758,32 @@ def run_oos(
     return receipt
 
 
+_RECEIPT_SCHEMA = "value-mvp-1-run-receipt/v2"
+
+
+def _environment_fingerprint() -> dict:
+    """Runtime environment facts bound into the run receipt (no wall-clock).
+
+    The frozen hyperparameters include max_iter=2000; on the real data lbfgs
+    stops at the iteration limit, so the fitted probabilities live on the
+    optimizer trajectory and exact reproduction requires this pinned
+    environment. sklearn/scipy must stay function-level imports (the CI
+    collection gate stubs sklearn with __path__=[]).
+    """
+    import platform  # noqa: PLC0415
+
+    import scipy  # noqa: PLC0415
+    import sklearn  # noqa: PLC0415
+
+    return {
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "sklearn": sklearn.__version__,
+        "numpy": np.__version__,
+        "scipy": scipy.__version__,
+    }
+
+
 _RECEIPT_OUTPUT_FILES = (
     "fold1-predictions.csv",
     "fold2-predictions.csv",
@@ -776,7 +817,7 @@ def build_run_receipt(
     the digests in before writing the receipt.
     """
     return {
-        "schema": "value-mvp-1-run-receipt/v1",
+        "schema": _RECEIPT_SCHEMA,
         "task": protocol["task"],
         "git_revision": git_revision,
         "protocol_sha256": protocol_sha256(protocol),
@@ -784,6 +825,11 @@ def build_run_receipt(
             json.dumps(manifest, sort_keys=True).encode("utf-8")
         ).hexdigest(),
         "evaluation_population_hash": population_manifest["evaluation_population_hash"],
+        "environment": _environment_fingerprint(),
+        "model_convergence": {
+            "fold1": fold1["convergence"],
+            "fold2": fold2["convergence"],
+        },
         "output_digests": (
             {name: sha256_file(output_dir / name) for name in _RECEIPT_OUTPUT_FILES}
             if compute_digests
@@ -820,6 +866,23 @@ def write_summary(path: Path, receipt: dict) -> None:
         [
             f"- delta_log_loss 95% CI: [{pooled['delta_log_loss_ci95_low']}, {pooled['delta_log_loss_ci95_high']}]",
             f"- FINAL CLASSIFICATION: {pooled['final_classification']}",
+            "",
+            "## Model convergence (lbfgs)",
+        ]
+    )
+    for fold_name, entry in receipt.get("model_convergence", {}).items():
+        lines.append(
+            f"- {fold_name}: converged={entry.get('converged')} "
+            f"(iterations {entry.get('iterations')} / max_iter {entry.get('max_iter')})"
+        )
+    env = receipt.get("environment", {})
+    lines.extend(
+        [
+            "",
+            "## Environment (reproducibility boundary)",
+            f"- python {env.get('python')} / sklearn {env.get('sklearn')} / "
+            f"numpy {env.get('numpy')} / scipy {env.get('scipy')}",
+            f"- platform: {env.get('platform')}",
             "",
             "## Claim boundary",
             f"- {receipt['claim_boundary']}",
