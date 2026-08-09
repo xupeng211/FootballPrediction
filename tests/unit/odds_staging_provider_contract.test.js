@@ -107,6 +107,17 @@ test('contract: season scope starts at the official 2019/20 evidence claim', t =
     assert.equal(isSeasonWithinProviderContract('not-a-season'), false);
 });
 
+test('contract: compact raw Season format "2223" fails closed (Codex R2 F-03)', t => {
+    // Raw Season 列的紧凑四位数格式不会到达 contract 检查（adapter 只输出 identity
+    // 派生格式）；无法解析 → 不应用 overlay，绝不把未证实语义写成 closing。
+    assert.equal(parseSeasonStartYear('2223'), null);
+    assert.equal(isSeasonWithinProviderContract('2223'), false);
+    assert.equal(
+        applyProviderContractToGroup(GROUP_SHAPES['bet365-c-series-unknown'], { applicable: true, season: '2223' }),
+        null
+    );
+});
+
 // ---- applyProviderContractToGroup -------------------------------------------
 
 const GROUP_SHAPES = {

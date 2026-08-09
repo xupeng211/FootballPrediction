@@ -792,13 +792,21 @@ function collectTemporalConsistencyErrors(facts, receipt) {
     if (!deepStableEqual(facts, receipt.evaluation_readiness.observation_facts)) {
         errors.push('observation facts recomputed from emitted output do not match the receipt');
     }
-    // The three timestamp/snapshot semantics fields are pure functions of the
-    // facts: recompute them so hand-edited semantics (e.g. flipping snapshot_type
-    // to 'known' while facts stay unknown) fail closed. plain/C opening/closing
-    // statuses are provenance conclusions and are checked for fact contradictions
-    // below instead.
+    // Every temporal_semantics status field is a pure function of the facts
+    // (Codex R2 F-01): recompute all of them so ANY hand-edit — including a
+    // consistently downgraded receipt (c_series_closing_status='not_proven' +
+    // readiness dims flipped to NO) — fails closed, exactly like the timestamp
+    // fields. plain_series_opening_status is always 'not_proven' by derivation,
+    // so an upgrade claim fails here too.
     const derived = buildTemporalSemantics(facts);
-    for (const field of ['snapshot_type', 'source_observed_at', 'capture_time']) {
+    for (const field of [
+        'snapshot_type',
+        'source_observed_at',
+        'capture_time',
+        'plain_series_opening_status',
+        'c_series_closing_status',
+        'plain_series_first_collection_status',
+    ]) {
         if (receipt.temporal_semantics[field] !== derived[field]) {
             errors.push(`temporal_semantics.${field} ${receipt.temporal_semantics[field]} contradicts the observation facts (recomputed ${derived[field]})`);
         }
@@ -838,11 +846,25 @@ function collectTemporalConsistencyErrors(facts, receipt) {
     if (receipt.temporal_semantics.provider_contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
         errors.push(`temporal_semantics.provider_contract_id ${receipt.temporal_semantics.provider_contract_id} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
     }
-    if (receipt.provider_semantic_contract && receipt.provider_semantic_contract.contract_id !== FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id) {
-        errors.push(`provider_semantic_contract.contract_id ${receipt.provider_semantic_contract.contract_id} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT.contract_id}`);
-    }
+    collectProviderSemanticContractPinningErrors(receipt, errors);
     collectSeriesDistributionErrors(facts, receipt, errors);
     return errors;
+}
+
+/**
+ * Codex R2 F-02: provider_semantic_contract 的全部 provenance 字段都必须与 committed
+ * 官方 contract 一致（不只是 contract_id），否则手改 provider_id / evidence_checked_at
+ * 等字段会把语义追溯链指向伪造来源。
+ */
+function collectProviderSemanticContractPinningErrors(receipt, errors) {
+    if (!receipt.provider_semantic_contract) {
+        return;
+    }
+    for (const field of ['contract_id', 'provider_id', 'evidence_type', 'evidence_checked_at', 'effective_from_season']) {
+        if (receipt.provider_semantic_contract[field] !== FOOTBALL_DATA_PROVIDER_CONTRACT[field]) {
+            errors.push(`provider_semantic_contract.${field} ${receipt.provider_semantic_contract[field]} does not match the committed provider contract ${FOOTBALL_DATA_PROVIDER_CONTRACT[field]}`);
+        }
+    }
 }
 
 /**

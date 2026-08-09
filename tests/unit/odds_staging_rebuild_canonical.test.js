@@ -800,6 +800,38 @@ test('temporal: hand-edited series_semantics_distribution is REJECTED by output-
     assert.ok(result.errors.some(error => error.includes('series_semantics_distribution')));
 });
 
+test('temporal: a consistently downgraded receipt (closing not_proven + readiness NO) is REJECTED', t => {
+    // Codex R2 F-01: status fields are pure functions of the facts — a hand-edit
+    // that downgrades c_series_closing_status AND flips the readiness dimensions
+    // consistently must still fail, otherwise audits trust under-claimed semantics.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.temporal_semantics.c_series_closing_status = 'not_proven';
+    receipt.evaluation_readiness.closing_odds_semantics_ready = 'NO';
+    receipt.evaluation_readiness.closing_market_benchmark_semantics_ready = 'NO';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('c_series_closing_status')));
+});
+
+test('temporal: hand-edited provider_semantic_contract provenance fields are REJECTED', t => {
+    // Codex R2 F-02: every provenance field must match the committed contract,
+    // not just contract_id.
+    const fixture = canonicalFixture(t);
+    runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));
+    const receiptPath = path.join(fixture.emitDir, 'receipt.json');
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    receipt.provider_semantic_contract.provider_id = 'some-other-provider';
+    receipt.provider_semantic_contract.evidence_checked_at = '2020-01-01';
+    fs.writeFileSync(receiptPath, `${JSON.stringify(receipt)}\n`, 'utf8');
+    const result = verifyEmitDirectory(fixture.emitDir, canonicalRunDependencies(fixture));
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(error => error.includes('provider_id') && error.includes('committed provider contract')));
+});
+
 test('temporal: hand-edited readiness dimensions are REJECTED by output-aware verification', t => {
     const fixture = canonicalFixture(t);
     runRebuild(canonicalRunOptions(fixture), canonicalRunDependencies(fixture));

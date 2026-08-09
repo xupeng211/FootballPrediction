@@ -67,7 +67,10 @@ const CLOSING_PHASE = 'closing';
 
 /**
  * 判定 season 是否落在 provider contract 生效范围内。
- * season 形如 '2022/2023'（identity 派生格式）或 '2223'（raw Season 列格式）。
+ * 支持 '2022/2023'（identity 派生格式，adapter normalizeSeasonFormat 之后）与
+ * '22/23'（短格式）。raw Season 列的紧凑 '2223' 格式在 adapter 中保持原样、不会到达
+ * 这里（Codex R2 F-03）：无法解析 → fail closed，不应用 overlay —— 宁可不打 closing
+ * 标签，也不把未证实语义写进观测。
  * effective_from '2019/20' → 起始年份 2019。
  */
 function parseSeasonStartYear(season) {
