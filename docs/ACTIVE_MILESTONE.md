@@ -45,6 +45,27 @@
   D4D readiness 评审、D4F 交叉来源审计
   （888 exact / 4 kickoff conflicts / 248 canonical-only / 252 无 exact link /
   1,140 候选总人口）。
+- **M3-R1 — historical odds current-main reproducibility（Draft PR #1829 待 Owner 验收；
+  M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；M3_R1_CLOSEOUT_COMPLETE=NO；不得改写为 COMPLETE）**：
+  新增 committed 有界重建入口 `npm run odds:staging:rebuild`
+  （`scripts/ops/odds_staging/historical_odds_rebuild.js` + sibling `historical_odds_rebuild_canonical.js`，
+  lifecycle: permanent；bundle/emit-dir 必须仓库外；no-write 默认；收据 v2 只记实际、无硬编码基线常量），
+  从 current main 完全复现冻结基线（38,832 / 38,616 accepted / 216 quarantined；892 候选 380/380/132；
+  888 exact / 3×15m + 1×30m conflicts；0 unmatched / 0 ambiguous）；BUILD_A/BUILD_B 字节一致；
+  业务哈希 40b02195…（M3-R1 定义组合；D4F 遗留 07e579ed… 组合不可复算）。
+  **Canonical self-recovering mode**（GAP-01）：从固定 Git 对象身份恢复来源（有界只读 git 子进程，
+  仅 rev-parse/cat-file/show，shell=false，剥 GIT_* 环境，GIT_NO_LAZY_FETCH/GIT_ALLOW_PROTOCOL=none，
+  仓库外确定性物化）；candidates artifact 绑定冻结基线（1140 + eff8817284…，fail closed）。
+  **Output-aware self-verification**（GAP-02，--validate）：重算 emitted_digest、计数、业务哈希、
+  linkage、manifest 派生字段、temporal facts/semantics/readiness；任何篡改被拒绝（真实数据验收
+  BUILD_A/B 字节一致 + VERIFY PASS ×2 + 篡改探针 REJECTED）。
+  **Machine-readable temporal contract**（GAP-03）：evaluation_readiness + temporal_semantics +
+  rebuild_status；facts 从实际观测计算（38,832 unknown / 0 known），fail-closed classifier，
+  手改 READY 被拒。**Temporal readiness = NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION**
+  （100% snapshot_type unknown、无观测/采集时间；plain ≠ opening、C ≠ closing；2024/2025 仅 4/6 家族、
+  2023/2024 Interwetten 稀疏；上游 provenance/license/capture time 未验证）。68 回归测试；
+  Codex focused review 2 轮（cap，P0/P1/P2=0，round-2 修复各附定向测试）；eslint 8.57.1 全绿；
+  git diff --check 干净；本地 gatekeeper commit-mode 门禁通过。
 - PR #1810：canonical inventory 写入设计评审（已结案）。
 - PR #1811：canonical inventory writer proof（已结案）。
 - PR #1812：disposable canonical proof SQL scan 范围修复（已结案）。
@@ -248,7 +269,8 @@
 ## 未完成 / 未授权（不得自动开始）
 
 1. **M3 主线收尾未完成**：Issue #1793 保持 open —— historical odds staging/import
-   主线尚未完整收尾。
+   主线尚未完整收尾。M3-R1（current-main 可复现重建 + 时序评估就绪度分类）Draft PR
+   待 Owner 验收（M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）。
 2. **historical odds production import 集成（NOT_ESTABLISHED）**：与 canonical
    inventory writer 分开 —— CanonicalInventoryWriter、V26.10 canonical inventory
    contract（artifact / import-run / lineage 表）与 disposable canonical writer proof
