@@ -50,8 +50,8 @@
 
 | 目录 | 职责 | 说明 |
 |---|---|---|
-| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1 离线确定性重建入口 `historical_odds_rebuild.js` + 同级 canonical 模块 `historical_odds_rebuild_canonical.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
-| `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（12 个模块）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
+| `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1/M3-R2 离线确定性重建入口 `historical_odds_rebuild.js` + 同级 canonical 模块 `historical_odds_rebuild_canonical.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
+| `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（13 个模块，含 M3-R2 provider 合同 `footballDataProviderContract.js`）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
 | `src/ml/` | 训练、特征、推理 | 训练 / 预测需显式授权 |
 | `src/feature_engine/` | Node 侧特征工程 | |
 | `src/config/` | Python 侧配置 | 与 `config/`、`src/config_unified/` 多目录并存（见 config 风险提示） |
@@ -67,7 +67,8 @@
   （CanonicalInventoryContract.js 等）、`src/infrastructure/fotmob/FotMobCandidateExporter.js`、
   `src/infrastructure/fotmob/FotMobStatusContract.js`。
 - **已实现但入口未登记（DOCUMENTED_ONLY，见 docs/CAPABILITY_INDEX.md）**：
-  `src/infrastructure/odds_staging/`（12 个模块，随 internal 入口 `npm run odds:staging:dry-run` 执行；
+  `src/infrastructure/odds_staging/`（13 个模块，含 M3-R2 机器可读官方 provider 合同
+  `footballDataProviderContract.js`；随 internal 入口 `npm run odds:staging:dry-run` 执行；
   M3-R1 起也可经 `npm run odds:staging:rebuild` 一次确定性重建，见 `scripts/ops/odds_staging/historical_odds_rebuild.js`）。
 - **SUPPORTED_COMPATIBILITY（保留兼容路径，非默认入口）**：v1 identity 输出路径
   （`--output-schema=identity-v1`，与 canonical-v2 并存，PR #1813 保留）。

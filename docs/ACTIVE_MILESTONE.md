@@ -45,8 +45,9 @@
   D4D readiness 评审、D4F 交叉来源审计
   （888 exact / 4 kickoff conflicts / 248 canonical-only / 252 无 exact link /
   1,140 候选总人口）。
-- **M3-R1 — historical odds current-main reproducibility（Draft PR #1829 待 Owner 验收；
-  M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；M3_R1_CLOSEOUT_COMPLETE=NO；不得改写为 COMPLETE）**：
+- **M3-R1 — historical odds current-main reproducibility（COMPLETE：PR #1829 squash-merged
+  `eb924b59e`，post-merge push Gate `31320043403` success；M3_R1_STATUS=COMPLETE；
+  M3_R1_CLOSEOUT_COMPLETE=YES）**：
   新增 committed 有界重建入口 `npm run odds:staging:rebuild`
   （`scripts/ops/odds_staging/historical_odds_rebuild.js` + sibling `historical_odds_rebuild_canonical.js`，
   lifecycle: permanent；bundle/emit-dir 必须仓库外；no-write 默认；收据 v2 只记实际、无硬编码基线常量），
@@ -268,9 +269,10 @@
 
 ## 未完成 / 未授权（不得自动开始）
 
-1. **M3 主线收尾未完成**：Issue #1793 保持 open —— historical odds staging/import
-   主线尚未完整收尾。M3-R1（current-main 可复现重建 + 时序评估就绪度分类）Draft PR
-   待 Owner 验收（M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）。
+1. **M3-R2（official provider temporal contract reconciliation）待 Owner 验收**：Issue
+   #1793 保持 open。M3-R1 已完成（COMPLETE）；M3-R2 Draft PR 待验收
+   （M3_R2_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）。
+   验收前不得开始 historical odds → production import 集成。
 2. **historical odds production import 集成（NOT_ESTABLISHED）**：与 canonical
    inventory writer 分开 —— CanonicalInventoryWriter、V26.10 canonical inventory
    contract（artifact / import-run / lineage 表）与 disposable canonical writer proof

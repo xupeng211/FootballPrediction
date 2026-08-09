@@ -197,8 +197,8 @@ legacy-writer execution is authorized.
 
 ## M3-R1 — Historical odds current-main reproducibility (reproducible rebuild entrypoint)
 
-- **M3-R1 IMPLEMENTED — AWAITING_OWNER_ACCEPTANCE（Draft PR #1829；Issue #1793 链接；
-  M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；M3_R1_CLOSEOUT_COMPLETE=NO；不得改写为 M3-R1 COMPLETE）** —
+- **M3-R1 COMPLETE（PR #1829 squash-merged `eb924b59e`，post-merge push Gate `31320043403` success；
+  M3_R1_STATUS=COMPLETE；M3_R1_CLOSEOUT_COMPLETE=YES）** —
   current-main historical odds reconstruction made deterministic and reproducible with a committed
   entrypoint `npm run odds:staging:rebuild`（`scripts/ops/odds_staging/historical_odds_rebuild.js` +
   sibling `historical_odds_rebuild_canonical.js`，lifecycle: permanent）。
@@ -249,8 +249,60 @@ legacy-writer execution is authorized.
   10 个定向新测试 + 全套 286 回归 + 真实数据验收验证。eslint 8.57.1 `complexity: ["error", 15]`
   全绿（含 positive control）；`git diff --check` clean；本地 gatekeeper commit-mode 门禁通过。
 - 未改变：M3_D4F 冻结合同计数不变、no-write 默认不变、无 DB/网络/训练/回测执行、无 migration。
-- Next (blocked on owner acceptance): M3-R1 Draft PR 验收；historical odds → production import
-  integration remains **NOT_ESTABLISHED**（独立授权 + 独立 Gate，见下）。
+- historical odds → production import integration remains **NOT_ESTABLISHED**（独立授权 + 独立 Gate，见下）。
+
+## M3-R2 — Official provider temporal contract reconciliation (Issue #1793)
+
+- **M3-R2 IMPLEMENTED — AWAITING_OWNER_ACCEPTANCE（Draft PR 待 Owner 验收；Issue #1793 链接；
+  M3_R2_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）** —
+  Football-Data.co.uk 官方 provider 时序语义合同对账（mandate M3-R2，evidence 目录
+  `footballprediction-m3-r2-provider-temporal-contract-20260809T162422Z/`）。
+- **官方证据（Level A primary provider documentation，2026-08-09 核验，无网络运行时）**：
+  downloadm.php / data.php / matches.php / notes.txt —— C 系列 = closing odds（provider 定义的
+  closing，非精确收盘 tick）；第一组 = market opening 之后按 fixtures 页时间采集的第一组，
+  **provider 从未称其为 opening odds** → 语义 = `first_collection_after_market_open`，
+  snapshot_type 保持 unknown（现有 schema 无法准确表达，mandate §22）；无任何 per-row 观察/采集
+  时间戳字段 → source_observed_at / captured_at 保持 null，provider 时刻表只是 rule 不是 timestamp。
+- **Per-source provenance（3 个来源分别判定，无全局 C 后缀推断）**：raw_odds_2223 / raw_odds_2324 /
+  real_odds_raw 全部适用官方合同（applicable_sources 从实际发射的 normalized manifest 重算，非
+  硬编码）；真实构建分布 closing 19,395 / first_collection 19,437 / unknown 0（per-source
+  6,840/6,840、6,258/6,288、6,297/6,309）。
+- **机器可读合同模块**：`src/infrastructure/odds_staging/footballDataProviderContract.js`（lifecycle:
+  permanent）冻结 `FOOTBALL_DATA_PROVIDER_CONTRACT`（contract_id
+  `football-data-provider-contract/v1`；effective_from_season 2019/20；closing /
+  first_collection_after_market_open 双阶段；pinnacle_warning 2025-07-23 起不适用于 canonical
+  seasons）。**fail closed**：非官方 contract_id / provider_id、applicable=false、pre-contract
+  season、紧凑 '2223' 格式均不 overlay。
+- **适配器 1.2.0 → 1.3.0**（football-data-csv）：C 系列 → snapshot_type=closing +
+  provider_collection_phase=closing；普通系列 → snapshot_type=unknown +
+  provider_collection_phase=first_collection_after_market_open；overlay 仅当 manifest 声明
+  applicable:true 且 contract_id/provider_id 与 committed 合同精确匹配且 season ≥ 2019/20。
+  idempotency 键分离 provider_collection_phase（Codex F-03）。
+- **收据 v2 → v3**（`m3-historical-odds-rebuild-receipt/v3`）：新增
+  `provider_semantic_contract`（applicable_sources 来自实际 manifests + 5 个 provenance 字段全部
+  pin 到 committed 合同）、`series_semantics_distribution`（纯 facts 投影，重算比对）、7 维
+  `evaluation_readiness`。
+- **Population 不变量全部保持不变（POPULATION_DRIFT→STOP 未触发）**：observation 38,832 /
+  accepted 38,616 / quarantine 216；unique candidates 892（380/380/132）；linkage 888 exact /
+  3×15m + 1×30m conflicts / 0 unmatched / 0 ambiguous；candidates artifact 1,140 +
+  eff8817284…；业务哈希 **未变**（40b02195cd…；组合只覆盖 match identities，不含时序语义 ——
+  HASH_CHANGED=NO 附说明）。
+- **Readiness（mandate §24 预期全部命中）**：CLOSING_ODDS_SEMANTICS_READY=YES、
+  FIRST_COLLECTION_SEMANTICS_READY=YES、EXACT_OBSERVATION_TIMESTAMP_READY=NO、
+  EXACT_CAPTURE_TIMESTAMP_READY=NO、STRICT_DECISION_TIME_VALUE_EVALUATION_READY=NO、
+  CLOSING_MARKET_BENCHMARK_SEMANTICS_READY=YES；composite
+  NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION（恰好 3 个 reasons：observed_at 缺失、captured_at
+  缺失、plain opening 未 proven）。
+- **验证**：真实数据 BUILD_A/BUILD_B 字节一致 + 最终代码 `verifyRebuildReceiptAgainstOutput`
+  valid=true ×2；6 个 tamper 探针（closing→unknown、first_collection→opening、contract_id、
+  readiness 维度、plain opening proven、distribution）全部 REJECTED；收据一致降级（closing
+  not_proven + readiness NO）与 provenance 字段手改均 REJECTED（Codex R2 F-01/F-02）。eslint 0
+  errors；canonical 单元套件 8,436/8,436 pass（含 M3-R2 新增 18+ 测试）；runtime 无网络回归通过。
+  Local Codex review 2 rounds（cap）：round 1 P3×4、round 2 P2×1 + P3×2，全部修复并附回归测试，
+  最终 P0/P1/P2=0（P3 记录）。
+- **legacy 脚本未改动**：`fetch_and_adapt_euro_leagues.js` 等保持原状；M3-R2 仅在新 canonical
+  语义链上叠加合同。
+- 未改变：no-write 默认、无 DB/网络/训练/回测执行、无 migration、SC-002 状态不变。
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
