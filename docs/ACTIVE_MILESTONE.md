@@ -45,6 +45,16 @@
   D4D readiness 评审、D4F 交叉来源审计
   （888 exact / 4 kickoff conflicts / 248 canonical-only / 252 无 exact link /
   1,140 候选总人口）。
+- **M3-R1 — historical odds current-main reproducibility（Draft PR 待 Owner 验收，M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE）**：
+  新增 committed 有界重建入口 `npm run odds:staging:rebuild`（`scripts/ops/odds_staging/historical_odds_rebuild.js`，
+  lifecycle: permanent；bundle/emit-dir 必须仓库外；no-write 默认；收据只记实际、无硬编码基线常量），
+  从 current main 完全复现冻结基线（38,832 / 38,616 accepted / 216 quarantined；892 候选 380/380/132；
+  888 exact / 3×15m + 1×30m conflicts；0 unmatched / 0 ambiguous）；BUILD_A/BUILD_B 字节一致；
+  业务哈希 40b02195…（M3-R1 定义组合；D4F 遗留 07e579ed… 组合不可复算）。
+  **Temporal readiness = NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION**（100% snapshot_type unknown、
+  无观测/采集时间；plain ≠ opening、C ≠ closing；2024/2025 仅 4/6 家族、2023/2024 Interwetten 稀疏；
+  上游 provenance/license/capture time 未验证）。24/24 回归测试；Codex 3 轮全部 finding 离线修复
+  （含 CI 阻断 complexity P1，经仓库 eslint 8.57.1 复核）；git diff --check 干净。
 - PR #1810：canonical inventory 写入设计评审（已结案）。
 - PR #1811：canonical inventory writer proof（已结案）。
 - PR #1812：disposable canonical proof SQL scan 范围修复（已结案）。
@@ -248,7 +258,8 @@
 ## 未完成 / 未授权（不得自动开始）
 
 1. **M3 主线收尾未完成**：Issue #1793 保持 open —— historical odds staging/import
-   主线尚未完整收尾。
+   主线尚未完整收尾。M3-R1（current-main 可复现重建 + 时序评估就绪度分类）Draft PR
+   待 Owner 验收（M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE；不得自动开始下一步）。
 2. **historical odds production import 集成（NOT_ESTABLISHED）**：与 canonical
    inventory writer 分开 —— CanonicalInventoryWriter、V26.10 canonical inventory
    contract（artifact / import-run / lineage 表）与 disposable canonical writer proof

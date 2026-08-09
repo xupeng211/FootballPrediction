@@ -195,6 +195,36 @@ Ligue 1 FotMob mapping states remain independent governance evidence; no
 network, database write, migration, canonical-linkage persistence, training or
 legacy-writer execution is authorized.
 
+## M3-R1 — Historical odds current-main reproducibility (reproducible rebuild entrypoint)
+
+- **M3-R1 COMPLETE（Draft PR awaiting owner acceptance，Issue #1793 链接；M3_R1_STATUS=AWAITING_OWNER_ACCEPTANCE）** — current-main
+  historical odds reconstruction made deterministic and reproducible with a committed entrypoint
+  `npm run odds:staging:rebuild`（`scripts/ops/odds_staging/historical_odds_rebuild.js`，lifecycle: permanent）。
+- Reproduces the entire frozen mandate baseline from current main: **38,832 observations total /
+  38,616 accepted / 216 quarantined** (144×15m + 72×30m); per-source 13,680/13,572/108,
+  12,546/12,510/36, 12,606/12,534/72; **892 unique source candidates** (380/380/132, all
+  canonical_match_identity, zero synthetic IDs); linkage **888 exact / 3×15m + 1×30m kickoff
+  conflicts / 0 unmatched / 0 ambiguous**; 888 distinct FotMob IDs. Two independent rebuilds
+  (BUILD_A / BUILD_B) are **byte-identical**; receipt schema m3-historical-odds-rebuild-receipt/v1
+  records actuals only (no hard-coded baseline constants).
+- **Source population business hash（M3-R1 canonical composition）: `40b02195cd5828d43b2be9778aa32b4bb896cf32da4e132386a8e18c8a0d2e06`** —
+  sha256 over the documented sorted projection; locale-invariant sort; stable across codex rounds 2-3 refactors.
+  The legacy D4F hash `07e579ed…` remains **NOT reproducible** (its composition was never retained in the repo);
+  count-level reproducibility is fully verified, hash-level composition is not verifiable from current main.
+- **Temporal evaluation readiness: NOT_READY_FOR_TEMPORAL_VALUE_EVALUATION** — every observation is
+  snapshot_type `unknown` (38,832/38,832), source_observed_at null, captured_at null, capture_time_status
+  `unknown`; plain ≠ opening, C ≠ closing; no opening/current/closing claim anywhere in extraction,
+  observation, quarantine or receipt. Coverage audit: 2024/2025 has only 4 of 6 bookmaker families
+  (no Interwetten, no VC Bet); 2023/2024 Interwetten sparse (840 observations). Provenance: git blob
+  verified per source; acquisition mode declared (`historical_git_recovery`); upstream provider provenance,
+  license and capture time unverified/unknown.
+- Local validation: 24/24 regression tests; Codex review rounds 1-3 (max per mandate) with all findings
+  fixed offline (P1/P2/P3 incl. CI-blocking complexity P1 — verified against the repo's own eslint
+  8.57.1 `complexity: ["error", 15]` gate with positive control); `git diff --check` clean.
+- 未改变：M3_D4F 冻结合同计数不变、no-write 默认不变、无 DB/网络/训练/回测执行、无 migration。
+- Next (blocked on owner acceptance): M3-R1 Draft PR 验收；historical odds → production import
+  integration remains **NOT_ESTABLISHED**（独立授权 + 独立 Gate，见下）。
+
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
