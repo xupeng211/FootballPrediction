@@ -15,11 +15,18 @@
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
 - 当前 main 基线：
-  `2532a7b95fb9e52e065619b904a2865dc56649c2`（PR #1830 squash merge；
-  post-merge main Production Gate 31327367581 success）
+  `d65ec1b318309ddafc5a91bc1475f3e5a286d49c`（PR #1833 merge；
+  post-merge main Production Gate 31414082873 success）
 - 最近完成：**PR #1830** — M3-R2 official provider temporal contract reconciliation
   （squash merge `2532a7b95…`，post-merge main Production Gate 31327367581
-  success）；**PR #1819** — FotMob bounded transport-phase observability
+  success）；**PR #1833** — FotMob 888 raw acquisition closeout（docs-only
+  formalization；merge `d65ec1b31…`，post-merge main Production Gate
+  31414082873 success）；**GDI1C — FotMob 888 raw historical acquisition
+  （COMPLETE，2026-08-10/11）**：14 正式批次 / 812 unique targets /
+  888 raw frozen（snapshot 206c1f04…，FOTMOB_RAW_ACQUISITION_STATUS=COMPLETE；
+  ACQUISITION_NETWORK_PHASE=CLOSED；详见 docs/data/FOTMOB_CURRENT_STATE.md
+  closeout 块）；**PR #1832** — FotMob optaId zero-id staging identity fix
+  （merge `7c177b57…`）；**PR #1819** — FotMob bounded transport-phase observability
   （squash merge `b5e6d8bf9…`，post-merge main Production Gate 31204100182
   success）；**PR #1820** — Production Gate manual-dispatch baseline resolution
   （squash merge `d3bcf3f15…`，post-merge main Production Gate 31153912121
@@ -293,9 +300,11 @@
   直接 Node CLI 是 internal engine（非 canonical 接口）。复用
   FotMobCandidateExporter / FotMobRawDetailFetcher / FotMobRouteIdentityReconciler /
   NextDataParser / FotMobRawParser，未创建重复 parser；不写数据库。
-  **未执行任何真实 detail-capture 请求**（唯一真实 FotMob 网络流量 = 已完成的有界
-  两路径兼容性 probe，2 次请求）：CAPTURE 默认关闭，真实执行仍须单独授权
-  （OWNER_REAL_CAPTURE_AUTHORIZATION=NO）。
+  **历史状态（PR #1816 merge 时）**：未执行任何真实 detail-capture 请求
+  （唯一真实 FotMob 网络流量 = 已完成的有界两路径兼容性 probe，2 次请求）。
+  → 2026-08-11 注：真实采集已由 GDI1C 显式授权执行（888 frozen，
+  2026-08-10/11，14 批 / 812 targets）；CAPTURE 入口对任何**新**采集仍默认关闭、
+  仍须单独授权（OWNER_REAL_CAPTURE_AUTHORIZATION=NO 语义保留于新采集）。
 
 ## 未完成 / 未授权（不得自动开始）
 
@@ -309,10 +318,13 @@
    已实现（PR #1811，docs/PROJECT_STATUS.md）；尚未建立的是 historical odds staging →
    production bookmaker odds / matches 表的正式 import 集成、授权表面与执行流程。
    真实持久化 / 生产写入仍 BLOCKED，未授权未执行。
-3. **FOTMOB_REAL_CAPTURE_READINESS（planning milestone）**：仓库内无该里程碑的
-   独立 Issue / tag / 文档；唯一出处为 PR #1813 正文与 Issue #1793 结案评论
-   （"begin a separate FOTMOB_REAL_CAPTURE_READINESS milestone. Do not start real
-   capture automatically."）。它未被授权为可执行里程碑，不得自动开始真实采集。
+3. **FOTMOB_REAL_CAPTURE_READINESS（planning milestone）—— SUPERSEDED_BY_COMPLETED_GDI1C_FOTMOB_888_ACQUISITION**：
+   仓库内无该里程碑的独立 Issue / tag / 文档；唯一出处为 PR #1813 正文与
+   Issue #1793 结案评论（"begin a separate FOTMOB_REAL_CAPTURE_READINESS
+   milestone. Do not start real capture automatically."）。该 planning
+   milestone 的使命（真实采集的代码就绪与受控执行准备）已由 GDI1C 在显式
+   Owner 授权下完成（888 frozen，2026-08-10/11）；不再作为当前待办。
+   任何超出冻结人口的新采集仍须单独授权，不得自动开始。
 4. **阶段A 剩余 P3（出处：PR #1813 Debt Impact）**：P3-1 / P3-2 代码加固已完成
    （见"已完成"）；以下各项**不属于**阶段A、本轮未处理：
    P3-3 v1 paired-write 弱点（标注 unchanged scope）、injected filesystem
@@ -321,8 +333,15 @@
    公共条款 / 使用边界审查已完成（written permission 缺失）；有界两路径兼容性
    probe 已完成 = 2 次请求，match detail 路由与 EPL fixtures 路由均兼容，
    未见 access-control 信号。
-5. **三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。
-6. **一场已结束比赛的受控真实 FotMob 详情端到端试运行（下一项推荐的数据任务）**：
+5. ~~**三赛季真实采集**（2022/2023–2024/2025 范围的网络抓取）：未授权。~~
+   → **SUPERSEDED_BY_COMPLETED_GDI1C_FOTMOB_888_ACQUISITION**：三赛季目标人口
+   888 已采集完成并冻结（2026-08-10/11，14 批 / 812 unique targets；
+   FOTMOB_RAW_ACQUISITION_STATUS=COMPLETE；ACQUISITION_NETWORK_PHASE=CLOSED）。
+   不得重新抓取；任何超出冻结人口的新采集仍须单独授权（NEW_FOTMOB_CAPTURE_IS_NOT_CURRENT_NEXT_STEP=YES）。
+6. ~~**一场已结束比赛的受控真实 FotMob 详情端到端试运行（下一项推荐的数据任务）**~~
+   → **SUPERSEDED_BY_COMPLETED_GDI1C_FOTMOB_888_ACQUISITION**（以下为历史设计
+   记录，保留不删；不再是当前推荐下一步，当前推荐 =
+   GOLDEN_DATASET_CANONICAL_MULTI_SOURCE_ASSEMBLY）：
    单场、单请求、仓库外输出、零数据库连接/写入、零 SQL、零 migration、
    零训练/回测/预测。任务边界（MATCH_COUNT=1 / MAX_FOTMOB_REQUESTS=1 /
    MATCH_STATUS=FINISHED）经 canonical 入口表达为：plan 阶段
@@ -334,9 +353,11 @@
    → 用户确认精确 match id 与预算 → CAPTURE 一场（execute 需全部授权变量
    与 `NETWORK_AUTHORIZATION=yes`）→ package/archive/receipt → offline
    staging build → staging validate → repeat offline build → 确定性输出比对 →
-   证据评审 → 停止。**尚未授权**：需要新的明确用户授权标识
-   `OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`（当前=NO），
-   不得自动开始，不得自动扩展到 5 场或 16 场。
+   证据评审 → 停止。**历史状态**：该 trial 当时尚未授权（需
+   `OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`）。
+   → 2026-08-11 结论：该单场 trial 定义已被实际执行完全 supersede —— GDI1C
+   在显式 Owner 授权下完成了 14 批 / 812 targets / 888 frozen 人口采集；
+   不得再作为下一项推荐数据任务提出，不得重新抓取。
 7. **生产 import schema 与真实写入**：需后续单独授权（须先满足 status-complete
    artifact、FotMob endpoint/capture/licence provenance、disposable proof、
    dedicated sandbox/ACL/backup-restore 等 Gate，见 Issue #1793 评论）。

@@ -9,7 +9,7 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-08-07
+## Current authoritative status — 2026-08-11 (post-GDI1C FotMob 888 closeout)
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
@@ -40,22 +40,24 @@ Offline detail staging converter / validator = implemented, tested, MERGED
 Chain available on main = PLAN → PREFLIGHT → bounded CAPTURE → REPLAY →
   verified archive/receipt → offline staging conversion → append-only retention →
   full validator
-Real FotMob detail capture = still NOT authorized and NOT executed (CAPTURE default-off)
-Next recommended data task = one finished match, single-request, controlled real
-  FotMob detail end-to-end trial (repository-external output, zero database) —
-  requires NEW explicit user authorization
-  (OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=NO at this time);
-  do not start automatically
+Real FotMob detail capture for the frozen 888 population = COMPLETE
+  (2026-08-10/11, GDI1C: 14 formal batches, 812 unique targets, 888 raw frozen;
+  ACQUISITION_NETWORK_PHASE=CLOSED; see "FotMob 888 raw acquisition closeout" below)
+NEW FotMob capture is NOT the current next step
+  (NEW_FOTMOB_CAPTURE_IS_NOT_CURRENT_NEXT_STEP=YES): the CAPTURE entrypoint
+  remains default-off, and any capture beyond the frozen population requires
+  NEW explicit user authorization; do not start automatically
 Public terms / usage-boundary review = completed
 FotMob written permission = absent (no written permission granted)
 Bounded two-path compatibility probe = completed
   (actual probe requests = 2; match detail route = compatible at probe time;
    EPL fixtures route = compatible at probe time; no access-control signal
    observed in that bounded probe)
-No batch capture executed; no 1,140-match detail capture executed; no database write
-Not occurred since PR #1817 merge: no new real FotMob detail capture, no season
-  capture, no business database write, no migration, no canonical linkage write,
-  no training, no backtest, no prediction
+Batch capture executed = 14 formal batches / 812 unique targets (frozen 888
+  population; no 1,140-match capture; no database write)
+Not occurred since the frozen 888 acquisition: no NEW capture beyond the frozen
+  population, no business database write, no migration, no canonical linkage
+  write, no training, no backtest, no prediction
 SC-002 = SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO
 Issue #1793 (M3 historical odds staging and import foundation) = remains OPEN
@@ -1006,8 +1008,8 @@ training/backtest/prediction; no real payload/manifest/artifact committed.
   `STATUS_MAPPING_VERSION`, the identity-v1 output path and both hash schemes are
   unchanged. No inventory writer, link or import has been
   authorized.
-- No network, database write, migration, new identity generation or legacy
-  writer execution is authorized.
+- No NEW network acquisition beyond the frozen 888 population, database write,
+  migration, new identity generation or legacy writer execution is authorized.
 
 ## Forbidden without explicit authorization
 
@@ -1032,32 +1034,30 @@ detail staging converter/validator is merged (PR #1817, squash merge
 `fd60117d2…`, post-merge main Production Gate 31075669344 success). The chain
 available on main is PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified
 archive/receipt → offline staging conversion → append-only retention → full
-validator. No new real FotMob detail capture has been executed: the only real
-FotMob network traffic remains the completed two-path compatibility probe
-(= 2 requests). The FotMob public terms / usage-boundary review is complete (no
+validator. Real FotMob detail capture has been executed once, under explicit
+Owner authorization: the GDI1C 888-population acquisition (2026-08-10/11, 14
+formal batches, 812 unique targets — see the closeout block above); the
+acquisition network phase is CLOSED and the frozen population is immutable.
+The FotMob public terms / usage-boundary review is complete (no
 written permission granted).
 
-The next recommended data task is exactly one: **a controlled real FotMob
-detail end-to-end trial for one already-finished match** — single match,
-single request (trial bounds `MATCH_COUNT=1`, `MAX_FOTMOB_REQUESTS=1`,
-`MATCH_STATUS=FINISHED`; expressed through the canonical entrypoint as
-`MAX_REQUESTS=1` on preflight, `MAX_REQUESTS=1` +
-`CONFIRM_MAX_FOTMOB_REQUESTS=1` on execute — the confirmation variable is
-enforced only on execute — and `MATCH_ID=<exact id>` + `LIMIT=1` on plan;
-FINISHED is a pre-execution
-human-confirmation condition, not a capture-script filter),
-repository-external output, zero database
-connections/writes, zero SQL, zero migrations, zero training/backtest/
-prediction — running PLAN → PREFLIGHT → user confirmation of the exact match
-id and budget → CAPTURE → package/archive/receipt → offline staging build →
-staging validate → repeat offline build → deterministic-output comparison →
-evidence review → stop. This trial is **not yet authorized**: it requires a
-new explicit user authorization
-(`OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL=YES`; currently NO)
-and must not auto-expand to 5 or 16 matches. A real batch capture and a
-separate future canonical FotMob writer as a `data-*`-gated business milestone
-remain separately authorized future steps. Future inventory is 1,140
-candidates.
+The former "next recommended data task" — **a controlled single-match real
+FotMob detail end-to-end trial** (bounds `MATCH_COUNT=1`,
+`MAX_FOTMOB_REQUESTS=1`, `MATCH_STATUS=FINISHED`, repository-external output,
+zero database) — is **SUPERSEDED_BY_COMPLETED_GDI1C_FOTMOB_888_ACQUISITION**:
+the trial-scale controlled prototype was superseded by the fully authorized
+batch execution (2026-08-10/11, 14 formal batches, 812 unique targets, 888 raw
+frozen; `OWNER_AUTHORIZES_ONE_MATCH_REAL_FOTMOB_END_TO_END_TRIAL` was never
+needed because the Owner authorized the broader GDI1C acquisition directly).
+The trial bounds description above is preserved as historical design record
+and must NOT be offered again as a current next step.
+
+The current next recommended phase is
+**GOLDEN_DATASET_CANONICAL_MULTI_SOURCE_ASSEMBLY** (offline readiness/design of
+the canonical multi-source assembly using the frozen 888 raw + retained odds
+sources; GOLDEN_DATASET_COMPLETE=NO). Any NEW FotMob capture beyond the frozen
+population remains a separately authorized future step (future inventory is
+1,140 candidates); do not start automatically.
 Linkage remains separately authorized for 888 exact identities and the four
 conflicts remain quarantine. The 32/10/8 Ligue 1 states remain independent.
 No network, database write, migration, canonical-linkage persistence or

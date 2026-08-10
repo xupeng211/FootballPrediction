@@ -1081,22 +1081,26 @@ legacy-writer execution is authorized.
 - Exact writer/run provenance for all 58 rows is not proven. Legacy acquisition
   scripts are historical evidence only and must not become canonical writers or
   new dependencies.
-- No network acquisition, database write, browser automation, parser
-  implementation, migration, training or prediction is authorized.
+- No NEW network acquisition beyond the frozen 888 population, database write,
+  browser automation, parser implementation, migration, training or prediction
+  is authorized.
 - **PR #1816 (bounded auditable FotMob detail capture pipeline) and PR #1817
   (offline detail staging converter/validator) are MERGED**: PR #1816 squash
   merge commit `b6f9f385124eab7476157777517fcd5bf01a93ab` (2026-08-04); PR #1817
   squash merge commit `fd60117d283a2af9e103990f733e436fda53b100` (2026-08-06),
   post-merge main Production Gate run 31075669344 success. Current main =
-  `fd60117d283a2af9e103990f733e436fda53b100`. The chain available on main is
+  `d65ec1b318309ddafc5a91bc1475f3e5a286d49c`. The chain available on main is
   PLAN → PREFLIGHT → bounded CAPTURE → REPLAY → verified archive/receipt →
-  offline staging conversion → append-only retention → full validator. No new
-  real FotMob detail capture, season capture, business database write,
-  migration, canonical linkage write, training, backtest or prediction has
-  occurred. The next recommended data task is a single-match, single-request,
-  FINISHED-status, repository-external-output, zero-database real end-to-end
-  FotMob detail trial, which still requires new explicit user authorization
-  (not granted; do not start automatically).
+  offline staging conversion → append-only retention → full validator.
+  **GDI1C FotMob 888 raw acquisition = COMPLETE (2026-08-10/11)**: 14 formal
+  batches / 812 unique targets / 888 frozen population (snapshot
+  `206c1f04…`; see `docs/data/FOTMOB_CURRENT_STATE.md` closeout block);
+  ACQUISITION_NETWORK_PHASE=CLOSED. No business database write, migration,
+  canonical linkage write, training, backtest or prediction has occurred.
+  The former single-match real FotMob detail trial recommendation is
+  **superseded by the completed 888 acquisition**; the next recommended phase
+  is GOLDEN_DATASET_CANONICAL_MULTI_SOURCE_ASSEMBLY (offline readiness/design
+  only, not started; do not start automatically).
 - The completed M3 offline cross-source audit derived its bounded population
   from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
