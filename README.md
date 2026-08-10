@@ -204,6 +204,7 @@ this section rather than maintaining duplicate command lists.
 | **Training** | Primary canonical | `npm run train` | **Only with explicit training authorization.** Writes model artifacts. `train:fast` and `train:deep` are variants |
 | **Prediction** | Primary canonical | `npm run predict` | May read DB. Confirm environment, model, and authorization. `predict:dry` and `predict:json` are variants |
 | **Backtest** | Not yet established | None — must be implemented and accepted in a future business milestone | Historical scripts (`recon_scanner.js`, `gold_pilot_50.js`, `titan_marathon.js`) are not canonical backtest entrypoints |
+| **Offline probability benchmark (Value MVP-1)** | Research evaluation (DOCUMENTED_ONLY) | Internal research-evaluation entrypoint: `scripts/model_training/value_mvp_baseline_vs_closing.py` (not a README canonical entrypoint; see Entry classification below) | Strictly offline probability benchmark evaluation: zero DB, zero network, zero new data, no odds as model features, walk-forward by season, protocol frozen before OOS. This is NOT an executable betting backtest and makes no ROI / profitability / CLV claim — the **Backtest** row above remains Not yet established |
 
 ### Entry classification
 
@@ -213,7 +214,10 @@ this section rather than maintaining duplicate command lists.
   too: `npm run odds:staging:dry-run` (single-source offline import, fail-closed/no-write) and
   `npm run odds:staging:rebuild` (multi-source deterministic reconstruction, repo-external bundle/emit-dir only,
   no-write default; `--canonical-history` recovers the pinned sources from immutable git objects via a bounded
-  read-only git child process; `--validate` recomputes every receipt fact from the emitted output).
+  read-only git child process; `--validate` recomputes every receipt fact from the emitted output). The
+  VALUE_MVP-1 offline probability benchmark (`scripts/model_training/value_mvp_baseline_vs_closing.py` +
+  `src/ml/value_mvp/`) also belongs here: it is a research evaluation entrypoint, not a canonical backtest
+  (see the **Offline probability benchmark** row above; Backtest remains Not yet established).
 - **Legacy / Admin-only** — retained but **must not** become a new code dependency:
   `scripts/ops/run_production.js`, `scripts/ops/titan_discovery.js`,
   `scripts/ops/total_war_pipeline.js`, and Phase/ADG-numbered scripts as a category.

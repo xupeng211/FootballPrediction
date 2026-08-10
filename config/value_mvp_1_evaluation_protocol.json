@@ -1,0 +1,91 @@
+{
+  "schema_version": "value-mvp-1-evaluation-protocol/v1",
+  "task": "VALUE_MVP_1_BASELINE_VS_CLOSING_MARKET",
+  "task_type": "BUSINESS_RESEARCH_IMPLEMENTATION",
+  "claim_boundary": "predictive-information benchmark only; NOT an executable betting backtest; NOT a profitability/ROI/CLV claim; NOT a decision-time execution claim",
+  "population_policy": {
+    "expected_population": { "total": 888, "per_season": { "2022/23": 377, "2023/24": 379, "2024/25": 132 } },
+    "primary": "m3_canonical_source_population_with_valid_label_and_valid_closing_benchmark",
+    "description": "Matches derived from the M3-R2 canonical accepted observations (38,616) with: valid FTR label from the same pinned source rows, and at least minimum_bookmaker_count valid closing bookmaker triples. Observed population: 888 unique canonical matches (377 x 2022/23, 379 x 2023/24, 132 x 2024/25). The 4 kickoff-conflict candidates of the 892 source population have no observation rows by M3 design and are therefore absent from the evaluation population.",
+    "exact_link_sensitivity": "population is identical to the exact-link subset (all 888 matches carry match_link.matched_id); sensitivity recomputed explicitly",
+    "bookmaker_exclusion": ["Max", "Avg"],
+    "bookmaker_exclusion_reason": "synthetic derived columns (max across bookmakers / average across bookmakers), not independent market quotes; excluding avoids double-counting; frozen pre-OOS. (No Max/Avg observations exist in the M3 canonical dataset; rule is a guard.)"
+  },
+  "season_assignment_rule": "kickoff_at month >= 8 -> YYYY/YYYY+1 else (YYYY-1)/YYYY (Europe/London kickoff, as emitted by M3)",
+  "season_split_policy": {
+    "fold1": { "train": ["2022/23"], "test": ["2023/24"] },
+    "fold2": { "train": ["2022/23", "2023/24"], "test": ["2024/25"] },
+    "no_random_split": true,
+    "split_invariant": "max(train kickoff) < min(test kickoff) per fold"
+  },
+  "feature_contract": {
+    "features": [
+      "home_elo_pre",
+      "away_elo_pre",
+      "elo_diff",
+      "home_last5_ppg",
+      "away_last5_ppg",
+      "home_last5_goals_for",
+      "away_last5_goals_for",
+      "home_last5_goals_against",
+      "away_last5_goals_against",
+      "home_last5_home_ppg",
+      "away_last5_away_ppg",
+      "home_matches_seen",
+      "away_matches_seen"
+    ],
+    "feature_count": 13,
+    "generation": "sequential chronological: for each match, features computed from team state BEFORE kickoff (state updated only AFTER the feature row is frozen); matches sharing the same kickoff_at are processed as a batch (features for all from pre-batch state, then all results applied)",
+    "points_win": 3,
+    "points_draw": 1,
+    "missing_policy": "missing stays missing; SimpleImputer(median) fitted on training fold rows only"
+  },
+  "elo_contract": {
+    "initial_elo": 1500,
+    "k_factor": 20,
+    "expected_formula": "E = 1 / (1 + 10^((R_opponent - R_self) / 400))",
+    "result_mapping": { "home_win": 1, "draw": 0.5, "home_loss": 0 },
+    "no_market_adjustment": true
+  },
+  "rolling_window": 5,
+  "model_family": "multinomial_logistic_regression",
+  "model_hyperparameters": {
+    "solver": "lbfgs",
+    "C": 1.0,
+    "max_iter": 2000,
+    "class_weight": null,
+    "n_jobs": 1
+  },
+  "model_family_note": "multinomial is the only LogisticRegression behavior in sklearn >= 1.5 (the old multi_class parameter was removed in 1.8); the family is therefore exactly multinomial logistic regression with these hyperparameters.",
+  "no_hyperparameter_search": true,
+  "imputer_policy": { "method": "median", "fit_on": "training_fold_rows_only" },
+  "scaler_policy": { "method": "standard", "fit_on": "training_fold_rows_only" },
+  "market_no_vig_method": "proportional: q_k = 1/odds_k; overround = q_H+q_D+q_A; p_k = q_k/overround; triple valid iff all three selections present, odds finite and > 1; invalid bookmaker triples excluded, never guessed",
+  "market_consensus_method": "for every eligible match: (1) no-vig probabilities independently per valid bookmaker; (2) arithmetic mean across bookmakers; (3) renormalize final H/D/A vector to sum exactly 1",
+  "minimum_bookmaker_count": 2,
+  "eligibility_fail": "MARKET_BENCHMARK_INELIGIBLE (match excluded from primary comparison, not imputed)",
+  "primary_metric": "multiclass_log_loss",
+  "secondary_metrics": ["multiclass_brier_score", "accuracy", "calibration_summary"],
+  "log_loss_eps": 1e-15,
+  "log_loss_formula": "mean over matches of -log(p_actual) with p clipped to [eps, 1]",
+  "brier_formula": "mean over matches of sum_k (p_k - y_k)^2",
+  "calibration_bins": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+  "statistical_inference_method": "deterministic season-stratified paired bootstrap on per-match delta_log_loss (model - market)",
+  "bootstrap": { "replicates": 10000, "seed": 20260810, "ci_percentiles": [2.5, 97.5] },
+  "claim_classification": {
+    "MODEL_BETTER_THAN_CLOSING": "pooled delta_log_loss 95% CI upper bound < 0",
+    "MARKET_BETTER_THAN_MODEL": "pooled delta_log_loss 95% CI lower bound > 0",
+    "INCONCLUSIVE": "pooled delta_log_loss 95% CI includes 0"
+  },
+  "primary_claim_basis": "pooled OOS; fold-specific results always reported separately",
+  "forbidden_features": [
+    "odds", "market", "closing", "close", "first_collection", "result", "FTR", "FTHG", "FTAG",
+    "score", "shots", "corners", "cards", "postmatch"
+  ],
+  "forbidden_claims": ["profitability", "ROI", "yield", "kelly", "staking", "CLV", "tradable edge", "decision-time execution", "bets", "wins", "losses", "stakes"],
+  "determinism": {
+    "runs": "RUN_A and RUN_B from identical code/inputs/protocol",
+    "requirement": "byte-stable JSON/CSV outputs (no wall-clock in any business hash)",
+    "tolerance": "none"
+  }
+}

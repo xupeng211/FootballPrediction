@@ -203,6 +203,9 @@ unfixable = []
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115", "I001"]
 
+# value_mvp_1_offline_benchmark — new VALUE_MVP-1 research benchmark tests
+"tests/unit/ml/value_mvp/*.py" = ["PLR2004"]
+
 [lint.isort]
 known-first-party = ["src", "tests"]
 force-sort-within-sections = true
