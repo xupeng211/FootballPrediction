@@ -22,6 +22,7 @@ from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
 from src.database.db_pool import DatabasePool
+from src.ml.inference.model_dispatcher import ModelArtifactUnavailableError
 
 # V4.46: 激活收割监控指标
 from src.api.monitoring import (
@@ -294,6 +295,10 @@ async def predict_match(
         result = predictor.predict(payload)
         logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
         return result
+    except ModelArtifactUnavailableError:
+        # MLC-1: 生产模型产物缺失 → FAIL CLOSED → 503，不向客户端暴露文件系统内部信息
+        logger.exception("模型产物不可用，拒绝预测")
+        raise HTTPException(status_code=503, detail="prediction model unavailable") from None
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -314,6 +319,10 @@ async def predict_batch(request: Request, batch_data: list[dict]) -> list[dict]:
         results = predictor.predict_batch(batch_data)
         logger.info(f"批量预测完成: {len(results)} 场比赛")
         return results
+    except ModelArtifactUnavailableError:
+        # MLC-1: 生产模型产物缺失 → FAIL CLOSED → 503
+        logger.exception("模型产物不可用，拒绝批量预测")
+        raise HTTPException(status_code=503, detail="prediction model unavailable") from None
     except Exception as e:
         logger.exception(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
