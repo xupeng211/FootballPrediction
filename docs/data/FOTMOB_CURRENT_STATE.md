@@ -94,6 +94,7 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md:177,
   docs/SC002_FINAL_CLOSURE_CHECK.md:207 (references PROJECT_STATUS wording,
   superseded by the PROJECT_STATUS correction in this PR),
+
   tests asserting the stale allowlist/doc wording:
   tests/unit/test_sc002_alembic_migration_runtime_guard.py:241-245,
   tests/unit/test_sc002_alembic_migration_guard_design.py:299-302,
@@ -118,6 +119,39 @@ Known remaining stale SC-002 wording surfaces NOT modified by PR #1818
   PROJECT_STATUS/CLOSURE_PLAN wording and would fail once the two-layer
   wording is applied to those docs — owner decision required before touching
   those docs)
+```
+
+### FotMob 888 raw acquisition closeout — 2026-08-11
+
+```text
+FOTMOB_RAW_ACQUISITION_STATUS=COMPLETE
+FROZEN_TARGET_POPULATION=888
+RAW_COVERAGE=888/888
+MISSING=0
+EXTRA=0
+AUTHORITATIVE_DUPLICATES=0
+XG_FAMILY_RAW_VALIDITY=888/888
+FULL_RAW_RETENTION=YES
+ACQUISITION_NETWORK_PHASE=CLOSED
+FOTMOB_888_RAW_ASSET_FROZEN=YES（immutable；不得编辑/重写/裁剪历史 raw）
+GOLDEN_DATASET_COMPLETE=NO（FotMob raw 收齐 ≠ Golden Dataset 完成）
+Asset snapshot（repo-external durable location，不在 Git 内）=
+  ~/.claude/audits/footballprediction-fotmob-888-asset-preservation-closeout-20260811T030000Z/
+  FOTMOB_RAW_ASSET_SNAPSHOT_ID=206c1f04ecef7ad6daefe7f362180cec0240f65351155e9fbb87ad8e4221a05a
+  TARGET_POPULATION_HASH=133ff028406064de60ad1d871afe6e52c1ab8b964f0e3f63f9def41ada2c1a2b
+  ASSET_MANIFEST_SHA256=67bbb64fd29957a79956808b7952c6cb2fee96360129854dc269a5824f6fc4db（JSONL）
+Acquisition network totals（frozen ledger accounting）=
+  UNIQUE_NETWORK_TARGETS=812 · SUCCESSFUL_HTTP_200=812 · INITIAL_TIMEOUT_FAILURES=2 ·
+  RETRIES=2 · TOTAL_PHYSICAL_HTTP_ATTEMPTS=814
+Formal batches = 14（B01-B14）· durable bundle+checkpoint 14/14 · PENDING=0
+Historical reuse = 76（GDI1B 60 + pilot/trial 13 + trial_resumed 3，REUSE_CONFIRMED）
+Redundant backup = PENDING_EXTERNAL_STORAGE（本机无独立存储设备；
+  backup-ready snapshot 已生成：/home/xupeng/fotmob-888-raw-snapshot/<snapshot_id>/）
+Known provenance tech debt = bundle-provenance.json collector_code_revision 为
+  repo-external wrapper 模板常量 bf7f4974…（权威=per-run plan.json 40b4cc4de…，
+  DATA_INTEGRITY_IMPACT=NO；DOCUMENTED_NOT_WORTH_PRODUCTIZING）
+This repository state executes zero live FotMob network requests（本轮纯离线；
+  812 次授权捕获发生于 2026-08-10/11，网络阶段已关闭）
 ```
 
 ### Detail capture pipeline
