@@ -41,6 +41,7 @@ const {
 const {
     buildPair,
     buildPayload,
+    buildNormalized,
     buildManifest,
     buildSourceIndex,
     sourceIndexEntry,
@@ -1416,4 +1417,147 @@ test('R15-P2-1d: a nested "__proto__" inside a section VALUE changes the busines
         events: { ...artifact.sections.events, json: events },
     };
     assert.notStrictEqual(computeStagingArtifactBusinessHash(artifact), artifact.business_hash);
+});
+
+// ─────────────────────────────────────────────────────────────
+// E011 player_stats family remediation (GDI1C E011 cluster)
+//
+// Real pattern (7 cases across GDI1B + Batch06): FotMob keys a player_stats
+// row by the player's OPTA id with id=0 when the player has no FotMob stats
+// id (fringe/young players), e.g. {key: "538210", id: 0, optaId: "538210"}.
+// The row is internally consistent (key == optaId) and the same player is
+// identified by FotMob id in lineup/events of the same payload.
+// ─────────────────────────────────────────────────────────────
+
+function buildNormalizedWithPlayerStats(playerStats) {
+    const n = buildNormalized();
+    n.player_stats = playerStats;
+    return n;
+}
+
+const E011_REAL_PATTERN_ROW = {
+    id: 0,
+    name: 'Andre Brooks',
+    optaId: '538210',
+    teamId: 8657,
+    teamName: 'Sheffield United',
+    isGoalkeeper: false,
+    shirtNumber: '35',
+};
+
+test('E011-D40: real E011 pattern (id=0 + optaId==key) passes L6 — validator false positive fixed', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: E011_REAL_PATTERN_ROW,
+            1396784: { ...E011_REAL_PATTERN_ROW, id: 1396784, optaId: '480331' },
+        }),
+    });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, true, validation.errors.map(e => e.message).join('; '));
+    assert.strictEqual(validation.terminal_state, null);
+    assert.strictEqual(
+        validation.errors.some(e => e.family === 'player_stats'),
+        false,
+        'no player_stats-family error expected',
+    );
+});
+
+test('E011-D41: genuine contradiction (id=999, no optaId) still fails closed → E011/player_stats', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: { ...E011_REAL_PATTERN_ROW, id: 999, optaId: undefined },
+        }),
+    });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, false);
+    assert.strictEqual(validation.terminal_state, TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL);
+    const e = validation.errors.find(x => x.code === ERROR_CODES.E011 && x.family === 'player_stats');
+    assert.ok(e, 'player_stats-family E011 expected');
+    assert.ok(e.message.includes('player_stats.538210'));
+});
+
+test('E011-D42: id=0 with contradicting optaId still fails closed → E011/player_stats', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: { ...E011_REAL_PATTERN_ROW, optaId: '999999' },
+        }),
+    });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, false);
+    assert.strictEqual(validation.terminal_state, TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL);
+    assert.ok(
+        validation.errors.some(x => x.code === ERROR_CODES.E011 && x.family === 'player_stats'),
+        'player_stats-family E011 expected',
+    );
+});
+
+test('E011-D43: id=0 with no optaId (insufficient identity) still fails closed → E011/player_stats', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: { ...E011_REAL_PATTERN_ROW, optaId: undefined },
+        }),
+    });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, false);
+    assert.strictEqual(validation.terminal_state, TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL);
+    assert.ok(
+        validation.errors.some(x => x.code === ERROR_CODES.E011 && x.family === 'player_stats'),
+        'player_stats-family E011 expected',
+    );
+});
+
+test('E011-D44: healthy rows (id==key, optaId differing) stay valid — no regression', () => {
+    // fixture player_stats: 1171140 → id 1171140, optaId 444180 (differs)
+    const pair = buildPair();
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, true, validation.errors.map(e => e.message).join('; '));
+    assert.strictEqual(
+        validation.errors.some(e => e.family === 'player_stats'),
+        false,
+        'no player_stats-family error expected for healthy rows',
+    );
+});
+
+test('E011-D45: family isolation — only player_stats errors carry family, shotmap stays error-free', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: { ...E011_REAL_PATTERN_ROW, id: 999, optaId: undefined },
+        }),
+    });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, false);
+    const psErrors = validation.errors.filter(e => e.family === 'player_stats');
+    const shotmapErrors = validation.errors.filter(e => e.family === 'shotmap');
+    assert.ok(psErrors.length > 0, 'player_stats-family errors present');
+    assert.strictEqual(shotmapErrors.length, 0, 'healthy shotmap family carries no errors');
+    // every L6 error carries a family attribution (auditable, §20)
+    for (const e of validation.errors) {
+        assert.ok(e.family !== undefined && e.family !== '', `error lacks family: ${e.message}`);
+    }
+});
+
+test('E011-D46: validation never mutates the raw payload', () => {
+    const pair = buildPair({
+        normalized: buildNormalizedWithPlayerStats({
+            538210: E011_REAL_PATTERN_ROW,
+        }),
+    });
+    const bytesBefore = JSON.stringify(pair.payload);
+    const shaBefore = pair.payload.stable_payload_sha256;
+    validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(JSON.stringify(pair.payload), bytesBefore, 'payload mutated by validation');
+    assert.strictEqual(pair.payload.stable_payload_sha256, shaBefore);
+});
+
+test('E011-D47: unrelated validation errors are not silently ignored (shotmap E011 intact)', () => {
+    const n = buildNormalized();
+    n.shotmap.shots[0].expectedGoals = 5; // outside 0..1
+    const pair = buildPair({ normalized: n });
+    const validation = validateObservation(pairToValidationArgs(pair));
+    assert.strictEqual(validation.ok, false);
+    assert.strictEqual(validation.terminal_state, TERMINAL_STATES.QUARANTINED_VALIDATION_FAIL);
+    assert.ok(
+        validation.errors.some(x => x.code === ERROR_CODES.E011 && x.family === 'shotmap'),
+        'shotmap-family E011 expected',
+    );
 });

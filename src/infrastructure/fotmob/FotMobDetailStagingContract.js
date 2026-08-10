@@ -1083,6 +1083,7 @@ function validateValueSanity(payload) {
         ) {
             errors.push({
                 code: ERROR_CODES.E011,
+                family: 'team_score',
                 message: `${label}.score must be a non-negative integer`,
             });
         }
@@ -1094,6 +1095,7 @@ function validateValueSanity(payload) {
             if (!isPlainObject(event)) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'events',
                     message: `events[${i}] is not an object`,
                 });
                 continue;
@@ -1108,6 +1110,7 @@ function validateValueSanity(payload) {
             ) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'events',
                     message: `events[${i}].minute out of range 0..${MAX_EVENT_MINUTE}`,
                 });
             }
@@ -1119,6 +1122,7 @@ function validateValueSanity(payload) {
             if (!isMarkerEvent && (event.id === undefined || event.id === null)) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'events',
                     message: `events[${i}].id missing`,
                 });
             }
@@ -1131,6 +1135,7 @@ function validateValueSanity(payload) {
             if (!isPlainObject(shot)) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'shotmap',
                     message: `shotmap.shots[${i}] is not an object`,
                 });
                 continue;
@@ -1144,6 +1149,7 @@ function validateValueSanity(payload) {
             ) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'shotmap',
                     message: `shotmap.shots[${i}].expectedGoals outside 0..1`,
                 });
             }
@@ -1151,6 +1157,7 @@ function validateValueSanity(payload) {
                 if (shot[coord] !== undefined && shot[coord] !== null && typeof shot[coord] !== 'number') {
                     errors.push({
                         code: ERROR_CODES.E011,
+                        family: 'shotmap',
                         message: `shotmap.shots[${i}].${coord} must be numeric`,
                     });
                 }
@@ -1163,13 +1170,35 @@ function validateValueSanity(payload) {
             if (!isPlainObject(entry)) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'player_stats',
                     message: `player_stats.${playerId} is not an object`,
                 });
                 continue;
             }
-            if (entry.id !== undefined && entry.id !== null && Number(entry.id) !== Number(playerId)) {
+            // E011 identity rule (remediation, GDI1C E011 cluster): a row is
+            // valid when the map key matches EITHER the embedded id (FotMob
+            // id — healthy rows) OR the embedded optaId. FotMob keys stats
+            // rows by optaId with id=0 for players without a FotMob stats id
+            // (fringe/young players), e.g. {key: "538210", id: 0, optaId:
+            // "538210"}; id=0 is a placeholder, not a contradiction. Genuine
+            // contradictions (key matches neither identity) still fail closed.
+            const embeddedId = entry.id;
+            const embeddedOptaId = entry.optaId;
+            const keyNum = Number(playerId);
+            const idMatches =
+                embeddedId !== undefined &&
+                embeddedId !== null &&
+                Number(embeddedId) !== 0 &&
+                Number(embeddedId) === keyNum;
+            const optaMatches =
+                embeddedOptaId !== undefined &&
+                embeddedOptaId !== null &&
+                String(embeddedOptaId) !== '' &&
+                Number(embeddedOptaId) === keyNum;
+            if (!idMatches && !optaMatches) {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'player_stats',
                     message: `player_stats.${playerId}.id disagrees with its key`,
                 });
             }
@@ -1182,6 +1211,7 @@ function validateValueSanity(payload) {
             if (!isPlainObject(row) || typeof row.key !== 'string' || row.key === '') {
                 errors.push({
                     code: ERROR_CODES.E011,
+                    family: 'stats',
                     message: `stats[${i}].key must be a non-empty string`,
                 });
             }
@@ -1199,6 +1229,7 @@ function validateValueSanity(payload) {
                         if (!isPlainObject(member) || member.id === undefined || member.id === null) {
                             errors.push({
                                 code: ERROR_CODES.E011,
+                                family: 'lineup',
                                 message: `lineup.${side}.${group}[${i}].id missing`,
                             });
                         }
