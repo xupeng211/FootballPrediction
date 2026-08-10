@@ -1222,6 +1222,19 @@ legacy-writer execution is authorized.
   unmerged, pending external implementation acceptance (merged 2026-08-06:
   squash commit `fd60117d2…`; post-merge main Production Gate 31075669344
   success).
+- **FotMob 888 raw historical acquisition COMPLETE（2026-08-10/11，GDI1C）**：
+  888/888 frozen canonical matches 的 FotMob raw payload 全部捕获并 durable 保留
+  （formal batches B01–B14 共 812 场 + 历史 reuse 76 场）；MISSING=0 · EXTRA=0 ·
+  AUTHORITATIVE_DUPLICATES=0 · FULL_RAW_RETENTION=YES · XG_FAMILY_RAW_VALIDITY=888/888。
+  Frozen ledger accounting：UNIQUE_NETWORK_TARGETS=812 · SUCCESSFUL_HTTP_200=812 ·
+  INITIAL_TIMEOUT_FAILURES=2 · RETRIES=2 · TOTAL_PHYSICAL_HTTP_ATTEMPTS=814。
+  Asset snapshot（repo-external）：`FOTMOB_RAW_ASSET_SNAPSHOT_ID=206c1f04…`、
+  `TARGET_POPULATION_HASH=133ff028…`、`ASSET_MANIFEST_SHA256=67bbb64f…`（JSONL），
+  详见 `docs/data/FOTMOB_CURRENT_STATE.md` "FotMob 888 raw acquisition closeout"。
+  **FOTMOB_RAW_ACQUISITION_STATUS=COMPLETE；GOLDEN_DATASET_COMPLETE=NO。**
+  本轮未执行：live FotMob network / DB 读写 / 训练 / backtest / commit raw data。
+  Redundant backup = PENDING_EXTERNAL_STORAGE（本机无独立存储；backup-ready
+  snapshot 已生成，待 Owner 指定独立目标后复制验证）。
 
 ## Next recommended sequence
 
