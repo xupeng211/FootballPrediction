@@ -1,5 +1,7 @@
 """PR-1 manifest contract + verification core tests (tests written first).
 
+lifecycle: permanent
+
 Contract under test:
 - The git-tracked manifest (config/model_artifacts.json lineage) is the SINGLE
   source of truth for artifact identity and the whole-file SHA256 checksum.
@@ -23,6 +25,7 @@ tmp_path; no real model_zoo/, models/, *.pkl, *.joblib, DB, or training.
 import hashlib
 import json
 from pathlib import Path
+import threading
 
 import pytest
 
@@ -151,6 +154,26 @@ def test_malformed_manifest_fails_closed(tmp_path, content):
     ready, reason = manager.api_ready()
     assert ready is False
     assert reason
+
+
+def test_unsupported_version_rejected(tmp_path):
+    """F4 (Codex): wrong manifest version fails closed, never goes ready."""
+    manifest_path = tmp_path / "bad-version.json"
+    manifest_path.write_text('{"version": 1, "artifacts": []}', encoding="utf-8")
+    with pytest.raises(ManifestError, match="version"):
+        ArtifactManifest(manifest_path).load()
+    manager = ReadinessManager(manifest_path)
+    ready, reason = manager.api_ready()
+    assert ready is False
+    assert "version" in reason
+
+
+def test_required_for_invalid_value_rejected(tmp_path):
+    """F3 (Codex): non-string / unknown required_for fails closed (no silent api)."""
+    for bad_value in (None, 123, "prediction_runtime"):
+        manifest_path = _write_manifest(tmp_path, [_entry("m", required_for=bad_value)])
+        with pytest.raises(ManifestError, match="required_for"):
+            ArtifactManifest(manifest_path).entries()
 
 
 # ---------------------------------------------------------------------------
@@ -451,3 +474,88 @@ def test_manager_accepts_entry_model_type(tmp_path):
     entries = manifest.entries()
     assert isinstance(entries[0], ArtifactEntry)
     assert entries[0].model_type == "m"
+
+
+# ---------------------------------------------------------------------------
+# F1 (Codex) — unexpected I/O errors fail closed instead of surfacing 500
+# ---------------------------------------------------------------------------
+
+
+def test_unreadable_manifest_fails_closed_not_raise(tmp_path):
+    """Manifest path is a directory: open() raises OSError -> contained."""
+    dir_path = tmp_path / "not-a-file.json"
+    dir_path.mkdir()
+    manager = ReadinessManager(dir_path)
+    ready, reason = manager.api_ready()  # must NOT raise
+    assert ready is False
+    assert reason
+
+
+def test_cli_verification_error_does_not_poison_api_readiness(tmp_path):
+    """F5 (Codex): a broken active CLI artifact never poisons API readiness."""
+    content = b"api-artifact"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    (tmp_path / "models").mkdir(parents=True, exist_ok=True)
+    # CLI artifact path is a DIRECTORY: verify() hits IsADirectoryError
+    manifest_path = _write_manifest(
+        tmp_path,
+        [
+            _entry(
+                "v26_7_aligned",
+                "model_zoo/production/v26.7.pkl",
+                required_for="api",
+                checksum=_sha256_of(content),
+            ),
+            _entry(
+                "titan",
+                "models/titan_dir",
+                required_for="cli",
+                status="active",
+                checksum="0" * 64,
+            ),
+        ],
+    )
+    manager = ReadinessManager(manifest_path)
+    ready, reason = manager.api_ready()
+    assert ready is True
+    assert reason == ""
+
+
+# ---------------------------------------------------------------------------
+# concurrency — first initialization hashes exactly once under threads
+# ---------------------------------------------------------------------------
+
+
+def test_concurrent_first_initialization_hashes_once(tmp_path, monkeypatch):
+    content = b"synthetic-test-artifact"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum=_sha256_of(content))],
+    )
+    manager = ReadinessManager(manifest_path)
+
+    hashes = []
+    original = ArtifactManifest.compute_sha256
+
+    def counting_sha256(_self, path):
+        hashes.append(str(path))
+        return original(path)
+
+    monkeypatch.setattr(ArtifactManifest, "compute_sha256", counting_sha256)
+
+    barrier = threading.Barrier(2)
+    results: list[tuple[bool, str]] = []
+
+    def _probe() -> None:
+        barrier.wait()
+        results.append(manager.api_ready())
+
+    threads = [threading.Thread(target=_probe) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert all(ready for ready, _ in results)
+    assert len(hashes) == 1  # one verification despite concurrent first calls

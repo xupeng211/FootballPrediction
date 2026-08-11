@@ -1,5 +1,7 @@
 """Canonical model artifact manifest + verification core (PR-1).
 
+lifecycle: permanent
+
 Single source of truth for model artifact identity and integrity:
 
 - Git-tracked manifest (``config/model_artifacts.json`` lineage) holds the
@@ -51,8 +53,15 @@ NOT_ACTIVE = "not_active"
 FILE_MISSING = "file_missing"
 CHECKSUM_MISMATCH = "checksum_mismatch"
 PATH_INVALID = "path_invalid"
+VERIFICATION_ERROR = "verification_error"
 MANIFEST_MISSING = "manifest_missing"
 MANIFEST_MALFORMED = "manifest_malformed"
+
+# Manifest schema version this core understands (fail closed otherwise).
+MANIFEST_VERSION = 2
+
+# Accepted required_for values (strict; anything else fails closed).
+VALID_REQUIRED_FOR = frozenset({REQUIRED_FOR_API, REQUIRED_FOR_CLI})
 
 _CHUNK_SIZE = 1024 * 1024
 
@@ -120,6 +129,10 @@ class ArtifactManifest:
             raise ManifestError("model artifact manifest malformed") from exc
         if not isinstance(data, dict) or not isinstance(data.get("artifacts"), list):
             raise ManifestError("model artifact manifest malformed")
+        if data.get("version") != MANIFEST_VERSION:
+            raise ManifestError(
+                f"model artifact manifest malformed (unsupported version: {data.get('version')!r})"
+            )
         return data
 
     def _resolve_root(self, raw: Any) -> Path:
@@ -173,8 +186,10 @@ class ArtifactManifest:
                 f"model artifact manifest malformed (artifact {name}: active requires checksum)"
             )
         required_for = raw.get("required_for", REQUIRED_FOR_API)
-        if not isinstance(required_for, str):
-            required_for = REQUIRED_FOR_API
+        if not isinstance(required_for, str) or required_for not in VALID_REQUIRED_FOR:
+            raise ManifestError(
+                f"model artifact manifest malformed (artifact {name}: required_for)"
+            )
         return ArtifactEntry(
             name=name,
             path=path,
@@ -261,15 +276,33 @@ class ArtifactManifest:
         )
 
     def evaluate(self) -> ReadinessState:
-        """Evaluate manifest-level readiness (fail closed on any manifest error)."""
+        """Evaluate manifest-level readiness (fail closed on ANY error).
+
+        Never raises: an unreadable/malformed manifest, or any I/O error
+        while verifying an artifact (unreadable file, directory path, race
+        between exists() and open()), collapses to a not-ready state instead
+        of surfacing HTTP 500. Per-artifact errors are contained so a broken
+        CLI-only artifact can never poison API readiness.
+        """
         try:
             entries = self.entries()
-        except ManifestError as exc:
+        except Exception as exc:  # fail-closed by contract
             return ReadinessState(
                 api_ready=False, api_reason=str(exc), verified_at=None, verifications={}
             )
 
-        verifications = {entry.name: self.verify(entry) for entry in entries}
+        verifications: dict[str, ArtifactVerification] = {}
+        for entry in entries:
+            try:
+                verifications[entry.name] = self.verify(entry)
+            except Exception as exc:  # fail-closed by contract
+                verifications[entry.name] = ArtifactVerification(
+                    name=entry.name,
+                    status=VERIFICATION_ERROR,
+                    declared_status=entry.status,
+                    required_for=entry.required_for,
+                    reason=f"artifact verification error: {exc}",
+                )
         api_required = [v for v in verifications.values() if v.required_for == REQUIRED_FOR_API]
         if not api_required:
             return ReadinessState(

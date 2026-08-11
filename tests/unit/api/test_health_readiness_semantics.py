@@ -1,5 +1,7 @@
 """PR-1 health readiness/quick HTTP semantics tests.
 
+lifecycle: permanent
+
 Contract under test:
 - /health/readiness: DB ready + API model ready -> 200; model not ready -> 503;
   DB unavailable -> 503.
@@ -171,6 +173,38 @@ def test_readiness_503_when_db_unavailable(client, tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# /health (full) — informational: 200 even when model is unhealthy
+# ---------------------------------------------------------------------------
+
+
+def test_health_full_200_when_model_unhealthy(client, tmp_path, monkeypatch):
+    """F7 (Codex): /health stays informational (200) with truthful body."""
+    _install_not_ready_manager(tmp_path, monkeypatch)
+    resp = client.get("/health")
+    assert resp.status_code == status.HTTP_200_OK
+    body = resp.json()
+    assert body["status"] == "unhealthy"
+    assert body["checks"]["model"]["status"] == "unhealthy"
+
+
+# ---------------------------------------------------------------------------
+# unexpected manifest I/O errors -> 503 (never 500)
+# ---------------------------------------------------------------------------
+
+
+def test_manifest_unreadable_503_not_500(client, tmp_path, monkeypatch):
+    """F1 (Codex): unreadable manifest fails closed to 503, never 500."""
+    dir_path = tmp_path / "not-a-file.json"
+    dir_path.mkdir()
+    manager = ReadinessManager(dir_path)
+    monkeypatch.setattr(health_module, "_readiness_manager", manager)
+
+    for endpoint in ("/health/readiness", "/health/quick"):
+        resp = client.get(endpoint)
+        assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+# ---------------------------------------------------------------------------
 # /health/quick
 # ---------------------------------------------------------------------------
 
@@ -225,6 +259,24 @@ def test_not_ready_bodies_do_not_leak_paths_or_traces(client, tmp_path, monkeypa
         assert "Traceback" not in text
         assert "/home/" not in text
         assert "tmp/" not in text  # no tmp_path leakage
+        assert "password" not in text.lower()
+        assert "secret" not in text.lower()
+
+    # DB-down bodies must also stay leak-free (F7 Codex extension)
+    async def _db_async_down():
+        return {"healthy": False, "message": "数据库连接失败", "response_time_ms": 1.0}
+
+    async def _db_quick_down():
+        return False
+
+    monkeypatch.setattr(health_module, "_check_database_async", _db_async_down)
+    monkeypatch.setattr(health_module, "_check_database_quick", _db_quick_down)
+    for endpoint in ("/health/readiness", "/health/quick"):
+        resp = client.get(endpoint)
+        assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        text = resp.text
+        assert "Traceback" not in text
+        assert "/home/" not in text
         assert "password" not in text.lower()
         assert "secret" not in text.lower()
 

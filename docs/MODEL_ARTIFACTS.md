@@ -55,7 +55,9 @@ Recommended next steps:
 
 This is currently a recovery scaffold only. Production model artifact storage still needs a follow-up integration with object storage, release artifacts, or the training pipeline.
 
-1. Copy `config/model_artifacts.example.json` to `config/model_artifacts.json`.
+1. Edit the git-tracked `config/model_artifacts.json` (the committed file IS the
+   canonical manifest; `config/model_artifacts.example.json` is a template only
+   — do not overwrite the canonical file with it).
 2. Fill in the required artifact list and checksums.
 3. Restore artifacts from external storage or regenerate them via the training pipeline.
 4. Place restored files under ignored local directories such as `models/` and `model_zoo/`.
@@ -88,6 +90,17 @@ artifact is `active`, its file exists, and its whole-file SHA256 matches the
 manifest. Full hashing runs once at initialization/refresh and is cached
 process-locally; health requests never re-hash. With no artifact restored, a
 deployment is intentionally NOT_READY (predictions are already 503).
+
+lifecycle: `config/model_artifacts.json` is `permanent` (the canonical manifest
+is a git-tracked current-state file); the verification core
+(`src/ml/inference/artifact_manifest.py`) is `permanent`; this document is
+`current-state`.
+
+Hashing timing note: while artifacts are `pending` no file hashing occurs at
+all. After activation, the first health request in a process triggers the
+one-time whole-file verification synchronously; a startup `refresh()` hook
+belongs to the loader/activation PR (this PR intentionally has no lifespan
+change).
 
 ## Important
 
