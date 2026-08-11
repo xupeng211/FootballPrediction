@@ -17,6 +17,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
+class ModelArtifactUnavailableError(Exception):
+    """模型产物缺失或不可用时抛出（生产模型类型 FAIL-CLOSED，MLC-1）。
+
+    仅表示"需要的模型产物不存在"这一可预期条件；
+    调用方（API 层）应将其映射为 503 Service Unavailable，
+    不得隐式降级或合成替代模型。
+    """
+
+
 # ============================================================================
 # V26.4 Predictor - 统一推理接口
 # ============================================================================
@@ -77,9 +86,15 @@ class Predictor:
 
         if os.path.exists(model_path):
             self._load_model(model_path)
-        else:
-            logger.warning(f"模型文件不存在: {model_path}，将创建新的微型模型")
+        elif model_type == "v26_mini":
+            # 显式测试/演示模型：缺失产物时允许创建微型合成模型
+            logger.warning("模型文件不存在: %s，按显式 v26_mini 行为创建微型模型", model_path)
             self._create_mini_model()
+        else:
+            # MLC-1: 生产模型类型缺失产物时 FAIL-CLOSED，绝不静默合成
+            raise ModelArtifactUnavailableError(
+                f"模型产物不可用: model_type={model_type}, path={model_path}"
+            )
 
     def _get_default_model_path(self, model_type: str) -> str:
         """获取默认模型路径"""
