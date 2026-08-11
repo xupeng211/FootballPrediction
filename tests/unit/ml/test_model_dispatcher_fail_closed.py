@@ -72,10 +72,19 @@ def test_v26_7_aligned_missing_artifact_fails_closed(isolated_cwd, monkeypatch):
 
 
 @pytest.mark.parametrize("model_type", PRODUCTION_MODEL_TYPES)
-def test_production_model_types_missing_artifact_fail_closed(model_type):
-    """TEST A（参数化）: 所有生产型模型类型缺失产物时都抛显式异常。"""
+def test_production_model_types_missing_artifact_fail_closed(isolated_cwd, model_type):
+    """TEST A（参数化）: 所有生产型模型类型缺失产物时都抛显式异常。
+
+    isolated_cwd 确保每个参数化用例都从 tmp_path 执行：
+    即使开发/CI 环境存在真实 model_zoo/production/*.pkl，
+    也不会被 os.path.exists 命中而 joblib.load 真实模型，
+    保证始终走缺失产物分支（F1 加固）。
+    """
     with pytest.raises(ModelArtifactUnavailableError):
         Predictor(model_type=model_type)
+
+    # 每个参数化用例同样断言：失败构造不得产生 model_zoo 副作用
+    assert not Path(isolated_cwd, "model_zoo").exists()
 
 
 def test_missing_artifact_does_not_create_any_model_file(isolated_cwd):
