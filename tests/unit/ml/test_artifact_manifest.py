@@ -563,3 +563,84 @@ def test_concurrent_first_initialization_hashes_once(tmp_path, monkeypatch):
 
     assert all(ready for ready, _ in results)
     assert len(hashes) == 1  # one verification despite concurrent first calls
+
+
+# ---------------------------------------------------------------------------
+# N4 (Codex) — negative cache: failing probes never re-hash per request
+# ---------------------------------------------------------------------------
+
+
+def test_negative_cache_prevents_rehash_within_ttl(tmp_path, monkeypatch):
+    """Active + checksum mismatch: repeated probes do NOT re-hash the file."""
+    content = b"actual-bytes"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum="1" * 64)],
+    )
+    manager = ReadinessManager(manifest_path)
+
+    hashes = []
+    original = ArtifactManifest.compute_sha256
+
+    def counting_sha256(_self, path):
+        hashes.append(str(path))
+        return original(path)
+
+    monkeypatch.setattr(ArtifactManifest, "compute_sha256", counting_sha256)
+
+    assert manager.api_ready()[0] is False
+    assert len(hashes) == 1  # first probe hashes once
+    for _ in range(5):
+        assert manager.api_ready()[0] is False
+    assert len(hashes) == 1  # negative cache: no re-hash within TTL
+
+
+def test_refresh_forces_reverification_after_failure(tmp_path, monkeypatch):
+    content = b"actual-bytes"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum="1" * 64)],
+    )
+    manager = ReadinessManager(manifest_path)
+
+    hashes = []
+    original = ArtifactManifest.compute_sha256
+
+    def counting_sha256(_self, path):
+        hashes.append(str(path))
+        return original(path)
+
+    monkeypatch.setattr(ArtifactManifest, "compute_sha256", counting_sha256)
+
+    assert manager.api_ready()[0] is False
+    assert len(hashes) == 1
+    first_verify_count = len(hashes)
+    manager.refresh()  # operator corrected the checksum -> force re-verify
+    assert len(hashes) == first_verify_count + 1
+
+
+def test_zero_ttl_disables_negative_cache(tmp_path, monkeypatch):
+    """TTL=0: every probe re-evaluates (self-healing path, no negative cache)."""
+    content = b"actual-bytes"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum="1" * 64)],
+    )
+    manager = ReadinessManager(manifest_path, negative_cache_ttl=0.0)
+
+    hashes = []
+    original = ArtifactManifest.compute_sha256
+
+    def counting_sha256(_self, path):
+        hashes.append(str(path))
+        return original(path)
+
+    monkeypatch.setattr(ArtifactManifest, "compute_sha256", counting_sha256)
+
+    probe_count = 3
+    for _ in range(probe_count):
+        assert manager.api_ready()[0] is False
+    assert len(hashes) == probe_count  # no caching: re-evaluated on every call

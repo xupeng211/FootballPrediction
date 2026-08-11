@@ -68,6 +68,11 @@ VALID_REQUIRED_FOR = frozenset({REQUIRED_FOR_API, REQUIRED_FOR_CLI})
 
 _CHUNK_SIZE = 1024 * 1024
 
+# Not-ready states are negative-cached for a short window so a failing probe
+# never re-hashes an artifact file on every request (bounds the worst case to
+# once per window, matching the Docker healthcheck interval).
+NEGATIVE_CACHE_TTL_SECONDS = 30.0
+
 
 class ManifestError(ValueError):
     """Raised when the git-tracked artifact manifest is invalid (fail closed)."""
@@ -348,10 +353,17 @@ class ReadinessManager:
     ``refresh()``; repeated readiness queries read the cached state only.
     """
 
-    def __init__(self, manifest_path: Path | None = None):
+    def __init__(
+        self,
+        manifest_path: Path | None = None,
+        negative_cache_ttl: float = NEGATIVE_CACHE_TTL_SECONDS,
+    ):
         self._manifest = ArtifactManifest(manifest_path)
         self._lock = threading.Lock()
         self._state: ReadinessState | None = None
+        self._negative_state: ReadinessState | None = None
+        self._negative_until: float = 0.0
+        self._negative_cache_ttl = negative_cache_ttl
 
     @property
     def manifest_path(self) -> Path:
@@ -359,26 +371,41 @@ class ReadinessManager:
         return self._manifest.manifest_path
 
     def initialize(self) -> ReadinessState:
-        """Verify lazily; VERIFIED states are cached, failures are NOT.
+        """Verify lazily; VERIFIED states are cached, failures negative-cached.
 
-        A not-ready evaluation is deliberately not cached: transient failures
-        (manifest mid-replace, volume not yet mounted, operator correcting a
-        checksum) self-heal on the next probe without a process restart.
-        Ready states are cached so health requests never re-hash.
+        Ready states are cached indefinitely so health requests never re-hash.
+        Not-ready states are negative-cached for a short TTL (default 30s):
+        transient failures (manifest mid-replace, volume not yet mounted, an
+        operator correcting a checksum) self-heal after the window without a
+        process restart, and a failing probe never re-hashes an artifact file
+        on every request.
         """
         with self._lock:
-            if self._state is None:
-                state = self._manifest.evaluate()
-                if state.api_ready:
-                    self._state = state
-                return state
-            return self._state
+            if self._state is not None:
+                return self._state
+            now = datetime.now(UTC).timestamp()
+            if now < self._negative_until and self._negative_state is not None:
+                return self._negative_state
+            state = self._manifest.evaluate()
+            if state.api_ready:
+                self._state = state
+            else:
+                self._negative_state = state
+                self._negative_until = now + self._negative_cache_ttl
+            return state
 
     def refresh(self) -> ReadinessState:
         """Explicit re-verification (startup / activation / reload hook)."""
         with self._lock:
             state = self._manifest.evaluate()
-            self._state = state if state.api_ready else None
+            if state.api_ready:
+                self._state = state
+                self._negative_state = None
+                self._negative_until = 0.0
+            else:
+                self._state = None
+                self._negative_state = state
+                self._negative_until = datetime.now(UTC).timestamp() + self._negative_cache_ttl
             return state
 
     def api_ready(self) -> tuple[bool, str]:

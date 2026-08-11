@@ -284,8 +284,10 @@ async def _get_model_service_check() -> ServiceCheck:
     容器就绪状态 — 就绪语义由 /health/readiness 与 /health/quick 承担。
     """
     start_time = time.time()
-    model_ready, model_reason = _readiness_manager.api_ready()
+    # 单次求值：snapshot() 已包含 api_ready/api_reason（避免重复校验/哈希）
     snapshot = _readiness_manager.snapshot()
+    model_ready = snapshot["api_ready"]
+    model_reason = snapshot["api_reason"]
     response_time = (time.time() - start_time) * 1000
 
     api_artifact_status = "unknown"
