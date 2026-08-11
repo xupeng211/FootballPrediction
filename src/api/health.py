@@ -19,11 +19,23 @@ import redis
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.config import get_settings
 from src.database.db_pool import DatabasePool
+from src.ml.inference.artifact_manifest import ReadinessManager
 from src.utils.data_quality_checker import DataQualityChecker
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["健康检查"])
+
+# 进程本地模型就绪状态（每 Uvicorn worker 独立实例）。整文件 SHA256 校验
+# 只在显式初始化/刷新时执行并缓存；健康请求只做廉价 stat 指纹检查（绝不
+# 重复哈希）。SERVICE READY = artifact verified + 匹配的进程本地加载信号
+# （mark_model_loaded，PR-3 才会调用）+ 指纹未变；仅 checksum 匹配 ≠ ready。
+_readiness_manager = ReadinessManager()
+
+
+async def _model_readiness() -> tuple[bool, str]:
+    """缓存的 SERVICE 就绪状态：(ready, reason)。首次调用触发一次性校验。"""
+    return _readiness_manager.service_ready()
 
 
 @router.get(
@@ -34,11 +46,11 @@ router = APIRouter(tags=["健康检查"])
 )
 async def health_check() -> HealthCheckResponse:
     """
-    系统健康检查端点 - 生产级版本
+    系统健康检查端点 - 信息性汇总（非就绪门控）
 
-    执行真实的连接检查，返回符合 HTTP 状态码的结果：
-    - 200: 所有服务健康
-    - 503: 有一个或多个服务不健康
+    汇总 database / redis / model / filesystem 检查结果；无论服务是否
+    健康均返回 HTTP 200（body 中对应 check 为 unhealthy）。该端点不决定
+    容器就绪状态 — 就绪语义由 /health/readiness 与 /health/quick 承担。
 
     Returns:
         HealthCheckResponse: 系统健康状态信息，严格遵循Schema定义
@@ -110,6 +122,7 @@ async def readiness_check() -> dict[str, Any]:
     checks: dict[str, Any] = {}
 
     # 检查数据库 (V76.100: 使用 asyncpg)
+    # F6 (Codex): 异常详情只进服务端日志；503 body 永不携带 str(e)。
     try:
         database_result = await _check_database_async()
         # 转换为ServiceCheck格式
@@ -123,17 +136,23 @@ async def readiness_check() -> dict[str, Any]:
             checks["database"] = ServiceCheck(
                 status="unhealthy",
                 response_time_ms=database_result.get("response_time_ms", 0),
-                details={
-                    "message": database_result.get("message", "数据库连接失败"),
-                    "error": database_result.get("error", ""),
-                },
+                details={"message": "数据库连接失败"},
             )
-    except Exception as e:
+    except Exception:
+        logger.exception("数据库健康检查异常")
         checks["database"] = ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={"message": "数据库检查异常", "error": str(e)},
+            details={"message": "数据库检查异常"},
         )
+
+    # 模型就绪状态（缓存读取；不在此处做整文件哈希）
+    model_ready, model_reason = await _model_readiness()
+    checks["model"] = ServiceCheck(
+        status="healthy" if model_ready else "unhealthy",
+        response_time_ms=0.0,
+        details={"message": model_reason or "模型就绪"},
+    )
 
     # 判断整体就绪状态
     all_healthy = all(check.status == "healthy" for check in checks.values())
@@ -185,16 +204,14 @@ async def _get_database_service_check() -> ServiceCheck:
                 "driver": "asyncpg",
             },
         )
-    except Exception as e:
+    except Exception:
         response_time = (time.time() - start_time) * 1000
         logger.exception("❌ 数据库健康检查失败")
+        # F6 (Codex): 异常详情只进服务端日志，绝不外泄到响应 body。
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
-            details={
-                "message": "数据库连接失败",
-                "error": str(e),
-            },
+            details={"message": "数据库连接失败"},
         )
 
 
@@ -258,55 +275,57 @@ async def _get_redis_service_check() -> ServiceCheck:
 
 async def _get_model_service_check() -> ServiceCheck:
     """
-    获取模型服务检查结果 - 检查模型文件是否存在
+    获取模型服务检查结果 - 信息性（SERVICE READY 语义）
 
-    检查生产模型文件的存在性和完整性
+    body 区分两层状态，绝不混淆：
+    - artifact_integrity: verified / not_ready（manifest + 整文件 SHA256；
+      只在初始化/刷新时哈希）
+    - model_loaded: bool（进程本地加载信号，PR-3 才会产生）
+
+    service_ready = 两者皆真且廉价指纹未变。本端点不反序列化模型，也不
+    决定容器就绪状态 — 就绪语义由 /health/readiness 与 /health/quick 承担。
     """
     start_time = time.time()
-    try:
-        settings = get_settings()
-        model_path = settings.get_model_path()
+    # 单次求值：snapshot() 已包含全部字段（避免重复校验/哈希）
+    snapshot = _readiness_manager.snapshot()
+    model_ready = snapshot["service_ready"]
+    model_reason = snapshot["reason"]
+    artifact_integrity = "verified" if snapshot["artifact_verified"] else "not_ready"
+    model_loaded = snapshot["model_loaded"]
+    response_time = (time.time() - start_time) * 1000
 
-        # 检查模型文件是否存在
-        if model_path.exists():
-            file_size = model_path.stat().st_size
-            response_time = (time.time() - start_time) * 1000
+    api_artifact_status = "unknown"
+    artifact_statuses: dict[str, str] = {}
+    for name, info in snapshot.get("artifacts", {}).items():
+        artifact_statuses[name] = info.get("status", "unknown")
+        if info.get("required_for") == "api" and api_artifact_status == "unknown":
+            api_artifact_status = artifact_statuses[name]
 
-            logger.debug("✅ 模型文件检查通过: %s (%s bytes)", model_path, file_size)
-
-            return ServiceCheck(
-                status="healthy",
-                response_time_ms=round(response_time, 2),
-                details={
-                    "message": "模型文件存在",
-                    "model_path": str(model_path),
-                    "model_size_bytes": file_size,
-                    "model_version": settings.model_version,
-                },
-            )
-        response_time = (time.time() - start_time) * 1000
-        logger.warning("⚠️ 模型文件不存在: %s", model_path)
-
+    if model_ready:
+        logger.debug("模型服务就绪: verified + loaded + 指纹未变")
         return ServiceCheck(
-            status="unhealthy",
+            status="healthy",
             response_time_ms=round(response_time, 2),
             details={
-                "message": "模型文件不存在",
-                "model_path": str(model_path),
-                "model_version": settings.model_version,
+                "message": "模型服务就绪（verified + loaded）",
+                "artifact_integrity": artifact_integrity,
+                "model_loaded": model_loaded,
+                "artifact_status": api_artifact_status,
+                "artifacts": artifact_statuses,
             },
         )
-    except Exception as e:
-        response_time = (time.time() - start_time) * 1000
-        logger.exception("❌ 模型检查失败")
-        return ServiceCheck(
-            status="unhealthy",
-            response_time_ms=round(response_time, 2),
-            details={
-                "message": "模型检查异常",
-                "error": str(e),
-            },
-        )
+    logger.warning("模型服务未就绪: %s", model_reason)
+    return ServiceCheck(
+        status="unhealthy",
+        response_time_ms=round(response_time, 2),
+        details={
+            "message": model_reason or "模型服务未就绪",
+            "artifact_integrity": artifact_integrity,
+            "model_loaded": model_loaded,
+            "artifact_status": api_artifact_status,
+            "artifacts": artifact_statuses,
+        },
+    )
 
 
 async def _get_filesystem_service_check() -> ServiceCheck:
@@ -367,13 +386,13 @@ async def _check_database_async() -> dict[str, Any]:
             "message": "数据库连接正常",
             "response_time_ms": round(response_time, 2),
         }
-    except Exception as e:
+    except Exception:
         response_time = (time.time() - start_time) * 1000
         logger.exception("❌ 数据库健康检查失败")
+        # F6 (Codex): 异常详情只进服务端日志；503 body 永不携带 str(e)。
         return {
             "healthy": False,
-            "message": f"数据库连接失败: {e!s}",
-            "error": str(e),
+            "message": "数据库连接失败",
             "response_time_ms": round(response_time, 2),
         }
 
@@ -430,34 +449,44 @@ async def _check_filesystem() -> dict[str, Any]:
 @router.get(
     "/health/quick",
     summary="快速健康检查",
-    description="轻量级健康检查，用于频繁探测",
+    description="轻量级就绪探测（Docker healthcheck）：DB 连通性 + 缓存的模型就绪状态；不做整文件哈希、不加载模型。not-ready 返回 503。",
     response_model=dict,
 )
 async def quick_health_check() -> dict[str, Any]:
     """
-    快速健康检查 - 最小化开销
+    快速健康检查 - readiness 的廉价子集
 
-    V76.100: 使用 DatabasePool (asyncpg) 替代 psycopg2
+    仅执行：
+    - 轻量 DB 检查（SELECT 1，无错误详情外泄）
+    - 读取缓存的 API 模型就绪状态（首次初始化后不再哈希）
 
-    用于负载均衡器或容器编排系统的频繁健康探测
+    任一不满足 → HTTP 503（绝不返回假绿 200）。用于负载均衡器或
+    容器编排系统的频繁就绪探测。
     """
-    # 仅检查关键服务的连通性，不执行复杂查询
-    status = "healthy"
     timestamp = datetime.now(tz=UTC).isoformat()
+    checks = {"database": await _check_database_quick()}
+    model_ready, _model_reason = await _model_readiness()
+    checks["model"] = model_ready
 
+    if not all(checks.values()):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "not_ready", "timestamp": timestamp, "checks": checks},
+        )
+    return {"status": "healthy", "timestamp": timestamp, "checks": checks}
+
+
+async def _check_database_quick() -> bool:
+    """Cheap DB liveness (SELECT 1 via asyncpg pool); no error detail leak."""
     try:
-        # V76.100: 快速数据库检查 (使用 DatabasePool)
-
         pool = await DatabasePool.get_instance()
         async with pool.acquire() as conn:
             await conn.fetchrow("SELECT 1")
     except Exception:
-        status = "unhealthy"
-
-    return {
-        "status": status,
-        "timestamp": timestamp,
-    }
+        logger.exception("快速健康检查数据库连接失败")
+        return False
+    else:
+        return True
 
 
 # 数据质量检查端点保持不变

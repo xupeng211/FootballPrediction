@@ -342,7 +342,9 @@ async def http_exception_handler(request, exc: HTTPException):
             "error": True,
             "status_code": exc.status_code,
             "message": exc.detail,
-            "path": str(request.url),
+            # PR-1 remediation (Codex round 2): path only — never echo the
+            # query string (credentials) into a 503 body.
+            "path": request.url.path,
         },
     )
 

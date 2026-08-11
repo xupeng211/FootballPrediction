@@ -55,7 +55,9 @@ Recommended next steps:
 
 This is currently a recovery scaffold only. Production model artifact storage still needs a follow-up integration with object storage, release artifacts, or the training pipeline.
 
-1. Copy `config/model_artifacts.example.json` to `config/model_artifacts.json`.
+1. Edit the git-tracked `config/model_artifacts.json` (the committed file IS the
+   canonical manifest; `config/model_artifacts.example.json` is a template only
+   — do not overwrite the canonical file with it).
 2. Fill in the required artifact list and checksums.
 3. Restore artifacts from external storage or regenerate them via the training pipeline.
 4. Place restored files under ignored local directories such as `models/` and `model_zoo/`.
@@ -70,6 +72,65 @@ For CI or documentation-only validation:
 ```bash
 python scripts/model_artifacts/check_model_artifacts.py --allow-missing
 ```
+
+## Manifest Status & Readiness
+
+`config/model_artifacts.json` is the git-tracked canonical manifest. Each row:
+
+- `status`: `pending` (not production-ready; `checksum_sha256` may be `null`)
+  or `active` (requires a concrete whole-file `checksum_sha256`).
+- `checksum_sha256`: SHA256 of the COMPLETE artifact file bytes — the single
+  authoritative integrity anchor (MANIFEST_ONLY; artifact files carry no
+  duplicate checksum).
+- `required_for`: `api` (HTTP `/predict` surface) or `cli` (`npm run predict`
+  surface). API readiness depends only on `api` rows.
+
+Readiness is TWO-LAYERED — artifact verification is NOT service readiness:
+
+1. **ARTIFACT VERIFIED** (integrity/storage): the API artifact is `active`,
+   its file exists, and its whole-file SHA256 matches the manifest. This
+   proves the bytes on disk are the bytes the manifest declares — it says
+   NOTHING about whether the model can serve. Checksum matching alone never
+   makes `/health/readiness` or `/health/quick` return 200 (a corrupt or
+   unloadable file with a matching checksum stays NOT service-ready).
+2. **SERVICE READY** (serving): artifact verified AND a process-local
+   loaded-model signal (`ReadinessManager.mark_model_loaded`) bound to the
+   verified identity AND an unchanged cheap stat fingerprint
+   (st_dev/st_ino/st_size/st_mtime_ns) of the verified file.
+
+`mark_model_loaded` is the minimal hook the future canonical loader
+integration (PR-3) will call AFTER a real load; PR-1 never invokes it and
+never deserializes artifacts. Until then, even a fully verified artifact
+leaves the deployment service-not-ready by design — `/predict` is already
+503 in that state (MLC-1 fail-closed), so readiness stays truthful.
+
+Cheap invariants: at verification time the manager captures a stat-based
+fingerprint; health requests re-check it with one `stat()` per verified file
+(no hashing). If the artifact is deleted, atomically replaced, or its
+size/mtime changes after verification, the next health request fails the
+invariant and reports not-ready IMMEDIATELY — readiness can never stay
+permanently green on a vanished/replaced artifact. The fingerprint is NOT a
+cryptographic integrity proof; after any mismatch, full whole-file
+verification is required again before readiness can return.
+
+lifecycle: `config/model_artifacts.json` is `permanent` (the canonical manifest
+is a git-tracked current-state file); the verification core
+(`src/ml/inference/artifact_manifest.py`) is `permanent`; this document is
+`current-state`.
+
+Hashing timing note: while artifacts are `pending` no file hashing occurs at
+all. After activation, the first health request in a process triggers the
+one-time whole-file verification synchronously; a startup `refresh()` hook
+belongs to the loader/activation PR (this PR intentionally has no lifespan
+change). Verified states are cached process-locally; health requests check
+only the cheap stat fingerprint (never re-hash). An explicit `refresh()`
+after the artifact changed re-verifies but does NOT resurrect a stale
+loaded-model signal — a new matching `mark_model_loaded` is required before
+service readiness returns. Not-ready states are negative-cached for a short
+TTL (30s): transient failures (manifest mid-replace, volume not yet mounted,
+a checksum being corrected) self-heal within one window without a process
+restart, and a failing probe never re-hashes an artifact file on every
+request.
 
 ## Important
 
