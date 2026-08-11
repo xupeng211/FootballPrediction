@@ -187,19 +187,45 @@ caller. The orphaned `src/core/inference_engine.py` loader was removed for the
 same reason: it had no repository caller and deserialized a separate default
 artifact path.
 
-`src/api/model_management.py` remains in the repository but is no longer
-mounted by `src.main`; its broken DI/reload surface is explicitly reserved for
-PR-5 model-management convergence and is not replaced here. The legacy
-`src/ml/inference/model_loader.py` / `predictor.py` pair remains only for the
-separately scoped non-API strategy compatibility path, while
+`src/api/model_management.py` is no longer a legacy lifecycle surface. PR-5
+converges it on the canonical manifest, feature-contract registry, and shared
+readiness manager, and mounts only its read-only `/api/v1/models/info` and
+`/api/v1/models/list` endpoints. The old reload, arbitrary-path, filesystem
+discovery, backup, and sidecar-metadata behaviors are not supported. The
+legacy `src/ml/inference/model_loader.py` / `predictor.py` pair remains only
+for the separately scoped non-API strategy compatibility path, while
 `titan_loader.py` remains the noncanonical CLI/TITAN consumer. Neither is a
 fallback for `/predict` or `/predict/batch`.
 
-PR-4 does not activate or create a production artifact. The tracked canonical
-API row remains `status=pending` with `checksum_sha256=null`; readiness remains
-false and `/predict` continues to return the sanitized 503 model-unavailable
-response. Canonical training-producer work, train/inference parity, and
-model-management convergence remain PR-6 and PR-5 boundaries respectively.
+PR-4 and PR-5 do not activate or create a production artifact. The tracked
+canonical API row remains `status=pending` with `checksum_sha256=null`;
+readiness remains false and `/predict` continues to return the sanitized 503
+model-unavailable response. Canonical training-producer work and
+train/inference parity remain future PR-6 boundaries.
+
+## Canonical Read-Only Model Management (PR-5)
+
+The mounted `/api/v1/models` surface is observational only:
+
+- `GET /api/v1/models/info` reports the exact `v26_7_aligned` API manifest row,
+  its exact `v26_7_aligned/v1` feature-contract binding, and sanitized runtime
+  state from the same process-local readiness manager used by the canonical
+  loader and `/health/readiness` / `/health/quick`.
+- `GET /api/v1/models/list` enumerates only rows declared in
+  `config/model_artifacts.json`. It never scans `models/`, `model_zoo/`, or
+  sidecar metadata. Contract details appear only for exact registered
+  bindings; an unregistered CLI-only row remains listable without an invented
+  contract.
+- `POST /api/v1/models/reload` is absent from the router and OpenAPI. There is
+  no model-management activation, switch, rollback, upload, checksum-write,
+  backup, or remote reload operation.
+
+Responses expose status, model type, consumer, contract identity/count, and
+readiness flags only. They do not expose checksum values, filesystem paths,
+model bytes, sidecar metadata, or raw exception text. The current pending/null
+API row therefore reports successfully as informational state while
+`artifact_verified=false`, `model_loaded=false`, and `service_ready=false`;
+activation remains separate reviewed operational work.
 
 ## Important
 

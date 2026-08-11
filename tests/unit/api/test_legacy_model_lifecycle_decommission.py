@@ -28,18 +28,26 @@ def _route_paths() -> set[str]:
     return {route.path for route in main_module.app.routes if hasattr(route, "path")}
 
 
-def test_canonical_predict_routes_remain_mounted_without_legacy_model_routes():
-    """Only the canonical prediction routes remain on the active app surface."""
+def test_canonical_prediction_and_readonly_model_routes_are_mounted():
+    """Prediction and the converged read-only model surface are mounted."""
     paths = _route_paths()
 
     assert "/predict" in paths
     assert "/predict/batch" in paths
-    assert not any(path.startswith("/api/v1/models") for path in paths)
+    assert "/api/v1/models/info" in paths
+    assert "/api/v1/models/list" in paths
     assert not any(path.startswith("/api/v1/admin") for path in paths)
 
-    # The old router registration symbols must not be present in the active
-    # application module either; route absence is the primary assertion above.
-    assert "model_management_router" not in vars(main_module)
+    model_routes = {
+        route.path: route.methods
+        for route in main_module.app.routes
+        if hasattr(route, "path") and route.path.startswith("/api/v1/models")
+    }
+    assert model_routes["/api/v1/models/info"] == {"GET"}
+    assert model_routes["/api/v1/models/list"] == {"GET"}
+    assert "/api/v1/models/reload" not in model_routes
+
+    # The old admin/retraining registration symbol remains absent.
     assert "admin_router" not in vars(main_module)
 
 
