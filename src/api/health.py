@@ -122,6 +122,7 @@ async def readiness_check() -> dict[str, Any]:
     checks: dict[str, Any] = {}
 
     # 检查数据库 (V76.100: 使用 asyncpg)
+    # F6 (Codex): 异常详情只进服务端日志；503 body 永不携带 str(e)。
     try:
         database_result = await _check_database_async()
         # 转换为ServiceCheck格式
@@ -135,16 +136,14 @@ async def readiness_check() -> dict[str, Any]:
             checks["database"] = ServiceCheck(
                 status="unhealthy",
                 response_time_ms=database_result.get("response_time_ms", 0),
-                details={
-                    "message": database_result.get("message", "数据库连接失败"),
-                    "error": database_result.get("error", ""),
-                },
+                details={"message": "数据库连接失败"},
             )
-    except Exception as e:
+    except Exception:
+        logger.exception("数据库健康检查异常")
         checks["database"] = ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={"message": "数据库检查异常", "error": str(e)},
+            details={"message": "数据库检查异常"},
         )
 
     # 模型就绪状态（缓存读取；不在此处做整文件哈希）
@@ -205,16 +204,14 @@ async def _get_database_service_check() -> ServiceCheck:
                 "driver": "asyncpg",
             },
         )
-    except Exception as e:
+    except Exception:
         response_time = (time.time() - start_time) * 1000
         logger.exception("❌ 数据库健康检查失败")
+        # F6 (Codex): 异常详情只进服务端日志，绝不外泄到响应 body。
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
-            details={
-                "message": "数据库连接失败",
-                "error": str(e),
-            },
+            details={"message": "数据库连接失败"},
         )
 
 
@@ -389,13 +386,13 @@ async def _check_database_async() -> dict[str, Any]:
             "message": "数据库连接正常",
             "response_time_ms": round(response_time, 2),
         }
-    except Exception as e:
+    except Exception:
         response_time = (time.time() - start_time) * 1000
         logger.exception("❌ 数据库健康检查失败")
+        # F6 (Codex): 异常详情只进服务端日志；503 body 永不携带 str(e)。
         return {
             "healthy": False,
-            "message": f"数据库连接失败: {e!s}",
-            "error": str(e),
+            "message": "数据库连接失败",
             "response_time_ms": round(response_time, 2),
         }
 

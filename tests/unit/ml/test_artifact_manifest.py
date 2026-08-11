@@ -16,11 +16,10 @@ Contract under test:
   checksum-matching-but-unloadable/corrupt artifact can never make
   /health/readiness or /health/quick return 200.
 - Cheap fingerprint invariants run per health request (one stat, no hash);
-  deletion/replacement/modification after verification invalidates readiness
-  immediately. Full-file hashing runs on initialization/refresh only.
-- API readiness depends ONLY on required_for="api" artifacts; a pending CLI
-  artifact must not poison it. The core NEVER deserializes artifacts, and
-  the artifact file carries no internal checksum.
+  any change after verification invalidates readiness immediately; full-file
+  hashing runs on initialization/refresh only. API readiness depends ONLY on
+  required_for="api" artifacts (pending CLI rows never poison it); the core
+  NEVER deserializes artifacts, and the artifact file carries no checksum.
 
 Side-effect safety: all artifacts are synthetic byte files created under
 tmp_path; no real model_zoo/, models/, *.pkl, *.joblib, DB, or training.
@@ -44,9 +43,8 @@ from src.ml.inference.artifact_manifest import (
 
 MANIFEST_VERSION = 2
 
-# Corrupt pickle-like bytes: never deserialized, must be rejected from service
-# readiness even when the checksum matches (hash-only verification is
-# integrity checking, NOT a load signal).
+# Corrupt pickle-like bytes: hash-only verification is integrity checking,
+# NOT a load signal — rejected from service readiness.
 CORRUPT_PICKLE_BYTES = b"\x80\x04\x95corrupted-synthetic"
 
 
@@ -98,11 +96,8 @@ def _sha256_of(content: bytes) -> str:
 
 
 def _install_verified_manager(tmp_path: Path, content: bytes = b"synthetic-test-artifact"):
-    """Active api artifact with matching checksum -> ARTIFACT VERIFIED manager.
-
-    Returns (manager, manifest_path, artifact_path). Service readiness still
-    requires an explicit mark_model_loaded call afterwards.
-    """
+    """Active api artifact + matching checksum -> ARTIFACT VERIFIED manager;
+    service readiness still requires an explicit mark_model_loaded call."""
     artifact_path = _write_artifact(tmp_path, "model_zoo/production/api_model.pkl", content)
     manifest_path = _write_manifest(
         tmp_path,
@@ -150,9 +145,7 @@ def isolated_cwd(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
 
 
-# ---------------------------------------------------------------------------
 # TEST A — valid manifest parses
-# ---------------------------------------------------------------------------
 
 
 def test_valid_manifest_parses(tmp_path):
@@ -173,9 +166,7 @@ def test_valid_manifest_parses(tmp_path):
     assert (entry.name, entry.status) == ("v26_7_aligned", "active")
 
 
-# ---------------------------------------------------------------------------
 # TEST B — missing manifest fails closed
-# ---------------------------------------------------------------------------
 
 
 def test_missing_manifest_fails_closed(tmp_path):
@@ -185,9 +176,7 @@ def test_missing_manifest_fails_closed(tmp_path):
     assert "manifest" in reason
 
 
-# ---------------------------------------------------------------------------
 # TEST C — malformed manifest fails closed
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -197,6 +186,9 @@ def test_missing_manifest_fails_closed(tmp_path):
         '{"version": 2}',  # missing artifacts list
         '{"version": "x", "artifacts": []}',  # wrong version type
         '{"version": 2, "artifacts": "nope"}',  # artifacts not a list
+        # F5 (Codex): unsafe artifact name (path-ish) fails closed
+        '{"version": 2, "artifacts": [{"name": "../evil", "path": "models/x.pkl",'
+        ' "required_for": "api", "status": "active", "checksum_sha256": "0"}]}',
     ],
 )
 def test_malformed_manifest_fails_closed(tmp_path, content):
@@ -221,16 +213,21 @@ def test_unsupported_version_rejected(tmp_path):
 
 
 def test_required_for_invalid_value_rejected(tmp_path):
-    """F3 (Codex): non-string / unknown required_for fails closed (no silent api)."""
+    """F3 (Codex): non-string / unknown / MISSING required_for fails closed."""
     for bad_value in (None, 123, "prediction_runtime"):
         manifest_path = _write_manifest(tmp_path, [_entry("m", required_for=bad_value)])
         with pytest.raises(ManifestError, match="required_for"):
             ArtifactManifest(manifest_path).entries()
+    # missing key entirely: no silent default-to-api (fail closed)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [{"name": "m", "path": "models/x.pkl", "status": "active", "checksum_sha256": "0" * 64}],
+    )
+    with pytest.raises(ManifestError, match="required_for"):
+        ArtifactManifest(manifest_path).entries()
 
 
-# ---------------------------------------------------------------------------
 # TEST D — duplicate artifact identity rejected
-# ---------------------------------------------------------------------------
 
 
 def test_duplicate_artifact_identity_rejected(tmp_path):
@@ -246,9 +243,7 @@ def test_duplicate_artifact_identity_rejected(tmp_path):
         manifest.entries()
 
 
-# ---------------------------------------------------------------------------
 # TEST E — path escaping approved artifact roots rejected
-# ---------------------------------------------------------------------------
 
 
 def test_path_escape_traversal_rejected(tmp_path):
@@ -285,9 +280,7 @@ def test_path_escape_symlink_rejected(tmp_path):
         manifest.resolve_path(entry.path)
 
 
-# ---------------------------------------------------------------------------
-# TEST F — pending artifact is NOT ready
-# ---------------------------------------------------------------------------
+# TEST F — pending artifact is NOT ready (reason + load-signal refusal)
 
 
 def test_pending_artifact_not_ready(tmp_path):
@@ -307,9 +300,7 @@ def test_pending_artifact_not_ready(tmp_path):
     assert manager.mark_model_loaded("v26_7_aligned") is False  # cannot load pending
 
 
-# ---------------------------------------------------------------------------
-# TEST G — active artifact with missing file is NOT ready
-# ---------------------------------------------------------------------------
+# TEST G — active artifact with missing file is NOT ready (reason asserted)
 
 
 def test_active_artifact_missing_file_not_ready(tmp_path):
@@ -323,9 +314,7 @@ def test_active_artifact_missing_file_not_ready(tmp_path):
     assert manager.mark_model_loaded("v26_7_aligned") is False
 
 
-# ---------------------------------------------------------------------------
 # TEST H — active artifact with checksum mismatch is NOT ready
-# ---------------------------------------------------------------------------
 
 
 def test_active_artifact_checksum_mismatch_not_ready(tmp_path):
@@ -340,13 +329,12 @@ def test_active_artifact_checksum_mismatch_not_ready(tmp_path):
     assert manager.mark_model_loaded("v26_7_aligned") is False
 
 
-# ---------------------------------------------------------------------------
-# TEST I — verified but NOT loaded -> artifact verified, service NOT ready
-# ---------------------------------------------------------------------------
+# TEST I+B — verified but NOT loaded -> NOT ready; matching load signal -> ready
 
 
-def test_verified_but_not_loaded_not_service_ready(tmp_path):
-    """Checksum match alone (no load signal) -> artifact verified, NOT ready."""
+def test_verified_then_loaded_readiness_transition(tmp_path):
+    """Checksum match alone is artifact-verified, NOT service-ready; a
+    matching load signal flips readiness (snapshot distinguishes layers)."""
     manager, _, _ = _install_verified_manager(tmp_path)
     ready, reason = manager.service_ready()
     assert ready is False
@@ -357,18 +345,22 @@ def test_verified_but_not_loaded_not_service_ready(tmp_path):
         False,
         False,
     )
+    assert manager.mark_model_loaded("api_model", _sha256_of(b"synthetic-test-artifact")) is True
+    assert manager.service_ready() == (True, "")
+    snapshot = manager.snapshot()
+    assert (snapshot["artifact_verified"], snapshot["service_ready"], snapshot["model_loaded"]) == (
+        True,
+        True,
+        True,
+    )
 
 
-# ---------------------------------------------------------------------------
-# TEST A (required) — checksum-matching but corrupt/unloadable bytes are
-# artifact-verified but NEVER service-ready without a load signal
-# ---------------------------------------------------------------------------
+# TEST A (required) — corrupt bytes: verified-by-hash but NEVER ready unloaded
 
 
 def test_corrupt_bytes_verified_but_not_service_ready(tmp_path):
-    """Corrupt pickle-like bytes with a MATCHING checksum: hash-only
-    verification proves integrity (never deserializes) — artifact VERIFIED,
-    but service readiness requires a real load signal, so NOT service-ready."""
+    """Matching-checksum corrupt bytes: hash-only verification proves integrity
+    (never deserializes) — verified, but NOT service-ready without a load."""
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", CORRUPT_PICKLE_BYTES)
     manifest_path = _write_manifest(
         tmp_path,
@@ -389,38 +381,12 @@ def test_corrupt_bytes_verified_but_not_service_ready(tmp_path):
     assert manager.service_ready()[0] is True
 
 
-# ---------------------------------------------------------------------------
-# TEST B (required) — verified + matching loaded signal -> service ready
-# ---------------------------------------------------------------------------
-
-
-def test_verified_and_matching_loaded_ready(tmp_path):
-    content = b"synthetic-test-artifact"
-    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
-    manifest_path = _write_manifest(
-        tmp_path,
-        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum=_sha256_of(content))],
-    )
-    manager = ReadinessManager(manifest_path)
-    assert manager.mark_model_loaded("v26_7_aligned", _sha256_of(content)) is True
-    ready, reason = manager.service_ready()
-    assert ready is True
-    assert reason == ""
-    snapshot = manager.snapshot()
-    assert snapshot["artifact_verified"] is True
-    assert snapshot["service_ready"] is True
-    assert snapshot["model_loaded"] is True
-
-
-# ---------------------------------------------------------------------------
 # TEST C (required) — loaded signal without verified artifact -> NOT ready
-# ---------------------------------------------------------------------------
 
 
 def test_loaded_without_verified_not_ready(tmp_path):
     """Load signal without a verified artifact: refused, readiness stays off."""
     manager, _, _ = _install_verified_manager(tmp_path)
-    # name has no matching verified api artifact
     assert manager.mark_model_loaded("titan_v4466_real_combat", "0" * 64) is False
     assert manager.service_ready()[0] is False
     # pending artifact: load signal refused (not verified)
@@ -432,25 +398,20 @@ def test_loaded_without_verified_not_ready(tmp_path):
             )
         ],
     )
-    pending_manager = ReadinessManager(manifest_path)
-    assert pending_manager.mark_model_loaded("v26_7_aligned") is False
-    assert pending_manager.service_ready()[0] is False
+    pending = ReadinessManager(manifest_path)
+    assert pending.mark_model_loaded("v26_7_aligned") is False
+    assert pending.service_ready()[0] is False
 
 
-# ---------------------------------------------------------------------------
 # TEST D (required) — identity mismatch -> NOT ready
-# ---------------------------------------------------------------------------
 
 
 def test_identity_mismatch_loaded_signal_refused(tmp_path):
     """A load signal for a non-matching name/checksum must be refused."""
     manager, _, _ = _install_verified_manager(tmp_path)
     assert manager.mark_model_loaded("other_artifact", "0" * 64) is False
+    assert manager.mark_model_loaded("api_model", "1" * 64) is False  # wrong checksum
     assert manager.service_ready()[0] is False
-    # wrong checksum identity must also be refused
-    assert manager.mark_model_loaded("api_model", "1" * 64) is False
-    assert manager.service_ready()[0] is False
-    # the correct identity works
     assert manager.mark_model_loaded("api_model", _sha256_of(b"synthetic-test-artifact")) is True
     assert manager.service_ready()[0] is True
 
@@ -468,13 +429,8 @@ def test_identity_change_clears_stale_loaded_signal(tmp_path):
     artifact_path.write_bytes(content_b)
     manifest_path.write_text(_manifest_for(content_b), encoding="utf-8")
     manager.refresh()
-    snapshot = manager.snapshot()
-    assert (snapshot["artifact_verified"], snapshot["model_loaded"], snapshot["service_ready"]) == (
-        True,
-        False,
-        False,
-    )  # stale load signal NOT preserved
-    assert manager.service_ready()[0] is False
+    assert manager.service_ready()[0] is False  # stale load signal NOT preserved
+    assert manager.snapshot()["model_loaded"] is False
 
     # leg 2: atomic replacement (new inode) while manifest still declares B
     replacement = tmp_path / "replacement.pkl"
@@ -483,27 +439,19 @@ def test_identity_change_clears_stale_loaded_signal(tmp_path):
     assert manager.service_ready()[0] is False  # cheap invariant catches it
     manager.refresh()
     assert manager.service_ready()[0] is False  # checksum mismatch -> unverified
-    assert manager.snapshot()["model_loaded"] is False
 
     # operator fixes the manifest checksum; refresh still must NOT resurrect
     manifest_path.write_text(_manifest_for(b"version-c-bytes"), encoding="utf-8")
     manager.refresh()
-    snapshot = manager.snapshot()
-    assert (snapshot["artifact_verified"], snapshot["model_loaded"], snapshot["service_ready"]) == (
-        True,
-        False,
-        False,
-    )
     assert manager.service_ready()[0] is False
+    assert manager.snapshot()["model_loaded"] is False
 
     # only a fresh matching load signal restores readiness
     assert manager.mark_model_loaded("api_model", _sha256_of(b"version-c-bytes")) is True
     assert manager.service_ready()[0] is True
 
 
-# ---------------------------------------------------------------------------
 # TEST E (required) — artifact deleted after ready -> NOT ready (no re-hash)
-# ---------------------------------------------------------------------------
 
 
 def test_delete_after_ready_invalidates(tmp_path, monkeypatch):
@@ -512,7 +460,6 @@ def test_delete_after_ready_invalidates(tmp_path, monkeypatch):
     assert manager.service_ready()[0] is True
 
     hashes, _ = _count_hashes(monkeypatch)
-
     artifact_path.unlink()
     ready, reason = manager.service_ready()
     assert ready is False
@@ -522,9 +469,7 @@ def test_delete_after_ready_invalidates(tmp_path, monkeypatch):
     assert hashes == []  # negative-cached: no re-hash while invalid
 
 
-# ---------------------------------------------------------------------------
 # TEST F (required) — artifact replaced after ready -> NOT ready (no re-hash)
-# ---------------------------------------------------------------------------
 
 
 def test_replace_after_ready_invalidates(tmp_path, monkeypatch):
@@ -542,38 +487,105 @@ def test_replace_after_ready_invalidates(tmp_path, monkeypatch):
     assert "changed" in reason
     assert hashes == []  # replacement detected by stat only — no SHA256
 
-    # same file, same size, same inode — a mtime bump alone also invalidates
+    # N2 (Codex): mtime bump on a FRESH manager with healthy verified state
+    # (the manager above is already invalidated + negative-cached)
+    manifest_path2 = _write_manifest(
+        tmp_path,
+        [
+            _entry(
+                "api_model",
+                "model_zoo/production/api_model.pkl",
+                checksum=_sha256_of(b"replacement-bytes"),
+            )
+        ],
+    )
+    fresh = ReadinessManager(manifest_path2)
+    assert fresh.mark_model_loaded("api_model", _sha256_of(b"replacement-bytes")) is True
+    assert fresh.service_ready()[0] is True
+    hashes_before = len(hashes)
     os.utime(artifact_path, ns=(time.time_ns(), time.time_ns()))
-    assert manager.service_ready()[0] is False
-    assert hashes == []
+    assert fresh.service_ready()[0] is False
+    assert len(hashes) == hashes_before  # mtime detected by stat only — no SHA256
 
 
-# ---------------------------------------------------------------------------
-# TEST G (required) — unchanged ready file: repeated probes NEVER re-hash
-# ---------------------------------------------------------------------------
-
-
-def test_unchanged_ready_no_rehash(tmp_path, monkeypatch):
-    manager, _, _ = _install_verified_manager(tmp_path)
-    assert manager.mark_model_loaded("api_model", _sha256_of(b"synthetic-test-artifact")) is True
+def test_symlink_retarget_after_ready_invalidates(tmp_path, monkeypatch):
+    """F4 (Codex): symlink retargeted after verification -> invariant fails."""
+    production = tmp_path / "model_zoo" / "production"
+    production.mkdir(parents=True)
+    target_a = production / "a.pkl"
+    target_b = production / "b.pkl"
+    target_a.write_bytes(b"bytes-a")
+    target_b.write_bytes(b"bytes-b")
+    link = production / "current.pkl"
+    link.symlink_to(target_a)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("api_model", "model_zoo/production/current.pkl", checksum=_sha256_of(b"bytes-a"))],
+    )
+    manager = ReadinessManager(manifest_path)
+    assert manager.mark_model_loaded("api_model", _sha256_of(b"bytes-a")) is True
     assert manager.service_ready()[0] is True
 
     hashes, _ = _count_hashes(monkeypatch)
-    for _ in range(5):
-        assert manager.service_ready()[0] is True
-    assert hashes == []  # cheap stat invariants only — zero SHA256
+    link.unlink()
+    link.symlink_to(target_b)  # retarget: same declared path, different file
+    assert manager.service_ready()[0] is False
+    assert hashes == []  # detected by re-resolution + stat — no SHA256
 
 
-# ---------------------------------------------------------------------------
-# TEST H (required) — refresh after change re-verifies but does NOT restore
-# stale loaded state; a new load signal is required (see
-# test_identity_change_clears_stale_loaded_signal below)
-# ---------------------------------------------------------------------------
+def test_verify_rejects_file_changed_during_verification(tmp_path, monkeypatch):
+    """F1 (Codex): a replacement between hash and fingerprint capture fails
+    closed — the cached fingerprint can never belong to unverified bytes."""
+    content = b"version-a-bytes"
+    _write_artifact(tmp_path, "model_zoo/production/api_model.pkl", content)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("api_model", "model_zoo/production/api_model.pkl", checksum=_sha256_of(content))],
+    )
+    manager = ReadinessManager(manifest_path)
+    original = ArtifactManifest.compute_sha256
+
+    def swapping_sha256(_self, p):
+        digest = original(p)
+        p.write_bytes(b"version-b-bytes")  # swap AFTER hashing (stat race)
+        return digest
+
+    monkeypatch.setattr(ArtifactManifest, "compute_sha256", swapping_sha256)
+    snapshot = manager.snapshot()
+    assert snapshot["artifact_verified"] is False
+    assert snapshot["artifacts"]["api_model"]["status"] == "verification_error"
+    assert manager.service_ready()[0] is False
 
 
-# ---------------------------------------------------------------------------
+def test_checksum_binding_catches_fingerprint_identical_change(tmp_path):
+    """F2 (Codex): a same-size edit with restored mtime keeps the fingerprint,
+    but the manifest checksum change still clears the stale loaded signal."""
+    content_a, content_b = b"version-a-bytes", b"version-b-bytes"  # same size
+    manager, manifest_path, artifact_path = _install_verified_manager(tmp_path, content_a)
+    assert manager.mark_model_loaded("api_model", _sha256_of(content_a)) is True
+    assert manager.service_ready()[0] is True
+
+    stat_before = artifact_path.stat()
+    artifact_path.write_bytes(content_b)  # same size -> same fingerprint fields
+    os.utime(artifact_path, ns=(stat_before.st_atime_ns, stat_before.st_mtime_ns))
+    manifest_path.write_text(_manifest_for(content_b), encoding="utf-8")
+
+    manager.refresh()  # full re-verify: identical fingerprint, new checksum
+    snapshot = manager.snapshot()
+    assert snapshot["artifact_verified"] is True
+    assert snapshot["model_loaded"] is False  # loaded signal bound to A cleared
+    assert snapshot["service_ready"] is False
+    assert manager.mark_model_loaded("api_model", _sha256_of(content_b)) is True
+    assert manager.service_ready()[0] is True
+
+
+# TEST G (required) — unchanged ready file never re-hashes
+# (covered by test_ready_probes_never_rehash below)
+# TEST H (required) — refresh does NOT restore stale loaded state
+# (covered by test_identity_change_clears_stale_loaded_signal)
+
+
 # TEST J — checksum is SHA256 of COMPLETE artifact bytes
-# ---------------------------------------------------------------------------
 
 
 def test_checksum_is_sha256_of_complete_bytes(tmp_path):
@@ -587,23 +599,18 @@ def test_checksum_is_sha256_of_complete_bytes(tmp_path):
     assert manifest.compute_sha256(path) != hashlib.sha256(content).hexdigest()
 
 
-# ---------------------------------------------------------------------------
-# TEST L — CLI-only pending artifact does not poison API readiness
-# ---------------------------------------------------------------------------
+# TEST L — CLI artifacts never poison API readiness (pending + broken active)
 
 
-def test_cli_only_pending_does_not_poison_api_readiness(tmp_path):
+def test_cli_artifacts_never_poison_api_readiness(tmp_path):
+    """Pending or broken active CLI artifacts leave API readiness untouched."""
     content = b"api-artifact"
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
+    api = _entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum=_sha256_of(content))
     manifest_path = _write_manifest(
         tmp_path,
         [
-            _entry(
-                "v26_7_aligned",
-                "model_zoo/production/v26.7.pkl",
-                required_for="api",
-                checksum=_sha256_of(content),
-            ),
+            api,
             _entry(
                 "titan",
                 "models/titan_v4466_real_combat.joblib",
@@ -619,10 +626,25 @@ def test_cli_only_pending_does_not_poison_api_readiness(tmp_path):
     assert manager.mark_model_loaded("v26_7_aligned", _sha256_of(content)) is True
     assert manager.service_ready() == (True, "")
 
+    # phase 2: active CLI artifact whose path IS a directory (verify error)
+    (tmp_path / "models" / "titan_dir").mkdir(parents=True, exist_ok=True)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [
+            api,
+            _entry("titan", "models/titan_dir", required_for="cli", checksum="0" * 64),
+        ],
+    )
+    manager = ReadinessManager(manifest_path)
+    assert manager.mark_model_loaded("v26_7_aligned", _sha256_of(content)) is True
+    assert manager.service_ready() == (True, "")
+    # CLI failure visible per-artifact, never poisoning API readiness
+    snapshot = manager.snapshot()
+    assert snapshot["artifacts"]["titan"]["status"] == "verification_error"
+    assert snapshot["artifacts"]["v26_7_aligned"]["status"] == "verified"
 
-# ---------------------------------------------------------------------------
+
 # TEST M — required API artifact pending/missing/mismatch makes service unready
-# ---------------------------------------------------------------------------
 
 
 def test_api_artifact_pending_missing_mismatch_unready(tmp_path):
@@ -665,7 +687,9 @@ def test_api_artifact_pending_missing_mismatch_unready(tmp_path):
 # CACHE — full hashing is NOT repeated for every readiness query
 
 
-def test_full_hash_runs_once_per_initialization(tmp_path, monkeypatch):
+def test_ready_probes_never_rehash(tmp_path, monkeypatch):
+    """TEST G+CACHE: verification runs once at init; repeated ready probes
+    check cheap stat invariants only (zero re-hash); refresh re-hashes once."""
     manager, _, _ = _install_verified_manager(tmp_path)
     assert manager.mark_model_loaded("api_model", _sha256_of(b"synthetic-test-artifact")) is True
     hashes, _ = _count_hashes(monkeypatch)
@@ -674,7 +698,7 @@ def test_full_hash_runs_once_per_initialization(tmp_path, monkeypatch):
     first_verify_count = len(hashes)
     for _ in range(5):
         assert manager.service_ready()[0] is True  # cheap stat invariants only
-    assert len(hashes) == first_verify_count
+    assert len(hashes) == first_verify_count  # zero re-hash while unchanged+ready
     manager.refresh()  # explicit refresh re-verifies (re-hashes exactly once)
     assert len(hashes) == first_verify_count + 1
 
@@ -685,10 +709,9 @@ def test_manager_accepts_entry_model_type(tmp_path):
     manifest_path = _write_manifest(
         tmp_path, [_entry("m", "model_zoo/production/m.pkl", checksum=_sha256_of(content))]
     )
-    manifest = ArtifactManifest(manifest_path)
-    entries = manifest.entries()
-    assert isinstance(entries[0], ArtifactEntry)
-    assert entries[0].model_type == "m"
+    entry = ArtifactManifest(manifest_path).entries()[0]
+    assert isinstance(entry, ArtifactEntry)
+    assert entry.model_type == "m"
 
 
 # F1 (Codex) — unexpected I/O errors fail closed instead of surfacing 500
@@ -702,40 +725,6 @@ def test_unreadable_manifest_fails_closed_not_raise(tmp_path):
     ready, reason = manager.service_ready()  # must NOT raise
     assert ready is False
     assert reason
-
-
-def test_cli_verification_error_does_not_poison_api_readiness(tmp_path):
-    """F5 (Codex): a broken active CLI artifact never poisons API readiness."""
-    content = b"api-artifact"
-    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
-    # CLI artifact path IS a directory: verify() hits IsADirectoryError
-    (tmp_path / "models" / "titan_dir").mkdir(parents=True, exist_ok=True)
-    manifest_path = _write_manifest(
-        tmp_path,
-        [
-            _entry(
-                "v26_7_aligned",
-                "model_zoo/production/v26.7.pkl",
-                required_for="api",
-                checksum=_sha256_of(content),
-            ),
-            _entry(
-                "titan",
-                "models/titan_dir",
-                required_for="cli",
-                status="active",
-                checksum="0" * 64,
-            ),
-        ],
-    )
-    manager = ReadinessManager(manifest_path)
-    assert manager.snapshot()["artifact_verified"] is True
-    assert manager.mark_model_loaded("v26_7_aligned", _sha256_of(content)) is True
-    assert manager.service_ready() == (True, "")
-    # the CLI failure is visible per-artifact, never poisoning API readiness
-    snapshot = manager.snapshot()
-    assert snapshot["artifacts"]["titan"]["status"] == "verification_error"
-    assert snapshot["artifacts"]["v26_7_aligned"]["status"] == "verified"
 
 
 # concurrency — first initialization hashes exactly once under threads

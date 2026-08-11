@@ -27,11 +27,12 @@ TWO-LAYER READINESS (integrity != serving):
 
 CHEAP INVARIANTS (no per-request hashing): at verification time the manager
 captures a stat()-based fingerprint (st_dev/st_ino/st_size/st_mtime_ns).
-Health requests re-check it with one stat() per verified file; deletion,
-atomic replacement (inode change), or size/mtime modification invalidates
-service readiness immediately, without any SHA256. The fingerprint is NOT a
-cryptographic integrity proof — after any mismatch, full whole-file
-verification is required again before readiness can return.
+Health requests re-check it by re-resolving the declared manifest path and
+one stat() per verified file; deletion, atomic replacement (inode change),
+size/mtime modification, or a symlink retarget invalidates service readiness
+immediately, without any SHA256. The fingerprint is NOT a cryptographic
+integrity proof — after any mismatch, full whole-file verification is
+required again before readiness can return.
 
 - API readiness depends ONLY on artifacts marked ``required_for="api"``; a
   pending/missing CLI-only artifact must not poison API readiness.
@@ -56,6 +57,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
+import re
 import threading
 from typing import Any
 
@@ -89,6 +91,11 @@ MANIFEST_VERSION = 2
 VALID_REQUIRED_FOR = frozenset({REQUIRED_FOR_API, REQUIRED_FOR_CLI})
 
 _CHUNK_SIZE = 1024 * 1024
+
+# Manifest-controlled names become snapshot keys and reason text; restrict to
+# safe identifiers so a malformed manifest cannot smuggle paths/credentials
+# into health responses.
+_SAFE_NAME_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_-]*")
 
 # Not-ready states are negative-cached for a short window so a failing probe
 # never re-hashes an artifact file on every request (bounds the worst case to
@@ -177,8 +184,10 @@ class ArtifactVerification:
     reason: str = ""
     declared_checksum: str | None = None
     # Internal bookkeeping for the cheap per-request invariant (never
-    # exposed through snapshot()/HTTP bodies).
-    resolved_path: Path | None = None
+    # exposed through snapshot()/HTTP bodies). declared_path is the raw
+    # manifest path, re-resolved on every health check so a symlink
+    # retargeted after verification is detected.
+    declared_path: str | None = None
     fingerprint: FileFingerprint | None = None
 
 
@@ -225,9 +234,8 @@ class ArtifactManifest:
         if not isinstance(data, dict) or not isinstance(data.get("artifacts"), list):
             raise ManifestError("model artifact manifest malformed")
         if data.get("version") != MANIFEST_VERSION:
-            raise ManifestError(
-                f"model artifact manifest malformed (unsupported version: {data.get('version')!r})"
-            )
+            # Fixed text: the raw manifest version value is never surfaced.
+            raise ManifestError("model artifact manifest malformed (unsupported version)")
         return data
 
     def _resolve_root(self, raw: Any) -> Path:
@@ -266,7 +274,10 @@ class ArtifactManifest:
             raise ManifestError(f"model artifact manifest malformed (entry #{index})")
         name = raw.get("name")
         path = raw.get("path")
-        if not isinstance(name, str) or not name.strip():
+        # F5 (Codex): names become snapshot keys and reason text — restrict to
+        # safe identifiers so a malformed manifest cannot smuggle paths or
+        # credentials into health responses.
+        if not isinstance(name, str) or not _SAFE_NAME_RE.fullmatch(name):
             raise ManifestError(f"model artifact manifest malformed (entry #{index}: name)")
         if not isinstance(path, str) or not path.strip():
             raise ManifestError(f"model artifact manifest malformed (entry #{index}: path)")
@@ -280,7 +291,9 @@ class ArtifactManifest:
             raise ManifestError(
                 f"model artifact manifest malformed (artifact {name}: active requires checksum)"
             )
-        required_for = raw.get("required_for", REQUIRED_FOR_API)
+        # F3 (Codex): required_for is mandatory — a row without an explicit
+        # api|cli classification fails closed instead of defaulting to API.
+        required_for = raw.get("required_for")
         if not isinstance(required_for, str) or required_for not in VALID_REQUIRED_FOR:
             raise ManifestError(
                 f"model artifact manifest malformed (artifact {name}: required_for)"
@@ -353,6 +366,15 @@ class ArtifactManifest:
                 required_for=entry.required_for,
                 reason="artifact file missing",
             )
+        # F1 (Codex): anchor the fingerprint to the EXACT file that was
+        # hashed — stat before AND after hashing. If the pathname's content
+        # changed mid-verification (replacement race), the fingerprints
+        # differ and the artifact fails closed instead of caching a
+        # fingerprint for bytes that were never checksum-verified.
+        try:
+            fingerprint_before = FileFingerprint.of(path)
+        except OSError:
+            fingerprint_before = None
         actual = self.compute_sha256(path)
         if entry.checksum_sha256 is None or actual != entry.checksum_sha256:
             return ArtifactVerification(
@@ -362,14 +384,18 @@ class ArtifactManifest:
                 required_for=entry.required_for,
                 reason="artifact checksum mismatch",
             )
-        # The fingerprint anchors the cheap per-request invariant to the file
-        # that was actually hashed. A stat race (file replaced between hash
-        # and stat) yields fingerprint=None -> the manager conservatively
-        # treats the artifact as not service-ready until the next verify.
         try:
-            fingerprint = FileFingerprint.of(path)
+            fingerprint_after = FileFingerprint.of(path)
         except OSError:
-            fingerprint = None
+            fingerprint_after = None
+        if fingerprint_before is None or fingerprint_after != fingerprint_before:
+            return ArtifactVerification(
+                name=entry.name,
+                status=VERIFICATION_ERROR,
+                declared_status=entry.status,
+                required_for=entry.required_for,
+                reason="artifact changed during verification",
+            )
         return ArtifactVerification(
             name=entry.name,
             status=VERIFIED,
@@ -377,8 +403,8 @@ class ArtifactManifest:
             required_for=entry.required_for,
             reason="",
             declared_checksum=entry.checksum_sha256,
-            resolved_path=path,
-            fingerprint=fingerprint,
+            declared_path=entry.path,
+            fingerprint=fingerprint_after,
         )
 
     def evaluate(self) -> ReadinessState:
@@ -490,19 +516,24 @@ class ReadinessManager:
         return self._manifest.manifest_path
 
     def _cheap_invariants_hold(self, state: ReadinessState) -> bool:
-        """One stat() per verified API artifact — no hashing on this path.
+        """One re-resolution + one stat() per verified API artifact.
 
-        A verified artifact whose file no longer matches its verification
-        fingerprint (deleted, atomically replaced, size/mtime modified)
-        fails the invariant. Missing fingerprint bookkeeping is treated
+        No hashing on this path. The DECLARED manifest path is re-resolved
+        on every check: a symlink retargeted after verification now resolves
+        to a different file (F4), and a deleted/atomically-replaced/
+        size-or-mtime-modified file no longer matches its verification
+        fingerprint. Missing fingerprint bookkeeping is treated
         conservatively as "cannot confirm" (not-ready).
         """
         for verification in state.verifications.values():
             if verification.status != VERIFIED or verification.required_for != REQUIRED_FOR_API:
                 continue
-            if verification.resolved_path is None or verification.fingerprint is None:
+            if verification.declared_path is None or verification.fingerprint is None:
                 return False
-            if not verification.fingerprint.matches(verification.resolved_path):
+            # Pure lexical+symlink resolution of the raw manifest path —
+            # no manifest re-read, no hash.
+            current = (Path.cwd() / verification.declared_path).resolve()
+            if not verification.fingerprint.matches(current):
                 return False
         return True
 
@@ -542,11 +573,18 @@ class ReadinessManager:
             ),
             None,
         )
+        # F2 (Codex): also bind the manifest checksum — a same-size edit with
+        # restored mtime keeps the fingerprint identical but the declared
+        # checksum changes, so the stale load signal must not survive.
         return (
             verified is not None
             and verified.fingerprint is not None
             and loaded.fingerprint is not None
             and verified.fingerprint == loaded.fingerprint
+            and (
+                loaded.checksum_sha256 is None
+                or verified.declared_checksum == loaded.checksum_sha256
+            )
         )
 
     def _service_state(self, state: ReadinessState) -> ReadinessState:
@@ -566,22 +604,7 @@ class ReadinessManager:
                 verified_at=state.verified_at,
                 verifications=state.verifications,
             )
-        verified = next(
-            (
-                v
-                for v in state.verifications.values()
-                if v.required_for == REQUIRED_FOR_API
-                and v.status == VERIFIED
-                and v.name == loaded.artifact_name
-            ),
-            None,
-        )
-        if (
-            verified is None
-            or verified.fingerprint is None
-            or loaded.fingerprint is None
-            or verified.fingerprint != loaded.fingerprint
-        ):
+        if not self._loaded_matches_current(state):
             return ReadinessState(
                 artifact_verified=True,
                 service_ready=False,
@@ -703,21 +726,26 @@ class ReadinessManager:
             return True
 
     def snapshot(self) -> dict[str, Any]:
-        """Informational per-artifact snapshot (no filesystem paths)."""
-        state = self.initialize()
-        return {
-            "artifact_verified": state.artifact_verified,
-            "service_ready": state.service_ready,
-            "model_loaded": self._loaded_identity is not None,
-            "reason": state.reason,
-            "verified_at": state.verified_at,
-            "artifacts": {
-                name: {
-                    "status": verification.status,
-                    "declared_status": verification.declared_status,
-                    "required_for": verification.required_for,
-                    "reason": verification.reason,
-                }
-                for name, verification in state.verifications.items()
-            },
-        }
+        """Informational per-artifact snapshot (no filesystem paths).
+
+        Built under the manager lock (N1): service_ready/model_loaded can
+        never come from two different evaluation moments.
+        """
+        with self._lock:
+            state = self._initialize_locked()
+            return {
+                "artifact_verified": state.artifact_verified,
+                "service_ready": state.service_ready,
+                "model_loaded": self._loaded_identity is not None,
+                "reason": state.reason,
+                "verified_at": state.verified_at,
+                "artifacts": {
+                    name: {
+                        "status": verification.status,
+                        "declared_status": verification.declared_status,
+                        "required_for": verification.required_for,
+                        "reason": verification.reason,
+                    }
+                    for name, verification in state.verifications.items()
+                },
+            }
