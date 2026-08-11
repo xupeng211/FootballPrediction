@@ -3,13 +3,18 @@
 lifecycle: permanent
 
 Contract under test:
-- /health/readiness: DB ready + API model ready -> 200; model not ready -> 503;
-  DB unavailable -> 503.
+- /health/readiness: DB ready + API model SERVICE ready -> 200; model not
+  ready -> 503; DB unavailable -> 503.
+- SERVICE READY means: artifact verified (active + exists + whole-file SHA256
+  match) AND a process-local loaded-model signal (mark_model_loaded) AND an
+  unchanged cheap stat fingerprint. Checksum matching ALONE never yields 200.
 - /health/quick: cheap subset (DB + CACHED model readiness, no full hash on
   request); not-ready -> 503 (never a false-green 200); ready -> 200.
 - 503 response bodies stay useful but expose no absolute filesystem paths,
   credentials, or raw exception traces.
-- Health requests must NOT re-run whole-file SHA256 verification (cached).
+- Health requests must NOT re-run whole-file SHA256 verification (cached);
+  readiness responses may expose the safe artifact_integrity/model_loaded
+  distinction.
 
 Side-effect safety: synthetic byte artifacts under tmp_path only; the real
 Predictor is never instantiated; DB checks are monkeypatched (no live DB).
@@ -31,6 +36,7 @@ from src.main import app as fastapi_app
 from src.ml.inference.artifact_manifest import ArtifactManifest, ReadinessManager
 
 ARTIFACT_CONTENT = b"synthetic-test-artifact"
+CORRUPT_PICKLE_BYTES = b"\x80\x04\x95corrupted-synthetic"
 
 
 @pytest.fixture(autouse=True)
@@ -75,63 +81,52 @@ def _sha256_hex(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def _install_ready_manager(tmp_path, monkeypatch) -> ReadinessManager:
-    """API artifact present + checksum match -> verified/ready manager."""
+def _api_entry(checksum: str | None, status: str = "active") -> dict:
+    return {
+        "name": "v26_7_aligned",
+        "path": "model_zoo/production/v26.7_aligned_production.pkl",
+        "required_for": "api",
+        "status": status,
+        "checksum_sha256": checksum,
+        "model_type": "v26_7_aligned",
+    }
+
+
+def _cli_entry() -> dict:
+    return {
+        "name": "titan_v4466_real_combat",
+        "path": "models/titan_v4466_real_combat.joblib",
+        "required_for": "cli",
+        "status": "pending",
+        "checksum_sha256": None,
+        "model_type": "titan",
+    }
+
+
+def _install_ready_manager(
+    tmp_path, monkeypatch, content: bytes = ARTIFACT_CONTENT
+) -> ReadinessManager:
+    """API artifact verified + loaded signal -> SERVICE ready manager."""
     artifact_dir = tmp_path / "model_zoo" / "production"
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    (artifact_dir / "v26.7_aligned_production.pkl").write_bytes(ARTIFACT_CONTENT)
-    manifest_path = _write_manifest(
-        tmp_path,
-        [
-            {
-                "name": "v26_7_aligned",
-                "path": "model_zoo/production/v26.7_aligned_production.pkl",
-                "required_for": "api",
-                "status": "active",
-                "checksum_sha256": _sha256_hex(ARTIFACT_CONTENT),
-                "model_type": "v26_7_aligned",
-            },
-            {
-                "name": "titan_v4466_real_combat",
-                "path": "models/titan_v4466_real_combat.joblib",
-                "required_for": "cli",
-                "status": "pending",
-                "checksum_sha256": None,
-                "model_type": "titan",
-            },
-        ],
-    )
+    (artifact_dir / "v26.7_aligned_production.pkl").write_bytes(content)
+    manifest_path = _write_manifest(tmp_path, [_api_entry(_sha256_hex(content)), _cli_entry()])
     manager = ReadinessManager(manifest_path)
-    assert manager.api_ready()[0] is True  # CLI-only pending must not poison API
+    # artifact VERIFIED alone is NOT service-ready — the load signal is
+    # required (and CLI-only pending must not poison it)
+    assert manager.snapshot()["artifact_verified"] is True
+    assert manager.service_ready()[0] is False
+    assert manager.mark_model_loaded("v26_7_aligned", _sha256_hex(content)) is True
+    assert manager.service_ready()[0] is True
     monkeypatch.setattr(health_module, "_readiness_manager", manager)
     return manager
 
 
 def _install_not_ready_manager(tmp_path, monkeypatch) -> ReadinessManager:
     """API artifact pending -> not ready manager (mirrors current repo reality)."""
-    manifest_path = _write_manifest(
-        tmp_path,
-        [
-            {
-                "name": "v26_7_aligned",
-                "path": "model_zoo/production/v26.7_aligned_production.pkl",
-                "required_for": "api",
-                "status": "pending",
-                "checksum_sha256": None,
-                "model_type": "v26_7_aligned",
-            },
-            {
-                "name": "titan_v4466_real_combat",
-                "path": "models/titan_v4466_real_combat.joblib",
-                "required_for": "cli",
-                "status": "pending",
-                "checksum_sha256": None,
-                "model_type": "titan",
-            },
-        ],
-    )
+    manifest_path = _write_manifest(tmp_path, [_api_entry(None, status="pending"), _cli_entry()])
     manager = ReadinessManager(manifest_path)
-    assert manager.api_ready()[0] is False
+    assert manager.service_ready()[0] is False
     monkeypatch.setattr(health_module, "_readiness_manager", manager)
     return manager
 
@@ -248,6 +243,61 @@ def test_quick_200_when_db_and_model_ready(client, tmp_path, monkeypatch):
     assert body["status"] == "healthy"
     assert body["checks"]["database"] is True
     assert body["checks"]["model"] is True
+
+
+# ---------------------------------------------------------------------------
+# TEST I (required) — checksum-matching but unloadable artifact NEVER 200;
+# only a matching load signal flips readiness to 200
+# ---------------------------------------------------------------------------
+
+
+def test_verified_but_not_loaded_503_until_load_signal(client, tmp_path, monkeypatch):
+    """HTTP semantics of ARTIFACT VERIFIED != SERVICE READY."""
+    artifact_dir = tmp_path / "model_zoo" / "production"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    (artifact_dir / "v26.7_aligned_production.pkl").write_bytes(CORRUPT_PICKLE_BYTES)
+    manifest_path = _write_manifest(
+        tmp_path, [_api_entry(_sha256_hex(CORRUPT_PICKLE_BYTES)), _cli_entry()]
+    )
+    manager = ReadinessManager(manifest_path)
+    # artifact VERIFIED by hash (never deserialized) but no load signal
+    assert manager.snapshot()["artifact_verified"] is True
+    monkeypatch.setattr(health_module, "_readiness_manager", manager)
+
+    for endpoint in ("/health/readiness", "/health/quick"):
+        resp = client.get(endpoint)
+        assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    # the load signal is what flips service readiness to 200
+    assert manager.mark_model_loaded("v26_7_aligned", _sha256_hex(CORRUPT_PICKLE_BYTES)) is True
+    for endpoint in ("/health/readiness", "/health/quick"):
+        resp = client.get(endpoint)
+        assert resp.status_code == status.HTTP_200_OK
+
+
+def test_health_full_exposes_integrity_vs_loaded_distinction(client, tmp_path, monkeypatch):
+    """The informational /health body shows artifact integrity separately
+    from the load signal — never conflates the two."""
+    artifact_dir = tmp_path / "model_zoo" / "production"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    (artifact_dir / "v26.7_aligned_production.pkl").write_bytes(ARTIFACT_CONTENT)
+    manifest_path = _write_manifest(
+        tmp_path, [_api_entry(_sha256_hex(ARTIFACT_CONTENT)), _cli_entry()]
+    )
+    manager = ReadinessManager(manifest_path)
+    monkeypatch.setattr(health_module, "_readiness_manager", manager)
+
+    resp = client.get("/health")
+    assert resp.status_code == status.HTTP_200_OK
+    model = resp.json()["checks"]["model"]
+    assert model["details"]["artifact_integrity"] == "verified"
+    assert model["details"]["model_loaded"] is False
+    assert model["status"] == "unhealthy"
+
+    assert manager.mark_model_loaded("v26_7_aligned", _sha256_hex(ARTIFACT_CONTENT)) is True
+    resp = client.get("/health")
+    assert resp.json()["checks"]["model"]["details"]["model_loaded"] is True
+    assert resp.json()["checks"]["model"]["status"] == "healthy"
 
 
 # ---------------------------------------------------------------------------

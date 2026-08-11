@@ -27,13 +27,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["健康检查"])
 
 # 进程本地模型就绪状态（每 Uvicorn worker 独立实例）。整文件 SHA256 校验
-# 只在显式初始化/刷新时执行并缓存；健康请求只读缓存，绝不重复哈希。
+# 只在显式初始化/刷新时执行并缓存；健康请求只做廉价 stat 指纹检查（绝不
+# 重复哈希）。SERVICE READY = artifact verified + 匹配的进程本地加载信号
+# （mark_model_loaded，PR-3 才会调用）+ 指纹未变；仅 checksum 匹配 ≠ ready。
 _readiness_manager = ReadinessManager()
 
 
 async def _model_readiness() -> tuple[bool, str]:
-    """缓存的 API 模型就绪状态：(ready, reason)。首次调用触发一次性校验。"""
-    return _readiness_manager.api_ready()
+    """缓存的 SERVICE 就绪状态：(ready, reason)。首次调用触发一次性校验。"""
+    return _readiness_manager.service_ready()
 
 
 @router.get(
@@ -276,18 +278,23 @@ async def _get_redis_service_check() -> ServiceCheck:
 
 async def _get_model_service_check() -> ServiceCheck:
     """
-    获取模型服务检查结果 - 基于 canonical manifest 的完整性状态（信息性）
+    获取模型服务检查结果 - 信息性（SERVICE READY 语义）
 
-    检查 git-tracked manifest 中 API 必需 artifact 的验证状态
-    （pending / file missing / checksum mismatch / verified）。整文件
-    SHA256 只在初始化/刷新时计算并缓存。本端点不反序列化模型，也不决定
-    容器就绪状态 — 就绪语义由 /health/readiness 与 /health/quick 承担。
+    body 区分两层状态，绝不混淆：
+    - artifact_integrity: verified / not_ready（manifest + 整文件 SHA256；
+      只在初始化/刷新时哈希）
+    - model_loaded: bool（进程本地加载信号，PR-3 才会产生）
+
+    service_ready = 两者皆真且廉价指纹未变。本端点不反序列化模型，也不
+    决定容器就绪状态 — 就绪语义由 /health/readiness 与 /health/quick 承担。
     """
     start_time = time.time()
-    # 单次求值：snapshot() 已包含 api_ready/api_reason（避免重复校验/哈希）
+    # 单次求值：snapshot() 已包含全部字段（避免重复校验/哈希）
     snapshot = _readiness_manager.snapshot()
-    model_ready = snapshot["api_ready"]
-    model_reason = snapshot["api_reason"]
+    model_ready = snapshot["service_ready"]
+    model_reason = snapshot["reason"]
+    artifact_integrity = "verified" if snapshot["artifact_verified"] else "not_ready"
+    model_loaded = snapshot["model_loaded"]
     response_time = (time.time() - start_time) * 1000
 
     api_artifact_status = "unknown"
@@ -298,22 +305,26 @@ async def _get_model_service_check() -> ServiceCheck:
             api_artifact_status = artifact_statuses[name]
 
     if model_ready:
-        logger.debug("模型就绪: manifest 整文件校验通过")
+        logger.debug("模型服务就绪: verified + loaded + 指纹未变")
         return ServiceCheck(
             status="healthy",
             response_time_ms=round(response_time, 2),
             details={
-                "message": "模型就绪（manifest 整文件校验通过）",
+                "message": "模型服务就绪（verified + loaded）",
+                "artifact_integrity": artifact_integrity,
+                "model_loaded": model_loaded,
                 "artifact_status": api_artifact_status,
                 "artifacts": artifact_statuses,
             },
         )
-    logger.warning("模型未就绪: %s", model_reason)
+    logger.warning("模型服务未就绪: %s", model_reason)
     return ServiceCheck(
         status="unhealthy",
         response_time_ms=round(response_time, 2),
         details={
-            "message": model_reason or "模型未就绪",
+            "message": model_reason or "模型服务未就绪",
+            "artifact_integrity": artifact_integrity,
+            "model_loaded": model_loaded,
             "artifact_status": api_artifact_status,
             "artifacts": artifact_statuses,
         },
