@@ -1,0 +1,35 @@
+{
+  "schema_version": "model-feature-contract-registry/v1",
+  "lifecycle": "permanent",
+  "contracts": [
+    {
+      "contract_id": "v26_7_aligned/v1",
+      "artifact_name": "v26_7_aligned",
+      "model_type": "v26_7_aligned",
+      "feature_contract_version": "v26_6_pre_match/v1",
+      "feature_count": 20,
+      "ordered_features": [
+        "rolling_xg_home",
+        "rolling_xg_away",
+        "rolling_shots_on_target_home",
+        "rolling_shots_on_target_away",
+        "rolling_possession_home",
+        "rolling_possession_away",
+        "rolling_team_rating_home",
+        "rolling_team_rating_away",
+        "home_table_position",
+        "away_table_position",
+        "table_position_diff",
+        "home_points",
+        "away_points",
+        "points_diff",
+        "home_recent_form_points",
+        "raw_elo_gap",
+        "adjusted_elo_gap",
+        "home_fatigue_index",
+        "away_fatigue_index",
+        "fatigue_diff"
+      ]
+    }
+  ]
+}
