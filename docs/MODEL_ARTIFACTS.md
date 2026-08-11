@@ -177,6 +177,30 @@ a checksum being corrected) self-heal within one window without a process
 restart, and a failing probe never re-hashes an artifact file on every
 request.
 
+## Legacy Model Lifecycle Boundary (PR-4)
+
+The canonical API lifecycle above is the only supported HTTP model-serving
+path. The former admin/retraining router and its disconnected retraining
+service were removed because they could switch, write, or register models
+outside the manifest/feature-contract lifecycle and had no supported runtime
+caller. The orphaned `src/core/inference_engine.py` loader was removed for the
+same reason: it had no repository caller and deserialized a separate default
+artifact path.
+
+`src/api/model_management.py` remains in the repository but is no longer
+mounted by `src.main`; its broken DI/reload surface is explicitly reserved for
+PR-5 model-management convergence and is not replaced here. The legacy
+`src/ml/inference/model_loader.py` / `predictor.py` pair remains only for the
+separately scoped non-API strategy compatibility path, while
+`titan_loader.py` remains the noncanonical CLI/TITAN consumer. Neither is a
+fallback for `/predict` or `/predict/batch`.
+
+PR-4 does not activate or create a production artifact. The tracked canonical
+API row remains `status=pending` with `checksum_sha256=null`; readiness remains
+false and `/predict` continues to return the sanitized 503 model-unavailable
+response. Canonical training-producer work, train/inference parity, and
+model-management convergence remain PR-6 and PR-5 boundaries respectively.
+
 ## Important
 
 Fresh clones do not include production model artifacts.

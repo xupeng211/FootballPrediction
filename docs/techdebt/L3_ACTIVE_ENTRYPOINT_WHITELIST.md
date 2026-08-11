@@ -57,12 +57,10 @@ Only routers with confirmed `app.include_router(...)` calls are listed.
 
 | Path | Mounted by | Status | Evidence | Notes |
 |---|---|---|---|---|
-| `src/api/health.py` | `src/main.py` line 136 | **active** | `app.include_router(health_router)` — unconditional mount | Health-check endpoints. |
-| `src/api/monitoring.py` | `src/main.py` line 137 | **active** | `app.include_router(monitoring_router, prefix="/api/v1")` — unconditional mount | Monitoring/metrics endpoints under `/api/v1`. |
-| `src/api/model_management.py` | `src/main.py` line 138 | **active** | `app.include_router(model_management_router)` — unconditional mount | Model reload/info/list endpoints. |
-| `src/api/v1/endpoints/admin.py` | `src/main.py` lines 142–144 | **conditional active** | `app.include_router(admin_router, prefix="/api/v1")` inside `try/except ImportError` guard | Admin endpoints (retrain, model switch/rollback, system health). Mounted when the import succeeds; skipped silently on ImportError. |
+| `src/api/health.py` | `src/main.py` line 149 | **active** | `app.include_router(health_router)` — unconditional mount | Health-check endpoints. |
+| `src/api/monitoring.py` | `src/main.py` line 150 | **active** | `app.include_router(monitoring_router, prefix="/api/v1")` — unconditional mount | Monitoring/metrics endpoints under `/api/v1`. |
 
-Count: **4** API routers (3 unconditional + 1 conditional).
+Count: **2** API routers (2 unconditional).
 
 ### Routers NOT mounted
 
@@ -72,6 +70,8 @@ The following files define `APIRouter` instances but are **not** included by `sr
 |---|---|---|
 | `src/api/predictions/predict_router.py` | Defines `router = APIRouter(...)` at line 40 with prediction endpoints, but `src/main.py` does **not** import or mount it. Current `/predict` is owned by `src/main.py` inline routes (lines 244, 304). | **Legacy candidate** — see Restricted Legacy section. |
 | `src/api/rate_limiter.py` | Contains example/doc `app = FastAPI()` and `@app.get(...)` decorators at lines 20, 300, 306, 312 inside docstrings/examples — not a real router. The actual rate limiter is used via `init_rate_limiter(app)` at `src/main.py` line 119. | **Not a router** — utility module with inline examples. |
+| `src/api/model_management.py` | The module remains in the tree but PR-4 removed its `src.main` registration. Its broken DI/reload surface is reserved for PR-5 and is not a supported runtime entrypoint. | **PR-5 deferred / unmounted**. |
+| `src/api/v1/endpoints/admin.py` | The former conditional router and its disconnected retraining/switch surface were removed in PR-4 after reference and importability checks. | **Decommissioned / deleted**. |
 
 ---
 
