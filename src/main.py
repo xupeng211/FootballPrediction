@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
+import threading
 from typing import Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
@@ -17,21 +18,21 @@ from prometheus_client import CONTENT_TYPE_LATEST
 
 from src.api.health import router as health_router
 from src.api.model_management import router as model_management_router
+from src.api.monitoring import (
+    circuit_breaker_state,
+    dead_letter_queue_size,
+    extraction_duration_seconds,
+    extraction_total,
+)
+
+# V4.46: 激活收割监控指标
+from src.api.monitoring import metrics as harvest_metrics
 from src.api.monitoring import router as monitoring_router
 from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
 from src.database.db_pool import DatabasePool
 from src.ml.inference.model_dispatcher import ModelArtifactUnavailableError
-
-# V4.46: 激活收割监控指标
-from src.api.monitoring import (
-    metrics as harvest_metrics,
-    extraction_total,
-    extraction_duration_seconds,
-    circuit_breaker_state,
-    dead_letter_queue_size,
-)
 
 
 def setup_metrics_exporter(port: int = 9090) -> None:
@@ -89,6 +90,17 @@ async def lifespan(app: FastAPI):
                 logger.info(f"📈 Prometheus 指标导出器已启动: 端口 {metrics_port}")
             except Exception as e:
                 logger.warning(f"⚠️ Prometheus 导出器启动失败 (端口可能被占用): {e}")
+
+        # PR-3: attempt the canonical load during startup.  The current
+        # tracked manifest is intentionally pending, so expected unavailability
+        # leaves readiness false without crashing the process or fabricating a
+        # model.  A valid active artifact can become ready without a first
+        # prediction request.
+        try:
+            get_predictor()
+            logger.info("✅ canonical v26_7_aligned model loaded during startup")
+        except ModelArtifactUnavailableError:
+            logger.warning("⚠️ canonical production model unavailable; service remains not-ready")
 
         logger.info("✅ 服务启动成功")
 
@@ -229,17 +241,27 @@ async def root():
 
 # 全局预测器实例
 _predictor: "Predictor | None" = None
+_predictor_lock = threading.RLock()
 
 
 def get_predictor() -> "Predictor":
     """获取预测器实例（单例模式）"""
     global _predictor
-    if _predictor is None:
-        from src.ml.inference import Predictor
+    with _predictor_lock:
+        if _predictor is None:
+            from src.ml.inference import Predictor
 
-        logger.info("初始化 V26.7 对齐预测器...")
-        _predictor = Predictor.create_v26_7_aligned()
-    return _predictor
+            logger.info("初始化 V26.7 对齐预测器...")
+            _predictor = Predictor.create_v26_7_aligned()
+        else:
+            try:
+                _predictor.ensure_canonical_model_current()
+            except ModelArtifactUnavailableError:
+                # Never keep serving an object after manifest/artifact
+                # invalidation has made the canonical load unavailable.
+                _predictor = None
+                raise
+        return _predictor
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])

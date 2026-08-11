@@ -19,7 +19,7 @@ import redis
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.config import get_settings
 from src.database.db_pool import DatabasePool
-from src.ml.inference.artifact_manifest import ReadinessManager
+from src.ml.inference.artifact_manifest import get_process_readiness_manager
 from src.utils.data_quality_checker import DataQualityChecker
 
 logger = logging.getLogger(__name__)
@@ -29,8 +29,8 @@ router = APIRouter(tags=["健康检查"])
 # 进程本地模型就绪状态（每 Uvicorn worker 独立实例）。整文件 SHA256 校验
 # 只在显式初始化/刷新时执行并缓存；健康请求只做廉价 stat 指纹检查（绝不
 # 重复哈希）。SERVICE READY = artifact verified + 匹配的进程本地加载信号
-# （mark_model_loaded，PR-3 才会调用）+ 指纹未变；仅 checksum 匹配 ≠ ready。
-_readiness_manager = ReadinessManager()
+# （mark_model_loaded，由 canonical loader 调用）+ 指纹未变；仅 checksum 匹配 ≠ ready。
+_readiness_manager = get_process_readiness_manager()
 
 
 async def _model_readiness() -> tuple[bool, str]:
