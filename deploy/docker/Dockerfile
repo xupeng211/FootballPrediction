@@ -133,6 +133,9 @@ WORKDIR /app
 
 # 1. 配置文件
 COPY pyproject.toml ./
+# canonical model artifact manifest (read-only runtime dependency of the
+# readiness core; keep in sync with docker-compose.yml config mount)
+COPY config/ ./config/
 
 # 2. 源代码
 COPY src/ ./src/

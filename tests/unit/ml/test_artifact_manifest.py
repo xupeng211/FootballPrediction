@@ -495,8 +495,8 @@ def test_cli_verification_error_does_not_poison_api_readiness(tmp_path):
     """F5 (Codex): a broken active CLI artifact never poisons API readiness."""
     content = b"api-artifact"
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
-    (tmp_path / "models").mkdir(parents=True, exist_ok=True)
-    # CLI artifact path is a DIRECTORY: verify() hits IsADirectoryError
+    # CLI artifact path IS a directory: verify() hits IsADirectoryError
+    (tmp_path / "models" / "titan_dir").mkdir(parents=True, exist_ok=True)
     manifest_path = _write_manifest(
         tmp_path,
         [
@@ -519,6 +519,10 @@ def test_cli_verification_error_does_not_poison_api_readiness(tmp_path):
     ready, reason = manager.api_ready()
     assert ready is True
     assert reason == ""
+    # the CLI failure is visible per-artifact, never poisoning API readiness
+    snapshot = manager.snapshot()
+    assert snapshot["artifacts"]["titan"]["status"] == "verification_error"
+    assert snapshot["artifacts"]["v26_7_aligned"]["status"] == "verified"
 
 
 # ---------------------------------------------------------------------------

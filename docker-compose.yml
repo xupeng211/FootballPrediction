@@ -197,6 +197,7 @@ services:
       - app_data:/app/data
       - app_logs:/app/logs
       - ./src:/app/src:ro
+      - ./config:/app/config:ro
     command: >
       uvicorn src.main:app
       --host 0.0.0.0

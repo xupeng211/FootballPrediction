@@ -289,10 +289,11 @@ async def _get_model_service_check() -> ServiceCheck:
     response_time = (time.time() - start_time) * 1000
 
     api_artifact_status = "unknown"
-    for info in snapshot.get("artifacts", {}).values():
-        if info.get("required_for") == "api":
-            api_artifact_status = info.get("status", "unknown")
-            break
+    artifact_statuses: dict[str, str] = {}
+    for name, info in snapshot.get("artifacts", {}).items():
+        artifact_statuses[name] = info.get("status", "unknown")
+        if info.get("required_for") == "api" and api_artifact_status == "unknown":
+            api_artifact_status = artifact_statuses[name]
 
     if model_ready:
         logger.debug("模型就绪: manifest 整文件校验通过")
@@ -302,6 +303,7 @@ async def _get_model_service_check() -> ServiceCheck:
             details={
                 "message": "模型就绪（manifest 整文件校验通过）",
                 "artifact_status": api_artifact_status,
+                "artifacts": artifact_statuses,
             },
         )
     logger.warning("模型未就绪: %s", model_reason)
@@ -311,6 +313,7 @@ async def _get_model_service_check() -> ServiceCheck:
         details={
             "message": model_reason or "模型未就绪",
             "artifact_status": api_artifact_status,
+            "artifacts": artifact_statuses,
         },
     )
 

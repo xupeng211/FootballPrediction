@@ -32,9 +32,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import hashlib
 import json
+import logging
 from pathlib import Path
 import threading
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MANIFEST_PATH = Path("config/model_artifacts.json")
 
@@ -286,22 +289,33 @@ class ArtifactManifest:
         """
         try:
             entries = self.entries()
-        except Exception as exc:  # fail-closed by contract
+        except ManifestError as exc:
+            # ManifestError messages are fixed strings — safe to surface.
             return ReadinessState(
                 api_ready=False, api_reason=str(exc), verified_at=None, verifications={}
+            )
+        except Exception:  # fail-closed by contract (e.g. unreadable file)
+            # str(exc) may embed absolute paths — keep it server-side only.
+            logger.exception("模型产物 manifest 读取失败")
+            return ReadinessState(
+                api_ready=False,
+                api_reason="model artifact manifest unavailable",
+                verified_at=None,
+                verifications={},
             )
 
         verifications: dict[str, ArtifactVerification] = {}
         for entry in entries:
             try:
                 verifications[entry.name] = self.verify(entry)
-            except Exception as exc:  # fail-closed by contract
+            except Exception:  # fail-closed by contract
+                logger.exception("模型产物校验异常: %s", entry.name)
                 verifications[entry.name] = ArtifactVerification(
                     name=entry.name,
                     status=VERIFICATION_ERROR,
                     declared_status=entry.status,
                     required_for=entry.required_for,
-                    reason=f"artifact verification error: {exc}",
+                    reason="artifact verification error",
                 )
         api_required = [v for v in verifications.values() if v.required_for == REQUIRED_FOR_API]
         if not api_required:
@@ -345,17 +359,27 @@ class ReadinessManager:
         return self._manifest.manifest_path
 
     def initialize(self) -> ReadinessState:
-        """Verify once (idempotent); returns the cached state."""
+        """Verify lazily; VERIFIED states are cached, failures are NOT.
+
+        A not-ready evaluation is deliberately not cached: transient failures
+        (manifest mid-replace, volume not yet mounted, operator correcting a
+        checksum) self-heal on the next probe without a process restart.
+        Ready states are cached so health requests never re-hash.
+        """
         with self._lock:
             if self._state is None:
-                self._state = self._manifest.evaluate()
+                state = self._manifest.evaluate()
+                if state.api_ready:
+                    self._state = state
+                return state
             return self._state
 
     def refresh(self) -> ReadinessState:
         """Explicit re-verification (startup / activation / reload hook)."""
         with self._lock:
-            self._state = self._manifest.evaluate()
-            return self._state
+            state = self._manifest.evaluate()
+            self._state = state if state.api_ready else None
+            return state
 
     def api_ready(self) -> tuple[bool, str]:
         """Cached API-model readiness: (ready, reason). Never re-hashes."""

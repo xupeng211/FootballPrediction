@@ -100,7 +100,10 @@ Hashing timing note: while artifacts are `pending` no file hashing occurs at
 all. After activation, the first health request in a process triggers the
 one-time whole-file verification synchronously; a startup `refresh()` hook
 belongs to the loader/activation PR (this PR intentionally has no lifespan
-change).
+change). Verified (ready) states are cached process-locally; not-ready states
+are NOT cached, so transient failures (manifest mid-replace, volume not yet
+mounted, a checksum being corrected) self-heal on the next probe without a
+process restart.
 
 ## Important
 

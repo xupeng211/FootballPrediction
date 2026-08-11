@@ -202,6 +202,12 @@ def test_manifest_unreadable_503_not_500(client, tmp_path, monkeypatch):
     for endpoint in ("/health/readiness", "/health/quick"):
         resp = client.get(endpoint)
         assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        # N2 (Codex): the generic reason must not embed the OSError text
+        # (which would carry the absolute tmp_path)
+        text = resp.text
+        assert "Traceback" not in text
+        assert str(dir_path) not in text
+        assert "not-a-file.json" not in text
 
 
 # ---------------------------------------------------------------------------
