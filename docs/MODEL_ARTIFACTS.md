@@ -104,6 +104,28 @@ never deserializes artifacts. Until then, even a fully verified artifact
 leaves the deployment service-not-ready by design — `/predict` is already
 503 in that state (MLC-1 fail-closed), so readiness stays truthful.
 
+## Canonical API Feature Contract (PR-2)
+
+The versioned, git-tracked inference contract registry is
+`config/model_feature_contracts.json`, read by
+`src/ml/inference/feature_contract_registry.py`. The canonical API binding is
+`contract_id=v26_7_aligned/v1`, `artifact_name=v26_7_aligned`,
+`model_type=v26_7_aligned`, and `feature_contract_version=v26_6_pre_match/v1`.
+It declares exactly 20 ordered feature names. Feature order is part of the
+identity; the registry reader rejects duplicate names, count mismatches,
+unsupported schema versions, malformed bindings, duplicate contract IDs, and
+unknown lookups without fallback.
+
+The current runtime producer is
+`src/ml/feature_adapter.py:V26_6_PreMatchAdapter`; its static ordered
+declaration is used to build the final inference `DataFrame`. A focused
+regression test compares that runtime order with the independent registry
+declaration. This PR does not connect the registry to the serving path, load
+or activate an artifact, invoke `mark_model_loaded`, or change readiness.
+Training-side feature pipelines remain outside this contract and are not
+modified here; parity is carried forward for the later canonical training
+producer work.
+
 Cheap invariants: at verification time the manager captures a stat-based
 fingerprint; health requests re-check it with one `stat()` per verified file
 (no hashing). If the artifact is deleted, atomically replaced, or its
