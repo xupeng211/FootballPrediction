@@ -227,6 +227,51 @@ API row therefore reports successfully as informational state while
 `artifact_verified=false`, `model_loaded=false`, and `service_ready=false`;
 activation remains separate reviewed operational work.
 
+## Canonical Training Producer and Parity (PR-6)
+
+The permanent canonical producer is
+`src/ml/training/canonical_training_producer.py`, exposed through
+`npm run train` (and the `train:fast` / `train:deep` variants). Its input
+boundary is an explicit offline CSV, JSON, JSONL, or Parquet feature frame;
+it does not query PostgreSQL, fetch live data, scan model directories, or
+consume the unsafe general `l3_features` surface. The frame must already
+contain the proven pre-match values and the `match_date` / `result` metadata.
+Missing, non-finite, unknown, or post-match-marked inputs fail closed; the
+producer does not hide missing required signals with zero filling.
+
+The producer resolves `v26_7_aligned/v1` through
+`FeatureContractRegistry`, checks the exact
+`v26_6_pre_match/v1` binding and ordered 20-feature declaration against
+`V26_6_PreMatchAdapter`, maps the established Away/Draw/Home classes to
+`0/1/2`, fits the scaler on the earlier partition only, and evaluates only
+later rows. The split is deterministic and chronological, with train and OOS
+date ranges, class distributions, metrics, estimator settings, contract
+identity, source revision, and a safe logical source identity recorded in
+bounded provenance. No production-quality or profitability claim follows from
+this validation.
+
+The result is an existing-loader-compatible candidate envelope containing the
+model, scaler, exact feature columns, identity fields, and provenance.
+Candidate serialization uses a same-directory temporary file, flush/fsync,
+atomic replacement, final-byte SHA256, and a second structural validation of
+the bytes at the destination. The output path is explicit and production
+paths are rejected. `config/model_artifacts.json` and
+`config/model_feature_contracts.json` are never written by the producer; it
+does not provide activation, status/checksum mutation, reload, or deployment.
+
+The old `scripts/ops/train_model.py` remains a separate TITAN-oriented
+legacy/compatibility path and is not the API producer. Its historical 11/42
+feature lead is not merged into the API contract because authoritative
+semantics for the missing TITAN signals were not proven. The separate
+`scripts/model_training/train_baseline_v1.py` DB/random-split path also remains
+noncanonical and blocked. PR-6 therefore establishes a safe producer without
+claiming that the current database/L3 pipeline is a valid training source.
+
+PR-6 tests use deterministic synthetic frames and `tmp_path` candidates only.
+They do not create `model_zoo/production/v26.7_aligned_production.pkl`, alter
+the tracked pending/null API row, or make `/predict` ready. Production
+activation remains a separately reviewed operation.
+
 ## Important
 
 Fresh clones do not include production model artifacts.

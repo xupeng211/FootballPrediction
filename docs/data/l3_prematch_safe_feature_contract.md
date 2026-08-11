@@ -425,6 +425,19 @@ elo_expected_home: 0.571
 - 如果父合同更新了分类规则，本合同必须重新审计并同步更新。
 - 如果 FeatureSmelter 新增或重命名了 key，本合同必须重新审计并同步更新。
 
+## PR-6 Canonical Producer Boundary
+
+PR-6 实现了一个安全的 canonical API candidate producer，但没有把当前
+`l3_features` 数据库表升级为可直接训练的数据源。producer 只接受调用方
+明确提供的、已经完成赛前 cutoff 证明的 20-feature frame，并再次拒绝缺失、
+非有限值、未知 target 和明显赛后字段；它不查询 DB、不抓取网络，也不从
+`l3_features` 做 `SELECT *` 或隐式展开。
+
+因此，本合同中关于 tactical/post-match 泄漏、conditional Elo/odds、缺少
+allowlist 以及旧训练路径的 blocker 仍然有效。candidate 生成、SHA256 和
+provenance 只证明 producer 的边界与 envelope 可验证，不代表生产模型已经
+生成、manifest 已激活或业务数据已经具备训练资格。
+
 ---
 
 ## 13. 本次明确不做事项

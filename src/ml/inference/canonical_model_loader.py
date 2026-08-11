@@ -350,9 +350,27 @@ class CanonicalModelLoader:
 
         model = model_data.get("model")
         scaler = model_data.get("scaler")
+        declared_artifact_name = model_data.get("artifact_name")
+        if declared_artifact_name is not None and declared_artifact_name != self._artifact_name:
+            raise self._unavailable("loaded model artifact identity mismatch")
+        declared_required_for = model_data.get("required_for")
+        if declared_required_for is not None and declared_required_for != REQUIRED_FOR_API:
+            raise self._unavailable("loaded model consumer binding mismatch")
         declared_model_type = model_data.get("model_type")
         if declared_model_type is not None and declared_model_type != self._model_type:
             raise self._unavailable("loaded model identity mismatch")
+        declared_contract_id = model_data.get("contract_id")
+        if (
+            declared_contract_id is not None
+            and declared_contract_id != binding.contract.contract_id
+        ):
+            raise self._unavailable("loaded model contract identity mismatch")
+        declared_contract_version = model_data.get("feature_contract_version")
+        if (
+            declared_contract_version is not None
+            and declared_contract_version != binding.contract.feature_contract_version
+        ):
+            raise self._unavailable("loaded model contract version mismatch")
 
         declared_features = model_data.get("feature_columns")
         if not declared_features:
@@ -404,6 +422,62 @@ class CanonicalModelLoader:
         """Create the sanitized public error while retaining server diagnostics."""
         logger.warning("canonical model unavailable (%s): %s", self._model_type, reason)
         return ModelArtifactUnavailableError(f"canonical model unavailable: {self._model_type}")
+
+
+def validate_canonical_model_envelope(
+    model_data: Any,
+    *,
+    registry: FeatureContractRegistry | None = None,
+    artifact_name: str = CANONICAL_API_ARTIFACT_NAME,
+    model_type: str = CANONICAL_API_MODEL_TYPE,
+) -> LoadedCanonicalModel:
+    """Validate a candidate envelope with the loader's structural rules.
+
+    This is an offline validation hook for the canonical training producer. It
+    does not read the production manifest, touch the filesystem, deserialize a
+    path, or publish readiness. The producer has already deserialized its own
+    candidate bytes before reporting success; this helper keeps the envelope
+    validation rules shared with the production loader.
+    """
+    contract_registry = registry or FeatureContractRegistry()
+    try:
+        contract = contract_registry.get_for_model(model_type, artifact_name=artifact_name)
+        runtime_adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)
+        if type(runtime_adapter) is not V26_6_PreMatchAdapter:
+            raise _LoaderValidationError("canonical runtime adapter binding is unexpected")
+        runtime_features = tuple(runtime_adapter.get_required_features())
+        if (
+            contract.artifact_name != artifact_name
+            or contract.model_type != model_type
+            or contract.feature_count != len(runtime_features)
+            or contract.ordered_features != runtime_features
+        ):
+            raise _LoaderValidationError("canonical candidate contract binding is invalid")
+
+        binding = _CanonicalBinding(
+            artifact=ArtifactEntry(
+                name=artifact_name,
+                path="candidate",
+                required_for=REQUIRED_FOR_API,
+                status=STATUS_ACTIVE,
+                checksum_sha256="candidate",
+                model_type=model_type,
+            ),
+            contract=contract,
+            runtime_features=runtime_features,
+        )
+        validator = CanonicalModelLoader(
+            manifest=ArtifactManifest(),
+            registry=contract_registry,
+            readiness_manager=get_process_readiness_manager(),
+            artifact_name=artifact_name,
+            model_type=model_type,
+        )
+        return validator._validate_loaded_model(model_data, binding)
+    except ModelArtifactUnavailableError:
+        raise
+    except (ValueError, FeatureContractRegistryError) as exc:
+        raise ModelArtifactUnavailableError(f"canonical model unavailable: {model_type}") from exc
 
 
 _PROCESS_LOADER_HOLDER: dict[str, CanonicalModelLoader | None] = {"loader": None}
