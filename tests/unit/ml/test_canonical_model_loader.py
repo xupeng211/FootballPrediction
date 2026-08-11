@@ -530,6 +530,25 @@ def test_loader_and_health_use_the_same_process_readiness_manager() -> None:
     assert health_module._readiness_manager is get_process_readiness_manager()
 
 
+def test_canonical_predictor_ignores_duplicated_model_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Canonical Predictor cannot bypass the manifest with a caller path."""
+    loader, _manager, _artifact_path, _manifest_path = _make_loader(tmp_path, marker="manifest")
+    monkeypatch.setattr(dispatcher_module, "get_canonical_model_loader", lambda: loader)
+
+    predictor = dispatcher_module.Predictor(
+        model_path=str(tmp_path / "unrelated-caller-path.pkl"),
+        model_type=CANONICAL_API_MODEL_TYPE,
+    )
+
+    assert predictor.model.marker == "manifest"
+    assert predictor._canonical_loaded_model is not None
+    assert predictor._canonical_loaded_model.artifact_path == (
+        "model_zoo/production/v26.7_aligned_production.pkl"
+    )
+
+
 def test_current_pending_manifest_keeps_predict_fail_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
