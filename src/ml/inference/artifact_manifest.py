@@ -531,8 +531,13 @@ class ReadinessManager:
             if verification.declared_path is None or verification.fingerprint is None:
                 return False
             # Pure lexical+symlink resolution of the raw manifest path —
-            # no manifest re-read, no hash.
-            current = (Path.cwd() / verification.declared_path).resolve()
+            # no manifest re-read, no hash. R2-F2 (Codex round 2): resolution
+            # failures (deleted cwd, symlink loop) fail closed — never raise,
+            # never become a 500.
+            try:
+                current = (Path.cwd() / verification.declared_path).resolve()
+            except (OSError, RuntimeError):
+                return False
             if not verification.fingerprint.matches(current):
                 return False
         return True
@@ -573,18 +578,19 @@ class ReadinessManager:
             ),
             None,
         )
-        # F2 (Codex): also bind the manifest checksum — a same-size edit with
+        # F2 (Codex): bind the manifest checksum — a same-size edit with
         # restored mtime keeps the fingerprint identical but the declared
         # checksum changes, so the stale load signal must not survive.
+        # R2-F1 (Codex round 2): an omitted checksum must never be a wildcard
+        # — mark_model_loaded stores the DECLARED checksum, so exact equality
+        # is always required here.
         return (
             verified is not None
             and verified.fingerprint is not None
             and loaded.fingerprint is not None
             and verified.fingerprint == loaded.fingerprint
-            and (
-                loaded.checksum_sha256 is None
-                or verified.declared_checksum == loaded.checksum_sha256
-            )
+            and verified.declared_checksum is not None
+            and verified.declared_checksum == loaded.checksum_sha256
         )
 
     def _service_state(self, state: ReadinessState) -> ReadinessState:
@@ -720,7 +726,10 @@ class ReadinessManager:
                 return False
             self._loaded_identity = LoadedModelIdentity(
                 artifact_name=artifact_name,
-                checksum_sha256=checksum_sha256,
+                # R2-F1 (Codex round 2): bind the DECLARED checksum when the
+                # caller omits one (PR-3 minimal-hook style) — an omitted
+                # checksum is never a wildcard in _loaded_matches_current.
+                checksum_sha256=checksum_sha256 or verified.declared_checksum,
                 fingerprint=verified.fingerprint,
             )
             return True

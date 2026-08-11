@@ -337,6 +337,25 @@ def test_not_ready_bodies_do_not_leak_paths_or_traces(client, tmp_path, monkeypa
         assert "secret" not in text.lower()
 
 
+def test_503_body_never_echoes_query_credentials(client, tmp_path, monkeypatch):
+    """R2-F3 (Codex round 2): HTTPException bodies carry request.url.path
+    only — a query string with credentials is never echoed into a 503 body."""
+    _install_not_ready_manager(tmp_path, monkeypatch)
+
+    resp = client.get("/health/quick?password=supersecret&token=abc123")
+    assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    text = resp.text
+    assert "supersecret" not in text
+    assert "abc123" not in text
+    assert "password=" not in text
+    assert resp.json()["path"] == "/health/quick"  # path only, no query
+
+    resp = client.get("/health/readiness?api_key=leakme")
+    assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert "leakme" not in resp.text
+    assert resp.json()["path"] == "/health/readiness"
+
+
 # ---------------------------------------------------------------------------
 # cached model readiness: health requests never re-hash the artifact
 # ---------------------------------------------------------------------------

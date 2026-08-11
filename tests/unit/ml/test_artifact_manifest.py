@@ -21,8 +21,8 @@ Contract under test:
   required_for="api" artifacts (pending CLI rows never poison it); the core
   NEVER deserializes artifacts, and the artifact file carries no checksum.
 
-Side-effect safety: all artifacts are synthetic byte files created under
-tmp_path; no real model_zoo/, models/, *.pkl, *.joblib, DB, or training.
+Side-effect safety: all artifacts are synthetic bytes under tmp_path; no real
+model_zoo/, models/, *.pkl, *.joblib, DB, or training.
 """
 
 import hashlib
@@ -149,16 +149,11 @@ def isolated_cwd(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_valid_manifest_parses(tmp_path):
-    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl")
+    content = b"synthetic-test-artifact"
+    _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
     manifest_path = _write_manifest(
         tmp_path,
-        [
-            _entry(
-                "v26_7_aligned",
-                "model_zoo/production/v26.7.pkl",
-                checksum=_sha256_of(b"synthetic-test-artifact"),
-            )
-        ],
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum=_sha256_of(content))],
     )
     manifest = ArtifactManifest(manifest_path)
     assert manifest.load()["version"] == MANIFEST_VERSION
@@ -287,11 +282,7 @@ def test_pending_artifact_not_ready(tmp_path):
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl")
     manifest_path = _write_manifest(
         tmp_path,
-        [
-            _entry(
-                "v26_7_aligned", "model_zoo/production/v26.7.pkl", status="pending", checksum=None
-            )
-        ],
+        [_entry("v26_7_aligned", "model_zoo/production/p.pkl", status="pending", checksum=None)],
     )
     manager = ReadinessManager(manifest_path)
     ready, reason = manager.service_ready()
@@ -362,15 +353,10 @@ def test_corrupt_bytes_verified_but_not_service_ready(tmp_path):
     """Matching-checksum corrupt bytes: hash-only verification proves integrity
     (never deserializes) — verified, but NOT service-ready without a load."""
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", CORRUPT_PICKLE_BYTES)
+    digest = _sha256_of(CORRUPT_PICKLE_BYTES)
     manifest_path = _write_manifest(
         tmp_path,
-        [
-            _entry(
-                "v26_7_aligned",
-                "model_zoo/production/v26.7.pkl",
-                checksum=_sha256_of(CORRUPT_PICKLE_BYTES),
-            )
-        ],
+        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum=digest)],
     )
     manager = ReadinessManager(manifest_path)
     assert manager.snapshot()["artifact_verified"] is True
@@ -392,11 +378,7 @@ def test_loaded_without_verified_not_ready(tmp_path):
     # pending artifact: load signal refused (not verified)
     manifest_path = _write_manifest(
         tmp_path,
-        [
-            _entry(
-                "v26_7_aligned", "model_zoo/production/v26.7.pkl", status="pending", checksum=None
-            )
-        ],
+        [_entry("v26_7_aligned", "model_zoo/production/p.pkl", status="pending", checksum=None)],
     )
     pending = ReadinessManager(manifest_path)
     assert pending.mark_model_loaded("v26_7_aligned") is False
@@ -417,8 +399,7 @@ def test_identity_mismatch_loaded_signal_refused(tmp_path):
 
 
 def test_identity_change_clears_stale_loaded_signal(tmp_path):
-    """Re-verifying a DIFFERENT file must not preserve the old loaded signal:
-    service stays not-ready until a fresh matching load (TEST H + D legs)."""
+    """Re-verifying a DIFFERENT file clears the stale loaded signal (TEST H)."""
     content_a = b"version-a-bytes"
     manager, manifest_path, artifact_path = _install_verified_manager(tmp_path, content_a)
     assert manager.mark_model_loaded("api_model", _sha256_of(content_a)) is True
@@ -430,7 +411,6 @@ def test_identity_change_clears_stale_loaded_signal(tmp_path):
     manifest_path.write_text(_manifest_for(content_b), encoding="utf-8")
     manager.refresh()
     assert manager.service_ready()[0] is False  # stale load signal NOT preserved
-    assert manager.snapshot()["model_loaded"] is False
 
     # leg 2: atomic replacement (new inode) while manifest still declares B
     replacement = tmp_path / "replacement.pkl"
@@ -439,6 +419,7 @@ def test_identity_change_clears_stale_loaded_signal(tmp_path):
     assert manager.service_ready()[0] is False  # cheap invariant catches it
     manager.refresh()
     assert manager.service_ready()[0] is False  # checksum mismatch -> unverified
+    assert manager.snapshot()["model_loaded"] is False
 
     # operator fixes the manifest checksum; refresh still must NOT resurrect
     manifest_path.write_text(_manifest_for(b"version-c-bytes"), encoding="utf-8")
@@ -465,8 +446,9 @@ def test_delete_after_ready_invalidates(tmp_path, monkeypatch):
     assert ready is False
     assert "changed" in reason
     assert hashes == []  # deletion detected by stat only — no SHA256
+    # negative-cached: repeated probes stay not-ready with zero re-hash
     assert all(manager.service_ready()[0] is False for _ in range(3))
-    assert hashes == []  # negative-cached: no re-hash while invalid
+    assert hashes == []
 
 
 # TEST F (required) — artifact replaced after ready -> NOT ready (no re-hash)
@@ -479,8 +461,9 @@ def test_replace_after_ready_invalidates(tmp_path, monkeypatch):
     assert manager.service_ready()[0] is True
     hashes, _ = _count_hashes(monkeypatch)
 
+    replacement_bytes = b"replacement-bytes"
     replacement = tmp_path / "replacement.pkl"
-    replacement.write_bytes(b"replacement-bytes")
+    replacement.write_bytes(replacement_bytes)
     replacement.replace(artifact_path)  # atomic: new inode, same path
     ready, reason = manager.service_ready()
     assert ready is False
@@ -489,21 +472,17 @@ def test_replace_after_ready_invalidates(tmp_path, monkeypatch):
 
     # N2 (Codex): mtime bump on a FRESH manager with healthy verified state
     # (the manager above is already invalidated + negative-cached)
-    manifest_path2 = _write_manifest(
-        tmp_path,
-        [
-            _entry(
-                "api_model",
-                "model_zoo/production/api_model.pkl",
-                checksum=_sha256_of(b"replacement-bytes"),
-            )
-        ],
+    content_c = b"replacement-bytes"
+    _write_artifact(tmp_path, "model_zoo/m.pkl", content_c)
+    m_path = tmp_path / "model_zoo" / "m.pkl"
+    m_manifest = _write_manifest(
+        tmp_path, [_entry("api_model", "model_zoo/m.pkl", checksum=_sha256_of(content_c))]
     )
-    fresh = ReadinessManager(manifest_path2)
-    assert fresh.mark_model_loaded("api_model", _sha256_of(b"replacement-bytes")) is True
+    fresh = ReadinessManager(m_manifest)
+    assert fresh.mark_model_loaded("api_model", _sha256_of(content_c)) is True
     assert fresh.service_ready()[0] is True
     hashes_before = len(hashes)
-    os.utime(artifact_path, ns=(time.time_ns(), time.time_ns()))
+    os.utime(m_path, ns=(time.time_ns(), time.time_ns()))
     assert fresh.service_ready()[0] is False
     assert len(hashes) == hashes_before  # mtime detected by stat only — no SHA256
 
@@ -531,6 +510,30 @@ def test_symlink_retarget_after_ready_invalidates(tmp_path, monkeypatch):
     link.symlink_to(target_b)  # retarget: same declared path, different file
     assert manager.service_ready()[0] is False
     assert hashes == []  # detected by re-resolution + stat — no SHA256
+
+
+def test_symlink_loop_resolution_fails_closed(tmp_path):
+    """R2-F2: a symlink loop at the declared path makes resolve() raise —
+    readiness must fail closed, never raise/500."""
+    production = tmp_path / "model_zoo" / "production"
+    production.mkdir(parents=True)
+    target = production / "real.pkl"
+    target.write_bytes(b"bytes-a")
+    link = production / "current.pkl"
+    link.symlink_to(target)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_entry("api_model", "model_zoo/production/current.pkl", checksum=_sha256_of(b"bytes-a"))],
+    )
+    manager = ReadinessManager(manifest_path)
+    assert manager.mark_model_loaded("api_model", _sha256_of(b"bytes-a")) is True
+    assert manager.service_ready()[0] is True
+
+    loop = production / "loop.pkl"
+    loop.symlink_to(link)
+    link.unlink()
+    link.symlink_to(loop)  # current.pkl -> loop.pkl -> current.pkl
+    assert manager.service_ready()[0] is False  # fail closed, not raise
 
 
 def test_verify_rejects_file_changed_during_verification(tmp_path, monkeypatch):
@@ -576,6 +579,24 @@ def test_checksum_binding_catches_fingerprint_identical_change(tmp_path):
     assert snapshot["model_loaded"] is False  # loaded signal bound to A cleared
     assert snapshot["service_ready"] is False
     assert manager.mark_model_loaded("api_model", _sha256_of(content_b)) is True
+    assert manager.service_ready()[0] is True
+
+
+def test_omitted_checksum_load_binds_declared(tmp_path):
+    """R2-F1: an omitted checksum binds the DECLARED checksum (never a
+    wildcard) — same-size rewrite + manifest update clears the stale signal."""
+    content_a, content_b = b"version-a-bytes", b"version-b-bytes"  # same size
+    manager, manifest_path, artifact_path = _install_verified_manager(tmp_path, content_a)
+    assert manager.mark_model_loaded("api_model") is True  # PR-3 hook style
+    assert manager.service_ready()[0] is True
+
+    stat_before = artifact_path.stat()
+    artifact_path.write_bytes(content_b)  # same size -> same fingerprint
+    os.utime(artifact_path, ns=(stat_before.st_atime_ns, stat_before.st_mtime_ns))
+    manifest_path.write_text(_manifest_for(content_b), encoding="utf-8")
+    manager.refresh()
+    assert manager.service_ready()[0] is False  # stale signal cleared
+    assert manager.mark_model_loaded("api_model") is True  # fresh signal
     assert manager.service_ready()[0] is True
 
 
@@ -653,16 +674,8 @@ def test_api_artifact_pending_missing_mismatch_unready(tmp_path):
     manifest_path = _write_manifest(
         tmp_path,
         [
-            _entry(
-                "v26_7_aligned", "model_zoo/production/v26.7.pkl", status="pending", checksum=None
-            ),
-            _entry(
-                "titan",
-                "models/titan.joblib",
-                required_for="cli",
-                status="active",
-                checksum="0" * 64,
-            ),
+            _entry("v26_7_aligned", "model_zoo/production/m.pkl", status="pending", checksum=None),
+            _entry("titan", "models/titan.joblib", required_for="cli", checksum="0" * 64),
         ],
     )
     assert ReadinessManager(manifest_path).service_ready()[0] is False  # pending
@@ -762,8 +775,7 @@ def test_negative_cache_bounds_rehashing(tmp_path, monkeypatch):
     content = b"actual-bytes"
     _write_artifact(tmp_path, "model_zoo/production/v26.7.pkl", content)
     manifest_path = _write_manifest(
-        tmp_path,
-        [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum="1" * 64)],
+        tmp_path, [_entry("v26_7_aligned", "model_zoo/production/v26.7.pkl", checksum="1" * 64)]
     )
     manager = ReadinessManager(manifest_path)
 
@@ -779,7 +791,6 @@ def test_negative_cache_bounds_rehashing(tmp_path, monkeypatch):
     first_verify_count = len(hashes)
     manager.refresh()
     assert len(hashes) == first_verify_count + 1
-
     # TTL=0: every probe re-evaluates (self-healing path, no negative cache)
     ttl_zero = ReadinessManager(manifest_path, negative_cache_ttl=0.0)
     probe_count = 3
