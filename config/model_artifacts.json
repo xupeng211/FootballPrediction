@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "description": "Canonical model artifact manifest (git-tracked, MANIFEST_ONLY integrity anchor). status=pending until an artifact is restored to the canonical store and its whole-file checksum_sha256 is recorded through a reviewed change (staged activation). Do not commit model binaries.",
+  "artifact_root": "models",
+  "model_zoo_root": "model_zoo",
+  "artifacts": [
+    {
+      "name": "v26_7_aligned",
+      "path": "model_zoo/production/v26.7_aligned_production.pkl",
+      "required_for": "api",
+      "status": "pending",
+      "checksum_sha256": null,
+      "model_type": "v26_7_aligned",
+      "schema_version": null,
+      "source": "external_artifact_storage"
+    },
+    {
+      "name": "titan_v4466_real_combat",
+      "path": "models/titan_v4466_real_combat.joblib",
+      "required_for": "cli",
+      "status": "pending",
+      "checksum_sha256": null,
+      "model_type": "titan",
+      "schema_version": null,
+      "source": "external_artifact_storage"
+    }
+  ],
+  "notes": [
+    "Manifest rows mirror CURRENT LIVE loader paths (model_dispatcher v26_7_aligned; titan_loader primary artifact).",
+    "Artifacts are not in git; restore from external storage under ignored local dirs (models/, model_zoo/).",
+    "Activation = restore artifact + record whole-file checksum_sha256 + set status=active in a reviewed manifest change.",
+    "Pending artifacts are never treated as production-ready by the verification core."
+  ]
+}

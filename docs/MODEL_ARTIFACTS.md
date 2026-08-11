@@ -71,6 +71,24 @@ For CI or documentation-only validation:
 python scripts/model_artifacts/check_model_artifacts.py --allow-missing
 ```
 
+## Manifest Status & Readiness
+
+`config/model_artifacts.json` is the git-tracked canonical manifest. Each row:
+
+- `status`: `pending` (not production-ready; `checksum_sha256` may be `null`)
+  or `active` (requires a concrete whole-file `checksum_sha256`).
+- `checksum_sha256`: SHA256 of the COMPLETE artifact file bytes — the single
+  authoritative integrity anchor (MANIFEST_ONLY; artifact files carry no
+  duplicate checksum).
+- `required_for`: `api` (HTTP `/predict` surface) or `cli` (`npm run predict`
+  surface). API readiness depends only on `api` rows.
+
+Readiness: `/health/readiness` and `/health/quick` return 503 until the API
+artifact is `active`, its file exists, and its whole-file SHA256 matches the
+manifest. Full hashing runs once at initialization/refresh and is cached
+process-locally; health requests never re-hash. With no artifact restored, a
+deployment is intentionally NOT_READY (predictions are already 503).
+
 ## Important
 
 Fresh clones do not include production model artifacts.
