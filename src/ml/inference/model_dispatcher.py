@@ -13,18 +13,14 @@ V26.8 推理引擎 - ModelDispatcher & Predictor
 import logging
 import os
 
+from src.ml.inference.canonical_model_loader import (
+    LoadedCanonicalModel,
+    ModelArtifactUnavailableError,
+    get_canonical_model_loader,
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
-
-class ModelArtifactUnavailableError(Exception):
-    """模型产物缺失或不可用时抛出（生产模型类型 FAIL-CLOSED，MLC-1）。
-
-    仅表示"需要的模型产物不存在"这一可预期条件；
-    调用方（API 层）应将其映射为 503 Service Unavailable，
-    不得隐式降级或合成替代模型。
-    """
-
 
 # ============================================================================
 # V26.4 Predictor - 统一推理接口
@@ -58,6 +54,8 @@ class Predictor:
         self.model = None
         self.scaler = None
         self.feature_names = []
+        self._canonical_loader = None
+        self._canonical_loaded_model: LoadedCanonicalModel | None = None
 
         # 加载特征适配器
         from src.ml.feature_adapter import FeatureAdapterFactory, ModelType
@@ -79,6 +77,13 @@ class Predictor:
             )  # Reuse V26_6 adapter
         else:
             raise ValueError(f"不支持的模型类型: {model_type}")
+
+        if model_type == "v26_7_aligned":
+            # PR-3: the manifest is the only production artifact authority;
+            # model_path is intentionally ignored for this canonical type.
+            self._canonical_loader = get_canonical_model_loader()
+            self._apply_canonical_model(self._canonical_loader.load())
+            return
 
         # 加载模型
         if model_path is None:
@@ -110,11 +115,17 @@ class Predictor:
         if model_type == "v26_6_pre_match":
             return "model_zoo/production/v26.6_pre_match.pkl"
         if model_type == "v26_7_aligned":
-            return "model_zoo/production/v26.7_aligned_production.pkl"
+            raise ModelArtifactUnavailableError(
+                "canonical v26_7_aligned artifact path is manifest-controlled"
+            )
         return "model_zoo/production/v26.5_mini.pkl"
 
     def _load_model(self, model_path: str):
         """加载模型文件"""
+        if self.model_type == "v26_7_aligned":
+            raise ModelArtifactUnavailableError(
+                "canonical v26_7_aligned loading must use the verified loader"
+            )
         import joblib
 
         logger.info(f"加载模型: {model_path}")
@@ -135,6 +146,24 @@ class Predictor:
             )
 
         logger.info(f"✅ 模型加载成功，特征数: {len(self.feature_names)}")
+
+    def _apply_canonical_model(self, loaded: LoadedCanonicalModel) -> None:
+        """Publish a model returned by the verified canonical loader."""
+        self.model = loaded.model
+        self.scaler = loaded.scaler
+        self.feature_names = list(loaded.feature_names)
+        self._canonical_loaded_model = loaded
+        logger.info("✅ canonical v26_7_aligned model loaded, features=%d", len(self.feature_names))
+
+    def ensure_canonical_model_current(self) -> None:
+        """Refresh the canonical model identity before serving a request."""
+        if self.model_type != "v26_7_aligned":
+            return
+        if self._canonical_loader is None:
+            self._canonical_loader = get_canonical_model_loader()
+        loaded = self._canonical_loader.load()
+        if loaded is not self._canonical_loaded_model:
+            self._apply_canonical_model(loaded)
 
     def _create_mini_model(self):
         """创建微型模型（用于测试）"""
@@ -327,14 +356,11 @@ class ModelDispatcher:
 
     def _load_base_model(self):
         """加载通用底座模型（确保至少有一个可用模型）"""
-        base_model_path = self.MODEL_PATHS[self.FALLBACK_MODEL]
-        if os.path.exists(base_model_path):
-            self.loaded_models[self.FALLBACK_MODEL] = Predictor(
-                model_path=base_model_path, model_type="v26_7_aligned"
-            )
+        try:
+            self.loaded_models[self.FALLBACK_MODEL] = Predictor(model_type=self.FALLBACK_MODEL)
             logger.info(f"✅ 通用底座模型已加载: {self.FALLBACK_MODEL}")
-        else:
-            logger.warning(f"⚠️  通用底座模型未找到: {base_model_path}")
+        except ModelArtifactUnavailableError:
+            logger.warning("⚠️  通用底座模型不可用: %s", self.FALLBACK_MODEL)
 
     def _detect_league(self, match_data: dict) -> int | None:
         """

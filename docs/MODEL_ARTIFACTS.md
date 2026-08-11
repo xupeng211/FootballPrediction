@@ -98,11 +98,11 @@ Readiness is TWO-LAYERED — artifact verification is NOT service readiness:
    verified identity AND an unchanged cheap stat fingerprint
    (st_dev/st_ino/st_size/st_mtime_ns) of the verified file.
 
-`mark_model_loaded` is the minimal hook the future canonical loader
-integration (PR-3) will call AFTER a real load; PR-1 never invokes it and
-never deserializes artifacts. Until then, even a fully verified artifact
-leaves the deployment service-not-ready by design — `/predict` is already
-503 in that state (MLC-1 fail-closed), so readiness stays truthful.
+`mark_model_loaded` is called by the PR-3 canonical loader only AFTER a real
+verified deserialization and contract validation. PR-1 never invokes it and
+never deserializes artifacts. The loader and health routes share one
+process-local `ReadinessManager` instance per worker, so a successful startup
+load is visible to `/health/readiness` and `/health/quick`.
 
 ## Canonical API Feature Contract (PR-2)
 
@@ -120,11 +120,35 @@ The current runtime producer is
 `src/ml/feature_adapter.py:V26_6_PreMatchAdapter`; its static ordered
 declaration is used to build the final inference `DataFrame`. A focused
 regression test compares that runtime order with the independent registry
-declaration. This PR does not connect the registry to the serving path, load
-or activate an artifact, invoke `mark_model_loaded`, or change readiness.
-Training-side feature pipelines remain outside this contract and are not
-modified here; parity is carried forward for the later canonical training
-producer work.
+declaration. PR-3 consumes this exact binding from the loader and rejects
+manifest/registry identity drift or runtime order/count drift before
+deserialization. Training-side feature pipelines remain outside this contract
+and are not modified here; parity is carried forward for the later canonical
+training producer work.
+
+## Canonical Verified Loader (PR-3)
+
+The canonical HTTP path is `/predict` → `src.main.get_predictor()` →
+`src/ml/inference/model_dispatcher.py:Predictor` →
+`src/ml/inference/canonical_model_loader.py:CanonicalModelLoader`. For
+`v26_7_aligned`, the loader resolves the artifact path and status only from
+`config/model_artifacts.json`, then requires an exact binding to
+`config/model_feature_contracts.json` and the 20-feature
+`V26_6_PreMatchAdapter` declaration.
+
+An active artifact is copied into an ephemeral temporary file while the copied
+bytes are hashed and compared with the manifest checksum. `joblib.load()` only
+receives that verified snapshot, never the production pathname; the source is
+re-verified before the readiness signal is published. This closes the
+verify-before-deserialize and pathname replacement (TOCTOU) boundary. Expected
+load failures remain the public `503 prediction model unavailable` contract.
+
+Startup performs a canonical load attempt without waiting for the first
+prediction request. The current tracked API row remains `status=pending` with
+`checksum_sha256=null`, so startup intentionally leaves service readiness false,
+does not deserialize, and `/predict` remains 503 until a separately authorized
+activation supplies a real matching artifact and checksum. PR-3 does not create
+or activate production artifacts.
 
 Cheap invariants: at verification time the manager captures a stat-based
 fingerprint; health requests re-check it with one `stat()` per verified file
@@ -140,12 +164,11 @@ is a git-tracked current-state file); the verification core
 (`src/ml/inference/artifact_manifest.py`) is `permanent`; this document is
 `current-state`.
 
-Hashing timing note: while artifacts are `pending` no file hashing occurs at
-all. After activation, the first health request in a process triggers the
-one-time whole-file verification synchronously; a startup `refresh()` hook
-belongs to the loader/activation PR (this PR intentionally has no lifespan
-change). Verified states are cached process-locally; health requests check
-only the cheap stat fingerprint (never re-hash). An explicit `refresh()`
+Hashing timing note: while artifacts are `pending` no artifact file hashing
+occurs. After activation, the canonical startup loader performs a full
+verification before deserialization; the health routes then check only the
+cheap stat fingerprint (never re-hash). Verified states are cached
+process-locally. An explicit `refresh()`
 after the artifact changed re-verifies but does NOT resurrect a stale
 loaded-model signal — a new matching `mark_model_loaded` is required before
 service readiness returns. Not-ready states are negative-cached for a short

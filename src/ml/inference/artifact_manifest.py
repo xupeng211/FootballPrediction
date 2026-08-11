@@ -38,15 +38,15 @@ required again before readiness can return.
   pending/missing CLI-only artifact must not poison API readiness.
 - Process-local cached readiness: full-file hashing happens on explicit
   initialization/refresh only, never per health request. Each Uvicorn worker
-  holds its own manager (no shared/global state).
+  holds one manager shared by the canonical loader and health endpoints.
 
 HARD BOUNDARY: this module MUST NOT deserialize artifacts. It never calls
 ``joblib.load``/``pickle.load``, imports XGBoost, trains, predicts, writes
 artifact files, edits the manifest, queries the DB, or creates
 ``model_zoo/``/``models/``. Deserialization of the verified artifact belongs
-to the canonical loader integration (future PR). ``mark_model_loaded`` is
-the minimal process-local hook that future PR will call AFTER a real load;
-PR-1 never invokes it itself.
+to the canonical loader integration. ``mark_model_loaded`` is the minimal
+process-local hook that the canonical loader calls only AFTER a real load;
+PR-1 itself never invokes it.
 """
 
 from __future__ import annotations
@@ -170,6 +170,7 @@ class LoadedModelIdentity:
 
     artifact_name: str
     checksum_sha256: str | None
+    declared_path: str | None = None
     fingerprint: FileFingerprint | None = None
 
 
@@ -587,6 +588,7 @@ class ReadinessManager:
         return (
             verified is not None
             and verified.fingerprint is not None
+            and verified.declared_path == loaded.declared_path
             and loaded.fingerprint is not None
             and verified.fingerprint == loaded.fingerprint
             and verified.declared_checksum is not None
@@ -680,6 +682,19 @@ class ReadinessManager:
                 self._negative_until = datetime.now(UTC).timestamp() + self._negative_cache_ttl
             return self._service_state(state)
 
+    def invalidate(self) -> None:
+        """Drop cached verification and loaded state after identity drift.
+
+        The manifest verifier cannot infer model/contract binding semantics.
+        The canonical loader uses this hook when those identities drift even
+        if the artifact bytes and checksum themselves are unchanged.
+        """
+        with self._lock:
+            self._state = None
+            self._negative_state = None
+            self._negative_until = 0.0
+            self._loaded_identity = None
+
     def service_ready(self) -> tuple[bool, str]:
         """Cached SERVICE readiness: (ready, reason). Never re-hashes.
 
@@ -730,6 +745,7 @@ class ReadinessManager:
                 # caller omits one (PR-3 minimal-hook style) — an omitted
                 # checksum is never a wildcard in _loaded_matches_current.
                 checksum_sha256=checksum_sha256 or verified.declared_checksum,
+                declared_path=verified.declared_path,
                 fingerprint=verified.fingerprint,
             )
             return True
@@ -758,3 +774,14 @@ class ReadinessManager:
                     for name, verification in state.verifications.items()
                 },
             }
+
+
+# One process-local owner is shared by canonical loading and health probes.
+# Uvicorn workers still receive independent instances because each worker
+# imports this module in its own process.
+_PROCESS_READINESS_MANAGER = ReadinessManager()
+
+
+def get_process_readiness_manager() -> ReadinessManager:
+    """Return the process-local readiness manager used by all API surfaces."""
+    return _PROCESS_READINESS_MANAGER
