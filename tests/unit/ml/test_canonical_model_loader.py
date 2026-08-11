@@ -59,7 +59,7 @@ class _SafeTestModel:
         return [[0.7, 0.2, 0.1]]
 
 
-@pytest.fixture(autouse=True)  # type: ignore[misc]
+@pytest.fixture(autouse=True)
 def isolated_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Keep all manifest paths and temporary artifacts inside tmp_path."""
     monkeypatch.chdir(tmp_path)
