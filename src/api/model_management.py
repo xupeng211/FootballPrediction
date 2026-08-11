@@ -1,293 +1,320 @@
-"""
-模型管理API路由
+"""Canonical read-only model observability API.
 
-提供模型热重载、版本查询等MLOps功能
+lifecycle: permanent
+component: Canonical
+
+This router reports the model state declared by the canonical artifact
+manifest, the exact feature-contract binding, and the process-local readiness
+state already shared by the canonical loader and health endpoints.
+
+It deliberately has no model lifecycle mutation surface.  Artifact activation
+remains a reviewed manifest change followed by startup loading; this module
+never deserializes a model, discovers local files, or writes repository state.
 """
 
-from datetime import datetime
+from __future__ import annotations
+
 import logging
-from pathlib import Path
+import re
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
-from src.services.inference_service import InferenceService
+from src.ml.inference.artifact_manifest import (
+    REQUIRED_FOR_API,
+    STATUS_PENDING,
+    VERIFIED,
+    ArtifactEntry,
+    ArtifactManifest,
+    get_process_readiness_manager,
+)
+from src.ml.inference.canonical_model_loader import (
+    CANONICAL_API_ARTIFACT_NAME,
+    CANONICAL_API_MODEL_TYPE,
+)
+from src.ml.inference.feature_contract_registry import (
+    FeatureContract,
+    FeatureContractRegistry,
+    FeatureContractRegistryError,
+)
 
 logger = logging.getLogger(__name__)
 
-# 创建API路由
-router = APIRouter(
-    prefix="/api/v1/models",
-    tags=["模型管理"],
-    responses={
-        400: {"description": "请求参数错误"},
-        404: {"description": "模型文件不存在"},
-        500: {"description": "服务器内部错误"},
-    },
+_PUBLIC_UNAVAILABLE_MESSAGE = "model management state unavailable"
+_SAFE_METADATA_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:+-]{0,119}")
+_SAFE_TIMESTAMP_RE = re.compile(
+    r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})"
+)
+_SAFE_VERIFICATION_STATUSES = frozenset(
+    {
+        "verified",
+        "not_active",
+        "file_missing",
+        "checksum_mismatch",
+        "path_invalid",
+        "verification_error",
+        "manifest_missing",
+        "manifest_malformed",
+    }
 )
 
 
-# Pydantic模型定义
-class ModelReloadRequest(BaseModel):
-    """模型重载请求"""
+class ArtifactSummary(BaseModel):
+    """Safe manifest-derived identity and declared state."""
 
-    model_path: str | None = Field(None, description="新的模型文件路径，如果不提供则使用默认路径")
-    backup_current: bool = Field(default=True, description="是否备份当前模型")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "model_path": "models/baseline_v1_retrained.pkl",
-                "backup_current": True,
-            }
-        }
+    name: str
+    model_type: str | None = None
+    required_for: str
+    declared_status: str
+    checksum_present: bool
+    schema_version: str | None = None
+    source: str | None = None
+    verification_status: str
 
 
-class ModelReloadResponse(BaseModel):
-    """模型重载响应"""
+class FeatureContractSummary(BaseModel):
+    """Safe summary of an exact registered feature-contract binding."""
 
-    success: bool = Field(..., description="是否重载成功")
-    message: str = Field(..., description="重载结果信息")
-    previous_version: str | None = Field(None, description="重载前的模型版本")
-    new_version: str | None = Field(None, description="重载后的模型版本")
-    reload_time: str = Field(..., description="重载时间")
-    model_path: str = Field(..., description="模型文件路径")
+    contract_id: str
+    feature_contract_version: str
+    feature_count: int
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "success": True,
-                "message": "模型重载成功",
-                "previous_version": "baseline_v1_mock",
-                "new_version": "baseline_v1_retrained",
-                "reload_time": "2025-12-16T20:15:00.000Z",
-                "model_path": "models/baseline_v1_retrained.pkl",
-            }
-        }
+
+class RuntimeSummary(BaseModel):
+    """Process-local serving status without paths or internal diagnostics."""
+
+    artifact_verified: bool
+    model_loaded: bool
+    service_ready: bool
+    reason: str
+    verified_at: str | None = None
 
 
 class ModelInfoResponse(BaseModel):
-    """模型信息响应"""
+    """Canonical API model information."""
 
-    is_loaded: bool = Field(..., description="模型是否已加载")
-    model_version: str = Field(..., description="当前模型版本")
-    model_path: str = Field(..., description="模型文件路径")
-    load_time: str | None = Field(None, description="模型加载时间")
-    file_size_mb: float | None = Field(None, description="模型文件大小(MB)")
-    last_modified: str | None = Field(None, description="模型文件最后修改时间")
-    available_models: list[str] = Field(..., description="可用的模型文件列表")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "is_loaded": True,
-                "model_version": "baseline_v1_retrained",
-                "model_path": "models/baseline_v1_retrained.pkl",
-                "load_time": "2025-12-16T20:15:00.000Z",
-                "file_size_mb": 0.14,
-                "last_modified": "2025-12-16T20:12:00.000Z",
-                "available_models": [
-                    "models/baseline_v1.pkl",
-                    "models/baseline_v1_retrained.pkl",
-                ],
-            }
-        }
+    artifact: ArtifactSummary
+    feature_contract: FeatureContractSummary
+    runtime: RuntimeSummary
 
 
-# 全局推理服务实例（在实际应用中应该通过依赖注入）
-_inference_service: InferenceService | None = None
+class ModelListItem(ArtifactSummary):
+    """One manifest-declared model with an optional exact contract binding."""
+
+    feature_contract: FeatureContractSummary | None = None
 
 
-def get_inference_service() -> InferenceService:
-    """获取推理服务实例"""
-    global _inference_service
-    if _inference_service is None:
-        _inference_service = InferenceService()
-    return _inference_service
+class ModelListResponse(BaseModel):
+    """Manifest-declared model inventory."""
+
+    total_models: int
+    models: list[ModelListItem]
 
 
-def get_available_models() -> list[str]:
-    """获取可用的模型文件列表"""
-    models_dir = Path("models")
-    if not models_dir.exists():
-        return []
+# One process-local owner is deliberately shared with health and the
+# canonical loader.  Tests may replace this reference with an isolated
+# ReadinessManager, but production imports resolve to the singleton owner.
+_readiness_manager = get_process_readiness_manager()
 
-    model_files = []
-    for file_path in models_dir.glob("*.pkl"):
-        model_files.append(str(file_path))
-
-    return sorted(model_files)
-
-
-def get_model_metadata(model_path: str) -> dict[str, Any]:
-    """获取模型元数据"""
-    model_path_obj = Path(model_path)
-    metadata_path = model_path_obj.with_suffix("._metadata.json")
-
-    metadata = {}
-    if metadata_path.exists():
-        try:
-            import json
-
-            with open(metadata_path) as f:
-                metadata = json.load(f)
-        except Exception as e:
-            logger.warning(f"读取模型元数据失败 {metadata_path}: {e}")
-
-    return metadata
+router = APIRouter(
+    prefix="/api/v1/models",
+    tags=["模型管理"],
+    responses={503: {"description": "模型管理状态不可用"}},
+)
 
 
-@router.post("/reload", response_model=ModelReloadResponse)
-async def reload_model(request: ModelReloadRequest, background_tasks: BackgroundTasks):
-    """
-    重新加载模型
+class _ManagementStateError(ValueError):
+    """Internal fail-closed marker for invalid canonical management state."""
 
-    支持模型热重载，可以在不重启服务的情况下更新模型。
 
-    Args:
-        request: 模型重载请求
-        background_tasks: 后台任务（用于日志记录等）
+def _safe_public_value(value: Any) -> str | None:
+    """Return only short identifier-like metadata suitable for an HTTP body."""
+    if not isinstance(value, str) or not _SAFE_METADATA_RE.fullmatch(value):
+        return None
+    return value
 
-    Returns:
-        ModelReloadResponse: 重载结果
-    """
-    try:
-        inference_service = get_inference_service()
 
-        # 获取当前模型版本
-        current_info = inference_service.get_model_info()
-        previous_version = current_info.get("model_version", "unknown")
+def _canonical_api_artifact(manifest: ArtifactManifest) -> ArtifactEntry:
+    """Resolve the exact API identity already owned by the canonical loader."""
+    entries = manifest.entries()
+    matches = [entry for entry in entries if entry.name == CANONICAL_API_ARTIFACT_NAME]
+    if len(matches) != 1:
+        raise _ManagementStateError("canonical API artifact identity unavailable")
 
-        # 确定模型路径
-        target_model_path = request.model_path or "models/baseline_v1.pkl"
+    artifact = matches[0]
+    if artifact.required_for != REQUIRED_FOR_API or artifact.model_type != CANONICAL_API_MODEL_TYPE:
+        raise _ManagementStateError("canonical API artifact binding unavailable")
+    return artifact
 
-        # 备份当前模型
-        if request.backup_current:
-            backup_path = f"{target_model_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            try:
-                import shutil
 
-                current_model_path = current_info.get("model_path", target_model_path)
-                if Path(current_model_path).exists():
-                    shutil.copy2(current_model_path, backup_path)
-                    logger.info(f"当前模型已备份到: {backup_path}")
-            except Exception as e:
-                logger.warning(f"模型备份失败: {e}")
+def _exact_feature_contract(
+    registry: FeatureContractRegistry, artifact: ArtifactEntry
+) -> FeatureContract:
+    """Resolve and re-check one exact artifact/model contract binding."""
+    contract = registry.get_for_model(
+        CANONICAL_API_MODEL_TYPE,
+        artifact_name=CANONICAL_API_ARTIFACT_NAME,
+    )
+    if (
+        artifact.name != contract.artifact_name
+        or artifact.model_type != contract.model_type
+        or contract.artifact_name != CANONICAL_API_ARTIFACT_NAME
+        or contract.model_type != CANONICAL_API_MODEL_TYPE
+    ):
+        raise _ManagementStateError("canonical artifact and feature contract are mismatched")
+    return contract
 
-        # 执行模型重载
-        reload_success = await inference_service.reload_model(target_model_path)
 
-        if reload_success:
-            # 获取新模型信息
-            new_info = inference_service.get_model_info()
-            new_version = new_info.get("model_version", "unknown")
+def _contract_summary(contract: FeatureContract) -> FeatureContractSummary:
+    """Convert a validated registry record to its safe public shape."""
+    return FeatureContractSummary(
+        contract_id=contract.contract_id,
+        feature_contract_version=contract.feature_contract_version,
+        feature_count=contract.feature_count,
+    )
 
-            # 后台任务：记录重载日志
-            background_tasks.add_task(
-                log_model_reload, previous_version, new_version, target_model_path, True
-            )
 
-            return ModelReloadResponse(
-                success=True,
-                message="模型重载成功",
-                previous_version=previous_version,
-                new_version=new_version,
-                reload_time=datetime.now().isoformat(),
-                model_path=target_model_path,
-            )
-        background_tasks.add_task(
-            log_model_reload, previous_version, "unknown", target_model_path, False
-        )
+def _verification_status(snapshot: dict[str, Any], artifact_name: str) -> str:
+    """Read a bounded per-artifact verification label from readiness state."""
+    artifacts = snapshot.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return "not_available"
+    state = artifacts.get(artifact_name)
+    if not isinstance(state, dict):
+        return "not_available"
+    value = state.get("status")
+    if isinstance(value, str) and value in _SAFE_VERIFICATION_STATUSES:
+        return value
+    return "not_available"
 
-        raise HTTPException(status_code=500, detail="模型重载失败")
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"模型重载异常: {e}")
-        raise HTTPException(status_code=500, detail=f"模型重载异常: {e!s}")
+def _artifact_summary(artifact: ArtifactEntry, snapshot: dict[str, Any]) -> ArtifactSummary:
+    """Build a manifest-only summary without exposing path or checksum values."""
+    return ArtifactSummary(
+        name=artifact.name,
+        model_type=_safe_public_value(artifact.model_type),
+        required_for=artifact.required_for,
+        declared_status=artifact.status,
+        checksum_present=artifact.checksum_sha256 is not None,
+        schema_version=_safe_public_value(artifact.schema_version),
+        source=_safe_public_value(artifact.source),
+        verification_status=_verification_status(snapshot, artifact.name),
+    )
+
+
+def _list_feature_contract(
+    artifact: ArtifactEntry,
+    contracts: dict[tuple[str, str], FeatureContract],
+) -> FeatureContract | None:
+    """Return an exact list binding, requiring one for the API artifact."""
+    contract = (
+        contracts.get((artifact.name, artifact.model_type))
+        if isinstance(artifact.model_type, str)
+        else None
+    )
+    if artifact.required_for != REQUIRED_FOR_API:
+        return contract
+    if contract is None:
+        raise _ManagementStateError("canonical API feature contract unavailable")
+    if contract.artifact_name != artifact.name or contract.model_type != artifact.model_type:
+        raise _ManagementStateError("canonical artifact and feature contract mismatch")
+    return contract
+
+
+def _runtime_summary(artifact: ArtifactEntry, snapshot: dict[str, Any]) -> RuntimeSummary:
+    """Expose stable readiness semantics rather than internal reason text."""
+    artifacts = snapshot.get("artifacts")
+    artifact_state = artifacts.get(artifact.name) if isinstance(artifacts, dict) else None
+    artifact_verified = isinstance(artifact_state, dict) and (
+        artifact_state.get("status") == VERIFIED
+    )
+    model_loaded = bool(snapshot.get("model_loaded")) and artifact_verified
+    service_ready = bool(snapshot.get("service_ready")) and artifact_verified
+
+    if service_ready:
+        reason = ""
+    elif artifact.status == STATUS_PENDING:
+        reason = "model artifact pending"
+    elif not artifact_verified:
+        reason = "model artifact not verified"
+    elif not model_loaded:
+        reason = "model artifact verified but not loaded"
+    else:
+        reason = "model service not ready"
+
+    verified_at = snapshot.get("verified_at") if artifact_verified else None
+    if not isinstance(verified_at, str) or not _SAFE_TIMESTAMP_RE.fullmatch(verified_at):
+        verified_at = None
+
+    return RuntimeSummary(
+        artifact_verified=artifact_verified,
+        model_loaded=model_loaded,
+        service_ready=service_ready,
+        reason=reason,
+        verified_at=verified_at,
+    )
+
+
+def _management_unavailable() -> HTTPException:
+    """Return the stable public error for malformed/unavailable canonical state."""
+    return HTTPException(status_code=503, detail=_PUBLIC_UNAVAILABLE_MESSAGE)
 
 
 @router.get("/info", response_model=ModelInfoResponse)
-async def get_model_info():
-    """
-    获取当前模型信息
-
-    Returns:
-        ModelInfoResponse: 模型信息
-    """
+async def get_model_info() -> ModelInfoResponse:
+    """Report the canonical API artifact and its read-only runtime state."""
     try:
-        inference_service = get_inference_service()
-        model_info = inference_service.get_model_info()
-
-        # 获取模型文件信息
-        model_path = model_info.get("model_path", "")
-        model_path_obj = Path(model_path)
-
-        file_size_mb = None
-        last_modified = None
-
-        if model_path_obj.exists():
-            file_size_mb = round(model_path_obj.stat().st_size / (1024 * 1024), 3)
-            last_modified = datetime.fromtimestamp(model_path_obj.stat().st_mtime).isoformat()
-
-        # 获取可用模型列表
-        available_models = get_available_models()
-
+        manifest = ArtifactManifest()
+        artifact = _canonical_api_artifact(manifest)
+        contract = _exact_feature_contract(FeatureContractRegistry(), artifact)
+        snapshot = _readiness_manager.snapshot()
         return ModelInfoResponse(
-            is_loaded=model_info.get("is_trained", False),
-            model_version=model_info.get("model_version", "unknown"),
-            model_path=model_path,
-            load_time=model_info.get("load_time"),
-            file_size_mb=file_size_mb,
-            last_modified=last_modified,
-            available_models=available_models,
+            artifact=_artifact_summary(artifact, snapshot),
+            feature_contract=_contract_summary(contract),
+            runtime=_runtime_summary(artifact, snapshot),
         )
+    except HTTPException:
+        raise
+    except (OSError, ValueError, FeatureContractRegistryError, RuntimeError):
+        logger.exception("模型管理 canonical 状态读取失败")
+        raise _management_unavailable() from None
+    except Exception:
+        logger.exception("模型管理 canonical 状态出现未预期错误")
+        raise _management_unavailable() from None
 
-    except Exception as e:
-        logger.exception(f"获取模型信息失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取模型信息失败: {e!s}")
 
-
-@router.get("/list")
-async def list_models():
-    """
-    列出所有可用模型
-
-    Returns:
-        Dict[str, Any]: 可用模型列表
-    """
+@router.get("/list", response_model=ModelListResponse)
+async def list_models() -> ModelListResponse:
+    """List only rows declared by the canonical manifest."""
     try:
-        models = []
-        available_models = get_available_models()
+        manifest = ArtifactManifest()
+        entries = manifest.entries()
+        registry = FeatureContractRegistry()
+        contracts = {
+            (contract.artifact_name, contract.model_type): contract
+            for contract in registry.contracts()
+        }
+        snapshot = _readiness_manager.snapshot()
 
-        for model_path in available_models:
-            model_path_obj = Path(model_path)
-            metadata = get_model_metadata(model_path)
+        models: list[ModelListItem] = []
+        for artifact in entries:
+            contract = _list_feature_contract(artifact, contracts)
+            models.append(
+                ModelListItem(
+                    **_artifact_summary(artifact, snapshot).model_dump(),
+                    feature_contract=(
+                        _contract_summary(contract) if contract is not None else None
+                    ),
+                )
+            )
 
-            model_info = {
-                "path": model_path,
-                "filename": model_path_obj.name,
-                "size_mb": round(model_path_obj.stat().st_size / (1024 * 1024), 3),
-                "last_modified": datetime.fromtimestamp(model_path_obj.stat().st_mtime).isoformat(),
-                "version": metadata.get("model_version", "unknown"),
-                "training_date": metadata.get("training_date"),
-                "accuracy": metadata.get("metrics", {}).get("accuracy"),
-                "is_metadata_available": bool(metadata),
-            }
-            models.append(model_info)
-
-        return {"total_models": len(models), "models": models}
-
-    except Exception as e:
-        logger.exception(f"列出模型失败: {e}")
-        raise HTTPException(status_code=500, detail=f"列出模型失败: {e!s}")
-
-
-async def log_model_reload(old_version: str, new_version: str, model_path: str, success: bool):
-    """记录模型重载日志"""
-    status = "成功" if success else "失败"
-    logger.info(
-        f"模型重载{status}: {old_version} -> {new_version} 模型路径: {model_path} 时间: {datetime.now()}"
-    )
+        return ModelListResponse(total_models=len(models), models=models)
+    except HTTPException:
+        raise
+    except (OSError, ValueError, FeatureContractRegistryError, RuntimeError):
+        logger.exception("模型管理 manifest/registry 读取失败")
+        raise _management_unavailable() from None
+    except Exception:
+        logger.exception("模型管理列表出现未预期错误")
+        raise _management_unavailable() from None

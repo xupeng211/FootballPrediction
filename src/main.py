@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST
 
 from src.api.health import router as health_router
+from src.api.model_management import router as model_management_router
 from src.api.monitoring import router as monitoring_router
 from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
@@ -147,9 +148,8 @@ app.add_middleware(
 # 注册路由
 app.include_router(health_router)
 app.include_router(monitoring_router, prefix="/api/v1")
-# PR-4: legacy model-management and admin/retraining routers are intentionally
-# not mounted.  The canonical API lifecycle is the only supported serving path;
-# model-management convergence remains reserved for PR-5.
+# PR-5: the mounted model-management surface is canonical and read-only.
+app.include_router(model_management_router)
 
 # 初始化 Prometheus metrics (在应用创建后，启动前)
 if os.getenv("ENABLE_METRICS", "true").lower() == "true":
