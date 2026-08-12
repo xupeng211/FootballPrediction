@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from prometheus_client import CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, start_http_server
 
 from src.api.health import router as health_router
 from src.api.model_management import router as model_management_router
@@ -28,15 +28,6 @@ from src.ml.inference.canonical_model_loader import ModelArtifactUnavailableErro
 if TYPE_CHECKING:
     from src.ml.inference.model_dispatcher import Predictor
 
-# V4.46: 激活收割监控指标
-from src.api.monitoring import (
-    circuit_breaker_state,
-    dead_letter_queue_size,
-    extraction_duration_seconds,
-    extraction_total,
-)
-from src.api.monitoring import metrics as harvest_metrics
-
 
 def setup_metrics_exporter(port: int = 9090) -> None:
     """
@@ -44,8 +35,6 @@ def setup_metrics_exporter(port: int = 9090) -> None:
 
     在独立端口上启动 HTTP 服务器，暴露 /metrics 端点。
     """
-    from prometheus_client import start_http_server
-
     start_http_server(port)
     logger.info(f"📈 Prometheus exporter started on port {port}")
 
