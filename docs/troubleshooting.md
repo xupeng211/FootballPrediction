@@ -280,83 +280,46 @@ export HTTPS_PROXY=http://new_proxy:port
 
 ## ML 模型问题
 
-### `AssertionError: Model file not found`
+### `prediction model unavailable`
 
-**原因**: 模型文件缺失或路径错误
+**含义**：canonical `v26_7_aligned` artifact 当前缺失、未激活、校验失败，
+或 manifest / feature contract 绑定不可用。git-tracked 当前状态是
+`status=pending`、`checksum_sha256=null`，因此 CLI 非零退出、HTTP 返回
+503 都是预期的 fail-closed 行为。
 
-**解决方案**:
+**诊断**：
 
 ```bash
-# 1. 检查模型文件
-ls -lh model_zoo/
-
-# 2. 重新训练模型
-python scripts/ml/train_model.py
-
-# 3. 从备份恢复
-cp backups/model_zoo_backup/* model_zoo/
+cat config/model_artifacts.json
+cat config/model_feature_contracts.json
+docker compose -f docker-compose.dev.yml exec -T dev \
+  python -m src.ml.inference.predict_cli --help
 ```
+
+不要通过直接 pathname 加载、Titan fallback、`v26_mini` 或训练命令绕过
+canonical artifact 状态。artifact 恢复、checksum 记录和 activation 属于
+单独授权的后续操作。
 
 ---
 
-### `AttributeError: 'NoneType' object has no attribute 'predict'`
+### 预测入口选错模型
 
-**原因**: 模型加载失败
-
-**诊断步骤**:
-
-```bash
-# 1. 检查模型文件完整性
-python -c "
-import pickle
-with open('model_zoo/v26.8_epl_production.pkl', 'rb') as f:
-    model = pickle.load(f)
-    print(type(model))
-"
-
-# 2. 检查 ModelDispatcher 配置
-python -c "from src.ml.inference.model_dispatcher import ModelDispatcher; print(ModelDispatcher.LEAGUE_MODEL_MAPPING)"
-```
-
-**解决方案**:
-
-```bash
-# 1. 验证模型文件格式
-python scripts/ml/validate_model.py
-
-# 2. 重新训练模型
-python scripts/ml/train_model.py --league "Premier League"
-```
+默认 `npm run predict` 必须进入
+`src.ml.inference.predict_cli`，再通过共享 runtime owner 使用
+`v26_7_aligned` 的 verified loader、manifest 和 feature contract。若需要
+审计旧 DB/Titan 兼容路径，命令名必须明确写成
+`npm run predict:titan-legacy`；该路径不是 canonical，也不能把其旧特征
+补齐、重命名或映射成 canonical 20-feature 输入。
 
 ---
 
-### 预测结果异常 (概率过低或过高)
+### 输入契约或特征维度不一致
 
-**原因**: 特征维度不一致或数据质量问题
-
-**诊断步骤**:
-
-```bash
-# 1. 检查特征维度
-python scripts/ops/check_db_consistency.py
-
-# 2. 检查特征清单
-python -c "
-from src.processors.feature_manifest import FeatureManifest
-manifest = FeatureManifest.from_file('config/v26_feature_manifest.json')
-print(f'特征维度: {len(manifest.get_required_features())}')
-"
-```
-
-**解决方案**:
-
-```bash
-# 1. 重新提取特征
-python scripts/maintenance/reprocess_from_local.py
-
-# 2. 验证特征清单
-python scripts/ops/lock_feature_manifest.py --validate
-```
+canonical registry `v26_7_aligned/v1` 固定 20 个有序特征，由
+`V26_6_PreMatchAdapter` 形成。CLI 只接收与 HTTP 相同的 JSON payload；不
+接受旧 `prediction_repo.extract_features()` 产生的 Titan DB 字典作为隐式
+转换输入。缺失或不确定的历史特征来源应让输入失败，不能用零值、默认值
+或 H2H 补位伪造 canonical 特征。
 
 ---
 

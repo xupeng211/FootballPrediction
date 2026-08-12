@@ -109,6 +109,32 @@ FootballPrediction/
 
 ---
 
+## 4.5 预测入口（当前 canonical surface）
+
+HTTP `/predict`、`/predict/batch` 与默认 CLI 共用
+`src/ml/inference/prediction_runtime.py`，canonical 身份固定为
+`v26_7_aligned`。CLI 只接受显式 JSON 文件或 stdin，不会因为旧命令习惯
+去执行 legacy business-DB batch discovery，也不会访问网络或写模型 artifact：
+
+```bash
+# 在 dev 容器内直接调用 canonical CLI
+docker compose -f docker-compose.dev.yml exec -T dev \
+  python -m src.ml.inference.predict_cli --input /path/to/payload.json
+
+# 通过 package 入口（入口自身进入 dev 容器）
+npm run predict -- --input /path/to/payload.json
+npm run predict:json -- --input /path/to/payload.json
+npm run predict:dry -- --input /path/to/payload.json
+```
+
+`predict:dry` 只校验 JSON 外形，不加载模型。当前 git-tracked canonical
+artifact 仍是 `pending`/`checksum_sha256=null`，真实预测会以非零退出码和
+`prediction model unavailable` 失败；不得用 Titan 或训练模型绕过该状态。
+旧 DB/Titan 管道仅可通过明确的 `npm run predict:titan-legacy` 名称调用，
+不属于默认入口。
+
+---
+
 ## 第五步：第一次贡献（5 分钟）
 
 ### 5.1 创建功能分支

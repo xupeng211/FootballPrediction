@@ -45,8 +45,9 @@ These are the production runtime surfaces that serve the application.
 | Path | Kind | Status | Evidence | Notes |
 |---|---|---|---|---|
 | `src/main.py` | FastAPI application | **active** | `Dockerfile` line 119: `CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]`; `docker-compose.yml` references `uvicorn src.main:app`; contains `app = FastAPI(...)` at line 109; has `if __name__ == "__main__"` at line 361 | Sole production API entrypoint. All runtime API traffic flows through this file. |
+| `src/ml/inference/predict_cli.py` | canonical prediction CLI | **active / artifact-pending** | `package.json` `predict`, `predict:dry`, and `predict:json` scripts invoke `python -m src.ml.inference.predict_cli`; `src/ml/inference/prediction_runtime.py` is the shared owner with HTTP | Explicit-payload CLI only; no implicit legacy DB-batch query or Titan fallback. The tracked canonical artifact remains pending, so normal prediction fails closed. |
 
-Count: **1** active runtime entrypoint.
+Count: **2** active runtime entrypoints.
 
 ---
 
@@ -135,7 +136,7 @@ treated as active runtime surfaces without explicit user authorization.
 | `scripts/ops/batch_historical_backfill.js` | backfill CLI | **do not run, do not modify** | `AGENTS.md` lists legacy raw backfill as blocked | Explicit backfill authorization |
 | `scripts/ops/odds_harvest_pipeline.js` | odds harvest CLI | **do not run, do not modify** | Odds ingestion requires separate authorization; `package.json` `odds:harvest` references it | Explicit odds harvesting authorization |
 | `scripts/ops/train_model.py` | training CLI | **do not run without training authorization** | `package.json` `train`, `train:fast`, `train:deep` scripts reference it; has `argparse` CLI; training is blocked by default | Explicit training authorization |
-| `scripts/ops/predict_pipeline.py` | prediction CLI | **do not run without prediction authorization** | `package.json` `predict`, `predict:dry`, `predict:json` scripts reference it; has `argparse` CLI; may bypass API boundary | Explicit prediction authorization |
+| `scripts/ops/predict_pipeline.py` | legacy Titan prediction CLI | **do not run without prediction authorization** | `package.json` exposes it only as `predict:titan-legacy`; it has `argparse`, import-time log setup, DB-backed feature extraction, and the non-canonical Titan lifecycle | Explicit prediction authorization; legacy/compatibility use only |
 | `scripts/ops/smelt_all.js` | feature/smelt CLI | **do not run, do not modify** | `package.json` `smelt` script references it; L3 work not authorized by default | Explicit L3/smelt authorization |
 | `scripts/ops/l3_stitch_pipeline.js` | L3 stitch CLI | **do not run, do not modify** | `package.json` `l3:stitch` script references it | Explicit L3 stitch authorization |
 | `scripts/maintenance/**` | maintenance CLIs | **do not run without maintenance authorization** | Multiple scripts with `__main__`, `argparse`, or DB/network naming; task-scoped approval required | Task-specific maintenance approval |

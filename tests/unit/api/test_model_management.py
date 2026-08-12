@@ -22,6 +22,7 @@ from starlette import status
 import src.api.health as health_module
 import src.api.model_management as model_management_module
 import src.main as main_module
+from src.ml.inference import prediction_runtime
 from src.ml.inference.artifact_manifest import ReadinessManager, get_process_readiness_manager
 from src.ml.inference.feature_contract_registry import FeatureContractRegistry
 import src.services.inference_service as inference_service_module
@@ -320,7 +321,7 @@ def test_model_management_does_not_mutate_tracked_configuration(client, monkeypa
 def test_predict_pending_artifact_remains_503(client, monkeypatch):
     """PR-5 observability does not change the canonical prediction contract."""
     monkeypatch.chdir(REPOSITORY_ROOT)
-    monkeypatch.setattr(main_module, "_predictor", None)
+    prediction_runtime.reset_predictor()
     get_process_readiness_manager().invalidate()
     response = client.post("/predict", json={"home_team": "A", "away_team": "B"})
 
