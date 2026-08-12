@@ -104,7 +104,7 @@ FootballPrediction/
 | `main.py` | 命令入口 | 很少改 |
 | `src/config/__init__.py` | 配置入口 | 需要新增或读取统一配置 |
 | `src/api/collectors/` | 数据采集 | 添加新数据源 |
-| `src/ml/engine.py` | 预测引擎 | 修改模型 |
+| `src/ml/inference/model_dispatcher.py` | 规范推理分发接口 | 修改推理边界时 |
 | `Makefile` | 快捷命令 | 添加新命令 |
 
 ---

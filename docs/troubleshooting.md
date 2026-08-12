@@ -315,7 +315,7 @@ with open('model_zoo/v26.8_epl_production.pkl', 'rb') as f:
 "
 
 # 2. 检查 ModelDispatcher 配置
-python -c "from src.ml.engine import ModelDispatcher; print(ModelDispatcher().league_model_mapping)"
+python -c "from src.ml.inference.model_dispatcher import ModelDispatcher; print(ModelDispatcher().league_model_mapping)"
 ```
 
 **解决方案**:
