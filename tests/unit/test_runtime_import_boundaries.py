@@ -109,6 +109,21 @@ assert not hasattr(compatibility, 'main')
     _assert_subprocess_success(result)
 
 
+def test_model_dispatcher_mapping_diagnostic_uses_public_class_constant() -> None:
+    result = _run_python(
+        """
+from src.ml.inference.model_dispatcher import ModelDispatcher
+
+assert hasattr(ModelDispatcher, 'LEAGUE_MODEL_MAPPING')
+assert not hasattr(ModelDispatcher, 'league_model_mapping')
+mapping = ModelDispatcher.LEAGUE_MODEL_MAPPING
+assert isinstance(mapping, dict)
+print(ModelDispatcher.LEAGUE_MODEL_MAPPING)
+"""
+    )
+    _assert_subprocess_success(result)
+
+
 def test_decommissioned_service_container_is_not_importable() -> None:
     result = _run_python(
         """
