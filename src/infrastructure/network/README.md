@@ -1,10 +1,10 @@
-# NetworkShield - V1.1.0
+# Node.js NetworkShield - V1.1.0
 
-## 工业级跨语言代理管理组件
+## Node.js 代理管理组件
 
 > **[Genesis.Standardization]** Production-Grade Proxy Management System
 >
-> 统一管理 Python (L2) 和 Node.js (L3) 的网络出口，深度对接 Windows 端的 Clash Verge (22个节点)。
+> Node.js 侧的代理管理与会话绑定组件，深度对接 Windows 端的 Clash Verge (22个节点)。
 
 ---
 
@@ -60,28 +60,14 @@ await shield.markProxySuccess(proxy.port, 150);
 shield.releaseSession('session-123');
 ```
 
-### Python 适配器
+### Python import boundary
 
-```python
-from src.infrastructure.network.network_shield import NetworkShieldAdapter
-
-# 创建适配器
-shield = NetworkShieldAdapter(
-    proxy_host='172.25.16.1',
-    port_range=(7891, 7912),
-    log_level='info'
-)
-
-# 初始化
-await shield.initialize()
-
-# 获取代理
-proxy = await shield.get_next_healthy_proxy('session-123')
-print(f"Using proxy: {proxy['url']}")
-
-# 释放会话
-shield.release_session('session-123')
-```
+历史 Python `NetworkShieldAdapter` 实现并不在当前仓库中，因此不是受支持的
+Python 能力。`src.infrastructure.network.python` 仅保留为可导入的空命名空间，
+不会导出 `NetworkShield`、`get_proxy` 或其他代理池 API。Python 专用客户端如有
+明确调用者，应直接导入其具体模块（例如
+`src.infrastructure.network.stealth_client`）；不要从该命名空间推断出 Python
+NetworkShield owner。
 
 ---
 
@@ -155,17 +141,13 @@ shield.release_session('session-123')
 └─────────────────────────────────────────────────────────────────────────────┘
                                      ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    跨语言同步层                                              │
+│                    Node.js 网络运行时                                        │
 │                                                                             │
-│  ┌─────────────────────┐         ┌─────────────────────┐                    │
-│  │   Node.js (L3)      │         │   Python (L2)       │                    │
-│  │   QuantHarvester    │         │   proxy_manager.py   │                    │
-│  │                     │         │                     │                    │
-│  │   NetworkShield.js  │◄───────►│   network_shield.py  │                    │
-│  └─────────────────────┘         └─────────────────────┘                    │
-│          ↑                                ↑                                  │
-│          └────────────────────────────────┘                                  │
-│                    File Lock + Registry Sync                                  │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │   NetworkShield.js / ProxyProvider / RegistryManager                  │  │
+│  │   SessionManager                                                      │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                    File Lock + Registry Sync                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -202,7 +184,7 @@ shield.release_session('session-123')
 
 ### 1. 中央注册制 (Central Registry Management)
 
-- **单一数据源**: `active_registry.json` 作为跨语言状态同步的权威来源
+- **单一数据源**: `active_registry.json` 作为 Node.js NetworkShield 状态的权威来源
 - **原子更新**: 基于文件锁的原子写入，避免竞态条件
 - **自动备份**: 写入前自动备份，支持故障恢复
 - **缓存优化**: 1秒 TTL 缓存，减少磁盘 I/O
@@ -343,61 +325,10 @@ async function main() {
 main().catch(console.error);
 ```
 
-### Python 完整示例
+### Python 运行时说明
 
-```python
-import asyncio
-import aiohttp
-from src.infrastructure.network.network_shield import NetworkShieldAdapter
-
-async def main():
-    # 1. 创建适配器
-    shield = NetworkShieldAdapter(
-        proxy_host='172.25.16.1',
-        port_range=(7891, 7912),
-        log_level='info'
-    )
-
-    # 2. 初始化
-    status = await shield.initialize()
-    print(f"NetworkShield initialized: {status}")
-
-    # 3. 创建会话并获取代理
-    session_id = f"session-{int(time.time())}"
-    proxy = await shield.get_next_healthy_proxy(session_id)
-
-    print(f"Assigned proxy: {proxy['url']} (Health: {proxy['health_score']})")
-
-    try:
-        # 4. 使用代理发起请求
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                'https://api.example.com/data',
-                proxy=proxy['url'],
-                timeout=10
-            ) as response:
-                data = await response.json()
-
-                # 5. 标记成功
-                await shield.mark_proxy_success(proxy['port'], 150)
-                print('Request successful')
-
-    except Exception as error:
-        # 6. 标记失败
-        await shield.mark_proxy_failed(proxy['port'], str(error))
-        print(f'Request failed: {error}')
-
-    finally:
-        # 7. 释放会话
-        shield.release_session(session_id)
-
-    # 8. 获取状态
-    final_status = shield.get_status()
-    print(f'Final status: {final_status}')
-
-if __name__ == '__main__':
-    asyncio.run(main())
-```
+当前仓库没有 Python NetworkShield 适配器示例。Python 网络模块的导入边界与
+具体客户端各自维护；本页其余示例均为 Node.js NetworkShield 用法。
 
 ---
 

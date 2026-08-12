@@ -1,57 +1,18 @@
-"""
-NetworkShield - V1.0.0 [Genesis.NetworkShield]
-================================================
+"""Network infrastructure package boundary.
 
-工业级跨语言代理管理组件
+The supported NetworkShield implementation is the Node.js module at
+``src/infrastructure/network/NetworkShield.js``. The historical Python
+NetworkShield exports are intentionally not re-exported: their implementation
+is not present in this repository.
 
-This package provides unified proxy management across Python and Node.js:
+Python callers with a supported specialized need import the concrete module,
+such as ``src.infrastructure.network.stealth_client``, directly.
 
-    from src.infrastructure.network.python import NetworkShield, get_proxy
-
-    # Get a healthy proxy
-    assignment = get_proxy(session_id="my-session")
-    if assignment:
-        print(f"Using proxy: {assignment.url}")
-        print(f"Health score: {assignment.health_score}")
-
-        # Mark result
-        mark_success(assignment.port)
-        # or
-        mark_failed(assignment.port, reason="Connection timeout")
-
-        # Release when done
-        release_session("my-session")
-
-Core Components:
-    - NetworkShield: Main proxy management class
-    - RegistryManager: Manages active_registry.json state
-    - ProxyNode: Represents a proxy node
-    - ProxyAssignment: Represents a proxy assignment result
+lifecycle: permanent
+component: package import boundary
 """
 
-from .python.network_shield import (
-    NetworkShield,
-    NodeStatus,
-    ProxyAssignment,
-    ProxyNode,
-    get_network_shield,
-    get_proxy,
-    mark_failed,
-    mark_success,
-    release_session,
-)
-
-__all__ = [
-    "NetworkShield",
-    "NodeStatus",
-    "ProxyAssignment",
-    "ProxyNode",
-    "get_network_shield",
-    "get_proxy",
-    "mark_failed",
-    "mark_success",
-    "release_session",
-]
+__all__: tuple[str, ...] = ()
 
 __version__ = "1.0.0"
 __author__ = "[Genesis.NetworkShield]"
