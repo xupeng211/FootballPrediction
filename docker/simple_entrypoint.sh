@@ -40,21 +40,6 @@ wait_for_database() {
     return 0
 }
 
-# 运行数据库迁移
-run_database_migrations() {
-    log_info "运行数据库迁移..."
-
-    if [[ -f "/app/alembic.ini" ]]; then
-        cd /app
-        python -m alembic upgrade head || {
-            log_warning "数据库迁移失败，但继续启动应用"
-        }
-        log_success "数据库迁移完成"
-    else
-        log_info "未找到迁移文件，跳过数据库迁移"
-    fi
-}
-
 # 启动应用
 start_application() {
     log_info "启动简化增强版API..."
@@ -86,7 +71,7 @@ main() {
 
     # 执行初始化步骤
     wait_for_database
-    run_database_migrations
+    log_info "应用启动不执行 schema migration；请先按 database/migrations/ 单独授权并 provision schema"
 
     # 启动应用
     start_application "$@"

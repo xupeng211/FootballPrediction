@@ -4,7 +4,7 @@
 - owner: project governance
 - task: local_staging_phase5p_staging_schema_migration_plan_docs_only
 - issue: #1636
-- status: planning documentation only
+- status: current-state governance; source authority resolved by PR-A4, execution still separately authorized
 
 ## Purpose
 
@@ -47,12 +47,16 @@ This plan does not call `/health/quick`, `/predict`, or any DB-backed endpoint.
 
 ## Schema and Migration Source of Truth
 
-The repository currently contains multiple schema and migration references:
+The repository retains multiple schema and migration surfaces, but their lifecycle is
+now explicit:
 
-- `database/migrations/*.sql` contains SQL migration files.
+- `database/migrations/*.sql` is the single forward schema-definition authority.
 - `src/database/migrations/alembic.ini` and `src/database/migrations/env.py`
-  define the Alembic migration environment.
+  define a legacy-frozen Alembic compatibility environment; its three historical
+  revisions do not reproduce the current V26.x contract.
 - `src/database/migrations/versions/` contains Alembic revision files.
+- `config/db_schema_authority.json` is the machine-readable authority/lifecycle
+  contract. A future schema change belongs only under `database/migrations/`.
 - `Makefile` exposes `data-schema-help`, `data-schema-status`,
   `data-schema-plan`, and blocked `data-schema-migrate` safety gates.
 - `docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md` is a historical
@@ -63,10 +67,11 @@ The repository currently contains multiple schema and migration references:
   dev-only role proof of concept. It must not be treated as a staging migration
   execution path.
 
-Because both SQL migration files and Alembic migration files exist, the future
-authorized migration task must first identify the source of truth and exact
-execution path. If the source of truth is unclear at that time, the task must
-stop at pending discovery and must not run migration.
+The future authorized migration task must use `database/migrations/` as the
+definition source and still identify the exact authorized execution surface,
+target environment, and expected state. Canonical location does not authorize
+execution; an ambiguous target or missing authorization must still stop before
+any migration.
 
 This PR does not define a real migration command.
 
@@ -105,7 +110,7 @@ Before any future migration task can run, all of the following must be true:
       pending for the migration task.
 - [ ] #1633 `DB_SSL_MODE` semantics status is reviewed or explicitly accepted
       as pending for the migration task.
-- [ ] Migration source of truth is identified.
+- [x] Migration source of truth is `database/migrations/` (PR-A4 policy contract).
 - [ ] Backup and rollback approach is documented.
 - [ ] Validation checklist is prepared.
 - [ ] No scraper, training, data expansion, or pipeline worker is running.

@@ -3,8 +3,11 @@
 # ^ Phase2C batch2: pre-existing type annotation gaps. This file was already
 #   >800 lines with mixed typing before the guard addition (~10 lines).
 """
-Database Schema Manager - 生产级数据库架构管理
-统一管理所有数据库操作、ID对齐和Schema维护
+历史数据库读写兼容模块。
+
+Schema evolution is owned by ``database/migrations/``.  The historical DDL
+entrypoints in this module are retained for auditability but are disabled;
+read-only/introspection helpers remain available to existing consumers.
 """
 
 from datetime import datetime
@@ -28,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class SchemaManager:
-    """数据库Schema管理器 - 生产级架构管理"""
+    """保留历史读取能力的数据库兼容模块；不再承担 schema evolution。"""
 
     def __init__(self):
         """初始化Schema管理器"""
@@ -49,14 +52,21 @@ class SchemaManager:
 
     def initialize_schema(self) -> bool:
         """
-        初始化/升级数据库Schema - 无损升级接口
+        已停用的历史 runtime DDL 入口。
 
-        兼容"表已存在但缺少字段"的情况，实现断点续传式升级。
-        这是 V149.0 标准化的统一入口，用于一键启动脚本。
+        新 schema 变更必须进入 ``database/migrations/``，并在独立授权后
+        执行。保留下面的旧实现正文仅用于历史审计，不允许通过本方法触发。
 
         Returns:
-            bool: 初始化是否成功
+            bool: 不返回；该历史入口始终抛出异常
         """
+        raise RuntimeError(
+            "SchemaManager.initialize_schema() is disabled as a legacy, "
+            "non-canonical runtime DDL entrypoint; provision schema from "
+            "database/migrations/ with separate authorization."
+        )
+
+        # The historical implementation below is intentionally unreachable.
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
@@ -69,7 +79,7 @@ class SchemaManager:
                 tables=["match_features_training", "matches", "raw_match_data"],
             )
 
-            logger.info("🏗️ V149.0 Schema初始化/升级开始...")
+            logger.info("历史 Schema DDL 实现（不可达，仅供审计）开始...")
 
             # Step 1: 创建所有表（如果不存在）
             self._create_match_features_table(cursor)
@@ -77,7 +87,7 @@ class SchemaManager:
             self._create_raw_match_data_table(cursor)
 
             # Step 2: 无损升级 - 添加L2字段（如果不存在）
-            logger.info("🔄 检查L2字段并执行无损升级...")
+            logger.info("历史 L2 DDL 实现（不可达，仅供审计）...")
             cursor.execute("""
                 DO $$
                 BEGIN
@@ -133,24 +143,29 @@ class SchemaManager:
             logger.info(f"✅ L2字段验证结果: {len(result)} 个字段存在")
 
             conn.commit()
-            logger.info("✅ V149.0 Schema初始化/升级完成 - 已支持 L2 Data Lake")
+            logger.info("历史 Schema DDL 实现（不可达，仅供审计）完成")
             return True
 
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.exception(f"❌ Schema初始化失败: {e}")
+            logger.exception(f"❌ 历史 Schema DDL 实现异常（不可达）: {e}")
             return False
 
     def initialize_production_schema(self) -> bool:
         """
-        初始化生产环境完整Schema
+        已停用的历史生产 schema DDL 入口。
+
+        生产或默认 runtime 不得从 Python 代码演进 schema；请使用
+        ``database/migrations/`` 的独立授权流程。
 
         Returns:
-            bool: 初始化是否成功
+            bool: 不返回；该历史入口始终抛出异常
         """
-        # V149.0: 统一使用 initialize_schema() 入口
-        return self.initialize_schema()
+        raise RuntimeError(
+            "SchemaManager.initialize_production_schema() is disabled; "
+            "schema evolution belongs to database/migrations/ with separate authorization."
+        )
 
     def _create_match_features_table(self, cursor):
         """创建match_features_training表"""

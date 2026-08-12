@@ -12,7 +12,7 @@
 - 仓库有哪些主要目录，各自职责是什么。
 - 新 Agent / 新成员应该按什么顺序阅读文档、在哪里找能力。
 - 正式、兼容、历史遗留代码大致分布在哪里。
-- 两套 migration 树、config 多目录、scripts/ops 与 docs/_reports 的已知边界与风险。
+- schema authority、两套 migration 树、config 多目录、scripts/ops 与 docs/_reports 的已知边界与风险。
 
 不回答：
 
@@ -56,8 +56,10 @@
 | `src/feature_engine/` | Node 侧特征工程 | |
 | `src/config/` | Python 侧配置 | 与 `config/`、`src/config_unified/` 多目录并存（见 config 风险提示） |
 | `config/` | 业务配置 | AGENTS.md §6.2 列出的优先配置源 |
-| `database/migrations/` | SQL migration 树（16 个 V*.sql） | V26.8 / V26.9 / V26.10 为 M3 合同；V26.10 经 `make data-schema-m3-canonical-inventory-disposable-*` 门禁；V26.8 / V26.9 仅经 `make m3-odds-sandbox-migrate`（授权 sandbox，双授权），`make data-schema-*` 不覆盖（plan 止于 V26.4、migrate 未接通） |
-| `src/database/migrations/` | Alembic migration 树（alembic.ini / env.py / versions/ 3 个版本） | 职责划分 UNCLEAR（见下） |
+| `database/migrations/` | 唯一 forward schema-definition authority（16 个 V*.sql） | 新 schema 变更只进入这里的 reviewed `V*.sql`；执行仍需既有 SC-002 / `make data-schema-*` 门禁与单独授权，不由应用启动自动执行 |
+| `src/database/migrations/` | Alembic 历史树（alembic.ini / env.py / versions/ 3 个版本） | `LEGACY`（future revisions frozen）：保留历史兼容与静态检查，不接收未来 schema revision，不是当前 schema authority |
+| `src/database/schema_manager.py` | 历史 Python schema helper | `LEGACY_NON_CANONICAL_RUNTIME_DDL`；`initialize_schema()` / `initialize_production_schema()` 已停用；读取/检查方法保留 |
+| `deploy/docker/init_db.sql` | 本地 Docker 空卷 bootstrap | `DEV_BOOTSTRAP_NON_AUTHORITATIVE`；仅 `docker-compose.dev.yml` 的开发 DB bootstrap，不是 staging/production migration authority |
 | `tests/` | 单元、集成、夹具 | 含 `tests/unit/odds_staging_*`、`tests/unit/canonical_inventory_*`、`tests/integration/odds_staging/` 等 |
 | `docs/` | 架构与运维文档 | `docs/_reports`、`docs/_manifests` 为历史治理资产，新任务默认不得创建 |
 
@@ -91,17 +93,27 @@
 4. 若能力已存在且状态为 CANONICAL：复用，不重复创建（AGENTS.md §2.1 防重复开发规则）。
 5. 若状态为 BLOCKED / NOT_ESTABLISHED：不自行实现，先向 Issue / 用户确认授权范围。
 
-## 两套 migration 目录的已知边界
+## DB schema authority 与两套 migration 目录
 
-- `database/migrations/`：16 个 V*.sql（V6.x / V12.x / V26.x）。V26.8（odds historical staging
-  contract）、V26.9（observation fingerprint）、V26.10（M3 canonical inventory contract）
-  为 M3 合同。V26.10 经 `make data-schema-m3-canonical-inventory-disposable-*` 门禁执行；
-  V26.8 / V26.9 仅经 `make m3-odds-sandbox-migrate` 在授权 sandbox（M3-D4D-B1）中应用，
-  `make data-schema-*` 不覆盖（plan 止于 V26.4、migrate 未接通）
-  （docs/PROJECT_STATUS.md、docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md）。
-- `src/database/migrations/`：Alembic 树（alembic.ini / env.py / versions/，3 个版本）。
-- **UNCLEAR — requires dedicated documentation**：两套树的职责划分（谁负责哪个 schema、
-  何时用 SQL 树、何时用 Alembic 树）在仓库文档中无明确说明。本文档不自行断言划分依据。
+机器可读的唯一契约是 `config/db_schema_authority.json`。新工程师对“下一项
+schema change 放在哪里？”的唯一答案是：
+
+> 在 `database/migrations/` 新增一个 reviewed、版本化的 `V*.sql` migration。
+
+- `database/migrations/` 是唯一 forward schema-definition authority。它包含 V6.x、
+  V12.x、V26.x 历史与现代合同；V26.8 / V26.9 的 odds staging 与 V26.10 的 M3
+  canonical inventory 仍按各自现有受控 surface 执行，不能从 authority 位置推导执行授权。
+- `src/database/migrations/` 的 Alembic head 是 `003_v145`，只有 3 个历史 revision，
+  未覆盖 V26.4–V26.10 当前合同，因此生命周期为 `LEGACY` 且冻结 future revisions；不得新增未来 revision，
+  不得由默认启动调用 `alembic upgrade`。
+- `SchemaManager` 的 mutation entrypoints 是 `LEGACY_NON_CANONICAL_RUNTIME_DDL` 并已 fail-fast；
+  其只读/introspection 方法不因 A4 被删除。
+- `deploy/docker/init_db.sql` 是 `DEV_BOOTSTRAP_NON_AUTHORITATIVE`，仅由
+  `docker-compose.dev.yml` 的开发 DB 空卷 bootstrap 使用；unified/production-like Compose
+  不再挂载它。它的表定义与 migration tree 的历史漂移是 carry-forward，不在 A4 修复。
+- 应用启动不自动执行 migration；migration 的 canonical location 与 migration execution
+  authorization 始终是两件事。现有 SC-002 allowlist、Python DB write guard、Alembic runtime
+  guard 保持不变。
 
 ## config 多目录风险提示
 
@@ -136,5 +148,6 @@ README canonical 表只定义"正式入口"，不授予执行权。所有含副�
 
 - 目录结构发生结构性变化（新增 / 移除顶层业务目录、migration 树职责明确化）。
 - README canonical 表入口集合变化时，同步检查本文档目录职责表。
-- 两套 migration 树职责得到官方说明（届时把 UNCLEAR 替换为结论并更新 CAPABILITY_INDEX）。
+- `config/db_schema_authority.json` 的 authority、lifecycle 或 startup policy 发生变化时，
+  同步更新 README、CAPABILITY_INDEX 与本节。
 - 新 Agent 反馈按本文档找不到能力时，立即修正。

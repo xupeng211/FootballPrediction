@@ -34,31 +34,16 @@ const pool = new Pool({
 const WORKER_SCRIPT = path.resolve(__dirname, 'l3_stitch_worker.js');
 const ELO_SCRIPT = path.resolve(__dirname, '../maintenance/recalculate_elo.js');
 
-const CREATE_L3_SQL = `
-    CREATE TABLE IF NOT EXISTS l3_features (
-        match_id VARCHAR(50) PRIMARY KEY REFERENCES matches(match_id) ON DELETE CASCADE,
-        external_id VARCHAR(50),
-        golden_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        tactical_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        odds_movement_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        odds_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        elo_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        rolling_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        efficiency_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        draw_features JSONB NOT NULL DEFAULT '{}'::jsonb,
-        market_sentiment JSONB NOT NULL DEFAULT '{}'::jsonb,
-        stitch_summary JSONB NOT NULL DEFAULT '{}'::jsonb,
-        computed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-    );
-    CREATE INDEX IF NOT EXISTS idx_l3_features_external_id ON l3_features(external_id);
-    CREATE INDEX IF NOT EXISTS idx_l3_features_computed_at ON l3_features(computed_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_l3_features_tactical_gin ON l3_features USING GIN(tactical_features);
-`;
+async function assertL3SchemaProvisioned(client) {
+    const result = await client.query(`
+        SELECT to_regclass('public.l3_features') AS relation
+    `);
 
-async function ensureL3Schema(client) {
-    await client.query(CREATE_L3_SQL);
+    if (!result.rows[0]?.relation) {
+        throw new Error(
+            'l3_features schema is not provisioned; authorize and provision database/migrations/V26.4__create_l3_features_table.sql before running L3 stitch'
+        );
+    }
 }
 
 async function backfillFinishedScores(client) {
@@ -272,14 +257,14 @@ async function main() {
     assertDbWriteAllowed({
         script: 'l3_stitch_pipeline.js',
         tables: ['l3_features', 'matches'],
-        operations: ['CREATE', 'UPDATE'],
+        operations: ['UPDATE'],
     });
 
     const client = await pool.connect();
 
     try {
         console.log(`L3 Golden Stitching season=${TARGET_SEASON} workers=${TARGET_WORKERS}`);
-        await ensureL3Schema(client);
+        await assertL3SchemaProvisioned(client);
 
         const scoresBackfilled = await backfillFinishedScores(client);
         console.log(`Backfilled finished scores from raw header: ${scoresBackfilled}`);

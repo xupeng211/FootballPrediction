@@ -94,21 +94,6 @@ asyncio.run(check_db())
     exit 1
 }
 
-# 运行数据库迁移
-run_database_migrations() {
-    log_info "检查数据库迁移..."
-
-    if [[ -f "/app/alembic.ini" ]]; then
-        log_info "运行数据库迁移..."
-        cd /app
-        python -m alembic upgrade head || {
-            log_warning "数据库迁移失败，但继续启动应用"
-        }
-    else
-        log_info "未找到迁移文件，跳过数据库迁移"
-    fi
-}
-
 # 初始化应用
 initialize_application() {
     log_info "初始化应用..."
@@ -215,7 +200,7 @@ main() {
     # 执行初始化步骤
     check_environment_variables
     wait_for_database
-    run_database_migrations
+    log_info "应用启动不执行 schema migration；请先按 database/migrations/ 单独授权并 provision schema"
     initialize_application
 
     # 启动应用
