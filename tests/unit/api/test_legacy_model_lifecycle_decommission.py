@@ -16,8 +16,9 @@ os.environ["LOG_LEVEL"] = "INFO"
 
 import src.main as main_module
 import src.ml.inference as inference_package
-from src.ml.inference import Predictor
+from src.ml.inference import Predictor, prediction_runtime
 from src.ml.inference.model_dispatcher import Predictor as DispatcherPredictor
+import src.ml.inference.predict_cli as prediction_cli
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 CANONICAL_ARTIFACT = REPOSITORY_ROOT / "model_zoo/production/v26.7_aligned_production.pkl"
@@ -51,10 +52,14 @@ def test_canonical_prediction_and_readonly_model_routes_are_mounted():
     assert "admin_router" not in vars(main_module)
 
 
-def test_predictor_factory_remains_canonical():
-    """The active factory still constructs the PR-3 canonical predictor."""
+def test_predictor_factory_remains_canonical(monkeypatch):
+    """HTTP and CLI resolve through the shared canonical runtime owner."""
     assert Predictor is DispatcherPredictor
-    factory_source = inspect.getsource(main_module.get_predictor)
+    factory_source = inspect.getsource(prediction_runtime.get_predictor)
+    sentinel = object()
+    monkeypatch.setattr(prediction_runtime, "get_predictor", lambda: sentinel)
+    assert main_module.get_predictor() is sentinel
+    assert prediction_cli.get_predictor() is sentinel
     assert "create_v26_7_aligned" in factory_source
     assert "model_loader" not in factory_source.lower()
 

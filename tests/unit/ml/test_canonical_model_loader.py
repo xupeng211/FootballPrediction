@@ -25,6 +25,7 @@ import src.api.health as health_module
 from src.database.db_pool import DatabasePool
 import src.main as main_module
 from src.ml.feature_adapter import FeatureAdapterFactory, ModelType, V26_6_PreMatchAdapter
+from src.ml.inference import prediction_runtime
 from src.ml.inference.artifact_manifest import (
     ArtifactManifest,
     ReadinessManager,
@@ -62,8 +63,10 @@ class _SafeTestModel:
 @pytest.fixture(autouse=True)
 def isolated_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Keep all manifest paths and temporary artifacts inside tmp_path."""
+    prediction_runtime.reset_predictor()
     monkeypatch.chdir(tmp_path)
-    return tmp_path
+    yield tmp_path
+    prediction_runtime.reset_predictor()
 
 
 def _sha256(path: Path) -> str:
@@ -554,7 +557,7 @@ def test_current_pending_manifest_keeps_predict_fail_closed(
 ) -> None:
     """The real tracked pending row still yields the public 503 contract."""
     monkeypatch.chdir(PROJECT_ROOT)
-    monkeypatch.setattr(main_module, "_predictor", None)
+    prediction_runtime.reset_predictor()
     main_module.app.state.limiter.enabled = False
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -574,7 +577,7 @@ def test_startup_valid_temp_artifact_can_be_ready_without_prediction(
     loader, manager, _artifact_path, _manifest_path = _make_loader(tmp_path)
     monkeypatch.setattr(dispatcher_module, "get_canonical_model_loader", lambda: loader)
     monkeypatch.setattr(health_module, "_readiness_manager", manager)
-    monkeypatch.setattr(main_module, "_predictor", None)
+    prediction_runtime.reset_predictor()
     monkeypatch.setenv("ENABLE_METRICS", "false")
 
     class _FakePool:
@@ -593,7 +596,7 @@ def test_startup_valid_temp_artifact_can_be_ready_without_prediction(
     async def _exercise() -> None:
         async with main_module.lifespan(main_module.app):
             assert manager.service_ready() == (True, "")
-            assert main_module._predictor is not None
+            assert prediction_runtime._runtime_state.predictor is not None
 
     asyncio.run(_exercise())
 
@@ -603,7 +606,7 @@ def test_startup_with_real_pending_manifest_stays_not_ready(
 ) -> None:
     """Startup recognizes the tracked pending state without deserialization."""
     monkeypatch.chdir(PROJECT_ROOT)
-    monkeypatch.setattr(main_module, "_predictor", None)
+    prediction_runtime.reset_predictor()
     monkeypatch.setenv("ENABLE_METRICS", "false")
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -623,7 +626,7 @@ def test_startup_with_real_pending_manifest_stays_not_ready(
     async def _exercise() -> None:
         async with main_module.lifespan(main_module.app):
             assert get_process_readiness_manager().service_ready()[0] is False
-            assert main_module._predictor is None
+            assert prediction_runtime._runtime_state.predictor is None
 
     asyncio.run(_exercise())
     assert load_calls == []

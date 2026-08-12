@@ -8,13 +8,12 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
-import threading
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from prometheus_client import CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, start_http_server
 
 from src.api.health import router as health_router
 from src.api.model_management import router as model_management_router
@@ -23,16 +22,11 @@ from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
 from src.database.db_pool import DatabasePool
-from src.ml.inference.model_dispatcher import ModelArtifactUnavailableError, Predictor
+from src.ml.inference import prediction_runtime
+from src.ml.inference.canonical_model_loader import ModelArtifactUnavailableError
 
-# V4.46: 激活收割监控指标
-from src.api.monitoring import (
-    metrics as harvest_metrics,
-    extraction_total,
-    extraction_duration_seconds,
-    circuit_breaker_state,
-    dead_letter_queue_size,
-)
+if TYPE_CHECKING:
+    from src.ml.inference.model_dispatcher import Predictor
 
 
 def setup_metrics_exporter(port: int = 9090) -> None:
@@ -41,8 +35,6 @@ def setup_metrics_exporter(port: int = 9090) -> None:
 
     在独立端口上启动 HTTP 服务器，暴露 /metrics 端点。
     """
-    from prometheus_client import start_http_server
-
     start_http_server(port)
     logger.info(f"📈 Prometheus exporter started on port {port}")
 
@@ -229,27 +221,10 @@ async def root():
 # V26.4 预测端点
 # ============================================================================
 
-# 全局预测器实例
-_predictor: "Predictor | None" = None
-_predictor_lock = threading.RLock()
-
 
 def get_predictor() -> "Predictor":
-    """获取预测器实例（单例模式）"""
-    global _predictor
-    with _predictor_lock:
-        if _predictor is None:
-            logger.info("初始化 V26.7 对齐预测器...")
-            _predictor = Predictor.create_v26_7_aligned()
-        else:
-            try:
-                _predictor.ensure_canonical_model_current()
-            except ModelArtifactUnavailableError:
-                # Never keep serving an object after manifest/artifact
-                # invalidation has made the canonical load unavailable.
-                _predictor = None
-                raise
-        return _predictor
+    """HTTP compatibility seam delegating to the shared canonical owner."""
+    return prediction_runtime.get_predictor()
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])

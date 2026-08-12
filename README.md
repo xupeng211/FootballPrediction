@@ -202,15 +202,46 @@ this section rather than maintaining duplicate command lists.
 | **M3 canonical inventory** | Controlled implementation surface | `make data-m3-canonical-inventory-preflight` and `make data-m3-canonical-inventory-disposable-proof` | Preflight validates a hash-bound artifact without writing. The proof accepts only deterministic synthetic input, requires separate exact schema and proof authorizations, and reaches its V26.10 migration through the disposable-only `data-schema-*` gate; persistent canonical writes remain blocked pending separate provenance review and authorization |
 | **Feature build** | Primary canonical | `npm run l3:stitch` | Confirm input data and write scope before execution; `npm run smelt` is a specialized internal alternative |
 | **Training** | Primary canonical | `npm run train -- --input <offline-feature-frame> --output <candidate-path>` | **Only with explicit training authorization.** The canonical producer consumes an explicit pre-match frame, writes only a non-production candidate, uses the exact API contract, and never activates the tracked manifest. `train:fast` and `train:deep` are variants |
-| **Prediction** | Primary canonical | `npm run predict` | May read DB. Confirm environment, model, and authorization. `predict:dry` and `predict:json` are variants |
+| **Prediction** | Primary canonical | `npm run predict -- --input <json-file>` (or JSON stdin) | HTTP and default CLI share `src/ml/inference/prediction_runtime.py`; the CLI does not perform legacy DB-batch discovery, fetch network data, or write artifacts. The canonical API artifact is currently pending, so prediction fails closed; execution still requires explicit prediction authorization |
 | **Backtest** | Not yet established | None — must be implemented and accepted in a future business milestone | Historical scripts (`recon_scanner.js`, `gold_pilot_50.js`, `titan_marathon.js`) are not canonical backtest entrypoints |
 | **Offline probability benchmark (Value MVP-1)** | Research evaluation (DOCUMENTED_ONLY) | Internal research-evaluation entrypoint: `scripts/model_training/value_mvp_baseline_vs_closing.py` (not a README canonical entrypoint; see Entry classification below) | Strictly offline probability benchmark evaluation: zero DB, zero network, zero new data, no odds as model features, walk-forward by season, protocol frozen before OOS. This is NOT an executable betting backtest and makes no ROI / profitability / CLV claim — the **Backtest** row above remains Not yet established |
+
+### Prediction authority (PR-A3 current state)
+
+- HTTP `POST /predict` and `POST /predict/batch` delegate to the shared
+  `src/ml/inference/prediction_runtime.py` owner. The owner always creates
+  `v26_7_aligned` through `Predictor.create_v26_7_aligned()`, which remains
+  bound to the verified loader, manifest, feature-contract registry, and
+  readiness lifecycle.
+- The default CLI is the thin `src/ml/inference/predict_cli.py` adapter:
+
+  ```bash
+  npm run predict -- --input payload.json
+  cat payload.json | npm run predict
+  npm run predict:json -- --input payload.json
+  npm run predict:dry -- --input payload.json
+  ```
+
+  Input is an explicit JSON object or an array of JSON objects with the same
+  outer shape accepted by the HTTP routes. The adapter does not recreate the
+  legacy DB/Titan batch query. `predict:dry` validates input only;
+  it does not load a model. With the tracked pending/null canonical artifact,
+  normal prediction exits non-zero with `prediction model unavailable` and
+  never falls back to Titan or `v26_mini`.
+- `npm run predict:titan-legacy` is the explicit legacy compatibility command
+  for `scripts/ops/predict_pipeline.py`. It retains the old DB-backed Titan
+  feature path and is not a canonical prediction authority. Its Titan input
+  contains an 11-feature legacy core plus default-filled Titan-specific
+  extensions; it is not asserted to equal the canonical 20-feature contract.
+  `scripts/ops/titan_cruise_control.py` remains a historical Titan caller for
+  the same reason.
 
 ### Entry classification
 
 - **Canonical** — default entrypoint for new human work and agent work.
-- **Specialized / Internal** — valid for specific use-cases but not the domain default (e.g., `npm run seed`,
-  `npm run odds:sniper`, `npm run smelt`, `predict:dry`, `train:fast`). M3 odds-staging offline entries belong here
+- **Specialized / Internal** — valid for specific use-cases but not the domain default (e.g.,
+  `npm run seed`, `npm run odds:sniper`, `npm run smelt`, `predict:dry`,
+  `predict:titan-legacy`, `train:fast`). M3 odds-staging offline entries belong here
   too: `npm run odds:staging:dry-run` (single-source offline import, fail-closed/no-write) and
   `npm run odds:staging:rebuild` (multi-source deterministic reconstruction, repo-external bundle/emit-dir only,
   no-write default; `--canonical-history` recovers the pinned sources from immutable git objects via a bounded

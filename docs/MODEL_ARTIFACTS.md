@@ -82,8 +82,10 @@ python scripts/model_artifacts/check_model_artifacts.py --allow-missing
 - `checksum_sha256`: SHA256 of the COMPLETE artifact file bytes — the single
   authoritative integrity anchor (MANIFEST_ONLY; artifact files carry no
   duplicate checksum).
-- `required_for`: `api` (HTTP `/predict` surface) or `cli` (`npm run predict`
-  surface). API readiness depends only on `api` rows.
+- `required_for`: `api` (HTTP `/predict` and canonical CLI surfaces) or `cli`
+  (a retained compatibility consumer). API readiness and the canonical CLI
+  both depend on the `api` row; the legacy Titan `cli` row does not authorize
+  or activate the canonical CLI.
 
 Readiness is TWO-LAYERED — artifact verification is NOT service readiness:
 
@@ -128,13 +130,16 @@ training producer work.
 
 ## Canonical Verified Loader (PR-3)
 
-The canonical HTTP path is `/predict` → `src.main.get_predictor()` →
+The canonical HTTP and CLI paths are `/predict`, `/predict/batch`, and
+`src/ml/inference/predict_cli.py` →
+`src/ml/inference/prediction_runtime.py:get_predictor()` →
 `src/ml/inference/model_dispatcher.py:Predictor` →
 `src/ml/inference/canonical_model_loader.py:CanonicalModelLoader`. For
 `v26_7_aligned`, the loader resolves the artifact path and status only from
 `config/model_artifacts.json`, then requires an exact binding to
 `config/model_feature_contracts.json` and the 20-feature
-`V26_6_PreMatchAdapter` declaration.
+`V26_6_PreMatchAdapter` declaration. The CLI only accepts an explicit
+HTTP-compatible JSON payload; it does not recreate the legacy DB batch query.
 
 An active artifact is copied into an ephemeral temporary file while the copied
 bytes are hashed and compared with the manifest checksum. `joblib.load()` only
@@ -142,6 +147,13 @@ receives that verified snapshot, never the production pathname; the source is
 re-verified before the readiness signal is published. This closes the
 verify-before-deserialize and pathname replacement (TOCTOU) boundary. Expected
 load failures remain the public `503 prediction model unavailable` contract.
+
+The canonical CLI maps the same unavailable condition to exit code `3` and the
+sanitized message `prediction model unavailable`. Malformed or invalid input
+is a non-zero input error without a traceback. It never falls back to Titan,
+`v26_mini`, direct artifact paths, model creation, or manifest/readiness
+mutation. `npm run predict:dry` validates the outer JSON shape only and does
+not load a model.
 
 Startup performs a canonical load attempt without waiting for the first
 prediction request. The current tracked API row remains `status=pending` with
@@ -194,8 +206,13 @@ readiness manager, and mounts only its read-only `/api/v1/models/info` and
 discovery, backup, and sidecar-metadata behaviors are not supported. The
 legacy `src/ml/inference/model_loader.py` / `predictor.py` pair remains only
 for the separately scoped non-API strategy compatibility path, while
-`titan_loader.py` remains the noncanonical CLI/TITAN consumer. Neither is a
-fallback for `/predict` or `/predict/batch`.
+`titan_loader.py` remains the noncanonical CLI/TITAN consumer, exposed for
+the explicit `npm run predict:titan-legacy` compatibility command. The old
+DB-backed `scripts/ops/predict_pipeline.py` path and its
+`titan_cruise_control.py` caller remain legacy; neither is a fallback for
+`/predict`, `/predict/batch`, or the canonical CLI. Their Titan feature
+extraction is not equivalent to the registry-owned canonical 20-feature
+contract and is not translated by A3.
 
 PR-4 and PR-5 do not activate or create a production artifact. The tracked
 canonical API row remains `status=pending` with `checksum_sha256=null`;
