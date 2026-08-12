@@ -161,10 +161,9 @@ async def init_production():
             settings = get_settings()
             print(f'📋 应用: Football Prediction System v2.3-production')
             print(f'🌍 环境: {settings.environment}')
-        except Exception as e:
-            print(f'⚠️ 配置加载警告: {e}')
-            # 使用默认配置继续
-            print('📋 使用默认配置继续启动')
+        except Exception:
+            print('❌ 配置加载失败，停止启动')
+            return False
 
         # 2. 验证核心模块导入
         print('\\n🔍 验证核心模块:')

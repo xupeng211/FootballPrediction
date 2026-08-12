@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import json
+import logging
 from pathlib import Path
 import sys
 import types
@@ -79,6 +80,173 @@ DEFAULT_MIN_PAYOUT = 1.02
 def _clear_settings_cache() -> None:
     settings_module._build_settings.cache_clear()
     settings_module._build_config_accessor.cache_clear()
+
+
+def _set_valid_settings_environment(monkeypatch, environment: str) -> None:
+    """为配置初始化测试设置不依赖外部服务的有效环境。"""
+    monkeypatch.setenv("ENVIRONMENT", environment)
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("NODE_ENV", raising=False)
+    monkeypatch.setenv("LOG_LEVEL", "INFO")
+    monkeypatch.setenv("DEBUG", "false")
+    monkeypatch.setenv("SKIP_ENV_VALIDATION", "1")
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    monkeypatch.setenv("DB_PASSWORD", "db-password")
+    monkeypatch.setenv("DB_HOST", "db")
+    monkeypatch.setenv(
+        "DB_NAME",
+        "football_prediction_staging" if environment == "staging" else "football_db",
+    )
+    monkeypatch.setenv("DB_SSL_MODE", "require")
+    monkeypatch.setenv("REDIS_HOST", "redis")
+
+
+@pytest.mark.parametrize("environment", ["staging", "production"])
+def test_protected_environment_initialization_failure_propagates(monkeypatch, environment):
+    """受保护环境初始化失败时不得返回开发配置。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, environment)
+    expected_error = ValueError("configuration bootstrap failure")
+
+    def fail_validation(_settings):
+        raise expected_error
+
+    monkeypatch.setattr(settings_module, "_validate_database_environment", fail_validation)
+
+    with pytest.raises(ValueError, match="configuration bootstrap failure") as exc_info:
+        reload_settings()
+
+    assert exc_info.value is expected_error
+    assert settings_module._build_settings.cache_info().currsize == 0
+
+
+def test_database_configuration_error_semantics_are_preserved(monkeypatch):
+    """DatabaseConfigurationError 仍应原样传播且不进入 fallback。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "production")
+    expected_error = config_package.DatabaseConfigurationError("database bootstrap failure")
+
+    def fail_validation(_settings):
+        raise expected_error
+
+    monkeypatch.setattr(settings_module, "_validate_database_environment", fail_validation)
+
+    with pytest.raises(config_package.DatabaseConfigurationError) as exc_info:
+        reload_settings()
+
+    assert exc_info.value is expected_error
+    assert settings_module._build_settings.cache_info().currsize == 0
+
+
+def test_unexpected_construction_error_is_not_retried_or_cached(monkeypatch):
+    """意外构造异常不得被重试为开发配置，也不得进入缓存。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "production")
+    original_settings = settings_module.UnifiedSettings
+    calls = 0
+
+    def fail_once(**kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("unexpected configuration programmer error")
+        return original_settings(**kwargs)
+
+    monkeypatch.setattr(settings_module, "UnifiedSettings", fail_once)
+
+    with pytest.raises(RuntimeError, match="unexpected configuration programmer error"):
+        get_settings()
+
+    assert calls == 1
+    assert settings_module._build_settings.cache_info().currsize == 0
+
+
+def test_valid_development_configuration_remains_available(monkeypatch):
+    """有效开发配置仍可通过公共入口初始化。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "development")
+    monkeypatch.setattr(settings_module, "_validate_database_environment", lambda _settings: None)
+
+    settings = reload_settings()
+
+    assert settings.environment is common.Environment.DEVELOPMENT
+    assert settings.secret_key.get_secret_value() == "x" * 32
+    assert settings.debug is False
+
+
+@pytest.mark.parametrize("environment", ["staging", "production"])
+def test_valid_protected_configuration_preserves_environment(monkeypatch, environment):
+    """有效 staging/production 配置的环境身份保持不变。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, environment)
+    monkeypatch.setattr(settings_module, "_validate_database_environment", lambda _settings: None)
+
+    settings = reload_settings()
+
+    assert settings.environment is common.Environment(environment)
+
+
+def test_failed_build_is_not_cached_and_can_retry_after_repair(monkeypatch):
+    """失败构造不缓存伪造对象，修复输入后可通过正式 cache path 重试。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "production")
+    should_fail = True
+
+    def fail_until_repaired(_settings):
+        if should_fail:
+            raise ValueError("temporary configuration failure")
+
+    monkeypatch.setattr(settings_module, "_validate_database_environment", fail_until_repaired)
+
+    with pytest.raises(ValueError, match="temporary configuration failure"):
+        reload_settings()
+    assert settings_module._build_settings.cache_info().currsize == 0
+
+    should_fail = False
+    settings = reload_settings()
+
+    assert settings.environment is common.Environment.PRODUCTION
+    assert get_settings() is settings
+    assert settings_module._build_settings.cache_info().currsize == 1
+
+
+def test_configuration_failure_does_not_log_secret_material(monkeypatch, caplog):
+    """配置失败日志不得泄露环境中的密钥或开发恢复密钥。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "production")
+    sentinel_secret = "sentinel-production-secret-1234567890"
+    monkeypatch.setenv("SECRET_KEY", sentinel_secret)
+
+    def fail_validation(_settings):
+        raise ValueError("configuration validation failed")
+
+    monkeypatch.setattr(settings_module, "_validate_database_environment", fail_validation)
+
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.raises(ValueError, match="configuration validation failed"),
+    ):
+        get_settings()
+
+    assert sentinel_secret not in caplog.text
+    assert "dev-secret-key-please-change-in-production" not in caplog.text
+
+
+def test_public_config_accessors_do_not_add_failure_fallback(monkeypatch):
+    """get_settings/reload_settings/get_config 共享同一 fail-closed 入口。"""
+    _clear_settings_cache()
+    _set_valid_settings_environment(monkeypatch, "staging")
+
+    def fail_validation(_settings):
+        raise ValueError("public configuration failure")
+
+    monkeypatch.setattr(settings_module, "_validate_database_environment", fail_validation)
+
+    for accessor in (get_settings, reload_settings, get_config):
+        _clear_settings_cache()
+        with pytest.raises(ValueError, match="public configuration failure"):
+            accessor()
+        assert settings_module._build_settings.cache_info().currsize == 0
 
 
 def test_common_env_helpers(monkeypatch):
@@ -341,6 +509,7 @@ def test_unified_settings_urls_and_accessors(monkeypatch, tmp_path):
     monkeypatch.setattr(proxy_settings, "PROXY_POOL_CONFIG_PATH", pool_file)
     monkeypatch.setattr(settings_module, "_validate_database_environment", lambda _: None)
     monkeypatch.setenv("SKIP_ENV_VALIDATION", "1")
+    monkeypatch.setenv("ENVIRONMENT", "development")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     monkeypatch.setenv("DB_PASSWORD", "db-password")
     monkeypatch.setenv("DB_NAME", "football_db")

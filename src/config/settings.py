@@ -7,17 +7,13 @@ from functools import lru_cache
 import os
 from typing import Any
 
-from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.config.common import (
     DEFAULT_DB_NAME,
-    DEFAULT_DB_SSL_MODE,
     MIN_SECRET_KEY_LENGTH,
-    Environment,
     env_flag,
     logger,
-    normalize_db_ssl_mode,
     normalize_environment_name,
     validate_database_environment_impl,
     validate_db_name_for_environment,
@@ -182,25 +178,11 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
 @lru_cache(maxsize=1)
 def _build_settings() -> UnifiedSettings:
     """构建并缓存全局设置实例。"""
-    try:
-        settings = UnifiedSettings()
-        errors = settings.validate_integrity()
-        if errors:
-            logger.warning("配置验证警告: %s", "; ".join(errors))
-        _validate_database_environment(settings)
-    except DatabaseConfigurationError:
-        raise
-    except Exception as exc:
-        logger.warning("配置初始化警告: %s", exc)
-        policy_environment = normalize_environment_name()
-        raw_db_name = os.getenv("DB_NAME", DEFAULT_DB_NAME)
-        validate_db_name_for_environment(raw_db_name, policy_environment)
-        normalize_db_ssl_mode(os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE), policy_environment)
-        return UnifiedSettings(
-            environment=Environment.DEVELOPMENT,
-            debug=True,
-            secret_key=SecretStr("dev-secret-key-please-change-in-production"),
-        )
+    settings = UnifiedSettings()
+    errors = settings.validate_integrity()
+    if errors:
+        logger.warning("配置验证警告: %s", "; ".join(errors))
+    _validate_database_environment(settings)
     return settings
 
 
