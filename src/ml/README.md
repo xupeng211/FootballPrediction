@@ -457,3 +457,23 @@ engine = BacktestEngine(backtest_config)
 
 **维护者**: V35.0 Architecture Team
 **许可证**: 内部使用
+
+## Current Canonical Producer (PR-6)
+
+The current API producer is
+`src/ml/training/canonical_training_producer.py`, exposed by
+`npm run train -- --input <offline-feature-frame> --output <candidate-path>`.
+It supersedes the historical examples in this V35 document for the
+`v26_7_aligned` API path. The producer consumes the registry-owned ordered
+`v26_7_aligned/v1` contract with 20 features, uses a deterministic chronological
+split and later-row OOS evaluation, fits preprocessing on training rows only,
+and emits an existing-loader-compatible candidate envelope with bounded
+provenance and a whole-file SHA256.
+
+This path deliberately does not use the current database/L3 training surface,
+does not silently fill missing canonical signals, and cannot write the tracked
+manifest or a production artifact. The legacy TITAN producer and its separate
+feature contract remain noncanonical; the historical 11/42 question is
+deferred because the missing feature semantics are not proven. Candidate
+generation does not activate a model, change the pending/null manifest state,
+or make `/predict` ready.
