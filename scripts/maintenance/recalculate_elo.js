@@ -98,6 +98,25 @@ async function getLeagueStats(client, leagueId) {
     };
 }
 
+/**
+ * Require the Elo persistence table to be provisioned before write mode.
+ * @param {object} client - PostgreSQL 客户端
+ * @returns {Promise<void>}
+ */
+async function assertTeamEloSchemaProvisioned(client) {
+    const result = await client.query(`
+        SELECT to_regclass('public.team_elo_ratings') AS relation
+    `);
+
+    if (!result.rows?.[0]?.relation) {
+        throw new Error(
+            'team_elo_ratings schema is not provisioned; runtime schema creation is disabled. ' +
+            'Provision the schema through the separately authorized canonical database/migrations ' +
+            'process before running Elo write mode.'
+        );
+    }
+}
+
 // ============================================================================
 // 主逻辑
 // ============================================================================
@@ -122,6 +141,10 @@ async function main() {
     const client = await pool.connect();
 
     try {
+        if (!dryRun) {
+            await assertTeamEloSchemaProvisioned(client);
+        }
+
         // ============================================
         // Step 1: 动态发现所有联赛
         // ============================================
@@ -372,15 +395,6 @@ async function main() {
             // 5.2 保存球队 Elo 评分
             console.log('\n  💾 保存球队 Elo 评分...');
 
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS team_elo_ratings (
-                    team_name VARCHAR(255) PRIMARY KEY,
-                    elo_rating DECIMAL(10, 2) NOT NULL,
-                    matches_count INTEGER DEFAULT 0,
-                    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                )
-            `);
-
             let teamsSaved = 0;
             const teamEntries = Object.entries(allRatings);
 
@@ -457,8 +471,15 @@ async function main() {
 // CLI 入口
 // ============================================================================
 
-main().catch(err => {
-    console.error('❌ 致命错误:', err.message);
-    console.error(err.stack);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch(err => {
+        console.error('❌ 致命错误:', err.message);
+        console.error(err.stack);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    assertTeamEloSchemaProvisioned,
+    main,
+};

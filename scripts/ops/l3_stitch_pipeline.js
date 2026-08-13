@@ -46,6 +46,20 @@ async function assertL3SchemaProvisioned(client) {
     }
 }
 
+async function assertTeamEloSchemaProvisioned(client) {
+    const result = await client.query(`
+        SELECT to_regclass('public.team_elo_ratings') AS relation
+    `);
+
+    if (!result.rows[0]?.relation) {
+        throw new Error(
+            'team_elo_ratings schema is not provisioned; runtime schema creation is disabled. ' +
+            'Provision the schema through the separately authorized canonical database/migrations ' +
+            'process before running L3 stitch.'
+        );
+    }
+}
+
 async function backfillFinishedScores(client) {
     const query = `
         UPDATE matches m
@@ -265,6 +279,7 @@ async function main() {
     try {
         console.log(`L3 Golden Stitching season=${TARGET_SEASON} workers=${TARGET_WORKERS}`);
         await assertL3SchemaProvisioned(client);
+        await assertTeamEloSchemaProvisioned(client);
 
         const scoresBackfilled = await backfillFinishedScores(client);
         console.log(`Backfilled finished scores from raw header: ${scoresBackfilled}`);

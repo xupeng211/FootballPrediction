@@ -61,9 +61,10 @@
             },
             {
                 "path": "scripts/maintenance/recalculate_elo.js",
-                "lifecycle": "SPECIALIZED_INTERNAL_RUNTIME_DDL",
-                "allowed_role": "legacy child helper invoked by L3 stitch for Elo data maintenance",
-                "schema_mutation_entrypoint": "legacy CREATE TABLE IF NOT EXISTS team_elo_ratings",
+                "lifecycle": "SPECIALIZED_INTERNAL_DATA_WRITER",
+                "allowed_role": "legacy child helper invoked by L3 stitch for Elo data writes after schema pre-provisioning",
+                "schema_mutation_entrypoint": "disabled",
+                "requires_preprovisioned_schema": true,
                 "future_schema_changes_allowed": false,
                 "default_application_startup": false,
                 "execution_requires_separate_authorization": true

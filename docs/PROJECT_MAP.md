@@ -110,8 +110,10 @@ schema change 放在哪里？”的唯一答案是：
   只读/introspection 方法保留，`align_external_ids` 与 `bulk_insert_features` 是
   `LEGACY_NON_CANONICAL_RUNTIME_DML` 兼容方法，不是 schema authority。
 - L3 主 pipeline 不再执行 schema DDL；其调用的
-  `scripts/maintenance/recalculate_elo.js` 仍是 `SPECIALIZED_INTERNAL_RUNTIME_DDL` legacy
-  子入口，仅作 Elo 数据维护，未来 schema change 不得写入其中，执行仍需单独授权。
+  `scripts/maintenance/recalculate_elo.js` 是 `SPECIALIZED_INTERNAL_DATA_WRITER` legacy
+  子入口，只能在 `team_elo_ratings` 已预置时写入 Elo 数据，执行仍需单独授权。
+  该表当前未在 `database/migrations/` 中找到；这是 A4-F1 保留的 provisioning gap，
+  不在本任务中新增 migration 或修复 schema。
 - `deploy/docker/init_db.sql` 是 `DEV_BOOTSTRAP_NON_AUTHORITATIVE`，仅由
   `docker-compose.dev.yml` 的开发 DB 空卷 bootstrap 使用；unified/production-like Compose
   不再挂载它。它的表定义与 migration tree 的历史漂移是 carry-forward，不在 A4 修复。

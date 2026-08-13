@@ -38,6 +38,7 @@ function listFiles(relativePath) {
 
 function changedPaths() {
     const outputs = [];
+    let successfulDiffViews = 0;
     for (const args of [
         ['diff', '--name-only', 'origin/main...HEAD'],
         ['diff', '--name-only'],
@@ -50,6 +51,7 @@ function changedPaths() {
                     encoding: 'utf8',
                 })
             );
+            successfulDiffViews += 1;
         } catch {
             // A shallow/local checkout may not have origin/main; other views still prove the guard.
         }
@@ -69,6 +71,10 @@ function changedPaths() {
         );
     } catch {
         // The test still retains the committed-diff checks if status is unavailable.
+    }
+
+    if (successfulDiffViews === 0) {
+        throw new Error('A4 protected-file guard could not obtain any authoritative git diff view');
     }
 
     return [...new Set(outputs.flatMap(output => output.split('\n').filter(Boolean)))];
@@ -169,20 +175,83 @@ test('A4 turns L3 schema setup into a read-only precondition', () => {
     assert.equal(l3.schema_mutation_entrypoint, 'disabled');
     assert.doesNotMatch(source, /CREATE\s+TABLE|CREATE\s+INDEX/i);
     assert.match(source, /to_regclass\('public\.l3_features'\)/);
+    assert.match(source, /to_regclass\('public\.team_elo_ratings'\)/);
+    assert.match(source, /await assertTeamEloSchemaProvisioned\(client\)/);
     assert.match(source, /database\/migrations\/V26\.4__create_l3_features_table\.sql/);
     assert.match(source, /operations:\s*\['UPDATE'\]/);
 });
 
-test('A4 classifies the legacy L3 Elo child DDL as noncanonical', () => {
+test('A4 classifies the L3 Elo child as a pre-provisioned data writer', () => {
     const policy = readJson('config/db_schema_authority.json');
     const source = read('scripts/maintenance/recalculate_elo.js');
     const elo = surfaceByPath(policy, 'scripts/maintenance/recalculate_elo.js');
 
-    assert.equal(elo.lifecycle, 'SPECIALIZED_INTERNAL_RUNTIME_DDL');
+    assert.equal(elo.lifecycle, 'SPECIALIZED_INTERNAL_DATA_WRITER');
+    assert.equal(elo.schema_mutation_entrypoint, 'disabled');
+    assert.equal(elo.requires_preprovisioned_schema, true);
     assert.equal(elo.future_schema_changes_allowed, false);
     assert.equal(elo.default_application_startup, false);
     assert.equal(elo.execution_requires_separate_authorization, true);
-    assert.match(source, /CREATE TABLE IF NOT EXISTS team_elo_ratings/i);
+    assert.doesNotMatch(source, /CREATE\s+TABLE|CREATE\s+INDEX|ALTER\s+TABLE|DROP\s+TABLE/i);
+    assert.match(source, /to_regclass\('public\.team_elo_ratings'\)/);
+    assert.match(source, /runtime schema creation is disabled/i);
+});
+
+test('A4 Elo write mode checks the read-only schema precondition before persistence', () => {
+    const source = read('scripts/maintenance/recalculate_elo.js');
+    const precondition = source.indexOf('await assertTeamEloSchemaProvisioned(client)');
+    const firstPersistence = source.indexOf('UPDATE l3_features');
+    const eloPersistence = source.indexOf('INSERT INTO team_elo_ratings');
+
+    assert.ok(precondition >= 0);
+    assert.ok(firstPersistence > precondition);
+    assert.ok(eloPersistence > precondition);
+    assert.match(source, /if \(!dryRun\)\s*\{\s*await assertTeamEloSchemaProvisioned\(client\)/s);
+});
+
+test('A4 missing team Elo schema fails closed with a mocked client', async () => {
+    const { assertTeamEloSchemaProvisioned } = require('../../scripts/maintenance/recalculate_elo.js');
+    const queries = [];
+    const client = {
+        query: async query => {
+            queries.push(query);
+            return { rows: [{ relation: null }] };
+        },
+    };
+
+    await assert.rejects(
+        () => assertTeamEloSchemaProvisioned(client),
+        /team_elo_ratings schema is not provisioned/i
+    );
+    assert.equal(queries.length, 1);
+    assert.match(queries[0], /SELECT\s+to_regclass\('public\.team_elo_ratings'\)/i);
+    assert.doesNotMatch(queries.join('\n'), /CREATE|ALTER|DROP|INSERT|UPDATE/i);
+});
+
+test('A4 existing team Elo schema allows the mocked precondition to pass', async () => {
+    const { assertTeamEloSchemaProvisioned } = require('../../scripts/maintenance/recalculate_elo.js');
+    const queries = [];
+    const client = {
+        query: async query => {
+            queries.push(query);
+            return { rows: [{ relation: 'team_elo_ratings' }] };
+        },
+    };
+
+    await assert.doesNotReject(() => assertTeamEloSchemaProvisioned(client));
+    assert.equal(queries.length, 1);
+    assert.match(queries[0], /to_regclass\('public\.team_elo_ratings'\)/i);
+});
+
+test('A4 canonical L3 wiring reaches only the non-DDL Elo child', () => {
+    const packageJson = readJson('package.json');
+    const l3Source = read('scripts/ops/l3_stitch_pipeline.js');
+    const eloSource = read('scripts/maintenance/recalculate_elo.js');
+
+    assert.equal(packageJson.scripts['l3:stitch'], 'node scripts/ops/l3_stitch_pipeline.js');
+    assert.match(l3Source, /recalculate_elo\.js/);
+    assert.match(l3Source, /ELO_SCRIPT,\s*'--incremental'/);
+    assert.doesNotMatch(eloSource, /CREATE\s+TABLE|CREATE\s+INDEX|ALTER\s+TABLE|DROP\s+TABLE/i);
 });
 
 test('A4 keeps init_db.sql dev-only and out of unified/production-like Compose', () => {
