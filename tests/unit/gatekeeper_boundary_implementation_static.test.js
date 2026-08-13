@@ -3,9 +3,11 @@
  * Static tests for SC-002 Gatekeeper Boundary Implementation.
  *
  * lifecycle: permanent
- * scope: static verification only; does NOT execute gatekeeper.js / gatekeeper.sh,
- *        does NOT connect to DB, does NOT run CREATE DATABASE / DROP DATABASE,
- *        does NOT execute browser/Playwright, does NOT train.
+ * scope: static verification plus hermetic hook subprocess verification;
+ *        the subprocess probe stubs Docker/DB commands and fails if the
+ *        Gatekeeper attempts to load dbBlueprint or open a network connection.
+ *        It never connects to a real DB, runs CREATE DATABASE / DROP DATABASE,
+ *        executes browser/Playwright, or trains.
  *
  * Verifies that gatekeeper.js and gatekeeper.sh have been properly guarded with
  * assertDbWriteAllowed() before their cold-start blueprint check (which triggers
@@ -16,6 +18,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -28,6 +32,9 @@ const CLOSURE_PLAN = path.join(REPO_ROOT, 'docs/SC002_CLOSURE_PLAN.md');
 const AUDIT_DOC = path.join(REPO_ROOT, 'docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md');
 const DB_WRITE_GUARD = path.join(REPO_ROOT, 'scripts/ops/helpers/db_write_guard.js');
 const DB_BLUEPRINT = path.join(REPO_ROOT, 'scripts/ops/helpers/dbBlueprint.js');
+const PRE_COMMIT_HOOK = path.join(REPO_ROOT, '.githooks/pre-commit');
+const PRE_PUSH_HOOK = path.join(REPO_ROOT, '.githooks/pre-push');
+const PRODUCTION_GATE_WORKFLOW = path.join(REPO_ROOT, '.github/workflows/production-gate.yml');
 
 function readDoc(filePath) {
     return fs.readFileSync(filePath, 'utf8');
@@ -35,6 +42,90 @@ function readDoc(filePath) {
 
 function fileExists(filePath) {
     return fs.existsSync(filePath);
+}
+
+function readProbeMarker(markerPath) {
+    return fileExists(markerPath) ? fs.readFileSync(markerPath, 'utf8') : '';
+}
+
+function createHookSafetyProbe() {
+    const probeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gatekeeper-hook-safety-'));
+    const binDir = path.join(probeRoot, 'bin');
+    const markerPath = path.join(probeRoot, 'forbidden.log');
+    const nodeGuardPath = path.join(probeRoot, 'forbidden-node-operations.js');
+    fs.mkdirSync(binDir);
+
+    for (const command of ['docker', 'docker-compose', 'psql', 'pg_isready', 'redis-cli']) {
+        const commandPath = path.join(binDir, command);
+        fs.writeFileSync(
+            commandPath,
+            '#!/usr/bin/env bash\nprintf \'%s\\n\' "forbidden-command:$0 $*" >> "$GATEKEEPER_SAFETY_MARKER"\nexit 97\n',
+            { mode: 0o755 }
+        );
+    }
+
+    fs.writeFileSync(
+        nodeGuardPath,
+        `'use strict';
+const fs = require('node:fs');
+const Module = require('node:module');
+const net = require('node:net');
+const markerPath = process.env.GATEKEEPER_SAFETY_MARKER;
+
+function forbid(operation) {
+    fs.appendFileSync(markerPath, \`${'${operation}'}\\n\`);
+    throw new Error(\`forbidden local-hook operation: ${'${operation}'}\`);
+}
+
+const originalLoad = Module._load;
+Module._load = function guardedLoad(request, parent, isMain) {
+    if (request === 'pg' || String(request).includes('dbBlueprint')) {
+        forbid(\`node-load:${'${request}'}\`);
+    }
+    return originalLoad.call(this, request, parent, isMain);
+};
+
+for (const method of ['connect', 'createConnection']) {
+    const original = net[method];
+    net[method] = function guardedNetworkConnection(...args) {
+        forbid(\`network:${'${method}'}\`);
+        return original.apply(this, args);
+    };
+}
+`,
+        { mode: 0o644 }
+    );
+
+    const env = { ...process.env };
+    delete env.CI;
+    delete env.GITHUB_ACTIONS;
+    delete env.GATEKEEPER_WORKSPACE_ROOT;
+    env.PATH = `${binDir}${path.delimiter}${env.PATH || ''}`;
+    env.GATEKEEPER_SAFETY_MARKER = markerPath;
+    env.GATEKEEPER_LOCAL_CI = '1';
+    env.GATEKEEPER_DIRECT_MODE = '1';
+    env.GATEKEEPER_IN_CONTAINER = '0';
+    env.NODE_OPTIONS = [env.NODE_OPTIONS, `--require=${nodeGuardPath}`]
+        .filter(Boolean)
+        .join(' ');
+
+    return {
+        env,
+        markerPath,
+        probeRoot,
+        cleanup() {
+            fs.rmSync(probeRoot, { recursive: true, force: true });
+        }
+    };
+}
+
+function runHook(hookPath, env) {
+    return spawnSync('bash', [hookPath], {
+        cwd: REPO_ROOT,
+        env,
+        encoding: 'utf8',
+        timeout: 120000
+    });
 }
 
 // ── Source File Existence ──────────────────────────────────────────────────────
@@ -304,22 +395,10 @@ test('GATEKEEPER.SH: run_cold_start_integrity_guard exports guard env vars befor
     );
 });
 
-// ── Safety: No execution ───────────────────────────────────────────────────────
+// ── Safety: Hermetic execution only ────────────────────────────────────────────
 
-test('SAFETY: this test does NOT execute gatekeeper.js or gatekeeper.sh', () => {
-    assert.ok(true, 'Static test only — no target script execution');
-});
-
-test('SAFETY: this test does NOT connect to DB', () => {
-    assert.ok(true, 'Static test only — no DB connection');
-});
-
-test('SAFETY: this test does NOT execute CREATE DATABASE / DROP DATABASE', () => {
-    assert.ok(true, 'Static test only — no destructive DB operations');
-});
-
-test('SAFETY: this test does NOT execute INSERT or any real DB write', () => {
-    assert.ok(true, 'Static test only — no real DB write');
+test('SAFETY: real DB services and destructive SQL are never used by this suite', () => {
+    assert.ok(true, 'Behavioral hook coverage uses only temporary command/network stubs');
 });
 
 // ── Design Document Update Tests ──────────────────────────────────────────────
@@ -528,4 +607,111 @@ test('IMPLEMENTATION: 8 needs_manual_review consumers were NOT modified', () => 
         }
     }
     assert.ok(true, 'No manual review consumers accidentally modified');
+});
+
+// ── Local Git Hook Boundary Tests ──────────────────────────────────────────────
+
+test('LOCAL HOOK CONTRACT: both repository hooks select explicit hermetic mode', () => {
+    assert.match(
+        readDoc(PRE_COMMIT_HOOK),
+        /gatekeeper\.sh --mode=commit --local-hook/,
+        'pre-commit must select explicit local-hook commit mode'
+    );
+    assert.match(
+        readDoc(PRE_PUSH_HOOK),
+        /gatekeeper\.sh --mode=auto --local-hook/,
+        'pre-push must select explicit local-hook auto mode'
+    );
+
+    const gatekeeper = readDoc(GATEKEEPER_SH);
+    assert.match(gatekeeper, /--local-hook/);
+    assert.match(gatekeeper, /LOCAL_HOOK_MODE=1/);
+    assert.match(gatekeeper, /run_local_hook_checks\(\)/);
+});
+
+test('LOCAL HOOK PATH: static/hermetic checks cannot call Docker or cold-start blueprint', () => {
+    const gatekeeper = readDoc(GATEKEEPER_SH);
+    const localStart = gatekeeper.indexOf('run_local_hook_checks()');
+    const localEnd = gatekeeper.indexOf('\n}\n', localStart);
+    assert.ok(localStart > 0, 'local hook check function must exist');
+    assert.ok(localEnd > localStart, 'local hook check function must be bounded');
+
+    const localBody = gatekeeper.slice(localStart, localEnd);
+    assert.doesNotMatch(localBody, /docker(?:-compose)?\s+compose|docker compose/);
+    assert.doesNotMatch(localBody, /run_cold_start_integrity_guard|runColdStartBlueprintCheck|dbBlueprint/);
+    assert.doesNotMatch(
+        localBody,
+        /ALLOW_SCHEMA_WRITE=yes|ALLOW_RAW_MATCH_DATA_WRITE=yes|ALLOW_ODDS_WRITE=yes/,
+        'local hook checks must not enable DB/schema/raw/odds write authorization'
+    );
+    assert.match(
+        gatekeeper,
+        /if \[\[ \"\$LOCAL_HOOK_MODE\" == \"1\" \]\]; then[\s\S]*?run_local_hook_checks/,
+        'main must dispatch local-hook mode before the full Gatekeeper path'
+    );
+});
+
+test('REMOTE CI PRESERVATION: full Gatekeeper keeps ephemeral DB cold-start validation', () => {
+    const gatekeeper = readDoc(GATEKEEPER_SH);
+    const workflow = readDoc(PRODUCTION_GATE_WORKFLOW);
+
+    assert.match(gatekeeper, /run_cold_start_integrity_guard\(\)/);
+    assert.match(gatekeeper, /runColdStartBlueprintCheck/);
+    assert.match(gatekeeper, /ALLOW_SCHEMA_WRITE=yes/);
+    assert.match(
+        workflow,
+        /docker compose -f docker-compose\.dev\.yml up -d dev db redis/,
+        'Production Gate must still bootstrap isolated dev/db/redis services'
+    );
+    assert.match(workflow, /DB_BLUEPRINT_DEBUG:\s*["']1["']/);
+    assert.match(workflow, /gatekeeper\.sh --mode=\"\$\{GATEKEEPER_CI_MODE\}\"/);
+});
+
+test('LOCAL HOOK BEHAVIOR: pre-commit and pre-push stay DB/Docker-free with dangerous commands stubbed', () => {
+    const probe = createHookSafetyProbe();
+    try {
+        for (const [name, hookPath] of [
+            ['pre-commit', PRE_COMMIT_HOOK],
+            ['pre-push', PRE_PUSH_HOOK]
+        ]) {
+            const result = runHook(hookPath, probe.env);
+            const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+            assert.equal(
+                result.status,
+                0,
+                `${name} hermetic hook failed unexpectedly:\n${output.slice(-6000)}`
+            );
+            assert.equal(
+                readProbeMarker(probe.markerPath),
+                '',
+                `${name} invoked Docker, PostgreSQL, Redis, dbBlueprint, or a network connection`
+            );
+        }
+    } finally {
+        probe.cleanup();
+    }
+});
+
+test('LOCAL HOOK CONTRACT: malformed invocation fails closed before tooling or Docker', () => {
+    const probe = createHookSafetyProbe();
+    try {
+        for (const args of [
+            ['--local-hook'],
+            ['--mode=full', '--local-hook']
+        ]) {
+            const result = spawnSync('bash', [GATEKEEPER_SH, ...args], {
+                cwd: REPO_ROOT,
+                env: probe.env,
+                encoding: 'utf8',
+                timeout: 10000
+            });
+            const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+
+            assert.notEqual(result.status, 0, `${args.join(' ')} must fail closed`);
+            assert.match(output, /--local-hook.*(显式|不允许)/);
+            assert.equal(readProbeMarker(probe.markerPath), '');
+        }
+    } finally {
+        probe.cleanup();
+    }
 });
