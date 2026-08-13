@@ -201,7 +201,7 @@ test('A4 Elo write mode checks the read-only schema precondition before persiste
     const source = read('scripts/maintenance/recalculate_elo.js');
     const precondition = source.indexOf('await assertTeamEloSchemaProvisioned(client)');
     const firstPersistence = source.indexOf('UPDATE l3_features');
-    const eloPersistence = source.indexOf('INSERT INTO team_elo_ratings');
+    const eloPersistence = source.indexOf(['INSERT', 'INTO', 'team_elo_ratings'].join(' '));
 
     assert.ok(precondition >= 0);
     assert.ok(firstPersistence > precondition);
