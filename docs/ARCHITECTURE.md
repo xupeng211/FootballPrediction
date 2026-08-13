@@ -324,6 +324,25 @@ class PreMatchFeaturePlugin:
 
 ## 3. 数据库 Schema
 
+### 3.0 Schema 演进 authority（当前状态）
+
+未来 schema 演进只有一个定义位置：`database/migrations/` 下 reviewed、版本化的
+`V*.sql` migration。机器可读契约为 `config/db_schema_authority.json`。
+
+- `src/database/migrations/` 是 `LEGACY` 且冻结 future revisions 的历史 Alembic 兼容树（head
+  `003_v145`），不接收未来 revision，也不由默认应用启动执行。
+- `src/database/schema_manager.py` 的 `initialize_schema()` 与
+  `initialize_production_schema()` 是已停用的 `LEGACY_NON_CANONICAL_RUNTIME_DDL`；
+  只读查询/检查能力保留。
+- `deploy/docker/init_db.sql` 是 `DEV_BOOTSTRAP_NON_AUTHORITATIVE`，只供
+  `docker-compose.dev.yml` 本地开发空卷 bootstrap；unified/production-like Compose
+  不挂载它。
+- authority location 不等于执行授权。migration、DB write 与 schema bootstrap 仍须
+  单独授权；应用启动不自动 apply migration。
+
+本节以下的 SQL 片段是历史架构概览，不是新增 schema change 的入口；表定义之间已知的
+漂移属于 A4 carry-forward，不在本 PR 中对齐或修复。
+
 ### 3.1 核心表结构
 
 #### matches 表 (比赛基础信息)

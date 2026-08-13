@@ -1,0 +1,130 @@
+{
+    "lifecycle": "permanent",
+    "policy_id": "db-schema-authority-convergence",
+    "policy_version": 1,
+    "schema_definition_authority": {
+        "path": "database/migrations/",
+        "lifecycle": "CANONICAL",
+        "future_schema_changes_allowed": true,
+        "required_change_shape": "reviewed versioned V*.sql migration",
+        "automatic_execution": false
+    },
+    "forward_schema_evolution_authorities": ["database/migrations/"],
+    "future_schema_change_location": "database/migrations/",
+    "execution_requires_explicit_authorization": true,
+    "automatic_application_on_default_startup": false,
+    "migration_content_policy": {
+        "a4_migration_content_changed": false,
+        "a4_new_migration_created": false,
+        "future_alembic_revisions_allowed": false
+    },
+    "migration_trees": [
+        {
+            "path": "database/migrations/",
+            "lifecycle": "CANONICAL",
+            "allowed_role": "single forward schema-definition location",
+            "future_schema_changes_allowed": true,
+            "automatic_execution": false,
+            "execution_policy": "existing SC-002 and data-schema gates plus separate authorization"
+        },
+        {
+            "path": "src/database/migrations/",
+            "lifecycle": "LEGACY",
+            "allowed_role": "historical Alembic compatibility and static inspection",
+            "future_schema_changes_allowed": false,
+            "automatic_execution": false,
+            "freeze_policy": "frozen; no future Alembic revisions",
+            "current_head": "003_v145"
+        }
+    ],
+    "runtime_schema_mutation_policy": {
+        "default_application_startup": "FORBIDDEN",
+        "future_schema_changes_in_runtime_code": "FORBIDDEN",
+        "surfaces": [
+            {
+                "path": "src/database/schema_manager.py",
+                "lifecycle": "LEGACY_NON_CANONICAL_RUNTIME_DDL",
+                "mutation_entrypoints": ["initialize_schema", "initialize_production_schema"],
+                "mutation_entrypoints_disabled": true,
+                "read_only_methods_retained": true,
+                "retained_legacy_data_methods": ["align_external_ids", "bulk_insert_features"],
+                "retained_legacy_data_methods_lifecycle": "LEGACY_NON_CANONICAL_RUNTIME_DML",
+                "supported_default_callers": []
+            },
+            {
+                "path": "scripts/ops/l3_stitch_pipeline.js",
+                "lifecycle": "SPECIALIZED_INTERNAL_DATA_WRITER",
+                "schema_mutation_entrypoint": "disabled",
+                "allowed_role": "feature/data writer after schema pre-provisioning",
+                "future_schema_changes_allowed": false,
+                "execution_requires_separate_authorization": true
+            },
+            {
+                "path": "scripts/maintenance/recalculate_elo.js",
+                "lifecycle": "SPECIALIZED_INTERNAL_DATA_WRITER",
+                "allowed_role": "legacy child helper invoked by L3 stitch for Elo data writes after schema pre-provisioning",
+                "schema_mutation_entrypoint": "disabled",
+                "requires_preprovisioned_schema": true,
+                "future_schema_changes_allowed": false,
+                "default_application_startup": false,
+                "execution_requires_separate_authorization": true
+            },
+            {
+                "path": "src/infrastructure/harvesters/components/Persistence.js",
+                "lifecycle": "LEGACY_NON_CANONICAL_RUNTIME_DDL",
+                "allowed_role": "legacy ProductionHarvester compatibility fallback",
+                "future_schema_changes_allowed": false,
+                "default_application_startup": false
+            },
+            {
+                "path": "src/infrastructure/services/recon/ReconSchemaJanitor.js",
+                "lifecycle": "SPECIALIZED_INTERNAL_RUNTIME_DDL",
+                "allowed_role": "retained Recon compatibility/repair path",
+                "future_schema_changes_allowed": false,
+                "default_application_startup": false
+            },
+            {
+                "path": "src/feature_engine/smelter/FeatureSmelter.js",
+                "lifecycle": "SPECIALIZED_INTERNAL_RUNTIME_DDL",
+                "allowed_role": "retained specialized feature-index compatibility path",
+                "future_schema_changes_allowed": false,
+                "default_application_startup": false
+            }
+        ]
+    },
+    "bootstrap_surfaces": [
+        {
+            "path": "deploy/docker/init_db.sql",
+            "lifecycle": "DEV_BOOTSTRAP_NON_AUTHORITATIVE",
+            "allowed_scope": "docker-compose.dev.yml db service on an empty local development volume",
+            "production_migration_authority": false,
+            "staging_migration_authority": false,
+            "future_schema_changes_allowed": false,
+            "execution_requires_separate_authorization": true
+        }
+    ],
+    "startup_helpers": [
+        {
+            "path": "docker/entrypoint.sh",
+            "lifecycle": "LEGACY_INACTIVE_STARTUP_HELPER",
+            "implicit_migration": false
+        },
+        {
+            "path": "docker/simple_entrypoint.sh",
+            "lifecycle": "LEGACY_INACTIVE_STARTUP_HELPER",
+            "implicit_migration": false
+        },
+        {
+            "path": "docker/entrypoint_production.sh",
+            "lifecycle": "READ_ONLY_SCHEMA_READINESS_CHECK",
+            "implicit_migration": false,
+            "ddl_or_dml": false
+        }
+    ],
+    "sc002": {
+        "sql_migration_allowlist_preserved": true,
+        "python_db_write_guard_preserved": true,
+        "alembic_runtime_guard_preserved": true,
+        "execution_authorization_is_not_inferred_from_location": true
+    }
+}
