@@ -119,7 +119,8 @@ unsupported schema versions, malformed bindings, duplicate contract IDs, and
 unknown lookups without fallback.
 
 The current runtime producer is
-`src/ml/feature_adapter.py:V26_6_PreMatchAdapter`; its static ordered
+`src/ml/feature_adapters/prematch.py:V26_6_PreMatchAdapter`, re-exported by the
+compatibility facade `src/ml/feature_adapter.py`; its static ordered
 declaration is used to build the final inference `DataFrame`. A focused
 regression test compares that runtime order with the independent registry
 declaration. PR-3 consumes this exact binding from the loader and rejects
@@ -161,6 +162,25 @@ prediction request. The current tracked API row remains `status=pending` with
 does not deserialize, and `/predict` remains 503 until a separately authorized
 activation supplies a real matching artifact and checksum. PR-3 does not create
 or activate production artifacts.
+
+## Canonical Feature Availability Gate (WAVE-A-NEXT-03)
+
+After a valid artifact is activated, the canonical `v26_7_aligned` predictor
+requires a valid home team, away team, and parseable match timestamp before any
+feature lookup. Every canonical rolling, standings, ELO, and fatigue lookup
+receives the target-match cutoff. Missing or insufficient rolling history,
+missing standings, missing ELO, unavailable fatigue data, provider/database
+errors, and malformed required rows fail closed before scaler or model calls;
+they are never converted into neutral-looking numeric values.
+
+The public contract distinguishes caller input (`400 invalid prediction input`)
+from unavailable required feature data (`503 required prediction feature data
+unavailable`). The canonical CLI keeps input exit code `2`, model-unavailable
+exit code `3`, and uses exit code `4` for required feature data unavailable.
+Batch prediction is all-or-none for this condition. This gate addresses data
+availability only; authoritative real feature sourcing, numeric lineage,
+training readiness, and artifact activation remain unresolved and separately
+authorized work.
 
 Cheap invariants: at verification time the manager captures a stat-based
 fingerprint; health requests re-check it with one `stat()` per verified file

@@ -12,7 +12,9 @@ V26.8 推理引擎 - ModelDispatcher & Predictor
 
 import logging
 import os
+from typing import Any
 
+from src.core.exceptions import PredictionError
 from src.ml.inference.canonical_model_loader import (
     LoadedCanonicalModel,
     ModelArtifactUnavailableError,
@@ -220,11 +222,28 @@ class Predictor:
             raise ValueError("模型未加载")
 
         # 1. 特征适配
-        adaptation_result = self.adapter.adapt(raw_match_data)
+        adaptation_result = self._adapt_for_prediction(raw_match_data)
+        self._require_adaptation_success(adaptation_result)
+        return self._predict_adapted(adaptation_result)
 
-        if not adaptation_result.success:
-            raise ValueError(f"特征适配失败: {adaptation_result.errors}")
+    def _adapt_for_prediction(self, raw_match_data: dict) -> Any:
+        """按模型类型选择 strict canonical 或 legacy 适配行为。"""
+        if self.model_type == "v26_7_aligned":
+            canonical_adapter: Any = self.adapter
+            return canonical_adapter.adapt(raw_match_data, strict=True)
+        # legacy/demo 调用保留原有 adapter 默认行为。
+        return self.adapter.adapt(raw_match_data)
 
+    def _require_adaptation_success(self, adaptation_result: Any) -> None:
+        """在任何 scaler/model 调用前拒绝失败的特征适配结果。"""
+        if adaptation_result.success and adaptation_result.features is not None:
+            return
+        if self.model_type == "v26_7_aligned":
+            raise PredictionError("canonical feature adaptation failed")
+        raise ValueError(f"特征适配失败: {adaptation_result.errors}")
+
+    def _predict_adapted(self, adaptation_result: Any) -> dict:
+        """对已验证的特征结果执行 scaler 与模型推理。"""
         features_df = adaptation_result.features
 
         # 2. 特征标准化
@@ -255,7 +274,19 @@ class Predictor:
         Returns:
             预测结果列表
         """
-        return [self.predict(data) for data in raw_match_data_list]
+        if self.model_type != "v26_7_aligned":
+            return [self.predict(data) for data in raw_match_data_list]
+
+        if self.model is None:
+            raise ValueError("模型未加载")
+
+        # canonical batch 先完整获取并验证所有行的特征，再允许任何一行进入推理。
+        adaptation_results = [self._adapt_for_prediction(data) for data in raw_match_data_list]
+        for adaptation_result in adaptation_results:
+            self._require_adaptation_success(adaptation_result)
+        return [
+            self._predict_adapted(adaptation_result) for adaptation_result in adaptation_results
+        ]
 
     def save(self, path: str | None = None):
         """保存模型"""

@@ -13,12 +13,13 @@ read-only/introspection helpers remain available to existing consumers.
 from datetime import datetime
 import logging
 import sys
-from typing import Any
+from typing import Any, NoReturn
 
 import psycopg2
 from psycopg2.extras import execute_values
 
 from src.config import get_settings
+from src.core.exceptions import RequiredFeatureDataUnavailableError
 
 # Phase2C batch2: Python runtime DB write guard
 _guard_path = str(__import__("pathlib").Path(__file__).resolve().parents[2] / "scripts" / "ops")
@@ -28,6 +29,11 @@ if _guard_path not in sys.path:
 from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger(__name__)
+
+
+def _raise_feature_data_unavailable(message: str) -> NoReturn:
+    """在 strict canonical 读取路径上统一抛出特征不可用异常。"""
+    raise RequiredFeatureDataUnavailableError(message)
 
 
 class SchemaManager:
@@ -720,7 +726,10 @@ class SchemaManager:
 
     @staticmethod
     def get_team_rolling_stats(
-        team_name: str, n_matches: int = 5, before_match_date: str | None = None
+        team_name: str,
+        n_matches: int = 5,
+        before_match_date: str | None = None,
+        strict: bool = False,
     ) -> dict[str, float]:
         """
         获取球队最近 N 场比赛的滚动统计数据
@@ -731,6 +740,7 @@ class SchemaManager:
             team_name: 球队名称
             n_matches: 统计最近 N 场比赛
             before_match_date: 只统计此时间之前的比赛（用于预测时的历史数据）
+            strict: canonical 预测是否要求完整、可用的历史数据。
 
         Returns:
             Dict: 滚动统计指标
@@ -744,7 +754,18 @@ class SchemaManager:
                     "matches_count": int,          # 实际统计的比赛场数
                 }
         """
+        conn = None
+        cursor = None
         try:
+            if strict and (not isinstance(team_name, str) or not team_name.strip()):
+                _raise_feature_data_unavailable("rolling history unavailable")
+            if strict and (
+                not isinstance(n_matches, int) or isinstance(n_matches, bool) or n_matches <= 0
+            ):
+                _raise_feature_data_unavailable("rolling history unavailable")
+            if strict and (not isinstance(before_match_date, str) or not before_match_date.strip()):
+                _raise_feature_data_unavailable("rolling history unavailable")
+
             import numpy as np
             import psycopg2
 
@@ -761,7 +782,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 查询该球队最近 N 场比赛的比分
-            time_filter = "AND m.match_date < %s" if before_match_date else ""
+            time_filter = "AND m.match_date < %s" if strict or before_match_date else ""
             query = f"""
                 SELECT
                     m.home_team,
@@ -787,10 +808,9 @@ class SchemaManager:
             cursor.execute(query, params)
             matches = cursor.fetchall()
 
-            cursor.close()
-            conn.close()
-
             if not matches:
+                if strict:
+                    _raise_feature_data_unavailable("rolling history unavailable")
                 # 冷启动：没有历史数据，返回默认值
                 return {
                     "rolling_xg": 1.2,
@@ -801,6 +821,9 @@ class SchemaManager:
                     "rolling_possession_std": 10.0,
                     "matches_count": 0,
                 }
+
+            if strict and len(matches) < n_matches:
+                _raise_feature_data_unavailable("rolling history unavailable")
 
             # 从比分中提取统计指标
             goals_values = []  # 进球数
@@ -813,6 +836,8 @@ class SchemaManager:
                 is_home = home_team == team_name
 
                 try:
+                    if strict and (home_score is None or away_score is None):
+                        _raise_feature_data_unavailable("rolling history unavailable")
                     if is_home:
                         goals = int(home_score) if home_score is not None else 0
                         possession = 55.0  # 主场平均控球率
@@ -823,7 +848,11 @@ class SchemaManager:
                     goals_values.append(float(goals))
                     possession_proxy.append(possession)
 
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as exc:
+                    if strict:
+                        raise RequiredFeatureDataUnavailableError(
+                            "rolling history unavailable"
+                        ) from exc
                     # 数据解析失败，使用默认值
                     goals_values.append(1.0)
                     possession_proxy.append(50.0)
@@ -850,8 +879,12 @@ class SchemaManager:
                 "matches_count": len(matches),
             }
 
+        except RequiredFeatureDataUnavailableError:
+            raise
         except Exception as e:
             logger.exception(f"❌ 获取球队滚动统计失败 ({team_name}): {e}")
+            if strict:
+                raise RequiredFeatureDataUnavailableError("rolling history unavailable") from e
             # 出错时返回默认值
             return {
                 "rolling_xg": 1.2,
@@ -862,10 +895,24 @@ class SchemaManager:
                 "rolling_possession_std": 10.0,
                 "matches_count": 0,
             }
+        finally:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.warning("关闭滚动统计 cursor 失败")
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    logger.warning("关闭滚动统计 connection 失败")
 
     @staticmethod
     def get_team_standings(
-        team_name: str, before_match_date: str | None = None, league_name: str | None = None
+        team_name: str,
+        before_match_date: str | None = None,
+        league_name: str | None = None,
+        strict: bool = False,
     ) -> dict[str, Any]:
         """
         获取球队在指定时间前的积分榜数据
@@ -874,6 +921,7 @@ class SchemaManager:
             team_name: 球队名称
             before_match_date: 只统计此时间之前的比赛
             league_name: 联赛名称（可选，用于过滤）
+            strict: canonical 预测是否要求可用的积分榜历史。
 
         Returns:
             Dict: 积分榜数据
@@ -890,7 +938,14 @@ class SchemaManager:
                     "recent_form_points": int, # 最近5场积分
                 }
         """
+        conn = None
+        cursor = None
         try:
+            if strict and (not isinstance(team_name, str) or not team_name.strip()):
+                _raise_feature_data_unavailable("standings unavailable")
+            if strict and (not isinstance(before_match_date, str) or not before_match_date.strip()):
+                _raise_feature_data_unavailable("standings unavailable")
+
             import psycopg2
 
             from src.config import get_settings
@@ -906,7 +961,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 时间过滤
-            time_filter = "AND m.match_date < %s" if before_match_date else ""
+            time_filter = "AND m.match_date < %s" if strict or before_match_date else ""
             league_filter = "AND m.league_name = %s" if league_name else ""
 
             # 获取所有球队的积分数据
@@ -935,6 +990,9 @@ class SchemaManager:
             cursor.execute(query, params)
             matches = cursor.fetchall()
 
+            if strict and not matches:
+                _raise_feature_data_unavailable("standings unavailable")
+
             # 计算积分
             points = 0
             played = 0
@@ -952,6 +1010,8 @@ class SchemaManager:
                 home_team, away_team, home_score, away_score = match
 
                 try:
+                    if strict and (home_score is None or away_score is None):
+                        _raise_feature_data_unavailable("standings unavailable")
                     home_s = int(home_score) if home_score else 0
                     away_s = int(away_score) if away_score else 0
 
@@ -972,13 +1032,17 @@ class SchemaManager:
                     else:
                         lost += 1
 
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as exc:
+                    if strict:
+                        raise RequiredFeatureDataUnavailableError("standings unavailable") from exc
                     played += 1
 
             # 计算最近5场积分
             for match in recent_matches:
                 home_team, _away_team, home_score, away_score = match
                 try:
+                    if strict and (home_score is None or away_score is None):
+                        _raise_feature_data_unavailable("standings unavailable")
                     home_s = int(home_score) if home_score else 0
                     away_s = int(away_score) if away_score else 0
 
@@ -990,13 +1054,13 @@ class SchemaManager:
                         recent_form_points += 3
                     elif team_score == opponent_score:
                         recent_form_points += 1
-                except (TypeError, ValueError):
-                    pass
-
-            cursor.close()
-            conn.close()
+                except (TypeError, ValueError) as exc:
+                    if strict:
+                        raise RequiredFeatureDataUnavailableError("standings unavailable") from exc
 
             if played == 0:
+                if strict:
+                    _raise_feature_data_unavailable("standings unavailable")
                 # 冷启动：返回默认值
                 return {
                     "position": 10,
@@ -1030,8 +1094,12 @@ class SchemaManager:
                 "recent_form_points": recent_form_points,
             }
 
+        except RequiredFeatureDataUnavailableError:
+            raise
         except Exception as e:
             logger.exception(f"❌ 获取球队积分榜失败 ({team_name}): {e}")
+            if strict:
+                raise RequiredFeatureDataUnavailableError("standings unavailable") from e
             return {
                 "position": 10,
                 "points": 30,
@@ -1044,10 +1112,21 @@ class SchemaManager:
                 "goal_diff": 0,
                 "recent_form_points": 6,
             }
+        finally:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.warning("关闭积分榜 cursor 失败")
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    logger.warning("关闭积分榜 connection 失败")
 
     @staticmethod
     def get_elo_ratings(
-        team_names: list[str], before_match_date: str | None = None
+        team_names: list[str], before_match_date: str | None = None, strict: bool = False
     ) -> dict[str, float]:
         """
         计算球队的 ELO 评分
@@ -1058,11 +1137,26 @@ class SchemaManager:
         Args:
             team_names: 需要计算 ELO 的球队列表
             before_match_date: 只统计此时间之前的比赛
+            strict: canonical 预测是否要求每支球队有可用历史来源。
 
         Returns:
             Dict: {team_name: elo_rating}
         """
+        conn = None
+        cursor = None
         try:
+            if strict and (
+                not isinstance(team_names, list)
+                or not team_names
+                or any(
+                    not isinstance(team_name, str) or not team_name.strip()
+                    for team_name in team_names
+                )
+            ):
+                _raise_feature_data_unavailable("ELO unavailable")
+            if strict and (not isinstance(before_match_date, str) or not before_match_date.strip()):
+                _raise_feature_data_unavailable("ELO unavailable")
+
             import psycopg2
 
             from src.config import get_settings
@@ -1078,7 +1172,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 获取所有相关比赛（按时间顺序）
-            time_filter = "AND m.match_date < %s" if before_match_date else ""
+            time_filter = "AND m.match_date < %s" if strict or before_match_date else ""
             placeholders = ",".join(["%s"] * len(team_names))
 
             query = f"""
@@ -1104,11 +1198,12 @@ class SchemaManager:
             cursor.execute(query, params)
             matches = cursor.fetchall()
 
-            cursor.close()
-            conn.close()
+            if strict and not matches:
+                _raise_feature_data_unavailable("ELO unavailable")
 
             # 初始化 ELO
             elo_ratings = dict.fromkeys(team_names, 1500.0)
+            observed_teams: set[str] = set()
 
             # K系数
             k_factor = 20.0
@@ -1122,6 +1217,13 @@ class SchemaManager:
                     continue
 
                 try:
+                    if strict and (
+                        not isinstance(home_team, str)
+                        or not isinstance(away_team, str)
+                        or home_score is None
+                        or away_score is None
+                    ):
+                        _raise_feature_data_unavailable("ELO unavailable")
                     home_s = int(home_score) if home_score else 0
                     away_s = int(away_score) if away_score else 0
 
@@ -1150,18 +1252,47 @@ class SchemaManager:
                             (1 - actual_score) - (1 - expected_home)
                         )
 
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as exc:
+                    if strict:
+                        raise RequiredFeatureDataUnavailableError("ELO unavailable") from exc
                     continue
+
+                if home_team in elo_ratings:
+                    observed_teams.add(home_team)
+                if away_team in elo_ratings:
+                    observed_teams.add(away_team)
+
+            if strict:
+                missing_teams = set(team_names) - observed_teams
+                if missing_teams:
+                    _raise_feature_data_unavailable("ELO unavailable")
 
             return elo_ratings
 
+        except RequiredFeatureDataUnavailableError:
+            raise
         except Exception as e:
             logger.exception(f"❌ 计算 ELO 失败: {e}")
+            if strict:
+                raise RequiredFeatureDataUnavailableError("ELO unavailable") from e
             # 返回默认 ELO
             return dict.fromkeys(team_names, 1500.0)
+        finally:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.warning("关闭 ELO cursor 失败")
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    logger.warning("关闭 ELO connection 失败")
 
     @staticmethod
-    def get_team_fatigue_index(team_name: str, match_date: str, lookback_days: int = 7) -> float:
+    def get_team_fatigue_index(
+        team_name: str, match_date: str, lookback_days: int = 7, strict: bool = False
+    ) -> float:
         """
         计算球队疲劳度指数
 
@@ -1172,11 +1303,25 @@ class SchemaManager:
             team_name: 球队名称
             match_date: 比赛时间（用于计算之前的比赛）
             lookback_days: 回溯天数
+            strict: canonical 预测是否要求可用的赛程查询结果。
 
         Returns:
             float: 疲劳度指数 (0.0 - 1.0，越高越疲劳)
         """
+        conn = None
+        cursor = None
         try:
+            if strict and (not isinstance(team_name, str) or not team_name.strip()):
+                _raise_feature_data_unavailable("fatigue unavailable")
+            if strict and (not isinstance(match_date, str) or not match_date.strip()):
+                _raise_feature_data_unavailable("fatigue unavailable")
+            if strict and (
+                not isinstance(lookback_days, int)
+                or isinstance(lookback_days, bool)
+                or lookback_days <= 0
+            ):
+                _raise_feature_data_unavailable("fatigue unavailable")
+
             from datetime import timedelta
 
             import psycopg2
@@ -1211,15 +1356,17 @@ class SchemaManager:
 
                 match_dt = datetime.fromisoformat(match_date.replace("Z", "+00:00"))
                 start_time = match_dt - timedelta(days=lookback_days)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as exc:
+                if strict:
+                    raise RequiredFeatureDataUnavailableError("fatigue unavailable") from exc
                 # 时间解析失败，使用默认值
                 return 0.5
 
             cursor.execute(query, (team_name, team_name, start_time, match_date))
             result = cursor.fetchone()
 
-            cursor.close()
-            conn.close()
+            if strict and (not result or result[0] is None):
+                _raise_feature_data_unavailable("fatigue unavailable")
 
             match_count = result[0] if result else 0
 
@@ -1227,9 +1374,24 @@ class SchemaManager:
             # 7天3场比赛 = 0.43，7天1场比赛 = 0.14
             return min(1.0, match_count / lookback_days)
 
+        except RequiredFeatureDataUnavailableError:
+            raise
         except Exception as e:
             logger.exception(f"❌ 计算疲劳度失败 ({team_name}): {e}")
+            if strict:
+                raise RequiredFeatureDataUnavailableError("fatigue unavailable") from e
             return 0.5  # 默认中等疲劳度
+        finally:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    logger.warning("关闭疲劳 cursor 失败")
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    logger.warning("关闭疲劳 connection 失败")
 
 
 # 全局Schema管理器实例

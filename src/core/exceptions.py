@@ -71,6 +71,10 @@ class ValidationError(BaseApplicationError):
     """数据验证异常"""
 
 
+class InvalidPredictionInputError(ValidationError):
+    """Canonical 预测输入缺失或格式无效。"""
+
+
 class ExternalAPIError(BaseApplicationError):
     """外部API调用异常"""
 
@@ -117,6 +121,10 @@ class ConflictError(BaseApplicationError):
 
 class ServiceUnavailableError(BaseApplicationError):
     """服务不可用异常"""
+
+
+class RequiredFeatureDataUnavailableError(ServiceUnavailableError):
+    """Canonical 预测所需的赛前特征数据不可用。"""
 
 
 class TimeoutError(BaseApplicationError):

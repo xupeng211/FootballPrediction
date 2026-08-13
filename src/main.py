@@ -20,6 +20,11 @@ from src.api.model_management import router as model_management_router
 from src.api.monitoring import router as monitoring_router
 from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
+from src.core.exceptions import (
+    InvalidPredictionInputError,
+    PredictionError,
+    RequiredFeatureDataUnavailableError,
+)
 from src.core.metrics import get_metrics
 from src.database.db_pool import DatabasePool
 from src.ml.inference import prediction_runtime
@@ -284,11 +289,20 @@ async def predict_match(
         # MLC-1: 生产模型产物缺失 → FAIL CLOSED → 503，不向客户端暴露文件系统内部信息
         logger.exception("模型产物不可用，拒绝预测")
         raise HTTPException(status_code=503, detail="prediction model unavailable") from None
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.exception(f"预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"预测失败: {e!s}")
+    except InvalidPredictionInputError:
+        raise HTTPException(status_code=400, detail="invalid prediction input") from None
+    except RequiredFeatureDataUnavailableError:
+        raise HTTPException(
+            status_code=503, detail="required prediction feature data unavailable"
+        ) from None
+    except PredictionError:
+        logger.exception("预测内部失败")
+        raise HTTPException(status_code=500, detail="prediction failed") from None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid prediction input") from None
+    except Exception:
+        logger.exception("预测失败")
+        raise HTTPException(status_code=500, detail="prediction failed") from None
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
@@ -308,9 +322,20 @@ async def predict_batch(request: Request, batch_data: list[dict]) -> list[dict]:
         # MLC-1: 生产模型产物缺失 → FAIL CLOSED → 503
         logger.exception("模型产物不可用，拒绝批量预测")
         raise HTTPException(status_code=503, detail="prediction model unavailable") from None
-    except Exception as e:
-        logger.exception(f"批量预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
+    except InvalidPredictionInputError:
+        raise HTTPException(status_code=400, detail="invalid prediction input") from None
+    except RequiredFeatureDataUnavailableError:
+        raise HTTPException(
+            status_code=503, detail="required prediction feature data unavailable"
+        ) from None
+    except PredictionError:
+        logger.exception("批量预测内部失败")
+        raise HTTPException(status_code=500, detail="prediction failed") from None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid prediction input") from None
+    except Exception:
+        logger.exception("批量预测失败")
+        raise HTTPException(status_code=500, detail="prediction failed") from None
 
 
 @app.exception_handler(HTTPException)
@@ -349,7 +374,7 @@ async def general_exception_handler(request, exc: Exception):
             "error": True,
             "status_code": 500,
             "message": "内部服务器错误",
-            "path": str(request.url),
+            "path": request.url.path,
         },
     )
 
