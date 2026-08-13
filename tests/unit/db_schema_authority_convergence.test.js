@@ -143,6 +143,8 @@ test('A4 disables SchemaManager mutation entrypoints while retaining the module'
     assert.equal(schemaManager.lifecycle, 'LEGACY_NON_CANONICAL_RUNTIME_DDL');
     assert.equal(schemaManager.mutation_entrypoints_disabled, true);
     assert.equal(schemaManager.read_only_methods_retained, true);
+    assert.deepEqual(schemaManager.retained_legacy_data_methods, ['align_external_ids', 'bulk_insert_features']);
+    assert.equal(schemaManager.retained_legacy_data_methods_lifecycle, 'LEGACY_NON_CANONICAL_RUNTIME_DML');
 
     const initializeStart = source.indexOf('def initialize_schema');
     const productionStart = source.indexOf('def initialize_production_schema');
@@ -169,6 +171,18 @@ test('A4 turns L3 schema setup into a read-only precondition', () => {
     assert.match(source, /to_regclass\('public\.l3_features'\)/);
     assert.match(source, /database\/migrations\/V26\.4__create_l3_features_table\.sql/);
     assert.match(source, /operations:\s*\['UPDATE'\]/);
+});
+
+test('A4 classifies the legacy L3 Elo child DDL as noncanonical', () => {
+    const policy = readJson('config/db_schema_authority.json');
+    const source = read('scripts/maintenance/recalculate_elo.js');
+    const elo = surfaceByPath(policy, 'scripts/maintenance/recalculate_elo.js');
+
+    assert.equal(elo.lifecycle, 'SPECIALIZED_INTERNAL_RUNTIME_DDL');
+    assert.equal(elo.future_schema_changes_allowed, false);
+    assert.equal(elo.default_application_startup, false);
+    assert.equal(elo.execution_requires_separate_authorization, true);
+    assert.match(source, /CREATE TABLE IF NOT EXISTS team_elo_ratings/i);
 });
 
 test('A4 keeps init_db.sql dev-only and out of unified/production-like Compose', () => {

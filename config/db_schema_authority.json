@@ -47,6 +47,8 @@
                 "mutation_entrypoints": ["initialize_schema", "initialize_production_schema"],
                 "mutation_entrypoints_disabled": true,
                 "read_only_methods_retained": true,
+                "retained_legacy_data_methods": ["align_external_ids", "bulk_insert_features"],
+                "retained_legacy_data_methods_lifecycle": "LEGACY_NON_CANONICAL_RUNTIME_DML",
                 "supported_default_callers": []
             },
             {
@@ -55,6 +57,15 @@
                 "schema_mutation_entrypoint": "disabled",
                 "allowed_role": "feature/data writer after schema pre-provisioning",
                 "future_schema_changes_allowed": false,
+                "execution_requires_separate_authorization": true
+            },
+            {
+                "path": "scripts/maintenance/recalculate_elo.js",
+                "lifecycle": "SPECIALIZED_INTERNAL_RUNTIME_DDL",
+                "allowed_role": "legacy child helper invoked by L3 stitch for Elo data maintenance",
+                "schema_mutation_entrypoint": "legacy CREATE TABLE IF NOT EXISTS team_elo_ratings",
+                "future_schema_changes_allowed": false,
+                "default_application_startup": false,
                 "execution_requires_separate_authorization": true
             },
             {

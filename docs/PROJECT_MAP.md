@@ -107,7 +107,11 @@ schema change 放在哪里？”的唯一答案是：
   未覆盖 V26.4–V26.10 当前合同，因此生命周期为 `LEGACY` 且冻结 future revisions；不得新增未来 revision，
   不得由默认启动调用 `alembic upgrade`。
 - `SchemaManager` 的 mutation entrypoints 是 `LEGACY_NON_CANONICAL_RUNTIME_DDL` 并已 fail-fast；
-  其只读/introspection 方法不因 A4 被删除。
+  只读/introspection 方法保留，`align_external_ids` 与 `bulk_insert_features` 是
+  `LEGACY_NON_CANONICAL_RUNTIME_DML` 兼容方法，不是 schema authority。
+- L3 主 pipeline 不再执行 schema DDL；其调用的
+  `scripts/maintenance/recalculate_elo.js` 仍是 `SPECIALIZED_INTERNAL_RUNTIME_DDL` legacy
+  子入口，仅作 Elo 数据维护，未来 schema change 不得写入其中，执行仍需单独授权。
 - `deploy/docker/init_db.sql` 是 `DEV_BOOTSTRAP_NON_AUTHORITATIVE`，仅由
   `docker-compose.dev.yml` 的开发 DB 空卷 bootstrap 使用；unified/production-like Compose
   不再挂载它。它的表定义与 migration tree 的历史漂移是 carry-forward，不在 A4 修复。
