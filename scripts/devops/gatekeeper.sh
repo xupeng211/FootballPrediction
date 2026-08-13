@@ -5,29 +5,64 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${GATEKEEPER_COMPOSE_FILE:-docker-compose.dev.yml}"
 DEV_SERVICE="${GATEKEEPER_DEV_SERVICE:-dev}"
 MODE="${GATEKEEPER_MODE:-push}"
-WORKSPACE_ROOT="${GATEKEEPER_WORKSPACE_ROOT:-}"
-if [[ -z "$WORKSPACE_ROOT" ]]; then
-  if [[ "${GATEKEEPER_LOCAL_CI:-0}" == "1" || "${GATEKEEPER_DIRECT_MODE:-0}" == "1" ]]; then
-    WORKSPACE_ROOT="$ROOT_DIR"
-  else
-    WORKSPACE_ROOT='/app'
-  fi
-fi
-CONTAINER_GATEKEEPER_PATH="${WORKSPACE_ROOT%/}/scripts/devops/gatekeeper.sh"
+LOCAL_HOOK_MODE=0
+MODE_ARGUMENT_SEEN=0
+MODE_ARGUMENT_VALUE=''
+CLI_PARSE_ERROR=''
 
 for arg in "$@"; do
   case "$arg" in
     --mode=commit)
+      if [[ "$MODE_ARGUMENT_SEEN" == "1" ]]; then
+        CLI_PARSE_ERROR='门禁模式只能指定一次。'
+      fi
       MODE="commit"
+      MODE_ARGUMENT_SEEN=1
+      MODE_ARGUMENT_VALUE='commit'
       ;;
     --mode=pr)
+      if [[ "$MODE_ARGUMENT_SEEN" == "1" ]]; then
+        CLI_PARSE_ERROR='门禁模式只能指定一次。'
+      fi
       MODE="pr"
+      MODE_ARGUMENT_SEEN=1
+      MODE_ARGUMENT_VALUE='pr'
       ;;
     --mode=auto)
+      if [[ "$MODE_ARGUMENT_SEEN" == "1" ]]; then
+        CLI_PARSE_ERROR='门禁模式只能指定一次。'
+      fi
       MODE="auto"
+      MODE_ARGUMENT_SEEN=1
+      MODE_ARGUMENT_VALUE='auto'
       ;;
-    --mode=push|--mode=full)
+    --mode=push)
+      if [[ "$MODE_ARGUMENT_SEEN" == "1" ]]; then
+        CLI_PARSE_ERROR='门禁模式只能指定一次。'
+      fi
       MODE="push"
+      MODE_ARGUMENT_SEEN=1
+      MODE_ARGUMENT_VALUE='push'
+      ;;
+    --mode=full)
+      if [[ "$MODE_ARGUMENT_SEEN" == "1" ]]; then
+        CLI_PARSE_ERROR='门禁模式只能指定一次。'
+      fi
+      MODE="push"
+      MODE_ARGUMENT_SEEN=1
+      MODE_ARGUMENT_VALUE='full'
+      ;;
+    --local-hook)
+      if [[ "$LOCAL_HOOK_MODE" == "1" ]]; then
+        CLI_PARSE_ERROR='--local-hook 只能指定一次。'
+      fi
+      LOCAL_HOOK_MODE=1
+      ;;
+    --mode=*)
+      CLI_PARSE_ERROR="不支持的门禁模式参数: ${arg}"
+      ;;
+    *)
+      CLI_PARSE_ERROR="不支持的门禁参数: ${arg}"
       ;;
   esac
 done
@@ -44,6 +79,57 @@ fail() {
   printf '[Gatekeeper] ERROR: %s\n' "$*" >&2
   exit 1
 }
+
+if [[ -n "$CLI_PARSE_ERROR" ]]; then
+  fail "$CLI_PARSE_ERROR"
+fi
+
+if [[ "$LOCAL_HOOK_MODE" == "1" ]]; then
+  if [[ "$MODE_ARGUMENT_SEEN" != "1" ]]; then
+    fail '--local-hook 必须与显式 --mode=commit、--mode=push、--mode=pr 或 --mode=auto 一起使用。'
+  fi
+
+  case "$MODE_ARGUMENT_VALUE" in
+    commit|push|pr|auto)
+      ;;
+    *)
+      fail "--local-hook 不允许使用门禁模式: ${MODE_ARGUMENT_VALUE}"
+      ;;
+  esac
+
+  if [[ -n "${GITHUB_ACTIONS:-}" || "${CI:-}" == "true" ]]; then
+    fail '--local-hook 仅允许本地 Git Hook 使用，CI 环境拒绝降级为 hermetic 模式。'
+  fi
+
+  if [[ -n "${GATEKEEPER_WORKSPACE_ROOT:-}" && "${GATEKEEPER_WORKSPACE_ROOT}" != "$ROOT_DIR" ]]; then
+    fail '--local-hook 禁止覆盖工作区根目录，拒绝执行不明工作区。'
+  fi
+
+  WORKSPACE_ROOT="$ROOT_DIR"
+  CONTAINER_GATEKEEPER_PATH="${ROOT_DIR%/}/scripts/devops/gatekeeper.sh"
+  export GATEKEEPER_IN_CONTAINER=1
+  export GATEKEEPER_LOCAL_HOOK_ACTIVE=1
+else
+  WORKSPACE_ROOT="${GATEKEEPER_WORKSPACE_ROOT:-}"
+  if [[ -z "$WORKSPACE_ROOT" ]]; then
+    if [[ "${GATEKEEPER_LOCAL_CI:-0}" == "1" || "${GATEKEEPER_DIRECT_MODE:-0}" == "1" ]]; then
+      WORKSPACE_ROOT="$ROOT_DIR"
+    else
+      WORKSPACE_ROOT='/app'
+    fi
+  fi
+  CONTAINER_GATEKEEPER_PATH="${WORKSPACE_ROOT%/}/scripts/devops/gatekeeper.sh"
+fi
+
+PYTHON_BIN="${GATEKEEPER_PYTHON_BIN:-python}"
+if [[ "$LOCAL_HOOK_MODE" == "1" ]] && ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN='python3'
+  fi
+fi
+if [[ "$LOCAL_HOOK_MODE" == "1" ]] && ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  fail '本地 Git Hook hermetic 模式缺少 python/python3，拒绝执行不完整门禁。'
+fi
 
 run_with_failure_reason() {
   local reason="$1"
@@ -643,6 +729,12 @@ assert_quality_tooling() {
   [[ -x node_modules/.bin/c8 ]] || fail '项目依赖中缺少 c8。'
 }
 
+assert_local_hook_tooling() {
+  command -v node >/dev/null 2>&1 || fail '本地 Git Hook hermetic 模式缺少 node。'
+  command -v npm >/dev/null 2>&1 || fail '本地 Git Hook hermetic 模式缺少 npm。'
+  [[ -x node_modules/.bin/eslint ]] || fail '本地 Git Hook hermetic 模式缺少 eslint。'
+}
+
 validate_proxy_pool_file() {
   log '校验共享代理池配置文件。'
   [[ -f config/proxy_pool.json ]] || fail '缺少 config/proxy_pool.json。'
@@ -700,7 +792,7 @@ fs.writeFileSync('/tmp/gatekeeper-node-proxy.json', JSON.stringify({
 }, null, 2));
 NODE
 
-  python <<'PY'
+  "$PYTHON_BIN" <<'PY'
 import json
 import os
 from pathlib import Path
@@ -809,7 +901,7 @@ Path("/tmp/gatekeeper-python-proxy.json").write_text(
 )
 PY
 
-  python <<'PY'
+  "$PYTHON_BIN" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -1098,15 +1190,15 @@ run_static_quality_checks() {
   # Pre-existing violations in changed files are reported as warnings.
   # TECHDEBT-E: Apply changed-line principle to static quality checks.
   if [[ -f "scripts/devops/static_quality_changed_lines.py" ]]; then
-    python scripts/devops/static_quality_changed_lines.py "${python_targets[@]}" || ruff_rc=$?
+    "$PYTHON_BIN" scripts/devops/static_quality_changed_lines.py "${python_targets[@]}" || ruff_rc=$?
   else
     # Fallback: whole-file ruff check (original behavior).
     warn 'static_quality_changed_lines.py 未找到，回退到全文件 ruff 检查。'
-    python -m ruff check "${python_targets[@]}" || ruff_rc=$?
+    "$PYTHON_BIN" -m ruff check "${python_targets[@]}" || ruff_rc=$?
   fi
 
   # ruff format check remains whole-file (formatting consistency for the entire changed file).
-  python -m ruff format --check "${python_targets[@]}"
+  "$PYTHON_BIN" -m ruff format --check "${python_targets[@]}"
 
   # mypy type check with changed-line gating.
   # TECHDEBT-E: mypy diagnostics on changed lines block; pre-existing errors warn.
@@ -1121,11 +1213,11 @@ run_static_quality_checks() {
   local mypy_rc=0
   if [[ "${#mypy_targets[@]}" -gt 0 ]]; then
     if [[ -f "scripts/devops/static_quality_changed_lines.py" ]]; then
-      python scripts/devops/static_quality_changed_lines.py --mypy "${mypy_targets[@]}" || mypy_rc=$?
+      "$PYTHON_BIN" scripts/devops/static_quality_changed_lines.py --mypy "${mypy_targets[@]}" || mypy_rc=$?
     else
       # Fallback: whole-file mypy check.
       warn 'static_quality_changed_lines.py 未找到，回退到全文件 mypy 检查。'
-      python -m mypy --config-file mypy.ini --follow-imports=silent "${mypy_targets[@]}" || mypy_rc=$?
+      "$PYTHON_BIN" -m mypy --config-file mypy.ini --follow-imports=silent "${mypy_targets[@]}" || mypy_rc=$?
     fi
   else
     log '本次变更未触达 src Python 模块，跳过 mypy。'
@@ -1445,8 +1537,35 @@ run_commit_smoke_tests() {
   fi
 }
 
+run_local_hook_checks() {
+  log "执行本地 Git Hook hermetic 门禁（mode=${MODE}，禁止 Docker/DB）。"
+
+  run_branch_workspace_preflight
+  ensure_git_context
+  assert_local_hook_tooling
+
+  run_no_verify_backdoor_guard
+  validate_proxy_pool_file
+  validate_cross_language_proxy_source
+  run_secret_ip_leak_check
+  run_proxy_contract_check
+  run_python_proxy_contract_check
+  run_config_compat_guard
+  run_python_architecture_guard
+  run_static_quality_checks
+  run_repo_hygiene_guard
+  run_proxyprovider_smoke_test
+  run_commit_smoke_tests
+}
+
 main() {
   log "进入门禁容器执行阶段（mode=${MODE}）。"
+
+  if [[ "$LOCAL_HOOK_MODE" == "1" ]]; then
+    run_local_hook_checks
+    log "本地 Git Hook hermetic 门禁通过（mode=${MODE}）。"
+    return 0
+  fi
 
   if [[ "${GATEKEEPER_LOCAL_CI_ACTIVE:-0}" == "1" ]]; then
     warn '========================================================================'
