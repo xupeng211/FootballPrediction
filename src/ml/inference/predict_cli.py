@@ -21,6 +21,11 @@ from typing import TYPE_CHECKING, Any, Protocol, TextIO, cast
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from src.core.exceptions import (
+    InvalidPredictionInputError,
+    PredictionError,
+    RequiredFeatureDataUnavailableError,
+)
 from src.ml.inference import prediction_runtime
 from src.ml.inference.canonical_model_loader import (
     CANONICAL_API_MODEL_TYPE,
@@ -32,6 +37,7 @@ EXIT_SUCCESS = 0
 EXIT_PREDICTION_ERROR = 1
 EXIT_INPUT_ERROR = 2
 EXIT_MODEL_UNAVAILABLE = 3
+EXIT_FEATURE_DATA_UNAVAILABLE = 4
 
 
 class InputError(ValueError):
@@ -175,6 +181,15 @@ def main(
     except ModelArtifactUnavailableError:
         print("prediction model unavailable", file=error_stream)
         exit_code = EXIT_MODEL_UNAVAILABLE
+    except InvalidPredictionInputError:
+        print("input error: invalid prediction input", file=error_stream)
+        exit_code = EXIT_INPUT_ERROR
+    except RequiredFeatureDataUnavailableError:
+        print("required prediction feature data unavailable", file=error_stream)
+        exit_code = EXIT_FEATURE_DATA_UNAVAILABLE
+    except PredictionError:
+        print("prediction failed", file=error_stream)
+        exit_code = EXIT_PREDICTION_ERROR
     except ValueError as exc:
         print(_safe_value_error(exc), file=error_stream)
         exit_code = EXIT_INPUT_ERROR
