@@ -378,10 +378,16 @@ function resultPointsForTeam(fact, candidate, teamName) {
 }
 
 function factProvenanceProjection(fact, field) {
+    const staging = fact.provenance.staging || {};
+    const capture = fact.provenance.capture || {};
     return {
         canonical_match_id: fact.canonical_match_id,
         field,
-        provenance: fact.provenance,
+        fact_provenance_digest: computeProvenanceDigest(fact.provenance),
+        staging_business_hash: staging.business_hash || null,
+        stable_payload_sha256: staging.stable_payload_sha256 || capture.stable_payload_sha256 || null,
+        payload_file_sha256: staging.payload_file_sha256 || capture.payload_file_sha256 || null,
+        capture_manifest_sha256: staging.capture_manifest_sha256 || capture.capture_manifest_sha256 || null,
     };
 }
 
