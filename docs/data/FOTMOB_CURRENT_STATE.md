@@ -11,6 +11,17 @@
 
 ## Current authoritative status — 2026-08-11 (post-GDI1C FotMob 888 closeout)
 
+### GD-A01 implementation status — 2026-08-14
+
+The GD-A01 spine + historical-odds file-first assembler is implemented on the
+`feat/gd-a01-spine-odds-assembler` branch and awaits merge review.  Its frozen
+888 real-asset validation artifact is an assembly foundation, not the Golden
+Dataset: `FOTMOB_888_RAW_ASSET_FROZEN=YES` does not mean
+`GOLDEN_DATASET_COMPLETE=YES`, and GD-A01 does not include the GD-A02+ facts or
+prior-state feature views.  Football-Data C-series values remain a
+provider-defined closing benchmark; an exact closing timestamp/tick is not
+proven.
+
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
 Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
