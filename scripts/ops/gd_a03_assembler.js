@@ -7,6 +7,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { resolveGitState } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 
 const {
     validateCanonicalCandidateDocument,
@@ -175,6 +176,21 @@ function assertRepositoryConfigFile(filePath, label, repositoryRoot) {
     }
     const bytes = fs.readFileSync(realPath);
     return { path: realPath, bytes, sha256: sha256Bytes(bytes) };
+}
+
+function assertCodeRevisionMatchesHead(codeRevision, repositoryRoot) {
+    let gitState;
+    try {
+        gitState = resolveGitState({ repositoryRoot });
+    } catch (error) {
+        fail(`cannot verify --code-revision against Git HEAD: ${error.message}`, 'CODE_REVISION_UNVERIFIED');
+    }
+    if (gitState.revision !== codeRevision) {
+        fail(
+            `--code-revision ${codeRevision} does not match Git HEAD ${gitState.revision}`,
+            'CODE_REVISION_MISMATCH'
+        );
+    }
 }
 
 function loadRuntimeFeatureIdentity(repositoryRoot) {
@@ -416,6 +432,7 @@ function main(argv = process.argv.slice(2), dependencies = {}) {
             stdout(`${JSON.stringify(summary(result))}\n`);
             return EXIT_CODES.OK;
         }
+        assertCodeRevisionMatchesHead(args.codeRevision, repositoryRoot);
         const result = buildPriorStateFeatureView(loadBuildInputs(args, repositoryRoot));
         validatePriorStateOutputFiles(result.artifactBytes, result.receiptBytes);
         if (

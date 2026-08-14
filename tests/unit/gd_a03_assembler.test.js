@@ -11,6 +11,7 @@ const test = require('node:test');
 const featureContract = require('../../config/model_feature_contracts.json').contracts[0];
 const {
     buildPriorStateFeatureView,
+    normalizeSchedule,
     validatePriorStateOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateAssembler');
 const { loadFeatureContract } = require('../../scripts/ops/gd_a03_assembler');
@@ -231,6 +232,19 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
     };
     const withFuture = buildPriorStateFeatureView(futureOptions);
     assert.deepEqual(targetRow(withFuture, fixture.targetId).features, targetRow(base, fixture.targetId).features);
+});
+
+test('GD-A03 schedule normalization rejects non-canonical IDs and timestamps', () => {
+    const fixture = buildFixture();
+    const valid = fixture.schedule[0];
+    assertReject(
+        () => normalizeSchedule([{ ...valid, source_match_id: 'not-numeric' }]),
+        'IDENTITY_CONFLICT'
+    );
+    assertReject(
+        () => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]),
+        'FACT_VALUE_INVALID'
+    );
 });
 
 test('GD-A03 records an actual missing recent match and does not reach farther back', () => {

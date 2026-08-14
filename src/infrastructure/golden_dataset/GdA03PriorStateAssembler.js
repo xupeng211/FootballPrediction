@@ -31,6 +31,7 @@ const {
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
 const { admittedIdSetHash, sha256Bytes } = require('./GdA01AssemblyContract');
+const { isNumericExternalId, isStrictAbsoluteTimestamp } = require('../fotmob/FotMobCandidateExporter');
 
 const SCHEDULE_SCHEMA_VERSION = 'candidate-match-identity/v1';
 const SCHEDULE_AUTHORITY_VERSION = 'canonical-schedule-history/v1';
@@ -85,6 +86,12 @@ function normalizeScheduleCandidate(candidate, index) {
     }
     if (candidate.competition !== 'Premier League') {
         fail(`schedule candidate[${index}] competition is unsupported`, 'IDENTITY_CONFLICT');
+    }
+    if (!isNumericExternalId(candidate.source_match_id)) {
+        fail(`schedule candidate[${index}] source_match_id must be numeric`, 'IDENTITY_CONFLICT');
+    }
+    if (!isStrictAbsoluteTimestamp(candidate.kickoff_at)) {
+        fail(`schedule candidate[${index}] kickoff_at must be an absolute timestamp`, 'FACT_VALUE_INVALID');
     }
     if (candidate.home_team === candidate.away_team) {
         fail(`schedule candidate[${index}] home/away identity collision`, 'IDENTITY_CONFLICT');
@@ -690,7 +697,7 @@ function buildFatigueLine({ featureName, target, teamName, matches, closure, sou
                 closure_schema: closure.schema_version,
                 schedule_sha256: sourceBinding?.sha256 || null,
                 team_name: teamName,
-                window_start_exclusive: new Date(startMs).toISOString(),
+                window_start_inclusive: new Date(startMs).toISOString(),
                 window_end_exclusive: target.kickoff_at,
             },
         ],
