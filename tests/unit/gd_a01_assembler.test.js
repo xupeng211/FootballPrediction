@@ -32,7 +32,8 @@ const {
     FOOTBALL_DATA_PROVIDER_CONTRACT,
 } = require('../../src/infrastructure/odds_staging/footballDataProviderContract');
 const { computeBusinessContentHash } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
-const { runRebuild } = require('../../scripts/ops/odds_staging/historical_odds_rebuild');
+const historicalOddsVerifier = require('../../scripts/ops/odds_staging/historical_odds_rebuild');
+const { runRebuild } = historicalOddsVerifier;
 const { parseArgs } = require('../../scripts/ops/gd_a01_assembler');
 
 const HASH = 'a'.repeat(64);
@@ -326,8 +327,8 @@ test('GD-A01 assembler build and receipt are deterministic on a hermetic offline
         codeRevision: REVISION,
         expectedAdmittedRows: 1,
     };
-    const left = buildAssembly(options);
-    const right = buildAssembly(options);
+    const left = buildAssembly(options, { historicalOddsVerifier });
+    const right = buildAssembly(options, { historicalOddsVerifier });
     assert.equal(left.artifact.rows.length, 1);
     assert.equal(left.artifact.rejected_rows.length, 0);
     assert.equal(left.artifactBytes.toString(), right.artifactBytes.toString());

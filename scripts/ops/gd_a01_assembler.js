@@ -10,6 +10,10 @@ const {
     validateAssemblyFiles,
     writeAssemblyOutputs,
 } = require('../../src/infrastructure/golden_dataset/GdA01Assembler');
+// The CLI binds the existing M3 verifier at the scripts/ops boundary.  The
+// src assembler receives this capability by dependency injection and therefore
+// does not create a src -> scripts/ops reverse dependency.
+const historicalOddsVerifier = require('./odds_staging/historical_odds_rebuild');
 
 const EXIT_CODES = Object.freeze({
     OK: 0,
@@ -118,7 +122,7 @@ function main(argv = process.argv.slice(2), dependencies = {}) {
             );
             return EXIT_CODES.OK;
         }
-        const result = buildAssembly(args, dependencies);
+        const result = buildAssembly(args, { ...dependencies, historicalOddsVerifier });
         const written = writeAssemblyOutputs(result, args, dependencies);
         stdout(
             `${JSON.stringify({

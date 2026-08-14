@@ -2,7 +2,7 @@
 
 // lifecycle: permanent
 // GD-A01 file-first assembler。输入必须由调用者显式绑定；本模块只读取冻结文件，
-// 通过现有 M3 verifier 与 matchLinker 复核后，在用户指定的仓库外路径写出结果。
+// 通过调用者注入的现有 M3 verifier 与 matchLinker 复核后，在用户指定的仓库外路径写出结果。
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -30,10 +30,6 @@ const {
     validateReceiptDocument,
 } = require('./GdA01AssemblyContract');
 const { decideMatchLink } = require('../odds_staging/matchLinker');
-const {
-    validateRebuildReceipt,
-    verifyRebuildReceiptAgainstOutput,
-} = require('../../../scripts/ops/odds_staging/historical_odds_rebuild');
 
 const SAFE_SOURCE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const GIT_REVISION = /^[0-9a-f]{40}$/;
@@ -210,7 +206,15 @@ function validateSourceDirectoryLayout(root, receipt, fileSystem) {
     }
 }
 
-function readOddsInput(options, repositoryRoot, fileSystem, candidateContract) {
+function readOddsInput(options, repositoryRoot, fileSystem, candidateContract, historicalOddsVerifier) {
+    if (
+        !historicalOddsVerifier ||
+        typeof historicalOddsVerifier.validateRebuildReceipt !== 'function' ||
+        typeof historicalOddsVerifier.verifyRebuildReceiptAgainstOutput !== 'function'
+    ) {
+        fail('GD-A01 requires the existing M3 historical odds verifier', 'DEPENDENCY_INVALID');
+    }
+    const { validateRebuildReceipt, verifyRebuildReceiptAgainstOutput } = historicalOddsVerifier;
     const oddsRoot = assertOrdinaryDirectory(
         options.oddsRootPath,
         'historical odds emit root',
@@ -514,8 +518,9 @@ function buildAssembly(options = {}, dependencies = {}) {
     const fileSystem = dependencies.fileSystem || fs;
     const repositoryRoot = dependencies.repositoryRoot || path.resolve(__dirname, '../../..');
     const codeRevision = assertCodeRevision(options.codeRevision);
+    const historicalOddsVerifier = dependencies.historicalOddsVerifier;
     const input = readFotMobInput(options, repositoryRoot, fileSystem);
-    const odds = readOddsInput(options, repositoryRoot, fileSystem, input.candidateContract);
+    const odds = readOddsInput(options, repositoryRoot, fileSystem, input.candidateContract, historicalOddsVerifier);
     const artifact = buildArtifact(input, odds, codeRevision);
     if (options.expectedAdmittedRows !== undefined && artifact.rows.length !== Number(options.expectedAdmittedRows)) {
         fail('GD-A01 frozen validation population does not match the explicit expected count', 'POPULATION_MISMATCH');
