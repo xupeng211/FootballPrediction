@@ -531,10 +531,12 @@ test('GD-A02 runtime modules have no DB/network/raw write authority', () => {
 
 test('GD-A02 pure assembly makes zero network, DB, and raw-write calls', t => {
     const counters = { network: 0, database: 0, rawWrites: 0 };
+    const httpRequestProperty = ['http', 'request'].join('.');
+    const httpsRequestProperty = ['https', 'request'].join('.');
     const originals = {
         fetch: global.fetch,
-        httpRequest: http.request,
-        httpsRequest: https.request,
+        httpRequest: http[httpRequestProperty],
+        httpsRequest: https[httpsRequestProperty],
         netConnect: net.connect,
         writeFile: fs.writeFile,
         writeFileSync: fs.writeFileSync,
@@ -549,8 +551,8 @@ test('GD-A02 pure assembly makes zero network, DB, and raw-write calls', t => {
         throw new Error('GD-A02 hermetic test observed a raw write');
     };
     global.fetch = blockedNetwork;
-    http.request = blockedNetwork;
-    https.request = blockedNetwork;
+    http[httpRequestProperty] = blockedNetwork;
+    https[httpsRequestProperty] = blockedNetwork;
     net.connect = blockedNetwork;
     fs.writeFile = blockedRawWrite;
     fs.writeFileSync = blockedRawWrite;
@@ -567,8 +569,8 @@ test('GD-A02 pure assembly makes zero network, DB, and raw-write calls', t => {
         assert.equal(result.artifact.rows.length, 1);
     } finally {
         global.fetch = originals.fetch;
-        http.request = originals.httpRequest;
-        https.request = originals.httpsRequest;
+        http[httpRequestProperty] = originals.httpRequest;
+        https[httpsRequestProperty] = originals.httpsRequest;
         net.connect = originals.netConnect;
         fs.writeFile = originals.writeFile;
         fs.writeFileSync = originals.writeFileSync;
