@@ -891,6 +891,16 @@ function buildFeatureAvailability(rows, featureNames) {
     });
 }
 
+function buildUnavailableReasonCounts(rows) {
+    const counts = {};
+    for (const row of rows) {
+        for (const line of Object.values(row.features)) {
+            for (const reason of line.unavailable_reason_codes) counts[reason] = (counts[reason] || 0) + 1;
+        }
+    }
+    return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));
+}
+
 // eslint-disable-next-line complexity -- counters intentionally enumerate each safety invariant.
 function computeValidationCounters(rows, scheduleById) {
     let targetMatchFactDependencyCount = 0;
@@ -1030,6 +1040,7 @@ function buildPriorStateFeatureView(options) {
             accounted_id_set_sha256: admittedIdSetHash([...accountedIds]),
         },
         feature_availability: buildFeatureAvailability(rows, featureNames),
+        unavailable_reason_counts: buildUnavailableReasonCounts(rows),
         validation_counters: validationCounters,
         numeric_parity: NUMERIC_PARITY,
         feature_frame_readiness: 'NOT_READY',
@@ -1066,6 +1077,7 @@ function buildPriorStateFeatureView(options) {
         db_writes: 0,
         db_migrations: 0,
         raw_mutations: 0,
+        db_connections: 0,
         training_runs: 0,
         backtest_runs: 0,
         model_activations: 0,

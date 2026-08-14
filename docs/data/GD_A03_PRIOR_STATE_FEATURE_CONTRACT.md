@@ -96,6 +96,7 @@ Each target row contains:
 - the canonical feature contract and ordered feature object;
 - each feature value or `null`, `availability_status`, exact source IDs and identities,
   latest source kickoff, derivation contract, cutoff proof, and provenance digest;
+- `feature_availability` and deterministic `unavailable_reason_counts` for all 20 features;
 - `feature_vector_eligibility` (`YES`/`NO`) with reason codes;
 - an isolated `target_label` with `role=TRAINING_LABEL_POSTMATCH`.
 
@@ -151,3 +152,5 @@ FEATURE_FRAME_READINESS=NOT_READY
 TRAINING_EXECUTION_AUTHORIZED=NO
 GOLDEN_DATASET_COMPLETE=NO
 ```
+
+The receipt also records `DB_CONNECTIONS=0` alongside the other offline safety counters.
