@@ -18,7 +18,11 @@ const SOURCE_PROVIDER = 'FotMob';
 const CANONICAL_PROVIDER = 'fotmob';
 const COMPETITION = 'Premier League';
 const SEASONS = Object.freeze(['2022/2023', '2023/2024', '2024/2025']);
+const TEAMS_PER_SEASON = 20;
 const FIXTURES_PER_SEASON = 380;
+const FIXTURES_PER_TEAM = 38;
+const HOME_FIXTURES_PER_TEAM = 19;
+const AWAY_FIXTURES_PER_TEAM = 19;
 const MASTER_COUNT = SEASONS.length * FIXTURES_PER_SEASON;
 const APPROVED_CANARY_COUNTS = new Set([1, 10]);
 const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
@@ -522,12 +526,16 @@ module.exports = {
     COMPETITION,
     CanonicalInventoryContractError,
     FOTMOB_STATUS_TO_APPLICATION_STATUS,
+    AWAY_FIXTURES_PER_TEAM,
     FIXTURES_PER_SEASON,
+    FIXTURES_PER_TEAM,
+    HOME_FIXTURES_PER_TEAM,
     MASTER_COUNT,
     SCHEMA_VERSION,
     SEASONS,
     SOURCE_PROVIDER,
     STATUS_MAPPING_VERSION,
+    TEAMS_PER_SEASON,
     canonicalCandidateProjection,
     canonicalOrder,
     computeBusinessHash,
