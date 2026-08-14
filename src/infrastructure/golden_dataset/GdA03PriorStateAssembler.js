@@ -19,6 +19,7 @@ const {
     PRIOR_STATE_STAGE,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
+    SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     SEMANTICS_STATUS,
     assertFiniteNumber,
     assertObject,
@@ -215,6 +216,7 @@ function normalizeFactRows(factRows) {
     return byId;
 }
 
+// eslint-disable-next-line complexity -- schedule/team closure is one fail-closed authority check.
 function validateScheduleClosure(schedule, closure) {
     assertObject(closure, 'schedule closure');
     if (closure.schema_version !== SCHEDULE_AUTHORITY_VERSION) {
@@ -228,11 +230,62 @@ function validateScheduleClosure(schedule, closure) {
     if (stableStringify(actualCounts) !== stableStringify(closure.per_season_expected_counts)) {
         fail('schedule closure counts do not match the canonical schedule', 'HISTORY_CLOSURE_INVALID');
     }
+    let teamClosure = null;
+    if (closure.team_closure !== undefined) {
+        assertObject(closure.team_closure, 'schedule closure team_closure');
+        if (closure.team_closure.schema_version !== SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION) {
+            fail('schedule team closure schema is unsupported', 'SCHEMA_MISMATCH');
+        }
+        if (closure.team_closure.status !== 'PROVEN') {
+            fail('schedule team closure must be PROVEN', 'HISTORY_CLOSURE_INVALID');
+        }
+        const expectedFields = [
+            'teams_per_season',
+            'fixtures_per_team',
+            'home_fixtures_per_team',
+            'away_fixtures_per_team',
+        ];
+        for (const field of expectedFields) {
+            if (!Number.isSafeInteger(closure.team_closure[field]) || closure.team_closure[field] <= 0) {
+                fail(`schedule team closure ${field} is invalid`, 'SCHEMA_MISMATCH');
+            }
+        }
+        const bySeason = new Map();
+        for (const candidate of schedule) {
+            const teamMap = bySeason.get(candidate.season) || new Map();
+            const home = teamMap.get(candidate.home_team) || { total: 0, home: 0, away: 0 };
+            const away = teamMap.get(candidate.away_team) || { total: 0, home: 0, away: 0 };
+            home.total += 1;
+            home.home += 1;
+            away.total += 1;
+            away.away += 1;
+            teamMap.set(candidate.home_team, home);
+            teamMap.set(candidate.away_team, away);
+            bySeason.set(candidate.season, teamMap);
+        }
+        for (const season of Object.keys(closure.per_season_expected_counts)) {
+            const teamMap = bySeason.get(season) || new Map();
+            if (teamMap.size !== closure.team_closure.teams_per_season) {
+                fail(`schedule season ${season} team count is not closed`, 'HISTORY_CLOSURE_INVALID');
+            }
+            for (const [team, counts] of teamMap) {
+                if (
+                    counts.total !== closure.team_closure.fixtures_per_team ||
+                    counts.home !== closure.team_closure.home_fixtures_per_team ||
+                    counts.away !== closure.team_closure.away_fixtures_per_team
+                ) {
+                    fail(`schedule season ${season} team ${team} fixture closure is invalid`, 'HISTORY_CLOSURE_INVALID');
+                }
+            }
+        }
+        teamClosure = { ...closure.team_closure };
+    }
     return {
         schema_version: closure.schema_version,
         status: closure.status,
         authority: closure.authority,
         per_season_expected_counts: { ...closure.per_season_expected_counts },
+        ...(teamClosure ? { team_closure: teamClosure } : {}),
     };
 }
 
@@ -1052,6 +1105,7 @@ function buildPriorStateFeatureView(options) {
             closure_status: closure.status,
             authority: closure.authority,
             per_season_counts: closure.per_season_expected_counts,
+            ...(closure.team_closure ? { team_closure: closure.team_closure } : {}),
         },
         population_accounting: {
             target_population_count: rows.length,

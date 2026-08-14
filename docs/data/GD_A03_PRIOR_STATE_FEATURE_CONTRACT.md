@@ -38,8 +38,9 @@ stats、match stats 是同场 `POSTMATCH_ONLY` facts。它们禁止进入同场 
 - 目标 identity/spine：GD-A01 artifact。
 - historical factual truth：GD-A02 artifact；其事实时序固定为 `POSTMATCH_ONLY`。
 - history closure：canonical candidate/schedule identity artifact（现行三赛季
-  Premier League master scope 为 380 场/season）。它证明哪些 official fixture
-  存在，不把 GD-A02 的 888 target subset 当成完整 schedule/result history。
+  Premier League master scope 为 380 场/season）。GD-A03 CLI 另外验证每季 20
+  个 team、每队 38 场且主客各 19 场；它证明哪些 official fixture 存在，不把
+  GD-A02 的 888 target subset 当成完整 schedule/result history。
 - `l3_features`、PostgreSQL runtime tables、`SchemaManager` proxy/default 不是
   GD-A03 的 input authority。
 

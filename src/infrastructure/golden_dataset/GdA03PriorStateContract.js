@@ -7,10 +7,21 @@
 // 提升为数值权威。
 
 const { GdA01ContractError, sha256Text, stableStringify } = require('./GdA01AssemblyContract');
+const {
+    AWAY_FIXTURES_PER_TEAM,
+    FIXTURES_PER_TEAM,
+    HOME_FIXTURES_PER_TEAM,
+    TEAMS_PER_SEASON,
+} = require('../canonical/CanonicalInventoryContract');
 
 const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v1';
 const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v1';
+const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
+const SCHEDULE_TEAMS_PER_SEASON = TEAMS_PER_SEASON;
+const SCHEDULE_FIXTURES_PER_TEAM = FIXTURES_PER_TEAM;
+const SCHEDULE_HOME_FIXTURES_PER_TEAM = HOME_FIXTURES_PER_TEAM;
+const SCHEDULE_AWAY_FIXTURES_PER_TEAM = AWAY_FIXTURES_PER_TEAM;
 const PRIOR_STATE_STAGE = 'GD-A03';
 const FEATURE_CUTOFF_POLICY = 'TARGET_KICKOFF_EXCLUSIVE';
 const FEATURE_CUTOFF_RELATION = 'source_match_kickoff < target_match_kickoff';
@@ -472,6 +483,11 @@ module.exports = {
     PRIOR_STATE_STAGE,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
+    SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    SCHEDULE_FIXTURES_PER_TEAM,
+    SCHEDULE_HOME_FIXTURES_PER_TEAM,
+    SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    SCHEDULE_TEAMS_PER_SEASON,
     SEMANTICS_STATUS,
     assertFiniteNumber,
     assertObject,

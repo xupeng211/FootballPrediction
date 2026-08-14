@@ -12,6 +12,7 @@ const featureContract = require('../../config/model_feature_contracts.json').con
 const {
     buildPriorStateFeatureView,
     normalizeSchedule,
+    validateScheduleClosure,
     validatePriorStateOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateAssembler');
 const { loadFeatureContract } = require('../../scripts/ops/gd_a03_assembler');
@@ -20,6 +21,7 @@ const {
     FEATURE_CUTOFF_POLICY,
     PRIOR_STATE_LINEAGE_CONTRACT_VERSION,
     REASON_CODES,
+    SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     computeBusinessHash,
     stableStringify,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
@@ -246,6 +248,51 @@ test('GD-A03 schedule normalization rejects non-canonical IDs and timestamps', (
     assertReject(
         () => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]),
         'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture', () => {
+    const teams = Array.from({ length: 20 }, (_, index) => `Team ${index + 1}`);
+    const schedule = [];
+    let sequence = 1;
+    for (let homeIndex = 0; homeIndex < teams.length; homeIndex += 1) {
+        for (let awayIndex = homeIndex + 1; awayIndex < teams.length; awayIndex += 1) {
+            for (const [home, away] of [
+                [teams[homeIndex], teams[awayIndex]],
+                [teams[awayIndex], teams[homeIndex]],
+            ]) {
+                schedule.push(
+                    candidate(
+                        `47_20242025_${String(sequence).padStart(7, '0')}`,
+                        '2024-07-01T12:00:00Z',
+                        home,
+                        away
+                    )
+                );
+                sequence += 1;
+            }
+        }
+    }
+    const closure = {
+        schema_version: 'canonical-schedule-history/v1',
+        status: 'PROVEN',
+        authority: 'fixture canonical schedule',
+        per_season_expected_counts: { '2024/2025': 380 },
+        team_closure: {
+            schema_version: SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+            status: 'PROVEN',
+            teams_per_season: 20,
+            fixtures_per_team: 38,
+            home_fixtures_per_team: 19,
+            away_fixtures_per_team: 19,
+        },
+    };
+    assert.doesNotThrow(() => validateScheduleClosure(normalizeSchedule(schedule), closure));
+    const tampered = schedule.map(row => ({ ...row }));
+    tampered[0].home_team = 'Reassigned Team';
+    assertReject(
+        () => validateScheduleClosure(normalizeSchedule(tampered), closure),
+        'HISTORY_CLOSURE_INVALID'
     );
 });
 

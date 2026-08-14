@@ -27,6 +27,11 @@ const {
 const {
     GdA03ContractError,
     PRIOR_STATE_ARTIFACT_SCHEMA_VERSION,
+    SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    SCHEDULE_FIXTURES_PER_TEAM,
+    SCHEDULE_HOME_FIXTURES_PER_TEAM,
+    SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    SCHEDULE_TEAMS_PER_SEASON,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
 const {
     buildPriorStateFeatureView,
@@ -364,6 +369,14 @@ function loadBuildInputs(args, repositoryRoot) {
         authority:
             'canonical-inventory-contract + candidate-match-identity/v1; schedule completeness only, not result completeness',
         per_season_expected_counts: perSeasonCounts,
+        team_closure: {
+            schema_version: SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+            status: 'PROVEN',
+            teams_per_season: SCHEDULE_TEAMS_PER_SEASON,
+            fixtures_per_team: SCHEDULE_FIXTURES_PER_TEAM,
+            home_fixtures_per_team: SCHEDULE_HOME_FIXTURES_PER_TEAM,
+            away_fixtures_per_team: SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+        },
     };
     return {
         targetRows: gdA01.artifact.rows,
