@@ -187,6 +187,8 @@ test('GD-A03 derives only strict prior-state values and isolates the target labe
     );
     assert.equal(target.features.home_fatigue_index.value, 3 / 7);
     assert.equal(target.target_label.role, 'TRAINING_LABEL_POSTMATCH');
+    assert.equal(target.target_label.canonical_match_id, fixture.targetId);
+    assert.equal('source_match_id' in target.target_label, false);
     assert.equal(base.artifact.validation_counters.target_match_fact_dependency_count, 0);
     assert.equal(base.artifact.validation_counters.future_match_dependency_count, 0);
     assert.equal(base.artifact.validation_counters.cutoff_violation_count, 0);
@@ -320,6 +322,16 @@ test('GD-A03 output validation conserves population and rejects tampered busines
     assertReject(
         () => validatePriorStateOutputFiles(Buffer.from(`${JSON.stringify(tampered)}\n`), result.receiptBytes),
         'BUSINESS_HASH_MISMATCH'
+    );
+});
+
+test('GD-A03 receipt content hash rejects receipt provenance tampering', () => {
+    const result = build(buildFixture());
+    const tamperedReceipt = JSON.parse(result.receiptBytes.toString('utf8'));
+    tamperedReceipt.code_revision = 'c'.repeat(40);
+    assertReject(
+        () => validatePriorStateOutputFiles(result.artifactBytes, Buffer.from(`${JSON.stringify(tamperedReceipt)}\n`)),
+        'RECEIPT_HASH_MISMATCH'
     );
 });
 

@@ -460,6 +460,7 @@ function main(argv = process.argv.slice(2), dependencies = {}) {
                 'HISTORY_CLOSURE_INVALID',
                 'PROVENANCE_INVALID',
                 'FACT_VALUE_INVALID',
+                'RECEIPT_HASH_MISMATCH',
             ].includes(code)
         ) {
             return EXIT_CODES.VALIDATION;

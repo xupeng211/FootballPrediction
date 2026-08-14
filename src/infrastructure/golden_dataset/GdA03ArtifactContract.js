@@ -19,6 +19,7 @@ const {
     assertSha,
     assertText,
     computeBusinessHash,
+    computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
     REQUIRED_ROLLING_HISTORY_COUNT,
@@ -331,6 +332,10 @@ function validateReceipt(receipt, artifactBytes, artifact) {
     }
     if (receipt.output_business_sha256 !== artifact.business_content_sha256) {
         fail('GD-A03 receipt business hash mismatch', 'BUSINESS_HASH_MISMATCH');
+    }
+    assertSha(receipt.receipt_content_sha256, 'GD-A03 receipt receipt_content_sha256');
+    if (receipt.receipt_content_sha256 !== computeReceiptHash(receipt)) {
+        fail('GD-A03 receipt content hash mismatch', 'RECEIPT_HASH_MISMATCH');
     }
     for (const field of [
         'input_target_count',

@@ -99,6 +99,7 @@ Each target row contains:
 - `feature_availability` and deterministic `unavailable_reason_counts` for all 20 features;
 - `feature_vector_eligibility` (`YES`/`NO`) with reason codes;
 - an isolated `target_label` with `role=TRAINING_LABEL_POSTMATCH`.
+- the isolated label identifies the target with `canonical_match_id`; it is not a provider `source_match_id`.
 
 The target label is created after feature derivation and is never an input to it.
 
@@ -115,6 +116,10 @@ unaccounted = 0
 `FULL_20_VECTOR_ELIGIBLE=YES` requires all 20 values to be finite, semantically proven,
 strictly prior, fully closed, and individually hash/provenance bound. No null is replaced
 by zero, neutral, a proxy, or a cold-start default.
+
+The receipt uses `gd-a03-prior-state-feature-view-receipt/v2` and carries
+`receipt_content_sha256`, a stable hash over every other receipt field. Receipt provenance
+tampering therefore fails closed even when the artifact bytes are unchanged.
 
 ## Fail-closed and determinism requirements
 

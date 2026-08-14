@@ -9,7 +9,7 @@
 const { GdA01ContractError, sha256Text, stableStringify } = require('./GdA01AssemblyContract');
 
 const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v1';
-const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v1';
+const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v1';
 const PRIOR_STATE_STAGE = 'GD-A03';
 const FEATURE_CUTOFF_POLICY = 'TARGET_KICKOFF_EXCLUSIVE';
@@ -445,6 +445,11 @@ function computeBusinessHash(artifact) {
     return sha256Text(stableStringify(projection));
 }
 
+function computeReceiptHash(receipt) {
+    const { receipt_content_sha256: ignored, ...projection } = receipt;
+    return sha256Text(stableStringify(projection));
+}
+
 function computeProvenanceDigest(projection) {
     return sha256Text(stableStringify(projection));
 }
@@ -473,6 +478,7 @@ module.exports = {
     assertSha,
     assertText,
     computeBusinessHash,
+    computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
     stableStringify,

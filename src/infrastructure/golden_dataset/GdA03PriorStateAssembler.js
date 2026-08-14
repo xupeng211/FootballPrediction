@@ -26,6 +26,7 @@ const {
     assertText,
     computeBusinessHash,
     computeProvenanceDigest,
+    computeReceiptHash,
     featureSemanticsInOrder,
     stableStringify,
     validateFeatureContract,
@@ -81,6 +82,11 @@ function normalizeScheduleCandidate(candidate, index) {
         'kickoff_at',
     ];
     for (const field of fields) assertText(candidate[field], `schedule candidate[${index}].${field}`);
+    for (const field of Object.keys(candidate)) {
+        if (!fields.includes(field)) {
+            fail(`schedule candidate[${index}] contains unsupported field ${field}`, 'SCHEMA_MISMATCH');
+        }
+    }
     if (candidate.source_provider !== 'FotMob') {
         fail(`schedule candidate[${index}] provider is unsupported`, 'IDENTITY_CONFLICT');
     }
@@ -128,7 +134,7 @@ function normalizeSchedule(scheduleCandidates) {
 function compareSchedule(left, right) {
     return (
         left.season.localeCompare(right.season) ||
-        left.kickoff_at.localeCompare(right.kickoff_at) ||
+        left.kickoff_ms - right.kickoff_ms ||
         left.id.localeCompare(right.id)
     );
 }
@@ -599,11 +605,23 @@ function deriveLine({ featureName, target, left, right, operation, derivation })
             sourceProjections: [left.provenance_digest, right.provenance_digest],
         });
     }
+    const value = operation(left.value, right.value);
+    if (value === null) {
+        return featureLine({
+            featureName,
+            target,
+            sourceMatches,
+            reasons: [...reasons, REASON_CODES.DEPENDENCY_UNAVAILABLE],
+            derivation,
+            sourceFields: [left.derivation_contract, right.derivation_contract],
+            sourceProjections: [left.provenance_digest, right.provenance_digest],
+        });
+    }
     return featureLine({
         featureName,
         target,
         sourceMatches,
-        value: operation(left.value, right.value),
+        value,
         derivation,
         sourceFields: [left.derivation_contract, right.derivation_contract],
         sourceProjections: [left.provenance_digest, right.provenance_digest],
@@ -863,7 +881,7 @@ function buildTargetLabel(target, fact) {
         timing_class: FACT_TIMING_CLASS,
         status: result?.status || 'UNAVAILABLE',
         outcome: result?.outcome || null,
-        source_match_id: target.canonical_match_id,
+        canonical_match_id: target.canonical_match_id,
         provenance_digest: computeProvenanceDigest({
             role: TRAINING_LABEL_ROLE,
             target_match_id: target.canonical_match_id,
@@ -1090,7 +1108,10 @@ function buildPriorStateFeatureView(options) {
         model_activations: 0,
         status: 'ACCOUNTED_FEATURE_AVAILABILITY_COMPLETE',
     };
-    const receipt = receiptWithoutHash;
+    const receipt = {
+        ...receiptWithoutHash,
+        receipt_content_sha256: computeReceiptHash(receiptWithoutHash),
+    };
     validatePriorStateOutputFiles(artifactBytes, Buffer.from(`${stableStringify(receipt)}\n`, 'utf8'));
     return { artifact, receipt, artifactBytes, receiptBytes: Buffer.from(`${stableStringify(receipt)}\n`, 'utf8') };
 }
