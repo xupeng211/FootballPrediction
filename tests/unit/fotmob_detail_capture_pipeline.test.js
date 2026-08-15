@@ -734,6 +734,38 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
     }
 });
 
+test('AUTH: conflicting trusted response team IDs fail closed before capture', async () => {
+    const dir = tmpDir('fotmob-auth-team-id-conflict-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+            homeTeamId: 1001,
+            awayTeamId: 1002,
+            pagePropsExtra: {
+                header: {
+                    teams: [
+                        { name: 'Manchester United', id: 2001 },
+                        { name: 'Fulham', id: 1002 },
+                    ],
+                    status: { utcTime: '2024-08-16T19:00:00Z' },
+                },
+            },
+        });
+        const fetchImpl = mockFetchImpl(() => okResponse(page));
+        const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /IDENTITY_CONFLICT/);
+        assert.equal(result.completedCount, 0);
+        assert.ok(!fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.payload.json')));
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 // ─────────────────────────────────────────────────────────────
 // D. Content validity
 // ─────────────────────────────────────────────────────────────

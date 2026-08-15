@@ -112,6 +112,7 @@ function responseDerivedTeamId(rawData, side, expectedName) {
         },
     ];
     const expected = normalizeTeamName(expectedName);
+    const observations = [];
     for (const candidate of candidates) {
         const team = candidate.value;
         if (!team || typeof team !== 'object') continue;
@@ -119,10 +120,21 @@ function responseDerivedTeamId(rawData, side, expectedName) {
         if (typeof name !== 'string' || normalizeTeamName(name) !== expected) continue;
         for (const field of ['id', 'teamId', 'fotmobId']) {
             const id = normalizeResponseTeamId(team[field]);
-            if (id !== null) return { id, source: `${candidate.source}.${field}` };
+            if (id !== null) observations.push({ id, source: `${candidate.source}.${field}` });
         }
     }
-    return { id: null, source: null };
+    const distinctIds = [...new Set(observations.map(observation => observation.id))];
+    if (distinctIds.length > 1) {
+        return {
+            id: null,
+            source: null,
+            conflict: true,
+            sources: observations.map(observation => observation.source),
+        };
+    }
+    return observations[0]
+        ? { id: observations[0].id, source: observations[0].source, conflict: false }
+        : { id: null, source: null, conflict: false };
 }
 
 // Block markers are imported from the shared contract module (single source).
@@ -2008,6 +2020,18 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 observedAway = String(g.awayTeam?.name ?? g.away_team?.name ?? g.away_team ?? '').trim() || null;
                 const observedHomeIdentity = responseDerivedTeamId(rawData, 'home', candidate.home_team);
                 const observedAwayIdentity = responseDerivedTeamId(rawData, 'away', candidate.away_team);
+                if (observedHomeIdentity.conflict || observedAwayIdentity.conflict) {
+                    const conflictSides = [
+                        observedHomeIdentity.conflict ? 'home' : null,
+                        observedAwayIdentity.conflict ? 'away' : null,
+                    ]
+                        .filter(Boolean)
+                        .join(',');
+                    throw Object.assign(
+                        new Error(`IDENTITY_CONFLICT: conflicting trusted response team ids for ${conflictSides}`),
+                        { code: 'IDENTITY_CONFLICT' }
+                    );
+                }
                 observedHomeTeamId = observedHomeIdentity.id;
                 observedAwayTeamId = observedAwayIdentity.id;
                 observedHomeTeamIdSource = observedHomeIdentity.source;
