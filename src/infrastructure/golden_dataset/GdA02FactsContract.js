@@ -340,6 +340,9 @@ function validateShotsOnTargetStatusConsistency(value, label) {
         }
         return;
     }
+    if (!sides.some(([, side]) => side.status === 'PARTIAL')) {
+        fail(`${label} partial projection must have a partial side`, 'FACT_VALUE_INVALID');
+    }
     for (const [sideName, side] of sides) {
         if (side.status === 'UNAVAILABLE') {
             fail(`${label}.${sideName} cannot be unavailable with a partial projection`, 'FACT_VALUE_INVALID');
