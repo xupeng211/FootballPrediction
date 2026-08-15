@@ -307,6 +307,37 @@ function validateShotsOnTargetSide(value, label) {
     }
 }
 
+function validateShotsOnTargetStatusConsistency(value, label) {
+    const sides = [
+        ['home', value.home],
+        ['away', value.away],
+    ];
+    if (value.status === 'UNAVAILABLE') {
+        for (const [sideName, side] of sides) {
+            if (side.status !== 'UNAVAILABLE') {
+                fail(`${label}.${sideName} must be unavailable with an unavailable projection`, 'FACT_VALUE_INVALID');
+            }
+            if (side.value !== null || side.known_shots !== 0 || side.missing_shots !== 0) {
+                fail(`${label}.${sideName} unavailable side must not carry observations`, 'FACT_VALUE_INVALID');
+            }
+        }
+        return;
+    }
+    if (value.status === 'VALID') {
+        for (const [sideName, side] of sides) {
+            if (side.status !== 'COMPLETE') {
+                fail(`${label}.${sideName} must be complete with a valid projection`, 'FACT_VALUE_INVALID');
+            }
+        }
+        return;
+    }
+    for (const [sideName, side] of sides) {
+        if (side.status === 'UNAVAILABLE') {
+            fail(`${label}.${sideName} cannot be unavailable with a partial projection`, 'FACT_VALUE_INVALID');
+        }
+    }
+}
+
 function validateShotsOnTarget(value, label) {
     assertAllowedKeys(
         value,
@@ -339,6 +370,7 @@ function validateShotsOnTarget(value, label) {
     }
     validateShotsOnTargetSide(value.home, `${label}.home`);
     validateShotsOnTargetSide(value.away, `${label}.away`);
+    validateShotsOnTargetStatusConsistency(value, label);
     if (value.status === 'UNAVAILABLE' && value.total_shots !== null) {
         fail(`${label}.unavailable projection must not carry counts`, 'FACT_VALUE_INVALID');
     }

@@ -691,16 +691,17 @@ function xgForTeam(fact, candidate, teamName) {
 
 function shotsOnTargetForTeam(fact, candidate, teamName) {
     const side = teamSide(candidate, teamName);
-    const projection = fact?.facts?.shots_on_target?.[side];
+    const projection = fact?.facts?.shots_on_target;
     if (
         !projection ||
-        projection.status !== 'COMPLETE' ||
-        !Number.isSafeInteger(projection.value) ||
-        projection.value < 0
+        projection.status === 'UNAVAILABLE' ||
+        projection[side]?.status !== 'COMPLETE' ||
+        !Number.isSafeInteger(projection[side].value) ||
+        projection[side].value < 0
     ) {
         return null;
     }
-    return projection.value;
+    return projection[side].value;
 }
 
 function buildRollingXgLine({ featureName, target, teamName, matches, factsById }) {

@@ -33,6 +33,7 @@ const {
     validateFactsSourceIndex,
     validateOutputFiles,
     validateResult,
+    validateShotsOnTarget,
 } = require('../../src/infrastructure/golden_dataset/GdA02FactsContract');
 const {
     buildStagingArtifact,
@@ -393,6 +394,26 @@ test('GD-A02 fails closed when own-goal SOT semantics are not proven', t => {
     assert.equal(shotsOnTarget.total_shots, null);
     assert.equal(shotsOnTarget.home.value, null);
     assert.equal(shotsOnTarget.away.value, null);
+});
+
+test('GD-A02 rejects an unavailable SOT projection with a usable side value', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'UNAVAILABLE',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: null,
+                    shots_with_on_target: null,
+                    shots_without_on_target: null,
+                    home: { value: 4, status: 'COMPLETE', known_shots: 4, missing_shots: 0 },
+                    away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
 });
 
 test('GD-A02 fails closed when own-goal flag is missing or non-boolean', t => {
