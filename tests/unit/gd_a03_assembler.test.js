@@ -396,11 +396,32 @@ test('GD-A03 closes SOT from GD-A02 shotmap facts with exact five-match lineage'
     assert.equal(result.artifact.validation_counters.target_match_fact_dependency_count, 0);
 
     const targetFact = facts.find(row => row.canonical_match_id === fixture.targetId);
-    targetFact.facts.shots_on_target.home.value = 999;
+    targetFact.facts.shots_on_target = completeShotsOnTarget(0, targetFact.facts.shots_on_target.away.value);
     const targetMutated = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
     assert.equal(
         targetRow(targetMutated, fixture.targetId).features.rolling_shots_on_target_home.value,
         target.features.rolling_shots_on_target_home.value
+    );
+});
+
+test('GD-A03 rejects an unvalidated SOT value before deriving prior-state features', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const sourceFact = facts.find(row => row.canonical_match_id !== fixture.targetId);
+    sourceFact.facts.shots_on_target.home = {
+        ...sourceFact.facts.shots_on_target.home,
+        value: 999,
+    };
+
+    assertReject(
+        () => buildPriorStateFeatureView(rebindSourceBindings({ ...fixture.options, factRows: facts })),
+        'FACT_VALUE_INVALID'
     );
 });
 
@@ -475,10 +496,7 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
         ...futureFact,
         facts: {
             ...futureFact.facts,
-            shots_on_target: {
-                ...futureFact.facts.shots_on_target,
-                home: { ...futureFact.facts.shots_on_target.home, value: 999 },
-            },
+            shots_on_target: completeShotsOnTarget(0, 8),
         },
     };
     const mutated = buildPriorStateFeatureView(

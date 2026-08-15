@@ -44,6 +44,7 @@ const {
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
 const { admittedIdSetHash, sha256Bytes } = require('./GdA01AssemblyContract');
+const { validateShotsOnTarget } = require('./GdA02FactsContract');
 const { isNumericExternalId, isStrictAbsoluteTimestamp } = require('../fotmob/FotMobCandidateExporter');
 
 const SCHEDULE_SCHEMA_VERSION = 'candidate-match-identity/v1';
@@ -187,6 +188,14 @@ function normalizeFactRow(row, label) {
     assertObject(row.facts.xg, `${label}.facts.xg`);
     if (row.facts.shots_on_target !== undefined) {
         assertObject(row.facts.shots_on_target, `${label}.facts.shots_on_target`);
+        try {
+            validateShotsOnTarget(row.facts.shots_on_target, `${label}.facts.shots_on_target`);
+        } catch (error) {
+            fail(
+                `${label}.facts.shots_on_target is not a valid GD-A02 projection: ${error.message}`,
+                error.code || 'FACT_VALUE_INVALID'
+            );
+        }
     }
     if (!row.provenance || typeof row.provenance !== 'object' || Array.isArray(row.provenance)) {
         fail(`${label}.provenance is required`, 'PROVENANCE_INVALID');
