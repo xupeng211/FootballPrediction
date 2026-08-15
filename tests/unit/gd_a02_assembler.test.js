@@ -416,6 +416,26 @@ test('GD-A02 rejects an unavailable SOT projection with a usable side value', ()
     );
 });
 
+test('GD-A02 rejects an impossible complete SOT side count', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'VALID',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: 1,
+                    shots_with_on_target: 1,
+                    shots_without_on_target: 0,
+                    home: { value: 999, status: 'COMPLETE', known_shots: 0, missing_shots: 0 },
+                    away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
 test('GD-A02 fails closed when own-goal flag is missing or non-boolean', t => {
     const base = buildPair().payload.normalized;
     for (const shotOverride of [{ isOwnGoal: undefined }, { isOwnGoal: 'false' }]) {

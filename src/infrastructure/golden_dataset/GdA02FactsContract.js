@@ -302,6 +302,15 @@ function validateShotsOnTargetSide(value, label) {
     if (value.status === 'UNAVAILABLE' && value.value !== null) {
         fail(`${label}.unavailable side must not carry a value`, 'FACT_VALUE_INVALID');
     }
+    if (value.status === 'PARTIAL' && value.value !== null) {
+        fail(`${label}.partial side must not carry a value`, 'FACT_VALUE_INVALID');
+    }
+    if (value.status === 'COMPLETE' && value.value === null) {
+        fail(`${label}.complete side must carry a value`, 'FACT_VALUE_INVALID');
+    }
+    if (value.value !== null && value.value > value.known_shots) {
+        fail(`${label}.value cannot exceed known shots`, 'FACT_VALUE_INVALID');
+    }
     if (value.status === 'COMPLETE' && value.missing_shots !== 0) {
         fail(`${label}.complete side cannot have missing shots`, 'FACT_VALUE_INVALID');
     }
@@ -335,6 +344,34 @@ function validateShotsOnTargetStatusConsistency(value, label) {
         if (side.status === 'UNAVAILABLE') {
             fail(`${label}.${sideName} cannot be unavailable with a partial projection`, 'FACT_VALUE_INVALID');
         }
+    }
+}
+
+function validateShotsOnTargetCounts(value, label) {
+    if (value.status === 'UNAVAILABLE') return;
+    const sides = [value.home, value.away];
+    const knownShots = sides.reduce((total, side) => total + side.known_shots, 0);
+    const missingShots = sides.reduce((total, side) => total + side.missing_shots, 0);
+    const completeValues = sides.reduce((total, side) => total + (side.status === 'COMPLETE' ? side.value : 0), 0);
+    if (knownShots + missingShots > value.total_shots) {
+        fail(`${label} side observations exceed total shots`, 'FACT_VALUE_INVALID');
+    }
+    if (value.shots_with_on_target > value.total_shots || value.shots_without_on_target > value.total_shots) {
+        fail(`${label} aggregate observations exceed total shots`, 'FACT_VALUE_INVALID');
+    }
+    if (value.shots_with_on_target + value.shots_without_on_target > value.total_shots) {
+        fail(`${label} aggregate observations overlap total shots`, 'FACT_VALUE_INVALID');
+    }
+    if (value.shots_with_on_target < completeValues) {
+        fail(`${label} aggregate on-target count is below complete side values`, 'FACT_VALUE_INVALID');
+    }
+    if (
+        value.status === 'VALID' &&
+        (knownShots !== value.total_shots ||
+            value.shots_with_on_target !== completeValues ||
+            value.shots_without_on_target !== 0)
+    ) {
+        fail(`${label} valid projection counts are not internally consistent`, 'FACT_VALUE_INVALID');
     }
 }
 
@@ -380,6 +417,7 @@ function validateShotsOnTarget(value, label) {
     ) {
         fail(`${label} available projection must carry shot counts`, 'FACT_VALUE_INVALID');
     }
+    validateShotsOnTargetCounts(value, label);
 }
 
 function validateSection(value, section, label) {

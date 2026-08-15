@@ -763,6 +763,30 @@ test('GD-A03 independently validates target-label identity, projection, and dige
     sourceFactTampered.rows[0].target_label.source_fact_binding.source_business_hash = 'b'.repeat(64);
     assertReject(() => validatePriorStateArtifact(sourceFactTampered), 'PROVENANCE_INVALID');
 
+    const unavailableResultWithScore = JSON.parse(result.artifactBytes.toString('utf8'));
+    const unavailableLabel = unavailableResultWithScore.rows[0].target_label;
+    unavailableLabel.provenance_input.result = {
+        status: 'UNAVAILABLE',
+        home_score: 3,
+        away_score: 2,
+        outcome: null,
+        source_path: 'normalized.home_team.score + normalized.away_team.score',
+    };
+    unavailableLabel.status = 'UNAVAILABLE';
+    unavailableLabel.outcome = null;
+    unavailableLabel.provenance_digest = computeProvenanceDigest({
+        role: unavailableLabel.role,
+        target_match_id: unavailableLabel.canonical_match_id,
+        result: unavailableLabel.provenance_input.result,
+        source_provenance: unavailableLabel.provenance_input.source_provenance,
+    });
+    unavailableLabel.source_fact_binding.fact_result_binding = computeFactResultBinding({
+        canonicalMatchId: unavailableLabel.canonical_match_id,
+        result: unavailableLabel.provenance_input.result,
+        sourceProvenance: unavailableLabel.provenance_input.source_provenance,
+    });
+    assertReject(() => validatePriorStateArtifact(unavailableResultWithScore), 'FACT_VALUE_INVALID');
+
     const independentlyRewrittenLabel = JSON.parse(result.artifactBytes.toString('utf8'));
     const rewrittenLabel = independentlyRewrittenLabel.rows[0].target_label;
     rewrittenLabel.provenance_input.result = {

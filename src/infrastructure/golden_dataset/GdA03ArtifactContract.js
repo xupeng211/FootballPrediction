@@ -41,6 +41,7 @@ const {
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
 const { admittedIdSetHash, sha256Bytes } = require('./GdA01AssemblyContract');
+const { validateResult } = require('./GdA02FactsContract');
 
 const TRAINING_LABEL_ROLE = 'TRAINING_LABEL_POSTMATCH';
 const FACT_TIMING_CLASS = 'POSTMATCH_ONLY';
@@ -82,6 +83,14 @@ function fail(message, code = 'GD_A03_CONTRACT_INVALID') {
 function assertArray(value, label) {
     if (!Array.isArray(value)) fail(`${label} must be an array`, 'SCHEMA_MISMATCH');
     return value;
+}
+
+function validateTargetLabelResult(result, label) {
+    try {
+        validateResult(result, label);
+    } catch (error) {
+        fail(error.message, error.code || 'FACT_VALUE_INVALID');
+    }
 }
 
 // eslint-disable-next-line complexity -- source bindings enumerate every immutable authority and coverage field.
@@ -436,29 +445,14 @@ function validateTargetLabel(label, row, sourceBindings) {
     }
     assertObject(label.provenance_input, `GD-A03 row ${row.canonical_match_id}.target_label.provenance_input`);
     const result = label.provenance_input.result;
-    if (result !== null) assertObject(result, `GD-A03 row ${row.canonical_match_id}.target_label.result`);
+    if (result !== null) {
+        assertObject(result, `GD-A03 row ${row.canonical_match_id}.target_label.result`);
+        validateTargetLabelResult(result, `GD-A03 row ${row.canonical_match_id}.target_label.result`);
+    }
     const expectedStatus = result?.status || 'UNAVAILABLE';
     const expectedOutcome = result?.outcome || null;
     if (!['AVAILABLE', 'UNAVAILABLE'].includes(expectedStatus)) {
         fail('GD-A03 target label result status is invalid', 'FACT_VALUE_INVALID');
-    }
-    if (expectedStatus === 'AVAILABLE') {
-        if (!['home', 'draw', 'away'].includes(expectedOutcome)) {
-            fail('GD-A03 target label result outcome is invalid', 'FACT_VALUE_INVALID');
-        }
-        if (!Number.isSafeInteger(result.home_score) || result.home_score < 0) {
-            fail('GD-A03 target label home score is invalid', 'FACT_VALUE_INVALID');
-        }
-        if (!Number.isSafeInteger(result.away_score) || result.away_score < 0) {
-            fail('GD-A03 target label away score is invalid', 'FACT_VALUE_INVALID');
-        }
-        const scoreOutcome =
-            result.home_score === result.away_score ? 'draw' : result.home_score > result.away_score ? 'home' : 'away';
-        if (expectedOutcome !== scoreOutcome) {
-            fail('GD-A03 target label outcome is not derived from scores', 'FACT_VALUE_INVALID');
-        }
-    } else if (expectedOutcome !== null) {
-        fail('GD-A03 unavailable target label carries an outcome', 'FACT_VALUE_INVALID');
     }
     if (label.status !== expectedStatus || label.outcome !== expectedOutcome) {
         fail('GD-A03 target label projection mismatch', 'FACT_VALUE_INVALID');
