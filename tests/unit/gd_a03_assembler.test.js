@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- GD-A03 lineage and fail-closed invariants stay in one permanent contract suite. */
+
 // lifecycle: permanent；GD-A03 runtime behavior / fail-closed / determinism tests。
 // 真实 888 离线验证使用同一 assembler，由任务级 external validation 执行。
 

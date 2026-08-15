@@ -98,10 +98,7 @@ const REQUIRED_LEAGUE_ID = '47';
 const VALID_SEASON_PATTERN = /^(\d{4})\/(\d{4})$/;
 
 // Allowed content types for the match detail page.
-const ALLOWED_CONTENT_TYPES = [
-    'text/html',
-    'application/xhtml+xml',
-];
+const ALLOWED_CONTENT_TYPES = ['text/html', 'application/xhtml+xml'];
 
 // Maximum reasonable body size for a FotMob match detail SSR page.
 const MAX_BODY_BYTES = 8 * 1024 * 1024; // 8 MiB
@@ -157,12 +154,13 @@ function assertNoSymlinkAncestors(absPath, fsImpl = fs) {
         let stat = null;
         try {
             stat = fsImpl.lstatSync(current);
-        } catch { /* component absent is fine */ }
+        } catch {
+            /* component absent is fine */
+        }
         if (stat && stat.isSymbolicLink()) {
-            throw Object.assign(
-                new Error(`path component must not be a symlink: ${current}`),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error(`path component must not be a symlink: ${current}`), {
+                code: 'SAFETY_ERROR',
+            });
         }
     }
     return abs;
@@ -188,19 +186,19 @@ function ensureRealDirectoryTree(absDirPath, fsImpl = fs) {
         let stat = null;
         try {
             stat = fsImpl.lstatSync(current);
-        } catch { /* absent */ }
+        } catch {
+            /* absent */
+        }
         if (stat) {
             if (stat.isSymbolicLink()) {
-                throw Object.assign(
-                    new Error(`path component must not be a symlink: ${current}`),
-                    { code: 'SAFETY_ERROR' }
-                );
+                throw Object.assign(new Error(`path component must not be a symlink: ${current}`), {
+                    code: 'SAFETY_ERROR',
+                });
             }
             if (!stat.isDirectory()) {
-                throw Object.assign(
-                    new Error(`path component must be a directory: ${current}`),
-                    { code: 'SAFETY_ERROR' }
-                );
+                throw Object.assign(new Error(`path component must be a directory: ${current}`), {
+                    code: 'SAFETY_ERROR',
+                });
             }
         } else {
             // Create one level at a time — never a single recursive mkdir
@@ -209,21 +207,17 @@ function ensureRealDirectoryTree(absDirPath, fsImpl = fs) {
             let created = null;
             try {
                 created = fsImpl.lstatSync(current);
-            } catch { /* treat as missing */ }
+            } catch {
+                /* treat as missing */
+            }
             if (!created || created.isSymbolicLink() || !created.isDirectory()) {
-                throw Object.assign(
-                    new Error(`failed to create real directory: ${current}`),
-                    { code: 'SAFETY_ERROR' }
-                );
+                throw Object.assign(new Error(`failed to create real directory: ${current}`), { code: 'SAFETY_ERROR' });
             }
         }
     }
     const finalStat = fsImpl.lstatSync(abs);
     if (!finalStat || finalStat.isSymbolicLink() || !finalStat.isDirectory()) {
-        throw Object.assign(
-            new Error(`target must be a real directory: ${abs}`),
-            { code: 'SAFETY_ERROR' }
-        );
+        throw Object.assign(new Error(`target must be a real directory: ${abs}`), { code: 'SAFETY_ERROR' });
     }
     return abs;
 }
@@ -234,16 +228,12 @@ function assertRegularInputFile(filePath, fsImpl = fs) {
     try {
         stat = fsImpl.lstatSync(filePath);
     } catch (err) {
-        throw Object.assign(
-            new Error(`input file not readable: ${filePath}`),
-            { code: 'INPUT_ERROR' }
-        );
+        throw Object.assign(new Error(`input file not readable: ${filePath}`), { code: 'INPUT_ERROR' });
     }
     if (stat.isSymbolicLink() || !stat.isFile()) {
-        throw Object.assign(
-            new Error(`input must be a regular file, not a symlink or directory: ${filePath}`),
-            { code: 'SAFETY_ERROR' }
-        );
+        throw Object.assign(new Error(`input must be a regular file, not a symlink or directory: ${filePath}`), {
+            code: 'SAFETY_ERROR',
+        });
     }
     return stat;
 }
@@ -255,10 +245,7 @@ function readInputFile(filePath, fsImpl = fs) {
     try {
         parsed = JSON.parse(bytes.toString('utf8'));
     } catch (err) {
-        throw Object.assign(
-            new Error(`input artifact is not valid JSON: ${filePath}`),
-            { code: 'INPUT_ERROR' }
-        );
+        throw Object.assign(new Error(`input artifact is not valid JSON: ${filePath}`), { code: 'INPUT_ERROR' });
     }
     return {
         bytes,
@@ -335,9 +322,8 @@ function computeCapturePlanBusinessProjection(plan) {
         source_provider: String(plan.source_provider ?? ''),
         source_artifact_schema: String(plan.source_artifact_schema ?? ''),
         source_artifact_sha256: String(plan.source_artifact_sha256 ?? ''),
-        source_artifact_business_hash: plan.source_artifact_business_hash === null
-            ? null
-            : String(plan.source_artifact_business_hash ?? ''),
+        source_artifact_business_hash:
+            plan.source_artifact_business_hash === null ? null : String(plan.source_artifact_business_hash ?? ''),
         competition: String(plan.competition ?? ''),
         league_id: String(plan.league_id ?? ''),
         selected_seasons: Array.isArray(plan.selected_seasons) ? plan.selected_seasons.map(String).sort() : [],
@@ -482,7 +468,9 @@ function validateAndRecomputeCapturePlan(plan) {
                 errors.push(`${label}: home_team must differ from away_team`);
             }
             if (typeof c.kickoff_at !== 'string' || !isStrictAbsoluteTimestamp(c.kickoff_at)) {
-                errors.push(`${label}: kickoff_at must be a strict ISO timestamp with timezone, got ${JSON.stringify(c.kickoff_at)}`);
+                errors.push(
+                    `${label}: kickoff_at must be a strict ISO timestamp with timezone, got ${JSON.stringify(c.kickoff_at)}`
+                );
             }
             const recomputedIdentity = canonicalJsonHash({
                 source_match_id: sourceMatchId,
@@ -523,9 +511,7 @@ function validateAndRecomputeCapturePlan(plan) {
  * @returns {string} 64-hex self-hash
  */
 function computeCaptureManifestSelfHash(manifest) {
-    const clone = Object.fromEntries(
-        Object.entries(manifest || {}).filter(([k]) => k !== 'capture_manifest_sha256')
-    );
+    const clone = Object.fromEntries(Object.entries(manifest || {}).filter(([k]) => k !== 'capture_manifest_sha256'));
     return canonicalJsonHash(clone);
 }
 
@@ -536,8 +522,7 @@ function computeCaptureManifestSelfHash(manifest) {
 function validateCandidateIdentityV1Document(doc) {
     const errors = [];
     if (!isPlainObject(doc)) return { ok: false, errors: ['document is not an object'] };
-    if (doc.schema_version !== 'candidate-match-identity/v1' &&
-        doc.schema_version !== 'candidate-match-identity.v1') {
+    if (doc.schema_version !== 'candidate-match-identity/v1' && doc.schema_version !== 'candidate-match-identity.v1') {
         errors.push(`unsupported schema_version: ${doc.schema_version}`);
     }
     const sourceProvider = doc.source_provider ?? doc.snapshot?.source_provider;
@@ -563,8 +548,10 @@ function validateCandidateIdentityV1Document(doc) {
 function validateCanonicalV2Document(doc) {
     const errors = [];
     if (!isPlainObject(doc)) return { ok: false, errors: ['document is not an object'] };
-    if (doc.schema_version !== 'canonical-inventory-artifact/v2' &&
-        doc.schema_version !== 'canonical-inventory-artifact.v2') {
+    if (
+        doc.schema_version !== 'canonical-inventory-artifact/v2' &&
+        doc.schema_version !== 'canonical-inventory-artifact.v2'
+    ) {
         errors.push(`unsupported schema_version: ${doc.schema_version}`);
     }
     // Real producer shape (FotMobCandidateExporter.buildV2OutputDocument):
@@ -606,7 +593,14 @@ function validateCanonicalV2Document(doc) {
 /* eslint-disable-next-line complexity */
 function validateCandidateArtifact(loaded) {
     if (!isPlainObject(loaded) || !isPlainObject(loaded.parsed)) {
-        return { ok: false, schema: null, candidates: [], errors: ['artifact payload missing'], artifact_sha256: null, business_hash: null };
+        return {
+            ok: false,
+            schema: null,
+            candidates: [],
+            errors: ['artifact payload missing'],
+            artifact_sha256: null,
+            business_hash: null,
+        };
     }
     const doc = loaded.parsed;
     const sha256 = loaded.sha256;
@@ -652,15 +646,22 @@ function validateCandidateArtifact(loaded) {
         }
         const candidateProvider = c.source_provider ?? c.provider ?? topProvider;
         if (candidateProvider !== REQUIRED_SOURCE_PROVIDER) {
-            errors.push(`${label}: source_provider must be ${REQUIRED_SOURCE_PROVIDER}, got ${JSON.stringify(candidateProvider)}`);
+            errors.push(
+                `${label}: source_provider must be ${REQUIRED_SOURCE_PROVIDER}, got ${JSON.stringify(candidateProvider)}`
+            );
         }
         const candidateCompetition = c.competition ?? topCompetition;
         if (candidateCompetition !== REQUIRED_COMPETITION) {
-            errors.push(`${label}: competition must be ${REQUIRED_COMPETITION}, got ${JSON.stringify(candidateCompetition)}`);
+            errors.push(
+                `${label}: competition must be ${REQUIRED_COMPETITION}, got ${JSON.stringify(candidateCompetition)}`
+            );
         }
         const candidateLeagueId = c.league_id ?? topLeagueId;
-        if (candidateLeagueId !== undefined && candidateLeagueId !== null &&
-            String(candidateLeagueId) !== REQUIRED_LEAGUE_ID) {
+        if (
+            candidateLeagueId !== undefined &&
+            candidateLeagueId !== null &&
+            String(candidateLeagueId) !== REQUIRED_LEAGUE_ID
+        ) {
             errors.push(`${label}: league_id must be ${REQUIRED_LEAGUE_ID}, got ${JSON.stringify(candidateLeagueId)}`);
         }
         const candidateId = c.candidate_id ?? c.id;
@@ -699,7 +700,9 @@ function validateCandidateArtifact(loaded) {
             errors.push(`${label}: home_team must differ from away_team`);
         }
         if (typeof kickoffAt !== 'string' || !isStrictAbsoluteTimestamp(kickoffAt)) {
-            errors.push(`${label}: kickoff_at must be a strict ISO timestamp with timezone, got ${JSON.stringify(kickoffAt)}`);
+            errors.push(
+                `${label}: kickoff_at must be a strict ISO timestamp with timezone, got ${JSON.stringify(kickoffAt)}`
+            );
         }
     }
 
@@ -743,7 +746,14 @@ function validateCandidateArtifact(loaded) {
     }
 
     if (errors.length > 0) {
-        return { ok: false, schema: base.schema, candidates: [], errors, artifact_sha256: sha256, business_hash: businessHash };
+        return {
+            ok: false,
+            schema: base.schema,
+            candidates: [],
+            errors,
+            artifact_sha256: sha256,
+            business_hash: businessHash,
+        };
     }
 
     return {
@@ -790,9 +800,7 @@ function evaluateContentValidity(args = {}) {
 
     checks.http_status_ok = httpStatus === 200;
     const contentType = String(args.content_type || '');
-    checks.content_type_allowed = ALLOWED_CONTENT_TYPES.some(
-        t => contentType.toLowerCase().startsWith(t)
-    );
+    checks.content_type_allowed = ALLOWED_CONTENT_TYPES.some(t => contentType.toLowerCase().startsWith(t));
     const body = typeof args.body === 'string' ? args.body : '';
     checks.body_non_empty = body.length > 0;
     checks.body_byte_range = body.length >= MIN_BODY_BYTES && body.length <= MAX_BODY_BYTES;
@@ -821,8 +829,9 @@ function evaluateContentValidity(args = {}) {
     // fallback, request URL or any derivation. A page whose only "match id"
     // is the request id must fail closed (R3-P1).
     const observedId = rawData && (rawData.matchId ?? null) !== null ? String(rawData.matchId) : null;
-    const matchIdSource = String(fr.match_id_source ||
-        (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
+    const matchIdSource = String(
+        fr.match_id_source || (rawData && rawData._meta ? rawData._meta.match_id_source : null) || ''
+    );
     checks.observed_match_id_present = observedId !== null;
     checks.observed_match_id_source_trusted = TRUSTED_OBSERVED_ID_SOURCES.has(matchIdSource);
     checks.observed_match_id_not_conflicting = fr.observed_match_id_conflict !== true;
@@ -847,8 +856,7 @@ function evaluateContentValidity(args = {}) {
         UNKNOWN_DATE_COMPATIBILITY,
         UNRESOLVED_LARGE_GAP,
     ];
-    checks.date_compatibility_not_conflicting =
-        dateStatus === null || !CONFLICTING_DATE_STATUSES.includes(dateStatus);
+    checks.date_compatibility_not_conflicting = dateStatus === null || !CONFLICTING_DATE_STATUSES.includes(dateStatus);
     checks.identity_reconciliation_not_conflicting =
         identityStatus === null ||
         identityStatus === IDENTITY_MATCH ||
@@ -878,9 +886,7 @@ function evaluateContentValidity(args = {}) {
     }
 
     const ok = allOk && !emptyShellDetected;
-    const errorCode = ok
-        ? null
-        : (emptyShellDetected ? 'EMPTY_SSR_SHELL' : 'CONTENT_VALIDITY_FAIL');
+    const errorCode = ok ? null : emptyShellDetected ? 'EMPTY_SSR_SHELL' : 'CONTENT_VALIDITY_FAIL';
 
     return { ok, error_code: errorCode, checks, stable_raw_payload_sha256: stableHash || null };
 }
@@ -903,7 +909,10 @@ function evaluateTeamMarkers(rawData, expectedHome, expectedAway) {
 }
 
 function normalizeTeamName(name) {
-    return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    return String(name || '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -995,9 +1004,15 @@ function validateCaptureManifest(manifest) {
     if (typeof manifest.observed_match_id_is_response_derived !== 'boolean') {
         errors.push('observed_match_id_is_response_derived must be a boolean');
     }
-    for (const hexField of ['response_body_sha256', 'stable_raw_payload_sha256', 'stable_payload_sha256',
-        'payload_file_sha256', 'candidate_identity_sha256', 'source_plan_sha256',
-        'source_artifact_sha256']) {
+    for (const hexField of [
+        'response_body_sha256',
+        'stable_raw_payload_sha256',
+        'stable_payload_sha256',
+        'payload_file_sha256',
+        'candidate_identity_sha256',
+        'source_plan_sha256',
+        'source_artifact_sha256',
+    ]) {
         if (!/^[0-9a-f]{64}$/.test(String(manifest[hexField] || ''))) {
             errors.push(`${hexField} must be 64 lowercase hex`);
         }
@@ -1098,9 +1113,10 @@ function buildCapturePayload(args = {}) {
     const parsedData = args.parsedData || {};
     const observed = args.observedIdentity || {};
     const normalized = {
-        match_external_id: parsedData.match && parsedData.match.externalId !== undefined
-            ? String(parsedData.match.externalId)
-            : String(candidate.source_match_id || ''),
+        match_external_id:
+            parsedData.match && parsedData.match.externalId !== undefined
+                ? String(parsedData.match.externalId)
+                : String(candidate.source_match_id || ''),
         home_team: parsedData.homeTeam ?? null,
         away_team: parsedData.awayTeam ?? null,
         stats: parsedData.stats ?? null,
@@ -1225,9 +1241,14 @@ function validateDetailArtifact(artifact) {
     // Replay must never emit empty candidate identity (P2-6): the identity
     // comes from the run-bound plan snapshot, never from file names.
     const expected = artifact.expected_identity || {};
-    if (typeof expected.home_team !== 'string' || expected.home_team.trim() === '' ||
-        typeof expected.away_team !== 'string' || expected.away_team.trim() === '' ||
-        typeof expected.kickoff_at !== 'string' || expected.kickoff_at.trim() === '') {
+    if (
+        typeof expected.home_team !== 'string' ||
+        expected.home_team.trim() === '' ||
+        typeof expected.away_team !== 'string' ||
+        expected.away_team.trim() === '' ||
+        typeof expected.kickoff_at !== 'string' ||
+        expected.kickoff_at.trim() === ''
+    ) {
         errors.push('expected_identity home_team/away_team/kickoff_at must be non-empty');
     }
     if (typeof artifact.candidate_id !== 'string' || artifact.candidate_id.trim() === '') {

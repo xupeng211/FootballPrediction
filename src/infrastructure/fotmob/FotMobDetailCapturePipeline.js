@@ -48,14 +48,9 @@ const {
     normalizeTeamName,
 } = require('./FotMobDetailCaptureContract');
 
-const {
-    fetchFotMobRawDetail,
-} = require('../services/FotMobRawDetailFetcher');
+const { fetchFotMobRawDetail } = require('../services/FotMobRawDetailFetcher');
 
-const {
-    validateCollectorCodeRevision,
-    resolveGitState,
-} = require('./FotMobCandidateExporter');
+const { validateCollectorCodeRevision, resolveGitState } = require('./FotMobCandidateExporter');
 
 const {
     writeCapturePair,
@@ -204,10 +199,7 @@ function createBoundedFetchAdapter(options = {}) {
         throw Object.assign(new Error('maxRequests must be a positive integer'), { code: 'INPUT_ERROR' });
     }
     if (!Number.isInteger(delayMs) || delayMs < MIN_DELAY_MS) {
-        throw Object.assign(
-            new Error(`delayMs must be at least ${MIN_DELAY_MS}`),
-            { code: 'INPUT_ERROR' }
-        );
+        throw Object.assign(new Error(`delayMs must be at least ${MIN_DELAY_MS}`), { code: 'INPUT_ERROR' });
     }
     if (typeof fetchImpl !== 'function') {
         throw Object.assign(new Error('fetch implementation missing'), { code: 'INPUT_ERROR' });
@@ -223,12 +215,17 @@ function createBoundedFetchAdapter(options = {}) {
     // attempt. An invalid / unparseable timestamp fails closed — guessing
     // is not an option.
     let lastRequestAt = 0;
-    if (options.initialLastRequestAt !== undefined && options.initialLastRequestAt !== null &&
-        String(options.initialLastRequestAt).trim() !== '') {
+    if (
+        options.initialLastRequestAt !== undefined &&
+        options.initialLastRequestAt !== null &&
+        String(options.initialLastRequestAt).trim() !== ''
+    ) {
         const parsed = Date.parse(String(options.initialLastRequestAt));
         if (Number.isNaN(parsed)) {
             throw Object.assign(
-                new Error(`SAFETY_ERROR:invalid_last_request_attempted_at:${String(options.initialLastRequestAt).slice(0, 80)}`),
+                new Error(
+                    `SAFETY_ERROR:invalid_last_request_attempted_at:${String(options.initialLastRequestAt).slice(0, 80)}`
+                ),
                 { code: 'SAFETY_ERROR' }
             );
         }
@@ -239,7 +236,12 @@ function createBoundedFetchAdapter(options = {}) {
 
     // Injectable sleep keeps multi-candidate tests fast while the delayMs
     // value gate (>= 60000) is still enforced on the real path.
-    const sleepImpl = options.sleepImpl || ((ms) => new Promise((resolve) => { setTimeout(resolve, ms); }));
+    const sleepImpl =
+        options.sleepImpl ||
+        (ms =>
+            new Promise(resolve => {
+                setTimeout(resolve, ms);
+            }));
 
     /**
      * Execute one bounded GET. Budget is incremented BEFORE the native
@@ -265,10 +267,9 @@ function createBoundedFetchAdapter(options = {}) {
             throw Object.assign(new Error(`SAFETY_ERROR:path_not_authorized:${u.pathname}`), { code: 'SAFETY_ERROR' });
         }
         if (u.search !== '' || u.hash !== '') {
-            throw Object.assign(
-                new Error(`SAFETY_ERROR:query_or_fragment_not_authorized:${u.search}${u.hash}`),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error(`SAFETY_ERROR:query_or_fragment_not_authorized:${u.search}${u.hash}`), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (initialUsed + requestCount >= maxRequests) {
             throw Object.assign(
@@ -380,18 +381,15 @@ function createBoundedFetchAdapter(options = {}) {
             responseHeadersReceivedAt = new Date(nowMs()).toISOString();
             const status = Number(res.status || 0);
             httpStatus = status;
-            const contentType = String(res.headers && res.headers.get ? (res.headers.get('content-type') || '') : '');
-            const location = String(res.headers && res.headers.get ? (res.headers.get('location') || '') : '');
+            const contentType = String(res.headers && res.headers.get ? res.headers.get('content-type') || '' : '');
+            const location = String(res.headers && res.headers.get ? res.headers.get('location') || '' : '');
             const finalUrl = String(res.url || u.href);
             const redirected = REDIRECT_STATUSES.has(status);
-            const declaredLength = Number(
-                res.headers && res.headers.get ? (res.headers.get('content-length') || 0) : 0
-            );
+            const declaredLength = Number(res.headers && res.headers.get ? res.headers.get('content-length') || 0 : 0);
             responseMetadata = {
                 content_type: String(contentType).slice(0, 200),
-                declared_content_length: Number.isSafeInteger(declaredLength) && declaredLength >= 0
-                    ? declaredLength
-                    : null,
+                declared_content_length:
+                    Number.isSafeInteger(declaredLength) && declaredLength >= 0 ? declaredLength : null,
                 location_present: location !== '',
                 redirected,
             };
@@ -426,7 +424,9 @@ function createBoundedFetchAdapter(options = {}) {
                     if (res.body && typeof res.body.cancel === 'function') {
                         try {
                             await res.body.cancel();
-                        } catch { /* best effort — the SAFETY_ERROR below is the outcome */ }
+                        } catch {
+                            /* best effort — the SAFETY_ERROR below is the outcome */
+                        }
                     }
                     throw Object.assign(
                         new Error(`SAFETY_ERROR:oversized_response_body:declared_${declaredLength}/${MAX_BODY_BYTES}`),
@@ -455,7 +455,9 @@ function createBoundedFetchAdapter(options = {}) {
                             if (typeof stream.cancel === 'function') {
                                 try {
                                     await stream.cancel();
-                                } catch { /* best effort — the error below is the outcome */ }
+                                } catch {
+                                    /* best effort — the error below is the outcome */
+                                }
                             }
                             throw Object.assign(
                                 new Error(`SAFETY_ERROR:oversized_response_body:stream_${total}/${MAX_BODY_BYTES}`),
@@ -464,7 +466,7 @@ function createBoundedFetchAdapter(options = {}) {
                         }
                         chunks.push(value);
                     }
-                    bodyBytes = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
+                    bodyBytes = Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
                 } else {
                     const ab = await res.arrayBuffer();
                     bodyBytesReceived = ab.byteLength;
@@ -521,7 +523,7 @@ function createBoundedFetchAdapter(options = {}) {
                 status,
                 url: finalUrl,
                 headers: {
-                    get: (name) => {
+                    get: name => {
                         const n = String(name || '').toLowerCase();
                         if (n === 'content-type') return contentType;
                         if (n === 'location') return location;
@@ -558,28 +560,29 @@ function createBoundedFetchAdapter(options = {}) {
             // flags + the local ctrl.signal). The original thrown value is
             // rethrown unchanged at the end of this block.
             const errObj = err !== null && typeof err === 'object' ? err : null;
-            const snap = errObj === null
-                ? {}
-                : {
-                    code: safeReadProperty(errObj, 'code'),
-                    name: safeReadProperty(errObj, 'name'),
-                    message: safeReadProperty(errObj, 'message'),
-                    signal: safeReadProperty(errObj, 'signal'),
-                    cause: safeReadProperty(errObj, 'cause'),
-                  };
+            const snap =
+                errObj === null
+                    ? {}
+                    : {
+                          code: safeReadProperty(errObj, 'code'),
+                          name: safeReadProperty(errObj, 'name'),
+                          message: safeReadProperty(errObj, 'message'),
+                          signal: safeReadProperty(errObj, 'signal'),
+                          cause: safeReadProperty(errObj, 'cause'),
+                      };
             // cause.* is read from the ONE cause snapshot; unreadable cause
             // metadata is unavailable, never re-read or re-triggered.
-            const causeObj = snap.cause !== DIAGNOSTIC_PROPERTY_UNAVAILABLE
-                && snap.cause !== null
-                && typeof snap.cause === 'object'
-                ? snap.cause
-                : null;
-            const snapCause = causeObj === null
-                ? {}
-                : {
-                    name: safeReadProperty(causeObj, 'name'),
-                    code: safeReadProperty(causeObj, 'code'),
-                  };
+            const causeObj =
+                snap.cause !== DIAGNOSTIC_PROPERTY_UNAVAILABLE && snap.cause !== null && typeof snap.cause === 'object'
+                    ? snap.cause
+                    : null;
+            const snapCause =
+                causeObj === null
+                    ? {}
+                    : {
+                          name: safeReadProperty(causeObj, 'name'),
+                          code: safeReadProperty(causeObj, 'code'),
+                      };
 
             const isSafetyError = snap.code === 'SAFETY_ERROR';
             // Historical falsy fallback semantics (TD-03 reconciliation
@@ -589,15 +592,29 @@ function createBoundedFetchAdapter(options = {}) {
             // / 'null' / '0' / 'false'. Truthy names coerce safely; a
             // hostile coercion yields 'Error'. The snapshot value is never
             // re-read.
-            const errName = snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.name
-                ? 'Error'
-                : safeStringify(snap.name, 'Error');
+            const errName =
+                snap.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.name
+                    ? 'Error'
+                    : safeStringify(snap.name, 'Error');
             const messageAbort = (() => {
-                if (snap.message === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.message === null || snap.message === undefined) return false;
+                if (
+                    snap.message === DIAGNOSTIC_PROPERTY_UNAVAILABLE ||
+                    snap.message === null ||
+                    snap.message === undefined
+                ) {
+                    return false;
+                }
                 return safeStringify(snap.message, '').toLowerCase().includes('aborted');
             })();
             const errSignalAborted = (() => {
-                if (snap.signal === DIAGNOSTIC_PROPERTY_UNAVAILABLE || snap.signal === null || snap.signal === undefined || typeof snap.signal !== 'object') return false;
+                if (
+                    snap.signal === DIAGNOSTIC_PROPERTY_UNAVAILABLE ||
+                    snap.signal === null ||
+                    snap.signal === undefined ||
+                    typeof snap.signal !== 'object'
+                ) {
+                    return false;
+                }
                 const aborted = safeReadProperty(snap.signal, 'aborted');
                 return aborted !== DIAGNOSTIC_PROPERTY_UNAVAILABLE && Boolean(aborted);
             })();
@@ -622,10 +639,13 @@ function createBoundedFetchAdapter(options = {}) {
                 // is kept; REQUEST_ABORTED_BY_TIMEOUT is the vocabulary
                 // terminal marker the validator accepts for this outcome.
                 lastReliablePhase =
-                    lastReliablePhase === 'READING_RESPONSE_BODY' ? 'READING_RESPONSE_BODY' : 'AWAITING_RESPONSE_HEADERS';
+                    lastReliablePhase === 'READING_RESPONSE_BODY'
+                        ? 'READING_RESPONSE_BODY'
+                        : 'AWAITING_RESPONSE_HEADERS';
             } else if (isSafetyError) {
                 terminalOutcome = 'SAFETY_ERROR';
-                lastReliablePhase = lastReliablePhase === 'READING_RESPONSE_BODY' ? 'READING_RESPONSE_BODY' : lastReliablePhase;
+                lastReliablePhase =
+                    lastReliablePhase === 'READING_RESPONSE_BODY' ? 'READING_RESPONSE_BODY' : lastReliablePhase;
             } else if (isAbortError) {
                 terminalOutcome = 'ABORTED';
                 abortSource = 'EXTERNAL_ABORT';
@@ -647,15 +667,15 @@ function createBoundedFetchAdapter(options = {}) {
             // ''` — falsy values (undefined / null / '' / 0 / false / NaN)
             // persist '', never the literal strings '0' / 'false'. Truthy
             // values coerce safely; hostile coercions yield ''.
-            errorCode = snap.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.code
-                ? ''
-                : safeStringify(snap.code, '');
-            errorCauseName = snapCause.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.name
-                ? ''
-                : safeStringify(snapCause.name, '');
-            errorCauseCode = snapCause.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.code
-                ? ''
-                : safeStringify(snapCause.code, '');
+            errorCode = snap.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snap.code ? '' : safeStringify(snap.code, '');
+            errorCauseName =
+                snapCause.name === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.name
+                    ? ''
+                    : safeStringify(snapCause.name, '');
+            errorCauseCode =
+                snapCause.code === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !snapCause.code
+                    ? ''
+                    : safeStringify(snapCause.code, '');
             const finishedMs = nowMs();
             const transportObservation = buildTransportObservation({
                 ordinal,
@@ -685,7 +705,9 @@ function createBoundedFetchAdapter(options = {}) {
             if (err !== null && typeof err === 'object') {
                 try {
                     err.transportObservation = transportObservation;
-                } catch { /* frozen error object — observation is attached or lost */ }
+                } catch {
+                    /* frozen error object — observation is attached or lost */
+                }
             }
             // R20-P1 (Codex re-review on 0bfe90629): convey the TRUE
             // fetch-start moment even on failure — the run's stop-path state
@@ -696,7 +718,9 @@ function createBoundedFetchAdapter(options = {}) {
             if (fetchStartIso !== null && err !== null && typeof err === 'object') {
                 try {
                     err.requestAttemptedAt = fetchStartIso;
-                } catch { /* frozen error object — the value stays unset */ }
+                } catch {
+                    /* frozen error object — the value stays unset */
+                }
             }
             throw err;
         } finally {
@@ -891,17 +915,16 @@ function validateAuthorizationBinding(options = {}) {
         let stat = null;
         try {
             stat = fsImpl.lstatSync(root);
-        } catch { /* absent is fine */ }
+        } catch {
+            /* absent is fine */
+        }
         if (stat && (stat.isSymbolicLink() || !stat.isDirectory())) {
             errors.push('output root must be a real directory, not a symlink');
         }
     }
 
     if (errors.length > 0) {
-        throw Object.assign(
-            new Error(`authorization binding failed: ${errors.join('; ')}`),
-            { code: 'SAFETY_ERROR' }
-        );
+        throw Object.assign(new Error(`authorization binding failed: ${errors.join('; ')}`), { code: 'SAFETY_ERROR' });
     }
 
     // Git revision binding happens last (only when all other gates pass).
@@ -917,12 +940,12 @@ function validateAuthorizationBinding(options = {}) {
     // 40-hex); a plan generated at any other HEAD must fail closed before a
     // native fetch or a formal run-state write. Both preflight and execute
     // surface PLAN_REVISION_HEAD_MISMATCH.
-    const planGeneratorRevision = String(options.plan && options.plan.generator_code_revision || '');
+    const planGeneratorRevision = String((options.plan && options.plan.generator_code_revision) || '');
     if (planGeneratorRevision !== collectorCodeRevision) {
         throw Object.assign(
             new Error(
                 `PLAN_REVISION_HEAD_MISMATCH: plan generator_code_revision ${planGeneratorRevision || '(missing)'} ` +
-                `does not match collector HEAD ${collectorCodeRevision}`
+                    `does not match collector HEAD ${collectorCodeRevision}`
             ),
             { code: 'SAFETY_ERROR' }
         );
@@ -1015,11 +1038,15 @@ function evaluateAccessControl(response, body) {
         let loc = null;
         try {
             loc = response.location ? new URL(response.location).hostname : null;
-        } catch { loc = 'invalid'; }
+        } catch {
+            loc = 'invalid';
+        }
         if (loc && loc !== 'www.fotmob.com') return `cross_origin_redirect:${loc}`;
         return `redirect_${status}`;
     }
-    const lower = String(body || '').slice(0, 200000).toLowerCase();
+    const lower = String(body || '')
+        .slice(0, 200000)
+        .toLowerCase();
     for (const marker of BLOCK_MARKERS) {
         if (lower.includes(marker)) return `block_marker:${marker}`;
     }
@@ -1130,7 +1157,10 @@ function readProcStarttimeTicks(pid, fsImpl = fs) {
         if (closeParen < 0) return null;
         // Fields after the closing paren restart at state=1; starttime is
         // field 20 there (22 overall, including pid and comm).
-        const fields = stat.slice(closeParen + 1).trim().split(/\s+/);
+        const fields = stat
+            .slice(closeParen + 1)
+            .trim()
+            .split(/\s+/);
         const starttime = Number(fields[19]);
         return Number.isFinite(starttime) ? starttime : null;
     } catch {
@@ -1165,15 +1195,17 @@ function isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl) {
 
 /* eslint-disable-next-line complexity */
 function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {}) {
-    const isPidAlive = pidAlive || ((candidatePid) => {
-        try {
-            process.kill(candidatePid, 0);
-            return true;
-        } catch (err) {
-            // EPERM: the pid exists but belongs to another user — alive.
-            return err && err.code === 'EPERM';
-        }
-    });
+    const isPidAlive =
+        pidAlive ||
+        (candidatePid => {
+            try {
+                process.kill(candidatePid, 0);
+                return true;
+            } catch (err) {
+                // EPERM: the pid exists but belongs to another user — alive.
+                return err && err.code === 'EPERM';
+            }
+        });
     const ourStartTicks = readProcStarttimeTicks(pid, fsImpl);
     const ourToken = `pid:${pid}:${ourStartTicks === null ? '' : ourStartTicks}:${process.hrtime.bigint()}`;
     const lockDir = path.join(runDir, RUN_LOCK_DIR_NAME);
@@ -1188,10 +1220,14 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
             fsImpl.renameSync(tmpDir, lockDir);
         } catch (err) {
             // Best effort cleanup of OUR temp dir (never anyone else's).
-            try { fsImpl.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+            try {
+                fsImpl.rmSync(tmpDir, { recursive: true, force: true });
+            } catch {
+                /* ignore */
+            }
             if (!err || (err.code !== 'EEXIST' && err.code !== 'ENOTEMPTY')) {
                 throw Object.assign(
-                    new Error(`SAFETY_ERROR:run lock could not be created: ${String(err && err.message || err)}`),
+                    new Error(`SAFETY_ERROR:run lock could not be created: ${String((err && err.message) || err)}`),
                     { code: 'SAFETY_ERROR' }
                 );
             }
@@ -1207,8 +1243,7 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
             const token = readRunLockToken(lockDir, fsImpl);
             const holderPid = parseRunLockToken(token);
             const holderStartTicks = parseRunLockStartTicks(token);
-            if (holderPid !== null
-                && isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl)) {
+            if (holderPid !== null && isHolderAlive(holderPid, holderStartTicks, isPidAlive, fsImpl)) {
                 throw Object.assign(
                     new Error(`SAFETY_ERROR:another capture process (pid ${holderPid}) holds the run lock`),
                     { code: 'SAFETY_ERROR' }
@@ -1223,12 +1258,18 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                 const trash = path.join(runDir, `${RUN_LOCK_DIR_NAME}.trash.${pid}.${Date.now()}`);
                 try {
                     fsImpl.renameSync(lockDir, trash);
-                } catch { continue; } // raced out — the retry re-evaluates
+                } catch {
+                    continue;
+                } // raced out — the retry re-evaluates
                 const movedToken = readRunLockToken(trash, fsImpl);
                 if (String(movedToken ?? '') === String(token ?? '')) {
                     // The moved dir still carries the EXACT token we
                     // verified as stale — delete it and retry the publish.
-                    try { fsImpl.rmSync(trash, { recursive: true, force: true }); } catch { /* best effort */ }
+                    try {
+                        fsImpl.rmSync(trash, { recursive: true, force: true });
+                    } catch {
+                        /* best effort */
+                    }
                 } else {
                     // The lock changed between evaluation and grab: a NEW
                     // owner's lock was moved. Restore it — never delete a
@@ -1243,17 +1284,13 @@ function acquireRunLock(runDir, { fsImpl = fs, pid = process.pid, pidAlive } = {
                 }
                 continue;
             }
-            throw Object.assign(
-                new Error('SAFETY_ERROR:run lock could not be acquired'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('SAFETY_ERROR:run lock could not be acquired'), { code: 'SAFETY_ERROR' });
         }
         // Owned — verify OUR token is at the lock path (R11-P1 / R12-P1).
         if (readRunLockToken(lockDir, fsImpl) !== ourToken) {
-            throw Object.assign(
-                new Error('SAFETY_ERROR:run lock ownership lost during acquisition'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('SAFETY_ERROR:run lock ownership lost during acquisition'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         return { lockDir, ourToken };
     }
@@ -1270,13 +1307,21 @@ function releaseRunLock(runDir, runLock, fsImpl = fs) {
     const trash = path.join(runDir, `${RUN_LOCK_DIR_NAME}.trash.${process.pid}.${Date.now()}`);
     try {
         fsImpl.renameSync(lockDir, trash);
-    } catch { return; /* already released */ }
+    } catch {
+        return; /* already released */
+    }
     if (readRunLockToken(trash, fsImpl) === ourToken) {
-        try { fsImpl.rmSync(trash, { recursive: true, force: true }); } catch { /* best effort */ }
+        try {
+            fsImpl.rmSync(trash, { recursive: true, force: true });
+        } catch {
+            /* best effort */
+        }
     } else {
         try {
             fsImpl.renameSync(trash, lockDir);
-        } catch { /* occupied again — leave the moved lock; its owner re-verifies */ }
+        } catch {
+            /* occupied again — leave the moved lock; its owner re-verifies */
+        }
     }
 }
 
@@ -1315,10 +1360,7 @@ async function executeCaptureRun(options = {}) {
     // gate in validateAuthorizationBinding).
     const runRel = path.relative(binding.outputRoot, runDir);
     if (runRel === '' || runRel.startsWith('..') || path.isAbsolute(runRel)) {
-        throw Object.assign(
-            new Error(`run dir escapes the output root: ${runDir}`),
-            { code: 'SAFETY_ERROR' }
-        );
+        throw Object.assign(new Error(`run dir escapes the output root: ${runDir}`), { code: 'SAFETY_ERROR' });
     }
 
     // Directory creation is symlink-safe: every component below the output
@@ -1344,12 +1386,22 @@ async function executeCaptureRun(options = {}) {
         pidAlive: options.pidAlive,
     });
     try {
-        return await executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, now, parser, {
-            runsDir,
-            runDir,
-            capturesDir,
-            replayDir,
-        }, runLock);
+        return await executeCaptureRunLocked(
+            options,
+            plan,
+            binding,
+            delayMs,
+            fsImpl,
+            now,
+            parser,
+            {
+                runsDir,
+                runDir,
+                capturesDir,
+                replayDir,
+            },
+            runLock
+        );
     } finally {
         releaseRunLock(runDir, runLock, fsImpl);
     }
@@ -1362,7 +1414,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     // R12-P1: every run-state write first re-verifies that we still hold
     // the run lock's ownership token — fail closed at the next write if a
     // concurrent takeover displaced us (before the next fetch can issue).
-    const writeRunStateLocked = (runState) => {
+    const writeRunStateLocked = runState => {
         verifyRunLockOwnership(runLock, fsImpl);
         writeRunState(runDir, runState, fsImpl);
     };
@@ -1373,60 +1425,53 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         // Full binding validation — run, plan, artifact, authorization,
         // budget contract, delay contract, collector revision (P1-5).
         if (String(runState.run_id || '') !== binding.runId) {
-            throw Object.assign(
-                new Error('run state run id mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state run id mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (runState.plan_sha256 !== plan.plan_business_sha256) {
-            throw Object.assign(
-                new Error('run state plan SHA mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state plan SHA mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (String(runState.source_artifact_sha256 || '') !== String(plan.source_artifact_sha256 || '')) {
-            throw Object.assign(
-                new Error('run state source artifact SHA mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state source artifact SHA mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (runState.authorization_id !== binding.authorizationId) {
-            throw Object.assign(
-                new Error('run state authorization id mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state authorization id mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (Number(runState.max_requests) !== binding.maxRequests) {
-            throw Object.assign(
-                new Error('run state max-requests contract mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state max-requests contract mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (Number(runState.delay_ms) !== delayMs) {
-            throw Object.assign(
-                new Error('run state delay contract mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state delay contract mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         if (String(runState.collector_code_revision || '') !== binding.collectorCodeRevision) {
-            throw Object.assign(
-                new Error('run state collector revision mismatch — refusing to continue'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state collector revision mismatch — refusing to continue'), {
+                code: 'SAFETY_ERROR',
+            });
         }
     } else {
         // Fail closed: captures present without run-state must not be
         // guessed-and-continued from file names (P1-5).
         let existingPairs = 0;
         try {
-            existingPairs = fsImpl.readdirSync(capturesDir)
-                .filter(f => f.endsWith('.payload.json')).length;
-        } catch { /* absent dir is fine */ }
+            existingPairs = fsImpl.readdirSync(capturesDir).filter(f => f.endsWith('.payload.json')).length;
+        } catch {
+            /* absent dir is fine */
+        }
         if (existingPairs > 0) {
-            throw Object.assign(
-                new Error('run state missing but capture pairs exist — refusing to guess'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('run state missing but capture pairs exist — refusing to guess'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         runState = defaultRunState(plan, {
             runId: binding.runId,
@@ -1447,10 +1492,9 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     try {
         observationsDoc = readTransportObservationsFile(runDir, fsImpl);
     } catch (err) {
-        throw Object.assign(
-            new Error(`SAFETY_ERROR:transport observations file unreadable: ${String(err.message)}`),
-            { code: 'SAFETY_ERROR' }
-        );
+        throw Object.assign(new Error(`SAFETY_ERROR:transport observations file unreadable: ${String(err.message)}`), {
+            code: 'SAFETY_ERROR',
+        });
     }
     if (observationsDoc) {
         if (String(observationsDoc.run_id || '') !== binding.runId) {
@@ -1503,11 +1547,13 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     // run outcome or fail-stop behavior of the capture itself. (At run
     // START, by contrast, an unreadable or foreign pre-existing
     // observations file fails closed before any request — see above.)
-    const settleObservation = (observation) => {
+    const settleObservation = observation => {
         if (!observation) return;
         try {
             observationsDoc = settleObservationInDoc(observationsDoc, observation);
-        } catch { /* diagnostic-only — the run continues unchanged */ }
+        } catch {
+            /* diagnostic-only — the run continues unchanged */
+        }
     };
 
     // Run-bound immutable plan snapshot BEFORE any real network request:
@@ -1552,10 +1598,9 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             );
         }
         if (Number.isNaN(Date.parse(String(initialLastRequestAt)))) {
-            throw Object.assign(
-                new Error('SAFETY_ERROR:invalid last_network_request_attempted_at in run state'),
-                { code: 'SAFETY_ERROR' }
-            );
+            throw Object.assign(new Error('SAFETY_ERROR:invalid last_network_request_attempted_at in run state'), {
+                code: 'SAFETY_ERROR',
+            });
         }
         // R24-P1 (Codex re-review on 0e0ba8988): the marker decision is made
         // REGARDLESS of the deadline — a state written before 05cd23c55
@@ -1604,10 +1649,9 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             if (deadlineRaw !== undefined && deadlineRaw !== null && String(deadlineRaw).trim() !== '') {
                 const deadlineMs = Date.parse(String(deadlineRaw));
                 if (Number.isNaN(deadlineMs)) {
-                    throw Object.assign(
-                        new Error('SAFETY_ERROR:invalid next_allowed_request_at in run state'),
-                        { code: 'SAFETY_ERROR' }
-                    );
+                    throw Object.assign(new Error('SAFETY_ERROR:invalid next_allowed_request_at in run state'), {
+                        code: 'SAFETY_ERROR',
+                    });
                 }
                 // R21-P2 (Codex re-review on 05cd23c55): when the deadline is
                 // present it is a fail-closed GATE — it must equal the
@@ -1848,9 +1892,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // TD-03: read the attached fetch-start moment safely, ONCE (a
             // Proxy-intercepted read must not replace the original thrown
             // value; the value itself is a plain ISO string we attached).
-            const attemptedAt = err !== null && typeof err === 'object'
-                ? safeReadProperty(err, 'requestAttemptedAt')
-                : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
+            const attemptedAt =
+                err !== null && typeof err === 'object'
+                    ? safeReadProperty(err, 'requestAttemptedAt')
+                    : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
             if (attemptedAt !== DIAGNOSTIC_PROPERTY_UNAVAILABLE && attemptedAt) {
                 const attemptedAtStr = safeStringify(attemptedAt, null);
                 if (attemptedAtStr !== null) {
@@ -1874,9 +1919,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             // Diagnostic-only: settle the failure-path transport observation
             // (timeout / abort / safety / read / fetch errors) into the
             // in-memory document. The observation never changes fail-stop.
-            const transportObs = err !== null && typeof err === 'object'
-                ? safeReadProperty(err, 'transportObservation')
-                : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
+            const transportObs =
+                err !== null && typeof err === 'object'
+                    ? safeReadProperty(err, 'transportObservation')
+                    : DIAGNOSTIC_PROPERTY_UNAVAILABLE;
             if (transportObs !== DIAGNOSTIC_PROPERTY_UNAVAILABLE) {
                 settleObservation(transportObs);
             }
@@ -1892,15 +1938,11 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
             let msg = '';
             if (err !== null && typeof err === 'object') {
                 const em = safeReadProperty(err, 'message');
-                msg = em === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !em
-                    ? safeStringify(err, '')
-                    : safeStringify(em, '');
+                msg = em === DIAGNOSTIC_PROPERTY_UNAVAILABLE || !em ? safeStringify(err, '') : safeStringify(em, '');
             } else if (err !== undefined && err !== null) {
                 msg = safeStringify(err, '');
             }
-            stopReason = msg.includes('budget_exhausted')
-                ? 'budget_exhausted'
-                : `fetch_error:${msg.slice(0, 200)}`;
+            stopReason = msg.includes('budget_exhausted') ? 'budget_exhausted' : `fetch_error:${msg.slice(0, 200)}`;
             stoppedAtOrdinal = ordinal;
             break;
         }
@@ -1953,11 +1995,12 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                     }
                 );
                 const rawData = fetcherResult.raw_data || null;
-                observedMatchId = rawData && (rawData.matchId ?? null) !== null
-                    ? String(rawData.matchId)
-                    : null;
-                observedMatchIdSource = String(fetcherResult.match_id_source ||
-                    (rawData && rawData._meta ? rawData._meta.match_id_source : null) || '');
+                observedMatchId = rawData && (rawData.matchId ?? null) !== null ? String(rawData.matchId) : null;
+                observedMatchIdSource = String(
+                    fetcherResult.match_id_source ||
+                        (rawData && rawData._meta ? rawData._meta.match_id_source : null) ||
+                        ''
+                );
                 observedMatchIdConflict = fetcherResult.observed_match_id_conflict === true;
                 observedMatchIdResponseDerived = fetcherResult.observed_match_id_response_derived === true;
                 const g = rawData && rawData.general ? rawData.general : {};
@@ -1978,9 +2021,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 // the manifest unbound to the actual observed match id
                 // (P2, Codex round-2 review on 85bc0ee43).
                 stableRawPayloadSha256 = fetcherResult.stable_raw_payload_hash || null;
-                const extracted = parser.extractFromHtml
-                    ? parser.extractFromHtml(fetchResult.body)
-                    : null;
+                const extracted = parser.extractFromHtml ? parser.extractFromHtml(fetchResult.body) : null;
                 nextData = extracted && extracted.success === true ? extracted.data : null;
                 // Full parse chain: HTML → __NEXT_DATA__ → transform →
                 // FotMobRawParser. The parser output feeds the persisted
@@ -2114,7 +2155,7 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
 
     const completed = completedOrdinals.size;
     const total = plan.candidates.length;
-    runState.status = stopReason ? 'stopped' : (completed === total ? 'complete' : 'in_progress');
+    runState.status = stopReason ? 'stopped' : completed === total ? 'complete' : 'in_progress';
     runState.stopped_at_ordinal = stoppedAtOrdinal;
     runState.stop_reason = stopReason;
     runState.network_requests_attempted = priorNetworkRequests + runNetworkRequests;
@@ -2137,7 +2178,9 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
     if (observationsDoc.observations.length > 0) {
         try {
             writeTransportObservationsFile(runDir, observationsDoc, fsImpl, baseObservationsDoc);
-        } catch { /* diagnostic-only — reconciled from actual disk state below */ }
+        } catch {
+            /* diagnostic-only — reconciled from actual disk state below */
+        }
     }
     const persistedObservationsDoc = reconcilePersistedObservationsDoc({
         runDir,
