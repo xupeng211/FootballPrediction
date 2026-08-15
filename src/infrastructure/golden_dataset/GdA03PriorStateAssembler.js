@@ -20,7 +20,11 @@ const {
     PRIOR_STATE_STAGE,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
+    SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    SCHEDULE_FIXTURES_PER_TEAM,
+    SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    SCHEDULE_TEAMS_PER_SEASON,
     SEMANTICS_STATUS,
     assertFiniteNumber,
     assertObject,
@@ -293,16 +297,29 @@ function validateTeamClosure(schedule, input, expectedSeasonCounts) {
             fail(`schedule team closure ${season} fixture total is invalid`, 'HISTORY_CLOSURE_INVALID');
         }
     }
-    const expectedFields = ['teams_per_season', 'fixtures_per_team', 'home_fixtures_per_team', 'away_fixtures_per_team'];
-    for (const field of expectedFields) {
-        if (input[field] !== undefined && (!Number.isSafeInteger(input[field]) || input[field] <= 0)) {
-            fail(`schedule team closure ${field} is invalid`, 'SCHEMA_MISMATCH');
+    const expectedFields = {
+        teams_per_season: SCHEDULE_TEAMS_PER_SEASON,
+        fixtures_per_team: SCHEDULE_FIXTURES_PER_TEAM,
+        home_fixtures_per_team: SCHEDULE_HOME_FIXTURES_PER_TEAM,
+        away_fixtures_per_team: SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    };
+    for (const [field, expected] of Object.entries(expectedFields)) {
+        if (input[field] !== expected) {
+            fail(`schedule team closure ${field} must equal canonical value`, 'HISTORY_CLOSURE_INVALID');
         }
     }
-    if (input.teams_per_season !== undefined) {
-        for (const season of Object.keys(perTeamCounts)) {
-            if (Object.keys(perTeamCounts[season]).length !== input.teams_per_season) {
-                fail(`schedule season ${season} team count is not closed`, 'HISTORY_CLOSURE_INVALID');
+    for (const season of Object.keys(perTeamCounts)) {
+        const seasonTeams = perTeamCounts[season];
+        if (Object.keys(seasonTeams).length !== SCHEDULE_TEAMS_PER_SEASON) {
+            fail(`schedule season ${season} team count is not closed`, 'HISTORY_CLOSURE_INVALID');
+        }
+        for (const [team, counts] of Object.entries(seasonTeams)) {
+            if (
+                counts.total !== SCHEDULE_FIXTURES_PER_TEAM ||
+                counts.home !== SCHEDULE_HOME_FIXTURES_PER_TEAM ||
+                counts.away !== SCHEDULE_AWAY_FIXTURES_PER_TEAM
+            ) {
+                fail(`schedule season ${season} team ${team} fixture closure is not canonical`, 'HISTORY_CLOSURE_INVALID');
             }
         }
     }
@@ -1033,17 +1050,22 @@ function buildTargetFeatures({ target, schedule, factsById, indexes, closure, so
 
 function buildTargetLabel(target, fact) {
     const result = fact?.facts?.match_result;
+    const sourceProvenance = fact?.provenance || null;
     return {
         role: TRAINING_LABEL_ROLE,
         timing_class: FACT_TIMING_CLASS,
         status: result?.status || 'UNAVAILABLE',
         outcome: result?.outcome || null,
         canonical_match_id: target.canonical_match_id,
+        provenance_input: {
+            result: result || null,
+            source_provenance: sourceProvenance,
+        },
         provenance_digest: computeProvenanceDigest({
             role: TRAINING_LABEL_ROLE,
             target_match_id: target.canonical_match_id,
             result,
-            source_provenance: fact?.provenance || null,
+            source_provenance: sourceProvenance,
         }),
     };
 }

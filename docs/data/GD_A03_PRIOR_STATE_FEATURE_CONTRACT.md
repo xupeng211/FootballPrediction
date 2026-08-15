@@ -118,6 +118,25 @@ extra = 0
 unaccounted = 0
 ```
 
+The schedule authority is fail-closed for the current canonical Premier League
+inventory: each season must contain 20 distinct teams, 380 fixtures, and every
+team must have exactly 38 fixtures (19 home and 19 away). The artifact retains
+the per-season/per-team counts and validates them against the schedule rows;
+the GD-A03 assembler does not accept a declared closure that is not reconciled
+to those rows.
+
+`population_accounting.target_id_set_sha256` and
+`population_accounting.accounted_id_set_sha256` are required hashes of the
+sorted canonical target IDs. The artifact verifier recomputes both hashes from
+the rows, so population accounting cannot be made green by changing counts
+alone.
+
+Each `target_label` is independently bound to its row identity and to the
+postmatch result projection. Its `provenance_input` retains the result and
+source provenance used by the digest; the verifier recomputes that digest and
+rejects identity, projection, or provenance tampering. Target labels remain
+postmatch-only and are never inputs to feature computation.
+
 `FULL_20_VECTOR_ELIGIBLE=YES` requires all 20 values to be finite, semantically proven,
 strictly prior, fully closed, and individually hash/provenance bound. No null is replaced
 by zero, neutral, a proxy, or a cold-start default.

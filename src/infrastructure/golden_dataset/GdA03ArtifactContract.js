@@ -26,10 +26,14 @@ const {
     isSemanticsProven,
     REQUIRED_ROLLING_HISTORY_COUNT,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    SCHEDULE_FIXTURES_PER_TEAM,
+    SCHEDULE_HOME_FIXTURES_PER_TEAM,
+    SCHEDULE_TEAMS_PER_SEASON,
     stableStringify,
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
-const { sha256Bytes } = require('./GdA01AssemblyContract');
+const { admittedIdSetHash, sha256Bytes } = require('./GdA01AssemblyContract');
 
 const TRAINING_LABEL_ROLE = 'TRAINING_LABEL_POSTMATCH';
 const FACT_TIMING_CLASS = 'POSTMATCH_ONLY';
@@ -129,6 +133,17 @@ function validateScheduleAuthority(scheduleAuthority) {
     if (teamClosure.schema_version !== SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION || teamClosure.status !== 'PROVEN') {
         fail('GD-A03 team closure status/schema is invalid', 'HISTORY_CLOSURE_INVALID');
     }
+    const canonicalTeamClosure = {
+        teams_per_season: SCHEDULE_TEAMS_PER_SEASON,
+        fixtures_per_team: SCHEDULE_FIXTURES_PER_TEAM,
+        home_fixtures_per_team: SCHEDULE_HOME_FIXTURES_PER_TEAM,
+        away_fixtures_per_team: SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+    };
+    for (const [field, expected] of Object.entries(canonicalTeamClosure)) {
+        if (teamClosure[field] !== expected) {
+            fail(`GD-A03 team closure ${field} is not canonical`, 'HISTORY_CLOSURE_INVALID');
+        }
+    }
     assertObject(teamClosure.per_team_counts, 'GD-A03 schedule_authority.team_closure.per_team_counts');
     for (const [season, teamCounts] of Object.entries(teamClosure.per_team_counts)) {
         assertObject(teamCounts, `GD-A03 team closure ${season}`);
@@ -144,13 +159,26 @@ function validateScheduleAuthority(scheduleAuthority) {
             if (counts.total !== counts.home + counts.away) {
                 fail(`GD-A03 team closure ${season}.${team} totals do not reconcile`, 'HISTORY_CLOSURE_INVALID');
             }
+            if (
+                counts.total !== SCHEDULE_FIXTURES_PER_TEAM ||
+                counts.home !== SCHEDULE_HOME_FIXTURES_PER_TEAM ||
+                counts.away !== SCHEDULE_AWAY_FIXTURES_PER_TEAM
+            ) {
+                fail(`GD-A03 team closure ${season}.${team} is not canonical`, 'HISTORY_CLOSURE_INVALID');
+            }
             totalFixtures += counts.total;
+        }
+        if (Object.keys(teamCounts).length !== SCHEDULE_TEAMS_PER_SEASON) {
+            fail(`GD-A03 team closure ${season} team count is not canonical`, 'HISTORY_CLOSURE_INVALID');
         }
         if (scheduleAuthority.per_season_counts[season] !== totalFixtures / 2) {
             fail(`GD-A03 team closure ${season} does not reconcile to schedule count`, 'HISTORY_CLOSURE_INVALID');
         }
     }
-    if (stableStringify(Object.keys(teamClosure.per_team_counts).sort()) !== stableStringify(Object.keys(scheduleAuthority.per_season_counts).sort())) {
+    if (
+        stableStringify(Object.keys(teamClosure.per_team_counts).sort()) !==
+        stableStringify(Object.keys(scheduleAuthority.per_season_counts).sort())
+    ) {
         fail('GD-A03 team closure seasons do not match schedule seasons', 'HISTORY_CLOSURE_INVALID');
     }
     return scheduleAuthority;
@@ -307,6 +335,55 @@ function computeUnavailableReasonCounts(artifact) {
     return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));
 }
 
+// eslint-disable-next-line complexity -- target-label validation enumerates identity, result, and digest invariants.
+function validateTargetLabel(label, row) {
+    assertObject(label, `GD-A03 row ${row.canonical_match_id}.target_label`);
+    if (label.role !== TRAINING_LABEL_ROLE || label.timing_class !== FACT_TIMING_CLASS) {
+        fail('GD-A03 target label timing is invalid', 'TEMPORAL_SEMANTICS_UNPROVEN');
+    }
+    if (label.canonical_match_id !== row.canonical_match_id) {
+        fail('GD-A03 target label identity is invalid', 'PROVENANCE_INVALID');
+    }
+    assertObject(label.provenance_input, `GD-A03 row ${row.canonical_match_id}.target_label.provenance_input`);
+    const result = label.provenance_input.result;
+    if (result !== null) assertObject(result, `GD-A03 row ${row.canonical_match_id}.target_label.result`);
+    const expectedStatus = result?.status || 'UNAVAILABLE';
+    const expectedOutcome = result?.outcome || null;
+    if (!['AVAILABLE', 'UNAVAILABLE'].includes(expectedStatus)) {
+        fail('GD-A03 target label result status is invalid', 'FACT_VALUE_INVALID');
+    }
+    if (expectedStatus === 'AVAILABLE') {
+        if (!['home', 'draw', 'away'].includes(expectedOutcome)) {
+            fail('GD-A03 target label result outcome is invalid', 'FACT_VALUE_INVALID');
+        }
+        if (!Number.isSafeInteger(result.home_score) || result.home_score < 0) {
+            fail('GD-A03 target label home score is invalid', 'FACT_VALUE_INVALID');
+        }
+        if (!Number.isSafeInteger(result.away_score) || result.away_score < 0) {
+            fail('GD-A03 target label away score is invalid', 'FACT_VALUE_INVALID');
+        }
+    } else if (expectedOutcome !== null) {
+        fail('GD-A03 unavailable target label carries an outcome', 'FACT_VALUE_INVALID');
+    }
+    if (label.status !== expectedStatus || label.outcome !== expectedOutcome) {
+        fail('GD-A03 target label projection mismatch', 'FACT_VALUE_INVALID');
+    }
+    assertObject(
+        label.provenance_input.source_provenance,
+        `GD-A03 row ${row.canonical_match_id}.target_label.source_provenance`
+    );
+    assertSha(label.provenance_digest, `GD-A03 row ${row.canonical_match_id}.target_label.provenance_digest`);
+    const expectedDigest = computeProvenanceDigest({
+        role: TRAINING_LABEL_ROLE,
+        target_match_id: row.canonical_match_id,
+        result,
+        source_provenance: label.provenance_input.source_provenance,
+    });
+    if (label.provenance_digest !== expectedDigest) {
+        fail('GD-A03 target label provenance mismatch', 'PROVENANCE_INVALID');
+    }
+}
+
 // eslint-disable-next-line complexity
 function validatePriorStateArtifact(artifact) {
     assertObject(artifact, 'GD-A03 artifact');
@@ -383,10 +460,7 @@ function validatePriorStateArtifact(artifact) {
         if ((row.feature_vector_eligibility.status === 'YES') !== expectedEligible) {
             fail('GD-A03 row eligibility disagrees with features', 'POPULATION_MISMATCH');
         }
-        assertObject(row.target_label, `GD-A03 row ${row.canonical_match_id}.target_label`);
-        if (row.target_label.role !== TRAINING_LABEL_ROLE || row.target_label.timing_class !== FACT_TIMING_CLASS) {
-            fail('GD-A03 target label timing is invalid', 'TEMPORAL_SEMANTICS_UNPROVEN');
-        }
+        validateTargetLabel(row.target_label, row);
     }
     const accounting = artifact.population_accounting;
     assertObject(accounting, 'GD-A03 population_accounting');
@@ -407,6 +481,13 @@ function validatePriorStateArtifact(artifact) {
         artifact.rows.filter(row => row.feature_vector_eligibility.status === 'NO').length
     ) {
         fail('GD-A03 unavailable accounting mismatch', 'POPULATION_MISMATCH');
+    }
+    assertSha(accounting.target_id_set_sha256, 'GD-A03 target_id_set_sha256');
+    assertSha(accounting.accounted_id_set_sha256, 'GD-A03 accounted_id_set_sha256');
+    const accountedIds = artifact.rows.map(row => row.canonical_match_id);
+    const expectedIdHash = admittedIdSetHash(accountedIds);
+    if (accounting.target_id_set_sha256 !== expectedIdHash || accounting.accounted_id_set_sha256 !== expectedIdHash) {
+        fail('GD-A03 population ID set hash mismatch', 'POPULATION_MISMATCH');
     }
     if (accounting.unaccounted_count !== 0 || accounting.duplicate_id_count !== 0 || accounting.extra_id_count !== 0) {
         fail('GD-A03 population is not conserved', 'POPULATION_MISMATCH');

@@ -50,6 +50,10 @@ function teamClosure(schedule) {
     return {
         schema_version: SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
         status: 'PROVEN',
+        teams_per_season: 20,
+        fixtures_per_team: 38,
+        home_fixtures_per_team: 19,
+        away_fixtures_per_team: 19,
         per_team_counts: perTeamCounts,
     };
 }
@@ -156,8 +160,9 @@ function buildFixture({ includeSixth = false } = {}) {
         facts.push(fact(row, sequence));
         return row;
     };
-    const homeOpponents = ['H1 FC', 'H2 FC', 'H3 FC', 'H4 FC', 'H5 FC', 'H6 FC'];
-    const awayOpponents = ['A1 FC', 'A2 FC', 'A3 FC', 'A4 FC', 'A5 FC'];
+    const canonicalTeams = ['Home FC', 'Away FC', ...Array.from({ length: 18 }, (_, index) => `Team ${index + 3}`)];
+    const homeOpponents = canonicalTeams.slice(2, 2 + (includeSixth ? 6 : 5));
+    const awayOpponents = canonicalTeams.slice(8, 13);
     const dates = includeSixth
         ? [
               '2024-07-01T12:00:00Z',
@@ -179,6 +184,24 @@ function buildFixture({ includeSixth = false } = {}) {
         addTarget(dates[index], awayOpponents[index], 'Away FC');
     }
     const target = addTarget('2024-07-13T12:00:00Z', 'Home FC', 'Away FC');
+    const existingPairs = new Set(schedule.map(row => `${row.home_team}\u0000${row.away_team}`));
+    let fillerIndex = 0;
+    let futureSlot = null;
+    for (const homeTeam of canonicalTeams) {
+        for (const awayTeam of canonicalTeams) {
+            if (homeTeam === awayTeam || existingPairs.has(`${homeTeam}\u0000${awayTeam}`)) continue;
+            const filler = candidate(
+                `47_20242025_${String(sequence).padStart(7, '0')}`,
+                new Date(Date.parse('2024-08-01T12:00:00Z') + fillerIndex * 60 * 60 * 1000).toISOString(),
+                homeTeam,
+                awayTeam
+            );
+            sequence += 1;
+            fillerIndex += 1;
+            schedule.push(filler);
+            if (!futureSlot) futureSlot = filler;
+        }
+    }
     const sourceBindings = {
         gd_a01_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-artifact/v1' },
         gd_a01_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-receipt/v1' },
@@ -207,7 +230,7 @@ function buildFixture({ includeSixth = false } = {}) {
         sourceBindings,
         codeRevision: REVISION,
     };
-    return { options, schedule, targets, facts, targetId: target.id };
+    return { options, schedule, targets, facts, targetId: target.id, futureSlot };
 }
 
 function build(fixture) {
@@ -335,7 +358,13 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
             shots_on_target: completeShotsOnTarget(index + 1, index + 1),
         },
     }));
-    const future = candidate('47_20242025_9999999', '2024-07-20T12:00:00Z', 'Home FC', 'Future FC');
+    const future = candidate(
+        '47_20242025_9999999',
+        '2024-07-20T12:00:00Z',
+        fixture.futureSlot.home_team,
+        fixture.futureSlot.away_team
+    );
+    const scheduleWithFuture = fixture.schedule.map(row => (row.id === fixture.futureSlot.id ? future : row));
     const futureFactBase = fact(future, 99);
     const futureFact = {
         ...futureFactBase,
@@ -346,13 +375,13 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
     };
     const options = {
         ...fixture.options,
-        scheduleCandidates: [...fixture.schedule, future],
+        scheduleCandidates: scheduleWithFuture,
         targetRows: [...fixture.options.targetRows, { ...future, canonical_match_id: future.id }],
         factRows: [...facts, futureFact],
         scheduleClosure: {
             ...fixture.options.scheduleClosure,
-            per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
-            team_closure: teamClosure([...fixture.schedule, future]),
+            per_season_expected_counts: { '2024/2025': scheduleWithFuture.length },
+            team_closure: teamClosure(scheduleWithFuture),
         },
     };
     const baseline = buildPriorStateFeatureView(options);
@@ -386,14 +415,20 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
     assert.equal(reordered.artifactBytes.toString(), base.artifactBytes.toString());
     assert.equal(reordered.receiptBytes.toString(), base.receiptBytes.toString());
 
-    const future = candidate('47_20242025_9999999', '2024-07-20T12:00:00Z', 'Home FC', 'Future FC');
+    const future = candidate(
+        '47_20242025_9999999',
+        '2024-07-20T12:00:00Z',
+        fixture.futureSlot.home_team,
+        fixture.futureSlot.away_team
+    );
+    const scheduleWithFuture = fixture.schedule.map(row => (row.id === fixture.futureSlot.id ? future : row));
     const futureOptions = {
         ...fixture.options,
-        scheduleCandidates: [...fixture.schedule, future],
+        scheduleCandidates: scheduleWithFuture,
         scheduleClosure: {
             ...fixture.options.scheduleClosure,
-            per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
-            team_closure: teamClosure([...fixture.schedule, future]),
+            per_season_expected_counts: { '2024/2025': scheduleWithFuture.length },
+            team_closure: teamClosure(scheduleWithFuture),
         },
     };
     const withFuture = buildPriorStateFeatureView(futureOptions);
@@ -539,10 +574,45 @@ test('GD-A03 requires team-level schedule closure and complete source bindings',
         'HISTORY_CLOSURE_INVALID'
     );
 
+    assertReject(
+        () =>
+            buildPriorStateFeatureView({
+                ...fixture.options,
+                scheduleClosure: {
+                    ...fixture.options.scheduleClosure,
+                    team_closure: { ...fixture.options.scheduleClosure.team_closure, fixtures_per_team: 1 },
+                },
+            }),
+        'HISTORY_CLOSURE_INVALID'
+    );
+
     const result = build(fixture);
     const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
     delete tampered.source_bindings.gd_a02_receipt;
     assertReject(() => validatePriorStateArtifact(tampered), 'PROVENANCE_INVALID');
+
+    const nonCanonicalClosure = JSON.parse(result.artifactBytes.toString('utf8'));
+    nonCanonicalClosure.schedule_authority.team_closure.teams_per_season = 19;
+    assertReject(() => validatePriorStateArtifact(nonCanonicalClosure), 'HISTORY_CLOSURE_INVALID');
+
+    const missingPopulationHash = JSON.parse(result.artifactBytes.toString('utf8'));
+    delete missingPopulationHash.population_accounting.target_id_set_sha256;
+    assertReject(() => validatePriorStateArtifact(missingPopulationHash), 'HASH_MISMATCH');
+});
+
+test('GD-A03 independently validates target-label identity, projection, and digest', () => {
+    const result = build(buildFixture());
+    const identityTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    identityTampered.rows[0].target_label.canonical_match_id = 'tampered-target';
+    assertReject(() => validatePriorStateArtifact(identityTampered), 'PROVENANCE_INVALID');
+
+    const projectionTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    projectionTampered.rows[0].target_label.outcome = 'home';
+    assertReject(() => validatePriorStateArtifact(projectionTampered), 'FACT_VALUE_INVALID');
+
+    const digestTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    digestTampered.rows[0].target_label.provenance_input.result.home_score += 1;
+    assertReject(() => validatePriorStateArtifact(digestTampered), 'PROVENANCE_INVALID');
 });
 
 test('GD-A03 receipt content hash rejects receipt provenance tampering', () => {
