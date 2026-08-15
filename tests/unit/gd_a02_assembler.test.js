@@ -32,6 +32,8 @@ const {
     validateFactsArtifact,
     validateFactsSourceIndex,
     validateOutputFiles,
+    validateResult,
+    validateShotsOnTarget,
 } = require('../../src/infrastructure/golden_dataset/GdA02FactsContract');
 const {
     buildStagingArtifact,
@@ -297,6 +299,10 @@ test('GD-A02 produces admitted postmatch facts with exact provenance and no feat
     assert.equal(row.facts.xg.status, 'PARTIAL');
     assert.equal(row.facts.xg.home.value, 0.09059995412826538);
     assert.equal(row.facts.xg.away.value, null);
+    assert.equal(row.facts.shots_on_target.status, 'VALID');
+    assert.equal(row.facts.shots_on_target.aggregation, 'count_true_isOnTarget_by_team_id');
+    assert.equal(row.facts.shots_on_target.home.value, 1);
+    assert.equal(row.facts.shots_on_target.away.value, 0);
     for (const section of ['events', 'lineup', 'player_stats', 'shotmap', 'stats']) {
         assert.equal(row.facts.sections[section].present, true);
         assert.equal(row.facts.sections[section].version, 'fotmob-match-detail-parsed/v1');
@@ -305,6 +311,23 @@ test('GD-A02 produces admitted postmatch facts with exact provenance and no feat
     }
     assert.equal(result.artifact.scope.prematch_features, false);
     assert.equal(result.artifact.scope.training, false);
+});
+
+test('GD-A02 rejects a result outcome that is not derived from the final scores', () => {
+    assertContractReject(
+        () =>
+            validateResult(
+                {
+                    status: 'AVAILABLE',
+                    home_score: 2,
+                    away_score: 0,
+                    outcome: 'away',
+                    source_path: 'normalized.home_team.score + normalized.away_team.score',
+                },
+                'fixture.facts.match_result'
+            ),
+        'FACT_VALUE_INVALID'
+    );
 });
 
 test('GD-A02 build is byte-deterministic for identical exact inputs', t => {
@@ -335,6 +358,198 @@ test('GD-A02 preserves missing xG as partial/null and never fabricates zero', t 
     assert.equal(xg.status, 'PARTIAL');
     assert.equal(xg.home.value, null);
     assert.equal(xg.home.missing_shots, 1);
+});
+
+test('GD-A02 preserves missing isOnTarget as partial/null and never fabricates zero', t => {
+    const base = buildPair().payload.normalized;
+    const missingShot = { ...base.shotmap.shots[0] };
+    delete missingShot.isOnTarget;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [missingShot],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'PARTIAL');
+    assert.equal(shotsOnTarget.home.value, null);
+    assert.equal(shotsOnTarget.home.missing_shots, 1);
+});
+
+test('GD-A02 counts explicit false isOnTarget observations separately from missing evidence', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [{ ...base.shotmap.shots[0], isOnTarget: false }],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'VALID');
+    assert.equal(shotsOnTarget.home.value, 0);
+    assert.equal(shotsOnTarget.shots_with_on_target, 0);
+    assert.equal(shotsOnTarget.shots_without_on_target, 1);
+});
+
+test('GD-A02 fails closed when own-goal SOT semantics are not proven', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [{ ...base.shotmap.shots[0], isOnTarget: true, isOwnGoal: true }],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+    assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN');
+    assert.equal(shotsOnTarget.total_shots, null);
+    assert.equal(shotsOnTarget.home.value, null);
+    assert.equal(shotsOnTarget.away.value, null);
+});
+
+test('GD-A02 rejects an unavailable SOT projection with a usable side value', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'UNAVAILABLE',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: null,
+                    shots_with_on_target: null,
+                    shots_without_on_target: null,
+                    home: { value: 4, status: 'COMPLETE', known_shots: 4, missing_shots: 0 },
+                    away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A02 rejects an impossible complete SOT side count', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'VALID',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: 1,
+                    shots_with_on_target: 1,
+                    shots_without_on_target: 0,
+                    home: { value: 999, status: 'COMPLETE', known_shots: 0, missing_shots: 0 },
+                    away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A02 rejects a partial SOT projection with only complete sides', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'PARTIAL',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: 2,
+                    shots_with_on_target: 1,
+                    shots_without_on_target: 0,
+                    home: { value: 1, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                    away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A02 rejects partial SOT aggregates above known side observations', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'PARTIAL',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: 2,
+                    shots_with_on_target: 2,
+                    shots_without_on_target: 0,
+                    home: { value: null, status: 'PARTIAL', known_shots: 0, missing_shots: 1 },
+                    away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A02 fails closed when own-goal flag is missing or non-boolean', t => {
+    const base = buildPair().payload.normalized;
+    for (const shotOverride of [{ isOwnGoal: undefined }, { isOwnGoal: 'false' }]) {
+        const shot = { ...base.shotmap.shots[0], ...shotOverride };
+        if (shotOverride.isOwnGoal === undefined) delete shot.isOwnGoal;
+        const fixture = buildResult(t, {
+            normalized: { ...base, shotmap: { shots: [shot] } },
+        });
+        const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+        assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+        assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_OWN_GOAL_FLAG_UNAVAILABLE');
+    }
+});
+
+test('GD-A02 rejects normalized home/away identity reversal even when source IDs are legal', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildFixture(t, {
+        normalized: {
+            ...base,
+            home_team: { ...base.away_team },
+            away_team: { ...base.home_team },
+        },
+    });
+    const result = buildFactsAssembly(fixture.options);
+    assert.equal(result.artifact.rows.length, 0);
+    assert.equal(result.artifact.rejected_rows.length, 1);
+    assert.equal(result.artifact.rejected_rows[0].error_code, 'IDENTITY_CONFLICT');
+});
+
+test('GD-A02 rejects SOT when only normalized team IDs are reversed', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            home_team: { ...base.home_team, id: base.away_team.id },
+            away_team: { ...base.away_team, id: base.home_team.id },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+    assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN');
+});
+
+test('GD-A02 rejects response team IDs without trusted source paths', t => {
+    const pair = buildPair({
+        observed: {
+            observed_home_team_id_source: 'request.candidate.home_team_id',
+            observed_away_team_id_source: 'request.candidate.away_team_id',
+        },
+    });
+    const validation = validateObservation({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.equal(validation.ok, false);
+    assert.ok(validation.errors.some(error => /untrusted observed_.*team_id_source/.test(error.message)));
 });
 
 test('GD-A02 accounts a malformed source as rejection when another admitted row remains', t => {

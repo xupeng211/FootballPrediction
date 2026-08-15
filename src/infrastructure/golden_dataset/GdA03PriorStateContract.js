@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- the permanent GD-A03 contract keeps semantic, lineage, and hash rules together. */
+
 // lifecycle: permanent
 // GD-A03 的 feature identity / numeric-lineage contract。特征名称与顺序仍由
 // config/model_feature_contracts.json 传入并校验；本文件只声明每个名称的
@@ -14,10 +16,22 @@ const {
     TEAMS_PER_SEASON,
 } = require('../canonical/CanonicalInventoryContract');
 
-const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v1';
-const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
-const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v1';
+const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v4';
+const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v4';
+const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
+const POPULATION_AUTHORITY_SCHEMA_VERSION = 'gd-a01-target-population-binding/v1';
+const TARGET_RESULT_BINDINGS_SCHEMA_VERSION = 'gd-a02-target-result-bindings/v1';
+const TARGET_REJECTION_BINDINGS_SCHEMA_VERSION = 'gd-a02-rejected-fact-bindings/v1';
 const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
+const GD_A03_SOURCE_BINDING_NAMES = Object.freeze([
+    'canonical_schedule',
+    'feature_contract',
+    'gd_a01_artifact',
+    'gd_a01_receipt',
+    'gd_a02_artifact',
+    'gd_a02_receipt',
+    'runtime_feature_adapter',
+]);
 const SCHEDULE_TEAMS_PER_SEASON = TEAMS_PER_SEASON;
 const SCHEDULE_FIXTURES_PER_TEAM = FIXTURES_PER_TEAM;
 const SCHEDULE_HOME_FIXTURES_PER_TEAM = HOME_FIXTURES_PER_TEAM;
@@ -58,6 +72,9 @@ const REASON_CODES = Object.freeze({
     INSUFFICIENT_HISTORY: 'INSUFFICIENT_HISTORY',
     NO_PROVEN_SOURCE_FACT: 'NO_PROVEN_SOURCE_FACT',
     SEMANTICS_UNPROVEN: 'SEMANTICS_UNPROVEN',
+    SOT_OWN_GOAL_FLAG_UNAVAILABLE: 'SOT_OWN_GOAL_FLAG_UNAVAILABLE',
+    SOT_OWN_GOAL_SEMANTICS_UNPROVEN: 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN',
+    SOT_TEAM_IDENTITY_BINDING_UNPROVEN: 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN',
     STANDINGS_HISTORY_GAP: 'STANDINGS_HISTORY_GAP',
     STANDINGS_TIEBREAK_UNPROVEN: 'STANDINGS_TIEBREAK_UNPROVEN',
 });
@@ -97,31 +114,39 @@ const FEATURE_SEMANTICS = [
         feature_name: 'rolling_shots_on_target_home',
         family: FEATURE_FAMILIES.rolling,
         intended_semantics: 'Target home team mean shots on target over five actual prior matches.',
-        source_authority: 'No accepted numeric field in the GD-A02 factual projection.',
-        source_fields: ['GD-A02 sections.stats is fingerprint-only; no numeric shots-on-target value'],
+        source_authority: 'GD-A02 v2 facts projection from the existing validated FotMob normalized shotmap.',
+        source_fields: [
+            'facts.shots_on_target.home.value',
+            'facts.shots_on_target.home.status=COMPLETE',
+            'facts.shots_on_target source path=normalized.shotmap.shots[*].isOnTarget',
+        ],
         history_scope: 'Premier League, same season, target home team.',
         lookback_rule: 'Exactly five actual prior matches would be required.',
-        derivation: 'No derivation is permitted until a numeric source field is contractually projected.',
+        derivation: 'Arithmetic mean of the five proven team-side on-target shot counts.',
         cutoff_rule: FEATURE_CUTOFF_RELATION,
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
-        provenance_requirements: 'A future source must bind field path, source hash and source match ID.',
-        semantics_status: SEMANTICS_STATUS.UNAVAILABLE,
+        provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
+        semantics_status: SEMANTICS_STATUS.SEMANTICS_UNPROVEN,
     },
     {
         feature_name: 'rolling_shots_on_target_away',
         family: FEATURE_FAMILIES.rolling,
         intended_semantics: 'Target away team mean shots on target over five actual prior matches.',
-        source_authority: 'No accepted numeric field in the GD-A02 factual projection.',
-        source_fields: ['GD-A02 sections.stats is fingerprint-only; no numeric shots-on-target value'],
+        source_authority: 'GD-A02 v2 facts projection from the existing validated FotMob normalized shotmap.',
+        source_fields: [
+            'facts.shots_on_target.away.value',
+            'facts.shots_on_target.away.status=COMPLETE',
+            'facts.shots_on_target source path=normalized.shotmap.shots[*].isOnTarget',
+        ],
         history_scope: 'Premier League, same season, target away team.',
         lookback_rule: 'Exactly five actual prior matches would be required.',
-        derivation: 'No derivation is permitted until a numeric source field is contractually projected.',
+        derivation: 'Arithmetic mean of the five proven team-side on-target shot counts.',
         cutoff_rule: FEATURE_CUTOFF_RELATION,
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
-        provenance_requirements: 'A future source must bind field path, source hash and source match ID.',
-        semantics_status: SEMANTICS_STATUS.UNAVAILABLE,
+        provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
+        semantics_status: SEMANTICS_STATUS.SEMANTICS_UNPROVEN,
     },
     {
         feature_name: 'rolling_possession_home',
@@ -451,6 +476,10 @@ function featureSemanticsInOrder(orderedFeatures) {
     });
 }
 
+function isSemanticsProven(status) {
+    return status === SEMANTICS_STATUS.PROVEN || status === SEMANTICS_STATUS.PROVEN_DERIVED;
+}
+
 function computeBusinessHash(artifact) {
     const { business_content_sha256: ignored, ...projection } = artifact;
     return sha256Text(stableStringify(projection));
@@ -463,6 +492,53 @@ function computeReceiptHash(receipt) {
 
 function computeProvenanceDigest(projection) {
     return sha256Text(stableStringify(projection));
+}
+
+function computeFactResultBinding({ canonicalMatchId, result, sourceProvenance }) {
+    return sha256Text(
+        stableStringify({
+            schema_version: TARGET_RESULT_BINDINGS_SCHEMA_VERSION,
+            canonical_match_id: canonicalMatchId,
+            result,
+            source_provenance: sourceProvenance,
+        })
+    );
+}
+
+function computeFactResultBindingsHash(bindings) {
+    const normalized = bindings
+        .map(binding => ({
+            canonical_match_id: binding.canonical_match_id,
+            fact_result_binding: binding.fact_result_binding,
+        }))
+        .sort((left, right) => left.canonical_match_id.localeCompare(right.canonical_match_id));
+    return sha256Text(stableStringify(normalized));
+}
+
+function computeFactRejectionBinding({ canonicalMatchId, sourceMatchId, rejectionReason, errorCode, reason }) {
+    return sha256Text(
+        stableStringify({
+            schema_version: TARGET_REJECTION_BINDINGS_SCHEMA_VERSION,
+            canonical_match_id: canonicalMatchId,
+            source_match_id: sourceMatchId,
+            admission: {
+                status: 'REJECTED',
+                rejection_reason: rejectionReason,
+            },
+            error_code: errorCode,
+            reason,
+        })
+    );
+}
+
+function computeFactRejectionBindingsHash(bindings) {
+    const normalized = bindings
+        .map(binding => ({
+            canonical_match_id: binding.canonical_match_id,
+            fact_rejection_binding: binding.fact_rejection_binding,
+        }))
+        .sort((left, right) => left.canonical_match_id.localeCompare(right.canonical_match_id));
+    return sha256Text(stableStringify(normalized));
 }
 
 module.exports = {
@@ -481,12 +557,14 @@ module.exports = {
     PRIOR_STATE_LINEAGE_CONTRACT_VERSION,
     PRIOR_STATE_RECEIPT_SCHEMA_VERSION,
     PRIOR_STATE_STAGE,
+    POPULATION_AUTHORITY_SCHEMA_VERSION,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
     SCHEDULE_AWAY_FIXTURES_PER_TEAM,
     SCHEDULE_FIXTURES_PER_TEAM,
     SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    GD_A03_SOURCE_BINDING_NAMES,
     SCHEDULE_TEAMS_PER_SEASON,
     SEMANTICS_STATUS,
     assertFiniteNumber,
@@ -494,9 +572,16 @@ module.exports = {
     assertSha,
     assertText,
     computeBusinessHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
+    isSemanticsProven,
     stableStringify,
+    TARGET_RESULT_BINDINGS_SCHEMA_VERSION,
+    TARGET_REJECTION_BINDINGS_SCHEMA_VERSION,
     validateFeatureContract,
 };

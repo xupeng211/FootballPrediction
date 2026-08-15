@@ -34,7 +34,8 @@ The build surface is `npm run gd:a02 -- build` with explicit paths for:
 4. the current full Git revision and two new output paths.
 
 The artifact schema is
-`golden-dataset-v1-gd-a02-facts-artifact/v1`; its deterministic rows contain:
+`golden-dataset-v1-gd-a02-facts-artifact/v2`; v1 remains readable as a legacy
+artifact for historical revalidation. Its deterministic rows contain:
 
 - GD-A01 canonical identity and exact source linkage;
 - frozen, staging, and capture provenance/hash bindings;
@@ -49,11 +50,30 @@ The artifact schema is
   replaced with zero. Finite source numbers are summed as parsed without an
   additional decimal truncation or rounding step. Own-goal shots are not
   silently treated as ordinary xG shots;
+- `shots_on_target`, derived only from the existing normalized shotmap's
+  boolean `isOnTarget` observation by exact home/away `teamId`. The accepted
+  aggregation is `count_true_isOnTarget_by_team_id`; it does not use goals,
+  summary-stat proxies, interpolation, or defaults. A missing/invalid boolean
+  or reversed/unknown team identity makes the affected side unavailable. The
+  `shots_without_on_target` aggregate counts only explicit boolean
+  `isOnTarget=false` observations; missing booleans and unbound identities are
+  not treated as false. For a `VALID` projection, the true and explicit-false
+  aggregates partition all side-bound shot observations. The normalized team
+  IDs must also equal the independently retained,
+  response-derived `observed_identity.observed_home_team_id` /
+  `observed_away_team_id`, with trusted source paths; old frozen payloads
+  without that pair remain unavailable because an ID-only side reversal cannot
+  be disproved. A missing or non-boolean `isOwnGoal` flag is unavailable. If a
+  source shot is marked `isOwnGoal=true`, GD-A02 emits an unavailable SOT
+  projection with `SOT_OWN_GOAL_SEMANTICS_UNPROVEN`; it does not silently
+  decide whether that observation belongs in the canonical team SOT count.
+  The projection is a postmatch fact and is not a current-match prematch feature;
 - an explicit `admission` value. Invalid evidence is represented by a
   `rejected_rows` entry with its canonical ID, error code, and reason rather
   than being silently dropped.
 
-The receipt binds output bytes, business hash, admitted/accounted ID-set
+The receipt schema is `gd-a02-facts-assembly-receipt/v2` (with v1 retained
+for legacy validation). It binds output bytes, business hash, admitted/accounted ID-set
 hashes, population counts, source bindings, code revision, scope, and status.
 
 ## Population and identity invariants
@@ -91,6 +111,11 @@ features. Therefore GD-A02 does not prove strict decision-time readiness or
 real training readiness. GD-A01/M3 odds semantics remain unchanged:
 provider-defined closing is proven; exact closing, opening, and capture
 timestamps remain unproven; strict decision-time value evaluation is not ready.
+
+For an `AVAILABLE` match result, `outcome` is a deterministic projection of
+`home_score` and `away_score`: the higher score is the winner and equal scores
+are `draw`. A result carrying a contradictory outcome is rejected as a fact
+value error; it is never repaired downstream.
 
 ## Determinism and revalidation
 

@@ -56,28 +56,28 @@ receipt 也必须在仓库外。它不联网、不连接 DB、不写 DB/raw/L3�
 `MISSING_HISTORY_POLICY`、`COLD_START_POLICY`、`PROVENANCE_REQUIREMENTS`、
 `SEMANTICS_STATUS`。
 
-| Feature                        | Intended semantics                                                 | Source / derivation                                                                        | History and missing policy                                                                 | Semantics status     |
-| ------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | -------------------- |
-| `rolling_xg_home`              | target home team previous-five mean xG                             | GD-A02 `facts.xg.<side>.value`, side must be `COMPLETE`; arithmetic mean                   | exact five actual same-season prior fixtures; any missing fact => null, no skip            | `PROVEN_DERIVED`     |
-| `rolling_xg_away`              | target away team previous-five mean xG                             | GD-A02 `facts.xg.<side>.value`, side must be `COMPLETE`; arithmetic mean                   | exact five actual same-season prior fixtures; any missing fact => null, no skip            | `PROVEN_DERIVED`     |
-| `rolling_shots_on_target_home` | target home team previous-five mean shots on target                | GD-A02 only exposes stats fingerprint; no accepted numeric field                           | null; no goals or `goals*3+2` proxy                                                        | `UNAVAILABLE`        |
-| `rolling_shots_on_target_away` | target away team previous-five mean shots on target                | GD-A02 only exposes stats fingerprint; no accepted numeric field                           | null; no goals or `goals*3+2` proxy                                                        | `UNAVAILABLE`        |
-| `rolling_possession_home`      | target home team previous-five mean possession                     | no accepted numeric field in GD-A02 projection                                             | null; no 50/55/45 proxy                                                                    | `UNAVAILABLE`        |
-| `rolling_possession_away`      | target away team previous-five mean possession                     | no accepted numeric field in GD-A02 projection                                             | null; no 50/55/45 proxy                                                                    | `UNAVAILABLE`        |
-| `rolling_team_rating_home`     | target home team prior rolling rating                              | no frozen rating formula; current weighted proxy is compatibility behavior                 | null; no replacement algorithm invented                                                    | `SEMANTICS_UNPROVEN` |
-| `rolling_team_rating_away`     | target away team prior rolling rating                              | no frozen rating formula; current weighted proxy is compatibility behavior                 | null; no replacement algorithm invented                                                    | `SEMANTICS_UNPROVEN` |
-| `home_table_position`          | exact league position before kickoff                               | requires complete prior league results and reproducible official tie-break                 | null on history gap or tie-break ambiguity; estimated rank forbidden                       | `SEMANTICS_UNPROVEN` |
-| `away_table_position`          | exact league position before kickoff                               | requires complete prior league results and reproducible official tie-break                 | null on history gap or tie-break ambiguity; estimated rank forbidden                       | `SEMANTICS_UNPROVEN` |
-| `table_position_diff`          | home position minus away position                                  | derived only from both proven positions                                                    | null if either dependency unavailable                                                      | `SEMANTICS_UNPROVEN` |
-| `home_points`                  | target home team points from all prior fixtures                    | GD-A02 result: win=3/draw=1/loss=0                                                         | all actual prior team fixtures must have result facts; empty closed history => proven 0    | `PROVEN_DERIVED`     |
-| `away_points`                  | target away team points from all prior fixtures                    | GD-A02 result: win=3/draw=1/loss=0                                                         | all actual prior team fixtures must have result facts; empty closed history => proven 0    | `PROVEN_DERIVED`     |
-| `points_diff`                  | home points minus away points                                      | derived from both point lineages                                                           | null if either dependency unavailable                                                      | `PROVEN_DERIVED`     |
-| `home_recent_form_points`      | target home team points in exact previous-five fixtures            | GD-A02 result: win=3/draw=1/loss=0                                                         | fewer than five or any missing previous fixture => null; no older sixth match substitution | `PROVEN_DERIVED`     |
-| `raw_elo_gap`                  | home minus away historical ELO                                     | no proven complete universe, initialization, season, K, or home treatment contract         | null; 1500 is not silently treated as observed historical ELO                              | `SEMANTICS_UNPROVEN` |
-| `adjusted_elo_gap`             | proven transformation of raw ELO gap                               | no value while raw ELO and adjustment formula are unproven; current `*0.1` is not promoted | null on dependency/semantic gap                                                            | `SEMANTICS_UNPROVEN` |
-| `home_fatigue_index`           | scheduled prior fixtures in `[cutoff-7d, cutoff)` / 7, capped at 1 | canonical complete schedule identity; no target facts required                             | null only if schedule closure is not proven; empty closed window => 0                      | `PROVEN_DERIVED`     |
-| `away_fatigue_index`           | scheduled prior fixtures in `[cutoff-7d, cutoff)` / 7, capped at 1 | canonical complete schedule identity; no target facts required                             | null only if schedule closure is not proven; empty closed window => 0                      | `PROVEN_DERIVED`     |
-| `fatigue_diff`                 | home fatigue minus away fatigue                                    | derived from both fatigue lineages                                                         | null if either dependency unavailable                                                      | `PROVEN_DERIVED`     |
+| Feature                        | Intended semantics                                                 | Source / derivation                                                                                                                     | History and missing policy                                                                                                              | Semantics status     |
+| ------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `rolling_xg_home`              | target home team previous-five mean xG                             | GD-A02 `facts.xg.<side>.value`, side must be `COMPLETE`; arithmetic mean                                                                | exact five actual same-season prior fixtures; any missing fact => null, no skip                                                         | `PROVEN_DERIVED`     |
+| `rolling_xg_away`              | target away team previous-five mean xG                             | GD-A02 `facts.xg.<side>.value`, side must be `COMPLETE`; arithmetic mean                                                                | exact five actual same-season prior fixtures; any missing fact => null, no skip                                                         | `PROVEN_DERIVED`     |
+| `rolling_shots_on_target_home` | target home team previous-five mean shots on target                | GD-A02 v2 `facts.shots_on_target.home.value`, from normalized shotmap `isOnTarget` by team ID plus independent observed team-ID binding | exact five actual same-season prior fixtures; missing binding/fact, invalid own-goal flag, or own-goal ambiguity => null; no goal proxy | `SEMANTICS_UNPROVEN` |
+| `rolling_shots_on_target_away` | target away team previous-five mean shots on target                | GD-A02 v2 `facts.shots_on_target.away.value`, from normalized shotmap `isOnTarget` by team ID plus independent observed team-ID binding | exact five actual same-season prior fixtures; missing binding/fact, invalid own-goal flag, or own-goal ambiguity => null; no goal proxy | `SEMANTICS_UNPROVEN` |
+| `rolling_possession_home`      | target home team previous-five mean possession                     | no accepted numeric field in GD-A02 projection                                                                                          | null; no 50/55/45 proxy                                                                                                                 | `UNAVAILABLE`        |
+| `rolling_possession_away`      | target away team previous-five mean possession                     | no accepted numeric field in GD-A02 projection                                                                                          | null; no 50/55/45 proxy                                                                                                                 | `UNAVAILABLE`        |
+| `rolling_team_rating_home`     | target home team prior rolling rating                              | no frozen rating formula; current weighted proxy is compatibility behavior                                                              | null; no replacement algorithm invented                                                                                                 | `SEMANTICS_UNPROVEN` |
+| `rolling_team_rating_away`     | target away team prior rolling rating                              | no frozen rating formula; current weighted proxy is compatibility behavior                                                              | null; no replacement algorithm invented                                                                                                 | `SEMANTICS_UNPROVEN` |
+| `home_table_position`          | exact league position before kickoff                               | requires complete prior league results and reproducible official tie-break                                                              | null on history gap or tie-break ambiguity; estimated rank forbidden                                                                    | `SEMANTICS_UNPROVEN` |
+| `away_table_position`          | exact league position before kickoff                               | requires complete prior league results and reproducible official tie-break                                                              | null on history gap or tie-break ambiguity; estimated rank forbidden                                                                    | `SEMANTICS_UNPROVEN` |
+| `table_position_diff`          | home position minus away position                                  | derived only from both proven positions                                                                                                 | null if either dependency unavailable                                                                                                   | `SEMANTICS_UNPROVEN` |
+| `home_points`                  | target home team points from all prior fixtures                    | GD-A02 result: win=3/draw=1/loss=0                                                                                                      | all actual prior team fixtures must have result facts; empty closed history => proven 0                                                 | `PROVEN_DERIVED`     |
+| `away_points`                  | target away team points from all prior fixtures                    | GD-A02 result: win=3/draw=1/loss=0                                                                                                      | all actual prior team fixtures must have result facts; empty closed history => proven 0                                                 | `PROVEN_DERIVED`     |
+| `points_diff`                  | home points minus away points                                      | derived from both point lineages                                                                                                        | null if either dependency unavailable                                                                                                   | `PROVEN_DERIVED`     |
+| `home_recent_form_points`      | target home team points in exact previous-five fixtures            | GD-A02 result: win=3/draw=1/loss=0                                                                                                      | fewer than five or any missing previous fixture => null; no older sixth match substitution                                              | `PROVEN_DERIVED`     |
+| `raw_elo_gap`                  | home minus away historical ELO                                     | no proven complete universe, initialization, season, K, or home treatment contract                                                      | null; 1500 is not silently treated as observed historical ELO                                                                           | `SEMANTICS_UNPROVEN` |
+| `adjusted_elo_gap`             | proven transformation of raw ELO gap                               | no value while raw ELO and adjustment formula are unproven; current `*0.1` is not promoted                                              | null on dependency/semantic gap                                                                                                         | `SEMANTICS_UNPROVEN` |
+| `home_fatigue_index`           | scheduled prior fixtures in `[cutoff-7d, cutoff)` / 7, capped at 1 | canonical complete schedule identity; no target facts required                                                                          | null only if schedule closure is not proven; empty closed window => 0                                                                   | `PROVEN_DERIVED`     |
+| `away_fatigue_index`           | scheduled prior fixtures in `[cutoff-7d, cutoff)` / 7, capped at 1 | canonical complete schedule identity; no target facts required                                                                          | null only if schedule closure is not proven; empty closed window => 0                                                                   | `PROVEN_DERIVED`     |
+| `fatigue_diff`                 | home fatigue minus away fatigue                                    | derived from both fatigue lineages                                                                                                      | null if either dependency unavailable                                                                                                   | `PROVEN_DERIVED`     |
 
 Every rolling feature records the exact actual previous-five canonical IDs even when
 one required fact is absent. The assembler never changes `A B C D E` into `A B D E F`.
@@ -87,8 +87,12 @@ one required fact is absent. The assembler never changes `A B C D E` into `A B D
 The file-first artifact schema is:
 
 ```text
-golden-dataset-v1-gd-a03-prior-state-features-artifact/v1
+golden-dataset-v1-gd-a03-prior-state-features-artifact/v4
 ```
+
+FSC-V1 advances the numeric lineage contract to
+`gd-a03-numeric-lineage/v2`; feature names and order remain the unchanged
+canonical 20-feature identity.
 
 Each target row contains:
 
@@ -101,6 +105,11 @@ Each target row contains:
 - `feature_vector_eligibility` (`YES`/`NO`) with reason codes;
 - an isolated `target_label` with `role=TRAINING_LABEL_POSTMATCH`.
 - the isolated label identifies the target with `canonical_match_id`; it is not a provider `source_match_id`.
+- the isolated label includes `source_fact_binding`, which binds its canonical ID,
+  GD-A02 artifact hashes, `fact_presence`, and (when admitted) a deterministic
+  result/provenance binding. A missing fact also carries a deterministic
+  `fact_rejection_binding` over the canonical ID, source ID, rejection reason,
+  error code, and reason text.
 
 The target label is created after feature derivation and is never an input to it.
 
@@ -114,11 +123,52 @@ extra = 0
 unaccounted = 0
 ```
 
+The schedule authority is fail-closed for the current canonical Premier League
+inventory: each season must contain 20 distinct teams, 380 fixtures, and every
+team must have exactly 38 fixtures (19 home and 19 away). The artifact retains
+the per-season/per-team counts and validates them against the schedule rows;
+the GD-A03 assembler does not accept a declared closure that is not reconciled
+to those rows.
+
+`population_authority` is a required GD-A01-bound object. Its
+`target_id_set_sha256` and `target_population_count` must equal the admitted ID
+set hash and admitted row count in `gd_a01_receipt`; the artifact verifier does
+not accept a self-declared smaller population.
+
+`population_accounting.target_id_set_sha256` and
+`population_accounting.accounted_id_set_sha256` are required hashes of the
+sorted canonical target IDs. The artifact verifier recomputes both hashes from
+the rows and compares the result to `population_authority`, so population
+accounting cannot be made green by changing counts alone.
+
+Each `target_label` is independently bound to its row identity and to the
+postmatch result projection. GD-A02 validates that an available outcome is
+derived from its final home/away scores. GD-A03 retains the result and source
+provenance in `provenance_input`, recomputes both the display digest and the
+fact-result binding for admitted facts, and verifies the admitted/rejected/
+accounted ID sets against the validated GD-A02 artifact binding. A GD-A02
+rejection is retained as a target row with `fact_presence=MISSING`, explicit
+rejection provenance, a null result, and no synthetic fact-result binding; its
+dependent historical features remain unavailable. The GD-A02 source binding
+also carries the sorted aggregate hash and count of rejected-fact bindings,
+and each missing target label carries its corresponding binding. Identity,
+projection, source binding, or provenance tampering therefore fails closed,
+without shrinking the GD-A01 target population. Target labels remain
+postmatch-only and are never inputs to feature computation.
+
+The GD-A02 coverage binding in `source_bindings.gd_a02_artifact` records the
+SHA-256 ID-set hash and row count for admitted facts, rejected facts, and their
+union, plus the admitted fact-result binding aggregate and rejected-fact
+binding aggregate. GD-A03 requires both binding aggregates to match the
+validated GD-A02 rows and the union to equal the GD-A01 admitted population. A
+missing rejection record is therefore a population/provenance error, not an
+invitation to use older history or an estimated value.
+
 `FULL_20_VECTOR_ELIGIBLE=YES` requires all 20 values to be finite, semantically proven,
 strictly prior, fully closed, and individually hash/provenance bound. No null is replaced
 by zero, neutral, a proxy, or a cold-start default.
 
-The receipt uses `gd-a03-prior-state-feature-view-receipt/v2` and carries
+The receipt uses `gd-a03-prior-state-feature-view-receipt/v4` and carries
 `receipt_content_sha256`, a stable hash over every other receipt field. Receipt provenance
 tampering therefore fails closed even when the artifact bytes are unchanged.
 
@@ -150,8 +200,19 @@ TRAIN_INFERENCE_NUMERIC_PARITY=NOT_PROVEN
 
 The current `SchemaManager` implementation uses goals as xG, estimated shots-on-target,
 fixed possession, estimated position, default/cold-start values, and a compatibility
-rating formula. Those values are not silently copied into GD-A03. Consequently this V1
-does not authorize training and does not upgrade `REAL_TRAINING_READINESS`.
+rating formula. Those values are not silently copied into GD-A03. FSC-V1 extends the
+existing capture/staging contract to retain response-derived team IDs when the source
+response exposes them, and the GD-A02 projection accepts SOT only when that independent
+binding is present. Current frozen payloads do not retain the independent pair, so their
+SOT projection remains unavailable rather than accepting an ID-only side reversal. A
+source shot marked `isOwnGoal=true` (or carrying a missing/invalid own-goal flag) is
+also fail-closed because the frozen authority does not prove whether it belongs in the
+canonical team SOT statistic; therefore the two SOT rolling features remain
+`SEMANTICS_UNPROVEN` at the global contract level and are only a partial closure.
+The canonical runtime adapter still fails closed because it has no runtime source with
+the same historical lineage; non-strict compatibility behavior is not numeric authority.
+Consequently this does not authorize training and does not upgrade
+`REAL_TRAINING_READINESS`.
 
 ```text
 FEATURE_FRAME_READINESS=NOT_READY

@@ -32,7 +32,12 @@ const {
     SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     SCHEDULE_TEAMS_PER_SEASON,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
+const { admittedIdSetHash } = require('../../src/infrastructure/golden_dataset/GdA01AssemblyContract');
 const {
     buildPriorStateFeatureView,
     validatePriorStateOutputFiles,
@@ -191,10 +196,7 @@ function assertCodeRevisionMatchesHead(codeRevision, repositoryRoot) {
         fail(`cannot verify --code-revision against Git HEAD: ${error.message}`, 'CODE_REVISION_UNVERIFIED');
     }
     if (gitState.revision !== codeRevision) {
-        fail(
-            `--code-revision ${codeRevision} does not match Git HEAD ${gitState.revision}`,
-            'CODE_REVISION_MISMATCH'
-        );
+        fail(`--code-revision ${codeRevision} does not match Git HEAD ${gitState.revision}`, 'CODE_REVISION_MISMATCH');
     }
 }
 
@@ -279,6 +281,26 @@ function loadFeatureContract(repositoryRoot) {
 }
 
 function buildSourceBindings(inputs, featureContractBinding, scheduleValidation) {
+    const factRows = inputs.gdA02.artifact.rows;
+    const factRejections = inputs.gdA02.artifact.rejected_rows;
+    const factResultBindings = factRows.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
+    const factRejectionBindings = factRejections.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_rejection_binding: computeFactRejectionBinding({
+            canonicalMatchId: row.canonical_match_id,
+            sourceMatchId: row.source_match_id,
+            rejectionReason: row.admission.rejection_reason,
+            errorCode: row.error_code,
+            reason: row.reason,
+        }),
+    }));
     return {
         gd_a01_artifact: {
             sha256: inputs.gdA01Artifact.sha256,
@@ -289,11 +311,26 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
             sha256: inputs.gdA01Receipt.sha256,
             business_hash: inputs.gdA01.receipt.output_business_sha256,
             schema_version: inputs.gdA01.receipt.schema_version,
+            admitted_id_set_sha256: inputs.gdA01.receipt.admitted_id_set_sha256,
+            admitted_row_count: inputs.gdA01.receipt.admitted_row_count,
         },
         gd_a02_artifact: {
             sha256: inputs.gdA02Artifact.sha256,
             business_hash: inputs.gdA02.artifact.business_content_sha256,
             schema_version: inputs.gdA02.artifact.schema_version,
+            fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+            fact_result_binding_count: factResultBindings.length,
+            fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+            fact_rejection_binding_count: factRejectionBindings.length,
+            fact_admitted_id_set_sha256: admittedIdSetHash(factRows.map(row => row.canonical_match_id)),
+            fact_admitted_row_count: factRows.length,
+            fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
+            fact_rejected_row_count: factRejections.length,
+            fact_accounted_id_set_sha256: admittedIdSetHash([
+                ...factRows.map(row => row.canonical_match_id),
+                ...factRejections.map(row => row.canonical_match_id),
+            ]),
+            fact_accounted_row_count: factRows.length + factRejections.length,
         },
         gd_a02_receipt: {
             sha256: inputs.gdA02Receipt.sha256,
@@ -328,9 +365,10 @@ function loadBuildInputs(args, repositoryRoot) {
         repositoryRoot
     );
     const gdA01 = validateGdA01OutputFiles(gdA01Artifact.bytes, gdA01Receipt.bytes);
-    const gdA02 = validateGdA02OutputFiles(gdA02Artifact.bytes, gdA02Receipt.bytes, {
-        expectedAdmittedRows: args.expectedTargets,
-    });
+    // GD-A02 may legitimately contain rejected rows. GD-A03 binds admitted ∪ rejected
+    // coverage to GD-A01, so an expected target count must not be misread as an
+    // admitted-fact count here.
+    const gdA02 = validateGdA02OutputFiles(gdA02Artifact.bytes, gdA02Receipt.bytes);
     const scheduleDocument = parseJson(schedule, 'canonical schedule artifact');
     let scheduleValidation;
     try {
@@ -363,6 +401,19 @@ function loadBuildInputs(args, repositoryRoot) {
         counts[candidate.season] = (counts[candidate.season] || 0) + 1;
         return counts;
     }, {});
+    const perTeamCounts = {};
+    for (const candidate of scheduleValidation.candidates) {
+        const seasonTeams = perTeamCounts[candidate.season] || {};
+        const home = seasonTeams[candidate.home_team] || { total: 0, home: 0, away: 0 };
+        const away = seasonTeams[candidate.away_team] || { total: 0, home: 0, away: 0 };
+        home.total += 1;
+        home.home += 1;
+        away.total += 1;
+        away.away += 1;
+        seasonTeams[candidate.home_team] = home;
+        seasonTeams[candidate.away_team] = away;
+        perTeamCounts[candidate.season] = seasonTeams;
+    }
     const scheduleClosure = {
         schema_version: 'canonical-schedule-history/v1',
         status: 'PROVEN',
@@ -376,11 +427,13 @@ function loadBuildInputs(args, repositoryRoot) {
             fixtures_per_team: SCHEDULE_FIXTURES_PER_TEAM,
             home_fixtures_per_team: SCHEDULE_HOME_FIXTURES_PER_TEAM,
             away_fixtures_per_team: SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+            per_team_counts: perTeamCounts,
         },
     };
     return {
         targetRows: gdA01.artifact.rows,
         factRows: gdA02.artifact.rows,
+        factRejections: gdA02.artifact.rejected_rows,
         scheduleCandidates: scheduleValidation.candidates,
         scheduleClosure,
         featureContract: featureContractBinding.contract,

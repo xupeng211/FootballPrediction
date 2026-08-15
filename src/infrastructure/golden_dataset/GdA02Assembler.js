@@ -7,6 +7,7 @@
 // re-parses a raw/pageProps document.
 
 const { validateObservation, validateStagingArtifact } = require('../fotmob/FotMobDetailStagingContract');
+const { normalizeTeamName, TRUSTED_OBSERVED_TEAM_ID_SOURCES } = require('../fotmob/FotMobDetailCaptureContract');
 const {
     validateAssemblyArtifact,
     validateOutputFiles: validateGdA01OutputFiles,
@@ -29,6 +30,7 @@ const {
     computeArtifactBusinessHash,
     computeFactsSetHash,
     computeSchemaFingerprint,
+    emptyShotsOnTargetProjection,
     resultFromScores,
     validateFactsArtifact,
     validateFactsSourceIndex,
@@ -131,6 +133,51 @@ function validateFactInputIndex(sourceIndex, expectedIds) {
 
 function compareExact(actual, expected, label) {
     if (actual !== expected) fail(`${label} mismatch`, 'IDENTITY_CONFLICT');
+}
+
+function normalizePositiveTeamId(value) {
+    if (Number.isSafeInteger(value) && value > 0) return value;
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number(value);
+        if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+    }
+    return null;
+}
+
+function validateNormalizedTeamBinding(payload, expectedRow) {
+    const normalized = payload.normalized || {};
+    const sides = [
+        ['home', normalized.home_team, expectedRow.home_team],
+        ['away', normalized.away_team, expectedRow.away_team],
+    ];
+    const ids = new Set();
+    for (const [side, observed, expectedName] of sides) {
+        const observedId = normalizePositiveTeamId(observed && observed.id);
+        const observedName = String(observed && observed.name ? observed.name : '').trim();
+        if (
+            observedId === null ||
+            observedName === '' ||
+            normalizeTeamName(observedName) !== normalizeTeamName(expectedName)
+        ) {
+            fail(`${expectedRow.canonical_match_id} normalized ${side} team identity mismatch`, 'IDENTITY_CONFLICT');
+        }
+        if (ids.has(observedId)) {
+            fail(`${expectedRow.canonical_match_id} normalized home/away team IDs collide`, 'IDENTITY_CONFLICT');
+        }
+        ids.add(observedId);
+    }
+}
+
+function hasIndependentTeamIdBinding(payload, homeTeamId, awayTeamId) {
+    const observed = payload.observed_identity || {};
+    const observedHomeTeamId = normalizePositiveTeamId(observed.observed_home_team_id);
+    const observedAwayTeamId = normalizePositiveTeamId(observed.observed_away_team_id);
+    return (
+        observedHomeTeamId === homeTeamId &&
+        observedAwayTeamId === awayTeamId &&
+        TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observed.observed_home_team_id_source || '')) &&
+        TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observed.observed_away_team_id_source || ''))
+    );
 }
 
 // eslint-disable-next-line complexity
@@ -237,8 +284,18 @@ function validateSourcePair(entry, expectedRow, frozenRow) {
         frozenRow.fotmob_match_id,
         `${expectedRow.canonical_match_id} normalized external ID`
     );
+    validateNormalizedTeamBinding(entry.capturePayload, expectedRow);
     if (entry.capturePayload.observed_identity.observed_match_id_conflict === true) {
         fail(`${expectedRow.canonical_match_id} capture identity conflict`, 'IDENTITY_CONFLICT');
+    }
+    for (const side of ['home', 'away']) {
+        for (const field of ['team_id', 'team_id_source']) {
+            compareExact(
+                entry.stagingArtifact.observed_identity[`observed_${side}_${field}`],
+                entry.capturePayload.observed_identity[`observed_${side}_${field}`],
+                `${expectedRow.canonical_match_id} observed ${side} team ${field}`
+            );
+        }
     }
     for (const section of SECTIONS) {
         const staged = entry.stagingArtifact.sections[section] || {};
@@ -351,6 +408,105 @@ function buildXgProjection(payload) {
     };
 }
 
+// The existing FotMob parser/staging authority retains the normalized shotmap.
+// This projection promotes only the source's explicit boolean observation when
+// its team identity is bound and no own-goal semantic ambiguity is present; it
+// never estimates shots on target from goals or from the summary stats section.
+// eslint-disable-next-line complexity -- source identity and boolean observation checks stay together.
+function buildShotsOnTargetProjection(payload) {
+    const normalized = payload.normalized || {};
+    const shotmap = normalized.shotmap;
+    if (!shotmap || !Array.isArray(shotmap.shots) || shotmap.shots.length === 0) {
+        return emptyShotsOnTargetProjection();
+    }
+    const toTeamId = value => {
+        if (Number.isSafeInteger(value) && value > 0) return value;
+        if (typeof value === 'string' && /^\d+$/.test(value)) {
+            const parsed = Number(value);
+            if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+        }
+        return null;
+    };
+    const homeTeamId = toTeamId(normalized.home_team && normalized.home_team.id);
+    const awayTeamId = toTeamId(normalized.away_team && normalized.away_team.id);
+    if (homeTeamId === null || awayTeamId === null || homeTeamId === awayTeamId) {
+        return emptyShotsOnTargetProjection();
+    }
+    // The normalized team objects and shotmap teamId are produced by the same
+    // parser projection. Without a separately retained raw-response team-ID
+    // binding, swapping only normalized IDs can produce a numerically valid
+    // but reversed SOT vector. Keep the fact admitted, but fail SOT closed.
+    if (!hasIndependentTeamIdBinding(payload, homeTeamId, awayTeamId)) {
+        return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN');
+    }
+    const sides = {
+        home: { value: 0, known_shots: 0, missing_shots: 0 },
+        away: { value: 0, known_shots: 0, missing_shots: 0 },
+    };
+    let shotsWithOnTarget = 0;
+    let shotsWithoutOnTarget = 0;
+    let invalidIdentity = false;
+    for (const shot of shotmap.shots) {
+        const ownGoal = shot && shot.isOwnGoal;
+        if (typeof ownGoal !== 'boolean') {
+            return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_OWN_GOAL_FLAG_UNAVAILABLE');
+        }
+        if (ownGoal === true) {
+            return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN');
+        }
+        const teamId = toTeamId(shot && shot.teamId);
+        const side =
+            teamId !== null && teamId === homeTeamId
+                ? 'home'
+                : teamId !== null && teamId === awayTeamId
+                  ? 'away'
+                  : null;
+        if (!side) {
+            invalidIdentity = true;
+            continue;
+        }
+        if (typeof (shot && shot.isOnTarget) !== 'boolean') {
+            sides[side].missing_shots += 1;
+            continue;
+        }
+        sides[side].known_shots += 1;
+        if (shot.isOnTarget === true) {
+            shotsWithOnTarget += 1;
+            sides[side].value += 1;
+        } else {
+            shotsWithoutOnTarget += 1;
+        }
+    }
+    const buildSide = side => {
+        if (invalidIdentity || sides[side].missing_shots > 0) {
+            return {
+                value: null,
+                status: 'PARTIAL',
+                known_shots: sides[side].known_shots,
+                missing_shots: sides[side].missing_shots,
+            };
+        }
+        return {
+            value: sides[side].value,
+            status: 'COMPLETE',
+            known_shots: sides[side].known_shots,
+            missing_shots: 0,
+        };
+    };
+    const home = buildSide('home');
+    const away = buildSide('away');
+    return {
+        status: home.status === 'COMPLETE' && away.status === 'COMPLETE' ? 'VALID' : 'PARTIAL',
+        source_path: 'normalized.shotmap.shots[*].isOnTarget',
+        aggregation: 'count_true_isOnTarget_by_team_id',
+        total_shots: shotmap.shots.length,
+        shots_with_on_target: shotsWithOnTarget,
+        shots_without_on_target: shotsWithoutOnTarget,
+        home,
+        away,
+    };
+}
+
 function buildSectionProjection(stagingArtifact, section) {
     const source = stagingArtifact.sections[section];
     return {
@@ -411,6 +567,7 @@ function buildFactsRow(expectedRow, frozenRow, entry) {
             ),
             match_result: result,
             xg: buildXgProjection(entry.capturePayload),
+            shots_on_target: buildShotsOnTargetProjection(entry.capturePayload),
         },
         admission: { status: 'ADMITTED', rejection_reason: null },
     };

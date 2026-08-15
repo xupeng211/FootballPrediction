@@ -21,9 +21,7 @@ const {
     buildDeterministicCapturePlan,
     writePlanDocument,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePlan');
-const {
-    computeBusinessContentHash,
-} = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+const { computeBusinessContentHash } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 const {
     executeCaptureRun,
     createBoundedFetchAdapter,
@@ -32,16 +30,14 @@ const {
     REQUIRED_ENV_VAR,
     REQUIRED_ENV_BUDGET,
 } = require('../../src/infrastructure/fotmob/FotMobDetailCapturePipeline');
-const {
-    computeCaptureManifestSelfHash,
-} = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
+const { computeCaptureManifestSelfHash } = require('../../src/infrastructure/fotmob/FotMobDetailCaptureContract');
 const NextDataParser = require('../../src/parsers/fotmob/NextDataParser');
 const FotMobRawParser = require('../../src/parsers/fotmob/FotMobRawParser');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TEST_REVISION = 'a7da729fd29675c6f16e1bfc49511772d2bd590d';
 const FIXED_CLOCK = '2026-08-02T12:00:00.000Z';
-const CLEAN_EXEC = (cmd) => (String(cmd).includes('rev-parse') ? `${TEST_REVISION}\n` : '');
+const CLEAN_EXEC = cmd => (String(cmd).includes('rev-parse') ? `${TEST_REVISION}\n` : '');
 
 function sha256Text(text) {
     return crypto.createHash('sha256').update(String(text), 'utf8').digest('hex');
@@ -101,20 +97,26 @@ function makePlanFixture(dir, candidates, { seasons, matchIds, limit } = {}) {
  * general/header carry the team markers + match time so the route identity
  * reconciler sees an identity_match / date_match.
  */
-function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, pagePropsExtra }) {
-    const safeContent = content !== undefined
-        ? content
-        : { stats: { periods: ['x'] }, lineup: { lineups: [{ team: homeTeam }] }, shotmap: { shots: [{ x: 1 }] }, liveticker: [] };
+function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, pagePropsExtra, homeTeamId, awayTeamId }) {
+    const safeContent =
+        content !== undefined
+            ? content
+            : {
+                  stats: { periods: ['x'] },
+                  lineup: { lineups: [{ team: homeTeam }] },
+                  shotmap: { shots: [{ x: 1 }] },
+                  liveticker: [],
+              };
     const general = {
         matchId: String(matchId),
-        homeTeam: { name: homeTeam },
-        awayTeam: { name: awayTeam },
+        homeTeam: { name: homeTeam, ...(homeTeamId === undefined ? {} : { id: homeTeamId }) },
+        awayTeam: { name: awayTeam, ...(awayTeamId === undefined ? {} : { id: awayTeamId }) },
         matchTimeUTC: kickoffAt,
         season: '2024/2025',
     };
     const header = {
-        homeTeam: { name: homeTeam },
-        awayTeam: { name: awayTeam },
+        homeTeam: { name: homeTeam, ...(homeTeamId === undefined ? {} : { id: homeTeamId }) },
+        awayTeam: { name: awayTeam, ...(awayTeamId === undefined ? {} : { id: awayTeamId }) },
         status: { utcTime: kickoffAt },
     };
     const pageProps = { content: safeContent, general, header, ssr: true, ...(pagePropsExtra || {}) };
@@ -139,7 +141,14 @@ function mockFetchImpl(responseBuilder, calls = []) {
         return {
             status: r.status,
             url,
-            headers: { get: (n) => (n === 'content-type' ? (r.contentType || 'text/html; charset=utf-8') : (n === 'location' ? (r.location || null) : null)) },
+            headers: {
+                get: n =>
+                    n === 'content-type'
+                        ? r.contentType || 'text/html; charset=utf-8'
+                        : n === 'location'
+                          ? r.location || null
+                          : null,
+            },
             text: async () => r.body,
             arrayBuffer: async () => Buffer.from(r.body, 'utf8'),
         };
@@ -150,7 +159,21 @@ function okResponse(body, contentType = 'text/html; charset=utf-8') {
     return { status: 200, body, contentType };
 }
 
-function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoot, env, fetchImpl, sleepImpl, execSync, fsImpl, timeoutMs, extra }) {
+function makeCaptureOptions({
+    dir,
+    plan,
+    planPath,
+    runId,
+    maxRequests,
+    outputRoot,
+    env,
+    fetchImpl,
+    sleepImpl,
+    execSync,
+    fsImpl,
+    timeoutMs,
+    extra,
+}) {
     return {
         plan,
         planPath,
@@ -183,8 +206,20 @@ function makeCaptureOptions({ dir, plan, planPath, runId, maxRequests, outputRoo
 }
 
 const TWO_CANDIDATES = [
-    makeCandidate({ id: 4506263, season: '2024/2025', home: 'Manchester United', away: 'Fulham', kickoff: '2024-08-16T19:00:00Z' }),
-    makeCandidate({ id: 4506264, season: '2024/2025', home: 'Ipswich Town', away: 'Liverpool', kickoff: '2024-08-17T11:30:00Z' }),
+    makeCandidate({
+        id: 4506263,
+        season: '2024/2025',
+        home: 'Manchester United',
+        away: 'Fulham',
+        kickoff: '2024-08-16T19:00:00Z',
+    }),
+    makeCandidate({
+        id: 4506264,
+        season: '2024/2025',
+        home: 'Ipswich Town',
+        away: 'Liverpool',
+        kickoff: '2024-08-17T11:30:00Z',
+    }),
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -192,22 +227,45 @@ const TWO_CANDIDATES = [
 // ─────────────────────────────────────────────────────────────
 
 test('NETWORK: only https://www.fotmob.com/match/<digits> allowed', async () => {
-    const adapter = createBoundedFetchAdapter({ fetchImpl: mockFetchImpl(() => okResponse('x')), maxRequests: 5, delayMs: 60000, sleepImpl: async () => {} });
+    const adapter = createBoundedFetchAdapter({
+        fetchImpl: mockFetchImpl(() => okResponse('x')),
+        maxRequests: 5,
+        delayMs: 60000,
+        sleepImpl: async () => {},
+    });
     await adapter.fetchOnce('https://www.fotmob.com/match/123');
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/api/data/123'), (e) => e.code === 'SAFETY_ERROR' && /path_not_authorized/.test(e.message));
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/matches/sevilla/sevilla-h2h'), (e) => e.code === 'SAFETY_ERROR' && /path_not_authorized/.test(e.message));
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/'), (e) => e.code === 'SAFETY_ERROR');
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/123x'), (e) => e.code === 'SAFETY_ERROR');
-    await assert.rejects(adapter.fetchOnce('http://www.fotmob.com/match/123'), (e) => e.code === 'SAFETY_ERROR' && /protocol/.test(e.message));
-    await assert.rejects(adapter.fetchOnce('https://evil.com/match/123'), (e) => e.code === 'SAFETY_ERROR' && /host/.test(e.message));
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/123?x=1'), (e) => e.code === 'SAFETY_ERROR' && /query_or_fragment/.test(e.message));
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/123#frag'), (e) => e.code === 'SAFETY_ERROR' && /query_or_fragment/.test(e.message));
+    await assert.rejects(
+        adapter.fetchOnce('https://www.fotmob.com/api/data/123'),
+        e => e.code === 'SAFETY_ERROR' && /path_not_authorized/.test(e.message)
+    );
+    await assert.rejects(
+        adapter.fetchOnce('https://www.fotmob.com/matches/sevilla/sevilla-h2h'),
+        e => e.code === 'SAFETY_ERROR' && /path_not_authorized/.test(e.message)
+    );
+    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/'), e => e.code === 'SAFETY_ERROR');
+    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/123x'), e => e.code === 'SAFETY_ERROR');
+    await assert.rejects(
+        adapter.fetchOnce('http://www.fotmob.com/match/123'),
+        e => e.code === 'SAFETY_ERROR' && /protocol/.test(e.message)
+    );
+    await assert.rejects(
+        adapter.fetchOnce('https://evil.com/match/123'),
+        e => e.code === 'SAFETY_ERROR' && /host/.test(e.message)
+    );
+    await assert.rejects(
+        adapter.fetchOnce('https://www.fotmob.com/match/123?x=1'),
+        e => e.code === 'SAFETY_ERROR' && /query_or_fragment/.test(e.message)
+    );
+    await assert.rejects(
+        adapter.fetchOnce('https://www.fotmob.com/match/123#frag'),
+        e => e.code === 'SAFETY_ERROR' && /query_or_fragment/.test(e.message)
+    );
 });
 
 test('NETWORK: redirect never followed; 3xx response counts as the request', async () => {
     const calls = [];
     const adapter = createBoundedFetchAdapter({
-        fetchImpl: mockFetchImpl((url) => ({ status: 302, body: '', location: 'https://www.fotmob.com/other' }), calls),
+        fetchImpl: mockFetchImpl(url => ({ status: 302, body: '', location: 'https://www.fotmob.com/other' }), calls),
         maxRequests: 2,
         delayMs: 60000,
         sleepImpl: async () => {},
@@ -238,17 +296,23 @@ test('NETWORK: serial only, exact request counting, budget before fetch', async 
     await adapter.fetchOnce('https://www.fotmob.com/match/2');
     assert.equal(adapter.requestCount(), 2);
     assert.equal(calls.length, 4); // 2 onBeforeFetch + 2 fetchImpl
-    assert.deepEqual(calls.filter(c => c.count).map(c => c.count), [1, 2]);
+    assert.deepEqual(
+        calls.filter(c => c.count).map(c => c.count),
+        [1, 2]
+    );
     // Budget exhausted BEFORE next fetch — the fetch implementation must
     // not be called again.
-    await assert.rejects(adapter.fetchOnce('https://www.fotmob.com/match/3'), (e) => e.code === 'SAFETY_ERROR' && /budget_exhausted/.test(e.message));
+    await assert.rejects(
+        adapter.fetchOnce('https://www.fotmob.com/match/3'),
+        e => e.code === 'SAFETY_ERROR' && /budget_exhausted/.test(e.message)
+    );
     assert.equal(calls.length, 4);
 });
 
 test('NETWORK: delayMs < 60000 rejected', () => {
     assert.throws(
         () => createBoundedFetchAdapter({ fetchImpl: async () => ({}), maxRequests: 1, delayMs: 1000 }),
-        (e) => e.code === 'INPUT_ERROR' && /60000/.test(e.message)
+        e => e.code === 'INPUT_ERROR' && /60000/.test(e.message)
     );
 });
 
@@ -256,12 +320,20 @@ test('NETWORK: timeout aborts the request and stops the run', async () => {
     const dir = tmpDir('fotmob-net-timeout-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const neverResolves = (url, opts) => new Promise((resolve, reject) => {
-            opts.signal.addEventListener('abort', () => reject(new Error('aborted')));
-        });
-        const result = await executeCaptureRun(makeCaptureOptions({
-            dir, plan, planPath, maxRequests: 1, fetchImpl: neverResolves, timeoutMs: 50,
-        }));
+        const neverResolves = (url, opts) =>
+            new Promise((resolve, reject) => {
+                opts.signal.addEventListener('abort', () => reject(new Error('aborted')));
+            });
+        const result = await executeCaptureRun(
+            makeCaptureOptions({
+                dir,
+                plan,
+                planPath,
+                maxRequests: 1,
+                fetchImpl: neverResolves,
+                timeoutMs: 50,
+            })
+        );
         assert.equal(result.completedCount, 0);
         assert.equal(result.status, 'stopped');
         assert.match(result.stopReason, /fetch_error|timeout|abort/);
@@ -276,7 +348,9 @@ test('NETWORK: 403 stops the run immediately; next candidate not fetched', async
         const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
         const calls = [];
         const fetchImpl = mockFetchImpl(() => ({ status: 403, body: 'forbidden' }), calls);
-        const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 2, fetchImpl: fetchImpl }));
+        const result = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, maxRequests: 2, fetchImpl: fetchImpl })
+        );
         assert.equal(result.status, 'stopped');
         assert.equal(result.stopReason, 'access_control:http_403');
         assert.equal(result.completedCount, 0);
@@ -360,17 +434,51 @@ test('NETWORK: retry=0 — a failing response is fetched exactly once', async ()
 test('NETWORK: budget exhausted before next fetch stops the run at the right ordinal', async () => {
     const dir = tmpDir('fotmob-net-budget-');
     try {
-        const three = [TWO_CANDIDATES[0], TWO_CANDIDATES[1],
-            makeCandidate({ id: 4506265, season: '2024/2025', home: 'Arsenal', away: 'Wolves', kickoff: '2024-08-17T14:00:00Z' })];
+        const three = [
+            TWO_CANDIDATES[0],
+            TWO_CANDIDATES[1],
+            makeCandidate({
+                id: 4506265,
+                season: '2024/2025',
+                home: 'Arsenal',
+                away: 'Wolves',
+                kickoff: '2024-08-17T14:00:00Z',
+            }),
+        ];
         const { plan, planPath } = makePlanFixture(dir, three, { seasons: ['2024/2025'] });
         const calls = [];
         // Serve the page matching each requested candidate so ordinals 1-2
         // complete and only ordinal 3 hits the budget gate.
-        const fetchImpl = mockFetchImpl((url) => {
+        const fetchImpl = mockFetchImpl(url => {
             const id = url.match(/match\/(\d+)/)[1];
-            if (id === '4506263') return okResponse(makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' }));
-            if (id === '4506264') return okResponse(makePageHtml({ matchId: 4506264, homeTeam: 'Ipswich Town', awayTeam: 'Liverpool', kickoffAt: '2024-08-17T11:30:00Z' }));
-            return okResponse(makePageHtml({ matchId: 4506265, homeTeam: 'Arsenal', awayTeam: 'Wolves', kickoffAt: '2024-08-17T14:00:00Z' }));
+            if (id === '4506263') {
+                return okResponse(
+                    makePageHtml({
+                        matchId: 4506263,
+                        homeTeam: 'Manchester United',
+                        awayTeam: 'Fulham',
+                        kickoffAt: '2024-08-16T19:00:00Z',
+                    })
+                );
+            }
+            if (id === '4506264') {
+                return okResponse(
+                    makePageHtml({
+                        matchId: 4506264,
+                        homeTeam: 'Ipswich Town',
+                        awayTeam: 'Liverpool',
+                        kickoffAt: '2024-08-17T11:30:00Z',
+                    })
+                );
+            }
+            return okResponse(
+                makePageHtml({
+                    matchId: 4506265,
+                    homeTeam: 'Arsenal',
+                    awayTeam: 'Wolves',
+                    kickoffAt: '2024-08-17T14:00:00Z',
+                })
+            );
         }, calls);
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 2, fetchImpl }));
         assert.equal(result.status, 'stopped');
@@ -404,7 +512,7 @@ test('AUTH: missing --execute → SAFETY_ERROR, zero fetches', async () => {
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.execute = false;
         opts.networkAuthorization = false;
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR');
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR');
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -419,7 +527,10 @@ test('AUTH: missing environment variable → SAFETY_ERROR, zero fetches', async 
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.env = { [REQUIRED_ENV_BUDGET]: '1' };
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE/.test(e.message));
+        await assert.rejects(
+            executeCaptureRun(opts),
+            e => e.code === 'SAFETY_ERROR' && /CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE/.test(e.message)
+        );
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -439,7 +550,7 @@ test('AUTH: missing NETWORK_AUTHORIZATION=yes → SAFETY_ERROR, zero fetches (No
         opts.env = { [REQUIRED_ENV_VAR]: '1', [REQUIRED_ENV_BUDGET]: '1' };
         await assert.rejects(
             executeCaptureRun(opts),
-            (e) => e.code === 'SAFETY_ERROR' && /NETWORK_AUTHORIZATION=yes/.test(e.message)
+            e => e.code === 'SAFETY_ERROR' && /NETWORK_AUTHORIZATION=yes/.test(e.message)
         );
         assert.equal(calls.length, 0);
     } finally {
@@ -455,7 +566,7 @@ test('AUTH: missing authorization id → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.authorizationId = '';
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR');
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR');
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -470,7 +581,7 @@ test('AUTH: plan hash mismatch → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.expectedPlanSha256 = 'f'.repeat(64);
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /plan SHA-256/.test(e.message));
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR' && /plan SHA-256/.test(e.message));
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -485,7 +596,10 @@ test('AUTH: request budget env mismatch → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.env = zeroFetchEnv(99);
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /CONFIRM_MAX_FOTMOB_REQUESTS/.test(e.message));
+        await assert.rejects(
+            executeCaptureRun(opts),
+            e => e.code === 'SAFETY_ERROR' && /CONFIRM_MAX_FOTMOB_REQUESTS/.test(e.message)
+        );
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -500,7 +614,7 @@ test('AUTH: dirty worktree → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.execSync = () => ' M src/x.js\n';
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /dirty/.test(e.message));
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR' && /dirty/.test(e.message));
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -515,8 +629,8 @@ test('AUTH: invalid git revision → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         // Clean worktree (''), but a non-hex revision from rev-parse.
-        opts.execSync = (cmd) => (String(cmd).includes('rev-parse') ? 'abc\n' : '');
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /40-hex/.test(e.message));
+        opts.execSync = cmd => (String(cmd).includes('rev-parse') ? 'abc\n' : '');
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR' && /40-hex/.test(e.message));
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -531,7 +645,10 @@ test('AUTH: output root inside repository → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.outputRoot = REPO_ROOT;
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /outside the repository/.test(e.message));
+        await assert.rejects(
+            executeCaptureRun(opts),
+            e => e.code === 'SAFETY_ERROR' && /outside the repository/.test(e.message)
+        );
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -550,7 +667,7 @@ test('AUTH: symlink output root → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.outputRoot = linkOut;
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /symlink/.test(e.message));
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR' && /symlink/.test(e.message));
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -565,11 +682,11 @@ test('AUTH: run id escaping the output root → zero fetches', async () => {
         const fetchImpl = mockFetchImpl(() => okResponse('x'), calls);
         const opts = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts.runId = '..';
-        await assert.rejects(executeCaptureRun(opts), (e) => e.code === 'SAFETY_ERROR' && /run id/.test(e.message));
+        await assert.rejects(executeCaptureRun(opts), e => e.code === 'SAFETY_ERROR' && /run id/.test(e.message));
         assert.equal(calls.length, 0);
         const opts2 = makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl });
         opts2.runId = '/tmp/escape';
-        await assert.rejects(executeCaptureRun(opts2), (e) => e.code === 'SAFETY_ERROR' && /run id/.test(e.message));
+        await assert.rejects(executeCaptureRun(opts2), e => e.code === 'SAFETY_ERROR' && /run id/.test(e.message));
         assert.equal(calls.length, 0);
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -580,7 +697,14 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
     const dir = tmpDir('fotmob-auth-ok-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+            homeTeamId: 1001,
+            awayTeamId: 1002,
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'complete');
@@ -591,13 +715,52 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
         assert.ok(fs.existsSync(path.join(runDir, 'captures', '1-4506263.manifest.json')));
         // P1-1: the full HTML body is never persisted — no .html file, no
         // __NEXT_DATA__ / pageProps / raw_data inside the outputs.
-        assert.equal(fs.readdirSync(path.join(runDir, 'captures')).some(f => f.endsWith('.html')), false);
+        assert.equal(
+            fs.readdirSync(path.join(runDir, 'captures')).some(f => f.endsWith('.html')),
+            false
+        );
         assert.ok(fs.existsSync(path.join(runDir, 'plan.json')), 'run plan snapshot must exist');
         const payload = JSON.parse(fs.readFileSync(path.join(runDir, 'captures', '1-4506263.payload.json'), 'utf8'));
+        assert.equal(payload.observed_identity.observed_home_team_id, 1001);
+        assert.equal(payload.observed_identity.observed_home_team_id_source, 'general.homeTeam.id');
+        assert.equal(payload.observed_identity.observed_away_team_id, 1002);
+        assert.equal(payload.observed_identity.observed_away_team_id_source, 'general.awayTeam.id');
         const serialized = JSON.stringify(payload);
         for (const marker of ['__NEXT_DATA__', 'pageProps', 'raw_data', '<!doctype']) {
             assert.ok(!serialized.includes(marker), `payload must not contain ${marker}`);
         }
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('AUTH: conflicting trusted response team IDs fail closed before capture', async () => {
+    const dir = tmpDir('fotmob-auth-team-id-conflict-');
+    try {
+        const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+            homeTeamId: 1001,
+            awayTeamId: 1002,
+            pagePropsExtra: {
+                header: {
+                    teams: [
+                        { name: 'Manchester United', id: 2001 },
+                        { name: 'Fulham', id: 1002 },
+                    ],
+                    status: { utcTime: '2024-08-16T19:00:00Z' },
+                },
+            },
+        });
+        const fetchImpl = mockFetchImpl(() => okResponse(page));
+        const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
+        assert.equal(result.status, 'stopped');
+        assert.match(result.stopReason, /IDENTITY_CONFLICT/);
+        assert.equal(result.completedCount, 0);
+        assert.ok(!fs.existsSync(path.join(result.runDir, 'captures', '1-4506263.payload.json')));
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -611,7 +774,12 @@ test('CONTENT: complete retained fixture succeeds with full manifest', async () 
     const dir = tmpDir('fotmob-content-ok-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'complete');
@@ -653,15 +821,25 @@ test('CONTENT: response body hash covers the in-memory HTML; payload file hash c
     const dir = tmpDir('fotmob-content-hash-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         // P1-1: the full HTML body exists only in memory — its hash is bound
         // by the manifest, but the HTML itself is never written to disk.
-        const manifest = JSON.parse(fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        const manifest = JSON.parse(
+            fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8')
+        );
         assert.equal(manifest.response_body_sha256, sha256Text(page));
         assert.equal(manifest.response_body_byte_size, Buffer.byteLength(page));
-        assert.equal(fs.readdirSync(path.join(result.runDir, 'captures')).some(f => f.endsWith('.html')), false);
+        assert.equal(
+            fs.readdirSync(path.join(result.runDir, 'captures')).some(f => f.endsWith('.html')),
+            false
+        );
         // The retained payload file hash binds the actual persisted bytes.
         const payloadPath = path.join(result.runDir, 'captures', '1-4506263.payload.json');
         const payloadBytes = fs.readFileSync(payloadPath);
@@ -722,7 +900,9 @@ test('CONTENT: malformed JSON rejected', async () => {
     const dir = tmpDir('fotmob-content-maljson-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const fetchImpl = mockFetchImpl(() => okResponse('<script id="__NEXT_DATA__" type="application/json">{broken json</script>'));
+        const fetchImpl = mockFetchImpl(() =>
+            okResponse('<script id="__NEXT_DATA__" type="application/json">{broken json</script>')
+        );
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'stopped');
         assert.match(result.stopReason, /content_validity:/);
@@ -735,7 +915,12 @@ test('CONTENT: inner matchId mismatch rejected', async () => {
     const dir = tmpDir('fotmob-content-mismatch-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 9999999, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 9999999,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'stopped');
@@ -752,7 +937,12 @@ test('CONTENT: route identity date conflict rejected', async () => {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         // Observed date far away from the expected kickoff → deterministic
         // date incompatibility.
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2026-01-01T12:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2026-01-01T12:00:00Z',
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'stopped');
@@ -766,10 +956,17 @@ test('CONTENT: valid stats/lineup/shotmap flags recorded in manifest', async () 
     const dir = tmpDir('fotmob-content-flags-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
-        const manifest = JSON.parse(fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        const manifest = JSON.parse(
+            fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8')
+        );
         assert.equal(manifest.has_stats, true);
         assert.equal(manifest.has_lineup, true);
         assert.equal(manifest.has_shotmap, true);
@@ -783,13 +980,18 @@ test('CONTENT: no stats but otherwise valid — contract accepts, has_stats=fals
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         const page = makePageHtml({
-            matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z',
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
             content: { lineup: { lineups: [] }, shotmap: { shots: [] }, liveticker: [] },
         });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'complete');
-        const manifest = JSON.parse(fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        const manifest = JSON.parse(
+            fs.readFileSync(path.join(result.runDir, 'captures', '1-4506263.manifest.json'), 'utf8')
+        );
         assert.equal(manifest.has_stats, false);
         assert.equal(manifest.looks_like_valid_match_detail, true);
     } finally {
@@ -806,10 +1008,26 @@ test('RESUME: completed candidates are never fetched again', async () => {
     try {
         const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
         const calls = [];
-        const fetchImpl = mockFetchImpl((url) => {
+        const fetchImpl = mockFetchImpl(url => {
             const id = url.match(/match\/(\d+)/)[1];
-            if (id === '4506263') return okResponse(makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' }));
-            return okResponse(makePageHtml({ matchId: 4506264, homeTeam: 'Ipswich Town', awayTeam: 'Liverpool', kickoffAt: '2024-08-17T11:30:00Z' }));
+            if (id === '4506263') {
+                return okResponse(
+                    makePageHtml({
+                        matchId: 4506263,
+                        homeTeam: 'Manchester United',
+                        awayTeam: 'Fulham',
+                        kickoffAt: '2024-08-16T19:00:00Z',
+                    })
+                );
+            }
+            return okResponse(
+                makePageHtml({
+                    matchId: 4506264,
+                    homeTeam: 'Ipswich Town',
+                    awayTeam: 'Liverpool',
+                    kickoffAt: '2024-08-17T11:30:00Z',
+                })
+            );
         }, calls);
         const runId = 'run-resume';
         const opts = makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl });
@@ -834,7 +1052,18 @@ test('RESUME: completed pair hash mismatch stops without fetching', async () => 
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
         const calls = [];
-        const fetchImpl = mockFetchImpl(() => okResponse(makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' })), calls);
+        const fetchImpl = mockFetchImpl(
+            () =>
+                okResponse(
+                    makePageHtml({
+                        matchId: 4506263,
+                        homeTeam: 'Manchester United',
+                        awayTeam: 'Fulham',
+                        kickoffAt: '2024-08-16T19:00:00Z',
+                    })
+                ),
+            calls
+        );
         const runId = 'run-mismatch';
         const opts = makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 1, fetchImpl });
         await executeCaptureRun(opts);
@@ -855,14 +1084,33 @@ test('RESUME: run state plan SHA mismatch refuses to continue', async () => {
     const dir = tmpDir('fotmob-resume-plansha-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const fetchImpl = mockFetchImpl(() => okResponse(makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' })));
+        const fetchImpl = mockFetchImpl(() =>
+            okResponse(
+                makePageHtml({
+                    matchId: 4506263,
+                    homeTeam: 'Manchester United',
+                    awayTeam: 'Fulham',
+                    kickoffAt: '2024-08-16T19:00:00Z',
+                })
+            )
+        );
         const runId = 'run-plansha';
         const opts = makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 1, fetchImpl });
         await executeCaptureRun(opts);
         // Different plan, same run id.
         const other = makePlanFixture(dir, [TWO_CANDIDATES[1]], { seasons: ['2024/2025'] });
-        const opts2 = makeCaptureOptions({ dir, plan: other.plan, planPath: other.planPath, runId, maxRequests: 1, fetchImpl });
-        await assert.rejects(executeCaptureRun(opts2), (e) => e.code === 'SAFETY_ERROR' && /plan SHA mismatch/.test(e.message));
+        const opts2 = makeCaptureOptions({
+            dir,
+            plan: other.plan,
+            planPath: other.planPath,
+            runId,
+            maxRequests: 1,
+            fetchImpl,
+        });
+        await assert.rejects(
+            executeCaptureRun(opts2),
+            e => e.code === 'SAFETY_ERROR' && /plan SHA mismatch/.test(e.message)
+        );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -872,10 +1120,17 @@ test('RESUME: failure at Nth candidate keeps previous N-1 pairs', async () => {
     const dir = tmpDir('fotmob-resume-keep-');
     try {
         const { plan, planPath } = makePlanFixture(dir, TWO_CANDIDATES, { seasons: ['2024/2025'] });
-        const fetchImpl = mockFetchImpl((url) => {
+        const fetchImpl = mockFetchImpl(url => {
             const id = url.match(/match\/(\d+)/)[1];
             if (id === '4506264') return { status: 403, body: 'forbidden' };
-            return okResponse(makePageHtml({ matchId: id, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' }));
+            return okResponse(
+                makePageHtml({
+                    matchId: id,
+                    homeTeam: 'Manchester United',
+                    awayTeam: 'Fulham',
+                    kickoffAt: '2024-08-16T19:00:00Z',
+                })
+            );
         });
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 2, fetchImpl }));
         assert.equal(result.status, 'stopped');
@@ -892,21 +1147,57 @@ test('RESUME: failure at Nth candidate keeps previous N-1 pairs', async () => {
 test('RESUME: budget is cumulative across runs; a resumed run never fetches past the declared cap', async () => {
     const dir = tmpDir('fotmob-resume-budget-');
     try {
-        const three = [TWO_CANDIDATES[0], TWO_CANDIDATES[1],
-            makeCandidate({ id: 4506265, season: '2024/2025', home: 'Arsenal', away: 'Wolves', kickoff: '2024-08-17T14:00:00Z' })];
+        const three = [
+            TWO_CANDIDATES[0],
+            TWO_CANDIDATES[1],
+            makeCandidate({
+                id: 4506265,
+                season: '2024/2025',
+                home: 'Arsenal',
+                away: 'Wolves',
+                kickoff: '2024-08-17T14:00:00Z',
+            }),
+        ];
         const { plan, planPath } = makePlanFixture(dir, three, { seasons: ['2024/2025'] });
         const calls = [];
         // Per-candidate pages: ordinal 3 (Arsenal vs Wolves) is the only one
         // whose team markers match the generic response below.
-        const fetchImpl = mockFetchImpl((url) => {
+        const fetchImpl = mockFetchImpl(url => {
             const id = url.match(/match\/(\d+)/)[1];
-            if (id === '4506263') return okResponse(makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' }));
-            if (id === '4506264') return okResponse(makePageHtml({ matchId: 4506264, homeTeam: 'Ipswich Town', awayTeam: 'Liverpool', kickoffAt: '2024-08-17T11:30:00Z' }));
-            return okResponse(makePageHtml({ matchId: 4506265, homeTeam: 'Arsenal', awayTeam: 'Wolves', kickoffAt: '2024-08-17T14:00:00Z' }));
+            if (id === '4506263') {
+                return okResponse(
+                    makePageHtml({
+                        matchId: 4506263,
+                        homeTeam: 'Manchester United',
+                        awayTeam: 'Fulham',
+                        kickoffAt: '2024-08-16T19:00:00Z',
+                    })
+                );
+            }
+            if (id === '4506264') {
+                return okResponse(
+                    makePageHtml({
+                        matchId: 4506264,
+                        homeTeam: 'Ipswich Town',
+                        awayTeam: 'Liverpool',
+                        kickoffAt: '2024-08-17T11:30:00Z',
+                    })
+                );
+            }
+            return okResponse(
+                makePageHtml({
+                    matchId: 4506265,
+                    homeTeam: 'Arsenal',
+                    awayTeam: 'Wolves',
+                    kickoffAt: '2024-08-17T14:00:00Z',
+                })
+            );
         }, calls);
         const runId = 'run-budget';
         // First run: budget 2 → completes 2, stops at ordinal 3.
-        const first = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl }));
+        const first = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl })
+        );
         assert.equal(first.status, 'stopped');
         assert.equal(first.stopReason, 'budget_exhausted');
         assert.equal(first.completedCount, 2);
@@ -915,7 +1206,9 @@ test('RESUME: budget is cumulative across runs; a resumed run never fetches past
         // the persisted attempted count seeds the adapter, so ordinal 3 is
         // stopped BEFORE any fetch. The run can never exceed the declared
         // max-requests total across resume cycles.
-        const second = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl }));
+        const second = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 2, fetchImpl })
+        );
         assert.equal(second.status, 'stopped');
         assert.equal(second.stopReason, 'budget_exhausted');
         assert.equal(second.completedCount, 2);
@@ -924,7 +1217,7 @@ test('RESUME: budget is cumulative across runs; a resumed run never fetches past
         // Changing the budget contract across runs is refused (P1-5).
         await assert.rejects(
             executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId, maxRequests: 3, fetchImpl })),
-            (e) => e.code === 'SAFETY_ERROR' && /max-requests contract mismatch/.test(e.message)
+            e => e.code === 'SAFETY_ERROR' && /max-requests contract mismatch/.test(e.message)
         );
     } finally {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -935,19 +1228,35 @@ test('RESUME: stable hash may differ across separate runs (page drift allowed)',
     const dir = tmpDir('fotmob-resume-drift-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const pageA = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const pageA = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+        });
         const pageB = makePageHtml({
-            matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z',
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
             content: { stats: { periods: ['y'] }, lineup: { lineups: [] }, shotmap: { shots: [] } },
         });
         const fetchImplA = mockFetchImpl(() => okResponse(pageA));
-        const runA = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId: 'run-drift-a', maxRequests: 1, fetchImpl: fetchImplA }));
+        const runA = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId: 'run-drift-a', maxRequests: 1, fetchImpl: fetchImplA })
+        );
         assert.equal(runA.status, 'complete');
         const fetchImplB = mockFetchImpl(() => okResponse(pageB));
-        const runB = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, runId: 'run-drift-b', maxRequests: 1, fetchImpl: fetchImplB }));
+        const runB = await executeCaptureRun(
+            makeCaptureOptions({ dir, plan, planPath, runId: 'run-drift-b', maxRequests: 1, fetchImpl: fetchImplB })
+        );
         assert.equal(runB.status, 'complete');
-        const manifestA = JSON.parse(fs.readFileSync(path.join(runA.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
-        const manifestB = JSON.parse(fs.readFileSync(path.join(runB.runDir, 'captures', '1-4506263.manifest.json'), 'utf8'));
+        const manifestA = JSON.parse(
+            fs.readFileSync(path.join(runA.runDir, 'captures', '1-4506263.manifest.json'), 'utf8')
+        );
+        const manifestB = JSON.parse(
+            fs.readFileSync(path.join(runB.runDir, 'captures', '1-4506263.manifest.json'), 'utf8')
+        );
         // Different page content → different stable hash across runs is
         // allowed and never treated as failure.
         assert.notEqual(manifestA.stable_raw_payload_sha256, manifestB.stable_raw_payload_sha256);

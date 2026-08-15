@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- GD-A03 lineage and fail-closed invariants stay in one permanent contract suite. */
+
 // lifecycle: permanent；GD-A03 runtime behavior / fail-closed / determinism tests。
 // 真实 888 离线验证使用同一 assembler，由任务级 external validation 执行。
 
@@ -9,6 +11,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const featureContract = require('../../config/model_feature_contracts.json').contracts[0];
+const { admittedIdSetHash } = require('../../src/infrastructure/golden_dataset/GdA01AssemblyContract');
 const {
     buildPriorStateFeatureView,
     normalizeSchedule,
@@ -23,6 +26,11 @@ const {
     REASON_CODES,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     computeBusinessHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
+    computeProvenanceDigest,
     stableStringify,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
 
@@ -31,6 +39,31 @@ const HASH = 'a'.repeat(64);
 
 function digest(value) {
     return crypto.createHash('sha256').update(stableStringify(value)).digest('hex');
+}
+
+function teamClosure(schedule) {
+    const perTeamCounts = {};
+    for (const row of schedule) {
+        const seasonTeams = perTeamCounts[row.season] || {};
+        const home = seasonTeams[row.home_team] || { total: 0, home: 0, away: 0 };
+        const away = seasonTeams[row.away_team] || { total: 0, home: 0, away: 0 };
+        home.total += 1;
+        home.home += 1;
+        away.total += 1;
+        away.away += 1;
+        seasonTeams[row.home_team] = home;
+        seasonTeams[row.away_team] = away;
+        perTeamCounts[row.season] = seasonTeams;
+    }
+    return {
+        schema_version: SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+        status: 'PROVEN',
+        teams_per_season: 20,
+        fixtures_per_team: 38,
+        home_fixtures_per_team: 19,
+        away_fixtures_per_team: 19,
+        per_team_counts: perTeamCounts,
+    };
 }
 
 function candidate(id, kickoffAt, homeTeam, awayTeam) {
@@ -82,6 +115,16 @@ function fact(row, index) {
                 home: { value: homeXg, status: 'COMPLETE', known_shots: 5, missing_shots: 0 },
                 away: { value: awayXg, status: 'COMPLETE', known_shots: 5, missing_shots: 0 },
             },
+            shots_on_target: {
+                status: 'UNAVAILABLE',
+                source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                aggregation: 'count_true_isOnTarget_by_team_id',
+                total_shots: null,
+                shots_with_on_target: null,
+                shots_without_on_target: null,
+                home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+                away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+            },
             sections: {},
         },
         provenance: {
@@ -99,6 +142,19 @@ function fact(row, index) {
     };
 }
 
+function completeShotsOnTarget(home, away) {
+    return {
+        status: 'VALID',
+        source_path: 'normalized.shotmap.shots[*].isOnTarget',
+        aggregation: 'count_true_isOnTarget_by_team_id',
+        total_shots: home + away + 2,
+        shots_with_on_target: home + away,
+        shots_without_on_target: 2,
+        home: { value: home, status: 'COMPLETE', known_shots: home + 1, missing_shots: 0 },
+        away: { value: away, status: 'COMPLETE', known_shots: away + 1, missing_shots: 0 },
+    };
+}
+
 function buildFixture({ includeSixth = false } = {}) {
     const schedule = [];
     const targets = [];
@@ -112,8 +168,9 @@ function buildFixture({ includeSixth = false } = {}) {
         facts.push(fact(row, sequence));
         return row;
     };
-    const homeOpponents = ['H1 FC', 'H2 FC', 'H3 FC', 'H4 FC', 'H5 FC', 'H6 FC'];
-    const awayOpponents = ['A1 FC', 'A2 FC', 'A3 FC', 'A4 FC', 'A5 FC'];
+    const canonicalTeams = ['Home FC', 'Away FC', ...Array.from({ length: 18 }, (_, index) => `Team ${index + 3}`)];
+    const homeOpponents = canonicalTeams.slice(2, 2 + (includeSixth ? 6 : 5));
+    const awayOpponents = canonicalTeams.slice(8, 13);
     const dates = includeSixth
         ? [
               '2024-07-01T12:00:00Z',
@@ -135,31 +192,137 @@ function buildFixture({ includeSixth = false } = {}) {
         addTarget(dates[index], awayOpponents[index], 'Away FC');
     }
     const target = addTarget('2024-07-13T12:00:00Z', 'Home FC', 'Away FC');
+    const existingPairs = new Set(schedule.map(row => `${row.home_team}\u0000${row.away_team}`));
+    let fillerIndex = 0;
+    let futureSlot = null;
+    for (const homeTeam of canonicalTeams) {
+        for (const awayTeam of canonicalTeams) {
+            if (homeTeam === awayTeam || existingPairs.has(`${homeTeam}\u0000${awayTeam}`)) continue;
+            const filler = candidate(
+                `47_20242025_${String(sequence).padStart(7, '0')}`,
+                new Date(Date.parse('2024-08-01T12:00:00Z') + fillerIndex * 60 * 60 * 1000).toISOString(),
+                homeTeam,
+                awayTeam
+            );
+            sequence += 1;
+            fillerIndex += 1;
+            schedule.push(filler);
+            if (!futureSlot) futureSlot = filler;
+        }
+    }
+    const factResultBindings = facts.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
+    const factRejectionBindings = [];
     const sourceBindings = {
-        gd_a01_artifact: { sha256: HASH, business_hash: HASH },
-        gd_a02_artifact: { sha256: HASH, business_hash: HASH },
-        canonical_schedule: { sha256: HASH, business_hash: HASH },
-        feature_contract: { sha256: HASH },
+        gd_a01_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-artifact/v1' },
+        gd_a01_receipt: {
+            sha256: HASH,
+            business_hash: HASH,
+            schema_version: 'gd-a01-receipt/v1',
+            admitted_id_set_sha256: admittedIdSetHash(targets.map(row => row.id)),
+            admitted_row_count: targets.length,
+        },
+        gd_a02_artifact: {
+            sha256: HASH,
+            business_hash: HASH,
+            schema_version: 'gd-a02-artifact/v2',
+            fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+            fact_result_binding_count: factResultBindings.length,
+            fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+            fact_rejection_binding_count: factRejectionBindings.length,
+            fact_admitted_id_set_sha256: admittedIdSetHash(facts.map(row => row.canonical_match_id)),
+            fact_admitted_row_count: facts.length,
+            fact_rejected_id_set_sha256: admittedIdSetHash([]),
+            fact_rejected_row_count: 0,
+            fact_accounted_id_set_sha256: admittedIdSetHash(facts.map(row => row.canonical_match_id)),
+            fact_accounted_row_count: facts.length,
+        },
+        gd_a02_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-receipt/v2' },
+        canonical_schedule: { sha256: HASH, business_hash: HASH, schema_version: 'candidate-match-identity/v1' },
+        feature_contract: { sha256: HASH, schema_version: 'model-feature-contract-registry/v1' },
+        runtime_feature_adapter: {
+            sha256: HASH,
+            schema_version: 'V26_6_PreMatchAdapter.V26_6_FEATURES',
+            ordered_features: featureContract.ordered_features,
+        },
     };
     const options = {
         targetRows: targets.map(row => ({ ...row, canonical_match_id: row.id })),
         factRows: facts,
+        factRejections: [],
         scheduleCandidates: schedule,
         scheduleClosure: {
             schema_version: 'canonical-schedule-history/v1',
             status: 'PROVEN',
             authority: 'fixture canonical schedule',
             per_season_expected_counts: { '2024/2025': schedule.length },
+            team_closure: teamClosure(schedule),
         },
         featureContract,
         sourceBindings,
         codeRevision: REVISION,
     };
-    return { options, schedule, targets, facts, targetId: target.id };
+    return { options, schedule, targets, facts, targetId: target.id, futureSlot };
 }
 
 function build(fixture) {
     return buildPriorStateFeatureView(fixture.options);
+}
+
+function rebindSourceBindings(options) {
+    const targetIds = options.targetRows.map(row => row.canonical_match_id);
+    const factRejections = options.factRejections || [];
+    const factResultBindings = options.factRows.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
+    const factRejectionBindings = factRejections.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_rejection_binding: computeFactRejectionBinding({
+            canonicalMatchId: row.canonical_match_id,
+            sourceMatchId: row.source_match_id,
+            rejectionReason: row.admission.rejection_reason,
+            errorCode: row.error_code,
+            reason: row.reason,
+        }),
+    }));
+    return {
+        ...options,
+        sourceBindings: {
+            ...options.sourceBindings,
+            gd_a01_receipt: {
+                ...options.sourceBindings.gd_a01_receipt,
+                admitted_id_set_sha256: admittedIdSetHash(targetIds),
+                admitted_row_count: targetIds.length,
+            },
+            gd_a02_artifact: {
+                ...options.sourceBindings.gd_a02_artifact,
+                fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+                fact_result_binding_count: factResultBindings.length,
+                fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+                fact_rejection_binding_count: factRejectionBindings.length,
+                fact_admitted_id_set_sha256: admittedIdSetHash(options.factRows.map(row => row.canonical_match_id)),
+                fact_admitted_row_count: options.factRows.length,
+                fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
+                fact_rejected_row_count: factRejections.length,
+                fact_accounted_id_set_sha256: admittedIdSetHash([
+                    ...options.factRows.map(row => row.canonical_match_id),
+                    ...factRejections.map(row => row.canonical_match_id),
+                ]),
+                fact_accounted_row_count: options.factRows.length + factRejections.length,
+            },
+        },
+    };
 }
 
 function targetRow(result, targetId) {
@@ -202,7 +365,7 @@ test('GD-A03 derives only strict prior-state values and isolates the target labe
         match_result: { ...targetFact.facts.match_result, home_score: 99, away_score: 0, outcome: 'home' },
         xg: { ...targetFact.facts.xg, home: { ...targetFact.facts.xg.home, value: 9999 } },
     };
-    const poisoned = buildPriorStateFeatureView({ ...fixture.options, factRows: mutatedFacts });
+    const poisoned = buildPriorStateFeatureView(rebindSourceBindings({ ...fixture.options, factRows: mutatedFacts }));
     assert.deepEqual(targetRow(poisoned, fixture.targetId).features, target.features);
     assert.notDeepEqual(targetRow(poisoned, fixture.targetId).target_label, target.target_label);
 });
@@ -211,6 +374,141 @@ test('GD-A03 name/order identity matches config and V26_6_PreMatchAdapter', () =
     const loaded = loadFeatureContract(path.resolve(__dirname, '../..'));
     assert.deepEqual(loaded.contract.ordered_features, loaded.runtimeFeatureAdapter.orderedFeatures);
     assert.equal(loaded.runtimeFeatureAdapter.symbol, 'V26_6_PreMatchAdapter.V26_6_FEATURES');
+});
+
+test('GD-A03 closes SOT from GD-A02 shotmap facts with exact five-match lineage', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const result = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    const target = targetRow(result, fixture.targetId);
+    assert.equal(target.features.rolling_shots_on_target_home.value, 3);
+    assert.equal(target.features.rolling_shots_on_target_away.value, 8);
+    assert.equal(target.feature_vector_eligibility.status, 'NO');
+    assert.ok(target.feature_vector_eligibility.reason_codes.includes(REASON_CODES.SEMANTICS_UNPROVEN));
+    assert.deepEqual(target.features.rolling_shots_on_target_home.source_evidence_match_ids, [
+        ...target.features.rolling_shots_on_target_home.source_match_ids,
+    ]);
+    assert.match(target.features.rolling_shots_on_target_home.provenance_inputs[0].field, /^facts\.shots_on_target\./);
+    assert.equal(result.artifact.validation_counters.target_match_fact_dependency_count, 0);
+
+    const targetFact = facts.find(row => row.canonical_match_id === fixture.targetId);
+    targetFact.facts.shots_on_target = completeShotsOnTarget(0, targetFact.facts.shots_on_target.away.value);
+    const targetMutated = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    assert.equal(
+        targetRow(targetMutated, fixture.targetId).features.rolling_shots_on_target_home.value,
+        target.features.rolling_shots_on_target_home.value
+    );
+});
+
+test('GD-A03 rejects an unvalidated SOT value before deriving prior-state features', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const sourceFact = facts.find(row => row.canonical_match_id !== fixture.targetId);
+    sourceFact.facts.shots_on_target.home = {
+        ...sourceFact.facts.shots_on_target.home,
+        value: 999,
+    };
+
+    assertReject(
+        () => buildPriorStateFeatureView(rebindSourceBindings({ ...fixture.options, factRows: facts })),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A03 SOT missing prior evidence fails closed without reaching older history', () => {
+    const fixture = buildFixture({ includeSixth: true });
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const missingId = fixture.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
+    const missing = facts.find(row => row.canonical_match_id === missingId);
+    missing.facts.shots_on_target = {
+        ...missing.facts.shots_on_target,
+        status: 'UNAVAILABLE',
+        unavailable_reason_code: REASON_CODES.SOT_OWN_GOAL_SEMANTICS_UNPROVEN,
+        total_shots: null,
+        shots_with_on_target: null,
+        shots_without_on_target: null,
+        home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+        away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+    };
+    const result = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    const line = targetRow(result, fixture.targetId).features.rolling_shots_on_target_home;
+    assert.equal(line.value, null);
+    assert.equal(line.source_match_ids.length, 5);
+    assert.ok(line.source_match_ids.includes(missingId));
+    assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.HISTORY_GAP));
+    assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.SOT_OWN_GOAL_SEMANTICS_UNPROVEN));
+    assert.equal(result.artifact.validation_counters.silent_history_gap_count, 0);
+});
+
+test('GD-A03 SOT earlier target is invariant under later source-fact mutation', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const future = candidate(
+        '47_20242025_9999999',
+        '2024-07-20T12:00:00Z',
+        fixture.futureSlot.home_team,
+        fixture.futureSlot.away_team
+    );
+    const scheduleWithFuture = fixture.schedule.map(row => (row.id === fixture.futureSlot.id ? future : row));
+    const futureFactBase = fact(future, 99);
+    const futureFact = {
+        ...futureFactBase,
+        facts: {
+            ...futureFactBase.facts,
+            shots_on_target: completeShotsOnTarget(7, 8),
+        },
+    };
+    const options = {
+        ...fixture.options,
+        scheduleCandidates: scheduleWithFuture,
+        targetRows: [...fixture.options.targetRows, { ...future, canonical_match_id: future.id }],
+        factRows: [...facts, futureFact],
+        scheduleClosure: {
+            ...fixture.options.scheduleClosure,
+            per_season_expected_counts: { '2024/2025': scheduleWithFuture.length },
+            team_closure: teamClosure(scheduleWithFuture),
+        },
+    };
+    const baseline = buildPriorStateFeatureView(rebindSourceBindings(options));
+    const mutatedFutureFact = {
+        ...futureFact,
+        facts: {
+            ...futureFact.facts,
+            shots_on_target: completeShotsOnTarget(0, 8),
+        },
+    };
+    const mutated = buildPriorStateFeatureView(
+        rebindSourceBindings({ ...options, factRows: [...facts, mutatedFutureFact] })
+    );
+    assert.equal(
+        targetRow(mutated, fixture.targetId).features.rolling_shots_on_target_home.value,
+        targetRow(baseline, fixture.targetId).features.rolling_shots_on_target_home.value
+    );
+    assert.equal(mutated.artifact.validation_counters.future_match_dependency_count, 0);
 });
 
 test('GD-A03 is deterministic across input reorder and ignores future fixtures for earlier targets', () => {
@@ -225,13 +523,20 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
     assert.equal(reordered.artifactBytes.toString(), base.artifactBytes.toString());
     assert.equal(reordered.receiptBytes.toString(), base.receiptBytes.toString());
 
-    const future = candidate('47_20242025_9999999', '2024-07-20T12:00:00Z', 'Home FC', 'Future FC');
+    const future = candidate(
+        '47_20242025_9999999',
+        '2024-07-20T12:00:00Z',
+        fixture.futureSlot.home_team,
+        fixture.futureSlot.away_team
+    );
+    const scheduleWithFuture = fixture.schedule.map(row => (row.id === fixture.futureSlot.id ? future : row));
     const futureOptions = {
         ...fixture.options,
-        scheduleCandidates: [...fixture.schedule, future],
+        scheduleCandidates: scheduleWithFuture,
         scheduleClosure: {
             ...fixture.options.scheduleClosure,
-            per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
+            per_season_expected_counts: { '2024/2025': scheduleWithFuture.length },
+            team_closure: teamClosure(scheduleWithFuture),
         },
     };
     const withFuture = buildPriorStateFeatureView(futureOptions);
@@ -241,14 +546,8 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
 test('GD-A03 schedule normalization rejects non-canonical IDs and timestamps', () => {
     const fixture = buildFixture();
     const valid = fixture.schedule[0];
-    assertReject(
-        () => normalizeSchedule([{ ...valid, source_match_id: 'not-numeric' }]),
-        'IDENTITY_CONFLICT'
-    );
-    assertReject(
-        () => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]),
-        'FACT_VALUE_INVALID'
-    );
+    assertReject(() => normalizeSchedule([{ ...valid, source_match_id: 'not-numeric' }]), 'IDENTITY_CONFLICT');
+    assertReject(() => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]), 'FACT_VALUE_INVALID');
 });
 
 test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture', () => {
@@ -262,12 +561,7 @@ test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture'
                 [teams[awayIndex], teams[homeIndex]],
             ]) {
                 schedule.push(
-                    candidate(
-                        `47_20242025_${String(sequence).padStart(7, '0')}`,
-                        '2024-07-01T12:00:00Z',
-                        home,
-                        away
-                    )
+                    candidate(`47_20242025_${String(sequence).padStart(7, '0')}`, '2024-07-01T12:00:00Z', home, away)
                 );
                 sequence += 1;
             }
@@ -285,27 +579,39 @@ test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture'
             fixtures_per_team: 38,
             home_fixtures_per_team: 19,
             away_fixtures_per_team: 19,
+            per_team_counts: teamClosure(schedule).per_team_counts,
         },
     };
     assert.doesNotThrow(() => validateScheduleClosure(normalizeSchedule(schedule), closure));
     const tampered = schedule.map(row => ({ ...row }));
     tampered[0].home_team = 'Reassigned Team';
-    assertReject(
-        () => validateScheduleClosure(normalizeSchedule(tampered), closure),
-        'HISTORY_CLOSURE_INVALID'
-    );
+    assertReject(() => validateScheduleClosure(normalizeSchedule(tampered), closure), 'HISTORY_CLOSURE_INVALID');
 });
 
 test('GD-A03 records an actual missing recent match and does not reach farther back', () => {
     const complete = buildFixture({ includeSixth: true });
     const missingId = complete.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
     const targetId = complete.targetId;
-    const options = {
+    const missingSource = complete.schedule.find(row => row.id === missingId);
+    const missingFactOptions = {
         ...complete.options,
-        targetRows: complete.options.targetRows.filter(row => row.canonical_match_id !== missingId),
         factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
     };
-    const result = buildPriorStateFeatureView(options);
+    assertReject(() => buildPriorStateFeatureView(rebindSourceBindings(missingFactOptions)), 'POPULATION_MISMATCH');
+    const options = {
+        ...complete.options,
+        factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
+        factRejections: [
+            {
+                canonical_match_id: missingId,
+                source_match_id: missingSource.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
+    };
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const line = targetRow(result, targetId).features.rolling_xg_home;
     assert.equal(line.value, null);
     assert.equal(line.source_match_ids.length, 5);
@@ -316,6 +622,41 @@ test('GD-A03 records an actual missing recent match and does not reach farther b
     );
     assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.HISTORY_GAP));
     assert.equal(result.artifact.validation_counters.silent_history_gap_count, 0);
+    assert.equal(result.artifact.rows.length, complete.options.targetRows.length);
+    const missingLabel = targetRow(result, missingId).target_label;
+    assert.equal(missingLabel.source_fact_binding.fact_presence, 'MISSING');
+    assert.equal(missingLabel.provenance_input.result, null);
+});
+
+test('GD-A03 rejects tampered rejected-fact provenance after business hashes are rewritten', () => {
+    const complete = buildFixture({ includeSixth: true });
+    const missingId = complete.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
+    const missingSource = complete.schedule.find(row => row.id === missingId);
+    const options = {
+        ...complete.options,
+        factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
+        factRejections: [
+            {
+                canonical_match_id: missingId,
+                source_match_id: missingSource.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
+    };
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    const missingLabel = tampered.rows.find(row => row.canonical_match_id === missingId).target_label;
+    missingLabel.provenance_input.source_provenance.rejection_message = 'tampered rejection reason';
+    missingLabel.provenance_digest = computeProvenanceDigest({
+        role: missingLabel.role,
+        target_match_id: missingLabel.canonical_match_id,
+        result: missingLabel.provenance_input.result,
+        source_provenance: missingLabel.provenance_input.source_provenance,
+    });
+    tampered.business_content_sha256 = computeBusinessHash({ ...tampered, business_content_sha256: null });
+    assertReject(() => validatePriorStateArtifact(tampered), 'PROVENANCE_INVALID');
 });
 
 test('GD-A03 rejects equal/future lineage, identity tamper, and provenance tamper', () => {
@@ -346,10 +687,18 @@ test('GD-A03 preserves standings history gaps and never estimates position', () 
     );
     const options = {
         ...fixture.options,
-        targetRows: fixture.options.targetRows.filter(row => row.canonical_match_id !== missingPrior.id),
         factRows: fixture.facts.filter(row => row.canonical_match_id !== missingPrior.id),
+        factRejections: [
+            {
+                canonical_match_id: missingPrior.id,
+                source_match_id: missingPrior.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
     };
-    const result = buildPriorStateFeatureView(options);
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const row = targetRow(result, target.id);
     assert.equal(row.features.home_table_position.value, null);
     assert.ok(
@@ -370,6 +719,129 @@ test('GD-A03 output validation conserves population and rejects tampered busines
         () => validatePriorStateOutputFiles(Buffer.from(`${JSON.stringify(tampered)}\n`), result.receiptBytes),
         'BUSINESS_HASH_MISMATCH'
     );
+});
+
+test('GD-A03 requires canonical readiness to remain fail-closed', () => {
+    const result = build(buildFixture());
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    tampered.feature_frame_readiness = 'READY_FOR_SEPARATE_TRAINING_REVIEW';
+    assertReject(() => validatePriorStateArtifact(tampered), 'READINESS_BOUNDARY');
+});
+
+test('GD-A03 requires team-level schedule closure and complete source bindings', () => {
+    const fixture = buildFixture();
+    assertReject(
+        () =>
+            buildPriorStateFeatureView({
+                ...fixture.options,
+                scheduleClosure: { ...fixture.options.scheduleClosure, team_closure: undefined },
+            }),
+        'HISTORY_CLOSURE_INVALID'
+    );
+
+    assertReject(
+        () =>
+            buildPriorStateFeatureView({
+                ...fixture.options,
+                scheduleClosure: {
+                    ...fixture.options.scheduleClosure,
+                    team_closure: { ...fixture.options.scheduleClosure.team_closure, fixtures_per_team: 1 },
+                },
+            }),
+        'HISTORY_CLOSURE_INVALID'
+    );
+
+    const result = build(fixture);
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    delete tampered.source_bindings.gd_a02_receipt;
+    assertReject(() => validatePriorStateArtifact(tampered), 'PROVENANCE_INVALID');
+
+    const nonCanonicalClosure = JSON.parse(result.artifactBytes.toString('utf8'));
+    nonCanonicalClosure.schedule_authority.team_closure.teams_per_season = 19;
+    assertReject(() => validatePriorStateArtifact(nonCanonicalClosure), 'HISTORY_CLOSURE_INVALID');
+
+    const missingPopulationHash = JSON.parse(result.artifactBytes.toString('utf8'));
+    delete missingPopulationHash.population_accounting.target_id_set_sha256;
+    assertReject(() => validatePriorStateArtifact(missingPopulationHash), 'HASH_MISMATCH');
+});
+
+test('GD-A03 independently validates target-label identity, projection, and digest', () => {
+    const result = build(buildFixture());
+    const identityTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    identityTampered.rows[0].target_label.canonical_match_id = 'tampered-target';
+    assertReject(() => validatePriorStateArtifact(identityTampered), 'PROVENANCE_INVALID');
+
+    const projectionTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    projectionTampered.rows[0].target_label.outcome = 'home';
+    assertReject(() => validatePriorStateArtifact(projectionTampered), 'FACT_VALUE_INVALID');
+
+    const digestTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    digestTampered.rows[0].target_label.provenance_input.result.home_score += 1;
+    assertReject(() => validatePriorStateArtifact(digestTampered), 'FACT_VALUE_INVALID');
+
+    const sourceFactTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    sourceFactTampered.rows[0].target_label.source_fact_binding.source_business_hash = 'b'.repeat(64);
+    assertReject(() => validatePriorStateArtifact(sourceFactTampered), 'PROVENANCE_INVALID');
+
+    const unavailableResultWithScore = JSON.parse(result.artifactBytes.toString('utf8'));
+    const unavailableLabel = unavailableResultWithScore.rows[0].target_label;
+    unavailableLabel.provenance_input.result = {
+        status: 'UNAVAILABLE',
+        home_score: 3,
+        away_score: 2,
+        outcome: null,
+        source_path: 'normalized.home_team.score + normalized.away_team.score',
+    };
+    unavailableLabel.status = 'UNAVAILABLE';
+    unavailableLabel.outcome = null;
+    unavailableLabel.provenance_digest = computeProvenanceDigest({
+        role: unavailableLabel.role,
+        target_match_id: unavailableLabel.canonical_match_id,
+        result: unavailableLabel.provenance_input.result,
+        source_provenance: unavailableLabel.provenance_input.source_provenance,
+    });
+    unavailableLabel.source_fact_binding.fact_result_binding = computeFactResultBinding({
+        canonicalMatchId: unavailableLabel.canonical_match_id,
+        result: unavailableLabel.provenance_input.result,
+        sourceProvenance: unavailableLabel.provenance_input.source_provenance,
+    });
+    assertReject(() => validatePriorStateArtifact(unavailableResultWithScore), 'FACT_VALUE_INVALID');
+
+    const independentlyRewrittenLabel = JSON.parse(result.artifactBytes.toString('utf8'));
+    const rewrittenLabel = independentlyRewrittenLabel.rows[0].target_label;
+    rewrittenLabel.provenance_input.result = {
+        ...rewrittenLabel.provenance_input.result,
+        home_score: 100,
+        away_score: 0,
+        outcome: 'home',
+    };
+    rewrittenLabel.status = 'AVAILABLE';
+    rewrittenLabel.outcome = 'home';
+    rewrittenLabel.provenance_digest = computeProvenanceDigest({
+        role: rewrittenLabel.role,
+        target_match_id: rewrittenLabel.canonical_match_id,
+        result: rewrittenLabel.provenance_input.result,
+        source_provenance: rewrittenLabel.provenance_input.source_provenance,
+    });
+    rewrittenLabel.source_fact_binding.fact_result_binding = computeFactResultBinding({
+        canonicalMatchId: rewrittenLabel.canonical_match_id,
+        result: rewrittenLabel.provenance_input.result,
+        sourceProvenance: rewrittenLabel.provenance_input.source_provenance,
+    });
+    assertReject(() => validatePriorStateArtifact(independentlyRewrittenLabel), 'PROVENANCE_INVALID');
+});
+
+test('GD-A03 binds the population to GD-A01 independently of artifact row accounting', () => {
+    const result = build(buildFixture());
+    const shrunk = JSON.parse(result.artifactBytes.toString('utf8'));
+    shrunk.rows.pop();
+    shrunk.population_accounting.target_population_count = shrunk.rows.length;
+    shrunk.population_accounting.rows_accounted = shrunk.rows.length;
+    shrunk.population_accounting.target_id_set_sha256 = admittedIdSetHash(
+        shrunk.rows.map(row => row.canonical_match_id)
+    );
+    shrunk.population_accounting.accounted_id_set_sha256 = shrunk.population_accounting.target_id_set_sha256;
+    assertReject(() => validatePriorStateArtifact(shrunk), 'POPULATION_MISMATCH');
 });
 
 test('GD-A03 receipt content hash rejects receipt provenance tampering', () => {
