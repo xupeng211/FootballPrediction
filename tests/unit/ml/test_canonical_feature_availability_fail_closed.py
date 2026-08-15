@@ -58,7 +58,6 @@ CANONICAL_FEATURES = [
 ]
 CANONICAL_FEATURE_COUNT = 20
 EXPECTED_FATIGUE = 0.5
-EXPECTED_ROLLING_PROVIDER_CALLS = 2
 EXPECTED_LEGACY_PROVIDER_CALLS = 7
 EXPECTED_SCHEMA_PROVIDER_CALLS = 4
 
@@ -161,18 +160,15 @@ def strict_provider_calls(monkeypatch: pytest.MonkeyPatch) -> dict[str, list[dic
     return calls
 
 
-def test_strict_success_preserves_exact_20_order_and_accepts_1500_and_05(
+def test_strict_fails_closed_before_compatibility_provider(
     strict_provider_calls: dict[str, list[dict[str, Any]]],
 ) -> None:
-    result = V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
+    with pytest.raises(
+        RequiredFeatureDataUnavailableError, match="canonical prior-state numeric source"
+    ):
+        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert result.success is True
-    assert result.features is not None
-    assert list(result.features.columns) == CANONICAL_FEATURES
-    assert result.features.shape == (1, CANONICAL_FEATURE_COUNT)
-    assert result.features.loc[0, "raw_elo_gap"] == 0.0
-    assert result.features.loc[0, "home_fatigue_index"] == EXPECTED_FATIGUE
-    assert len(strict_provider_calls["rolling"]) == EXPECTED_ROLLING_PROVIDER_CALLS
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 @pytest.mark.parametrize(
@@ -212,23 +208,18 @@ def test_missing_or_invalid_timestamp_fails_with_zero_provider_calls(
     assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
-def test_every_strict_provider_receives_the_same_target_cutoff(
+def test_strict_canonical_path_does_not_query_compatibility_providers(
     strict_provider_calls: dict[str, list[dict[str, Any]]],
 ) -> None:
-    V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
-    cutoff = "2026-08-14T19:00:00+00:00"
+    with pytest.raises(RequiredFeatureDataUnavailableError):
+        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert {call["before_match_date"] for call in strict_provider_calls["rolling"]} == {cutoff}
-    assert {call["before_match_date"] for call in strict_provider_calls["standings"]} == {cutoff}
-    assert {call["before_match_date"] for call in strict_provider_calls["elo"]} == {cutoff}
-    assert {call["match_date"] for call in strict_provider_calls["fatigue"]} == {cutoff}
-    assert all(call["strict"] for calls in strict_provider_calls.values() for call in calls)
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 @pytest.mark.parametrize("matches_count", [0, 4])
 def test_no_or_insufficient_rolling_history_fails_closed(
     strict_provider_calls: dict[str, list[dict[str, Any]]],
-    monkeypatch: pytest.MonkeyPatch,
     matches_count: int,
 ) -> None:
     def insufficient(**_kwargs: Any) -> dict[str, Any]:
@@ -236,19 +227,15 @@ def test_no_or_insufficient_rolling_history_fails_closed(
         result["matches_count"] = matches_count
         return result
 
-    monkeypatch.setattr(schema_manager_module.SchemaManager, "get_team_rolling_stats", insufficient)
-
     with pytest.raises(RequiredFeatureDataUnavailableError):
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert strict_provider_calls["standings"] == []
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
-def test_rolling_provider_exception_is_feature_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_rolling_provider_exception_is_feature_unavailable() -> None:
     def unavailable(**_kwargs: Any) -> dict[str, Any]:
         raise RuntimeError("database host must not cross the boundary")
-
-    monkeypatch.setattr(schema_manager_module.SchemaManager, "get_team_rolling_stats", unavailable)
 
     with pytest.raises(RequiredFeatureDataUnavailableError) as error:
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
@@ -259,7 +246,6 @@ def test_rolling_provider_exception_is_feature_unavailable(monkeypatch: pytest.M
 @pytest.mark.parametrize("provider_mode", ["no_data", "provider_error"])
 def test_standings_no_data_or_provider_error_fails_closed(
     strict_provider_calls: dict[str, list[dict[str, Any]]],
-    monkeypatch: pytest.MonkeyPatch,
     provider_mode: str,
 ) -> None:
     def standings(**_kwargs: Any) -> dict[str, Any]:
@@ -267,18 +253,15 @@ def test_standings_no_data_or_provider_error_fails_closed(
             raise RuntimeError("standings database failure")
         return {**_standings(), "played": 0, "position": 10, "points": 30}
 
-    monkeypatch.setattr(schema_manager_module.SchemaManager, "get_team_standings", standings)
-
     with pytest.raises(RequiredFeatureDataUnavailableError):
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert strict_provider_calls["rolling"]
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 @pytest.mark.parametrize("provider_mode", ["missing_team", "provider_error"])
 def test_elo_missing_or_provider_error_fails_closed(
     strict_provider_calls: dict[str, list[dict[str, Any]]],
-    monkeypatch: pytest.MonkeyPatch,
     provider_mode: str,
 ) -> None:
     def elo(*, team_names: list[str], **_kwargs: Any) -> dict[str, float]:
@@ -286,26 +269,22 @@ def test_elo_missing_or_provider_error_fails_closed(
             raise RuntimeError("ELO database failure")
         return {team_names[0]: 1500.0}
 
-    monkeypatch.setattr(schema_manager_module.SchemaManager, "get_elo_ratings", elo)
-
     with pytest.raises(RequiredFeatureDataUnavailableError):
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert strict_provider_calls["standings"]
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 def test_fatigue_provider_error_fails_closed(
-    strict_provider_calls: dict[str, list[dict[str, Any]]], monkeypatch: pytest.MonkeyPatch
+    strict_provider_calls: dict[str, list[dict[str, Any]]],
 ) -> None:
     def fatigue(**_kwargs: Any) -> float:
         raise RuntimeError("fatigue database failure")
 
-    monkeypatch.setattr(schema_manager_module.SchemaManager, "get_team_fatigue_index", fatigue)
-
     with pytest.raises(RequiredFeatureDataUnavailableError):
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert strict_provider_calls["elo"]
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 def test_missing_required_contract_key_never_zero_fills(
@@ -320,7 +299,7 @@ def test_missing_required_contract_key_never_zero_fills(
     with pytest.raises(RequiredFeatureDataUnavailableError):
         V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
 
-    assert len(strict_provider_calls["rolling"]) == EXPECTED_ROLLING_PROVIDER_CALLS
+    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
 
 class _SpyScaler:

@@ -297,6 +297,10 @@ test('GD-A02 produces admitted postmatch facts with exact provenance and no feat
     assert.equal(row.facts.xg.status, 'PARTIAL');
     assert.equal(row.facts.xg.home.value, 0.09059995412826538);
     assert.equal(row.facts.xg.away.value, null);
+    assert.equal(row.facts.shots_on_target.status, 'VALID');
+    assert.equal(row.facts.shots_on_target.aggregation, 'count_true_isOnTarget_by_team_id');
+    assert.equal(row.facts.shots_on_target.home.value, 1);
+    assert.equal(row.facts.shots_on_target.away.value, 0);
     for (const section of ['events', 'lineup', 'player_stats', 'shotmap', 'stats']) {
         assert.equal(row.facts.sections[section].present, true);
         assert.equal(row.facts.sections[section].version, 'fotmob-match-detail-parsed/v1');
@@ -335,6 +339,24 @@ test('GD-A02 preserves missing xG as partial/null and never fabricates zero', t 
     assert.equal(xg.status, 'PARTIAL');
     assert.equal(xg.home.value, null);
     assert.equal(xg.home.missing_shots, 1);
+});
+
+test('GD-A02 preserves missing isOnTarget as partial/null and never fabricates zero', t => {
+    const base = buildPair().payload.normalized;
+    const missingShot = { ...base.shotmap.shots[0] };
+    delete missingShot.isOnTarget;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [missingShot],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'PARTIAL');
+    assert.equal(shotsOnTarget.home.value, null);
+    assert.equal(shotsOnTarget.home.missing_shots, 1);
 });
 
 test('GD-A02 accounts a malformed source as rejection when another admitted row remains', t => {

@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- the permanent facts contract keeps schema, hash and receipt invariants together. */
+
 // lifecycle: permanent
 // GD-A02 facts artifact/receipt contract.  This module owns only the
 // file-first facts projection shape, hashes, population accounting and
@@ -21,8 +23,10 @@ const {
 const { canonicalJsonHash } = require('../fotmob/FotMobDetailCaptureContract');
 const { isPlainJsonData, validateStagingArtifact, SECTIONS } = require('../fotmob/FotMobDetailStagingContract');
 
-const FACTS_ASSEMBLY_SCHEMA_VERSION = 'golden-dataset-v1-gd-a02-facts-artifact/v1';
-const FACTS_RECEIPT_SCHEMA_VERSION = 'gd-a02-facts-assembly-receipt/v1';
+const FACTS_ASSEMBLY_SCHEMA_VERSION = 'golden-dataset-v1-gd-a02-facts-artifact/v2';
+const LEGACY_FACTS_ASSEMBLY_SCHEMA_VERSION = 'golden-dataset-v1-gd-a02-facts-artifact/v1';
+const FACTS_RECEIPT_SCHEMA_VERSION = 'gd-a02-facts-assembly-receipt/v2';
+const LEGACY_FACTS_RECEIPT_SCHEMA_VERSION = 'gd-a02-facts-assembly-receipt/v1';
 const FACTS_SOURCE_INDEX_SCHEMA_VERSION = 'gd-a02-facts-source-index/v1';
 const STAGE = 'GD-A02';
 const ARTIFACT_KIND = 'fotmob_facts_assembly';
@@ -33,6 +37,8 @@ const RESULT_VALUES = new Set(['home', 'draw', 'away']);
 const RESULT_STATUS_VALUES = new Set(['AVAILABLE', 'UNAVAILABLE']);
 const XG_STATUS_VALUES = new Set(['VALID', 'PARTIAL', 'UNAVAILABLE']);
 const XG_SIDE_STATUS_VALUES = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE']);
+const SHOTS_ON_TARGET_STATUS_VALUES = new Set(['VALID', 'PARTIAL', 'UNAVAILABLE']);
+const SHOTS_ON_TARGET_SIDE_STATUS_VALUES = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE']);
 const FACT_TIMING = Object.freeze({
     role: 'MATCH_FACT',
     timing_class: 'POSTMATCH_ONLY',
@@ -264,6 +270,73 @@ function validateXg(value, label) {
     }
 }
 
+function emptyShotsOnTargetProjection(status = 'UNAVAILABLE') {
+    return {
+        status,
+        source_path: 'normalized.shotmap.shots[*].isOnTarget',
+        aggregation: 'count_true_isOnTarget_by_team_id',
+        total_shots: null,
+        shots_with_on_target: null,
+        shots_without_on_target: null,
+        home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+        away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+    };
+}
+
+function validateShotsOnTargetSide(value, label) {
+    assertAllowedKeys(value, new Set(['value', 'status', 'known_shots', 'missing_shots']), label);
+    if (!SHOTS_ON_TARGET_SIDE_STATUS_VALUES.has(value.status)) {
+        fail(`${label}.status is invalid`, 'SCHEMA_MISMATCH');
+    }
+    assertInteger(value.known_shots, `${label}.known_shots`);
+    assertInteger(value.missing_shots, `${label}.missing_shots`);
+    if (value.value !== null && (!Number.isSafeInteger(value.value) || value.value < 0)) {
+        fail(`${label}.value is invalid`, 'FACT_VALUE_INVALID');
+    }
+    if (value.status === 'UNAVAILABLE' && value.value !== null) {
+        fail(`${label}.unavailable side must not carry a value`, 'FACT_VALUE_INVALID');
+    }
+    if (value.status === 'COMPLETE' && value.missing_shots !== 0) {
+        fail(`${label}.complete side cannot have missing shots`, 'FACT_VALUE_INVALID');
+    }
+}
+
+function validateShotsOnTarget(value, label) {
+    assertAllowedKeys(
+        value,
+        new Set([
+            'status',
+            'source_path',
+            'aggregation',
+            'total_shots',
+            'shots_with_on_target',
+            'shots_without_on_target',
+            'home',
+            'away',
+        ]),
+        label
+    );
+    if (!SHOTS_ON_TARGET_STATUS_VALUES.has(value.status)) {
+        fail(`${label}.status is invalid`, 'SCHEMA_MISMATCH');
+    }
+    assertText(value.source_path, `${label}.source_path`);
+    assertText(value.aggregation, `${label}.aggregation`);
+    for (const field of ['total_shots', 'shots_with_on_target', 'shots_without_on_target']) {
+        if (value[field] !== null) assertInteger(value[field], `${label}.${field}`);
+    }
+    validateShotsOnTargetSide(value.home, `${label}.home`);
+    validateShotsOnTargetSide(value.away, `${label}.away`);
+    if (value.status === 'UNAVAILABLE' && value.total_shots !== null) {
+        fail(`${label}.unavailable projection must not carry counts`, 'FACT_VALUE_INVALID');
+    }
+    if (
+        value.status !== 'UNAVAILABLE' &&
+        (value.total_shots === null || value.shots_with_on_target === null || value.shots_without_on_target === null)
+    ) {
+        fail(`${label} available projection must carry shot counts`, 'FACT_VALUE_INVALID');
+    }
+}
+
 function validateSection(value, section, label) {
     assertAllowedKeys(value, new Set(['present', 'version', 'coverage', 'schema_fingerprint']), label);
     if (typeof value.present !== 'boolean') fail(`${label}.present must be boolean`, 'SCHEMA_MISMATCH');
@@ -354,7 +427,7 @@ function validateProvenance(value, label) {
     }
 }
 
-function validateFactsRow(row, index) {
+function validateFactsRow(row, index, { requireShotsOnTarget = false } = {}) {
     const label = `artifact.rows[${index}]`;
     assertAllowedKeys(
         row,
@@ -386,7 +459,7 @@ function validateFactsRow(row, index) {
     validateProvenance(row.provenance, `${label}.provenance`);
     validateTemporal(row.temporal_semantics, `${label}.temporal_semantics`);
     assertFactsObject(row.facts, `${label}.facts`);
-    assertAllowedKeys(row.facts, new Set(['sections', 'match_result', 'xg']), `${label}.facts`);
+    assertAllowedKeys(row.facts, new Set(['sections', 'match_result', 'xg', 'shots_on_target']), `${label}.facts`);
     assertFactsObject(row.facts.sections, `${label}.facts.sections`);
     assertAllowedKeys(row.facts.sections, new Set(SECTIONS), `${label}.facts.sections`);
     for (const section of SECTIONS) {
@@ -394,6 +467,12 @@ function validateFactsRow(row, index) {
     }
     validateResult(row.facts.match_result, `${label}.facts.match_result`);
     validateXg(row.facts.xg, `${label}.facts.xg`);
+    if (requireShotsOnTarget && !row.facts.shots_on_target) {
+        fail(`${label}.facts.shots_on_target is required by the v2 contract`, 'SCHEMA_MISMATCH');
+    }
+    if (row.facts.shots_on_target) {
+        validateShotsOnTarget(row.facts.shots_on_target, `${label}.facts.shots_on_target`);
+    }
     assertAllowedKeys(row.admission, new Set(['status', 'rejection_reason']), `${label}.admission`);
     if (row.admission.status !== 'ADMITTED' || row.admission.rejection_reason !== null) {
         fail(`${label}.admission is not admitted`, 'SCHEMA_MISMATCH');
@@ -532,7 +611,9 @@ function validateFactsArtifact(document, options = {}) {
         ]),
         'GD-A02 artifact'
     );
-    if (document.schema_version !== FACTS_ASSEMBLY_SCHEMA_VERSION) {
+    const isCurrentSchema = document.schema_version === FACTS_ASSEMBLY_SCHEMA_VERSION;
+    const isLegacySchema = document.schema_version === LEGACY_FACTS_ASSEMBLY_SCHEMA_VERSION;
+    if (!isCurrentSchema && !isLegacySchema) {
         fail('GD-A02 artifact schema is unsupported', 'UNSUPPORTED_VERSION');
     }
     if (document.stage !== STAGE || document.artifact_kind !== ARTIFACT_KIND) {
@@ -570,7 +651,9 @@ function validateFactsArtifact(document, options = {}) {
     if (document.rows.length === 0 && document.rejected_rows.length === 0) {
         fail('GD-A02 artifact must contain admitted or rejected rows', 'POPULATION_MISMATCH');
     }
-    const rows = document.rows.map(validateFactsRow);
+    const rows = document.rows.map((row, index) =>
+        validateFactsRow(row, index, { requireShotsOnTarget: isCurrentSchema })
+    );
     const rejectedRows = document.rejected_rows.map(validateRejectedRow);
     const admittedIds = new Set();
     for (const row of rows) {
@@ -688,7 +771,10 @@ function validateFactsSourceIndex(document) {
 }
 
 function validateReceiptHeader(receipt) {
-    if (receipt.schema_version !== FACTS_RECEIPT_SCHEMA_VERSION) {
+    if (
+        receipt.schema_version !== FACTS_RECEIPT_SCHEMA_VERSION &&
+        receipt.schema_version !== LEGACY_FACTS_RECEIPT_SCHEMA_VERSION
+    ) {
         fail('GD-A02 receipt schema is unsupported', 'UNSUPPORTED_VERSION');
     }
     if (receipt.stage !== STAGE || receipt.build_mode !== 'file_first') {
@@ -713,6 +799,7 @@ function validateReceiptHeader(receipt) {
     validateScope(receipt.scope);
 }
 
+// eslint-disable-next-line complexity -- receipt/document binding is one fail-closed invariant.
 function validateReceiptDocument(receipt, artifactBytes = null, artifact = null) {
     assertFactsObject(receipt, 'GD-A02 receipt');
     assertAllowedKeys(
@@ -744,6 +831,14 @@ function validateReceiptDocument(receipt, artifactBytes = null, artifact = null)
     }
     if (artifact) {
         const normalizedArtifact = validateFactsArtifact(artifact);
+        if (
+            (normalizedArtifact.schema_version === FACTS_ASSEMBLY_SCHEMA_VERSION &&
+                receipt.schema_version !== FACTS_RECEIPT_SCHEMA_VERSION) ||
+            (normalizedArtifact.schema_version === LEGACY_FACTS_ASSEMBLY_SCHEMA_VERSION &&
+                receipt.schema_version !== LEGACY_FACTS_RECEIPT_SCHEMA_VERSION)
+        ) {
+            fail('GD-A02 artifact/receipt schema versions do not match', 'UNSUPPORTED_VERSION');
+        }
         if (receipt.output_business_sha256 !== normalizedArtifact.business_content_sha256) {
             fail('GD-A02 receipt business hash mismatch', 'BUSINESS_HASH_MISMATCH');
         }
@@ -795,7 +890,9 @@ function validateOutputFiles(artifactBytes, receiptBytes, options = {}) {
 module.exports = {
     ARTIFACT_KIND,
     FACTS_ASSEMBLY_SCHEMA_VERSION,
+    LEGACY_FACTS_ASSEMBLY_SCHEMA_VERSION,
     FACTS_RECEIPT_SCHEMA_VERSION,
+    LEGACY_FACTS_RECEIPT_SCHEMA_VERSION,
     FACTS_SOURCE_INDEX_SCHEMA_VERSION,
     FACT_TIMING,
     GdA02ContractError,
@@ -808,6 +905,7 @@ module.exports = {
     computeFactsSetHash,
     computeSchemaFingerprint,
     emptyXgProjection,
+    emptyShotsOnTargetProjection,
     resultFromScores,
     sha256Bytes,
     stableStringify,
@@ -820,4 +918,5 @@ module.exports = {
     validateScope,
     validateTemporal,
     validateXg,
+    validateShotsOnTarget,
 };

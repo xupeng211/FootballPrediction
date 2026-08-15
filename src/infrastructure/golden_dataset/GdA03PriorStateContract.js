@@ -16,7 +16,7 @@ const {
 
 const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v1';
 const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
-const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v1';
+const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
 const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
 const SCHEDULE_TEAMS_PER_SEASON = TEAMS_PER_SEASON;
 const SCHEDULE_FIXTURES_PER_TEAM = FIXTURES_PER_TEAM;
@@ -97,31 +97,39 @@ const FEATURE_SEMANTICS = [
         feature_name: 'rolling_shots_on_target_home',
         family: FEATURE_FAMILIES.rolling,
         intended_semantics: 'Target home team mean shots on target over five actual prior matches.',
-        source_authority: 'No accepted numeric field in the GD-A02 factual projection.',
-        source_fields: ['GD-A02 sections.stats is fingerprint-only; no numeric shots-on-target value'],
+        source_authority: 'GD-A02 v2 facts projection from the existing validated FotMob normalized shotmap.',
+        source_fields: [
+            'facts.shots_on_target.home.value',
+            'facts.shots_on_target.home.status=COMPLETE',
+            'facts.shots_on_target source path=normalized.shotmap.shots[*].isOnTarget',
+        ],
         history_scope: 'Premier League, same season, target home team.',
         lookback_rule: 'Exactly five actual prior matches would be required.',
-        derivation: 'No derivation is permitted until a numeric source field is contractually projected.',
+        derivation: 'Arithmetic mean of the five proven team-side on-target shot counts.',
         cutoff_rule: FEATURE_CUTOFF_RELATION,
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
-        provenance_requirements: 'A future source must bind field path, source hash and source match ID.',
-        semantics_status: SEMANTICS_STATUS.UNAVAILABLE,
+        provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
+        semantics_status: SEMANTICS_STATUS.PROVEN_DERIVED,
     },
     {
         feature_name: 'rolling_shots_on_target_away',
         family: FEATURE_FAMILIES.rolling,
         intended_semantics: 'Target away team mean shots on target over five actual prior matches.',
-        source_authority: 'No accepted numeric field in the GD-A02 factual projection.',
-        source_fields: ['GD-A02 sections.stats is fingerprint-only; no numeric shots-on-target value'],
+        source_authority: 'GD-A02 v2 facts projection from the existing validated FotMob normalized shotmap.',
+        source_fields: [
+            'facts.shots_on_target.away.value',
+            'facts.shots_on_target.away.status=COMPLETE',
+            'facts.shots_on_target source path=normalized.shotmap.shots[*].isOnTarget',
+        ],
         history_scope: 'Premier League, same season, target away team.',
         lookback_rule: 'Exactly five actual prior matches would be required.',
-        derivation: 'No derivation is permitted until a numeric source field is contractually projected.',
+        derivation: 'Arithmetic mean of the five proven team-side on-target shot counts.',
         cutoff_rule: FEATURE_CUTOFF_RELATION,
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
-        provenance_requirements: 'A future source must bind field path, source hash and source match ID.',
-        semantics_status: SEMANTICS_STATUS.UNAVAILABLE,
+        provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
+        semantics_status: SEMANTICS_STATUS.PROVEN_DERIVED,
     },
     {
         feature_name: 'rolling_possession_home',

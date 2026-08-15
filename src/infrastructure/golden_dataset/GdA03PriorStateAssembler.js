@@ -134,9 +134,7 @@ function normalizeSchedule(scheduleCandidates) {
 
 function compareSchedule(left, right) {
     return (
-        left.season.localeCompare(right.season) ||
-        left.kickoff_ms - right.kickoff_ms ||
-        left.id.localeCompare(right.id)
+        left.season.localeCompare(right.season) || left.kickoff_ms - right.kickoff_ms || left.id.localeCompare(right.id)
     );
 }
 
@@ -176,6 +174,9 @@ function normalizeFactRow(row, label) {
     assertObject(row.facts, `${label}.facts`);
     assertObject(row.facts.match_result, `${label}.facts.match_result`);
     assertObject(row.facts.xg, `${label}.facts.xg`);
+    if (row.facts.shots_on_target !== undefined) {
+        assertObject(row.facts.shots_on_target, `${label}.facts.shots_on_target`);
+    }
     if (!row.provenance || typeof row.provenance !== 'object' || Array.isArray(row.provenance)) {
         fail(`${label}.provenance is required`, 'PROVENANCE_INVALID');
     }
@@ -274,7 +275,10 @@ function validateScheduleClosure(schedule, closure) {
                     counts.home !== closure.team_closure.home_fixtures_per_team ||
                     counts.away !== closure.team_closure.away_fixtures_per_team
                 ) {
-                    fail(`schedule season ${season} team ${team} fixture closure is invalid`, 'HISTORY_CLOSURE_INVALID');
+                    fail(
+                        `schedule season ${season} team ${team} fixture closure is invalid`,
+                        'HISTORY_CLOSURE_INVALID'
+                    );
                 }
             }
         }
@@ -471,6 +475,20 @@ function xgForTeam(fact, candidate, teamName) {
     return projection.value;
 }
 
+function shotsOnTargetForTeam(fact, candidate, teamName) {
+    const side = teamSide(candidate, teamName);
+    const projection = fact?.facts?.shots_on_target?.[side];
+    if (
+        !projection ||
+        projection.status !== 'COMPLETE' ||
+        !Number.isSafeInteger(projection.value) ||
+        projection.value < 0
+    ) {
+        return null;
+    }
+    return projection.value;
+}
+
 function buildRollingXgLine({ featureName, target, teamName, matches, factsById }) {
     const sourceMatches = previousWindow(matches, REQUIRED_ROLLING_HISTORY_COUNT);
     const reasons = [];
@@ -509,6 +527,52 @@ function buildRollingXgLine({ featureName, target, teamName, matches, factsById 
         reasons,
         derivation: 'mean_exact_previous_5_complete_team_xg',
         sourceFields: ['facts.xg.<team_side>.value'],
+        sourceProjections: projections,
+    });
+}
+
+function buildRollingShotsOnTargetLine({ featureName, target, teamName, matches, factsById }) {
+    const sourceMatches = previousWindow(matches, REQUIRED_ROLLING_HISTORY_COUNT);
+    const reasons = [];
+    if (sourceMatches.length < REQUIRED_ROLLING_HISTORY_COUNT) reasons.push(REASON_CODES.INSUFFICIENT_HISTORY);
+    const evidence = [];
+    const values = [];
+    const projections = [];
+    for (const candidate of sourceMatches) {
+        const fact = getFactForSource(factsById, candidate, target, featureName);
+        const value = shotsOnTargetForTeam(fact, candidate, teamName);
+        if (fact && value !== null) {
+            evidence.push(candidate);
+            values.push(value);
+            projections.push(
+                factProvenanceProjection(fact, `facts.shots_on_target.${teamSide(candidate, teamName)}.value`)
+            );
+        } else {
+            reasons.push(REASON_CODES.HISTORY_GAP, REASON_CODES.NO_PROVEN_SOURCE_FACT);
+        }
+    }
+    const derivation = 'mean_exact_previous_5_complete_team_shots_on_target';
+    const sourceFields = ['facts.shots_on_target.<team_side>.value'];
+    if (sourceMatches.length === REQUIRED_ROLLING_HISTORY_COUNT && values.length === sourceMatches.length) {
+        return featureLine({
+            featureName,
+            target,
+            sourceMatches,
+            sourceEvidence: evidence,
+            value: values.reduce((sum, item) => sum + item, 0) / values.length,
+            derivation,
+            sourceFields,
+            sourceProjections: projections,
+        });
+    }
+    return featureLine({
+        featureName,
+        target,
+        sourceMatches,
+        sourceEvidence: evidence,
+        reasons,
+        derivation,
+        sourceFields,
         sourceProjections: projections,
     });
 }
@@ -809,15 +873,19 @@ function buildTargetFeatures({ target, schedule, factsById, indexes, closure, so
     const featureByName = {
         rolling_xg_home: homeXg,
         rolling_xg_away: awayXg,
-        rolling_shots_on_target_home: buildNoNumericRollingLine({
+        rolling_shots_on_target_home: buildRollingShotsOnTargetLine({
             featureName: 'rolling_shots_on_target_home',
             target,
+            teamName: target.home_team,
             matches: homeMatches,
+            factsById,
         }),
-        rolling_shots_on_target_away: buildNoNumericRollingLine({
+        rolling_shots_on_target_away: buildRollingShotsOnTargetLine({
             featureName: 'rolling_shots_on_target_away',
             target,
+            teamName: target.away_team,
             matches: awayMatches,
+            factsById,
         }),
         rolling_possession_home: buildNoNumericRollingLine({
             featureName: 'rolling_possession_home',

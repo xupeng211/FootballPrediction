@@ -76,6 +76,10 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
     ]
 
     REQUIRED_ROLLING_HISTORY_COUNT = 5
+    # The current SchemaManager providers expose compatibility proxies/defaults,
+    # not the GD-A03 authoritative prior-state lineage.  Until a runtime source
+    # with the same contract is wired, canonical inference must fail closed.
+    CANONICAL_RUNTIME_NUMERIC_SOURCE_STATUS = "NOT_READY"
 
     def adapt(self, raw_features: dict[str, Any], *, strict: bool = False) -> AdaptationResult:
         """
@@ -113,6 +117,12 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
                         ).isoformat()
                 except (AttributeError, TypeError, ValueError):
                     pass
+
+            if strict:
+                _raise_feature_data_unavailable(
+                    "canonical prior-state numeric source unavailable; "
+                    "SchemaManager compatibility proxies are not canonical"
+                )
 
             # 动态获取滚动特征（历史平均值）
             from src.database.schema_manager import SchemaManager

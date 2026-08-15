@@ -29,6 +29,7 @@ const {
     computeArtifactBusinessHash,
     computeFactsSetHash,
     computeSchemaFingerprint,
+    emptyShotsOnTargetProjection,
     resultFromScores,
     validateFactsArtifact,
     validateFactsSourceIndex,
@@ -351,6 +352,88 @@ function buildXgProjection(payload) {
     };
 }
 
+// The existing FotMob parser/staging authority retains the normalized shotmap.
+// This projection promotes only the source's explicit boolean observation; it
+// never estimates shots on target from goals or from the summary stats section.
+// eslint-disable-next-line complexity -- source identity and boolean observation checks stay together.
+function buildShotsOnTargetProjection(payload) {
+    const normalized = payload.normalized || {};
+    const shotmap = normalized.shotmap;
+    if (!shotmap || !Array.isArray(shotmap.shots) || shotmap.shots.length === 0) {
+        return emptyShotsOnTargetProjection();
+    }
+    const toTeamId = value => {
+        if (Number.isSafeInteger(value) && value > 0) return value;
+        if (typeof value === 'string' && /^\d+$/.test(value)) {
+            const parsed = Number(value);
+            if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+        }
+        return null;
+    };
+    const homeTeamId = toTeamId(normalized.home_team && normalized.home_team.id);
+    const awayTeamId = toTeamId(normalized.away_team && normalized.away_team.id);
+    if (homeTeamId === null || awayTeamId === null || homeTeamId === awayTeamId) {
+        return emptyShotsOnTargetProjection();
+    }
+    const sides = {
+        home: { value: 0, known_shots: 0, missing_shots: 0 },
+        away: { value: 0, known_shots: 0, missing_shots: 0 },
+    };
+    let shotsWithOnTarget = 0;
+    let shotsWithoutOnTarget = 0;
+    let invalidIdentity = false;
+    for (const shot of shotmap.shots) {
+        const teamId = toTeamId(shot && shot.teamId);
+        const side =
+            teamId !== null && teamId === homeTeamId
+                ? 'home'
+                : teamId !== null && teamId === awayTeamId
+                  ? 'away'
+                  : null;
+        if (!side) {
+            invalidIdentity = true;
+            shotsWithoutOnTarget += 1;
+            continue;
+        }
+        if (typeof (shot && shot.isOnTarget) !== 'boolean') {
+            sides[side].missing_shots += 1;
+            shotsWithoutOnTarget += 1;
+            continue;
+        }
+        sides[side].known_shots += 1;
+        shotsWithOnTarget += shot.isOnTarget ? 1 : 0;
+        if (shot.isOnTarget === true) sides[side].value += 1;
+    }
+    const buildSide = side => {
+        if (invalidIdentity || sides[side].missing_shots > 0) {
+            return {
+                value: null,
+                status: 'PARTIAL',
+                known_shots: sides[side].known_shots,
+                missing_shots: sides[side].missing_shots,
+            };
+        }
+        return {
+            value: sides[side].value,
+            status: 'COMPLETE',
+            known_shots: sides[side].known_shots,
+            missing_shots: 0,
+        };
+    };
+    const home = buildSide('home');
+    const away = buildSide('away');
+    return {
+        status: home.status === 'COMPLETE' && away.status === 'COMPLETE' ? 'VALID' : 'PARTIAL',
+        source_path: 'normalized.shotmap.shots[*].isOnTarget',
+        aggregation: 'count_true_isOnTarget_by_team_id',
+        total_shots: shotmap.shots.length,
+        shots_with_on_target: shotsWithOnTarget,
+        shots_without_on_target: shotsWithoutOnTarget,
+        home,
+        away,
+    };
+}
+
 function buildSectionProjection(stagingArtifact, section) {
     const source = stagingArtifact.sections[section];
     return {
@@ -411,6 +494,7 @@ function buildFactsRow(expectedRow, frozenRow, entry) {
             ),
             match_result: result,
             xg: buildXgProjection(entry.capturePayload),
+            shots_on_target: buildShotsOnTargetProjection(entry.capturePayload),
         },
         admission: { status: 'ADMITTED', rejection_reason: null },
     };

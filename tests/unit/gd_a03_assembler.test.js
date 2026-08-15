@@ -82,6 +82,16 @@ function fact(row, index) {
                 home: { value: homeXg, status: 'COMPLETE', known_shots: 5, missing_shots: 0 },
                 away: { value: awayXg, status: 'COMPLETE', known_shots: 5, missing_shots: 0 },
             },
+            shots_on_target: {
+                status: 'UNAVAILABLE',
+                source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                aggregation: 'count_true_isOnTarget_by_team_id',
+                total_shots: null,
+                shots_with_on_target: null,
+                shots_without_on_target: null,
+                home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+                away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+            },
             sections: {},
         },
         provenance: {
@@ -96,6 +106,19 @@ function fact(row, index) {
             matched_id: row.id,
             candidate_ids: [row.id],
         },
+    };
+}
+
+function completeShotsOnTarget(home, away) {
+    return {
+        status: 'VALID',
+        source_path: 'normalized.shotmap.shots[*].isOnTarget',
+        aggregation: 'count_true_isOnTarget_by_team_id',
+        total_shots: home + away + 2,
+        shots_with_on_target: home + away,
+        shots_without_on_target: 0,
+        home: { value: home, status: 'COMPLETE', known_shots: home + 1, missing_shots: 0 },
+        away: { value: away, status: 'COMPLETE', known_shots: away + 1, missing_shots: 0 },
     };
 }
 
@@ -213,6 +236,106 @@ test('GD-A03 name/order identity matches config and V26_6_PreMatchAdapter', () =
     assert.equal(loaded.runtimeFeatureAdapter.symbol, 'V26_6_PreMatchAdapter.V26_6_FEATURES');
 });
 
+test('GD-A03 closes SOT from GD-A02 shotmap facts with exact five-match lineage', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const result = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    const target = targetRow(result, fixture.targetId);
+    assert.equal(target.features.rolling_shots_on_target_home.value, 3);
+    assert.equal(target.features.rolling_shots_on_target_away.value, 8);
+    assert.deepEqual(target.features.rolling_shots_on_target_home.source_evidence_match_ids, [
+        ...target.features.rolling_shots_on_target_home.source_match_ids,
+    ]);
+    assert.match(target.features.rolling_shots_on_target_home.provenance_inputs[0].field, /^facts\.shots_on_target\./);
+    assert.equal(result.artifact.validation_counters.target_match_fact_dependency_count, 0);
+
+    const targetFact = facts.find(row => row.canonical_match_id === fixture.targetId);
+    targetFact.facts.shots_on_target.home.value = 999;
+    const targetMutated = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    assert.equal(
+        targetRow(targetMutated, fixture.targetId).features.rolling_shots_on_target_home.value,
+        target.features.rolling_shots_on_target_home.value
+    );
+});
+
+test('GD-A03 SOT missing prior evidence fails closed without reaching older history', () => {
+    const fixture = buildFixture({ includeSixth: true });
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const missingId = fixture.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
+    const missing = facts.find(row => row.canonical_match_id === missingId);
+    missing.facts.shots_on_target = {
+        ...missing.facts.shots_on_target,
+        status: 'PARTIAL',
+        home: { value: null, status: 'PARTIAL', known_shots: 0, missing_shots: 1 },
+    };
+    const result = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
+    const line = targetRow(result, fixture.targetId).features.rolling_shots_on_target_home;
+    assert.equal(line.value, null);
+    assert.equal(line.source_match_ids.length, 5);
+    assert.ok(line.source_match_ids.includes(missingId));
+    assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.HISTORY_GAP));
+    assert.equal(result.artifact.validation_counters.silent_history_gap_count, 0);
+});
+
+test('GD-A03 SOT earlier target is invariant under later source-fact mutation', () => {
+    const fixture = buildFixture();
+    const facts = fixture.facts.map((row, index) => ({
+        ...row,
+        facts: {
+            ...row.facts,
+            shots_on_target: completeShotsOnTarget(index + 1, index + 1),
+        },
+    }));
+    const future = candidate('47_20242025_9999999', '2024-07-20T12:00:00Z', 'Home FC', 'Future FC');
+    const futureFactBase = fact(future, 99);
+    const futureFact = {
+        ...futureFactBase,
+        facts: {
+            ...futureFactBase.facts,
+            shots_on_target: completeShotsOnTarget(7, 8),
+        },
+    };
+    const options = {
+        ...fixture.options,
+        scheduleCandidates: [...fixture.schedule, future],
+        targetRows: [...fixture.options.targetRows, { ...future, canonical_match_id: future.id }],
+        factRows: [...facts, futureFact],
+        scheduleClosure: {
+            ...fixture.options.scheduleClosure,
+            per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
+        },
+    };
+    const baseline = buildPriorStateFeatureView(options);
+    const mutatedFutureFact = {
+        ...futureFact,
+        facts: {
+            ...futureFact.facts,
+            shots_on_target: {
+                ...futureFact.facts.shots_on_target,
+                home: { ...futureFact.facts.shots_on_target.home, value: 999 },
+            },
+        },
+    };
+    const mutated = buildPriorStateFeatureView({ ...options, factRows: [...facts, mutatedFutureFact] });
+    assert.equal(
+        targetRow(mutated, fixture.targetId).features.rolling_shots_on_target_home.value,
+        targetRow(baseline, fixture.targetId).features.rolling_shots_on_target_home.value
+    );
+    assert.equal(mutated.artifact.validation_counters.future_match_dependency_count, 0);
+});
+
 test('GD-A03 is deterministic across input reorder and ignores future fixtures for earlier targets', () => {
     const fixture = buildFixture();
     const base = build(fixture);
@@ -241,14 +364,8 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
 test('GD-A03 schedule normalization rejects non-canonical IDs and timestamps', () => {
     const fixture = buildFixture();
     const valid = fixture.schedule[0];
-    assertReject(
-        () => normalizeSchedule([{ ...valid, source_match_id: 'not-numeric' }]),
-        'IDENTITY_CONFLICT'
-    );
-    assertReject(
-        () => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]),
-        'FACT_VALUE_INVALID'
-    );
+    assertReject(() => normalizeSchedule([{ ...valid, source_match_id: 'not-numeric' }]), 'IDENTITY_CONFLICT');
+    assertReject(() => normalizeSchedule([{ ...valid, kickoff_at: '2024-07-03' }]), 'FACT_VALUE_INVALID');
 });
 
 test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture', () => {
@@ -262,12 +379,7 @@ test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture'
                 [teams[awayIndex], teams[homeIndex]],
             ]) {
                 schedule.push(
-                    candidate(
-                        `47_20242025_${String(sequence).padStart(7, '0')}`,
-                        '2024-07-01T12:00:00Z',
-                        home,
-                        away
-                    )
+                    candidate(`47_20242025_${String(sequence).padStart(7, '0')}`, '2024-07-01T12:00:00Z', home, away)
                 );
                 sequence += 1;
             }
@@ -290,10 +402,7 @@ test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture'
     assert.doesNotThrow(() => validateScheduleClosure(normalizeSchedule(schedule), closure));
     const tampered = schedule.map(row => ({ ...row }));
     tampered[0].home_team = 'Reassigned Team';
-    assertReject(
-        () => validateScheduleClosure(normalizeSchedule(tampered), closure),
-        'HISTORY_CLOSURE_INVALID'
-    );
+    assertReject(() => validateScheduleClosure(normalizeSchedule(tampered), closure), 'HISTORY_CLOSURE_INVALID');
 });
 
 test('GD-A03 records an actual missing recent match and does not reach farther back', () => {
