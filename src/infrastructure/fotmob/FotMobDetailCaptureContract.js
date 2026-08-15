@@ -72,6 +72,25 @@ const NETWORK_AUTHORIZATION_MODE = 'explicit_network_authorization';
 // so persisted provenance never leaks the raw-data marker itself.)
 const TRUSTED_OBSERVED_ID_SOURCES = new Set(['general.matchId', 'matchId']);
 
+// Response-derived team IDs provide an independent side binding for factual
+// shotmap fields. Persist the exact raw-response field path with each ID so
+// downstream assembly can distinguish it from a parser-derived or
+// request-side value.
+const TRUSTED_OBSERVED_TEAM_ID_SOURCES = new Set([
+    'general.homeTeam.id',
+    'general.homeTeam.teamId',
+    'general.homeTeam.fotmobId',
+    'general.awayTeam.id',
+    'general.awayTeam.teamId',
+    'general.awayTeam.fotmobId',
+    'header.teams[0].id',
+    'header.teams[0].teamId',
+    'header.teams[0].fotmobId',
+    'header.teams[1].id',
+    'header.teams[1].teamId',
+    'header.teams[1].fotmobId',
+]);
+
 const REQUIRED_SOURCE_PROVIDER = 'FotMob';
 const REQUIRED_COMPETITION = 'Premier League';
 const REQUIRED_LEAGUE_ID = '47';
@@ -1025,7 +1044,9 @@ function validateCaptureManifest(manifest) {
  * @param {object} args - {
  *   candidate (plan candidate), parsedData (FotMobRawParser output .data),
  *   observedIdentity: { home_team, away_team, observed_match_id,
- *                       observed_match_id_source, observed_match_id_conflict }
+ *                       observed_match_id_source, observed_match_id_conflict,
+ *                       observed_home_team_id, observed_home_team_id_source,
+ *                       observed_away_team_id, observed_away_team_id_source }
  * }
  * @returns {object} payload document (with stable_payload_sha256)
  */
@@ -1105,6 +1126,23 @@ function buildCapturePayload(args = {}) {
         // derived value.
         observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
     };
+    for (const [side, idValue, sourceValue] of [
+        ['home', observed.observed_home_team_id, observed.observed_home_team_id_source],
+        ['away', observed.observed_away_team_id, observed.observed_away_team_id_source],
+    ]) {
+        const normalizedId =
+            Number.isSafeInteger(idValue) && idValue > 0
+                ? idValue
+                : typeof idValue === 'string' && /^\d+$/.test(idValue)
+                  ? Number(idValue)
+                  : null;
+        if (Number.isSafeInteger(normalizedId) && normalizedId > 0) {
+            observedIdentity[`observed_${side}_team_id`] = normalizedId;
+            if (typeof sourceValue === 'string' && sourceValue !== '') {
+                observedIdentity[`observed_${side}_team_id_source`] = sourceValue;
+            }
+        }
+    }
     const payload = {
         schema_version: PAYLOAD_SCHEMA_VERSION,
         source_provider: REQUIRED_SOURCE_PROVIDER,
@@ -1219,6 +1257,7 @@ module.exports = {
     MIN_BODY_BYTES,
     BLOCK_MARKERS,
     TRUSTED_OBSERVED_ID_SOURCES,
+    TRUSTED_OBSERVED_TEAM_ID_SOURCES,
     MANIFEST_REQUIRED_FIELDS,
     DETAIL_ARTIFACT_REQUIRED_FIELDS,
     PLAN_REQUIRED_FIELDS,

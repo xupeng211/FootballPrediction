@@ -45,6 +45,7 @@ const {
     BLOCK_MARKERS,
     assertNoSymlinkAncestors,
     ensureRealDirectoryTree,
+    normalizeTeamName,
 } = require('./FotMobDetailCaptureContract');
 
 const {
@@ -90,6 +91,44 @@ const FIXED_USER_AGENT =
 
 const ACCESS_CONTROL_STATUSES = new Set([401, 403, 407, 429]);
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+function normalizeResponseTeamId(value) {
+    if (Number.isSafeInteger(value) && value > 0) return value;
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number(value);
+        if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+    }
+    return null;
+}
+
+// The ordered raw-response fallback and field allowlist are intentionally
+// kept together so the retained source path matches the identity decision.
+// eslint-disable-next-line complexity
+function responseDerivedTeamId(rawData, side, expectedName) {
+    const general = rawData && rawData.general ? rawData.general : {};
+    const header = rawData && rawData.header ? rawData.header : {};
+    const index = side === 'home' ? 0 : 1;
+    const generalKey = side === 'home' ? 'homeTeam' : 'awayTeam';
+    const candidates = [
+        { source: `general.${generalKey}`, value: general[generalKey] },
+        {
+            source: `header.teams[${index}]`,
+            value: Array.isArray(header.teams) ? header.teams[index] : null,
+        },
+    ];
+    const expected = normalizeTeamName(expectedName);
+    for (const candidate of candidates) {
+        const team = candidate.value;
+        if (!team || typeof team !== 'object') continue;
+        const name = team.name ?? team.teamName ?? team.shortName;
+        if (typeof name !== 'string' || normalizeTeamName(name) !== expected) continue;
+        for (const field of ['id', 'teamId', 'fotmobId']) {
+            const id = normalizeResponseTeamId(team[field]);
+            if (id !== null) return { id, source: `${candidate.source}.${field}` };
+        }
+    }
+    return { id: null, source: null };
+}
 
 // Block markers are imported from the shared contract module (single source).
 
@@ -1885,6 +1924,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
         let observedMatchIdResponseDerived = false;
         let observedHome = null;
         let observedAway = null;
+        let observedHomeTeamId = null;
+        let observedAwayTeamId = null;
+        let observedHomeTeamIdSource = null;
+        let observedAwayTeamIdSource = null;
         let meta = null;
         let stableRawPayloadSha256 = null;
         let parsedRaw = null;
@@ -1920,6 +1963,12 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 const g = rawData && rawData.general ? rawData.general : {};
                 observedHome = String(g.homeTeam?.name ?? g.home_team?.name ?? g.home_team ?? '').trim() || null;
                 observedAway = String(g.awayTeam?.name ?? g.away_team?.name ?? g.away_team ?? '').trim() || null;
+                const observedHomeIdentity = responseDerivedTeamId(rawData, 'home', candidate.home_team);
+                const observedAwayIdentity = responseDerivedTeamId(rawData, 'away', candidate.away_team);
+                observedHomeTeamId = observedHomeIdentity.id;
+                observedAwayTeamId = observedAwayIdentity.id;
+                observedHomeTeamIdSource = observedHomeIdentity.source;
+                observedAwayTeamIdSource = observedAwayIdentity.source;
                 meta = rawData && rawData._meta ? rawData._meta : null;
                 // The authoritative stable-raw-payload hash is the fetcher's,
                 // computed with the trusted response-derived identity
@@ -1999,6 +2048,10 @@ async function executeCaptureRunLocked(options, plan, binding, delayMs, fsImpl, 
                 observed_match_id_source: observedMatchIdSource,
                 observed_match_id_conflict: observedMatchIdConflict,
                 observed_match_id_is_response_derived: observedMatchIdResponseDerived,
+                observed_home_team_id: observedHomeTeamId,
+                observed_home_team_id_source: observedHomeTeamIdSource,
+                observed_away_team_id: observedAwayTeamId,
+                observed_away_team_id_source: observedAwayTeamIdSource,
             },
         });
         const payloadBody = JSON.stringify(stablePayload, null, 2) + '\n';

@@ -249,6 +249,8 @@ test('GD-A03 closes SOT from GD-A02 shotmap facts with exact five-match lineage'
     const target = targetRow(result, fixture.targetId);
     assert.equal(target.features.rolling_shots_on_target_home.value, 3);
     assert.equal(target.features.rolling_shots_on_target_away.value, 8);
+    assert.equal(target.feature_vector_eligibility.status, 'NO');
+    assert.ok(target.feature_vector_eligibility.reason_codes.includes(REASON_CODES.SEMANTICS_UNPROVEN));
     assert.deepEqual(target.features.rolling_shots_on_target_home.source_evidence_match_ids, [
         ...target.features.rolling_shots_on_target_home.source_match_ids,
     ]);

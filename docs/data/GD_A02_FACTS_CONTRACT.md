@@ -54,7 +54,12 @@ artifact for historical revalidation. Its deterministic rows contain:
   boolean `isOnTarget` observation by exact home/away `teamId`. The accepted
   aggregation is `count_true_isOnTarget_by_team_id`; it does not use goals,
   summary-stat proxies, interpolation, or defaults. A missing/invalid boolean
-  or reversed/unknown team identity makes the affected side unavailable. If a
+  or reversed/unknown team identity makes the affected side unavailable. The
+  normalized team IDs must also equal the independently retained,
+  response-derived `observed_identity.observed_home_team_id` /
+  `observed_away_team_id`, with trusted source paths; old frozen payloads
+  without that pair remain unavailable because an ID-only side reversal cannot
+  be disproved. A missing or non-boolean `isOwnGoal` flag is unavailable. If a
   source shot is marked `isOwnGoal=true`, GD-A02 emits an unavailable SOT
   projection with `SOT_OWN_GOAL_SEMANTICS_UNPROVEN`; it does not silently
   decide whether that observation belongs in the canonical team SOT count.

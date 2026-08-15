@@ -377,6 +377,20 @@ test('GD-A02 fails closed when own-goal SOT semantics are not proven', t => {
     assert.equal(shotsOnTarget.away.value, null);
 });
 
+test('GD-A02 fails closed when own-goal flag is missing or non-boolean', t => {
+    const base = buildPair().payload.normalized;
+    for (const shotOverride of [{ isOwnGoal: undefined }, { isOwnGoal: 'false' }]) {
+        const shot = { ...base.shotmap.shots[0], ...shotOverride };
+        if (shotOverride.isOwnGoal === undefined) delete shot.isOwnGoal;
+        const fixture = buildResult(t, {
+            normalized: { ...base, shotmap: { shots: [shot] } },
+        });
+        const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+        assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+        assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_OWN_GOAL_FLAG_UNAVAILABLE');
+    }
+});
+
 test('GD-A02 rejects normalized home/away identity reversal even when source IDs are legal', t => {
     const base = buildPair().payload.normalized;
     const fixture = buildFixture(t, {
@@ -390,6 +404,36 @@ test('GD-A02 rejects normalized home/away identity reversal even when source IDs
     assert.equal(result.artifact.rows.length, 0);
     assert.equal(result.artifact.rejected_rows.length, 1);
     assert.equal(result.artifact.rejected_rows[0].error_code, 'IDENTITY_CONFLICT');
+});
+
+test('GD-A02 rejects SOT when only normalized team IDs are reversed', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            home_team: { ...base.home_team, id: base.away_team.id },
+            away_team: { ...base.away_team, id: base.home_team.id },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+    assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN');
+});
+
+test('GD-A02 rejects response team IDs without trusted source paths', t => {
+    const pair = buildPair({
+        observed: {
+            observed_home_team_id_source: 'request.candidate.home_team_id',
+            observed_away_team_id_source: 'request.candidate.away_team_id',
+        },
+    });
+    const validation = validateObservation({
+        payload: pair.payload,
+        manifest: pair.manifest,
+        payloadBytes: pair.payloadBytes,
+    });
+    assert.equal(validation.ok, false);
+    assert.ok(validation.errors.some(error => /untrusted observed_.*team_id_source/.test(error.message)));
 });
 
 test('GD-A02 accounts a malformed source as rejection when another admitted row remains', t => {

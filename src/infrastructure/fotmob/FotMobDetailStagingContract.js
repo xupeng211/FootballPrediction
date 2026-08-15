@@ -37,6 +37,7 @@ const {
     REQUIRED_LEAGUE_ID,
     VALID_SEASON_PATTERN,
     TRUSTED_OBSERVED_ID_SOURCES,
+    TRUSTED_OBSERVED_TEAM_ID_SOURCES,
     computeStableCapturePayloadSha256,
     computeCaptureManifestSelfHash,
     validateCaptureManifest,
@@ -53,6 +54,75 @@ const {
 const STAGING_ARTIFACT_SCHEMA_VERSION = 'fotmob-detail-staging-artifact/v1';
 const SOURCE_INDEX_SCHEMA_VERSION = 'fotmob-detail-source-index/v1';
 const PARSED_OUTPUT_CONTRACT_VERSION = 'fotmob-match-detail-parsed/v1';
+
+function normalizePositiveTeamId(value) {
+    if (Number.isSafeInteger(value) && value > 0) return value;
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number(value);
+        if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+    }
+    return null;
+}
+
+function observedTeamIdBindingErrors(observed = {}) {
+    const errors = [];
+    const observedHomeTeamId = observed.observed_home_team_id;
+    const observedAwayTeamId = observed.observed_away_team_id;
+    const observedHomeSource = observed.observed_home_team_id_source;
+    const observedAwaySource = observed.observed_away_team_id_source;
+    const hasObservedHomeTeamId = observedHomeTeamId !== undefined && observedHomeTeamId !== null;
+    const hasObservedAwayTeamId = observedAwayTeamId !== undefined && observedAwayTeamId !== null;
+    const hasObservedHomeSource = observedHomeSource !== undefined && observedHomeSource !== null;
+    const hasObservedAwaySource = observedAwaySource !== undefined && observedAwaySource !== null;
+
+    if (hasObservedHomeTeamId !== hasObservedAwayTeamId) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: 'observed_home_team_id and observed_away_team_id must be supplied together',
+        });
+    }
+    if (hasObservedHomeSource !== hasObservedAwaySource) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: 'observed_home_team_id_source and observed_away_team_id_source must be supplied together',
+        });
+    }
+    if (hasObservedHomeTeamId && hasObservedAwayTeamId) {
+        const homeId = normalizePositiveTeamId(observedHomeTeamId);
+        const awayId = normalizePositiveTeamId(observedAwayTeamId);
+        if (homeId === null || awayId === null || homeId === awayId) {
+            errors.push({
+                code: ERROR_CODES.E007,
+                message: 'observed home/away team IDs must be distinct positive safe integers',
+            });
+        }
+        if (!hasObservedHomeSource || !hasObservedAwaySource) {
+            errors.push({
+                code: ERROR_CODES.E007,
+                message: 'response-derived team IDs require source paths',
+            });
+        }
+    }
+    if (hasObservedHomeSource && !TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observedHomeSource))) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: `untrusted observed_home_team_id_source ${String(observedHomeSource)}`,
+        });
+    }
+    if (hasObservedAwaySource && !TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observedAwaySource))) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: `untrusted observed_away_team_id_source ${String(observedAwaySource)}`,
+        });
+    }
+    if (hasObservedHomeSource !== hasObservedHomeTeamId || hasObservedAwaySource !== hasObservedAwayTeamId) {
+        errors.push({
+            code: ERROR_CODES.E007,
+            message: 'observed team ID source paths must correspond exactly to supplied IDs',
+        });
+    }
+    return errors;
+}
 
 // 11 terminal states — idempotency-versioning-policy.md (names MUST match
 // the contract package; no renames).
@@ -746,6 +816,7 @@ function validateIdentityBinding(payload) {
             message: `away_team conflict: expected ${expAway}, observed ${obsAway}`,
         });
     }
+    errors.push(...observedTeamIdBindingErrors(observed));
     if (observed.observed_match_id_conflict === true) {
         errors.push({
             code: ERROR_CODES.E007,
@@ -946,6 +1017,10 @@ function validateDoubleBinding(payload, manifest) {
         observed_match_id_source: String(observed.observed_match_id_source ?? ''),
         observed_match_id_conflict: observed.observed_match_id_conflict === true,
         observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
+        observed_home_team_id: normalizePositiveTeamId(observed.observed_home_team_id),
+        observed_home_team_id_source: String(observed.observed_home_team_id_source ?? ''),
+        observed_away_team_id: normalizePositiveTeamId(observed.observed_away_team_id),
+        observed_away_team_id_source: String(observed.observed_away_team_id_source ?? ''),
     });
     const expectedRecomputed = canonicalJsonHash({
         home_team: String(expected.home_team ?? ''),
@@ -1791,6 +1866,23 @@ function buildStagingArtifact(args = {}) {
         };
     }
 
+    const artifactObservedIdentity = {
+        home_team: String(observed.home_team ?? ''),
+        away_team: String(observed.away_team ?? ''),
+        observed_match_id: String(observed.observed_match_id ?? ''),
+        observed_match_id_source: String(observed.observed_match_id_source ?? ''),
+        observed_match_id_conflict: observed.observed_match_id_conflict === true,
+        observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
+    };
+    for (const side of ['home', 'away']) {
+        const id = normalizePositiveTeamId(observed[`observed_${side}_team_id`]);
+        const source = observed[`observed_${side}_team_id_source`];
+        if (id !== null) {
+            artifactObservedIdentity[`observed_${side}_team_id`] = id;
+            artifactObservedIdentity[`observed_${side}_team_id_source`] = String(source ?? '');
+        }
+    }
+
     const artifact = {
         schema_version: STAGING_ARTIFACT_SCHEMA_VERSION,
         observation_id: deterministicObservationId(
@@ -1812,14 +1904,7 @@ function buildStagingArtifact(args = {}) {
             away_team: String(expected.away_team ?? ''),
             kickoff_at: String(expected.kickoff_at ?? ''),
         },
-        observed_identity: {
-            home_team: String(observed.home_team ?? ''),
-            away_team: String(observed.away_team ?? ''),
-            observed_match_id: String(observed.observed_match_id ?? ''),
-            observed_match_id_source: String(observed.observed_match_id_source ?? ''),
-            observed_match_id_conflict: observed.observed_match_id_conflict === true,
-            observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
-        },
+        observed_identity: artifactObservedIdentity,
         observed_match_id_source: String(observed.observed_match_id_source ?? ''),
         observed_match_id_conflict: observed.observed_match_id_conflict === true,
         observed_match_id_is_response_derived: observed.observed_match_id_is_response_derived === true,
@@ -2003,6 +2088,9 @@ function validateStagingArtifact(artifact) {
         normalizeTeamName(artifactExpected.away_team) !== normalizeTeamName(artifactObserved.away_team)
     ) {
         errors.push('observed_identity.away_team must equal expected_identity.away_team');
+    }
+    for (const error of observedTeamIdBindingErrors(artifactObserved)) {
+        errors.push(error.message);
     }
     if (!isPlainObject(artifact.sections)) {
         errors.push('sections must be an object');

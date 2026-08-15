@@ -52,6 +52,10 @@ function buildPayload(overrides = {}) {
         observed_match_id_source: 'general.matchId',
         observed_match_id_conflict: false,
         observed_match_id_is_response_derived: true,
+        observed_home_team_id: 10204,
+        observed_home_team_id_source: 'general.homeTeam.id',
+        observed_away_team_id: 10261,
+        observed_away_team_id_source: 'general.awayTeam.id',
         ...(overrides.observed || {}),
     };
     const payload = {

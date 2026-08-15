@@ -101,20 +101,20 @@ function makePlanFixture(dir, candidates, { seasons, matchIds, limit } = {}) {
  * general/header carry the team markers + match time so the route identity
  * reconciler sees an identity_match / date_match.
  */
-function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, pagePropsExtra }) {
+function makePageHtml({ matchId, homeTeam, awayTeam, kickoffAt, content, pagePropsExtra, homeTeamId, awayTeamId }) {
     const safeContent = content !== undefined
         ? content
         : { stats: { periods: ['x'] }, lineup: { lineups: [{ team: homeTeam }] }, shotmap: { shots: [{ x: 1 }] }, liveticker: [] };
     const general = {
         matchId: String(matchId),
-        homeTeam: { name: homeTeam },
-        awayTeam: { name: awayTeam },
+        homeTeam: { name: homeTeam, ...(homeTeamId === undefined ? {} : { id: homeTeamId }) },
+        awayTeam: { name: awayTeam, ...(awayTeamId === undefined ? {} : { id: awayTeamId }) },
         matchTimeUTC: kickoffAt,
         season: '2024/2025',
     };
     const header = {
-        homeTeam: { name: homeTeam },
-        awayTeam: { name: awayTeam },
+        homeTeam: { name: homeTeam, ...(homeTeamId === undefined ? {} : { id: homeTeamId }) },
+        awayTeam: { name: awayTeam, ...(awayTeamId === undefined ? {} : { id: awayTeamId }) },
         status: { utcTime: kickoffAt },
     };
     const pageProps = { content: safeContent, general, header, ssr: true, ...(pagePropsExtra || {}) };
@@ -580,7 +580,14 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
     const dir = tmpDir('fotmob-auth-ok-');
     try {
         const { plan, planPath } = makePlanFixture(dir, [TWO_CANDIDATES[0]], { seasons: ['2024/2025'] });
-        const page = makePageHtml({ matchId: 4506263, homeTeam: 'Manchester United', awayTeam: 'Fulham', kickoffAt: '2024-08-16T19:00:00Z' });
+        const page = makePageHtml({
+            matchId: 4506263,
+            homeTeam: 'Manchester United',
+            awayTeam: 'Fulham',
+            kickoffAt: '2024-08-16T19:00:00Z',
+            homeTeamId: 1001,
+            awayTeamId: 1002,
+        });
         const fetchImpl = mockFetchImpl(() => okResponse(page));
         const result = await executeCaptureRun(makeCaptureOptions({ dir, plan, planPath, maxRequests: 1, fetchImpl }));
         assert.equal(result.status, 'complete');
@@ -594,6 +601,10 @@ test('AUTH: all gates satisfied → capture proceeds', async () => {
         assert.equal(fs.readdirSync(path.join(runDir, 'captures')).some(f => f.endsWith('.html')), false);
         assert.ok(fs.existsSync(path.join(runDir, 'plan.json')), 'run plan snapshot must exist');
         const payload = JSON.parse(fs.readFileSync(path.join(runDir, 'captures', '1-4506263.payload.json'), 'utf8'));
+        assert.equal(payload.observed_identity.observed_home_team_id, 1001);
+        assert.equal(payload.observed_identity.observed_home_team_id_source, 'general.homeTeam.id');
+        assert.equal(payload.observed_identity.observed_away_team_id, 1002);
+        assert.equal(payload.observed_identity.observed_away_team_id_source, 'general.awayTeam.id');
         const serialized = JSON.stringify(payload);
         for (const marker of ['__NEXT_DATA__', 'pageProps', 'raw_data', '<!doctype']) {
             assert.ok(!serialized.includes(marker), `payload must not contain ${marker}`);

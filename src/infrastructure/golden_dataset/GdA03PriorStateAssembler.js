@@ -29,6 +29,7 @@ const {
     computeProvenanceDigest,
     computeReceiptHash,
     featureSemanticsInOrder,
+    isSemanticsProven,
     stableStringify,
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
@@ -1014,11 +1015,21 @@ function buildTargetLabel(target, fact) {
     };
 }
 
-function rowEligibility(featureNames, features) {
-    const unavailable = featureNames.flatMap(name => features[name].unavailable_reason_codes);
+function rowEligibility(featureNames, features, semantics) {
+    const semanticsByName = new Map(semantics.map(definition => [definition.feature_name, definition]));
+    const semanticsUnavailable = featureNames
+        .filter(name => !isSemanticsProven(semanticsByName.get(name).semantics_status))
+        .map(() => REASON_CODES.SEMANTICS_UNPROVEN);
+    const unavailable = featureNames
+        .flatMap(name => features[name].unavailable_reason_codes)
+        .concat(semanticsUnavailable);
     const eligible = featureNames.every(name => {
         const line = features[name];
-        return line.availability_status === FEATURE_AVAILABILITY.AVAILABLE && Number.isFinite(line.value);
+        return (
+            isSemanticsProven(semanticsByName.get(name).semantics_status) &&
+            line.availability_status === FEATURE_AVAILABILITY.AVAILABLE &&
+            Number.isFinite(line.value)
+        );
     });
     return {
         status: eligible ? 'YES' : 'NO',
@@ -1141,7 +1152,7 @@ function buildPriorStateFeatureView(options) {
             feature_cutoff_policy: FEATURE_CUTOFF_POLICY,
             feature_cutoff_time: target.kickoff_at,
             features: orderedFeatures,
-            feature_vector_eligibility: rowEligibility(featureNames, orderedFeatures),
+            feature_vector_eligibility: rowEligibility(featureNames, orderedFeatures, semantics),
             target_label: buildTargetLabel(target, factsById.get(target.canonical_match_id)),
             cutoff_time_ms: target.kickoff_ms,
         };

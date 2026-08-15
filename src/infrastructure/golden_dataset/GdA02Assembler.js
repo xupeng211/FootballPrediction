@@ -7,7 +7,7 @@
 // re-parses a raw/pageProps document.
 
 const { validateObservation, validateStagingArtifact } = require('../fotmob/FotMobDetailStagingContract');
-const { normalizeTeamName } = require('../fotmob/FotMobDetailCaptureContract');
+const { normalizeTeamName, TRUSTED_OBSERVED_TEAM_ID_SOURCES } = require('../fotmob/FotMobDetailCaptureContract');
 const {
     validateAssemblyArtifact,
     validateOutputFiles: validateGdA01OutputFiles,
@@ -168,6 +168,18 @@ function validateNormalizedTeamBinding(payload, expectedRow) {
     }
 }
 
+function hasIndependentTeamIdBinding(payload, homeTeamId, awayTeamId) {
+    const observed = payload.observed_identity || {};
+    const observedHomeTeamId = normalizePositiveTeamId(observed.observed_home_team_id);
+    const observedAwayTeamId = normalizePositiveTeamId(observed.observed_away_team_id);
+    return (
+        observedHomeTeamId === homeTeamId &&
+        observedAwayTeamId === awayTeamId &&
+        TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observed.observed_home_team_id_source || '')) &&
+        TRUSTED_OBSERVED_TEAM_ID_SOURCES.has(String(observed.observed_away_team_id_source || ''))
+    );
+}
+
 // eslint-disable-next-line complexity
 function validateSourcePair(entry, expectedRow, frozenRow) {
     requireBuffer(entry.stagingArtifactBytes, `${expectedRow.canonical_match_id} staging artifact`);
@@ -275,6 +287,15 @@ function validateSourcePair(entry, expectedRow, frozenRow) {
     validateNormalizedTeamBinding(entry.capturePayload, expectedRow);
     if (entry.capturePayload.observed_identity.observed_match_id_conflict === true) {
         fail(`${expectedRow.canonical_match_id} capture identity conflict`, 'IDENTITY_CONFLICT');
+    }
+    for (const side of ['home', 'away']) {
+        for (const field of ['team_id', 'team_id_source']) {
+            compareExact(
+                entry.stagingArtifact.observed_identity[`observed_${side}_${field}`],
+                entry.capturePayload.observed_identity[`observed_${side}_${field}`],
+                `${expectedRow.canonical_match_id} observed ${side} team ${field}`
+            );
+        }
     }
     for (const section of SECTIONS) {
         const staged = entry.stagingArtifact.sections[section] || {};
@@ -411,6 +432,13 @@ function buildShotsOnTargetProjection(payload) {
     if (homeTeamId === null || awayTeamId === null || homeTeamId === awayTeamId) {
         return emptyShotsOnTargetProjection();
     }
+    // The normalized team objects and shotmap teamId are produced by the same
+    // parser projection. Without a separately retained raw-response team-ID
+    // binding, swapping only normalized IDs can produce a numerically valid
+    // but reversed SOT vector. Keep the fact admitted, but fail SOT closed.
+    if (!hasIndependentTeamIdBinding(payload, homeTeamId, awayTeamId)) {
+        return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN');
+    }
     const sides = {
         home: { value: 0, known_shots: 0, missing_shots: 0 },
         away: { value: 0, known_shots: 0, missing_shots: 0 },
@@ -419,7 +447,11 @@ function buildShotsOnTargetProjection(payload) {
     let shotsWithoutOnTarget = 0;
     let invalidIdentity = false;
     for (const shot of shotmap.shots) {
-        if (shot && shot.isOwnGoal === true) {
+        const ownGoal = shot && shot.isOwnGoal;
+        if (typeof ownGoal !== 'boolean') {
+            return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_OWN_GOAL_FLAG_UNAVAILABLE');
+        }
+        if (ownGoal === true) {
             return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN');
         }
         const teamId = toTeamId(shot && shot.teamId);

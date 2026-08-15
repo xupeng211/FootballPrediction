@@ -22,6 +22,7 @@ const {
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
+    isSemanticsProven,
     REQUIRED_ROLLING_HISTORY_COUNT,
     stableStringify,
     validateFeatureContract,
@@ -220,6 +221,7 @@ function validatePriorStateArtifact(artifact) {
     }
     const featureContract = validateFeatureContract(artifact.feature_contract);
     const semantics = featureSemanticsInOrder(featureContract.ordered_features);
+    const semanticsByName = new Map(semantics.map(definition => [definition.feature_name, definition]));
     if (stableStringify(artifact.feature_semantics) !== stableStringify(semantics)) {
         fail('GD-A03 semantic matrix mismatch', 'SCHEMA_MISMATCH');
     }
@@ -259,9 +261,14 @@ function validatePriorStateArtifact(artifact) {
         if (!['YES', 'NO'].includes(row.feature_vector_eligibility.status)) {
             fail('GD-A03 row eligibility is invalid', 'SCHEMA_MISMATCH');
         }
-        const expectedEligible = featureContract.ordered_features.every(
-            name => row.features[name].availability_status === FEATURE_AVAILABILITY.AVAILABLE
-        );
+        const expectedEligible = featureContract.ordered_features.every(name => {
+            const definition = semanticsByName.get(name);
+            return (
+                isSemanticsProven(definition.semantics_status) &&
+                row.features[name].availability_status === FEATURE_AVAILABILITY.AVAILABLE &&
+                Number.isFinite(row.features[name].value)
+            );
+        });
         if ((row.feature_vector_eligibility.status === 'YES') !== expectedEligible) {
             fail('GD-A03 row eligibility disagrees with features', 'POPULATION_MISMATCH');
         }

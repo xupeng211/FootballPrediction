@@ -58,7 +58,9 @@ const REASON_CODES = Object.freeze({
     INSUFFICIENT_HISTORY: 'INSUFFICIENT_HISTORY',
     NO_PROVEN_SOURCE_FACT: 'NO_PROVEN_SOURCE_FACT',
     SEMANTICS_UNPROVEN: 'SEMANTICS_UNPROVEN',
+    SOT_OWN_GOAL_FLAG_UNAVAILABLE: 'SOT_OWN_GOAL_FLAG_UNAVAILABLE',
     SOT_OWN_GOAL_SEMANTICS_UNPROVEN: 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN',
+    SOT_TEAM_IDENTITY_BINDING_UNPROVEN: 'SOT_TEAM_IDENTITY_BINDING_UNPROVEN',
     STANDINGS_HISTORY_GAP: 'STANDINGS_HISTORY_GAP',
     STANDINGS_TIEBREAK_UNPROVEN: 'STANDINGS_TIEBREAK_UNPROVEN',
 });
@@ -460,6 +462,10 @@ function featureSemanticsInOrder(orderedFeatures) {
     });
 }
 
+function isSemanticsProven(status) {
+    return status === SEMANTICS_STATUS.PROVEN || status === SEMANTICS_STATUS.PROVEN_DERIVED;
+}
+
 function computeBusinessHash(artifact) {
     const { business_content_sha256: ignored, ...projection } = artifact;
     return sha256Text(stableStringify(projection));
@@ -506,6 +512,7 @@ module.exports = {
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
+    isSemanticsProven,
     stableStringify,
     validateFeatureContract,
 };
