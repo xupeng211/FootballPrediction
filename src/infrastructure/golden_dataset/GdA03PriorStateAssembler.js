@@ -12,6 +12,7 @@ const {
     FEATURE_CUTOFF_POLICY,
     FEATURE_CUTOFF_RELATION,
     FATIGUE_LOOKBACK_DAYS,
+    GD_A03_SOURCE_BINDING_NAMES,
     GdA03ContractError,
     PRIOR_STATE_ARTIFACT_SCHEMA_VERSION,
     PRIOR_STATE_LINEAGE_CONTRACT_VERSION,
@@ -232,75 +233,107 @@ function validateScheduleClosure(schedule, closure) {
     if (stableStringify(actualCounts) !== stableStringify(closure.per_season_expected_counts)) {
         fail('schedule closure counts do not match the canonical schedule', 'HISTORY_CLOSURE_INVALID');
     }
-    let teamClosure = null;
-    if (closure.team_closure !== undefined) {
-        assertObject(closure.team_closure, 'schedule closure team_closure');
-        if (closure.team_closure.schema_version !== SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION) {
-            fail('schedule team closure schema is unsupported', 'SCHEMA_MISMATCH');
-        }
-        if (closure.team_closure.status !== 'PROVEN') {
-            fail('schedule team closure must be PROVEN', 'HISTORY_CLOSURE_INVALID');
-        }
-        const expectedFields = [
-            'teams_per_season',
-            'fixtures_per_team',
-            'home_fixtures_per_team',
-            'away_fixtures_per_team',
-        ];
-        for (const field of expectedFields) {
-            if (!Number.isSafeInteger(closure.team_closure[field]) || closure.team_closure[field] <= 0) {
-                fail(`schedule team closure ${field} is invalid`, 'SCHEMA_MISMATCH');
-            }
-        }
-        const bySeason = new Map();
-        for (const candidate of schedule) {
-            const teamMap = bySeason.get(candidate.season) || new Map();
-            const home = teamMap.get(candidate.home_team) || { total: 0, home: 0, away: 0 };
-            const away = teamMap.get(candidate.away_team) || { total: 0, home: 0, away: 0 };
-            home.total += 1;
-            home.home += 1;
-            away.total += 1;
-            away.away += 1;
-            teamMap.set(candidate.home_team, home);
-            teamMap.set(candidate.away_team, away);
-            bySeason.set(candidate.season, teamMap);
-        }
-        for (const season of Object.keys(closure.per_season_expected_counts)) {
-            const teamMap = bySeason.get(season) || new Map();
-            if (teamMap.size !== closure.team_closure.teams_per_season) {
-                fail(`schedule season ${season} team count is not closed`, 'HISTORY_CLOSURE_INVALID');
-            }
-            for (const [team, counts] of teamMap) {
-                if (
-                    counts.total !== closure.team_closure.fixtures_per_team ||
-                    counts.home !== closure.team_closure.home_fixtures_per_team ||
-                    counts.away !== closure.team_closure.away_fixtures_per_team
-                ) {
-                    fail(
-                        `schedule season ${season} team ${team} fixture closure is invalid`,
-                        'HISTORY_CLOSURE_INVALID'
-                    );
-                }
-            }
-        }
-        teamClosure = { ...closure.team_closure };
-    }
+    const teamClosure = validateTeamClosure(schedule, closure.team_closure, closure.per_season_expected_counts);
     return {
         schema_version: closure.schema_version,
         status: closure.status,
         authority: closure.authority,
         per_season_expected_counts: { ...closure.per_season_expected_counts },
-        ...(teamClosure ? { team_closure: teamClosure } : {}),
+        team_closure: teamClosure,
+    };
+}
+
+// eslint-disable-next-line complexity -- exact team closure is intentionally fail-closed and fully enumerated.
+function validateTeamClosure(schedule, input, expectedSeasonCounts) {
+    if (input === undefined) fail('schedule team closure is required', 'HISTORY_CLOSURE_INVALID');
+    assertObject(input, 'schedule closure team_closure');
+    if (input.schema_version !== SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION) {
+        fail('schedule team closure schema is unsupported', 'SCHEMA_MISMATCH');
+    }
+    if (input.status !== 'PROVEN') fail('schedule team closure must be PROVEN', 'HISTORY_CLOSURE_INVALID');
+    assertObject(input.per_team_counts, 'schedule closure team_closure.per_team_counts');
+    const actualBySeason = new Map();
+    for (const candidate of schedule) {
+        const teamMap = actualBySeason.get(candidate.season) || new Map();
+        const home = teamMap.get(candidate.home_team) || { total: 0, home: 0, away: 0 };
+        const away = teamMap.get(candidate.away_team) || { total: 0, home: 0, away: 0 };
+        home.total += 1;
+        home.home += 1;
+        away.total += 1;
+        away.away += 1;
+        teamMap.set(candidate.home_team, home);
+        teamMap.set(candidate.away_team, away);
+        actualBySeason.set(candidate.season, teamMap);
+    }
+    if (stableStringify(Object.keys(input.per_team_counts).sort()) !== stableStringify(Object.keys(expectedSeasonCounts).sort())) {
+        fail('schedule team closure seasons do not match schedule closure', 'HISTORY_CLOSURE_INVALID');
+    }
+    const perTeamCounts = {};
+    for (const season of Object.keys(expectedSeasonCounts)) {
+        const actualTeams = actualBySeason.get(season) || new Map();
+        const expectedTeams = input.per_team_counts[season];
+        assertObject(expectedTeams, `schedule team closure ${season}`);
+        if (stableStringify(Object.keys(expectedTeams).sort()) !== stableStringify([...actualTeams.keys()].sort())) {
+            fail(`schedule season ${season} team identities are not closed`, 'HISTORY_CLOSURE_INVALID');
+        }
+        perTeamCounts[season] = {};
+        let totalFixtures = 0;
+        for (const [team, actual] of actualTeams) {
+            const expected = expectedTeams[team];
+            assertObject(expected, `schedule team closure ${season}.${team}`);
+            for (const field of ['total', 'home', 'away']) {
+                if (!Number.isSafeInteger(expected[field]) || expected[field] < 0 || expected[field] !== actual[field]) {
+                    fail(`schedule team closure ${season}.${team}.${field} is invalid`, 'HISTORY_CLOSURE_INVALID');
+                }
+            }
+            totalFixtures += actual.total;
+            perTeamCounts[season][team] = { ...actual };
+        }
+        if (totalFixtures / 2 !== expectedSeasonCounts[season]) {
+            fail(`schedule team closure ${season} fixture total is invalid`, 'HISTORY_CLOSURE_INVALID');
+        }
+    }
+    const expectedFields = ['teams_per_season', 'fixtures_per_team', 'home_fixtures_per_team', 'away_fixtures_per_team'];
+    for (const field of expectedFields) {
+        if (input[field] !== undefined && (!Number.isSafeInteger(input[field]) || input[field] <= 0)) {
+            fail(`schedule team closure ${field} is invalid`, 'SCHEMA_MISMATCH');
+        }
+    }
+    if (input.teams_per_season !== undefined) {
+        for (const season of Object.keys(perTeamCounts)) {
+            if (Object.keys(perTeamCounts[season]).length !== input.teams_per_season) {
+                fail(`schedule season ${season} team count is not closed`, 'HISTORY_CLOSURE_INVALID');
+            }
+        }
+    }
+    return {
+        ...input,
+        per_team_counts: perTeamCounts,
     };
 }
 
 function validateSourceBindings(sourceBindings) {
     assertObject(sourceBindings, 'GD-A03 source_bindings');
+    const actualNames = Object.keys(sourceBindings).sort();
+    const expectedNames = [...GD_A03_SOURCE_BINDING_NAMES].sort();
+    if (stableStringify(actualNames) !== stableStringify(expectedNames)) {
+        fail('GD-A03 source_bindings must contain the complete canonical authority set', 'PROVENANCE_INVALID');
+    }
     for (const [name, binding] of Object.entries(sourceBindings)) {
         assertObject(binding, `GD-A03 source_bindings.${name}`);
-        if (binding.sha256 !== undefined) assertSha(binding.sha256, `GD-A03 source_bindings.${name}.sha256`);
+        if (binding.sha256 === undefined || binding.schema_version === undefined) {
+            fail(`GD-A03 source_bindings.${name} is incomplete`, 'PROVENANCE_INVALID');
+        }
+        assertSha(binding.sha256, `GD-A03 source_bindings.${name}.sha256`);
+        assertText(binding.schema_version, `GD-A03 source_bindings.${name}.schema_version`);
         if (binding.business_hash !== undefined) {
             assertSha(binding.business_hash, `GD-A03 source_bindings.${name}.business_hash`);
+        }
+        if (binding.ordered_features !== undefined) {
+            assertArray(binding.ordered_features, `GD-A03 source_bindings.${name}.ordered_features`);
+            binding.ordered_features.forEach((featureName, index) =>
+                assertText(featureName, `GD-A03 source_bindings.${name}.ordered_features[${index}]`)
+            );
         }
     }
     return sourceBindings;
@@ -1106,7 +1139,6 @@ function buildPriorStateFeatureView(options) {
     const featureNames = featureContract.ordered_features;
     const semantics = featureSemanticsInOrder(featureNames);
     const schedule = normalizeSchedule(options.scheduleCandidates);
-    const closure = validateScheduleClosure(schedule, options.scheduleClosure);
     const targetRows = normalizeTargetRows(options.targetRows);
     const factsById = normalizeFactRows(options.factRows);
     const targetIds = new Set(targetRows.map(row => row.canonical_match_id));
@@ -1131,6 +1163,7 @@ function buildPriorStateFeatureView(options) {
             }
         }
     }
+    const closure = validateScheduleClosure(schedule, options.scheduleClosure);
     const indexes = buildIndexes(schedule);
     const sourceBindings = validateSourceBindings(options.sourceBindings);
     const rows = targetRows.map(target => {
@@ -1241,6 +1274,11 @@ function buildPriorStateFeatureView(options) {
         training_runs: 0,
         backtest_runs: 0,
         model_activations: 0,
+        feature_frame_readiness: 'NOT_READY',
+        real_training_readiness: 'NOT_READY',
+        training_execution_authorized: false,
+        strict_decision_time_value_evaluation: 'NOT_READY',
+        golden_dataset_complete: false,
         status: 'ACCOUNTED_FEATURE_AVAILABILITY_COMPLETE',
     };
     const receipt = {

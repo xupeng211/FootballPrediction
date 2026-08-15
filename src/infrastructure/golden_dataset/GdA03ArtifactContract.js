@@ -22,8 +22,10 @@ const {
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
+    GD_A03_SOURCE_BINDING_NAMES,
     isSemanticsProven,
     REQUIRED_ROLLING_HISTORY_COUNT,
+    SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     stableStringify,
     validateFeatureContract,
 } = require('./GdA03PriorStateContract');
@@ -31,6 +33,22 @@ const { sha256Bytes } = require('./GdA01AssemblyContract');
 
 const TRAINING_LABEL_ROLE = 'TRAINING_LABEL_POSTMATCH';
 const FACT_TIMING_CLASS = 'POSTMATCH_ONLY';
+const READINESS_CONTRACT = Object.freeze({
+    feature_frame_readiness: 'NOT_READY',
+    real_training_readiness: 'NOT_READY',
+    training_execution_authorized: false,
+    strict_decision_time_value_evaluation: 'NOT_READY',
+    golden_dataset_complete: false,
+});
+const SOURCE_BINDING_FIELDS = Object.freeze({
+    canonical_schedule: ['sha256', 'business_hash', 'schema_version'],
+    feature_contract: ['sha256', 'schema_version'],
+    gd_a01_artifact: ['sha256', 'business_hash', 'schema_version'],
+    gd_a01_receipt: ['sha256', 'business_hash', 'schema_version'],
+    gd_a02_artifact: ['sha256', 'business_hash', 'schema_version'],
+    gd_a02_receipt: ['sha256', 'business_hash', 'schema_version'],
+    runtime_feature_adapter: ['sha256', 'schema_version', 'ordered_features'],
+});
 
 function fail(message, code = 'GD_A03_CONTRACT_INVALID') {
     throw new GdA03ContractError(message, code);
@@ -43,14 +61,99 @@ function assertArray(value, label) {
 
 function validateSourceBindings(sourceBindings) {
     assertObject(sourceBindings, 'GD-A03 source_bindings');
-    for (const [name, binding] of Object.entries(sourceBindings)) {
+    const actualNames = Object.keys(sourceBindings).sort();
+    const expectedNames = [...GD_A03_SOURCE_BINDING_NAMES].sort();
+    if (stableStringify(actualNames) !== stableStringify(expectedNames)) {
+        fail('GD-A03 source_bindings must contain the complete canonical authority set', 'PROVENANCE_INVALID');
+    }
+    for (const name of expectedNames) {
+        const binding = sourceBindings[name];
         assertObject(binding, `GD-A03 source_bindings.${name}`);
-        if (binding.sha256 !== undefined) assertSha(binding.sha256, `GD-A03 source_bindings.${name}.sha256`);
+        const requiredFields = SOURCE_BINDING_FIELDS[name];
+        const allowedFields = new Set(requiredFields);
+        for (const field of Object.keys(binding)) {
+            if (!allowedFields.has(field)) {
+                fail(`GD-A03 source_bindings.${name}.${field} is unsupported`, 'SCHEMA_MISMATCH');
+            }
+        }
+        for (const field of requiredFields) {
+            if (binding[field] === undefined) {
+                fail(`GD-A03 source_bindings.${name}.${field} is required`, 'PROVENANCE_INVALID');
+            }
+        }
+        assertSha(binding.sha256, `GD-A03 source_bindings.${name}.sha256`);
         if (binding.business_hash !== undefined) {
             assertSha(binding.business_hash, `GD-A03 source_bindings.${name}.business_hash`);
         }
+        assertText(binding.schema_version, `GD-A03 source_bindings.${name}.schema_version`);
+        if (binding.ordered_features !== undefined) {
+            assertArray(binding.ordered_features, `GD-A03 source_bindings.${name}.ordered_features`);
+            binding.ordered_features.forEach((featureName, index) =>
+                assertText(featureName, `GD-A03 source_bindings.${name}.ordered_features[${index}]`)
+            );
+        }
     }
     return sourceBindings;
+}
+
+function validateReadiness(value, label) {
+    assertObject(value, label);
+    for (const [field, expected] of Object.entries(READINESS_CONTRACT)) {
+        if (value[field] !== expected) {
+            fail(`${label}.${field} must remain ${String(expected)}`, 'READINESS_BOUNDARY');
+        }
+    }
+}
+
+// eslint-disable-next-line complexity -- artifact validation enumerates every schedule/team closure invariant.
+function validateScheduleAuthority(scheduleAuthority) {
+    assertObject(scheduleAuthority, 'GD-A03 schedule_authority');
+    if (scheduleAuthority.schema_version !== 'candidate-match-identity/v1') {
+        fail('GD-A03 schedule authority schema is invalid', 'HISTORY_CLOSURE_INVALID');
+    }
+    if (scheduleAuthority.closure_schema_version !== 'canonical-schedule-history/v1') {
+        fail('GD-A03 schedule closure schema is invalid', 'HISTORY_CLOSURE_INVALID');
+    }
+    if (scheduleAuthority.closure_status !== 'PROVEN') {
+        fail('GD-A03 schedule closure status is not PROVEN', 'HISTORY_CLOSURE_INVALID');
+    }
+    assertText(scheduleAuthority.authority, 'GD-A03 schedule_authority.authority');
+    assertObject(scheduleAuthority.per_season_counts, 'GD-A03 schedule_authority.per_season_counts');
+    for (const [season, count] of Object.entries(scheduleAuthority.per_season_counts)) {
+        if (!season || !Number.isSafeInteger(count) || count <= 0) {
+            fail('GD-A03 schedule season count is invalid', 'HISTORY_CLOSURE_INVALID');
+        }
+    }
+    const teamClosure = scheduleAuthority.team_closure;
+    assertObject(teamClosure, 'GD-A03 schedule_authority.team_closure');
+    if (teamClosure.schema_version !== SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION || teamClosure.status !== 'PROVEN') {
+        fail('GD-A03 team closure status/schema is invalid', 'HISTORY_CLOSURE_INVALID');
+    }
+    assertObject(teamClosure.per_team_counts, 'GD-A03 schedule_authority.team_closure.per_team_counts');
+    for (const [season, teamCounts] of Object.entries(teamClosure.per_team_counts)) {
+        assertObject(teamCounts, `GD-A03 team closure ${season}`);
+        let totalFixtures = 0;
+        for (const [team, counts] of Object.entries(teamCounts)) {
+            if (!team) fail('GD-A03 team closure has an empty team identity', 'HISTORY_CLOSURE_INVALID');
+            assertObject(counts, `GD-A03 team closure ${season}.${team}`);
+            for (const field of ['total', 'home', 'away']) {
+                if (!Number.isSafeInteger(counts[field]) || counts[field] < 0) {
+                    fail(`GD-A03 team closure ${season}.${team}.${field} is invalid`, 'HISTORY_CLOSURE_INVALID');
+                }
+            }
+            if (counts.total !== counts.home + counts.away) {
+                fail(`GD-A03 team closure ${season}.${team} totals do not reconcile`, 'HISTORY_CLOSURE_INVALID');
+            }
+            totalFixtures += counts.total;
+        }
+        if (scheduleAuthority.per_season_counts[season] !== totalFixtures / 2) {
+            fail(`GD-A03 team closure ${season} does not reconcile to schedule count`, 'HISTORY_CLOSURE_INVALID');
+        }
+    }
+    if (stableStringify(Object.keys(teamClosure.per_team_counts).sort()) !== stableStringify(Object.keys(scheduleAuthority.per_season_counts).sort())) {
+        fail('GD-A03 team closure seasons do not match schedule seasons', 'HISTORY_CLOSURE_INVALID');
+    }
+    return scheduleAuthority;
 }
 
 // eslint-disable-next-line complexity -- fail-closed validation keeps all lineage invariants visible together.
@@ -226,6 +329,14 @@ function validatePriorStateArtifact(artifact) {
         fail('GD-A03 semantic matrix mismatch', 'SCHEMA_MISMATCH');
     }
     validateSourceBindings(artifact.source_bindings);
+    if (
+        stableStringify(artifact.source_bindings.runtime_feature_adapter.ordered_features) !==
+        stableStringify(featureContract.ordered_features)
+    ) {
+        fail('GD-A03 runtime feature binding order mismatch', 'PROVENANCE_INVALID');
+    }
+    validateReadiness(artifact, 'GD-A03 artifact');
+    validateScheduleAuthority(artifact.schedule_authority);
     assertArray(artifact.rows, 'GD-A03 rows');
     const rowIds = new Set();
     for (const row of artifact.rows) {
@@ -333,6 +444,12 @@ function validateReceipt(receipt, artifactBytes, artifact) {
     validateSourceBindings(receipt.source_bindings);
     if (stableStringify(receipt.source_bindings) !== stableStringify(artifact.source_bindings)) {
         fail('GD-A03 receipt source binding mismatch', 'PROVENANCE_INVALID');
+    }
+    validateReadiness(receipt, 'GD-A03 receipt');
+    for (const field of Object.keys(READINESS_CONTRACT)) {
+        if (receipt[field] !== artifact[field]) {
+            fail(`GD-A03 receipt ${field} does not match artifact`, 'READINESS_BOUNDARY');
+        }
     }
     if (receipt.artifact_sha256 !== sha256Bytes(artifactBytes)) {
         fail('GD-A03 receipt artifact hash mismatch', 'ARTIFACT_HASH_MISMATCH');

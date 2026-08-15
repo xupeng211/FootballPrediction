@@ -18,6 +18,15 @@ const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-stat
 const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
 const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
+const GD_A03_SOURCE_BINDING_NAMES = Object.freeze([
+    'canonical_schedule',
+    'feature_contract',
+    'gd_a01_artifact',
+    'gd_a01_receipt',
+    'gd_a02_artifact',
+    'gd_a02_receipt',
+    'runtime_feature_adapter',
+]);
 const SCHEDULE_TEAMS_PER_SEASON = TEAMS_PER_SEASON;
 const SCHEDULE_FIXTURES_PER_TEAM = FIXTURES_PER_TEAM;
 const SCHEDULE_HOME_FIXTURES_PER_TEAM = HOME_FIXTURES_PER_TEAM;
@@ -502,6 +511,7 @@ module.exports = {
     SCHEDULE_FIXTURES_PER_TEAM,
     SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+    GD_A03_SOURCE_BINDING_NAMES,
     SCHEDULE_TEAMS_PER_SEASON,
     SEMANTICS_STATUS,
     assertFiniteNumber,

@@ -363,6 +363,19 @@ function loadBuildInputs(args, repositoryRoot) {
         counts[candidate.season] = (counts[candidate.season] || 0) + 1;
         return counts;
     }, {});
+    const perTeamCounts = {};
+    for (const candidate of scheduleValidation.candidates) {
+        const seasonTeams = perTeamCounts[candidate.season] || {};
+        const home = seasonTeams[candidate.home_team] || { total: 0, home: 0, away: 0 };
+        const away = seasonTeams[candidate.away_team] || { total: 0, home: 0, away: 0 };
+        home.total += 1;
+        home.home += 1;
+        away.total += 1;
+        away.away += 1;
+        seasonTeams[candidate.home_team] = home;
+        seasonTeams[candidate.away_team] = away;
+        perTeamCounts[candidate.season] = seasonTeams;
+    }
     const scheduleClosure = {
         schema_version: 'canonical-schedule-history/v1',
         status: 'PROVEN',
@@ -376,6 +389,7 @@ function loadBuildInputs(args, repositoryRoot) {
             fixtures_per_team: SCHEDULE_FIXTURES_PER_TEAM,
             home_fixtures_per_team: SCHEDULE_HOME_FIXTURES_PER_TEAM,
             away_fixtures_per_team: SCHEDULE_AWAY_FIXTURES_PER_TEAM,
+            per_team_counts: perTeamCounts,
         },
     };
     return {

@@ -33,6 +33,27 @@ function digest(value) {
     return crypto.createHash('sha256').update(stableStringify(value)).digest('hex');
 }
 
+function teamClosure(schedule) {
+    const perTeamCounts = {};
+    for (const row of schedule) {
+        const seasonTeams = perTeamCounts[row.season] || {};
+        const home = seasonTeams[row.home_team] || { total: 0, home: 0, away: 0 };
+        const away = seasonTeams[row.away_team] || { total: 0, home: 0, away: 0 };
+        home.total += 1;
+        home.home += 1;
+        away.total += 1;
+        away.away += 1;
+        seasonTeams[row.home_team] = home;
+        seasonTeams[row.away_team] = away;
+        perTeamCounts[row.season] = seasonTeams;
+    }
+    return {
+        schema_version: SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
+        status: 'PROVEN',
+        per_team_counts: perTeamCounts,
+    };
+}
+
 function candidate(id, kickoffAt, homeTeam, awayTeam) {
     return {
         id,
@@ -159,10 +180,17 @@ function buildFixture({ includeSixth = false } = {}) {
     }
     const target = addTarget('2024-07-13T12:00:00Z', 'Home FC', 'Away FC');
     const sourceBindings = {
-        gd_a01_artifact: { sha256: HASH, business_hash: HASH },
-        gd_a02_artifact: { sha256: HASH, business_hash: HASH },
-        canonical_schedule: { sha256: HASH, business_hash: HASH },
-        feature_contract: { sha256: HASH },
+        gd_a01_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-artifact/v1' },
+        gd_a01_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-receipt/v1' },
+        gd_a02_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-artifact/v2' },
+        gd_a02_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-receipt/v2' },
+        canonical_schedule: { sha256: HASH, business_hash: HASH, schema_version: 'candidate-match-identity/v1' },
+        feature_contract: { sha256: HASH, schema_version: 'model-feature-contract-registry/v1' },
+        runtime_feature_adapter: {
+            sha256: HASH,
+            schema_version: 'V26_6_PreMatchAdapter.V26_6_FEATURES',
+            ordered_features: featureContract.ordered_features,
+        },
     };
     const options = {
         targetRows: targets.map(row => ({ ...row, canonical_match_id: row.id })),
@@ -173,6 +201,7 @@ function buildFixture({ includeSixth = false } = {}) {
             status: 'PROVEN',
             authority: 'fixture canonical schedule',
             per_season_expected_counts: { '2024/2025': schedule.length },
+            team_closure: teamClosure(schedule),
         },
         featureContract,
         sourceBindings,
@@ -323,6 +352,7 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
         scheduleClosure: {
             ...fixture.options.scheduleClosure,
             per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
+            team_closure: teamClosure([...fixture.schedule, future]),
         },
     };
     const baseline = buildPriorStateFeatureView(options);
@@ -363,6 +393,7 @@ test('GD-A03 is deterministic across input reorder and ignores future fixtures f
         scheduleClosure: {
             ...fixture.options.scheduleClosure,
             per_season_expected_counts: { '2024/2025': fixture.schedule.length + 1 },
+            team_closure: teamClosure([...fixture.schedule, future]),
         },
     };
     const withFuture = buildPriorStateFeatureView(futureOptions);
@@ -405,6 +436,7 @@ test('GD-A03 team schedule closure rejects an incomplete or re-assigned fixture'
             fixtures_per_team: 38,
             home_fixtures_per_team: 19,
             away_fixtures_per_team: 19,
+            per_team_counts: teamClosure(schedule).per_team_counts,
         },
     };
     assert.doesNotThrow(() => validateScheduleClosure(normalizeSchedule(schedule), closure));
@@ -487,6 +519,30 @@ test('GD-A03 output validation conserves population and rejects tampered busines
         () => validatePriorStateOutputFiles(Buffer.from(`${JSON.stringify(tampered)}\n`), result.receiptBytes),
         'BUSINESS_HASH_MISMATCH'
     );
+});
+
+test('GD-A03 requires canonical readiness to remain fail-closed', () => {
+    const result = build(buildFixture());
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    tampered.feature_frame_readiness = 'READY_FOR_SEPARATE_TRAINING_REVIEW';
+    assertReject(() => validatePriorStateArtifact(tampered), 'READINESS_BOUNDARY');
+});
+
+test('GD-A03 requires team-level schedule closure and complete source bindings', () => {
+    const fixture = buildFixture();
+    assertReject(
+        () =>
+            buildPriorStateFeatureView({
+                ...fixture.options,
+                scheduleClosure: { ...fixture.options.scheduleClosure, team_closure: undefined },
+            }),
+        'HISTORY_CLOSURE_INVALID'
+    );
+
+    const result = build(fixture);
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    delete tampered.source_bindings.gd_a02_receipt;
+    assertReject(() => validatePriorStateArtifact(tampered), 'PROVENANCE_INVALID');
 });
 
 test('GD-A03 receipt content hash rejects receipt provenance tampering', () => {
