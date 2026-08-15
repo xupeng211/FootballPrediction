@@ -226,6 +226,40 @@ function normalizeFactRows(factRows) {
     return byId;
 }
 
+function normalizeFactRejections(factRejections) {
+    const rows = assertArray(factRejections, 'GD-A02 rejected fact rows').map((row, index) => {
+        const label = `GD-A02 rejected row[${index}]`;
+        assertObject(row, label);
+        const allowedFields = new Set(['canonical_match_id', 'source_match_id', 'admission', 'error_code', 'reason']);
+        for (const field of Object.keys(row)) {
+            if (!allowedFields.has(field)) fail(`${label}.${field} is unsupported`, 'SCHEMA_MISMATCH');
+        }
+        assertText(row.canonical_match_id, `${label}.canonical_match_id`);
+        if (row.source_match_id !== null) assertText(row.source_match_id, `${label}.source_match_id`);
+        assertObject(row.admission, `${label}.admission`);
+        if (row.admission.status !== 'REJECTED' || typeof row.admission.rejection_reason !== 'string') {
+            fail(`${label}.admission is incomplete`, 'SCHEMA_MISMATCH');
+        }
+        assertText(row.error_code, `${label}.error_code`);
+        assertText(row.reason, `${label}.reason`);
+        return {
+            canonical_match_id: row.canonical_match_id,
+            source_match_id: row.source_match_id,
+            error_code: row.error_code,
+            reason: row.reason,
+            rejection_reason: row.admission.rejection_reason,
+        };
+    });
+    const byId = new Map();
+    for (const row of rows) {
+        if (byId.has(row.canonical_match_id)) {
+            fail(`duplicate rejected fact ID ${row.canonical_match_id}`, 'POPULATION_MISMATCH');
+        }
+        byId.set(row.canonical_match_id, row);
+    }
+    return byId;
+}
+
 // eslint-disable-next-line complexity -- schedule/team closure is one fail-closed authority check.
 function validateScheduleClosure(schedule, closure) {
     assertObject(closure, 'schedule closure');
@@ -272,7 +306,10 @@ function validateTeamClosure(schedule, input, expectedSeasonCounts) {
         teamMap.set(candidate.away_team, away);
         actualBySeason.set(candidate.season, teamMap);
     }
-    if (stableStringify(Object.keys(input.per_team_counts).sort()) !== stableStringify(Object.keys(expectedSeasonCounts).sort())) {
+    if (
+        stableStringify(Object.keys(input.per_team_counts).sort()) !==
+        stableStringify(Object.keys(expectedSeasonCounts).sort())
+    ) {
         fail('schedule team closure seasons do not match schedule closure', 'HISTORY_CLOSURE_INVALID');
     }
     const perTeamCounts = {};
@@ -289,7 +326,11 @@ function validateTeamClosure(schedule, input, expectedSeasonCounts) {
             const expected = expectedTeams[team];
             assertObject(expected, `schedule team closure ${season}.${team}`);
             for (const field of ['total', 'home', 'away']) {
-                if (!Number.isSafeInteger(expected[field]) || expected[field] < 0 || expected[field] !== actual[field]) {
+                if (
+                    !Number.isSafeInteger(expected[field]) ||
+                    expected[field] < 0 ||
+                    expected[field] !== actual[field]
+                ) {
                     fail(`schedule team closure ${season}.${team}.${field} is invalid`, 'HISTORY_CLOSURE_INVALID');
                 }
             }
@@ -322,7 +363,10 @@ function validateTeamClosure(schedule, input, expectedSeasonCounts) {
                 counts.home !== SCHEDULE_HOME_FIXTURES_PER_TEAM ||
                 counts.away !== SCHEDULE_AWAY_FIXTURES_PER_TEAM
             ) {
-                fail(`schedule season ${season} team ${team} fixture closure is not canonical`, 'HISTORY_CLOSURE_INVALID');
+                fail(
+                    `schedule season ${season} team ${team} fixture closure is not canonical`,
+                    'HISTORY_CLOSURE_INVALID'
+                );
             }
         }
     }
@@ -332,6 +376,7 @@ function validateTeamClosure(schedule, input, expectedSeasonCounts) {
     };
 }
 
+// eslint-disable-next-line complexity -- source bindings enumerate every immutable authority and coverage field.
 function validateSourceBindings(sourceBindings) {
     assertObject(sourceBindings, 'GD-A03 source_bindings');
     const actualNames = Object.keys(sourceBindings).sort();
@@ -362,9 +407,24 @@ function validateSourceBindings(sourceBindings) {
             }
         }
         if (name === 'gd_a02_artifact') {
-            assertSha(binding.fact_result_bindings_sha256, `GD-A03 source_bindings.${name}.fact_result_bindings_sha256`);
-            if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count <= 0) {
+            assertSha(
+                binding.fact_result_bindings_sha256,
+                `GD-A03 source_bindings.${name}.fact_result_bindings_sha256`
+            );
+            if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count < 0) {
                 fail(`GD-A03 source_bindings.${name}.fact_result_binding_count is invalid`, 'PROVENANCE_INVALID');
+            }
+            for (const field of [
+                'fact_admitted_id_set_sha256',
+                'fact_rejected_id_set_sha256',
+                'fact_accounted_id_set_sha256',
+            ]) {
+                assertSha(binding[field], `GD-A03 source_bindings.${name}.${field}`);
+            }
+            for (const field of ['fact_admitted_row_count', 'fact_rejected_row_count', 'fact_accounted_row_count']) {
+                if (!Number.isSafeInteger(binding[field]) || binding[field] < 0) {
+                    fail(`GD-A03 source_bindings.${name}.${field} is invalid`, 'PROVENANCE_INVALID');
+                }
             }
         }
     }
@@ -401,6 +461,34 @@ function validateFactResultBindings(sourceBindings, factsById) {
     ) {
         fail('GD-A02 fact result bindings do not match GD-A03 source binding', 'PROVENANCE_INVALID');
     }
+}
+
+function validateFactCoverage(sourceBindings, factsById, factRejectionsById, targetIds) {
+    const factIds = new Set(factsById.keys());
+    const rejectedIds = new Set(factRejectionsById.keys());
+    for (const id of factIds) {
+        if (rejectedIds.has(id)) fail(`GD-A02 fact ${id} is both admitted and rejected`, 'POPULATION_MISMATCH');
+        if (!targetIds.has(id)) fail(`GD-A02 admitted fact ${id} is outside target population`, 'POPULATION_MISMATCH');
+    }
+    for (const id of rejectedIds) {
+        if (!targetIds.has(id)) fail(`GD-A02 rejected fact ${id} is outside target population`, 'POPULATION_MISMATCH');
+    }
+    const accountedIds = new Set([...factIds, ...rejectedIds]);
+    if (accountedIds.size !== targetIds.size || [...targetIds].some(id => !accountedIds.has(id))) {
+        fail('GD-A02 admitted and rejected facts do not conserve the GD-A01 target population', 'POPULATION_MISMATCH');
+    }
+    const sourceBinding = sourceBindings.gd_a02_artifact;
+    const expectedSets = [
+        ['fact_admitted_id_set_sha256', 'fact_admitted_row_count', factIds],
+        ['fact_rejected_id_set_sha256', 'fact_rejected_row_count', rejectedIds],
+        ['fact_accounted_id_set_sha256', 'fact_accounted_row_count', accountedIds],
+    ];
+    for (const [hashField, countField, ids] of expectedSets) {
+        if (sourceBinding[hashField] !== admittedIdSetHash([...ids]) || sourceBinding[countField] !== ids.size) {
+            fail(`GD-A02 ${hashField} does not match admitted/rejected fact coverage`, 'PROVENANCE_INVALID');
+        }
+    }
+    validateFactResultBindings(sourceBindings, factsById);
 }
 
 function makeSourceIdentity(candidate) {
@@ -1095,13 +1183,20 @@ function buildTargetFeatures({ target, schedule, factsById, indexes, closure, so
     return featureByName;
 }
 
-function buildTargetLabel(target, fact, sourceBindings) {
-    const result = fact?.facts?.match_result;
-    const sourceProvenance = fact?.provenance || null;
+function buildTargetLabel(target, fact, factRejection, sourceBindings) {
+    const result = fact?.facts?.match_result || null;
+    const sourceProvenance = fact?.provenance || {
+        status: 'MISSING_GD_A02_FACT',
+        canonical_match_id: target.canonical_match_id,
+        source_match_id: factRejection.source_match_id,
+        rejection_reason: factRejection.rejection_reason,
+        rejection_error_code: factRejection.error_code,
+        rejection_message: factRejection.reason,
+    };
     const factResultBinding = computeFactResultBinding({
         canonicalMatchId: target.canonical_match_id,
-        result: result || null,
-        sourceProvenance,
+        result: fact ? result : null,
+        sourceProvenance: fact ? sourceProvenance : null,
     });
     return {
         role: TRAINING_LABEL_ROLE,
@@ -1123,7 +1218,8 @@ function buildTargetLabel(target, fact, sourceBindings) {
             canonical_match_id: target.canonical_match_id,
             source_artifact_sha256: sourceBindings.gd_a02_artifact.sha256,
             source_business_hash: sourceBindings.gd_a02_artifact.business_hash,
-            fact_result_binding: factResultBinding,
+            fact_presence: fact ? 'PRESENT' : 'MISSING',
+            fact_result_binding: fact ? factResultBinding : null,
         },
     };
 }
@@ -1221,13 +1317,11 @@ function buildPriorStateFeatureView(options) {
     const schedule = normalizeSchedule(options.scheduleCandidates);
     const targetRows = normalizeTargetRows(options.targetRows);
     const factsById = normalizeFactRows(options.factRows);
+    const factRejectionsById = normalizeFactRejections(options.factRejections || []);
     const sourceBindings = validateSourceBindings(options.sourceBindings);
     const targetIds = new Set(targetRows.map(row => row.canonical_match_id));
     const populationAuthority = validateTargetPopulationBinding(sourceBindings, targetIds);
-    validateFactResultBindings(sourceBindings, factsById);
-    if (factsById.size !== targetIds.size || [...factsById.keys()].some(id => !targetIds.has(id))) {
-        fail('GD-A02 facts must exactly cover the GD-A01 target population', 'POPULATION_MISMATCH');
-    }
+    validateFactCoverage(sourceBindings, factsById, factRejectionsById, targetIds);
     const scheduleById = new Map(schedule.map(candidate => [candidate.id, candidate]));
     for (const target of targetRows) {
         const scheduleTarget = scheduleById.get(target.canonical_match_id);
@@ -1240,10 +1334,14 @@ function buildPriorStateFeatureView(options) {
             }
         }
         const fact = factsById.get(target.canonical_match_id);
-        for (const field of ['competition', 'season', 'home_team', 'away_team', 'kickoff_at']) {
-            if (fact[field] !== scheduleTarget[field]) {
-                fail(`fact ${target.canonical_match_id} ${field} mismatch`, 'IDENTITY_CONFLICT');
+        if (fact) {
+            for (const field of ['competition', 'season', 'home_team', 'away_team', 'kickoff_at']) {
+                if (fact[field] !== scheduleTarget[field]) {
+                    fail(`fact ${target.canonical_match_id} ${field} mismatch`, 'IDENTITY_CONFLICT');
+                }
             }
+        } else if (!factRejectionsById.has(target.canonical_match_id)) {
+            fail(`target ${target.canonical_match_id} has no admitted or rejected GD-A02 fact`, 'POPULATION_MISMATCH');
         }
     }
     const closure = validateScheduleClosure(schedule, options.scheduleClosure);
@@ -1268,7 +1366,12 @@ function buildPriorStateFeatureView(options) {
             feature_cutoff_time: target.kickoff_at,
             features: orderedFeatures,
             feature_vector_eligibility: rowEligibility(featureNames, orderedFeatures, semantics),
-            target_label: buildTargetLabel(target, factsById.get(target.canonical_match_id), sourceBindings),
+            target_label: buildTargetLabel(
+                target,
+                factsById.get(target.canonical_match_id),
+                factRejectionsById.get(target.canonical_match_id),
+                sourceBindings
+            ),
             cutoff_time_ms: target.kickoff_ms,
         };
     });

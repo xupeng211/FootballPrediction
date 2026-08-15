@@ -229,6 +229,12 @@ function buildFixture({ includeSixth = false } = {}) {
             schema_version: 'gd-a02-artifact/v2',
             fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
             fact_result_binding_count: factResultBindings.length,
+            fact_admitted_id_set_sha256: admittedIdSetHash(facts.map(row => row.canonical_match_id)),
+            fact_admitted_row_count: facts.length,
+            fact_rejected_id_set_sha256: admittedIdSetHash([]),
+            fact_rejected_row_count: 0,
+            fact_accounted_id_set_sha256: admittedIdSetHash(facts.map(row => row.canonical_match_id)),
+            fact_accounted_row_count: facts.length,
         },
         gd_a02_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-receipt/v2' },
         canonical_schedule: { sha256: HASH, business_hash: HASH, schema_version: 'candidate-match-identity/v1' },
@@ -242,6 +248,7 @@ function buildFixture({ includeSixth = false } = {}) {
     const options = {
         targetRows: targets.map(row => ({ ...row, canonical_match_id: row.id })),
         factRows: facts,
+        factRejections: [],
         scheduleCandidates: schedule,
         scheduleClosure: {
             schema_version: 'canonical-schedule-history/v1',
@@ -263,6 +270,7 @@ function build(fixture) {
 
 function rebindSourceBindings(options) {
     const targetIds = options.targetRows.map(row => row.canonical_match_id);
+    const factRejections = options.factRejections || [];
     const factResultBindings = options.factRows.map(row => ({
         canonical_match_id: row.canonical_match_id,
         fact_result_binding: computeFactResultBinding({
@@ -284,6 +292,15 @@ function rebindSourceBindings(options) {
                 ...options.sourceBindings.gd_a02_artifact,
                 fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
                 fact_result_binding_count: factResultBindings.length,
+                fact_admitted_id_set_sha256: admittedIdSetHash(options.factRows.map(row => row.canonical_match_id)),
+                fact_admitted_row_count: options.factRows.length,
+                fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
+                fact_rejected_row_count: factRejections.length,
+                fact_accounted_id_set_sha256: admittedIdSetHash([
+                    ...options.factRows.map(row => row.canonical_match_id),
+                    ...factRejections.map(row => row.canonical_match_id),
+                ]),
+                fact_accounted_row_count: options.factRows.length + factRejections.length,
             },
         },
     };
@@ -538,10 +555,24 @@ test('GD-A03 records an actual missing recent match and does not reach farther b
     const complete = buildFixture({ includeSixth: true });
     const missingId = complete.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
     const targetId = complete.targetId;
+    const missingSource = complete.schedule.find(row => row.id === missingId);
+    const missingFactOptions = {
+        ...complete.options,
+        factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
+    };
+    assertReject(() => buildPriorStateFeatureView(rebindSourceBindings(missingFactOptions)), 'POPULATION_MISMATCH');
     const options = {
         ...complete.options,
-        targetRows: complete.options.targetRows.filter(row => row.canonical_match_id !== missingId),
         factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
+        factRejections: [
+            {
+                canonical_match_id: missingId,
+                source_match_id: missingSource.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
     };
     const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const line = targetRow(result, targetId).features.rolling_xg_home;
@@ -554,6 +585,10 @@ test('GD-A03 records an actual missing recent match and does not reach farther b
     );
     assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.HISTORY_GAP));
     assert.equal(result.artifact.validation_counters.silent_history_gap_count, 0);
+    assert.equal(result.artifact.rows.length, complete.options.targetRows.length);
+    const missingLabel = targetRow(result, missingId).target_label;
+    assert.equal(missingLabel.source_fact_binding.fact_presence, 'MISSING');
+    assert.equal(missingLabel.provenance_input.result, null);
 });
 
 test('GD-A03 rejects equal/future lineage, identity tamper, and provenance tamper', () => {
@@ -584,8 +619,16 @@ test('GD-A03 preserves standings history gaps and never estimates position', () 
     );
     const options = {
         ...fixture.options,
-        targetRows: fixture.options.targetRows.filter(row => row.canonical_match_id !== missingPrior.id),
         factRows: fixture.facts.filter(row => row.canonical_match_id !== missingPrior.id),
+        factRejections: [
+            {
+                canonical_match_id: missingPrior.id,
+                source_match_id: missingPrior.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
     };
     const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const row = targetRow(result, target.id);

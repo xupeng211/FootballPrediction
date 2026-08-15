@@ -58,6 +58,12 @@ const SOURCE_BINDING_FIELDS = Object.freeze({
         'schema_version',
         'fact_result_bindings_sha256',
         'fact_result_binding_count',
+        'fact_admitted_id_set_sha256',
+        'fact_admitted_row_count',
+        'fact_rejected_id_set_sha256',
+        'fact_rejected_row_count',
+        'fact_accounted_id_set_sha256',
+        'fact_accounted_row_count',
     ],
     gd_a02_receipt: ['sha256', 'business_hash', 'schema_version'],
     runtime_feature_adapter: ['sha256', 'schema_version', 'ordered_features'],
@@ -72,6 +78,7 @@ function assertArray(value, label) {
     return value;
 }
 
+// eslint-disable-next-line complexity -- source bindings enumerate every immutable authority and coverage field.
 function validateSourceBindings(sourceBindings) {
     assertObject(sourceBindings, 'GD-A03 source_bindings');
     const actualNames = Object.keys(sourceBindings).sort();
@@ -116,8 +123,20 @@ function validateSourceBindings(sourceBindings) {
                 binding.fact_result_bindings_sha256,
                 `GD-A03 source_bindings.${name}.fact_result_bindings_sha256`
             );
-            if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count <= 0) {
+            if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count < 0) {
                 fail(`GD-A03 source_bindings.${name}.fact_result_binding_count is invalid`, 'PROVENANCE_INVALID');
+            }
+            for (const field of [
+                'fact_admitted_id_set_sha256',
+                'fact_rejected_id_set_sha256',
+                'fact_accounted_id_set_sha256',
+            ]) {
+                assertSha(binding[field], `GD-A03 source_bindings.${name}.${field}`);
+            }
+            for (const field of ['fact_admitted_row_count', 'fact_rejected_row_count', 'fact_accounted_row_count']) {
+                if (!Number.isSafeInteger(binding[field]) || binding[field] < 0) {
+                    fail(`GD-A03 source_bindings.${name}.${field} is invalid`, 'PROVENANCE_INVALID');
+                }
             }
         }
     }
@@ -447,6 +466,7 @@ function validateTargetLabel(label, row, sourceBindings) {
         'canonical_match_id',
         'source_artifact_sha256',
         'source_business_hash',
+        'fact_presence',
         'fact_result_binding',
     ]);
     for (const key of Object.keys(label.source_fact_binding)) {
@@ -472,17 +492,55 @@ function validateTargetLabel(label, row, sourceBindings) {
         label.source_fact_binding.source_business_hash,
         `GD-A03 row ${row.canonical_match_id}.target_label.source_business_hash`
     );
-    assertSha(
-        label.source_fact_binding.fact_result_binding,
-        `GD-A03 row ${row.canonical_match_id}.target_label.fact_result_binding`
-    );
-    const expectedFactResultBinding = computeFactResultBinding({
-        canonicalMatchId: row.canonical_match_id,
-        result,
-        sourceProvenance: label.provenance_input.source_provenance,
-    });
-    if (label.source_fact_binding.fact_result_binding !== expectedFactResultBinding) {
-        fail('GD-A03 target label fact result binding is invalid', 'PROVENANCE_INVALID');
+    if (!['PRESENT', 'MISSING'].includes(label.source_fact_binding.fact_presence)) {
+        fail('GD-A03 target label fact presence is invalid', 'PROVENANCE_INVALID');
+    }
+    if (label.source_fact_binding.fact_presence === 'PRESENT') {
+        assertSha(
+            label.source_fact_binding.fact_result_binding,
+            `GD-A03 row ${row.canonical_match_id}.target_label.fact_result_binding`
+        );
+        const expectedFactResultBinding = computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result,
+            sourceProvenance: label.provenance_input.source_provenance,
+        });
+        if (label.source_fact_binding.fact_result_binding !== expectedFactResultBinding) {
+            fail('GD-A03 target label fact result binding is invalid', 'PROVENANCE_INVALID');
+        }
+    } else {
+        if (label.source_fact_binding.fact_result_binding !== null || result !== null) {
+            fail('GD-A03 missing target fact carries a result binding or value', 'PROVENANCE_INVALID');
+        }
+        const missingProvenance = label.provenance_input.source_provenance;
+        const missingProvenanceKeys = new Set([
+            'status',
+            'canonical_match_id',
+            'source_match_id',
+            'rejection_reason',
+            'rejection_error_code',
+            'rejection_message',
+        ]);
+        for (const key of Object.keys(missingProvenance)) {
+            if (!missingProvenanceKeys.has(key)) {
+                fail(`GD-A03 missing target fact provenance contains ${key}`, 'SCHEMA_MISMATCH');
+            }
+        }
+        if (
+            missingProvenance.status !== 'MISSING_GD_A02_FACT' ||
+            missingProvenance.canonical_match_id !== row.canonical_match_id
+        ) {
+            fail('GD-A03 missing target fact provenance is invalid', 'PROVENANCE_INVALID');
+        }
+        if (missingProvenance.source_match_id !== null) {
+            assertText(
+                missingProvenance.source_match_id,
+                `GD-A03 row ${row.canonical_match_id}.target_label.source_match_id`
+            );
+        }
+        for (const field of ['rejection_reason', 'rejection_error_code', 'rejection_message']) {
+            assertText(missingProvenance[field], `GD-A03 row ${row.canonical_match_id}.target_label.${field}`);
+        }
     }
 }
 
@@ -598,7 +656,13 @@ function validatePriorStateArtifact(artifact) {
     ) {
         fail('GD-A03 population accounting is not bound to GD-A01 admitted population', 'POPULATION_MISMATCH');
     }
-    const labelBindings = artifact.rows.map(row => ({
+    const presentLabelRows = artifact.rows.filter(
+        row => row.target_label.source_fact_binding.fact_presence === 'PRESENT'
+    );
+    const missingLabelRows = artifact.rows.filter(
+        row => row.target_label.source_fact_binding.fact_presence === 'MISSING'
+    );
+    const labelBindings = presentLabelRows.map(row => ({
         canonical_match_id: row.canonical_match_id,
         fact_result_binding: row.target_label.source_fact_binding.fact_result_binding,
     }));
@@ -608,7 +672,21 @@ function validatePriorStateArtifact(artifact) {
         labelBindings.length !== gdA02Binding.fact_result_binding_count ||
         expectedLabelBindingsHash !== gdA02Binding.fact_result_bindings_sha256
     ) {
-        fail('GD-A03 target labels are not fully bound to GD-A02 facts', 'PROVENANCE_INVALID');
+        fail('GD-A03 admitted target labels are not fully bound to GD-A02 facts', 'PROVENANCE_INVALID');
+    }
+    const admittedLabelIds = new Set(presentLabelRows.map(row => row.canonical_match_id));
+    const rejectedLabelIds = new Set(missingLabelRows.map(row => row.canonical_match_id));
+    const accountedLabelIds = new Set([...admittedLabelIds, ...rejectedLabelIds]);
+    if (
+        gdA02Binding.fact_admitted_row_count !== admittedLabelIds.size ||
+        gdA02Binding.fact_admitted_id_set_sha256 !== admittedIdSetHash([...admittedLabelIds]) ||
+        gdA02Binding.fact_rejected_row_count !== rejectedLabelIds.size ||
+        gdA02Binding.fact_rejected_id_set_sha256 !== admittedIdSetHash([...rejectedLabelIds]) ||
+        gdA02Binding.fact_accounted_row_count !== accountedLabelIds.size ||
+        gdA02Binding.fact_accounted_id_set_sha256 !== admittedIdSetHash([...accountedLabelIds]) ||
+        accountedLabelIds.size !== artifact.rows.length
+    ) {
+        fail('GD-A03 target labels do not conserve GD-A02 admitted/rejected fact coverage', 'POPULATION_MISMATCH');
     }
     if (accounting.unaccounted_count !== 0 || accounting.duplicate_id_count !== 0 || accounting.extra_id_count !== 0) {
         fail('GD-A03 population is not conserved', 'POPULATION_MISMATCH');

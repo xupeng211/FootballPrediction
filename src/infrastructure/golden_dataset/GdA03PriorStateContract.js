@@ -14,8 +14,8 @@ const {
     TEAMS_PER_SEASON,
 } = require('../canonical/CanonicalInventoryContract');
 
-const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v2';
-const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
+const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v3';
+const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v3';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
 const POPULATION_AUTHORITY_SCHEMA_VERSION = 'gd-a01-target-population-binding/v1';
 const TARGET_RESULT_BINDINGS_SCHEMA_VERSION = 'gd-a02-target-result-bindings/v1';

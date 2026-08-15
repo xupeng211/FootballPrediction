@@ -35,6 +35,7 @@ const {
     computeFactResultBinding,
     computeFactResultBindingsHash,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
+const { admittedIdSetHash } = require('../../src/infrastructure/golden_dataset/GdA01AssemblyContract');
 const {
     buildPriorStateFeatureView,
     validatePriorStateOutputFiles,
@@ -193,10 +194,7 @@ function assertCodeRevisionMatchesHead(codeRevision, repositoryRoot) {
         fail(`cannot verify --code-revision against Git HEAD: ${error.message}`, 'CODE_REVISION_UNVERIFIED');
     }
     if (gitState.revision !== codeRevision) {
-        fail(
-            `--code-revision ${codeRevision} does not match Git HEAD ${gitState.revision}`,
-            'CODE_REVISION_MISMATCH'
-        );
+        fail(`--code-revision ${codeRevision} does not match Git HEAD ${gitState.revision}`, 'CODE_REVISION_MISMATCH');
     }
 }
 
@@ -281,7 +279,9 @@ function loadFeatureContract(repositoryRoot) {
 }
 
 function buildSourceBindings(inputs, featureContractBinding, scheduleValidation) {
-    const factResultBindings = inputs.gdA02.artifact.rows.map(row => ({
+    const factRows = inputs.gdA02.artifact.rows;
+    const factRejections = inputs.gdA02.artifact.rejected_rows;
+    const factResultBindings = factRows.map(row => ({
         canonical_match_id: row.canonical_match_id,
         fact_result_binding: computeFactResultBinding({
             canonicalMatchId: row.canonical_match_id,
@@ -308,6 +308,15 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
             schema_version: inputs.gdA02.artifact.schema_version,
             fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
             fact_result_binding_count: factResultBindings.length,
+            fact_admitted_id_set_sha256: admittedIdSetHash(factRows.map(row => row.canonical_match_id)),
+            fact_admitted_row_count: factRows.length,
+            fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
+            fact_rejected_row_count: factRejections.length,
+            fact_accounted_id_set_sha256: admittedIdSetHash([
+                ...factRows.map(row => row.canonical_match_id),
+                ...factRejections.map(row => row.canonical_match_id),
+            ]),
+            fact_accounted_row_count: factRows.length + factRejections.length,
         },
         gd_a02_receipt: {
             sha256: inputs.gdA02Receipt.sha256,
@@ -342,9 +351,10 @@ function loadBuildInputs(args, repositoryRoot) {
         repositoryRoot
     );
     const gdA01 = validateGdA01OutputFiles(gdA01Artifact.bytes, gdA01Receipt.bytes);
-    const gdA02 = validateGdA02OutputFiles(gdA02Artifact.bytes, gdA02Receipt.bytes, {
-        expectedAdmittedRows: args.expectedTargets,
-    });
+    // GD-A02 may legitimately contain rejected rows. GD-A03 binds admitted ∪ rejected
+    // coverage to GD-A01, so an expected target count must not be misread as an
+    // admitted-fact count here.
+    const gdA02 = validateGdA02OutputFiles(gdA02Artifact.bytes, gdA02Receipt.bytes);
     const scheduleDocument = parseJson(schedule, 'canonical schedule artifact');
     let scheduleValidation;
     try {
@@ -409,6 +419,7 @@ function loadBuildInputs(args, repositoryRoot) {
     return {
         targetRows: gdA01.artifact.rows,
         factRows: gdA02.artifact.rows,
+        factRejections: gdA02.artifact.rejected_rows,
         scheduleCandidates: scheduleValidation.candidates,
         scheduleClosure,
         featureContract: featureContractBinding.contract,
