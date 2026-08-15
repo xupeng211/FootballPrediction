@@ -58,6 +58,7 @@ const REASON_CODES = Object.freeze({
     INSUFFICIENT_HISTORY: 'INSUFFICIENT_HISTORY',
     NO_PROVEN_SOURCE_FACT: 'NO_PROVEN_SOURCE_FACT',
     SEMANTICS_UNPROVEN: 'SEMANTICS_UNPROVEN',
+    SOT_OWN_GOAL_SEMANTICS_UNPROVEN: 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN',
     STANDINGS_HISTORY_GAP: 'STANDINGS_HISTORY_GAP',
     STANDINGS_TIEBREAK_UNPROVEN: 'STANDINGS_TIEBREAK_UNPROVEN',
 });
@@ -110,7 +111,7 @@ const FEATURE_SEMANTICS = [
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
         provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
-        semantics_status: SEMANTICS_STATUS.PROVEN_DERIVED,
+        semantics_status: SEMANTICS_STATUS.SEMANTICS_UNPROVEN,
     },
     {
         feature_name: 'rolling_shots_on_target_away',
@@ -129,7 +130,7 @@ const FEATURE_SEMANTICS = [
         missing_history_policy: 'Null with NO_PROVEN_SOURCE_FACT; no goals or shot proxy.',
         cold_start_policy: 'Unavailable.',
         provenance_requirements: 'Every source canonical ID, kickoff, GD-A02 staging/business hash and shotmap path.',
-        semantics_status: SEMANTICS_STATUS.PROVEN_DERIVED,
+        semantics_status: SEMANTICS_STATUS.SEMANTICS_UNPROVEN,
     },
     {
         feature_name: 'rolling_possession_home',

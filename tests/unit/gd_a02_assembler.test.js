@@ -359,6 +359,39 @@ test('GD-A02 preserves missing isOnTarget as partial/null and never fabricates z
     assert.equal(shotsOnTarget.home.missing_shots, 1);
 });
 
+test('GD-A02 fails closed when own-goal SOT semantics are not proven', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [{ ...base.shotmap.shots[0], isOnTarget: true, isOwnGoal: true }],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'UNAVAILABLE');
+    assert.equal(shotsOnTarget.unavailable_reason_code, 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN');
+    assert.equal(shotsOnTarget.total_shots, null);
+    assert.equal(shotsOnTarget.home.value, null);
+    assert.equal(shotsOnTarget.away.value, null);
+});
+
+test('GD-A02 rejects normalized home/away identity reversal even when source IDs are legal', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildFixture(t, {
+        normalized: {
+            ...base,
+            home_team: { ...base.away_team },
+            away_team: { ...base.home_team },
+        },
+    });
+    const result = buildFactsAssembly(fixture.options);
+    assert.equal(result.artifact.rows.length, 0);
+    assert.equal(result.artifact.rejected_rows.length, 1);
+    assert.equal(result.artifact.rejected_rows[0].error_code, 'IDENTITY_CONFLICT');
+});
+
 test('GD-A02 accounts a malformed source as rejection when another admitted row remains', t => {
     const first = buildFixture(t);
     const second = buildFixture(t, { source_match_id: '3901024' });

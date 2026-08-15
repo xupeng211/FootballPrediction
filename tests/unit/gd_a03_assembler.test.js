@@ -277,8 +277,13 @@ test('GD-A03 SOT missing prior evidence fails closed without reaching older hist
     const missing = facts.find(row => row.canonical_match_id === missingId);
     missing.facts.shots_on_target = {
         ...missing.facts.shots_on_target,
-        status: 'PARTIAL',
-        home: { value: null, status: 'PARTIAL', known_shots: 0, missing_shots: 1 },
+        status: 'UNAVAILABLE',
+        unavailable_reason_code: REASON_CODES.SOT_OWN_GOAL_SEMANTICS_UNPROVEN,
+        total_shots: null,
+        shots_with_on_target: null,
+        shots_without_on_target: null,
+        home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+        away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
     };
     const result = buildPriorStateFeatureView({ ...fixture.options, factRows: facts });
     const line = targetRow(result, fixture.targetId).features.rolling_shots_on_target_home;
@@ -286,6 +291,7 @@ test('GD-A03 SOT missing prior evidence fails closed without reaching older hist
     assert.equal(line.source_match_ids.length, 5);
     assert.ok(line.source_match_ids.includes(missingId));
     assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.HISTORY_GAP));
+    assert.ok(line.unavailable_reason_codes.includes(REASON_CODES.SOT_OWN_GOAL_SEMANTICS_UNPROVEN));
     assert.equal(result.artifact.validation_counters.silent_history_gap_count, 0);
 });
 

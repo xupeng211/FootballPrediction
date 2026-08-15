@@ -54,8 +54,11 @@ artifact for historical revalidation. Its deterministic rows contain:
   boolean `isOnTarget` observation by exact home/away `teamId`. The accepted
   aggregation is `count_true_isOnTarget_by_team_id`; it does not use goals,
   summary-stat proxies, interpolation, or defaults. A missing/invalid boolean
-  or reversed/unknown team identity makes the affected side unavailable. The
-  projection is a postmatch fact and is not a current-match prematch feature;
+  or reversed/unknown team identity makes the affected side unavailable. If a
+  source shot is marked `isOwnGoal=true`, GD-A02 emits an unavailable SOT
+  projection with `SOT_OWN_GOAL_SEMANTICS_UNPROVEN`; it does not silently
+  decide whether that observation belongs in the canonical team SOT count.
+  The projection is a postmatch fact and is not a current-match prematch feature;
 - an explicit `admission` value. Invalid evidence is represented by a
   `rejected_rows` entry with its canonical ID, error code, and reason rather
   than being silently dropped.

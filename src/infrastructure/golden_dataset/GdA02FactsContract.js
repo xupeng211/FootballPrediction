@@ -270,7 +270,7 @@ function validateXg(value, label) {
     }
 }
 
-function emptyShotsOnTargetProjection(status = 'UNAVAILABLE') {
+function emptyShotsOnTargetProjection(status = 'UNAVAILABLE', unavailableReasonCode = null) {
     return {
         status,
         source_path: 'normalized.shotmap.shots[*].isOnTarget',
@@ -280,6 +280,7 @@ function emptyShotsOnTargetProjection(status = 'UNAVAILABLE') {
         shots_without_on_target: null,
         home: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
         away: { value: null, status: 'UNAVAILABLE', known_shots: 0, missing_shots: 0 },
+        ...(unavailableReasonCode ? { unavailable_reason_code: unavailableReasonCode } : {}),
     };
 }
 
@@ -313,6 +314,7 @@ function validateShotsOnTarget(value, label) {
             'shots_without_on_target',
             'home',
             'away',
+            'unavailable_reason_code',
         ]),
         label
     );
@@ -321,6 +323,12 @@ function validateShotsOnTarget(value, label) {
     }
     assertText(value.source_path, `${label}.source_path`);
     assertText(value.aggregation, `${label}.aggregation`);
+    if (value.unavailable_reason_code !== undefined) {
+        assertText(value.unavailable_reason_code, `${label}.unavailable_reason_code`);
+        if (value.status !== 'UNAVAILABLE') {
+            fail(`${label}.unavailable_reason_code requires an unavailable projection`, 'FACT_VALUE_INVALID');
+        }
+    }
     for (const field of ['total_shots', 'shots_with_on_target', 'shots_without_on_target']) {
         if (value[field] !== null) assertInteger(value[field], `${label}.${field}`);
     }

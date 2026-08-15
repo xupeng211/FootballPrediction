@@ -7,6 +7,7 @@
 // re-parses a raw/pageProps document.
 
 const { validateObservation, validateStagingArtifact } = require('../fotmob/FotMobDetailStagingContract');
+const { normalizeTeamName } = require('../fotmob/FotMobDetailCaptureContract');
 const {
     validateAssemblyArtifact,
     validateOutputFiles: validateGdA01OutputFiles,
@@ -134,6 +135,39 @@ function compareExact(actual, expected, label) {
     if (actual !== expected) fail(`${label} mismatch`, 'IDENTITY_CONFLICT');
 }
 
+function normalizePositiveTeamId(value) {
+    if (Number.isSafeInteger(value) && value > 0) return value;
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number(value);
+        if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+    }
+    return null;
+}
+
+function validateNormalizedTeamBinding(payload, expectedRow) {
+    const normalized = payload.normalized || {};
+    const sides = [
+        ['home', normalized.home_team, expectedRow.home_team],
+        ['away', normalized.away_team, expectedRow.away_team],
+    ];
+    const ids = new Set();
+    for (const [side, observed, expectedName] of sides) {
+        const observedId = normalizePositiveTeamId(observed && observed.id);
+        const observedName = String(observed && observed.name ? observed.name : '').trim();
+        if (
+            observedId === null ||
+            observedName === '' ||
+            normalizeTeamName(observedName) !== normalizeTeamName(expectedName)
+        ) {
+            fail(`${expectedRow.canonical_match_id} normalized ${side} team identity mismatch`, 'IDENTITY_CONFLICT');
+        }
+        if (ids.has(observedId)) {
+            fail(`${expectedRow.canonical_match_id} normalized home/away team IDs collide`, 'IDENTITY_CONFLICT');
+        }
+        ids.add(observedId);
+    }
+}
+
 // eslint-disable-next-line complexity
 function validateSourcePair(entry, expectedRow, frozenRow) {
     requireBuffer(entry.stagingArtifactBytes, `${expectedRow.canonical_match_id} staging artifact`);
@@ -238,6 +272,7 @@ function validateSourcePair(entry, expectedRow, frozenRow) {
         frozenRow.fotmob_match_id,
         `${expectedRow.canonical_match_id} normalized external ID`
     );
+    validateNormalizedTeamBinding(entry.capturePayload, expectedRow);
     if (entry.capturePayload.observed_identity.observed_match_id_conflict === true) {
         fail(`${expectedRow.canonical_match_id} capture identity conflict`, 'IDENTITY_CONFLICT');
     }
@@ -353,7 +388,8 @@ function buildXgProjection(payload) {
 }
 
 // The existing FotMob parser/staging authority retains the normalized shotmap.
-// This projection promotes only the source's explicit boolean observation; it
+// This projection promotes only the source's explicit boolean observation when
+// its team identity is bound and no own-goal semantic ambiguity is present; it
 // never estimates shots on target from goals or from the summary stats section.
 // eslint-disable-next-line complexity -- source identity and boolean observation checks stay together.
 function buildShotsOnTargetProjection(payload) {
@@ -383,6 +419,9 @@ function buildShotsOnTargetProjection(payload) {
     let shotsWithoutOnTarget = 0;
     let invalidIdentity = false;
     for (const shot of shotmap.shots) {
+        if (shot && shot.isOwnGoal === true) {
+            return emptyShotsOnTargetProjection('UNAVAILABLE', 'SOT_OWN_GOAL_SEMANTICS_UNPROVEN');
+        }
         const teamId = toTeamId(shot && shot.teamId);
         const side =
             teamId !== null && teamId === homeTeamId

@@ -549,6 +549,8 @@ function buildRollingShotsOnTargetLine({ featureName, target, teamName, matches,
             );
         } else {
             reasons.push(REASON_CODES.HISTORY_GAP, REASON_CODES.NO_PROVEN_SOURCE_FACT);
+            const unavailableReason = fact?.facts?.shots_on_target?.unavailable_reason_code;
+            if (unavailableReason) reasons.push(unavailableReason);
         }
     }
     const derivation = 'mean_exact_previous_5_complete_team_shots_on_target';
