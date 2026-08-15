@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- the permanent GD-A03 contract keeps semantic, lineage, and hash rules together. */
+
 // lifecycle: permanent
 // GD-A03 的 feature identity / numeric-lineage contract。特征名称与顺序仍由
 // config/model_feature_contracts.json 传入并校验；本文件只声明每个名称的
@@ -14,11 +16,12 @@ const {
     TEAMS_PER_SEASON,
 } = require('../canonical/CanonicalInventoryContract');
 
-const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v3';
-const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v3';
+const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v4';
+const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v4';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
 const POPULATION_AUTHORITY_SCHEMA_VERSION = 'gd-a01-target-population-binding/v1';
 const TARGET_RESULT_BINDINGS_SCHEMA_VERSION = 'gd-a02-target-result-bindings/v1';
+const TARGET_REJECTION_BINDINGS_SCHEMA_VERSION = 'gd-a02-rejected-fact-bindings/v1';
 const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
 const GD_A03_SOURCE_BINDING_NAMES = Object.freeze([
     'canonical_schedule',
@@ -512,6 +515,32 @@ function computeFactResultBindingsHash(bindings) {
     return sha256Text(stableStringify(normalized));
 }
 
+function computeFactRejectionBinding({ canonicalMatchId, sourceMatchId, rejectionReason, errorCode, reason }) {
+    return sha256Text(
+        stableStringify({
+            schema_version: TARGET_REJECTION_BINDINGS_SCHEMA_VERSION,
+            canonical_match_id: canonicalMatchId,
+            source_match_id: sourceMatchId,
+            admission: {
+                status: 'REJECTED',
+                rejection_reason: rejectionReason,
+            },
+            error_code: errorCode,
+            reason,
+        })
+    );
+}
+
+function computeFactRejectionBindingsHash(bindings) {
+    const normalized = bindings
+        .map(binding => ({
+            canonical_match_id: binding.canonical_match_id,
+            fact_rejection_binding: binding.fact_rejection_binding,
+        }))
+        .sort((left, right) => left.canonical_match_id.localeCompare(right.canonical_match_id));
+    return sha256Text(stableStringify(normalized));
+}
+
 module.exports = {
     FATIGUE_LOOKBACK_DAYS,
     FEATURE_AVAILABILITY,
@@ -545,11 +574,14 @@ module.exports = {
     computeBusinessHash,
     computeFactResultBinding,
     computeFactResultBindingsHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
     isSemanticsProven,
     stableStringify,
     TARGET_RESULT_BINDINGS_SCHEMA_VERSION,
+    TARGET_REJECTION_BINDINGS_SCHEMA_VERSION,
     validateFeatureContract,
 };

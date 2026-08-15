@@ -34,6 +34,8 @@ const {
     computeBusinessHash,
     computeFactResultBinding,
     computeFactResultBindingsHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeProvenanceDigest,
     computeReceiptHash,
     featureSemanticsInOrder,
@@ -414,6 +416,16 @@ function validateSourceBindings(sourceBindings) {
             if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count < 0) {
                 fail(`GD-A03 source_bindings.${name}.fact_result_binding_count is invalid`, 'PROVENANCE_INVALID');
             }
+            assertSha(
+                binding.fact_rejection_bindings_sha256,
+                `GD-A03 source_bindings.${name}.fact_rejection_bindings_sha256`
+            );
+            if (
+                !Number.isSafeInteger(binding.fact_rejection_binding_count) ||
+                binding.fact_rejection_binding_count < 0
+            ) {
+                fail(`GD-A03 source_bindings.${name}.fact_rejection_binding_count is invalid`, 'PROVENANCE_INVALID');
+            }
             for (const field of [
                 'fact_admitted_id_set_sha256',
                 'fact_rejected_id_set_sha256',
@@ -487,6 +499,22 @@ function validateFactCoverage(sourceBindings, factsById, factRejectionsById, tar
         if (sourceBinding[hashField] !== admittedIdSetHash([...ids]) || sourceBinding[countField] !== ids.size) {
             fail(`GD-A02 ${hashField} does not match admitted/rejected fact coverage`, 'PROVENANCE_INVALID');
         }
+    }
+    const rejectionBindings = [...factRejectionsById.values()].map(rejection => ({
+        canonical_match_id: rejection.canonical_match_id,
+        fact_rejection_binding: computeFactRejectionBinding({
+            canonicalMatchId: rejection.canonical_match_id,
+            sourceMatchId: rejection.source_match_id,
+            rejectionReason: rejection.rejection_reason,
+            errorCode: rejection.error_code,
+            reason: rejection.reason,
+        }),
+    }));
+    if (
+        sourceBinding.fact_rejection_binding_count !== rejectionBindings.length ||
+        sourceBinding.fact_rejection_bindings_sha256 !== computeFactRejectionBindingsHash(rejectionBindings)
+    ) {
+        fail('GD-A02 rejected fact bindings do not match GD-A03 source binding', 'PROVENANCE_INVALID');
     }
     validateFactResultBindings(sourceBindings, factsById);
 }
@@ -1198,6 +1226,15 @@ function buildTargetLabel(target, fact, factRejection, sourceBindings) {
         result: fact ? result : null,
         sourceProvenance: fact ? sourceProvenance : null,
     });
+    const factRejectionBinding = fact
+        ? null
+        : computeFactRejectionBinding({
+              canonicalMatchId: target.canonical_match_id,
+              sourceMatchId: sourceProvenance.source_match_id,
+              rejectionReason: sourceProvenance.rejection_reason,
+              errorCode: sourceProvenance.rejection_error_code,
+              reason: sourceProvenance.rejection_message,
+          });
     return {
         role: TRAINING_LABEL_ROLE,
         timing_class: FACT_TIMING_CLASS,
@@ -1220,6 +1257,7 @@ function buildTargetLabel(target, fact, factRejection, sourceBindings) {
             source_business_hash: sourceBindings.gd_a02_artifact.business_hash,
             fact_presence: fact ? 'PRESENT' : 'MISSING',
             fact_result_binding: fact ? factResultBinding : null,
+            fact_rejection_binding: factRejectionBinding,
         },
     };
 }

@@ -24,6 +24,8 @@ const {
     REASON_CODES,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     computeBusinessHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeFactResultBinding,
     computeFactResultBindingsHash,
     computeProvenanceDigest,
@@ -214,6 +216,7 @@ function buildFixture({ includeSixth = false } = {}) {
             sourceProvenance: row.provenance,
         }),
     }));
+    const factRejectionBindings = [];
     const sourceBindings = {
         gd_a01_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-artifact/v1' },
         gd_a01_receipt: {
@@ -229,6 +232,8 @@ function buildFixture({ includeSixth = false } = {}) {
             schema_version: 'gd-a02-artifact/v2',
             fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
             fact_result_binding_count: factResultBindings.length,
+            fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+            fact_rejection_binding_count: factRejectionBindings.length,
             fact_admitted_id_set_sha256: admittedIdSetHash(facts.map(row => row.canonical_match_id)),
             fact_admitted_row_count: facts.length,
             fact_rejected_id_set_sha256: admittedIdSetHash([]),
@@ -279,6 +284,16 @@ function rebindSourceBindings(options) {
             sourceProvenance: row.provenance,
         }),
     }));
+    const factRejectionBindings = factRejections.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_rejection_binding: computeFactRejectionBinding({
+            canonicalMatchId: row.canonical_match_id,
+            sourceMatchId: row.source_match_id,
+            rejectionReason: row.admission.rejection_reason,
+            errorCode: row.error_code,
+            reason: row.reason,
+        }),
+    }));
     return {
         ...options,
         sourceBindings: {
@@ -292,6 +307,8 @@ function rebindSourceBindings(options) {
                 ...options.sourceBindings.gd_a02_artifact,
                 fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
                 fact_result_binding_count: factResultBindings.length,
+                fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+                fact_rejection_binding_count: factRejectionBindings.length,
                 fact_admitted_id_set_sha256: admittedIdSetHash(options.factRows.map(row => row.canonical_match_id)),
                 fact_admitted_row_count: options.factRows.length,
                 fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
@@ -589,6 +606,37 @@ test('GD-A03 records an actual missing recent match and does not reach farther b
     const missingLabel = targetRow(result, missingId).target_label;
     assert.equal(missingLabel.source_fact_binding.fact_presence, 'MISSING');
     assert.equal(missingLabel.provenance_input.result, null);
+});
+
+test('GD-A03 rejects tampered rejected-fact provenance after business hashes are rewritten', () => {
+    const complete = buildFixture({ includeSixth: true });
+    const missingId = complete.schedule.find(row => row.kickoff_at === '2024-07-09T12:00:00Z').id;
+    const missingSource = complete.schedule.find(row => row.id === missingId);
+    const options = {
+        ...complete.options,
+        factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
+        factRejections: [
+            {
+                canonical_match_id: missingId,
+                source_match_id: missingSource.source_match_id,
+                admission: { status: 'REJECTED', rejection_reason: 'GD_A02_FACT_INPUT_REJECTED' },
+                error_code: 'TEST_MISSING_FACT',
+                reason: 'frozen GD-A02 fact intentionally unavailable in test fixture',
+            },
+        ],
+    };
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
+    const tampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    const missingLabel = tampered.rows.find(row => row.canonical_match_id === missingId).target_label;
+    missingLabel.provenance_input.source_provenance.rejection_message = 'tampered rejection reason';
+    missingLabel.provenance_digest = computeProvenanceDigest({
+        role: missingLabel.role,
+        target_match_id: missingLabel.canonical_match_id,
+        result: missingLabel.provenance_input.result,
+        source_provenance: missingLabel.provenance_input.source_provenance,
+    });
+    tampered.business_content_sha256 = computeBusinessHash({ ...tampered, business_content_sha256: null });
+    assertReject(() => validatePriorStateArtifact(tampered), 'PROVENANCE_INVALID');
 });
 
 test('GD-A03 rejects equal/future lineage, identity tamper, and provenance tamper', () => {

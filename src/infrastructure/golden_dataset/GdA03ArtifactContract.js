@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- the permanent GD-A03 verifier keeps artifact and lineage invariants together. */
+
 // lifecycle: permanent
 // GD-A03 artifact/receipt verifier。它只验证已经构建的 file-first projection：
 // schema、strict cutoff、lineage digest、population accounting、safety flags 与
@@ -22,6 +24,8 @@ const {
     computeBusinessHash,
     computeFactResultBinding,
     computeFactResultBindingsHash,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
@@ -58,6 +62,8 @@ const SOURCE_BINDING_FIELDS = Object.freeze({
         'schema_version',
         'fact_result_bindings_sha256',
         'fact_result_binding_count',
+        'fact_rejection_bindings_sha256',
+        'fact_rejection_binding_count',
         'fact_admitted_id_set_sha256',
         'fact_admitted_row_count',
         'fact_rejected_id_set_sha256',
@@ -125,6 +131,16 @@ function validateSourceBindings(sourceBindings) {
             );
             if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count < 0) {
                 fail(`GD-A03 source_bindings.${name}.fact_result_binding_count is invalid`, 'PROVENANCE_INVALID');
+            }
+            assertSha(
+                binding.fact_rejection_bindings_sha256,
+                `GD-A03 source_bindings.${name}.fact_rejection_bindings_sha256`
+            );
+            if (
+                !Number.isSafeInteger(binding.fact_rejection_binding_count) ||
+                binding.fact_rejection_binding_count < 0
+            ) {
+                fail(`GD-A03 source_bindings.${name}.fact_rejection_binding_count is invalid`, 'PROVENANCE_INVALID');
             }
             for (const field of [
                 'fact_admitted_id_set_sha256',
@@ -468,6 +484,7 @@ function validateTargetLabel(label, row, sourceBindings) {
         'source_business_hash',
         'fact_presence',
         'fact_result_binding',
+        'fact_rejection_binding',
     ]);
     for (const key of Object.keys(label.source_fact_binding)) {
         if (!sourceFactBindingKeys.has(key)) {
@@ -496,6 +513,9 @@ function validateTargetLabel(label, row, sourceBindings) {
         fail('GD-A03 target label fact presence is invalid', 'PROVENANCE_INVALID');
     }
     if (label.source_fact_binding.fact_presence === 'PRESENT') {
+        if (label.source_fact_binding.fact_rejection_binding !== null) {
+            fail('GD-A03 admitted target fact carries a rejection binding', 'PROVENANCE_INVALID');
+        }
         assertSha(
             label.source_fact_binding.fact_result_binding,
             `GD-A03 row ${row.canonical_match_id}.target_label.fact_result_binding`
@@ -540,6 +560,20 @@ function validateTargetLabel(label, row, sourceBindings) {
         }
         for (const field of ['rejection_reason', 'rejection_error_code', 'rejection_message']) {
             assertText(missingProvenance[field], `GD-A03 row ${row.canonical_match_id}.target_label.${field}`);
+        }
+        assertSha(
+            label.source_fact_binding.fact_rejection_binding,
+            `GD-A03 row ${row.canonical_match_id}.target_label.fact_rejection_binding`
+        );
+        const expectedFactRejectionBinding = computeFactRejectionBinding({
+            canonicalMatchId: row.canonical_match_id,
+            sourceMatchId: missingProvenance.source_match_id,
+            rejectionReason: missingProvenance.rejection_reason,
+            errorCode: missingProvenance.rejection_error_code,
+            reason: missingProvenance.rejection_message,
+        });
+        if (label.source_fact_binding.fact_rejection_binding !== expectedFactRejectionBinding) {
+            fail('GD-A03 target label fact rejection binding is invalid', 'PROVENANCE_INVALID');
         }
     }
 }
@@ -687,6 +721,16 @@ function validatePriorStateArtifact(artifact) {
         accountedLabelIds.size !== artifact.rows.length
     ) {
         fail('GD-A03 target labels do not conserve GD-A02 admitted/rejected fact coverage', 'POPULATION_MISMATCH');
+    }
+    const rejectionBindings = missingLabelRows.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_rejection_binding: row.target_label.source_fact_binding.fact_rejection_binding,
+    }));
+    if (
+        rejectionBindings.length !== gdA02Binding.fact_rejection_binding_count ||
+        computeFactRejectionBindingsHash(rejectionBindings) !== gdA02Binding.fact_rejection_bindings_sha256
+    ) {
+        fail('GD-A03 rejected target labels are not bound to GD-A02 rejection rows', 'PROVENANCE_INVALID');
     }
     if (accounting.unaccounted_count !== 0 || accounting.duplicate_id_count !== 0 || accounting.extra_id_count !== 0) {
         fail('GD-A03 population is not conserved', 'POPULATION_MISMATCH');

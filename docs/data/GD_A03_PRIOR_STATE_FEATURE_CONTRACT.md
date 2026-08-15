@@ -87,7 +87,7 @@ one required fact is absent. The assembler never changes `A B C D E` into `A B D
 The file-first artifact schema is:
 
 ```text
-golden-dataset-v1-gd-a03-prior-state-features-artifact/v3
+golden-dataset-v1-gd-a03-prior-state-features-artifact/v4
 ```
 
 FSC-V1 advances the numeric lineage contract to
@@ -107,7 +107,9 @@ Each target row contains:
 - the isolated label identifies the target with `canonical_match_id`; it is not a provider `source_match_id`.
 - the isolated label includes `source_fact_binding`, which binds its canonical ID,
   GD-A02 artifact hashes, `fact_presence`, and (when admitted) a deterministic
-  result/provenance binding.
+  result/provenance binding. A missing fact also carries a deterministic
+  `fact_rejection_binding` over the canonical ID, source ID, rejection reason,
+  error code, and reason text.
 
 The target label is created after feature derivation and is never an input to it.
 
@@ -147,23 +149,26 @@ fact-result binding for admitted facts, and verifies the admitted/rejected/
 accounted ID sets against the validated GD-A02 artifact binding. A GD-A02
 rejection is retained as a target row with `fact_presence=MISSING`, explicit
 rejection provenance, a null result, and no synthetic fact-result binding; its
-dependent historical features remain unavailable. Identity, projection, source
-binding, or provenance tampering therefore fails closed, without shrinking the
-GD-A01 target population. Target labels remain postmatch-only and are never
-inputs to feature computation.
+dependent historical features remain unavailable. The GD-A02 source binding
+also carries the sorted aggregate hash and count of rejected-fact bindings,
+and each missing target label carries its corresponding binding. Identity,
+projection, source binding, or provenance tampering therefore fails closed,
+without shrinking the GD-A01 target population. Target labels remain
+postmatch-only and are never inputs to feature computation.
 
 The GD-A02 coverage binding in `source_bindings.gd_a02_artifact` records the
 SHA-256 ID-set hash and row count for admitted facts, rejected facts, and their
-union, plus the admitted fact-result binding aggregate. GD-A03 requires the
-union to equal the GD-A01 admitted population. A missing rejection record is
-therefore a population/provenance error, not an invitation to use older history
-or an estimated value.
+union, plus the admitted fact-result binding aggregate and rejected-fact
+binding aggregate. GD-A03 requires both binding aggregates to match the
+validated GD-A02 rows and the union to equal the GD-A01 admitted population. A
+missing rejection record is therefore a population/provenance error, not an
+invitation to use older history or an estimated value.
 
 `FULL_20_VECTOR_ELIGIBLE=YES` requires all 20 values to be finite, semantically proven,
 strictly prior, fully closed, and individually hash/provenance bound. No null is replaced
 by zero, neutral, a proxy, or a cold-start default.
 
-The receipt uses `gd-a03-prior-state-feature-view-receipt/v3` and carries
+The receipt uses `gd-a03-prior-state-feature-view-receipt/v4` and carries
 `receipt_content_sha256`, a stable hash over every other receipt field. Receipt provenance
 tampering therefore fails closed even when the artifact bytes are unchanged.
 

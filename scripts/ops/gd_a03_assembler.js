@@ -32,6 +32,8 @@ const {
     SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     SCHEDULE_TEAMS_PER_SEASON,
+    computeFactRejectionBinding,
+    computeFactRejectionBindingsHash,
     computeFactResultBinding,
     computeFactResultBindingsHash,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
@@ -289,6 +291,16 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
             sourceProvenance: row.provenance,
         }),
     }));
+    const factRejectionBindings = factRejections.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_rejection_binding: computeFactRejectionBinding({
+            canonicalMatchId: row.canonical_match_id,
+            sourceMatchId: row.source_match_id,
+            rejectionReason: row.admission.rejection_reason,
+            errorCode: row.error_code,
+            reason: row.reason,
+        }),
+    }));
     return {
         gd_a01_artifact: {
             sha256: inputs.gdA01Artifact.sha256,
@@ -308,6 +320,8 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
             schema_version: inputs.gdA02.artifact.schema_version,
             fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
             fact_result_binding_count: factResultBindings.length,
+            fact_rejection_bindings_sha256: computeFactRejectionBindingsHash(factRejectionBindings),
+            fact_rejection_binding_count: factRejectionBindings.length,
             fact_admitted_id_set_sha256: admittedIdSetHash(factRows.map(row => row.canonical_match_id)),
             fact_admitted_row_count: factRows.length,
             fact_rejected_id_set_sha256: admittedIdSetHash(factRejections.map(row => row.canonical_match_id)),
