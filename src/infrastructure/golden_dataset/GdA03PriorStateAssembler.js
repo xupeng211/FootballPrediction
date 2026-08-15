@@ -18,6 +18,7 @@ const {
     PRIOR_STATE_LINEAGE_CONTRACT_VERSION,
     PRIOR_STATE_RECEIPT_SCHEMA_VERSION,
     PRIOR_STATE_STAGE,
+    POPULATION_AUTHORITY_SCHEMA_VERSION,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
     SCHEDULE_AWAY_FIXTURES_PER_TEAM,
@@ -31,6 +32,8 @@ const {
     assertSha,
     assertText,
     computeBusinessHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
     computeProvenanceDigest,
     computeReceiptHash,
     featureSemanticsInOrder,
@@ -352,8 +355,52 @@ function validateSourceBindings(sourceBindings) {
                 assertText(featureName, `GD-A03 source_bindings.${name}.ordered_features[${index}]`)
             );
         }
+        if (name === 'gd_a01_receipt') {
+            assertSha(binding.admitted_id_set_sha256, `GD-A03 source_bindings.${name}.admitted_id_set_sha256`);
+            if (!Number.isSafeInteger(binding.admitted_row_count) || binding.admitted_row_count <= 0) {
+                fail(`GD-A03 source_bindings.${name}.admitted_row_count is invalid`, 'PROVENANCE_INVALID');
+            }
+        }
+        if (name === 'gd_a02_artifact') {
+            assertSha(binding.fact_result_bindings_sha256, `GD-A03 source_bindings.${name}.fact_result_bindings_sha256`);
+            if (!Number.isSafeInteger(binding.fact_result_binding_count) || binding.fact_result_binding_count <= 0) {
+                fail(`GD-A03 source_bindings.${name}.fact_result_binding_count is invalid`, 'PROVENANCE_INVALID');
+            }
+        }
     }
     return sourceBindings;
+}
+
+function validateTargetPopulationBinding(sourceBindings, targetIds) {
+    const binding = sourceBindings.gd_a01_receipt;
+    const targetIdSetSha256 = admittedIdSetHash([...targetIds]);
+    if (binding.admitted_row_count !== targetIds.size || binding.admitted_id_set_sha256 !== targetIdSetSha256) {
+        fail('GD-A03 target population does not match GD-A01 admitted IDs', 'POPULATION_MISMATCH');
+    }
+    return {
+        schema_version: POPULATION_AUTHORITY_SCHEMA_VERSION,
+        source_binding: 'gd_a01_receipt.admitted_id_set_sha256',
+        target_id_set_sha256: targetIdSetSha256,
+        target_population_count: targetIds.size,
+    };
+}
+
+function validateFactResultBindings(sourceBindings, factsById) {
+    const bindings = [...factsById.values()].map(fact => ({
+        canonical_match_id: fact.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: fact.canonical_match_id,
+            result: fact.facts.match_result,
+            sourceProvenance: fact.provenance,
+        }),
+    }));
+    const sourceBinding = sourceBindings.gd_a02_artifact;
+    if (
+        sourceBinding.fact_result_binding_count !== bindings.length ||
+        sourceBinding.fact_result_bindings_sha256 !== computeFactResultBindingsHash(bindings)
+    ) {
+        fail('GD-A02 fact result bindings do not match GD-A03 source binding', 'PROVENANCE_INVALID');
+    }
 }
 
 function makeSourceIdentity(candidate) {
@@ -1048,9 +1095,14 @@ function buildTargetFeatures({ target, schedule, factsById, indexes, closure, so
     return featureByName;
 }
 
-function buildTargetLabel(target, fact) {
+function buildTargetLabel(target, fact, sourceBindings) {
     const result = fact?.facts?.match_result;
     const sourceProvenance = fact?.provenance || null;
+    const factResultBinding = computeFactResultBinding({
+        canonicalMatchId: target.canonical_match_id,
+        result: result || null,
+        sourceProvenance,
+    });
     return {
         role: TRAINING_LABEL_ROLE,
         timing_class: FACT_TIMING_CLASS,
@@ -1067,6 +1119,12 @@ function buildTargetLabel(target, fact) {
             result,
             source_provenance: sourceProvenance,
         }),
+        source_fact_binding: {
+            canonical_match_id: target.canonical_match_id,
+            source_artifact_sha256: sourceBindings.gd_a02_artifact.sha256,
+            source_business_hash: sourceBindings.gd_a02_artifact.business_hash,
+            fact_result_binding: factResultBinding,
+        },
     };
 }
 
@@ -1163,7 +1221,10 @@ function buildPriorStateFeatureView(options) {
     const schedule = normalizeSchedule(options.scheduleCandidates);
     const targetRows = normalizeTargetRows(options.targetRows);
     const factsById = normalizeFactRows(options.factRows);
+    const sourceBindings = validateSourceBindings(options.sourceBindings);
     const targetIds = new Set(targetRows.map(row => row.canonical_match_id));
+    const populationAuthority = validateTargetPopulationBinding(sourceBindings, targetIds);
+    validateFactResultBindings(sourceBindings, factsById);
     if (factsById.size !== targetIds.size || [...factsById.keys()].some(id => !targetIds.has(id))) {
         fail('GD-A02 facts must exactly cover the GD-A01 target population', 'POPULATION_MISMATCH');
     }
@@ -1187,7 +1248,6 @@ function buildPriorStateFeatureView(options) {
     }
     const closure = validateScheduleClosure(schedule, options.scheduleClosure);
     const indexes = buildIndexes(schedule);
-    const sourceBindings = validateSourceBindings(options.sourceBindings);
     const rows = targetRows.map(target => {
         const features = buildTargetFeatures({
             target,
@@ -1208,7 +1268,7 @@ function buildPriorStateFeatureView(options) {
             feature_cutoff_time: target.kickoff_at,
             features: orderedFeatures,
             feature_vector_eligibility: rowEligibility(featureNames, orderedFeatures, semantics),
-            target_label: buildTargetLabel(target, factsById.get(target.canonical_match_id)),
+            target_label: buildTargetLabel(target, factsById.get(target.canonical_match_id), sourceBindings),
             cutoff_time_ms: target.kickoff_ms,
         };
     });
@@ -1235,6 +1295,7 @@ function buildPriorStateFeatureView(options) {
         feature_contract: featureContract,
         feature_semantics: semantics,
         source_bindings: sourceBindings,
+        population_authority: populationAuthority,
         schedule_authority: {
             schema_version: SCHEDULE_SCHEMA_VERSION,
             closure_schema_version: closure.schema_version,
@@ -1251,7 +1312,7 @@ function buildPriorStateFeatureView(options) {
             unaccounted_count: targetIds.size - accountedIds.size,
             duplicate_id_count: rows.length - accountedIds.size,
             extra_id_count: 0,
-            target_id_set_sha256: admittedIdSetHash([...targetIds]),
+            target_id_set_sha256: populationAuthority.target_id_set_sha256,
             accounted_id_set_sha256: admittedIdSetHash([...accountedIds]),
         },
         feature_availability: buildFeatureAvailability(rows, featureNames),
@@ -1276,6 +1337,7 @@ function buildPriorStateFeatureView(options) {
         build_mode: 'file_first_offline',
         code_revision: options.codeRevision,
         source_bindings: sourceBindings,
+        population_authority: populationAuthority,
         input_target_count: rows.length,
         rows_accounted: rows.length,
         feature_eligible_count: eligibleRows.length,

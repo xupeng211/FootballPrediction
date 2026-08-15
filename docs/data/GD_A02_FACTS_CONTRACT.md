@@ -108,6 +108,11 @@ real training readiness. GD-A01/M3 odds semantics remain unchanged:
 provider-defined closing is proven; exact closing, opening, and capture
 timestamps remain unproven; strict decision-time value evaluation is not ready.
 
+For an `AVAILABLE` match result, `outcome` is a deterministic projection of
+`home_score` and `away_score`: the higher score is the winner and equal scores
+are `draw`. A result carrying a contradictory outcome is rejected as a fact
+value error; it is never repaired downstream.
+
 ## Determinism and revalidation
 
 Rows and rejected rows are sorted by `canonical_match_id`. The business hash

@@ -191,6 +191,11 @@ function validateResult(value, label) {
             fail(`${label}.away_score is invalid`, 'FACT_VALUE_INVALID');
         }
         if (!RESULT_VALUES.has(value.outcome)) fail(`${label}.outcome is invalid`, 'FACT_VALUE_INVALID');
+        const expectedOutcome =
+            value.home_score === value.away_score ? 'draw' : value.home_score > value.away_score ? 'home' : 'away';
+        if (value.outcome !== expectedOutcome) {
+            fail(`${label}.outcome is not derived from the scores`, 'FACT_VALUE_INVALID');
+        }
     } else if (value.home_score !== null || value.away_score !== null || value.outcome !== null) {
         fail(`${label} unavailable result must not carry a value`, 'FACT_VALUE_INVALID');
     }

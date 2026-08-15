@@ -9,6 +9,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const featureContract = require('../../config/model_feature_contracts.json').contracts[0];
+const { admittedIdSetHash } = require('../../src/infrastructure/golden_dataset/GdA01AssemblyContract');
 const {
     buildPriorStateFeatureView,
     normalizeSchedule,
@@ -23,6 +24,9 @@ const {
     REASON_CODES,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     computeBusinessHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
+    computeProvenanceDigest,
     stableStringify,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
 
@@ -202,10 +206,30 @@ function buildFixture({ includeSixth = false } = {}) {
             if (!futureSlot) futureSlot = filler;
         }
     }
+    const factResultBindings = facts.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
     const sourceBindings = {
         gd_a01_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-artifact/v1' },
-        gd_a01_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a01-receipt/v1' },
-        gd_a02_artifact: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-artifact/v2' },
+        gd_a01_receipt: {
+            sha256: HASH,
+            business_hash: HASH,
+            schema_version: 'gd-a01-receipt/v1',
+            admitted_id_set_sha256: admittedIdSetHash(targets.map(row => row.id)),
+            admitted_row_count: targets.length,
+        },
+        gd_a02_artifact: {
+            sha256: HASH,
+            business_hash: HASH,
+            schema_version: 'gd-a02-artifact/v2',
+            fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+            fact_result_binding_count: factResultBindings.length,
+        },
         gd_a02_receipt: { sha256: HASH, business_hash: HASH, schema_version: 'gd-a02-receipt/v2' },
         canonical_schedule: { sha256: HASH, business_hash: HASH, schema_version: 'candidate-match-identity/v1' },
         feature_contract: { sha256: HASH, schema_version: 'model-feature-contract-registry/v1' },
@@ -235,6 +259,34 @@ function buildFixture({ includeSixth = false } = {}) {
 
 function build(fixture) {
     return buildPriorStateFeatureView(fixture.options);
+}
+
+function rebindSourceBindings(options) {
+    const targetIds = options.targetRows.map(row => row.canonical_match_id);
+    const factResultBindings = options.factRows.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
+    return {
+        ...options,
+        sourceBindings: {
+            ...options.sourceBindings,
+            gd_a01_receipt: {
+                ...options.sourceBindings.gd_a01_receipt,
+                admitted_id_set_sha256: admittedIdSetHash(targetIds),
+                admitted_row_count: targetIds.length,
+            },
+            gd_a02_artifact: {
+                ...options.sourceBindings.gd_a02_artifact,
+                fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+                fact_result_binding_count: factResultBindings.length,
+            },
+        },
+    };
 }
 
 function targetRow(result, targetId) {
@@ -277,7 +329,7 @@ test('GD-A03 derives only strict prior-state values and isolates the target labe
         match_result: { ...targetFact.facts.match_result, home_score: 99, away_score: 0, outcome: 'home' },
         xg: { ...targetFact.facts.xg, home: { ...targetFact.facts.xg.home, value: 9999 } },
     };
-    const poisoned = buildPriorStateFeatureView({ ...fixture.options, factRows: mutatedFacts });
+    const poisoned = buildPriorStateFeatureView(rebindSourceBindings({ ...fixture.options, factRows: mutatedFacts }));
     assert.deepEqual(targetRow(poisoned, fixture.targetId).features, target.features);
     assert.notDeepEqual(targetRow(poisoned, fixture.targetId).target_label, target.target_label);
 });
@@ -384,7 +436,7 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
             team_closure: teamClosure(scheduleWithFuture),
         },
     };
-    const baseline = buildPriorStateFeatureView(options);
+    const baseline = buildPriorStateFeatureView(rebindSourceBindings(options));
     const mutatedFutureFact = {
         ...futureFact,
         facts: {
@@ -395,7 +447,9 @@ test('GD-A03 SOT earlier target is invariant under later source-fact mutation', 
             },
         },
     };
-    const mutated = buildPriorStateFeatureView({ ...options, factRows: [...facts, mutatedFutureFact] });
+    const mutated = buildPriorStateFeatureView(
+        rebindSourceBindings({ ...options, factRows: [...facts, mutatedFutureFact] })
+    );
     assert.equal(
         targetRow(mutated, fixture.targetId).features.rolling_shots_on_target_home.value,
         targetRow(baseline, fixture.targetId).features.rolling_shots_on_target_home.value
@@ -489,7 +543,7 @@ test('GD-A03 records an actual missing recent match and does not reach farther b
         targetRows: complete.options.targetRows.filter(row => row.canonical_match_id !== missingId),
         factRows: complete.facts.filter(row => row.canonical_match_id !== missingId),
     };
-    const result = buildPriorStateFeatureView(options);
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const line = targetRow(result, targetId).features.rolling_xg_home;
     assert.equal(line.value, null);
     assert.equal(line.source_match_ids.length, 5);
@@ -533,7 +587,7 @@ test('GD-A03 preserves standings history gaps and never estimates position', () 
         targetRows: fixture.options.targetRows.filter(row => row.canonical_match_id !== missingPrior.id),
         factRows: fixture.facts.filter(row => row.canonical_match_id !== missingPrior.id),
     };
-    const result = buildPriorStateFeatureView(options);
+    const result = buildPriorStateFeatureView(rebindSourceBindings(options));
     const row = targetRow(result, target.id);
     assert.equal(row.features.home_table_position.value, null);
     assert.ok(
@@ -612,7 +666,47 @@ test('GD-A03 independently validates target-label identity, projection, and dige
 
     const digestTampered = JSON.parse(result.artifactBytes.toString('utf8'));
     digestTampered.rows[0].target_label.provenance_input.result.home_score += 1;
-    assertReject(() => validatePriorStateArtifact(digestTampered), 'PROVENANCE_INVALID');
+    assertReject(() => validatePriorStateArtifact(digestTampered), 'FACT_VALUE_INVALID');
+
+    const sourceFactTampered = JSON.parse(result.artifactBytes.toString('utf8'));
+    sourceFactTampered.rows[0].target_label.source_fact_binding.source_business_hash = 'b'.repeat(64);
+    assertReject(() => validatePriorStateArtifact(sourceFactTampered), 'PROVENANCE_INVALID');
+
+    const independentlyRewrittenLabel = JSON.parse(result.artifactBytes.toString('utf8'));
+    const rewrittenLabel = independentlyRewrittenLabel.rows[0].target_label;
+    rewrittenLabel.provenance_input.result = {
+        ...rewrittenLabel.provenance_input.result,
+        home_score: 100,
+        away_score: 0,
+        outcome: 'home',
+    };
+    rewrittenLabel.status = 'AVAILABLE';
+    rewrittenLabel.outcome = 'home';
+    rewrittenLabel.provenance_digest = computeProvenanceDigest({
+        role: rewrittenLabel.role,
+        target_match_id: rewrittenLabel.canonical_match_id,
+        result: rewrittenLabel.provenance_input.result,
+        source_provenance: rewrittenLabel.provenance_input.source_provenance,
+    });
+    rewrittenLabel.source_fact_binding.fact_result_binding = computeFactResultBinding({
+        canonicalMatchId: rewrittenLabel.canonical_match_id,
+        result: rewrittenLabel.provenance_input.result,
+        sourceProvenance: rewrittenLabel.provenance_input.source_provenance,
+    });
+    assertReject(() => validatePriorStateArtifact(independentlyRewrittenLabel), 'PROVENANCE_INVALID');
+});
+
+test('GD-A03 binds the population to GD-A01 independently of artifact row accounting', () => {
+    const result = build(buildFixture());
+    const shrunk = JSON.parse(result.artifactBytes.toString('utf8'));
+    shrunk.rows.pop();
+    shrunk.population_accounting.target_population_count = shrunk.rows.length;
+    shrunk.population_accounting.rows_accounted = shrunk.rows.length;
+    shrunk.population_accounting.target_id_set_sha256 = admittedIdSetHash(
+        shrunk.rows.map(row => row.canonical_match_id)
+    );
+    shrunk.population_accounting.accounted_id_set_sha256 = shrunk.population_accounting.target_id_set_sha256;
+    assertReject(() => validatePriorStateArtifact(shrunk), 'POPULATION_MISMATCH');
 });
 
 test('GD-A03 receipt content hash rejects receipt provenance tampering', () => {

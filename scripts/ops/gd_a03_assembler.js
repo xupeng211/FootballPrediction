@@ -32,6 +32,8 @@ const {
     SCHEDULE_HOME_FIXTURES_PER_TEAM,
     SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION,
     SCHEDULE_TEAMS_PER_SEASON,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
 } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
 const {
     buildPriorStateFeatureView,
@@ -279,6 +281,14 @@ function loadFeatureContract(repositoryRoot) {
 }
 
 function buildSourceBindings(inputs, featureContractBinding, scheduleValidation) {
+    const factResultBindings = inputs.gdA02.artifact.rows.map(row => ({
+        canonical_match_id: row.canonical_match_id,
+        fact_result_binding: computeFactResultBinding({
+            canonicalMatchId: row.canonical_match_id,
+            result: row.facts.match_result,
+            sourceProvenance: row.provenance,
+        }),
+    }));
     return {
         gd_a01_artifact: {
             sha256: inputs.gdA01Artifact.sha256,
@@ -289,11 +299,15 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
             sha256: inputs.gdA01Receipt.sha256,
             business_hash: inputs.gdA01.receipt.output_business_sha256,
             schema_version: inputs.gdA01.receipt.schema_version,
+            admitted_id_set_sha256: inputs.gdA01.receipt.admitted_id_set_sha256,
+            admitted_row_count: inputs.gdA01.receipt.admitted_row_count,
         },
         gd_a02_artifact: {
             sha256: inputs.gdA02Artifact.sha256,
             business_hash: inputs.gdA02.artifact.business_content_sha256,
             schema_version: inputs.gdA02.artifact.schema_version,
+            fact_result_bindings_sha256: computeFactResultBindingsHash(factResultBindings),
+            fact_result_binding_count: factResultBindings.length,
         },
         gd_a02_receipt: {
             sha256: inputs.gdA02Receipt.sha256,

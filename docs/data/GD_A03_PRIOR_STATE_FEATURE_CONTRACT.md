@@ -87,7 +87,7 @@ one required fact is absent. The assembler never changes `A B C D E` into `A B D
 The file-first artifact schema is:
 
 ```text
-golden-dataset-v1-gd-a03-prior-state-features-artifact/v1
+golden-dataset-v1-gd-a03-prior-state-features-artifact/v2
 ```
 
 FSC-V1 advances the numeric lineage contract to
@@ -105,6 +105,8 @@ Each target row contains:
 - `feature_vector_eligibility` (`YES`/`NO`) with reason codes;
 - an isolated `target_label` with `role=TRAINING_LABEL_POSTMATCH`.
 - the isolated label identifies the target with `canonical_match_id`; it is not a provider `source_match_id`.
+- the isolated label includes `source_fact_binding`, which binds its canonical ID,
+  GD-A02 artifact hashes, and a deterministic result/provenance binding.
 
 The target label is created after feature derivation and is never an input to it.
 
@@ -125,16 +127,24 @@ the per-season/per-team counts and validates them against the schedule rows;
 the GD-A03 assembler does not accept a declared closure that is not reconciled
 to those rows.
 
+`population_authority` is a required GD-A01-bound object. Its
+`target_id_set_sha256` and `target_population_count` must equal the admitted ID
+set hash and admitted row count in `gd_a01_receipt`; the artifact verifier does
+not accept a self-declared smaller population.
+
 `population_accounting.target_id_set_sha256` and
 `population_accounting.accounted_id_set_sha256` are required hashes of the
 sorted canonical target IDs. The artifact verifier recomputes both hashes from
-the rows, so population accounting cannot be made green by changing counts
-alone.
+the rows and compares the result to `population_authority`, so population
+accounting cannot be made green by changing counts alone.
 
 Each `target_label` is independently bound to its row identity and to the
-postmatch result projection. Its `provenance_input` retains the result and
-source provenance used by the digest; the verifier recomputes that digest and
-rejects identity, projection, or provenance tampering. Target labels remain
+postmatch result projection. GD-A02 validates that an available outcome is
+derived from its final home/away scores. GD-A03 retains the result and source
+provenance in `provenance_input`, recomputes both the display digest and the
+fact-result binding, and verifies the complete target-label binding set against
+the validated GD-A02 artifact binding. Identity, projection, source binding,
+or provenance tampering therefore fails closed. Target labels remain
 postmatch-only and are never inputs to feature computation.
 
 `FULL_20_VECTOR_ELIGIBLE=YES` requires all 20 values to be finite, semantically proven,

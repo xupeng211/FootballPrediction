@@ -32,6 +32,7 @@ const {
     validateFactsArtifact,
     validateFactsSourceIndex,
     validateOutputFiles,
+    validateResult,
 } = require('../../src/infrastructure/golden_dataset/GdA02FactsContract');
 const {
     buildStagingArtifact,
@@ -309,6 +310,23 @@ test('GD-A02 produces admitted postmatch facts with exact provenance and no feat
     }
     assert.equal(result.artifact.scope.prematch_features, false);
     assert.equal(result.artifact.scope.training, false);
+});
+
+test('GD-A02 rejects a result outcome that is not derived from the final scores', () => {
+    assertContractReject(
+        () =>
+            validateResult(
+                {
+                    status: 'AVAILABLE',
+                    home_score: 2,
+                    away_score: 0,
+                    outcome: 'away',
+                    source_path: 'normalized.home_team.score + normalized.away_team.score',
+                },
+                'fixture.facts.match_result'
+            ),
+        'FACT_VALUE_INVALID'
+    );
 });
 
 test('GD-A02 build is byte-deterministic for identical exact inputs', t => {

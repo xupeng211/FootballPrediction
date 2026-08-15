@@ -14,9 +14,11 @@ const {
     TEAMS_PER_SEASON,
 } = require('../canonical/CanonicalInventoryContract');
 
-const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v1';
+const PRIOR_STATE_ARTIFACT_SCHEMA_VERSION = 'golden-dataset-v1-gd-a03-prior-state-features-artifact/v2';
 const PRIOR_STATE_RECEIPT_SCHEMA_VERSION = 'gd-a03-prior-state-feature-view-receipt/v2';
 const PRIOR_STATE_LINEAGE_CONTRACT_VERSION = 'gd-a03-numeric-lineage/v2';
+const POPULATION_AUTHORITY_SCHEMA_VERSION = 'gd-a01-target-population-binding/v1';
+const TARGET_RESULT_BINDINGS_SCHEMA_VERSION = 'gd-a02-target-result-bindings/v1';
 const SCHEDULE_TEAM_CLOSURE_SCHEMA_VERSION = 'canonical-schedule-team-closure/v1';
 const GD_A03_SOURCE_BINDING_NAMES = Object.freeze([
     'canonical_schedule',
@@ -489,6 +491,27 @@ function computeProvenanceDigest(projection) {
     return sha256Text(stableStringify(projection));
 }
 
+function computeFactResultBinding({ canonicalMatchId, result, sourceProvenance }) {
+    return sha256Text(
+        stableStringify({
+            schema_version: TARGET_RESULT_BINDINGS_SCHEMA_VERSION,
+            canonical_match_id: canonicalMatchId,
+            result,
+            source_provenance: sourceProvenance,
+        })
+    );
+}
+
+function computeFactResultBindingsHash(bindings) {
+    const normalized = bindings
+        .map(binding => ({
+            canonical_match_id: binding.canonical_match_id,
+            fact_result_binding: binding.fact_result_binding,
+        }))
+        .sort((left, right) => left.canonical_match_id.localeCompare(right.canonical_match_id));
+    return sha256Text(stableStringify(normalized));
+}
+
 module.exports = {
     FATIGUE_LOOKBACK_DAYS,
     FEATURE_AVAILABILITY,
@@ -505,6 +528,7 @@ module.exports = {
     PRIOR_STATE_LINEAGE_CONTRACT_VERSION,
     PRIOR_STATE_RECEIPT_SCHEMA_VERSION,
     PRIOR_STATE_STAGE,
+    POPULATION_AUTHORITY_SCHEMA_VERSION,
     REASON_CODES,
     REQUIRED_ROLLING_HISTORY_COUNT,
     SCHEDULE_AWAY_FIXTURES_PER_TEAM,
@@ -519,10 +543,13 @@ module.exports = {
     assertSha,
     assertText,
     computeBusinessHash,
+    computeFactResultBinding,
+    computeFactResultBindingsHash,
     computeReceiptHash,
     computeProvenanceDigest,
     featureSemanticsInOrder,
     isSemanticsProven,
     stableStringify,
+    TARGET_RESULT_BINDINGS_SCHEMA_VERSION,
     validateFeatureContract,
 };
