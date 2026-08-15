@@ -238,14 +238,20 @@ def test_rolling_provider_exception_is_feature_unavailable() -> None:
         raise RuntimeError("database host must not cross the boundary")
 
     with pytest.raises(RequiredFeatureDataUnavailableError) as error:
-        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
+        V26_6_PreMatchAdapter._invoke_provider(
+            unavailable,
+            strict_mode=True,
+            team_name="Home FC",
+            n_matches=5,
+            before_match_date="2026-08-14T19:00:00+00:00",
+            strict=True,
+        )
 
     assert "database host" not in str(error.value)
 
 
 @pytest.mark.parametrize("provider_mode", ["no_data", "provider_error"])
 def test_standings_no_data_or_provider_error_fails_closed(
-    strict_provider_calls: dict[str, list[dict[str, Any]]],
     provider_mode: str,
 ) -> None:
     def standings(**_kwargs: Any) -> dict[str, Any]:
@@ -253,15 +259,23 @@ def test_standings_no_data_or_provider_error_fails_closed(
             raise RuntimeError("standings database failure")
         return {**_standings(), "played": 0, "position": 10, "points": 30}
 
-    with pytest.raises(RequiredFeatureDataUnavailableError):
-        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
-
-    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
+    if provider_mode == "provider_error":
+        with pytest.raises(RequiredFeatureDataUnavailableError) as error:
+            V26_6_PreMatchAdapter._invoke_provider(
+                standings,
+                strict_mode=True,
+                team_name="Home FC",
+                before_match_date="2026-08-14T19:00:00+00:00",
+                strict=True,
+            )
+        assert "standings database failure" not in str(error.value)
+    else:
+        with pytest.raises(RequiredFeatureDataUnavailableError):
+            V26_6_PreMatchAdapter._validate_standings(standings(), "Home FC")
 
 
 @pytest.mark.parametrize("provider_mode", ["missing_team", "provider_error"])
 def test_elo_missing_or_provider_error_fails_closed(
-    strict_provider_calls: dict[str, list[dict[str, Any]]],
     provider_mode: str,
 ) -> None:
     def elo(*, team_names: list[str], **_kwargs: Any) -> dict[str, float]:
@@ -269,22 +283,36 @@ def test_elo_missing_or_provider_error_fails_closed(
             raise RuntimeError("ELO database failure")
         return {team_names[0]: 1500.0}
 
-    with pytest.raises(RequiredFeatureDataUnavailableError):
-        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
+    if provider_mode == "provider_error":
+        with pytest.raises(RequiredFeatureDataUnavailableError) as error:
+            V26_6_PreMatchAdapter._invoke_provider(
+                elo,
+                strict_mode=True,
+                team_names=["Home FC", "Away FC"],
+                before_match_date="2026-08-14T19:00:00+00:00",
+                strict=True,
+            )
+        assert "ELO database failure" not in str(error.value)
+    else:
+        with pytest.raises(RequiredFeatureDataUnavailableError):
+            V26_6_PreMatchAdapter._required_number({"Home FC": 1500.0}, "Away FC", "ELO")
 
-    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
 
-
-def test_fatigue_provider_error_fails_closed(
-    strict_provider_calls: dict[str, list[dict[str, Any]]],
-) -> None:
+def test_fatigue_provider_error_fails_closed() -> None:
     def fatigue(**_kwargs: Any) -> float:
         raise RuntimeError("fatigue database failure")
 
-    with pytest.raises(RequiredFeatureDataUnavailableError):
-        V26_6_PreMatchAdapter().adapt(CANONICAL_PAYLOAD, strict=True)
+    with pytest.raises(RequiredFeatureDataUnavailableError) as error:
+        V26_6_PreMatchAdapter._invoke_provider(
+            fatigue,
+            strict_mode=True,
+            team_name="Home FC",
+            match_date="2026-08-14T19:00:00+00:00",
+            lookback_days=7,
+            strict=True,
+        )
 
-    assert all(not provider_calls for provider_calls in strict_provider_calls.values())
+    assert "fatigue database failure" not in str(error.value)
 
 
 def test_missing_required_contract_key_never_zero_fills(

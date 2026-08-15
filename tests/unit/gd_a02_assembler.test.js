@@ -378,6 +378,23 @@ test('GD-A02 preserves missing isOnTarget as partial/null and never fabricates z
     assert.equal(shotsOnTarget.home.missing_shots, 1);
 });
 
+test('GD-A02 counts explicit false isOnTarget observations separately from missing evidence', t => {
+    const base = buildPair().payload.normalized;
+    const fixture = buildResult(t, {
+        normalized: {
+            ...base,
+            shotmap: {
+                shots: [{ ...base.shotmap.shots[0], isOnTarget: false }],
+            },
+        },
+    });
+    const shotsOnTarget = fixture.result.artifact.rows[0].facts.shots_on_target;
+    assert.equal(shotsOnTarget.status, 'VALID');
+    assert.equal(shotsOnTarget.home.value, 0);
+    assert.equal(shotsOnTarget.shots_with_on_target, 0);
+    assert.equal(shotsOnTarget.shots_without_on_target, 1);
+});
+
 test('GD-A02 fails closed when own-goal SOT semantics are not proven', t => {
     const base = buildPair().payload.normalized;
     const fixture = buildResult(t, {
@@ -448,6 +465,26 @@ test('GD-A02 rejects a partial SOT projection with only complete sides', () => {
                     shots_with_on_target: 1,
                     shots_without_on_target: 0,
                     home: { value: 1, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                    away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
+                },
+                'fixture.facts.shots_on_target'
+            ),
+        'FACT_VALUE_INVALID'
+    );
+});
+
+test('GD-A02 rejects partial SOT aggregates above known side observations', () => {
+    assertContractReject(
+        () =>
+            validateShotsOnTarget(
+                {
+                    status: 'PARTIAL',
+                    source_path: 'normalized.shotmap.shots[*].isOnTarget',
+                    aggregation: 'count_true_isOnTarget_by_team_id',
+                    total_shots: 2,
+                    shots_with_on_target: 2,
+                    shots_without_on_target: 0,
+                    home: { value: null, status: 'PARTIAL', known_shots: 0, missing_shots: 1 },
                     away: { value: 0, status: 'COMPLETE', known_shots: 1, missing_shots: 0 },
                 },
                 'fixture.facts.shots_on_target'

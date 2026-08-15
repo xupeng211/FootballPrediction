@@ -55,7 +55,11 @@ artifact for historical revalidation. Its deterministic rows contain:
   aggregation is `count_true_isOnTarget_by_team_id`; it does not use goals,
   summary-stat proxies, interpolation, or defaults. A missing/invalid boolean
   or reversed/unknown team identity makes the affected side unavailable. The
-  normalized team IDs must also equal the independently retained,
+  `shots_without_on_target` aggregate counts only explicit boolean
+  `isOnTarget=false` observations; missing booleans and unbound identities are
+  not treated as false. For a `VALID` projection, the true and explicit-false
+  aggregates partition all side-bound shot observations. The normalized team
+  IDs must also equal the independently retained,
   response-derived `observed_identity.observed_home_team_id` /
   `observed_away_team_id`, with trusted source paths; old frozen payloads
   without that pair remain unavailable because an ID-only side reversal cannot

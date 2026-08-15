@@ -463,17 +463,19 @@ function buildShotsOnTargetProjection(payload) {
                   : null;
         if (!side) {
             invalidIdentity = true;
-            shotsWithoutOnTarget += 1;
             continue;
         }
         if (typeof (shot && shot.isOnTarget) !== 'boolean') {
             sides[side].missing_shots += 1;
-            shotsWithoutOnTarget += 1;
             continue;
         }
         sides[side].known_shots += 1;
-        shotsWithOnTarget += shot.isOnTarget ? 1 : 0;
-        if (shot.isOnTarget === true) sides[side].value += 1;
+        if (shot.isOnTarget === true) {
+            shotsWithOnTarget += 1;
+            sides[side].value += 1;
+        } else {
+            shotsWithoutOnTarget += 1;
+        }
     }
     const buildSide = side => {
         if (invalidIdentity || sides[side].missing_shots > 0) {

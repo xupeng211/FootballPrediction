@@ -147,7 +147,7 @@ function completeShotsOnTarget(home, away) {
         aggregation: 'count_true_isOnTarget_by_team_id',
         total_shots: home + away + 2,
         shots_with_on_target: home + away,
-        shots_without_on_target: 0,
+        shots_without_on_target: 2,
         home: { value: home, status: 'COMPLETE', known_shots: home + 1, missing_shots: 0 },
         away: { value: away, status: 'COMPLETE', known_shots: away + 1, missing_shots: 0 },
     };
