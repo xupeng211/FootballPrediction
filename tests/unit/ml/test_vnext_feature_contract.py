@@ -6,6 +6,7 @@ These tests validate the single git-tracked contract registry. They do not
 activate V-next, build a training frame, fetch data, or select ELO parameters.
 """
 
+from copy import deepcopy
 import json
 from pathlib import Path
 
@@ -159,4 +160,33 @@ def test_vnext_schema_metadata_fails_closed_when_status_matrix_is_removed(tmp_pa
     path.write_text(json.dumps(document), encoding="utf-8")
 
     with pytest.raises(FeatureContractRegistryError, match="feature status matrix"):
+        load_feature_contract_registry(path)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda document: document["decision_boundaries"]["raw_elo"].update(
+            {"training_eligible": "YES"}
+        ),
+        lambda document: document["decision_boundaries"]["raw_elo"]["parameter_sheet"][3].update(
+            {"k_factor": 32}
+        ),
+        lambda document: document["decision_boundaries"]["activation"].update(
+            {"v_next_default_activated": "YES"}
+        ),
+        lambda document: document["decision_boundaries"]["possession"].update(
+            {"fallbacks_forbidden": ["50/50"]}
+        ),
+    ],
+)
+def test_v2_decision_boundaries_fail_closed_on_semantic_drift(tmp_path: Path, mutate) -> None:
+    document = deepcopy(_registry_document())
+    mutate(document)
+    path = tmp_path / "model_feature_contracts.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(
+        FeatureContractRegistryError, match=r"decision|parameter|fallback|activation"
+    ):
         load_feature_contract_registry(path)

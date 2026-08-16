@@ -412,7 +412,21 @@ test('GD-A03 rejects a v2 registry without the non-activated V-next contract', (
     try {
         assert.throws(
             () => loadFeatureContract(repositoryRoot),
-            error => error.code === 'SCHEMA_MISMATCH' && /V1 first and V-next/.test(error.message)
+            error => error.code === 'SCHEMA_MISMATCH' && /V1 and V-next/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects decision-boundary value drift before artifact assembly', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.decision_boundaries.raw_elo.training_eligible = 'YES';
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /raw ELO decision boundary/.test(error.message)
         );
     } finally {
         fs.rmSync(repositoryRoot, { recursive: true, force: true });

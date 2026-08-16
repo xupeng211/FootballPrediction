@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+/* eslint-disable max-lines -- GD-A03 keeps the registry boundary validator with its file-first entrypoint. */
+
 // lifecycle: permanent；GD-A03 file-first prior-state feature-view entrypoint。
 // 所有 Golden Dataset 输入/输出均显式绑定到仓库外普通文件；不联网、不连 DB、
 // 不写 raw/L3、不训练、不做 backtest。feature name/order 从仓库 config 读取。
@@ -425,6 +427,308 @@ function validateRegistryMigrationMap(registry, v1Contract, vNextContract) {
     }
 }
 
+function requireBoundaryObject(value, fields, label) {
+    if (!hasExactKeys(value, new Set(fields))) {
+        fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
+    }
+    return value;
+}
+
+function requireBoundaryText(value, label, expected = undefined) {
+    assertRegistryText(value, label);
+    if (expected !== undefined && value !== expected) {
+        fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
+    }
+}
+
+function requireBoundaryTextFields(value, fields, label) {
+    for (const field of fields) requireBoundaryText(value[field], `${label}.${field}`);
+}
+
+function requireBoundaryList(value, expected, label) {
+    if (stableStringify(value) !== stableStringify(expected)) {
+        fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
+    }
+}
+
+// eslint-disable-next-line complexity -- decision-boundary values are frozen as one auditable contract.
+function validateDecisionBoundaryValues(boundaries) {
+    const rawElo = requireBoundaryObject(
+        boundaries.raw_elo,
+        [
+            'direction',
+            'retained_in_v_next',
+            'semantic_status',
+            'training_eligible',
+            'runtime_eligible',
+            'parameter_sheet',
+        ],
+        'raw ELO decision boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        direction: 'BOUNDED_START',
+        retained_in_v_next: 'YES',
+        semantic_status: 'OWNER_PARAMETER_DECISION_REQUIRED',
+        training_eligible: 'NO',
+        runtime_eligible: 'NO',
+    })) {
+        requireBoundaryText(rawElo[field], `raw ELO decision boundary.${field}`, expected);
+    }
+    if (!Array.isArray(rawElo.parameter_sheet) || rawElo.parameter_sheet.length !== 11) {
+        fail('raw ELO parameter sheet is malformed', 'SCHEMA_MISMATCH');
+    }
+    rawElo.parameter_sheet.forEach((parameter, index) => {
+        const id = `E${index + 1}`;
+        requireBoundaryObject(
+            parameter,
+            ['id', 'parameter', 'candidate_contract', 'owner_decision_required'],
+            `raw ELO parameter ${id}`
+        );
+        requireBoundaryText(parameter.id, `raw ELO parameter ${id}.id`, id);
+        requireBoundaryTextFields(parameter, ['parameter', 'candidate_contract'], `raw ELO parameter ${id}`);
+        requireBoundaryText(
+            parameter.owner_decision_required,
+            `raw ELO parameter ${id}.owner_decision_required`,
+            'YES'
+        );
+    });
+
+    const standings = requireBoundaryObject(
+        boundaries.standings,
+        [
+            'retained_in_v_next',
+            'semantic_direction',
+            'cutoff',
+            'same_kickoff_fixtures',
+            'training_eligible',
+            'runtime_eligible',
+            'rule_history_closure_required',
+            'unresolved_evidence',
+        ],
+        'standings decision boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        retained_in_v_next: 'YES',
+        semantic_direction: 'OFFICIAL_POINT_IN_TIME_STANDINGS',
+        cutoff: 'source_kickoff < target_kickoff',
+        same_kickoff_fixtures: 'EXCLUDED',
+        training_eligible: 'NO',
+        runtime_eligible: 'NO',
+        rule_history_closure_required: 'YES',
+    })) {
+        requireBoundaryText(standings[field], `standings decision boundary.${field}`, expected);
+    }
+    if (
+        !Array.isArray(standings.unresolved_evidence) ||
+        standings.unresolved_evidence.length === 0 ||
+        standings.unresolved_evidence.some(item => typeof item !== 'string' || !item.trim())
+    ) {
+        fail('standings unresolved evidence is malformed', 'SCHEMA_MISMATCH');
+    }
+
+    const sot = requireBoundaryObject(
+        boundaries.sot,
+        [
+            'retained_in_v_next',
+            'inventory_mode',
+            'existing_source_repair_feasible',
+            'new_acquisition_required',
+            'training_eligible',
+            'runtime_eligible',
+            'evidence',
+            'evidence_provenance',
+            'bounded_next_scope',
+        ],
+        'SOT decision boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        retained_in_v_next: 'YES',
+        inventory_mode: 'READ_ONLY_EXISTING_FROZEN_SOURCES',
+        existing_source_repair_feasible: 'NO',
+        new_acquisition_required: 'YES',
+        training_eligible: 'NO',
+        runtime_eligible: 'NO',
+    })) {
+        requireBoundaryText(sot[field], `SOT decision boundary.${field}`, expected);
+    }
+    const evidence = requireBoundaryObject(
+        sot.evidence,
+        [
+            'formal_payloads',
+            'shotmap_payloads',
+            'payloads_with_is_on_target',
+            'payloads_with_is_own_goal',
+            'payloads_with_own_goal_true',
+            'normalized_team_identity_pairs',
+            'independent_observed_home_away_team_pairs',
+            'blocker',
+        ],
+        'SOT evidence'
+    );
+    const expectedEvidenceCounts = {
+        formal_payloads: 812,
+        shotmap_payloads: 812,
+        payloads_with_is_on_target: 812,
+        payloads_with_is_own_goal: 812,
+        payloads_with_own_goal_true: 90,
+        normalized_team_identity_pairs: 812,
+        independent_observed_home_away_team_pairs: 0,
+    };
+    for (const [field, expected] of Object.entries(expectedEvidenceCounts)) {
+        if (!Number.isSafeInteger(evidence[field]) || evidence[field] !== expected) {
+            fail(`SOT evidence.${field} is malformed`, 'SCHEMA_MISMATCH');
+        }
+    }
+    requireBoundaryText(
+        evidence.blocker,
+        'SOT evidence.blocker',
+        'Frozen captures do not prove independent home/away shot-team binding.'
+    );
+    const evidenceProvenance = requireBoundaryObject(
+        sot.evidence_provenance,
+        ['authority', 'memo_sha256', 'inventory_scope', 'reproducibility'],
+        'SOT evidence provenance'
+    );
+    requireBoundaryText(
+        evidenceProvenance.authority,
+        'SOT evidence provenance.authority',
+        'OSD-V1 final decision memo'
+    );
+    requireBoundaryText(
+        evidenceProvenance.memo_sha256,
+        'SOT evidence provenance.memo_sha256',
+        '21eab8eedb31688488850d47833b2f86a2b765abadc49562050a81ebeaf78e2f'
+    );
+    requireBoundaryTextFields(evidenceProvenance, ['inventory_scope', 'reproducibility'], 'SOT evidence provenance');
+    if (
+        !Array.isArray(sot.bounded_next_scope) ||
+        sot.bounded_next_scope.length !== 5 ||
+        sot.bounded_next_scope.some(item => typeof item !== 'string' || !item.trim())
+    ) {
+        fail('SOT bounded next scope is malformed', 'SCHEMA_MISMATCH');
+    }
+
+    const possession = requireBoundaryObject(
+        boundaries.possession,
+        [
+            'retained_in_v_next',
+            'historical_source_status',
+            'runtime_source_status',
+            'training_eligible',
+            'runtime_eligible',
+            'fallbacks_forbidden',
+        ],
+        'possession decision boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        retained_in_v_next: 'YES',
+        historical_source_status: 'UNAVAILABLE',
+        runtime_source_status: 'UNAVAILABLE',
+        training_eligible: 'NO',
+        runtime_eligible: 'NO',
+    })) {
+        requireBoundaryText(possession[field], `possession decision boundary.${field}`, expected);
+    }
+    requireBoundaryList(
+        possession.fallbacks_forbidden,
+        ['50/50', '55/45', 'team average', 'league average', 'forward fill', 'interpolation', 'estimated possession'],
+        'possession forbidden fallback policy'
+    );
+
+    const sharedEngine = requireBoundaryObject(
+        boundaries.shared_engine,
+        [
+            'architecture_approved',
+            'implementation_started',
+            'canonical_semantic_engine',
+            'historical_source_adapter',
+            'runtime_source_adapter',
+        ],
+        'shared semantic engine boundary'
+    );
+    requireBoundaryText(sharedEngine.architecture_approved, 'shared semantic engine architecture_approved', 'YES');
+    requireBoundaryText(sharedEngine.implementation_started, 'shared semantic engine implementation_started', 'NO');
+    const canonicalEngine = requireBoundaryObject(
+        sharedEngine.canonical_semantic_engine,
+        ['input', 'output', 'prohibitions'],
+        'canonical semantic engine boundary'
+    );
+    requireBoundaryTextFields(canonicalEngine, ['input', 'output'], 'canonical semantic engine boundary');
+    requireBoundaryList(
+        canonicalEngine.prohibitions,
+        [
+            'network fetch',
+            'provider query',
+            'database query',
+            'database write',
+            'historical/runtime path branching',
+            'compatibility proxy defaults',
+            'silent unavailable-field defaults',
+        ],
+        'canonical semantic engine prohibitions'
+    );
+    requireBoundaryTextFields(
+        sharedEngine,
+        ['historical_source_adapter', 'runtime_source_adapter'],
+        'shared semantic engine boundary'
+    );
+
+    const activation = requireBoundaryObject(
+        boundaries.activation,
+        [
+            'v_next_defined',
+            'v_next_default_activated',
+            'training_default_switched',
+            'runtime_default_switched',
+            'model_schema_switched',
+            'feature_frame_readiness',
+            'real_training_readiness',
+            'train_inference_numeric_parity',
+            'golden_dataset_complete',
+        ],
+        'activation boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        v_next_defined: 'YES',
+        v_next_default_activated: 'NO',
+        training_default_switched: 'NO',
+        runtime_default_switched: 'NO',
+        model_schema_switched: 'NO',
+        feature_frame_readiness: 'NOT_READY',
+        real_training_readiness: 'NOT_READY',
+        train_inference_numeric_parity: 'NOT_PROVEN',
+        golden_dataset_complete: 'NO',
+    })) {
+        requireBoundaryText(activation[field], `activation boundary.${field}`, expected);
+    }
+
+    const legacy = requireBoundaryObject(
+        boundaries.legacy_proxy_policy,
+        ['canonical_v_next_reachability', 'proxies_rejected', 'compatibility_behavior'],
+        'legacy proxy policy'
+    );
+    requireBoundaryText(
+        legacy.canonical_v_next_reachability,
+        'legacy proxy policy.canonical_v_next_reachability',
+        'NO'
+    );
+    requireBoundaryList(
+        legacy.proxies_rejected,
+        [
+            'goals proxy for xG',
+            'goals*3+2 SOT',
+            '55/45 possession',
+            'estimated standings',
+            'default or implicit cold-start ELO',
+            'fatigue 0.5 fallback',
+            'compatibility team rating',
+            'raw_elo_gap * 0.1 adjusted ELO',
+        ],
+        'legacy proxy rejection policy'
+    );
+    requireBoundaryTextFields(legacy, ['compatibility_behavior'], 'legacy proxy policy');
+}
+
 // eslint-disable-next-line complexity -- registry validation enumerates the version lifecycle and migration gates.
 function validateFeatureContractRegistry(registry) {
     if (!isPlainObject(registry) || !hasExactKeys(registry, REGISTRY_ROOT_FIELDS)) {
@@ -433,8 +737,8 @@ function validateFeatureContractRegistry(registry) {
     if (registry.schema_version !== FEATURE_CONTRACT_REGISTRY_SCHEMA_VERSION || registry.lifecycle !== 'permanent') {
         fail('feature contract registry schema or lifecycle is unsupported', 'SCHEMA_MISMATCH');
     }
-    if (!Array.isArray(registry.contracts) || registry.contracts.length === 0) {
-        fail('feature contract registry must contain contracts', 'SCHEMA_MISMATCH');
+    if (!Array.isArray(registry.contracts) || registry.contracts.length !== 2) {
+        fail('feature contract registry must contain exactly V1 and V-next contracts', 'SCHEMA_MISMATCH');
     }
     const contractIds = new Set();
     const modelBindings = new Set();
@@ -486,6 +790,7 @@ function validateFeatureContractRegistry(registry) {
     ) {
         fail('feature contract decision boundaries are incomplete', 'SCHEMA_MISMATCH');
     }
+    validateDecisionBoundaryValues(registry.decision_boundaries);
     return { v1Contract, vNextContract };
 }
 

@@ -128,7 +128,9 @@ V-next has no model-artifact manifest binding and cannot become the default mere
 because it is defined. Feature order is part of identity; the reader rejects
 duplicate names, count mismatches, unsupported schema versions, malformed
 bindings, incomplete migration/status metadata, duplicate contract IDs, and
-unknown lookups without fallback.
+unknown lookups without fallback. It also rejects drift in the frozen decision
+boundary values (including ELO parameter-sheet shape, activation/readiness flags,
+possession fallback prohibitions, and SOT inventory evidence/provenance).
 
 The current runtime producer is
 `src/ml/feature_adapters/prematch.py:V26_6_PreMatchAdapter`, re-exported by the

@@ -453,6 +453,12 @@
                 "independent_observed_home_away_team_pairs": 0,
                 "blocker": "Frozen captures do not prove independent home/away shot-team binding."
             },
+            "evidence_provenance": {
+                "authority": "OSD-V1 final decision memo",
+                "memo_sha256": "21eab8eedb31688488850d47833b2f86a2b765abadc49562050a81ebeaf78e2f",
+                "inventory_scope": "Read-only existing frozen repository/local sources; no new football acquisition.",
+                "reproducibility": "Counts are copied from the final OSD-V1 evidence matrix; source repair feasibility remains NO."
+            },
             "bounded_next_scope": [
                 "Acquire only the missing provider match identity and independent home/away team binding.",
                 "Preserve raw immutable capture, stable payload hash, source URI/field lineage, and capture timing.",

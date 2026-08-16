@@ -16,6 +16,8 @@ from pathlib import Path
 import re
 from typing import Any
 
+from src.ml.inference.feature_contract_boundary_validator import validate_v2_decision_boundaries
+
 DEFAULT_REGISTRY_PATH = (
     Path(__file__).resolve().parents[3] / "config" / "model_feature_contracts.json"
 )
@@ -63,6 +65,12 @@ _MIGRATION_MAP_FIELDS = frozenset({"from_contract_id", "to_contract_id", "entrie
 _MIGRATION_ENTRY_FIELDS = frozenset({"from_feature", "to_feature", "classification", "reason"})
 _MIGRATION_CLASSIFICATIONS = frozenset(
     {"UNCHANGED", "REMOVED", "SEMANTICS_PENDING", "SOURCE_PENDING", "CONTRACT_PENDING"}
+)
+_V2_CONTRACT_IDS = (V1_CONTRACT_ID, VNEXT_CONTRACT_ID)
+_V1_FEATURE_COUNT = 20
+_VNEXT_FEATURE_COUNT = 17
+_VNEXT_REMOVED_FEATURES = frozenset(
+    {"rolling_team_rating_home", "rolling_team_rating_away", "adjusted_elo_gap"}
 )
 _IDENTIFIER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-/]*")
 _FEATURE_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_]*")
@@ -368,9 +376,13 @@ class FeatureContractRegistry:
         return tuple(statuses)
 
     @classmethod
-    def _validate_v2_document(
+    def _validate_v2_document(  # noqa: C901
         cls, payload: dict[str, Any], contracts: tuple[FeatureContract, ...]
     ) -> None:
+        if tuple(contract.contract_id for contract in contracts) != _V2_CONTRACT_IDS:
+            raise FeatureContractRegistryError(
+                "versioned registry must contain exactly the frozen V1 and V-next contracts"
+            )
         by_id = {contract.contract_id: contract for contract in contracts}
         v1_contract = by_id.get(V1_CONTRACT_ID)
         vnext_contract = by_id.get(VNEXT_CONTRACT_ID)
@@ -391,6 +403,12 @@ class FeatureContractRegistry:
             raise FeatureContractRegistryError("V-next contract cannot be active by definition")
         if vnext_contract.activation_status != "DEFINED_NOT_ACTIVATED":
             raise FeatureContractRegistryError("V-next activation status malformed")
+        if (
+            v1_contract.feature_count != _V1_FEATURE_COUNT
+            or vnext_contract.feature_count != _VNEXT_FEATURE_COUNT
+            or _VNEXT_REMOVED_FEATURES.intersection(vnext_contract.ordered_features)
+        ):
+            raise FeatureContractRegistryError("versioned contract feature boundary malformed")
         if len(vnext_contract.feature_statuses) != vnext_contract.feature_count:
             raise FeatureContractRegistryError("V-next feature status matrix is incomplete")
         if tuple(status.feature_name for status in vnext_contract.feature_statuses) != (
@@ -473,20 +491,7 @@ class FeatureContractRegistry:
 
     @staticmethod
     def _validate_v2_decision_boundaries(payload: dict[str, Any]) -> None:
-        boundaries = payload.get("decision_boundaries")
-        if not isinstance(boundaries, dict):
-            raise FeatureContractRegistryError("feature contract decision boundaries malformed")
-        required_boundary_names = {
-            "raw_elo",
-            "standings",
-            "sot",
-            "possession",
-            "shared_engine",
-            "activation",
-            "legacy_proxy_policy",
-        }
-        if set(boundaries) != required_boundary_names:
-            raise FeatureContractRegistryError("feature contract decision boundaries incomplete")
+        validate_v2_decision_boundaries(payload, FeatureContractRegistryError)
 
     @staticmethod
     def _require_identifier(value: Any, index: int, field: str) -> str:

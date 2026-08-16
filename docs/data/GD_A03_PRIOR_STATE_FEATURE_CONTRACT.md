@@ -53,7 +53,9 @@ receipt 也必须在仓库外。它不联网、不连接 DB、不写 DB/raw/L3�
 截至 2026-08-16，`config/model_feature_contracts.json` 已升级为同一注册表内的
 版本化权威（`model-feature-contract-registry/v2`）。这不是第二套 feature
 authority：V1 和 V-next、V1→V-next migration map、逐 feature readiness status
-以及 activation/decision boundaries 都由该注册表共同校验。
+以及 activation/decision boundaries 都由该注册表共同校验；decision-boundary 的
+关键值也必须 fail-closed，不能只校验 section 名称。SOT inventory 的证据链引用
+OSD-V1 final decision memo SHA256 `21eab8eedb31688488850d47833b2f86a2b765abadc49562050a81ebeaf78e2f`。
 
 ### Current historical/default contract: V1
 
