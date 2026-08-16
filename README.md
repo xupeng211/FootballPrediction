@@ -250,7 +250,8 @@ this section rather than maintaining duplicate command lists.
   rolling team-rating features and `adjusted_elo_gap` without fabricating
   replacements; training, runtime, and model-schema defaults remain V1.
 - Raw ELO remains pending an Owner-approved bounded-start parameter contract;
-  standings remain rules-blocked; SOT remains source-blocked; possession is
+  the standings semantic contract is frozen while runtime/history values remain
+  unavailable until separate implementation; SOT remains source-blocked; possession is
   retained but unavailable. `FEATURE_FRAME_READINESS=NOT_READY`,
   `REAL_TRAINING_READINESS=NOT_READY`, and
   `TRAIN_INFERENCE_NUMERIC_PARITY=NOT_PROVEN` remain unchanged.

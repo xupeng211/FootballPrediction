@@ -449,6 +449,20 @@ test('GD-A03 rejects decision-boundary value drift before artifact assembly', ()
     }
 });
 
+test('GD-A03 rejects an unresolved standings rule-history flag after closure', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.decision_boundaries.standings.rule_history_closure_required = 'YES';
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /standings decision boundary/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
 test('GD-A03 rejects a non-object frozen standings contract before artifact assembly', () => {
     const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
     document.decision_boundaries.standings.contract = null;
