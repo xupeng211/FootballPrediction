@@ -94,6 +94,10 @@ STANDINGS_SEMANTIC_CONTRACT_STATUS=FROZEN
 STANDINGS_HISTORY_EVIDENCE_STATUS=EVIDENCE_CLOSED_FOR_FROZEN_SCOPE
 ```
 
+`rule_history_closure_required` 是“当前 rule-history closure 是否仍未完成”的
+state flag；frozen scope 下值为 `NO`，表示 official rule-history closure 已完成，
+不是对未来所有 standings contract 都永久声明 prerequisite。
+
 合同位于同一 `config/model_feature_contracts.json` 的
 `decision_boundaries.standings.contract`，不是第二个 registry。它冻结
 points → goal difference → goals scored、competition ranking shared positions

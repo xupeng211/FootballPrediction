@@ -218,6 +218,7 @@ def test_standings_semantic_contract_is_frozen_without_runtime_or_training_readi
 
     assert standings["semantic_contract_status"] == "FROZEN"
     assert standings["historical_evidence_status"] == "EVIDENCE_CLOSED_FOR_FROZEN_SCOPE"
+    assert standings["rule_history_closure_required"] == "NO"
     assert standings["unresolved_evidence"] == []
     assert contract["contract_id"] == STANDINGS_CONTRACT_ID
     assert contract["version"] == "v1"
@@ -377,6 +378,9 @@ def test_vnext_feature_status_values_fail_closed(tmp_path: Path, mutate) -> None
         ),
         lambda document: document["decision_boundaries"]["possession"].update(
             {"fallbacks_forbidden": ["50/50"]}
+        ),
+        lambda document: document["decision_boundaries"]["standings"].update(
+            {"rule_history_closure_required": "YES"}
         ),
         lambda document: document["decision_boundaries"]["standings"]["contract"].update(
             {"contract_id": "standings/other/v1"}

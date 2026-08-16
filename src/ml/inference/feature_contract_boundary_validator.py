@@ -133,7 +133,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         "same_kickoff_fixtures": "EXCLUDED",
         "training_eligible": "NO",
         "runtime_eligible": "NO",
-        "rule_history_closure_required": "YES",
+        "rule_history_closure_required": "NO",
         "semantic_contract_status": "FROZEN",
         "historical_evidence_status": "EVIDENCE_CLOSED_FOR_FROZEN_SCOPE",
     }.items():
