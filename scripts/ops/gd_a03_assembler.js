@@ -355,28 +355,28 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'NO_PROVEN_POSSESSION_SOURCE_FACT',
     ],
     home_table_position: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     away_table_position: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     table_position_diff: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     home_points: [
         'RETAINED_PROVEN',
@@ -669,6 +669,9 @@ function validateDecisionBoundaryValues(boundaries) {
             'training_eligible',
             'runtime_eligible',
             'rule_history_closure_required',
+            'semantic_contract_status',
+            'historical_evidence_status',
+            'contract',
             'unresolved_evidence',
         ],
         'standings decision boundary'
@@ -681,14 +684,12 @@ function validateDecisionBoundaryValues(boundaries) {
         training_eligible: 'NO',
         runtime_eligible: 'NO',
         rule_history_closure_required: 'YES',
+        semantic_contract_status: 'FROZEN',
+        historical_evidence_status: 'EVIDENCE_CLOSED_FOR_FROZEN_SCOPE',
     })) {
         requireBoundaryText(standings[field], `standings decision boundary.${field}`, expected);
     }
-    if (
-        !Array.isArray(standings.unresolved_evidence) ||
-        standings.unresolved_evidence.length === 0 ||
-        standings.unresolved_evidence.some(item => typeof item !== 'string' || !item.trim())
-    ) {
+    if (!Array.isArray(standings.unresolved_evidence) || standings.unresolved_evidence.length !== 0) {
         fail('standings unresolved evidence is malformed', 'SCHEMA_MISMATCH');
     }
 

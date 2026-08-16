@@ -121,9 +121,11 @@ artifacts.
 The same registry defines the non-activated V-next contract
 `contract_id=canonical_prematch/vnext-v1` with exactly 17 ordered features.
 V-next removes `rolling_team_rating_home`, `rolling_team_rating_away`, and
-`adjusted_elo_gap`; it does not invent replacements to preserve 20. The V1→V-next
-migration map covers every V1 feature exactly once, while its per-feature matrix
-keeps SOT, possession, standings, and raw ELO explicitly unavailable/pending;
+`adjusted_elo_gap`; it does not invent replacements to preserve 20. The
+V1→V-next migration map covers every V1 feature exactly once, while its per-feature matrix
+keeps SOT, possession, and raw ELO explicitly unavailable/pending, while the
+standings semantic contract is frozen separately from its unimplemented
+historical/runtime value producer;
 the matrix values for all 17 features are frozen and validated, including the
 runtime/readiness states of the retained proven families. Both source-side and
 V-next target-side migration coverage are required.
@@ -151,8 +153,10 @@ training producer work.
 
 The V-next contract is a freeze-only definition in this lifecycle. It does not
 switch training, runtime, model schema, readiness, or artifact activation. Raw
-ELO parameters remain an Owner decision; standings remain blocked by official
-rule-history closure; SOT remains blocked by source identity/own-goal closure;
+ELO parameters remain an Owner decision; the Premier League standings semantic
+contract is frozen under `standings/premier-league-point-in-time/v1`, while
+standings runtime/history values remain unavailable until a separate implementation
+and parity task; SOT remains blocked by source identity/own-goal closure;
 possession remains unavailable. The shared pure semantic-engine direction is
 approved but its implementation is a separate task.
 

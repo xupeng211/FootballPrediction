@@ -50,6 +50,24 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         for field in fields:
             text(value[field], f"{label}.{field}")
 
+    def text_list(value: Any, label: str, expected: list[str] | None = None) -> list[str]:
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or not item.strip() for item in value
+        ):
+            raise error_type(f"{label} malformed")
+        if expected is not None and value != expected:
+            raise error_type(f"{label} malformed")
+        return value
+
+    def integer(value: Any, label: str, expected: int | None = None) -> int:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or (expected is not None and value != expected)
+        ):
+            raise error_type(f"{label} malformed")
+        return value
+
     raw_elo = exact_object(
         boundaries["raw_elo"],
         {
@@ -101,6 +119,9 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
             "training_eligible",
             "runtime_eligible",
             "rule_history_closure_required",
+            "semantic_contract_status",
+            "historical_evidence_status",
+            "contract",
             "unresolved_evidence",
         },
         "standings decision boundary",
@@ -113,17 +134,349 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         "training_eligible": "NO",
         "runtime_eligible": "NO",
         "rule_history_closure_required": "YES",
+        "semantic_contract_status": "FROZEN",
+        "historical_evidence_status": "EVIDENCE_CLOSED_FOR_FROZEN_SCOPE",
     }.items():
         text(standings[field], f"standings decision boundary.{field}", expected)
-    if (
-        not isinstance(standings["unresolved_evidence"], list)
-        or not standings["unresolved_evidence"]
-        or any(
-            not isinstance(item, str) or not item.strip()
-            for item in standings["unresolved_evidence"]
-        )
-    ):
-        raise error_type("standings unresolved evidence malformed")
+    text_list(standings["unresolved_evidence"], "standings unresolved evidence", [])
+
+    standings_contract = exact_object(
+        standings["contract"],
+        {
+            "contract_id",
+            "version",
+            "feature_bindings",
+            "competition_scope",
+            "season_rule_bindings",
+            "points_rule",
+            "ordering_rules",
+            "tie_representation",
+            "table_position_diff_rule",
+            "strict_cutoff_rule",
+            "same_kickoff_rule",
+            "postponed_rule",
+            "exception_rule",
+            "administrative_adjustment_rule",
+            "season_boundary_rule",
+            "result_state_requirements",
+            "missing_history_policy",
+            "source_authority",
+            "lineage_requirements",
+            "source_conflict_policy",
+            "fail_closed_reason_codes",
+            "evidence_provenance",
+        },
+        "standings semantic contract",
+    )
+    text(
+        standings_contract["contract_id"],
+        "standings contract id",
+        "standings/premier-league-point-in-time/v1",
+    )
+    text(standings_contract["version"], "standings contract version", "v1")
+    text_list(
+        standings_contract["feature_bindings"],
+        "standings feature bindings",
+        ["home_table_position", "away_table_position", "table_position_diff"],
+    )
+
+    scope = exact_object(
+        standings_contract["competition_scope"],
+        {"competition", "league_id", "frozen_seasons", "target_population"},
+        "standings competition scope",
+    )
+    text(scope["competition"], "standings competition", "Premier League")
+    integer(scope["league_id"], "standings league id", 47)
+    text_list(
+        scope["frozen_seasons"],
+        "standings frozen seasons",
+        ["2022/2023", "2023/2024", "2024/2025"],
+    )
+    integer(scope["target_population"], "standings target population", 888)
+
+    expected_rule_bindings = [
+        {
+            "season": "2022/2023",
+            "document_title": "Premier League Handbook 2022/23",
+            "source_url": "https://resources.premierleague.com/premierleague/document/2022/07/19/40085fed-1e9e-4c33-9f14-0bcf57857da2/PL_Handbook_2022-23_DIGITAL_18.07.pdf",
+            "rule_identifier": "C.1-C.7,C.17,C.18,C.25-C.30",
+        },
+        {
+            "season": "2023/2024",
+            "document_title": "Premier League Handbook 2023/24 v3",
+            "source_url": "https://resources.premierleague.com/premierleague/document/2024/03/04/0910e1b3-f94a-41a5-9818-6e1b5c961a9a/PL_Handbook_2023-24_DIGITAL_26.02.24-v3.pdf",
+            "rule_identifier": "C.1-C.7,C.17,C.18,C.25-C.30",
+        },
+        {
+            "season": "2024/2025",
+            "document_title": "Premier League Handbook and Collateral 2024/25 V2",
+            "source_url": "https://resources.premierleague.com/premierleague/document/2024/07/26/e6332e5a-4ca6-4411-bf01-9f8ab76c6fb4/TM1534-PL_Handbook-and-Collateral-2024-25_25.07_V2.pdf",
+            "rule_identifier": "C.1-C.7,C.17,C.18,C.25-C.30",
+        },
+    ]
+    bindings = standings_contract["season_rule_bindings"]
+    if not isinstance(bindings, list) or bindings != expected_rule_bindings:
+        raise error_type("standings season rule bindings malformed")
+
+    points_rule = exact_object(
+        standings_contract["points_rule"], {"win", "draw", "loss"}, "standings points rule"
+    )
+    for field, expected in {"win": 3, "draw": 1, "loss": 0}.items():
+        integer(points_rule[field], f"standings points rule.{field}", expected)
+    text_list(
+        standings_contract["ordering_rules"],
+        "standings ordering rules",
+        ["points", "goal_difference", "goals_scored"],
+    )
+
+    tie = exact_object(
+        standings_contract["tie_representation"],
+        {"mode", "definition", "examples", "forbidden_tie_breakers"},
+        "standings tie representation",
+    )
+    text(
+        tie["mode"],
+        "standings tie representation.mode",
+        "COMPETITION_RANKING_SHARED_POSITION_WITH_GAPS",
+    )
+    text(
+        tie["definition"],
+        "standings tie representation.definition",
+        "1 + number of clubs strictly ahead under the applicable ordinary ranking criteria.",
+    )
+    text_list(tie["examples"], "standings tie representation.examples", ["1,1,3", "4,5,5,7"])
+    text_list(
+        tie["forbidden_tie_breakers"],
+        "standings tie representation.forbidden_tie_breakers",
+        [
+            "alphabetical club name",
+            "team ID",
+            "provider order",
+            "match ID",
+            "database order",
+            "filesystem order",
+            "ingestion order",
+        ],
+    )
+
+    position_diff = exact_object(
+        standings_contract["table_position_diff_rule"],
+        {"orientation", "formula", "requires_both_positions", "unavailable_if_either_missing"},
+        "standings table position diff rule",
+    )
+    text(
+        position_diff["orientation"],
+        "standings table position diff orientation",
+        "HOME_POSITION_MINUS_AWAY_POSITION",
+    )
+    text(
+        position_diff["formula"],
+        "standings table position diff formula",
+        "home_table_position - away_table_position",
+    )
+    text(
+        position_diff["requires_both_positions"], "standings table position diff dependency", "YES"
+    )
+    text(
+        position_diff["unavailable_if_either_missing"],
+        "standings table position diff missing policy",
+        "YES",
+    )
+
+    for field, expected in {
+        "strict_cutoff_rule": "SOURCE_EVENT_TIME_LT_TARGET_KICKOFF",
+        "same_kickoff_rule": "EXCLUDED",
+        "postponed_rule": "ACTUAL_PLAYED_EVENT_TIME_ONLY",
+        "season_boundary_rule": "EXACT_COMPETITION_SEASON_CLUB_UNIVERSE_ONLY",
+    }.items():
+        text(standings_contract[field], f"standings contract.{field}", expected)
+
+    exception_rule = exact_object(
+        standings_contract["exception_rule"],
+        {"abandoned", "awarded", "replayed", "void", "unknown_status"},
+        "standings exception rule",
+    )
+    for field, expected in {
+        "abandoned": "NOT_TABLE_ELIGIBLE",
+        "awarded": "OFFICIAL_TABLE_ELIGIBILITY_REQUIRED",
+        "replayed": "OFFICIAL_DISPOSITION_WITHOUT_DOUBLE_COUNT",
+        "void": "NOT_TABLE_ELIGIBLE",
+        "unknown_status": "FAIL_CLOSED",
+    }.items():
+        text(exception_rule[field], f"standings exception rule.{field}", expected)
+
+    adjustment_rule = exact_object(
+        standings_contract["administrative_adjustment_rule"],
+        {
+            "point_layer",
+            "retroactive_allowed",
+            "exact_timestamp",
+            "date_only",
+            "before_interval",
+            "after_interval",
+            "overlap",
+            "overlap_reason_code",
+        },
+        "standings administrative adjustment rule",
+    )
+    for field, expected in {
+        "point_layer": "MATCH_EARNED_POINTS_PLUS_EFFECTIVE_ADMINISTRATIVE_ADJUSTMENTS",
+        "retroactive_allowed": "NO",
+        "exact_timestamp": "USE_EXACT_TIMESTAMP",
+        "date_only": "UNCERTAIN_DAY_INTERVAL",
+        "before_interval": "NOT_EFFECTIVE",
+        "after_interval": "EFFECTIVE",
+        "overlap": "UNAVAILABLE",
+        "overlap_reason_code": "ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS",
+    }.items():
+        text(adjustment_rule[field], f"standings administrative adjustment rule.{field}", expected)
+
+    text_list(
+        standings_contract["result_state_requirements"],
+        "standings result state requirements",
+        [
+            "canonical_match_identity",
+            "canonical_team_identity",
+            "proven_eligible_result_status",
+            "actual_eligible_event_time",
+            "final_score",
+            "source_lineage",
+        ],
+    )
+    missing_history = exact_object(
+        standings_contract["missing_history_policy"],
+        {"action", "reason_code", "fallbacks_forbidden"},
+        "standings missing history policy",
+    )
+    text(missing_history["action"], "standings missing history action", "UNAVAILABLE")
+    text(
+        missing_history["reason_code"],
+        "standings missing history reason",
+        "MISSING_PRIOR_RESULT_EVIDENCE",
+    )
+    text_list(
+        missing_history["fallbacks_forbidden"],
+        "standings missing history fallbacks",
+        [
+            "skip match",
+            "forward fill",
+            "final table",
+            "later standings",
+            "provider current table",
+            "fabricated score",
+        ],
+    )
+
+    text_list(
+        standings_contract["source_authority"],
+        "standings source authority",
+        [
+            "Season-specific official Premier League handbook/rules.",
+            "Official Premier League administrative and fixture-status decisions.",
+            "Canonical schedule identity and GD-A02 validated result facts.",
+        ],
+    )
+    text_list(
+        standings_contract["lineage_requirements"],
+        "standings lineage requirements",
+        [
+            "canonical competition and season membership",
+            "canonical match and team identity",
+            "actual eligible event time",
+            "final eligible result status and score",
+            "exception disposition",
+            "administrative adjustment state and effective-time evidence",
+            "strict target kickoff cutoff",
+        ],
+    )
+
+    conflict_policy = exact_object(
+        standings_contract["source_conflict_policy"],
+        {"action", "reason_codes", "majority_vote", "provider_priority"},
+        "standings source conflict policy",
+    )
+    text(conflict_policy["action"], "standings source conflict action", "FAIL_CLOSED")
+    text_list(
+        conflict_policy["reason_codes"],
+        "standings source conflict reason codes",
+        [
+            "RESULT_IDENTITY_CONFLICT",
+            "RESULT_SCORE_CONFLICT",
+            "EVENT_TIME_CONFLICT",
+            "FIXTURE_STATUS_CONFLICT",
+            "ADMIN_ADJUSTMENT_CONFLICT",
+        ],
+    )
+    text(conflict_policy["majority_vote"], "standings source conflict majority vote", "FORBIDDEN")
+    text(
+        conflict_policy["provider_priority"],
+        "standings source conflict provider priority",
+        "FORBIDDEN_WITHOUT_EXPLICIT_AUTHORITY",
+    )
+    text_list(
+        standings_contract["fail_closed_reason_codes"],
+        "standings fail-closed reason codes",
+        [
+            "MISSING_PRIOR_RESULT_EVIDENCE",
+            "RESULT_IDENTITY_CONFLICT",
+            "RESULT_SCORE_CONFLICT",
+            "EVENT_TIME_CONFLICT",
+            "FIXTURE_STATUS_CONFLICT",
+            "ADMIN_ADJUSTMENT_CONFLICT",
+            "ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS",
+            "POSTPONED_EVENT_TIME_UNPROVEN",
+            "EXCEPTION_STATUS_UNPROVEN",
+            "RULE_VERSION_UNPROVEN",
+            "SAME_KICKOFF_NOT_ELIGIBLE",
+            "STANDINGS_POSITION_UNAVAILABLE",
+            "DEPENDENCY_UNAVAILABLE",
+        ],
+    )
+
+    evidence_provenance = exact_object(
+        standings_contract["evidence_provenance"],
+        {
+            "task_id",
+            "memo_sha256",
+            "target_population",
+            "target_row_evidence_coverage",
+            "expected_fail_closed_target_rows",
+            "expected_unavailable_targets",
+            "evidence_status",
+        },
+        "standings evidence provenance",
+    )
+    text(
+        evidence_provenance["task_id"],
+        "standings evidence task",
+        "STANDINGS-HISTORY-EVIDENCE-REMEDIATION-V1",
+    )
+    text(
+        evidence_provenance["memo_sha256"],
+        "standings evidence memo sha256",
+        "e09a80735f26d3fe3f949fcc115c853354c3f449dcf1ca6e9da7954846dbb357",
+    )
+    integer(evidence_provenance["target_population"], "standings evidence target population", 888)
+    text(
+        evidence_provenance["target_row_evidence_coverage"],
+        "standings evidence coverage",
+        "887/888",
+    )
+    integer(
+        evidence_provenance["expected_fail_closed_target_rows"],
+        "standings expected unavailable count",
+        1,
+    )
+    text_list(
+        evidence_provenance["expected_unavailable_targets"],
+        "standings expected unavailable targets",
+        ["47_20232024_4193789"],
+    )
+    text(
+        evidence_provenance["evidence_status"],
+        "standings evidence status",
+        "SEMANTIC_CONTRACT_EVIDENCE_READY",
+    )
 
     sot = exact_object(
         boundaries["sot"],
