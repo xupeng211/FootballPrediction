@@ -602,7 +602,7 @@ function computeStandingsSnapshot(input) {
             }
             continue;
         }
-        if (result.disposition === 'AWARDED' && result.tableEligibility !== 'ELIGIBLE') {
+        if (result.disposition === 'AWARDED' && result.tableEligibility === 'UNKNOWN') {
             if (
                 actualMilliseconds === null ||
                 actualMilliseconds < targetMilliseconds ||
@@ -612,6 +612,7 @@ function computeStandingsSnapshot(input) {
             }
             continue;
         }
+        if (result.disposition === 'AWARDED' && result.tableEligibility === 'NOT_ELIGIBLE') continue;
         if (result.tableEligibility !== 'ELIGIBLE') {
             blockers.add('EXCEPTION_STATUS_UNPROVEN');
             continue;

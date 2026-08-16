@@ -363,6 +363,26 @@ test('P: awarded result without official table eligibility fails closed', () => 
     assertUnavailable(output, 'EXCEPTION_STATUS_UNPROVEN');
 });
 
+test('P2: awarded result with proven non-eligibility is excluded without blocking the snapshot', () => {
+    const awarded = fixture('awarded-not-eligible', '2022-08-19T12:00:00.000Z', 'TEAM_03', 'TEAM_04');
+    const output = computeStandingsSnapshot(
+        input({
+            priorFixtures: [awarded],
+            priorResults: [
+                result(awarded, {
+                    disposition: 'AWARDED',
+                    tableEligibility: 'NOT_ELIGIBLE',
+                    homeScore: null,
+                    awayScore: null,
+                }),
+            ],
+        })
+    );
+    assert.equal(output.snapshot_status, 'AVAILABLE');
+    assert.deepEqual(output.source_event_ids_used, []);
+    assert.equal(output.diagnostic_table_state.find(row => row.team_id === 'TEAM_03').played, 0);
+});
+
 test('Q: unknown exception status fails closed', () => {
     const unknown = fixture('unknown', '2022-08-19T12:00:00.000Z', 'TEAM_03', 'TEAM_04');
     const output = computeStandingsSnapshot(
