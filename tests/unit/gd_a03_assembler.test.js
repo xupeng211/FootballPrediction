@@ -7,6 +7,8 @@
 
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
@@ -39,6 +41,18 @@ const HASH = 'a'.repeat(64);
 
 function digest(value) {
     return crypto.createHash('sha256').update(stableStringify(value)).digest('hex');
+}
+
+function temporaryContractRepository(document) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gd-a03-contract-'));
+    fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'src/ml/feature_adapters'), { recursive: true });
+    fs.copyFileSync(
+        path.resolve(__dirname, '../../src/ml/feature_adapters/prematch.py'),
+        path.join(root, 'src/ml/feature_adapters/prematch.py')
+    );
+    fs.writeFileSync(path.join(root, 'config/model_feature_contracts.json'), JSON.stringify(document), 'utf8');
+    return root;
 }
 
 function teamClosure(schedule) {
@@ -374,6 +388,93 @@ test('GD-A03 name/order identity matches config and V26_6_PreMatchAdapter', () =
     const loaded = loadFeatureContract(path.resolve(__dirname, '../..'));
     assert.deepEqual(loaded.contract.ordered_features, loaded.runtimeFeatureAdapter.orderedFeatures);
     assert.equal(loaded.runtimeFeatureAdapter.symbol, 'V26_6_PreMatchAdapter.V26_6_FEATURES');
+    assert.equal(loaded.registrySchemaVersion, 'model-feature-contract-registry/v2');
+});
+
+test('GD-A03 rejects an incomplete v2 registry before artifact assembly', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    delete document.migration_map;
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /v2 fields|migration map/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects the legacy registry schema without an explicit compatibility path', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.schema_version = 'model-feature-contract-registry/v1';
+    delete document.migration_map;
+    delete document.decision_boundaries;
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /v2 fields|schema or lifecycle/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects a v2 registry without the non-activated V-next contract', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.contracts = document.contracts.filter(contract => contract.contract_id !== 'canonical_prematch/vnext-v1');
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /V1 and V-next/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects decision-boundary value drift before artifact assembly', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.decision_boundaries.raw_elo.training_eligible = 'YES';
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /raw ELO decision boundary/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects V-next feature-status value drift before artifact assembly', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.contracts[1].feature_statuses[0].runtime_source_status = 'PROVEN';
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /feature status values/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+});
+
+test('GD-A03 rejects an orphaned V-next migration target before artifact assembly', () => {
+    const document = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json')));
+    document.migration_map.entries[0].to_feature = 'rolling_xg_away';
+    const repositoryRoot = temporaryContractRepository(document);
+    try {
+        assert.throws(
+            () => loadFeatureContract(repositoryRoot),
+            error => error.code === 'SCHEMA_MISMATCH' && /target coverage/.test(error.message)
+        );
+    } finally {
+        fs.rmSync(repositoryRoot, { recursive: true, force: true });
+    }
 });
 
 test('GD-A03 closes SOT from GD-A02 shotmap facts with exact five-match lineage', () => {

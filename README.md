@@ -240,6 +240,23 @@ this section rather than maintaining duplicate command lists.
   `scripts/ops/titan_cruise_control.py` remains a historical Titan caller for
   the same reason.
 
+### Prematch feature-contract current state
+
+- V1 (`v26_7_aligned/v1`) remains the frozen 20-feature historical/default
+  contract. Existing V1 artifacts and the current canonical adapter are not
+  reinterpreted under another schema.
+- V-next (`canonical_prematch/vnext-v1`) is a separate, versioned 17-feature
+  definition in the same registry and is **not activated**. It removes both
+  rolling team-rating features and `adjusted_elo_gap` without fabricating
+  replacements; training, runtime, and model-schema defaults remain V1.
+- Raw ELO remains pending an Owner-approved bounded-start parameter contract;
+  standings remain rules-blocked; SOT remains source-blocked; possession is
+  retained but unavailable. `FEATURE_FRAME_READINESS=NOT_READY`,
+  `REAL_TRAINING_READINESS=NOT_READY`, and
+  `TRAIN_INFERENCE_NUMERIC_PARITY=NOT_PROVEN` remain unchanged.
+- The approved shared pure canonical semantic-engine architecture is a future
+  implementation boundary, not a runtime behavior change in this state.
+
 ### Entry classification
 
 - **Canonical** — default entrypoint for new human work and agent work.

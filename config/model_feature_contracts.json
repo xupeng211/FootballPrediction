@@ -1,35 +1,531 @@
 {
-  "schema_version": "model-feature-contract-registry/v1",
-  "lifecycle": "permanent",
-  "contracts": [
-    {
-      "contract_id": "v26_7_aligned/v1",
-      "artifact_name": "v26_7_aligned",
-      "model_type": "v26_7_aligned",
-      "feature_contract_version": "v26_6_pre_match/v1",
-      "feature_count": 20,
-      "ordered_features": [
-        "rolling_xg_home",
-        "rolling_xg_away",
-        "rolling_shots_on_target_home",
-        "rolling_shots_on_target_away",
-        "rolling_possession_home",
-        "rolling_possession_away",
-        "rolling_team_rating_home",
-        "rolling_team_rating_away",
-        "home_table_position",
-        "away_table_position",
-        "table_position_diff",
-        "home_points",
-        "away_points",
-        "points_diff",
-        "home_recent_form_points",
-        "raw_elo_gap",
-        "adjusted_elo_gap",
-        "home_fatigue_index",
-        "away_fatigue_index",
-        "fatigue_diff"
-      ]
+    "schema_version": "model-feature-contract-registry/v2",
+    "lifecycle": "permanent",
+    "contracts": [
+        {
+            "contract_id": "v26_7_aligned/v1",
+            "artifact_name": "v26_7_aligned",
+            "model_type": "v26_7_aligned",
+            "feature_contract_version": "v26_6_pre_match/v1",
+            "feature_count": 20,
+            "ordered_features": [
+                "rolling_xg_home",
+                "rolling_xg_away",
+                "rolling_shots_on_target_home",
+                "rolling_shots_on_target_away",
+                "rolling_possession_home",
+                "rolling_possession_away",
+                "rolling_team_rating_home",
+                "rolling_team_rating_away",
+                "home_table_position",
+                "away_table_position",
+                "table_position_diff",
+                "home_points",
+                "away_points",
+                "points_diff",
+                "home_recent_form_points",
+                "raw_elo_gap",
+                "adjusted_elo_gap",
+                "home_fatigue_index",
+                "away_fatigue_index",
+                "fatigue_diff"
+            ],
+            "contract_role": "HISTORICAL_DEFAULT",
+            "activation_status": "ACTIVE_DEFAULT"
+        },
+        {
+            "contract_id": "canonical_prematch/vnext-v1",
+            "artifact_name": "canonical_prematch_vnext",
+            "model_type": "canonical_prematch_vnext",
+            "feature_contract_version": "canonical_prematch/vnext/v1",
+            "feature_count": 17,
+            "ordered_features": [
+                "rolling_xg_home",
+                "rolling_xg_away",
+                "rolling_shots_on_target_home",
+                "rolling_shots_on_target_away",
+                "rolling_possession_home",
+                "rolling_possession_away",
+                "home_table_position",
+                "away_table_position",
+                "table_position_diff",
+                "home_points",
+                "away_points",
+                "points_diff",
+                "home_recent_form_points",
+                "raw_elo_gap",
+                "home_fatigue_index",
+                "away_fatigue_index",
+                "fatigue_diff"
+            ],
+            "contract_role": "VERSIONED_NEXT",
+            "activation_status": "DEFINED_NOT_ACTIVATED",
+            "feature_statuses": [
+                {
+                    "feature_name": "rolling_xg_home",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "rolling_xg_away",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "rolling_shots_on_target_home",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "SEMANTICS_PENDING",
+                    "historical_source_status": "SOURCE_PENDING",
+                    "runtime_source_status": "SOURCE_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_SOURCE_CLOSURE",
+                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING"
+                },
+                {
+                    "feature_name": "rolling_shots_on_target_away",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "SEMANTICS_PENDING",
+                    "historical_source_status": "SOURCE_PENDING",
+                    "runtime_source_status": "SOURCE_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_SOURCE_CLOSURE",
+                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING"
+                },
+                {
+                    "feature_name": "rolling_possession_home",
+                    "v_next_status": "RETAINED_UNAVAILABLE",
+                    "semantic_definition_status": "SEMANTICS_DEFINED",
+                    "historical_source_status": "UNAVAILABLE",
+                    "runtime_source_status": "UNAVAILABLE",
+                    "training_eligibility": "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
+                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT"
+                },
+                {
+                    "feature_name": "rolling_possession_away",
+                    "v_next_status": "RETAINED_UNAVAILABLE",
+                    "semantic_definition_status": "SEMANTICS_DEFINED",
+                    "historical_source_status": "UNAVAILABLE",
+                    "runtime_source_status": "UNAVAILABLE",
+                    "training_eligibility": "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
+                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT"
+                },
+                {
+                    "feature_name": "home_table_position",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "CONTRACT_PENDING",
+                    "historical_source_status": "HISTORY_PENDING",
+                    "runtime_source_status": "CONTRACT_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_RULE_CLOSURE",
+                    "reason_code": "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED"
+                },
+                {
+                    "feature_name": "away_table_position",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "CONTRACT_PENDING",
+                    "historical_source_status": "HISTORY_PENDING",
+                    "runtime_source_status": "CONTRACT_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_RULE_CLOSURE",
+                    "reason_code": "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED"
+                },
+                {
+                    "feature_name": "table_position_diff",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "CONTRACT_PENDING",
+                    "historical_source_status": "HISTORY_PENDING",
+                    "runtime_source_status": "CONTRACT_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_RULE_CLOSURE",
+                    "reason_code": "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED"
+                },
+                {
+                    "feature_name": "home_points",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "away_points",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "points_diff",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "home_recent_form_points",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "raw_elo_gap",
+                    "v_next_status": "RETAINED_PENDING",
+                    "semantic_definition_status": "OWNER_PARAMETER_DECISION_REQUIRED",
+                    "historical_source_status": "CONTRACT_PENDING",
+                    "runtime_source_status": "CONTRACT_PENDING",
+                    "training_eligibility": "NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT",
+                    "reason_code": "ELO_OWNER_PARAMETER_DECISION_REQUIRED"
+                },
+                {
+                    "feature_name": "home_fatigue_index",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "away_fatigue_index",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                },
+                {
+                    "feature_name": "fatigue_diff",
+                    "v_next_status": "RETAINED_PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
+                    "runtime_source_status": "NOT_PROVEN",
+                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                }
+            ]
+        }
+    ],
+    "migration_map": {
+        "from_contract_id": "v26_7_aligned/v1",
+        "to_contract_id": "canonical_prematch/vnext-v1",
+        "entries": [
+            {
+                "from_feature": "rolling_xg_home",
+                "to_feature": "rolling_xg_home",
+                "classification": "UNCHANGED",
+                "reason": "V1 semantic definition is retained in V-next."
+            },
+            {
+                "from_feature": "rolling_xg_away",
+                "to_feature": "rolling_xg_away",
+                "classification": "UNCHANGED",
+                "reason": "V1 semantic definition is retained in V-next."
+            },
+            {
+                "from_feature": "rolling_shots_on_target_home",
+                "to_feature": "rolling_shots_on_target_home",
+                "classification": "SEMANTICS_PENDING",
+                "reason": "SOT team binding and own-goal treatment remain pending source closure."
+            },
+            {
+                "from_feature": "rolling_shots_on_target_away",
+                "to_feature": "rolling_shots_on_target_away",
+                "classification": "SEMANTICS_PENDING",
+                "reason": "SOT team binding and own-goal treatment remain pending source closure."
+            },
+            {
+                "from_feature": "rolling_possession_home",
+                "to_feature": "rolling_possession_home",
+                "classification": "SOURCE_PENDING",
+                "reason": "No accepted numeric possession fact exists in the frozen source."
+            },
+            {
+                "from_feature": "rolling_possession_away",
+                "to_feature": "rolling_possession_away",
+                "classification": "SOURCE_PENDING",
+                "reason": "No accepted numeric possession fact exists in the frozen source."
+            },
+            {
+                "from_feature": "rolling_team_rating_home",
+                "to_feature": null,
+                "classification": "REMOVED",
+                "reason": "Owner removed the compatibility composite from V-next."
+            },
+            {
+                "from_feature": "rolling_team_rating_away",
+                "to_feature": null,
+                "classification": "REMOVED",
+                "reason": "Owner removed the compatibility composite from V-next."
+            },
+            {
+                "from_feature": "home_table_position",
+                "to_feature": "home_table_position",
+                "classification": "CONTRACT_PENDING",
+                "reason": "Official rule history and exception closure are still required."
+            },
+            {
+                "from_feature": "away_table_position",
+                "to_feature": "away_table_position",
+                "classification": "CONTRACT_PENDING",
+                "reason": "Official rule history and exception closure are still required."
+            },
+            {
+                "from_feature": "table_position_diff",
+                "to_feature": "table_position_diff",
+                "classification": "CONTRACT_PENDING",
+                "reason": "Its inputs remain blocked until the standings contract closes."
+            },
+            {
+                "from_feature": "home_points",
+                "to_feature": "home_points",
+                "classification": "UNCHANGED",
+                "reason": "V1 point accumulation semantics are retained in V-next."
+            },
+            {
+                "from_feature": "away_points",
+                "to_feature": "away_points",
+                "classification": "UNCHANGED",
+                "reason": "V1 point accumulation semantics are retained in V-next."
+            },
+            {
+                "from_feature": "points_diff",
+                "to_feature": "points_diff",
+                "classification": "UNCHANGED",
+                "reason": "V1 derived point difference remains explicitly retained."
+            },
+            {
+                "from_feature": "home_recent_form_points",
+                "to_feature": "home_recent_form_points",
+                "classification": "UNCHANGED",
+                "reason": "V1 recent-form points semantics are retained in V-next."
+            },
+            {
+                "from_feature": "raw_elo_gap",
+                "to_feature": "raw_elo_gap",
+                "classification": "CONTRACT_PENDING",
+                "reason": "Bounded-start direction is approved; numerical parameters are not."
+            },
+            {
+                "from_feature": "adjusted_elo_gap",
+                "to_feature": null,
+                "classification": "REMOVED",
+                "reason": "Owner removed the unapproved linear rescaling from V-next."
+            },
+            {
+                "from_feature": "home_fatigue_index",
+                "to_feature": "home_fatigue_index",
+                "classification": "UNCHANGED",
+                "reason": "V1 fatigue semantics are retained in V-next."
+            },
+            {
+                "from_feature": "away_fatigue_index",
+                "to_feature": "away_fatigue_index",
+                "classification": "UNCHANGED",
+                "reason": "V1 fatigue semantics are retained in V-next."
+            },
+            {
+                "from_feature": "fatigue_diff",
+                "to_feature": "fatigue_diff",
+                "classification": "UNCHANGED",
+                "reason": "V1 derived fatigue difference remains explicitly retained."
+            }
+        ]
+    },
+    "decision_boundaries": {
+        "raw_elo": {
+            "direction": "BOUNDED_START",
+            "retained_in_v_next": "YES",
+            "semantic_status": "OWNER_PARAMETER_DECISION_REQUIRED",
+            "training_eligible": "NO",
+            "runtime_eligible": "NO",
+            "parameter_sheet": [
+                {
+                    "id": "E1",
+                    "parameter": "rating_epoch",
+                    "candidate_contract": "A complete, explicitly bounded pre-epoch result history before the target population.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E2",
+                    "parameter": "initial_condition",
+                    "candidate_contract": "A versioned modeling initial condition; 1500 is not observed evidence.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E3",
+                    "parameter": "competition_and_team_universe",
+                    "candidate_contract": "One explicitly named competition universe with stable team identity linkage.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E4",
+                    "parameter": "k_factor",
+                    "candidate_contract": "One fixed, versioned K value selected by semantic policy, not backtest performance.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E5",
+                    "parameter": "home_advantage",
+                    "candidate_contract": "One fixed, versioned home-advantage term with an explicit unit.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E6",
+                    "parameter": "expected_score_equation",
+                    "candidate_contract": "One deterministic logistic expected-score equation and denominator convention.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E7",
+                    "parameter": "season_transition",
+                    "candidate_contract": "Explicit carry-over, decay, or reset policy at each season boundary.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E8",
+                    "parameter": "promoted_or_new_team_rule",
+                    "candidate_contract": "Explicit identity-linked initialization for teams without eligible prior ratings.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E9",
+                    "parameter": "minimum_warmup_history",
+                    "candidate_contract": "Explicit minimum prior fixture/history requirement before a rating is available.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E10",
+                    "parameter": "same_kickoff_ordering",
+                    "candidate_contract": "Exclude equal-kickoff fixtures from prior state; use deterministic ordering only for eligible events.",
+                    "owner_decision_required": "YES"
+                },
+                {
+                    "id": "E11",
+                    "parameter": "missing_or_postponed_fixture_behavior",
+                    "candidate_contract": "Define treatment for absent, postponed, awarded, and abandoned fixtures without silent imputation.",
+                    "owner_decision_required": "YES"
+                }
+            ]
+        },
+        "standings": {
+            "retained_in_v_next": "YES",
+            "semantic_direction": "OFFICIAL_POINT_IN_TIME_STANDINGS",
+            "cutoff": "source_kickoff < target_kickoff",
+            "same_kickoff_fixtures": "EXCLUDED",
+            "training_eligible": "NO",
+            "runtime_eligible": "NO",
+            "rule_history_closure_required": "YES",
+            "unresolved_evidence": [
+                "Official competition rule history for every frozen season.",
+                "Points, goal-difference, goals-scored, and any tie-break precedence by season.",
+                "Treatment of postponed, abandoned, awarded, and replayed fixtures.",
+                "Deterministic handling of identical kickoff timestamps.",
+                "Season boundary and pre-target table snapshot reconstruction evidence.",
+                "Complete result-history lineage sufficient to rebuild each target snapshot."
+            ]
+        },
+        "sot": {
+            "retained_in_v_next": "YES",
+            "inventory_mode": "READ_ONLY_EXISTING_FROZEN_SOURCES",
+            "existing_source_repair_feasible": "NO",
+            "new_acquisition_required": "YES",
+            "training_eligible": "NO",
+            "runtime_eligible": "NO",
+            "evidence": {
+                "formal_payloads": 812,
+                "shotmap_payloads": 812,
+                "payloads_with_is_on_target": 812,
+                "payloads_with_is_own_goal": 812,
+                "payloads_with_own_goal_true": 90,
+                "normalized_team_identity_pairs": 812,
+                "independent_observed_home_away_team_pairs": 0,
+                "blocker": "Frozen captures do not prove independent home/away shot-team binding."
+            },
+            "evidence_provenance": {
+                "authority": "OSD-V1 final decision memo",
+                "memo_sha256": "21eab8eedb31688488850d47833b2f86a2b765abadc49562050a81ebeaf78e2f",
+                "inventory_scope": "Read-only existing frozen repository/local sources; no new football acquisition.",
+                "reproducibility": "Counts are copied from the final OSD-V1 evidence matrix; source repair feasibility remains NO."
+            },
+            "bounded_next_scope": [
+                "Acquire only the missing provider match identity and independent home/away team binding.",
+                "Preserve raw immutable capture, stable payload hash, source URI/field lineage, and capture timing.",
+                "Prove isOnTarget and isOwnGoal handling against event-level team identity.",
+                "Rebuild only affected GD-A02/GD-A03 facts and preserve the existing 888 target population where linkage remains valid.",
+                "Provide a runtime-equivalent source before runtime eligibility is considered."
+            ]
+        },
+        "possession": {
+            "retained_in_v_next": "YES",
+            "historical_source_status": "UNAVAILABLE",
+            "runtime_source_status": "UNAVAILABLE",
+            "training_eligible": "NO",
+            "runtime_eligible": "NO",
+            "fallbacks_forbidden": [
+                "50/50",
+                "55/45",
+                "team average",
+                "league average",
+                "forward fill",
+                "interpolation",
+                "estimated possession"
+            ]
+        },
+        "shared_engine": {
+            "architecture_approved": "YES",
+            "implementation_started": "NO",
+            "canonical_semantic_engine": {
+                "input": "Canonical typed prior-state facts.",
+                "output": "V-next feature values plus availability and lineage/reason.",
+                "prohibitions": [
+                    "network fetch",
+                    "provider query",
+                    "database query",
+                    "database write",
+                    "historical/runtime path branching",
+                    "compatibility proxy defaults",
+                    "silent unavailable-field defaults"
+                ]
+            },
+            "historical_source_adapter": "Translate validated historical authorities into canonical typed prior-state facts.",
+            "runtime_source_adapter": "Translate validated decision-time authorities into the identical canonical typed prior-state facts."
+        },
+        "activation": {
+            "v_next_defined": "YES",
+            "v_next_default_activated": "NO",
+            "training_default_switched": "NO",
+            "runtime_default_switched": "NO",
+            "model_schema_switched": "NO",
+            "feature_frame_readiness": "NOT_READY",
+            "real_training_readiness": "NOT_READY",
+            "train_inference_numeric_parity": "NOT_PROVEN",
+            "golden_dataset_complete": "NO"
+        },
+        "legacy_proxy_policy": {
+            "canonical_v_next_reachability": "NO",
+            "proxies_rejected": [
+                "goals proxy for xG",
+                "goals*3+2 SOT",
+                "55/45 possession",
+                "estimated standings",
+                "default or implicit cold-start ELO",
+                "fatigue 0.5 fallback",
+                "compatibility team rating",
+                "raw_elo_gap * 0.1 adjusted ELO"
+            ],
+            "compatibility_behavior": "May remain available only to existing noncanonical callers; it is not a V-next source or semantic authority."
+        }
     }
-  ]
 }

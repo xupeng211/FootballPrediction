@@ -48,7 +48,65 @@ GD-A03 CLI 只接受显式 repository-external immutable input files，输出 ar
 receipt 也必须在仓库外。它不联网、不连接 DB、不写 DB/raw/L3，不训练、不 backtest、
 不预测。
 
-## Canonical 20-feature numeric lineage matrix
+## Versioned V-next contract freeze
+
+截至 2026-08-16，`config/model_feature_contracts.json` 已升级为同一注册表内的
+版本化权威（`model-feature-contract-registry/v2`）。这不是第二套 feature
+authority：V1 和 V-next、V1→V-next migration map、逐 feature readiness status
+以及 activation/decision boundaries 都由该注册表共同校验；decision-boundary 的
+关键值也必须 fail-closed，不能只校验 section 名称。SOT inventory 的证据链引用
+OSD-V1 final decision memo SHA256 `21eab8eedb31688488850d47833b2f86a2b765abadc49562050a81ebeaf78e2f`。
+
+### Current historical/default contract: V1
+
+`contract_id=v26_7_aligned/v1`、`feature_contract_version=v26_6_pre_match/v1`、
+20 个 feature 的名称、顺序和既有数值语义保持冻结。它仍是当前历史 artifact、
+canonical training producer 与 runtime adapter 所使用的默认绑定。V1 artifact 不得
+被重新解释为 V-next。
+
+### Next contract: V-next
+
+`contract_id=canonical_prematch/vnext-v1`、`feature_contract_version=canonical_prematch/vnext/v1`
+固定为 17 个 feature，且 `activation_status=DEFINED_NOT_ACTIVATED`。V-next 删除：
+
+- `rolling_team_rating_home`
+- `rolling_team_rating_away`
+- `adjusted_elo_gap`
+
+没有为保持 20 维而虚构替代 feature；`table_position_diff`、`points_diff` 和
+`fatigue_diff` 仍保留。V-next 的逐 feature 状态矩阵明确保留但未就绪的 SOT、
+possession、standings 和 raw ELO，不把“仍在 contract 中”升级为可训练或可运行。
+V1→V-next 的 20 条迁移记录必须对每个 V1 feature 恰好覆盖一次。
+同时，所有 17 个保留目标 feature 必须恰好获得一个非空迁移目标；迁移源或目标
+覆盖不完整都会 fail-closed。逐 feature 状态矩阵的值（包括 proven family 的
+runtime/readiness 状态）也是冻结边界，不是仅校验字段形状。
+
+当前边界不变：
+
+```text
+V_NEXT_DEFAULT_ACTIVATED=NO
+TRAINING_DEFAULT_SWITCHED=NO
+RUNTIME_DEFAULT_SWITCHED=NO
+MODEL_SCHEMA_SWITCHED=NO
+FEATURE_FRAME_READINESS=NOT_READY
+REAL_TRAINING_READINESS=NOT_READY
+TRAIN_INFERENCE_NUMERIC_PARITY=NOT_PROVEN
+GOLDEN_DATASET_COMPLETE=NO
+```
+
+Raw ELO 只冻结 `BOUNDED_START` 方向；E1–E11 数值与历史行为参数仍需 Owner
+单独批准。Standings 保留严格 `source_kickoff < target_kickoff`、排除相同 kickoff
+的拟议方向，但仍需完成全部冻结赛季的官方规则历史/例外闭合。SOT 只完成了对既有
+冻结资产的只读库存：812 个 formal payload 均有 shotmap、`isOnTarget` 和
+`isOwnGoal` 布尔字段，但独立观测的主客 team-ID pair 为 0，因此现有资产不足以
+闭合 canonical SOT；不得在本任务中采集新足球数据。Possession 仍保留但历史与运行时
+source 均为 unavailable，禁止任何比例、均值、插值或估算 fallback。
+
+Owner 批准的后续架构边界是一个不联网、不查 provider、不查 DB、不写 DB、无兼容
+proxy/default 的纯 `CanonicalSemanticEngine`，由 historical/runtime source adapter
+分别提供同构 typed prior-state facts。该引擎本任务只冻结接口边界，未开始实现。
+
+## V1 canonical 20-feature numeric lineage matrix
 
 下表中的每行都必须在 artifact 中出现，且必须包含：
 `FEATURE_NAME`、`INTENDED_SEMANTICS`、`SOURCE_AUTHORITY`、`SOURCE_FIELDS`、

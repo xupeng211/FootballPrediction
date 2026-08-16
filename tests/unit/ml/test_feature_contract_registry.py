@@ -16,6 +16,7 @@ import pytest
 from src.ml.feature_adapter import V26_6_PreMatchAdapter
 from src.ml.inference.feature_contract_registry import (
     FeatureContractNotFoundError,
+    FeatureContractRegistry,
     FeatureContractRegistryError,
     load_feature_contract_registry,
 )
@@ -120,6 +121,20 @@ def test_unsupported_registry_version_fails_closed(tmp_path: Path) -> None:
 
     with pytest.raises(FeatureContractRegistryError, match="unsupported"):
         load_feature_contract_registry(_write_document(tmp_path, document))
+
+
+def test_legacy_registry_requires_explicit_compatibility_flag(tmp_path: Path) -> None:
+    document = _canonical_document()
+    document["schema_version"] = "model-feature-contract-registry/v1"
+    document.pop("migration_map")
+    document.pop("decision_boundaries")
+    path = _write_document(tmp_path, document)
+
+    with pytest.raises(FeatureContractRegistryError, match="unsupported"):
+        load_feature_contract_registry(path)
+
+    registry = FeatureContractRegistry(path, allow_legacy_schema=True)
+    assert registry.get_by_contract_id(CONTRACT_ID).feature_count == CANONICAL_FEATURE_COUNT
 
 
 def test_registry_reader_is_inert_without_model_or_database_dependencies(
