@@ -108,14 +108,26 @@ load is visible to `/health/readiness` and `/health/quick`.
 
 ## Canonical API Feature Contract (PR-2)
 
-The versioned, git-tracked inference contract registry is
+The versioned, git-tracked inference feature-contract registry is
 `config/model_feature_contracts.json`, read by
-`src/ml/inference/feature_contract_registry.py`. The canonical API binding is
+`src/ml/inference/feature_contract_registry.py`. The registry schema is
+`model-feature-contract-registry/v2` and remains the single feature authority.
+The current historical/default API binding is still
 `contract_id=v26_7_aligned/v1`, `artifact_name=v26_7_aligned`,
-`model_type=v26_7_aligned`, and `feature_contract_version=v26_6_pre_match/v1`.
-It declares exactly 20 ordered feature names. Feature order is part of the
-identity; the registry reader rejects duplicate names, count mismatches,
-unsupported schema versions, malformed bindings, duplicate contract IDs, and
+`model_type=v26_7_aligned`, and `feature_contract_version=v26_6_pre_match/v1`;
+it declares exactly 20 ordered feature names and is immutable for existing
+artifacts.
+
+The same registry defines the non-activated V-next contract
+`contract_id=canonical_prematch/vnext-v1` with exactly 17 ordered features.
+V-next removes `rolling_team_rating_home`, `rolling_team_rating_away`, and
+`adjusted_elo_gap`; it does not invent replacements to preserve 20. The V1→V-next
+migration map covers every V1 feature exactly once, while its per-feature matrix
+keeps SOT, possession, standings, and raw ELO explicitly unavailable/pending.
+V-next has no model-artifact manifest binding and cannot become the default merely
+because it is defined. Feature order is part of identity; the reader rejects
+duplicate names, count mismatches, unsupported schema versions, malformed
+bindings, incomplete migration/status metadata, duplicate contract IDs, and
 unknown lookups without fallback.
 
 The current runtime producer is
@@ -128,6 +140,13 @@ manifest/registry identity drift or runtime order/count drift before
 deserialization. Training-side feature pipelines remain outside this contract
 and are not modified here; parity is carried forward for the later canonical
 training producer work.
+
+The V-next contract is a freeze-only definition in this lifecycle. It does not
+switch training, runtime, model schema, readiness, or artifact activation. Raw
+ELO parameters remain an Owner decision; standings remain blocked by official
+rule-history closure; SOT remains blocked by source identity/own-goal closure;
+possession remains unavailable. The shared pure semantic-engine direction is
+approved but its implementation is a separate task.
 
 ## Canonical Verified Loader (PR-3)
 

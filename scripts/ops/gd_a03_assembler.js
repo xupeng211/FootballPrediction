@@ -264,10 +264,22 @@ function loadFeatureContract(repositoryRoot) {
         repositoryRoot
     );
     const registry = parseJson(binding, 'feature contract registry');
-    if (!Array.isArray(registry.contracts) || registry.contracts.length !== 1) {
-        fail('feature contract registry must have one canonical contract', 'SCHEMA_MISMATCH');
+    if (registry.schema_version !== 'model-feature-contract-registry/v2') {
+        fail('feature contract registry schema version is unsupported', 'SCHEMA_MISMATCH');
     }
-    const contract = registry.contracts[0];
+    if (!Array.isArray(registry.contracts) || registry.contracts.length === 0) {
+        fail('feature contract registry must contain contracts', 'SCHEMA_MISMATCH');
+    }
+    const canonicalContracts = registry.contracts.filter(
+        contract => contract && contract.contract_id === 'v26_7_aligned/v1'
+    );
+    if (canonicalContracts.length !== 1) {
+        fail('feature contract registry must contain exactly one frozen V1 contract', 'SCHEMA_MISMATCH');
+    }
+    const contract = canonicalContracts[0];
+    if (contract.activation_status && contract.activation_status !== 'ACTIVE_DEFAULT') {
+        fail('frozen V1 contract must remain the active default binding', 'SCHEMA_MISMATCH');
+    }
     const runtimeFeatureAdapter = loadRuntimeFeatureIdentity(repositoryRoot);
     if (stableStringify(contract.ordered_features) !== stableStringify(runtimeFeatureAdapter.orderedFeatures)) {
         fail('config feature order differs from V26_6_PreMatchAdapter.V26_6_FEATURES', 'SCHEMA_MISMATCH');

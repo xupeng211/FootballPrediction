@@ -427,6 +427,11 @@ elo_expected_home: 0.571
 
 ## PR-6 Canonical Producer Boundary
 
+The 20-feature frame described by the PR-6 boundary is explicitly the frozen
+V1 contract. The V-next 17-feature contract is defined in the shared versioned
+registry but is not activated, is not a training-frame format, and does not
+change this document's readiness boundary.
+
 PR-6 实现了一个安全的 canonical API candidate producer，但没有把当前
 `l3_features` 数据库表升级为可直接训练的数据源。producer 只接受调用方
 明确提供的、已经完成赛前 cutoff 证明的 20-feature frame，并再次拒绝缺失、
