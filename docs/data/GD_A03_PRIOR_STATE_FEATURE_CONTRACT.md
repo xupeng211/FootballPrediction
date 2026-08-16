@@ -74,12 +74,39 @@ canonical training producer 与 runtime adapter 所使用的默认绑定。V1 ar
 - `adjusted_elo_gap`
 
 没有为保持 20 维而虚构替代 feature；`table_position_diff`、`points_diff` 和
-`fatigue_diff` 仍保留。V-next 的逐 feature 状态矩阵明确保留但未就绪的 SOT、
-possession、standings 和 raw ELO，不把“仍在 contract 中”升级为可训练或可运行。
+`fatigue_diff` 仍保留。SOT、possession 和 raw ELO 仍保持 pending；standings
+的语义合同已冻结，但不把“仍在 contract 中”升级为可训练、可运行或已物化数值。
 V1→V-next 的 20 条迁移记录必须对每个 V1 feature 恰好覆盖一次。
 同时，所有 17 个保留目标 feature 必须恰好获得一个非空迁移目标；迁移源或目标
 覆盖不完整都会 fail-closed。逐 feature 状态矩阵的值（包括 proven family 的
 runtime/readiness 状态）也是冻结边界，不是仅校验字段形状。
+
+### Frozen V-next standings semantic contract
+
+V-next 的三个 standings features 共同绑定同一个、且仅一个语义合同：
+
+```text
+STANDINGS_CONTRACT_ID=standings/premier-league-point-in-time/v1
+STANDINGS_CONTRACT_VERSION=v1
+COMPETITION_SCOPE=Premier League / league_id 47
+FROZEN_SEASONS=2022/2023,2023/2024,2024/2025
+STANDINGS_SEMANTIC_CONTRACT_STATUS=FROZEN
+STANDINGS_HISTORY_EVIDENCE_STATUS=EVIDENCE_CLOSED_FOR_FROZEN_SCOPE
+```
+
+合同位于同一 `config/model_feature_contracts.json` 的
+`decision_boundaries.standings.contract`，不是第二个 registry。它冻结
+points → goal difference → goals scored、competition ranking shared positions
+with gaps（`1,1,3`）、严格 `SOURCE_EVENT_TIME_LT_TARGET_KICKOFF`、排除相同
+kickoff、postponed 使用 actual played event time、异常比赛官方状态处理、
+行政扣分有效时间区间与 fail-closed reason codes。证据 memo SHA256 为
+`e09a80735f26d3fe3f949fcc115c853354c3f449dcf1ca6e9da7954846dbb357`，覆盖
+`887/888`，其中 `47_20232024_4193789` 必须因
+`ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS` 保持 unavailable。
+
+这不会改写 V1 的 20-feature numeric lineage matrix，也不会使 GD-A03 的
+历史数值 producer、runtime、training 或 feature frame ready。V1 matrix 中
+standings 行保留其既有未实现数值边界；本节只冻结 V-next 的语义合同。
 
 当前边界不变：
 
@@ -95,8 +122,9 @@ GOLDEN_DATASET_COMPLETE=NO
 ```
 
 Raw ELO 只冻结 `BOUNDED_START` 方向；E1–E11 数值与历史行为参数仍需 Owner
-单独批准。Standings 保留严格 `source_kickoff < target_kickoff`、排除相同 kickoff
-的拟议方向，但仍需完成全部冻结赛季的官方规则历史/例外闭合。SOT 只完成了对既有
+单独批准。Standings 已完成官方规则历史/例外闭合并冻结严格
+`source_kickoff < target_kickoff`、排除相同 kickoff 的语义合同；其数值 producer
+仍未实现。SOT 只完成了对既有
 冻结资产的只读库存：812 个 formal payload 均有 shotmap、`isOnTarget` 和
 `isOwnGoal` 布尔字段，但独立观测的主客 team-ID pair 为 0，因此现有资产不足以
 闭合 canonical SOT；不得在本任务中采集新足球数据。Possession 仍保留但历史与运行时

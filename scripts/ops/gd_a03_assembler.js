@@ -269,7 +269,22 @@ const MIGRATION_CLASSIFICATIONS = new Set([
     'SEMANTICS_PENDING',
     'SOURCE_PENDING',
     'CONTRACT_PENDING',
+    'SEMANTICS_FROZEN',
 ]);
+const EXPECTED_STANDINGS_MIGRATION_METADATA = Object.freeze({
+    home_table_position: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.',
+    ],
+    away_table_position: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.',
+    ],
+    table_position_diff: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next; both input positions share standings/premier-league-point-in-time/v1 with HOME_POSITION_MINUS_AWAY_POSITION orientation; runtime/training parity and numeric materialization remain not ready.',
+    ],
+});
 const REGISTRY_ROOT_FIELDS = new Set([
     'schema_version',
     'lifecycle',
@@ -355,28 +370,28 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'NO_PROVEN_POSSESSION_SOURCE_FACT',
     ],
     home_table_position: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     away_table_position: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     table_position_diff: [
-        'RETAINED_PENDING',
-        'CONTRACT_PENDING',
-        'HISTORY_PENDING',
-        'CONTRACT_PENDING',
-        'NOT_ELIGIBLE_RULE_CLOSURE',
-        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+        'RETAINED_PROVEN',
+        'SEMANTICS_FROZEN',
+        'PROVEN_FOR_FROZEN_SCOPE',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
     ],
     home_points: [
         'RETAINED_PROVEN',
@@ -593,6 +608,31 @@ function validateRegistryMigrationMap(registry, v1Contract, vNextContract) {
     }
 }
 
+function validateStandingsMigrationConsistency(registry, vNextContract) {
+    const standingsBoundary = registry.decision_boundaries.standings;
+    const migrations = new Map(registry.migration_map.entries.map(entry => [entry.from_feature, entry]));
+    const statuses = new Map(vNextContract.feature_statuses.map(status => [status.feature_name, status]));
+    for (const [feature, [classification, reason]] of Object.entries(EXPECTED_STANDINGS_MIGRATION_METADATA)) {
+        const status = statuses.get(feature);
+        const migration = migrations.get(feature);
+        if (
+            !status ||
+            !migration ||
+            status.v_next_status !== 'RETAINED_PROVEN' ||
+            status.semantic_definition_status !== 'SEMANTICS_FROZEN' ||
+            status.historical_source_status !== 'PROVEN_FOR_FROZEN_SCOPE' ||
+            migration.to_feature !== feature ||
+            migration.classification !== classification ||
+            migration.reason !== reason ||
+            standingsBoundary.semantic_contract_status !== 'FROZEN' ||
+            standingsBoundary.historical_evidence_status !== 'EVIDENCE_CLOSED_FOR_FROZEN_SCOPE' ||
+            standingsBoundary.contract.contract_id !== 'standings/premier-league-point-in-time/v1'
+        ) {
+            fail('standings migration metadata is inconsistent with the frozen contract', 'SCHEMA_MISMATCH');
+        }
+    }
+}
+
 function requireBoundaryObject(value, fields, label) {
     if (!hasExactKeys(value, new Set(fields))) {
         fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
@@ -669,6 +709,9 @@ function validateDecisionBoundaryValues(boundaries) {
             'training_eligible',
             'runtime_eligible',
             'rule_history_closure_required',
+            'semantic_contract_status',
+            'historical_evidence_status',
+            'contract',
             'unresolved_evidence',
         ],
         'standings decision boundary'
@@ -681,15 +724,16 @@ function validateDecisionBoundaryValues(boundaries) {
         training_eligible: 'NO',
         runtime_eligible: 'NO',
         rule_history_closure_required: 'YES',
+        semantic_contract_status: 'FROZEN',
+        historical_evidence_status: 'EVIDENCE_CLOSED_FOR_FROZEN_SCOPE',
     })) {
         requireBoundaryText(standings[field], `standings decision boundary.${field}`, expected);
     }
-    if (
-        !Array.isArray(standings.unresolved_evidence) ||
-        standings.unresolved_evidence.length === 0 ||
-        standings.unresolved_evidence.some(item => typeof item !== 'string' || !item.trim())
-    ) {
+    if (!Array.isArray(standings.unresolved_evidence) || standings.unresolved_evidence.length !== 0) {
         fail('standings unresolved evidence is malformed', 'SCHEMA_MISMATCH');
+    }
+    if (!isPlainObject(standings.contract)) {
+        fail('standings semantic contract is malformed', 'SCHEMA_MISMATCH');
     }
 
     const sot = requireBoundaryObject(
@@ -958,6 +1002,7 @@ function validateFeatureContractRegistry(registry) {
         fail('feature contract decision boundaries are incomplete', 'SCHEMA_MISMATCH');
     }
     validateDecisionBoundaryValues(registry.decision_boundaries);
+    validateStandingsMigrationConsistency(registry, vNextContract);
     return { v1Contract, vNextContract };
 }
 
