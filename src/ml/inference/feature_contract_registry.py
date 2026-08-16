@@ -133,6 +133,11 @@ class FeatureContractRegistry:
 
     def contracts(self) -> tuple[FeatureContract, ...]:
         """Load every contract and fail closed on any schema violation."""
+        _, validated_contracts = self._validated_document()
+        return validated_contracts
+
+    def _validated_document(self) -> tuple[dict[str, Any], tuple[FeatureContract, ...]]:
+        """Read and validate one immutable registry snapshot."""
         payload = self._read_payload()
         raw_contracts = payload.get("contracts")
         if not isinstance(raw_contracts, list) or not raw_contracts:
@@ -154,7 +159,7 @@ class FeatureContractRegistry:
         validated_contracts = tuple(contracts)
         if payload.get("schema_version") == SUPPORTED_SCHEMA_VERSION:
             self._validate_v2_document(payload, validated_contracts)
-        return validated_contracts
+        return payload, validated_contracts
 
     def get_by_contract_id(self, contract_id: str) -> FeatureContract:
         """Return the exact contract ID or fail closed; never choose a fallback."""
@@ -188,8 +193,7 @@ class FeatureContractRegistry:
         to_contract_id: str = VNEXT_CONTRACT_ID,
     ) -> tuple[FeatureMigration, ...]:
         """Return the validated migration map for one exact contract pair."""
-        self.contracts()
-        payload = self._read_payload()
+        payload, _ = self._validated_document()
         if payload.get("schema_version") != SUPPORTED_SCHEMA_VERSION:
             raise FeatureContractRegistryError(
                 "migration map requires the versioned registry schema"

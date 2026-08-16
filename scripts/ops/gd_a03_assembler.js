@@ -257,6 +257,238 @@ function parseJson(binding, label) {
     }
 }
 
+const FEATURE_CONTRACT_REGISTRY_SCHEMA_VERSION = 'model-feature-contract-registry/v2';
+const V1_FEATURE_CONTRACT_ID = 'v26_7_aligned/v1';
+const V_NEXT_FEATURE_CONTRACT_ID = 'canonical_prematch/vnext-v1';
+const V_NEXT_REMOVED_FEATURES = new Set(['rolling_team_rating_home', 'rolling_team_rating_away', 'adjusted_elo_gap']);
+const MIGRATION_CLASSIFICATIONS = new Set([
+    'UNCHANGED',
+    'REMOVED',
+    'SEMANTICS_PENDING',
+    'SOURCE_PENDING',
+    'CONTRACT_PENDING',
+]);
+const REGISTRY_ROOT_FIELDS = new Set([
+    'schema_version',
+    'lifecycle',
+    'contracts',
+    'migration_map',
+    'decision_boundaries',
+]);
+const REGISTRY_CONTRACT_FIELDS = new Set([
+    'contract_id',
+    'artifact_name',
+    'model_type',
+    'feature_contract_version',
+    'feature_count',
+    'ordered_features',
+    'contract_role',
+    'activation_status',
+    'feature_statuses',
+]);
+const REQUIRED_CONTRACT_FIELDS = new Set([
+    'contract_id',
+    'artifact_name',
+    'model_type',
+    'feature_contract_version',
+    'feature_count',
+    'ordered_features',
+]);
+const FEATURE_STATUS_FIELDS = new Set([
+    'feature_name',
+    'v_next_status',
+    'semantic_definition_status',
+    'historical_source_status',
+    'runtime_source_status',
+    'training_eligibility',
+    'reason_code',
+]);
+
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(value, expected) {
+    return isPlainObject(value) && stableStringify(Object.keys(value).sort()) === stableStringify([...expected].sort());
+}
+
+function assertRegistryText(value, label) {
+    if (typeof value !== 'string' || !value.trim()) fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
+}
+
+function assertRegistryIdentifier(value, label) {
+    assertRegistryText(value, label);
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.\-/]*$/.test(value)) fail(`${label} is malformed`, 'SCHEMA_MISMATCH');
+}
+
+function validateRegistryFeatureStatuses(contract) {
+    if (contract.feature_statuses === undefined) return;
+    if (!Array.isArray(contract.feature_statuses) || contract.feature_statuses.length === 0) {
+        fail(`feature contract ${contract.contract_id} feature status matrix is malformed`, 'SCHEMA_MISMATCH');
+    }
+    const seen = new Set();
+    for (const status of contract.feature_statuses) {
+        if (!hasExactKeys(status, FEATURE_STATUS_FIELDS)) {
+            fail(`feature contract ${contract.contract_id} feature status is malformed`, 'SCHEMA_MISMATCH');
+        }
+        for (const field of FEATURE_STATUS_FIELDS) assertRegistryText(status[field], `feature status ${field}`);
+        if (!/^[A-Za-z0-9][A-Za-z0-9_]*$/.test(status.feature_name) || seen.has(status.feature_name)) {
+            fail(`feature contract ${contract.contract_id} feature status name is malformed`, 'SCHEMA_MISMATCH');
+        }
+        seen.add(status.feature_name);
+    }
+}
+
+// eslint-disable-next-line complexity -- registry validation enumerates each fail-closed schema boundary.
+function validateRegistryContractShape(contract, index) {
+    if (!isPlainObject(contract)) {
+        fail(`feature contract entry #${index} is malformed`, 'SCHEMA_MISMATCH');
+    }
+    if (![...REQUIRED_CONTRACT_FIELDS].every(field => field in contract)) {
+        fail(`feature contract entry #${index} is malformed`, 'SCHEMA_MISMATCH');
+    }
+    for (const field of Object.keys(contract)) {
+        if (!REGISTRY_CONTRACT_FIELDS.has(field)) {
+            fail(`feature contract entry #${index} is malformed`, 'SCHEMA_MISMATCH');
+        }
+    }
+    for (const field of ['contract_id', 'artifact_name', 'model_type', 'feature_contract_version']) {
+        assertRegistryIdentifier(contract[field], `feature contract entry #${index}.${field}`);
+    }
+    if (!Number.isSafeInteger(contract.feature_count) || contract.feature_count <= 0) {
+        fail(`feature contract entry #${index}.feature_count is malformed`, 'SCHEMA_MISMATCH');
+    }
+    if (!Array.isArray(contract.ordered_features) || contract.ordered_features.length !== contract.feature_count) {
+        fail(`feature contract entry #${index}.ordered_features is malformed`, 'SCHEMA_MISMATCH');
+    }
+    const seenFeatures = new Set();
+    for (const feature of contract.ordered_features) {
+        if (typeof feature !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_]*$/.test(feature) || seenFeatures.has(feature)) {
+            fail(`feature contract entry #${index}.ordered_features contains an invalid feature`, 'SCHEMA_MISMATCH');
+        }
+        seenFeatures.add(feature);
+    }
+    for (const field of ['contract_role', 'activation_status']) {
+        if (contract[field] !== undefined) {
+            assertRegistryText(contract[field], `feature contract entry #${index}.${field}`);
+        }
+    }
+    validateRegistryFeatureStatuses(contract);
+}
+
+function validateRegistryMigrationMap(registry, v1Contract, vNextContract) {
+    const migrationMap = registry.migration_map;
+    const requiredFields = new Set(['from_contract_id', 'to_contract_id', 'entries']);
+    if (!hasExactKeys(migrationMap, requiredFields)) {
+        fail('feature contract migration map is malformed', 'SCHEMA_MISMATCH');
+    }
+    if (
+        migrationMap.from_contract_id !== V1_FEATURE_CONTRACT_ID ||
+        migrationMap.to_contract_id !== V_NEXT_FEATURE_CONTRACT_ID ||
+        !Array.isArray(migrationMap.entries) ||
+        migrationMap.entries.length !== v1Contract.feature_count
+    ) {
+        fail('feature contract migration map is incomplete', 'SCHEMA_MISMATCH');
+    }
+    const seen = new Set();
+    const expectedEntries = v1Contract.ordered_features;
+    migrationMap.entries.forEach((entry, index) => {
+        const fields = new Set(['from_feature', 'to_feature', 'classification', 'reason']);
+        if (!hasExactKeys(entry, fields)) fail(`migration entry #${index + 1} is malformed`, 'SCHEMA_MISMATCH');
+        if (
+            typeof entry.from_feature !== 'string' ||
+            !expectedEntries.includes(entry.from_feature) ||
+            seen.has(entry.from_feature)
+        ) {
+            fail(`migration entry #${index + 1} source feature is malformed`, 'SCHEMA_MISMATCH');
+        }
+        if (
+            entry.to_feature !== null &&
+            (!isPlainObject(vNextContract) || !vNextContract.ordered_features.includes(entry.to_feature))
+        ) {
+            fail(`migration entry #${index + 1} target feature is malformed`, 'SCHEMA_MISMATCH');
+        }
+        if (
+            !MIGRATION_CLASSIFICATIONS.has(entry.classification) ||
+            typeof entry.reason !== 'string' ||
+            !entry.reason.trim()
+        ) {
+            fail(`migration entry #${index + 1} decision is malformed`, 'SCHEMA_MISMATCH');
+        }
+        if (entry.classification === 'REMOVED' ? entry.to_feature !== null : entry.to_feature === null) {
+            fail(`migration entry #${index + 1} target/classification is inconsistent`, 'SCHEMA_MISMATCH');
+        }
+        seen.add(entry.from_feature);
+    });
+    if (stableStringify([...seen].sort()) !== stableStringify([...expectedEntries].sort())) {
+        fail('feature contract migration source coverage is malformed', 'SCHEMA_MISMATCH');
+    }
+}
+
+// eslint-disable-next-line complexity -- registry validation enumerates the version lifecycle and migration gates.
+function validateFeatureContractRegistry(registry) {
+    if (!isPlainObject(registry) || !hasExactKeys(registry, REGISTRY_ROOT_FIELDS)) {
+        fail('feature contract registry v2 fields are malformed', 'SCHEMA_MISMATCH');
+    }
+    if (registry.schema_version !== FEATURE_CONTRACT_REGISTRY_SCHEMA_VERSION || registry.lifecycle !== 'permanent') {
+        fail('feature contract registry schema or lifecycle is unsupported', 'SCHEMA_MISMATCH');
+    }
+    if (!Array.isArray(registry.contracts) || registry.contracts.length === 0) {
+        fail('feature contract registry must contain contracts', 'SCHEMA_MISMATCH');
+    }
+    const contractIds = new Set();
+    const modelBindings = new Set();
+    registry.contracts.forEach((contract, index) => {
+        validateRegistryContractShape(contract, index + 1);
+        if (contractIds.has(contract.contract_id)) fail('duplicate feature contract id', 'SCHEMA_MISMATCH');
+        const binding = `${contract.artifact_name}\u0000${contract.model_type}`;
+        if (modelBindings.has(binding)) fail('duplicate feature contract model binding', 'SCHEMA_MISMATCH');
+        contractIds.add(contract.contract_id);
+        modelBindings.add(binding);
+    });
+    const v1Contract = registry.contracts.find(contract => contract.contract_id === V1_FEATURE_CONTRACT_ID);
+    const vNextContract = registry.contracts.find(contract => contract.contract_id === V_NEXT_FEATURE_CONTRACT_ID);
+    if (!v1Contract || !vNextContract || registry.contracts[0] !== v1Contract) {
+        fail('versioned registry must contain frozen V1 first and V-next contracts', 'SCHEMA_MISMATCH');
+    }
+    if (v1Contract.contract_role !== 'HISTORICAL_DEFAULT' || v1Contract.activation_status !== 'ACTIVE_DEFAULT') {
+        fail('frozen V1 contract default binding is malformed', 'SCHEMA_MISMATCH');
+    }
+    if (
+        vNextContract.contract_role !== 'VERSIONED_NEXT' ||
+        vNextContract.activation_status !== 'DEFINED_NOT_ACTIVATED'
+    ) {
+        fail('V-next contract activation boundary is malformed', 'SCHEMA_MISMATCH');
+    }
+    if (
+        vNextContract.feature_count !== 17 ||
+        !Array.isArray(vNextContract.feature_statuses) ||
+        vNextContract.feature_statuses.length !== vNextContract.feature_count ||
+        stableStringify(vNextContract.feature_statuses.map(status => status.feature_name)) !==
+            stableStringify(vNextContract.ordered_features) ||
+        vNextContract.ordered_features.some(feature => V_NEXT_REMOVED_FEATURES.has(feature))
+    ) {
+        fail('V-next feature status/order boundary is malformed', 'SCHEMA_MISMATCH');
+    }
+    validateRegistryMigrationMap(registry, v1Contract, vNextContract);
+    const boundaryNames = new Set([
+        'raw_elo',
+        'standings',
+        'sot',
+        'possession',
+        'shared_engine',
+        'activation',
+        'legacy_proxy_policy',
+    ]);
+    if (
+        !hasExactKeys(registry.decision_boundaries, boundaryNames) ||
+        [...boundaryNames].some(name => !isPlainObject(registry.decision_boundaries[name]))
+    ) {
+        fail('feature contract decision boundaries are incomplete', 'SCHEMA_MISMATCH');
+    }
+    return { v1Contract, vNextContract };
+}
+
 function loadFeatureContract(repositoryRoot) {
     const binding = assertRepositoryConfigFile(
         path.join(repositoryRoot, 'config/model_feature_contracts.json'),
@@ -264,22 +496,7 @@ function loadFeatureContract(repositoryRoot) {
         repositoryRoot
     );
     const registry = parseJson(binding, 'feature contract registry');
-    if (registry.schema_version !== 'model-feature-contract-registry/v2') {
-        fail('feature contract registry schema version is unsupported', 'SCHEMA_MISMATCH');
-    }
-    if (!Array.isArray(registry.contracts) || registry.contracts.length === 0) {
-        fail('feature contract registry must contain contracts', 'SCHEMA_MISMATCH');
-    }
-    const canonicalContracts = registry.contracts.filter(
-        contract => contract && contract.contract_id === 'v26_7_aligned/v1'
-    );
-    if (canonicalContracts.length !== 1) {
-        fail('feature contract registry must contain exactly one frozen V1 contract', 'SCHEMA_MISMATCH');
-    }
-    const contract = canonicalContracts[0];
-    if (contract.activation_status && contract.activation_status !== 'ACTIVE_DEFAULT') {
-        fail('frozen V1 contract must remain the active default binding', 'SCHEMA_MISMATCH');
-    }
+    const { v1Contract: contract } = validateFeatureContractRegistry(registry);
     const runtimeFeatureAdapter = loadRuntimeFeatureIdentity(repositoryRoot);
     if (stableStringify(contract.ordered_features) !== stableStringify(runtimeFeatureAdapter.orderedFeatures)) {
         fail('config feature order differs from V26_6_PreMatchAdapter.V26_6_FEATURES', 'SCHEMA_MISMATCH');
@@ -288,6 +505,7 @@ function loadFeatureContract(repositoryRoot) {
         contract,
         bytes: binding.bytes,
         sha256: binding.sha256,
+        registrySchemaVersion: registry.schema_version,
         runtimeFeatureAdapter,
     };
 }
@@ -356,7 +574,7 @@ function buildSourceBindings(inputs, featureContractBinding, scheduleValidation)
         },
         feature_contract: {
             sha256: featureContractBinding.sha256,
-            schema_version: 'model-feature-contract-registry/v1',
+            schema_version: featureContractBinding.registrySchemaVersion,
         },
         runtime_feature_adapter: {
             sha256: featureContractBinding.runtimeFeatureAdapter.sha256,
