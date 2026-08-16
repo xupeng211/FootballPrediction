@@ -7,6 +7,7 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { sha256Text, stableStringify } = require('./StableValue');
 const {
     computeBusinessContentHash,
     isNumericExternalId,
@@ -56,27 +57,6 @@ class CanonicalInventoryContractError extends Error {
         this.name = 'CanonicalInventoryContractError';
         this.code = code;
     }
-}
-
-function sha256Text(value) {
-    return crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');
-}
-
-function stableCanonicalize(value) {
-    if (Array.isArray(value)) return value.map(stableCanonicalize);
-    if (value && typeof value === 'object') {
-        return Object.keys(value)
-            .sort()
-            .reduce((out, key) => {
-                out[key] = stableCanonicalize(value[key]);
-                return out;
-            }, {});
-    }
-    return value;
-}
-
-function stableStringify(value) {
-    return JSON.stringify(stableCanonicalize(value));
 }
 
 function canonicalOrder(left, right) {
