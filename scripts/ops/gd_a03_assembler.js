@@ -692,6 +692,9 @@ function validateDecisionBoundaryValues(boundaries) {
     if (!Array.isArray(standings.unresolved_evidence) || standings.unresolved_evidence.length !== 0) {
         fail('standings unresolved evidence is malformed', 'SCHEMA_MISMATCH');
     }
+    if (!isPlainObject(standings.contract)) {
+        fail('standings semantic contract is malformed', 'SCHEMA_MISMATCH');
+    }
 
     const sot = requireBoundaryObject(
         boundaries.sot,
