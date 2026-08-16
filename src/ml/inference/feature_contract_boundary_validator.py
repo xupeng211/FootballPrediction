@@ -172,9 +172,9 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         "normalized_team_identity_pairs": 812,
         "independent_observed_home_away_team_pairs": 0,
     }
-    for field, expected in expected_counts.items():
+    for field, expected_count in expected_counts.items():
         if (
-            evidence[field] != expected
+            evidence[field] != expected_count
             or isinstance(evidence[field], bool)
             or not isinstance(evidence[field], int)
         ):
