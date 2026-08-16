@@ -272,20 +272,20 @@
             {
                 "from_feature": "home_table_position",
                 "to_feature": "home_table_position",
-                "classification": "CONTRACT_PENDING",
-                "reason": "Official rule history and exception closure are still required."
+                "classification": "SEMANTICS_FROZEN",
+                "reason": "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready."
             },
             {
                 "from_feature": "away_table_position",
                 "to_feature": "away_table_position",
-                "classification": "CONTRACT_PENDING",
-                "reason": "Official rule history and exception closure are still required."
+                "classification": "SEMANTICS_FROZEN",
+                "reason": "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready."
             },
             {
                 "from_feature": "table_position_diff",
                 "to_feature": "table_position_diff",
-                "classification": "CONTRACT_PENDING",
-                "reason": "Its inputs remain blocked until the standings contract closes."
+                "classification": "SEMANTICS_FROZEN",
+                "reason": "Retained in V-next; both input positions share standings/premier-league-point-in-time/v1 with HOME_POSITION_MINUS_AWAY_POSITION orientation; runtime/training parity and numeric materialization remain not ready."
             },
             {
                 "from_feature": "home_points",

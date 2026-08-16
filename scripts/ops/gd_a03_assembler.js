@@ -269,7 +269,22 @@ const MIGRATION_CLASSIFICATIONS = new Set([
     'SEMANTICS_PENDING',
     'SOURCE_PENDING',
     'CONTRACT_PENDING',
+    'SEMANTICS_FROZEN',
 ]);
+const EXPECTED_STANDINGS_MIGRATION_METADATA = Object.freeze({
+    home_table_position: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.',
+    ],
+    away_table_position: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.',
+    ],
+    table_position_diff: [
+        'SEMANTICS_FROZEN',
+        'Retained in V-next; both input positions share standings/premier-league-point-in-time/v1 with HOME_POSITION_MINUS_AWAY_POSITION orientation; runtime/training parity and numeric materialization remain not ready.',
+    ],
+});
 const REGISTRY_ROOT_FIELDS = new Set([
     'schema_version',
     'lifecycle',
@@ -590,6 +605,31 @@ function validateRegistryMigrationMap(registry, v1Contract, vNextContract) {
         stableStringify([...new Set(targets)].sort()) !== stableStringify([...vNextContract.ordered_features].sort())
     ) {
         fail('feature contract migration target coverage is malformed', 'SCHEMA_MISMATCH');
+    }
+}
+
+function validateStandingsMigrationConsistency(registry, vNextContract) {
+    const standingsBoundary = registry.decision_boundaries.standings;
+    const migrations = new Map(registry.migration_map.entries.map(entry => [entry.from_feature, entry]));
+    const statuses = new Map(vNextContract.feature_statuses.map(status => [status.feature_name, status]));
+    for (const [feature, [classification, reason]] of Object.entries(EXPECTED_STANDINGS_MIGRATION_METADATA)) {
+        const status = statuses.get(feature);
+        const migration = migrations.get(feature);
+        if (
+            !status ||
+            !migration ||
+            status.v_next_status !== 'RETAINED_PROVEN' ||
+            status.semantic_definition_status !== 'SEMANTICS_FROZEN' ||
+            status.historical_source_status !== 'PROVEN_FOR_FROZEN_SCOPE' ||
+            migration.to_feature !== feature ||
+            migration.classification !== classification ||
+            migration.reason !== reason ||
+            standingsBoundary.semantic_contract_status !== 'FROZEN' ||
+            standingsBoundary.historical_evidence_status !== 'EVIDENCE_CLOSED_FOR_FROZEN_SCOPE' ||
+            standingsBoundary.contract.contract_id !== 'standings/premier-league-point-in-time/v1'
+        ) {
+            fail('standings migration metadata is inconsistent with the frozen contract', 'SCHEMA_MISMATCH');
+        }
     }
 }
 
@@ -962,6 +1002,7 @@ function validateFeatureContractRegistry(registry) {
         fail('feature contract decision boundaries are incomplete', 'SCHEMA_MISMATCH');
     }
     validateDecisionBoundaryValues(registry.decision_boundaries);
+    validateStandingsMigrationConsistency(registry, vNextContract);
     return { v1Contract, vNextContract };
 }
 

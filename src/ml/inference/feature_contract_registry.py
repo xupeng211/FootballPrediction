@@ -64,7 +64,14 @@ _FEATURE_STATUS_FIELDS = frozenset(
 _MIGRATION_MAP_FIELDS = frozenset({"from_contract_id", "to_contract_id", "entries"})
 _MIGRATION_ENTRY_FIELDS = frozenset({"from_feature", "to_feature", "classification", "reason"})
 _MIGRATION_CLASSIFICATIONS = frozenset(
-    {"UNCHANGED", "REMOVED", "SEMANTICS_PENDING", "SOURCE_PENDING", "CONTRACT_PENDING"}
+    {
+        "UNCHANGED",
+        "REMOVED",
+        "SEMANTICS_PENDING",
+        "SOURCE_PENDING",
+        "CONTRACT_PENDING",
+        "SEMANTICS_FROZEN",
+    }
 )
 _V2_CONTRACT_IDS = (V1_CONTRACT_ID, VNEXT_CONTRACT_ID)
 _V1_FEATURE_COUNT = 20
@@ -218,6 +225,21 @@ _EXPECTED_VNEXT_FEATURE_STATUS_VALUES = {
         "NOT_PROVEN",
         "NOT_READY_RUNTIME_PARITY",
         "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+}
+
+_EXPECTED_STANDINGS_MIGRATION_METADATA = {
+    "home_table_position": (
+        "SEMANTICS_FROZEN",
+        "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.",
+    ),
+    "away_table_position": (
+        "SEMANTICS_FROZEN",
+        "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.",
+    ),
+    "table_position_diff": (
+        "SEMANTICS_FROZEN",
+        "Retained in V-next; both input positions share standings/premier-league-point-in-time/v1 with HOME_POSITION_MINUS_AWAY_POSITION orientation; runtime/training parity and numeric materialization remain not ready.",
     ),
 }
 
@@ -575,6 +597,7 @@ class FeatureContractRegistry:
 
         cls._validate_v2_migration_map(payload, v1_contract, vnext_contract)
         cls._validate_v2_decision_boundaries(payload)
+        cls._validate_v2_standings_migration_consistency(payload, vnext_contract)
 
     @staticmethod
     def _validate_v2_feature_status_values(vnext_contract: FeatureContract) -> None:
@@ -667,6 +690,38 @@ class FeatureContractRegistry:
     @staticmethod
     def _validate_v2_decision_boundaries(payload: dict[str, Any]) -> None:
         validate_v2_decision_boundaries(payload, FeatureContractRegistryError)
+
+    @staticmethod
+    def _validate_v2_standings_migration_consistency(
+        payload: dict[str, Any], vnext_contract: FeatureContract
+    ) -> None:
+        standings_boundary = payload["decision_boundaries"]["standings"]
+        migrations = {entry["from_feature"]: entry for entry in payload["migration_map"]["entries"]}
+        statuses = {status.feature_name: status for status in vnext_contract.feature_statuses}
+        for feature, (
+            expected_classification,
+            expected_reason,
+        ) in _EXPECTED_STANDINGS_MIGRATION_METADATA.items():
+            status = statuses.get(feature)
+            migration = migrations.get(feature)
+            if (
+                status is None
+                or migration is None
+                or status.v_next_status != "RETAINED_PROVEN"
+                or status.semantic_definition_status != "SEMANTICS_FROZEN"
+                or status.historical_source_status != "PROVEN_FOR_FROZEN_SCOPE"
+                or migration["to_feature"] != feature
+                or migration["classification"] != expected_classification
+                or migration["reason"] != expected_reason
+                or standings_boundary["semantic_contract_status"] != "FROZEN"
+                or standings_boundary["historical_evidence_status"]
+                != "EVIDENCE_CLOSED_FOR_FROZEN_SCOPE"
+                or standings_boundary["contract"]["contract_id"]
+                != "standings/premier-league-point-in-time/v1"
+            ):
+                raise FeatureContractRegistryError(
+                    "standings migration metadata is inconsistent with the frozen contract"
+                )
 
     @staticmethod
     def _require_identifier(value: Any, index: int, field: str) -> str:

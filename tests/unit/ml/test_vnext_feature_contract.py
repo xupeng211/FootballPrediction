@@ -117,6 +117,45 @@ def test_v1_to_vnext_migration_covers_each_v1_feature_once() -> None:
     } == REMOVED_FROM_V_NEXT
 
 
+def test_standings_migration_metadata_matches_frozen_feature_status() -> None:
+    registry = load_feature_contract_registry()
+    migrations = {item.from_feature: item for item in registry.migration_map()}
+    statuses = {
+        status.feature_name: status
+        for status in registry.get_by_contract_id(VNEXT_CONTRACT_ID).feature_statuses
+    }
+    expected_reasons = {
+        "home_table_position": "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.",
+        "away_table_position": "Retained in V-next under standings/premier-league-point-in-time/v1; historical evidence is proven for the frozen scope; runtime/training parity and numeric materialization remain not ready.",
+        "table_position_diff": "Retained in V-next; both input positions share standings/premier-league-point-in-time/v1 with HOME_POSITION_MINUS_AWAY_POSITION orientation; runtime/training parity and numeric materialization remain not ready.",
+    }
+
+    for feature, expected_reason in expected_reasons.items():
+        assert migrations[feature].to_feature == feature
+        assert migrations[feature].classification == "SEMANTICS_FROZEN"
+        assert migrations[feature].reason == expected_reason
+        assert statuses[feature].v_next_status == "RETAINED_PROVEN"
+        assert statuses[feature].semantic_definition_status == "SEMANTICS_FROZEN"
+        assert statuses[feature].historical_source_status == "PROVEN_FOR_FROZEN_SCOPE"
+
+
+def test_stale_standings_migration_metadata_fails_closed(tmp_path: Path) -> None:
+    document = deepcopy(_registry_document())
+    for entry in document["migration_map"]["entries"]:
+        if entry["from_feature"] in {
+            "home_table_position",
+            "away_table_position",
+            "table_position_diff",
+        }:
+            entry["classification"] = "CONTRACT_PENDING"
+            entry["reason"] = "Official rule history and exception closure are still required."
+    path = tmp_path / "model_feature_contracts.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(FeatureContractRegistryError, match="standings migration metadata"):
+        load_feature_contract_registry(path)
+
+
 def test_v1_to_vnext_migration_covers_each_vnext_feature_once(tmp_path: Path) -> None:
     document = _registry_document()
     document["migration_map"]["entries"][0]["to_feature"] = "rolling_xg_away"
