@@ -74,6 +74,152 @@ _VNEXT_REMOVED_FEATURES = frozenset(
 )
 _IDENTIFIER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-/]*")
 _FEATURE_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_]*")
+_FEATURE_STATUS_VALUE_FIELDS = (
+    "v_next_status",
+    "semantic_definition_status",
+    "historical_source_status",
+    "runtime_source_status",
+    "training_eligibility",
+    "reason_code",
+)
+_EXPECTED_VNEXT_FEATURE_STATUS_VALUES = {
+    "rolling_xg_home": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "rolling_xg_away": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "rolling_shots_on_target_home": (
+        "RETAINED_PENDING",
+        "SEMANTICS_PENDING",
+        "SOURCE_PENDING",
+        "SOURCE_PENDING",
+        "NOT_ELIGIBLE_SOURCE_CLOSURE",
+        "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+    ),
+    "rolling_shots_on_target_away": (
+        "RETAINED_PENDING",
+        "SEMANTICS_PENDING",
+        "SOURCE_PENDING",
+        "SOURCE_PENDING",
+        "NOT_ELIGIBLE_SOURCE_CLOSURE",
+        "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+    ),
+    "rolling_possession_home": (
+        "RETAINED_UNAVAILABLE",
+        "SEMANTICS_DEFINED",
+        "UNAVAILABLE",
+        "UNAVAILABLE",
+        "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
+        "NO_PROVEN_POSSESSION_SOURCE_FACT",
+    ),
+    "rolling_possession_away": (
+        "RETAINED_UNAVAILABLE",
+        "SEMANTICS_DEFINED",
+        "UNAVAILABLE",
+        "UNAVAILABLE",
+        "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
+        "NO_PROVEN_POSSESSION_SOURCE_FACT",
+    ),
+    "home_table_position": (
+        "RETAINED_PENDING",
+        "CONTRACT_PENDING",
+        "HISTORY_PENDING",
+        "CONTRACT_PENDING",
+        "NOT_ELIGIBLE_RULE_CLOSURE",
+        "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED",
+    ),
+    "away_table_position": (
+        "RETAINED_PENDING",
+        "CONTRACT_PENDING",
+        "HISTORY_PENDING",
+        "CONTRACT_PENDING",
+        "NOT_ELIGIBLE_RULE_CLOSURE",
+        "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED",
+    ),
+    "table_position_diff": (
+        "RETAINED_PENDING",
+        "CONTRACT_PENDING",
+        "HISTORY_PENDING",
+        "CONTRACT_PENDING",
+        "NOT_ELIGIBLE_RULE_CLOSURE",
+        "STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED",
+    ),
+    "home_points": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "away_points": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "points_diff": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "home_recent_form_points": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "raw_elo_gap": (
+        "RETAINED_PENDING",
+        "OWNER_PARAMETER_DECISION_REQUIRED",
+        "CONTRACT_PENDING",
+        "CONTRACT_PENDING",
+        "NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT",
+        "ELO_OWNER_PARAMETER_DECISION_REQUIRED",
+    ),
+    "home_fatigue_index": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "away_fatigue_index": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+    "fatigue_diff": (
+        "RETAINED_PROVEN",
+        "PROVEN_DERIVED",
+        "PROVEN_DERIVED",
+        "NOT_PROVEN",
+        "NOT_READY_RUNTIME_PARITY",
+        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    ),
+}
 
 
 class FeatureContractRegistryError(ValueError):
@@ -129,10 +275,16 @@ class FeatureContract:
 class FeatureContractRegistry:
     """Read and validate the canonical feature-contract registry."""
 
-    def __init__(self, registry_path: str | Path | None = None):
+    def __init__(
+        self,
+        registry_path: str | Path | None = None,
+        *,
+        allow_legacy_schema: bool = False,
+    ):
         self._registry_path = (
             Path(registry_path) if registry_path is not None else DEFAULT_REGISTRY_PATH
         )
+        self._allow_legacy_schema = allow_legacy_schema
 
     @property
     def registry_path(self) -> Path:
@@ -231,7 +383,9 @@ class FeatureContractRegistry:
         if not isinstance(payload, dict):
             raise FeatureContractRegistryError("feature contract registry malformed")
         schema_version = payload.get("schema_version")
-        if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        if schema_version not in SUPPORTED_SCHEMA_VERSIONS or (
+            schema_version == LEGACY_SUPPORTED_SCHEMA_VERSION and not self._allow_legacy_schema
+        ):
             raise FeatureContractRegistryError(
                 "unsupported feature contract registry schema version"
             )
@@ -417,9 +571,23 @@ class FeatureContractRegistry:
             raise FeatureContractRegistryError(
                 "V-next feature status order does not match contract"
             )
+        cls._validate_v2_feature_status_values(vnext_contract)
 
         cls._validate_v2_migration_map(payload, v1_contract, vnext_contract)
         cls._validate_v2_decision_boundaries(payload)
+
+    @staticmethod
+    def _validate_v2_feature_status_values(vnext_contract: FeatureContract) -> None:
+        expected_features = set(_EXPECTED_VNEXT_FEATURE_STATUS_VALUES)
+        if expected_features != set(vnext_contract.ordered_features):
+            raise FeatureContractRegistryError("V-next feature status authority is incomplete")
+        for status in vnext_contract.feature_statuses:
+            expected = _EXPECTED_VNEXT_FEATURE_STATUS_VALUES[status.feature_name]
+            actual = tuple(getattr(status, field) for field in _FEATURE_STATUS_VALUE_FIELDS)
+            if actual != expected:
+                raise FeatureContractRegistryError(
+                    f"V-next feature status values malformed for {status.feature_name}"
+                )
 
     @classmethod
     def _validate_v2_migration_map(
@@ -440,14 +608,21 @@ class FeatureContractRegistry:
         if not isinstance(raw_entries, list) or len(raw_entries) != v1_contract.feature_count:
             raise FeatureContractRegistryError("feature contract migration map is incomplete")
         seen_from_features: set[str] = set()
+        seen_to_features: set[str] = set()
         for entry in raw_entries:
             from_feature = cls._validate_migration_entry(
                 entry, v1_contract, vnext_contract, seen_from_features
             )
             seen_from_features.add(from_feature)
+            if entry["to_feature"] is not None:
+                seen_to_features.add(entry["to_feature"])
         if seen_from_features != set(v1_contract.ordered_features):
             raise FeatureContractRegistryError(
                 "feature contract migration source coverage malformed"
+            )
+        if seen_to_features != set(vnext_contract.ordered_features):
+            raise FeatureContractRegistryError(
+                "feature contract migration target coverage malformed"
             )
 
     @staticmethod
@@ -508,8 +683,13 @@ class FeatureContractRegistry:
 
 def load_feature_contract_registry(
     registry_path: str | Path | None = None,
+    *,
+    allow_legacy_schema: bool = False,
 ) -> FeatureContractRegistry:
     """Create and immediately validate a read-only feature-contract registry."""
-    registry = FeatureContractRegistry(registry_path)
+    registry = FeatureContractRegistry(
+        registry_path,
+        allow_legacy_schema=allow_legacy_schema,
+    )
     registry.contracts()
     return registry

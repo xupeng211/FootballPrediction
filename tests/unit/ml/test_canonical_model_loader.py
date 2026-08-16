@@ -183,7 +183,7 @@ def _make_loader(
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
         manifest=ArtifactManifest(manifest_path),
-        registry=FeatureContractRegistry(registry_path),
+        registry=FeatureContractRegistry(registry_path, allow_legacy_schema=True),
         readiness_manager=manager,
     )
     return loader, manager, artifact_path, manifest_path
@@ -217,7 +217,9 @@ def test_pending_artifact_fails_before_deserialize(
     registry_path = _write_registry(tmp_path)
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
-        ArtifactManifest(manifest_path), FeatureContractRegistry(registry_path), manager
+        ArtifactManifest(manifest_path),
+        FeatureContractRegistry(registry_path, allow_legacy_schema=True),
+        manager,
     )
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -238,7 +240,9 @@ def test_active_missing_checksum_fails_before_deserialize(
     registry_path = _write_registry(tmp_path)
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
-        ArtifactManifest(manifest_path), FeatureContractRegistry(registry_path), manager
+        ArtifactManifest(manifest_path),
+        FeatureContractRegistry(registry_path, allow_legacy_schema=True),
+        manager,
     )
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -258,7 +262,9 @@ def test_checksum_mismatch_fails_before_deserialize(
     registry_path = _write_registry(tmp_path)
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
-        ArtifactManifest(manifest_path), FeatureContractRegistry(registry_path), manager
+        ArtifactManifest(manifest_path),
+        FeatureContractRegistry(registry_path, allow_legacy_schema=True),
+        manager,
     )
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -278,7 +284,9 @@ def test_missing_file_fails_before_deserialize(
     registry_path = _write_registry(tmp_path)
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
-        ArtifactManifest(manifest_path), FeatureContractRegistry(registry_path), manager
+        ArtifactManifest(manifest_path),
+        FeatureContractRegistry(registry_path, allow_legacy_schema=True),
+        manager,
     )
     load_calls: list[bool] = []
     monkeypatch.setattr(joblib, "load", lambda *_args, **_kwargs: load_calls.append(True))
@@ -362,7 +370,9 @@ def test_deserialization_failure_does_not_mark_ready(
     registry_path = _write_registry(tmp_path)
     manager = ReadinessManager(manifest_path, negative_cache_ttl=0)
     loader = CanonicalModelLoader(
-        ArtifactManifest(manifest_path), FeatureContractRegistry(registry_path), manager
+        ArtifactManifest(manifest_path),
+        FeatureContractRegistry(registry_path, allow_legacy_schema=True),
+        manager,
     )
     mark_calls = _spy_mark(monkeypatch, manager)
 

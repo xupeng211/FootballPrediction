@@ -77,6 +77,9 @@ canonical training producer 与 runtime adapter 所使用的默认绑定。V1 ar
 `fatigue_diff` 仍保留。V-next 的逐 feature 状态矩阵明确保留但未就绪的 SOT、
 possession、standings 和 raw ELO，不把“仍在 contract 中”升级为可训练或可运行。
 V1→V-next 的 20 条迁移记录必须对每个 V1 feature 恰好覆盖一次。
+同时，所有 17 个保留目标 feature 必须恰好获得一个非空迁移目标；迁移源或目标
+覆盖不完整都会 fail-closed。逐 feature 状态矩阵的值（包括 proven family 的
+runtime/readiness 状态）也是冻结边界，不是仅校验字段形状。
 
 当前边界不变：
 

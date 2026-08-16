@@ -145,8 +145,8 @@
                 {
                     "feature_name": "home_points",
                     "v_next_status": "RETAINED_PROVEN",
-                    "semantic_definition_status": "PROVEN",
-                    "historical_source_status": "PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
                     "runtime_source_status": "NOT_PROVEN",
                     "training_eligibility": "NOT_READY_RUNTIME_PARITY",
                     "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
@@ -154,8 +154,8 @@
                 {
                     "feature_name": "away_points",
                     "v_next_status": "RETAINED_PROVEN",
-                    "semantic_definition_status": "PROVEN",
-                    "historical_source_status": "PROVEN",
+                    "semantic_definition_status": "PROVEN_DERIVED",
+                    "historical_source_status": "PROVEN_DERIVED",
                     "runtime_source_status": "NOT_PROVEN",
                     "training_eligibility": "NOT_READY_RUNTIME_PARITY",
                     "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"

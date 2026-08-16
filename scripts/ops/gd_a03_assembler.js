@@ -305,6 +305,144 @@ const FEATURE_STATUS_FIELDS = new Set([
     'training_eligibility',
     'reason_code',
 ]);
+const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
+    rolling_xg_home: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    rolling_xg_away: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    rolling_shots_on_target_home: [
+        'RETAINED_PENDING',
+        'SEMANTICS_PENDING',
+        'SOURCE_PENDING',
+        'SOURCE_PENDING',
+        'NOT_ELIGIBLE_SOURCE_CLOSURE',
+        'SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING',
+    ],
+    rolling_shots_on_target_away: [
+        'RETAINED_PENDING',
+        'SEMANTICS_PENDING',
+        'SOURCE_PENDING',
+        'SOURCE_PENDING',
+        'NOT_ELIGIBLE_SOURCE_CLOSURE',
+        'SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING',
+    ],
+    rolling_possession_home: [
+        'RETAINED_UNAVAILABLE',
+        'SEMANTICS_DEFINED',
+        'UNAVAILABLE',
+        'UNAVAILABLE',
+        'NOT_ELIGIBLE_SOURCE_UNAVAILABLE',
+        'NO_PROVEN_POSSESSION_SOURCE_FACT',
+    ],
+    rolling_possession_away: [
+        'RETAINED_UNAVAILABLE',
+        'SEMANTICS_DEFINED',
+        'UNAVAILABLE',
+        'UNAVAILABLE',
+        'NOT_ELIGIBLE_SOURCE_UNAVAILABLE',
+        'NO_PROVEN_POSSESSION_SOURCE_FACT',
+    ],
+    home_table_position: [
+        'RETAINED_PENDING',
+        'CONTRACT_PENDING',
+        'HISTORY_PENDING',
+        'CONTRACT_PENDING',
+        'NOT_ELIGIBLE_RULE_CLOSURE',
+        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+    ],
+    away_table_position: [
+        'RETAINED_PENDING',
+        'CONTRACT_PENDING',
+        'HISTORY_PENDING',
+        'CONTRACT_PENDING',
+        'NOT_ELIGIBLE_RULE_CLOSURE',
+        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+    ],
+    table_position_diff: [
+        'RETAINED_PENDING',
+        'CONTRACT_PENDING',
+        'HISTORY_PENDING',
+        'CONTRACT_PENDING',
+        'NOT_ELIGIBLE_RULE_CLOSURE',
+        'STANDINGS_RULE_HISTORY_CLOSURE_REQUIRED',
+    ],
+    home_points: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    away_points: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    points_diff: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    home_recent_form_points: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    raw_elo_gap: [
+        'RETAINED_PENDING',
+        'OWNER_PARAMETER_DECISION_REQUIRED',
+        'CONTRACT_PENDING',
+        'CONTRACT_PENDING',
+        'NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT',
+        'ELO_OWNER_PARAMETER_DECISION_REQUIRED',
+    ],
+    home_fatigue_index: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    away_fatigue_index: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+    fatigue_diff: [
+        'RETAINED_PROVEN',
+        'PROVEN_DERIVED',
+        'PROVEN_DERIVED',
+        'NOT_PROVEN',
+        'NOT_READY_RUNTIME_PARITY',
+        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+    ],
+});
 
 function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -338,6 +476,27 @@ function validateRegistryFeatureStatuses(contract) {
             fail(`feature contract ${contract.contract_id} feature status name is malformed`, 'SCHEMA_MISMATCH');
         }
         seen.add(status.feature_name);
+    }
+}
+
+function validateVNextFeatureStatusValues(contract) {
+    const expectedFeatures = Object.keys(EXPECTED_VNEXT_FEATURE_STATUS_VALUES);
+    if (stableStringify(expectedFeatures) !== stableStringify(contract.ordered_features)) {
+        fail('V-next feature status authority is incomplete', 'SCHEMA_MISMATCH');
+    }
+    const fields = [
+        'v_next_status',
+        'semantic_definition_status',
+        'historical_source_status',
+        'runtime_source_status',
+        'training_eligibility',
+        'reason_code',
+    ];
+    for (const status of contract.feature_statuses) {
+        const actual = fields.map(field => status[field]);
+        if (stableStringify(actual) !== stableStringify(EXPECTED_VNEXT_FEATURE_STATUS_VALUES[status.feature_name])) {
+            fail(`V-next feature status values are malformed for ${status.feature_name}`, 'SCHEMA_MISMATCH');
+        }
     }
 }
 
@@ -424,6 +583,13 @@ function validateRegistryMigrationMap(registry, v1Contract, vNextContract) {
     });
     if (stableStringify([...seen].sort()) !== stableStringify([...expectedEntries].sort())) {
         fail('feature contract migration source coverage is malformed', 'SCHEMA_MISMATCH');
+    }
+    const targets = migrationMap.entries.filter(entry => entry.to_feature !== null).map(entry => entry.to_feature);
+    if (
+        new Set(targets).size !== targets.length ||
+        stableStringify([...new Set(targets)].sort()) !== stableStringify([...vNextContract.ordered_features].sort())
+    ) {
+        fail('feature contract migration target coverage is malformed', 'SCHEMA_MISMATCH');
     }
 }
 
@@ -774,6 +940,7 @@ function validateFeatureContractRegistry(registry) {
     ) {
         fail('V-next feature status/order boundary is malformed', 'SCHEMA_MISMATCH');
     }
+    validateVNextFeatureStatusValues(vNextContract);
     validateRegistryMigrationMap(registry, v1Contract, vNextContract);
     const boundaryNames = new Set([
         'raw_elo',

@@ -123,7 +123,10 @@ The same registry defines the non-activated V-next contract
 V-next removes `rolling_team_rating_home`, `rolling_team_rating_away`, and
 `adjusted_elo_gap`; it does not invent replacements to preserve 20. The V1→V-next
 migration map covers every V1 feature exactly once, while its per-feature matrix
-keeps SOT, possession, standings, and raw ELO explicitly unavailable/pending.
+keeps SOT, possession, standings, and raw ELO explicitly unavailable/pending;
+the matrix values for all 17 features are frozen and validated, including the
+runtime/readiness states of the retained proven families. Both source-side and
+V-next target-side migration coverage are required.
 V-next has no model-artifact manifest binding and cannot become the default merely
 because it is defined. Feature order is part of identity; the reader rejects
 duplicate names, count mismatches, unsupported schema versions, malformed
@@ -131,6 +134,9 @@ bindings, incomplete migration/status metadata, duplicate contract IDs, and
 unknown lookups without fallback. It also rejects drift in the frozen decision
 boundary values (including ELO parameter-sheet shape, activation/readiness flags,
 possession fallback prohibitions, and SOT inventory evidence/provenance).
+The old v1 registry schema is accepted only through the explicit
+`allow_legacy_schema=True` compatibility constructor flag used by isolated
+legacy test/noncanonical callers; the default canonical reader requires v2.
 
 The current runtime producer is
 `src/ml/feature_adapters/prematch.py:V26_6_PreMatchAdapter`, re-exported by the

@@ -115,6 +115,16 @@ def test_v1_to_vnext_migration_covers_each_v1_feature_once() -> None:
     } == REMOVED_FROM_V_NEXT
 
 
+def test_v1_to_vnext_migration_covers_each_vnext_feature_once(tmp_path: Path) -> None:
+    document = _registry_document()
+    document["migration_map"]["entries"][0]["to_feature"] = "rolling_xg_away"
+    path = tmp_path / "model_feature_contracts.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(FeatureContractRegistryError, match="target coverage"):
+        load_feature_contract_registry(path)
+
+
 def test_vnext_pending_families_remain_unavailable_or_ineligible() -> None:
     contract = load_feature_contract_registry().get_by_contract_id(VNEXT_CONTRACT_ID)
     statuses = {status.feature_name: status for status in contract.feature_statuses}
@@ -160,6 +170,27 @@ def test_vnext_schema_metadata_fails_closed_when_status_matrix_is_removed(tmp_pa
     path.write_text(json.dumps(document), encoding="utf-8")
 
     with pytest.raises(FeatureContractRegistryError, match="feature status matrix"):
+        load_feature_contract_registry(path)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda document: document["contracts"][1]["feature_statuses"][0].update(
+            {"runtime_source_status": "PROVEN"}
+        ),
+        lambda document: document["contracts"][1]["feature_statuses"][-1].update(
+            {"training_eligibility": "ELIGIBLE"}
+        ),
+    ],
+)
+def test_vnext_feature_status_values_fail_closed(tmp_path: Path, mutate) -> None:
+    document = deepcopy(_registry_document())
+    mutate(document)
+    path = tmp_path / "model_feature_contracts.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(FeatureContractRegistryError, match="feature status values"):
         load_feature_contract_registry(path)
 
 
