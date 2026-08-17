@@ -239,7 +239,7 @@ test('GD-A03 projection copies engine values and computes no independent standin
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9c50ab1' },
+        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     });
     assert.equal(row.home_table_position, 4);
     assert.equal(row.away_table_position, 7);
@@ -262,7 +262,7 @@ test('GD-A03 projection keeps all standings values null when engine is unavailab
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9c50ab1' },
+        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     });
     assert.equal(row.home_table_position, null);
     assert.equal(row.away_table_position, null);
@@ -276,7 +276,7 @@ test('GD-A03 projection rejects wrong diff orientation and fabricated unavailabl
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9c50ab1' },
+        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     };
     expectCode(
         () => projectStandingsSnapshot({ ...args, output: validEngineOutput({ table_position_diff: 3 }) }),
@@ -297,6 +297,17 @@ test('GD-A03 projection rejects wrong diff orientation and fabricated unavailabl
             }),
         'STANDINGS_POSITION_UNAVAILABLE'
     );
+});
+
+test('GD-A03 projection rejects a malformed engine source commit binding', () => {
+    const args = {
+        output: validEngineOutput(),
+        vNextContractBinding: bindVNextFeatureContract(REGISTRY),
+        context: projectionContext(),
+        scheduleClosure: validScheduleClosure(),
+        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9c50ab1' },
+    };
+    expectCode(() => projectStandingsSnapshot(args), 'DEPENDENCY_UNAVAILABLE');
 });
 
 test('the integration surface remains separate from V1 assembler module', () => {

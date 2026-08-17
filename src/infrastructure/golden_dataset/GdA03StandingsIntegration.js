@@ -67,6 +67,13 @@ function assertSha(value, label) {
     return value;
 }
 
+function assertCommitSha(value, label) {
+    if (typeof value !== 'string' || !/^[0-9a-f]{40}$/.test(value)) {
+        fail(`${label} must be a 40-character lowercase commit SHA`, 'DEPENDENCY_UNAVAILABLE');
+    }
+    return value;
+}
+
 function assertKnownKeys(value, allowed, label, code = 'DEPENDENCY_UNAVAILABLE') {
     for (const key of Object.keys(value)) {
         if (!allowed.has(key)) fail(`${label} contains unsupported field ${key}`, code);
@@ -164,7 +171,7 @@ function assertEngineImplementation(engineImplementation) {
     if (value.implementation_id !== 'PointInTimeStandingsEngine') {
         fail('GD-A03 standings integration is bound to an unexpected engine', 'DEPENDENCY_UNAVAILABLE');
     }
-    assertText(value.source_commit, 'standings engine implementation_binding.source_commit');
+    assertCommitSha(value.source_commit, 'standings engine implementation_binding.source_commit');
     return { ...value };
 }
 
@@ -317,6 +324,7 @@ function makeFeatureLine(featureName, output, sharedLineage, scheduleClosure, en
 
 function projectStandingsSnapshot({ output, vNextContractBinding, context, scheduleClosure, engineImplementation }) {
     const value = assertEngineOutput(output);
+    const implementation = assertEngineImplementation(engineImplementation);
     const targetLineage = context.lineage.targetByMatchId[value.target_match_id];
     if (!targetLineage) fail(`target ${value.target_match_id} has no adapter lineage`, 'DEPENDENCY_UNAVAILABLE');
     const sharedLineage = makeEvidenceIds(value, context);
@@ -324,7 +332,7 @@ function projectStandingsSnapshot({ output, vNextContractBinding, context, sched
     const featureLines = Object.fromEntries(
         STANDINGS_FEATURES.map(featureName => [
             featureName,
-            makeFeatureLine(featureName, value, sharedLineage, scheduleClosure, engineImplementation),
+            makeFeatureLine(featureName, value, sharedLineage, scheduleClosure, implementation),
         ])
     );
     const row = {
