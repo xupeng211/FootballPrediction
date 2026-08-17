@@ -659,6 +659,248 @@ function requireBoundaryList(value, expected, label) {
 
 // eslint-disable-next-line complexity -- decision-boundary values are frozen as one auditable contract.
 function validateDecisionBoundaryValues(boundaries) {
+    const modelAsOf = requireBoundaryObject(
+        boundaries.model_as_of,
+        [
+            'contract_id',
+            'version',
+            'policy',
+            'status',
+            'field_names',
+            'invariants',
+            'availability_proof',
+            'strict_value_evaluation',
+            'historical_compatibility',
+            'implementation_status',
+            'fail_closed_reason_codes',
+        ],
+        'model-as-of decision boundary'
+    );
+    requireBoundaryText(modelAsOf.contract_id, 'model-as-of contract id', 'canonical-model-asof/v1');
+    requireBoundaryText(modelAsOf.version, 'model-as-of contract version', 'v1');
+    requireBoundaryText(modelAsOf.policy, 'model-as-of policy', 'EXPLICIT_PER_PREDICTION_AS_OF');
+    requireBoundaryText(modelAsOf.status, 'model-as-of status', 'FROZEN');
+    const modelAsOfFieldNames = requireBoundaryObject(
+        modelAsOf.field_names,
+        [
+            'MODEL_DECISION_TIME_UTC',
+            'FEATURE_AS_OF_UTC',
+            'TARGET_KICKOFF_UTC',
+            'SOURCE_EVENT_TIME_UTC',
+            'SOURCE_EFFECTIVE_TIME_UTC',
+            'SOURCE_OBSERVED_AT_UTC',
+            'SOURCE_CAPTURED_AT_UTC',
+            'PREDICTION_GENERATED_AT_UTC',
+            'ODDS_SNAPSHOT_OBSERVED_AT_UTC',
+        ],
+        'model-as-of field taxonomy'
+    );
+    for (const [field, expected] of Object.entries({
+        MODEL_DECISION_TIME_UTC: 'logical_model_information_boundary',
+        FEATURE_AS_OF_UTC: 'same_logical_information_boundary_as_model_decision_time',
+        TARGET_KICKOFF_UTC: 'target_match_scheduling_context',
+        SOURCE_EVENT_TIME_UTC: 'when_event_happened',
+        SOURCE_EFFECTIVE_TIME_UTC: 'when_fact_or_disposition_became_effective',
+        SOURCE_OBSERVED_AT_UTC: 'when_source_observed_or_published_fact',
+        SOURCE_CAPTURED_AT_UTC: 'when_system_captured_or_persisted_source_record',
+        PREDICTION_GENERATED_AT_UTC: 'output_execution_telemetry',
+        ODDS_SNAPSHOT_OBSERVED_AT_UTC: 'when_used_market_snapshot_was_observed',
+    })) {
+        requireBoundaryText(modelAsOfFieldNames[field], `model-as-of field taxonomy.${field}`, expected);
+    }
+    const modelAsOfInvariants = requireBoundaryObject(
+        modelAsOf.invariants,
+        [
+            'feature_as_of_equals_model_decision_time',
+            'target_kickoff_is_model_decision_time',
+            'prematch_decision_requires_t_lt_kickoff',
+            'prediction_generated_at_is_feature_authority',
+            'prediction_generated_at_must_be_gte_decision_when_present',
+            'source_event_time_is_observation_time',
+            'source_captured_at_is_observation_time_by_default',
+            'post_decision_information_allowed',
+            'ambiguous_time_interval_fails_closed',
+            'current_kickoff_exclusive_rows_relabelled_as_asof_rows',
+            'points_feature_semantics_changed',
+            'v1_feature_count',
+            'v1_active_default',
+            'v1_order_changed',
+            'v1_semantics_changed',
+            'v_next_feature_count',
+            'v_next_order_changed',
+            'v_next_default_activated',
+            'strict_value_evaluation_requires_shared_information_boundary',
+        ],
+        'model-as-of invariants'
+    );
+    for (const [field, expected] of Object.entries({
+        feature_as_of_equals_model_decision_time: 'YES',
+        target_kickoff_is_model_decision_time: 'NO',
+        prematch_decision_requires_t_lt_kickoff: 'YES',
+        prediction_generated_at_is_feature_authority: 'NO',
+        prediction_generated_at_must_be_gte_decision_when_present: 'YES',
+        source_event_time_is_observation_time: 'NO',
+        source_captured_at_is_observation_time_by_default: 'NO',
+        post_decision_information_allowed: 'NO',
+        ambiguous_time_interval_fails_closed: 'YES',
+        current_kickoff_exclusive_rows_relabelled_as_asof_rows: 'NO',
+        points_feature_semantics_changed: 'NO',
+        v1_active_default: 'YES',
+        v1_order_changed: 'NO',
+        v1_semantics_changed: 'NO',
+        v_next_order_changed: 'NO',
+        v_next_default_activated: 'NO',
+        strict_value_evaluation_requires_shared_information_boundary: 'YES',
+    })) {
+        requireBoundaryText(modelAsOfInvariants[field], `model-as-of invariant.${field}`, expected);
+    }
+    if (
+        !Number.isSafeInteger(modelAsOfInvariants.v1_feature_count) ||
+        modelAsOfInvariants.v1_feature_count !== 20 ||
+        !Number.isSafeInteger(modelAsOfInvariants.v_next_feature_count) ||
+        modelAsOfInvariants.v_next_feature_count !== 17
+    ) {
+        fail('model-as-of feature counts are malformed', 'SCHEMA_MISMATCH');
+    }
+    const availabilityProof = requireBoundaryObject(
+        modelAsOf.availability_proof,
+        [
+            'allowed_forms',
+            'unknown',
+            'after_decision',
+            'precision_overlap',
+            'event_time_alone_proves_availability',
+            'captured_at_substitutes_observed_at_by_default',
+        ],
+        'model-as-of availability proof'
+    );
+    requireBoundaryList(
+        availabilityProof.allowed_forms,
+        [
+            'EXACT_OBSERVATION_TIMESTAMP',
+            'EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF',
+            'BOUNDED_INTERVAL_ENTIRELY_BEFORE_T',
+        ],
+        'model-as-of allowed availability proofs'
+    );
+    for (const [field, expected] of Object.entries({
+        unknown: 'FAIL_CLOSED',
+        after_decision: 'REJECT',
+        precision_overlap: 'FAIL_CLOSED',
+        event_time_alone_proves_availability: 'NO',
+        captured_at_substitutes_observed_at_by_default: 'NO',
+    })) {
+        requireBoundaryText(availabilityProof[field], `model-as-of availability proof.${field}`, expected);
+    }
+    const strictValue = requireBoundaryObject(
+        modelAsOf.strict_value_evaluation,
+        [
+            'odds_observed_at_field',
+            'odds_must_be_proven_observable_no_later_than_t',
+            'odds_snapshot_must_equal_t',
+            'odds_freshness_policy_status',
+            'status',
+        ],
+        'model-as-of strict value evaluation'
+    );
+    requireBoundaryText(
+        strictValue.odds_observed_at_field,
+        'model-as-of odds observed-at field',
+        'ODDS_SNAPSHOT_OBSERVED_AT_UTC'
+    );
+    requireBoundaryText(
+        strictValue.odds_must_be_proven_observable_no_later_than_t,
+        'model-as-of odds availability rule',
+        'YES'
+    );
+    requireBoundaryText(strictValue.odds_snapshot_must_equal_t, 'model-as-of odds equality rule', 'NO');
+    requireBoundaryText(
+        strictValue.odds_freshness_policy_status,
+        'model-as-of odds freshness policy',
+        'OWNER_DECISION_OR_FUTURE_CONTRACT_REQUIRED'
+    );
+    requireBoundaryText(strictValue.status, 'model-as-of strict value status', 'NOT_READY');
+    const history = requireBoundaryObject(
+        modelAsOf.historical_compatibility,
+        [
+            'existing_standings_contract_id',
+            'existing_cutoff',
+            'semantic',
+            'coverage',
+            'engine_gd_a03_parity',
+            'current_rows_are_kickoff_reference_projection',
+            'automatic_training_eligibility_for_model_asof',
+            'automatic_relabeling',
+            'known_unavailable_target',
+            'known_unavailable_reason',
+        ],
+        'model-as-of historical compatibility'
+    );
+    for (const [field, expected] of Object.entries({
+        existing_standings_contract_id: 'standings/premier-league-point-in-time/v1',
+        existing_cutoff: 'SOURCE_EVENT_TIME_LT_TARGET_KICKOFF',
+        semantic: 'KICKOFF_EXCLUSIVE_POINT_IN_TIME',
+        coverage: '887/888',
+        engine_gd_a03_parity: '888/888',
+        current_rows_are_kickoff_reference_projection: 'YES',
+        automatic_training_eligibility_for_model_asof: 'NO',
+        automatic_relabeling: 'NO',
+        known_unavailable_target: '47_20232024_4193789',
+        known_unavailable_reason: 'ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS',
+    })) {
+        requireBoundaryText(history[field], `model-as-of historical compatibility.${field}`, expected);
+    }
+    const implementation = requireBoundaryObject(
+        modelAsOf.implementation_status,
+        [
+            'runtime_capture_contract_implemented',
+            'runtime_provider_implementation_started',
+            'standings_runtime_implementation_started',
+            'runtime_eligible',
+            'training_eligible',
+            'strict_decision_time_value_evaluation',
+            'feature_frame_readiness',
+            'real_training_readiness',
+            'train_inference_numeric_parity',
+            'golden_dataset_complete',
+        ],
+        'model-as-of implementation status'
+    );
+    for (const [field, expected] of Object.entries({
+        runtime_capture_contract_implemented: 'NO',
+        runtime_provider_implementation_started: 'NO',
+        standings_runtime_implementation_started: 'NO',
+        runtime_eligible: 'NO',
+        training_eligible: 'NO',
+        strict_decision_time_value_evaluation: 'NOT_READY',
+        feature_frame_readiness: 'NOT_READY',
+        real_training_readiness: 'NOT_READY',
+        train_inference_numeric_parity: 'NOT_PROVEN',
+        golden_dataset_complete: 'NO',
+    })) {
+        requireBoundaryText(implementation[field], `model-as-of implementation status.${field}`, expected);
+    }
+    requireBoundaryList(
+        modelAsOf.fail_closed_reason_codes,
+        [
+            'MODEL_DECISION_TIME_MISSING',
+            'MODEL_DECISION_TIME_INVALID',
+            'DECISION_TIME_NOT_PREMATCH',
+            'FEATURE_AS_OF_MISSING',
+            'FEATURE_AS_OF_INVALID',
+            'FEATURE_AS_OF_MISMATCH',
+            'TARGET_KICKOFF_MISSING',
+            'TARGET_KICKOFF_INVALID',
+            'PREDICTION_GENERATED_AT_INVALID',
+            'PREDICTION_GENERATED_BEFORE_DECISION_BOUNDARY',
+            'SOURCE_AVAILABILITY_TIME_UNPROVEN',
+            'SOURCE_AVAILABLE_AFTER_DECISION',
+            'SOURCE_TIME_PRECISION_AMBIGUOUS',
+            'ODDS_DECISION_TIME_UNPROVEN',
+            'CONTRACT_VERSION_MISMATCH',
+        ],
+        'model-as-of fail-closed reason codes'
+    );
     const rawElo = requireBoundaryObject(
         boundaries.raw_elo,
         [
@@ -987,6 +1229,7 @@ function validateFeatureContractRegistry(registry) {
     validateVNextFeatureStatusValues(vNextContract);
     validateRegistryMigrationMap(registry, v1Contract, vNextContract);
     const boundaryNames = new Set([
+        'model_as_of',
         'raw_elo',
         'standings',
         'sot',

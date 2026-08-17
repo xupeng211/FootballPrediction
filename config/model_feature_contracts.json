@@ -579,6 +579,104 @@
             },
             "unresolved_evidence": []
         },
+        "model_as_of": {
+            "contract_id": "canonical-model-asof/v1",
+            "version": "v1",
+            "policy": "EXPLICIT_PER_PREDICTION_AS_OF",
+            "status": "FROZEN",
+            "field_names": {
+                "MODEL_DECISION_TIME_UTC": "logical_model_information_boundary",
+                "FEATURE_AS_OF_UTC": "same_logical_information_boundary_as_model_decision_time",
+                "TARGET_KICKOFF_UTC": "target_match_scheduling_context",
+                "SOURCE_EVENT_TIME_UTC": "when_event_happened",
+                "SOURCE_EFFECTIVE_TIME_UTC": "when_fact_or_disposition_became_effective",
+                "SOURCE_OBSERVED_AT_UTC": "when_source_observed_or_published_fact",
+                "SOURCE_CAPTURED_AT_UTC": "when_system_captured_or_persisted_source_record",
+                "PREDICTION_GENERATED_AT_UTC": "output_execution_telemetry",
+                "ODDS_SNAPSHOT_OBSERVED_AT_UTC": "when_used_market_snapshot_was_observed"
+            },
+            "invariants": {
+                "feature_as_of_equals_model_decision_time": "YES",
+                "target_kickoff_is_model_decision_time": "NO",
+                "prematch_decision_requires_t_lt_kickoff": "YES",
+                "prediction_generated_at_is_feature_authority": "NO",
+                "prediction_generated_at_must_be_gte_decision_when_present": "YES",
+                "source_event_time_is_observation_time": "NO",
+                "source_captured_at_is_observation_time_by_default": "NO",
+                "post_decision_information_allowed": "NO",
+                "ambiguous_time_interval_fails_closed": "YES",
+                "current_kickoff_exclusive_rows_relabelled_as_asof_rows": "NO",
+                "points_feature_semantics_changed": "NO",
+                "v1_feature_count": 20,
+                "v1_active_default": "YES",
+                "v1_order_changed": "NO",
+                "v1_semantics_changed": "NO",
+                "v_next_feature_count": 17,
+                "v_next_order_changed": "NO",
+                "v_next_default_activated": "NO",
+                "strict_value_evaluation_requires_shared_information_boundary": "YES"
+            },
+            "availability_proof": {
+                "allowed_forms": [
+                    "EXACT_OBSERVATION_TIMESTAMP",
+                    "EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF",
+                    "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T"
+                ],
+                "unknown": "FAIL_CLOSED",
+                "after_decision": "REJECT",
+                "precision_overlap": "FAIL_CLOSED",
+                "event_time_alone_proves_availability": "NO",
+                "captured_at_substitutes_observed_at_by_default": "NO"
+            },
+            "strict_value_evaluation": {
+                "odds_observed_at_field": "ODDS_SNAPSHOT_OBSERVED_AT_UTC",
+                "odds_must_be_proven_observable_no_later_than_t": "YES",
+                "odds_snapshot_must_equal_t": "NO",
+                "odds_freshness_policy_status": "OWNER_DECISION_OR_FUTURE_CONTRACT_REQUIRED",
+                "status": "NOT_READY"
+            },
+            "historical_compatibility": {
+                "existing_standings_contract_id": "standings/premier-league-point-in-time/v1",
+                "existing_cutoff": "SOURCE_EVENT_TIME_LT_TARGET_KICKOFF",
+                "semantic": "KICKOFF_EXCLUSIVE_POINT_IN_TIME",
+                "coverage": "887/888",
+                "engine_gd_a03_parity": "888/888",
+                "current_rows_are_kickoff_reference_projection": "YES",
+                "automatic_training_eligibility_for_model_asof": "NO",
+                "automatic_relabeling": "NO",
+                "known_unavailable_target": "47_20232024_4193789",
+                "known_unavailable_reason": "ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS"
+            },
+            "implementation_status": {
+                "runtime_capture_contract_implemented": "NO",
+                "runtime_provider_implementation_started": "NO",
+                "standings_runtime_implementation_started": "NO",
+                "runtime_eligible": "NO",
+                "training_eligible": "NO",
+                "strict_decision_time_value_evaluation": "NOT_READY",
+                "feature_frame_readiness": "NOT_READY",
+                "real_training_readiness": "NOT_READY",
+                "train_inference_numeric_parity": "NOT_PROVEN",
+                "golden_dataset_complete": "NO"
+            },
+            "fail_closed_reason_codes": [
+                "MODEL_DECISION_TIME_MISSING",
+                "MODEL_DECISION_TIME_INVALID",
+                "DECISION_TIME_NOT_PREMATCH",
+                "FEATURE_AS_OF_MISSING",
+                "FEATURE_AS_OF_INVALID",
+                "FEATURE_AS_OF_MISMATCH",
+                "TARGET_KICKOFF_MISSING",
+                "TARGET_KICKOFF_INVALID",
+                "PREDICTION_GENERATED_AT_INVALID",
+                "PREDICTION_GENERATED_BEFORE_DECISION_BOUNDARY",
+                "SOURCE_AVAILABILITY_TIME_UNPROVEN",
+                "SOURCE_AVAILABLE_AFTER_DECISION",
+                "SOURCE_TIME_PRECISION_AMBIGUOUS",
+                "ODDS_DECISION_TIME_UNPROVEN",
+                "CONTRACT_VERSION_MISMATCH"
+            ]
+        },
         "sot": {
             "retained_in_v_next": "YES",
             "inventory_mode": "READ_ONLY_EXISTING_FROZEN_SOURCES",

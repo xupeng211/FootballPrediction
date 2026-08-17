@@ -25,6 +25,19 @@ source_match_kickoff < target_match_kickoff
 STRICT_DECISION_TIME_VALUE_EVALUATION=NOT_READY
 ```
 
+### System-wide model-as-of boundary
+
+`canonical-model-asof/v1` 已在同一 `config/model_feature_contracts.json` registry
+中冻结为系统级 temporal policy。它要求未来每个 prediction context 显式提供
+`MODEL_DECISION_TIME_UTC=T`，并令 `FEATURE_AS_OF_UTC=T`；`TARGET_KICKOFF_UTC` 仍是
+独立的 target scheduling field。它不会改写本 GD-A03 的历史语义，也不会把既有
+kickoff-exclusive rows 自动重标为 decision-time rows。完整定义见
+`docs/data/MODEL_ASOF_CONTRACT.md`。
+
+因此本文件下述 V1 cutoff 仍只回答“目标 kickoff 前的历史状态”，不回答某个更早
+prediction decision time 可知什么；未来 T-aware standings input contract、source
+availability proof 和 replayable capture 仍需另行冻结/实现。
+
 GD-A02 的 `score`、`result`、`xG`、shots、possession、events、shotmap、player
 stats、match stats 是同场 `POSTMATCH_ONLY` facts。它们禁止进入同场 feature；前一
 场的合格 facts 可以作为后一场的历史输入。
