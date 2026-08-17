@@ -780,7 +780,6 @@ function validateDecisionBoundaryValues(boundaries) {
             'EXACT_OBSERVATION_TIMESTAMP',
             'EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF',
             'BOUNDED_INTERVAL_ENTIRELY_BEFORE_T',
-            'EXPLICIT_FROZEN_SOURCE_CONTRACT_PROOF',
         ],
         'model-as-of allowed availability proofs'
     );

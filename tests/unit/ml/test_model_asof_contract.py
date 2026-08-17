@@ -176,6 +176,25 @@ def test_interval_overlapping_t_fails_closed() -> None:
         validate_model_as_of_context(_context(evidence=[evidence]))
 
 
+def test_interval_ending_at_t_fails_closed() -> None:
+    evidence = {
+        "SOURCE_AVAILABILITY_INTERVAL_START_UTC": "2026-08-17T10:00:00Z",
+        "SOURCE_AVAILABILITY_INTERVAL_END_UTC": DECISION_TIME,
+        "availability_proof": "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T",
+    }
+    with _raises_reason("SOURCE_TIME_PRECISION_AMBIGUOUS"):
+        validate_model_as_of_context(_context(evidence=[evidence]))
+
+
+def test_unbound_frozen_source_contract_proof_fails_closed() -> None:
+    evidence = {
+        "availability_proof": "EXPLICIT_FROZEN_SOURCE_CONTRACT_PROOF",
+        "availability_proven_by_contract": True,
+    }
+    with _raises_reason("SOURCE_AVAILABILITY_TIME_UNPROVEN"):
+        validate_model_as_of_context(_context(evidence=[evidence]))
+
+
 def test_captured_at_alone_cannot_substitute_for_observed_at() -> None:
     evidence = {
         "SOURCE_EVENT_TIME_UTC": "2026-08-17T10:00:00Z",
@@ -190,6 +209,16 @@ def test_provider_defined_closing_cannot_prove_exact_decision_time_odds() -> Non
         "provider_defined_closing": True,
         "ODDS_SNAPSHOT_OBSERVED_AT_UTC": DECISION_TIME,
         "exact_timestamp_proven": False,
+    }
+    with _raises_reason("ODDS_DECISION_TIME_UNPROVEN"):
+        validate_model_as_of_context(_context(evidence=[evidence]))
+
+
+def test_self_declared_exact_odds_timestamp_is_not_admissible_while_not_ready() -> None:
+    evidence = {
+        "kind": "odds",
+        "ODDS_SNAPSHOT_OBSERVED_AT_UTC": DECISION_TIME,
+        "exact_timestamp_proven": True,
     }
     with _raises_reason("ODDS_DECISION_TIME_UNPROVEN"):
         validate_model_as_of_context(_context(evidence=[evidence]))

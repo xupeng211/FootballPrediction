@@ -45,7 +45,6 @@ MODEL_ASOF_AVAILABILITY_FORMS = [
     "EXACT_OBSERVATION_TIMESTAMP",
     "EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF",
     "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T",
-    "EXPLICIT_FROZEN_SOURCE_CONTRACT_PROOF",
 ]
 
 _MODEL_ASOF_BOUNDARY_FIELDS = {
@@ -336,7 +335,7 @@ def _optional_model_asof_timestamp(
     return _parse_model_asof_utc(value, field, invalid_reason)
 
 
-def _validate_model_asof_evidence(  # noqa: C901, PLR0912
+def _validate_model_asof_evidence(  # noqa: C901
     evidence: Any, decision_time: datetime
 ) -> None:
     """Validate one source evidence proof against T; unknown evidence fails closed."""
@@ -352,19 +351,10 @@ def _validate_model_asof_evidence(  # noqa: C901, PLR0912
         or evidence.get("provider_defined_closing") is True
     )
     if is_odds:
-        odds_observed = _optional_model_asof_timestamp(
-            evidence, "ODDS_SNAPSHOT_OBSERVED_AT_UTC", "ODDS_DECISION_TIME_UNPROVEN"
+        raise ModelAsOfValidationError(
+            "ODDS_DECISION_TIME_UNPROVEN",
+            "strict value evaluation is not ready and no bound odds temporal contract exists",
         )
-        if odds_observed is None or evidence.get("exact_timestamp_proven") is not True:
-            raise ModelAsOfValidationError(
-                "ODDS_DECISION_TIME_UNPROVEN",
-                "odds evidence lacks a proven exact observed timestamp",
-            )
-        if odds_observed > decision_time:
-            raise ModelAsOfValidationError(
-                "SOURCE_AVAILABLE_AFTER_DECISION", "odds evidence was observed after T"
-            )
-        return
 
     source_event_time = _optional_model_asof_timestamp(
         evidence, "SOURCE_EVENT_TIME_UTC", "SOURCE_TIME_PRECISION_AMBIGUOUS"
@@ -391,13 +381,6 @@ def _validate_model_asof_evidence(  # noqa: C901, PLR0912
         )
 
     proof = evidence.get("availability_proof")
-    if proof == "EXPLICIT_FROZEN_SOURCE_CONTRACT_PROOF":
-        if evidence.get("availability_proven_by_contract") is True:
-            return
-        raise ModelAsOfValidationError(
-            "SOURCE_AVAILABILITY_TIME_UNPROVEN", "frozen source proof was not declared"
-        )
-
     interval_start = _optional_model_asof_timestamp(
         evidence,
         "SOURCE_AVAILABILITY_INTERVAL_START_UTC",
@@ -413,7 +396,7 @@ def _validate_model_asof_evidence(  # noqa: C901, PLR0912
             raise ModelAsOfValidationError(
                 "SOURCE_TIME_PRECISION_AMBIGUOUS", "source availability interval is malformed"
             )
-        if interval_end <= decision_time and proof == "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T":
+        if interval_end < decision_time and proof == "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T":
             return
         if interval_start > decision_time:
             raise ModelAsOfValidationError(

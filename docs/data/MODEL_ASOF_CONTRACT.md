@@ -72,7 +72,8 @@ boundary。它与 T 分开保存，并且在正常预测中预期不相等。
 - exact observation timestamp 且不晚于 T；
 - exact effective timestamp 且有 source observation proof；
 - 由 source contract 证明整个 bounded interval 严格早于 T；
-- 其他未来明确冻结且可审计的 source-contract proof。
+- 其他未来明确冻结且可审计的 source-contract proof 需要后续版本化 source/capture
+  contract；`canonical-model-asof/v1` 不接受未绑定的自报 proof flag。
 
 unknown 保持 unknown。观察时间晚于 T 直接拒绝。时间精度不足导致 availability
 interval 与 T overlap 时，不能猜测先后，必须以
@@ -122,7 +123,9 @@ used odds snapshot observed <= T
 
 odds snapshot 不要求时间戳恰好等于 T，但必须是该 decision 实际使用的、时间已证明的
 snapshot；freshness/staleness policy 留待未来合同或 Owner 决策。本阶段状态仍为
-`STRICT_DECISION_TIME_VALUE_EVALUATION=NOT_READY`。
+`STRICT_DECISION_TIME_VALUE_EVALUATION=NOT_READY`，因此当前 v1 validator 拒绝所有
+odds evidence；provider-defined closing 或 caller 自报的 exactness flag 都不能绕过该
+状态。未来 odds temporal contract 需先绑定 exact observation authority 后再扩展。
 
 ## Version/readiness boundary
 

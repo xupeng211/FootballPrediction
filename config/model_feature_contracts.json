@@ -620,8 +620,7 @@
                 "allowed_forms": [
                     "EXACT_OBSERVATION_TIMESTAMP",
                     "EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF",
-                    "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T",
-                    "EXPLICIT_FROZEN_SOURCE_CONTRACT_PROOF"
+                    "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T"
                 ],
                 "unknown": "FAIL_CLOSED",
                 "after_decision": "REJECT",
