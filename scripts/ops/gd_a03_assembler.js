@@ -901,6 +901,258 @@ function validateDecisionBoundaryValues(boundaries) {
         ],
         'model-as-of fail-closed reason codes'
     );
+    const runtimeCapture = requireBoundaryObject(
+        boundaries.runtime_capture,
+        [
+            'contract_id',
+            'version',
+            'policy',
+            'status',
+            'capture_time_relation_to_t',
+            'manifest_finalization_after_t_allowed',
+            'prediction_context_fields',
+            'manifest_fields',
+            'evidence_entry_fields',
+            'availability_proof_kinds',
+            'source_provenance_statuses',
+            'content_integrity',
+            'invariants',
+            'status_semantics',
+            'security',
+            'implementation_status',
+        ],
+        'runtime-capture boundary'
+    );
+    for (const [field, expected] of Object.entries({
+        contract_id: 'canonical-runtime-capture/v1',
+        version: 'v1',
+        policy: 'IMMUTABLE_DECISION_EVIDENCE_CAPTURE',
+        status: 'FROZEN',
+        capture_time_relation_to_t: 'CAPTURE_MUST_BE_LTE_T',
+        manifest_finalization_after_t_allowed: 'YES',
+    })) {
+        requireBoundaryText(runtimeCapture[field], `runtime-capture boundary.${field}`, expected);
+    }
+    requireBoundaryList(
+        runtimeCapture.prediction_context_fields,
+        [
+            'FEATURE_AS_OF_UTC',
+            'FEATURE_CONTRACT_ID',
+            'FEATURE_CONTRACT_VERSION',
+            'MODEL_ASOF_CONTRACT_ID',
+            'MODEL_ASOF_CONTRACT_VERSION',
+            'MODEL_DECISION_TIME_UTC',
+            'POST_DECISION_INFORMATION_DEPENDENCY_COUNT',
+            'PREDICTION_CONTEXT_ID',
+            'PREDICTION_GENERATED_AT_UTC',
+            'TARGET_KICKOFF_UTC',
+            'TARGET_MATCH_ID',
+        ],
+        'runtime-capture prediction context fields'
+    );
+    requireBoundaryList(
+        runtimeCapture.manifest_fields,
+        [
+            'CAPTURE_CONTENT_DIGEST',
+            'CAPTURE_INSTANCE_ID',
+            'EVIDENCE',
+            'MANIFEST_FINALIZED_AT_UTC',
+            'PREDICTION_CONTEXT',
+            'PROVENANCE',
+            'RUNTIME_CAPTURE_CONTRACT_ID',
+            'RUNTIME_CAPTURE_CONTRACT_VERSION',
+            'SELECTED_EVIDENCE_IDS',
+            'STATUS',
+        ],
+        'runtime-capture manifest fields'
+    );
+    requireBoundaryList(
+        runtimeCapture.evidence_entry_fields,
+        [
+            'AVAILABILITY_PROOF_DATA',
+            'AVAILABILITY_PROOF_KIND',
+            'EVIDENCE_ID',
+            'PAYLOAD_BYTE_LENGTH',
+            'PAYLOAD_CONTENT_DIGEST',
+            'PAYLOAD_KIND',
+            'SOURCE_AUTHORITY_ID',
+            'SOURCE_CAPTURED_AT_UTC',
+            'SOURCE_EFFECTIVE_TIME_UTC',
+            'SOURCE_EVENT_TIME_UTC',
+            'SOURCE_FAMILY',
+            'SOURCE_OBSERVED_AT_UTC',
+            'SOURCE_PROVENANCE_STATUS',
+            'SOURCE_RECORD_ID',
+        ],
+        'runtime-capture evidence entry fields'
+    );
+    requireBoundaryList(
+        runtimeCapture.availability_proof_kinds,
+        [
+            'EXACT_OBSERVATION_TIMESTAMP',
+            'EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF',
+            'BOUNDED_INTERVAL_ENTIRELY_BEFORE_T',
+        ],
+        'runtime-capture availability proof kinds'
+    );
+    requireBoundaryList(
+        runtimeCapture.source_provenance_statuses,
+        ['UNKNOWN', 'EXTERNAL_CONTRACT_BOUND'],
+        'runtime-capture source provenance statuses'
+    );
+    const runtimeContentIntegrity = requireBoundaryObject(
+        runtimeCapture.content_integrity,
+        [
+            'payload_digest_algorithm',
+            'manifest_digest_algorithm',
+            'canonical_serialization',
+            'manifest_digest_field',
+            'manifest_digest_scope',
+            'payload_digest_scope',
+            'evidence_ordering',
+            'selected_evidence_ordering',
+        ],
+        'runtime-capture content integrity'
+    );
+    for (const [field, expected] of Object.entries({
+        payload_digest_algorithm: 'SHA-256',
+        manifest_digest_algorithm: 'SHA-256',
+        canonical_serialization: 'STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON',
+        manifest_digest_field: 'CAPTURE_CONTENT_DIGEST',
+        manifest_digest_scope: 'SELF_EXCLUDING_CANONICAL_MANIFEST',
+        payload_digest_scope: 'EXACT_PAYLOAD_BYTES',
+        evidence_ordering: 'EVIDENCE_ID_ASCENDING_FOR_DIGEST',
+        selected_evidence_ordering: 'EVIDENCE_ID_ASCENDING',
+    })) {
+        requireBoundaryText(runtimeContentIntegrity[field], `runtime-capture content integrity.${field}`, expected);
+    }
+    const runtimeInvariants = requireBoundaryObject(
+        runtimeCapture.invariants,
+        [
+            'prediction_context_immutable',
+            'model_asof_contract_binding_required',
+            'feature_contract_binding_required',
+            'model_decision_time_bound_in_capture',
+            'feature_as_of_bound_in_capture',
+            'target_match_id_bound_in_capture',
+            'target_kickoff_bound_in_capture',
+            'capture_instance_distinct_from_content_digest',
+            'decision_evidence_set_explicit',
+            'captured_evidence_distinct_from_selected_evidence',
+            'post_decision_evidence_selected_count',
+            'capture_establishes_source_authority',
+            'unknown_source_authority_upgraded',
+            'source_captured_at_is_observed_at_by_default',
+            'source_event_time_is_observed_at',
+            'unbound_extra_evidence_becomes_selected',
+            'missing_selected_evidence_accepted',
+            'structural_capture_validity_distinct_from_source_completeness',
+            'secret_bearing_metadata_allowed',
+            'caller_supplied_git_sha_proves_repository_provenance',
+            'source_normalization_replay_proven',
+            'feature_numeric_replay_proven',
+            'train_inference_replay_proven',
+        ],
+        'runtime-capture invariants'
+    );
+    for (const [field, expected] of Object.entries({
+        prediction_context_immutable: 'YES',
+        model_asof_contract_binding_required: 'YES',
+        feature_contract_binding_required: 'YES',
+        model_decision_time_bound_in_capture: 'YES',
+        feature_as_of_bound_in_capture: 'YES',
+        target_match_id_bound_in_capture: 'YES',
+        target_kickoff_bound_in_capture: 'YES',
+        capture_instance_distinct_from_content_digest: 'YES',
+        decision_evidence_set_explicit: 'YES',
+        captured_evidence_distinct_from_selected_evidence: 'YES',
+        capture_establishes_source_authority: 'NO',
+        unknown_source_authority_upgraded: 'NO',
+        source_captured_at_is_observed_at_by_default: 'NO',
+        source_event_time_is_observed_at: 'NO',
+        unbound_extra_evidence_becomes_selected: 'NO',
+        missing_selected_evidence_accepted: 'NO',
+        structural_capture_validity_distinct_from_source_completeness: 'YES',
+        secret_bearing_metadata_allowed: 'NO',
+        caller_supplied_git_sha_proves_repository_provenance: 'NO',
+        source_normalization_replay_proven: 'NO',
+        feature_numeric_replay_proven: 'NO',
+        train_inference_replay_proven: 'NO',
+    })) {
+        requireBoundaryText(runtimeInvariants[field], `runtime-capture invariant.${field}`, expected);
+    }
+    if (runtimeInvariants.post_decision_evidence_selected_count !== 0) {
+        fail('runtime-capture post-decision evidence invariant is malformed', 'SCHEMA_MISMATCH');
+    }
+    const runtimeStatusSemantics = requireBoundaryObject(
+        runtimeCapture.status_semantics,
+        [
+            'STRUCTURAL_CAPTURE_VALIDITY',
+            'SOURCE_AUTHORITY_VALIDITY',
+            'TEMPORAL_ELIGIBILITY_VALIDITY',
+            'FEATURE_DEPENDENCY_COMPLETENESS',
+        ],
+        'runtime-capture status semantics'
+    );
+    requireBoundaryList(
+        runtimeStatusSemantics.STRUCTURAL_CAPTURE_VALIDITY,
+        ['NOT_PROVEN', 'PROVEN'],
+        'runtime-capture structural status values'
+    );
+    requireBoundaryList(
+        runtimeStatusSemantics.SOURCE_AUTHORITY_VALIDITY,
+        ['NOT_PROVEN', 'PROVEN_BY_SOURCE_CONTRACT', 'UNKNOWN'],
+        'runtime-capture source status values'
+    );
+    requireBoundaryList(
+        runtimeStatusSemantics.TEMPORAL_ELIGIBILITY_VALIDITY,
+        ['NOT_PROVEN', 'PROVEN'],
+        'runtime-capture temporal status values'
+    );
+    requireBoundaryList(
+        runtimeStatusSemantics.FEATURE_DEPENDENCY_COMPLETENESS,
+        ['NOT_PROVEN', 'PROVEN'],
+        'runtime-capture completeness status values'
+    );
+    const runtimeSecurity = requireBoundaryObject(
+        runtimeCapture.security,
+        ['secret_bearing_metadata_allowed', 'metadata_minimization'],
+        'runtime-capture security'
+    );
+    requireBoundaryText(
+        runtimeSecurity.secret_bearing_metadata_allowed,
+        'runtime-capture security.secret_bearing_metadata_allowed',
+        'NO'
+    );
+    requireBoundaryText(
+        runtimeSecurity.metadata_minimization,
+        'runtime-capture security.metadata_minimization',
+        'REQUIRED'
+    );
+    const runtimeImplementation = requireBoundaryObject(
+        runtimeCapture.implementation_status,
+        [
+            'validator_implemented',
+            'storage_implemented',
+            'pipeline_implemented',
+            'live_capture_proven',
+            'source_normalization_replay',
+            'feature_numeric_replay',
+            'train_inference_replay',
+        ],
+        'runtime-capture implementation status'
+    );
+    for (const [field, expected] of Object.entries({
+        validator_implemented: 'YES',
+        storage_implemented: 'NO',
+        pipeline_implemented: 'NO',
+        live_capture_proven: 'NO',
+        source_normalization_replay: 'NO',
+        feature_numeric_replay: 'NO',
+        train_inference_replay: 'NO',
+    })) {
+        requireBoundaryText(runtimeImplementation[field], `runtime-capture implementation status.${field}`, expected);
+    }
     const rawElo = requireBoundaryObject(
         boundaries.raw_elo,
         [
@@ -1230,6 +1482,7 @@ function validateFeatureContractRegistry(registry) {
     validateRegistryMigrationMap(registry, v1Contract, vNextContract);
     const boundaryNames = new Set([
         'model_as_of',
+        'runtime_capture',
         'raw_elo',
         'standings',
         'sot',

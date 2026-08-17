@@ -19,6 +19,7 @@ from src.ml.inference.model_asof_contract import (
     validate_model_as_of_context,
     validate_model_asof_registry_boundary,
 )
+from src.ml.inference.runtime_capture_contract import validate_runtime_capture_registry_boundary
 
 __all__ = [
     "MODEL_ASOF_AVAILABILITY_FORMS",
@@ -44,6 +45,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         raise error_type("feature contract decision boundaries malformed")
     required_boundary_names = {
         "model_as_of",
+        "runtime_capture",
         "raw_elo",
         "standings",
         "sot",
@@ -92,6 +94,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         return value
 
     validate_model_asof_registry_boundary(boundaries["model_as_of"], error_type)
+    validate_runtime_capture_registry_boundary(boundaries["runtime_capture"], error_type)
 
     raw_elo = exact_object(
         boundaries["raw_elo"],

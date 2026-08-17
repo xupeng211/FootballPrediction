@@ -344,6 +344,115 @@
         ]
     },
     "decision_boundaries": {
+        "runtime_capture": {
+            "contract_id": "canonical-runtime-capture/v1",
+            "version": "v1",
+            "policy": "IMMUTABLE_DECISION_EVIDENCE_CAPTURE",
+            "status": "FROZEN",
+            "capture_time_relation_to_t": "CAPTURE_MUST_BE_LTE_T",
+            "manifest_finalization_after_t_allowed": "YES",
+            "prediction_context_fields": [
+                "FEATURE_AS_OF_UTC",
+                "FEATURE_CONTRACT_ID",
+                "FEATURE_CONTRACT_VERSION",
+                "MODEL_ASOF_CONTRACT_ID",
+                "MODEL_ASOF_CONTRACT_VERSION",
+                "MODEL_DECISION_TIME_UTC",
+                "POST_DECISION_INFORMATION_DEPENDENCY_COUNT",
+                "PREDICTION_CONTEXT_ID",
+                "PREDICTION_GENERATED_AT_UTC",
+                "TARGET_KICKOFF_UTC",
+                "TARGET_MATCH_ID"
+            ],
+            "manifest_fields": [
+                "CAPTURE_CONTENT_DIGEST",
+                "CAPTURE_INSTANCE_ID",
+                "EVIDENCE",
+                "MANIFEST_FINALIZED_AT_UTC",
+                "PREDICTION_CONTEXT",
+                "PROVENANCE",
+                "RUNTIME_CAPTURE_CONTRACT_ID",
+                "RUNTIME_CAPTURE_CONTRACT_VERSION",
+                "SELECTED_EVIDENCE_IDS",
+                "STATUS"
+            ],
+            "evidence_entry_fields": [
+                "AVAILABILITY_PROOF_DATA",
+                "AVAILABILITY_PROOF_KIND",
+                "EVIDENCE_ID",
+                "PAYLOAD_BYTE_LENGTH",
+                "PAYLOAD_CONTENT_DIGEST",
+                "PAYLOAD_KIND",
+                "SOURCE_AUTHORITY_ID",
+                "SOURCE_CAPTURED_AT_UTC",
+                "SOURCE_EFFECTIVE_TIME_UTC",
+                "SOURCE_EVENT_TIME_UTC",
+                "SOURCE_FAMILY",
+                "SOURCE_OBSERVED_AT_UTC",
+                "SOURCE_PROVENANCE_STATUS",
+                "SOURCE_RECORD_ID"
+            ],
+            "availability_proof_kinds": [
+                "EXACT_OBSERVATION_TIMESTAMP",
+                "EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF",
+                "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T"
+            ],
+            "source_provenance_statuses": ["UNKNOWN", "EXTERNAL_CONTRACT_BOUND"],
+            "content_integrity": {
+                "payload_digest_algorithm": "SHA-256",
+                "manifest_digest_algorithm": "SHA-256",
+                "canonical_serialization": "STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON",
+                "manifest_digest_field": "CAPTURE_CONTENT_DIGEST",
+                "manifest_digest_scope": "SELF_EXCLUDING_CANONICAL_MANIFEST",
+                "payload_digest_scope": "EXACT_PAYLOAD_BYTES",
+                "evidence_ordering": "EVIDENCE_ID_ASCENDING_FOR_DIGEST",
+                "selected_evidence_ordering": "EVIDENCE_ID_ASCENDING"
+            },
+            "invariants": {
+                "prediction_context_immutable": "YES",
+                "model_asof_contract_binding_required": "YES",
+                "feature_contract_binding_required": "YES",
+                "model_decision_time_bound_in_capture": "YES",
+                "feature_as_of_bound_in_capture": "YES",
+                "target_match_id_bound_in_capture": "YES",
+                "target_kickoff_bound_in_capture": "YES",
+                "capture_instance_distinct_from_content_digest": "YES",
+                "decision_evidence_set_explicit": "YES",
+                "captured_evidence_distinct_from_selected_evidence": "YES",
+                "post_decision_evidence_selected_count": 0,
+                "capture_establishes_source_authority": "NO",
+                "unknown_source_authority_upgraded": "NO",
+                "source_captured_at_is_observed_at_by_default": "NO",
+                "source_event_time_is_observed_at": "NO",
+                "unbound_extra_evidence_becomes_selected": "NO",
+                "missing_selected_evidence_accepted": "NO",
+                "structural_capture_validity_distinct_from_source_completeness": "YES",
+                "secret_bearing_metadata_allowed": "NO",
+                "caller_supplied_git_sha_proves_repository_provenance": "NO",
+                "source_normalization_replay_proven": "NO",
+                "feature_numeric_replay_proven": "NO",
+                "train_inference_replay_proven": "NO"
+            },
+            "status_semantics": {
+                "STRUCTURAL_CAPTURE_VALIDITY": ["NOT_PROVEN", "PROVEN"],
+                "SOURCE_AUTHORITY_VALIDITY": ["NOT_PROVEN", "PROVEN_BY_SOURCE_CONTRACT", "UNKNOWN"],
+                "TEMPORAL_ELIGIBILITY_VALIDITY": ["NOT_PROVEN", "PROVEN"],
+                "FEATURE_DEPENDENCY_COMPLETENESS": ["NOT_PROVEN", "PROVEN"]
+            },
+            "security": {
+                "secret_bearing_metadata_allowed": "NO",
+                "metadata_minimization": "REQUIRED"
+            },
+            "implementation_status": {
+                "validator_implemented": "YES",
+                "storage_implemented": "NO",
+                "pipeline_implemented": "NO",
+                "live_capture_proven": "NO",
+                "source_normalization_replay": "NO",
+                "feature_numeric_replay": "NO",
+                "train_inference_replay": "NO"
+            }
+        },
         "raw_elo": {
             "direction": "BOUNDED_START",
             "retained_in_v_next": "YES",
