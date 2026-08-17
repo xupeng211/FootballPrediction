@@ -7,6 +7,7 @@ The git-tracked JSON registry remains the semantic authority. This module only
 enforces the frozen shape and values before a consumer can bind to it.
 """
 
+from collections.abc import Mapping
 from typing import Any
 
 from src.ml.inference.model_asof_contract import (
@@ -29,6 +30,7 @@ __all__ = [
     "MODEL_ASOF_FIELD_NAMES",
     "ModelAsOfValidationError",
     "validate_model_as_of_context",
+    "validate_runtime_capture_manifest_against_canonical_registry",
     "validate_v2_decision_boundaries",
 ]
 
@@ -716,3 +718,62 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
     ]:
         raise error_type("legacy proxy rejection policy malformed")
     text_fields(legacy, {"compatibility_behavior"}, "legacy proxy policy")
+
+
+def validate_runtime_capture_manifest_against_canonical_registry(
+    manifest: dict[str, Any], payloads: Mapping[str, bytes]
+) -> dict[str, Any]:
+    """Add canonical feature authority only after exact registry resolution."""
+    from src.ml.inference.feature_contract_registry import (  # noqa: PLC0415
+        FeatureContractRegistryError,
+        load_feature_contract_registry,
+    )
+    from src.ml.inference.runtime_capture_contract import (  # noqa: PLC0415
+        RuntimeCaptureValidationError,
+        validate_runtime_capture_manifest,
+    )
+
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("PREDICTION_CONTEXT"), dict):
+        raise RuntimeCaptureValidationError(
+            "CAPTURE_SCHEMA_MISMATCH", "prediction context must be an object"
+        )
+    context = manifest["PREDICTION_CONTEXT"]
+    feature_contract_id = context.get("FEATURE_CONTRACT_ID")
+    feature_contract_version = context.get("FEATURE_CONTRACT_VERSION")
+    if not isinstance(feature_contract_id, str) or not isinstance(feature_contract_version, str):
+        raise RuntimeCaptureValidationError(
+            "CAPTURE_SCHEMA_MISMATCH", "feature contract reference is malformed"
+        )
+
+    registry = load_feature_contract_registry()
+    try:
+        contract = registry.get_by_contract_id(feature_contract_id)
+    except FeatureContractRegistryError as exc:
+        raise RuntimeCaptureValidationError(
+            "FEATURE_CONTRACT_AUTHORITY_UNAVAILABLE",
+            "canonical feature contract ID is not registered",
+        ) from exc
+    if contract.feature_contract_version != feature_contract_version:
+        raise RuntimeCaptureValidationError(
+            "CONTRACT_VERSION_MISMATCH",
+            "canonical feature contract version does not match the registry",
+        )
+
+    result = validate_runtime_capture_manifest(
+        manifest,
+        payloads,
+        feature_contract_binding=registry.validated_feature_contract_binding(feature_contract_id),
+    )
+    if result["canonical_feature_contract_authority"] != "NOT_PROVEN_BY_CORE_VALIDATOR":
+        raise RuntimeCaptureValidationError(
+            "FEATURE_CONTRACT_AUTHORITY_BOUNDARY_MISMATCH",
+            "core validator returned an unexpected authority result",
+        )
+    integrated_result = dict(result)
+    integrated_result["feature_contract_reference"] = (
+        "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_CANONICAL_REGISTRY"
+    )
+    integrated_result["canonical_feature_contract_authority"] = (
+        "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN"
+    )
+    return integrated_result

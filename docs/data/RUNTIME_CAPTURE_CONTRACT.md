@@ -22,11 +22,22 @@ config/model_feature_contracts.json
 evidence identity 和精确 payload content 记录下来；它没有第二套 T 逻辑。
 
 feature contract binding 由 `feature_contract_registry.py` 在读取并验证 canonical
-registry 后签发不可变的 `ValidatedFeatureContractBinding`。纯 validator 接收这个
-typed binding，而不是任意 `Mapping[str, str]`；因此
-`FEATURE_CONTRACT_REFERENCE_MATCHED` 与
-`CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN` 是两个有明确 trust boundary 的结果。
-caller 自建 mapping、boolean 或字符串不能建立 canonical feature authority。
+registry 后签发不可变的 `ValidatedFeatureContractBinding`。这个 typed binding
+只是纯 validator 的引用/类型安全输入；Python 类型身份和 module-private token
+都不是 provenance 或 security authority。这里必须区分两层：
+
+1. `runtime_capture_contract.py` 的纯 core validator 只验证 manifest 引用是否匹配
+   supplied binding，并返回 `FEATURE_CONTRACT_REFERENCE_MATCHED_TO_SUPPLIED_BINDING`
+   与 `NOT_PROVEN_BY_CORE_VALIDATOR`；它不能凭对象类型、token、caller boolean 或
+   caller mapping 宣称 canonical authority。
+2. `feature_contract_registry.py` 的 canonical integration layer 先完整验证唯一的
+   `config/model_feature_contracts.json`，再精确解析 manifest 的
+   `FEATURE_CONTRACT_ID`/`FEATURE_CONTRACT_VERSION` 并成功调用 core validator，只有
+   此时才返回 `FEATURE_CONTRACT_REFERENCE_MATCHED_TO_CANONICAL_REGISTRY` 与
+   `CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN`。
+
+caller 自建 mapping、boolean、字符串、fake typed binding 或显式导入 private token
+不能建立 canonical feature authority。capture 本身也不建立 source authority。
 
 ## Capture manifest
 

@@ -13,8 +13,16 @@ from pathlib import Path
 
 import pytest
 
-from src.ml.inference.feature_contract_registry import load_feature_contract_registry
+from src.ml.inference.feature_contract_boundary_validator import (
+    validate_runtime_capture_manifest_against_canonical_registry,
+)
+import src.ml.inference.feature_contract_registry as feature_contract_registry_module
+from src.ml.inference.feature_contract_registry import (
+    FeatureContractRegistryError,
+    load_feature_contract_registry,
+)
 from src.ml.inference.runtime_capture_contract import (
+    _FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
     RUNTIME_CAPTURE_CONTRACT_ID,
     RUNTIME_CAPTURE_CONTRACT_VERSION,
     RuntimeCaptureValidationError,
@@ -140,6 +148,15 @@ def _validate(
     )
 
 
+def _validate_against_canonical_registry(
+    manifest: dict,
+    payloads: dict[str, bytes] | None = None,
+) -> dict:
+    if payloads is None:
+        payloads = {entry["EVIDENCE_ID"]: b"synthetic-payload-1" for entry in manifest["EVIDENCE"]}
+    return validate_runtime_capture_manifest_against_canonical_registry(manifest, payloads)
+
+
 def _raises(reason_code: str):
     return pytest.raises(RuntimeCaptureValidationError, match=reason_code)
 
@@ -149,6 +166,10 @@ def test_valid_prediction_context_binding_is_accepted() -> None:
     result = _validate(manifest, payloads)
     assert result["valid"] is True
     assert result["post_decision_evidence_selected_count"] == 0
+    assert result["feature_contract_reference"] == (
+        "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_SUPPLIED_BINDING"
+    )
+    assert result["canonical_feature_contract_authority"] == "NOT_PROVEN_BY_CORE_VALIDATOR"
 
 
 def test_wrong_model_asof_contract_id_is_rejected() -> None:
@@ -345,18 +366,107 @@ def test_caller_arbitrary_feature_mapping_cannot_establish_canonical_authority()
         )
 
 
-def test_canonical_registry_feature_binding_proves_authority_without_mapping() -> None:
+def test_core_feature_binding_reference_does_not_prove_canonical_authority() -> None:
     manifest, payloads = _manifest()
     result = _validate(manifest, payloads)
-    assert result["feature_contract_reference"] == "FEATURE_CONTRACT_REFERENCE_MATCHED"
+    assert result["feature_contract_reference"] == (
+        "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_SUPPLIED_BINDING"
+    )
+    assert result["canonical_feature_contract_authority"] == "NOT_PROVEN_BY_CORE_VALIDATOR"
+
+
+def test_canonical_registry_integration_proves_authority_for_v1() -> None:
+    manifest, payloads = _manifest()
+    result = _validate_against_canonical_registry(manifest, payloads)
+    assert result["feature_contract_reference"] == (
+        "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_CANONICAL_REGISTRY"
+    )
     assert result["canonical_feature_contract_authority"] == (
         "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN"
     )
 
 
+def test_canonical_registry_integration_resolves_vnext_without_activation() -> None:
+    manifest, payloads = _manifest(
+        context_overrides={
+            "FEATURE_CONTRACT_ID": "canonical_prematch/vnext-v1",
+            "FEATURE_CONTRACT_VERSION": "canonical_prematch/vnext/v1",
+        }
+    )
+    result = _validate_against_canonical_registry(manifest, payloads)
+    assert result["canonical_feature_contract_authority"] == (
+        "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN"
+    )
+    contracts = load_feature_contract_registry().contracts()
+    assert contracts[1].feature_count == V_NEXT_FEATURE_COUNT
+    assert contracts[1].activation_status == "DEFINED_NOT_ACTIVATED"
+
+
+def test_canonical_registry_integration_rejects_fake_contract_id() -> None:
+    manifest, payloads = _manifest(
+        context_overrides={
+            "FEATURE_CONTRACT_ID": "fake-feature-contract/v99",
+            "FEATURE_CONTRACT_VERSION": "v99",
+        }
+    )
+    with _raises("FEATURE_CONTRACT_AUTHORITY_UNAVAILABLE"):
+        _validate_against_canonical_registry(manifest, payloads)
+
+
+def test_canonical_registry_integration_rejects_wrong_feature_version() -> None:
+    manifest, payloads = _manifest(
+        context_overrides={"FEATURE_CONTRACT_VERSION": "wrong-feature-version/v99"}
+    )
+    with _raises("CONTRACT_VERSION_MISMATCH"):
+        _validate_against_canonical_registry(manifest, payloads)
+
+
+def test_invalid_canonical_registry_cannot_prove_feature_authority(tmp_path, monkeypatch) -> None:
+    document = json.loads(
+        (REPO_ROOT / "config" / "model_feature_contracts.json").read_text(encoding="utf-8")
+    )
+    document["contracts"][0].pop("ordered_features")
+    invalid_path = tmp_path / "invalid-model-feature-contracts.json"
+    invalid_path.write_text(json.dumps(document), encoding="utf-8")
+    monkeypatch.setattr(feature_contract_registry_module, "DEFAULT_REGISTRY_PATH", invalid_path)
+    manifest, payloads = _manifest()
+    with pytest.raises(FeatureContractRegistryError):
+        _validate_against_canonical_registry(manifest, payloads)
+
+
 def test_direct_feature_binding_construction_requires_registry_trust_token() -> None:
     with pytest.raises(TypeError, match="canonical registry"):
         ValidatedFeatureContractBinding("fake-feature-contract/v99", "v99", _trust_token=object())
+
+
+def test_private_token_binding_cannot_make_core_validator_claim_canonical_authority() -> None:
+    binding = ValidatedFeatureContractBinding._from_canonical_registry(
+        "fake-feature-contract/v99",
+        "v99",
+        _trust_token=_FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
+    )
+    manifest, payloads = _manifest(
+        context_overrides={
+            "FEATURE_CONTRACT_ID": "fake-feature-contract/v99",
+            "FEATURE_CONTRACT_VERSION": "v99",
+        }
+    )
+    result = _validate(manifest, payloads, feature_contract_binding=binding)
+    assert result["feature_contract_reference"] == (
+        "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_SUPPLIED_BINDING"
+    )
+    assert result["canonical_feature_contract_authority"] == "NOT_PROVEN_BY_CORE_VALIDATOR"
+
+
+def test_direct_caller_proof_flag_cannot_influence_core_result() -> None:
+    manifest, payloads = _manifest()
+    with pytest.raises(TypeError):
+        validate_runtime_capture_manifest(
+            manifest,
+            payloads,
+            feature_contract_binding=CANONICAL_FEATURE_CONTRACT_BINDING,
+            canonical_authority_proven=True,
+        )
 
 
 def test_registry_preserves_v1_default_and_vnext_not_activated() -> None:

@@ -361,7 +361,12 @@ class FeatureContractRegistry:
     def validated_feature_contract_binding(
         self, contract_id: str
     ) -> ValidatedFeatureContractBinding:
-        """Issue an immutable binding only after this registry validates the contract."""
+        """Issue an immutable reference after exact registry validation.
+
+        The returned type is suitable for Layer A reference matching. Canonical
+        authority is reported only by the registry integration boundary after
+        it validates the complete manifest path.
+        """
         contract = self.get_by_contract_id(contract_id)
         return ValidatedFeatureContractBinding._from_canonical_registry(
             contract.contract_id,

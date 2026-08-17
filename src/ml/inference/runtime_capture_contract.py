@@ -52,7 +52,7 @@ _FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN = object()
 
 @dataclass(frozen=True, init=False)
 class ValidatedFeatureContractBinding:
-    """Immutable feature binding issued by the canonical registry layer."""
+    """Immutable typed reference; type and token are not provenance authority."""
 
     contract_id: str
     feature_contract_version: str
@@ -232,6 +232,11 @@ _RUNTIME_CAPTURE_INVARIANTS = {
     "unknown_source_authority_upgraded": "NO",
     "feature_contract_reference_matched_distinct_from_authority_proven": "YES",
     "caller_arbitrary_feature_mapping_can_establish_canonical_authority": "NO",
+    "type_identity_is_canonical_authority_proof": "NO",
+    "private_token_is_canonical_authority_proof": "NO",
+    "core_validator_establishes_canonical_feature_authority": "NO",
+    "canonical_registry_integration_establishes_feature_authority": "YES",
+    "python_private_token_treated_as_security_boundary": "NO",
     "source_captured_at_is_observed_at_by_default": "NO",
     "source_event_time_is_observed_at": "NO",
     "unbound_extra_evidence_becomes_selected": "NO",
@@ -487,7 +492,7 @@ def _validate_context(
     if not isinstance(feature_contract_binding, ValidatedFeatureContractBinding):
         raise RuntimeCaptureValidationError(
             "FEATURE_CONTRACT_BINDING_UNTRUSTED",
-            "feature contract binding must be issued by the canonical registry",
+            "feature contract binding must be an immutable supplied reference",
         )
     if not feature_contract_binding.matches(feature_id, feature_version):
         raise RuntimeCaptureValidationError(
@@ -670,13 +675,7 @@ def validate_runtime_capture_manifest(  # noqa: C901, PLR0912 -- ordered fail-cl
     *,
     feature_contract_binding: ValidatedFeatureContractBinding,
 ) -> dict[str, Any]:
-    """Validate a manifest and exact payload bytes without I/O or wall-clock state.
-
-    ``feature_contract_binding`` is issued by the already validated canonical
-    feature registry.  Requiring its immutable trust-boundary type keeps this
-    validator pure without allowing an arbitrary caller mapping to masquerade
-    as canonical feature authority.
-    """
+    """Validate explicit manifest/payload inputs; never attach canonical authority proof."""
     _reject_secret_keys(manifest)
     values = _exact_object(manifest, MANIFEST_FIELDS, "runtime capture manifest")
     if values["RUNTIME_CAPTURE_CONTRACT_ID"] != RUNTIME_CAPTURE_CONTRACT_ID:
@@ -762,8 +761,8 @@ def validate_runtime_capture_manifest(  # noqa: C901, PLR0912 -- ordered fail-cl
         "post_decision_evidence_selected_count": 0,
         "structural_capture_validity": "PROVEN",
         "source_authority_validity": values["STATUS"]["SOURCE_AUTHORITY_VALIDITY"],
-        "feature_contract_reference": "FEATURE_CONTRACT_REFERENCE_MATCHED",
-        "canonical_feature_contract_authority": "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN",
+        "feature_contract_reference": "FEATURE_CONTRACT_REFERENCE_MATCHED_TO_SUPPLIED_BINDING",
+        "canonical_feature_contract_authority": "NOT_PROVEN_BY_CORE_VALIDATOR",
         "temporal_eligibility_validity": "PROVEN",
         "feature_dependency_completeness": values["STATUS"]["FEATURE_DEPENDENCY_COMPLETENESS"],
         "source_normalization_replay": "NOT_PROVEN",
