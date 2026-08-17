@@ -108,9 +108,9 @@ kickoff、postponed 使用 actual played event time、异常比赛官方状态�
 `887/888`，其中 `47_20232024_4193789` 必须因
 `ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS` 保持 unavailable。
 
-这不会改写 V1 的 20-feature numeric lineage matrix，也不会使 GD-A03 的
-历史数值 producer、runtime、training 或 feature frame ready。V1 matrix 中
-standings 行保留其既有未实现数值边界；本节只冻结 V-next 的语义合同。
+这不会改写 V1 的 20-feature numeric lineage matrix，也不会使 runtime、training
+或 feature frame ready。V1 matrix 中 standings 行仍保留其既有未实现数值边界；
+本阶段新增的历史能力只属于 V-next 的显式、未激活 projection path。
 
 当前边界不变：
 
@@ -127,16 +127,21 @@ GOLDEN_DATASET_COMPLETE=NO
 
 Raw ELO 只冻结 `BOUNDED_START` 方向；E1–E11 数值与历史行为参数仍需 Owner
 单独批准。Standings 已完成官方规则历史/例外闭合并冻结严格
-`source_kickoff < target_kickoff`、排除相同 kickoff 的语义合同；其数值 producer
-仍未实现。SOT 只完成了对既有
+`source_kickoff < target_kickoff`、排除相同 kickoff 的语义合同；Phase B 的
+`PremierLeagueFrozenEvidenceAdapter` 先证明每季 380 场、20 队、每队 38 场且主客
+各 19 场，再调用已合并的 `PointInTimeStandingsEngine`，由
+`GdA03StandingsIntegration` 生成显式 V-next 历史 audit projection。冻结证据验证为
+887/888，唯一 unavailable 行仍由行政有效时间区间重叠产生。该 projection 不是 V1
+artifact、canonical training frame 或 runtime cache。SOT 只完成了对既有
 冻结资产的只读库存：812 个 formal payload 均有 shotmap、`isOnTarget` 和
 `isOwnGoal` 布尔字段，但独立观测的主客 team-ID pair 为 0，因此现有资产不足以
 闭合 canonical SOT；不得在本任务中采集新足球数据。Possession 仍保留但历史与运行时
 source 均为 unavailable，禁止任何比例、均值、插值或估算 fallback。
 
-Owner 批准的后续架构边界是一个不联网、不查 provider、不查 DB、不写 DB、无兼容
-proxy/default 的纯 `CanonicalSemanticEngine`，由 historical/runtime source adapter
-分别提供同构 typed prior-state facts。该引擎本任务只冻结接口边界，未开始实现。
+当前 standings integration 仍保持不联网、不查 provider、不查 DB、不写 DB、无兼容
+proxy/default；历史 adapter 只接收 frozen evidence，runtime source adapter 尚未
+开始。V1 `npm run gd:a03` 入口和 assembler 行为保持不变，V-next 仍为
+`DEFINED_NOT_ACTIVATED`。
 
 ## V1 canonical 20-feature numeric lineage matrix
 
