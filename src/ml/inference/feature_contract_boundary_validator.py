@@ -9,6 +9,28 @@ enforces the frozen shape and values before a consumer can bind to it.
 
 from typing import Any
 
+from src.ml.inference.model_asof_contract import (
+    MODEL_ASOF_AVAILABILITY_FORMS,
+    MODEL_ASOF_CONTRACT_ID,
+    MODEL_ASOF_CONTRACT_VERSION,
+    MODEL_ASOF_FIELD_DESCRIPTIONS,
+    MODEL_ASOF_FIELD_NAMES,
+    ModelAsOfValidationError,
+    validate_model_as_of_context,
+    validate_model_asof_registry_boundary,
+)
+
+__all__ = [
+    "MODEL_ASOF_AVAILABILITY_FORMS",
+    "MODEL_ASOF_CONTRACT_ID",
+    "MODEL_ASOF_CONTRACT_VERSION",
+    "MODEL_ASOF_FIELD_DESCRIPTIONS",
+    "MODEL_ASOF_FIELD_NAMES",
+    "ModelAsOfValidationError",
+    "validate_model_as_of_context",
+    "validate_v2_decision_boundaries",
+]
+
 _RAW_ELO_PARAMETER_COUNT = 11
 _SOT_NEXT_SCOPE_COUNT = 5
 
@@ -21,6 +43,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
     if not isinstance(boundaries, dict):
         raise error_type("feature contract decision boundaries malformed")
     required_boundary_names = {
+        "model_as_of",
         "raw_elo",
         "standings",
         "sot",
@@ -67,6 +90,8 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         ):
             raise error_type(f"{label} malformed")
         return value
+
+    validate_model_asof_registry_boundary(boundaries["model_as_of"], error_type)
 
     raw_elo = exact_object(
         boundaries["raw_elo"],
