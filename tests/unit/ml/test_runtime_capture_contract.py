@@ -18,15 +18,15 @@ from src.ml.inference.runtime_capture_contract import (
     RUNTIME_CAPTURE_CONTRACT_ID,
     RUNTIME_CAPTURE_CONTRACT_VERSION,
     RuntimeCaptureValidationError,
+    ValidatedFeatureContractBinding,
     compute_capture_content_digest,
     validate_runtime_capture_manifest,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FEATURE_CONTRACT_BINDINGS = {
-    "v26_7_aligned/v1": "v26_6_pre_match/v1",
-    "canonical_prematch/vnext-v1": "canonical_prematch/vnext/v1",
-}
+CANONICAL_FEATURE_CONTRACT_BINDING = (
+    load_feature_contract_registry().validated_feature_contract_binding("v26_7_aligned/v1")
+)
 DECISION_TIME = "2026-08-18T10:00:00Z"
 TARGET_KICKOFF = "2026-08-18T20:00:00Z"
 CAPTURED_AT = "2026-08-18T09:55:00Z"
@@ -125,13 +125,18 @@ def _manifest(
     return manifest, payloads
 
 
-def _validate(manifest: dict, payloads: dict[str, bytes] | None = None) -> dict:
+def _validate(
+    manifest: dict,
+    payloads: dict[str, bytes] | None = None,
+    *,
+    feature_contract_binding=CANONICAL_FEATURE_CONTRACT_BINDING,
+) -> dict:
     if payloads is None:
         payloads = {entry["EVIDENCE_ID"]: b"synthetic-payload-1" for entry in manifest["EVIDENCE"]}
     return validate_runtime_capture_manifest(
         manifest,
         payloads,
-        feature_contract_bindings=FEATURE_CONTRACT_BINDINGS,
+        feature_contract_binding=feature_contract_binding,
     )
 
 
@@ -325,6 +330,35 @@ def test_unknown_feature_contract_is_rejected() -> None:
         _validate(manifest, payloads)
 
 
+def test_caller_arbitrary_feature_mapping_cannot_establish_canonical_authority() -> None:
+    manifest, payloads = _manifest(
+        context_overrides={
+            "FEATURE_CONTRACT_ID": "fake-feature-contract/v99",
+            "FEATURE_CONTRACT_VERSION": "v99",
+        }
+    )
+    with _raises("FEATURE_CONTRACT_BINDING_UNTRUSTED"):
+        _validate(
+            manifest,
+            payloads,
+            feature_contract_binding={"fake-feature-contract/v99": "v99"},
+        )
+
+
+def test_canonical_registry_feature_binding_proves_authority_without_mapping() -> None:
+    manifest, payloads = _manifest()
+    result = _validate(manifest, payloads)
+    assert result["feature_contract_reference"] == "FEATURE_CONTRACT_REFERENCE_MATCHED"
+    assert result["canonical_feature_contract_authority"] == (
+        "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN"
+    )
+
+
+def test_direct_feature_binding_construction_requires_registry_trust_token() -> None:
+    with pytest.raises(TypeError, match="canonical registry"):
+        ValidatedFeatureContractBinding("fake-feature-contract/v99", "v99", _trust_token=object())
+
+
 def test_registry_preserves_v1_default_and_vnext_not_activated() -> None:
     registry = load_feature_contract_registry()
     contracts = registry.contracts()
@@ -423,7 +457,7 @@ def test_payload_mapping_extra_unbound_entry_is_rejected() -> None:
 def test_external_authority_status_requires_an_authority_binding() -> None:
     entry = _entry(source_provenance_status="EXTERNAL_CONTRACT_BOUND")
     manifest, payloads = _manifest([entry])
-    with _raises("PROVENANCE_SCHEMA_MISMATCH"):
+    with _raises("SOURCE_AUTHORITY_PROOF_UNAVAILABLE"):
         _validate(manifest, payloads)
 
 
@@ -431,7 +465,27 @@ def test_source_authority_proven_status_requires_external_entry_proof() -> None:
     manifest, payloads = _manifest()
     manifest["STATUS"]["SOURCE_AUTHORITY_VALIDITY"] = "PROVEN_BY_SOURCE_CONTRACT"
     manifest["CAPTURE_CONTENT_DIGEST"] = compute_capture_content_digest(manifest)
-    with _raises("PROVENANCE_SCHEMA_MISMATCH"):
+    with _raises("SOURCE_AUTHORITY_PROOF_UNAVAILABLE"):
+        _validate(manifest, payloads)
+
+
+def test_fake_source_authority_positive_claim_fails_closed() -> None:
+    entry = _entry(
+        source_provenance_status="EXTERNAL_CONTRACT_BOUND",
+        source_authority_id="fake-provider-authority/v1",
+    )
+    manifest, payloads = _manifest([entry])
+    manifest["STATUS"]["SOURCE_AUTHORITY_VALIDITY"] = "PROVEN_BY_SOURCE_CONTRACT"
+    manifest["CAPTURE_CONTENT_DIGEST"] = compute_capture_content_digest(manifest)
+    with _raises("SOURCE_AUTHORITY_PROOF_UNAVAILABLE"):
+        _validate(manifest, payloads)
+
+
+def test_source_authority_positive_status_without_external_proof_fails_closed() -> None:
+    manifest, payloads = _manifest()
+    manifest["STATUS"]["SOURCE_AUTHORITY_VALIDITY"] = "PROVEN_BY_SOURCE_CONTRACT"
+    manifest["CAPTURE_CONTENT_DIGEST"] = compute_capture_content_digest(manifest)
+    with _raises("SOURCE_AUTHORITY_PROOF_UNAVAILABLE"):
         _validate(manifest, payloads)
 
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from copy import deepcopy
+from dataclasses import dataclass
 import hashlib
 import json
 import re
@@ -44,6 +45,53 @@ MANIFEST_DIGEST_ALGORITHM = "SHA-256"
 CANONICAL_SERIALIZATION_AUTHORITY = "STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON"
 SELF_EXCLUDING_DIGEST_SCOPE = "SELF_EXCLUDING_CANONICAL_MANIFEST"
 PAYLOAD_DIGEST_SCOPE = "EXACT_PAYLOAD_BYTES"
+CANONICAL_FEATURE_CONTRACT_AUTHORITY = "CANONICAL_FEATURE_CONTRACT_REGISTRY"
+
+_FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN = object()
+
+
+@dataclass(frozen=True, init=False)
+class ValidatedFeatureContractBinding:
+    """Immutable feature binding issued by the canonical registry layer."""
+
+    contract_id: str
+    feature_contract_version: str
+    authority: str
+
+    def __init__(
+        self,
+        contract_id: str,
+        feature_contract_version: str,
+        *,
+        _trust_token: object,
+    ) -> None:
+        if _trust_token is not _FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN:
+            raise TypeError("feature contract binding must be issued by the canonical registry")
+        object.__setattr__(self, "contract_id", contract_id)
+        object.__setattr__(self, "feature_contract_version", feature_contract_version)
+        object.__setattr__(self, "authority", CANONICAL_FEATURE_CONTRACT_AUTHORITY)
+
+    @classmethod
+    def _from_canonical_registry(
+        cls,
+        contract_id: str,
+        feature_contract_version: str,
+        *,
+        _trust_token: object,
+    ) -> ValidatedFeatureContractBinding:
+        return cls(
+            contract_id,
+            feature_contract_version,
+            _trust_token=_trust_token,
+        )
+
+    def matches(self, contract_id: str, feature_contract_version: str) -> bool:
+        """Return whether the bound context references this exact registry entry."""
+        return (
+            self.contract_id == contract_id
+            and self.feature_contract_version == feature_contract_version
+        )
+
 
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
@@ -179,7 +227,11 @@ _RUNTIME_CAPTURE_INVARIANTS = {
     "captured_evidence_distinct_from_selected_evidence": "YES",
     "post_decision_evidence_selected_count": 0,
     "capture_establishes_source_authority": "NO",
+    "caller_can_self_assert_source_authority": "NO",
+    "source_authority_proof_requires_external_canonical_authority": "YES",
     "unknown_source_authority_upgraded": "NO",
+    "feature_contract_reference_matched_distinct_from_authority_proven": "YES",
+    "caller_arbitrary_feature_mapping_can_establish_canonical_authority": "NO",
     "source_captured_at_is_observed_at_by_default": "NO",
     "source_event_time_is_observed_at": "NO",
     "unbound_extra_evidence_becomes_selected": "NO",
@@ -413,7 +465,10 @@ def _validate_status(status: Any) -> None:
         )
 
 
-def _validate_context(context: Any, feature_contract_bindings: Mapping[str, str]) -> dict[str, Any]:
+def _validate_context(
+    context: Any,
+    feature_contract_binding: ValidatedFeatureContractBinding,
+) -> dict[str, Any]:
     values = _exact_object(context, PREDICTION_CONTEXT_FIELDS, "prediction context")
     _text(values["PREDICTION_CONTEXT_ID"], "PREDICTION_CONTEXT_ID", safe_id=True)
     if values["MODEL_ASOF_CONTRACT_ID"] != MODEL_ASOF_CONTRACT_ID:
@@ -429,11 +484,12 @@ def _validate_context(context: Any, feature_contract_bindings: Mapping[str, str]
     feature_version = _text(
         values["FEATURE_CONTRACT_VERSION"], "FEATURE_CONTRACT_VERSION", safe_id=True
     )
-    if not isinstance(feature_contract_bindings, Mapping):
+    if not isinstance(feature_contract_binding, ValidatedFeatureContractBinding):
         raise RuntimeCaptureValidationError(
-            "FEATURE_CONTRACT_BINDING_UNPROVEN", "feature contract bindings are required"
+            "FEATURE_CONTRACT_BINDING_UNTRUSTED",
+            "feature contract binding must be issued by the canonical registry",
         )
-    if feature_contract_bindings.get(feature_id) != feature_version:
+    if not feature_contract_binding.matches(feature_id, feature_version):
         raise RuntimeCaptureValidationError(
             "CONTRACT_VERSION_MISMATCH", "capture feature contract binding is unknown"
         )
@@ -537,7 +593,8 @@ def _validate_evidence_shape(  # noqa: C901, PLR0912 -- proof-kind branches are 
         and values["SOURCE_AUTHORITY_ID"] is None
     ):
         raise RuntimeCaptureValidationError(
-            "PROVENANCE_SCHEMA_MISMATCH", f"{label} external authority binding is missing"
+            "SOURCE_AUTHORITY_PROOF_UNAVAILABLE",
+            f"{label} external authority binding is not trusted",
         )
     return values
 
@@ -592,17 +649,33 @@ def _validate_payloads(entries: list[dict[str, Any]], payloads: Mapping[str, byt
             )
 
 
-def validate_runtime_capture_manifest(  # noqa: C901, PLR0912, PLR0915 -- ordered fail-closed manifest validation.
+def _validate_source_authority_claims(
+    status: dict[str, Any], entries: list[dict[str, Any]]
+) -> None:
+    """Reject positive claims until a source-specific trust boundary exists."""
+    positive_manifest_claim = status["SOURCE_AUTHORITY_VALIDITY"] == "PROVEN_BY_SOURCE_CONTRACT"
+    positive_entry_claim = any(
+        entry["SOURCE_PROVENANCE_STATUS"] == "EXTERNAL_CONTRACT_BOUND" for entry in entries
+    )
+    if positive_manifest_claim or positive_entry_claim:
+        raise RuntimeCaptureValidationError(
+            "SOURCE_AUTHORITY_PROOF_UNAVAILABLE",
+            "generic capture validation has no trusted external source-authority binding",
+        )
+
+
+def validate_runtime_capture_manifest(  # noqa: C901, PLR0912 -- ordered fail-closed manifest validation.
     manifest: dict[str, Any],
     payloads: Mapping[str, bytes],
     *,
-    feature_contract_bindings: Mapping[str, str],
+    feature_contract_binding: ValidatedFeatureContractBinding,
 ) -> dict[str, Any]:
     """Validate a manifest and exact payload bytes without I/O or wall-clock state.
 
-    ``feature_contract_bindings`` is supplied by the already validated canonical
-    feature registry.  Requiring it as an explicit input keeps this validator
-    pure and prevents a second filesystem-backed feature authority.
+    ``feature_contract_binding`` is issued by the already validated canonical
+    feature registry.  Requiring its immutable trust-boundary type keeps this
+    validator pure without allowing an arbitrary caller mapping to masquerade
+    as canonical feature authority.
     """
     _reject_secret_keys(manifest)
     values = _exact_object(manifest, MANIFEST_FIELDS, "runtime capture manifest")
@@ -619,19 +692,13 @@ def validate_runtime_capture_manifest(  # noqa: C901, PLR0912, PLR0915 -- ordere
     _parse_utc(values["MANIFEST_FINALIZED_AT_UTC"], "MANIFEST_FINALIZED_AT_UTC")
     _validate_provenance(values["PROVENANCE"])
     _validate_status(values["STATUS"])
-    context = _validate_context(values["PREDICTION_CONTEXT"], feature_contract_bindings)
+    context = _validate_context(values["PREDICTION_CONTEXT"], feature_contract_binding)
 
     raw_entries = values["EVIDENCE"]
     if not isinstance(raw_entries, list):
         raise RuntimeCaptureValidationError("CAPTURE_SCHEMA_MISMATCH", "EVIDENCE must be a list")
     entries = [_validate_evidence_shape(entry, index) for index, entry in enumerate(raw_entries)]
-    if values["STATUS"]["SOURCE_AUTHORITY_VALIDITY"] == "PROVEN_BY_SOURCE_CONTRACT" and any(
-        entry["SOURCE_PROVENANCE_STATUS"] != "EXTERNAL_CONTRACT_BOUND" for entry in entries
-    ):
-        raise RuntimeCaptureValidationError(
-            "PROVENANCE_SCHEMA_MISMATCH",
-            "source authority cannot be proven without an external entry binding",
-        )
+    _validate_source_authority_claims(values["STATUS"], entries)
     if values["STATUS"]["FEATURE_DEPENDENCY_COMPLETENESS"] == "PROVEN":
         raise RuntimeCaptureValidationError(
             "FEATURE_DEPENDENCY_UNPROVEN",
@@ -695,6 +762,8 @@ def validate_runtime_capture_manifest(  # noqa: C901, PLR0912, PLR0915 -- ordere
         "post_decision_evidence_selected_count": 0,
         "structural_capture_validity": "PROVEN",
         "source_authority_validity": values["STATUS"]["SOURCE_AUTHORITY_VALIDITY"],
+        "feature_contract_reference": "FEATURE_CONTRACT_REFERENCE_MATCHED",
+        "canonical_feature_contract_authority": "CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN",
         "temporal_eligibility_validity": "PROVEN",
         "feature_dependency_completeness": values["STATUS"]["FEATURE_DEPENDENCY_COMPLETENESS"],
         "source_normalization_replay": "NOT_PROVEN",
@@ -717,6 +786,7 @@ __all__ = [
     "RUNTIME_CAPTURE_CONTRACT_ID",
     "RUNTIME_CAPTURE_CONTRACT_VERSION",
     "RuntimeCaptureValidationError",
+    "ValidatedFeatureContractBinding",
     "compute_capture_content_digest",
     "validate_runtime_capture_manifest",
     "validate_runtime_capture_registry_boundary",

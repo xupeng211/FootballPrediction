@@ -20,8 +20,10 @@ from typing import Any
 from src.ml.inference.feature_contract_boundary_validator import validate_v2_decision_boundaries
 from src.ml.inference.model_asof_contract import MODEL_ASOF_CONTRACT_ID, MODEL_ASOF_CONTRACT_VERSION
 from src.ml.inference.runtime_capture_contract import (
+    _FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
     RUNTIME_CAPTURE_CONTRACT_ID,
     RUNTIME_CAPTURE_CONTRACT_VERSION,
+    ValidatedFeatureContractBinding,
 )
 
 DEFAULT_REGISTRY_PATH = (
@@ -355,6 +357,17 @@ class FeatureContractRegistry:
             if contract.contract_id == contract_id:
                 return contract
         raise FeatureContractNotFoundError("feature contract id not found")
+
+    def validated_feature_contract_binding(
+        self, contract_id: str
+    ) -> ValidatedFeatureContractBinding:
+        """Issue an immutable binding only after this registry validates the contract."""
+        contract = self.get_by_contract_id(contract_id)
+        return ValidatedFeatureContractBinding._from_canonical_registry(
+            contract.contract_id,
+            contract.feature_contract_version,
+            _trust_token=_FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
+        )
 
     def get_for_model(self, model_type: str, artifact_name: str | None = None) -> FeatureContract:
         """Return an exact model binding or fail closed on unknown/ambiguous input."""

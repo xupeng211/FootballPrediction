@@ -21,6 +21,13 @@ config/model_feature_contracts.json
 `T < TARGET_KICKOFF_UTC`。本合同只定义怎样把一个已绑定的 context、selected
 evidence identity 和精确 payload content 记录下来；它没有第二套 T 逻辑。
 
+feature contract binding 由 `feature_contract_registry.py` 在读取并验证 canonical
+registry 后签发不可变的 `ValidatedFeatureContractBinding`。纯 validator 接收这个
+typed binding，而不是任意 `Mapping[str, str]`；因此
+`FEATURE_CONTRACT_REFERENCE_MATCHED` 与
+`CANONICAL_FEATURE_CONTRACT_AUTHORITY_PROVEN` 是两个有明确 trust boundary 的结果。
+caller 自建 mapping、boolean 或字符串不能建立 canonical feature authority。
+
 ## Capture manifest
 
 一个 manifest 的顶层字段是严格集合：
@@ -90,7 +97,11 @@ SOURCE_PROVENANCE_STATUS
 `SOURCE_CAPTURED_AT_UTC` 只证明本系统捕获/保存时间，默认不能替代
 `SOURCE_OBSERVED_AT_UTC`。source authority 必须来自另一个 source-specific
 contract；generic capture validator 只保存 binding，不能把 `UNKNOWN` 改成
-verified。
+verified。当前 V1 尚无 canonical external source-authority resolver，因此
+`SOURCE_AUTHORITY_ID`、`EXTERNAL_CONTRACT_BOUND` 或
+`PROVEN_BY_SOURCE_CONTRACT` 的 caller-authored positive claim 都 fail closed；
+正向证明必须由未来经批准的 source-specific authority boundary 提供。capture
+本身不建立 source authority。
 
 允许的 availability proof 与 model-as-of/v1 相同：
 
@@ -138,8 +149,9 @@ FEATURE_DEPENDENCY_COMPLETENESS
 
 结构和 payload integrity 通过，不代表 source authority 或 feature dependency
 complete。generic v1 validator 没有 source-specific authority 或 feature-dependency
-证明输入，因此不会接受 `PROVEN_BY_SOURCE_CONTRACT`（除非每条 entry 都带有外部
-authority binding），也不会接受 `FEATURE_DEPENDENCY_COMPLETENESS=PROVEN`。当前
+证明输入，因此当前不会接受 `PROVEN_BY_SOURCE_CONTRACT` 或
+`SOURCE_PROVENANCE_STATUS=EXTERNAL_CONTRACT_BOUND`，也不会接受
+`FEATURE_DEPENDENCY_COMPLETENESS=PROVEN`。当前
 generic contract 的 source normalization、feature numeric replay、train/inference
 replay 都保持 `NOT_PROVEN`。
 
