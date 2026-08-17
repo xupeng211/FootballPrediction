@@ -14,7 +14,10 @@ const {
 } = require('../standings/PremierLeagueFrozenEvidenceAdapter');
 const { APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH } = require('../canonical/CanonicalInventoryContract');
 const { STANDINGS_CONTRACT_ID, STANDINGS_CONTRACT_VERSION } = require('../standings/StandingsContractBinding');
-const { computeStandingsSnapshots } = require('../standings/PointInTimeStandingsEngine');
+const {
+    computeStandingsSnapshots,
+    STANDINGS_ENGINE_IMPLEMENTATION_BINDING,
+} = require('../standings/PointInTimeStandingsEngine');
 const { sha256Text, stableStringify } = require('../canonical/StableValue');
 
 const VNEXT_CONTRACT_ID = 'canonical_prematch/vnext-v1';
@@ -64,13 +67,6 @@ function assertText(value, label, code = 'DEPENDENCY_UNAVAILABLE') {
 
 function assertSha(value, label) {
     if (typeof value !== 'string' || !/^[0-9a-f]{64}$/.test(value)) fail(`${label} must be a lowercase SHA-256`);
-    return value;
-}
-
-function assertCommitSha(value, label) {
-    if (typeof value !== 'string' || !/^[0-9a-f]{40}$/.test(value)) {
-        fail(`${label} must be a 40-character lowercase commit SHA`, 'DEPENDENCY_UNAVAILABLE');
-    }
     return value;
 }
 
@@ -165,13 +161,45 @@ function assertScheduleClosure(scheduleClosure) {
     return value;
 }
 
-function assertEngineImplementation(engineImplementation) {
-    const value = assertObject(engineImplementation, 'standings engine implementation binding');
-    assertText(value.implementation_id, 'standings engine implementation_binding.implementation_id');
-    if (value.implementation_id !== 'PointInTimeStandingsEngine') {
-        fail('GD-A03 standings integration is bound to an unexpected engine', 'DEPENDENCY_UNAVAILABLE');
+function assertNoCallerEngineImplementation(value, label) {
+    if (
+        Object.hasOwn(value, 'engineImplementation') ||
+        Object.hasOwn(value, 'source_commit') ||
+        Object.hasOwn(value, 'sourceCommit')
+    ) {
+        fail(
+            `${label} cannot accept caller-supplied engine source provenance; use the imported engine identity and external audit proof`,
+            'DEPENDENCY_UNAVAILABLE'
+        );
     }
-    assertCommitSha(value.source_commit, 'standings engine implementation_binding.source_commit');
+}
+
+function importedEngineImplementation() {
+    const value = STANDINGS_ENGINE_IMPLEMENTATION_BINDING;
+    assertKnownKeys(
+        value,
+        new Set(['implementation_id', 'implementation_version', 'contract_id', 'implementation_identity_digest']),
+        'standings engine implementation binding'
+    );
+    assertText(value.implementation_id, 'standings engine implementation_binding.implementation_id');
+    assertText(value.implementation_version, 'standings engine implementation_binding.implementation_version');
+    assertText(value.contract_id, 'standings engine implementation_binding.contract_id');
+    assertSha(value.implementation_identity_digest, 'standings engine implementation_binding.identity_digest');
+    if (
+        value.implementation_id !== 'PointInTimeStandingsEngine' ||
+        value.contract_id !== STANDINGS_CONTRACT_ID ||
+        value.implementation_version !== STANDINGS_CONTRACT_VERSION
+    ) {
+        fail('GD-A03 standings integration is bound to an unexpected engine identity', 'DEPENDENCY_UNAVAILABLE');
+    }
+    const descriptor = {
+        implementation_id: value.implementation_id,
+        implementation_version: value.implementation_version,
+        contract_id: value.contract_id,
+    };
+    if (sha256Text(stableStringify(descriptor)) !== value.implementation_identity_digest) {
+        fail('GD-A03 standings engine identity digest is inconsistent', 'DEPENDENCY_UNAVAILABLE');
+    }
     return { ...value };
 }
 
@@ -322,9 +350,12 @@ function makeFeatureLine(featureName, output, sharedLineage, scheduleClosure, en
     };
 }
 
-function projectStandingsSnapshot({ output, vNextContractBinding, context, scheduleClosure, engineImplementation }) {
+function projectStandingsSnapshot(input) {
+    const request = assertObject(input, 'standings projection input');
+    assertNoCallerEngineImplementation(request, 'standings projection input');
+    const { output, vNextContractBinding, context, scheduleClosure } = request;
     const value = assertEngineOutput(output);
-    const implementation = assertEngineImplementation(engineImplementation);
+    const implementation = importedEngineImplementation();
     const targetLineage = context.lineage.targetByMatchId[value.target_match_id];
     if (!targetLineage) fail(`target ${value.target_match_id} has no adapter lineage`, 'DEPENDENCY_UNAVAILABLE');
     const sharedLineage = makeEvidenceIds(value, context);
@@ -389,19 +420,21 @@ function computeBusinessProjectionHash(rows) {
     return sha256Text(stableStringify(normalized));
 }
 
-function buildGdA03StandingsProjection({
-    registry,
-    officialFixtureProjection,
-    normalizedPriorResultLedger,
-    missingPriorFixtureLedger,
-    postponedRescheduledAudit,
-    exceptionStatusAudit,
-    administrativeAdjustmentLedger,
-    targetClosureAudit,
-    seasonRuleMatrix,
-    sourceBindings,
-    engineImplementation,
-}) {
+function buildGdA03StandingsProjection(input) {
+    const request = assertObject(input, 'GD-A03 standings integration input');
+    assertNoCallerEngineImplementation(request, 'GD-A03 standings integration input');
+    const {
+        registry,
+        officialFixtureProjection,
+        normalizedPriorResultLedger,
+        missingPriorFixtureLedger,
+        postponedRescheduledAudit,
+        exceptionStatusAudit,
+        administrativeAdjustmentLedger,
+        targetClosureAudit,
+        seasonRuleMatrix,
+        sourceBindings,
+    } = request;
     const context = buildHistoricalStandingsEvidenceInputs({
         registry,
         officialFixtureProjection,
@@ -416,7 +449,6 @@ function buildGdA03StandingsProjection({
     });
     const vNextContractBinding = bindVNextFeatureContract(registry);
     const scheduleClosure = assertScheduleClosure(context.scheduleClosure);
-    const implementation = assertEngineImplementation(engineImplementation);
     const outputs = computeStandingsSnapshots(context.inputs);
     if (outputs.length !== context.inputs.length) {
         fail('engine output population differs from adapter target population');
@@ -427,7 +459,6 @@ function buildGdA03StandingsProjection({
             vNextContractBinding,
             context,
             scheduleClosure,
-            engineImplementation: implementation,
         })
     );
     return Object.freeze({

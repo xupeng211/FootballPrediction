@@ -9,7 +9,25 @@
 // 只能把已验证证据转换为下方的 normalized input。
 
 const { sha256Text, stableStringify } = require('../canonical/StableValue');
-const { assertStandingsContractBinding } = require('./StandingsContractBinding');
+const {
+    assertStandingsContractBinding,
+    STANDINGS_CONTRACT_ID,
+    STANDINGS_CONTRACT_VERSION,
+} = require('./StandingsContractBinding');
+
+// This is the in-process identity of the implementation that is actually
+// imported and invoked. It intentionally contains no Git/source-commit claim;
+// repository provenance is proven separately by the external audit boundary.
+const STANDINGS_ENGINE_IMPLEMENTATION = Object.freeze({
+    implementation_id: 'PointInTimeStandingsEngine',
+    implementation_version: STANDINGS_CONTRACT_VERSION,
+    contract_id: STANDINGS_CONTRACT_ID,
+});
+const STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST = sha256Text(stableStringify(STANDINGS_ENGINE_IMPLEMENTATION));
+const STANDINGS_ENGINE_IMPLEMENTATION_BINDING = Object.freeze({
+    ...STANDINGS_ENGINE_IMPLEMENTATION,
+    implementation_identity_digest: STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST,
+});
 
 const UTC_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const TOP_LEVEL_FIELDS = new Set([
@@ -714,6 +732,9 @@ function computeStandingsSnapshots(inputs) {
 
 module.exports = {
     PointInTimeStandingsEngine: Object.freeze({ computeStandingsSnapshot, computeStandingsSnapshots }),
+    STANDINGS_ENGINE_IMPLEMENTATION,
+    STANDINGS_ENGINE_IMPLEMENTATION_BINDING,
+    STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST,
     StandingsEngineError,
     computeStandingsSnapshot,
     computeStandingsSnapshots,

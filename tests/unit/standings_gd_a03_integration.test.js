@@ -20,6 +20,9 @@ const {
     computeEvidenceContentDigest,
     proveCanonicalScheduleClosure,
 } = require('../../src/infrastructure/standings/PremierLeagueFrozenEvidenceAdapter');
+const {
+    STANDINGS_ENGINE_IMPLEMENTATION_BINDING,
+} = require('../../src/infrastructure/standings/PointInTimeStandingsEngine');
 
 const REGISTRY = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, '../../config/model_feature_contracts.json'), 'utf8')
@@ -239,7 +242,6 @@ test('GD-A03 projection copies engine values and computes no independent standin
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     });
     assert.equal(row.home_table_position, 4);
     assert.equal(row.away_table_position, 7);
@@ -247,6 +249,11 @@ test('GD-A03 projection copies engine values and computes no independent standin
     assert.equal(row.feature_lines.home_table_position.value, 4);
     assert.equal(row.feature_lines.table_position_diff.value, -3);
     assert.equal(row.v_next_activation_status, 'DEFINED_NOT_ACTIVATED');
+    assert.deepEqual(
+        row.feature_lines.home_table_position.engine_implementation,
+        STANDINGS_ENGINE_IMPLEMENTATION_BINDING
+    );
+    assert.equal(Object.hasOwn(row.feature_lines.home_table_position.engine_implementation, 'source_commit'), false);
 });
 
 test('GD-A03 projection keeps all standings values null when engine is unavailable', () => {
@@ -262,7 +269,6 @@ test('GD-A03 projection keeps all standings values null when engine is unavailab
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     });
     assert.equal(row.home_table_position, null);
     assert.equal(row.away_table_position, null);
@@ -276,7 +282,6 @@ test('GD-A03 projection rejects wrong diff orientation and fabricated unavailabl
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
         context: projectionContext(),
         scheduleClosure: validScheduleClosure(),
-        engineImplementation: { implementation_id: 'PointInTimeStandingsEngine', source_commit: '9'.repeat(40) },
     };
     expectCode(
         () => projectStandingsSnapshot({ ...args, output: validEngineOutput({ table_position_diff: 3 }) }),
@@ -299,7 +304,21 @@ test('GD-A03 projection rejects wrong diff orientation and fabricated unavailabl
     );
 });
 
-test('GD-A03 projection rejects a malformed engine source commit binding', () => {
+test('GD-A03 projection rejects caller-supplied engine provenance, including a fake valid SHA', () => {
+    const args = {
+        output: validEngineOutput(),
+        vNextContractBinding: bindVNextFeatureContract(REGISTRY),
+        context: projectionContext(),
+        scheduleClosure: validScheduleClosure(),
+        engineImplementation: {
+            implementation_id: 'PointInTimeStandingsEngine',
+            source_commit: '9999999999999999999999999999999999999999',
+        },
+    };
+    expectCode(() => projectStandingsSnapshot(args), 'DEPENDENCY_UNAVAILABLE');
+});
+
+test('GD-A03 projection rejects malformed caller-supplied source provenance', () => {
     const args = {
         output: validEngineOutput(),
         vNextContractBinding: bindVNextFeatureContract(REGISTRY),
