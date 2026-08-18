@@ -19,6 +19,12 @@ from typing import Any
 
 from src.ml.inference.feature_contract_boundary_validator import validate_v2_decision_boundaries
 from src.ml.inference.model_asof_contract import MODEL_ASOF_CONTRACT_ID, MODEL_ASOF_CONTRACT_VERSION
+from src.ml.inference.runtime_capture_contract import (
+    _FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
+    RUNTIME_CAPTURE_CONTRACT_ID,
+    RUNTIME_CAPTURE_CONTRACT_VERSION,
+    ValidatedFeatureContractBinding,
+)
 
 DEFAULT_REGISTRY_PATH = (
     Path(__file__).resolve().parents[3] / "config" / "model_feature_contracts.json"
@@ -352,6 +358,22 @@ class FeatureContractRegistry:
                 return contract
         raise FeatureContractNotFoundError("feature contract id not found")
 
+    def validated_feature_contract_binding(
+        self, contract_id: str
+    ) -> ValidatedFeatureContractBinding:
+        """Issue an immutable reference after exact registry validation.
+
+        The returned type is suitable for Layer A reference matching. Canonical
+        authority is reported only by the registry integration boundary after
+        it validates the complete manifest path.
+        """
+        contract = self.get_by_contract_id(contract_id)
+        return ValidatedFeatureContractBinding._from_canonical_registry(
+            contract.contract_id,
+            contract.feature_contract_version,
+            _trust_token=_FEATURE_CONTRACT_REGISTRY_TRUST_TOKEN,
+        )
+
     def get_for_model(self, model_type: str, artifact_name: str | None = None) -> FeatureContract:
         """Return an exact model binding or fail closed on unknown/ambiguous input."""
         if not isinstance(model_type, str) or not model_type:
@@ -407,6 +429,17 @@ class FeatureContractRegistry:
             or boundary["version"] != MODEL_ASOF_CONTRACT_VERSION
         ):
             raise FeatureContractRegistryError("model-as-of contract binding mismatch")
+        return deepcopy(boundary)
+
+    def runtime_capture_boundary(self) -> dict[str, Any]:
+        """Return the validated canonical runtime-capture boundary definition."""
+        payload, _ = self._validated_document()
+        boundary = payload["decision_boundaries"]["runtime_capture"]
+        if (
+            boundary["contract_id"] != RUNTIME_CAPTURE_CONTRACT_ID
+            or boundary["version"] != RUNTIME_CAPTURE_CONTRACT_VERSION
+        ):
+            raise FeatureContractRegistryError("runtime-capture contract binding mismatch")
         return deepcopy(boundary)
 
     def _read_payload(self) -> dict[str, Any]:

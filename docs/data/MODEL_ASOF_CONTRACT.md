@@ -82,9 +82,10 @@ interval 与 T overlap 时，不能猜测先后，必须以
 较晚 odds。
 
 当前 pure validator 不读取墙钟、DB、环境、网络或 Git，也不负责持久化 context
-immutability；未来 capture/replay contract 必须保存 context identity、T、source
-identity、observed/captured time、event/effective time、record ID、content digest 和
-normalization provenance，以证明同一 context 未被原地改写。
+immutability。这个持久化/replay boundary 已由独立的
+`canonical-runtime-capture/v1` contract freeze 定义（见
+`docs/data/RUNTIME_CAPTURE_CONTRACT.md`），但 storage、provider capture 和
+source-specific normalization 仍未实现。
 
 ## Historical standings preservation
 
