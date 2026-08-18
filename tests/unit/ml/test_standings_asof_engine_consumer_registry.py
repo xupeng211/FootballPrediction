@@ -13,6 +13,9 @@ from src.ml.inference.feature_contract_registry import (
     FeatureContractRegistryError,
     load_feature_contract_registry,
 )
+from src.ml.inference.standings_asof_engine_consumer_registry_validator import (
+    validate_standings_asof_engine_consumer_registry_boundary,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = REPO_ROOT / "config" / "model_feature_contracts.json"
@@ -29,7 +32,10 @@ def _write_document(tmp_path: Path, document: dict) -> Path:
 
 
 def test_standings_asof_engine_consumer_boundary_is_canonical_and_frozen() -> None:
-    boundary = load_feature_contract_registry().standings_asof_engine_consumer_boundary()
+    boundary = _document()["decision_boundaries"]["standings_asof_engine_consumer"]
+    validate_standings_asof_engine_consumer_registry_boundary(
+        boundary, FeatureContractRegistryError
+    )
 
     assert boundary["contract_id"] == "standings-asof-engine-consumer/v1"
     assert boundary["version"] == "v1"
@@ -122,7 +128,10 @@ def test_standings_asof_engine_consumer_boundary_drift_fails_closed(
 def test_consumer_boundary_is_distinct_from_frozen_input_boundary() -> None:
     registry = load_feature_contract_registry()
     input_boundary = registry.standings_asof_engine_input_boundary()
-    consumer_boundary = registry.standings_asof_engine_consumer_boundary()
+    consumer_boundary = _document()["decision_boundaries"]["standings_asof_engine_consumer"]
+    validate_standings_asof_engine_consumer_registry_boundary(
+        consumer_boundary, FeatureContractRegistryError
+    )
 
     assert input_boundary["contract_id"] != consumer_boundary["contract_id"]
     assert input_boundary["readiness"]["engine_consumer_implemented"] == "NO"
