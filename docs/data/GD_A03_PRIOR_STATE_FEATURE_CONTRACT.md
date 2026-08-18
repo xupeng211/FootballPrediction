@@ -35,8 +35,10 @@ kickoff-exclusive rows 自动重标为 decision-time rows。完整定义见
 `docs/data/MODEL_ASOF_CONTRACT.md`。
 
 因此本文件下述 V1 cutoff 仍只回答“目标 kickoff 前的历史状态”，不回答某个更早
-prediction decision time 可知什么；未来 T-aware standings input contract、source
-availability proof 和 replayable capture 仍需另行冻结/实现。
+prediction decision time 可知什么。`standings-asof-engine-input/v1` 现已在同一
+canonical registry 中冻结 T-aware standings normalized input、source availability proof
+和 fixture-state taxonomy；但其 engine consumer、source-specific normalization 与
+replayable runtime capture 仍未实现。本文件的历史 rows 不因此被重建或重标为 T-aware rows。
 
 GD-A02 的 `score`、`result`、`xG`、shots、possession、events、shotmap、player
 stats、match stats 是同场 `POSTMATCH_ONLY` facts。它们禁止进入同场 feature；前一

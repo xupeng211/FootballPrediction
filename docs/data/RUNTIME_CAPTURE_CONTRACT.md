@@ -39,6 +39,21 @@ registry 后签发不可变的 `ValidatedFeatureContractBinding`。这个 typed 
 caller 自建 mapping、boolean、字符串、fake typed binding 或显式导入 private token
 不能建立 canonical feature authority。capture 本身也不建立 source authority。
 
+Standings as-of input contract `standings-asof-engine-input/v1` 是该 capture boundary
+之后的未来 normalized consumer boundary；预期链路为：
+
+```text
+validated capture/evidence
+  → future source-specific normalization
+  → standings-as-of engine input
+  → existing PointInTimeStandingsEngine consumer
+```
+
+本阶段只冻结 standings input shape 和纯 validator。当前 JS input object 没有被证明由
+Python `canonical-runtime-capture/v1` validator 产生，
+`RUNTIME_CAPTURE_TO_JS_PROVEN=NOT_PROVEN`；storage、provider、cross-language
+normalization 和 standings engine consumer 均未实现。
+
 ## Capture manifest
 
 一个 manifest 的顶层字段是严格集合：

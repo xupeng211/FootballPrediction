@@ -46,6 +46,16 @@ FEATURE_AS_OF_UTC       = MODEL_DECISION_TIME_UTC
 `TARGET_KICKOFF_UTC` 是目标比赛的 scheduling/identity context，不是 model knowledge
 boundary。它与 T 分开保存，并且在正常预测中预期不相等。
 
+Standings 的 T-aware normalized input boundary 已在同一 registry 的
+`decision_boundaries.standings_asof_engine_input` 单独冻结为
+`standings-asof-engine-input/v1`。它复用本合同的 T 语义，但不改变
+`standings/premier-league-point-in-time/v1` 的 kickoff-exclusive ranking semantics；
+现有 `PointInTimeStandingsEngine` 尚未消费该 boundary。validator 证明输入结构和
+core-derivable schedule/T relation；source-dependent no-table status 的 T 前 eligibility
+仍为 `NOT_PROVEN`，不证明 fixture/result/status/administrative-adjustment source
+closure、source authority、stream completeness、runtime normalization 或 arbitrary-T
+numeric parity。
+
 ## Timestamp taxonomy
 
 | 字段                            | 语义                                                | 能否单独证明 T 前可用                          |

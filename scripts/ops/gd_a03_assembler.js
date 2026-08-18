@@ -1501,6 +1501,7 @@ function validateFeatureContractRegistry(registry) {
     const boundaryNames = new Set([
         'model_as_of',
         'runtime_capture',
+        'standings_asof_engine_input',
         'raw_elo',
         'standings',
         'sot',

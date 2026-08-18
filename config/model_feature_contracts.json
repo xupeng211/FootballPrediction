@@ -462,6 +462,144 @@
                 "train_inference_replay": "NO"
             }
         },
+        "standings_asof_engine_input": {
+            "contract_id": "standings-asof-engine-input/v1",
+            "version": "v1",
+            "status": "FROZEN",
+            "standings_contract": {
+                "contract_id": "standings/premier-league-point-in-time/v1",
+                "version": "v1"
+            },
+            "model_as_of_contract": {
+                "contract_id": "canonical-model-asof/v1",
+                "version": "v1"
+            },
+            "runtime_capture_contract": {
+                "contract_id": "canonical-runtime-capture/v1",
+                "version": "v1"
+            },
+            "implementation_family": "PointInTimeStandingsEngine",
+            "evaluation_boundary": {
+                "model_decision_time_field": "MODEL_DECISION_TIME_UTC",
+                "feature_as_of_field": "FEATURE_AS_OF_UTC",
+                "target_kickoff_field": "TARGET_KICKOFF_UTC",
+                "model_decision_time_is_asof_boundary": "YES",
+                "target_kickoff_is_evaluation_boundary": "NO",
+                "prematch_requires_t_lt_target_kickoff": "YES",
+                "target_kickoff_relabeling_forbidden": "YES",
+                "prefilter_only_proves_asof_compatibility": "NO"
+            },
+            "fixture_universe": {
+                "required": "YES",
+                "reference_match_required": "YES",
+                "full_state_coverage": "EXACTLY_ONE_STATE_PER_FIXTURE",
+                "target_exclusion": "EXACTLY_ONE_TARGET_FIXTURE_EXCLUDED",
+                "authority_proven_by_core": "NO",
+                "status_authority_proven_by_core": "NO"
+            },
+            "source_stream_closure": {
+                "fixture_universe_reference_match": "STRUCTURALLY_VALID",
+                "fixture_universe_closure": "NOT_PROVEN",
+                "fixture_status_evidence_closure": "NOT_PROVEN",
+                "result_evidence_closure": "NOT_PROVEN",
+                "admin_adjustment_stream_closure": "NOT_PROVEN"
+            },
+            "fixture_state_taxonomy": [
+                "RESULT_AVAILABLE_AT_T",
+                "NO_TABLE_RESULT_AT_T",
+                "REQUIRED_EVIDENCE_MISSING_AT_T",
+                "ASOF_STATE_AMBIGUOUS",
+                "TARGET_FIXTURE_EXCLUDED"
+            ],
+            "no_table_result_reason_codes": [
+                "SCHEDULE_NOT_YET_REACHED_AT_T",
+                "PROVEN_POSTPONED_NOT_PLAYED_BY_T",
+                "PROVEN_NOT_FINAL_BY_T",
+                "PROVEN_NON_TABLE_ELIGIBLE_BY_T",
+                "PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T",
+                "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
+                "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T"
+            ],
+            "no_table_proof": {
+                "core_derivable_reason_codes": ["SCHEDULE_NOT_YET_REACHED_AT_T"],
+                "source_dependent_reason_codes": [
+                    "PROVEN_POSTPONED_NOT_PLAYED_BY_T",
+                    "PROVEN_NOT_FINAL_BY_T",
+                    "PROVEN_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T"
+                ],
+                "schedule_not_yet_relation_proven_by_core": "YES",
+                "source_dependent_status_proven_by_core": "NO",
+                "evidence_reference_presence_is_external_truth_proof": "NO",
+                "source_semantic_reason_name_is_core_proof": "NO",
+                "structurally_valid_implies_temporal_proven": "NO",
+                "structurally_valid_implies_runtime_eligible": "NO"
+            },
+            "engine_consumption_gates": {
+                "requires_temporal_eligibility_proven": "YES",
+                "requires_source_dependency_gates": "YES"
+            },
+            "adjustment_state_taxonomy": [
+                "EFFECTIVE_AND_AVAILABLE_AT_T",
+                "KNOWN_NOT_EFFECTIVE_AT_T",
+                "ASOF_ADJUSTMENT_AMBIGUOUS"
+            ],
+            "availability_proof": {
+                "allowed_forms": [
+                    "EXACT_OBSERVATION_TIMESTAMP",
+                    "EXACT_EFFECTIVE_TIMESTAMP_WITH_SOURCE_OBSERVATION_PROOF",
+                    "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T"
+                ],
+                "event_time_alone_proves_availability": "NO",
+                "captured_at_alone_proves_availability": "NO",
+                "post_t_evidence_allowed": "NO",
+                "ambiguous_interval_fails_closed": "YES"
+            },
+            "trust_boundary": {
+                "core_establishes_runtime_source_authority": "NO",
+                "fixture_universe_authority_proven_by_core": "NO",
+                "fixture_status_stream_authority_proven_by_core": "NO",
+                "result_stream_authority_proven_by_core": "NO",
+                "admin_adjustment_stream_authority_proven_by_core": "NO",
+                "runtime_capture_to_js_proven": "NO",
+                "source_normalization_replay_proven": "NO",
+                "caller_source_closure_flags_accepted": "NO",
+                "caller_source_commit_proves_provenance": "NO"
+            },
+            "readiness": {
+                "engine_consumer_implemented": "NO",
+                "runtime_source_to_standings_normalization_proven": "NO",
+                "standings_source_closure_proven": "NO",
+                "historical_asof_numeric_parity_proven": "NO",
+                "runtime_eligible": "NO",
+                "training_eligible": "NO"
+            },
+            "fail_closed_reason_codes": [
+                "STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH",
+                "MODEL_ASOF_BINDING_MISMATCH",
+                "ASOF_DECISION_TIME_INVALID",
+                "TARGET_KICKOFF_IDENTITY_CONFLICT",
+                "FIXTURE_UNIVERSE_INCOMPLETE",
+                "FIXTURE_ASOF_STATE_MISSING",
+                "FIXTURE_ASOF_STATE_DUPLICATE",
+                "FIXTURE_ASOF_STATE_UNKNOWN",
+                "RESULT_AVAILABLE_AT_T_UNPROVEN",
+                "REQUIRED_EVIDENCE_MISSING_AT_T",
+                "ASOF_STATE_AMBIGUOUS",
+                "POST_DECISION_STANDINGS_EVIDENCE",
+                "STANDINGS_SOURCE_CLOSURE_UNPROVEN",
+                "ADMIN_ADJUSTMENT_ASOF_AMBIGUOUS",
+                "TARGET_FIXTURE_NOT_EXCLUDED"
+            ],
+            "digest": {
+                "algorithm": "SHA-256",
+                "canonical_serialization": "STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON",
+                "fixture_state_ordering": "canonicalMatchId_ASCENDING",
+                "adjustment_state_ordering": "adjustmentId_ASCENDING"
+            }
+        },
         "raw_elo": {
             "direction": "BOUNDED_START",
             "retained_in_v_next": "YES",
