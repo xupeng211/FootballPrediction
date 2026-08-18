@@ -49,8 +49,10 @@ boundary。它与 T 分开保存，并且在正常预测中预期不相等。
 Standings 的 T-aware normalized input boundary 已在同一 registry 的
 `decision_boundaries.standings_asof_engine_input` 单独冻结为
 `standings-asof-engine-input/v1`。它复用本合同的 T 语义，但不改变
-`standings/premier-league-point-in-time/v1` 的 kickoff-exclusive ranking semantics；
-现有 `PointInTimeStandingsEngine` 尚未消费该 boundary。validator 证明输入结构和
+`standings/premier-league-point-in-time/v1` 的 legacy kickoff-exclusive ranking semantics。
+同一 registry 的 sibling `standings-asof-engine-consumer/v1` 现在由现有
+`PointInTimeStandingsEngine` 消费该 raw input；consumer 只增加 decision-time-inclusive
+边界，不创建第二 engine 或第二 ranking authority。validator 仍只证明输入结构和
 core-derivable schedule/T relation；source-dependent no-table status 的 T 前 eligibility
 仍为 `NOT_PROVEN`，不证明 fixture/result/status/administrative-adjustment source
 closure、source authority、stream completeness、runtime normalization 或 arbitrary-T
@@ -113,11 +115,12 @@ GD-A03 parity 为 `888/888`；`47_20232024_4193789` 仍因
 校验，但不自动变成 Option-C 的 as-of training rows，也不能通过改标签绕过新的
 availability proof。对更早的 T，standings 可能需要在未来由 T-aware adapter 重建。
 
-当前 `PointInTimeStandingsEngine` 仍以 target kickoff 解释 prior result/event 和
-行政 adjustment eligibility，输入也没有 model T 或 source observation proof。因此本
-合同冻结的架构结论是：未来可继续复用同一个 engine core，但需要
-`REQUIRES_VERSIONED_ENGINE_INPUT_CONTRACT`；不能声称仅把 evidence 在调用前过滤就已
-证明 Option-C numeric parity，也不能创建第二个 standings engine。
+当前 `PointInTimeStandingsEngine` 保留 legacy public path：它以 target kickoff 解释 prior
+result/event 和行政 adjustment eligibility，并保持严格 `< target kickoff`。独立 as-of
+consumer 接收 raw `standings-asof-engine-input/v1`、内部调用 validator，再以
+`MODEL_DECISION_TIME_INCLUSIVE`（`<= T`）调用同一个 ranking kernel；它不会把 T 过滤后
+伪装成 kickoff input。该 consumer 只证明 contract-semantic numeric computation，不能
+声称 Option-C runtime/source numeric parity，也不能创建第二个 standings engine。
 
 ## Odds and strict value evaluation
 

@@ -4,8 +4,10 @@
 
 状态：`FROZEN`（`standings-asof-engine-input/v1`）。本文档冻结进入现有
 `PointInTimeStandingsEngine` 消费边界所需的 normalized as-of input shape、时间语义、
-fixture state 分类和确定性 digest；本阶段不实现 engine consumer、provider 或 runtime
-source。
+fixture state 分类和确定性 digest；本合同的语义与 readiness 字段保持不变。当前
+consumer lifecycle 由同一 registry 的 sibling authority
+`standings-asof-engine-consumer/v1` 定义（详见 `STANDINGS_ASOF_ENGINE_CONSUMER.md`）；
+本文档不承担 consumer implementation status、provider 或 runtime source authority。
 
 ## Canonical authority
 
@@ -169,14 +171,16 @@ NOT_PROVEN_BY_CORE`、`RUNTIME_NUMERIC_ELIGIBILITY=NO`。这明确表示：
 `CANONICAL_FIXTURE_UNIVERSE_AUTHORITY_PROVEN`、fixture/status/result stream closure 或
 source authority。
 
-未来 engine consumer 必须同时满足：
+已实现的独立 consumer boundary 必须同时满足：
 
 ```text
 ENGINE_CONSUMPTION_REQUIRES_TEMPORAL_ELIGIBILITY_PROVEN = YES
 ENGINE_CONSUMPTION_REQUIRES_SOURCE_DEPENDENCY_GATES    = YES
 ```
 
-本任务不实现该 consumer 或任何 status/source authority。
+该 gate 只允许 contract-semantic consumption；它不建立任何 status/source authority，
+不改变本输入合同的 readiness 字段，也不使 runtime source、capture、normalization 或
+training ready。
 
 ### Result availability by T
 
@@ -239,8 +243,10 @@ provenance。`canonical-runtime-capture/v1` 的存在只定义未来边界，不
 ```text
 STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_FROZEN=YES
 STANDINGS_ASOF_INPUT_STRUCTURAL_VALIDATOR_IMPLEMENTED=YES
-POINT_IN_TIME_STANDINGS_ENGINE_ASOF_CONSUMER_IMPLEMENTED=NO
-STANDINGS_ENGINE_ASOF_COMPATIBILITY=VERSIONED_ASOF_ENGINE_INPUT_CONTRACT_FROZEN_CONSUMER_NOT_IMPLEMENTED
+FROZEN_INPUT_CONTRACT_READINESS_ENGINE_CONSUMER_FIELD=NO
+FROZEN_INPUT_CONTRACT_MUTATED_TO_RECORD_CONSUMER_STATE=NO
+INPUT_CONTRACT_AUTHORITY=INPUT_SEMANTICS
+CONSUMER_CONTRACT_AUTHORITY=standings-asof-engine-consumer/v1
 RUNTIME_SOURCE_TO_STANDINGS_NORMALIZATION_PROVEN=NO
 STANDINGS_SOURCE_CLOSURE_PROVEN=NO
 STANDINGS_RUNTIME_ELIGIBLE=NO
@@ -274,9 +280,10 @@ engine↔GD-A03 parity 均保持不变。`47_20232024_4193789` 仍因
 `ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS` unavailable。
 
 历史 rows 仍是 `KICKOFF_EXCLUSIVE_REFERENCE_PROJECTION`：不 rebuild、不 relabel 为 T-aware
-rows，也没有 arbitrary-T numeric parity proof。本 PR 不修改 PointInTimeStandingsEngine
-的 computation semantics，不创建第二 engine，不启动 provider、capture storage、source
-normalization、GD-A04、odds、training、backtest 或 prediction。
+rows，也没有 arbitrary-T numeric parity proof。本 PR 只在同一
+`PointInTimeStandingsEngine` 内增加独立 consumer boundary；legacy computation semantics
+保持不变，不创建第二 engine，不启动 provider、capture storage、source normalization、
+GD-A04、odds、training、backtest 或 prediction。
 
 ## Validation surface
 
@@ -285,8 +292,12 @@ normalization、GD-A04、odds、training、backtest 或 prediction。
 ```text
 tests/unit/standings_asof_engine_input_contract.test.js
 tests/unit/ml/test_standings_asof_engine_input_contract.py
+tests/unit/standings_asof_engine_consumer.test.js
+tests/unit/ml/test_standings_asof_engine_consumer_registry.py
 ```
 
-前者当前覆盖 73 个 semantic/tamper cases，其中包含 15 个 NO_TABLE source-proof regression cases；后者验证同一 singular registry 的 frozen boundary
-与 drift fail-closed。后续 engine consumer 必须复用此 normalized shape 和 digest，不得把
-T 转译为 target kickoff，也不得另建 standings engine 或第二 temporal registry。
+input tests 当前覆盖 73 个 semantic/tamper cases，其中包含 15 个 NO_TABLE source-proof
+regression cases；consumer tests 验证 raw validator、两种 boundary policy、共享 kernel、
+provenance 和 fail-closed gates。Python registry tests 验证同一 singular registry 的
+frozen boundary 与 drift fail-closed。consumer 必须复用此 normalized shape 和 digest，
+不得把 T 转译为 target kickoff，也不得另建 standings engine 或第二 temporal registry。
