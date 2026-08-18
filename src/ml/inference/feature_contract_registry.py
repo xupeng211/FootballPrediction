@@ -25,6 +25,10 @@ from src.ml.inference.runtime_capture_contract import (
     RUNTIME_CAPTURE_CONTRACT_VERSION,
     ValidatedFeatureContractBinding,
 )
+from src.ml.inference.standings_asof_engine_consumer_registry_validator import (
+    STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_ID,
+    STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_VERSION,
+)
 
 DEFAULT_REGISTRY_PATH = (
     Path(__file__).resolve().parents[3] / "config" / "model_feature_contracts.json"
@@ -445,6 +449,16 @@ class FeatureContractRegistry:
     def standings_asof_engine_input_boundary(self) -> dict[str, Any]:  # noqa: D102
         payload, _ = self._validated_document()
         return deepcopy(payload["decision_boundaries"]["standings_asof_engine_input"])
+
+    def standings_asof_engine_consumer_boundary(self) -> dict[str, Any]:  # noqa: D102
+        payload, _ = self._validated_document()
+        boundary = payload["decision_boundaries"]["standings_asof_engine_consumer"]
+        if (
+            boundary["contract_id"] != STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_ID
+            or boundary["version"] != STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_VERSION
+        ):
+            raise FeatureContractRegistryError("standings as-of engine consumer binding mismatch")
+        return deepcopy(boundary)
 
     def _read_payload(self) -> dict[str, Any]:
         try:

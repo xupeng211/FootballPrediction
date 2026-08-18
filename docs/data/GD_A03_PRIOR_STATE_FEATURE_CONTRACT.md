@@ -37,8 +37,10 @@ kickoff-exclusive rows 自动重标为 decision-time rows。完整定义见
 因此本文件下述 V1 cutoff 仍只回答“目标 kickoff 前的历史状态”，不回答某个更早
 prediction decision time 可知什么。`standings-asof-engine-input/v1` 现已在同一
 canonical registry 中冻结 T-aware standings normalized input、source availability proof
-和 fixture-state taxonomy；但其 engine consumer、source-specific normalization 与
-replayable runtime capture 仍未实现。本文件的历史 rows 不因此被重建或重标为 T-aware rows。
+和 fixture-state taxonomy；其 sibling consumer `standings-asof-engine-consumer/v1` 已在
+现有 `PointInTimeStandingsEngine` 内实现，但不接入本 GD-A03 historical/runtime path。
+source-specific normalization 与 replayable runtime capture 仍未实现。本文件的历史 rows
+不因此被重建或重标为 T-aware rows。
 
 GD-A02 的 `score`、`result`、`xG`、shots、possession、events、shotmap、player
 stats、match stats 是同场 `POSTMATCH_ONLY` facts。它们禁止进入同场 feature；前一
@@ -154,9 +156,10 @@ artifact、canonical training frame 或 runtime cache。SOT 只完成了对既�
 source 均为 unavailable，禁止任何比例、均值、插值或估算 fallback。
 
 当前 standings integration 仍保持不联网、不查 provider、不查 DB、不写 DB、无兼容
-proxy/default；历史 adapter 只接收 frozen evidence，runtime source adapter 尚未
-开始。V1 `npm run gd:a03` 入口和 assembler 行为保持不变，V-next 仍为
-`DEFINED_NOT_ACTIVATED`。
+proxy/default；`GdA03StandingsIntegration` 继续调用 legacy kickoff-exclusive
+`computeStandingsSnapshots`，不调用 as-of consumer。历史 adapter 只接收 frozen evidence，
+runtime source adapter 尚未开始。V1 `npm run gd:a03` 入口和 assembler 行为保持不变，
+V-next 仍为 `DEFINED_NOT_ACTIVATED`。
 
 ## V1 canonical 20-feature numeric lineage matrix
 

@@ -14,6 +14,25 @@ const {
     STANDINGS_CONTRACT_ID,
     STANDINGS_CONTRACT_VERSION,
 } = require('./StandingsContractBinding');
+const {
+    STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_ID,
+    STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_VERSION,
+    validateStandingsAsOfEngineInput,
+} = require('./StandingsAsOfEngineInputContract');
+
+const STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_ID = 'standings-asof-engine-consumer/v1';
+const STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_VERSION = 'v1';
+const STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_STATUS = 'FROZEN';
+const LEGACY_KICKOFF_EXCLUSIVE = Object.freeze({
+    id: 'KICKOFF_EXCLUSIVE',
+    resultBoundary: 'STRICT_LT_TARGET_KICKOFF',
+    adjustmentBoundary: 'STRICT_LT_TARGET_KICKOFF',
+});
+const MODEL_DECISION_TIME_INCLUSIVE = Object.freeze({
+    id: 'MODEL_DECISION_TIME_INCLUSIVE',
+    resultBoundary: 'LTE_MODEL_DECISION_TIME',
+    adjustmentBoundary: 'LTE_MODEL_DECISION_TIME',
+});
 
 // This is the in-process identity of the implementation that is actually
 // imported and invoked. It intentionally contains no Git/source-commit claim;
@@ -383,7 +402,7 @@ function canonicalInput(input, fixtures, results, adjustments, target, teamIds) 
     };
 }
 
-function prepareInput(input) {
+function prepareInput(input, { modelDecisionMilliseconds = null } = {}) {
     const value = assertPlainObject(input, 'standings engine input');
     assertKnownKeys(value, TOP_LEVEL_FIELDS, 'standings engine input');
     const binding = assertStandingsContractBinding(value.contractBinding);
@@ -448,6 +467,7 @@ function prepareInput(input) {
         adjustmentsById,
         target,
         targetMilliseconds: parseUtc(target.targetKickoffUtc, 'target.targetKickoffUtc'),
+        modelDecisionMilliseconds,
         inputDigest: sha256Text(
             stableStringify(canonicalInput(value, fixtures, results, adjustments, target, teamIds))
         ),
@@ -525,12 +545,16 @@ function assignPositions(table) {
     return states;
 }
 
-function evaluateAdjustment(adjustment, targetMilliseconds) {
+function evaluateAdjustment(adjustment, evaluationMilliseconds, boundaryPolicy) {
     if (adjustment.effectiveTime.kind === 'EXACT') {
-        return adjustment.effectiveTime.atMs < targetMilliseconds ? 'EFFECTIVE' : 'NOT_EFFECTIVE';
+        const effective =
+            boundaryPolicy.adjustmentBoundary === 'LTE_MODEL_DECISION_TIME'
+                ? adjustment.effectiveTime.atMs <= evaluationMilliseconds
+                : adjustment.effectiveTime.atMs < evaluationMilliseconds;
+        return effective ? 'EFFECTIVE' : 'NOT_EFFECTIVE';
     }
-    if (targetMilliseconds < adjustment.effectiveTime.lowerMs) return 'NOT_EFFECTIVE';
-    if (targetMilliseconds >= adjustment.effectiveTime.upperMs) return 'EFFECTIVE';
+    if (evaluationMilliseconds < adjustment.effectiveTime.lowerMs) return 'NOT_EFFECTIVE';
+    if (evaluationMilliseconds >= adjustment.effectiveTime.upperMs) return 'EFFECTIVE';
     return 'AMBIGUOUS';
 }
 
@@ -584,9 +608,13 @@ function baseOutput(prepared, status, reasonCodes, sourceEventIds, consideredAdj
     };
 }
 
-function computeStandingsSnapshot(input) {
-    const prepared = prepareInput(input);
-    const { binding, target, targetMilliseconds, fixtures, resultsById, adjustments, teamIds, inputDigest } = prepared;
+function computePreparedStandings(prepared, boundaryPolicy) {
+    const evaluationMilliseconds =
+        boundaryPolicy === LEGACY_KICKOFF_EXCLUSIVE ? prepared.targetMilliseconds : prepared.modelDecisionMilliseconds;
+    if (!Number.isFinite(evaluationMilliseconds)) {
+        fail('standings evaluation boundary is unavailable', 'DEPENDENCY_UNAVAILABLE');
+    }
+    const { binding, target, fixtures, resultsById, adjustments, teamIds, inputDigest } = prepared;
     const blockers = new Set();
     const sourceEventIds = new Set();
     const sameKickoffExcluded = [];
@@ -599,7 +627,7 @@ function computeStandingsSnapshot(input) {
         const scheduledMilliseconds = parseUtc(fixture.scheduledKickoffUtc, 'fixture scheduled kickoff');
         const result = resultsById.get(fixture.canonicalMatchId);
         if (!result) {
-            if (scheduledMilliseconds < targetMilliseconds) blockers.add('MISSING_PRIOR_RESULT_EVIDENCE');
+            if (scheduledMilliseconds < evaluationMilliseconds) blockers.add('MISSING_PRIOR_RESULT_EVIDENCE');
             continue;
         }
 
@@ -613,8 +641,8 @@ function computeStandingsSnapshot(input) {
         if (result.disposition === 'UNKNOWN') {
             if (
                 actualMilliseconds === null ||
-                actualMilliseconds < targetMilliseconds ||
-                scheduledMilliseconds < targetMilliseconds
+                actualMilliseconds < evaluationMilliseconds ||
+                scheduledMilliseconds < evaluationMilliseconds
             ) {
                 blockers.add('EXCEPTION_STATUS_UNPROVEN');
             }
@@ -623,8 +651,8 @@ function computeStandingsSnapshot(input) {
         if (result.disposition === 'AWARDED' && result.tableEligibility === 'UNKNOWN') {
             if (
                 actualMilliseconds === null ||
-                actualMilliseconds < targetMilliseconds ||
-                scheduledMilliseconds < targetMilliseconds
+                actualMilliseconds < evaluationMilliseconds ||
+                scheduledMilliseconds < evaluationMilliseconds
             ) {
                 blockers.add('EXCEPTION_STATUS_UNPROVEN');
             }
@@ -638,8 +666,8 @@ function computeStandingsSnapshot(input) {
         if (result.finalityStatus !== 'FINAL') {
             if (
                 actualMilliseconds === null ||
-                actualMilliseconds < targetMilliseconds ||
-                scheduledMilliseconds < targetMilliseconds
+                actualMilliseconds < evaluationMilliseconds ||
+                scheduledMilliseconds < evaluationMilliseconds
             ) {
                 blockers.add('EXCEPTION_STATUS_UNPROVEN');
             }
@@ -649,11 +677,14 @@ function computeStandingsSnapshot(input) {
             blockers.add('POSTPONED_EVENT_TIME_UNPROVEN');
             continue;
         }
-        if (actualMilliseconds === targetMilliseconds) {
+        if (
+            actualMilliseconds === evaluationMilliseconds &&
+            boundaryPolicy.resultBoundary === 'STRICT_LT_TARGET_KICKOFF'
+        ) {
             sameKickoffExcluded.push(result.canonicalMatchId);
             continue;
         }
-        if (actualMilliseconds > targetMilliseconds) {
+        if (actualMilliseconds > evaluationMilliseconds) {
             futureExcluded.push(result.canonicalMatchId);
             continue;
         }
@@ -672,7 +703,7 @@ function computeStandingsSnapshot(input) {
     const consideredAdjustmentIds = adjustments.map(row => row.adjustmentId);
     const appliedAdjustmentIds = [];
     for (const adjustment of adjustments) {
-        const status = evaluateAdjustment(adjustment, targetMilliseconds);
+        const status = evaluateAdjustment(adjustment, evaluationMilliseconds, boundaryPolicy);
         if (status === 'AMBIGUOUS') {
             blockers.add('ADMIN_ADJUSTMENT_EFFECTIVE_TIME_AMBIGUOUS');
             continue;
@@ -723,6 +754,199 @@ function computeStandingsSnapshot(input) {
     return output;
 }
 
+function computeStandingsSnapshot(input) {
+    const prepared = prepareInput(input);
+    return computePreparedStandings(prepared, LEGACY_KICKOFF_EXCLUSIVE);
+}
+
+function toAsOfEngineResult(result) {
+    const engineResult = { ...result };
+    delete engineResult.availabilityProof;
+    return engineResult;
+}
+
+function toAsOfEngineAdjustment(adjustment) {
+    const engineAdjustment = { ...adjustment };
+    delete engineAdjustment.state;
+    delete engineAdjustment.availabilityProof;
+    const { effectiveTime } = adjustment;
+    const engineEffectiveTime =
+        effectiveTime.kind === 'EXACT'
+            ? { kind: 'EXACT', atUtc: effectiveTime.atUtc }
+            : {
+                  kind: 'INTERVAL',
+                  lowerBoundUtc: effectiveTime.lowerBoundUtc,
+                  upperBoundUtc: effectiveTime.upperBoundUtc,
+              };
+    return { ...engineAdjustment, effectiveTime: engineEffectiveTime };
+}
+
+function transformValidatedAsOfInput(rawInput, validation) {
+    const normalized = validation.normalizedInput;
+    const fixtures = normalized.fixture_universe.fixtures.map(fixture => ({ ...fixture }));
+    const fixtureStates = new Map(normalized.fixture_states.map(state => [state.canonicalMatchId, state]));
+    const results = normalized.fixture_states
+        .filter(state => state.state === 'RESULT_AVAILABLE_AT_T')
+        .map(state => toAsOfEngineResult(fixtureStates.get(state.canonicalMatchId).result));
+    const teamUniverse = [...new Set(fixtures.flatMap(fixture => [fixture.homeTeamId, fixture.awayTeamId]))].sort(
+        (left, right) => left.localeCompare(right)
+    );
+    return {
+        contractBinding: rawInput.standingsContractBinding,
+        competition: normalized.target.competition,
+        leagueId: normalized.target.leagueId,
+        season: normalized.target.season,
+        teamUniverse,
+        fixtures,
+        results,
+        administrativeAdjustments: normalized.administrative_adjustments.map(toAsOfEngineAdjustment),
+        target: { ...normalized.target },
+    };
+}
+
+function asOfConsumerGateReasonCodes(validation) {
+    if (validation.semanticStatus === 'BLOCKED') return [...validation.blockingReasonCodes];
+    if (validation.statuses.TEMPORAL_ELIGIBILITY_VALIDITY !== 'PROVEN') {
+        return ['STANDINGS_SOURCE_CLOSURE_UNPROVEN'];
+    }
+    return [];
+}
+
+function rankingProjectionDigest(engineOutput) {
+    if (!engineOutput) return null;
+    return sha256Text(
+        stableStringify({
+            snapshot_status: engineOutput.snapshot_status,
+            home_table_position: engineOutput.home_table_position,
+            away_table_position: engineOutput.away_table_position,
+            table_position_diff: engineOutput.table_position_diff,
+            diagnostic_table_state: engineOutput.diagnostic_table_state,
+            unavailable_reason_codes: engineOutput.unavailable_reason_codes,
+        })
+    );
+}
+
+function makeAsOfConsumerProvenanceDigest({
+    validation,
+    targetKickoffUtc,
+    sourceEventIds,
+    appliedAdjustmentIds,
+    consumerOutcomeStatus,
+    numericProjectionDigest,
+}) {
+    return sha256Text(
+        stableStringify({
+            consumer_contract_id: STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_ID,
+            consumer_contract_version: STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_VERSION,
+            input_contract_id: STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_ID,
+            input_contract_version: STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_VERSION,
+            asof_input_digest: validation.canonicalDigest,
+            model_decision_time_utc: validation.normalizedInput.model_decision_time_utc,
+            feature_as_of_utc: validation.normalizedInput.feature_as_of_utc,
+            target_kickoff_utc: targetKickoffUtc,
+            ranking_contract_id: STANDINGS_CONTRACT_ID,
+            ranking_contract_version: STANDINGS_CONTRACT_VERSION,
+            evaluation_boundary_policy: MODEL_DECISION_TIME_INCLUSIVE.id,
+            engine_implementation_id: STANDINGS_ENGINE_IMPLEMENTATION.implementation_id,
+            engine_implementation_identity_digest: STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST,
+            numeric_projection_digest: numericProjectionDigest,
+            source_event_ids_used: [...sourceEventIds].sort((left, right) => left.localeCompare(right)),
+            administrative_adjustment_ids_applied: [...appliedAdjustmentIds].sort((left, right) =>
+                left.localeCompare(right)
+            ),
+            consumer_outcome_status: consumerOutcomeStatus,
+        })
+    );
+}
+
+function buildAsOfConsumerOutput(validation, engineOutput, computationStatus, gateReasonCodes = []) {
+    const normalized = validation.normalizedInput;
+    const target = normalized.target;
+    const sourceEventIds = engineOutput?.source_event_ids_used || [];
+    const appliedAdjustmentIds = engineOutput?.administrative_adjustment_ids_applied || [];
+    const consideredAdjustmentIds =
+        engineOutput?.administrative_adjustment_ids_considered ||
+        normalized.administrative_adjustments.map(adjustment => adjustment.adjustmentId);
+    const unavailableReasonCodes = engineOutput
+        ? engineOutput.unavailable_reason_codes
+        : [...new Set(gateReasonCodes)].sort((left, right) => left.localeCompare(right));
+    const projectionDigest = rankingProjectionDigest(engineOutput);
+    const consumerOutcomeStatus = computationStatus === 'EXECUTED' ? 'EXECUTED' : 'NOT_EXECUTED';
+    return {
+        snapshot_status: engineOutput?.snapshot_status || 'UNAVAILABLE',
+        target_match_id: target.canonicalMatchId,
+        target_kickoff_utc: target.targetKickoffUtc,
+        home_team_id: target.homeTeamId,
+        away_team_id: target.awayTeamId,
+        competition: target.competition,
+        league_id: target.leagueId,
+        season: target.season,
+        contract_id: STANDINGS_CONTRACT_ID,
+        contract_version: STANDINGS_CONTRACT_VERSION,
+        home_table_position: engineOutput?.home_table_position ?? null,
+        away_table_position: engineOutput?.away_table_position ?? null,
+        table_position_diff: engineOutput?.table_position_diff ?? null,
+        unavailable_reason_codes: [...new Set(unavailableReasonCodes)].sort((left, right) => left.localeCompare(right)),
+        source_event_ids_used: [...sourceEventIds].sort((left, right) => left.localeCompare(right)),
+        administrative_adjustment_ids_considered: [...consideredAdjustmentIds].sort((left, right) =>
+            left.localeCompare(right)
+        ),
+        administrative_adjustment_ids_applied: [...appliedAdjustmentIds].sort((left, right) =>
+            left.localeCompare(right)
+        ),
+        max_eligible_source_event_time_utc: engineOutput?.max_eligible_source_event_time_utc || null,
+        diagnostic_table_state: engineOutput?.diagnostic_table_state || null,
+        diagnostics: engineOutput?.diagnostics || {
+            target_match_result_excluded: true,
+            same_kickoff_excluded_event_ids: [],
+            future_event_ids_excluded: [],
+            replay_double_count: 0,
+            original_scheduled_date_used_as_event_time_count: 0,
+        },
+        consumer_contract_id: STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_ID,
+        consumer_contract_version: STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_VERSION,
+        consumer_contract_status: STANDINGS_ASOF_ENGINE_CONSUMER_CONTRACT_STATUS,
+        input_contract_id: STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_ID,
+        input_contract_version: STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_VERSION,
+        model_decision_time_utc: normalized.model_decision_time_utc,
+        feature_as_of_utc: normalized.feature_as_of_utc,
+        evaluation_boundary_policy: MODEL_DECISION_TIME_INCLUSIVE.id,
+        asof_input_digest: validation.canonicalDigest,
+        ranking_contract_id: STANDINGS_CONTRACT_ID,
+        ranking_contract_version: STANDINGS_CONTRACT_VERSION,
+        engine_implementation_id: STANDINGS_ENGINE_IMPLEMENTATION.implementation_id,
+        engine_implementation_identity_digest: STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST,
+        ranking_projection_input_digest: engineOutput?.input_digest || null,
+        ranking_projection_provenance_digest: engineOutput?.provenance_digest || null,
+        consumer_provenance_digest: makeAsOfConsumerProvenanceDigest({
+            validation,
+            targetKickoffUtc: target.targetKickoffUtc,
+            sourceEventIds,
+            appliedAdjustmentIds,
+            consumerOutcomeStatus,
+            numericProjectionDigest: projectionDigest,
+        }),
+        engine_computation_status: computationStatus,
+        runtime_numeric_eligibility: 'NO',
+        source_authority_validity: 'NOT_PROVEN',
+    };
+}
+
+function computeStandingsAsOfSnapshot(asOfInput) {
+    const validation = validateStandingsAsOfEngineInput(asOfInput);
+    const gateReasonCodes = asOfConsumerGateReasonCodes(validation);
+    if (gateReasonCodes.length > 0) {
+        return buildAsOfConsumerOutput(validation, null, 'NOT_EXECUTED', gateReasonCodes);
+    }
+
+    const transformedInput = transformValidatedAsOfInput(asOfInput, validation);
+    const prepared = prepareInput(transformedInput, {
+        modelDecisionMilliseconds: parseUtc(validation.normalizedInput.model_decision_time_utc, 'model decision time'),
+    });
+    const engineOutput = computePreparedStandings(prepared, MODEL_DECISION_TIME_INCLUSIVE);
+    return buildAsOfConsumerOutput(validation, engineOutput, 'EXECUTED');
+}
+
 function computeStandingsSnapshots(inputs) {
     if (!Array.isArray(inputs)) fail('standings snapshot input list must be an array', 'DEPENDENCY_UNAVAILABLE');
     return inputs
@@ -731,11 +955,16 @@ function computeStandingsSnapshots(inputs) {
 }
 
 module.exports = {
-    PointInTimeStandingsEngine: Object.freeze({ computeStandingsSnapshot, computeStandingsSnapshots }),
+    PointInTimeStandingsEngine: Object.freeze({
+        computeStandingsSnapshot,
+        computeStandingsSnapshots,
+        computeStandingsAsOfSnapshot,
+    }),
     STANDINGS_ENGINE_IMPLEMENTATION,
     STANDINGS_ENGINE_IMPLEMENTATION_BINDING,
     STANDINGS_ENGINE_IMPLEMENTATION_IDENTITY_DIGEST,
     StandingsEngineError,
     computeStandingsSnapshot,
     computeStandingsSnapshots,
+    computeStandingsAsOfSnapshot,
 };

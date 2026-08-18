@@ -600,6 +600,74 @@
                 "adjustment_state_ordering": "adjustmentId_ASCENDING"
             }
         },
+        "standings_asof_engine_consumer": {
+            "contract_id": "standings-asof-engine-consumer/v1",
+            "version": "v1",
+            "status": "FROZEN",
+            "consumer_role": "CONSUMER_INTEGRATION",
+            "input_contract": {
+                "contract_id": "standings-asof-engine-input/v1",
+                "version": "v1"
+            },
+            "ranking_contract": {
+                "contract_id": "standings/premier-league-point-in-time/v1",
+                "version": "v1"
+            },
+            "model_as_of_contract": {
+                "contract_id": "canonical-model-asof/v1",
+                "version": "v1"
+            },
+            "runtime_capture_contract": {
+                "contract_id": "canonical-runtime-capture/v1",
+                "version": "v1"
+            },
+            "implementation_family": "PointInTimeStandingsEngine",
+            "implementation_binding": {
+                "implementation_id": "PointInTimeStandingsEngine",
+                "binding_source": "EXISTING_ENGINE_IMPLEMENTATION_BINDING",
+                "source_commit_proof": "EXTERNAL_AUDIT_ONLY"
+            },
+            "boundary_policy": {
+                "legacy": "KICKOFF_EXCLUSIVE",
+                "asof": "MODEL_DECISION_TIME_INCLUSIVE",
+                "legacy_result": "STRICT_LT_TARGET_KICKOFF",
+                "asof_result": "LTE_MODEL_DECISION_TIME",
+                "legacy_adjustment": "STRICT_LT_TARGET_KICKOFF",
+                "asof_adjustment": "LTE_MODEL_DECISION_TIME"
+            },
+            "consumption_gates": {
+                "generic_caller_cutoff_allowed": "NO",
+                "input_validator_invoked_by_consumer": "YES",
+                "caller_can_self_assert_validation": "NO",
+                "caller_can_self_assert_eligibility": "NO",
+                "source_dependent_no_table_allowed": "NO_WITHOUT_TRUSTED_PROOF",
+                "structural_validity_alone_allows_consumption": "NO",
+                "blocked_input_computation": "NO",
+                "unproven_state_can_be_filtered_away": "NO"
+            },
+            "output": {
+                "asof_context_bound": "YES",
+                "consumer_provenance_digest_algorithm": "SHA-256",
+                "t_bound_in_provenance": "YES",
+                "target_kickoff_bound_in_provenance": "YES",
+                "unavailable_positions": "NULL",
+                "unavailable_computation_status": "NOT_EXECUTED"
+            },
+            "readiness": {
+                "consumer_implemented": "YES",
+                "semantic_numeric_computation": "YES",
+                "runtime_source_authority_proven": "NO",
+                "runtime_numeric_eligibility": "NO",
+                "runtime_eligible": "NO",
+                "training_eligible": "NO"
+            },
+            "source_authority": {
+                "source_authority_validity": "NOT_PROVEN",
+                "source_stream_completeness": "NOT_PROVEN",
+                "runtime_source_to_standings_normalization_proven": "NO",
+                "target_identity_authority_implemented": "NO"
+            }
+        },
         "raw_elo": {
             "direction": "BOUNDED_START",
             "retained_in_v_next": "YES",

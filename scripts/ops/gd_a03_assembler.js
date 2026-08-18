@@ -1502,6 +1502,7 @@ function validateFeatureContractRegistry(registry) {
         'model_as_of',
         'runtime_capture',
         'standings_asof_engine_input',
+        'standings_asof_engine_consumer',
         'raw_elo',
         'standings',
         'sot',

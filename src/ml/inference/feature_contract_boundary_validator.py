@@ -21,6 +21,9 @@ from src.ml.inference.model_asof_contract import (
     validate_model_asof_registry_boundary,
 )
 from src.ml.inference.runtime_capture_contract import validate_runtime_capture_registry_boundary
+from src.ml.inference.standings_asof_engine_consumer_registry_validator import (
+    validate_standings_asof_engine_consumer_registry_boundary,
+)
 from src.ml.inference.standings_asof_engine_input_registry_validator import (
     validate_standings_asof_engine_input_registry_boundary,
 )
@@ -34,6 +37,7 @@ __all__ = [
     "ModelAsOfValidationError",
     "validate_model_as_of_context",
     "validate_runtime_capture_manifest_against_canonical_registry",
+    "validate_standings_asof_engine_consumer_registry_boundary",
     "validate_standings_asof_engine_input_registry_boundary",
     "validate_v2_decision_boundaries",
 ]
@@ -53,6 +57,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         "model_as_of",
         "runtime_capture",
         "standings_asof_engine_input",
+        "standings_asof_engine_consumer",
         "raw_elo",
         "standings",
         "sot",
@@ -104,6 +109,9 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
     validate_runtime_capture_registry_boundary(boundaries["runtime_capture"], error_type)
     validate_standings_asof_engine_input_registry_boundary(
         boundaries["standings_asof_engine_input"], error_type
+    )
+    validate_standings_asof_engine_consumer_registry_boundary(
+        boundaries["standings_asof_engine_consumer"], error_type
     )
 
     raw_elo = exact_object(
