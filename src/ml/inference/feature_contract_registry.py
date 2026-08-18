@@ -442,6 +442,10 @@ class FeatureContractRegistry:
             raise FeatureContractRegistryError("runtime-capture contract binding mismatch")
         return deepcopy(boundary)
 
+    def standings_asof_engine_input_boundary(self) -> dict[str, Any]:  # noqa: D102
+        payload, _ = self._validated_document()
+        return deepcopy(payload["decision_boundaries"]["standings_asof_engine_input"])
+
     def _read_payload(self) -> dict[str, Any]:
         try:
             payload = json.loads(self._registry_path.read_text(encoding="utf-8"))
