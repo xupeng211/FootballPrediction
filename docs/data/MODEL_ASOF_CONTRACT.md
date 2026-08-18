@@ -50,8 +50,9 @@ Standings 的 T-aware normalized input boundary 已在同一 registry 的
 `decision_boundaries.standings_asof_engine_input` 单独冻结为
 `standings-asof-engine-input/v1`。它复用本合同的 T 语义，但不改变
 `standings/premier-league-point-in-time/v1` 的 kickoff-exclusive ranking semantics；
-现有 `PointInTimeStandingsEngine` 尚未消费该 boundary。validator 只证明输入结构和
-T 前 eligibility 约束，不证明 fixture/result/status/administrative-adjustment source
+现有 `PointInTimeStandingsEngine` 尚未消费该 boundary。validator 证明输入结构和
+core-derivable schedule/T relation；source-dependent no-table status 的 T 前 eligibility
+仍为 `NOT_PROVEN`，不证明 fixture/result/status/administrative-adjustment source
 closure、source authority、stream completeness、runtime normalization 或 arbitrary-T
 numeric parity。
 

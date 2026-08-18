@@ -520,6 +520,27 @@
                 "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
                 "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T"
             ],
+            "no_table_proof": {
+                "core_derivable_reason_codes": ["SCHEDULE_NOT_YET_REACHED_AT_T"],
+                "source_dependent_reason_codes": [
+                    "PROVEN_POSTPONED_NOT_PLAYED_BY_T",
+                    "PROVEN_NOT_FINAL_BY_T",
+                    "PROVEN_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
+                    "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T"
+                ],
+                "schedule_not_yet_relation_proven_by_core": "YES",
+                "source_dependent_status_proven_by_core": "NO",
+                "evidence_reference_presence_is_external_truth_proof": "NO",
+                "source_semantic_reason_name_is_core_proof": "NO",
+                "structurally_valid_implies_temporal_proven": "NO",
+                "structurally_valid_implies_runtime_eligible": "NO"
+            },
+            "engine_consumption_gates": {
+                "requires_temporal_eligibility_proven": "YES",
+                "requires_source_dependency_gates": "YES"
+            },
             "adjustment_state_taxonomy": [
                 "EFFECTIVE_AND_AVAILABLE_AT_T",
                 "KNOWN_NOT_EFFECTIVE_AT_T",

@@ -43,6 +43,10 @@ const NO_TABLE_RESULT_REASONS = Object.freeze([
     'PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T',
     'PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T',
 ]);
+const CORE_DERIVABLE_NO_TABLE_REASONS = Object.freeze(['SCHEDULE_NOT_YET_REACHED_AT_T']);
+const SOURCE_DEPENDENT_NO_TABLE_REASONS = Object.freeze(
+    NO_TABLE_RESULT_REASONS.filter(reasonCode => !CORE_DERIVABLE_NO_TABLE_REASONS.includes(reasonCode))
+);
 const ADJUSTMENT_STATES = Object.freeze([
     'EFFECTIVE_AND_AVAILABLE_AT_T',
     'KNOWN_NOT_EFFECTIVE_AT_T',
@@ -87,6 +91,8 @@ const BOUNDARY_FIELDS = new Set([
     'source_stream_closure',
     'fixture_state_taxonomy',
     'no_table_result_reason_codes',
+    'no_table_proof',
+    'engine_consumption_gates',
     'adjustment_state_taxonomy',
     'availability_proof',
     'trust_boundary',
@@ -393,6 +399,61 @@ function validateContractBoundary(value) {
         NO_TABLE_RESULT_REASONS,
         'contractBoundary.no_table_result_reason_codes'
     );
+    const noTableProof = assertPlainObject(
+        boundary.no_table_proof,
+        'contractBoundary.no_table_proof',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
+    assertExactKeys(
+        noTableProof,
+        new Set([
+            'core_derivable_reason_codes',
+            'source_dependent_reason_codes',
+            'schedule_not_yet_relation_proven_by_core',
+            'source_dependent_status_proven_by_core',
+            'evidence_reference_presence_is_external_truth_proof',
+            'source_semantic_reason_name_is_core_proof',
+            'structurally_valid_implies_temporal_proven',
+            'structurally_valid_implies_runtime_eligible',
+        ]),
+        'contractBoundary.no_table_proof',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
+    assertExactValue(
+        noTableProof,
+        {
+            core_derivable_reason_codes: CORE_DERIVABLE_NO_TABLE_REASONS,
+            source_dependent_reason_codes: SOURCE_DEPENDENT_NO_TABLE_REASONS,
+            schedule_not_yet_relation_proven_by_core: 'YES',
+            source_dependent_status_proven_by_core: 'NO',
+            evidence_reference_presence_is_external_truth_proof: 'NO',
+            source_semantic_reason_name_is_core_proof: 'NO',
+            structurally_valid_implies_temporal_proven: 'NO',
+            structurally_valid_implies_runtime_eligible: 'NO',
+        },
+        'contractBoundary.no_table_proof',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
+    const engineConsumptionGates = assertPlainObject(
+        boundary.engine_consumption_gates,
+        'contractBoundary.engine_consumption_gates',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
+    assertExactKeys(
+        engineConsumptionGates,
+        new Set(['requires_temporal_eligibility_proven', 'requires_source_dependency_gates']),
+        'contractBoundary.engine_consumption_gates',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
+    assertExactValue(
+        engineConsumptionGates,
+        {
+            requires_temporal_eligibility_proven: 'YES',
+            requires_source_dependency_gates: 'YES',
+        },
+        'contractBoundary.engine_consumption_gates',
+        'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH'
+    );
     assertExactValue(
         boundary.adjustment_state_taxonomy,
         ADJUSTMENT_STATES,
@@ -534,6 +595,12 @@ function validateContractBoundary(value) {
         source_stream_closure: { ...sourceStreamClosure },
         fixture_state_taxonomy: [...boundary.fixture_state_taxonomy],
         no_table_result_reason_codes: [...boundary.no_table_result_reason_codes],
+        no_table_proof: {
+            ...noTableProof,
+            core_derivable_reason_codes: [...noTableProof.core_derivable_reason_codes],
+            source_dependent_reason_codes: [...noTableProof.source_dependent_reason_codes],
+        },
+        engine_consumption_gates: { ...engineConsumptionGates },
         adjustment_state_taxonomy: [...boundary.adjustment_state_taxonomy],
         availability_proof: { ...availabilityProof, allowed_forms: [...availabilityProof.allowed_forms] },
         trust_boundary: { ...trustBoundary },
@@ -818,6 +885,21 @@ function validateBasis(value, state, index) {
     };
 }
 
+function classifyNoTableReason(reasonCode) {
+    if (CORE_DERIVABLE_NO_TABLE_REASONS.includes(reasonCode)) {
+        return {
+            proofClass: 'CORE_DERIVABLE_TEMPORAL_RELATION',
+            sourceStatusProof: 'NOT_APPLICABLE',
+            temporalEligibility: 'PROVEN_BY_CORE_SCHEDULE_RELATION',
+        };
+    }
+    return {
+        proofClass: 'SOURCE_STATUS_DEPENDENT',
+        sourceStatusProof: 'NOT_PROVEN_BY_CORE',
+        temporalEligibility: 'NOT_PROVEN',
+    };
+}
+
 function validateFixtureState(value, index, fixtureById, target, decisionMilliseconds) {
     const label = `fixtureStates[${index}]`;
     const state = assertPlainObject(value, label, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
@@ -869,7 +951,12 @@ function validateFixtureState(value, index, fixtureById, target, decisionMillise
         } else if (scheduledMilliseconds >= decisionMilliseconds) {
             fail(`${label} no-table status hides a not-yet-reached schedule`, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
         }
-        return { canonicalMatchId: state.canonicalMatchId, state: state.state, basis };
+        return {
+            canonicalMatchId: state.canonicalMatchId,
+            state: state.state,
+            basis,
+            noTableProof: classifyNoTableReason(basis.reasonCode),
+        };
     }
     if (scheduledMilliseconds >= decisionMilliseconds) {
         fail(`${label} blocker is not a prior fixture obligation`, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
@@ -1196,6 +1283,13 @@ function validateStandingsAsOfEngineInput(input) {
     const canonicalDigest = sha256Text(stableStringify(normalizedInput));
     const blocking = [...blockingReasonCodes].sort((left, right) => left.localeCompare(right));
     const availableCount = fixtureStates.filter(state => state.state === 'RESULT_AVAILABLE_AT_T').length;
+    const noTableStates = fixtureStates.filter(state => state.state === 'NO_TABLE_RESULT_AT_T');
+    const sourceDependentNoTableCount = noTableStates.filter(
+        state => state.noTableProof.proofClass === 'SOURCE_STATUS_DEPENDENT'
+    ).length;
+    const scheduleNotYetCount = noTableStates.filter(
+        state => state.basis.reasonCode === 'SCHEDULE_NOT_YET_REACHED_AT_T'
+    ).length;
     const notYetEligibleCount = fixtureStates.filter(
         state => state.state === 'NO_TABLE_RESULT_AT_T' && state.basis.reasonCode === 'SCHEDULE_NOT_YET_REACHED_AT_T'
     ).length;
@@ -1219,10 +1313,19 @@ function validateStandingsAsOfEngineInput(input) {
             ENGINE_INPUT_STRUCTURAL_VALIDITY: 'PROVEN',
             FIXTURE_STATE_COVERAGE_VALIDITY: 'PROVEN',
             FIXTURE_UNIVERSE_REFERENCE_MATCH: 'STRUCTURALLY_VALID',
+            NO_TABLE_STATE_REFERENCE_VALIDITY: 'STRUCTURALLY_VALID',
+            SCHEDULE_NOT_YET_TEMPORAL_RELATION_PROVEN_BY_CORE: scheduleNotYetCount > 0 ? 'YES' : 'NO',
+            SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF: 'NOT_PROVEN_BY_CORE',
+            SOURCE_DEPENDENT_NO_TABLE_TEMPORAL_PROOF_BY_CORE: 'NO',
+            STRUCTURALLY_VALID_IMPLIES_TEMPORAL_PROVEN: 'NO',
+            STRUCTURALLY_VALID_IMPLIES_RUNTIME_ELIGIBLE: 'NO',
+            ENGINE_CONSUMPTION_REQUIRES_TEMPORAL_ELIGIBILITY_PROVEN: 'YES',
+            ENGINE_CONSUMPTION_REQUIRES_SOURCE_DEPENDENCY_GATES: 'YES',
             TEMPORAL_ELIGIBILITY_VALIDITY:
                 blocking.includes('REQUIRED_EVIDENCE_MISSING_AT_T') ||
                 blocking.includes('ASOF_STATE_AMBIGUOUS') ||
-                blocking.includes('ADMIN_ADJUSTMENT_ASOF_AMBIGUOUS')
+                blocking.includes('ADMIN_ADJUSTMENT_ASOF_AMBIGUOUS') ||
+                sourceDependentNoTableCount > 0
                     ? 'NOT_PROVEN'
                     : 'PROVEN',
             FIXTURE_UNIVERSE_CLOSURE: 'NOT_PROVEN',
@@ -1256,11 +1359,13 @@ const canonicalizeStandingsAsOfEngineInput = validateStandingsAsOfEngineInput;
 module.exports = {
     ADJUSTMENT_STATES,
     AVAILABILITY_PROOF_KINDS,
+    CORE_DERIVABLE_NO_TABLE_REASONS,
     FAIL_CLOSED_REASON_CODES,
     FIXTURE_STATES,
     MODEL_ASOF_CONTRACT_ID,
     MODEL_ASOF_CONTRACT_VERSION,
     NO_TABLE_RESULT_REASONS,
+    SOURCE_DEPENDENT_NO_TABLE_REASONS,
     RUNTIME_CAPTURE_CONTRACT_ID,
     RUNTIME_CAPTURE_CONTRACT_VERSION,
     STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_ID,

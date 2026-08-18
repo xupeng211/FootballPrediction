@@ -131,15 +131,15 @@ reference 的 fixture ID 集合与传入 rows 相等，只能证明 caller input
 每个 state 必须有显式 `basis.reasonCode` 与非空 `basis.evidenceRefs`，不接受裸的
 `eligible=true`、`known=true`、`not_required=true` 或 `proven=true`。
 
-| State                            | 语义                                                             |                                是否 blocker |
-| -------------------------------- | ---------------------------------------------------------------- | ------------------------------------------: |
-| `RESULT_AVAILABLE_AT_T`          | final、table-eligible result 及其 T 前 availability proof 已绑定 | 否（仅结构有效；source authority 仍未证明） |
-| `NO_TABLE_RESULT_AT_T`           | T 时刻不应有结果进入 standings，且有明确 reason/evidence         |                                          否 |
-| `REQUIRED_EVIDENCE_MISSING_AT_T` | 对 T 前的 prior obligation 无法诚实证明 result 或 no-table 状态  |                                          是 |
-| `ASOF_STATE_AMBIGUOUS`           | 状态/时间/来源冲突无法在 T 解析                                  |                                          是 |
-| `TARGET_FIXTURE_EXCLUDED`        | 唯一目标 fixture 明确排除，不得贡献自身 prematch result          |                                          否 |
+| State                            | 语义                                                             |                                               是否 blocker |
+| -------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------: |
+| `RESULT_AVAILABLE_AT_T`          | final、table-eligible result 及其 T 前 availability proof 已绑定 |                否（仅结构有效；source authority 仍未证明） |
+| `NO_TABLE_RESULT_AT_T`           | T 时刻不应有结果进入 standings，且有明确 reason/reference        | 否（结构层；source-dependent temporal proof 仍可能未证明） |
+| `REQUIRED_EVIDENCE_MISSING_AT_T` | 对 T 前的 prior obligation 无法诚实证明 result 或 no-table 状态  |                                                         是 |
+| `ASOF_STATE_AMBIGUOUS`           | 状态/时间/来源冲突无法在 T 解析                                  |                                                         是 |
+| `TARGET_FIXTURE_EXCLUDED`        | 唯一目标 fixture 明确排除，不得贡献自身 prematch result          |                                                         否 |
 
-`NO_TABLE_RESULT_AT_T` 只接受下列 evidence-backed reason：
+`NO_TABLE_RESULT_AT_T` 只接受下列冻结 reason taxonomy：
 
 ```text
 SCHEDULE_NOT_YET_REACHED_AT_T
@@ -151,10 +151,32 @@ PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T
 PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T
 ```
 
-其中 `SCHEDULE_NOT_YET_REACHED_AT_T` 要求 scheduled kickoff 不早于 T；prior fixture
-不能用此 reason 掩盖缺失数据。其余 reason 也不能由“没有 row”自动推导，必须有显式
-evidence/lineage reference。`REQUIRED_EVIDENCE_MISSING_AT_T` 与 `ASOF_STATE_AMBIGUOUS`
-都保留在 normalized input 中，但 engine-compatible semantic status 为 `BLOCKED`。
+其中 `SCHEDULE_NOT_YET_REACHED_AT_T` 是唯一由 generic core 直接推导的 temporal relation：
+它要求 supplied canonical fixture row 的 scheduled kickoff 不早于 T；prior fixture 不能用
+此 reason 掩盖缺失数据。
+
+其余 `PROVEN_*` reason 都依赖未来受信任的 status/source integration。generic core 只验证
+reason taxonomy、fixture timing 不矛盾、reference 字符串的结构和确定性 lineage；它不证明
+reference 对应的 evidence object 存在、不证明 status truth，也不证明该 status 在 T 前可用。
+因此 non-empty `evidenceRefs` 不是 external truth proof，`PROVEN_*` 名称也不是 core proof。
+source-dependent no-table state 可以保持 `semanticStatus=STRUCTURALLY_VALID`，但它的
+`TEMPORAL_ELIGIBILITY_VALIDITY=NOT_PROVEN`、`SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF=
+NOT_PROVEN_BY_CORE`、`RUNTIME_NUMERIC_ELIGIBILITY=NO`。这明确表示：
+`STRUCTURALLY_VALID != ENGINE_CONSUMPTION_ELIGIBLE`。
+
+`REQUIRED_EVIDENCE_MISSING_AT_T` 与 `ASOF_STATE_AMBIGUOUS` 都保留在 normalized input 中，
+并继续使 engine-compatible semantic status 为 `BLOCKED`。generic core 不证明
+`CANONICAL_FIXTURE_UNIVERSE_AUTHORITY_PROVEN`、fixture/status/result stream closure 或
+source authority。
+
+未来 engine consumer 必须同时满足：
+
+```text
+ENGINE_CONSUMPTION_REQUIRES_TEMPORAL_ELIGIBILITY_PROVEN = YES
+ENGINE_CONSUMPTION_REQUIRES_SOURCE_DEPENDENCY_GATES    = YES
+```
+
+本任务不实现该 consumer 或任何 status/source authority。
 
 ### Result availability by T
 
@@ -197,7 +219,9 @@ validator 分开返回以下状态：
 ```text
 ENGINE_INPUT_STRUCTURAL_VALIDITY = PROVEN / rejected
 FIXTURE_STATE_COVERAGE_VALIDITY  = PROVEN / rejected
+NO_TABLE_STATE_REFERENCE_VALIDITY = STRUCTURALLY_VALID
 TEMPORAL_ELIGIBILITY_VALIDITY   = PROVEN / NOT_PROVEN
+SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF = NOT_PROVEN_BY_CORE
 SOURCE_AUTHORITY_VALIDITY        = NOT_PROVEN
 SOURCE_STREAM_COMPLETENESS       = NOT_PROVEN
 RUNTIME_NUMERIC_ELIGIBILITY     = NO
@@ -207,6 +231,8 @@ generic core 不接受 caller 自报的 source closure、fixture-universe author
 status authority、result stream completeness、admin stream completeness 或 Git SHA
 provenance。`canonical-runtime-capture/v1` 的存在只定义未来边界，不证明 Python capture
 已经跨语言来源到此 JS object；当前 `RUNTIME_CAPTURE_TO_JS_PROVEN=NOT_PROVEN`。
+`STRUCTURALLY_VALID` 只表示输入 shape、identity、coverage 和允许的 reference 结构通过；
+它不等同于 temporal proof 或 runtime/engine eligibility。
 
 因此当前准确状态为：
 
@@ -261,6 +287,6 @@ tests/unit/standings_asof_engine_input_contract.test.js
 tests/unit/ml/test_standings_asof_engine_input_contract.py
 ```
 
-前者覆盖 59 个 semantic/tamper cases；后者验证同一 singular registry 的 frozen boundary
+前者当前覆盖 73 个 semantic/tamper cases，其中包含 15 个 NO_TABLE source-proof regression cases；后者验证同一 singular registry 的 frozen boundary
 与 drift fail-closed。后续 engine consumer 必须复用此 normalized shape 和 digest，不得把
 T 转译为 target kickoff，也不得另建 standings engine 或第二 temporal registry。

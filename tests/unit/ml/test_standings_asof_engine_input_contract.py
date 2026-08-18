@@ -53,6 +53,15 @@ def test_standings_asof_engine_input_boundary_is_canonical_and_frozen() -> None:
     assert boundary["evaluation_boundary"]["model_decision_time_is_asof_boundary"] == "YES"
     assert boundary["evaluation_boundary"]["target_kickoff_is_evaluation_boundary"] == "NO"
     assert boundary["fixture_universe"]["authority_proven_by_core"] == "NO"
+    assert boundary["no_table_proof"]["core_derivable_reason_codes"] == [
+        "SCHEDULE_NOT_YET_REACHED_AT_T"
+    ]
+    assert boundary["no_table_proof"]["source_dependent_status_proven_by_core"] == "NO"
+    assert boundary["no_table_proof"]["evidence_reference_presence_is_external_truth_proof"] == "NO"
+    assert boundary["engine_consumption_gates"] == {
+        "requires_temporal_eligibility_proven": "YES",
+        "requires_source_dependency_gates": "YES",
+    }
     assert boundary["readiness"]["engine_consumer_implemented"] == "NO"
 
 
@@ -83,6 +92,12 @@ def test_standings_asof_engine_input_boundary_is_canonical_and_frozen() -> None:
             ),
             "standings as-of engine input boundary malformed",
         ),
+        (
+            lambda document: document["decision_boundaries"]["standings_asof_engine_input"][
+                "no_table_proof"
+            ].update(source_dependent_status_proven_by_core="YES"),
+            "standings as-of no-table proof.source_dependent_status_proven_by_core malformed",
+        ),
     ],
 )
 def test_standings_asof_engine_input_boundary_drift_fails_closed(
@@ -105,3 +120,19 @@ def test_standings_asof_boundary_keeps_stream_closure_distinct() -> None:
         "result_evidence_closure": "NOT_PROVEN",
         "admin_adjustment_stream_closure": "NOT_PROVEN",
     }
+
+
+def test_standings_asof_boundary_separates_schedule_and_source_proof() -> None:
+    boundary = load_feature_contract_registry().standings_asof_engine_input_boundary()
+
+    assert boundary["no_table_proof"]["source_dependent_reason_codes"] == [
+        "PROVEN_POSTPONED_NOT_PLAYED_BY_T",
+        "PROVEN_NOT_FINAL_BY_T",
+        "PROVEN_NON_TABLE_ELIGIBLE_BY_T",
+        "PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T",
+        "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
+        "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T",
+    ]
+    assert boundary["no_table_proof"]["schedule_not_yet_relation_proven_by_core"] == "YES"
+    assert boundary["no_table_proof"]["structurally_valid_implies_temporal_proven"] == "NO"
+    assert boundary["no_table_proof"]["structurally_valid_implies_runtime_eligible"] == "NO"

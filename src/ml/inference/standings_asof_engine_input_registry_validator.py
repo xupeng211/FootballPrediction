@@ -27,6 +27,17 @@ _STANDINGS_ASOF_NO_TABLE_REASONS = [
     "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
     "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T",
 ]
+_STANDINGS_ASOF_CORE_DERIVABLE_NO_TABLE_REASONS = [
+    "SCHEDULE_NOT_YET_REACHED_AT_T",
+]
+_STANDINGS_ASOF_SOURCE_DEPENDENT_NO_TABLE_REASONS = [
+    "PROVEN_POSTPONED_NOT_PLAYED_BY_T",
+    "PROVEN_NOT_FINAL_BY_T",
+    "PROVEN_NON_TABLE_ELIGIBLE_BY_T",
+    "PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T",
+    "PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T",
+    "PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T",
+]
 _STANDINGS_ASOF_ADJUSTMENT_STATES = [
     "EFFECTIVE_AND_AVAILABLE_AT_T",
     "KNOWN_NOT_EFFECTIVE_AT_T",
@@ -97,6 +108,8 @@ def validate_standings_asof_engine_input_registry_boundary(
             "source_stream_closure",
             "fixture_state_taxonomy",
             "no_table_result_reason_codes",
+            "no_table_proof",
+            "engine_consumption_gates",
             "adjustment_state_taxonomy",
             "availability_proof",
             "trust_boundary",
@@ -220,6 +233,55 @@ def validate_standings_asof_engine_input_registry_boundary(
         root["no_table_result_reason_codes"],
         "standings as-of no-table reasons",
         _STANDINGS_ASOF_NO_TABLE_REASONS,
+    )
+    no_table_proof = exact(
+        root["no_table_proof"],
+        {
+            "core_derivable_reason_codes",
+            "source_dependent_reason_codes",
+            "schedule_not_yet_relation_proven_by_core",
+            "source_dependent_status_proven_by_core",
+            "evidence_reference_presence_is_external_truth_proof",
+            "source_semantic_reason_name_is_core_proof",
+            "structurally_valid_implies_temporal_proven",
+            "structurally_valid_implies_runtime_eligible",
+        },
+        "standings as-of no-table proof",
+    )
+    text_list(
+        no_table_proof["core_derivable_reason_codes"],
+        "standings as-of core-derivable no-table reasons",
+        _STANDINGS_ASOF_CORE_DERIVABLE_NO_TABLE_REASONS,
+    )
+    text_list(
+        no_table_proof["source_dependent_reason_codes"],
+        "standings as-of source-dependent no-table reasons",
+        _STANDINGS_ASOF_SOURCE_DEPENDENT_NO_TABLE_REASONS,
+    )
+    exact_values(
+        no_table_proof,
+        {
+            "schedule_not_yet_relation_proven_by_core": "YES",
+            "source_dependent_status_proven_by_core": "NO",
+            "evidence_reference_presence_is_external_truth_proof": "NO",
+            "source_semantic_reason_name_is_core_proof": "NO",
+            "structurally_valid_implies_temporal_proven": "NO",
+            "structurally_valid_implies_runtime_eligible": "NO",
+        },
+        "standings as-of no-table proof",
+    )
+    engine_consumption_gates = exact(
+        root["engine_consumption_gates"],
+        {"requires_temporal_eligibility_proven", "requires_source_dependency_gates"},
+        "standings as-of engine consumption gates",
+    )
+    exact_values(
+        engine_consumption_gates,
+        {
+            "requires_temporal_eligibility_proven": "YES",
+            "requires_source_dependency_gates": "YES",
+        },
+        "standings as-of engine consumption gates",
     )
     text_list(
         root["adjustment_state_taxonomy"],

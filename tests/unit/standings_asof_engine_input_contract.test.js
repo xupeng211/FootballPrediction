@@ -13,6 +13,7 @@ const {
     ADJUSTMENT_STATES,
     AVAILABILITY_PROOF_KINDS,
     FIXTURE_STATES,
+    SOURCE_DEPENDENT_NO_TABLE_REASONS,
     STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_ID,
     STANDINGS_ASOF_ENGINE_INPUT_CONTRACT_VERSION,
     StandingsAsOfEngineInputContractError,
@@ -326,13 +327,116 @@ test('captured-at-only proof is rejected', () => {
     }, 'RESULT_AVAILABLE_AT_T_UNPROVEN');
 });
 
-test('supported NO_TABLE_RESULT_AT_T status is accepted with explicit reason and evidence', () => {
+test('NT01 fake postponed reference remains structural but not temporally proven', () => {
     const value = baseInput();
     const prior = value.fixtureUniverse.fixtures[0];
     value.fixtureStates[0] = noTableState(prior, 'PROVEN_POSTPONED_NOT_PLAYED_BY_T');
     const result = validated(value);
     assert.equal(result.semanticStatus, 'STRUCTURALLY_VALID');
     assert.equal(result.stateCounts.noTableResultAtT, 2);
+    assert.equal(result.statuses.NO_TABLE_STATE_REFERENCE_VALIDITY, 'STRUCTURALLY_VALID');
+    assert.equal(result.statuses.SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF, 'NOT_PROVEN_BY_CORE');
+    assert.equal(result.statuses.SOURCE_DEPENDENT_NO_TABLE_TEMPORAL_PROOF_BY_CORE, 'NO');
+    assert.equal(result.statuses.TEMPORAL_ELIGIBILITY_VALIDITY, 'NOT_PROVEN');
+    assert.equal(result.statuses.RUNTIME_NUMERIC_ELIGIBILITY, 'NO');
+    assert.deepEqual(
+        result.normalizedInput.fixture_states.find(state => state.canonicalMatchId === 'prior').noTableProof,
+        {
+            proofClass: 'SOURCE_STATUS_DEPENDENT',
+            sourceStatusProof: 'NOT_PROVEN_BY_CORE',
+            temporalEligibility: 'NOT_PROVEN',
+        }
+    );
+});
+
+for (const [index, reasonCode] of SOURCE_DEPENDENT_NO_TABLE_REASONS.slice(1).entries()) {
+    const testNumber = index + 2;
+    test(`NT0${testNumber} source-dependent reason ${reasonCode} is not temporally proven`, () => {
+        const value = baseInput();
+        const prior = value.fixtureUniverse.fixtures[0];
+        value.fixtureStates[0] = noTableState(prior, reasonCode);
+        const result = validated(value);
+        assert.equal(result.semanticStatus, 'STRUCTURALLY_VALID');
+        assert.equal(result.statuses.TEMPORAL_ELIGIBILITY_VALIDITY, 'NOT_PROVEN');
+        assert.equal(result.statuses.SOURCE_AUTHORITY_VALIDITY, 'NOT_PROVEN');
+        assert.equal(result.statuses.SOURCE_STREAM_COMPLETENESS, 'NOT_PROVEN');
+        assert.equal(result.statuses.RUNTIME_NUMERIC_ELIGIBILITY, 'NO');
+    });
+}
+
+test('NT07 nonexistent evidence reference cannot establish external status proof', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(value.fixtureUniverse.fixtures[0], 'PROVEN_POSTPONED_NOT_PLAYED_BY_T');
+    value.fixtureStates[0].basis.evidenceRefs = ['status:nonexistent'];
+    const result = validated(value);
+    assert.equal(result.statuses.SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF, 'NOT_PROVEN_BY_CORE');
+    assert.equal(result.statuses.TEMPORAL_ELIGIBILITY_VALIDITY, 'NOT_PROVEN');
+});
+
+test('NT08 non-empty evidence references establish only structural reference presence', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(value.fixtureUniverse.fixtures[0], 'PROVEN_NOT_FINAL_BY_T');
+    const result = validated(value);
+    assert.equal(result.statuses.NO_TABLE_STATE_REFERENCE_VALIDITY, 'STRUCTURALLY_VALID');
+    assert.equal(result.statuses.SOURCE_DEPENDENT_NO_TABLE_STATUS_PROOF, 'NOT_PROVEN_BY_CORE');
+});
+
+test('NT09 future schedule relation remains core-valid for schedule-not-yet', () => {
+    const result = validated();
+    const future = result.normalizedInput.fixture_states.find(state => state.canonicalMatchId === 'future');
+    assert.deepEqual(future.noTableProof, {
+        proofClass: 'CORE_DERIVABLE_TEMPORAL_RELATION',
+        sourceStatusProof: 'NOT_APPLICABLE',
+        temporalEligibility: 'PROVEN_BY_CORE_SCHEDULE_RELATION',
+    });
+    assert.equal(result.statuses.SCHEDULE_NOT_YET_TEMPORAL_RELATION_PROVEN_BY_CORE, 'YES');
+});
+
+test('NT11 source-dependent no-table state does not upgrade source authority', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(value.fixtureUniverse.fixtures[0], 'PROVEN_VOID_NON_TABLE_ELIGIBLE_BY_T');
+    const result = validated(value);
+    assert.equal(result.statuses.SOURCE_AUTHORITY_VALIDITY, 'NOT_PROVEN');
+    assert.equal(result.trustBoundary.FIXTURE_STATUS_STREAM_AUTHORITY_PROVEN, 'NOT_PROVEN');
+});
+
+test('NT12 source-dependent no-table state does not upgrade source stream completeness', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(
+        value.fixtureUniverse.fixtures[0],
+        'PROVEN_ABANDONED_NON_TABLE_ELIGIBLE_BY_T'
+    );
+    const result = validated(value);
+    assert.equal(result.statuses.SOURCE_STREAM_COMPLETENESS, 'NOT_PROVEN');
+    assert.equal(result.statuses.FIXTURE_STATUS_EVIDENCE_CLOSURE, 'NOT_PROVEN');
+});
+
+test('NT13 source-dependent no-table state does not upgrade runtime numeric eligibility', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(
+        value.fixtureUniverse.fixtures[0],
+        'PROVEN_REPLAY_ORIGINAL_NON_ELIGIBLE_BY_T'
+    );
+    const result = validated(value);
+    assert.equal(result.statuses.RUNTIME_NUMERIC_ELIGIBILITY, 'NO');
+    assert.equal(result.readiness.STANDINGS_RUNTIME_ELIGIBLE, 'NO');
+});
+
+test('NT14 structural validity is distinct from temporal eligibility and runtime eligibility', () => {
+    const value = baseInput();
+    value.fixtureStates[0] = noTableState(value.fixtureUniverse.fixtures[0], 'PROVEN_NON_TABLE_ELIGIBLE_BY_T');
+    const result = validated(value);
+    assert.equal(result.semanticStatus, 'STRUCTURALLY_VALID');
+    assert.equal(result.statuses.STRUCTURALLY_VALID_IMPLIES_TEMPORAL_PROVEN, 'NO');
+    assert.equal(result.statuses.STRUCTURALLY_VALID_IMPLIES_RUNTIME_ELIGIBLE, 'NO');
+    assert.equal(result.statuses.ENGINE_CONSUMPTION_REQUIRES_TEMPORAL_ELIGIBILITY_PROVEN, 'YES');
+    assert.equal(result.statuses.ENGINE_CONSUMPTION_REQUIRES_SOURCE_DEPENDENCY_GATES, 'YES');
+});
+
+test('NT15 caller status proof boolean is rejected fail-closed', () => {
+    expectReject(value => {
+        value.fixtureStates[0].status_proven = true;
+    }, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
 });
 
 test('naked not_required boolean is rejected', () => {
@@ -341,7 +445,7 @@ test('naked not_required boolean is rejected', () => {
     }, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
 });
 
-test('missing data cannot masquerade as schedule-not-yet-reached', () => {
+test('NT10 prior fixture cannot masquerade as schedule-not-yet', () => {
     expectReject(value => {
         value.fixtureStates[0] = noTableState(value.fixtureUniverse.fixtures[0]);
     }, 'STANDINGS_ASOF_INPUT_CONTRACT_MISMATCH');
