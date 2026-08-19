@@ -267,12 +267,12 @@ function orderedProjection(envelope, { includeDigest = false } = {}) {
     }
     projection.STANDINGS_EVIDENCE_IDS = sortUnicodeCodePoints(projection.STANDINGS_EVIDENCE_IDS);
     projection.EVIDENCE_ATTESTATIONS = [...projection.EVIDENCE_ATTESTATIONS].sort((left, right) =>
-        compareUnicodeCodePoints(left.EVIDENCE_ID, right.EVIDENCE_ID)
+        compareUnicodeCodePoints(left.EVIDENCE_ID || '', right.EVIDENCE_ID || '')
     );
     projection.FACT_BINDINGS = projection.FACT_BINDINGS.map(binding => ({
         ...binding,
         SOURCE_EVIDENCE_IDS: sortUnicodeCodePoints(binding.SOURCE_EVIDENCE_IDS),
-    })).sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID, right.BINDING_ID));
+    })).sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID || '', right.BINDING_ID || ''));
     projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS = sortUnicodeCodePoints(
         projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS
     );
@@ -636,7 +636,7 @@ function validateNormalizationEnvelopeStructure(envelope) {
             'attestations must exactly cover standings evidence'
         );
     }
-    attestations.sort((left, right) => compareUnicodeCodePoints(left.EVIDENCE_ID, right.EVIDENCE_ID));
+    attestations.sort((left, right) => compareUnicodeCodePoints(left.EVIDENCE_ID || '', right.EVIDENCE_ID || ''));
     const stateIds = sortedUniqueIds(outputValue.FIXTURE_STATE_IDS, 'FIXTURE_STATE_IDS');
     const adjustmentIds = sortedUniqueIds(outputValue.ADMINISTRATIVE_ADJUSTMENT_IDS, 'ADMINISTRATIVE_ADJUSTMENT_IDS');
     const facts = value.FACT_BINDINGS.map((row, index) => validateFactBinding(row, index, standingsEvidenceIds));
@@ -647,7 +647,7 @@ function validateNormalizationEnvelopeStructure(envelope) {
             'fact bindings must be unique'
         );
     }
-    facts.sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID, right.BINDING_ID));
+    facts.sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID || '', right.BINDING_ID || ''));
     const output = validateOutputBinding(value.OUTPUT_STANDINGS_INPUT_BINDING, context, stateIds, adjustmentIds);
     const statuses = validateStatus(value.STATUS);
     if (computeNormalizationContentDigest(value) !== value.NORMALIZATION_CONTENT_DIGEST) {

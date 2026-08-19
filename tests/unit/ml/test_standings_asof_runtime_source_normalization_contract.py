@@ -563,6 +563,15 @@ def test_shared_ordering_adversarial_digest_vectors_match_python_serializer() ->
         ]
 
 
+def test_non_bmp_identifier_is_not_applicable_by_schema_and_fails_closed() -> None:
+    manifest, _payloads = _capture_manifest()
+    envelope = _envelope(manifest)
+    envelope["STANDINGS_EVIDENCE_IDS"] = ["😀"]
+    _refresh_digest(envelope)
+    with _raises("NORMALIZATION_SCHEMA_MISMATCH"):
+        validate_normalization_envelope_structure(envelope)
+
+
 @pytest.mark.parametrize(
     ("field", "tampered_value"),
     [

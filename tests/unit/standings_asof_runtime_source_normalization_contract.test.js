@@ -605,6 +605,13 @@ test('shared ordering adversarial digest vectors are accepted by the JS serializ
     });
 });
 
+test('non-BMP identifiers are not applicable by schema and fail closed', () => {
+    const { envelope } = baseEnvelope();
+    envelope.STANDINGS_EVIDENCE_IDS = ['😀'];
+    envelope.NORMALIZATION_CONTENT_DIGEST = computeNormalizationContentDigest(envelope);
+    expectNormalizationReject(envelope, 'NORMALIZATION_SCHEMA_MISMATCH');
+});
+
 test('F201/F209/F210 non-result fixture-state proofRef lineage binding remains generic', () => {
     const validInput = nonResultInput({
         state: 'NO_TABLE_RESULT_AT_T',

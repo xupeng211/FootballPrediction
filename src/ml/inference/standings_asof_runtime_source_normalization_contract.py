@@ -8,6 +8,13 @@ This module validates a language-neutral envelope against an already validated
 runtime-capture manifest.  It deliberately proves identity and content
 integrity only.  It never interprets a provider payload, grants source
 authority, proves stream closure, or writes a capture/normalization artifact.
+
+This module intentionally does not validate a candidate standings-as-of engine
+input or bind that input's fixture-state ``availabilityProofRef`` fields.  The
+output-input/proofRef bridge is owned by the JavaScript
+``StandingsAsOfRuntimeSourceNormalizationContract`` implementation, which
+invokes the frozen standings input validator.  Keeping this module
+capture-envelope-only prevents a second, divergent proofRef authority path.
 """
 
 from __future__ import annotations
