@@ -27,6 +27,9 @@ from src.ml.inference.standings_asof_engine_consumer_registry_validator import (
 from src.ml.inference.standings_asof_engine_input_registry_validator import (
     validate_standings_asof_engine_input_registry_boundary,
 )
+from src.ml.inference.standings_asof_runtime_source_normalization_registry_validator import (
+    validate_standings_asof_runtime_source_normalization_registry_boundary as validate_normalization_registry,
+)
 
 __all__ = [
     "MODEL_ASOF_AVAILABILITY_FORMS",
@@ -65,7 +68,7 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
         "shared_engine",
         "activation",
         "legacy_proxy_policy",
-    }
+    } | {"standings_asof_runtime_source_normalization"}
     if set(boundaries) != required_boundary_names:
         raise error_type("feature contract decision boundaries incomplete")
 
@@ -113,6 +116,8 @@ def validate_v2_decision_boundaries(  # noqa: C901, PLR0912, PLR0915
     validate_standings_asof_engine_consumer_registry_boundary(
         boundaries["standings_asof_engine_consumer"], error_type
     )
+    normalization_boundary = boundaries["standings_asof_runtime_source_normalization"]
+    validate_normalization_registry(normalization_boundary, error_type)
 
     raw_elo = exact_object(
         boundaries["raw_elo"],

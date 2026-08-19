@@ -152,3 +152,15 @@ odds evidence；provider-defined closing 或 caller 自报的 exactness flag 都
 
 本合同是 temporal semantic authority 的 freeze，不是 source readiness 或 training
 readiness 的升级。
+
+## Runtime-source normalization handoff
+
+`standings-asof-runtime-source-normalization/v1` 作为 sibling handoff contract 复用本
+合同已经冻结的 prediction context：`PREDICTION_CONTEXT_ID`、`MODEL_DECISION_TIME_UTC`
+和 `FEATURE_AS_OF_UTC` 必须仍表示同一个 T，且 T 与 `TARGET_KICKOFF_UTC` 保持 distinct。
+该 handoff 只验证 capture identity/attestation 与 standings-input lineage 的绑定，不
+改变本合同的 availability proof、时间语义或 readiness。
+
+capture/envelope digest、source authority 字符串和 caller 自报状态不能证明 source
+payload 的语义正确性、source authority、stream closure 或 runtime feature eligibility；
+这些状态仍需未来独立的 source-specific authority contract。

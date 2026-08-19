@@ -668,6 +668,146 @@
                 "target_identity_authority_implemented": "NO"
             }
         },
+        "standings_asof_runtime_source_normalization": {
+            "contract_id": "standings-asof-runtime-source-normalization/v1",
+            "version": "v1",
+            "status": "FROZEN",
+            "normalization_role": "RUNTIME_SOURCE_NORMALIZATION_HANDOFF_CONTRACT",
+            "runtime_capture_contract": {
+                "contract_id": "canonical-runtime-capture/v1",
+                "version": "v1"
+            },
+            "model_as_of_contract": {
+                "contract_id": "canonical-model-asof/v1",
+                "version": "v1"
+            },
+            "standings_asof_engine_input_contract": {
+                "contract_id": "standings-asof-engine-input/v1",
+                "version": "v1"
+            },
+            "standings_asof_engine_consumer_contract": {
+                "contract_id": "standings-asof-engine-consumer/v1",
+                "version": "v1"
+            },
+            "ranking_contract": {
+                "contract_id": "standings/premier-league-point-in-time/v1",
+                "version": "v1"
+            },
+            "envelope": {
+                "identity_fields": [
+                    "NORMALIZATION_CONTRACT_ID",
+                    "NORMALIZATION_CONTRACT_VERSION",
+                    "NORMALIZATION_INSTANCE_ID",
+                    "NORMALIZATION_CONTENT_DIGEST"
+                ],
+                "content_digest_algorithm": "SHA-256",
+                "content_digest_scope": "SELF_EXCLUDING_CANONICAL_NORMALIZATION_ENVELOPE",
+                "canonical_serialization": "STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON",
+                "timestamp_normalization": "ISO_8601_UTC_SECONDS_OPTIONAL_1_TO_6_FRACTION_Z_OR_PLUS_00_00_TO_MILLISECONDS",
+                "non_semantic_array_ordering": {
+                    "STANDINGS_EVIDENCE_IDS": "LEXICAL_ASCENDING",
+                    "CAPTURE_SELECTED_EVIDENCE_IDS": "LEXICAL_ASCENDING",
+                    "EVIDENCE_ATTESTATIONS": "EVIDENCE_ID_ASCENDING",
+                    "FACT_BINDINGS": "BINDING_ID_ASCENDING",
+                    "SOURCE_EVIDENCE_IDS": "LEXICAL_ASCENDING",
+                    "FIXTURE_STATE_IDS": "LEXICAL_ASCENDING",
+                    "ADMINISTRATIVE_ADJUSTMENT_IDS": "LEXICAL_ASCENDING"
+                },
+                "secret_fields_forbidden": "YES"
+            },
+            "proof_layers": {
+                "L1": "CAPTURE_STRUCTURAL_AND_CONTENT_INTEGRITY",
+                "L2": "CAPTURE_SELECTED_EVIDENCE_BINDING",
+                "L3": "NORMALIZATION_ENVELOPE_STRUCTURAL_VALIDITY",
+                "L4": "SOURCE_PAYLOAD_TO_DOMAIN_FACT_SEMANTIC_TRUTH",
+                "L5": "SOURCE_AUTHORITY",
+                "L6": "SOURCE_STREAM_CLOSURE",
+                "L7": "STANDINGS_ASOF_INPUT_CONTRACT_VALIDITY",
+                "L8": "RUNTIME_FEATURE_ELIGIBILITY",
+                "implications": {
+                    "L1_IMPLIES_L4": "NO",
+                    "L2_IMPLIES_L4": "NO",
+                    "L3_IMPLIES_L4": "NO",
+                    "L1_IMPLIES_L5": "NO",
+                    "L2_IMPLIES_L5": "NO",
+                    "L3_IMPLIES_L5": "NO",
+                    "L4_IMPLIES_L5": "NO",
+                    "L5_IMPLIES_L6": "NO",
+                    "L7_IMPLIES_L8": "NO",
+                    "DIGEST_MATCH_IMPLIES_SOURCE_TRUTH": "NO"
+                }
+            },
+            "fact_binding_taxonomy": {
+                "roles": [
+                    "FIXTURE_UNIVERSE",
+                    "FIXTURE",
+                    "FIXTURE_STATUS",
+                    "RESULT",
+                    "ADMIN_ADJUSTMENT",
+                    "TARGET_IDENTITY"
+                ],
+                "required_fields": [
+                    "BINDING_ID",
+                    "SEMANTIC_ROLE",
+                    "DOMAIN_IDENTITY",
+                    "SOURCE_EVIDENCE_IDS",
+                    "NORMALIZED_FACT_DIGEST"
+                ],
+                "source_lineage_required_for_source_attested": "YES",
+                "core_derived_source_authority_proven": "NO"
+            },
+            "lineage": {
+                "standings_evidence_subset_of_capture_selected": "YES",
+                "unselected_capture_evidence_may_enter_standings": "NO",
+                "selected_non_standings_evidence_auto_promoted": "NO",
+                "source_record_ref_non_null_rule": "EXACT_SOURCE_RECORD_ID_FOR_SINGLE_EVIDENCE",
+                "source_record_ref_multi_evidence_rule": "DETERMINISTIC_CAPTURE_RECORD_SET_DIGEST",
+                "source_record_ref_null_fallback": "CAPTURE_CONTENT_DIGEST_AND_EVIDENCE_ID_SET",
+                "fallback_proves_source_authority": "NO",
+                "availability_proof_ref_rule": "EXACT_PRIMARY_AVAILABILITY_EVIDENCE_ID",
+                "availability_metadata_rewritten_by_bridge": "NO"
+            },
+            "source_authority": {
+                "generic_capture_establishes_source_authority": "NO",
+                "generic_normalization_establishes_source_authority": "NO",
+                "source_authority_id_string_is_proof": "NO",
+                "caller_boolean_is_proof": "NO",
+                "digest_match_is_source_truth": "NO",
+                "future_source_specific_authority_required": "YES"
+            },
+            "source_stream_closure": {
+                "fixture_universe_closure": "NOT_PROVEN",
+                "fixture_status_stream_closure": "NOT_PROVEN",
+                "result_stream_closure": "NOT_PROVEN",
+                "admin_adjustment_stream_closure": "NOT_PROVEN",
+                "source_dependent_no_table_semantic_truth": "NOT_PROVEN"
+            },
+            "implementation_status": {
+                "contract_defined": "YES",
+                "normalization_envelope_validator_implemented": "YES",
+                "capture_binding_validator_implemented": "YES",
+                "standings_input_binding_validator_implemented": "YES",
+                "cross_language_digest_parity_proven": "YES",
+                "source_specific_normalizer_implemented": "NO",
+                "source_specific_authority_contract_implemented": "NO",
+                "source_semantic_normalization_proven": "NO",
+                "source_stream_closure_proven": "NO",
+                "runtime_pipeline_implemented": "NO"
+            },
+            "runtime_eligibility": {
+                "runtime_eligible": "NO",
+                "training_eligible": "NO",
+                "runtime_source_to_standings_normalization_proven": "NO",
+                "runtime_numeric_eligibility": "NO"
+            },
+            "security": {
+                "provider_selected": "NO",
+                "source_specific_payload_parser_count": 0,
+                "raw_provider_credentials_allowed": "NO",
+                "network_dependency": "NO",
+                "database_dependency": "NO"
+            }
+        },
         "raw_elo": {
             "direction": "BOUNDED_START",
             "retained_in_v_next": "YES",

@@ -1503,6 +1503,7 @@ function validateFeatureContractRegistry(registry) {
         'runtime_capture',
         'standings_asof_engine_input',
         'standings_asof_engine_consumer',
+        'standings_asof_runtime_source_normalization',
         'raw_elo',
         'standings',
         'sot',

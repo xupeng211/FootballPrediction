@@ -221,3 +221,23 @@ CURRENT_KICKOFF_EXCLUSIVE_ROWS_RELABELED=NO
 V1 仍为 20 features / `ACTIVE_DEFAULT`；V-next 仍为 17 features /
 `DEFINED_NOT_ACTIVATED`。本合同冻结不实现 runtime storage、provider、standings
 runtime、training、backtest、prediction 或 model activation。
+
+## Normalization handoff sibling
+
+`standings-asof-runtime-source-normalization/v1` 是同一 registry 中独立的
+`RUNTIME_SOURCE_NORMALIZATION_HANDOFF_CONTRACT`。它复用本合同的已验证 capture
+manifest、payload digest、selected evidence identity 和 prediction context；不修改本
+合同的字段、proof strength 或 readiness。
+
+```text
+canonical-runtime-capture/v1
+    → normalization envelope identity/lineage binding
+    → future source-specific semantic normalizer and authority
+    → standings-asof-engine-input/v1
+```
+
+capture structural/content integrity 和 capture-to-envelope binding 不等于 source
+payload semantic truth、source authority、source stream closure 或 runtime eligibility。
+`SOURCE_AUTHORITY_ID`、digest、caller boolean、token、type identity 和 Git SHA 都不能
+在 generic normalization layer 中升级 source authority；当前 source normalization replay
+和 `RUNTIME_SOURCE_TO_STANDINGS_NORMALIZATION_PROVEN` 仍为 `NO`。
