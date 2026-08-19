@@ -155,6 +155,17 @@ _SECRET_KEYS = frozenset(
 )
 
 
+def canonical_code_point_sorted(values: list[str], *, key=None) -> list[str]:
+    """Return Unicode code-point lexicographic ascending order.
+
+    Python strings compare by Unicode code points, matching the frozen
+    normalization contract for every schema-permitted identifier.  This helper
+    keeps that ordering rule explicit at the normalization boundary rather than
+    relying on scattered sort assumptions.
+    """
+    return sorted(values, key=key)
+
+
 class NormalizationValidationError(ValueError):
     """Raised when a normalization envelope or bridge is invalid."""
 
@@ -215,7 +226,7 @@ def _canonicalize_tree(value: Any, key: str | None = None) -> Any:
     if isinstance(value, dict):
         return {
             child_key: _canonicalize_tree(value[child_key], child_key)
-            for child_key in sorted(value)
+            for child_key in canonical_code_point_sorted(value)
         }
     if isinstance(value, list):
         return [_canonicalize_tree(child, key) for child in value]
@@ -254,7 +265,7 @@ def _sorted_unique_ids(value: Any, label: str, *, allow_empty: bool = True) -> l
         raise NormalizationValidationError(
             "NORMALIZATION_DUPLICATE_ID", f"{label} must contain unique IDs"
         )
-    return sorted(value)
+    return canonical_code_point_sorted(value)
 
 
 def _ordered_projection(  # noqa: C901 -- canonical projection keeps each non-semantic array rule explicit.
@@ -265,25 +276,31 @@ def _ordered_projection(  # noqa: C901 -- canonical projection keeps each non-se
         projection.pop("NORMALIZATION_CONTENT_DIGEST", None)
     capture = projection.get("RUNTIME_CAPTURE_BINDING")
     if isinstance(capture, dict) and isinstance(capture.get("CAPTURE_SELECTED_EVIDENCE_IDS"), list):
-        capture["CAPTURE_SELECTED_EVIDENCE_IDS"] = sorted(capture["CAPTURE_SELECTED_EVIDENCE_IDS"])
+        capture["CAPTURE_SELECTED_EVIDENCE_IDS"] = canonical_code_point_sorted(
+            capture["CAPTURE_SELECTED_EVIDENCE_IDS"]
+        )
     if isinstance(projection.get("STANDINGS_EVIDENCE_IDS"), list):
-        projection["STANDINGS_EVIDENCE_IDS"] = sorted(projection["STANDINGS_EVIDENCE_IDS"])
+        projection["STANDINGS_EVIDENCE_IDS"] = canonical_code_point_sorted(
+            projection["STANDINGS_EVIDENCE_IDS"]
+        )
     if isinstance(projection.get("EVIDENCE_ATTESTATIONS"), list):
-        projection["EVIDENCE_ATTESTATIONS"] = sorted(
+        projection["EVIDENCE_ATTESTATIONS"] = canonical_code_point_sorted(
             projection["EVIDENCE_ATTESTATIONS"], key=lambda row: row.get("EVIDENCE_ID", "")
         )
     if isinstance(projection.get("FACT_BINDINGS"), list):
         for binding in projection["FACT_BINDINGS"]:
             if isinstance(binding, dict) and isinstance(binding.get("SOURCE_EVIDENCE_IDS"), list):
-                binding["SOURCE_EVIDENCE_IDS"] = sorted(binding["SOURCE_EVIDENCE_IDS"])
-        projection["FACT_BINDINGS"] = sorted(
+                binding["SOURCE_EVIDENCE_IDS"] = canonical_code_point_sorted(
+                    binding["SOURCE_EVIDENCE_IDS"]
+                )
+        projection["FACT_BINDINGS"] = canonical_code_point_sorted(
             projection["FACT_BINDINGS"], key=lambda row: row.get("BINDING_ID", "")
         )
     output = projection.get("OUTPUT_STANDINGS_INPUT_BINDING")
     if isinstance(output, dict):
         for field in ("FIXTURE_STATE_IDS", "ADMINISTRATIVE_ADJUSTMENT_IDS"):
             if isinstance(output.get(field), list):
-                output[field] = sorted(output[field])
+                output[field] = canonical_code_point_sorted(output[field])
     return _canonicalize_tree(projection)
 
 
@@ -301,7 +318,9 @@ def compute_fact_binding_digest(binding: dict[str, Any]) -> str:
     projection = deepcopy(binding)
     projection.pop("NORMALIZED_FACT_DIGEST", None)
     if isinstance(projection.get("SOURCE_EVIDENCE_IDS"), list):
-        projection["SOURCE_EVIDENCE_IDS"] = sorted(projection["SOURCE_EVIDENCE_IDS"])
+        projection["SOURCE_EVIDENCE_IDS"] = canonical_code_point_sorted(
+            projection["SOURCE_EVIDENCE_IDS"]
+        )
     return _sha256_json(_canonicalize_tree(projection))
 
 
@@ -311,7 +330,7 @@ def compute_output_input_binding_digest(binding: dict[str, Any]) -> str:
     projection.pop("OUTPUT_INPUT_BINDING_DIGEST", None)
     for field in ("FIXTURE_STATE_IDS", "ADMINISTRATIVE_ADJUSTMENT_IDS"):
         if isinstance(projection.get(field), list):
-            projection[field] = sorted(projection[field])
+            projection[field] = canonical_code_point_sorted(projection[field])
     return _sha256_json(_canonicalize_tree(projection))
 
 
@@ -321,7 +340,7 @@ def source_record_ref_for_evidence_ids(
     attestations_by_id: Mapping[str, dict[str, Any]],
 ) -> str:
     """Return the deterministic sourceRecordRef bridge for a lineage set."""
-    ids = sorted(evidence_ids)
+    ids = canonical_code_point_sorted(evidence_ids)
     records = [attestations_by_id[evidence_id].get("SOURCE_RECORD_ID") for evidence_id in ids]
     non_null = [record for record in records if record is not None]
     if len(ids) == 1 and len(non_null) == 1:
@@ -627,12 +646,12 @@ def validate_normalization_envelope_structure(envelope: dict[str, Any]) -> dict[
     attestation_ids = [row["EVIDENCE_ID"] for row in attestations]
     if (
         len(set(attestation_ids)) != len(attestation_ids)
-        or sorted(attestation_ids) != standings_ids
+        or canonical_code_point_sorted(attestation_ids) != standings_ids
     ):
         raise NormalizationValidationError(
             "ATTESTATION_SET_MISMATCH", "attestations must exactly cover standings evidence"
         )
-    attestations = sorted(attestations, key=lambda row: row["EVIDENCE_ID"])
+    attestations = canonical_code_point_sorted(attestations, key=lambda row: row["EVIDENCE_ID"])
     state_ids = _sorted_unique_ids(output_value["FIXTURE_STATE_IDS"], "FIXTURE_STATE_IDS")
     adjustment_ids = _sorted_unique_ids(
         output_value["ADMINISTRATIVE_ADJUSTMENT_IDS"], "ADMINISTRATIVE_ADJUSTMENT_IDS"
@@ -646,7 +665,7 @@ def validate_normalization_envelope_structure(envelope: dict[str, Any]) -> dict[
         raise NormalizationValidationError(
             "FACT_BINDING_ORDER_MISMATCH", "fact bindings must be unique"
         )
-    facts = sorted(facts, key=lambda row: row["BINDING_ID"])
+    facts = canonical_code_point_sorted(facts, key=lambda row: row["BINDING_ID"])
     output = _validate_output_binding(
         values["OUTPUT_STANDINGS_INPUT_BINDING"], context, state_ids, adjustment_ids
     )
@@ -755,6 +774,7 @@ __all__ = [
     "NORMALIZATION_CONTRACT_VERSION",
     "NORMALIZATION_ENVELOPE_FIELDS",
     "NormalizationValidationError",
+    "canonical_code_point_sorted",
     "compute_fact_binding_digest",
     "compute_normalization_content_digest",
     "compute_output_input_binding_digest",

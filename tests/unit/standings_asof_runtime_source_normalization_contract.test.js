@@ -17,6 +17,8 @@ const {
     computeOutputInputBindingDigest,
     sourceRecordRefForEvidenceIds,
     StandingsAsOfRuntimeSourceNormalizationError,
+    compareUnicodeCodePoints,
+    sortUnicodeCodePoints,
     validateNormalizationEnvelopeStructure,
     validateStandingsAsOfRuntimeSourceNormalization,
 } = require('../../src/infrastructure/standings/StandingsAsOfRuntimeSourceNormalizationContract');
@@ -517,4 +519,142 @@ test('shared canonical digest vectors are accepted by the JS serializer', () => 
         const value = vector.operations.reduce(applyOperation, clone(vectors.base));
         assert.equal(computeNormalizationContentDigest(value), vector.expected_digest, vector.id);
     });
+});
+
+function nonResultInput(options = {}) {
+    const input = baseInput();
+    input.fixtureStates[0] = {
+        canonicalMatchId: 'prior',
+        state: options.state || 'NO_TABLE_RESULT_AT_T',
+        basis: {
+            reasonCode: options.reason || 'PROVEN_POSTPONED_NOT_PLAYED_BY_T',
+            evidenceRefs: ['e-result'],
+            availabilityProofRef: options.proofRef === undefined ? 'e-result' : options.proofRef,
+        },
+    };
+    input.fixtureStates[1].basis.availabilityProofRef = null;
+    return input;
+}
+
+test('direct unicode code-point comparator matches the frozen locale-independent order', () => {
+    const values = [
+        'A-evidence',
+        'a-evidence',
+        'evidence-1',
+        'evidence_1',
+        'evidence.1',
+        'evidence:1',
+        'evidence/1',
+        'Z-evidence',
+        'z-evidence',
+        '0-evidence',
+        '9-evidence',
+    ];
+    const expected = [
+        '0-evidence',
+        '9-evidence',
+        'A-evidence',
+        'Z-evidence',
+        'a-evidence',
+        'evidence-1',
+        'evidence.1',
+        'evidence/1',
+        'evidence:1',
+        'evidence_1',
+        'z-evidence',
+    ];
+    assert.deepEqual(sortUnicodeCodePoints(values), expected);
+    assert.equal(compareUnicodeCodePoints('😀', '😁') < 0, true);
+    assert.equal(compareUnicodeCodePoints('A', 'A'), 0);
+    assert.equal(compareUnicodeCodePoints('A', 'AA') < 0, true);
+    assert.equal(compareUnicodeCodePoints('AA', 'A') > 0, true);
+});
+
+test('shared ordering adversarial digest vectors are accepted by the JS serializer', () => {
+    const fixturePath = path.resolve(
+        __dirname,
+        '../fixtures/standings_asof_runtime_source_normalization_ordering_vectors.json'
+    );
+    const vectors = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+    assert.equal(vectors.lifecycle, 'test-fixture');
+    assert.ok(vectors.vectors.length >= 20);
+
+    function applyOperation(value, operation) {
+        const target = value;
+        const pathParts = operation.path ? operation.path.split('.') : [];
+        if (operation.type === 'REORDER_TOP_LEVEL') {
+            const entries = Object.entries(target).reverse();
+            Object.keys(target).forEach(key => delete target[key]);
+            entries.forEach(([key, child]) => {
+                target[key] = child;
+            });
+            return target;
+        }
+        let cursor = target;
+        pathParts.slice(0, -1).forEach(part => {
+            cursor = cursor[part];
+        });
+        if (operation.type === 'REVERSE') cursor[pathParts.at(-1)].reverse();
+        if (operation.type === 'SET') cursor[pathParts.at(-1)] = operation.value;
+        return target;
+    }
+
+    vectors.vectors.forEach(vector => {
+        const value = vector.operations.reduce(applyOperation, clone(vectors.base));
+        assert.equal(computeNormalizationContentDigest(value), vector.expected_digest, vector.id);
+    });
+});
+
+test('F201/F209/F210 non-result fixture-state proofRef lineage binding remains generic', () => {
+    const validInput = nonResultInput({
+        state: 'NO_TABLE_RESULT_AT_T',
+        reason: 'PROVEN_POSTPONED_NOT_PLAYED_BY_T',
+        proofRef: 'e-result',
+    });
+    const { envelope: validEnvelope } = baseEnvelope({ input: validInput });
+    const valid = validateStandingsAsOfRuntimeSourceNormalization(validEnvelope, validInput);
+    assert.equal(valid.statuses.SOURCE_SEMANTIC_NORMALIZATION_VALIDITY, 'NOT_PROVEN');
+    assert.equal(valid.statuses.SOURCE_AUTHORITY_VALIDITY, 'NOT_PROVEN');
+
+    const nullProofInput = nonResultInput({ proofRef: null });
+    const { envelope: nullProofEnvelope } = baseEnvelope({ input: nullProofInput });
+    assert.doesNotThrow(() => validateStandingsAsOfRuntimeSourceNormalization(nullProofEnvelope, nullProofInput));
+
+    const sourceDependentInput = nonResultInput({
+        state: 'NO_TABLE_RESULT_AT_T',
+        reason: 'PROVEN_NOT_FINAL_BY_T',
+        proofRef: 'e-result',
+    });
+    const { envelope: sourceDependentEnvelope } = baseEnvelope({ input: sourceDependentInput });
+    const sourceDependent = validateStandingsAsOfRuntimeSourceNormalization(
+        sourceDependentEnvelope,
+        sourceDependentInput
+    );
+    assert.equal(sourceDependent.statuses.SOURCE_SEMANTIC_NORMALIZATION_VALIDITY, 'NOT_PROVEN');
+    assert.equal(sourceDependent.statuses.SOURCE_AUTHORITY_VALIDITY, 'NOT_PROVEN');
+    assert.equal(sourceDependent.statuses.SOURCE_STREAM_COMPLETENESS, 'NOT_PROVEN');
+});
+
+test('F202-F204 non-result proofRef outside the bound standings evidence subset is rejected', () => {
+    for (const proofRef of ['e-other', 'e-unselected', 'e-odds']) {
+        const input = nonResultInput({ proofRef });
+        const { envelope } = baseEnvelope({ input });
+        assert.throws(
+            () => validateStandingsAsOfRuntimeSourceNormalization(envelope, input),
+            error =>
+                error instanceof StandingsAsOfRuntimeSourceNormalizationError &&
+                error.reasonCode === 'PROOF_REF_UNBOUND'
+        );
+    }
+});
+
+test('F205 non-result proofRef cannot survive a missing canonical attestation', () => {
+    const input = nonResultInput({ proofRef: 'e-result' });
+    const { envelope } = baseEnvelope({ input });
+    envelope.EVIDENCE_ATTESTATIONS = envelope.EVIDENCE_ATTESTATIONS.filter(row => row.EVIDENCE_ID !== 'e-result');
+    envelope.NORMALIZATION_CONTENT_DIGEST = computeNormalizationContentDigest(envelope);
+    assert.throws(
+        () => validateStandingsAsOfRuntimeSourceNormalization(envelope, input),
+        error => error.reasonCode === 'ATTESTATION_SET_MISMATCH'
+    );
 });

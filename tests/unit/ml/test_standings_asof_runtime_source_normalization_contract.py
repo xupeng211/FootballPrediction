@@ -23,6 +23,7 @@ from src.ml.inference.runtime_capture_contract import (
 )
 from src.ml.inference.standings_asof_runtime_source_normalization_contract import (
     NormalizationValidationError,
+    canonical_code_point_sorted,
     compute_fact_binding_digest,
     compute_normalization_content_digest,
     compute_output_input_binding_digest,
@@ -38,9 +39,16 @@ VECTOR_PATH = (
     / "fixtures"
     / "standings_asof_runtime_source_normalization_digest_vectors.json"
 )
+ORDERING_VECTOR_PATH = (
+    REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "standings_asof_runtime_source_normalization_ordering_vectors.json"
+)
 DECISION_TIME = "2026-08-18T12:00:00Z"
 TARGET_KICKOFF = "2026-08-18T13:00:00Z"
 DIGEST_VECTOR_COUNT = 20
+ORDERING_VECTOR_COUNT = 23
 
 
 def _payload_digest(payload: bytes) -> str:
@@ -510,3 +518,82 @@ def test_permutation_and_timestamps_are_deterministic_and_input_is_not_mutated()
     result = _validate(envelope, manifest, payloads)
     assert result["valid"] is True
     assert envelope == before
+
+
+def test_direct_code_point_order_matches_frozen_lexical_ascending() -> None:
+    values = [
+        "A-evidence",
+        "a-evidence",
+        "evidence-1",
+        "evidence_1",
+        "evidence.1",
+        "evidence:1",
+        "evidence/1",
+        "Z-evidence",
+        "z-evidence",
+        "0-evidence",
+        "9-evidence",
+    ]
+    assert canonical_code_point_sorted(values) == [
+        "0-evidence",
+        "9-evidence",
+        "A-evidence",
+        "Z-evidence",
+        "a-evidence",
+        "evidence-1",
+        "evidence.1",
+        "evidence/1",
+        "evidence:1",
+        "evidence_1",
+        "z-evidence",
+    ]
+    assert canonical_code_point_sorted(["😀", "😁"]) == ["😀", "😁"]
+
+
+def test_shared_ordering_adversarial_digest_vectors_match_python_serializer() -> None:
+    vectors = json.loads(ORDERING_VECTOR_PATH.read_text(encoding="utf-8"))
+    assert vectors["lifecycle"] == "test-fixture"
+    assert len(vectors["vectors"]) == ORDERING_VECTOR_COUNT
+    for vector in vectors["vectors"]:
+        value = deepcopy(vectors["base"])
+        for operation in vector["operations"]:
+            _apply_vector_operation(value, operation)
+        assert compute_normalization_content_digest(value) == vector["expected_digest"], vector[
+            "id"
+        ]
+
+
+@pytest.mark.parametrize(
+    ("field", "tampered_value"),
+    [
+        (
+            "PAYLOAD_CONTENT_DIGEST",
+            "f" * 64,
+        ),
+        (
+            "SOURCE_OBSERVED_AT_UTC",
+            "2026-08-18T11:30:00Z",
+        ),
+        (
+            "AVAILABILITY_PROOF_KIND",
+            "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T",
+        ),
+    ],
+)
+def test_f206_f208_capture_attestation_metadata_cannot_be_rewritten(
+    field: str, tampered_value: object
+) -> None:
+    manifest, payloads = _capture_manifest()
+    envelope = _envelope(manifest)
+    attestation = envelope["EVIDENCE_ATTESTATIONS"][0]
+    if field == "AVAILABILITY_PROOF_KIND":
+        attestation[field] = tampered_value
+        attestation["AVAILABILITY_PROOF_DATA"] = {
+            "start_utc": "2026-08-18T09:00:00Z",
+            "end_utc": "2026-08-18T10:00:00Z",
+        }
+    else:
+        attestation[field] = tampered_value
+    _refresh_digest(envelope)
+    with _raises("ATTESTATION_CAPTURE_MISMATCH"):
+        _validate(envelope, manifest, payloads)

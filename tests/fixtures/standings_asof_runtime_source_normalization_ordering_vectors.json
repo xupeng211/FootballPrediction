@@ -1,0 +1,356 @@
+{
+    "lifecycle": "test-fixture",
+    "canonicalization": "STABLE_VALUE_SORTED_KEYS_COMPACT_UTF8_JSON",
+    "base": {
+        "NORMALIZATION_CONTRACT_ID": "standings-asof-runtime-source-normalization/v1",
+        "NORMALIZATION_CONTRACT_VERSION": "v1",
+        "NORMALIZATION_INSTANCE_ID": "normalization-ordering-base",
+        "NORMALIZATION_CONTENT_DIGEST": "0000000000000000000000000000000000000000000000000000000000000000",
+        "PREDICTION_CONTEXT": {
+            "PREDICTION_CONTEXT_ID": "context-ordering",
+            "MODEL_ASOF_CONTRACT_ID": "canonical-model-asof/v1",
+            "MODEL_ASOF_CONTRACT_VERSION": "v1",
+            "MODEL_DECISION_TIME_UTC": "2026-08-18T12:00:00.000Z",
+            "FEATURE_AS_OF_UTC": "2026-08-18T12:00:00.000Z",
+            "TARGET_MATCH_ID": "target-ordering",
+            "TARGET_KICKOFF_UTC": "2026-08-18T13:00:00.000Z"
+        },
+        "RUNTIME_CAPTURE_BINDING": {
+            "RUNTIME_CAPTURE_CONTRACT_ID": "canonical-runtime-capture/v1",
+            "RUNTIME_CAPTURE_CONTRACT_VERSION": "v1",
+            "CAPTURE_INSTANCE_ID": "capture-ordering",
+            "CAPTURE_CONTENT_DIGEST": "1111111111111111111111111111111111111111111111111111111111111111",
+            "CAPTURE_SELECTED_EVIDENCE_IDS": [
+                "9-evidence",
+                "evidence-1",
+                "Z-evidence",
+                "evidence:1",
+                "evidence.1",
+                "evidence/1",
+                "a-evidence",
+                "0-evidence",
+                "evidence_1",
+                "A-evidence",
+                "z-evidence"
+            ]
+        },
+        "STANDINGS_EVIDENCE_IDS": [
+            "z-evidence",
+            "A-evidence",
+            "evidence_1",
+            "0-evidence",
+            "a-evidence",
+            "evidence/1",
+            "evidence.1",
+            "evidence:1",
+            "Z-evidence",
+            "evidence-1",
+            "9-evidence"
+        ],
+        "EVIDENCE_ATTESTATIONS": [
+            { "EVIDENCE_ID": "9-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "evidence-1", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "Z-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "evidence:1", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "evidence.1", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "evidence/1", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "a-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "0-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "evidence_1", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "A-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null },
+            { "EVIDENCE_ID": "z-evidence", "SOURCE_FAMILY": "generic", "SOURCE_RECORD_ID": null }
+        ],
+        "FACT_BINDINGS": [
+            { "BINDING_ID": "fact-9-evidence", "SOURCE_EVIDENCE_IDS": ["9-evidence"] },
+            { "BINDING_ID": "fact-evidence-1", "SOURCE_EVIDENCE_IDS": ["evidence-1"] },
+            { "BINDING_ID": "fact-Z-evidence", "SOURCE_EVIDENCE_IDS": ["Z-evidence"] },
+            { "BINDING_ID": "fact-evidence:1", "SOURCE_EVIDENCE_IDS": ["evidence:1"] },
+            { "BINDING_ID": "fact-evidence.1", "SOURCE_EVIDENCE_IDS": ["evidence.1"] },
+            { "BINDING_ID": "fact-evidence/1", "SOURCE_EVIDENCE_IDS": ["evidence/1"] },
+            { "BINDING_ID": "fact-a-evidence", "SOURCE_EVIDENCE_IDS": ["a-evidence"] },
+            { "BINDING_ID": "fact-0-evidence", "SOURCE_EVIDENCE_IDS": ["0-evidence"] },
+            { "BINDING_ID": "fact-evidence_1", "SOURCE_EVIDENCE_IDS": ["evidence_1"] },
+            { "BINDING_ID": "fact-A-evidence", "SOURCE_EVIDENCE_IDS": ["A-evidence"] },
+            { "BINDING_ID": "fact-z-evidence", "SOURCE_EVIDENCE_IDS": ["z-evidence"] }
+        ],
+        "OUTPUT_STANDINGS_INPUT_BINDING": {
+            "FIXTURE_STATE_IDS": [
+                "9-evidence",
+                "evidence-1",
+                "Z-evidence",
+                "evidence:1",
+                "evidence.1",
+                "evidence/1",
+                "a-evidence",
+                "0-evidence",
+                "evidence_1",
+                "A-evidence",
+                "z-evidence"
+            ],
+            "ADMINISTRATIVE_ADJUSTMENT_IDS": [
+                "z-evidence",
+                "A-evidence",
+                "evidence_1",
+                "0-evidence",
+                "a-evidence",
+                "evidence/1",
+                "evidence.1",
+                "evidence:1",
+                "Z-evidence",
+                "evidence-1",
+                "9-evidence"
+            ]
+        },
+        "STATUS": {
+            "NORMALIZATION_ENVELOPE_STRUCTURAL_VALIDITY": "PROVEN",
+            "CAPTURE_BINDING_VALIDITY": "PROVEN",
+            "OUTPUT_INPUT_BINDING_VALIDITY": "NOT_PROVEN",
+            "SOURCE_SEMANTIC_NORMALIZATION_VALIDITY": "NOT_PROVEN",
+            "SOURCE_AUTHORITY_VALIDITY": "NOT_PROVEN",
+            "SOURCE_STREAM_COMPLETENESS": "NOT_PROVEN",
+            "RUNTIME_NUMERIC_ELIGIBILITY": "NO"
+        }
+    },
+    "vectors": [
+        {
+            "id": "V02_STANDINGS_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "STANDINGS_EVIDENCE_IDS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V03_CAPTURE_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V04_ATTESTATION_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "EVIDENCE_ATTESTATIONS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V05_FACT_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "FACT_BINDINGS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V06_FACT_EVIDENCE_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "FACT_BINDINGS.0.SOURCE_EVIDENCE_IDS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V07_STATE_REVERSE",
+            "operations": [{ "type": "REVERSE", "path": "OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V08_ADJUSTMENT_REVERSE",
+            "operations": [
+                { "type": "REVERSE", "path": "OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS" }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V09_TOP_LEVEL_REORDER",
+            "operations": [{ "type": "REORDER_TOP_LEVEL" }],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V10_MIXED_EVIDENCE_SET",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "STANDINGS_EVIDENCE_IDS",
+                    "value": [
+                        "9-evidence",
+                        "evidence-1",
+                        "Z-evidence",
+                        "evidence:1",
+                        "evidence.1",
+                        "evidence/1",
+                        "a-evidence",
+                        "0-evidence",
+                        "evidence_1",
+                        "A-evidence",
+                        "z-evidence"
+                    ]
+                }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V11_MIXED_CAPTURE_SET",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS",
+                    "value": [
+                        "z-evidence",
+                        "A-evidence",
+                        "evidence_1",
+                        "0-evidence",
+                        "a-evidence",
+                        "evidence/1",
+                        "evidence.1",
+                        "evidence:1",
+                        "Z-evidence",
+                        "evidence-1",
+                        "9-evidence"
+                    ]
+                }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V12_MIXED_ATTESTATIONS",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "EVIDENCE_ATTESTATIONS",
+                    "value": [
+                        { "EVIDENCE_ID": "z-evidence", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "A-evidence", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "evidence_1", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "0-evidence", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "a-evidence", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "evidence/1", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "evidence.1", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "evidence:1", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "Z-evidence", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "evidence-1", "SOURCE_FAMILY": "generic" },
+                        { "EVIDENCE_ID": "9-evidence", "SOURCE_FAMILY": "generic" }
+                    ]
+                }
+            ],
+            "expected_digest": "c158c29b1edae0873d0c4dc4e8809bc9cf729727368cf5be00e7ae1a2036cd7c"
+        },
+        {
+            "id": "V13_MIXED_FACTS",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "FACT_BINDINGS",
+                    "value": [
+                        { "BINDING_ID": "fact-z-evidence", "SOURCE_EVIDENCE_IDS": ["z-evidence"] },
+                        { "BINDING_ID": "fact-A-evidence", "SOURCE_EVIDENCE_IDS": ["A-evidence"] },
+                        { "BINDING_ID": "fact-evidence_1", "SOURCE_EVIDENCE_IDS": ["evidence_1"] },
+                        { "BINDING_ID": "fact-0-evidence", "SOURCE_EVIDENCE_IDS": ["0-evidence"] },
+                        { "BINDING_ID": "fact-a-evidence", "SOURCE_EVIDENCE_IDS": ["a-evidence"] },
+                        { "BINDING_ID": "fact-evidence/1", "SOURCE_EVIDENCE_IDS": ["evidence/1"] },
+                        { "BINDING_ID": "fact-evidence.1", "SOURCE_EVIDENCE_IDS": ["evidence.1"] },
+                        { "BINDING_ID": "fact-evidence:1", "SOURCE_EVIDENCE_IDS": ["evidence:1"] },
+                        { "BINDING_ID": "fact-Z-evidence", "SOURCE_EVIDENCE_IDS": ["Z-evidence"] },
+                        { "BINDING_ID": "fact-evidence-1", "SOURCE_EVIDENCE_IDS": ["evidence-1"] },
+                        { "BINDING_ID": "fact-9-evidence", "SOURCE_EVIDENCE_IDS": ["9-evidence"] }
+                    ]
+                }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V14_MIXED_STATES",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS",
+                    "value": [
+                        "z-evidence",
+                        "A-evidence",
+                        "evidence_1",
+                        "0-evidence",
+                        "a-evidence",
+                        "evidence/1",
+                        "evidence.1",
+                        "evidence:1",
+                        "Z-evidence",
+                        "evidence-1",
+                        "9-evidence"
+                    ]
+                }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V15_MIXED_ADJUSTMENTS",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS",
+                    "value": [
+                        "9-evidence",
+                        "evidence-1",
+                        "Z-evidence",
+                        "evidence:1",
+                        "evidence.1",
+                        "evidence/1",
+                        "a-evidence",
+                        "0-evidence",
+                        "evidence_1",
+                        "A-evidence",
+                        "z-evidence"
+                    ]
+                }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V16_DOUBLE_REVERSE",
+            "operations": [
+                { "type": "REVERSE", "path": "STANDINGS_EVIDENCE_IDS" },
+                { "type": "REVERSE", "path": "FACT_BINDINGS" }
+            ],
+            "expected_digest": "fbaeb76e919a912d55a3d76f290651eb717626628f9650ea075a6f28b73e94df"
+        },
+        {
+            "id": "V17_SOURCE_FAMILY_UNICODE",
+            "operations": [{ "type": "SET", "path": "EVIDENCE_ATTESTATIONS.0.SOURCE_FAMILY", "value": "源-Δ-😀" }],
+            "expected_digest": "dd8f50a1987044852ac0fe32a1a98ceca297fd7c6cce0ad08a8806b9b7155006"
+        },
+        {
+            "id": "V18_INSTANCE_ID_CHANGE",
+            "operations": [
+                { "type": "SET", "path": "NORMALIZATION_INSTANCE_ID", "value": "normalization-ordering-other" }
+            ],
+            "expected_digest": "38679e3676eaf8f7b35ac31a3805bc6bce4687b1a86adba87f65b2b8b3ac9262"
+        },
+        {
+            "id": "V19_CAPTURE_DIGEST_CHANGE",
+            "operations": [
+                {
+                    "type": "SET",
+                    "path": "RUNTIME_CAPTURE_BINDING.CAPTURE_CONTENT_DIGEST",
+                    "value": "2222222222222222222222222222222222222222222222222222222222222222"
+                }
+            ],
+            "expected_digest": "a8f50bb0a86c994def4209d68fe6770be4cd4a724bc6785369734446130d7662"
+        },
+        {
+            "id": "V20_TARGET_CHANGE",
+            "operations": [
+                { "type": "SET", "path": "PREDICTION_CONTEXT.TARGET_MATCH_ID", "value": "target-ordering-other" }
+            ],
+            "expected_digest": "54af8d204950c7b4fac15e5006012ed5e8d5db0ccc62e557e26ee4df714c7f3f"
+        },
+        {
+            "id": "V21_FACT_EVIDENCE_CHANGE",
+            "operations": [{ "type": "SET", "path": "FACT_BINDINGS.0.SOURCE_EVIDENCE_IDS.0", "value": "A-evidence" }],
+            "expected_digest": "fc4de00624b2bc33f97fb427d95663ae5780b40a536a98f8b055e71cd00c619f"
+        },
+        {
+            "id": "V22_STATE_CHANGE",
+            "operations": [
+                { "type": "SET", "path": "OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS.0", "value": "state-z" }
+            ],
+            "expected_digest": "fa63f9e7ac434598b44de4888b1105b8dcd18e2bea198268f0dba342cd46d4d1"
+        },
+        {
+            "id": "V23_STATUS_CHANGE",
+            "operations": [{ "type": "SET", "path": "STATUS.OUTPUT_INPUT_BINDING_VALIDITY", "value": "PROVEN" }],
+            "expected_digest": "ff4f4a08fffbbbace8802706116345307fa3f7b658c5f59d857257f589ceb4db"
+        },
+        {
+            "id": "V24_PREFIX_SENSITIVE_BINDING",
+            "operations": [{ "type": "SET", "path": "FACT_BINDINGS.0.BINDING_ID", "value": "fact-evidence-1" }],
+            "expected_digest": "50a015915c4eef801fc190ebb354c0589e472dc59cc78a30f28dd306f115bce6"
+        }
+    ]
+}

@@ -136,6 +136,26 @@ const SECRET_KEYS = new Set([
     'TOKEN',
 ]);
 
+// Canonical ordering is frozen as locale-independent Unicode code-point
+// lexicographic ascending.  This comparator intentionally does not use
+// localeCompare, Intl.Collator, numeric/cultural collation, or UTF-16
+// code-unit ordering.
+function compareUnicodeCodePoints(left, right) {
+    const leftCodePoints = Array.from(String(left));
+    const rightCodePoints = Array.from(String(right));
+    const sharedLength = Math.min(leftCodePoints.length, rightCodePoints.length);
+    for (let index = 0; index < sharedLength; index += 1) {
+        const leftCodePoint = leftCodePoints[index].codePointAt(0);
+        const rightCodePoint = rightCodePoints[index].codePointAt(0);
+        if (leftCodePoint !== rightCodePoint) return leftCodePoint - rightCodePoint;
+    }
+    return leftCodePoints.length - rightCodePoints.length;
+}
+
+function sortUnicodeCodePoints(values) {
+    return [...values].sort(compareUnicodeCodePoints);
+}
+
 class StandingsAsOfRuntimeSourceNormalizationError extends Error {
     constructor(reasonCode, message) {
         super(`${reasonCode}: ${message}`);
@@ -207,7 +227,7 @@ function canonicalizeTree(value, key = null) {
     if (Array.isArray(value)) return value.map(child => canonicalizeTree(child, key));
     if (isPlainObject(value)) {
         return Object.keys(value)
-            .sort()
+            .sort(compareUnicodeCodePoints)
             .reduce((out, childKey) => {
                 out[childKey] = canonicalizeTree(value[childKey], childKey);
                 return out;
@@ -227,7 +247,7 @@ function sortedUniqueIds(value, label) {
     if (!Array.isArray(value) || value.some(item => typeof item !== 'string' || !SAFE_ID.test(item))) {
         throw new StandingsAsOfRuntimeSourceNormalizationError('NORMALIZATION_SCHEMA_MISMATCH', `${label} malformed`);
     }
-    const sorted = [...value].sort();
+    const sorted = sortUnicodeCodePoints(value);
     if (new Set(value).size !== value.length) {
         throw new StandingsAsOfRuntimeSourceNormalizationError(
             'NORMALIZATION_SCHEMA_MISMATCH',
@@ -241,24 +261,24 @@ function orderedProjection(envelope, { includeDigest = false } = {}) {
     const projection = cloneJson(envelope);
     if (!includeDigest) delete projection.NORMALIZATION_CONTENT_DIGEST;
     if (projection.RUNTIME_CAPTURE_BINDING) {
-        projection.RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS = [
-            ...projection.RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS,
-        ].sort();
+        projection.RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS = sortUnicodeCodePoints(
+            projection.RUNTIME_CAPTURE_BINDING.CAPTURE_SELECTED_EVIDENCE_IDS
+        );
     }
-    projection.STANDINGS_EVIDENCE_IDS = [...projection.STANDINGS_EVIDENCE_IDS].sort();
+    projection.STANDINGS_EVIDENCE_IDS = sortUnicodeCodePoints(projection.STANDINGS_EVIDENCE_IDS);
     projection.EVIDENCE_ATTESTATIONS = [...projection.EVIDENCE_ATTESTATIONS].sort((left, right) =>
-        left.EVIDENCE_ID.localeCompare(right.EVIDENCE_ID)
+        compareUnicodeCodePoints(left.EVIDENCE_ID, right.EVIDENCE_ID)
     );
     projection.FACT_BINDINGS = projection.FACT_BINDINGS.map(binding => ({
         ...binding,
-        SOURCE_EVIDENCE_IDS: [...binding.SOURCE_EVIDENCE_IDS].sort(),
-    })).sort((left, right) => left.BINDING_ID.localeCompare(right.BINDING_ID));
-    projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS = [
-        ...projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS,
-    ].sort();
-    projection.OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS = [
-        ...projection.OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS,
-    ].sort();
+        SOURCE_EVIDENCE_IDS: sortUnicodeCodePoints(binding.SOURCE_EVIDENCE_IDS),
+    })).sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID, right.BINDING_ID));
+    projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS = sortUnicodeCodePoints(
+        projection.OUTPUT_STANDINGS_INPUT_BINDING.FIXTURE_STATE_IDS
+    );
+    projection.OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS = sortUnicodeCodePoints(
+        projection.OUTPUT_STANDINGS_INPUT_BINDING.ADMINISTRATIVE_ADJUSTMENT_IDS
+    );
     return canonicalizeTree(projection);
 }
 
@@ -275,20 +295,20 @@ function computeNormalizationContentDigest(envelope) {
 function computeFactBindingDigest(binding) {
     const projection = cloneJson(binding);
     delete projection.NORMALIZED_FACT_DIGEST;
-    projection.SOURCE_EVIDENCE_IDS = [...projection.SOURCE_EVIDENCE_IDS].sort();
+    projection.SOURCE_EVIDENCE_IDS = sortUnicodeCodePoints(projection.SOURCE_EVIDENCE_IDS);
     return sha256Text(stableStringify(canonicalizeTree(projection)));
 }
 
 function computeOutputInputBindingDigest(binding) {
     const projection = cloneJson(binding);
     delete projection.OUTPUT_INPUT_BINDING_DIGEST;
-    projection.FIXTURE_STATE_IDS = [...projection.FIXTURE_STATE_IDS].sort();
-    projection.ADMINISTRATIVE_ADJUSTMENT_IDS = [...projection.ADMINISTRATIVE_ADJUSTMENT_IDS].sort();
+    projection.FIXTURE_STATE_IDS = sortUnicodeCodePoints(projection.FIXTURE_STATE_IDS);
+    projection.ADMINISTRATIVE_ADJUSTMENT_IDS = sortUnicodeCodePoints(projection.ADMINISTRATIVE_ADJUSTMENT_IDS);
     return sha256Text(stableStringify(canonicalizeTree(projection)));
 }
 
 function sourceRecordRefForEvidenceIds(captureContentDigest, evidenceIds, attestationsById) {
-    const ids = [...evidenceIds].sort();
+    const ids = sortUnicodeCodePoints(evidenceIds);
     const records = ids.map(id => attestationsById[id].SOURCE_RECORD_ID);
     const nonNull = records.filter(record => record !== null);
     if (ids.length === 1 && nonNull.length === 1) return nonNull[0];
@@ -415,7 +435,10 @@ function validateAttestation(value, index) {
             }
             break;
         case 'BOUNDED_INTERVAL_ENTIRELY_BEFORE_T':
-            if (!isPlainObject(proof) || Object.keys(proof).sort().join('|') !== 'end_utc|start_utc') {
+            if (
+                !isPlainObject(proof) ||
+                Object.keys(proof).sort(compareUnicodeCodePoints).join('|') !== 'end_utc|start_utc'
+            ) {
                 throw new StandingsAsOfRuntimeSourceNormalizationError(
                     'NORMALIZATION_SCHEMA_MISMATCH',
                     `${label} interval proof malformed`
@@ -606,14 +629,14 @@ function validateNormalizationEnvelopeStructure(envelope) {
     const attestationIds = attestations.map(row => row.EVIDENCE_ID);
     if (
         new Set(attestationIds).size !== attestationIds.length ||
-        JSON.stringify([...attestationIds].sort()) !== JSON.stringify(standingsEvidenceIds)
+        JSON.stringify(sortUnicodeCodePoints(attestationIds)) !== JSON.stringify(standingsEvidenceIds)
     ) {
         throw new StandingsAsOfRuntimeSourceNormalizationError(
             'ATTESTATION_SET_MISMATCH',
             'attestations must exactly cover standings evidence'
         );
     }
-    attestations.sort((left, right) => left.EVIDENCE_ID.localeCompare(right.EVIDENCE_ID));
+    attestations.sort((left, right) => compareUnicodeCodePoints(left.EVIDENCE_ID, right.EVIDENCE_ID));
     const stateIds = sortedUniqueIds(outputValue.FIXTURE_STATE_IDS, 'FIXTURE_STATE_IDS');
     const adjustmentIds = sortedUniqueIds(outputValue.ADMINISTRATIVE_ADJUSTMENT_IDS, 'ADMINISTRATIVE_ADJUSTMENT_IDS');
     const facts = value.FACT_BINDINGS.map((row, index) => validateFactBinding(row, index, standingsEvidenceIds));
@@ -624,7 +647,7 @@ function validateNormalizationEnvelopeStructure(envelope) {
             'fact bindings must be unique'
         );
     }
-    facts.sort((left, right) => left.BINDING_ID.localeCompare(right.BINDING_ID));
+    facts.sort((left, right) => compareUnicodeCodePoints(left.BINDING_ID, right.BINDING_ID));
     const output = validateOutputBinding(value.OUTPUT_STANDINGS_INPUT_BINDING, context, stateIds, adjustmentIds);
     const statuses = validateStatus(value.STATUS);
     if (computeNormalizationContentDigest(value) !== value.NORMALIZATION_CONTENT_DIGEST) {
@@ -641,6 +664,7 @@ function validateNormalizationEnvelopeStructure(envelope) {
         runtimeCaptureBinding: capture,
         standingsEvidenceIds,
         evidenceAttestations: attestations,
+        evidenceAttestationsById: Object.fromEntries(attestations.map(row => [row.EVIDENCE_ID, row])),
         factBindings: facts,
         outputStandingsInputBinding: output,
         statuses,
@@ -648,7 +672,10 @@ function validateNormalizationEnvelopeStructure(envelope) {
 }
 
 function validateLineage(lineage, label, envelopeResult, factByEvidence) {
-    if (!isPlainObject(lineage) || Object.keys(lineage).sort().join('|') !== 'evidenceRefs|sourceRecordRef') {
+    if (
+        !isPlainObject(lineage) ||
+        Object.keys(lineage).sort(compareUnicodeCodePoints).join('|') !== 'evidenceRefs|sourceRecordRef'
+    ) {
         throw new StandingsAsOfRuntimeSourceNormalizationError('OUTPUT_LINEAGE_INVALID', `${label} malformed`);
     }
     const evidenceRefs = sortedUniqueIds(lineage.evidenceRefs, `${label}.evidenceRefs`);
@@ -687,6 +714,12 @@ function validateProofRef(proofRef, label, envelopeResult) {
             `${label} must equal a selected evidence ID`
         );
     }
+    if (!Object.prototype.hasOwnProperty.call(envelopeResult.evidenceAttestationsById, proofRef)) {
+        throw new StandingsAsOfRuntimeSourceNormalizationError(
+            'PROOF_REF_UNBOUND',
+            `${label} has no matching canonical evidence attestation`
+        );
+    }
     return proofRef;
 }
 
@@ -707,8 +740,10 @@ function validateStandingsAsOfRuntimeSourceNormalization(envelope, candidateInpu
     }
     const normalizedInput = inputResult.normalizedInput;
     const outputBinding = envelopeResult.outputStandingsInputBinding;
-    const stateIds = normalizedInput.fixture_states.map(row => row.canonicalMatchId).sort();
-    const adjustmentIds = normalizedInput.administrative_adjustments.map(row => row.adjustmentId).sort();
+    const stateIds = sortUnicodeCodePoints(normalizedInput.fixture_states.map(row => row.canonicalMatchId));
+    const adjustmentIds = sortUnicodeCodePoints(
+        normalizedInput.administrative_adjustments.map(row => row.adjustmentId)
+    );
     if (
         inputResult.canonicalDigest !== outputBinding.CANONICAL_INPUT_DIGEST ||
         outputBinding.TARGET_MATCH_ID !== normalizedInput.target.canonicalMatchId ||
@@ -755,16 +790,18 @@ function validateStandingsAsOfRuntimeSourceNormalization(envelope, candidateInpu
             },
             `fixtureStates[${index}].basis`
         );
+        if (state.basis.availabilityProofRef !== null) {
+            validateProofRef(
+                state.basis.availabilityProofRef,
+                `fixtureStates[${index}].basis.availabilityProofRef`,
+                envelopeResult
+            );
+        }
         if (state.state === 'RESULT_AVAILABLE_AT_T') {
             lineage(state.result.sourceLineage, `fixtureStates[${index}].result.sourceLineage`);
             validateProofRef(
                 state.result.availabilityProof.proofRef,
                 `fixtureStates[${index}].result.availabilityProof.proofRef`,
-                envelopeResult
-            );
-            validateProofRef(
-                state.basis.availabilityProofRef,
-                `fixtureStates[${index}].basis.availabilityProofRef`,
                 envelopeResult
             );
             const fact = envelopeResult.factBindings.find(
@@ -830,10 +867,12 @@ module.exports = {
     NORMALIZATION_CONTRACT_VERSION,
     NORMALIZATION_ENVELOPE_FIELDS,
     StandingsAsOfRuntimeSourceNormalizationError,
+    compareUnicodeCodePoints,
     computeFactBindingDigest,
     computeNormalizationContentDigest,
     computeOutputInputBindingDigest,
     sourceRecordRefForEvidenceIds,
+    sortUnicodeCodePoints,
     validateNormalizationEnvelopeStructure,
     validateStandingsAsOfRuntimeSourceNormalization,
 };
