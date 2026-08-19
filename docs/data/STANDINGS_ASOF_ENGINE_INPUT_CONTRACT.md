@@ -301,3 +301,26 @@ regression cases；consumer tests 验证 raw validator、两种 boundary policy�
 provenance 和 fail-closed gates。Python registry tests 验证同一 singular registry 的
 frozen boundary 与 drift fail-closed。consumer 必须复用此 normalized shape 和 digest，
 不得把 T 转译为 target kickoff，也不得另建 standings engine 或第二 temporal registry。
+
+## Runtime-source normalization bridge
+
+`standings-asof-runtime-source-normalization/v1` 是 input semantics 之外的 sibling
+handoff authority。它将 exact runtime-capture identities、standings evidence subset、
+attestations、fact bindings 和 deterministic lineage 绑定到一个 candidate input，再由
+JS-side validator 复用本合同的 `validateStandingsAsOfEngineInput` 验证实际 input。它不
+修改本合同的 frozen subtree，也不把 capture binding validity 命名为 source normalization
+replay。
+
+```text
+capture structural/content integrity = PROVEN by runtime capture validator
+capture/envelope identity binding   = PROVEN by normalization validator
+standings input structural binding  = PROVEN only after actual JS input validation
+source semantic normalization        = NOT_PROVEN
+source authority / stream closure    = NOT_PROVEN
+runtime numeric eligibility          = NO
+```
+
+未 selected capture evidence 不能进入 standings subset；selected 的非-standings evidence
+也不会自动升级。`sourceLineage.evidenceRefs` 和 availability `proofRef` 必须追溯到
+exact selected evidence。source-specific parser、provider、capture storage、runtime
+pipeline 和 target identity authority 均不属于本合同。

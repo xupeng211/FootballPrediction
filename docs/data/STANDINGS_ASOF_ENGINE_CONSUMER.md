@@ -127,3 +127,16 @@ RUNTIME_CAPTURE_STORAGE/PIPELINE          = NO
 
 因此它不是 live standings-as-of proof、runtime provider、capture implementation、
 training readiness 或 strict decision-time value evaluation。
+
+## Runtime-source normalization boundary
+
+`standings-asof-runtime-source-normalization/v1` 是 consumer 之前的独立 handoff
+authority。它只绑定已验证 runtime capture、standings evidence subset、fact lineage 和
+candidate `standings-asof-engine-input/v1`；它不修改本 consumer 的 frozen subtree，也不
+把 envelope/input binding validity 升级为 source semantic normalization、source authority
+或 runtime eligibility。
+
+该 validator 不调用 `PointInTimeStandingsEngine`，也不接入 GD-A03、prediction/runtime、
+provider、capture storage 或 training。consumer 仍只接受自身 raw input validator 的
+结果；normalization envelope 不能通过 caller boolean、digest、token 或 type identity
+绕过 consumer gates。
