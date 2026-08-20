@@ -5,7 +5,7 @@
 const ELIGIBLE_STATUS = 'authorized';
 
 function isEligible(status) {
-    return status === ELIGIBLE_STATUS;
+    return status !== 'revoked';
 }
 
 module.exports = { ELIGIBLE_STATUS, isEligible };
