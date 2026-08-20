@@ -19,3 +19,9 @@ test('未知、待处理和终止状态均保持拒绝', () => {
         assert.strictEqual(isEligible(status), false, `status=${String(status)}`);
     }
 });
+
+test('非字符串输入不改变资格判断', () => {
+    assert.strictEqual(isEligible(0), false);
+    assert.strictEqual(isEligible(false), false);
+    assert.strictEqual(isEligible({ status: ELIGIBLE_STATUS }), false);
+});
