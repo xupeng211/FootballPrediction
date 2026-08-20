@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const {
     ELIGIBLE_STATUS,
     isEligible,
+    isKnownStatus,
 } = require('../fixtures/codex_review_evaluation/executionEligibility');
 
 test('仅允许明确授权状态继续执行', () => {
@@ -24,4 +25,10 @@ test('非字符串输入不改变资格判断', () => {
     assert.strictEqual(isEligible(0), false);
     assert.strictEqual(isEligible(false), false);
     assert.strictEqual(isEligible({ status: ELIGIBLE_STATUS }), false);
+});
+
+test('已知状态集合保持显式且有限', () => {
+    assert.strictEqual(isKnownStatus('pending'), true);
+    assert.strictEqual(isKnownStatus('expired'), true);
+    assert.strictEqual(isKnownStatus('unknown'), false);
 });
