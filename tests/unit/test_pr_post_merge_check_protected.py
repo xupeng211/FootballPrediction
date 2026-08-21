@@ -80,6 +80,46 @@ def test_protected_branch_name_is_report_only():
     assert not any("--delete" in command or "-d" in command for command in git_commands)
 
 
+def test_evaluate_reuses_one_snapshot_for_verdict_and_evidence():
+    """A later mutable-state change cannot contradict the verdict evidence."""
+    ci_data = {
+        "found": True,
+        "workflow": "Production Gate",
+        "run_id": "9876543210",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": MERGE_COMMIT,
+    }
+    main_ff_mock = mock.Mock(
+        side_effect=[
+            (True, "STATE=UP_TO_DATE"),
+            (False, "STATE=GIT_COMMAND_FAILED: transient second read"),
+        ]
+    )
+    status_mock = mock.Mock(
+        side_effect=[
+            (True, "Working tree is clean"),
+            (False, "Working tree is dirty: transient second read"),
+        ]
+    )
+
+    with (
+        mock.patch.object(pp, "fetch_pr", return_value=MERGED_PR_JSON),
+        mock.patch.object(pp, "fetch_ci", return_value=ci_data),
+        mock.patch.object(pp, "merge_commit_in_origin_main", return_value=True),
+        mock.patch.object(pp, "main_can_ff_sync", main_ff_mock),
+        mock.patch.object(pp, "git_status_clean", status_mock),
+    ):
+        result = pp.evaluate(PR_NUMBER, MERGE_COMMIT, "main")
+
+    assert main_ff_mock.call_count == 1
+    assert status_mock.call_count == 1
+    assert result.passed
+    assert result.main_ff_ok
+    assert result.status_clean
+    assert result.failures == []
+
+
 def test_cleanup_flag_is_not_a_supported_completion_option():
     """The completion CLI no longer exposes a branch deletion switch."""
     result = subprocess.run(

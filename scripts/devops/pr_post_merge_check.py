@@ -354,16 +354,18 @@ def evaluate(
     # Check 4: CI success
     failures.extend(_check_ci(ci_data, merge_sha if is_full_sha(merge_sha) else None))
 
-    # Check 5: Main ff-only sync
-    failures.extend(_check_main_ff_sync())
+    # Check 5: Main ff-only sync. Capture this mutable state once and reuse
+    # the exact result for both the verdict and the evidence fields below.
+    main_ff_ok, main_ff_message = main_can_ff_sync()
+    if not main_ff_ok:
+        failures.append(main_ff_message)
 
-    # Check 6: Working tree clean
-    failures.extend(_check_status_clean())
+    # Check 6: Working tree clean. Capture this mutable state once as well.
+    status_clean, status_message = git_status_clean()
+    if not status_clean:
+        failures.append(status_message)
 
     passed = len(failures) == 0
-
-    main_ff_ok, _ = main_can_ff_sync()
-    status_clean, _ = git_status_clean()
 
     return PostMergeResult(
         pr_number=pr_number,
