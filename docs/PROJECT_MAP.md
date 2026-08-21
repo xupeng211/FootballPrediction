@@ -24,20 +24,19 @@
 
 ## 当前可信阅读顺序
 
-按 CLAUDE.md 定义，新 Agent 从以下顺序开始：
+按 `AGENTS.md` 定义，新 Agent 从以下顺序开始：
 
 1. `AGENTS.md` —— 仓库级安全与工作流规则的权威。
 2. README "Canonical Business Entrypoints" —— 业务命令正式入口的权威。
-3. `docs/AGENT_WORKFLOW.md` 与 `docs/engineering/AI_AGENT_WORKFLOW.md` —— 详细工作流。
-4. `docs/AI_AGENT_WORKFLOW_HARDENING.md` —— CI 监控、分支安全、完成证据规则。
-5. `docs/data/FOTMOB_CURRENT_STATE.md` —— FotMob 摄取最新状态。
-6. 本文档（`docs/PROJECT_MAP.md`）—— 仓库结构与找能力路径。
-7. `docs/CAPABILITY_INDEX.md` —— 可扫描能力表。
-8. `docs/ACTIVE_MILESTONE.md` —— 当前里程碑与授权边界。
+3. `docs/AGENT_WORKFLOW.md` —— 唯一详细工作流。
+4. `docs/data/FOTMOB_CURRENT_STATE.md` —— FotMob 摄取最新状态。
+5. 本文档（`docs/PROJECT_MAP.md`）—— 仓库结构与找能力路径。
+6. `docs/CAPABILITY_INDEX.md` —— 可扫描能力表。
+7. `docs/ACTIVE_MILESTONE.md` —— 当前里程碑与授权边界。
 
 注意：canonical 表定义"正式入口"，但 **canonical ≠ 已获得执行授权**。
 网络、DB 写入、migration、artifact、训练与生产操作仍需逐项明确授权
-（AGENTS.md §2.4、CLAUDE.md）。
+（AGENTS.md §7、CLAUDE.md）。
 
 ## 技术栈摘要
 

@@ -14,25 +14,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 
-REQUIRED_SECTIONS: tuple[str, ...] = (
-    "## Summary",
-    "## Scope",
-    "## Documentation Impact",
-    "## Safety Impact",
-    "## Validation",
-    "## CI Gate Scope",
-    "## No deletion / no move / no rename confirmation",
-    "## Rollback Plan",
-    "## Next Recommended Task",
-    "## SC-002 status",
-    "## Remaining risks",
-)
-
-NEXT_TASK_MANDATORY_PHRASES: tuple[str, ...] = (
-    "Do not start automatically",
-    "Recommended next task only after user confirmation",
-)
-
 DANGEROUS_NETWORK_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
@@ -115,6 +96,9 @@ GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
         "scripts/ops/documentation_governance_check.py",
         "scripts/ops/ai_workflow_gate.py",
         ".github/workflows/production-gate.yml",
+        "CONTRIBUTING.md",
+        "docs/PROJECT_MAP.md",
+        "Makefile",
     }
 )
 
@@ -122,7 +106,7 @@ AUTHORITATIVE_DOC_PATHS: frozenset[str] = frozenset(
     {
         "docs/PROJECT_STATUS.md",
         "docs/DOCUMENTATION_GOVERNANCE.md",
-        "docs/CODEX_WORKFLOW.md",
+        "AGENTS.md",
         "docs/AGENT_WORKFLOW.md",
         "docs/DATA_SOURCE_STRATEGY.md",
         "docs/data/FOTMOB_CURRENT_STATE.md",
@@ -204,12 +188,8 @@ BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402, I001
-from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
-    narrow_blocking_errors,
-    parse_task_type,
-    run_pr_authorization_matrix_report_only,
-    validate_authorization,
+from scripts.ops.helpers.disposable_canonical_db_proof_scan import (  # noqa: E402, I001
+    scan_with_disposable_db_proof_exemption,
 )
 
 # Git change detection — delegated to dedicated helper
@@ -224,9 +204,21 @@ from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     parse_name_status,  # noqa: F401 — re-exported for local_pr_gate_preflight
     resolve_comparison_refs,
 )
-from scripts.ops.helpers.disposable_canonical_db_proof_scan import (  # noqa: E402
-    scan_with_disposable_db_proof_exemption,
+from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
+    narrow_blocking_errors,
+    parse_task_type,
+    run_pr_authorization_matrix_report_only,
+    validate_authorization,
 )
+from scripts.ops.helpers import section_content_quality as _section_content_quality  # noqa: E402
+
+CANONICAL_REQUIRED_SECTIONS = _section_content_quality.CANONICAL_REQUIRED_SECTIONS
+LEGACY_REQUIRED_SECTIONS = _section_content_quality.LEGACY_REQUIRED_SECTIONS
+NEXT_TASK_MANDATORY_PHRASES = _section_content_quality.NEXT_TASK_MANDATORY_PHRASES
+REQUIRED_SECTIONS = _section_content_quality.REQUIRED_SECTIONS
+_check_next_task_stop_phrase = _section_content_quality.check_next_task_stop_phrase
+check_required_sections = _section_content_quality.check_required_sections
+check_section_content_quality = _section_content_quality.check_section_content_quality
 
 
 def _normalise(text: str) -> str:
@@ -269,27 +261,9 @@ def section_text_between(pr_body: str, start_heading: str, next_heading: str | N
     return suffix
 
 
-def check_required_sections(pr_body: str) -> list[str]:
-    """Return missing required section headings."""
-
-    return [heading for heading in REQUIRED_SECTIONS if not section_present(pr_body, heading)]
-
-
 def check_next_task_stop_phrase(pr_body: str) -> list[str]:
-    """Verify the Next Recommended Task section contains mandatory phrases."""
-
-    section = section_text_between(
-        pr_body,
-        "## Next Recommended Task",
-    )
-    if not section:
-        return ["## Next Recommended Task section not found or empty"]
-
-    return [
-        f"## Next Recommended Task missing phrase: '{phrase}'"
-        for phrase in NEXT_TASK_MANDATORY_PHRASES
-        if phrase not in section
-    ]
+    """Keep the retired no-auto-next-task check compatible for old callers."""
+    return _check_next_task_stop_phrase(pr_body, section_text_between)
 
 
 def _touches_any(changed: set[str], prefixes: tuple[str, ...]) -> bool:
@@ -463,13 +437,28 @@ def _safety_status_no(pr_body: str, label: str) -> bool:
     return bool(re.search(rf"-\s*no\s+{label}\s*:\s*yes", pr_body, re.IGNORECASE))
 
 
+def _risk_declared_no(pr_body: str, label: str) -> bool:
+    """Check the canonical Risk section for an explicit no declaration."""
+
+    risk = section_text_between(pr_body, "## Risk")
+    if not risk:
+        return False
+    label_pattern = label.replace(r"\s+", r"\s+")
+    return bool(
+        re.search(rf"\bno\s+(?:live\s+)?{label_pattern}\b", risk, re.IGNORECASE)
+        or re.search(rf"\b{label_pattern}\s*:\s*no\b", risk, re.IGNORECASE)
+    )
+
+
 def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     """Fail if safety declarations contradict the files actually changed."""
 
     errors: list[str] = []
 
-    db_declared_no = _safety_declared_no(pr_body, r"DB\s+used") or _safety_status_no(
-        pr_body, r"DB\s+writes"
+    db_declared_no = (
+        _safety_declared_no(pr_body, r"DB\s+used")
+        or _safety_status_no(pr_body, r"DB\s+writes")
+        or _risk_declared_no(pr_body, r"(?:DB|database)\s+writes?")
     )
     if db_declared_no and _touches_any(changed, DB_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in DB_TOUCH_PATHS))
@@ -478,8 +467,10 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
             + ", ".join(touching)
         )
 
-    scraper_declared_no = _safety_declared_no(pr_body, r"Scraper\s+run") or _safety_status_no(
-        pr_body, r"scraper"
+    scraper_declared_no = (
+        _safety_declared_no(pr_body, r"Scraper\s+run")
+        or _safety_status_no(pr_body, r"scraper")
+        or _risk_declared_no(pr_body, r"(?:live\s+)?fetch|scraper\s+run")
     )
     if scraper_declared_no and _touches_any(changed, SCRAPER_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in SCRAPER_TOUCH_PATHS))
@@ -488,9 +479,11 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
             + ", ".join(touching)
         )
 
-    browser_declared_no = _safety_declared_no(
-        pr_body, r"Browser\s+automation\s+used"
-    ) or _safety_status_no(pr_body, r"browser")
+    browser_declared_no = (
+        _safety_declared_no(pr_body, r"Browser\s+automation\s+used")
+        or _safety_status_no(pr_body, r"browser")
+        or _risk_declared_no(pr_body, r"browser(?:\s+automation)?")
+    )
     if browser_declared_no and _touches_any(changed, BROWSER_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in BROWSER_TOUCH_PATHS))
         errors.append(
@@ -581,8 +574,11 @@ def validate(  # noqa: C901, PLR0912
         if missing:
             errors.append(f"Missing required PR body sections: {', '.join(missing)}")
 
-        # 2. Do not start automatically
-        errors.extend(check_next_task_stop_phrase(pr_body))
+        # 2. Do not start automatically. Main-push calls may intentionally
+        # omit PR metadata; an empty skipped body must not create a fake
+        # missing-phrase failure.
+        if not (skip_body_checks and not pr_body.strip()):
+            errors.extend(check_next_task_stop_phrase(pr_body))
 
     # 3. Mixed governance + business code
     errors.extend(check_mixed_governance_business(changed))

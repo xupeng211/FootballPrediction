@@ -785,6 +785,10 @@ legacy-writer execution is authorized.
 
 ## Current baseline
 
+> 以下历史 baseline 段落保留用于追溯，不再定义当前 agent workflow。当前操作权威是
+> `AGENTS.md`，详细说明是 `docs/AGENT_WORKFLOW.md`；GitHub ruleset、Actions 和 Git
+> 状态是机器事实。
+
 - `main` includes PR #1463 (P0 AI Workflow Gate CI enforcement).
 - `main` includes PR #16XX (`agent_workflow_rules_hardening_phase1`) — three-layer agent
   workflow discipline codified into the repo:
@@ -810,12 +814,13 @@ legacy-writer execution is authorized.
   Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase7 = 43 scripts now protected. SC-002 was partial mitigation only at that task's completion.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
-- AI workflow governance rules are enforced by:
+- The current workflow boundary is described by `AGENTS.md` and
+  `docs/AGENT_WORKFLOW.md`. The following are implementation/helpers or
+  historical records, not additional workflow authorities:
   - `scripts/ops/ai_workflow_gate.py` (CI-enforced workflow and documentation checks)
   - `scripts/devops/gatekeeper.sh` (CI-enforced, multi-phase)
   - `scripts/ops/documentation_governance_check.py` (standalone checker)
   - `.github/pull_request_template.md` (mandatory PR structure)
-  - `docs/CODEX_WORKFLOW.md` (Codex task rules)
   - `docs/DOCUMENTATION_GOVERNANCE.md` (doc lifecycle rules)
 
 ## Current SC-002 status (DB write safety gate)
@@ -976,10 +981,12 @@ legacy-writer execution is authorized.
 - Do not work directly on `main`.
 - Do not mix governance changes with runtime business code (CI-enforced).
 - Do not start automatically. Recommended next task only after user confirmation (CI-enforced).
-- PR body must include all mandatory sections: Scope, Documentation Impact, Safety Impact,
-  Validation, CI Gate Scope, No-deletion/move/rename confirmation, Rollback Plan,
-  Next Recommended Task.
-- CI Gate Scope must state what validation proves and does not prove.
+- PR body must include the canonical sections: Summary, Scope, Tests, Risk, Rollback.
+- `Scope` must state task type, changed paths, and runtime behavior impact; `Tests` must
+  list actual commands and exit codes; `Risk` must state side effects and any required
+  high-risk authorization.
+- Source changes invalidate old review/CI evidence; exact full SHA is required for
+  freshness and merge completion.
 - If a PR adds or modifies `docs/_reports/*.md`, it must update an
   authoritative doc or give a concrete source-of-truth no-update reason in the
   PR body.
@@ -1012,7 +1019,7 @@ legacy-writer execution is authorized.
 |---|---|
 | `docs/PROJECT_STATUS.md` | active (this file) |
 | `docs/DATA_SOURCE_STRATEGY.md` | active (created alongside this file) |
-| `docs/CODEX_WORKFLOW.md` | active |
+| `AGENTS.md` | active —唯一 operational workflow authority |
 | `docs/DOCUMENTATION_GOVERNANCE.md` | active |
 | `docs/data/FOTMOB_CURRENT_STATE.md` | active — read for FotMob state |
 | `docs/AGENT_WORKFLOW.md` | active |

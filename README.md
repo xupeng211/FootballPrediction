@@ -290,9 +290,8 @@ this section rather than maintaining duplicate command lists.
 
 - The table above defines the formal entrypoints, but **canonical ≠ 已获得执行授权**。
   含副作用的命令仍须按本表与 `AGENTS.md` 逐项明确授权。
-- 新 Agent 应按 `CLAUDE.md` 定义的阅读顺序开始：`AGENTS.md` → 本表 →
-  `docs/AGENT_WORKFLOW.md` / `docs/engineering/AI_AGENT_WORKFLOW.md` →
-  `docs/AI_AGENT_WORKFLOW_HARDENING.md` → `docs/data/FOTMOB_CURRENT_STATE.md`。
+- 新 Agent 先阅读 `AGENTS.md`；它指向唯一详细工作流 `docs/AGENT_WORKFLOW.md`。
+  Claude-specific 权限差异见 `CLAUDE.md`，业务命令仍以本表为准；历史 workflow 文档不再是必读 authority。
 - 项目地图 / 能力索引 / 活动里程碑（current-state 索引，不新增"唯一权威"声明）：
   - `docs/PROJECT_MAP.md` — 仓库结构、目录职责、阅读顺序、schema authority 与两套 migration 树生命周期。
   - `docs/CAPABILITY_INDEX.md` — 可扫描能力表（状态 / canonical 入口 / 授权 / legacy 替代）。

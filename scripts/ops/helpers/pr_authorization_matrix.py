@@ -4,9 +4,9 @@
 lifecycle: permanent
 
 Provides path classification, PR body task-type/authorization parsing, and
-deterministic validation without side effects.  This helper is not yet wired
-into ``scripts/ops/ai_workflow_gate.py`` and does not change current CI
-behaviour.
+deterministic validation without side effects. The current PR workflow invokes
+this helper through ``scripts/ops/ai_workflow_gate.py --block-matrix``; it is a
+governance check, not a fifth correctness authority.
 
 Usage::
 
@@ -147,13 +147,17 @@ _PATH_CATEGORY_PATTERNS: dict[str, tuple[str, ...]] = {
     CATEGORY_WORKFLOW_GOVERNANCE: (
         ".github/workflows/**",
         ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/pull_request_template.md",
+        "Makefile",
         "scripts/ops/ai_workflow_gate.py",
+        "scripts/ops/documentation_governance_check.py",
         "scripts/ops/helpers/**",
         "scripts/devops/**",
         "scripts/**/*gate*",
         "scripts/**/*guard*",
         "scripts/**/*preflight*",
+        "AGENTS.md",
         "docs/AGENT_WORKFLOW.md",
         "docs/CODEX_WORKFLOW.md",
         "docs/DOCUMENTATION_GOVERNANCE.md",

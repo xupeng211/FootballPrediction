@@ -79,8 +79,31 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "docs/CANONICAL_MATCH_SCHEMA.md",
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "docs/CODEX_WORKFLOW.md",
+        "docs/AGENT_WORKFLOW.md",
+        "docs/PROJECT_MAP.md",
+        "Makefile",
+        "docs/AI_AGENT_WORKFLOW_HARDENING.md",
+        "docs/engineering/AI_AGENT_WORKFLOW.md",
+        "docs/WORKFLOW_TOOLCHAIN_INVENTORY.md",
+        "CONTRIBUTING.md",
+        ".github/CODEOWNERS",
+        "scripts/ops/ai_workflow_gate.py",
+        "scripts/ops/documentation_governance_check.py",
+        "scripts/ops/helpers/section_content_quality.py",
+        "scripts/ops/helpers/pr_authorization_matrix.py",
+        "scripts/ops/helpers/dangerous_file_change_check.py",
+        "scripts/devops/static_quality_changed_lines.py",
+        "tests/unit/test_agent_workflow_hardening.py",
+        "tests/unit/test_ai_workflow_gate.py",
+        "tests/unit/test_documentation_governance_check.py",
+        "tests/unit/test_agent_workflow_hardening_phase1_ci_rules.py",
+        "tests/unit/test_dangerous_file_change_check.py",
     }
 )
+
+# WF01 intentionally removes the second pull-request template. No other
+# deletion or rename is permitted by this checker.
+ALLOWED_DELETED = frozenset({".github/PULL_REQUEST_TEMPLATE.md"})
 
 ALLOWED_ADDED = (
     PHASE0_ALLOWED_ADDED
@@ -90,11 +113,12 @@ ALLOWED_ADDED = (
     | AI_AUDIT_ALLOWED_ADDED
     | TEST_DEBT_AUDIT_ALLOWED_ADDED
 )
-ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED
+ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | ALLOWED_DELETED
 
 REQUIRED_DOCS = (
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
     "docs/DOCUMENTATION_GOVERNANCE.md",
-    "docs/CODEX_WORKFLOW.md",
     "docs/_reports/DOCUMENTATION_GOVERNANCE_AUDIT_NO_DELETION.md",
 )
 
@@ -107,13 +131,22 @@ GOVERNANCE_SECTIONS = (
     "Codex Documentation Rules",
 )
 
-CODEX_SECTIONS = (
-    "Core Rules",
-    "Task Types",
-    "Mandatory PR Body Sections",
-    "Documentation Creation Decision Tree",
-    "Prohibited Habits",
-)
+WORKFLOW_SECTIONS = {
+    "AGENTS.md": (
+        "NORMAL",
+        "STRICT",
+        "make verify-pr",
+        "exact-head",
+        "DONE",
+    ),
+    "docs/AGENT_WORKFLOW.md": (
+        "TEST",
+        "CI",
+        "REVIEW",
+        "OWNER",
+        "exact-head",
+    ),
+}
 
 AUDIT_SECTIONS = (
     "Inventory",
@@ -264,8 +297,8 @@ def validate_required_files(errors: list[str]) -> None:
     )
 
     section_sets = (
+        *WORKFLOW_SECTIONS.items(),
         ("docs/DOCUMENTATION_GOVERNANCE.md", GOVERNANCE_SECTIONS),
-        ("docs/CODEX_WORKFLOW.md", CODEX_SECTIONS),
         ("docs/_reports/DOCUMENTATION_GOVERNANCE_AUDIT_NO_DELETION.md", AUDIT_SECTIONS),
     )
     for path, sections in section_sets:
@@ -363,7 +396,7 @@ def validate_prohibited_files(changes: list[Change], errors: list[str]) -> None:
             errors.append(f"new decision report is prohibited: {path}")
 
     for change in changes:
-        if change.status == "D":
+        if change.status == "D" and change.path not in ALLOWED_DELETED:
             errors.append(f"deleted file is prohibited: {change.path}")
         if change.status == "R":
             errors.append(

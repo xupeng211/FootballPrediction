@@ -2,8 +2,9 @@
 
 lifecycle: permanent
 
-Rejects PR bodies where Documentation Impact, Validation, or Rollback Plan
-sections contain only hollow placeholders (N/A, passed, revert PR, etc.).
+Rejects PR bodies where canonical Tests, Risk, or Rollback sections (or the
+retired Documentation Impact, Validation, or Rollback Plan sections) contain
+only hollow placeholders (N/A, passed, revert PR, etc.).
 
 This module is extracted from ai_workflow_gate.py to keep the main gate file
 under the 800-line architecture limit enforced by gatekeeper.sh.
@@ -17,12 +18,89 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+CANONICAL_REQUIRED_SECTIONS: tuple[str, ...] = (
+    "## Summary",
+    "## Scope",
+    "## Tests",
+    "## Risk",
+    "## Rollback",
+)
+
+# Compatibility contract for already-open or older PRs. It is not a second
+# current template or workflow authority.
+LEGACY_REQUIRED_SECTIONS: tuple[str, ...] = (
+    "## Summary",
+    "## Scope",
+    "## Documentation Impact",
+    "## Safety Impact",
+    "## Validation",
+    "## CI Gate Scope",
+    "## No deletion / no move / no rename confirmation",
+    "## Rollback Plan",
+    "## Next Recommended Task",
+    "## SC-002 status",
+    "## Remaining risks",
+)
+
+REQUIRED_SECTIONS: tuple[str, ...] = CANONICAL_REQUIRED_SECTIONS
+
+NEXT_TASK_MANDATORY_PHRASES: tuple[str, ...] = (
+    "Do not start automatically",
+    "Recommended next task only after user confirmation",
+)
+
+
+def _heading_line_present(pr_body: str, heading: str) -> bool:
+    """Check for an exact Markdown heading, avoiding prefix collisions."""
+    return bool(re.search(rf"(?m)^\s*{re.escape(heading)}\s*$", pr_body))
+
+
+def check_required_sections(pr_body: str) -> list[str]:
+    """Return missing headings for the canonical or retired PR contract."""
+    has_canonical = any(
+        _heading_line_present(pr_body, heading) for heading in CANONICAL_REQUIRED_SECTIONS[2:]
+    )
+    has_legacy = any(
+        _heading_line_present(pr_body, heading) for heading in LEGACY_REQUIRED_SECTIONS[2:]
+    )
+    headings = (
+        LEGACY_REQUIRED_SECTIONS
+        if has_legacy and not has_canonical
+        else CANONICAL_REQUIRED_SECTIONS
+    )
+    return [heading for heading in headings if heading not in pr_body]
+
+
+def check_next_task_stop_phrase(
+    pr_body: str,
+    section_text_between_fn: Callable[[str, str], str],
+) -> list[str]:
+    """Check the retired no-auto-next-task section when an old body uses it."""
+    section = section_text_between_fn(pr_body, "## Next Recommended Task")
+    if not section:
+        return []
+    return [
+        f"## Next Recommended Task missing phrase: '{phrase}'"
+        for phrase in NEXT_TASK_MANDATORY_PHRASES
+        if phrase not in section
+    ]
+
+
 # Sections that MUST contain substantive content — not just "N/A" or similar.
-CRITICAL_SECTIONS: tuple[str, ...] = (
+LEGACY_CRITICAL_SECTIONS: tuple[str, ...] = (
     "## Documentation Impact",
     "## Validation",
     "## Rollback Plan",
 )
+
+CANONICAL_CRITICAL_SECTIONS: tuple[str, ...] = (
+    "## Tests",
+    "## Risk",
+    "## Rollback",
+)
+
+# Compatibility export for callers that inspected the retired contract.
+CRITICAL_SECTIONS: tuple[str, ...] = CANONICAL_CRITICAL_SECTIONS
 
 # General hollow-content patterns that are rejected in any critical section.
 HOLLOW_CONTENT_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
@@ -144,8 +222,7 @@ def check_section_content_quality(
     pr_body: str,
     section_text_between_fn: Callable[[str, str], str],
 ) -> list[str]:
-    """Validate that Documentation Impact, Validation, and Rollback Plan
-    sections contain substantive content — not just hollow placeholders.
+    """Validate the active PR contract's content sections.
 
     Args:
         pr_body: The full PR body text.
@@ -156,12 +233,19 @@ def check_section_content_quality(
     """
     errors: list[str] = []
 
-    for heading in CRITICAL_SECTIONS:
+    # Existing PR bodies use the retired headings. New bodies use the
+    # canonical five-section template. Keep the compatibility path narrow.
+    uses_canonical = any(
+        _heading_line_present(pr_body, heading) for heading in CANONICAL_CRITICAL_SECTIONS
+    )
+    critical_sections = CANONICAL_CRITICAL_SECTIONS if uses_canonical else LEGACY_CRITICAL_SECTIONS
+
+    for heading in critical_sections:
         raw = section_text_between_fn(heading, pr_body)
         label = heading.removeprefix("## ")
 
         extra: tuple[re.Pattern[str], ...] = ()
-        if heading == "## Rollback Plan":
+        if heading in {"## Rollback Plan", "## Rollback"}:
             extra = ROLLBACK_HOLLOW_PATTERNS
 
         if _section_content_is_hollow(raw, extra):

@@ -14,8 +14,8 @@ evidence during data-source exploration, but unlimited report chains make the
 current source of truth hard to find. A reader should not need to inspect dozens
 of phase files to understand the active state.
 
-The project should keep a small set of main documents clear and current. Codex
-must not create several new reports for every task just to prove activity. New
+The project should keep a small set of main documents clear and current. AI
+agents must not create several new reports for every task just to prove activity. New
 documents need a reader, a lifecycle, and a reason they cannot be represented by
 updating an existing source-of-truth document.
 
@@ -34,7 +34,8 @@ read first. They summarize current state and link to supporting evidence.
 | docs/data/FOTMOB_CURRENT_STATE.md | exists/needs_update | Existing FotMob state doc to reconcile. |
 | docs/CANONICAL_MATCH_SCHEMA.md | planned | Canonical match payload and feature schema. |
 | docs/DOCUMENTATION_GOVERNANCE.md | exists | This governance policy. |
-| docs/CODEX_WORKFLOW.md | exists | Codex task and PR workflow controls. |
+| AGENTS.md | active |唯一 operational workflow authority for AI development. |
+| docs/AGENT_WORKFLOW.md | active |唯一 detailed workflow explanation. |
 | docs/DEVELOPMENT_WORKFLOW.md | planned | Human development workflow reference. |
 
 If a listed document does not exist, mark it as planned. Do not create it unless
@@ -157,8 +158,8 @@ Any long-term conclusion must be recorded in source-of-truth docs. Phase reports
 can support the conclusion, but they cannot permanently be the only place where
 active truth lives.
 
-`docs/PROJECT_STATUS.md`, `docs/DOCUMENTATION_GOVERNANCE.md`,
-`docs/CODEX_WORKFLOW.md`, `docs/AGENT_WORKFLOW.md`,
+`AGENTS.md`, `docs/AGENT_WORKFLOW.md`, `docs/PROJECT_STATUS.md`,
+`docs/DOCUMENTATION_GOVERNANCE.md`,
 `docs/DATA_SOURCE_STRATEGY.md`, `docs/data/FOTMOB_CURRENT_STATE.md`, and
 `README.md` are the current authoritative update targets for general workflow
 and current-state backflow.
@@ -228,7 +229,7 @@ Active source-of-truth status after Phase1:
 |---|---|---|
 | Project status | docs/PROJECT_STATUS.md | active |
 | Documentation governance | docs/DOCUMENTATION_GOVERNANCE.md | active |
-| Codex workflow | docs/CODEX_WORKFLOW.md | active |
+| Agent workflow authority | AGENTS.md + docs/AGENT_WORKFLOW.md | active |
 | Data source strategy | docs/DATA_SOURCE_STRATEGY.md | active |
 | FotMob current state | docs/data/FOTMOB_CURRENT_STATE.md | active |
 | Canonical match schema | docs/CANONICAL_MATCH_SCHEMA.md | planned/missing |
