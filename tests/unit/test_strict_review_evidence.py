@@ -73,6 +73,16 @@ def test_normal_database_writer_path_cannot_waive_strict_review():
     assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
 
 
+def test_normal_infrastructure_network_path_cannot_waive_strict_review():
+    errors = validate_strict_review_evidence(
+        _body("NORMAL", reviewed_sha=None, task_type="source-code"),
+        CURRENT_SHA,
+        changed_paths=["src/infrastructure/network/FotMobApiClient.js"],
+        task_type="source-code",
+    )
+    assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
+
+
 def test_normal_low_risk_source_path_does_not_require_review():
     assert (
         validate_strict_review_evidence(

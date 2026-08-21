@@ -75,27 +75,13 @@ _STRICT_REVIEW_CATEGORIES = frozenset(
 _STRICT_REVIEW_PATH_PREFIXES = (
     "scripts/capture_auth",
     "scripts/model_training/",
-    "src/api/model_management.py",
-    "src/api/predictions/",
-    "src/api/",
-    "src/config/",
-    "src/core/",
-    "src/core/database/",
-    "src/core/harvesters/",
-    "src/data/",
-    "src/database/",
-    "src/feature_engine/",
-    "src/infrastructure/auth/",
-    "src/infrastructure/database/",
-    "src/infrastructure/harvesters/",
-    "src/infrastructure/recon/",
-    "src/infrastructure/services/",
-    "src/infrastructure/services/migrations/",
-    "src/ml/",
-    "src/parsers/",
-    "src/schemas/",
-    "src/services/",
-    "src/strategy/",
+)
+_NORMAL_SOURCE_PREFIXES = (
+    "src/components/",
+    "src/frontend/",
+    "src/pages/",
+    "src/styles/",
+    "src/ui/",
 )
 _STRICT_REVIEW_SCRIPT_TOKENS = frozenset(
     {"harvest", "ingest", "migration", "predict", "raw", "train", "write"}
@@ -234,9 +220,16 @@ def _strict_classification_reasons(
     for path in paths:
         normalized_path = path.replace("\\", "/")
         basename = normalized_path.rsplit("/", 1)[-1].casefold()
-        if normalized_path.startswith(_STRICT_REVIEW_PATH_PREFIXES) or (
-            normalized_path.startswith("scripts/ops/")
-            and any(token in basename for token in _STRICT_REVIEW_SCRIPT_TOKENS)
+        production_source = normalized_path.startswith("src/") and not normalized_path.startswith(
+            _NORMAL_SOURCE_PREFIXES
+        )
+        if (
+            production_source
+            or normalized_path.startswith(_STRICT_REVIEW_PATH_PREFIXES)
+            or (
+                normalized_path.startswith("scripts/ops/")
+                and any(token in basename for token in _STRICT_REVIEW_SCRIPT_TOKENS)
+            )
         ):
             reasons.append(f"high-risk path '{path}'")
     return reasons
