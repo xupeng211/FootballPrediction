@@ -8,11 +8,11 @@ by the current PR are treated as blocking.  Pre-existing violations in changed
 files are reported as warnings but do not cause a non-zero exit.
 
 Usage (ruff — default):
-    python static_quality_changed_lines.py <file>...
+    python3 static_quality_changed_lines.py <file>...
 
 Usage (mypy):
     python static_quality_changed_lines.py --mypy <file>...
-  python scripts/devops/static_quality_changed_lines.py <file1> <file2> ...
+  python3 scripts/devops/static_quality_changed_lines.py <file1> <file2> ...
 
 The script:
   1. Runs ruff check --output-format json on the given files.
@@ -238,7 +238,7 @@ def run_ruff(files: list[str]) -> list[dict]:
     """Run ruff check --output-format json and return diagnostics."""
     try:
         result = subprocess.run(
-            ["python", "-m", "ruff", "check", "--output-format", "json", *files],
+            [sys.executable, "-m", "ruff", "check", "--output-format", "json", *files],
             capture_output=True,
             timeout=30,
             check=False,

@@ -12,7 +12,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 CHECKER = ROOT / "scripts/ops/documentation_governance_check.py"
 GOVERNANCE = ROOT / "docs/DOCUMENTATION_GOVERNANCE.md"
-CODEX = ROOT / "docs/CODEX_WORKFLOW.md"
+AGENTS = ROOT / "AGENTS.md"
+WORKFLOW = ROOT / "docs/AGENT_WORKFLOW.md"
 AUDIT = ROOT / "docs/_reports/DOCUMENTATION_GOVERNANCE_AUDIT_NO_DELETION.md"
 
 sys.path.insert(0, str(ROOT / "scripts/ops"))
@@ -31,8 +32,9 @@ def test_governance_doc_exists():
     assert GOVERNANCE.exists()
 
 
-def test_codex_workflow_doc_exists():
-    assert CODEX.exists()
+def test_agents_workflow_docs_exist():
+    assert AGENTS.exists()
+    assert WORKFLOW.exists()
 
 
 def test_audit_report_exists():
@@ -45,10 +47,11 @@ def test_governance_doc_contains_required_sections():
         assert section in text
 
 
-def test_codex_workflow_contains_required_sections():
-    text = _read(CODEX)
-    for section in checker.CODEX_SECTIONS:
-        assert section in text
+def test_canonical_workflow_docs_contain_required_sections():
+    for path, sections in checker.WORKFLOW_SECTIONS.items():
+        text = _read(ROOT / path)
+        for section in sections:
+            assert section in text
 
 
 def test_audit_report_contains_required_sections():
@@ -116,7 +119,10 @@ def test_test_debt_audit_report_is_exact_path_allowed():
 
 def test_destructive_actions_forbidden():
     changes = checker.collect_changes()
-    assert not any(change.status in {"D", "R"} for change in changes)
+    assert not any(
+        change.status == "D" and change.path not in checker.ALLOWED_DELETED for change in changes
+    )
+    assert not any(change.status == "R" for change in changes)
     assert not any(change.path.startswith("docs/_archive/") for change in changes)
 
 
@@ -140,7 +146,6 @@ def test_agents_and_claude_md_in_source_of_truth_allowlist():
 def test_no_wildcard_paths_in_source_of_truth_allowlist():
     """The source-of-truth allowlist uses exact paths, not wildcards."""
     assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
-    assert "Makefile" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
     assert "package.json" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 

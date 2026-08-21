@@ -221,11 +221,14 @@ def _pr_declares_no_db(pr_body: str) -> bool:
     """Check if PR body declares no DB involvement."""
     safety_section = _section_text(pr_body, "## Safety Impact")
     safety_status = _section_text(pr_body, "## Safety Status")
-    combined = (safety_section or "") + "\n" + (safety_status or "")
+    risk_section = _section_text(pr_body, "## Risk")
+    combined = (safety_section or "") + "\n" + (safety_status or "") + "\n" + (risk_section or "")
     return bool(
         re.search(r"\|\s*DB\s+used\s*\|\s*no\b", combined, re.IGNORECASE)
         or re.search(r"-\s*no\s+DB\s+writes\s*:\s*yes", combined, re.IGNORECASE)
         or re.search(r"-\s*no\s+migration\s*:\s*yes", combined, re.IGNORECASE)
+        or re.search(r"\bno\s+(?:DB|database)\s+writes?\b", combined, re.IGNORECASE)
+        or re.search(r"\b(?:DB|database)\s+writes?\s*:\s*no\b", combined, re.IGNORECASE)
     )
 
 
@@ -234,6 +237,8 @@ def _pr_declares_no_docker(pr_body: str) -> bool:
     return bool(
         re.search(r"\|\s*Docker\s+used\s*\|\s*no\b", pr_body, re.IGNORECASE)
         or re.search(r"-\s*no\s+docker\s*:\s*yes", pr_body, re.IGNORECASE)
+        or re.search(r"\bno\s+Docker\b", _section_text(pr_body, "## Risk"), re.IGNORECASE)
+        or re.search(r"\bDocker\s*:\s*no\b", _section_text(pr_body, "## Risk"), re.IGNORECASE)
     )
 
 
@@ -242,6 +247,10 @@ def _pr_declares_no_workflow(pr_body: str) -> bool:
     return bool(
         re.search(r"\|\s*workflow\s+changed\s*\|\s*no\b", pr_body, re.IGNORECASE)
         or re.search(r"-\s*no\s+workflow\s+change\s*:\s*yes", pr_body, re.IGNORECASE)
+        or re.search(
+            r"\bno\s+workflow\s+change\b", _section_text(pr_body, "## Risk"), re.IGNORECASE
+        )
+        or re.search(r"\bworkflow\s*:\s*no\b", _section_text(pr_body, "## Risk"), re.IGNORECASE)
     )
 
 
@@ -251,6 +260,12 @@ def _pr_declares_no_migration(pr_body: str) -> bool:
         re.search(r"\|\s*migration\s+used\s*\|\s*no\b", pr_body, re.IGNORECASE)
         or re.search(r"-\s*no\s+migration\s*:\s*yes", pr_body, re.IGNORECASE)
         or re.search(r"-\s*no\s+SQL\s*:\s*yes", pr_body, re.IGNORECASE)
+        or re.search(
+            r"\bno\s+(?:SQL|migration)\b", _section_text(pr_body, "## Risk"), re.IGNORECASE
+        )
+        or re.search(
+            r"\b(?:SQL|migration)\s*:\s*no\b", _section_text(pr_body, "## Risk"), re.IGNORECASE
+        )
     )
 
 

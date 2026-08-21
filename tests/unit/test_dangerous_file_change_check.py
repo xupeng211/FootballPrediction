@@ -191,6 +191,15 @@ def test_pr_declares_no_db_safety_status():
     assert _pr_declares_no_db(body)
 
 
+def test_pr_declares_no_db_in_canonical_risk():
+    body = textwrap.dedent("""\
+        ## Risk
+
+        No DB writes, live fetch, or training.
+    """)
+    assert _pr_declares_no_db(body)
+
+
 def test_pr_declares_no_docker():
     body = textwrap.dedent("""\
         ## Safety Impact

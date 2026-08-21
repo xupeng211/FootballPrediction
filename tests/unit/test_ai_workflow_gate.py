@@ -418,7 +418,7 @@ def test_key_authoritative_docs_satisfy_report_backflow_gate():
     body = _valid_pr_body()
     for path in (
         "docs/DOCUMENTATION_GOVERNANCE.md",
-        "docs/CODEX_WORKFLOW.md",
+        "AGENTS.md",
         "docs/PROJECT_STATUS.md",
     ):
         changes = [gate.Change("A", "docs/_reports/new_audit.md"), gate.Change("M", path)]
@@ -661,6 +661,30 @@ def test_declared_no_db_but_touches_db_paths_fails():
     body = _valid_pr_body().replace("| DB used | n/a |", "| DB used | no |")
     changed = {"database/migrations/v2.sql"}
     errors = gate.check_safety_consistency(body, changed)
+    assert len(errors) >= 1
+    assert "DB" in errors[0]
+
+
+def test_canonical_risk_no_db_write_still_enforced():
+    body = """## Summary
+Workflow documentation change.
+
+## Scope
+| Task type | workflow-governance |
+
+## Tests
+Governance tests passed with exit code 0.
+
+## Risk
+No DB writes, live fetch, or training.
+
+## Rollback
+Revert the commit; no runtime state changed.
+
+Do not start automatically.
+Recommended next task only after user confirmation.
+"""
+    errors = gate.check_safety_consistency(body, {"database/migrations/v2.sql"})
     assert len(errors) >= 1
     assert "DB" in errors[0]
 
@@ -931,8 +955,9 @@ def test_mixed_with_missing_sections_fails():
         gate.Change("M", "src/prediction/model.py"),
     ]
     errors = gate.validate(body, changes)
-    # Should have: missing sections + missing stop phrase + mixed governance
-    min_expected = 3
+    # Should have: missing sections + mixed governance. The retired
+    # Next Recommended Task section is not required for canonical bodies.
+    min_expected = 2
     assert len(errors) >= min_expected, (
         f"Expected >= {min_expected} errors, got {len(errors)}: {errors}"
     )
@@ -1170,7 +1195,7 @@ def test_read_pr_body_from_file_preserves_multiline():
     try:
         result = gate.read_pr_body(tmp_path)
         assert len(result) >= len(body) - 5, f"Expected ~{len(body)} chars, got {len(result)}"
-        for heading in gate.REQUIRED_SECTIONS:
+        for heading in gate.LEGACY_REQUIRED_SECTIONS:
             assert heading in result, f"Missing heading: {heading}"
     finally:
         Path(tmp_path).unlink()

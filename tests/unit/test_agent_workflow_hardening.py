@@ -483,12 +483,9 @@ def test_pr_template_contains_required_sections():
     required = [
         "## Summary",
         "## Scope",
-        "## Safety Impact",
-        "## Validation",
-        "## SC-002 status",
-        "## Remaining risks",
-        "## Next Recommended Task",
-        "Agent Workflow Hardening Checklist",
+        "## Tests",
+        "## Risk",
+        "## Rollback",
     ]
     for section in required:
         assert section in body, f"PR template missing: {section}"
@@ -503,12 +500,12 @@ def test_claude_md_contains_non_negotiable_rules():
     claude_md = ROOT / "CLAUDE.md"
     body = claude_md.read_text(encoding="utf-8")
     required_rules = [
-        "Never work directly on main",
-        "SC-002 is partial mitigation",
-        "Do not create V2 / FINAL / rewritten",
-        "Post-merge main Production Gate must be green",
-        "Do not run DB write scripts",
-        "Do not run scraper / browser / Playwright",
+        "不直接修改 `main`",
+        "完整 SHA",
+        "副作用",
+        "main Production Gate",
+        "DB write",
+        "live fetch",
     ]
     for rule in required_rules:
         assert rule.lower() in body.lower(), f"CLAUDE.md missing rule: {rule}"
@@ -518,8 +515,8 @@ def test_rules_doc_allowlist_not_safety_approval():
     """Rules must clearly state allowlist is not safety approval."""
     claude_md = ROOT / "CLAUDE.md"
     body = claude_md.read_text(encoding="utf-8")
-    assert "not safety approval" in body or "not authorize execution" in body, (
-        "Rules must state allowlist is not safety approval"
+    assert "权限和工具差异不改变" in body or "不定义" in body, (
+        "Claude-specific instructions must not redefine repository authority"
     )
 
 
@@ -527,29 +524,28 @@ def test_rules_doc_post_merge_gate_required():
     """Rules must state post-merge main Gate is required."""
     claude_md = ROOT / "CLAUDE.md"
     body = claude_md.read_text(encoding="utf-8")
-    assert "post-merge main" in body.lower(), "Rules must require post-merge main Gate verification"
+    assert "main Production Gate" in body, "Rules must require main Gate verification"
 
 
 def test_rules_doc_no_main_direct_work():
     """Rules must explicitly prohibit direct work on main."""
     claude_md = ROOT / "CLAUDE.md"
     body = claude_md.read_text(encoding="utf-8")
-    assert "never work directly on main" in body.lower(), "Rules must prohibit direct work on main"
+    assert "不直接修改 `main`" in body, "Rules must prohibit direct work on main"
 
 
-def test_rules_doc_no_v2_rewritten_replacement():
-    """Rules must explicitly prohibit V2/rewritten/replacement patterns."""
+def test_rules_doc_does_not_define_replacement_workflow():
+    """Claude instructions must point to the canonical workflow."""
     claude_md = ROOT / "CLAUDE.md"
     body = claude_md.read_text(encoding="utf-8")
-    assert "V2" in body, "Rules must prohibit V2 naming patterns"
-    assert "rewritten" in body, "Rules must prohibit rewritten patterns"
-    assert "replacement" in body, "Rules must prohibit replacement patterns"
+    assert "AGENTS.md" in body
+    assert "唯一权威" in body
 
 
 def test_pr_template_checklist_contains_deletion_rule():
     template = ROOT / ".github" / "pull_request_template.md"
     body = template.read_text(encoding="utf-8")
-    assert "I did not delete or move historical code" in body
+    assert "Rollback" in body
 
 
 # -- Relocated from test_ai_workflow_gate.py (file length limit) --

@@ -253,7 +253,7 @@ pr-ready-check: ## PR ready-to-merge check: pr-body-check + pr-merge-preflight. 
 	@$(MAKE) pr-merge-preflight PR=$(PR)
 
 # ============================================
-# CI 监控与 PR 生命周期（参见 docs/AI_AGENT_WORKFLOW_HARDENING.md）
+# CI 监控与 PR 生命周期（参见 docs/AGENT_WORKFLOW.md）
 # 禁止 while/until/sleep/Monitor/CronCreate 自定义 CI 循环
 # 标准 PR Gate 监控唯一命令: make watch-pr
 # ============================================
