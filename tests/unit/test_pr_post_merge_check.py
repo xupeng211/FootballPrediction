@@ -83,7 +83,7 @@ def _make_git_mock(  # noqa: C901
     merge_contains_main: bool = True,
     main_is_ancestor: bool = True,
     origin_is_ancestor: bool = True,
-    behind_count: str = "0",
+    behind_count: str = "0 0",
     status_clean: bool = True,
 ) -> mock.MagicMock:
     """Return a mock for git commands."""
@@ -686,3 +686,86 @@ def test_ci_check_failed_fails():
     result = pp._check_ci(ci_data)
     assert len(result) >= 1
     assert any("failure" in r for r in result)
+
+
+# ---------------------------------------------------------------------------
+# Local-main fast-forward topology
+# ---------------------------------------------------------------------------
+
+
+def _make_ff_sync_git_mock(
+    counts: str = "0 0",
+    *,
+    fetch_returncode: int = 0,
+    rev_list_returncode: int = 0,
+) -> mock.MagicMock:
+    """Return a minimal read-only git mock for main/origin-main topology."""
+
+    def _run(args, **_kwargs):
+        result = mock.MagicMock(returncode=0, stdout="", stderr="")
+        if args[0] == "fetch":
+            result.returncode = fetch_returncode
+        elif args[0] == "rev-list":
+            result.returncode = rev_list_returncode
+            result.stdout = counts
+        return result
+
+    return mock.MagicMock(side_effect=_run)
+
+
+def test_main_can_ff_sync_equal():
+    with mock.patch.object(pp, "run_git", _make_ff_sync_git_mock(counts="0 0")):
+        ok, message = pp.main_can_ff_sync()
+    assert ok
+    assert "STATE=UP_TO_DATE" in message
+
+
+def test_main_can_ff_sync_behind_one_commit():
+    with mock.patch.object(pp, "run_git", _make_ff_sync_git_mock(counts="0 1")):
+        ok, message = pp.main_can_ff_sync()
+    assert ok
+    assert "STATE=FAST_FORWARD_AVAILABLE" in message
+
+
+def test_main_can_ff_sync_behind_multiple_commits():
+    with mock.patch.object(pp, "run_git", _make_ff_sync_git_mock(counts="0 3")):
+        ok, message = pp.main_can_ff_sync()
+    assert ok
+    assert "STATE=FAST_FORWARD_AVAILABLE" in message
+    assert "3 commit(s)" in message
+
+
+def test_main_can_ff_sync_local_ahead_fails():
+    with mock.patch.object(pp, "run_git", _make_ff_sync_git_mock(counts="2 0")):
+        ok, message = pp.main_can_ff_sync()
+    assert not ok
+    assert "STATE=LOCAL_AHEAD" in message
+
+
+def test_main_can_ff_sync_diverged_fails():
+    with mock.patch.object(pp, "run_git", _make_ff_sync_git_mock(counts="2 3")):
+        ok, message = pp.main_can_ff_sync()
+    assert not ok
+    assert "STATE=DIVERGED" in message
+
+
+def test_main_can_ff_sync_fetch_failure_fails_closed():
+    with mock.patch.object(
+        pp,
+        "run_git",
+        _make_ff_sync_git_mock(fetch_returncode=1),
+    ):
+        ok, message = pp.main_can_ff_sync()
+    assert not ok
+    assert "STATE=GIT_COMMAND_FAILED" in message
+
+
+def test_main_can_ff_sync_rev_list_failure_fails_closed():
+    with mock.patch.object(
+        pp,
+        "run_git",
+        _make_ff_sync_git_mock(rev_list_returncode=1),
+    ):
+        ok, message = pp.main_can_ff_sync()
+    assert not ok
+    assert "STATE=GIT_COMMAND_FAILED" in message
