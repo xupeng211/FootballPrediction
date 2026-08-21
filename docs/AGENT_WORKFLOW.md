@@ -17,7 +17,7 @@
 
 ## 2. 任务分类
 
-NORMAL 适合局部、低风险变更。STRICT 适合 DB/schema/write、ingestion、identity/auth/security、生产 runtime、training/model activation、关键架构和高影响破坏性行为。无法安全分类时按 STRICT 处理，并在 PR `Risk` 说明原因。
+NORMAL 适合局部、低风险变更。STRICT 适合 DB/schema/write、ingestion、identity/auth/security、生产 runtime、training/model activation、关键架构和高影响破坏性行为。无法由现有 path/task classifier 安全分类时按 STRICT 处理，并在 PR `Risk` 说明原因。
 
 NORMAL：
 

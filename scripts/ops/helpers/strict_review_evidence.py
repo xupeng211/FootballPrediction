@@ -25,6 +25,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (
     CATEGORY_MODEL_ARTIFACT,
     CATEGORY_RUNTIME_CONFIG,
     CATEGORY_SC002_DB_GOVERNANCE,
+    CATEGORY_UNKNOWN,
     CATEGORY_WORKFLOW_GOVERNANCE,
     TASK_TYPE_CONFIG_RUNTIME,
     TASK_TYPE_DATA_ARTIFACT,
@@ -67,6 +68,7 @@ _STRICT_REVIEW_CATEGORIES = frozenset(
         CATEGORY_MODEL_ARTIFACT,
         CATEGORY_RUNTIME_CONFIG,
         CATEGORY_SC002_DB_GOVERNANCE,
+        CATEGORY_UNKNOWN,
         CATEGORY_WORKFLOW_GOVERNANCE,
     }
 )
@@ -82,7 +84,9 @@ _STRICT_REVIEW_PATH_PREFIXES = (
     "src/infrastructure/database/",
     "src/infrastructure/harvesters/",
     "src/infrastructure/recon/",
+    "src/infrastructure/services/",
     "src/infrastructure/services/migrations/",
+    "src/feature_engine/",
     "src/ml/",
 )
 _STRICT_REVIEW_SCRIPT_TOKENS = frozenset(

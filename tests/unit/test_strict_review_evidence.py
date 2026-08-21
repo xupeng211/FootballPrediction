@@ -53,6 +53,28 @@ def test_normal_high_risk_path_cannot_waive_strict_review():
     assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
 
 
+def test_normal_unknown_path_cannot_waive_strict_review():
+    errors = validate_strict_review_evidence(
+        _body("NORMAL", reviewed_sha=None, task_type="source-code"),
+        CURRENT_SHA,
+        changed_paths=["scripts/ops/fotmob_detail_capture.js"],
+        task_type="source-code",
+    )
+    assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
+
+
+def test_normal_low_risk_source_path_does_not_require_review():
+    assert (
+        validate_strict_review_evidence(
+            _body("NORMAL", reviewed_sha=None, task_type="source-code"),
+            CURRENT_SHA,
+            changed_paths=["src/ui/scorecard.js"],
+            task_type="source-code",
+        )
+        == []
+    )
+
+
 def test_normal_without_review_evidence_passes():
     assert validate_strict_review_evidence(_body("NORMAL", reviewed_sha=None), CURRENT_SHA) == []
 

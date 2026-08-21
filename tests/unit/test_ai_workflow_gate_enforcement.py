@@ -216,6 +216,14 @@ def test_blocking_path_rejects_normal_for_high_risk_changed_path():
     )
 
 
+def test_production_gate_rechecks_current_pr_body_after_edit():
+    """PR body edits must start a fresh required governance check for the same HEAD."""
+    workflow = (ROOT / ".github" / "workflows" / "production-gate.yml").read_text()
+    trigger = "  pull_request:\n    types:\n"
+    assert trigger in workflow
+    assert "      - edited\n" in workflow
+
+
 def test_gate_cli_with_skip_body_checks_and_clean_files_passes():
     """Gate CLI with --skip-body-checks and clean changed files should exit 0."""
     result = subprocess.run(

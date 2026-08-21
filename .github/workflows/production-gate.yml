@@ -5,6 +5,13 @@ on:
     branches:
       - main
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - ready_for_review
+      - converted_to_draft
   # Manual trigger for fallback when push event is not processed by Actions.
   # workflow_dispatch carries no push/PR event refs, so base_sha is required.
   # The dispatch REF selects the revision GitHub runs; the AI Gate head is

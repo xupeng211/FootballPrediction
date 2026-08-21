@@ -45,7 +45,7 @@ NORMAL 默认不要求本地 Codex review、DeepSeek audit、codex-loop、manife
 
 ### STRICT
 
-DB/schema/write boundary、data ingestion、identity/auth/security、生产 runtime 语义、训练/模型激活、关键架构变化和高影响破坏性行为。流程在 NORMAL 基础上增加：
+DB/schema/write boundary、data ingestion、identity/auth/security、生产 runtime 语义、训练/模型激活、关键架构变化和高影响破坏性行为；无法由现有 path/task classifier 安全归类时也按 STRICT 处理。流程在 NORMAL 基础上增加：
 
 ```text
 relevant/full validation → 一个 exact-head independent adversarial review → PR
@@ -112,7 +112,7 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 - freshness、授权、review、CI 和 DONE 判断使用完整 40 字符 SHA；短 SHA 只能用于人类展示。
 - repository / PR / review / CI / merge 的共享完整 SHA primitive 是 `scripts/devops/exact_head.py`；新增 freshness 判断时先复用它，不得另写前缀比较。
 - review 只有在 `review_head == current_pr_head` 时有效；source change 自动使旧 review stale。
-- STRICT PR 若缺少、格式错误、重复字段、绑定旧 SHA，或高风险变更声明为 NORMAL，现有 required governance path 必须失败；这不新增 required check，也不把 PR 正文变成 review registry。
+- STRICT PR 若缺少、格式错误、重复字段、绑定旧 SHA，或高风险/未知变更声明为 NORMAL，现有 required governance path 必须失败；这不新增 required check，也不把 PR 正文变成 review registry。
 - required CI 只有在验证 SHA 等于当前 PR HEAD 时有效；历史 green run 不能授权新 HEAD。
 - `PR merged + merge SHA identified + main Production Gate for exact merge SHA succeeds` 才能标记 `DONE`。
 
