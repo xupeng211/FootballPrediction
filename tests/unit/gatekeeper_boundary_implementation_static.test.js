@@ -664,7 +664,9 @@ test('REMOTE CI PRESERVATION: full Gatekeeper keeps ephemeral DB cold-start vali
         'Production Gate must still bootstrap isolated dev/db/redis services'
     );
     assert.match(workflow, /DB_BLUEPRINT_DEBUG:\s*["']1["']/);
-    assert.match(workflow, /gatekeeper\.sh --mode=\"\$\{GATEKEEPER_CI_MODE\}\"/);
+    assert.match(workflow, /validation_profile=\"pr\"/);
+    assert.match(workflow, /python3 scripts\/devops\/validation_profiles\.py \"\$\{validation_profile\}\"/);
+    assert.doesNotMatch(workflow, /gatekeeper\.sh --mode=\"\$\{GATEKEEPER_CI_MODE\}\"/);
 });
 
 test('LOCAL HOOK BEHAVIOR: pre-commit and pre-push stay DB/Docker-free with dangerous commands stubbed', () => {
