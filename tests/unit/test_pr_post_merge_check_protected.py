@@ -49,7 +49,7 @@ def _make_git_mock():
         elif args[1] == "status" and "--short" in args:
             result.stdout = ""
         elif args[1] == "rev-list":
-            result.stdout = "0"
+            result.stdout = "0 0"
         return result
 
     return mock.MagicMock(side_effect=run)

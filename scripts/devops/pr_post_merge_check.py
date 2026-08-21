@@ -59,6 +59,7 @@ from exact_head import ExactHeadError, assert_ci_is_current, is_full_sha, normal
 
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
 TIMEOUT_SECONDS = 30
+_AHEAD_BEHIND_COUNT_FIELDS = 2
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -202,29 +203,36 @@ def main_can_ff_sync() -> tuple[bool, str]:
 
     Returns (ok, message).
     """
-    # Ensure we have latest
-    run_git(["fetch", "origin", "main"])
+    # Refresh the remote-tracking ref, but fail closed if the read fails.
+    fetch_result = run_git(["fetch", "origin", "main"])
+    if fetch_result.returncode != 0:
+        return False, "STATE=GIT_COMMAND_FAILED: unable to fetch origin/main"
 
-    # Check if origin/main is ahead of or equal to local main
-    result = run_git(["merge-base", "--is-ancestor", "main", "origin/main"])
+    # For ``main...origin/main``, the left count is local-only and the right
+    # count is remote-only.  This distinguishes behind, ahead, and diverged
+    # histories without relying on a second inverse ancestry check.
+    result = run_git(["rev-list", "--left-right", "--count", "main...origin/main"])
     if result.returncode != 0:
-        return False, "Local main is NOT an ancestor of origin/main — history has diverged"
+        return False, "STATE=GIT_COMMAND_FAILED: unable to calculate main/origin/main divergence"
 
-    # Check if local main is behind origin/main
-    result2 = run_git(["merge-base", "--is-ancestor", "origin/main", "main"])
-    if result2.returncode == 0:
-        # origin/main is ancestor of main => they're equal or local is ahead
-        behind_result = run_git(["rev-list", "--count", "main..origin/main"])
-        if behind_result.returncode == 0:
-            count = behind_result.stdout.strip()
-            if count and count != "0":
-                return (
-                    True,
-                    f"Local main is {count} commit(s) behind origin/main — ff-only sync possible",
-                )
-        return True, "Local main is up-to-date with origin/main"
-    # origin/main is NOT ancestor of main => local main is ahead (has extra commits)
-    return False, "Local main has commits not on origin/main — cannot ff-only sync"
+    counts = result.stdout.strip().split()
+    if len(counts) != _AHEAD_BEHIND_COUNT_FIELDS or any(not count.isdigit() for count in counts):
+        return False, "STATE=GIT_COMMAND_FAILED: invalid ahead/behind count from git"
+
+    local_only, remote_only = (int(count) for count in counts)
+    if local_only == 0 and remote_only == 0:
+        return True, "STATE=UP_TO_DATE: local main equals origin/main"
+    if local_only == 0:
+        return (
+            True,
+            f"STATE=FAST_FORWARD_AVAILABLE: local main is {remote_only} commit(s) behind origin/main",
+        )
+    state = "LOCAL_AHEAD" if remote_only == 0 else "DIVERGED"
+    if state == "LOCAL_AHEAD":
+        detail = f"local main has {local_only} commit(s) not on origin/main"
+    else:
+        detail = f"local main has {local_only} local-only and {remote_only} remote-only commit(s)"
+    return False, f"STATE={state}: {detail}"
 
 
 def git_status_clean() -> tuple[bool, str]:
