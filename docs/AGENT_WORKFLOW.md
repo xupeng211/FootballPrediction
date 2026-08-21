@@ -51,8 +51,12 @@ make verify-strict
 profile 的边界：
 
 - `verify-targeted`：受影响测试、必要 static check 和最小 targeted regression；快反馈，不宣称完整 CI。
-- `verify-pr`：本地和 GitHub PR gate 尽可能调用同一 canonical implementation；required failure 必须返回非零。
-- `verify-strict`：只用于 STRICT；包含与风险相关的完整测试、完整性、安全或 runtime smoke，不把昂贵检查默认施加给 NORMAL。
+- `verify-pr`：通过 `scripts/devops/validation_profiles.py pr` 调用现有 PR gatekeeper；GitHub PR 的
+  `Run Gatekeeper` 步骤调用同一个 profile implementation，required failure 必须返回非零。
+- `verify-strict`：通过同一 dispatcher 调用现有 push/full gate（覆盖率、完整性、安全和 runtime
+  smoke）；只用于 STRICT，不把昂贵检查默认施加给 NORMAL。
+
+`ci-local`、`ci-local-pr` 和 `workflow-pr-check` 只是兼容别名，委托 `verify-pr`，不再吞掉失败或维护另一套测试矩阵。旧的 `test` / `test-unit` 是底层测试入口，不是新的 workflow authority；Agent 默认只选择上述三个 profile。
 
 旧 `npm`/`make` 入口可以作为 alias 或 internal implementation，但不得各自维护另一套 test semantics。弃用入口在没有 caller inventory 前只标记，不直接删除。
 
