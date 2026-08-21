@@ -216,9 +216,7 @@ def main_can_ff_sync() -> tuple[bool, str]:
         return False, "STATE=GIT_COMMAND_FAILED: unable to calculate main/origin/main divergence"
 
     counts = result.stdout.strip().split()
-    if len(counts) != _AHEAD_BEHIND_COUNT_FIELDS or any(
-        not count.isdigit() for count in counts
-    ):
+    if len(counts) != _AHEAD_BEHIND_COUNT_FIELDS or any(not count.isdigit() for count in counts):
         return False, "STATE=GIT_COMMAND_FAILED: invalid ahead/behind count from git"
 
     local_only, remote_only = (int(count) for count in counts)
@@ -233,10 +231,7 @@ def main_can_ff_sync() -> tuple[bool, str]:
     if state == "LOCAL_AHEAD":
         detail = f"local main has {local_only} commit(s) not on origin/main"
     else:
-        detail = (
-            f"local main has {local_only} local-only and "
-            f"{remote_only} remote-only commit(s)"
-        )
+        detail = f"local main has {local_only} local-only and {remote_only} remote-only commit(s)"
     return False, f"STATE={state}: {detail}"
 
 
