@@ -97,9 +97,23 @@ Docker Build Validation
 
 ## 7. `pr-ready` 的职责
 
-WF03 目标是只暴露一个只读 preflight（命名可为 `make pr-ready`）。它可以检查 PR 存在、非 draft、当前 PR HEAD、required checks 的 SHA、工作区意外 dirty 和必要 metadata；它不重跑测试、不重跑 review、不生成 audit package、不修改 PR、不 merge、不清理 branch。
+唯一的 merge-readiness 状态预检是：
 
-preflight 是 governance check，不是 TEST、CI 或 REVIEW。任何 wrapper 只能编排 canonical implementation，不能通过吞掉 exit code 或写 Markdown 状态来制造 PASS。
+```bash
+make pr-ready PR=<number>
+make pr-ready PR=<number> JSON=1
+```
+
+其 canonical implementation 是 `scripts/devops/pr_ready_check.py`。它只读 Git/GitHub 当前状态并失败关闭，检查：
+
+- PR 为 open、非 draft、目标为 default branch，且有基本 title/body；
+- 当前 worktree 在 feature branch、branch 与 PR head branch 相同、无 dirty path；
+- 本地 HEAD 与 PR HEAD 是相同的完整 40 字符 SHA；
+- active ruleset 为 default branch 声明的每一个 required status check，都以相同完整 SHA 成功完成。
+
+它不重跑测试、不重跑 review、不生成 audit package/manifest、不把 SHA/run ID 写入 PR body、不修改 PR、不 merge、不清理 branch。它是 `GOVERNANCE CHECK`，不是 TEST、CI 或 REVIEW。
+
+历史 `pr-body-check`、`pr-merge-preflight` 和 `pr-ready-check` 路径只委托该实现；不能再维护自己的判断逻辑。`pr-gate-local` 是本地 PR gate parity helper，负责静态/安全扫描，不是 merge readiness，也不替代 GitHub required CI。`ai_workflow_gate.py` 仍由 CI 调用，负责 PR 内容和危险变更治理检查，但不是 reviewer。
 
 ## 8. 异常处理
 

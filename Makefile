@@ -64,7 +64,7 @@
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
         verify-targeted verify-pr verify-strict \
-        ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
+        ci-local ci-local-pr pr-gate-local pr-ready pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
 # 默认目标
@@ -240,20 +240,20 @@ pr-gate-local: ## 运行本地 PR Gate 预检（无网络/无DB/无 secrets）�
 		$(if $(JSON),--json) \
 		$(if $(VERBOSE),--verbose)
 
-pr-merge-preflight: ## PR merge preflight evidence check (read-only, no merge)
+pr-ready: ## Canonical PR readiness state check (read-only, no tests/review/merge). Usage: make pr-ready PR=<number> [JSON=1]
 	@if [ -z "$(PR)" ]; then \
-		echo "ERROR: PR number required. Usage: make pr-merge-preflight PR=<number>"; \
+		echo "ERROR: PR number required. Usage: make pr-ready PR=<number> [JSON=1]"; \
 		exit 1; \
 	fi
-	@python3 scripts/devops/pr_merge_preflight.py --pr $(PR)
+	@python3 scripts/devops/pr_ready_check.py --pr $(PR) $(if $(JSON),--json)
 
-pr-ready-check: ## PR ready-to-merge check: pr-body-check + pr-merge-preflight. Usage: make pr-ready-check PR=<number>
+pr-ready-check: ## 兼容入口：委托 canonical pr-ready。Usage: make pr-ready-check PR=<number>
 	@if [ -z "$(PR)" ]; then \
 		echo "ERROR: PR number required. Usage: make pr-ready-check PR=<number>"; \
 		exit 1; \
 	fi
-	@$(MAKE) pr-body-check PR=$(PR)
-	@$(MAKE) pr-merge-preflight PR=$(PR)
+	@echo "$(YELLOW)[PR Ready] compatibility alias -> pr-ready$(NC)"
+	@$(MAKE) pr-ready PR=$(PR) JSON=$(JSON)
 
 # ============================================
 # CI 监控与 PR 生命周期（参见 docs/AGENT_WORKFLOW.md）
@@ -274,12 +274,21 @@ watch-pr: ## CI 监控（唯一允许命令，禁止自定义循环）。Usage: 
 		exit 1; \
 	fi
 
-pr-body-check: ## PR body + current Production Gate evidence check (read-only). Usage: make pr-body-check PR=<number>
+pr-body-check: ## 兼容入口：委托 canonical pr-ready；PR body/CI 事实由 CI 检查。Usage: make pr-body-check PR=<number>
 	@if [ -z "$(PR)" ]; then \
 		echo "ERROR: PR number required. Usage: make pr-body-check PR=<number>"; \
 		exit 1; \
 	fi
-	@python3 scripts/devops/pr_body_check.py --pr $(PR)
+	@echo "$(YELLOW)[PR Body Check] compatibility alias -> pr-ready$(NC)"
+	@$(MAKE) pr-ready PR=$(PR) JSON=$(JSON)
+
+pr-merge-preflight: ## 兼容入口：委托 canonical pr-ready。Usage: make pr-merge-preflight PR=<number>
+	@if [ -z "$(PR)" ]; then \
+		echo "ERROR: PR number required. Usage: make pr-merge-preflight PR=<number>"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)[PR Merge Preflight] compatibility alias -> pr-ready$(NC)"
+	@$(MAKE) pr-ready PR=$(PR) JSON=$(JSON)
 
 workflow-pr-check: ## 兼容入口：委托 canonical PR 验证（FILES/TESTS 不再定义另一套语义）
 	@echo "$(YELLOW)[Workflow PR Check] compatibility alias -> verify-pr$(NC)"
