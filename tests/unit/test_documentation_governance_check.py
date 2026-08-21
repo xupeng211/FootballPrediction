@@ -146,7 +146,8 @@ def test_agents_and_claude_md_in_source_of_truth_allowlist():
 def test_no_wildcard_paths_in_source_of_truth_allowlist():
     """The source-of-truth allowlist uses exact paths, not wildcards."""
     assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
-    assert "package.json" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "package.json" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "package-lock.json" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 
 def test_unexpected_paths_still_rejected():

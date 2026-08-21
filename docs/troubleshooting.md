@@ -394,21 +394,19 @@ node --version  # 应该是 18+
 npm --version
 ```
 
-### Jest 测试失败
+### Node.js 测试失败
 
 **解决方案**:
 
 ```bash
-cd scripts/ops
+# 优先运行 canonical targeted profile
+make verify-targeted
 
-# 运行特定测试文件
-npx jest tests/interaction_v52.test.js
+# 运行特定 Node.js 测试文件（容器内）
+docker compose -f docker-compose.dev.yml exec dev node --test tests/unit/<file>.test.js
 
-# 运行特定测试
-npx jest -t "test_name"
-
-# 查看覆盖率
-npm run test:coverage
+# 运行完整的 PR profile（由 CI 共享同一底层实现）
+make verify-pr
 ```
 
 ---

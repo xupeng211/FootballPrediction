@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
-"""Post-merge check / cleanup gate — read-only by default, no auto-delete.
+"""Post-merge completion evidence check — read-only.
 
 lifecycle: permanent
 
-Checks that a merged PR satisfies all post-merge safety gates before
-allowing branch cleanup. All checks are read-only via ``gh`` CLI and
-local git commands. Branch deletion requires an explicit opt-in flag.
+Checks that a merged PR satisfies the post-merge completion invariant. All
+checks are read-only via ``gh`` CLI and local git commands. Branch/worktree
+cleanup is deliberately outside this completion utility.
 
 Usage:
   # Read-only check (default — safe)
   python scripts/devops/pr_post_merge_check.py --pr 1475 \
       --merge-commit abc1234 --branch feature/my-branch
-
-  # With cleanup (explicit opt-in required)
-  python scripts/devops/pr_post_merge_check.py --pr 1475 \
-      --merge-commit abc1234 --branch feature/my-branch --confirm-cleanup
 
 Checks performed:
   1. PR state is MERGED
@@ -23,7 +19,7 @@ Checks performed:
   4. Production Gate CI workflow concluded with success on the merge commit
   5. Local main can fast-forward sync to origin/main
   6. Working tree is clean (no uncommitted changes)
-  7. Branch is not protected (main/master/current branch)
+  7. The supplied branch value is reported only; it never authorizes cleanup
 
 PASS conditions (ALL must be true):
   - PR state == MERGED
@@ -34,7 +30,6 @@ PASS conditions (ALL must be true):
   - CI conclusion is success
   - Local main is up-to-date or can ff-only sync
   - git status is clean
-  - Branch is not protected (main/master/origin/main/origin/master/current)
 
 FAIL on any of:
   - PR not merged
@@ -43,12 +38,8 @@ FAIL on any of:
   - CI run not found / pending / failed / cancelled
   - Local main diverged from origin/main
   - Working tree has uncommitted changes
-  - Branch is protected or is the current branch
-
-Cleanup (only with --confirm-cleanup):
-  - Delete remote branch
-  - Delete local branch (if it exists)
-  - Requires all checks to PASS first
+Cleanup is not performed here. `DONE` remains the responsibility of the exact
+merge-SHA main Production Gate, not this helper and not branch cleanup.
 """
 
 from __future__ import annotations
@@ -68,8 +59,6 @@ from exact_head import ExactHeadError, assert_ci_is_current, is_full_sha, normal
 
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
 TIMEOUT_SECONDS = 30
-
-PROTECTED_BRANCHES: frozenset[str] = frozenset({"main", "master", "origin/main", "origin/master"})
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -312,96 +301,10 @@ CHECKS: list[tuple[str, Any]] = [
     ("Production Gate CI success", None),
     ("Local main ff-only sync", _check_main_ff_sync),
     ("Working tree clean", _check_status_clean),
-    ("Branch not protected", None),
 ]
 
 
 # ---------------------------------------------------------------------------
-# Branch protection
-# ---------------------------------------------------------------------------
-
-
-def get_current_branch() -> str:
-    """Return the current git branch name, or empty string on failure."""
-    result = run_git(["rev-parse", "--abbrev-ref", "HEAD"])
-    if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
-
-
-def _check_branch_not_protected(branch: str) -> list[str]:
-    """Check that *branch* is not a protected branch and is not the current branch.
-
-    Returns [] on pass, [error_message] on failure.
-    """
-    failures: list[str] = []
-
-    if branch in PROTECTED_BRANCHES:
-        failures.append(
-            f"Branch '{branch}' is a protected branch — cleanup is forbidden. "
-            f"Protected branches: {', '.join(sorted(PROTECTED_BRANCHES))}"
-        )
-
-    current = get_current_branch()
-    if current and branch == current:
-        failures.append(
-            f"Branch '{branch}' is the currently checked-out branch — "
-            f"cannot delete the branch you are on."
-        )
-
-    return failures
-
-
-# ---------------------------------------------------------------------------
-# Branch cleanup (only with explicit opt-in)
-# ---------------------------------------------------------------------------
-
-
-def cleanup_branch(branch: str, dry_run: bool = False) -> list[str]:
-    """Delete remote and local branch. Returns log messages.
-
-    Only called when --confirm-cleanup is set and all checks pass.
-    """
-    log: list[str] = []
-
-    # Belt-and-suspenders: refuse to touch protected branches
-    protected = _check_branch_not_protected(branch)
-    if protected:
-        log.append(f"REFUSED: {protected[0]}")
-        return log
-
-    if dry_run:
-        log.append(f"[DRY RUN] Would delete remote branch: origin/{branch}")
-        log.append(f"[DRY RUN] Would delete local branch: {branch}")
-        return log
-
-    # Delete remote branch
-    try:
-        result = run_git(["push", "origin", "--delete", branch])
-        if result.returncode == 0:
-            log.append(f"Deleted remote branch: origin/{branch}")
-        else:
-            log.append(f"Failed to delete remote branch: {result.stderr.strip()}")
-    except Exception as exc:
-        log.append(f"Error deleting remote branch: {exc}")
-
-    # Delete local branch (if it exists)
-    try:
-        result = run_git(["branch", "-d", branch])
-        if result.returncode == 0:
-            log.append(f"Deleted local branch: {branch}")
-        else:
-            stderr = result.stderr.strip()
-            if "not found" in stderr.lower():
-                log.append(f"Local branch '{branch}' not found — nothing to delete")
-            else:
-                log.append(f"Failed to delete local branch: {stderr}")
-    except Exception as exc:
-        log.append(f"Error deleting local branch: {exc}")
-
-    return log
-
-
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
@@ -448,9 +351,6 @@ def evaluate(
 
     # Check 6: Working tree clean
     failures.extend(_check_status_clean())
-
-    # Check 7: Branch not protected (blocks cleanup of main/master/current)
-    failures.extend(_check_branch_not_protected(branch))
 
     passed = len(failures) == 0
 
@@ -542,18 +442,12 @@ def format_evidence(result: PostMergeResult, *, as_json: bool = False) -> str:
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Post-merge check / cleanup gate (read-only by default)",
+        description="Post-merge completion evidence check (read-only)",
     )
     parser.add_argument("--pr", type=int, required=True, help="PR number")
     parser.add_argument("--merge-commit", type=str, required=True, help="Merge commit SHA")
     parser.add_argument(
-        "--branch", type=str, required=True, help="Branch name (for potential cleanup)"
-    )
-    parser.add_argument(
-        "--confirm-cleanup",
-        action="store_true",
-        default=False,
-        help="Enable branch deletion (remote + local). Requires all checks to PASS.",
+        "--branch", type=str, required=True, help="Branch name for evidence only; never deleted"
     )
     parser.add_argument(
         "--json",
@@ -577,21 +471,11 @@ def main(argv: list[str] | None = None) -> int:
     print(format_evidence(result, as_json=args.json))
 
     if not result.passed:
-        print("\nPost-merge check FAILED. Branch cleanup is NOT safe.", file=sys.stderr)
+        print("\nPost-merge completion evidence FAILED.", file=sys.stderr)
         return 1
 
-    # All checks passed
-    if args.confirm_cleanup:
-        print("\nAll checks passed. Proceeding with branch cleanup...")
-        logs = cleanup_branch(args.branch, dry_run=False)
-        for log_line in logs:
-            print(f"  {log_line}")
-        print("Cleanup complete.")
-    else:
-        print(
-            "\nAll checks passed. Branch cleanup requires --confirm-cleanup flag.",
-            file=sys.stderr,
-        )
+    # All checks passed. Cleanup is intentionally not part of this utility.
+    print("\nPost-merge completion evidence passed. Branch/worktree cleanup is separate.")
 
     return 0
 

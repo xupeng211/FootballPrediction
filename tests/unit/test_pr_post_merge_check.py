@@ -1,4 +1,4 @@
-"""Tests for the post-merge check / cleanup gate.
+"""Tests for the read-only post-merge completion evidence check.
 
 lifecycle: test-fixture
 
@@ -350,48 +350,6 @@ def test_dirty_tree_fails():
 
 
 # ---------------------------------------------------------------------------
-# Cleanup: no --confirm-cleanup => no branch deletion
-# ---------------------------------------------------------------------------
-
-
-def test_no_cleanup_without_confirm_flag():
-    """When --confirm-cleanup is NOT set, cleanup_branch should not be called."""
-    pr_mock = mock.MagicMock()
-    pr_mock.stdout = json.dumps(MERGED_PR_JSON)
-    pr_mock.returncode = 0
-
-    ci_mock = mock.MagicMock()
-    ci_mock.stdout = json.dumps(VALID_CI_RUN)
-    ci_mock.returncode = 0
-
-    git_ok = _make_git_mock()
-
-    def _combined_run(args, **kwargs):
-        if args[0] == "gh":
-            if "pr" in args:
-                return pr_mock
-            return ci_mock
-        if args[0] == "git":
-            return git_ok(args, **kwargs)
-        raise RuntimeError(f"Unexpected command: {args}")
-
-    with mock.patch("subprocess.run", side_effect=_combined_run):
-        result = pp.evaluate(_PR_NUM, _MERGE_COMMIT, _BRANCH)
-    _assert_pass(result)
-    # Verify no cleanup calls were made to delete branches
-    # (cleanup_branch is only called from main(), not evaluate())
-
-
-def test_cleanup_branch_noop_without_confirm():
-    """cleanup_branch should not be invoked when confirm_cleanup is False."""
-    # This is implicitly tested by the main flow — cleanup_branch is only
-    # called in main() when --confirm-cleanup is set.
-    # We test that evaluate() with confirm_cleanup=False does not delete.
-    logs = pp.cleanup_branch(_BRANCH, dry_run=True)
-    assert any("DRY RUN" in line for line in logs)
-    assert any(_BRANCH in line for line in logs)
-
-
 # ---------------------------------------------------------------------------
 # Empty merge commit => FAIL
 # ---------------------------------------------------------------------------

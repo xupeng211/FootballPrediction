@@ -225,10 +225,10 @@ async function backfillL2Data(l1Match, oddsData) {
 
 ```bash
 # 运行 MatchValidator 单元测试
-npm test tests/unit/MatchValidator.test.js
+docker compose -f docker-compose.dev.yml exec dev node --test tests/unit/MatchValidator.test.js
 
-# 查看覆盖率报告
-npx jest --coverage tests/unit/MatchValidator.test.js
+# 变更验证应选择 canonical profile；覆盖率是底层观察，不是本文件另设的 merge gate
+make verify-targeted
 ```
 
 ---

@@ -42,8 +42,7 @@
     "beforeEach": "readonly",
     "afterEach": "readonly",
     "beforeAll": "readonly",
-    "afterAll": "readonly",
-    "jest": "readonly"
+    "afterAll": "readonly"
   },
   "rules": {
     "no-unused-vars": "off",

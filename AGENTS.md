@@ -8,6 +8,7 @@
 
 - 所有回复、注释和日志优先使用中文。
 - 不直接修改 `main`，不在 `main` 上开发或提交。先确认 branch、worktree 和 dirty state。
+- 新 feature branch/worktree 的基线必须明确取自最新 `origin/main`；不要从可能落后的本地 `main` 猜测基线。
 - 保护用户已有修改；不得使用 `reset --hard`、`clean`、覆盖式 checkout、force-push 或删除未知工作。
 - 先读后改、最小修改、只做当前任务范围内的变更。
 - 默认在 `dev` 容器中运行 Node/Python 业务命令；数据库、网络抓取、raw 写入、训练、预测、backtest、模型激活和 migration apply 均需单独授权。
@@ -51,6 +52,7 @@ relevant/full validation → 一个 exact-head independent adversarial review �
 ```
 
 一个 STRICT 任务默认只有一个 primary independent reviewer。GitHub Codex Review 可以作为 advisory second opinion，但不是 approval 或 required status。
+STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider、结果、时间戳和被审查的完整 40 字符 SHA；required governance path 只验证该 evidence 是否存在、格式正确且绑定当前 PR HEAD。
 
 ## 4. Canonical validation profiles
 
@@ -81,7 +83,7 @@ PR 使用唯一模板 [.github/pull_request_template.md](.github/pull_request_te
 Summary / Scope / Tests / Risk / Rollback
 ```
 
-`Scope` 必须说明 task type、变更路径和 runtime behavior 是否变化；`Tests` 必须写实际命令及结果；`Risk` 必须说明副作用边界；高风险路径另加模板中要求的授权字段。
+`Scope` 必须说明 task type、变更路径和 runtime behavior 是否变化；还要声明 `Workflow class = NORMAL` 或 `STRICT`；`Tests` 必须写实际命令及结果；`Risk` 必须说明副作用边界；高风险路径另加模板中要求的授权字段。STRICT evidence 只证明一次独立 review 对应当前 exact HEAD，不运行 review、不替代 TEST/CI，也不决定 merge。
 
 PR 生命周期：
 
@@ -110,6 +112,7 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 - freshness、授权、review、CI 和 DONE 判断使用完整 40 字符 SHA；短 SHA 只能用于人类展示。
 - repository / PR / review / CI / merge 的共享完整 SHA primitive 是 `scripts/devops/exact_head.py`；新增 freshness 判断时先复用它，不得另写前缀比较。
 - review 只有在 `review_head == current_pr_head` 时有效；source change 自动使旧 review stale。
+- STRICT PR 若缺少、格式错误或绑定旧 SHA 的 `Strict Review Evidence`，现有 required governance path 必须失败；这不新增 required check，也不把 PR 正文变成 review registry。
 - required CI 只有在验证 SHA 等于当前 PR HEAD 时有效；历史 green run 不能授权新 HEAD。
 - `PR merged + merge SHA identified + main Production Gate for exact merge SHA succeeds` 才能标记 `DONE`。
 
@@ -123,7 +126,8 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 2. `docs/AGENT_WORKFLOW.md`：唯一 detailed workflow documentation，不得与本文件冲突。
 3. `README.md`：业务 canonical entrypoints 和运行说明。
 4. Git/GitHub/Actions：branch、HEAD、required checks 和 merge 的机器事实。
-5. 其他文档、历史 report、handover、archive：仅作背景，不能当作 current truth。
+5. `.claude/`、`GEMINI.md` 和其他 agent skill/config：仅是 tooling、skill 或 agent-specific pointer，不能成为平行 project workflow authority。
+6. 其他文档、历史 report、handover、archive：仅作背景，不能当作 current truth。
 
 Claude Code 只保留 Claude-specific 的权限/工具差异；其他 agent 应直接阅读本文件。
 
@@ -135,6 +139,7 @@ Claude Code 只保留 Claude-specific 的权限/工具差异；其他 agent 应�
 - 目标验证已按 NORMAL/STRICT 分类实际执行，并报告命令与 exit code。
 - PR 的 required checks 对当前完整 HEAD 成功。
 - STRICT 任务的 review 对当前 HEAD 有效，或明确记录不需要 review 的理由。
+- STRICT 任务的机器检查能够证明 review evidence 绑定当前完整 PR HEAD。
 - owner 已作出 merge decision。
 - merge 后 main Production Gate 对实际 merge SHA 成功。
 - 最终报告区分 `CONFIRMED`、`INFERRED` 和 `UNKNOWN`，没有把文档声明冒充机器强制。

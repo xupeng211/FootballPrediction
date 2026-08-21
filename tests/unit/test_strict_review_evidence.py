@@ -1,0 +1,77 @@
+"""Tests for the minimal STRICT review evidence contract.
+
+lifecycle: test-fixture
+"""
+
+from __future__ import annotations
+
+from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence
+
+CURRENT_SHA = "a" * 40
+OLD_SHA = "b" * 40
+SAME_PREFIX_SHA = "a" * 7 + "b" * 33
+
+
+def _body(workflow_class: str, *, reviewed_sha: str | None = CURRENT_SHA) -> str:
+    evidence = ""
+    if workflow_class == "STRICT" and reviewed_sha is not None:
+        evidence = f"""
+
+## Strict Review Evidence
+
+| Field | Value |
+| --- | --- |
+| Version | 1 |
+| Task type | STRICT |
+| Provider | local-codex-review |
+| Reviewed full SHA | {reviewed_sha} |
+| Result | PASS |
+| Timestamp | 2026-08-21T12:00:00Z |
+"""
+    return f"""## Scope
+
+| Field | Value |
+| --- | --- |
+| Task type | workflow-governance |
+| Workflow class | {workflow_class} |
+{evidence}
+"""
+
+
+def test_normal_without_review_evidence_passes():
+    assert validate_strict_review_evidence(_body("NORMAL", reviewed_sha=None), CURRENT_SHA) == []
+
+
+def test_strict_valid_current_full_sha_passes():
+    assert validate_strict_review_evidence(_body("STRICT"), CURRENT_SHA) == []
+
+
+def test_strict_without_evidence_fails_closed():
+    errors = validate_strict_review_evidence(_body("STRICT", reviewed_sha=None), CURRENT_SHA)
+    assert any("STRICT_REVIEW_MISSING" in error for error in errors)
+
+
+def test_strict_old_head_is_stale():
+    errors = validate_strict_review_evidence(_body("STRICT", reviewed_sha=OLD_SHA), CURRENT_SHA)
+    assert any("STRICT_REVIEW_STALE" in error for error in errors)
+
+
+def test_same_short_prefix_does_not_authorize_different_full_head():
+    reviewed = "a" * 7 + "c" * 33
+    errors = validate_strict_review_evidence(
+        _body("STRICT", reviewed_sha=reviewed), SAME_PREFIX_SHA
+    )
+    assert any("STRICT_REVIEW_STALE" in error for error in errors)
+
+
+def test_malformed_evidence_fails():
+    body = _body("STRICT").replace("| Version | 1 |", "| Version | two |")
+    body = body.replace("| Result | PASS |", "| Result | APPROVE |")
+    body = body.replace("| Timestamp | 2026-08-21T12:00:00Z |", "| Timestamp | yesterday |")
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("STRICT_REVIEW_INVALID" in error for error in errors)
+
+
+def test_source_change_after_review_invalidates_old_evidence():
+    errors = validate_strict_review_evidence(_body("STRICT", reviewed_sha=CURRENT_SHA), OLD_SHA)
+    assert any("STRICT_REVIEW_STALE" in error for error in errors)

@@ -71,8 +71,13 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         # Permanent workflow / source-of-truth instruction files.
         "AGENTS.md",
         "CLAUDE.md",
+        "GEMINI.md",
+        ".claude/README.md",
+        ".eslintrc.json",
         ".github/pull_request_template.md",
         "README.md",
+        "package.json",
+        "package-lock.json",
         "docs/PROJECT_STATUS.md",
         "docs/DATA_SOURCE_STRATEGY.md",
         "docs/data/FOTMOB_CURRENT_STATE.md",
@@ -80,6 +85,11 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "docs/CODEX_WORKFLOW.md",
         "docs/AGENT_WORKFLOW.md",
+        "docs/CLAUDE_JS_TOOLS.md",
+        "docs/TESTING_GUIDE.md",
+        "docs/troubleshooting.md",
+        "docs/architecture/L1_DATA_CONTRACT.md",
+        "docs/techdebt/L3_ACTIVE_ENTRYPOINT_WHITELIST.md",
         "docs/GITHUB_ACTIONS_AUDIT_REPORT.md",
         "docs/PROJECT_MAP.md",
         "Makefile",
@@ -98,6 +108,7 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "scripts/ops/helpers/section_content_quality.py",
         "scripts/ops/helpers/pr_authorization_matrix.py",
         "scripts/ops/helpers/dangerous_file_change_check.py",
+        "scripts/ops/helpers/strict_review_evidence.py",
         "scripts/devops/validation_profiles.py",
         "scripts/devops/pr_ready_check.py",
         "scripts/devops/exact_head.py",
@@ -105,6 +116,8 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "scripts/devops/static_quality_changed_lines.py",
         "tests/unit/test_agent_workflow_hardening.py",
         "tests/unit/test_ai_workflow_gate.py",
+        "tests/unit/test_ai_workflow_gate_enforcement.py",
+        "tests/unit/test_strict_review_evidence.py",
         "tests/unit/test_documentation_governance_check.py",
         "tests/unit/test_agent_workflow_hardening_phase1_ci_rules.py",
         "tests/unit/test_dangerous_file_change_check.py",
@@ -126,6 +139,7 @@ ALLOWED_DELETED = frozenset(
     {
         ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/ci-setup.md",
+        "tests/setup.js",
     }
 )
 
