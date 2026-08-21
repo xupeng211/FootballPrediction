@@ -95,6 +95,7 @@ GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
         "CLAUDE.md",
         "scripts/ops/documentation_governance_check.py",
         "scripts/ops/ai_workflow_gate.py",
+        "scripts/devops/pr_ready_check.py",
         ".github/workflows/production-gate.yml",
         "CONTRIBUTING.md",
         "docs/PROJECT_MAP.md",

@@ -89,10 +89,14 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         ".github/CODEOWNERS",
         "scripts/ops/ai_workflow_gate.py",
         "scripts/ops/documentation_governance_check.py",
+        "scripts/ci/l3_changed_file_classifier.py",
+        "scripts/devops/pr_body_check.py",
+        "scripts/devops/pr_merge_preflight.py",
         "scripts/ops/helpers/section_content_quality.py",
         "scripts/ops/helpers/pr_authorization_matrix.py",
         "scripts/ops/helpers/dangerous_file_change_check.py",
         "scripts/devops/validation_profiles.py",
+        "scripts/devops/pr_ready_check.py",
         ".github/workflows/production-gate.yml",
         "scripts/devops/static_quality_changed_lines.py",
         "tests/unit/test_agent_workflow_hardening.py",
@@ -101,6 +105,9 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "tests/unit/test_agent_workflow_hardening_phase1_ci_rules.py",
         "tests/unit/test_dangerous_file_change_check.py",
         "tests/unit/test_validation_profiles.py",
+        "tests/unit/test_pr_ready_check.py",
+        "tests/unit/test_pr_body_check.py",
+        "tests/unit/test_pr_merge_preflight.py",
     }
 )
 

@@ -92,6 +92,19 @@ PR 生命周期：
 5. owner 判断是否接受风险并合并。仓库目标 merge policy 是 Squash Merge；远端 ruleset 当前仍允许 merge、squash、rebase，若需收紧必须由 owner 修改 GitHub 设置。
 6. merge 不等于完成。必须找到实际 merge SHA，并确认 main push 的 Production Gate 对该完整 SHA 成功。
 
+合并前只使用一个状态预检入口：
+
+```bash
+make pr-ready PR=<number>          # 只读 Git/GitHub 状态检查
+make pr-ready PR=<number> JSON=1   # 机器可读证据
+```
+
+`pr-ready` 的 canonical implementation 是 `scripts/devops/pr_ready_check.py`。它只检查当前
+feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和该 HEAD 的 check runs；
+它不跑测试、不执行 review、不生成 manifest/report、不修改 PR、不 merge、不清理 branch。
+`pr-ready-check`、`pr-body-check` 和 `pr-merge-preflight` 仅是兼容别名，不能形成第二套 authority。
+`pr-gate-local` 仍是本地静态 parity helper，不是 merge readiness 或 code review。
+
 ## 6. Exact-head 原则
 
 - freshness、授权、review、CI 和 DONE 判断使用完整 40 字符 SHA；短 SHA 只能用于人类展示。
