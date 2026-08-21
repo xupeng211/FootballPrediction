@@ -194,8 +194,6 @@ from scripts.ops.helpers.disposable_canonical_db_proof_scan import (  # noqa: E4
     scan_with_disposable_db_proof_exemption,
 )
 
-# Git change detection — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     Change,
     IncrementalScanResult,
@@ -497,9 +495,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
 
 
 # Garbage prevention checks (G1 P0) — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
-# Agent workflow hardening checks (Phase1) — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
@@ -629,9 +624,6 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     # 6c. Forbidden rewrite file patterns (new files only)
     if has_pr_metadata:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
-    # 6d. Large-risk declarations are PR metadata checks. The deletion,
-    # rename, and scanner thresholds require cleanup/scanner declarations
-    # that do not exist on a main push.
     if has_pr_metadata:
         errors.extend(check_large_risky_change(changes, pr_body))
 
@@ -647,7 +639,14 @@ def validate(  # noqa: C901, PLR0912, PLR0915
             )
         )
         if enforce_strict_review:
-            errors.extend(validate_strict_review_evidence(pr_body, head_ref))
+            errors.extend(
+                validate_strict_review_evidence(
+                    pr_body,
+                    head_ref,
+                    changed_paths=changed,
+                    task_type=parse_task_type(pr_body),
+                )
+            )
         with contextlib.suppress(Exception):
             run_pr_authorization_matrix_report_only(changed, pr_body)
         if block_matrix:

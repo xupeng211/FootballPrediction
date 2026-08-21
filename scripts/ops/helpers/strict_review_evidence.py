@@ -11,16 +11,84 @@ from __future__ import annotations
 
 from datetime import datetime
 import re
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 from scripts.devops.exact_head import ExactHeadError, assert_review_is_current
+from scripts.ops.helpers.pr_authorization_matrix import (
+    CATEGORY_DATA_ARTIFACT,
+    CATEGORY_DB_MIGRATION_SQL,
+    CATEGORY_DOCKER_DEPLOY,
+    CATEGORY_ENV_SECRET,
+    CATEGORY_MODEL_ARTIFACT,
+    CATEGORY_RUNTIME_CONFIG,
+    CATEGORY_SC002_DB_GOVERNANCE,
+    CATEGORY_WORKFLOW_GOVERNANCE,
+    TASK_TYPE_CONFIG_RUNTIME,
+    TASK_TYPE_DATA_ARTIFACT,
+    TASK_TYPE_DB_MIGRATION_SQL,
+    TASK_TYPE_DOCKER_DEPLOY,
+    TASK_TYPE_MIXED,
+    TASK_TYPE_MODEL_ARTIFACT,
+    TASK_TYPE_SC002_DB_GOVERNANCE,
+    TASK_TYPE_WORKFLOW_GOVERNANCE,
+    classify_paths,
+)
 
 WORKFLOW_CLASS_NORMAL = "NORMAL"
 WORKFLOW_CLASS_STRICT = "STRICT"
 ACCEPTED_RESULTS: frozenset[str] = frozenset({"PASS", "FINDINGS_RESOLVED"})
 EVIDENCE_HEADING = "## Strict Review Evidence"
 MAX_PROVIDER_LENGTH = 128
+_TABLE_COLUMN_COUNT = 2
+_EVIDENCE_FIELDS = frozenset(
+    {"Version", "Task type", "Provider", "Reviewed full SHA", "Result", "Timestamp"}
+)
+_STRICT_REVIEW_TASK_TYPES = frozenset(
+    {
+        TASK_TYPE_CONFIG_RUNTIME,
+        TASK_TYPE_DATA_ARTIFACT,
+        TASK_TYPE_DB_MIGRATION_SQL,
+        TASK_TYPE_DOCKER_DEPLOY,
+        TASK_TYPE_MIXED,
+        TASK_TYPE_MODEL_ARTIFACT,
+        TASK_TYPE_SC002_DB_GOVERNANCE,
+        TASK_TYPE_WORKFLOW_GOVERNANCE,
+    }
+)
+_STRICT_REVIEW_CATEGORIES = frozenset(
+    {
+        CATEGORY_DATA_ARTIFACT,
+        CATEGORY_DB_MIGRATION_SQL,
+        CATEGORY_DOCKER_DEPLOY,
+        CATEGORY_ENV_SECRET,
+        CATEGORY_MODEL_ARTIFACT,
+        CATEGORY_RUNTIME_CONFIG,
+        CATEGORY_SC002_DB_GOVERNANCE,
+        CATEGORY_WORKFLOW_GOVERNANCE,
+    }
+)
+_STRICT_REVIEW_PATH_PREFIXES = (
+    "scripts/capture_auth",
+    "scripts/model_training/",
+    "src/api/model_management.py",
+    "src/api/predictions/",
+    "src/core/database/",
+    "src/core/harvesters/",
+    "src/database/",
+    "src/infrastructure/auth/",
+    "src/infrastructure/database/",
+    "src/infrastructure/harvesters/",
+    "src/infrastructure/recon/",
+    "src/infrastructure/services/migrations/",
+    "src/ml/",
+)
+_STRICT_REVIEW_SCRIPT_TOKENS = frozenset(
+    {"harvest", "ingest", "migration", "predict", "raw", "train", "write"}
+)
 
-_TABLE_VALUE_RE_TEMPLATE = r"^\|\s*{label}\s*\|\s*([^|]*?)\s*\|"
 _FENCE_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
 _HEADING_RE = re.compile(r"^[ \t]{0,3}##[ \t]+(.+?)\s*$")
 
@@ -81,22 +149,85 @@ def _section_matches(pr_body: str, heading: str) -> list[str]:
     return [body for title, body in _sections(pr_body) if title == expected]
 
 
-def _section_text(pr_body: str, heading: str) -> str:
-    """Return a section only when exactly one unambiguous match exists."""
+def _table_values(text: str, label: str) -> tuple[list[str], bool]:
+    """Return all exact table values and whether a matching row is malformed."""
 
-    matches = _section_matches(pr_body, heading)
-    return matches[0] if len(matches) == 1 else ""
+    values: list[str] = []
+    malformed = False
+    expected = label.casefold()
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if not cells or cells[0].casefold() != expected:
+            continue
+        if len(cells) != _TABLE_COLUMN_COUNT:
+            malformed = True
+            continue
+        values.append(cells[1].strip().strip("`").strip())
+    return values, malformed
 
 
-def _table_value(text: str, label: str) -> str:
-    """Read a single Markdown table value by exact case-insensitive label."""
+def _evidence_table_errors(text: str) -> list[str]:
+    """Reject duplicate, unknown, or multi-column evidence rows."""
 
-    pattern = re.compile(
-        _TABLE_VALUE_RE_TEMPLATE.format(label=re.escape(label)),
-        re.IGNORECASE | re.MULTILINE,
-    )
-    match = pattern.search(text)
-    return match.group(1).strip().strip("`").strip() if match else ""
+    counts: dict[str, int] = {}
+    errors: list[str] = []
+    labels = {label.casefold() for label in _EVIDENCE_FIELDS}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+            continue
+        if len(cells) == _TABLE_COLUMN_COUNT and cells[0].casefold() == "field":
+            continue
+        if len(cells) != _TABLE_COLUMN_COUNT:
+            errors.append(
+                "STRICT_REVIEW_INVALID: evidence table rows must have exactly two columns."
+            )
+            continue
+        label = cells[0].casefold()
+        if label not in labels:
+            errors.append(f"STRICT_REVIEW_INVALID: unsupported evidence field '{cells[0]}'.")
+            continue
+        counts[label] = counts.get(label, 0) + 1
+
+    for label in _EVIDENCE_FIELDS:
+        count = counts.get(label.casefold(), 0)
+        if count > 1:
+            errors.append(f"STRICT_REVIEW_INVALID: evidence field '{label}' must appear once.")
+    return errors
+
+
+def _strict_classification_reasons(
+    changed_paths: Iterable[str] | None,
+    task_type: str | None,
+) -> list[str]:
+    """Return reasons a PR cannot waive STRICT review by declaring NORMAL."""
+
+    paths = tuple(changed_paths or ())
+    normalized_task = (task_type or "").strip().lower()
+    reasons: list[str] = []
+    if normalized_task in _STRICT_REVIEW_TASK_TYPES:
+        reasons.append(f"task type '{normalized_task}'")
+
+    categories = classify_paths(paths)
+    category_hits = sorted(set(categories) & _STRICT_REVIEW_CATEGORIES)
+    if category_hits:
+        reasons.append("path categories " + ", ".join(category_hits))
+
+    for path in paths:
+        normalized_path = path.replace("\\", "/")
+        basename = normalized_path.rsplit("/", 1)[-1].casefold()
+        if normalized_path.startswith(_STRICT_REVIEW_PATH_PREFIXES) or (
+            normalized_path.startswith("scripts/ops/")
+            and any(token in basename for token in _STRICT_REVIEW_SCRIPT_TOKENS)
+        ):
+            reasons.append(f"high-risk path '{path}'")
+    return reasons
 
 
 def parse_workflow_class(pr_body: str) -> str | None:
@@ -105,7 +236,10 @@ def parse_workflow_class(pr_body: str) -> str | None:
     scope_sections = _section_matches(pr_body, "## Scope")
     if len(scope_sections) != 1:
         return None
-    raw = _table_value(scope_sections[0], "Workflow class")
+    values, malformed = _table_values(scope_sections[0], "Workflow class")
+    if malformed or len(values) != 1:
+        return None
+    raw = values[0]
     normalized = raw.upper()
     return normalized if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT} else None
 
@@ -120,9 +254,12 @@ def _valid_timestamp(value: str) -> bool:
     return parsed.tzinfo is not None
 
 
-def validate_strict_review_evidence(  # noqa: C901, PLR0912
+def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
     pr_body: str,
     current_pr_head: str | None,
+    *,
+    changed_paths: Iterable[str] | None = None,
+    task_type: str | None = None,
 ) -> list[str]:
     """Validate the STRICT review contract against one current full SHA.
 
@@ -137,9 +274,23 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0912
             "STRICT_REVIEW_CLASSIFICATION_INVALID: PR body must contain exactly one "
             "top-level Scope section."
         ]
-    workflow_raw = _table_value(scope_sections[0], "Workflow class")
+    workflow_values, workflow_malformed = _table_values(scope_sections[0], "Workflow class")
+    if workflow_malformed or len(workflow_values) != 1:
+        return [
+            "STRICT_REVIEW_CLASSIFICATION_INVALID: Scope must contain exactly one valid "
+            "Workflow class row."
+        ]
+    workflow_raw = workflow_values[0]
     workflow_class = workflow_raw.upper()
+    classification_reasons = _strict_classification_reasons(changed_paths, task_type)
     if workflow_class == WORKFLOW_CLASS_NORMAL:
+        if classification_reasons:
+            return [
+                "STRICT_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
+                "STRICT review; NORMAL cannot waive exact-head evidence ("
+                + "; ".join(classification_reasons)
+                + ")."
+            ]
         return []
     if workflow_class != WORKFLOW_CLASS_STRICT:
         return [
@@ -157,15 +308,24 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0912
         ]
     evidence = evidence_sections[0]
 
-    values = {
-        "version": _table_value(evidence, "Version"),
-        "task_type": _table_value(evidence, "Task type"),
-        "provider": _table_value(evidence, "Provider"),
-        "reviewed_sha": _table_value(evidence, "Reviewed full SHA"),
-        "result": _table_value(evidence, "Result").upper(),
-        "timestamp": _table_value(evidence, "Timestamp"),
-    }
+    values = dict.fromkeys(
+        ("version", "task_type", "provider", "reviewed_sha", "result", "timestamp"), ""
+    )
     errors: list[str] = []
+    errors.extend(_evidence_table_errors(evidence))
+    for label, key in (
+        ("Version", "version"),
+        ("Task type", "task_type"),
+        ("Provider", "provider"),
+        ("Reviewed full SHA", "reviewed_sha"),
+        ("Result", "result"),
+        ("Timestamp", "timestamp"),
+    ):
+        field_values, malformed = _table_values(evidence, label)
+        if malformed or len(field_values) != 1:
+            values[key] = ""
+        elif field_values:
+            values[key] = field_values[0].upper() if key == "result" else field_values[0]
     if values["version"] != "1":
         errors.append("STRICT_REVIEW_INVALID: evidence Version must be 1.")
     if values["task_type"].upper() != WORKFLOW_CLASS_STRICT:

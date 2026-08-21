@@ -52,7 +52,7 @@ relevant/full validation → 一个 exact-head independent adversarial review �
 ```
 
 一个 STRICT 任务默认只有一个 primary independent reviewer。GitHub Codex Review 可以作为 advisory second opinion，但不是 approval 或 required status。
-STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider、结果、时间戳和被审查的完整 40 字符 SHA；required governance path 只验证该 evidence 是否存在、格式正确且绑定当前 PR HEAD。
+STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider、结果、时间戳和被审查的完整 40 字符 SHA；required governance path 验证 evidence 是否存在、格式正确且绑定当前 PR HEAD，并用现有 task/path classifier 拒绝高风险变更声明为 NORMAL 来绕过 review。
 
 ## 4. Canonical validation profiles
 
@@ -91,7 +91,7 @@ PR 生命周期：
 2. commit 前检查 `git diff`、`git status` 和完整 HEAD；不要提交用户已有 dirty change。
 3. push feature branch，创建或更新 PR；source change 后重新验证当前 PR HEAD。
 4. GitHub `Environment / Proxy / Static / Unit Gate` 和 `Docker Build Validation` 是当前 ruleset 的 required checks；它们必须验证当前 PR HEAD。
-5. owner 判断是否接受风险并合并。仓库目标 merge policy 是 Squash Merge；远端 ruleset 当前仍允许 merge、squash、rebase，若需收紧必须由 owner 修改 GitHub 设置。
+5. owner 判断是否接受风险并合并。仓库远端 merge settings 已收敛为 Squash Merge；若 ruleset 的允许方法仍未同步，按真实 GitHub 状态报告并由 owner 处理。
 6. merge 不等于完成。必须找到实际 merge SHA，并确认 main push 的 Production Gate 对该完整 SHA 成功。
 
 合并前只使用一个状态预检入口：
@@ -112,7 +112,7 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 - freshness、授权、review、CI 和 DONE 判断使用完整 40 字符 SHA；短 SHA 只能用于人类展示。
 - repository / PR / review / CI / merge 的共享完整 SHA primitive 是 `scripts/devops/exact_head.py`；新增 freshness 判断时先复用它，不得另写前缀比较。
 - review 只有在 `review_head == current_pr_head` 时有效；source change 自动使旧 review stale。
-- STRICT PR 若缺少、格式错误或绑定旧 SHA 的 `Strict Review Evidence`，现有 required governance path 必须失败；这不新增 required check，也不把 PR 正文变成 review registry。
+- STRICT PR 若缺少、格式错误、重复字段、绑定旧 SHA，或高风险变更声明为 NORMAL，现有 required governance path 必须失败；这不新增 required check，也不把 PR 正文变成 review registry。
 - required CI 只有在验证 SHA 等于当前 PR HEAD 时有效；历史 green run 不能授权新 HEAD。
 - `PR merged + merge SHA identified + main Production Gate for exact merge SHA succeeds` 才能标记 `DONE`。
 

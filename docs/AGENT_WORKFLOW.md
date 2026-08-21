@@ -37,7 +37,7 @@ branch/worktree → base/head snapshot → implementation
 ```
 
 NORMAL 不默认运行本地 Codex review、DeepSeek、codex-loop、manifest/audit package 或 GitHub Codex Review。STRICT 只要求一个 primary independent reviewer；额外意见只能是 advisory，并且不能改变 owner 的 merge authority。
-STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定该 reviewer 与当前完整 PR HEAD。它只由现有 required governance path 校验，不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
+STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定该 reviewer 与当前完整 PR HEAD。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
 
 ## 3. 验证 profile
 
@@ -83,7 +83,7 @@ review 记录必须绑定完整 PR HEAD。有效性不依赖 reviewer 口头说 
 reviewed_full_sha == current_pr_head_full_sha
 ```
 
-source change、rebase、amend 或 force-push 后，旧 review 自动视为 stale；必须重新 review 或明确降级为 advisory。现有 `ai_workflow_gate.py --block-matrix` 路径在 STRICT PR 上拒绝缺失、格式错误或 stale evidence，不新增第三个 required check。GitHub Codex Review 当前是可选 second opinion，不是 required check，也不等于 approval。
+source change、rebase、amend 或 force-push 后，旧 review 自动视为 stale；必须重新 review 或明确降级为 advisory。现有 `ai_workflow_gate.py --block-matrix` 路径在 STRICT PR 上拒绝缺失、格式错误、重复字段、声明绕过或 stale evidence，不新增第三个 required check。GitHub Codex Review 当前是可选 second opinion，不是 required check，也不等于 approval。
 
 ## 6. CI 和 merge freshness
 

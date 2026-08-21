@@ -12,7 +12,12 @@ OLD_SHA = "b" * 40
 SAME_PREFIX_SHA = "a" * 7 + "b" * 33
 
 
-def _body(workflow_class: str, *, reviewed_sha: str | None = CURRENT_SHA) -> str:
+def _body(
+    workflow_class: str,
+    *,
+    reviewed_sha: str | None = CURRENT_SHA,
+    task_type: str = "workflow-governance",
+) -> str:
     evidence = ""
     if workflow_class == "STRICT" and reviewed_sha is not None:
         evidence = f"""
@@ -32,10 +37,20 @@ def _body(workflow_class: str, *, reviewed_sha: str | None = CURRENT_SHA) -> str
 
 | Field | Value |
 | --- | --- |
-| Task type | workflow-governance |
+| Task type | {task_type} |
 | Workflow class | {workflow_class} |
 {evidence}
 """
+
+
+def test_normal_high_risk_path_cannot_waive_strict_review():
+    errors = validate_strict_review_evidence(
+        _body("NORMAL", reviewed_sha=None, task_type="db-migration-sql"),
+        CURRENT_SHA,
+        changed_paths=["database/migrations/001.sql"],
+        task_type="db-migration-sql",
+    )
+    assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
 
 
 def test_normal_without_review_evidence_passes():
@@ -101,3 +116,18 @@ def test_duplicate_evidence_sections_fail_closed():
     body = first + "\n## Strict Review Evidence" + duplicate
     errors = validate_strict_review_evidence(body, CURRENT_SHA)
     assert any("STRICT_REVIEW_INVALID" in error for error in errors)
+
+
+def test_duplicate_evidence_field_fails_closed():
+    body = _body("STRICT") + "| Reviewed full SHA | " + CURRENT_SHA + " |\n"
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("must appear once" in error for error in errors)
+
+
+def test_evidence_row_with_extra_column_fails_closed():
+    body = _body("STRICT").replace(
+        f"| Reviewed full SHA | {CURRENT_SHA} |",
+        f"| Reviewed full SHA | {CURRENT_SHA} | extra |",
+    )
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("exactly two columns" in error for error in errors)

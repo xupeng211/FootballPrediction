@@ -194,6 +194,28 @@ def test_strict_review_evidence_is_enforced_by_blocking_path():
     assert any(error.startswith("STRICT_REVIEW_STALE") for error in stale_errors)
 
 
+def test_blocking_path_rejects_normal_for_high_risk_changed_path():
+    """A high-risk path cannot opt out of STRICT review by declaring NORMAL."""
+    body = _valid_pr_body().replace(
+        "| Task type | governance-only |", "| Task type | db-migration-sql |"
+    )
+    changes = [gate.Change("M", "database/migrations/001.sql")]
+    current_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True
+    ).stdout.strip()
+    errors = gate.validate(
+        body,
+        changes,
+        block_matrix=True,
+        enforce_strict_review=True,
+        base_ref=current_sha,
+        head_ref=current_sha,
+    )
+    assert any(error.startswith("STRICT_REVIEW_CLASSIFICATION_REQUIRED") for error in errors), (
+        errors
+    )
+
+
 def test_gate_cli_with_skip_body_checks_and_clean_files_passes():
     """Gate CLI with --skip-body-checks and clean changed files should exit 0."""
     result = subprocess.run(
