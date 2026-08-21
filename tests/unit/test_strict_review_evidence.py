@@ -75,3 +75,29 @@ def test_malformed_evidence_fails():
 def test_source_change_after_review_invalidates_old_evidence():
     errors = validate_strict_review_evidence(_body("STRICT", reviewed_sha=CURRENT_SHA), OLD_SHA)
     assert any("STRICT_REVIEW_STALE" in error for error in errors)
+
+
+def test_fake_scope_inside_fenced_code_block_cannot_downgrade_strict_pr():
+    body = """```markdown
+## Scope
+
+| Workflow class | NORMAL |
+```
+
+""" + _body("STRICT", reviewed_sha=None)
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("STRICT_REVIEW_MISSING" in error for error in errors)
+
+
+def test_duplicate_scope_sections_fail_closed():
+    body = _body("STRICT") + "\n## Scope\n\n| Workflow class | NORMAL |\n"
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("STRICT_REVIEW_CLASSIFICATION_INVALID" in error for error in errors)
+
+
+def test_duplicate_evidence_sections_fail_closed():
+    first = _body("STRICT")
+    duplicate = first.split("## Strict Review Evidence", 1)[1]
+    body = first + "\n## Strict Review Evidence" + duplicate
+    errors = validate_strict_review_evidence(body, CURRENT_SHA)
+    assert any("STRICT_REVIEW_INVALID" in error for error in errors)

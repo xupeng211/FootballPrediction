@@ -21,6 +21,8 @@ EVIDENCE_HEADING = "## Strict Review Evidence"
 MAX_PROVIDER_LENGTH = 128
 
 _TABLE_VALUE_RE_TEMPLATE = r"^\|\s*{label}\s*\|\s*([^|]*?)\s*\|"
+_FENCE_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
+_HEADING_RE = re.compile(r"^[ \t]{0,3}##[ \t]+(.+?)\s*$")
 
 
 def _without_html_comments(text: str) -> str:
@@ -29,16 +31,61 @@ def _without_html_comments(text: str) -> str:
     return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
-def _section_text(pr_body: str, heading: str) -> str:
-    """Return one top-level Markdown section without HTML comments."""
+def _normalize_heading(heading: str) -> str:
+    """Normalize an ATX heading name for exact section matching."""
 
-    body = _without_html_comments(pr_body)
-    start = body.find(heading)
-    if start == -1:
-        return ""
-    section = body[start + len(heading) :]
-    next_heading = re.search(r"\n##\s", section)
-    return section if next_heading is None else section[: next_heading.start()]
+    return re.sub(r"[ \t]+#+[ \t]*$", "", heading.strip()).casefold()
+
+
+def _sections(pr_body: str) -> list[tuple[str, str]]:
+    """Parse real top-level ``##`` sections, excluding fenced code blocks."""
+
+    sections: list[tuple[str, str]] = []
+    current_heading: str | None = None
+    current_lines: list[str] = []
+    fence: str | None = None
+
+    for line in _without_html_comments(pr_body).splitlines():
+        fence_match = _FENCE_RE.match(line)
+        if fence is not None:
+            if (
+                fence_match
+                and fence_match.group(1)[0] == fence[0]
+                and len(fence_match.group(1)) >= len(fence)
+            ):
+                fence = None
+            continue
+        if fence_match:
+            fence = fence_match.group(1)
+            continue
+
+        heading_match = _HEADING_RE.match(line)
+        if heading_match:
+            if current_heading is not None:
+                sections.append((current_heading, "\n".join(current_lines)))
+            current_heading = _normalize_heading(heading_match.group(1))
+            current_lines = []
+            continue
+        if current_heading is not None:
+            current_lines.append(line)
+
+    if current_heading is not None:
+        sections.append((current_heading, "\n".join(current_lines)))
+    return sections
+
+
+def _section_matches(pr_body: str, heading: str) -> list[str]:
+    """Return every exact top-level section matching *heading*."""
+
+    expected = _normalize_heading(heading.removeprefix("##"))
+    return [body for title, body in _sections(pr_body) if title == expected]
+
+
+def _section_text(pr_body: str, heading: str) -> str:
+    """Return a section only when exactly one unambiguous match exists."""
+
+    matches = _section_matches(pr_body, heading)
+    return matches[0] if len(matches) == 1 else ""
 
 
 def _table_value(text: str, label: str) -> str:
@@ -55,7 +102,10 @@ def _table_value(text: str, label: str) -> str:
 def parse_workflow_class(pr_body: str) -> str | None:
     """Return NORMAL/STRICT from the Scope table, or None when invalid/missing."""
 
-    raw = _table_value(_section_text(pr_body, "## Scope"), "Workflow class")
+    scope_sections = _section_matches(pr_body, "## Scope")
+    if len(scope_sections) != 1:
+        return None
+    raw = _table_value(scope_sections[0], "Workflow class")
     normalized = raw.upper()
     return normalized if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT} else None
 
@@ -70,7 +120,7 @@ def _valid_timestamp(value: str) -> bool:
     return parsed.tzinfo is not None
 
 
-def validate_strict_review_evidence(  # noqa: C901
+def validate_strict_review_evidence(  # noqa: C901, PLR0912
     pr_body: str,
     current_pr_head: str | None,
 ) -> list[str]:
@@ -81,8 +131,13 @@ def validate_strict_review_evidence(  # noqa: C901
     exact reviewed HEAD is absent or malformed.
     """
 
-    scope = _section_text(pr_body, "## Scope")
-    workflow_raw = _table_value(scope, "Workflow class")
+    scope_sections = _section_matches(pr_body, "## Scope")
+    if len(scope_sections) != 1:
+        return [
+            "STRICT_REVIEW_CLASSIFICATION_INVALID: PR body must contain exactly one "
+            "top-level Scope section."
+        ]
+    workflow_raw = _table_value(scope_sections[0], "Workflow class")
     workflow_class = workflow_raw.upper()
     if workflow_class == WORKFLOW_CLASS_NORMAL:
         return []
@@ -92,9 +147,15 @@ def validate_strict_review_evidence(  # noqa: C901
             "Workflow class as NORMAL or STRICT."
         ]
 
-    evidence = _section_text(pr_body, EVIDENCE_HEADING)
-    if not evidence.strip():
+    evidence_sections = _section_matches(pr_body, EVIDENCE_HEADING)
+    if not evidence_sections:
         return ["STRICT_REVIEW_MISSING: STRICT PR requires one Strict Review Evidence section."]
+    if len(evidence_sections) != 1:
+        return [
+            "STRICT_REVIEW_INVALID: PR body must contain exactly one top-level "
+            "Strict Review Evidence section."
+        ]
+    evidence = evidence_sections[0]
 
     values = {
         "version": _table_value(evidence, "Version"),
