@@ -38,6 +38,7 @@ VALID_CI_RUN = [
         "databaseId": 9876543210,
         "status": "completed",
         "conclusion": "success",
+        "headSha": _MERGE_COMMIT,
     }
 ]
 
