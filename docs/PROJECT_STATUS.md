@@ -1031,7 +1031,7 @@ legacy-writer execution is authorized.
 | `docs/SC002_MANUAL_REVIEW_PHASE1.md` | active — manual review and reclassification of all needs_manual_review scripts |
 | `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` | active — Python/SQL/migration enforcement design |
 | `docs/TESTING_GUIDE.md` | active — needs provenance review |
-| `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | evidence/needs_update — stale CI references |
+| `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | historical/superseded — current CI is `production-gate.yml` plus the GitHub ruleset/API |
 
 ## Current technical debt posture
 
@@ -1040,8 +1040,10 @@ legacy-writer execution is authorized.
 - `docs/_manifests/` contains 171 historical manifest files.
 - These are archived evidence; they should not be read as current truth.
 - Bulk archive moves are planned but not yet executed.
-- Stale docs (`GITHUB_ACTIONS_AUDIT_REPORT.md`, `TESTING_GUIDE.md`) should be
-  reviewed and marked or superseded in small scoped PRs.
+- `GITHUB_ACTIONS_AUDIT_REPORT.md` is now explicitly marked historical and
+  superseded; it must not be used as current CI evidence.
+- `TESTING_GUIDE.md` remains a separate provenance-review candidate and is not
+  a workflow authority.
 - Technical debt remains high enough to block data expansion and formal
   training. Current P0 debt includes DB write safety, cutoff strategy, training
   eligibility, and schema/init alignment.

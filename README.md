@@ -2,7 +2,7 @@
 
 > 工业级足球数据采集与预测平台 | Production-Ready Data Harvesting System
 >
-> **Version**: V4.51.2-TOTAL-WAR | **Status**: Production-Ready | **Coverage**: 80%+ Threshold
+> **Version**: V4.51.2-TOTAL-WAR | **Status**: Production-Ready | **Verification**: profile-based
 
 ---
 
@@ -360,80 +360,33 @@ docker-compose -f docker-compose.dev.yml exec dev \
 
 ---
 
-## 🛡️ Quality Gate
+## 🛡️ Current Development Verification
 
-### 三位一体质检门禁
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    TITAN QUALITY GATE                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   ESLint     │  │    Jest      │  │  Coverage    │      │
-│  │   0 Error    │  │   43+ Tests  │  │    80%+      │      │
-│  │   Policy     │  │   Pass       │  │  Threshold   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│         │                 │                │                │
-│         ▼                 ▼                ▼                │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              JSDoc Documentation                      │  │
-│  │         (Code as Documentation)                      │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 质量标准
-
-| 检查项 | 工具 | 阈值 | 命令 |
-|--------|------|------|------|
-| **静态分析** | ESLint | 0 Error | `npm run lint` |
-| **单元测试** | Node.js --test | 100+ Pass | `node --test` |
-| **代码覆盖** | c8 | 80%+ | `npx c8 --reporter=text node --test` |
-| **文档规范** | JSDoc | Required | `npm run lint` |
-| **代码格式** | Prettier | Enforced | `npm run format:check` |
-
-### Pre-Commit Hook
-
-所有提交必须通过本地质检门禁：
+开发工作流唯一权威是 [`AGENTS.md`](AGENTS.md)，详细说明见
+[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md)。公开验证 profile 只有三个：
 
 ```bash
-# .git/hooks/pre-commit 自动执行：
-1. ESLint 检查 (src/, scripts/)
-2. Node.js 单元测试 (100+ tests)
-3. Line Coverage 验证 (≥80%)
-4. Branch Coverage 验证 (≥80%)
-5. components/ 目录扫描
+# 普通任务：受影响测试、必要静态检查和最小回归
+make verify-targeted
+
+# PR：与 GitHub Production Gate 共享 canonical dispatcher
+make verify-pr
+
+# STRICT 任务：相关/全量验证和更严格的生产边界检查
+make verify-strict
 ```
 
-**覆盖率阈值**:
-- Line Coverage: **≥80%** (阻断)
-- Branch Coverage: **≥80%** (阻断)
+三种 profile 的职责不同：`verify-targeted` 用于快速反馈，不能冒充完整 CI；
+`verify-pr` 是 PR 验证入口；`verify-strict` 只用于数据库/schema/write、生产 runtime、
+安全、训练/模型激活和其他高风险变更。测试证明行为，GitHub CI 证明可重复环境中的
+验证结果，STRICT review 判断语义和边界，owner 才决定是否合并。
 
-**执行结果：**
+PR 的真正 hard gate 由 GitHub ruleset 和实际 Actions run 决定。当前 `main` required
+checks 是 `Environment / Proxy / Static / Unit Gate` 与 `Docker Build Validation`；
+GitHub Codex Review 是 advisory second opinion，不是 required check。合并后必须确认
+main Production Gate 验证实际 merge 的完整 SHA，才算 DONE。
 
-- ✅ 通过：准予提交
-- ❌ 失败：阻断提交，需修复后重试
-
-### 运行质检
-
-```bash
-# 全量质检流程
-npm run qa
-
-# 分项检查
-npm run lint          # ESLint 检查
-npm run lint:fix      # 自动修复
-npm run test          # 单元测试 (Jest)
-npm run test:coverage # 覆盖率报告
-npm run format:check  # 格式检查
-
-# Mini测试 (Node.js 内置测试，推荐)
-node --max-old-space-size=256 tests/unit/Dispatcher.test.js
-node --max-old-space-size=256 tests/unit/ErrorHandler.test.js
-node --max-old-space-size=256 tests/unit/Persistence.test.js
-```
+不要把历史 Jest、全局 80% coverage、pre-commit 或旧 workflow 说明当作当前 policy。
 
 ---
 
@@ -699,25 +652,20 @@ tail -f logs/sentinel.log
 - **Node.js**: 18+
 - **Python**: 3.11+
 - **PostgreSQL**: 15+
-- **Coverage**: 80%+ Threshold
+- **Verification**: `verify-targeted` / `verify-pr` / `verify-strict`
 - **License**: MIT
 - **Last Updated**: 2026-03-13
 
 ---
 
-## 🏆 Quality Badges
+## ✅ Current Repository Gates
 
-```
-┌────────────────────────────────────────┐
-│  ESLint    │  0 Error     │    ✅      │
-├────────────────────────────────────────┤
-│  Jest      │  43+ Pass    │    ✅      │
-├────────────────────────────────────────┤
-│  Coverage  │  80%+        │    ✅      │
-├────────────────────────────────────────┤
-│  JSDoc     │  Required    │    ✅      │
-└────────────────────────────────────────┘
-```
+- GitHub ruleset required checks: `Environment / Proxy / Static / Unit Gate` and
+  `Docker Build Validation`.
+- Merge policy target: Squash Merge; the repository documents the target but does
+  not claim that remote merge methods are restricted until the owner changes the
+  GitHub ruleset.
+- Final completion: main Production Gate succeeds for the exact merge SHA.
 
 ---
 

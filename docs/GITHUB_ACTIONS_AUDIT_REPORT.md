@@ -1,5 +1,12 @@
 # GitHub Actions CI/CD 深度审计报告
 
+> **历史资料 / 已被替代（WF05）**：本报告记录 2026-03-12 对一组已经不存在的
+> `ci.yml`、`ci_pipeline.yml`、`main.yml` 和 `quality-gates.yml` 的旧审计与建议。
+> 它不描述当前 CI，也不授权安装 pre-commit、运行 Jest、追求旧 coverage 阈值或归档
+> 当前 workflow。当前 workflow 事实以 `.github/workflows/production-gate.yml`、
+> `make verify-targeted` / `make verify-pr` / `make verify-strict`、GitHub ruleset
+> 和实际 Actions run 为准；详细开发流程见 `AGENTS.md` 与 `docs/AGENT_WORKFLOW.md`。
+
 > **审计时间**: 2026-03-12  
 > **审计范围**: `.github/workflows/` 全部工作流 + Issue/PR 模板  
 > **审计目的**: 确保合并主干前的 CI/CD 配置健康度
