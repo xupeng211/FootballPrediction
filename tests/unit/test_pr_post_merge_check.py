@@ -45,6 +45,7 @@ VALID_CI_RUN = [
         "databaseId": 9876543210,
         "status": "completed",
         "conclusion": "success",
+        "headSha": _MERGE_COMMIT,
     }
 ]
 
@@ -668,6 +669,18 @@ def test_merge_commit_short_fails():
     result = pp._check_merge_commit("abc")
     assert len(result) >= 1
     assert any("SHA" in r for r in result)
+
+
+def test_ci_check_requires_current_full_head_when_expected():
+    ci_data = {
+        "found": True,
+        "run_id": "12345",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": _MERGE_COMMIT[:7] + "0" * 33,
+    }
+    result = pp._check_ci(ci_data, _MERGE_COMMIT)
+    assert any("CI HEAD" in message for message in result)
 
 
 def test_merge_commit_valid_passes():

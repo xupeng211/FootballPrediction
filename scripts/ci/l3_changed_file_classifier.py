@@ -74,6 +74,7 @@ ACTIVE_GOVERNANCE_PATHS: list[str] = [
     "scripts/devops/pr_body_check.py",
     "scripts/devops/pr_merge_preflight.py",
     "scripts/devops/pr_ready_check.py",
+    "scripts/devops/exact_head.py",
     "scripts/devops/pr_post_merge_check.py",
     "scripts/devops/install_git_hooks.sh",
     "scripts/devops/init_dev.sh",

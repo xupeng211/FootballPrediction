@@ -108,6 +108,7 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 ## 6. Exact-head 原则
 
 - freshness、授权、review、CI 和 DONE 判断使用完整 40 字符 SHA；短 SHA 只能用于人类展示。
+- repository / PR / review / CI / merge 的共享完整 SHA primitive 是 `scripts/devops/exact_head.py`；新增 freshness 判断时先复用它，不得另写前缀比较。
 - review 只有在 `review_head == current_pr_head` 时有效；source change 自动使旧 review stale。
 - required CI 只有在验证 SHA 等于当前 PR HEAD 时有效；历史 green run 不能授权新 HEAD。
 - `PR merged + merge SHA identified + main Production Gate for exact merge SHA succeeds` 才能标记 `DONE`。

@@ -24,13 +24,16 @@ import argparse
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 from typing import Any
 
+try:
+    from .exact_head import get_current_head, is_full_sha, same_exact_head
+except ImportError:  # direct ``python scripts/devops/pr_ready_check.py`` entrypoint
+    from exact_head import get_current_head, is_full_sha, same_exact_head
+
 ROOT = Path(__file__).resolve().parents[2]
-FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 ACTIVE_ENFORCEMENT = "active"
 PASS_CONCLUSIONS = {"success"}
 MERGEABLE_STATES = {"MERGEABLE", "CLEAN"}
@@ -169,7 +172,7 @@ def _page_items(payload: Any, key: str | None = None) -> list[Any]:
 
 
 def _is_full_sha(value: str) -> bool:
-    return bool(FULL_SHA_RE.fullmatch(value.lower()))
+    return is_full_sha(value)
 
 
 def fetch_repo() -> RepoInfo:
@@ -216,7 +219,7 @@ def fetch_pr(number: int) -> PrInfo:
 def fetch_local() -> LocalInfo:
     """Read current local branch, full HEAD, and porcelain status."""
     branch = run_git(["branch", "--show-current"])
-    head_sha = run_git(["rev-parse", "HEAD"]).lower()
+    head_sha = get_current_head(run_git)
     status = run_git(["status", "--porcelain=v1", "--untracked-files=all"])
     dirty_paths = tuple(line for line in status.splitlines() if line.strip())
     return LocalInfo(branch=branch, head_sha=head_sha, dirty_paths=dirty_paths)
@@ -382,7 +385,11 @@ def evaluate(pr_number: int) -> PreflightResult:
 
     for required in required_checks:
         matching = next(
-            (run for run in check_runs if run.name == required and run.head_sha == pr.head_sha),
+            (
+                run
+                for run in check_runs
+                if run.name == required and same_exact_head(pr.head_sha, run.head_sha)
+            ),
             None,
         )
         passed = bool(

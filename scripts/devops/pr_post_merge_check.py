@@ -27,7 +27,7 @@ Checks performed:
 
 PASS conditions (ALL must be true):
   - PR state == MERGED
-  - Merge commit SHA present and >= 7 chars
+  - Merge commit SHA present and exactly 40 hex characters
   - Merge commit reachable from origin/main
   - Production Gate CI run exists for merge commit
   - CI status is completed
@@ -60,13 +60,14 @@ import subprocess
 import sys
 from typing import Any
 
+from exact_head import ExactHeadError, assert_ci_is_current, is_full_sha, normalize_full_sha
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
 TIMEOUT_SECONDS = 30
-MIN_SHA_LENGTH = 7
 
 PROTECTED_BRANCHES: frozenset[str] = frozenset({"main", "master", "origin/main", "origin/master"})
 
@@ -91,6 +92,7 @@ class PostMergeResult:
     failures: list[str] = field(default_factory=list)
     main_ff_ok: bool = False
     status_clean: bool = False
+    ci_head_sha: str | None = None
 
     def verdict(self) -> str:
         """Return 'PASS' or 'FAIL'."""
@@ -160,15 +162,27 @@ def fetch_ci(commit_sha: str) -> dict[str, Any]:
                 "--limit",
                 "1",
                 "--json",
-                "name,status,conclusion,databaseId",
+                "name,status,conclusion,databaseId,headSha",
             ]
         )
     except subprocess.CalledProcessError:
-        return {"found": False, "run_id": None, "status": "", "conclusion": ""}
+        return {
+            "found": False,
+            "run_id": None,
+            "status": "",
+            "conclusion": "",
+            "head_sha": "",
+        }
 
     entries: list[dict[str, Any]] = json.loads(raw)
     if not entries:
-        return {"found": False, "run_id": None, "status": "", "conclusion": ""}
+        return {
+            "found": False,
+            "run_id": None,
+            "status": "",
+            "conclusion": "",
+            "head_sha": "",
+        }
 
     entry = entries[0]
     return {
@@ -177,6 +191,7 @@ def fetch_ci(commit_sha: str) -> dict[str, Any]:
         "run_id": str(entry.get("databaseId", "")),
         "status": entry.get("status", ""),
         "conclusion": entry.get("conclusion", ""),
+        "head_sha": str(entry.get("headSha") or "").lower(),
     }
 
 
@@ -244,18 +259,22 @@ def _check_pr_merged(pr_data: dict[str, Any]) -> list[str]:
 
 
 def _check_merge_commit(merge_commit: str) -> list[str]:
-    if not merge_commit or len(merge_commit.strip()) < MIN_SHA_LENGTH:
-        return [f"Merge commit SHA is empty or too short: '{merge_commit}'"]
+    try:
+        normalize_full_sha(merge_commit.strip(), role="merge commit SHA")
+    except ExactHeadError:
+        return [f"Merge commit SHA must be a full 40-hex commit SHA: '{merge_commit}'"]
     return []
 
 
 def _check_merge_in_main(merge_commit: str) -> list[str]:
+    if not is_full_sha(merge_commit):
+        return ["Merge commit in origin/main cannot be checked without a full 40-hex SHA"]
     if not merge_commit_in_origin_main(merge_commit):
         return [f"Merge commit {merge_commit} is NOT in origin/main"]
     return []
 
 
-def _check_ci(ci_data: dict[str, Any]) -> list[str]:
+def _check_ci(ci_data: dict[str, Any], expected_head: str | None = None) -> list[str]:
     failures: list[str] = []
     if not ci_data.get("found"):
         failures.append(f"CI workflow '{PRODUCTION_GATE_WORKFLOW}' not found for merge commit")
@@ -264,6 +283,11 @@ def _check_ci(ci_data: dict[str, Any]) -> list[str]:
         failures.append(f"CI status is '{ci_data.get('status')}', expected 'completed'")
     if ci_data.get("conclusion") != "success":
         failures.append(f"CI conclusion is '{ci_data.get('conclusion')}', expected 'success'")
+    if expected_head is not None:
+        try:
+            assert_ci_is_current(ci_data.get("head_sha"), expected_head)
+        except ExactHeadError as exc:
+            failures.append(str(exc))
     return failures
 
 
@@ -391,7 +415,18 @@ def evaluate(
     """Fetch PR + CI data and run all checks, returning a verdict."""
     pr_data = fetch_pr(pr_number)
     pr_state = pr_data.get("state", "UNKNOWN")
-    ci_data = fetch_ci(merge_commit.strip())
+    merge_sha = merge_commit.strip()
+    ci_data = (
+        fetch_ci(merge_sha)
+        if is_full_sha(merge_sha)
+        else {
+            "found": False,
+            "run_id": None,
+            "status": "",
+            "conclusion": "",
+            "head_sha": "",
+        }
+    )
 
     # Resolve checks dynamically with captured state
     failures: list[str] = []
@@ -403,10 +438,10 @@ def evaluate(
     failures.extend(_check_merge_commit(merge_commit))
 
     # Check 3: Merge commit in origin/main
-    failures.extend(_check_merge_in_main(merge_commit.strip()))
+    failures.extend(_check_merge_in_main(merge_sha))
 
     # Check 4: CI success
-    failures.extend(_check_ci(ci_data))
+    failures.extend(_check_ci(ci_data, merge_sha if is_full_sha(merge_sha) else None))
 
     # Check 5: Main ff-only sync
     failures.extend(_check_main_ff_sync())
@@ -425,7 +460,7 @@ def evaluate(
     return PostMergeResult(
         pr_number=pr_number,
         pr_state=pr_state,
-        merge_commit=merge_commit.strip(),
+        merge_commit=merge_sha,
         branch=branch,
         ci_workflow=ci_data.get("workflow", PRODUCTION_GATE_WORKFLOW),
         ci_run_id=ci_data.get("run_id"),
@@ -435,6 +470,7 @@ def evaluate(
         failures=failures,
         main_ff_ok=main_ff_ok,
         status_clean=status_clean,
+        ci_head_sha=ci_data.get("head_sha") or None,
     )
 
 
@@ -456,6 +492,7 @@ def format_evidence(result: PostMergeResult, *, as_json: bool = False) -> str:
                 "ci_run_id": result.ci_run_id,
                 "ci_status": result.ci_status,
                 "ci_conclusion": result.ci_conclusion,
+                "ci_head_sha": result.ci_head_sha,
                 "main_ff_ok": result.main_ff_ok,
                 "status_clean": result.status_clean,
                 "verdict": result.verdict(),
@@ -479,6 +516,7 @@ def format_evidence(result: PostMergeResult, *, as_json: bool = False) -> str:
         f"  CI Run ID:       {result.ci_run_id or 'NOT FOUND'}",
         f"  CI Status:       {result.ci_status or 'N/A'}",
         f"  CI Conclusion:   {result.ci_conclusion or 'N/A'}",
+        f"  CI HEAD:         {result.ci_head_sha or 'N/A'}",
         "-" * 60,
     ]
 

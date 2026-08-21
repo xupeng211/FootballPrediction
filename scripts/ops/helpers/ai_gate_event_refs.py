@@ -47,24 +47,27 @@ whitespace-free).  Exits non-zero with a stderr message on any violation.
 from __future__ import annotations
 
 import os
-import re
+from pathlib import Path
 import subprocess
 import sys
+
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.devops.exact_head import ExactHeadError, is_full_sha, normalize_full_sha  # noqa: E402
 
 GITHUB_SHA_ENV = "GITHUB_SHA"
 EXPECTED_ARG_COUNT = 3
 EXIT_USAGE = 2
 
-# \Z (not $) anchors at the absolute end of the string: a trailing newline
-# must be rejected like any other malformed input.
-FULL_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}\Z")
-
 
 def validate_full_sha(value: str | None, *, role: str) -> str:
     """Return the SHA if it is a full 40-hex commit SHA, else raise."""
-    if not value or not FULL_SHA_RE.match(value):
-        raise RuntimeError(f"{role} is not a full 40-hex commit SHA")
-    return value
+    try:
+        return normalize_full_sha(value, role=role)
+    except ExactHeadError as exc:
+        raise RuntimeError(f"{role} is not a full 40-hex commit SHA") from exc
 
 
 def _git(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -112,7 +115,7 @@ def resolve_event_refs(
         base = validate_full_sha(base_sha, role="workflow_dispatch base_sha")
 
         env_sha = os.environ.get(GITHUB_SHA_ENV)
-        if not env_sha or not FULL_SHA_RE.match(env_sha):
+        if not is_full_sha(env_sha):
             raise RuntimeError(
                 "workflow_dispatch head must be the dispatched commit "
                 "(GITHUB_SHA); missing or malformed GITHUB_SHA"
