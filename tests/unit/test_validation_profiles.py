@@ -5,6 +5,7 @@ lifecycle: test-fixture
 
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,6 +68,37 @@ def test_profile_runner_propagates_required_failure_and_stops():
 
     assert status == expected_status
     assert calls == ["canonical gate"]
+
+
+def test_gatekeeper_dispatch_preserves_host_container_boundary():
+    captured_environments: list[dict[str, str]] = []
+
+    def fake_subprocess(_argv, **kwargs):
+        captured_environments.append(kwargs["env"])
+        return SimpleNamespace(returncode=0)
+
+    with (
+        patch.dict(
+            profiles.os.environ,
+            {"GATEKEEPER_IN_CONTAINER": "0", "GATEKEEPER_WORKSPACE_ROOT": "/host"},
+            clear=True,
+        ),
+        patch.object(profiles, "_running_in_container", return_value=False),
+        patch.object(profiles.subprocess, "run", side_effect=fake_subprocess),
+    ):
+        assert profiles._run_command("host gate", ["true"], gatekeeper=True) == 0
+
+    assert "GATEKEEPER_IN_CONTAINER" not in captured_environments[0]
+    assert "GATEKEEPER_WORKSPACE_ROOT" not in captured_environments[0]
+
+    with (
+        patch.object(profiles, "_running_in_container", return_value=True),
+        patch.object(profiles.subprocess, "run", side_effect=fake_subprocess),
+    ):
+        assert profiles._run_command("container gate", ["true"], gatekeeper=True) == 0
+
+    assert captured_environments[1]["GATEKEEPER_IN_CONTAINER"] == "1"
+    assert captured_environments[1]["GATEKEEPER_WORKSPACE_ROOT"] == str(profiles.ROOT)
 
 
 def test_make_compatibility_entries_delegate_to_verify_pr():

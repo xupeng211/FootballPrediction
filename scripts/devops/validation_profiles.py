@@ -125,6 +125,11 @@ def _is_js_trigger_path(path: str) -> bool:
     return path in JS_TRIGGER_FILES or Path(path).suffix in JS_TRIGGER_SUFFIXES
 
 
+def _running_in_container() -> bool:
+    """Return whether this dispatcher is already inside the dev container."""
+    return Path("/.dockerenv").exists() or os.environ.get("GATEKEEPER_IN_CONTAINER") == "1"
+
+
 def _profile_command_plan(
     profile: str,
     changed_files: Sequence[str],
@@ -229,10 +234,15 @@ def _run_command(label: str, argv: Sequence[str], *, gatekeeper: bool) -> int:
     environment = None
     if gatekeeper:
         environment = os.environ.copy()
-        # Make/workflow callers already run inside dev. These variables make
-        # the shared implementation explicit and prevent nested Docker calls.
-        environment.setdefault("GATEKEEPER_IN_CONTAINER", "1")
-        environment.setdefault("GATEKEEPER_WORKSPACE_ROOT", str(ROOT))
+        # Make invokes this file inside dev, while GitHub Actions invokes it
+        # from the runner before the existing gatekeeper enters dev. Preserve
+        # both paths: only suppress nested Docker when already containerized.
+        if _running_in_container():
+            environment["GATEKEEPER_IN_CONTAINER"] = "1"
+            environment["GATEKEEPER_WORKSPACE_ROOT"] = str(ROOT)
+        else:
+            environment.pop("GATEKEEPER_IN_CONTAINER", None)
+            environment.pop("GATEKEEPER_WORKSPACE_ROOT", None)
 
     try:
         result = subprocess.run(argv, cwd=ROOT, env=environment, check=False)
