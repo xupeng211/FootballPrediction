@@ -1,5 +1,9 @@
 # CLAUDE_JS_TOOLS.md
 
+> **历史工具参考 / 非当前 workflow authority**：本文保留旧版 JavaScript 工具和 Jest
+> 说明供审计追溯。当前测试和开发流程以 `AGENTS.md`、`docs/AGENT_WORKFLOW.md`、
+> `make verify-targeted`、`make verify-pr` 和 `make verify-strict` 为准。
+
 ## 🌐 JavaScript 运维工具完整参考
 
 本文档提供 FootballPrediction 项目中 JavaScript 运维工具的完整参考指南。

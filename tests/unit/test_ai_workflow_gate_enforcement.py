@@ -32,6 +32,7 @@ def _valid_pr_body() -> str:
     | Item | Value |
     |---|---|
     | Task type | governance-only |
+    | Workflow class | NORMAL |
     | One task / one branch / one PR | yes |
     | Business code changed | no |
 
@@ -146,6 +147,81 @@ def test_enforcement_validate_integration_clean():
     errors = gate.validate(body, changes)
     db_errors = [e for e in errors if "DB-WRITE-GUARD ENFORCEMENT" in e]
     assert db_errors == [], f"Should not have DB enforcement errors: {db_errors}"
+
+
+def test_strict_review_evidence_is_enforced_by_blocking_path():
+    """The existing blocking validation path rejects stale STRICT evidence."""
+    current_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    body = _valid_pr_body().replace("| Workflow class | NORMAL |", "| Workflow class | STRICT |")
+    body += f"""
+
+## Strict Review Evidence
+
+| Field | Value |
+| --- | --- |
+| Version | 1 |
+| Task type | STRICT |
+| Provider | test-independent-reviewer |
+| Reviewed full SHA | {current_sha} |
+| Result | PASS |
+| Timestamp | 2026-08-21T12:00:00Z |
+"""
+    errors = gate.validate(
+        body,
+        [],
+        block_matrix=True,
+        enforce_strict_review=True,
+        base_ref=current_sha,
+        head_ref=current_sha,
+    )
+    assert not any(error.startswith("STRICT_REVIEW_") for error in errors), errors
+
+    stale_body = body.replace(current_sha, "b" * 40)
+    stale_errors = gate.validate(
+        stale_body,
+        [],
+        block_matrix=True,
+        enforce_strict_review=True,
+        base_ref=current_sha,
+        head_ref=current_sha,
+    )
+    assert any(error.startswith("STRICT_REVIEW_STALE") for error in stale_errors)
+
+
+def test_blocking_path_rejects_normal_for_high_risk_changed_path():
+    """A high-risk path cannot opt out of STRICT review by declaring NORMAL."""
+    body = _valid_pr_body().replace(
+        "| Task type | governance-only |", "| Task type | db-migration-sql |"
+    )
+    changes = [gate.Change("M", "database/migrations/001.sql")]
+    current_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True
+    ).stdout.strip()
+    errors = gate.validate(
+        body,
+        changes,
+        block_matrix=True,
+        enforce_strict_review=True,
+        base_ref=current_sha,
+        head_ref=current_sha,
+    )
+    assert any(error.startswith("STRICT_REVIEW_CLASSIFICATION_REQUIRED") for error in errors), (
+        errors
+    )
+
+
+def test_production_gate_rechecks_current_pr_body_after_edit():
+    """PR body edits must start a fresh required governance check for the same HEAD."""
+    workflow = (ROOT / ".github" / "workflows" / "production-gate.yml").read_text()
+    trigger = "  pull_request:\n    types:\n"
+    assert trigger in workflow
+    assert "      - edited\n" in workflow
 
 
 def test_gate_cli_with_skip_body_checks_and_clean_files_passes():

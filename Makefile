@@ -294,7 +294,7 @@ workflow-pr-check: ## 兼容入口：委托 canonical PR 验证（FILES/TESTS �
 	@echo "$(YELLOW)[Workflow PR Check] compatibility alias -> verify-pr$(NC)"
 	@$(MAKE) verify-pr
 
-pr-post-merge-check: ## Post-merge check / cleanup gate. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name> [CONFIRM_CLEANUP=1]
+pr-post-merge-check: ## Read-only post-merge completion evidence. Cleanup is separate. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>
 	@if [ -z "$(PR)" ]; then \
 		echo "ERROR: PR number required. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>"; \
 		exit 1; \
@@ -307,11 +307,7 @@ pr-post-merge-check: ## Post-merge check / cleanup gate. Usage: make pr-post-mer
 		echo "ERROR: BRANCH required. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>"; \
 		exit 1; \
 	fi
-	@if [ "$(CONFIRM_CLEANUP)" = "1" ]; then \
-		python3 scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH) --confirm-cleanup; \
-	else \
-		python3 scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH); \
-	fi
+	@python3 scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH)
 
 # ============================================
 # 数据库命令

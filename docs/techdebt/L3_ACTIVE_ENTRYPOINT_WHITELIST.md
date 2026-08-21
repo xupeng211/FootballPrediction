@@ -90,7 +90,7 @@ They are not application runtime entrypoints but are active in the governance la
 | `scripts/ops/local_pr_gate_preflight.py` | `Makefile` line 201 (`pr-gate-local`) | **active** | `make pr-gate-local` → `python3 scripts/ops/local_pr_gate_preflight.py` | Local PR Gate preflight runner. Has `argparse` CLI. |
 | `scripts/devops/pr_body_check.py` | `Makefile` line 248 (`pr-body-check`) | **active** | Referenced by `make pr-body-check` | PR body validation. |
 | `scripts/devops/pr_merge_preflight.py` | `Makefile` line 214 (`pr-merge-preflight`) | **active** | Referenced by `make pr-merge-preflight` | Merge preflight evidence check. |
-| `scripts/devops/pr_post_merge_check.py` | `Makefile` line 278 (`pr-post-merge-check`) | **active** | Referenced by `make pr-post-merge-check` | Post-merge cleanup gate. |
+| `scripts/devops/pr_post_merge_check.py` | `Makefile` line 278 (`pr-post-merge-check`) | **active** | Referenced by `make pr-post-merge-check` | Read-only post-merge completion evidence; branch/worktree cleanup is separate. |
 | `scripts/ops/helpers/` directory | CI + local gates (various) | **active** | `scripts/ops/helpers/` contains `ai_workflow_gate.py` dependencies: `pr_authorization_matrix.py`, `pr_authorization_rules.py`, `dangerous_file_change_check.py`, `db_write_guard*.js`, `db_write_guard_advisory_check.py`, `python_db_write_guard.py`, `python_db_write_enforcement_check.py`, `sql_migration_policy_enforcement_check.py`, `governance_p1_checks.py`, `agent_workflow_hardening_checks.py`, `garbage_prevention_checks.py`, `section_content_quality.py`, `git_change_helpers.py`, `repoHygiene.js`, and others | Gate helper library. All files are governance infrastructure, not application runtime. |
 | `scripts/devops/install_git_hooks.sh` | Developer setup | **active** | Referenced by `package.json` `init:hooks` script | Git hooks installation. |
 | `scripts/devops/init_dev.sh` | Developer setup | **active** | Referenced by `package.json` `init:dev` script | Development environment initialization. |
@@ -112,7 +112,7 @@ most are gated behind phase-specific authorization.
 | `make pr-body-check` | PR validation | **active guarded** | `Makefile` lines 248–252 | PR body + Gate evidence check. Safe: read-only. |
 | `make pr-merge-preflight` | merge safety | **active guarded** | `Makefile` lines 214–219 | Pre-merge evidence check. Safe: read-only. |
 | `make pr-ready-check` | merge readiness | **active guarded** | `Makefile` lines 221–231 | Combined body + merge preflight. Safe: read-only. |
-| `make pr-post-merge-check` | post-merge cleanup | **active guarded** | `Makefile` lines 278–297 | Post-merge verification. Safe: read-only until CONFIRM_CLEANUP set. |
+| `make pr-post-merge-check` | post-merge completion | **active** | `Makefile` lines 278–294 | Read-only verification of merged PR, exact merge SHA, Production Gate and main state. It never deletes branches/worktrees. |
 | `make data-l1-*` / `make data-l2-*` | data harvesting | **guarded** | `Makefile` lines 408–1030 | Multi-phase guarded data pipeline. Each phase requires explicit authorization. Most phases are read-only/preview; write phases are explicitly gated. |
 | `make data-help` | data policy | **active guarded** | `Makefile` lines 408–420 | Safe data harvesting entrypoint policy display. Safe: read-only. |
 | `make data-check` | data environment | **active guarded** | `Makefile` lines 620–628 | Read-only data environment check. Safe: no network, no DB, no write. |

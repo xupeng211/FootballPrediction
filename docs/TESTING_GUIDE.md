@@ -1,8 +1,20 @@
 # 测试体系运行指南
 
-**版本**: V4.46.6
-**更新日期**: 2026-03-11
+**版本**: current workflow reference
+**更新日期**: 2026-08-21
 **维护团队**: TITAN QA Engineering
+
+本指南解释测试实现；Agent-facing workflow 只有以下三个 canonical profiles：
+
+```bash
+make verify-targeted
+make verify-pr
+make verify-strict
+```
+
+`npm run test:unit`、Node `--test` 和 pytest 是底层实现入口，不是第四套 workflow。
+GitHub merge gate 以当前 ruleset 和 `.github/workflows/production-gate.yml` 为准；本文旧的
+覆盖率数字和路线图仅是历史观察，不构成当前硬门禁。
 
 ---
 
@@ -212,14 +224,14 @@ assert.strictEqual(pendingMocks.length, 0, '不应该有未调用的 Mock');
 
 ---
 
-## 📊 覆盖率目标与现状
+## 📊 覆盖率观察（非独立 merge authority）
 
-### 当前整体覆盖率
+### 历史快照
 
 ```
-Line Coverage:    54.51%  ❌ (目标: 80%)
-Branch Coverage:  84.10%  ✅ (目标: 80%)
-Function Coverage: 48.44%  ❌ (目标: 80%)
+Line Coverage:    54.51%  （历史快照，非当前 gate）
+Branch Coverage:  84.10%  （历史快照，非当前 gate）
+Function Coverage: 48.44%  （历史快照，非当前 gate）
 ```
 
 ### 核心模块覆盖率
@@ -233,7 +245,7 @@ Function Coverage: 48.44%  ❌ (目标: 80%)
 | **PostgresClient** | 54.86% | 66.67% | 4.76% | 🟡 | P1 |
 | **WorkerPool** | 47.57% | 100% | 0.00% | 🟡 | P1 |
 
-### 提升到 80% 的路线图
+### 提升到 80% 的历史路线图（非当前合并门禁）
 
 #### 阶段 1: 核心收割引擎 (2 周)
 
@@ -353,12 +365,11 @@ nock('https://www.fotmob.com')
 - ✅ Lint 检查通过 (`npm run lint`)
 - ✅ 格式化检查通过 (`npm run format:check`)
 
-### 合并到主分支前必须达到
+### 当前合并前的真实职责
 
-- ✅ 整体覆盖率 >= 50%
-- ✅ 核心模块覆盖率 >= 70%
-- ✅ 新增代码覆盖率 >= 80%
-- ✅ 所有测试通过（无 skip）
+- 测试必须对当前变更匹配的行为提供证据，并由相应 canonical profile 调用。
+- required CI 的最终状态以 GitHub 当前两个 required checks 为准；本文不另设覆盖率阈值。
+- STRICT 任务的 review 是独立语义审查，不是 coverage 的替代品；owner 才有 merge decision。
 
 ---
 

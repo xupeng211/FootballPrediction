@@ -194,8 +194,6 @@ from scripts.ops.helpers.disposable_canonical_db_proof_scan import (  # noqa: E4
     scan_with_disposable_db_proof_exemption,
 )
 
-# Git change detection — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     Change,
     IncrementalScanResult,
@@ -497,9 +495,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
 
 
 # Garbage prevention checks (G1 P0) — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
-# Agent workflow hardening checks (Phase1) — delegated to dedicated helper
-# to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
@@ -519,6 +514,7 @@ from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
     check_script_lifecycle_requirement,
     run_governance_growth_gate,
 )
+from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 
 
 def _check_governance_growth(
@@ -538,12 +534,13 @@ def _check_governance_growth(
         return [f"GOV-GROWTH-GATE: Governance growth freeze check failed: {exc}"]
 
 
-def validate(  # noqa: C901, PLR0912
+def validate(  # noqa: C901, PLR0912, PLR0915
     pr_body: str,
     changes: list[Change] | None = None,
     *,
     skip_body_checks: bool = False,
     block_matrix: bool = False,
+    enforce_strict_review: bool = False,
     base_ref: str | None = None,
     head_ref: str | None = None,
 ) -> list[str]:
@@ -556,6 +553,7 @@ def validate(  # noqa: C901, PLR0912
     When *block_matrix* is True, the narrow A-L PR authorization matrix subset
     is added to errors (G1 expanded from original A-D).  Default False
     (report-only, #1651 Phase 5R8-D/G).
+
     """
 
     if changes is None:
@@ -563,9 +561,6 @@ def validate(  # noqa: C901, PLR0912
 
     added = added_paths(changes)
     changed = changed_paths(changes)
-    # Main push events do not have a PR body. Keep all declarations that need
-    # that metadata in one explicit context, while continuing to run the
-    # independent diff/static checks below for both event types.
     has_pr_metadata = not skip_body_checks
 
     errors: list[str] = []
@@ -629,9 +624,6 @@ def validate(  # noqa: C901, PLR0912
     # 6c. Forbidden rewrite file patterns (new files only)
     if has_pr_metadata:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
-    # 6d. Large-risk declarations are PR metadata checks. The deletion,
-    # rename, and scanner thresholds require cleanup/scanner declarations
-    # that do not exist on a main push.
     if has_pr_metadata:
         errors.extend(check_large_risky_change(changes, pr_body))
 
@@ -646,10 +638,17 @@ def validate(  # noqa: C901, PLR0912
                 lambda heading, body: section_text_between(body, heading),
             )
         )
-        # 8. PR authorization matrix — report-only (#1651 Phase 5R8-D)
+        if enforce_strict_review:
+            errors.extend(
+                validate_strict_review_evidence(
+                    pr_body,
+                    head_ref,
+                    changed_paths=changed,
+                    task_type=parse_task_type(pr_body),
+                )
+            )
         with contextlib.suppress(Exception):
             run_pr_authorization_matrix_report_only(changed, pr_body)
-        # 8b. optional narrow blocking (Phase 5R8-G, only when --block-matrix)
         if block_matrix:
             try:
                 task_type = parse_task_type(pr_body)
@@ -748,6 +747,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         changes,
         skip_body_checks=args.skip_body_checks,
         block_matrix=args.block_matrix,
+        enforce_strict_review=args.block_matrix and not args.skip_body_checks,
         base_ref=resolved_base,
         head_ref=resolved_head,
     )

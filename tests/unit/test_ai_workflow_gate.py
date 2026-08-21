@@ -128,6 +128,7 @@ def _valid_pr_body() -> str:
     | Item | Value |
     |---|---|
     | Task type | governance-only |
+    | Workflow class | NORMAL |
     | One task / one branch / one PR | yes |
     | Business code changed | no |
 
