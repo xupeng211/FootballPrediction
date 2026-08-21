@@ -151,7 +151,11 @@ jobs:
           set -u
           before="$(git status --porcelain=v1 -uall)"
           status=0
-          if bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"; then
+          validation_profile="pr"
+          if [ "${GATEKEEPER_CI_MODE}" = "push" ]; then
+            validation_profile="strict"
+          fi
+          if python3 scripts/devops/validation_profiles.py "${validation_profile}"; then
             :
           else
             status=$?

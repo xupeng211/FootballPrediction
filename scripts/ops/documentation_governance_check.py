@@ -92,12 +92,15 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "scripts/ops/helpers/section_content_quality.py",
         "scripts/ops/helpers/pr_authorization_matrix.py",
         "scripts/ops/helpers/dangerous_file_change_check.py",
+        "scripts/devops/validation_profiles.py",
+        ".github/workflows/production-gate.yml",
         "scripts/devops/static_quality_changed_lines.py",
         "tests/unit/test_agent_workflow_hardening.py",
         "tests/unit/test_ai_workflow_gate.py",
         "tests/unit/test_documentation_governance_check.py",
         "tests/unit/test_agent_workflow_hardening_phase1_ci_rules.py",
         "tests/unit/test_dangerous_file_change_check.py",
+        "tests/unit/test_validation_profiles.py",
     }
 )
 

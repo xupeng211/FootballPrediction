@@ -63,6 +63,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
+        verify-targeted verify-pr verify-strict \
         ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
@@ -95,6 +96,7 @@ help: ## 显示帮助信息
 # Docker 命令
 # ============================================
 COMPOSE_DEV=docker compose -f docker-compose.dev.yml
+VALIDATION_PROFILE_RUNNER=$(COMPOSE_DEV) exec -T dev python3 scripts/devops/validation_profiles.py
 CANONICAL_PYTHON_TESTS=tests/unit/scripts/ops/test_train_model_dry_run.py tests/unit/database/repositories/test_prediction_repo_l3_contract.py tests/unit/ml/test_training_no_write_guard.py
 PRE_NETWORK_RUNBOOK_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTH_FORM_NODE?=$(COMPOSE_DEV) exec -T dev node
@@ -205,24 +207,25 @@ security: ## 运行安全扫描
 	bandit -r src/ -f screen -ll
 
 verify: ## 运行完整验证
-	$(MAKE) lint
-	$(MAKE) test-unit
-	$(MAKE) security
+	@$(MAKE) verify-strict
+
+verify-targeted: ## 运行受影响代码的快速验证（NORMAL）
+	@$(VALIDATION_PROFILE_RUNNER) targeted
+
+verify-pr: ## 运行与 GitHub PR Production Gate 共享实现的验证
+	@$(VALIDATION_PROFILE_RUNNER) pr
+
+verify-strict: ## 运行完整 push gate 验证（STRICT）
+	@$(VALIDATION_PROFILE_RUNNER) strict
 
 # ============================================
 # 本地 CI 入口
 # ============================================
-ci-local: ## 运行本地 CI 部分验证（静态检查为主，远程 CI 为最终权威）
-	@echo "$(YELLOW)[Local CI] 运行本地部分验证...$(NC)"
-	@echo "$(YELLOW)[Local CI] 远程 GitHub Actions 为最终权威。$(NC)"
-	@echo "$(YELLOW)[Local CI] 不要将本地 CI 通过等同于远程 CI 通过。$(NC)"
-	@GATEKEEPER_LOCAL_CI=1 GATEKEEPER_DIRECT_MODE=1 \
-		GATEKEEPER_FAKE_CI=1 \
-		bash scripts/devops/gatekeeper.sh --mode=pr || \
-		(echo "$(YELLOW)[Local CI] 部分检查失败或跳过。远程 CI 为最终权威。$(NC)"; exit 0)
+ci-local: ## 兼容入口：运行 canonical PR 验证（失败返回非零）
+	@$(MAKE) verify-pr
 
-ci-local-pr: ## PR 前本地验证（同 ci-local）
-	$(MAKE) ci-local
+ci-local-pr: ## 兼容入口：运行 canonical PR 验证
+	@$(MAKE) verify-pr
 
 pr-gate-local: ## 运行本地 PR Gate 预检（无网络/无DB/无 secrets）。Usage: make pr-gate-local PR_BODY=<path/to/pr_body.md> [FULL=1] [JSON=1] [VERBOSE=1]
 	@if [ -z "$(PR_BODY)" ]; then \
@@ -278,28 +281,9 @@ pr-body-check: ## PR body + current Production Gate evidence check (read-only). 
 	fi
 	@python3 scripts/devops/pr_body_check.py --pr $(PR)
 
-workflow-pr-check: ## Workflow PR local validation: ruff check + format check + pytest. Usage: make workflow-pr-check FILES="<python_files>" TESTS="<test_files>"
-	@if [ -z "$(FILES)" ]; then \
-		echo "ERROR: FILES is required."; \
-		echo "Usage: make workflow-pr-check FILES=\"scripts/devops/foo.py tests/unit/test_foo.py\" TESTS=\"tests/unit/test_foo.py\""; \
-		echo "  FILES  — space-separated list of Python files to lint/format-check"; \
-		echo "  TESTS  — space-separated list of test files/dirs for pytest"; \
-		exit 1; \
-	fi
-	@if [ -z "$(TESTS)" ]; then \
-		echo "ERROR: TESTS is required."; \
-		echo "Usage: make workflow-pr-check FILES=\"scripts/devops/foo.py tests/unit/test_foo.py\" TESTS=\"tests/unit/test_foo.py\""; \
-		echo "  FILES  — space-separated list of Python files to lint/format-check"; \
-		echo "  TESTS  — space-separated list of test files/dirs for pytest"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)[Workflow PR Check] Running ruff check...$(NC)"
-	@$(COMPOSE_DEV) exec -T dev ruff check $(FILES)
-	@echo "$(BLUE)[Workflow PR Check] Running ruff format --check...$(NC)"
-	@$(COMPOSE_DEV) exec -T dev ruff format --check $(FILES)
-	@echo "$(BLUE)[Workflow PR Check] Running pytest...$(NC)"
-	@$(COMPOSE_DEV) exec -T dev pytest $(TESTS) -v
-	@echo "$(GREEN)[Workflow PR Check] All checks PASSED$(NC)"
+workflow-pr-check: ## 兼容入口：委托 canonical PR 验证（FILES/TESTS 不再定义另一套语义）
+	@echo "$(YELLOW)[Workflow PR Check] compatibility alias -> verify-pr$(NC)"
+	@$(MAKE) verify-pr
 
 pr-post-merge-check: ## Post-merge check / cleanup gate. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name> [CONFIRM_CLEANUP=1]
 	@if [ -z "$(PR)" ]; then \

@@ -62,7 +62,8 @@ make verify-pr         # 与 GitHub PR Production Gate 共享实现
 make verify-strict     # STRICT 的 relevant/full、安全和完整性验证
 ```
 
-WF02 完成前，仓库已有的 `make test-unit`、`make test`、`make ci-local-pr` 等入口仍是兼容入口；它们不应被误报为新的 authority。当前 `make ci-local` 的失败语义正在收敛，未完成前不能用它宣称 required CI 通过。
+`make verify-targeted`、`make verify-pr`、`make verify-strict` 是唯一公开的 validation profiles。
+仓库已有的 `make test-unit`、`make test`、`make ci-local-pr`、`make workflow-pr-check` 等入口只保留兼容用途；其中 CI/PR 兼容入口委托 canonical profile，不得自行定义另一套失败语义。
 
 验证分类必须保持清楚：
 
