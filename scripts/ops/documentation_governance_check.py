@@ -80,6 +80,7 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "docs/CODEX_WORKFLOW.md",
         "docs/AGENT_WORKFLOW.md",
+        "docs/GITHUB_ACTIONS_AUDIT_REPORT.md",
         "docs/PROJECT_MAP.md",
         "Makefile",
         "docs/AI_AGENT_WORKFLOW_HARDENING.md",
@@ -117,9 +118,16 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     }
 )
 
-# WF01 intentionally removes the second pull-request template. No other
-# deletion or rename is permitted by this checker.
-ALLOWED_DELETED = frozenset({".github/PULL_REQUEST_TEMPLATE.md"})
+# WF01 intentionally removes the second pull-request template. WF05 also
+# removes the obsolete CI setup note after proving that it has no supported
+# caller or current workflow reference. Other deletion or rename remains
+# prohibited by this checker.
+ALLOWED_DELETED = frozenset(
+    {
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".github/ci-setup.md",
+    }
+)
 
 ALLOWED_ADDED = (
     PHASE0_ALLOWED_ADDED

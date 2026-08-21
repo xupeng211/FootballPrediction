@@ -234,7 +234,7 @@ Active source-of-truth status after Phase1:
 | FotMob current state | docs/data/FOTMOB_CURRENT_STATE.md | active |
 | Canonical match schema | docs/CANONICAL_MATCH_SCHEMA.md | planned/missing |
 | Testing strategy | docs/TESTING_GUIDE.md | active |
-| CI strategy | docs/GITHUB_ACTIONS_AUDIT_REPORT.md | evidence/needs_update |
+| CI strategy | `.github/workflows/production-gate.yml` + GitHub ruleset/API | active/current |
 | Data storage strategy | docs/DATA_MODEL_STORAGE_POLICY.md | active |
 
 Long-lived project conclusions should be summarized in the active or planned
@@ -255,9 +255,12 @@ Lifecycle states now used for documentation cleanup are:
 - `archived`
 
 Phase3 may execute an archive move only after a reviewed mapping table exists.
-Deleting documentation remains forbidden. Active docs take priority over phase
-reports, and Codex must not treat `superseded` or `archive_candidate` files as
-current conclusions.
+Deletion remains forbidden by default. A stale setup/instruction file may be
+removed in a separately scoped cleanup change only after a caller inventory
+proves that it has no supported entry, automation caller, or configuration
+dependency, and the exact path is recorded in the governance checker. Active
+docs take priority over phase reports, and Codex must not treat `superseded` or
+`archive_candidate` files as current conclusions.
 
 ## Phase3A Archive Move Plan Status
 
@@ -266,7 +269,8 @@ rename, archive, or create `docs/_archive/` content.
 
 Proposed archive destinations are not authorization to move files. Owner review
 is required before any later task can move archive candidates. Active docs still
-take priority over reports, and deletion remains forbidden.
+take priority over reports. Deletion remains forbidden unless the narrowly
+scoped, evidence-backed exception above is satisfied.
 
 ## AI Guardrail Hardening Status
 
