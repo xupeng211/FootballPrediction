@@ -1,6 +1,8 @@
 """Typed-context parity and leakage tests for the canonical prematch engine."""
 
 from copy import deepcopy
+from hashlib import sha256
+import json
 
 import pytest
 
@@ -46,6 +48,7 @@ def _match(
 def _context(*, decision_time=None, matches=None, closure_matches=None):
     source_matches = list(matches if matches is not None else _matches())
     closure_source = list(source_matches if closure_matches is None else closure_matches)
+    canonical_schedule = _canonical_schedule(closure_source)
     return {
         "canonical_match_id": "target-001",
         "home_team": "Alpha",
@@ -62,10 +65,41 @@ def _context(*, decision_time=None, matches=None, closure_matches=None):
             "season": "2024/2025",
             "team_names": ["Alpha", "Beta"],
             "prior_match_ids": [match["canonical_match_id"] for match in closure_source],
-            "source_schedule_sha256": "c" * 64,
+            "canonical_schedule": canonical_schedule,
+            "source_schedule_sha256": _schedule_hash(canonical_schedule),
         },
         "prior_matches": source_matches,
     }
+
+
+def _canonical_schedule(matches):
+    schedule = [
+        {
+            "canonical_match_id": match["canonical_match_id"],
+            "kickoff_utc": match["kickoff_utc"],
+            "competition": match["competition"],
+            "season": match["season"],
+            "home_team": match["home_team"],
+            "away_team": match["away_team"],
+        }
+        for match in matches
+    ]
+    schedule.append(
+        {
+            "canonical_match_id": "target-001",
+            "kickoff_utc": "2025-01-10T12:00:00Z",
+            "competition": "Premier League",
+            "season": "2024/2025",
+            "home_team": "Alpha",
+            "away_team": "Beta",
+        }
+    )
+    return sorted(schedule, key=lambda match: (match["kickoff_utc"], match["canonical_match_id"]))
+
+
+def _schedule_hash(schedule):
+    encoded = json.dumps(schedule, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def _matches(available=None):
@@ -152,6 +186,22 @@ def test_points_and_fatigue_require_history_closure() -> None:
 
     del context["history_closure"]
     with pytest.raises(CanonicalPrematchFeatureError, match="INVALID_CONTEXT"):
+        build_canonical_prematch_features(context)
+
+
+def test_history_closure_digest_is_bound_to_canonical_schedule() -> None:
+    context = _context()
+    context["history_closure"]["source_schedule_sha256"] = "0" * 64
+
+    with pytest.raises(CanonicalPrematchFeatureError, match="HISTORY_CLOSURE_UNPROVEN"):
+        build_canonical_prematch_features(context)
+
+    context = _context(matches=_matches()[:-1])
+    context["history_closure"]["canonical_schedule"] = _canonical_schedule(_matches())
+    context["history_closure"]["source_schedule_sha256"] = _schedule_hash(
+        context["history_closure"]["canonical_schedule"]
+    )
+    with pytest.raises(CanonicalPrematchFeatureError, match="HISTORY_CLOSURE_MISMATCH"):
         build_canonical_prematch_features(context)
 
 

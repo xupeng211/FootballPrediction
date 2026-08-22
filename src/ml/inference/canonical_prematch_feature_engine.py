@@ -183,6 +183,7 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         "season",
         "team_names",
         "prior_match_ids",
+        "canonical_schedule",
         "source_schedule_sha256",
     }
     if set(closure) != expected_closure_fields:
@@ -200,13 +201,124 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         for match_id in closure["prior_match_ids"]
     ):
         _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure prior IDs are invalid")
+    raw_schedule = closure["canonical_schedule"]
+    if not isinstance(raw_schedule, list) or not raw_schedule:
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure canonical schedule is empty")
+    schedule: list[dict[str, Any]] = []
+    schedule_by_id: dict[str, dict[str, Any]] = {}
+    for index, raw_schedule_match in enumerate(raw_schedule):
+        if not isinstance(raw_schedule_match, dict):
+            _fail("HISTORY_CLOSURE_UNPROVEN", f"canonical_schedule[{index}] must be an object")
+        schedule_fields = {
+            "canonical_match_id",
+            "kickoff_utc",
+            "competition",
+            "season",
+            "home_team",
+            "away_team",
+        }
+        if set(raw_schedule_match) != schedule_fields:
+            _fail(
+                "HISTORY_CLOSURE_UNPROVEN",
+                f"canonical_schedule[{index}] fields are not canonical",
+            )
+        schedule_id = _text(
+            raw_schedule_match["canonical_match_id"],
+            f"canonical_schedule[{index}].canonical_match_id",
+        )
+        if schedule_id in schedule_by_id:
+            _fail("DUPLICATE_SOURCE_ID", f"canonical schedule ID {schedule_id} is duplicated")
+        schedule_kickoff = _parse_utc(
+            raw_schedule_match["kickoff_utc"], f"canonical_schedule[{index}].kickoff_utc"
+        )
+        schedule_competition = _text(
+            raw_schedule_match["competition"], f"canonical_schedule[{index}].competition"
+        )
+        schedule_season = _text(raw_schedule_match["season"], f"canonical_schedule[{index}].season")
+        schedule_home = _text(
+            raw_schedule_match["home_team"], f"canonical_schedule[{index}].home_team"
+        )
+        schedule_away = _text(
+            raw_schedule_match["away_team"], f"canonical_schedule[{index}].away_team"
+        )
+        if schedule_home == schedule_away or (
+            schedule_home not in {home_team, away_team}
+            and schedule_away not in {home_team, away_team}
+        ):
+            _fail(
+                "HISTORY_CLOSURE_UNPROVEN",
+                f"canonical schedule ID {schedule_id} is not bound to a target team",
+            )
+        if schedule_competition != competition or schedule_season != season:
+            _fail(
+                "HISTORY_CLOSURE_UNPROVEN",
+                f"canonical schedule ID {schedule_id} is outside target competition/season",
+            )
+        schedule_row = {
+            "canonical_match_id": schedule_id,
+            "kickoff_utc": _canonical_timestamp(schedule_kickoff),
+            "kickoff": schedule_kickoff,
+            "competition": schedule_competition,
+            "season": schedule_season,
+            "home_team": schedule_home,
+            "away_team": schedule_away,
+        }
+        schedule_by_id[schedule_id] = schedule_row
+        schedule.append(schedule_row)
+    target_schedule = schedule_by_id.get(target_id)
+    if target_schedule is None or any(
+        target_schedule[field] != expected
+        for field, expected in {
+            "kickoff_utc": _canonical_timestamp(target),
+            "competition": competition,
+            "season": season,
+            "home_team": home_team,
+            "away_team": away_team,
+        }.items()
+    ):
+        _fail("HISTORY_CLOSURE_UNPROVEN", "canonical schedule does not bind target identity")
+    schedule.sort(key=lambda match: (match["kickoff"], match["canonical_match_id"]))
+    canonical_schedule = [
+        {
+            key: match[key]
+            for key in (
+                "canonical_match_id",
+                "kickoff_utc",
+                "competition",
+                "season",
+                "home_team",
+                "away_team",
+            )
+        }
+        for match in schedule
+    ]
     source_schedule_sha256 = closure["source_schedule_sha256"]
     if (
         not isinstance(source_schedule_sha256, str)
         or len(source_schedule_sha256) != SHA256_HEX_LENGTH
         or any(character not in "0123456789abcdef" for character in source_schedule_sha256)
+        or source_schedule_sha256 != _digest(canonical_schedule)
     ):
-        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure source schedule binding is invalid")
+        _fail(
+            "HISTORY_CLOSURE_UNPROVEN",
+            "history_closure source schedule binding does not match canonical schedule",
+        )
+    expected_schedule_ids = {
+        match["canonical_match_id"]
+        for match in schedule
+        if match["canonical_match_id"] != target_id and match["kickoff"] < as_of
+    }
+    if any(
+        match["canonical_match_id"] != target_id and match["kickoff"] >= as_of for match in schedule
+    ):
+        _fail(
+            "FUTURE_SCHEDULE_DEPENDENCY",
+            "canonical schedule contains a non-target match at or after feature_as_of_utc",
+        )
+    if set(schedule_by_id) != expected_schedule_ids | {target_id}:
+        _fail(
+            "HISTORY_CLOSURE_UNPROVEN", "canonical schedule has an invalid target history boundary"
+        )
     matches: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     for index, raw_match in enumerate(raw_matches):
@@ -283,11 +395,21 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
                 "available_at_utc": None if available is None else _canonical_timestamp(available),
             }
         )
-    if sorted(closure["prior_match_ids"]) != sorted(seen_ids):
+    if sorted(closure["prior_match_ids"]) != sorted(seen_ids) or seen_ids != expected_schedule_ids:
         _fail(
             "HISTORY_CLOSURE_MISMATCH",
-            "history_closure does not account for every typed prior match",
+            "history_closure does not account for the canonical schedule history",
         )
+    for match in matches:
+        schedule_match = schedule_by_id[match["canonical_match_id"]]
+        if any(
+            match[field] != schedule_match[field]
+            for field in ("kickoff_utc", "competition", "season", "home_team", "away_team")
+        ):
+            _fail(
+                "SOURCE_SCHEDULE_MISMATCH",
+                f"typed prior match {match['canonical_match_id']} is not the canonical schedule row",
+            )
     matches.sort(key=lambda match: (match["kickoff"], match["canonical_match_id"]))
     return (
         {
@@ -561,6 +683,32 @@ def build_canonical_prematch_features(  # noqa: C901
                 "UNSUPPORTED_ACCEPTED_FEATURE",
                 f"registry accepted unsupported feature {feature_name}",
             )
+    target_schedule_row = {
+        "canonical_match_id": target["canonical_match_id"],
+        "kickoff_utc": _canonical_timestamp(target_kickoff),
+        "kickoff": target_kickoff,
+        "competition": target["competition"],
+        "season": target["season"],
+        "home_team": home,
+        "away_team": away,
+    }
+    canonical_schedule = [
+        {
+            key: match[key]
+            for key in (
+                "canonical_match_id",
+                "kickoff_utc",
+                "competition",
+                "season",
+                "home_team",
+                "away_team",
+            )
+        }
+        for match in sorted(
+            [*matches, target_schedule_row],
+            key=lambda match: (match["kickoff"], match["canonical_match_id"]),
+        )
+    ]
     return {
         "canonical_match_id": target["canonical_match_id"],
         "home_team": home,
@@ -582,6 +730,7 @@ def build_canonical_prematch_features(  # noqa: C901
             "season": target["season"],
             "team_names": sorted([home, away]),
             "prior_match_ids": [match["canonical_match_id"] for match in matches],
+            "canonical_schedule": canonical_schedule,
             "source_schedule_sha256": context["history_closure"]["source_schedule_sha256"],
         },
         "feature_names": list(names),

@@ -293,13 +293,28 @@ function build(fixture) {
 function runtimeContextForFixture(fixture) {
     const target = fixture.schedule.find(row => row.id === fixture.targetId);
     const factsById = new Map(fixture.facts.map(row => [row.canonical_match_id, row]));
-    const priorMatches = fixture.schedule
-        .filter(row => row.kickoff_at < target.kickoff_at)
+    const sourceSchedule = fixture.schedule
+        .filter(row => row.kickoff_at < target.kickoff_at || row.id === target.id)
+        .map(row => ({
+            canonical_match_id: row.id,
+            kickoff_utc: row.kickoff_at,
+            competition: row.competition,
+            season: row.season,
+            home_team: row.home_team,
+            away_team: row.away_team,
+        }))
+        .sort((left, right) =>
+            `${left.kickoff_utc}\u0000${left.canonical_match_id}`.localeCompare(
+                `${right.kickoff_utc}\u0000${right.canonical_match_id}`
+            )
+        );
+    const priorMatches = sourceSchedule
+        .filter(row => row.canonical_match_id !== target.id)
         .map(row => {
-            const sourceFact = factsById.get(row.id);
+            const sourceFact = factsById.get(row.canonical_match_id);
             return {
-                canonical_match_id: row.id,
-                kickoff_utc: row.kickoff_at,
+                canonical_match_id: row.canonical_match_id,
+                kickoff_utc: row.kickoff_utc,
                 competition: row.competition,
                 season: row.season,
                 home_team: row.home_team,
@@ -326,7 +341,8 @@ function runtimeContextForFixture(fixture) {
             season: target.season,
             team_names: [target.home_team, target.away_team].sort(),
             prior_match_ids: priorMatches.map(row => row.canonical_match_id),
-            source_schedule_sha256: HASH,
+            canonical_schedule: sourceSchedule,
+            source_schedule_sha256: digest(sourceSchedule),
         },
         prior_matches: priorMatches,
     };
