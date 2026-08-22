@@ -101,9 +101,15 @@ def build_provenance(
         frame_eligible_rows = source_binding.eligible_rows
         frame_ineligible_rows = source_binding.ineligible_rows
 
+    producer_source_revision = producer._git_revision()
+    if source_binding is not None and producer_source_revision == "unavailable":
+        raise producer.TrainingContractError(
+            "verified canonical training requires an exact producer Git revision"
+        )
+
     payload = {
         "producer_schema_version": producer.PRODUCER_SCHEMA_VERSION,
-        "producer_source_revision": producer._git_revision(),
+        "producer_source_revision": producer_source_revision,
         "artifact_name": producer.CANDIDATE_ARTIFACT_NAME,
         "model_type": producer.CANDIDATE_MODEL_TYPE,
         "model_family": producer.CANDIDATE_MODEL_FAMILY,
