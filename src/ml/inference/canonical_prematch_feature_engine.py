@@ -549,7 +549,7 @@ def _points_line(
     as_of: datetime,
 ) -> dict[str, Any]:
     prior = _team_matches(matches, team)
-    reason_codes = [] if prior else [HISTORY_CLOSURE_UNPROVEN]
+    reason_codes: list[str] = []
     point_values = [_points(match, team) for match in prior]
     if any(points is None for points in point_values):
         reason_codes.extend(["HISTORY_GAP", "STANDINGS_HISTORY_GAP"])
@@ -598,8 +598,8 @@ def _fatigue_line(
     selected = [
         match for match in _team_matches(matches, team) if start <= match["kickoff"] < as_of
     ]
-    reason_codes = [] if matches else [HISTORY_CLOSURE_UNPROVEN]
-    value = min(1.0, len(selected) / 7.0) if matches else None
+    reason_codes: list[str] = []
+    value = min(1.0, len(selected) / 7.0)
     return _line(
         feature_name=feature_name,
         value=value,

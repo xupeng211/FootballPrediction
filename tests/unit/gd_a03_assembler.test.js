@@ -290,8 +290,8 @@ function build(fixture) {
     return buildPriorStateFeatureView(fixture.options);
 }
 
-function runtimeContextForFixture(fixture) {
-    const target = fixture.schedule.find(row => row.id === fixture.targetId);
+function runtimeContextForFixture(fixture, targetId = fixture.targetId) {
+    const target = fixture.schedule.find(row => row.id === targetId);
     const factsById = new Map(fixture.facts.map(row => [row.canonical_match_id, row]));
     const sourceSchedule = fixture.schedule
         .filter(row => row.kickoff_at < target.kickoff_at || row.id === target.id)
@@ -352,10 +352,13 @@ function canonicalRuntimeProjection(context) {
     const script = [
         'import json, sys',
         'from src.ml.feature_adapters.prematch import V26_6_PreMatchAdapter',
+        'from src.ml.inference.canonical_prematch_feature_engine import build_canonical_prematch_features',
         'context = json.load(sys.stdin)',
         'result = V26_6_PreMatchAdapter().adapt_canonical_typed_context(context)',
+        'engine_result = build_canonical_prematch_features(context)',
         'payload = {"success": result.success, "feature_names": result.feature_names, "missing_features": result.missing_features}',
         'payload["canonical_diagnostics"] = result.canonical_diagnostics',
+        'payload["engine_features"] = engine_result["features"]',
         'if result.features is not None: payload["features"] = result.features.iloc[0].to_dict()',
         'print(json.dumps(payload, sort_keys=True))',
     ].join('\n');
@@ -447,6 +450,42 @@ test('missing historical outcome stays in the source set and propagates only res
     assert.equal(runtime.canonical_diagnostics.rolling_xg_home.availability_status, 'AVAILABLE');
     assert.equal(runtime.canonical_diagnostics.home_fatigue_index.availability_status, 'AVAILABLE');
     assert.ok(runtime.canonical_diagnostics.home_points.source_match_ids.includes(missingFact.canonical_match_id));
+});
+
+test('empty prior history uses identical proven cold-start semantics in historical and runtime paths', () => {
+    const fixture = buildFixture();
+    const emptyHistoryFixture = { ...fixture, targetId: fixture.targets[0].id };
+    const historical = build(emptyHistoryFixture);
+    const historicalRow = targetRow(historical, emptyHistoryFixture.targetId);
+    const runtime = canonicalRuntimeProjection(runtimeContextForFixture(emptyHistoryFixture));
+    const accepted = loadFeatureContract(path.resolve(__dirname, '../..')).vNextContract.feature_statuses
+        .filter(status => status.training_decision === 'ACCEPTED_FOR_TRAINING')
+        .map(status => status.feature_name);
+
+    assert.equal(runtime.success, false);
+    for (const featureName of accepted) {
+        assert.equal(
+            runtime.canonical_diagnostics[featureName].availability_status,
+            historicalRow.features[featureName].availability_status
+        );
+        assert.equal(runtime.engine_features[featureName].value, historicalRow.features[featureName].value);
+        assert.deepEqual(
+            runtime.canonical_diagnostics[featureName].unavailable_reason_codes,
+            historicalRow.features[featureName].unavailable_reason_codes
+        );
+    }
+    for (const featureName of [
+        'home_points',
+        'away_points',
+        'points_diff',
+        'home_fatigue_index',
+        'away_fatigue_index',
+        'fatigue_diff',
+    ]) {
+        assert.equal(historicalRow.features[featureName].value, 0);
+        assert.equal(historicalRow.features[featureName].availability_status, 'AVAILABLE');
+        assert.deepEqual(historicalRow.features[featureName].unavailable_reason_codes, []);
+    }
 });
 
 function rebindSourceBindings(options) {

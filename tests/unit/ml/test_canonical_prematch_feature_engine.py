@@ -211,7 +211,7 @@ def test_zero_xg_is_valid_and_null_xg_remains_unavailable() -> None:
     assert null_result["features"]["rolling_xg_home"]["availability_status"] == "UNAVAILABLE"
 
 
-def test_points_and_fatigue_require_history_closure() -> None:
+def test_points_and_fatigue_use_proven_cold_start_zero_when_history_is_empty() -> None:
     context = _context(matches=_matches()[:8], closure_matches=_matches())
 
     with pytest.raises(CanonicalPrematchFeatureError, match="HISTORY_CLOSURE_MISMATCH"):
@@ -227,9 +227,9 @@ def test_points_and_fatigue_require_history_closure() -> None:
         "away_fatigue_index",
         "fatigue_diff",
     ):
-        assert result["features"][name]["availability_status"] == "UNAVAILABLE"
-        assert result["features"][name]["value"] is None
-        assert "HISTORY_CLOSURE_UNPROVEN" in result["features"][name]["unavailable_reason_codes"]
+        assert result["features"][name]["availability_status"] == "AVAILABLE"
+        assert result["features"][name]["value"] == 0
+        assert result["features"][name]["unavailable_reason_codes"] == []
 
     del context["history_closure"]
     with pytest.raises(CanonicalPrematchFeatureError, match="INVALID_CONTEXT"):

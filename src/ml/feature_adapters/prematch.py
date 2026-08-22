@@ -91,7 +91,8 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
         This is intentionally not wired into the default V26.6 compatibility
         entrypoint.  It exists so a future source provider can pass the exact
         canonical context to the same formulas used by the offline frame.
-        Missing history remains unavailable; no value is imputed.
+        Missing or unproven history remains unavailable; a proven empty history
+        uses the GD-A03 cold-start zero, which is derived rather than imputed.
         """
         from src.ml.inference.canonical_prematch_feature_engine import (
             accepted_feature_names,

@@ -138,8 +138,9 @@ typed context 必须携带 competition/season、`canonical-schedule-history/v1` 
 history closure、包含 target 与 target-team prior schedule rows 的 canonical schedule
 以及由规范化 schedule 内容重算的 source schedule digest；digest 不是只检查格式的
 self-reported token。prior facts 的 identity/kickoff/team fields 还必须逐项匹配该
-schedule；缺失或不完整时 points/fatigue 也 fail closed，空 history 不会返回隐含的 0。它复用 registry
-accepted order，使用与 GD-A03 相同的 xG、points/form、fatigue 公式；在 deterministic
+schedule；缺失或不完整的 history closure 仍 fail closed。若 closure 明确证明某队
+没有任何 prior fixture，points/fatigue 使用 GD-A03 冻结的 cold-start `0`；这不是
+imputation 或默认值。它复用 registry accepted order，使用与 GD-A03 相同的 xG、points/form、fatigue 公式；在 deterministic
 fixture 上逐 feature 验证 GD-A03 historical producer 与该 adapter runtime path 的数值
 和 unavailable reason 一致。
 
