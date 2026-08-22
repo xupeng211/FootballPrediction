@@ -1,4 +1,4 @@
-"""Canonical v26_7_aligned training producer.
+"""Canonical prematch vnext offline candidate training producer.
 
 lifecycle: permanent
 component: Canonical
@@ -6,8 +6,8 @@ component: Canonical
 The producer consumes an explicit, already materialized pre-match feature
 frame. It does not connect to PostgreSQL, fetch live data, discover model
 files, or edit the tracked manifest. Feature identity and order come from the
-versioned registry and are cross-checked against the runtime adapter before a
-model is fit.
+versioned vnext registry projection; the production V1 runtime adapter is not
+used as a compatibility fallback.
 
 The output is a candidate envelope for review. A candidate path is required
 explicitly and production paths are rejected. Activation and manifest updates
@@ -16,18 +16,16 @@ remain separate reviewed operations.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+import hashlib
+import json
 import logging
-import os
 from pathlib import Path
 import subprocess
-import tempfile
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
 import joblib  # type: ignore[import-untyped]
 import numpy as np
@@ -38,18 +36,30 @@ import xgboost as xgb
 
 from src.constants.model_config import RESULT_MAP, RESULT_NAMES
 from src.ml.feature_adapter import FeatureAdapterFactory, ModelType, V26_6_PreMatchAdapter
-from src.ml.inference.artifact_manifest import ArtifactManifest
 from src.ml.inference.canonical_model_loader import (
     CANONICAL_API_ARTIFACT_NAME,
     CANONICAL_API_MODEL_TYPE,
-    ModelArtifactUnavailableError,
     validate_canonical_model_envelope,
 )
-from src.ml.inference.feature_contract_registry import FeatureContract, FeatureContractRegistry
+from src.ml.inference.feature_contract_registry import (
+    VNEXT_CONTRACT_ID,
+    FeatureContract,
+    FeatureContractRegistry,
+)
+from src.ml.training import canonical_candidate_artifact, canonical_frame_input
 
 logger = logging.getLogger(__name__)
 
-PRODUCER_SCHEMA_VERSION = "canonical-training-producer/v1"
+PRODUCER_SCHEMA_VERSION = "canonical-training-producer/v2"
+CANDIDATE_SCHEMA_VERSION = "canonical-training-candidate/v1"
+CANDIDATE_CREATED_AS = "NON_PRODUCTION_CANDIDATE"
+CANDIDATE_ACTIVATED = "NO"
+CANDIDATE_ARTIFACT_NAME = "canonical_prematch_vnext"
+CANDIDATE_MODEL_TYPE = "canonical_prematch_vnext"
+CANDIDATE_MODEL_FAMILY = "xgboost_multiclass_1x2"
+CANDIDATE_MODEL_VERSION = "canonical-prematch-vnext-xgb/v1"
+FRAME_SCHEMA_VERSION = "canonical-prematch-training-feature-frame/v1"
+FRAME_RECEIPT_SCHEMA_VERSION = "canonical-prematch-training-feature-frame-receipt/v1"
 DEFAULT_SEED = 42
 DEFAULT_VALIDATION_FRACTION = 0.2
 DEFAULT_MIN_TRAIN_ROWS = 20
@@ -61,6 +71,19 @@ DEFAULT_TIMESTAMP_COLUMN = "match_date"
 DEFAULT_TARGET_COLUMN = "result"
 DEFAULT_CLASS_ORDER = tuple(sorted(RESULT_MAP.values()))
 GIT_SHA_LENGTH = 40
+SHA256_LENGTH = 64
+
+ACCEPTED_TRAINING_FEATURES = (
+    "rolling_xg_home",
+    "rolling_xg_away",
+    "home_points",
+    "away_points",
+    "points_diff",
+    "home_recent_form_points",
+    "home_fatigue_index",
+    "away_fatigue_index",
+    "fatigue_diff",
+)
 
 # These markers only apply to non-contract input columns. The canonical
 # features themselves are allowed to contain ``rolling_*`` and ``*_fatigue``
@@ -97,6 +120,43 @@ class TrainingContractError(ValueError):
 
 
 @dataclass(frozen=True)
+class CanonicalFrameBinding:
+    """Hashes and population facts copied from one validated frame/receipt."""
+
+    artifact_sha256: str
+    receipt_sha256: str
+    business_sha256: str
+    contract_id: str
+    contract_version: str
+    feature_names: tuple[str, ...]
+    target_population: int
+    rows_accounted: int
+    eligible_rows: int
+    ineligible_rows: int
+    target_row_id_sha256: str
+    eligible_row_id_sha256: str
+    frame_code_revision: str
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a JSON-safe, path-free binding projection."""
+        return {
+            "artifact_sha256": self.artifact_sha256,
+            "receipt_sha256": self.receipt_sha256,
+            "business_sha256": self.business_sha256,
+            "contract_id": self.contract_id,
+            "contract_version": self.contract_version,
+            "feature_names": list(self.feature_names),
+            "target_population": self.target_population,
+            "rows_accounted": self.rows_accounted,
+            "eligible_rows": self.eligible_rows,
+            "ineligible_rows": self.ineligible_rows,
+            "target_row_id_sha256": self.target_row_id_sha256,
+            "eligible_row_id_sha256": self.eligible_row_id_sha256,
+            "frame_code_revision": self.frame_code_revision,
+        }
+
+
+@dataclass(frozen=True)
 class ValidatedTrainingData:
     """Validated input frame and the exact contract that authorized it."""
 
@@ -106,11 +166,14 @@ class ValidatedTrainingData:
     target_column: str
     feature_cutoff_column: str | None
     timestamps: pd.Series
+    source_binding: CanonicalFrameBinding | None = None
+    frame_eligible_rows: int | None = None
+    frame_ineligible_rows: int | None = None
 
 
 @dataclass(frozen=True)
 class TemporalSplit:
-    """Non-overlapping chronological train/validation partitions."""
+    """Non-overlapping chronological fit and reserved-evaluation partitions."""
 
     train: pd.DataFrame
     validation: pd.DataFrame
@@ -119,6 +182,7 @@ class TemporalSplit:
     timestamp_column: str
     target_column: str
     feature_names: tuple[str, ...]
+    validation_fraction: float
 
 
 @dataclass(frozen=True)
@@ -137,6 +201,8 @@ class CandidateArtifact:
     path: Path
     sha256: str
     provenance: dict[str, Any]
+    metadata_path: Path | None = None
+    metadata_sha256: str | None = None
 
 
 def resolve_canonical_contract(
@@ -166,6 +232,86 @@ def resolve_canonical_contract(
     ):
         raise TrainingContractError("canonical training/runtime feature contract mismatch")
     return contract
+
+
+def resolve_training_contract(
+    registry: FeatureContractRegistry | None = None,
+) -> FeatureContract:
+    """Resolve the non-activated V-next training projection exactly.
+
+    The registry owns all 17 V-next feature decisions.  Training receives only
+    the nine entries explicitly marked ``ACCEPTED_FOR_TRAINING``; blocked and
+    excluded entries are never treated as optional columns or compatibility
+    fallbacks.
+    """
+    contract_registry = registry or FeatureContractRegistry()
+    try:
+        registered = contract_registry.get_by_contract_id(VNEXT_CONTRACT_ID)
+    except (ValueError, TypeError) as exc:
+        raise TrainingContractError("canonical training feature contract unavailable") from exc
+
+    accepted = tuple(
+        status.feature_name
+        for status in registered.feature_statuses
+        if status.training_decision == "ACCEPTED_FOR_TRAINING"
+    )
+    if (
+        registered.contract_id != VNEXT_CONTRACT_ID
+        or registered.artifact_name != CANDIDATE_ARTIFACT_NAME
+        or registered.model_type != CANDIDATE_MODEL_TYPE
+        or registered.activation_status != "DEFINED_NOT_ACTIVATED"
+        or accepted != ACCEPTED_TRAINING_FEATURES
+        or len(accepted) != len(set(accepted))
+    ):
+        raise TrainingContractError("canonical training feature decision binding is invalid")
+
+    return replace(registered, feature_count=len(accepted), ordered_features=accepted)
+
+
+def _canonical_json_bytes(value: Any) -> bytes:
+    """Serialize metadata using the repository's stable JSON convention."""
+    try:
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise TrainingContractError("candidate metadata is not canonical JSON") from exc
+
+
+def _sha256_json(value: Any) -> str:
+    return hashlib.sha256(_canonical_json_bytes(value)).hexdigest()
+
+
+def _row_id_hash(row_ids: list[str] | tuple[str, ...]) -> str:
+    """Hash a sorted, duplicate-free ID set like the canonical JS contracts."""
+    normalized = [str(row_id) for row_id in row_ids]
+    if len(set(normalized)) != len(normalized):
+        raise TrainingContractError("training row IDs are not unique")
+    return _sha256_json(sorted(normalized))
+
+
+def _assert_sha256(value: Any, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != SHA256_LENGTH
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise TrainingContractError(f"{label} is not a lowercase SHA-256")
+    return value
+
+
+def _assert_full_sha(value: Any, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != GIT_SHA_LENGTH
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise TrainingContractError(f"{label} is not a full Git SHA")
+    return value
 
 
 def _normalise_target(value: Any) -> int:
@@ -204,14 +350,24 @@ def _validate_extra_columns(
     target_column: str,
     feature_cutoff_column: str | None,
 ) -> None:
+    feature_columns = tuple(
+        column for column in frame.columns if column in contract.ordered_features
+    )
+    if feature_columns != contract.ordered_features:
+        raise TrainingContractError("canonical training feature order is invalid")
     allowed_metadata = {timestamp_column, target_column, "match_id"}
     if feature_cutoff_column:
         allowed_metadata.add(feature_cutoff_column)
     extra_columns = set(frame.columns) - set(contract.ordered_features) - allowed_metadata
-    for column in extra_columns:
-        lowered = str(column).lower()
-        if any(marker in lowered for marker in _UNSAFE_EXTRA_MARKERS):
-            raise TrainingContractError(f"unsafe non-contract training column: {column}")
+    if extra_columns:
+        unsafe = [
+            str(column)
+            for column in extra_columns
+            if any(marker in str(column).lower() for marker in _UNSAFE_EXTRA_MARKERS)
+        ]
+        if unsafe:
+            raise TrainingContractError(f"unsafe non-contract training column: {unsafe[0]}")
+        raise TrainingContractError("training frame contains non-contract feature columns")
 
 
 def validate_training_frame(  # noqa: C901, PLR0912
@@ -228,7 +384,7 @@ def validate_training_frame(  # noqa: C901, PLR0912
     if not frame.columns.is_unique:
         raise TrainingContractError("training frame contains duplicate columns")
 
-    contract = resolve_canonical_contract(registry)
+    contract = resolve_training_contract(registry)
     required = set(contract.ordered_features)
     missing = required - set(frame.columns)
     if missing:
@@ -270,6 +426,10 @@ def validate_training_frame(  # noqa: C901, PLR0912
         raise TrainingContractError("training target is missing")
     if set(validated[target_column].astype(int)) != set(DEFAULT_CLASS_ORDER):
         raise TrainingContractError("training frame does not contain all outcome classes")
+    if "match_id" in validated.columns:
+        match_ids = validated["match_id"].astype(str)
+        if match_ids.duplicated().any():
+            raise TrainingContractError("training frame contains duplicate match IDs")
 
     return ValidatedTrainingData(
         frame=validated,
@@ -278,6 +438,18 @@ def validate_training_frame(  # noqa: C901, PLR0912
         target_column=target_column,
         feature_cutoff_column=feature_cutoff_column,
         timestamps=timestamps,
+    )
+
+
+def load_canonical_feature_frame(
+    artifact_path: str | Path,
+    receipt_path: str | Path,
+    *,
+    registry: FeatureContractRegistry | None = None,
+) -> ValidatedTrainingData:
+    """Load the repository-external canonical frame through its input module."""
+    return canonical_frame_input.load_canonical_feature_frame(
+        artifact_path, receipt_path, registry=registry
     )
 
 
@@ -350,6 +522,7 @@ def chronological_split(
         timestamp_column=data.timestamp_column,
         target_column=data.target_column,
         feature_names=data.contract.ordered_features,
+        validation_fraction=validation_fraction,
     )
 
 
@@ -405,7 +578,12 @@ def fit_canonical_model(
     learning_rate: float = DEFAULT_LEARNING_RATE,
     estimator_factory: Callable[[], Any] | None = None,
 ) -> FittedCanonicalModel:
-    """Fit scaler and estimator on train rows only, then validate parity."""
+    """Fit scaler and estimator on fit rows only.
+
+    ``split.validation`` is deliberately reserved for the next evaluation
+    business node.  It is transformed neither for fitting nor passed through
+    the estimator's ``eval_set`` hook in this producer.
+    """
     if estimators < 1 or max_depth < 1 or learning_rate <= 0:
         raise TrainingContractError("estimator hyperparameters are invalid")
     scaler = StandardScaler()
@@ -413,12 +591,7 @@ def fit_canonical_model(
         scaler.fit_transform(split.train.loc[:, list(split.feature_names)]),
         columns=split.feature_names,
     )
-    x_validation = pd.DataFrame(
-        scaler.transform(split.validation.loc[:, list(split.feature_names)]),
-        columns=split.feature_names,
-    )
     y_train = split.train[split.target_column].astype(int)
-    y_validation = split.validation[split.target_column].astype(int)
     model = (
         estimator_factory()
         if estimator_factory is not None
@@ -429,7 +602,7 @@ def fit_canonical_model(
             learning_rate=learning_rate,
         )
     )
-    model.fit(x_train, y_train, eval_set=[(x_validation, y_validation)], verbose=False)
+    model.fit(x_train, y_train, verbose=False)
     class_order = _model_class_order(model)
     _validate_estimator_feature_metadata(model, split.feature_names)
     return FittedCanonicalModel(model=model, scaler=scaler, class_order=class_order)
@@ -486,53 +659,28 @@ def _date_range(timestamps: pd.Series) -> list[str]:
 
 def build_provenance(
     split: TemporalSplit,
-    metrics: Mapping[str, Any],
+    metrics: Mapping[str, Any] | None,
     contract: FeatureContract,
     *,
     seed: int,
     source_dataset_identity: str,
+    source_binding: CanonicalFrameBinding | None = None,
     estimator_type: str = "xgboost.XGBClassifier",
     hyperparameters: Mapping[str, Any] | None = None,
     created_at: str | None = None,
 ) -> dict[str, Any]:
-    """Build bounded provenance without paths, credentials, or source rows."""
-    if (
-        not source_dataset_identity
-        or Path(source_dataset_identity).is_absolute()
-        or ".." in Path(source_dataset_identity).parts
-    ):
-        raise TrainingContractError("source dataset identity must be a safe logical name")
-
-    def class_distribution(frame: pd.DataFrame) -> dict[str, int]:
-        counts = frame[split.target_column].value_counts().to_dict()
-        return {RESULT_NAMES[label]: int(counts.get(label, 0)) for label in DEFAULT_CLASS_ORDER}
-
-    return {
-        "producer_schema_version": PRODUCER_SCHEMA_VERSION,
-        "producer_source_revision": _git_revision(),
-        "artifact_name": CANONICAL_API_ARTIFACT_NAME,
-        "model_type": CANONICAL_API_MODEL_TYPE,
-        "contract_id": contract.contract_id,
-        "feature_contract_version": contract.feature_contract_version,
-        "feature_columns": list(contract.ordered_features),
-        "feature_count": contract.feature_count,
-        "class_order": list(DEFAULT_CLASS_ORDER),
-        "class_names": list(RESULT_NAMES),
-        "training_seed": seed,
-        "estimator": {
-            "class": estimator_type,
-            "hyperparameters": dict(hyperparameters or {}),
-        },
-        "source_dataset_identity": source_dataset_identity,
-        "train_rows": len(split.train),
-        "validation_rows": len(split.validation),
-        "train_class_distribution": class_distribution(split.train),
-        "validation_class_distribution": class_distribution(split.validation),
-        "train_date_range": _date_range(split.train_timestamps),
-        "validation_date_range": _date_range(split.validation_timestamps),
-        "oos_metrics": dict(metrics),
-        "created_at": created_at or datetime.now(UTC).isoformat(),
-    }
+    """Build provenance through the dedicated candidate artifact module."""
+    return canonical_candidate_artifact.build_provenance(
+        split,
+        metrics,
+        contract,
+        seed=seed,
+        source_dataset_identity=source_dataset_identity,
+        source_binding=source_binding,
+        estimator_type=estimator_type,
+        hyperparameters=hyperparameters,
+        created_at=created_at,
+    )
 
 
 def build_candidate_envelope(
@@ -540,93 +688,27 @@ def build_candidate_envelope(
     contract: FeatureContract,
     provenance: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Create the smallest existing-loader-compatible candidate envelope."""
-    envelope = {
-        "model": fitted.model,
-        "scaler": fitted.scaler,
-        "artifact_name": CANONICAL_API_ARTIFACT_NAME,
-        "model_type": CANONICAL_API_MODEL_TYPE,
-        "required_for": "api",
-        "contract_id": contract.contract_id,
-        "feature_contract_version": contract.feature_contract_version,
-        "feature_columns": list(contract.ordered_features),
-        "schema_version": PRODUCER_SCHEMA_VERSION,
-        "provenance": dict(provenance),
-    }
-    try:
-        validate_canonical_model_envelope(envelope)
-    except ModelArtifactUnavailableError as exc:
-        raise TrainingContractError(
-            "candidate envelope is incompatible with canonical loader"
-        ) from exc
-    return envelope
+    """Create a candidate envelope through the dedicated artifact module."""
+    return canonical_candidate_artifact.build_candidate_envelope(fitted, contract, provenance)
 
 
-def _reject_production_path(path: Path) -> None:
-    resolved = path.resolve()
-    parts = tuple(part.lower() for part in resolved.parts)
-    if "config" in parts:
-        raise TrainingContractError("tracked configuration is not a candidate output")
-    if any(
-        parts[index : index + 2] == ("model_zoo", "production") for index in range(len(parts) - 1)
-    ) or any(part in {"models", "model_zoo"} for part in parts):
-        raise TrainingContractError("production artifact path is not a candidate output")
+def validate_candidate_metadata(
+    metadata: Mapping[str, Any], *, model_sha256: str | None = None
+) -> None:
+    """Validate candidate metadata through the dedicated artifact module."""
+    canonical_candidate_artifact.validate_candidate_metadata(metadata, model_sha256=model_sha256)
 
 
 def atomic_write_candidate(
-    envelope: Mapping[str, Any], output_path: str | Path
+    envelope: Mapping[str, Any],
+    output_path: str | Path,
+    *,
+    contract: FeatureContract | None = None,
 ) -> CandidateArtifact:
-    """Serialize, fsync, and atomically replace one non-production candidate."""
-    path = Path(output_path)
-    if not path.name:
-        raise TrainingContractError("candidate output path is invalid")
-    _reject_production_path(path)
-    try:
-        validate_canonical_model_envelope(envelope)
-    except ModelArtifactUnavailableError as exc:
-        raise TrainingContractError("candidate envelope validation failed") from exc
-    provenance = envelope.get("provenance")
-    if not isinstance(provenance, Mapping):
-        raise TrainingContractError("candidate provenance is missing")
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path: Path | None = None
-    try:
-        file_descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            dir=path.parent,
-        )
-        temporary_path = Path(temporary_name)
-        with os.fdopen(file_descriptor, "wb") as handle:
-            joblib.dump(dict(envelope), handle)
-            handle.flush()
-            os.fsync(handle.fileno())
-        temporary_path.replace(path)
-        temporary_path = None
-        try:
-            directory_fd = os.open(path.parent, os.O_DIRECTORY)
-        except (AttributeError, OSError):
-            directory_fd = None
-        if directory_fd is not None:
-            try:
-                try:
-                    os.fsync(directory_fd)
-                except OSError:
-                    logger.debug("candidate directory fsync unavailable: %s", path.parent)
-            finally:
-                os.close(directory_fd)
-    except Exception as exc:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
-        raise TrainingContractError("candidate artifact write failed") from exc
-
-    try:
-        checksum = ArtifactManifest.compute_sha256(path)
-    except (OSError, ValueError) as exc:
-        path.unlink(missing_ok=True)
-        raise TrainingContractError("candidate checksum computation failed") from exc
-    return CandidateArtifact(path=path, sha256=checksum, provenance=dict(provenance))
+    """Serialize a model and sidecar through the dedicated artifact module."""
+    return canonical_candidate_artifact.atomic_write_candidate(
+        envelope, output_path, contract=contract
+    )
 
 
 def produce_candidate(
@@ -645,6 +727,7 @@ def produce_candidate(
     max_depth: int = DEFAULT_MAX_DEPTH,
     learning_rate: float = DEFAULT_LEARNING_RATE,
     source_dataset_identity: str = "explicit-offline-feature-frame",
+    source_binding: CanonicalFrameBinding | None = None,
 ) -> CandidateArtifact:
     """Run the complete safe candidate pipeline and self-verify final bytes."""
     data = validate_training_frame(
@@ -667,13 +750,13 @@ def produce_candidate(
         max_depth=max_depth,
         learning_rate=learning_rate,
     )
-    metrics = evaluate_canonical_model(fitted, split)
     provenance = build_provenance(
         split,
-        metrics,
+        None,
         data.contract,
         seed=seed,
         source_dataset_identity=source_dataset_identity,
+        source_binding=source_binding,
         estimator_type=type(fitted.model).__module__ + "." + type(fitted.model).__name__,
         hyperparameters={
             "seed": seed,
@@ -684,14 +767,21 @@ def produce_candidate(
         },
     )
     envelope = build_candidate_envelope(fitted, data.contract, provenance)
-    candidate = atomic_write_candidate(envelope, output_path)
+    candidate = atomic_write_candidate(envelope, output_path, contract=data.contract)
 
     # Validate the bytes that actually reached the final candidate path. A
     # serialization failure therefore cannot be reported as a successful run.
     try:
         serialized_envelope = joblib.load(candidate.path)
-        validate_canonical_model_envelope(serialized_envelope)
+        validate_canonical_model_envelope(
+            serialized_envelope,
+            artifact_name=CANDIDATE_ARTIFACT_NAME,
+            model_type=CANDIDATE_MODEL_TYPE,
+            contract=data.contract,
+        )
     except Exception as exc:
         candidate.path.unlink(missing_ok=True)
+        if candidate.metadata_path is not None:
+            candidate.metadata_path.unlink(missing_ok=True)
         raise TrainingContractError("final candidate self-validation failed") from exc
     return candidate

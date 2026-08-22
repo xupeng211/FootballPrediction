@@ -458,17 +458,27 @@ engine = BacktestEngine(backtest_config)
 **维护者**: V35.0 Architecture Team
 **许可证**: 内部使用
 
-## Current Canonical Producer (PR-6)
+## Current Canonical Candidate Producer
 
 The current API producer is
 `src/ml/training/canonical_training_producer.py`, exposed by
 `npm run train -- --input <offline-feature-frame> --output <candidate-path>`.
-It supersedes the historical examples in this V35 document for the
-`v26_7_aligned` API path. The producer consumes the registry-owned ordered
-`v26_7_aligned/v1` contract with 20 features, uses a deterministic chronological
-split and later-row OOS evaluation, fits preprocessing on training rows only,
-and emits an existing-loader-compatible candidate envelope with bounded
-provenance and a whole-file SHA256.
+For the canonical JSON feature-frame artifact, pass its explicit
+`--receipt <offline-feature-frame.receipt.json>` as well. It supersedes the
+historical examples in this V35 document for candidate production. The
+producer uses the non-activated `canonical_prematch/vnext-v1` registry
+projection with the nine features marked `ACCEPTED_FOR_TRAINING`; blocked and
+excluded features are not compatibility inputs. It uses a deterministic
+chronological fit/reserved-evaluation split, fits `StandardScaler` and
+XGBoost on fit rows only, and does not pass reserved rows as an estimator
+`eval_set`.
+
+The output is an explicitly named non-production candidate plus a metadata
+sidecar. Both bind the frame and receipt SHA256 values, feature order, fit and
+reserved row-ID hashes, label contract, preprocessing identity, seed,
+hyperparameters, source revision, and model artifact hash. It is validated by
+the offline candidate projection, not activated through the production V1
+loader.
 
 This path deliberately does not use the current database/L3 training surface,
 does not silently fill missing canonical signals, and cannot write the tracked

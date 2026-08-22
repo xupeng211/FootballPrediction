@@ -19,10 +19,6 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from src.ml.inference.canonical_model_loader import (
-    CANONICAL_API_ARTIFACT_NAME,
-    CANONICAL_API_MODEL_TYPE,
-)
 from src.ml.training import canonical_training_producer as producer
 
 if TYPE_CHECKING:
@@ -51,10 +47,14 @@ def _load_input_frame(path: Path) -> pd.DataFrame:
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Canonical v26_7_aligned temporal training producer"
+        description="Canonical prematch vnext offline candidate producer"
     )
     parser.add_argument(
         "--input", required=True, help="explicit CSV/JSON/JSONL/Parquet feature frame"
+    )
+    parser.add_argument(
+        "--receipt",
+        help="repository-external canonical feature-frame receipt (required for canonical JSON frame)",
     )
     parser.add_argument("--output", help="non-production candidate artifact path")
     parser.add_argument("--timestamp-column", default=producer.DEFAULT_TIMESTAMP_COLUMN)
@@ -82,13 +82,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Validate or produce one safe canonical candidate."""
     args = _parse_args(argv)
-    frame = _load_input_frame(Path(args.input))
-    data = producer.validate_training_frame(
-        frame,
-        timestamp_column=args.timestamp_column,
-        target_column=args.target_column,
-        feature_cutoff_column=args.feature_cutoff_column,
-    )
+    input_path = Path(args.input)
+    if args.receipt:
+        data = producer.load_canonical_feature_frame(input_path, Path(args.receipt))
+    else:
+        frame = _load_input_frame(input_path)
+        data = producer.validate_training_frame(
+            frame,
+            timestamp_column=args.timestamp_column,
+            target_column=args.target_column,
+            feature_cutoff_column=args.feature_cutoff_column,
+        )
     split = producer.chronological_split(
         data,
         validation_fraction=args.validation_fraction,
@@ -110,9 +114,11 @@ def main(argv: list[str] | None = None) -> int:
             "feature_count": data.contract.feature_count,
             "feature_columns": list(data.contract.ordered_features),
             "train_rows": len(split.train),
-            "validation_rows": len(split.validation),
+            "reserved_evaluation_rows": len(split.validation),
+            "frame_eligible_rows": data.frame_eligible_rows,
+            "frame_ineligible_rows": data.frame_ineligible_rows,
             "train_date_range": producer._date_range(split.train_timestamps),
-            "validation_date_range": producer._date_range(split.validation_timestamps),
+            "reserved_evaluation_date_range": producer._date_range(split.validation_timestamps),
         }
         sys.stdout.write(
             f"{json.dumps(summary, ensure_ascii=False, sort_keys=True) if args.json else summary}\n"
@@ -121,11 +127,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.output:
         raise producer.TrainingContractError("--output is required unless --dry-run is used")
     candidate = producer.produce_candidate(
-        frame,
+        data.frame,
         args.output,
         timestamp_column=args.timestamp_column,
         target_column=args.target_column,
-        feature_cutoff_column=args.feature_cutoff_column,
+        feature_cutoff_column=data.feature_cutoff_column or args.feature_cutoff_column,
         validation_fraction=args.validation_fraction,
         min_train_rows=args.min_train_rows,
         min_validation_rows=args.min_validation_rows,
@@ -134,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         max_depth=args.depth,
         learning_rate=args.learning_rate,
         source_dataset_identity=args.source_dataset_identity,
+        source_binding=data.source_binding,
     )
     summary = {
         "mode": "canonical_training_candidate",
@@ -141,17 +148,25 @@ def main(argv: list[str] | None = None) -> int:
         "feature_contract_valid": True,
         "temporal_split_valid": True,
         "model_fit_success": True,
-        "oos_evaluation_success": True,
+        "oos_evaluation_success": False,
         "artifact_envelope_valid": True,
         "final_candidate_exists": candidate.path.exists(),
         "candidate_sha256_computed": bool(candidate.sha256),
         "provenance_complete": True,
         "candidate_sha256": candidate.sha256,
-        "artifact_name": CANONICAL_API_ARTIFACT_NAME,
-        "model_type": CANONICAL_API_MODEL_TYPE,
+        "artifact_name": producer.CANDIDATE_ARTIFACT_NAME,
+        "model_type": producer.CANDIDATE_MODEL_TYPE,
         "contract_id": data.contract.contract_id,
         "feature_count": data.contract.feature_count,
         "candidate_path": str(candidate.path),
+        "candidate_metadata_path": str(candidate.metadata_path)
+        if candidate.metadata_path
+        else None,
+        "candidate_metadata_sha256": candidate.metadata_sha256,
+        "train_rows": candidate.provenance.get("train_rows"),
+        "reserved_evaluation_rows": candidate.provenance.get("reserved_evaluation_rows"),
+        "frame_eligible_rows": candidate.provenance.get("frame_eligible_rows"),
+        "trainer_rejected_rows": candidate.provenance.get("trainer_rejected_rows"),
         "provenance": candidate.provenance,
     }
     sys.stdout.write(

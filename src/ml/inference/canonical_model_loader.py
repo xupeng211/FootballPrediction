@@ -41,6 +41,7 @@ from src.ml.inference.artifact_manifest import (
     get_process_readiness_manager,
 )
 from src.ml.inference.feature_contract_registry import (
+    VNEXT_CONTRACT_ID,
     FeatureContract,
     FeatureContractRegistry,
     FeatureContractRegistryError,
@@ -424,12 +425,13 @@ class CanonicalModelLoader:
         return ModelArtifactUnavailableError(f"canonical model unavailable: {self._model_type}")
 
 
-def validate_canonical_model_envelope(
+def validate_canonical_model_envelope(  # noqa: C901
     model_data: Any,
     *,
     registry: FeatureContractRegistry | None = None,
     artifact_name: str = CANONICAL_API_ARTIFACT_NAME,
     model_type: str = CANONICAL_API_MODEL_TYPE,
+    contract: FeatureContract | None = None,
 ) -> LoadedCanonicalModel:
     """Validate a candidate envelope with the loader's structural rules.
 
@@ -441,19 +443,48 @@ def validate_canonical_model_envelope(
     """
     contract_registry = registry or FeatureContractRegistry()
     try:
-        contract = contract_registry.get_for_model(model_type, artifact_name=artifact_name)
-        runtime_adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)
-        if type(runtime_adapter) is not V26_6_PreMatchAdapter:
-            raise _LoaderValidationError("canonical runtime adapter binding is unexpected")
-        runtime_features = tuple(runtime_adapter.get_required_features())
-        if (
-            contract.artifact_name != artifact_name
-            or contract.model_type != model_type
-            or contract.feature_count != len(runtime_features)
-            or contract.ordered_features != runtime_features
-        ):
-            raise _LoaderValidationError("canonical candidate contract binding is invalid")
+        if contract is None:
+            contract = contract_registry.get_for_model(model_type, artifact_name=artifact_name)
+            runtime_adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)
+            if type(runtime_adapter) is not V26_6_PreMatchAdapter:
+                raise _LoaderValidationError("canonical runtime adapter binding is unexpected")
+            runtime_features = tuple(runtime_adapter.get_required_features())
+            if (
+                contract.artifact_name != artifact_name
+                or contract.model_type != model_type
+                or contract.feature_count != len(runtime_features)
+                or contract.ordered_features != runtime_features
+            ):
+                raise _LoaderValidationError("canonical candidate contract binding is invalid")
+        else:
+            registered = contract_registry.get_by_contract_id(contract.contract_id)
+            if (
+                contract.artifact_name != artifact_name
+                or contract.model_type != model_type
+                or contract.feature_contract_version != registered.feature_contract_version
+            ):
+                raise _LoaderValidationError("canonical candidate contract identity is invalid")
+            if contract.contract_id == VNEXT_CONTRACT_ID:
+                accepted_features = tuple(
+                    status.feature_name
+                    for status in registered.feature_statuses
+                    if status.training_decision == "ACCEPTED_FOR_TRAINING"
+                )
+                if (
+                    contract.feature_count != len(accepted_features)
+                    or contract.ordered_features != accepted_features
+                ):
+                    raise _LoaderValidationError("canonical training projection is invalid")
+            elif contract != registered:
+                raise _LoaderValidationError("canonical candidate contract override is invalid")
+            # The override is an explicitly validated offline projection, so
+            # its ordered features are the binding used for model metadata
+            # validation.  The production V1 runtime adapter must not be
+            # consulted for this non-production candidate path.
+            runtime_features = tuple(contract.ordered_features)
 
+        if contract is None:  # pragma: no cover - guarded by the branches above
+            raise _LoaderValidationError("canonical candidate contract is unavailable")
         binding = _CanonicalBinding(
             artifact=ArtifactEntry(
                 name=artifact_name,
