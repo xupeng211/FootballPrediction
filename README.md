@@ -204,6 +204,7 @@ this section rather than maintaining duplicate command lists.
 | **GD-A01 file-first assembly** | Specialized / internal offline surface | `npm run gd:a01 -- {build,validate}` with every input/output path explicit | Builds only the GD-A01 spine+historical-odds assembly outside the repository after validating frozen source identities, M3 receipt/output, exact linkage, and provider semantics; zero DB, zero network, zero raw mutation, zero features/training. This is not the completed Golden Dataset |
 | **GD-A02 file-first facts assembly** | Specialized / internal offline surface | `npm run gd:a02 -- {build,validate}` with every input/output path explicit | Projects the validated GD-A01 admitted population onto the frozen FotMob capture/staging facts contract (five sections, result label, xG coverage) with exact provenance, deterministic ordering, population conservation, and postmatch-only semantics; zero DB, zero network, zero raw mutation, zero features/training. This does not complete the Golden Dataset |
 | **GD-A03 prior-state feature view** | Specialized / internal offline surface | `npm run gd:a03 -- {build,validate}` with every input/output path explicit | Derives strict target-kickoff-exclusive prior-state features from GD-A01 identity, GD-A02 facts, and the canonical 1,140-fixture schedule; records feature-level numeric lineage and availability without defaults/proxies; zero DB, zero network, zero raw mutation, zero training/backtest. This does not prove decision-time readiness or complete the Golden Dataset |
+| **Canonical prematch training feature frame** | Specialized / internal offline surface | `npm run feature:frame -- {build,validate}` with explicit repository-external GD-A03 artifact/receipt and output paths; `validate` rebinds the frozen GD-A03 inputs | Derives a versioned training-ready projection from the validated GD-A03 artifact and the single V-next registry: 9 accepted features, 2 excluded, 6 blocked; preserves every target row, label isolation, cutoff/provenance, and deterministic receipt. Offline/file-first only; zero DB, network, raw writes, training, backtest, prediction, or model activation. Decision-time (T-aware) readiness remains separate and unproven |
 | **Feature build** | Primary canonical | `npm run l3:stitch` | Schema must already be provisioned from the selected `database/migrations/` authority; the main stitch pipeline checks the L3 precondition and its Elo child checks the pre-provisioned `team_elo_ratings` relation before writing data. Neither path performs runtime schema creation. The raw SQL tree currently has no canonical `team_elo_ratings` definition; that provisioning gap is carried forward and is not repaired by A4-F1. Execution remains separately authorized. Confirm input/write scope; `npm run smelt` is a specialized internal alternative |
 | **Training** | Primary canonical | `npm run train -- --input <offline-feature-frame> --output <candidate-path>` | **Only with explicit training authorization.** The canonical producer consumes an explicit pre-match frame, writes only a non-production candidate, uses the exact API contract, and never activates the tracked manifest. `train:fast` and `train:deep` are variants |
 | **Prediction** | Primary canonical | `npm run predict -- --input <json-file>` (or JSON stdin) | HTTP and default CLI share `src/ml/inference/prediction_runtime.py`; the CLI does not perform legacy DB-batch discovery, fetch network data, or write artifacts. The canonical API artifact is currently pending, so prediction fails closed; execution still requires explicit prediction authorization |
@@ -251,12 +252,17 @@ this section rather than maintaining duplicate command lists.
   replacements; training, runtime, and model-schema defaults remain V1.
 - Raw ELO remains pending an Owner-approved bounded-start parameter contract;
   the standings semantic contract is frozen while runtime/history values remain
-  unavailable until separate implementation; SOT remains source-blocked; possession is
-  retained but unavailable. `FEATURE_FRAME_READINESS=NOT_READY`,
-  `REAL_TRAINING_READINESS=NOT_READY`, and
-  `TRAIN_INFERENCE_NUMERIC_PARITY=NOT_PROVEN` remain unchanged.
-- The approved shared pure canonical semantic-engine architecture is a future
-  implementation boundary, not a runtime behavior change in this state.
+  unavailable until separate decision-time implementation; SOT remains source-blocked;
+  possession is explicitly excluded from the first training frame. The derived
+  `canonical-prematch-training-feature-frame/v1` projection accepts only the 9 features
+  whose historical formulas and typed-context runtime semantics are proven by repository
+  tests; it keeps all 888 rows accounted for, with early-history rows ineligible rather
+  than imputed. Its readiness is scoped to the kickoff-exclusive offline frame. The
+  V-next contract is still not activated as a production model/runtime schema, and the
+  system-wide strict decision-time evaluation remains `NOT_READY`.
+- The canonical prematch semantic engine is implemented as a pure typed-context boundary;
+  it is not a provider, capture route, production runtime switch, or compatibility fallback.
+  See `docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md`.
 
 ### Entry classification
 

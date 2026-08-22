@@ -67,6 +67,7 @@ _FEATURE_STATUS_FIELDS = frozenset(
         "runtime_source_status",
         "training_eligibility",
         "reason_code",
+        "training_decision",
     }
 )
 _MIGRATION_MAP_FIELDS = frozenset({"from_contract_id", "to_contract_id", "entries"})
@@ -96,143 +97,72 @@ _FEATURE_STATUS_VALUE_FIELDS = (
     "runtime_source_status",
     "training_eligibility",
     "reason_code",
+    "training_decision",
+)
+_ACCEPTED_DERIVED_STATUS = (
+    "RETAINED_PROVEN",
+    "PROVEN_DERIVED",
+    "PROVEN_DERIVED",
+    "PROVEN_CANONICAL_TYPED_CONTEXT",
+    "ACCEPTED_FOR_TRAINING",
+    "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+    "ACCEPTED_FOR_TRAINING",
+)
+_BLOCKED_SOT_STATUS = (
+    "RETAINED_PENDING",
+    "SEMANTICS_PENDING",
+    "SOURCE_PENDING",
+    "SOURCE_PENDING",
+    "NOT_ELIGIBLE_SOURCE_CLOSURE",
+    "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+    "BLOCKED_PENDING_EVIDENCE",
+)
+_EXCLUDED_POSSESSION_STATUS = (
+    "RETAINED_UNAVAILABLE",
+    "SEMANTICS_DEFINED",
+    "UNAVAILABLE",
+    "UNAVAILABLE",
+    "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
+    "NO_PROVEN_POSSESSION_SOURCE_FACT",
+    "EXCLUDED_FROM_TRAINING",
+)
+_BLOCKED_STANDINGS_STATUS = (
+    "RETAINED_PROVEN",
+    "SEMANTICS_FROZEN",
+    "PROVEN_FOR_FROZEN_SCOPE",
+    "NOT_PROVEN",
+    "NOT_READY_RUNTIME_PARITY",
+    "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    "BLOCKED_PENDING_EVIDENCE",
+)
+_BLOCKED_ELO_STATUS = (
+    "RETAINED_PENDING",
+    "OWNER_PARAMETER_DECISION_REQUIRED",
+    "CONTRACT_PENDING",
+    "CONTRACT_PENDING",
+    "NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT",
+    "ELO_OWNER_PARAMETER_DECISION_REQUIRED",
+    "BLOCKED_PENDING_EVIDENCE",
 )
 _EXPECTED_VNEXT_FEATURE_STATUS_VALUES = {
-    "rolling_xg_home": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    **dict.fromkeys(("rolling_xg_home", "rolling_xg_away"), _ACCEPTED_DERIVED_STATUS),
+    **dict.fromkeys(
+        ("rolling_shots_on_target_home", "rolling_shots_on_target_away"), _BLOCKED_SOT_STATUS
     ),
-    "rolling_xg_away": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    **dict.fromkeys(
+        ("rolling_possession_home", "rolling_possession_away"), _EXCLUDED_POSSESSION_STATUS
     ),
-    "rolling_shots_on_target_home": (
-        "RETAINED_PENDING",
-        "SEMANTICS_PENDING",
-        "SOURCE_PENDING",
-        "SOURCE_PENDING",
-        "NOT_ELIGIBLE_SOURCE_CLOSURE",
-        "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+    **dict.fromkeys(
+        ("home_table_position", "away_table_position", "table_position_diff"),
+        _BLOCKED_STANDINGS_STATUS,
     ),
-    "rolling_shots_on_target_away": (
-        "RETAINED_PENDING",
-        "SEMANTICS_PENDING",
-        "SOURCE_PENDING",
-        "SOURCE_PENDING",
-        "NOT_ELIGIBLE_SOURCE_CLOSURE",
-        "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+    **dict.fromkeys(
+        ("home_points", "away_points", "points_diff", "home_recent_form_points"),
+        _ACCEPTED_DERIVED_STATUS,
     ),
-    "rolling_possession_home": (
-        "RETAINED_UNAVAILABLE",
-        "SEMANTICS_DEFINED",
-        "UNAVAILABLE",
-        "UNAVAILABLE",
-        "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
-        "NO_PROVEN_POSSESSION_SOURCE_FACT",
-    ),
-    "rolling_possession_away": (
-        "RETAINED_UNAVAILABLE",
-        "SEMANTICS_DEFINED",
-        "UNAVAILABLE",
-        "UNAVAILABLE",
-        "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
-        "NO_PROVEN_POSSESSION_SOURCE_FACT",
-    ),
-    "home_table_position": (
-        "RETAINED_PROVEN",
-        "SEMANTICS_FROZEN",
-        "PROVEN_FOR_FROZEN_SCOPE",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "away_table_position": (
-        "RETAINED_PROVEN",
-        "SEMANTICS_FROZEN",
-        "PROVEN_FOR_FROZEN_SCOPE",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "table_position_diff": (
-        "RETAINED_PROVEN",
-        "SEMANTICS_FROZEN",
-        "PROVEN_FOR_FROZEN_SCOPE",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "home_points": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "away_points": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "points_diff": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "home_recent_form_points": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "raw_elo_gap": (
-        "RETAINED_PENDING",
-        "OWNER_PARAMETER_DECISION_REQUIRED",
-        "CONTRACT_PENDING",
-        "CONTRACT_PENDING",
-        "NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT",
-        "ELO_OWNER_PARAMETER_DECISION_REQUIRED",
-    ),
-    "home_fatigue_index": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "away_fatigue_index": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
-    ),
-    "fatigue_diff": (
-        "RETAINED_PROVEN",
-        "PROVEN_DERIVED",
-        "PROVEN_DERIVED",
-        "NOT_PROVEN",
-        "NOT_READY_RUNTIME_PARITY",
-        "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+    "raw_elo_gap": _BLOCKED_ELO_STATUS,
+    **dict.fromkeys(
+        ("home_fatigue_index", "away_fatigue_index", "fatigue_diff"), _ACCEPTED_DERIVED_STATUS
     ),
 }
 
@@ -275,6 +205,7 @@ class FeatureStatus:
     runtime_source_status: str
     training_eligibility: str
     reason_code: str
+    training_decision: str
 
 
 @dataclass(frozen=True)

@@ -66,18 +66,20 @@
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "rolling_xg_away",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "rolling_shots_on_target_home",
@@ -86,7 +88,8 @@
                     "historical_source_status": "SOURCE_PENDING",
                     "runtime_source_status": "SOURCE_PENDING",
                     "training_eligibility": "NOT_ELIGIBLE_SOURCE_CLOSURE",
-                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING"
+                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "rolling_shots_on_target_away",
@@ -95,7 +98,8 @@
                     "historical_source_status": "SOURCE_PENDING",
                     "runtime_source_status": "SOURCE_PENDING",
                     "training_eligibility": "NOT_ELIGIBLE_SOURCE_CLOSURE",
-                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING"
+                    "reason_code": "SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "rolling_possession_home",
@@ -104,7 +108,8 @@
                     "historical_source_status": "UNAVAILABLE",
                     "runtime_source_status": "UNAVAILABLE",
                     "training_eligibility": "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
-                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT"
+                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT",
+                    "training_decision": "EXCLUDED_FROM_TRAINING"
                 },
                 {
                     "feature_name": "rolling_possession_away",
@@ -113,7 +118,8 @@
                     "historical_source_status": "UNAVAILABLE",
                     "runtime_source_status": "UNAVAILABLE",
                     "training_eligibility": "NOT_ELIGIBLE_SOURCE_UNAVAILABLE",
-                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT"
+                    "reason_code": "NO_PROVEN_POSSESSION_SOURCE_FACT",
+                    "training_decision": "EXCLUDED_FROM_TRAINING"
                 },
                 {
                     "feature_name": "home_table_position",
@@ -122,7 +128,8 @@
                     "historical_source_status": "PROVEN_FOR_FROZEN_SCOPE",
                     "runtime_source_status": "NOT_PROVEN",
                     "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "away_table_position",
@@ -131,7 +138,8 @@
                     "historical_source_status": "PROVEN_FOR_FROZEN_SCOPE",
                     "runtime_source_status": "NOT_PROVEN",
                     "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "table_position_diff",
@@ -140,43 +148,48 @@
                     "historical_source_status": "PROVEN_FOR_FROZEN_SCOPE",
                     "runtime_source_status": "NOT_PROVEN",
                     "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "home_points",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "away_points",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "points_diff",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "home_recent_form_points",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "raw_elo_gap",
@@ -185,34 +198,38 @@
                     "historical_source_status": "CONTRACT_PENDING",
                     "runtime_source_status": "CONTRACT_PENDING",
                     "training_eligibility": "NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT",
-                    "reason_code": "ELO_OWNER_PARAMETER_DECISION_REQUIRED"
+                    "reason_code": "ELO_OWNER_PARAMETER_DECISION_REQUIRED",
+                    "training_decision": "BLOCKED_PENDING_EVIDENCE"
                 },
                 {
                     "feature_name": "home_fatigue_index",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "away_fatigue_index",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 },
                 {
                     "feature_name": "fatigue_diff",
                     "v_next_status": "RETAINED_PROVEN",
                     "semantic_definition_status": "PROVEN_DERIVED",
                     "historical_source_status": "PROVEN_DERIVED",
-                    "runtime_source_status": "NOT_PROVEN",
-                    "training_eligibility": "NOT_READY_RUNTIME_PARITY",
-                    "reason_code": "RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN"
+                    "runtime_source_status": "PROVEN_CANONICAL_TYPED_CONTEXT",
+                    "training_eligibility": "ACCEPTED_FOR_TRAINING",
+                    "reason_code": "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN",
+                    "training_decision": "ACCEPTED_FOR_TRAINING"
                 }
             ]
         }

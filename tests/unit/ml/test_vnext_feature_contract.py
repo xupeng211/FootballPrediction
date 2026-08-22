@@ -170,15 +170,59 @@ def test_vnext_feature_status_boundaries_remain_truthful() -> None:
     contract = load_feature_contract_registry().get_by_contract_id(VNEXT_CONTRACT_ID)
     statuses = {status.feature_name: status for status in contract.feature_statuses}
 
+    accepted = {
+        "rolling_xg_home",
+        "rolling_xg_away",
+        "home_points",
+        "away_points",
+        "points_diff",
+        "home_recent_form_points",
+        "home_fatigue_index",
+        "away_fatigue_index",
+        "fatigue_diff",
+    }
+    excluded = {"rolling_possession_home", "rolling_possession_away"}
+    blocked = {
+        "rolling_shots_on_target_home",
+        "rolling_shots_on_target_away",
+        "home_table_position",
+        "away_table_position",
+        "table_position_diff",
+        "raw_elo_gap",
+    }
+    assert {
+        name
+        for name, status in statuses.items()
+        if status.training_decision == "ACCEPTED_FOR_TRAINING"
+    } == accepted
+    assert {
+        name
+        for name, status in statuses.items()
+        if status.training_decision == "EXCLUDED_FROM_TRAINING"
+    } == excluded
+    assert {
+        name
+        for name, status in statuses.items()
+        if status.training_decision == "BLOCKED_PENDING_EVIDENCE"
+    } == blocked
+
+    for feature in accepted:
+        assert statuses[feature].runtime_source_status == "PROVEN_CANONICAL_TYPED_CONTEXT"
+        assert statuses[feature].training_eligibility == "ACCEPTED_FOR_TRAINING"
+        assert statuses[feature].reason_code == "CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN"
+        assert statuses[feature].training_decision == "ACCEPTED_FOR_TRAINING"
+
     for feature in ("rolling_shots_on_target_home", "rolling_shots_on_target_away"):
         assert statuses[feature].semantic_definition_status == "SEMANTICS_PENDING"
         assert statuses[feature].historical_source_status == "SOURCE_PENDING"
         assert statuses[feature].training_eligibility == "NOT_ELIGIBLE_SOURCE_CLOSURE"
+        assert statuses[feature].training_decision == "BLOCKED_PENDING_EVIDENCE"
 
     for feature in ("rolling_possession_home", "rolling_possession_away"):
         assert statuses[feature].historical_source_status == "UNAVAILABLE"
         assert statuses[feature].runtime_source_status == "UNAVAILABLE"
         assert statuses[feature].training_eligibility == "NOT_ELIGIBLE_SOURCE_UNAVAILABLE"
+        assert statuses[feature].training_decision == "EXCLUDED_FROM_TRAINING"
 
     for feature in ("home_table_position", "away_table_position", "table_position_diff"):
         assert statuses[feature].v_next_status == "RETAINED_PROVEN"
@@ -192,6 +236,7 @@ def test_vnext_feature_status_boundaries_remain_truthful() -> None:
         "OWNER_PARAMETER_DECISION_REQUIRED"
     )
     assert statuses["raw_elo_gap"].training_eligibility == ("NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT")
+    assert statuses["raw_elo_gap"].training_decision == "BLOCKED_PENDING_EVIDENCE"
 
 
 def test_vnext_does_not_create_a_model_binding_or_reach_legacy_proxies() -> None:
