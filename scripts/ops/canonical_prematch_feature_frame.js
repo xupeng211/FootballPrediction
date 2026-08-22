@@ -289,12 +289,12 @@ function validate(args, repositoryRoot) {
 
 function main(argv = process.argv.slice(2)) {
     const repositoryRoot = path.resolve(__dirname, '../..');
-    const args = parseArgs(argv);
-    if (args.command === 'help') {
-        process.stdout.write(`${usage()}\n`);
-        return EXIT_CODES.OK;
-    }
     try {
+        const args = parseArgs(argv);
+        if (args.command === 'help') {
+            process.stdout.write(`${usage()}\n`);
+            return EXIT_CODES.OK;
+        }
         const result = args.command === 'build' ? build(args, repositoryRoot) : validate(args, repositoryRoot);
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
         return EXIT_CODES.OK;

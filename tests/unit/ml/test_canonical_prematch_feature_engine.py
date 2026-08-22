@@ -164,6 +164,53 @@ def test_history_gap_is_unavailable_without_imputation() -> None:
     assert result["features"]["away_points"]["value"] == EXPECTED_AWAY_POINTS
 
 
+def test_missing_outcome_preserves_context_and_propagates_only_result_dependencies() -> None:
+    matches = _matches()
+    matches[0]["outcome"] = None
+
+    result = build_canonical_prematch_features(_context(matches=matches))
+
+    assert result["features"]["rolling_xg_home"]["availability_status"] == "AVAILABLE"
+    assert result["features"]["rolling_xg_away"]["availability_status"] == "AVAILABLE"
+    assert result["features"]["home_fatigue_index"]["availability_status"] == "AVAILABLE"
+    assert result["features"]["away_fatigue_index"]["availability_status"] == "AVAILABLE"
+    assert result["features"]["away_points"]["availability_status"] == "AVAILABLE"
+
+    for name in ("home_points", "points_diff", "home_recent_form_points"):
+        line = result["features"][name]
+        assert line["availability_status"] == "UNAVAILABLE"
+        assert line["value"] is None
+    assert result["features"]["home_points"]["unavailable_reason_codes"] == [
+        "HISTORY_GAP",
+        "STANDINGS_HISTORY_GAP",
+    ]
+    assert result["features"]["home_recent_form_points"]["unavailable_reason_codes"] == [
+        "HISTORY_GAP",
+    ]
+    assert "a1" in result["features"]["home_points"]["source_match_ids"]
+
+
+@pytest.mark.parametrize("field", ["home_xg", "away_xg"])
+def test_negative_xg_is_rejected_by_runtime_semantics(field: str) -> None:
+    context = _context()
+    context["prior_matches"][0][field] = -0.1
+
+    with pytest.raises(CanonicalPrematchFeatureError, match="must be non-negative"):
+        build_canonical_prematch_features(context)
+
+
+def test_zero_xg_is_valid_and_null_xg_remains_unavailable() -> None:
+    zero_context = _context()
+    zero_context["prior_matches"][0]["home_xg"] = 0
+    zero_result = build_canonical_prematch_features(zero_context)
+    assert zero_result["features"]["rolling_xg_home"]["availability_status"] == "AVAILABLE"
+
+    null_context = _context()
+    null_context["prior_matches"][0]["home_xg"] = None
+    null_result = build_canonical_prematch_features(null_context)
+    assert null_result["features"]["rolling_xg_home"]["availability_status"] == "UNAVAILABLE"
+
+
 def test_points_and_fatigue_require_history_closure() -> None:
     context = _context(matches=_matches()[:8], closure_matches=_matches())
 

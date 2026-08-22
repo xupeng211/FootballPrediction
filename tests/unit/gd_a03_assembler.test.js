@@ -321,7 +321,7 @@ function runtimeContextForFixture(fixture) {
                 away_team: row.away_team,
                 home_xg: sourceFact?.facts?.xg?.home?.value ?? null,
                 away_xg: sourceFact?.facts?.xg?.away?.value ?? null,
-                outcome: sourceFact?.facts?.match_result?.outcome,
+                outcome: sourceFact?.facts?.match_result?.outcome ?? null,
                 available_at_utc: null,
             };
         });
@@ -413,6 +413,40 @@ test('GD-A03 unavailable reasons remain visible and equal in the canonical runti
         );
         assert.match(runtime.canonical_diagnostics[featureName].provenance_digest, /^[0-9a-f]{64}$/);
     }
+});
+
+test('missing historical outcome stays in the source set and propagates only result dependencies', () => {
+    const fixture = buildFixture();
+    const missingFact = fixture.facts.find(row => row.canonical_match_id !== fixture.targetId);
+    missingFact.facts.match_result = {
+        ...missingFact.facts.match_result,
+        status: 'UNAVAILABLE',
+        home_score: null,
+        away_score: null,
+        outcome: null,
+    };
+    const historical = buildPriorStateFeatureView(
+        rebindSourceBindings({ ...fixture.options, factRows: fixture.facts })
+    ).artifact.rows.find(row => row.canonical_match_id === fixture.targetId);
+    const runtime = canonicalRuntimeProjection(runtimeContextForFixture(fixture));
+    const accepted = loadFeatureContract(path.resolve(__dirname, '../..')).vNextContract.feature_statuses
+        .filter(status => status.training_decision === 'ACCEPTED_FOR_TRAINING')
+        .map(status => status.feature_name);
+
+    assert.equal(runtime.success, false);
+    for (const featureName of accepted) {
+        assert.equal(
+            runtime.canonical_diagnostics[featureName].availability_status,
+            historical.features[featureName].availability_status
+        );
+        assert.deepEqual(
+            runtime.canonical_diagnostics[featureName].unavailable_reason_codes,
+            historical.features[featureName].unavailable_reason_codes
+        );
+    }
+    assert.equal(runtime.canonical_diagnostics.rolling_xg_home.availability_status, 'AVAILABLE');
+    assert.equal(runtime.canonical_diagnostics.home_fatigue_index.availability_status, 'AVAILABLE');
+    assert.ok(runtime.canonical_diagnostics.home_points.source_match_ids.includes(missingFact.canonical_match_id));
 });
 
 function rebindSourceBindings(options) {

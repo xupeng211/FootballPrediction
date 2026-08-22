@@ -21,7 +21,7 @@ const FRAME_AS_OF_STATUS = 'KICKOFF_REFERENCE_ONLY';
 const FRAME_DECISION_TIME_STATUS = 'NOT_PROVEN_KICKOFF_REFERENCE_ONLY';
 const FRAME_READINESS = Object.freeze({
     feature_frame_readiness: 'READY',
-    real_training_readiness: 'READY',
+    real_training_readiness: 'READY_FOR_OFFLINE_CANDIDATE_INPUT',
     strict_decision_time_value_evaluation: 'NOT_READY',
     golden_dataset_complete: false,
     training_execution_authorized: false,
@@ -464,8 +464,11 @@ function validateFrameArtifact(artifact) {
     ) {
         fail('canonical prematch frame temporal boundary is invalid', 'TEMPORAL_SEMANTICS_UNPROVEN');
     }
-    if (artifact.feature_frame_readiness !== 'READY' || artifact.real_training_readiness !== 'READY') {
-        fail('canonical prematch frame readiness is not READY', 'READINESS_BOUNDARY');
+    if (
+        artifact.feature_frame_readiness !== FRAME_READINESS.feature_frame_readiness ||
+        artifact.real_training_readiness !== FRAME_READINESS.real_training_readiness
+    ) {
+        fail('canonical prematch frame readiness is not training-input scoped', 'READINESS_BOUNDARY');
     }
     if (
         artifact.strict_decision_time_value_evaluation !== 'NOT_READY' ||

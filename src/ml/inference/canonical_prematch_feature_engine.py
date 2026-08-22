@@ -91,6 +91,14 @@ def _finite(value: Any, label: str) -> float | None:
     return float(value)
 
 
+def _non_negative_finite(value: Any, label: str) -> float | None:
+    """Validate a numeric fact whose domain is explicitly non-negative."""
+    normalized = _finite(value, label)
+    if normalized is not None and normalized < 0:
+        _fail("INVALID_TYPED_FACT", f"{label} must be non-negative or null")
+    return normalized
+
+
 def accepted_feature_names(registry_path: str | Path | None = None) -> tuple[str, ...]:
     """Return the accepted ordered V-next names from the canonical registry."""
     registry = FeatureContractRegistry(registry_path)
@@ -105,7 +113,9 @@ def accepted_feature_names(registry_path: str | Path | None = None) -> tuple[str
     return accepted
 
 
-def _normalise_outcome(value: Any, label: str) -> str:
+def _normalise_outcome(value: Any, label: str) -> str | None:
+    if value is None:
+        return None
     normalized = _text(value, label).lower()
     aliases = {
         "h": "home",
@@ -387,8 +397,12 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
                 "season": source_season,
                 "home_team": source_home,
                 "away_team": source_away,
-                "home_xg": _finite(raw_match["home_xg"], f"prior_matches[{index}].home_xg"),
-                "away_xg": _finite(raw_match["away_xg"], f"prior_matches[{index}].away_xg"),
+                "home_xg": _non_negative_finite(
+                    raw_match["home_xg"], f"prior_matches[{index}].home_xg"
+                ),
+                "away_xg": _non_negative_finite(
+                    raw_match["away_xg"], f"prior_matches[{index}].away_xg"
+                ),
                 "outcome": _normalise_outcome(
                     raw_match["outcome"], f"prior_matches[{index}].outcome"
                 ),
@@ -430,10 +444,13 @@ def _team_matches(matches: list[dict[str, Any]], team: str) -> list[dict[str, An
     return [match for match in matches if team in (match["home_team"], match["away_team"])]
 
 
-def _points(match: dict[str, Any], team: str) -> int:
-    if match["outcome"] == "draw":
+def _points(match: dict[str, Any], team: str) -> int | None:
+    outcome = match["outcome"]
+    if outcome is None:
+        return None
+    if outcome == "draw":
         return 1
-    home_won = match["outcome"] == "home"
+    home_won = outcome == "home"
     team_won = (home_won and match["home_team"] == team) or (
         not home_won and match["away_team"] == team
     )
@@ -533,7 +550,12 @@ def _points_line(
 ) -> dict[str, Any]:
     prior = _team_matches(matches, team)
     reason_codes = [] if prior else [HISTORY_CLOSURE_UNPROVEN]
-    value = sum(_points(match, team) for match in prior) if prior else None
+    point_values = [_points(match, team) for match in prior]
+    if any(points is None for points in point_values):
+        reason_codes.extend(["HISTORY_GAP", "STANDINGS_HISTORY_GAP"])
+    value = (
+        sum(points for points in point_values if points is not None) if not reason_codes else None
+    )
     return _line(
         feature_name=feature_name,
         value=value,
@@ -549,7 +571,12 @@ def _form_line(team: str, matches: list[dict[str, Any]], as_of: datetime) -> dic
     prior = _team_matches(matches, team)
     selected = prior[-ROLLING_HISTORY_COUNT:]
     reason_codes = [] if len(selected) == ROLLING_HISTORY_COUNT else ["INSUFFICIENT_HISTORY"]
-    value = None if reason_codes else sum(_points(match, team) for match in selected)
+    point_values = [_points(match, team) for match in selected]
+    if any(points is None for points in point_values):
+        reason_codes.append("HISTORY_GAP")
+    value = (
+        sum(points for points in point_values if points is not None) if not reason_codes else None
+    )
     return _line(
         feature_name="home_recent_form_points",
         value=value,

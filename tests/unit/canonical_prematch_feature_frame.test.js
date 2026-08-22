@@ -17,8 +17,10 @@ const {
     projectFrameArtifact,
     sourceLineBindingDigest,
     validateFrameAgainstInputs,
+    validateFrameArtifact,
     validateFrameOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract');
+const { spawnSync } = require('node:child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const LOADED = loadFeatureContract(REPO_ROOT);
@@ -196,7 +198,7 @@ test('generated artifact and receipt validate, and rebuilding is deterministic',
         duplicate: 0,
         extra: 0,
         feature_frame_readiness: 'READY',
-        real_training_readiness: 'READY',
+        real_training_readiness: 'READY_FOR_OFFLINE_CANDIDATE_INPUT',
         strict_decision_time_value_evaluation: 'NOT_READY',
         golden_dataset_complete: false,
         training_execution_authorized: false,
@@ -216,8 +218,28 @@ test('generated artifact and receipt validate, and rebuilding is deterministic',
     const firstReceiptBytes = Buffer.from(`${JSON.stringify(firstReceipt, null, 2)}\n`);
 
     validateFrameOutputFiles(firstArtifactBytes, firstReceiptBytes);
+    const broadReceipt = {
+        ...firstReceipt,
+        real_training_readiness: 'READY',
+        receipt_content_sha256: null,
+    };
+    broadReceipt.receipt_content_sha256 = computeFrameReceiptHash(broadReceipt);
+    assert.throws(
+        () => validateFrameOutputFiles(firstArtifactBytes, Buffer.from(`${JSON.stringify(broadReceipt, null, 2)}\n`)),
+        /readiness/
+    );
     assert.equal(JSON.stringify(first), JSON.stringify(second));
     assert.equal(first.business_content_sha256, second.business_content_sha256);
+});
+
+test('readiness is scoped to offline candidate input and rejects broad READY', () => {
+    const artifact = projected();
+
+    assert.equal(artifact.real_training_readiness, 'READY_FOR_OFFLINE_CANDIDATE_INPUT');
+    assert.throws(() => {
+        const legacy = { ...artifact, real_training_readiness: 'READY' };
+        validateFrameArtifact(legacy);
+    }, /readiness/);
 });
 
 test('target label mutation does not change prematch feature projection', () => {
@@ -317,4 +339,37 @@ test('source-bound validation rejects rehashed row, contract, and label tamperin
     const label = JSON.parse(original.artifactBytes.toString('utf8'));
     label.rows[0].target_label.outcome = 'away';
     assert.throws(() => validate(...Object.values(rehash(label))), /bound|source projection|provenance/);
+});
+
+test('CLI input errors are structured and return exit code 2 without a stack trace', () => {
+    const cliPath = path.join(REPO_ROOT, 'scripts/ops/canonical_prematch_feature_frame.js');
+    const cases = [
+        ['missing required args', ['build']],
+        ['unknown command', ['unknown-command']],
+        [
+            'invalid expected targets',
+            [
+                'build',
+                '--gd-a03-artifact', '/tmp/gd-a03-artifact.json',
+                '--gd-a03-receipt', '/tmp/gd-a03-receipt.json',
+                '--output', '/tmp/frame.json',
+                '--receipt', '/tmp/frame-receipt.json',
+                '--code-revision', 'a'.repeat(40),
+                '--expected-targets', '0',
+            ],
+        ],
+    ];
+
+    for (const [label, args] of cases) {
+        const result = spawnSync(process.execPath, [cliPath, ...args], {
+            cwd: REPO_ROOT,
+            encoding: 'utf8',
+        });
+        assert.equal(result.status, 2, label);
+        assert.equal(result.stdout, '', label);
+        assert.doesNotMatch(result.stderr, /\n\s*at\s|node:internal|CanonicalPrematchFeatureFrameError/, label);
+        const error = JSON.parse(result.stderr.trim());
+        assert.equal(error.code, 'INPUT_INVALID', label);
+        assert.equal(typeof error.error, 'string', label);
+    }
 });
