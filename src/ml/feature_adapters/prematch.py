@@ -80,6 +80,45 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
     # not the GD-A03 authoritative prior-state lineage.  Until a runtime source
     # with the same contract is wired, canonical inference must fail closed.
     CANONICAL_RUNTIME_NUMERIC_SOURCE_STATUS = "NOT_READY"
+    # This explicit method is the isolated canonical semantic path.  The
+    # compatibility ``adapt`` path and its 20-feature default remain unchanged;
+    # production source/provider availability still requires a separate task.
+    CANONICAL_TYPED_CONTEXT_RUNTIME_STATUS = "PROVEN_TYPED_CONTEXT_ONLY"
+
+    def adapt_canonical_typed_context(self, context: dict[str, Any]) -> AdaptationResult:
+        """Adapt one validated typed context without compatibility fallback.
+
+        This is intentionally not wired into the default V26.6 compatibility
+        entrypoint.  It exists so a future source provider can pass the exact
+        canonical context to the same formulas used by the offline frame.
+        Missing history remains unavailable; no value is imputed.
+        """
+        from src.ml.inference.canonical_prematch_feature_engine import (
+            accepted_feature_names,
+            build_canonical_prematch_features,
+        )
+
+        names = accepted_feature_names()
+        result = build_canonical_prematch_features(context)
+        unavailable = [
+            name for name in names if result["features"][name]["availability_status"] != "AVAILABLE"
+        ]
+        if unavailable:
+            return AdaptationResult(
+                success=False,
+                features=None,
+                feature_names=list(names),
+                missing_features=unavailable,
+                errors=[f"canonical feature unavailable: {name}" for name in unavailable],
+            )
+        values = [result["features"][name]["value"] for name in names]
+        return AdaptationResult(
+            success=True,
+            features=pd.DataFrame([values], columns=list(names)),
+            feature_names=list(names),
+            missing_features=[],
+            errors=[],
+        )
 
     def adapt(self, raw_features: dict[str, Any], *, strict: bool = False) -> AdaptationResult:
         """

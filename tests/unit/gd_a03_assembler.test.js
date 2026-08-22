@@ -7,6 +7,7 @@
 
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -288,6 +289,82 @@ function buildFixture({ includeSixth = false } = {}) {
 function build(fixture) {
     return buildPriorStateFeatureView(fixture.options);
 }
+
+function runtimeContextForFixture(fixture) {
+    const target = fixture.schedule.find(row => row.id === fixture.targetId);
+    const factsById = new Map(fixture.facts.map(row => [row.canonical_match_id, row]));
+    const priorMatches = fixture.schedule
+        .filter(row => row.kickoff_at < target.kickoff_at)
+        .map(row => {
+            const sourceFact = factsById.get(row.id);
+            return {
+                canonical_match_id: row.id,
+                kickoff_utc: row.kickoff_at,
+                competition: row.competition,
+                season: row.season,
+                home_team: row.home_team,
+                away_team: row.away_team,
+                home_xg: sourceFact?.facts?.xg?.home?.value ?? null,
+                away_xg: sourceFact?.facts?.xg?.away?.value ?? null,
+                outcome: sourceFact?.facts?.match_result?.outcome,
+                available_at_utc: null,
+            };
+        });
+    return {
+        canonical_match_id: target.id,
+        home_team: target.home_team,
+        away_team: target.away_team,
+        competition: target.competition,
+        season: target.season,
+        target_kickoff_utc: target.kickoff_at,
+        feature_as_of_utc: target.kickoff_at,
+        model_decision_time_utc: null,
+        history_closure: {
+            status: 'PROVEN',
+            authority: 'canonical-schedule-history/v1',
+            competition: target.competition,
+            season: target.season,
+            team_names: [target.home_team, target.away_team].sort(),
+            prior_match_ids: priorMatches.map(row => row.canonical_match_id),
+        },
+        prior_matches: priorMatches,
+    };
+}
+
+function canonicalRuntimeProjection(context) {
+    const script = [
+        'import json, sys',
+        'from src.ml.feature_adapters.prematch import V26_6_PreMatchAdapter',
+        'context = json.load(sys.stdin)',
+        'result = V26_6_PreMatchAdapter().adapt_canonical_typed_context(context)',
+        'payload = {"success": result.success, "feature_names": result.feature_names, "missing_features": result.missing_features}',
+        'if result.features is not None: payload["features"] = result.features.iloc[0].to_dict()',
+        'print(json.dumps(payload, sort_keys=True))',
+    ].join('\n');
+    const completed = spawnSync('python3', ['-c', script], {
+        cwd: path.resolve(__dirname, '../..'),
+        input: JSON.stringify(context),
+        encoding: 'utf8',
+    });
+    assert.equal(completed.status, 0, completed.stderr);
+    return JSON.parse(completed.stdout);
+}
+
+test('GD-A03 historical values equal the isolated canonical runtime adapter on typed context', () => {
+    const fixture = buildFixture();
+    const historical = build(fixture).artifact.rows.find(row => row.canonical_match_id === fixture.targetId);
+    const runtime = canonicalRuntimeProjection(runtimeContextForFixture(fixture));
+    const accepted = loadFeatureContract(path.resolve(__dirname, '../..')).vNextContract.feature_statuses
+        .filter(status => status.training_decision === 'ACCEPTED_FOR_TRAINING')
+        .map(status => status.feature_name);
+
+    assert.equal(runtime.success, true);
+    assert.deepEqual(runtime.feature_names, accepted);
+    for (const featureName of accepted) {
+        assert.equal(historical.features[featureName].availability_status, 'AVAILABLE');
+        assert.equal(runtime.features[featureName], historical.features[featureName].value);
+    }
+});
 
 function rebindSourceBindings(options) {
     const targetIds = options.targetRows.map(row => row.canonical_match_id);

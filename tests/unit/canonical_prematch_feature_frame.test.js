@@ -7,11 +7,16 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { loadFeatureContract } = require('../../scripts/ops/gd_a03_assembler');
+const {
+    admittedIdSetHash,
+    sha256Bytes,
+} = require('../../src/infrastructure/golden_dataset/GdA01AssemblyContract');
 const { FEATURE_SEMANTICS } = require('../../src/infrastructure/golden_dataset/GdA03PriorStateContract');
 const {
     buildFrameOutput,
     projectFrameArtifact,
     sourceLineBindingDigest,
+    validateFrameAgainstInputs,
     validateFrameOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract');
 
@@ -83,6 +88,13 @@ function sourceArtifact() {
             ordered_features: v1.ordered_features,
         },
         feature_semantics: FEATURE_SEMANTICS,
+        population_authority: {
+            schema_version: 'gd-a01-target-population-binding/v1',
+            source_binding: 'gd-a01_receipt.admitted_id_set_sha256',
+            target_id_set_sha256: admittedIdSetHash(['target-001', 'target-002', 'target-003']),
+            target_population_count: 3,
+        },
+        business_content_sha256: 'a'.repeat(64),
         rows: [
             makeRow('target-001', '2024-02-01T12:00:00Z'),
             makeRow('target-002', '2024-02-02T12:00:00Z', false),
@@ -102,8 +114,29 @@ function projected() {
             registrySchemaVersion: LOADED.registrySchemaVersion,
         },
         vNextContract: LOADED.vNextContract,
-        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64) },
+        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64), adapterSha256: '1'.repeat(64) },
     });
+}
+
+function frameInputs() {
+    const priorStateArtifact = sourceArtifact();
+    const priorStateReceipt = { schema_version: 'fixture-receipt/v1' };
+    return {
+        priorStateArtifact,
+        priorStateArtifactBytes: Buffer.from(`${JSON.stringify(priorStateArtifact, null, 2)}\n`),
+        priorStateReceipt,
+        priorStateReceiptBytes: Buffer.from(`${JSON.stringify(priorStateReceipt, null, 2)}\n`),
+        featureContractBinding: {
+            sha256: LOADED.sha256,
+            registrySchemaVersion: LOADED.registrySchemaVersion,
+        },
+        vNextContract: LOADED.vNextContract,
+        runtimeSemanticEngineBinding: {
+            sha256: 'e'.repeat(64),
+            adapterSha256: '1'.repeat(64),
+        },
+        codeRevision: 'f'.repeat(40),
+    };
 }
 
 test('registry decisions derive a stable nine-feature training order', () => {
@@ -199,7 +232,7 @@ test('target label mutation does not change prematch feature projection', () => 
         priorStateReceiptSha256: 'd'.repeat(64),
         featureContractBinding: { sha256: LOADED.sha256, registrySchemaVersion: LOADED.registrySchemaVersion },
         vNextContract: LOADED.vNextContract,
-        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64) },
+        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64), adapterSha256: '1'.repeat(64) },
     });
     const changed = projectFrameArtifact({
         priorStateArtifact: mutatedSource,
@@ -208,7 +241,7 @@ test('target label mutation does not change prematch feature projection', () => 
         priorStateReceiptSha256: 'd'.repeat(64),
         featureContractBinding: { sha256: LOADED.sha256, registrySchemaVersion: LOADED.registrySchemaVersion },
         vNextContract: LOADED.vNextContract,
-        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64) },
+        runtimeSemanticEngineBinding: { sha256: 'e'.repeat(64), adapterSha256: '1'.repeat(64) },
     });
 
     assert.deepEqual(base.rows[0].features, changed.rows[0].features);
@@ -243,4 +276,45 @@ test('source-line and cutoff tampering fail closed', () => {
         future.business_content_sha256 = computeFrameBusinessHash(future);
         require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract').validateFrameArtifact(future);
     }, /future source identity|cutoff/);
+});
+
+test('source-bound validation rejects rehashed row, contract, and label tampering', () => {
+    const inputs = frameInputs();
+    const original = buildFrameOutput(inputs);
+    const validate = (artifactBytes, receiptBytes) =>
+        validateFrameAgainstInputs({
+            ...inputs,
+            artifactBytes,
+            receiptBytes,
+        });
+    assert.doesNotThrow(() => validate(original.artifactBytes, original.receiptBytes));
+
+    const rehash = artifact => {
+        artifact.business_content_sha256 = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract').computeFrameBusinessHash(artifact);
+        const artifactBytes = Buffer.from(`${JSON.stringify(artifact, null, 2)}\n`);
+        const receipt = {
+            ...original.receipt,
+            artifact_sha256: sha256Bytes(artifactBytes),
+            output_business_sha256: artifact.business_content_sha256,
+            receipt_content_sha256: null,
+        };
+        receipt.receipt_content_sha256 = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract').computeFrameReceiptHash(receipt);
+        return {
+            artifactBytes,
+            receiptBytes: Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`),
+        };
+    };
+
+    const missingRow = JSON.parse(original.artifactBytes.toString('utf8'));
+    missingRow.rows.pop();
+    assert.throws(() => validate(...Object.values(rehash(missingRow))), /population|source projection/);
+
+    const oneFeature = JSON.parse(original.artifactBytes.toString('utf8'));
+    oneFeature.feature_contract.training_feature_order.pop();
+    oneFeature.feature_contract.training_feature_count -= 1;
+    assert.throws(() => validate(...Object.values(rehash(oneFeature))), /binding|contract|source projection/);
+
+    const label = JSON.parse(original.artifactBytes.toString('utf8'));
+    label.rows[0].target_label.outcome = 'away';
+    assert.throws(() => validate(...Object.values(rehash(label))), /bound|source projection|provenance/);
 });

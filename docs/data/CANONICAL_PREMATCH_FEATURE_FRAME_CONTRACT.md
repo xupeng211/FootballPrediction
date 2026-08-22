@@ -29,11 +29,15 @@ npm run feature:frame -- build \
 
 npm run feature:frame -- validate \
   --artifact <absolute repository-external frame> \
-  --receipt <absolute repository-external frame-receipt>
+  --receipt <absolute repository-external frame-receipt> \
+  --gd-a03-artifact <absolute repository-external GD-A03 artifact> \
+  --gd-a03-receipt <absolute repository-external GD-A03 receipt>
 ```
 
-Build 先重新验证 GD-A03 artifact/receipt，然后只投影 selected features。它不
-抓取数据、不连接数据库、不写 raw/L3、不训练、不预测、不 backtest、不激活模型。
+Build 和 validate 都重新验证 GD-A03 artifact/receipt，并由同一 registry、GD-A03
+source rows、engine 与 runtime adapter 重新投影/逐字节比对；只做 selected features
+的 file-first projection。它不抓取数据、不连接数据库、不写 raw/L3、不训练、不预测、
+不 backtest、不激活模型。
 
 ## First training decision matrix
 
@@ -127,16 +131,19 @@ target/accounted ID-set hash，并要求 population conservation。
 
 ## Runtime parity boundary
 
-`src/ml/inference/canonical_prematch_feature_engine.py` 是纯 typed-context semantic
-engine，不是 provider/capture adapter，也没有接管 production runtime。它复用 registry
+`V26_6_PreMatchAdapter.adapt_canonical_typed_context` 是现有 adapter 上隔离的 canonical
+typed-context 入口，委托 `src/ml/inference/canonical_prematch_feature_engine.py` 的纯
+semantic engine；它不是 provider/capture adapter，也没有接管默认 production runtime。
+typed context 必须携带 competition/season 和 `canonical-schedule-history/v1` 的完整
+history closure，缺失或不完整时 points/fatigue 也 fail closed。它复用 registry
 accepted order，使用与 GD-A03 相同的 xG、points/form、fatigue 公式；在 deterministic
-fixture 上逐 feature 验证 historical kickoff-reference path 与 runtime typed-context
-path 的数值和 unavailable reason 一致。
+fixture 上逐 feature 验证 GD-A03 historical producer 与该 adapter runtime path 的数值
+和 unavailable reason 一致。
 
 因此：
 
 ```text
-TYPED_CONTEXT_SEMANTIC_PARITY=PROVEN
+GD_A03_TO_CANONICAL_ADAPTER_TYPED_CONTEXT_PARITY=PROVEN
 REAL_DECISION_TIME_PROVIDER_AVAILABILITY=NOT_PROVEN
 V1_DEFAULT_RUNTIME_SWITCH=NO
 MODEL_SCHEMA_SWITCH=NO

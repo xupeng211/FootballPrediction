@@ -35,6 +35,7 @@ DECISION_TIME_PROVEN = "DECISION_TIME_PROVEN"
 FEATURE_CUTOFF_RELATION = "source_match_kickoff < feature_as_of_utc"
 ROLLING_HISTORY_COUNT = 5
 FATIGUE_LOOKBACK = timedelta(days=7)
+HISTORY_CLOSURE_AUTHORITY = "canonical-schedule-history/v1"
 
 
 class CanonicalPrematchFeatureError(ValueError):
@@ -126,9 +127,12 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         "canonical_match_id",
         "home_team",
         "away_team",
+        "competition",
+        "season",
         "target_kickoff_utc",
         "feature_as_of_utc",
         "model_decision_time_utc",
+        "history_closure",
         "prior_matches",
     }
     if set(context) != required:
@@ -137,6 +141,8 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
     target_id = _text(context["canonical_match_id"], "canonical_match_id")
     home_team = _text(context["home_team"], "home_team")
     away_team = _text(context["away_team"], "away_team")
+    competition = _text(context["competition"], "competition")
+    season = _text(context["season"], "season")
     if home_team == away_team:
         _fail("INVALID_CONTEXT", "home_team and away_team must be distinct")
     target = _parse_utc(context["target_kickoff_utc"], "target_kickoff_utc")
@@ -165,6 +171,32 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
     raw_matches = context["prior_matches"]
     if not isinstance(raw_matches, list):
         _fail("INVALID_CONTEXT", "prior_matches must be a list")
+    closure = context["history_closure"]
+    if not isinstance(closure, dict):
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure must be an object")
+    expected_closure_fields = {
+        "status",
+        "authority",
+        "competition",
+        "season",
+        "team_names",
+        "prior_match_ids",
+    }
+    if set(closure) != expected_closure_fields:
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure fields are not canonical")
+    if (
+        closure["status"] != "PROVEN"
+        or closure["authority"] != HISTORY_CLOSURE_AUTHORITY
+        or closure["competition"] != competition
+        or closure["season"] != season
+        or closure["team_names"] != sorted([home_team, away_team])
+    ):
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure does not bind target identity")
+    if not isinstance(closure["prior_match_ids"], list) or any(
+        not isinstance(match_id, str) or not match_id.strip()
+        for match_id in closure["prior_match_ids"]
+    ):
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure prior IDs are invalid")
     matches: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     for index, raw_match in enumerate(raw_matches):
@@ -173,6 +205,8 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         expected_fields = {
             "canonical_match_id",
             "kickoff_utc",
+            "competition",
+            "season",
             "home_team",
             "away_team",
             "home_xg",
@@ -198,6 +232,13 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
             )
         source_home = _text(raw_match["home_team"], f"prior_matches[{index}].home_team")
         source_away = _text(raw_match["away_team"], f"prior_matches[{index}].away_team")
+        source_competition = _text(raw_match["competition"], f"prior_matches[{index}].competition")
+        source_season = _text(raw_match["season"], f"prior_matches[{index}].season")
+        if source_competition != competition or source_season != season:
+            _fail(
+                "SOURCE_IDENTITY_UNBOUND",
+                f"prior match {match_id} is outside target competition/season",
+            )
         if source_home == source_away or (
             source_home not in {home_team, away_team} and source_away not in {home_team, away_team}
         ):
@@ -220,6 +261,8 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
                 "canonical_match_id": match_id,
                 "kickoff": kickoff,
                 "kickoff_utc": _canonical_timestamp(kickoff),
+                "competition": source_competition,
+                "season": source_season,
                 "home_team": source_home,
                 "away_team": source_away,
                 "home_xg": _finite(raw_match["home_xg"], f"prior_matches[{index}].home_xg"),
@@ -230,9 +273,20 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
                 "available_at_utc": None if available is None else _canonical_timestamp(available),
             }
         )
+    if sorted(closure["prior_match_ids"]) != sorted(seen_ids):
+        _fail(
+            "HISTORY_CLOSURE_MISMATCH",
+            "history_closure does not account for every typed prior match",
+        )
     matches.sort(key=lambda match: (match["kickoff"], match["canonical_match_id"]))
     return (
-        {"canonical_match_id": target_id, "home_team": home_team, "away_team": away_team},
+        {
+            "canonical_match_id": target_id,
+            "home_team": home_team,
+            "away_team": away_team,
+            "competition": competition,
+            "season": season,
+        },
         target,
         as_of,
         mode,
@@ -471,6 +525,8 @@ def build_canonical_prematch_features(  # noqa: C901
         "canonical_match_id": target["canonical_match_id"],
         "home_team": home,
         "away_team": away,
+        "competition": target["competition"],
+        "season": target["season"],
         "target_kickoff_utc": _canonical_timestamp(target_kickoff),
         "feature_as_of_utc": _canonical_timestamp(as_of),
         "feature_as_of_status": mode,
@@ -479,6 +535,14 @@ def build_canonical_prematch_features(  # noqa: C901
         else _canonical_timestamp(as_of),
         "feature_contract_id": VNEXT_CONTRACT_ID,
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "history_closure": {
+            "status": "PROVEN",
+            "authority": HISTORY_CLOSURE_AUTHORITY,
+            "competition": target["competition"],
+            "season": target["season"],
+            "team_names": sorted([home, away]),
+            "prior_match_ids": [match["canonical_match_id"] for match in matches],
+        },
         "feature_names": list(names),
         "features": lines,
         "feature_vector": [lines[name]["value"] for name in names],

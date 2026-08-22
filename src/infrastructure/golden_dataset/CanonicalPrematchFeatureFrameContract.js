@@ -91,6 +91,14 @@ function computeFrameReceiptHash(receipt) {
     return sha256Text(stableStringify({ ...receipt, receipt_content_sha256: null }));
 }
 
+function featureOrderHash(features) {
+    return sha256Text(stableStringify(features));
+}
+
+function featureStatusHash(statuses) {
+    return sha256Text(stableStringify(statuses));
+}
+
 function sourceLineBindingDigest(rowId, featureName, line) {
     const sourceLine = clone(line);
     delete sourceLine.source_line_sha256;
@@ -207,6 +215,15 @@ function projectFrameArtifact({
     assertSha(priorStateReceiptSha256, 'GD-A03 receipt SHA');
     assertSha(featureContractBinding.sha256, 'feature contract SHA');
     assertSha(runtimeSemanticEngineBinding.sha256, 'runtime semantic engine SHA');
+    assertSha(runtimeSemanticEngineBinding.adapterSha256, 'runtime adapter SHA');
+    assertObject(priorStateArtifact.population_authority, 'GD-A03 population authority');
+    assertSha(
+        priorStateArtifact.population_authority.target_id_set_sha256,
+        'GD-A03 target ID set SHA'
+    );
+    if (priorStateArtifact.population_authority.target_population_count !== priorStateArtifact.rows.length) {
+        fail('GD-A03 population authority does not match its rows', 'POPULATION_MISMATCH');
+    }
     if (
         vNextContract.contract_id !== FRAME_CONTRACT_ID ||
         vNextContract.feature_contract_version !== FRAME_CONTRACT_VERSION ||
@@ -237,7 +254,7 @@ function projectFrameArtifact({
             point_in_time_safe: 'KICKOFF_EXCLUSIVE_PROVEN_FOR_FRAME',
             train_runtime_parity:
                 status.training_decision === 'ACCEPTED_FOR_TRAINING'
-                    ? 'PROVEN_TYPED_CONTEXT_ENGINE_FIXTURE'
+                    ? 'PROVEN_GD_A03_TO_CANONICAL_ADAPTER_TYPED_CONTEXT_FIXTURE'
                     : 'NOT_PROVEN',
             missing_policy: semantic?.missing_history_policy || status.reason_code,
             final_decision: status.training_decision,
@@ -342,6 +359,8 @@ function projectFrameArtifact({
             training_feature_count: acceptedFeatures.length,
             ordered_features: orderedFeatures,
             training_feature_order: acceptedFeatures,
+            ordered_features_sha256: featureOrderHash(orderedFeatures),
+            training_feature_order_sha256: featureOrderHash(acceptedFeatures),
         },
         feature_decisions: featureDecisions,
         feature_cutoff_policy: FRAME_CUTOFF_POLICY,
@@ -372,6 +391,8 @@ function projectFrameArtifact({
                 sha256: priorStateArtifactSha256,
                 business_hash: priorStateArtifact.business_content_sha256,
                 schema_version: priorStateArtifact.schema_version,
+                target_population: priorStateArtifact.population_authority.target_population_count,
+                target_id_set_sha256: priorStateArtifact.population_authority.target_id_set_sha256,
             },
             gd_a03_receipt: {
                 sha256: priorStateReceiptSha256,
@@ -383,19 +404,27 @@ function projectFrameArtifact({
                 schema_version: featureContractBinding.registrySchemaVersion,
                 contract_id: FRAME_CONTRACT_ID,
                 feature_contract_version: FRAME_CONTRACT_VERSION,
+                registry_feature_count: orderedFeatures.length,
+                training_feature_count: acceptedFeatures.length,
+                ordered_features_sha256: featureOrderHash(orderedFeatures),
+                training_feature_order_sha256: featureOrderHash(acceptedFeatures),
+                feature_statuses_sha256: featureStatusHash(vNextContract.feature_statuses),
             },
             runtime_semantic_engine: {
                 sha256: runtimeSemanticEngineBinding.sha256,
+                adapter_sha256: runtimeSemanticEngineBinding.adapterSha256,
                 implementation_id: 'canonical-prematch-feature-engine',
                 implementation_version: 'v1',
                 source_path: 'src/ml/inference/canonical_prematch_feature_engine.py',
+                adapter_source_path: 'src/ml/feature_adapters/prematch.py',
+                adapter_method: 'V26_6_PreMatchAdapter.adapt_canonical_typed_context',
             },
         },
         runtime_parity: {
-            status: 'PROVEN_TYPED_CONTEXT_ENGINE_FIXTURE',
+            status: 'PROVEN_GD_A03_TO_CANONICAL_ADAPTER_TYPED_CONTEXT_FIXTURE',
             historical_producer: 'GD-A03 prior-state feature lines under kickoff-exclusive policy',
-            runtime_producer: 'canonical-prematch-feature-engine/v1',
-            numeric_parity_test: 'REPOSITORY_TEST_REQUIRED_AND_SCOPED_TO_TYPED_CONTEXT',
+            runtime_producer: 'V26_6_PreMatchAdapter.adapt_canonical_typed_context -> canonical-prematch-feature-engine/v1',
+            numeric_parity_test: 'REPOSITORY_TEST_GD_A03_ASSEMBLER_TO_ADAPTER_TYPED_CONTEXT',
             features: acceptedFeatures,
             failures: [],
         },
@@ -445,15 +474,23 @@ function validateFrameArtifact(artifact) {
     ) {
         fail('canonical prematch frame readiness boundary was widened', 'READINESS_BOUNDARY');
     }
-    assertObject(artifact.feature_contract, 'feature_contract');
+        assertObject(artifact.feature_contract, 'feature_contract');
     if (
         artifact.feature_contract.contract_id !== FRAME_CONTRACT_ID ||
         artifact.feature_contract.feature_contract_version !== FRAME_CONTRACT_VERSION ||
         artifact.feature_contract.training_feature_count !== artifact.feature_contract.training_feature_order.length ||
         artifact.feature_contract.registry_feature_count !== artifact.feature_contract.ordered_features.length
-    ) {
-        fail('canonical prematch frame contract binding is invalid', 'CONTRACT_MISMATCH');
-    }
+        ) {
+            fail('canonical prematch frame contract binding is invalid', 'CONTRACT_MISMATCH');
+        }
+        if (
+            artifact.feature_contract.ordered_features_sha256 !==
+                featureOrderHash(artifact.feature_contract.ordered_features) ||
+            artifact.feature_contract.training_feature_order_sha256 !==
+                featureOrderHash(artifact.feature_contract.training_feature_order)
+        ) {
+            fail('canonical prematch frame feature-order binding is invalid', 'CONTRACT_MISMATCH');
+        }
     const orderedFeatures = artifact.feature_contract.ordered_features;
     const acceptedFeatures = artifact.feature_contract.training_feature_order;
     validateFeatureDecisions(artifact.feature_decisions, orderedFeatures, acceptedFeatures);
@@ -551,6 +588,34 @@ function validateFrameArtifact(artifact) {
     ) {
         fail('frame population authority mismatch', 'POPULATION_MISMATCH');
     }
+    assertObject(artifact.source_bindings, 'source_bindings');
+    assertObject(artifact.source_bindings.gd_a03_artifact, 'source_bindings.gd_a03_artifact');
+    if (
+        artifact.source_bindings.gd_a03_artifact.target_population !== population.target_population ||
+        artifact.source_bindings.gd_a03_artifact.target_id_set_sha256 !== idHash
+    ) {
+        fail('frame population is not bound to GD-A03 source authority', 'POPULATION_MISMATCH');
+    }
+    assertObject(artifact.source_bindings.feature_contract, 'source_bindings.feature_contract');
+    const contractBinding = artifact.source_bindings.feature_contract;
+    if (
+        contractBinding.registry_feature_count !== orderedFeatures.length ||
+        contractBinding.training_feature_count !== acceptedFeatures.length ||
+        contractBinding.ordered_features_sha256 !== featureOrderHash(orderedFeatures) ||
+        contractBinding.training_feature_order_sha256 !== featureOrderHash(acceptedFeatures) ||
+        !assertSha(contractBinding.feature_statuses_sha256, 'feature contract status binding')
+    ) {
+        fail('frame feature contract is not bound to registry authority', 'CONTRACT_MISMATCH');
+    }
+    assertObject(artifact.source_bindings.runtime_semantic_engine, 'source_bindings.runtime_semantic_engine');
+    assertSha(
+        artifact.source_bindings.runtime_semantic_engine.sha256,
+        'runtime semantic engine binding'
+    );
+    assertSha(
+        artifact.source_bindings.runtime_semantic_engine.adapter_sha256,
+        'runtime adapter binding'
+    );
     assertObject(artifact.validation_counters, 'validation_counters');
     if (
         artifact.validation_counters.target_match_fact_dependency_count !== targetMatchDependencies ||
@@ -694,6 +759,38 @@ function validateFrameOutputFiles(artifactBytes, receiptBytes) {
     return { artifact, receipt };
 }
 
+function validateFrameAgainstInputs({
+    artifactBytes,
+    receiptBytes,
+    priorStateArtifact,
+    priorStateArtifactBytes,
+    priorStateReceipt,
+    priorStateReceiptBytes,
+    featureContractBinding,
+    vNextContract,
+    runtimeSemanticEngineBinding,
+    codeRevision,
+}) {
+    const validated = validateFrameOutputFiles(artifactBytes, receiptBytes);
+    const expected = buildFrameOutput({
+        priorStateArtifact,
+        priorStateArtifactBytes,
+        priorStateReceipt,
+        priorStateReceiptBytes,
+        featureContractBinding,
+        vNextContract,
+        runtimeSemanticEngineBinding,
+        codeRevision,
+    });
+    if (!Buffer.from(artifactBytes).equals(expected.artifactBytes)) {
+        fail('frame artifact does not match the bound GD-A03 and registry inputs', 'PROVENANCE_INVALID');
+    }
+    if (!Buffer.from(receiptBytes).equals(expected.receiptBytes)) {
+        fail('frame receipt does not match the bound source projection', 'PROVENANCE_INVALID');
+    }
+    return validated;
+}
+
 module.exports = {
     FRAME_CONTRACT_ID,
     FRAME_CONTRACT_VERSION,
@@ -708,6 +805,7 @@ module.exports = {
     computeFrameBusinessHash,
     computeFrameReceiptHash,
     projectFrameArtifact,
+    validateFrameAgainstInputs,
     sourceLineBindingDigest,
     validateFrameArtifact,
     validateFrameOutputFiles,

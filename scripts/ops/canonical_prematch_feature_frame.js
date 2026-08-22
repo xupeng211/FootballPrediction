@@ -18,6 +18,7 @@ const { loadFeatureContract } = require('./gd_a03_assembler');
 const {
     CanonicalPrematchFeatureFrameError,
     buildFrameOutput,
+    validateFrameAgainstInputs,
     validateFrameOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract');
 
@@ -35,7 +36,7 @@ function usage() {
         '',
         'Validate:',
         '  npm run feature:frame -- validate --artifact <abs-artifact.json> --receipt <abs-receipt.json>',
-        '    [--expected-targets <count>]',
+        '    --gd-a03-artifact <abs.json> --gd-a03-receipt <abs.json> [--expected-targets <count>]',
         '',
         'Only the two explicit output files are written by build.',
     ].join('\n');
@@ -80,7 +81,7 @@ function parseArgs(argv = []) {
     const required =
         command === 'build'
             ? ['gdA03ArtifactPath', 'gdA03ReceiptPath', 'outputPath', 'receiptPath', 'codeRevision']
-            : ['artifactPath', 'receiptPath'];
+            : ['artifactPath', 'receiptPath', 'gdA03ArtifactPath', 'gdA03ReceiptPath'];
     for (const field of required) if (!values[field]) fail(`${field} is required for ${command}`, 'INPUT_INVALID');
     if (command === 'build' && !FULL_GIT_SHA.test(values.codeRevision)) {
         fail('--code-revision must be a full Git SHA', 'INPUT_INVALID');
@@ -223,6 +224,11 @@ function build(args, repositoryRoot) {
         'canonical runtime semantic engine',
         repositoryRoot
     );
+    const runtimeAdapter = readInternalFile(
+        path.join(repositoryRoot, 'src/ml/feature_adapters/prematch.py'),
+        'canonical runtime adapter',
+        repositoryRoot
+    );
     const result = buildFrameOutput({
         priorStateArtifact: validated.artifact,
         priorStateArtifactBytes: gdA03Artifact.bytes,
@@ -230,7 +236,7 @@ function build(args, repositoryRoot) {
         priorStateReceiptBytes: gdA03Receipt.bytes,
         featureContractBinding: loadedContract,
         vNextContract: loadedContract.vNextContract,
-        runtimeSemanticEngineBinding: runtimeEngine,
+        runtimeSemanticEngineBinding: { ...runtimeEngine, adapterSha256: runtimeAdapter.sha256 },
         codeRevision: args.codeRevision,
     });
     const artifactPath = outputPath(args.outputPath, 'frame artifact output', repositoryRoot);
@@ -245,10 +251,40 @@ function validate(args, repositoryRoot) {
     const artifact = readExternalFile(args.artifactPath, 'frame artifact', repositoryRoot);
     const receipt = readExternalFile(args.receiptPath, 'frame receipt', repositoryRoot);
     const result = validateFrameOutputFiles(artifact.bytes, receipt.bytes);
+    assertRevisionMatchesHead(result.receipt.code_revision, repositoryRoot);
+    const gdA03Artifact = readExternalFile(args.gdA03ArtifactPath, 'GD-A03 artifact', repositoryRoot);
+    const gdA03Receipt = readExternalFile(args.gdA03ReceiptPath, 'GD-A03 receipt', repositoryRoot);
+    const validated = validatePriorStateOutputFiles(gdA03Artifact.bytes, gdA03Receipt.bytes);
     if (args.expectedTargets !== undefined && result.artifact.rows.length !== args.expectedTargets) {
         fail(`frame target count ${result.artifact.rows.length} does not equal expected ${args.expectedTargets}`, 'POPULATION_MISMATCH');
     }
-    return summary(result);
+    if (args.expectedTargets !== undefined && validated.artifact.rows.length !== args.expectedTargets) {
+        fail(`GD-A03 target count ${validated.artifact.rows.length} does not equal expected ${args.expectedTargets}`, 'POPULATION_MISMATCH');
+    }
+    const loadedContract = loadFeatureContract(repositoryRoot);
+    const runtimeEngine = readInternalFile(
+        path.join(repositoryRoot, 'src/ml/inference/canonical_prematch_feature_engine.py'),
+        'canonical runtime semantic engine',
+        repositoryRoot
+    );
+    const runtimeAdapter = readInternalFile(
+        path.join(repositoryRoot, 'src/ml/feature_adapters/prematch.py'),
+        'canonical runtime adapter',
+        repositoryRoot
+    );
+    const bound = validateFrameAgainstInputs({
+        artifactBytes: artifact.bytes,
+        receiptBytes: receipt.bytes,
+        priorStateArtifact: validated.artifact,
+        priorStateArtifactBytes: gdA03Artifact.bytes,
+        priorStateReceipt: validated.receipt,
+        priorStateReceiptBytes: gdA03Receipt.bytes,
+        featureContractBinding: loadedContract,
+        vNextContract: loadedContract.vNextContract,
+        runtimeSemanticEngineBinding: { ...runtimeEngine, adapterSha256: runtimeAdapter.sha256 },
+        codeRevision: result.receipt.code_revision,
+    });
+    return summary(bound);
 }
 
 function main(argv = process.argv.slice(2)) {

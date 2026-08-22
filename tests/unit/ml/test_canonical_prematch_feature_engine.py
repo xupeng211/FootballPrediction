@@ -17,10 +17,23 @@ EXPECTED_AWAY_POINTS = 7
 EXPECTED_POINTS_DIFF = 4
 
 
-def _match(match_id, kickoff, home, away, home_xg, away_xg, outcome, available=None):
+def _match(
+    match_id,
+    kickoff,
+    home,
+    away,
+    home_xg,
+    away_xg,
+    outcome,
+    available=None,
+    competition="Premier League",
+    season="2024/2025",
+):
     return {
         "canonical_match_id": match_id,
         "kickoff_utc": kickoff,
+        "competition": competition,
+        "season": season,
         "home_team": home,
         "away_team": away,
         "home_xg": home_xg,
@@ -30,15 +43,27 @@ def _match(match_id, kickoff, home, away, home_xg, away_xg, outcome, available=N
     }
 
 
-def _context(*, decision_time=None, matches=None):
+def _context(*, decision_time=None, matches=None, closure_matches=None):
+    source_matches = list(matches if matches is not None else _matches())
+    closure_source = list(source_matches if closure_matches is None else closure_matches)
     return {
         "canonical_match_id": "target-001",
         "home_team": "Alpha",
         "away_team": "Beta",
+        "competition": "Premier League",
+        "season": "2024/2025",
         "target_kickoff_utc": "2025-01-10T12:00:00Z",
         "feature_as_of_utc": decision_time or "2025-01-10T12:00:00Z",
         "model_decision_time_utc": decision_time,
-        "prior_matches": list(matches if matches is not None else _matches()),
+        "history_closure": {
+            "status": "PROVEN",
+            "authority": "canonical-schedule-history/v1",
+            "competition": "Premier League",
+            "season": "2024/2025",
+            "team_names": ["Alpha", "Beta"],
+            "prior_match_ids": [match["canonical_match_id"] for match in closure_source],
+        },
+        "prior_matches": source_matches,
     }
 
 
@@ -91,14 +116,29 @@ def test_kickoff_reference_and_explicit_decision_time_share_numeric_semantics() 
 
 
 def test_history_gap_is_unavailable_without_imputation() -> None:
-    result = build_canonical_prematch_features(_context(matches=_matches()[:8]))
+    matches = _matches()
+    matches[0]["home_xg"] = None
+    result = build_canonical_prematch_features(_context(matches=matches))
 
-    for name in ("rolling_xg_home", "rolling_xg_away", "home_recent_form_points"):
+    for name in ("rolling_xg_home",):
         assert result["features"][name]["availability_status"] == "UNAVAILABLE"
         assert result["features"][name]["value"] is None
-        assert "INSUFFICIENT_HISTORY" in result["features"][name]["unavailable_reason_codes"]
-    assert result["features"]["home_points"]["value"] == 10  # noqa: PLR2004
+        assert "NO_PROVEN_SOURCE_FACT" in result["features"][name]["unavailable_reason_codes"]
+    assert result["features"]["rolling_xg_away"]["availability_status"] == "AVAILABLE"
+    assert result["features"]["home_points"]["value"] == EXPECTED_HOME_POINTS
     assert result["features"]["away_points"]["value"] == EXPECTED_AWAY_POINTS
+
+
+def test_points_and_fatigue_require_history_closure() -> None:
+    context = _context(matches=_matches()[:8], closure_matches=_matches())
+
+    with pytest.raises(CanonicalPrematchFeatureError, match="HISTORY_CLOSURE_MISMATCH"):
+        build_canonical_prematch_features(context)
+
+    context = _context(matches=[])
+    del context["history_closure"]
+    with pytest.raises(CanonicalPrematchFeatureError, match="INVALID_CONTEXT"):
+        build_canonical_prematch_features(context)
 
 
 @pytest.mark.parametrize(
