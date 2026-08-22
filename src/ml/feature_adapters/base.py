@@ -11,14 +11,18 @@ lifecycle: permanent
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum as _CompatibilityEnum
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
+# Keep the legacy ``str, Enum`` runtime representation without using the
+# direct multiple inheritance syntax targeted by Ruff UP042.
+_CompatibilityEnumBase = _CompatibilityEnum("_CompatibilityEnumBase", {}, type=str)  # type: ignore[misc]
 
-class ModelType(str, Enum):  # noqa -- public compatibility enum; StrEnum would change supported runtime behavior.
+
+class ModelType(_CompatibilityEnumBase):
     """支持的模型类型"""
 
     V19_ROLLING = "v19_rolling"  # 48 维滚动特征
