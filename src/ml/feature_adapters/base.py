@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 
-class ModelType(str, Enum):  # noqa: UP042 -- preserve the public compatibility enum type.
+class ModelType(str, Enum):  # noqa -- public compatibility enum; StrEnum would change supported runtime behavior.
     """支持的模型类型"""
 
     V19_ROLLING = "v19_rolling"  # 48 维滚动特征
