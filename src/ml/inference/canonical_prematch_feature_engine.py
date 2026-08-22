@@ -36,6 +36,8 @@ FEATURE_CUTOFF_RELATION = "source_match_kickoff < feature_as_of_utc"
 ROLLING_HISTORY_COUNT = 5
 FATIGUE_LOOKBACK = timedelta(days=7)
 HISTORY_CLOSURE_AUTHORITY = "canonical-schedule-history/v1"
+HISTORY_CLOSURE_UNPROVEN = "HISTORY_CLOSURE_UNPROVEN"
+SHA256_HEX_LENGTH = 64
 
 
 class CanonicalPrematchFeatureError(ValueError):
@@ -181,6 +183,7 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         "season",
         "team_names",
         "prior_match_ids",
+        "source_schedule_sha256",
     }
     if set(closure) != expected_closure_fields:
         _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure fields are not canonical")
@@ -197,6 +200,13 @@ def _validate_context(  # noqa: C901, PLR0912, PLR0915
         for match_id in closure["prior_match_ids"]
     ):
         _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure prior IDs are invalid")
+    source_schedule_sha256 = closure["source_schedule_sha256"]
+    if (
+        not isinstance(source_schedule_sha256, str)
+        or len(source_schedule_sha256) != SHA256_HEX_LENGTH
+        or any(character not in "0123456789abcdef" for character in source_schedule_sha256)
+    ):
+        _fail("HISTORY_CLOSURE_UNPROVEN", "history_closure source schedule binding is invalid")
     matches: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     for index, raw_match in enumerate(raw_matches):
@@ -380,7 +390,7 @@ def _rolling_xg(
     if len(selected) < ROLLING_HISTORY_COUNT:
         reason_codes.append("INSUFFICIENT_HISTORY")
     if any(value is None for value in values):
-        reason_codes.append("NO_PROVEN_SOURCE_FACT")
+        reason_codes.extend(["HISTORY_GAP", "NO_PROVEN_SOURCE_FACT"])
     value = None if reason_codes else sum(values) / ROLLING_HISTORY_COUNT
     return _line(
         feature_name=feature_name,
@@ -400,13 +410,14 @@ def _points_line(
     as_of: datetime,
 ) -> dict[str, Any]:
     prior = _team_matches(matches, team)
-    value = sum(_points(match, team) for match in prior)
+    reason_codes = [] if prior else [HISTORY_CLOSURE_UNPROVEN]
+    value = sum(_points(match, team) for match in prior) if prior else None
     return _line(
         feature_name=feature_name,
         value=value,
         source_matches=prior,
         as_of=as_of,
-        reason_codes=[],
+        reason_codes=reason_codes,
         derivation_contract="canonical-prematch/vnext/v1:sum_prior_result_points_3_1_0",
         source_fields=["typed_prior_match.outcome"],
     )
@@ -438,13 +449,14 @@ def _fatigue_line(
     selected = [
         match for match in _team_matches(matches, team) if start <= match["kickoff"] < as_of
     ]
-    value = min(1.0, len(selected) / 7.0)
+    reason_codes = [] if matches else [HISTORY_CLOSURE_UNPROVEN]
+    value = min(1.0, len(selected) / 7.0) if matches else None
     return _line(
         feature_name=feature_name,
         value=value,
         source_matches=selected,
         as_of=as_of,
-        reason_codes=[],
+        reason_codes=reason_codes,
         derivation_contract="canonical-prematch/vnext/v1:capped_prior_7_day_scheduled_match_count_divided_by_7",
         source_fields=["typed_prior_match.kickoff_utc", "typed_prior_match.team_identity"],
     )
@@ -454,6 +466,38 @@ def _merge_source_matches(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]
     """Union source matches in deterministic kickoff/identity order."""
     by_id = {match["canonical_match_id"]: match for group in groups for match in group}
     return sorted(by_id.values(), key=lambda match: (match["kickoff"], match["canonical_match_id"]))
+
+
+def _difference_line(
+    feature_name: str,
+    left: dict[str, Any],
+    right: dict[str, Any],
+    source_matches: list[dict[str, Any]],
+    as_of: datetime,
+    derivation_contract: str,
+    source_fields: list[str],
+) -> dict[str, Any]:
+    reasons = sorted(set(left["unavailable_reason_codes"] + right["unavailable_reason_codes"]))
+    if left["value"] is None or right["value"] is None:
+        reasons.append("DEPENDENCY_UNAVAILABLE")
+        return _line(
+            feature_name=feature_name,
+            value=None,
+            source_matches=source_matches,
+            as_of=as_of,
+            reason_codes=sorted(set(reasons)),
+            derivation_contract=derivation_contract,
+            source_fields=source_fields,
+        )
+    return _line(
+        feature_name=feature_name,
+        value=left["value"] - right["value"],
+        source_matches=source_matches,
+        as_of=as_of,
+        reason_codes=reasons,
+        derivation_contract=derivation_contract,
+        source_fields=source_fields,
+    )
 
 
 def build_canonical_prematch_features(  # noqa: C901
@@ -479,14 +523,12 @@ def build_canonical_prematch_features(  # noqa: C901
         elif feature_name == "points_diff":
             home_line = _points_line("home_points", home, matches, as_of)
             away_line = _points_line("away_points", away, matches, as_of)
-            lines[feature_name] = _line(
-                feature_name=feature_name,
-                value=home_line["value"] - away_line["value"],
-                source_matches=_merge_source_matches(
-                    _team_matches(matches, home), _team_matches(matches, away)
-                ),
+            lines[feature_name] = _difference_line(
+                feature_name,
+                home_line,
+                away_line,
+                _merge_source_matches(_team_matches(matches, home), _team_matches(matches, away)),
                 as_of=as_of,
-                reason_codes=[],
                 derivation_contract="canonical-prematch/vnext/v1:home_points_minus_away_points",
                 source_fields=[
                     "canonical-prematch/vnext/v1:home_points",
@@ -502,14 +544,12 @@ def build_canonical_prematch_features(  # noqa: C901
         elif feature_name == "fatigue_diff":
             home_line = _fatigue_line("home_fatigue_index", home, matches, as_of)
             away_line = _fatigue_line("away_fatigue_index", away, matches, as_of)
-            lines[feature_name] = _line(
-                feature_name=feature_name,
-                value=home_line["value"] - away_line["value"],
-                source_matches=_merge_source_matches(
-                    _team_matches(matches, home), _team_matches(matches, away)
-                ),
+            lines[feature_name] = _difference_line(
+                feature_name,
+                home_line,
+                away_line,
+                _merge_source_matches(_team_matches(matches, home), _team_matches(matches, away)),
                 as_of=as_of,
-                reason_codes=[],
                 derivation_contract="canonical-prematch/vnext/v1:home_fatigue_minus_away_fatigue",
                 source_fields=[
                     "canonical-prematch/vnext/v1:home_fatigue_index",
@@ -542,6 +582,7 @@ def build_canonical_prematch_features(  # noqa: C901
             "season": target["season"],
             "team_names": sorted([home, away]),
             "prior_match_ids": [match["canonical_match_id"] for match in matches],
+            "source_schedule_sha256": context["history_closure"]["source_schedule_sha256"],
         },
         "feature_names": list(names),
         "features": lines,

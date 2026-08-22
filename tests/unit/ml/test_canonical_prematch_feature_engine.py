@@ -62,6 +62,7 @@ def _context(*, decision_time=None, matches=None, closure_matches=None):
             "season": "2024/2025",
             "team_names": ["Alpha", "Beta"],
             "prior_match_ids": [match["canonical_match_id"] for match in closure_source],
+            "source_schedule_sha256": "c" * 64,
         },
         "prior_matches": source_matches,
     }
@@ -136,6 +137,19 @@ def test_points_and_fatigue_require_history_closure() -> None:
         build_canonical_prematch_features(context)
 
     context = _context(matches=[])
+    result = build_canonical_prematch_features(context)
+    for name in (
+        "home_points",
+        "away_points",
+        "points_diff",
+        "home_fatigue_index",
+        "away_fatigue_index",
+        "fatigue_diff",
+    ):
+        assert result["features"][name]["availability_status"] == "UNAVAILABLE"
+        assert result["features"][name]["value"] is None
+        assert "HISTORY_CLOSURE_UNPROVEN" in result["features"][name]["unavailable_reason_codes"]
+
     del context["history_closure"]
     with pytest.raises(CanonicalPrematchFeatureError, match="INVALID_CONTEXT"):
         build_canonical_prematch_features(context)

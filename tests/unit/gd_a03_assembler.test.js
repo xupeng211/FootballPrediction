@@ -326,6 +326,7 @@ function runtimeContextForFixture(fixture) {
             season: target.season,
             team_names: [target.home_team, target.away_team].sort(),
             prior_match_ids: priorMatches.map(row => row.canonical_match_id),
+            source_schedule_sha256: HASH,
         },
         prior_matches: priorMatches,
     };
@@ -338,6 +339,7 @@ function canonicalRuntimeProjection(context) {
         'context = json.load(sys.stdin)',
         'result = V26_6_PreMatchAdapter().adapt_canonical_typed_context(context)',
         'payload = {"success": result.success, "feature_names": result.feature_names, "missing_features": result.missing_features}',
+        'payload["canonical_diagnostics"] = result.canonical_diagnostics',
         'if result.features is not None: payload["features"] = result.features.iloc[0].to_dict()',
         'print(json.dumps(payload, sort_keys=True))',
     ].join('\n');
@@ -363,6 +365,37 @@ test('GD-A03 historical values equal the isolated canonical runtime adapter on t
     for (const featureName of accepted) {
         assert.equal(historical.features[featureName].availability_status, 'AVAILABLE');
         assert.equal(runtime.features[featureName], historical.features[featureName].value);
+    }
+});
+
+test('GD-A03 unavailable reasons remain visible and equal in the canonical runtime adapter', () => {
+    const fixture = buildFixture();
+    const missingFact = fixture.facts.find(row => row.canonical_match_id !== fixture.targetId);
+    missingFact.facts.xg.home = {
+        value: null,
+        status: 'UNAVAILABLE',
+        known_shots: 0,
+        missing_shots: 5,
+    };
+    const historical = buildPriorStateFeatureView(
+        rebindSourceBindings({ ...fixture.options, factRows: fixture.facts })
+    ).artifact.rows.find(row => row.canonical_match_id === fixture.targetId);
+    const runtime = canonicalRuntimeProjection(runtimeContextForFixture(fixture));
+    const accepted = loadFeatureContract(path.resolve(__dirname, '../..')).vNextContract.feature_statuses
+        .filter(status => status.training_decision === 'ACCEPTED_FOR_TRAINING')
+        .map(status => status.feature_name);
+
+    assert.equal(runtime.success, false);
+    for (const featureName of accepted) {
+        assert.equal(
+            runtime.canonical_diagnostics[featureName].availability_status,
+            historical.features[featureName].availability_status
+        );
+        assert.deepEqual(
+            runtime.canonical_diagnostics[featureName].unavailable_reason_codes,
+            historical.features[featureName].unavailable_reason_codes
+        );
+        assert.match(runtime.canonical_diagnostics[featureName].provenance_digest, /^[0-9a-f]{64}$/);
     }
 });
 

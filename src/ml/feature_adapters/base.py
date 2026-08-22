@@ -10,7 +10,7 @@ lifecycle: permanent
 # mypy: disable_error_code="type-arg"
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 
-class ModelType(str, Enum):
+class ModelType(str, Enum):  # noqa: UP042 -- preserve the public compatibility enum type.
     """支持的模型类型"""
 
     V19_ROLLING = "v19_rolling"  # 48 维滚动特征
@@ -46,15 +46,19 @@ class AdaptationResult:
     feature_names: list[str]
     missing_features: list[str]
     errors: list[str]
+    canonical_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         """转换为字典"""
-        return {
+        payload = {
             "success": self.success,
             "feature_count": len(self.feature_names),
             "missing_features": self.missing_features,
             "errors": self.errors,
         }
+        if self.canonical_diagnostics:
+            payload["canonical_diagnostics"] = self.canonical_diagnostics
+        return payload
 
 
 class BaseFeatureAdapter(ABC):

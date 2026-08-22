@@ -47,7 +47,7 @@ V-next 的 17 个定义按当前证据被严格分成三类：
 |---|---|---|
 | `rolling_xg_home` | `ACCEPTED_FOR_TRAINING` | GD-A03 exact previous-five historical xG lineage；typed-context runtime formula 与 deterministic fixture numeric parity 已证明 |
 | `rolling_xg_away` | `ACCEPTED_FOR_TRAINING` | 同上，team identity 按每场 home/away side 解析 |
-| `home_points` | `ACCEPTED_FOR_TRAINING` | prior result `3/1/0` 累加；empty closed history 可证明为 0 |
+| `home_points` | `ACCEPTED_FOR_TRAINING` | prior result `3/1/0` 累加；runtime typed path 对没有可验证 prior history 的情况返回 unavailable，不隐含填 0 |
 | `away_points` | `ACCEPTED_FOR_TRAINING` | 同上 |
 | `points_diff` | `ACCEPTED_FOR_TRAINING` | `home_points - away_points` |
 | `home_recent_form_points` | `ACCEPTED_FOR_TRAINING` | exact previous-five result points；不足五场为 unavailable |
@@ -134,8 +134,9 @@ target/accounted ID-set hash，并要求 population conservation。
 `V26_6_PreMatchAdapter.adapt_canonical_typed_context` 是现有 adapter 上隔离的 canonical
 typed-context 入口，委托 `src/ml/inference/canonical_prematch_feature_engine.py` 的纯
 semantic engine；它不是 provider/capture adapter，也没有接管默认 production runtime。
-typed context 必须携带 competition/season 和 `canonical-schedule-history/v1` 的完整
-history closure，缺失或不完整时 points/fatigue 也 fail closed。它复用 registry
+typed context 必须携带 competition/season、`canonical-schedule-history/v1` 的完整
+history closure 和 source schedule digest；缺失或不完整时 points/fatigue 也 fail
+closed，空 history 不会返回隐含的 0。它复用 registry
 accepted order，使用与 GD-A03 相同的 xG、points/form、fatigue 公式；在 deterministic
 fixture 上逐 feature 验证 GD-A03 historical producer 与该 adapter runtime path 的数值
 和 unavailable reason 一致。

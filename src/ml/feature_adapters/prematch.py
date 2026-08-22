@@ -100,6 +100,16 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
 
         names = accepted_feature_names()
         result = build_canonical_prematch_features(context)
+        diagnostics = {
+            name: {
+                "availability_status": result["features"][name]["availability_status"],
+                "unavailable_reason_codes": result["features"][name]["unavailable_reason_codes"],
+                "provenance_digest": result["features"][name]["provenance_digest"],
+                "source_match_ids": result["features"][name]["source_match_ids"],
+                "cutoff_proof": result["features"][name]["cutoff_proof"],
+            }
+            for name in names
+        }
         unavailable = [
             name for name in names if result["features"][name]["availability_status"] != "AVAILABLE"
         ]
@@ -110,6 +120,7 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
                 feature_names=list(names),
                 missing_features=unavailable,
                 errors=[f"canonical feature unavailable: {name}" for name in unavailable],
+                canonical_diagnostics=diagnostics,
             )
         values = [result["features"][name]["value"] for name in names]
         return AdaptationResult(
@@ -118,6 +129,7 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
             feature_names=list(names),
             missing_features=[],
             errors=[],
+            canonical_diagnostics=diagnostics,
         )
 
     def adapt(self, raw_features: dict[str, Any], *, strict: bool = False) -> AdaptationResult:
