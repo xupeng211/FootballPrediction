@@ -8,9 +8,11 @@ resolved lazily to keep the public training module import-compatible.
 from __future__ import annotations
 
 from collections.abc import Mapping
+import importlib.metadata
 import logging
 import os
 from pathlib import Path
+import platform
 import tempfile
 from typing import Any
 
@@ -30,6 +32,26 @@ def _producer():
     from src.ml.training import canonical_training_producer as producer  # noqa: PLC0415
 
     return producer
+
+
+def _runtime_versions() -> dict[str, str]:
+    """Return stable runtime/library versions needed to reproduce a fit."""
+    distributions = {
+        "numpy": "numpy",
+        "pandas": "pandas",
+        "scikit_learn": "scikit-learn",
+        "xgboost": "xgboost",
+        "joblib": "joblib",
+    }
+    versions: dict[str, str] = {"python": platform.python_version()}
+    for key, distribution in distributions.items():
+        try:
+            versions[key] = importlib.metadata.version(distribution)
+        except importlib.metadata.PackageNotFoundError as exc:
+            raise _producer().TrainingContractError(
+                f"required runtime version is unavailable: {distribution}"
+            ) from exc
+    return versions
 
 
 def build_provenance(
@@ -121,6 +143,7 @@ def build_provenance(
         "class_order": list(producer.DEFAULT_CLASS_ORDER),
         "class_names": list(producer.RESULT_NAMES),
         "random_seed": seed,
+        "runtime_versions": _runtime_versions(),
         "estimator": {
             "class": estimator_type,
             "hyperparameters": dict(hyperparameters or {}),
@@ -196,6 +219,7 @@ def build_candidate_envelope(
         "activated": producer.CANDIDATE_ACTIVATED,
         "provenance": dict(provenance),
     }
+    _validate_candidate_envelope_identity(envelope, provenance)
     try:
         validate_canonical_model_envelope(
             envelope,
@@ -208,6 +232,47 @@ def build_candidate_envelope(
             "candidate envelope is incompatible with canonical loader"
         ) from exc
     return envelope
+
+
+def _validate_candidate_envelope_identity(
+    envelope: Mapping[str, Any], provenance: Mapping[str, Any]
+) -> None:
+    """Keep the serialized envelope identity bound to the canonical producer."""
+    producer = _producer()
+    expected = {
+        "artifact_name": producer.CANDIDATE_ARTIFACT_NAME,
+        "model_type": producer.CANDIDATE_MODEL_TYPE,
+        "schema_version": producer.PRODUCER_SCHEMA_VERSION,
+        "model_family": producer.CANDIDATE_MODEL_FAMILY,
+        "model_version": producer.CANDIDATE_MODEL_VERSION,
+        "created_as": producer.CANDIDATE_CREATED_AS,
+        "activated": producer.CANDIDATE_ACTIVATED,
+    }
+    for field, value in expected.items():
+        if envelope.get(field) != value:
+            raise producer.TrainingContractError(f"candidate envelope {field} identity is invalid")
+
+    candidate_id = envelope.get("candidate_id")
+    if not isinstance(candidate_id, str) or not candidate_id:
+        raise producer.TrainingContractError("candidate envelope candidate_id is invalid")
+    if candidate_id != provenance.get("candidate_id"):
+        raise producer.TrainingContractError("candidate envelope candidate_id binding is invalid")
+
+    provenance_bindings = {
+        "producer_schema_version": envelope.get("schema_version"),
+        "artifact_name": envelope.get("artifact_name"),
+        "model_type": envelope.get("model_type"),
+        "model_family": envelope.get("model_family"),
+        "model_version": envelope.get("model_version"),
+        "contract_id": envelope.get("contract_id"),
+        "feature_contract_version": envelope.get("feature_contract_version"),
+        "feature_columns": envelope.get("feature_columns"),
+        "created_as": envelope.get("created_as"),
+        "activated": envelope.get("activated"),
+    }
+    for field, value in provenance_bindings.items():
+        if provenance.get(field) != value:
+            raise producer.TrainingContractError(f"candidate provenance {field} binding is invalid")
 
 
 def _reject_production_path(path: Path) -> None:
@@ -263,6 +328,7 @@ def _candidate_metadata(provenance: Mapping[str, Any], model_sha256: str) -> dic
         "preprocessor_identity": preprocessing.get("identity"),
         "preprocessor_fit_population": preprocessing.get("fit_population"),
         "hyperparameters": estimator.get("hyperparameters"),
+        "runtime_versions": provenance.get("runtime_versions"),
         "random_seed": provenance.get("random_seed"),
         "model_artifact_sha256": model_sha256,
         "created_as": producer.CANDIDATE_CREATED_AS,
@@ -274,7 +340,7 @@ def _candidate_metadata(provenance: Mapping[str, Any], model_sha256: str) -> dic
     return metadata
 
 
-def validate_candidate_metadata(
+def validate_candidate_metadata(  # noqa: C901
     metadata: Mapping[str, Any], *, model_sha256: str | None = None
 ) -> None:
     """Validate the auditable sidecar and its binding to model bytes."""
@@ -300,6 +366,7 @@ def validate_candidate_metadata(
         "preprocessor_identity",
         "preprocessor_fit_population",
         "hyperparameters",
+        "runtime_versions",
         "random_seed",
         "model_artifact_sha256",
         "created_as",
@@ -316,6 +383,14 @@ def validate_candidate_metadata(
         raise producer.TrainingContractError("candidate metadata is not non-production")
     if metadata.get("activated") != producer.CANDIDATE_ACTIVATED:
         raise producer.TrainingContractError("candidate metadata activation flag is invalid")
+    if metadata.get("model_family") != producer.CANDIDATE_MODEL_FAMILY:
+        raise producer.TrainingContractError("candidate metadata model family is invalid")
+    if metadata.get("model_version") != producer.CANDIDATE_MODEL_VERSION:
+        raise producer.TrainingContractError("candidate metadata model version is invalid")
+    if not isinstance(metadata.get("provenance"), Mapping):
+        raise producer.TrainingContractError("candidate metadata provenance is invalid")
+    if metadata.get("candidate_id") != metadata["provenance"].get("candidate_id"):
+        raise producer.TrainingContractError("candidate metadata candidate_id binding is invalid")
     declared_model_hash = producer._assert_sha256(
         metadata.get("model_artifact_sha256"), "candidate model artifact hash"
     )
@@ -391,6 +466,7 @@ def atomic_write_candidate(  # noqa: C901, PLR0915
     provenance = envelope.get("provenance")
     if not isinstance(provenance, Mapping):
         raise producer.TrainingContractError("candidate provenance is missing")
+    _validate_candidate_envelope_identity(envelope, provenance)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None

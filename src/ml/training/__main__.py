@@ -82,6 +82,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Validate or produce one safe canonical candidate."""
     args = _parse_args(argv)
+    if not args.dry_run and not args.receipt:
+        raise producer.TrainingContractError(
+            "--receipt is required for canonical candidate production"
+        )
     input_path = Path(args.input)
     if args.receipt:
         data = producer.load_canonical_feature_frame(input_path, Path(args.receipt))
@@ -152,7 +156,10 @@ def main(argv: list[str] | None = None) -> int:
         "artifact_envelope_valid": True,
         "final_candidate_exists": candidate.path.exists(),
         "candidate_sha256_computed": bool(candidate.sha256),
-        "provenance_complete": True,
+        "provenance_complete": (
+            candidate.provenance.get("input_binding", {}).get("status")
+            == "VERIFIED_CANONICAL_FRAME"
+        ),
         "candidate_sha256": candidate.sha256,
         "artifact_name": producer.CANDIDATE_ARTIFACT_NAME,
         "model_type": producer.CANDIDATE_MODEL_TYPE,

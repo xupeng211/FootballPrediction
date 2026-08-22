@@ -353,6 +353,10 @@ def test_candidate_is_bound_to_frame_ids_metadata_and_explicit_vnext_loader(
     assert metadata["training_row_count"] == FIT_ROWS
     assert metadata["reserved_evaluation_row_count"] == RESERVED_ROWS
     assert metadata["feature_order"] == list(FEATURES)
+    assert metadata["runtime_versions"] == candidate.provenance["runtime_versions"]
+    assert metadata["hyperparameters"]["objective"] == "multi:softprob"
+    assert metadata["hyperparameters"]["num_class"] == len(producer.DEFAULT_CLASS_ORDER)
+    assert metadata["hyperparameters"]["n_jobs"] == 1
     producer.validate_candidate_metadata(metadata, model_sha256=candidate.sha256)
 
     # The candidate projection is intentionally not the production V1 loader
@@ -434,9 +438,6 @@ def test_candidate_tamper_is_detected_and_failed_writes_leave_no_output(
         )
     assert not output.exists()
 
-    def fail_dump(*_args: Any, **_kwargs: Any) -> None:
-        raise OSError("synthetic serialization failure")
-
     split = producer.chronological_split(
         producer.validate_training_frame(frame), min_train_rows=20, min_validation_rows=5
     )
@@ -454,6 +455,17 @@ def test_candidate_tamper_is_detected_and_failed_writes_leave_no_output(
             source_binding=_frame_binding(frame),
         ),
     )
+    for field, value in (("activated", "YES"), ("created_as", "PRODUCTION_MODEL")):
+        invalid_envelope = dict(envelope)
+        invalid_envelope[field] = value
+        invalid_output = tmp_path / f"invalid-{field}.joblib"
+        with pytest.raises(producer.TrainingContractError, match="identity"):
+            producer.atomic_write_candidate(invalid_envelope, invalid_output, contract=contract)
+        assert not invalid_output.exists()
+
+    def fail_dump(*_args: Any, **_kwargs: Any) -> None:
+        raise OSError("synthetic serialization failure")
+
     monkeypatch.setattr(producer.joblib, "dump", fail_dump)
     with pytest.raises(producer.TrainingContractError, match="write"):
         producer.atomic_write_candidate(envelope, output, contract=contract)
@@ -492,3 +504,24 @@ def test_cli_dry_run_does_not_fit_or_write(
     assert output["model_fit_success"] is False
     assert output["final_candidate_exists"] is False
     assert not list(tmp_path.glob("*.joblib"))
+
+
+def test_cli_candidate_requires_canonical_receipt(tmp_path: Path) -> None:
+    input_path = tmp_path / "features.csv"
+    output_path = tmp_path / "candidate.joblib"
+    _frame().to_csv(input_path, index=False)
+
+    with pytest.raises(producer.TrainingContractError, match="receipt"):
+        producer_cli_main(
+            [
+                "--input",
+                str(input_path),
+                "--output",
+                str(output_path),
+                "--min-train-rows",
+                "20",
+                "--min-validation-rows",
+                "5",
+            ]
+        )
+    assert not output_path.exists()

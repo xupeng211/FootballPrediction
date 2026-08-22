@@ -759,10 +759,16 @@ def produce_candidate(
         source_binding=source_binding,
         estimator_type=type(fitted.model).__module__ + "." + type(fitted.model).__name__,
         hyperparameters={
-            "seed": seed,
-            "estimators": estimators,
+            "objective": "multi:softprob",
+            "num_class": len(DEFAULT_CLASS_ORDER),
+            "n_estimators": estimators,
             "max_depth": max_depth,
             "learning_rate": learning_rate,
+            "subsample": 1.0,
+            "colsample_bytree": 1.0,
+            "eval_metric": "mlogloss",
+            "random_state": seed,
+            "n_jobs": 1,
             "validation_fraction": validation_fraction,
         },
     )
