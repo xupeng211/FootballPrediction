@@ -319,23 +319,26 @@ const FEATURE_STATUS_FIELDS = new Set([
     'runtime_source_status',
     'training_eligibility',
     'reason_code',
+    'training_decision',
 ]);
 const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
     rolling_xg_home: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     rolling_xg_away: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     rolling_shots_on_target_home: [
         'RETAINED_PENDING',
@@ -344,6 +347,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'SOURCE_PENDING',
         'NOT_ELIGIBLE_SOURCE_CLOSURE',
         'SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     rolling_shots_on_target_away: [
         'RETAINED_PENDING',
@@ -352,6 +356,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'SOURCE_PENDING',
         'NOT_ELIGIBLE_SOURCE_CLOSURE',
         'SOT_SOURCE_IDENTITY_AND_OWN_GOAL_PENDING',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     rolling_possession_home: [
         'RETAINED_UNAVAILABLE',
@@ -360,6 +365,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'UNAVAILABLE',
         'NOT_ELIGIBLE_SOURCE_UNAVAILABLE',
         'NO_PROVEN_POSSESSION_SOURCE_FACT',
+        'EXCLUDED_FROM_TRAINING',
     ],
     rolling_possession_away: [
         'RETAINED_UNAVAILABLE',
@@ -368,6 +374,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'UNAVAILABLE',
         'NOT_ELIGIBLE_SOURCE_UNAVAILABLE',
         'NO_PROVEN_POSSESSION_SOURCE_FACT',
+        'EXCLUDED_FROM_TRAINING',
     ],
     home_table_position: [
         'RETAINED_PROVEN',
@@ -376,6 +383,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'NOT_PROVEN',
         'NOT_READY_RUNTIME_PARITY',
         'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     away_table_position: [
         'RETAINED_PROVEN',
@@ -384,6 +392,7 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'NOT_PROVEN',
         'NOT_READY_RUNTIME_PARITY',
         'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     table_position_diff: [
         'RETAINED_PROVEN',
@@ -392,38 +401,43 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'NOT_PROVEN',
         'NOT_READY_RUNTIME_PARITY',
         'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     home_points: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     away_points: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     points_diff: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     home_recent_form_points: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     raw_elo_gap: [
         'RETAINED_PENDING',
@@ -432,30 +446,34 @@ const EXPECTED_VNEXT_FEATURE_STATUS_VALUES = Object.freeze({
         'CONTRACT_PENDING',
         'NOT_ELIGIBLE_OWNER_PARAMETER_CONTRACT',
         'ELO_OWNER_PARAMETER_DECISION_REQUIRED',
+        'BLOCKED_PENDING_EVIDENCE',
     ],
     home_fatigue_index: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     away_fatigue_index: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
     fatigue_diff: [
         'RETAINED_PROVEN',
         'PROVEN_DERIVED',
         'PROVEN_DERIVED',
-        'NOT_PROVEN',
-        'NOT_READY_RUNTIME_PARITY',
-        'RUNTIME_NUMERIC_SEMANTICS_NOT_PROVEN',
+        'PROVEN_CANONICAL_TYPED_CONTEXT',
+        'ACCEPTED_FOR_TRAINING',
+        'CANONICAL_TYPED_FACTS_RUNTIME_PARITY_PROVEN',
+        'ACCEPTED_FOR_TRAINING',
     ],
 });
 
@@ -506,6 +524,7 @@ function validateVNextFeatureStatusValues(contract) {
         'runtime_source_status',
         'training_eligibility',
         'reason_code',
+        'training_decision',
     ];
     for (const status of contract.feature_statuses) {
         const actual = fields.map(field => status[field]);
@@ -1530,13 +1549,14 @@ function loadFeatureContract(repositoryRoot) {
         repositoryRoot
     );
     const registry = parseJson(binding, 'feature contract registry');
-    const { v1Contract: contract } = validateFeatureContractRegistry(registry);
+    const { v1Contract: contract, vNextContract } = validateFeatureContractRegistry(registry);
     const runtimeFeatureAdapter = loadRuntimeFeatureIdentity(repositoryRoot);
     if (stableStringify(contract.ordered_features) !== stableStringify(runtimeFeatureAdapter.orderedFeatures)) {
         fail('config feature order differs from V26_6_PreMatchAdapter.V26_6_FEATURES', 'SCHEMA_MISMATCH');
     }
     return {
         contract,
+        vNextContract,
         bytes: binding.bytes,
         sha256: binding.sha256,
         registrySchemaVersion: registry.schema_version,

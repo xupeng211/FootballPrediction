@@ -31,6 +31,7 @@ const FEATURE_STATUS_FIELDS = new Set([
     'runtime_source_status',
     'training_eligibility',
     'reason_code',
+    'training_decision',
 ]);
 
 class GdA03StandingsIntegrationError extends Error {
@@ -125,7 +126,8 @@ function bindVNextFeatureContract(registry) {
             status.semantic_definition_status !== 'SEMANTICS_FROZEN' ||
             status.historical_source_status !== 'PROVEN_FOR_FROZEN_SCOPE' ||
             status.runtime_source_status !== 'NOT_PROVEN' ||
-            status.training_eligibility !== 'NOT_READY_RUNTIME_PARITY'
+            status.training_eligibility !== 'NOT_READY_RUNTIME_PARITY' ||
+            status.training_decision !== 'BLOCKED_PENDING_EVIDENCE'
         ) {
             fail(`${featureName} V-next status is not bound to the frozen authority`, 'RULE_VERSION_UNPROVEN');
         }

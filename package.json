@@ -20,6 +20,7 @@
         "gd:a01": "node scripts/ops/gd_a01_assembler.js",
         "gd:a02": "node scripts/ops/gd_a02_assembler.js",
         "gd:a03": "node scripts/ops/gd_a03_assembler.js",
+        "feature:frame": "node scripts/ops/canonical_prematch_feature_frame.js",
         "fotmob:candidates:export": "node scripts/ops/fotmob_candidates_export.js",
         "fotmob:detail:staging": "docker compose -f docker-compose.dev.yml exec -T dev node scripts/ops/fotmob_detail_staging.js",
         "canonical:inventory:writer": "node scripts/ops/canonical_inventory_writer.js",
