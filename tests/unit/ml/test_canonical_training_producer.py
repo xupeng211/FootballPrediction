@@ -47,6 +47,24 @@ FIT_ROWS = 36
 RESERVED_ROWS = 9
 
 
+class _ReservedLabelSentinel:
+    """任何尝试转换 reserved label 都应使 candidate 运行失败。"""
+
+    def __int__(self) -> int:
+        raise AssertionError("reserved evaluation label was opened")
+
+
+class _ReservedLabelGuardFrame(pd.DataFrame):
+    @property
+    def _constructor(self) -> type[pd.DataFrame]:
+        return _ReservedLabelGuardFrame
+
+    def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, str) and key == producer.DEFAULT_TARGET_COLUMN:
+            raise AssertionError("reserved evaluation label column was opened")
+        return super().__getitem__(key)
+
+
 def _frame(rows: int = FIXTURE_ROWS) -> pd.DataFrame:
     records: list[dict[str, object]] = []
     for index in range(rows):
@@ -223,6 +241,11 @@ def test_canonical_frame_loader_excludes_ineligible_rows_and_isolates_label(
         canonical_frame_input, "_validate_frame_files_with_canonical_contract", lambda *_: None
     )
 
+    def fail_target_access(_value: Any) -> int:
+        raise AssertionError("frame loader opened a target value")
+
+    monkeypatch.setattr(producer, "_normalise_target", fail_target_access)
+
     data = producer.load_canonical_feature_frame(artifact_path, receipt_path)
 
     assert len(data.frame) == FIXTURE_ELIGIBLE_ROWS
@@ -300,9 +323,110 @@ def test_fit_does_not_touch_reserved_evaluation_rows_or_pass_eval_set() -> None:
 
     assert spy.fit_rows == len(split.train)
     assert len(spy.fit_labels) == len(split.train)
+    assert spy.fit_labels == split.train[split.target_column].tolist()
     assert spy.fit_kwargs == {"verbose": False}
     assert fitted.scaler.n_samples_seen_ == len(split.train)
     assert not hasattr(spy, "eval_set")
+
+
+def test_candidate_production_keeps_reserved_label_values_unopened(tmp_path: Path) -> None:
+    frame = _frame()
+    frame["result"] = frame["result"].astype(object)
+    frame.loc[FIT_ROWS:, "result"] = [_ReservedLabelSentinel()] * RESERVED_ROWS
+
+    candidate = producer.produce_candidate(
+        frame,
+        tmp_path / "candidate.joblib",
+        min_train_rows=20,
+        min_validation_rows=5,
+        estimators=4,
+        max_depth=2,
+        source_binding=_frame_binding(_frame()),
+    )
+
+    assert candidate.path.exists()
+    assert candidate.provenance["reserved_evaluation_policy"]["outcome_access"] == (
+        "UNOPENED_UNTIL_OFFLINE_EVALUATION"
+    )
+
+
+def test_candidate_provenance_excludes_reserved_label_distribution(tmp_path: Path) -> None:
+    candidate = producer.produce_candidate(
+        _frame(),
+        tmp_path / "candidate.joblib",
+        min_train_rows=20,
+        min_validation_rows=5,
+        estimators=4,
+        max_depth=2,
+        source_binding=_frame_binding(_frame()),
+    )
+
+    assert "train_class_distribution" in candidate.provenance
+    assert "reserved_evaluation_class_distribution" not in candidate.provenance
+    assert candidate.provenance["reserved_evaluation_policy"]["used_for_metrics"] is False
+
+
+def test_reserved_label_column_accessor_is_not_used_by_provenance(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    frame = _frame()
+    original_split = producer.chronological_split
+
+    def guarded_split(data: Any, **kwargs: Any) -> producer.TemporalSplit:
+        split = original_split(data, **kwargs)
+        return replace(
+            split,
+            validation=_ReservedLabelGuardFrame(split.validation.copy(deep=True)),
+        )
+
+    monkeypatch.setattr(producer, "chronological_split", guarded_split)
+    candidate = producer.produce_candidate(
+        frame,
+        tmp_path / "candidate.joblib",
+        min_train_rows=20,
+        min_validation_rows=5,
+        estimators=4,
+        max_depth=2,
+        source_binding=_frame_binding(frame),
+    )
+
+    assert candidate.path.exists()
+
+
+def test_reserved_label_mutation_is_candidate_invariant(tmp_path: Path) -> None:
+    original_frame = _frame()
+    mutated_frame = _frame()
+    mutated_frame.loc[FIT_ROWS:, "result"] = [2, 1, 0, 2, 1, 0, 2, 1, 0]
+    first = producer.produce_candidate(
+        original_frame,
+        tmp_path / "first.joblib",
+        min_train_rows=20,
+        min_validation_rows=5,
+        estimators=4,
+        max_depth=2,
+        source_binding=_frame_binding(original_frame),
+    )
+    second = producer.produce_candidate(
+        mutated_frame,
+        tmp_path / "second.joblib",
+        min_train_rows=20,
+        min_validation_rows=5,
+        estimators=4,
+        max_depth=2,
+        source_binding=_frame_binding(mutated_frame),
+    )
+
+    assert first.provenance == second.provenance
+    assert first.sha256 == second.sha256
+    assert first.metadata_path is not None
+    assert second.metadata_path is not None
+    assert first.metadata_path.read_bytes() == second.metadata_path.read_bytes()
+    first_env = joblib.load(first.path)
+    second_env = joblib.load(second.path)
+    smoke_features = original_frame.loc[[0], list(FEATURES)]
+    first_prob = first_env["model"].predict_proba(first_env["scaler"].transform(smoke_features))
+    second_prob = second_env["model"].predict_proba(second_env["scaler"].transform(smoke_features))
+    assert np.array_equal(first_prob, second_prob)
 
 
 def test_candidate_is_bound_to_frame_ids_metadata_and_explicit_vnext_loader(
@@ -352,6 +476,8 @@ def test_candidate_is_bound_to_frame_ids_metadata_and_explicit_vnext_loader(
     assert metadata["training_frame_receipt_hash"] == "b" * 64
     assert metadata["training_row_count"] == FIT_ROWS
     assert metadata["reserved_evaluation_row_count"] == RESERVED_ROWS
+    assert "reserved_evaluation_class_distribution" not in metadata
+    assert "reserved_evaluation_class_distribution" not in metadata["provenance"]
     assert metadata["feature_order"] == list(FEATURES)
     assert metadata["runtime_versions"] == candidate.provenance["runtime_versions"]
     assert metadata["hyperparameters"]["objective"] == "multi:softprob"

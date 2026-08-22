@@ -96,6 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             timestamp_column=args.timestamp_column,
             target_column=args.target_column,
             feature_cutoff_column=args.feature_cutoff_column,
+            validate_target=False,
         )
     split = producer.chronological_split(
         data,

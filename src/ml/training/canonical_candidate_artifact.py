@@ -76,7 +76,7 @@ def build_provenance(
         raise producer.TrainingContractError("source dataset identity must be a safe logical name")
 
     def class_distribution(frame) -> dict[str, int]:
-        counts = frame[split.target_column].value_counts().to_dict()
+        counts = frame[split.target_column].map(producer._normalise_target).value_counts().to_dict()
         return {
             producer.RESULT_NAMES[label]: int(counts.get(label, 0))
             for label in producer.DEFAULT_CLASS_ORDER
@@ -164,9 +164,15 @@ def build_provenance(
             producer._row_id_hash(reserved_ids) if reserved_ids else None
         ),
         "train_class_distribution": class_distribution(split.train),
-        "reserved_evaluation_class_distribution": class_distribution(split.validation),
         "train_date_range": producer._date_range(split.train_timestamps),
         "reserved_evaluation_date_range": producer._date_range(split.validation_timestamps),
+        "reserved_evaluation_policy": {
+            "outcome_access": "UNOPENED_UNTIL_OFFLINE_EVALUATION",
+            "used_for_fit": False,
+            "used_for_preprocessing": False,
+            "used_for_tuning": False,
+            "used_for_metrics": False,
+        },
         "split_policy": {
             "name": "chronological_reserved_evaluation_holdout/v1",
             "validation_fraction": split.validation_fraction,

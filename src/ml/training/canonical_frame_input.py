@@ -196,13 +196,13 @@ def load_canonical_feature_frame(  # noqa: C901, PLR0912, PLR0915
             raise producer.TrainingContractError("eligible canonical row has no available label")
         if set(contract.ordered_features).intersection(label):
             raise producer.TrainingContractError("canonical feature columns overlap label fields")
-        outcome = label.get("outcome")
-        producer._normalise_target(outcome)
         record: dict[str, Any] = {
             "match_id": row_id,
             "match_date": row.get("target_kickoff_utc"),
             "feature_as_of_utc": row.get("feature_as_of_utc"),
-            "result": outcome,
+            # 在时间切分隔离训练分区前保持 label payload 未打开；producer
+            # 只在 fit 时解析训练 labels，reserved labels 保持不透明。
+            "result": label,
         }
         for feature_name in contract.ordered_features:
             line = features[feature_name]
@@ -266,6 +266,7 @@ def load_canonical_feature_frame(  # noqa: C901, PLR0912, PLR0915
         pd.DataFrame(records),
         registry=registry,
         feature_cutoff_column="feature_as_of_utc",
+        validate_target=False,
     )
     return replace(
         data,

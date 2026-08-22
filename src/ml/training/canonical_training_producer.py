@@ -16,16 +16,14 @@ remain separate reviewed operations.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 import hashlib
 import json
 import logging
 from pathlib import Path
 import subprocess
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+from typing import Any
 
 import joblib  # type: ignore[import-untyped]
 import numpy as np
@@ -316,6 +314,10 @@ def _assert_full_sha(value: Any, label: str) -> str:
 
 def _normalise_target(value: Any) -> int:
     """Map the established Away/Draw/Home labels to 0/1/2 without fallback."""
+    if isinstance(value, Mapping):
+        if "outcome" not in value:
+            raise TrainingContractError("target label outcome is missing")
+        value = value["outcome"]
     if isinstance(value, str):
         normalized = value.strip().upper()
         aliases: dict[str, int] = {
@@ -377,6 +379,7 @@ def validate_training_frame(  # noqa: C901, PLR0912
     timestamp_column: str = DEFAULT_TIMESTAMP_COLUMN,
     target_column: str = DEFAULT_TARGET_COLUMN,
     feature_cutoff_column: str | None = None,
+    validate_target: bool = True,
 ) -> ValidatedTrainingData:
     """Validate an explicit pre-match frame without filling missing values."""
     if not isinstance(frame, pd.DataFrame) or frame.empty:
@@ -421,11 +424,12 @@ def validate_training_frame(  # noqa: C901, PLR0912
             raise TrainingContractError("canonical training feature contains non-finite values")
         validated[feature] = numeric.astype(float)
 
-    validated[target_column] = validated[target_column].map(_normalise_target)
-    if validated[target_column].isna().any():
-        raise TrainingContractError("training target is missing")
-    if set(validated[target_column].astype(int)) != set(DEFAULT_CLASS_ORDER):
-        raise TrainingContractError("training frame does not contain all outcome classes")
+    if validate_target:
+        validated[target_column] = validated[target_column].map(_normalise_target)
+        if validated[target_column].isna().any():
+            raise TrainingContractError("training target is missing")
+        if set(validated[target_column].astype(int)) != set(DEFAULT_CLASS_ORDER):
+            raise TrainingContractError("training frame does not contain all outcome classes")
     if "match_id" in validated.columns:
         match_ids = validated["match_id"].astype(str)
         if match_ids.duplicated().any():
@@ -591,7 +595,9 @@ def fit_canonical_model(
         scaler.fit_transform(split.train.loc[:, list(split.feature_names)]),
         columns=split.feature_names,
     )
-    y_train = split.train[split.target_column].astype(int)
+    y_train = split.train[split.target_column].map(_normalise_target).astype(int)
+    if set(y_train) != set(DEFAULT_CLASS_ORDER):
+        raise TrainingContractError("training partition does not contain all outcome classes")
     model = (
         estimator_factory()
         if estimator_factory is not None
@@ -617,7 +623,7 @@ def evaluate_canonical_model(
         fitted.scaler.transform(split.validation.loc[:, list(split.feature_names)]),
         columns=split.feature_names,
     )
-    y_validation = split.validation[split.target_column].astype(int).to_numpy()
+    y_validation = split.validation[split.target_column].map(_normalise_target).to_numpy()
     probabilities = np.asarray(fitted.model.predict_proba(x_validation), dtype=float)
     if probabilities.shape != (len(split.validation), len(DEFAULT_CLASS_ORDER)):
         raise TrainingContractError("estimator probability shape is incompatible")
@@ -736,6 +742,7 @@ def produce_candidate(
         timestamp_column=timestamp_column,
         target_column=target_column,
         feature_cutoff_column=feature_cutoff_column,
+        validate_target=False,
     )
     split = chronological_split(
         data,
