@@ -262,12 +262,15 @@ does not change runtime behavior or remove either caller.
   restricted internal/compatibility surface requiring explicit authorization, not as the default
   odds entrypoint.
 - **Feature build / `npm run l3:stitch` — `DOCUMENTED_ONLY`**: `package.json` invokes the direct
-  Node runtime `scripts/ops/l3_stitch_pipeline.js`. `make data-l3-dry-run` and
+  Node runtime `scripts/ops/l3_stitch_pipeline.js`; `scripts/ops/total_war_pipeline.js` also
+  invokes it for that orchestrator's `smelt` task, while `npm run smelt` invokes the separate
+  `scripts/ops/smelt_all.js` surface. `make data-l3-dry-run` and
   `make data-l3-write-dry-run` are distinct fixture/local paths, while the corresponding commit
   targets remain blocked; they are not equivalent to `npm run l3:stitch`. The implementation
-  writes L3 data only after pre-provisioned-schema checks, forks L3 workers, and invokes the Elo
-  child; it performs no runtime DDL. Treat it as a restricted internal data-writer surface
-  requiring explicit authorization, not as the default feature-build entrypoint.
+  may backfill scores in `matches`, writes L3 data only after pre-provisioned-schema checks,
+  forks L3 workers, and invokes the Elo child; it performs no runtime DDL. Treat it as a
+  restricted internal data-writer surface requiring explicit authorization, not as the default
+  feature-build entrypoint.
 
 ### Prediction authority (PR-A3 current state)
 
