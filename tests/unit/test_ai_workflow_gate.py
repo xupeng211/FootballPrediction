@@ -146,6 +146,15 @@ def _valid_pr_body() -> str:
 
     | Item | Value |
     |---|---|
+    | Capability changed? | no |
+    | Milestone changed? | no |
+    | Canonical entrypoint changed? | no |
+    | Current blocker changed? | no |
+    | Data/model/authorization contract changed? | no |
+    | Repository structure/authority navigation changed? | no |
+    | Source-of-truth docs updated | no |
+    | Updated authoritative docs | none |
+    | If not updated, explicit reason | This fixture changes no business capability or current-state status. |
     | New docs added | 0 |
     | Modified docs | AGENT_WORKFLOW.md — added section 19.5 hollow-compliance rules |
     | Reason | Updated workflow documentation to record new content-quality gate rules |
@@ -202,6 +211,19 @@ def _valid_pr_body() -> str:
 
     - TBD
     """
+    )
+
+
+def _legacy_report_body() -> str:
+    """Keep report-backflow unit cases focused on the legacy checker contract."""
+
+    return (
+        "\n".join(
+            line
+            for line in _valid_pr_body().splitlines()
+            if not line.startswith("| If not updated, explicit reason |")
+        )
+        + "\n"
     )
 
 
@@ -371,7 +393,7 @@ def test_review_report_files_count_as_sprawl():
 
 
 def test_report_without_authoritative_update_or_reason_fails():
-    body = _valid_pr_body()
+    body = _legacy_report_body()
     changes = [gate.Change("A", "docs/_reports/new_audit.md")]
     errors = gate.check_authoritative_report_backflow(body, changes)
     assert len(errors) == 1
@@ -388,7 +410,7 @@ def test_report_with_project_status_update_passes():
 
 
 def test_report_with_explicit_no_update_reason_passes():
-    body = _valid_pr_body().replace(
+    body = _legacy_report_body().replace(
         "| Reason | Updated workflow documentation to record new content-quality gate rules |",
         "| Source-of-truth no-update reason | User scoped this PR to a transient evidence "
         "report and explicitly blocked source-of-truth edits. |",
@@ -401,7 +423,7 @@ def test_report_with_hollow_no_update_reasons_fails():
     hollow_values = ("n/a", "none", "not needed", "no", "无", "无需")
     changes = [gate.Change("A", "docs/_reports/new_audit.md")]
     for value in hollow_values:
-        body = _valid_pr_body().replace(
+        body = _legacy_report_body().replace(
             "| Reason | Updated workflow documentation to record new content-quality gate rules |",
             f"| Source-of-truth no-update reason | {value} |",
         )
@@ -427,7 +449,7 @@ def test_key_authoritative_docs_satisfy_report_backflow_gate():
 
 
 def test_validate_reports_authoritative_backflow_failure():
-    body = _valid_pr_body()
+    body = _legacy_report_body()
     changes = [gate.Change("A", "docs/_reports/new_audit.md")]
     errors = gate.validate(body, changes)
     assert any("Source-of-truth no-update reason" in e for e in errors)

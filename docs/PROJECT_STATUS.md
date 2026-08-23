@@ -3,7 +3,37 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-08-08
+Last updated: 2026-08-23
+
+## Current State
+
+本节是当前状态摘要；下方的 M3、VALUE_MVP-1、SC-002 和 FotMob 长篇段落是
+supporting history / completed evidence，保留用于追溯，不再把旧阶段标题当作
+当前战线。当前主线事实已按 `origin/main` 与 canonical code/config 独立核对。
+
+| Field | Current truth |
+|---|---|
+| Current main | `0e21c2c9be52d0e760d57aa95d1deb511f516e7f`（本次审计基线；以后以 Git 完整 SHA 刷新） |
+| Current system stage | `CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE`；pre-production research evidence |
+| Completed canonical pipeline | GD-A01 → GD-A02 → GD-A03 → Canonical Prematch Feature Frame → Training Candidate Production → Offline Evaluation |
+| Current model asset | `canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41`; `xgboost_multiclass_1x2`; `canonical_prematch/vnext-v1`; 9 accepted-for-training features |
+| Population / split | 888 accounted; 545 eligible; 343 ineligible; 436 training; 109 reserved evaluation |
+| Predictive evidence | log loss `0.97834` vs prior `1.05654`; Brier `0.58456` vs prior `0.63590`; accuracy `55.96%` vs majority `48.62%`; `MODEL_OFFLINE_QUALITY_STATUS=PROMISING` |
+| Holdout | `CONSUMED_FOR_OFFLINE_EVALUATION`（109 outcomes，不再是 untouched/unopened） |
+| Market / odds evidence | historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
+| Hard blockers | strict decision-time odds timeline；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation |
+| Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
+| Next Owner decision | 明确授权下一项证据任务：优先 fresh independent future holdout，或另行设计 strict decision-time market evidence；不自动开始、不混合 VALUE_MVP-1 与 canonical candidate |
+
+当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
+`docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
+`docs/MODEL_ARTIFACTS.md` 和 `docs/data/FOTMOB_CURRENT_STATE.md`。代码合同与
+GitHub/Actions 状态仍以机器事实为准；本摘要不授权训练、预测、回测、写入或激活。
+
+## Historical evidence / completed history
+
+以下长篇段落保留历史证据、完成记录和 supporting history。它们不能覆盖上面的
+Current State，也不能作为新的 workflow authority。
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 

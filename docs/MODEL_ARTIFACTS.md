@@ -4,6 +4,16 @@
 
 Model artifacts are generated outputs and are not stored in Git.
 
+## Current handoff — 2026-08-23
+
+`config/model_artifacts.json` remains the canonical production manifest. Its API
+artifact row is still `pending`/`null`, and no production model is activated.
+The evaluated `canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41` candidate is
+repository-external, non-production research evidence; it does not change the
+manifest or readiness state. Its offline evidence and proof boundaries are
+maintained in `docs/PROJECT_STATUS.md` and
+`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`.
+
 ## Not Stored in Git
 
 The following are intentionally excluded from Git:

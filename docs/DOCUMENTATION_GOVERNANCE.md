@@ -28,11 +28,16 @@ read first. They summarize current state and link to supporting evidence.
 
 | Path | Status | Notes |
 |---|---|---|
-| docs/PROJECT_STATUS.md | active | Overall project status and blockers. |
+| README.md | active | `Canonical Business Entrypoints` is the formal business-entrypoint authority. |
+| docs/PROJECT_MAP.md | active | Repository structure and Agent navigation map; not a progress ledger. |
+| docs/CAPABILITY_INDEX.md | active | Long-lived capability, asset, status, entrypoint, and authorization index. |
+| docs/ACTIVE_MILESTONE.md | active | Current battle line, completed node, blockers, and next Owner decision. |
+| docs/PROJECT_STATUS.md | active | Overall current state, blockers, and supporting completed history. |
 | docs/DATA_SOURCE_STRATEGY.md | active | Current data-source strategy and gates. |
-| docs/FOTMOB_CURRENT_STATE.md | planned | Preferred root-level FotMob state doc. |
-| docs/data/FOTMOB_CURRENT_STATE.md | exists/needs_update | Existing FotMob state doc to reconcile. |
+| docs/FOTMOB_CURRENT_STATE.md | not used | Do not create a parallel root-level FotMob authority. |
+| docs/data/FOTMOB_CURRENT_STATE.md | active | FotMob acquisition, retention, and domain blocker current state. |
 | docs/CANONICAL_MATCH_SCHEMA.md | planned | Canonical match payload and feature schema. |
+| docs/MODEL_ARTIFACTS.md | active | Manifest, artifact-readiness, and activation boundary; candidate evidence remains external research state. |
 | docs/DOCUMENTATION_GOVERNANCE.md | exists | This governance policy. |
 | AGENTS.md | active |唯一 operational workflow authority for AI development. |
 | docs/AGENT_WORKFLOW.md | active |唯一 detailed workflow explanation. |
@@ -40,6 +45,10 @@ read first. They summarize current state and link to supporting evidence.
 
 If a listed document does not exist, mark it as planned. Do not create it unless
 the task explicitly includes that scope.
+
+`COMMAND_CENTER.md` is a historical snapshot and remains non-authoritative. It
+must not be restored as the current project map or used to override the current
+state documents above.
 
 ### 2. ADR / Decision Docs
 
@@ -151,6 +160,12 @@ Every PR body must include:
 | Superseded docs identified | yes/no |
 | Archive candidates identified | yes/no |
 | Reason for new docs | `<short reason>` |
+| Capability changed? | `yes` / `no` |
+| Milestone changed? | `yes` / `no` |
+| Canonical entrypoint changed? | `yes` / `no` |
+| Current blocker changed? | `yes` / `no` |
+| Data/model/authorization contract changed? | `yes` / `no` |
+| Repository structure/authority navigation changed? | `yes` / `no` |
 
 ## Source of Truth Rule
 
@@ -158,11 +173,14 @@ Any long-term conclusion must be recorded in source-of-truth docs. Phase reports
 can support the conclusion, but they cannot permanently be the only place where
 active truth lives.
 
-`AGENTS.md`, `docs/AGENT_WORKFLOW.md`, `docs/PROJECT_STATUS.md`,
-`docs/DOCUMENTATION_GOVERNANCE.md`,
-`docs/DATA_SOURCE_STRATEGY.md`, `docs/data/FOTMOB_CURRENT_STATE.md`, and
-`README.md` are the current authoritative update targets for general workflow
-and current-state backflow.
+`AGENTS.md`, `docs/AGENT_WORKFLOW.md`, `docs/PROJECT_MAP.md`,
+`docs/CAPABILITY_INDEX.md`, `docs/ACTIVE_MILESTONE.md`,
+`docs/PROJECT_STATUS.md`, `docs/DOCUMENTATION_GOVERNANCE.md`,
+`docs/DATA_SOURCE_STRATEGY.md`, `docs/data/FOTMOB_CURRENT_STATE.md`,
+`docs/MODEL_ARTIFACTS.md`, and `README.md` are the existing authoritative
+update targets for workflow, navigation, capability, milestone, model, and
+current-state backflow. Their roles are distinct; none is a replacement for
+another.
 
 Any PR that adds or modifies `docs/_reports/*.md` must either:
 
@@ -177,6 +195,44 @@ change active project status must be reflected in `docs/PROJECT_STATUS.md`.
 When a phase report changes project direction, the next governance or cleanup
 task should update the relevant source-of-truth document with a short summary and
 links to evidence.
+
+## Documentation Backflow Contract
+
+This is a lightweight contract over the existing documents, not a second project
+map or workflow authority. A PR that changes a long-lived business capability,
+canonical entrypoint, capability status, training/evaluation behavior,
+data/model/authorization contract, major blocker, or milestone completion must
+either update the relevant current-state source of truth or provide a concrete
+no-update reason in its `Documentation Impact` table.
+
+The stable mapping is intentionally small:
+
+| Declared impact | Required current-state backflow |
+|---|---|
+| Capability or asset status | `docs/CAPABILITY_INDEX.md` |
+| Active milestone, major DONE, or next Owner decision | `docs/ACTIVE_MILESTONE.md` |
+| Canonical business entrypoint | `README.md` + `docs/CAPABILITY_INDEX.md` |
+| Project-wide current blocker or stage | `docs/PROJECT_STATUS.md` |
+| FotMob acquisition/retention/domain blocker | `docs/data/FOTMOB_CURRENT_STATE.md` |
+| Workflow or authorization semantics | `AGENTS.md` + `docs/AGENT_WORKFLOW.md` |
+| Repository structure or authority navigation | `docs/PROJECT_MAP.md` |
+
+The PR body uses machine-readable `yes` / `no` declarations for capability,
+milestone, canonical entrypoint, current blocker, data/model/authorization
+contract, and repository-navigation impact. A positive capability/status/entrypoint/milestone/blocker
+declaration cannot be bypassed by a generic no-update sentence. A bugfix that
+does not change the declared long-lived semantics may use a specific reason that
+states what changed and why lifecycle, status, entrypoint, contract, blocker, or
+navigation truth did not change. `n/a`, `none`, `not needed`, `no update needed`,
+`无`, and `无需` are invalid reasons, including when a classified category is
+explicitly declared unchanged.
+
+The existing `scripts/ops/ai_workflow_gate.py` required CI step calls its small
+`scripts/ops/helpers/documentation_backflow.py` path classifier. It checks only
+the changed paths plus the PR declaration; it does not infer business meaning,
+rewrite Markdown, create manifests, or add a new required GitHub check. The
+existing cleanup checker remains focused on its allowlist/destructive-operation
+scope and is reused for governance-file safety.
 
 Do not create replacement authority files such as `PROJECT_STATUS_V2.md`,
 `NEW_RULES.md`, `NEW_WORKFLOW.md`, or similar parallel entrypoints to bypass the

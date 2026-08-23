@@ -75,6 +75,21 @@ profile 的边界：
 
 内容必须是实际事实：命令、exit code、覆盖范围、runtime 影响和回滚办法。`Scope` 必须包含 `Workflow class = NORMAL` 或 `STRICT`。STRICT 的 evidence 只包含 version、task type、provider、reviewed full SHA、result 和带时区 timestamp；完整 SHA 必须等于当前 PR HEAD。普通 PR 不生成空 finding、manifest、snapshot 或 phase report。高风险路径需要的授权信息只在该 PR 的 `Risk` 之外按模板提示增加，不为 NORMAL 增加状态机式正文。
 
+### 4.1 Current-state documentation backflow
+
+`AGENTS.md` 的 2.1 是操作要求；具体文档映射由
+`docs/DOCUMENTATION_GOVERNANCE.md` 维护，二者不创建新的 authority。涉及长期能力或状态的任务开始前要声明
+`EXISTING_CAPABILITIES_REVIEWED=YES` 和 `CURRENT_MILESTONE_REVIEWED=YES`；结束前要判断
+`CAPABILITY_INDEX_UPDATE_REQUIRED`、`ACTIVE_MILESTONE_UPDATE_REQUIRED`、
+`PROJECT_STATUS_UPDATE_REQUIRED`、`README_ENTRYPOINT_UPDATE_REQUIRED` 和
+`PROJECT_MAP_UPDATE_REQUIRED`。PR 的 `Documentation Impact` 以 yes/no 字段表达这些判断。
+
+现有 `AI Workflow Gate` 会根据少量稳定 changed-path 分类检查：能力变化是否回写
+`docs/CAPABILITY_INDEX.md`，里程碑变化是否回写 `docs/ACTIVE_MILESTONE.md`，canonical
+入口变化是否同时回写 `README.md` 与能力索引，blocker 变化是否回写
+`docs/PROJECT_STATUS.md`，以及仓库结构/authority navigation 变化是否回写
+`docs/PROJECT_MAP.md`。没有改变长期语义的 bugfix 可以填写具体 no-update reason；空泛理由会失败。
+
 ## 5. Review freshness
 
 review 记录必须绑定完整 PR HEAD。有效性不依赖 reviewer 口头说 PASS，而依赖：
