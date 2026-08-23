@@ -143,6 +143,11 @@ def test_agents_and_claude_md_in_source_of_truth_allowlist():
     assert "CLAUDE.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 
+def test_project_vision_is_a_source_of_truth_allowlist_entry():
+    """The permanent North Star document may be updated as source-of-truth."""
+    assert "docs/PROJECT_VISION.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
 def test_no_wildcard_paths_in_source_of_truth_allowlist():
     """The source-of-truth allowlist uses exact paths, not wildcards."""
     assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED

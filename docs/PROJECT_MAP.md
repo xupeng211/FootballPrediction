@@ -19,6 +19,7 @@
 - 不回答具体命令的授权状态 —— 见 README "Canonical Business Entrypoints" 表。
 - 不逐条罗列能力 —— 见 docs/CAPABILITY_INDEX.md。
 - 不回答当前里程碑进度 —— 见 docs/ACTIVE_MILESTONE.md。
+- 不回答最终目标系统 —— 见 docs/PROJECT_VISION.md。
 - 不回答 FotMob 摄取当前状态 —— 见 docs/data/FOTMOB_CURRENT_STATE.md。
 - 不替代代码本身、数据合同（V*.sql / contract 模块）或任何 current-state 文档。
 
@@ -26,17 +27,27 @@
 
 按 `AGENTS.md` 定义，新 Agent 从以下顺序开始：
 
-1. `AGENTS.md` —— 仓库级安全与工作流规则的权威。
-2. README "Canonical Business Entrypoints" —— 业务命令正式入口的权威。
-3. `docs/AGENT_WORKFLOW.md` —— 唯一详细工作流。
-4. `docs/data/FOTMOB_CURRENT_STATE.md` —— FotMob 摄取最新状态。
-5. 本文档（`docs/PROJECT_MAP.md`）—— 仓库结构与找能力路径。
-6. `docs/CAPABILITY_INDEX.md` —— 可扫描能力表。
-7. `docs/ACTIVE_MILESTONE.md` —— 当前里程碑与授权边界。
+1. `AGENTS.md` —— 仓库级安全与工作流规则的唯一 operational authority。
+2. README "Canonical Business Entrypoints" —— 业务命令正式入口的 authority。
+3. `docs/AGENT_WORKFLOW.md` —— 唯一详细工作流说明。
+4. `docs/PROJECT_VISION.md` —— 最终 target system / North Star；不授予执行授权。
+5. 本文档（`docs/PROJECT_MAP.md`）—— 仓库结构与找东西的地图。
+6. `docs/CAPABILITY_INDEX.md` —— 能力、资产、状态、入口和授权索引。
+7. `docs/ACTIVE_MILESTONE.md` —— 当前战线、当前节点、blocker 和下一 Owner 决策。
+8. `docs/PROJECT_STATUS.md` —— 较完整 current-state、blockers 与 supporting history。
+9. 领域 current-state docs —— FotMob 读 `docs/data/FOTMOB_CURRENT_STATE.md`；模型
+   artifact/readiness 读 `docs/MODEL_ARTIFACTS.md`；再按能力行链接的 data/model contract 阅读。
 
 注意：canonical 表定义"正式入口"，但 **canonical ≠ 已获得执行授权**。
 网络、DB 写入、migration、artifact、训练与生产操作仍需逐项明确授权
 （AGENTS.md §7、CLAUDE.md）。
+
+## PROJECT_VISION 的边界
+
+`docs/PROJECT_VISION.md` 只描述 FootballPrediction 的 target system / North Star，回答
+“最终要造什么”。它不负责仓库的操作规则，不是当前能力清单、active milestone、current-state
+status 或执行授权来源；这些职责仍分别属于 AGENTS.md、CAPABILITY_INDEX、ACTIVE_MILESTONE
+和 PROJECT_STATUS。
 
 ## 技术栈摘要
 
@@ -84,7 +95,7 @@
 
 ## 新 Agent 找能力推荐顺序
 
-1. 读本文档 + `docs/CAPABILITY_INDEX.md`，确认目标能力是否已存在。
+1. 按上面的正式阅读路径完成基础阅读，再读本文档 + `docs/CAPABILITY_INDEX.md`，确认目标能力是否已存在。
 2. 在 CAPABILITY_INDEX 中按 Domain 找对应行：状态词、canonical 入口、核心实现、
    测试、legacy 替代。
 3. 读状态为 current-state 的对应文档（FotMob → `docs/data/FOTMOB_CURRENT_STATE.md`；

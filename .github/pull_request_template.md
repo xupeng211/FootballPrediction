@@ -15,6 +15,31 @@
 
 <!-- For a strict or workflow-governance change, state the risk boundary and authorized paths. -->
 
+## Documentation Impact
+
+| Field | Value |
+| --- | --- |
+| Capability changed? | `yes` / `no` |
+| Milestone changed? | `yes` / `no` |
+| Canonical entrypoint changed? | `yes` / `no` |
+| Current blocker changed? | `yes` / `no` |
+| Data/model/authorization contract changed? | `yes` / `no` |
+| Repository structure/authority navigation changed? | `yes` / `no` |
+| Project vision / target-state changed? | `yes` / `no` |
+| Source-of-truth docs updated | `yes` / `no` |
+| Updated authoritative docs | `docs/...` or `none` when source-of-truth docs are not needed |
+| If not updated, explicit reason | Required when source-of-truth docs updated is `no`; state the unchanged lifecycle/status/entrypoint/contract boundary. |
+
+<!--
+The existing AI Workflow Gate checks these fields only when stable changed paths
+can affect long-lived capability or current state. Positive capability, milestone,
+entrypoint, blocker, navigation, or project-vision declarations must name the mapped
+source-of-truth docs. `Project vision / target-state changed? = yes` must name
+`docs/PROJECT_VISION.md`; it cannot be bypassed with a no-update reason.
+Generic reasons such as "n/a", "none", "not needed", "no update needed", "无",
+or "无需" are rejected.
+-->
+
 ## Tests
 
 <!-- List the actual commands, exit codes, and any intentionally unrun checks. -->

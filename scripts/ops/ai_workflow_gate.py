@@ -99,7 +99,7 @@ GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
         "scripts/devops/exact_head.py",
         ".github/workflows/production-gate.yml",
         "CONTRIBUTING.md",
-        "docs/PROJECT_MAP.md",
+        *{"docs/PROJECT_MAP.md", "docs/PROJECT_VISION.md"},
         "Makefile",
     }
 )
@@ -109,10 +109,13 @@ AUTHORITATIVE_DOC_PATHS: frozenset[str] = frozenset(
         "docs/PROJECT_STATUS.md",
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "AGENTS.md",
-        "docs/AGENT_WORKFLOW.md",
+        *{"docs/AGENT_WORKFLOW.md", "docs/PROJECT_VISION.md"},
         "docs/DATA_SOURCE_STRATEGY.md",
         "docs/data/FOTMOB_CURRENT_STATE.md",
         "README.md",
+        "docs/CAPABILITY_INDEX.md",
+        "docs/ACTIVE_MILESTONE.md",
+        "docs/MODEL_ARTIFACTS.md",
     }
 )
 
@@ -211,6 +214,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
     validate_authorization,
 )
 from scripts.ops.helpers import section_content_quality as _section_content_quality  # noqa: E402
+from scripts.ops.helpers.documentation_backflow import check_documentation_backflow  # noqa: E402
 
 CANONICAL_REQUIRED_SECTIONS = _section_content_quality.CANONICAL_REQUIRED_SECTIONS
 LEGACY_REQUIRED_SECTIONS = _section_content_quality.LEGACY_REQUIRED_SECTIONS
@@ -586,20 +590,18 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     # 4b. Report artifacts require source-of-truth backflow or explicit reason
     if has_pr_metadata:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
+        errors.extend(check_documentation_backflow(pr_body, changed))
 
-    # 4c. Report-restricted task type: non-docs/governance PRs cannot add reports (P0-3)
     if has_pr_metadata:
         errors.extend(
             check_report_restricted_task_type(added, pr_body, skip_body_checks=skip_body_checks)
         )
 
-    # 4d. Report lifecycle required when docs/_reports files are added (P0-3)
     if has_pr_metadata:
         errors.extend(
             check_report_lifecycle_required(added, pr_body, skip_body_checks=skip_body_checks)
         )
 
-    # 4e. No-generated-artifacts: block temp/cache/log/build/coverage artifacts (P0-2)
     errors.extend(check_no_generated_artifacts_wrapper(added))
 
     # 5. Dangerous keywords in docs/tests blind spots

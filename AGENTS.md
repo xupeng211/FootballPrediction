@@ -30,6 +30,39 @@ BASE_SHA=
 
 确认当前不是 `main`。若在 `main`，先创建 feature branch；若已有未提交修改，原样保护，不能为了切 branch 而覆盖它。优先使用现有 worktree；需要新 worktree 时先确认目标路径不含用户工作。
 
+### 2.1 能力审计与 current-state 回流
+
+任何可能改变长期业务能力、canonical 入口、能力状态、训练/评价行为、数据或模型合同、授权边界、主要 blocker 或里程碑结论的任务，在实现前必须先核对既有能力和当前战线，并在任务记录或 PR `Documentation Impact` 中声明：
+
+```text
+EXISTING_CAPABILITIES_REVIEWED=YES
+CURRENT_MILESTONE_REVIEWED=YES
+```
+
+涉及长期业务能力或目标架构的任务还必须阅读
+`docs/PROJECT_VISION.md`，并在任务记录或 PR `Scope` 中确认：
+
+```text
+VISION_ALIGNMENT_REVIEWED=YES
+```
+
+确认时至少判断：新能力对应 PROJECT_VISION 的哪一层、是否已有能力可以复用、是否是当前
+战线的真实缺口，以及是否会制造 North Star 之外的无关系统。普通 typo / bugfix 若不改变
+长期能力或目标架构，不要求修改 PROJECT_VISION 或填写上述判断。
+
+任务结束前必须判断并填写：
+
+```text
+CAPABILITY_INDEX_UPDATE_REQUIRED=YES|NO
+ACTIVE_MILESTONE_UPDATE_REQUIRED=YES|NO
+PROJECT_STATUS_UPDATE_REQUIRED=YES|NO
+README_ENTRYPOINT_UPDATE_REQUIRED=YES|NO
+PROJECT_MAP_UPDATE_REQUIRED=YES|NO
+PROJECT_VISION_UPDATE_REQUIRED=YES|NO
+```
+
+判断为 `YES` 时必须在同一 PR 回写对应的现有 current-state 文档；判断为 `NO` 时，PR `Documentation Impact` 必须给出具体原因，不能只写 `n/a`、`none`、`not needed`、`无需` 或同义空话。小型 typo / bugfix 若未改变能力、状态、入口、合同或 blocker，可以声明 `NO`，但仍须说明未改变的边界。具体映射和机器检查复用 `docs/DOCUMENTATION_GOVERNANCE.md` 与现有 `AI Workflow Gate`，不得创建第二套 PROJECT_MAP、ASSET_MAP 或 workflow authority。
+
 ## 3. 任务分类
 
 ### NORMAL

@@ -48,6 +48,16 @@ def _valid_pr_body() -> str:
     | New docs added | 0 |
     | Modified docs | AGENT_WORKFLOW.md |
     | Reason | Testing local preflight |
+    | Capability changed? | no |
+    | Milestone changed? | no |
+    | Canonical entrypoint changed? | no |
+    | Current blocker changed? | no |
+    | Data/model/authorization contract changed? | no |
+    | Repository structure/authority navigation changed? | no |
+    | Project vision / target-state changed? | no |
+    | Source-of-truth docs updated | no |
+    | Updated authoritative docs | none |
+    | If not updated, explicit reason | This fixture changes no long-lived capability, target state, entrypoint, contract, blocker, or navigation semantics. |
 
     ## Safety Impact
 

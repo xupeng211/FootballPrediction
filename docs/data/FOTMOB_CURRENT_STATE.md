@@ -9,16 +9,17 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-08-11 (post-GDI1C FotMob 888 closeout)
+## Current authoritative status — 2026-08-23 handoff (acquisition closeout 2026-08-11)
 
-### GD-A01 implementation status — 2026-08-14
+### GD-A01 / GD-A02 / GD-A03 implementation status — current main
 
-The GD-A01 spine + historical-odds file-first assembler is implemented on the
-`feat/gd-a01-spine-odds-assembler` branch and awaits merge review.  Its frozen
-888 real-asset validation artifact is an assembly foundation, not the Golden
-Dataset: `FOTMOB_888_RAW_ASSET_FROZEN=YES` does not mean
-`GOLDEN_DATASET_COMPLETE=YES`, and GD-A01 does not include the GD-A02+ facts or
-prior-state feature views.  Football-Data C-series values remain a
+The GD-A01 spine + historical-odds assembler, GD-A02 facts projection, and GD-A03
+prior-state feature view are present in the current main ancestry. Their frozen
+888 real-asset chain is an assembly foundation, not the Golden Dataset:
+`FOTMOB_888_RAW_ASSET_FROZEN=YES` does not mean `GOLDEN_DATASET_COMPLETE=YES`.
+The later canonical prematch frame, training candidate, and offline evaluation
+are documented in the project-level current-state docs; they do not change the
+FotMob acquisition boundary. Football-Data C-series values remain a
 provider-defined closing benchmark; an exact closing timestamp/tick is not
 proven.
 
@@ -66,9 +67,12 @@ Bounded two-path compatibility probe = completed
    observed in that bounded probe)
 Batch capture executed = 14 formal batches / 812 unique targets (frozen 888
   population; no 1,140-match capture; no database write)
-Not occurred since the frozen 888 acquisition: no NEW capture beyond the frozen
-  population, no business database write, no migration, no canonical linkage
-  write, no training, no backtest, no prediction
+Since the frozen 888 acquisition: no NEW capture beyond the frozen population,
+no business database write, no migration, no canonical linkage write, no
+production model activation, no backtest, and no prediction execution. The
+canonical training-candidate and offline-evaluation evidence was produced as a
+separate repository-external, explicitly authorized research path with no
+network, DB, raw write, backtest, or activation side effect.
 SC-002 = SC_002_ENFORCEMENT_INFRASTRUCTURE=COMPLETE /
   SC_002_STAGING_PRODUCTION_ROLE_DEPLOYMENT=PENDING / PR1817_CHANGES_SC002=NO
 Issue #1793 (M3 historical odds staging and import foundation) = remains OPEN
@@ -1031,7 +1035,15 @@ training/backtest/prediction; no real payload/manifest/artifact committed.
 - Batch C/D evidence acquisition
 - full HTML / pageProps / raw_data / source body save or print
 
-## Recommended next step
+## Current project-level handoff
+
+The frozen FotMob acquisition remains a data asset and is not the current next
+business task. Current project stage is `CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE`;
+the project-level blockers and Owner decision are maintained in
+`docs/ACTIVE_MILESTONE.md` and `docs/PROJECT_STATUS.md`. No new FotMob capture,
+inventory mutation, linkage write, or legacy-writer restart is implied.
+
+## Historical recommended next step (superseded)
 
 Do not start automatically. Recommended next task only after user confirmation:
 the v2 exporter with status-complete hash-bound `canonical-inventory-artifact/v2`

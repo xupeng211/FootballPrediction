@@ -8,9 +8,60 @@
 
 回答：当前活动里程碑是什么、基线在哪、已完成什么、未完成什么、下一步需要什么授权、
 绝对不能做什么。
-不回答：完整能力清单（docs/CAPABILITY_INDEX.md）、仓库结构（docs/PROJECT_MAP.md）。
+不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
+仓库结构（docs/PROJECT_MAP.md）。
 
-## 当前里程碑
+## Current State Snapshot — 2026-08-23
+
+以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
+下方历史证据段，不覆盖本节。`CURRENT_MAIN_SHA` 是本次审计时的
+`origin/main` 完整 SHA；下一次业务变更应按 Git 事实刷新它。
+
+```text
+CURRENT_MAIN_SHA=0e21c2c9be52d0e760d57aa95d1deb511f516e7f
+CURRENT_BUSINESS_STAGE=CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE__PRE_PRODUCTION_EVIDENCE
+
+RECENTLY_COMPLETED=
+- GD-A01 / GD-A02 / GD-A03 file-first evidence chain
+- Canonical Prematch Feature Frame (canonical_prematch/vnext-v1; 9 accepted features)
+- Canonical Training Candidate Production
+- Canonical Offline Model Evaluation
+
+CURRENT_MODEL_ASSET=
+- candidate=canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41
+- family=xgboost_multiclass_1x2
+- population=888 accounted / 545 eligible / 343 ineligible
+- split=436 training / 109 reserved evaluation
+- holdout=CONSUMED_FOR_OFFLINE_EVALUATION
+- MODEL_OFFLINE_QUALITY_STATUS=PROMISING
+- MODEL_QUALITY_PROVEN=NO; PROFITABILITY_PROVEN=NO; PRODUCTION_READY=NO; MODEL_ACTIVATED=NO
+
+CURRENT_DATA_ASSETS=
+- frozen FotMob raw evidence for 888 target matches
+- historical odds staging and provider-semantic receipts
+- GD-A01 / GD-A02 / GD-A03 and the canonical prematch feature frame
+
+CURRENT_MARKET_ASSETS=
+- provider-defined closing-market semantics (not exact decision-time ticks)
+- VALUE_MVP-1 historical research result: MARKET_BETTER_THAN_MODEL
+- historical odds staging/rebuild evidence
+
+CURRENT_HARD_BLOCKERS=
+- strict decision-time odds timeline and source capture are NOT_READY
+- canonical value engine and canonical betting backtest are NOT_ESTABLISHED
+- bankroll/staking and CLV tracking are not established
+- fresh independent future holdout is not yet evaluated
+- production model activation remains NO / separately authorized
+
+NEXT_OWNER_DECISION=在明确授权后选择下一项证据任务；推荐先做 fresh independent future holdout，或另行进入 strict decision-time market-evidence design；不得把两条实验路径合并。
+DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
+```
+
+细节入口：`docs/CAPABILITY_INDEX.md`、`docs/PROJECT_STATUS.md`、
+`docs/data/FOTMOB_CURRENT_STATE.md`、`docs/MODEL_ARTIFACTS.md`、
+`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`。
+
+## Historical evidence — superseded M3 / FotMob milestone snapshot
 
 - Active Issue: **#1793 — M3: Historical odds staging and import foundation**（OPEN）
 - Milestone: **M3 historical odds staging / import foundation**
@@ -46,7 +97,7 @@
   v1 输出路径不变）
 - 关键 current-state 文档：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md
 
-## 已完成（勿重复）
+## Historical evidence — 已完成（保留证据，不作当前摘要）
 
 - M3 离线主线 → D4F：离线 staging pipeline、CSV recovery、确定性候选导出与身份、
   D4B 持久化合同（38,616 accepted / 216 quarantined 冻结合同）、
@@ -306,7 +357,7 @@
   2026-08-10/11，14 批 / 812 targets）；CAPTURE 入口对任何**新**采集仍默认关闭、
   仍须单独授权（OWNER_REAL_CAPTURE_AUTHORIZATION=NO 语义保留于新采集）。
 
-## 未完成 / 未授权（不得自动开始）
+## Historical evidence — 未完成 / 未授权（当时状态）
 
 1. **VALUE_MVP-1（offline probability benchmark: prematch baseline vs closing 1X2
    market）待 Owner 验收**：Draft PR 已建立；M3-R2 已 COMPLETE（PR #1830，见"已完成"）；
@@ -363,7 +414,7 @@
    dedicated sandbox/ACL/backup-restore 等 Gate，见 Issue #1793 评论）。
 8. **训练 / 回测 / 预测**：仍禁止 / 未授权（README canonical 表、CLAUDE.md）。
 
-## 当前授权下一步
+## Historical evidence — 当前授权下一步（已由上方 current snapshot supersede）
 
 - 只读审计与阅读（无需另行授权）：docs/data/FOTMOB_CURRENT_STATE.md、docs/PROJECT_STATUS.md、
   PR #1813 证据、Issue #1793 记录。
@@ -371,7 +422,7 @@
   本文档与 docs/CAPABILITY_INDEX.md、docs/PROJECT_MAP.md 的 current-state 更新。
 - 等待主会话 / 用户对下一授权步骤的明确指令（如阶段A 实现、canonical inventory provenance review）。
 
-## 明确停止边界（不得越界）
+## Historical evidence — 明确停止边界（长期安全规则仍以 AGENTS.md 为准）
 
 - 不执行任何真实网络抓取、浏览器自动化、DB 写入、migration、artifact 写盘、
   训练、预测或生产操作。
