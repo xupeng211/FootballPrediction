@@ -143,6 +143,31 @@ def test_agents_and_claude_md_in_source_of_truth_allowlist():
     assert "CLAUDE.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 
+def test_audited_agent_skill_pointers_are_exact_allowlist_entries():
+    expected = {
+        ".claude/skills/api-testing/SKILL.md",
+        ".claude/skills/data-collection/SKILL.md",
+        ".claude/skills/data-engineering/SKILL.md",
+        ".claude/skills/data-engineering/README.md",
+        ".claude/skills/database-operations/SKILL.md",
+        ".claude/skills/deployment-management/SKILL.md",
+        ".claude/skills/deployment-operations/SKILL.md",
+        ".claude/skills/docker-devops/SKILL.md",
+        ".claude/skills/football-prediction/SKILL.md",
+        ".claude/skills/feature-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/README.md",
+        ".claude/skills/fastapi-development/SKILL.md",
+        ".claude/skills/fastapi-development/README.md",
+        ".claude/skills/performance-monitoring/SKILL.md",
+        ".claude/skills/report-generation/SKILL.md",
+        ".claude/skills/v26-harvest/SKILL.md",
+    }
+
+    assert expected <= checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert ".claude/skills/**" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
 def test_project_vision_is_a_source_of_truth_allowlist_entry():
     """The permanent North Star document may be updated as source-of-truth."""
     assert "docs/PROJECT_VISION.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED

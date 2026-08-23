@@ -1,4 +1,19 @@
-# Machine Learning Engineering Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This README is retained as historical machine-learning engineering examples.
+> It is not a current model specification, metric baseline, feature contract,
+> production-readiness declaration, or training authority.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/PROJECT_VISION.md`](../../../docs/PROJECT_VISION.md),
+> [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). Training,
+> prediction, backtest, and model activation remain separately authorized.
+
+## Historical / Legacy Reference
+
+### Machine Learning Engineering Skill (legacy)
 
 ## 📋 概述
 

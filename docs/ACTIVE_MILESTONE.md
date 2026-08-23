@@ -14,11 +14,15 @@
 ## Current State Snapshot — 2026-08-23
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
-下方历史证据段，不覆盖本节。`CURRENT_MAIN_SHA` 是本次审计时的
-`origin/main` 完整 SHA；下一次业务变更应按 Git 事实刷新它。
+下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
+`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 是本次知识审计使用的 `origin/main` 完整 SHA，
+只表示 documented audit snapshot。实时的 `CURRENT_GIT_HEAD`、`CURRENT_ORIGIN_MAIN`
+和 `GITHUB_MAIN` 必须从 Git/GitHub 获取；后续 main 变化不会由 Markdown 自动推断。
 
 ```text
-CURRENT_MAIN_SHA=0e21c2c9be52d0e760d57aa95d1deb511f516e7f
+LAST_KNOWLEDGE_AUDIT_BASE_SHA=b0995c36fcd2f84cc6f1034450881d6f15103e68
+DOCUMENTED_SHA_ROLE=LAST_KNOWLEDGE_AUDIT_SNAPSHOT_ONLY
+REALTIME_MAIN_AUTHORITY=Git/GitHub
 CURRENT_BUSINESS_STAGE=CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE__PRE_PRODUCTION_EVIDENCE
 
 RECENTLY_COMPLETED=

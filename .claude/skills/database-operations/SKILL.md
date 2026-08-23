@@ -1,9 +1,23 @@
 ---
 name: database-operations
-description: Manage PostgreSQL database operations including migrations, query optimization, connection pooling, and data backup/restore. Use when handling database tasks, optimizing queries, or managing database connections.
+description: Legacy/background database-operations reference. Current schema, write boundaries, and migration authorization are defined by the project authority docs.
 ---
 
-# Database Operations Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical database, migration, backup, and query
+> examples only. It is not a current schema contract, database-state claim,
+> DB-write authority, or migration-apply authorization. Its examples require
+> an explicitly authorized task.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md).
+
+## Historical / Legacy Reference
+
+### Database Operations Skill (legacy)
 
 ## 概述
 专业的数据库操作管理技能，专注于PostgreSQL数据库的优化、迁移、连接管理和数据处理。

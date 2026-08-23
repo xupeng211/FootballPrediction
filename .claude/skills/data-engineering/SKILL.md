@@ -1,9 +1,23 @@
 ---
 name: data-engineering
-description: Design and optimize data pipelines for football prediction system. Use when building ETL processes, data transformations, or optimizing data flow between PostgreSQL, Redis, and external APIs.
+description: Legacy/background data-engineering reference. Current data contracts, write boundaries, and canonical entrypoints are defined by the project authority docs.
 ---
 
-# Data Engineering Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical data-pipeline, database, and cache examples
+> only. It is not a current data contract, runtime capability declaration, or
+> DB/write/migration authority. Its commands require an explicitly authorized
+> task and must not override the repository workflow.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md).
+
+## Historical / Legacy Reference
+
+### Data Engineering Skill (legacy)
 
 ## 技能概述
 专业的数据工程技能模块，专注于高性能数据管道设计、数据库优化和缓存策略。

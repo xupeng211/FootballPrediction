@@ -1,9 +1,21 @@
 ---
 name: performance-monitoring
-description: Monitor system performance, prediction accuracy, and real-time metrics using Prometheus and Grafana. Use when checking system health, analyzing performance data, or tracking prediction accuracy.
+description: Legacy/background performance-monitoring reference. Current runtime metrics and model evidence are defined by the project authority docs.
 ---
 
-# Performance Monitoring Skill
+> Lifecycle: `LEGACY_BACKGROUND`。
+>
+> 本文件仅保留历史监控、预测指标和 Grafana 示例，不是当前 runtime
+> capability、模型准确率、生产监控或模型激活 authority。不要把示例指标当作当前证据。
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), README 的
+> `Canonical Business Entrypoints`、[`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md)、
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md) 和
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md)。
+
+## Historical / Legacy Reference
+
+### Performance Monitoring Skill (legacy)
 
 ## 概述
 全面的系统性能监控技能，集成Prometheus指标收集和Grafana可视化，提供实时监控和告警功能。

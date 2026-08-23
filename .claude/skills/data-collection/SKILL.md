@@ -1,9 +1,24 @@
 ---
 name: data-collection
-description: Collect football data from external APIs including FotMob L2 data, odds information, and real-time match statistics. Use when gathering match data, collecting historical statistics, or updating prediction datasets.
+description: Legacy/background data-collection reference. Current acquisition entrypoints and network authorization are defined by the project authority docs.
 ---
 
-# Data Collection Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical acquisition examples only. It is not a
+> current data-entry contract, source-of-truth state, network authorization,
+> or raw-data write authority. Do not run its direct collector commands as
+> current canonical entrypoints.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/data/FOTMOB_CURRENT_STATE.md`](../../../docs/data/FOTMOB_CURRENT_STATE.md),
+> [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). Data work must
+> use the controlled `make data-*` surfaces and separate authorization.
+
+## Historical / Legacy Reference
+
+### Data Collection Skill (legacy)
 
 ## 概述
 专业的足球数据收集技能，支持从多个外部API获取实时和历史数据，为预测系统提供高质量的数据源。

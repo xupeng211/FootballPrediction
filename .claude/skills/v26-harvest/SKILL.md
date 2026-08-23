@@ -1,9 +1,24 @@
 ---
 name: v26-harvest
-description: V26.1 production-grade data harvesting pipeline with zero defects. Use when running data collection, monitoring pipeline health, or managing batch processing for football prediction system.
+description: Legacy/background V26 harvesting reference. Current data-entry safety gates and acquisition state are defined by the project authority docs.
 ---
 
-# V26.1 收割流水线技能
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file is retained as historical harvesting background only. It does not
+> declare a current production pipeline, data quality, feature dimension, or
+> authorization. Do not run its direct harvest, monitoring, or training
+> commands as current canonical entrypoints.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/data/FOTMOB_CURRENT_STATE.md`](../../../docs/data/FOTMOB_CURRENT_STATE.md),
+> and [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). New data work
+> must use the controlled `make data-*` surfaces and separate authorization.
+
+## Historical / Legacy Reference
+
+### V26.1 收割流水线技能（legacy）
 
 ## 技能概述
 V26.1 生产级"零缺陷"收割流水线，专为足球预测系统设计的高性能、容错、可监控的数据采集架构。

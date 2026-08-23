@@ -1,9 +1,24 @@
 ---
 name: feature-engineering
-description: Professional feature engineering for football prediction. Use when extracting features, selecting important features, transforming data, or implementing V25.1 adaptive extraction engine (48→12061 dimensions).
+description: Legacy/background feature-engineering reference. Current feature contracts and canonical entrypoints are defined by the project authority docs.
 ---
 
-# 特征工程技能
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical feature-engineering examples only. It is not a
+> current feature contract, feature-dimension claim, or production pipeline
+> authority. Do not treat its versioned engines or commands as current.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). The canonical
+> prematch feature frame is a separate, offline/file-first surface and remains
+> subject to explicit authorization.
+
+## Historical / Legacy Reference
+
+### 特征工程技能（legacy）
 
 ## 技能概述
 专业的特征工程技能模块，专注于足球预测系统的特征提取、选择、变换和优化。

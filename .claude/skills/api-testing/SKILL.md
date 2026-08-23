@@ -1,9 +1,23 @@
 ---
 name: api-testing
-description: Comprehensive API testing including unit tests, integration tests, performance testing, and automated test pipelines. Use when testing REST endpoints, validating API responses, load testing, or setting up test automation.
+description: Legacy/background API-testing reference. Current endpoints, runtime readiness, and validation boundaries are defined by the project authority docs.
 ---
 
-# API Testing Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical API-testing examples only. It is not a current
+> endpoint catalog, test-count claim, runtime capability declaration, or
+> production monitoring authority. Its routes and load-test examples require
+> an explicitly authorized task.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md).
+
+## Historical / Legacy Reference
+
+### API Testing Skill (legacy)
 
 ## 技能概述
 专业的API测试技能模块，专注于全面测试策略、性能测试和自动化测试流水线。
