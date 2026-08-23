@@ -42,9 +42,9 @@ prediction surface。
 
 ### TITAN-era platform overview (HISTORICAL / LEGACY)
 
-## 📐 Architecture
+### 📐 TITAN Architecture (HISTORICAL / LEGACY)
 
-### 系统架构图
+#### 系统架构图
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -71,7 +71,7 @@ prediction surface。
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 核心组件
+#### 核心组件
 
 | 组件 | 技术栈 | 职责 |
 |------|--------|------|
@@ -81,7 +81,7 @@ prediction surface。
 | **ML Engine** | Python + XGBoost | 3-Model共识预测（67.2%准确率） |
 | **Network Shield** | Custom Proxy Pool | 熔断保护与会话管理 |
 
-### V11.0 Clean Sweep 架构 (Recon 侦察引擎)
+#### V11.0 Clean Sweep 架构 (Recon 侦察引擎) (HISTORICAL / LEGACY)
 
 V11.0 引入了工业级 Recon 侦察系统，实现从 OddsPortal 高效采集历史数据：
 
@@ -104,7 +104,7 @@ V11.0 引入了工业级 Recon 侦察系统，实现从 OddsPortal 高效采集�
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### V11.0 核心特性
+##### V11.0 核心特性
 
 | 特性 | 实现 | 说明 |
 |------|------|------|
@@ -116,7 +116,7 @@ V11.0 引入了工业级 Recon 侦察系统，实现从 OddsPortal 高效采集�
 | **真事务映射保存** | `FixtureRepository` 单 Client 事务 | 避免批量写入伪事务 |
 | **Fallback 加固** | `smartScan()` + DOM fallback | API 失败后不再因赛季变量缺失崩溃 |
 
-#### V11.0 Release Note
+##### V11.0 Release Note (HISTORICAL / LEGACY)
 
 **新特性**
 
@@ -137,7 +137,7 @@ V11.0 引入了工业级 Recon 侦察系统，实现从 OddsPortal 高效采集�
 
 - `AbstractHarvester.js` 当前仍为高耦合大类，已登记到根目录 `TECH_DEBT.md`，计划在 V12.0 或全量收割完成后重构
 
-#### V11.0 启动指令
+##### V11.0 启动指令 (HISTORICAL / LEGACY)
 
 ```bash
 # 启动 Recon 扫描器 (单赛季单联赛)
@@ -168,7 +168,7 @@ L2 状态机约定：
 
 ---
 
-### 🧩 模块化架构 (V4.52+)
+#### TITAN 模块化架构 (V4.52+) (HISTORICAL / LEGACY)
 
 TITAN V4.52 引入了三大高内聚组件，实现真正的模块化设计：
 
@@ -185,7 +185,7 @@ TITAN V4.52 引入了三大高内聚组件，实现真正的模块化设计：
        └──────────────┘  └─────────────┘  └─────────────┘
 ```
 
-#### 组件职责
+##### 组件职责
 
 | 组件 | 行数 | 覆盖率 | 核心功能 |
 |------|------|--------|----------|
@@ -193,7 +193,7 @@ TITAN V4.52 引入了三大高内聚组件，实现真正的模块化设计：
 | **Persistence** | 219 | 60%+ | 数据库保存、文件保存、双保险模式、错误分类 |
 | **ErrorHandler** | 289 | 100% | 错误分类、可重试性判断、审计报告、模式匹配 |
 
-#### 使用示例
+##### 使用示例
 
 ```javascript
 // Dispatcher - 任务分派
@@ -211,7 +211,7 @@ const retryable = this.errorHandler.isRetryable(error, attempt);
 this.errorHandler.audit(error, { matchId, workerId });
 ```
 
-### 数据流向
+#### Historical / Legacy 数据流向
 
 ```
 FotMob API → matches (L1) → raw_match_data (L2) → l3_features (L3) → predictions
@@ -505,7 +505,7 @@ docker-compose ps
 
 ---
 
-## 📊 Data Dictionary
+## Historical / Legacy Data Dictionary
 
 ### 数据库表结构
 
@@ -576,7 +576,7 @@ data/
 
 ---
 
-## 📁 Project Structure
+## Historical / Legacy Project Structure
 
 ```
 FootballPrediction/
@@ -613,7 +613,7 @@ FootballPrediction/
 
 ---
 
-## 🧪 Mini测试详解
+## Historical / Legacy Mini Tests
 
 TITAN 使用 Node.js 内置测试框架 (`node --test`) 进行单元测试，相比 Jest 更轻量、更快。
 
@@ -651,7 +651,7 @@ done
 
 ---
 
-## 🔐 Authentication
+## Historical / Legacy Authentication
 
 ### Cookie 更新
 
@@ -665,7 +665,7 @@ node scripts/capture_auth_v3.js
 
 ---
 
-## 📈 Monitoring
+## Historical / Legacy Monitoring
 
 ### 实时监控
 
@@ -686,7 +686,7 @@ tail -f logs/sentinel.log
 
 ---
 
-## 🛠️ Troubleshooting
+## Historical / Legacy Troubleshooting
 
 ### 常见问题
 
@@ -703,7 +703,7 @@ tail -f logs/sentinel.log
 
 ---
 
-## 📋 Version Information
+## Historical / Legacy Version Information
 
 - **Version**: V4.51.2-TOTAL-WAR
 - **Node.js**: 18+
