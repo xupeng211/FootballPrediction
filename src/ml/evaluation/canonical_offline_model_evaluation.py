@@ -8,7 +8,7 @@ metrics, and external evidence.  The public sequence remains
 from __future__ import annotations
 
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from pathlib import Path
 import subprocess
 from typing import Any
@@ -19,7 +19,7 @@ from . import canonical_offline_model_evaluation_contract as _contract
 from .canonical_offline_model_evaluation_artifacts import (
     JOURNAL_FILENAME,
     _append_evaluation_journal_event_with_capability,
-    _JournalCapability,
+    _consume_journal_capability,
     append_evaluation_journal_event,
     build_evaluation_artifact,
     build_evaluation_receipt,
@@ -88,6 +88,8 @@ from .canonical_offline_model_evaluation_metrics import (
     metric_bundle,
     validate_probability_matrix,
 )
+
+_PREPARED_EVALUATION_FACTORY_TOKEN = object()
 
 
 def current_git_head(repository_root: Path | None = None) -> str:
@@ -237,11 +239,8 @@ class OutcomeAccessGate:
 
     def _authorize_journal(self, capability: object) -> object:
         """Create private authorization from a one-use post-fsync capability."""
-        if not isinstance(capability, _JournalCapability):
-            raise EvaluationContractError(
-                "reserved outcomes require a post-fsync journal capability"
-            )
-        journal_path = capability.authorize(
+        journal_path = _consume_journal_capability(
+            capability,
             evaluation_id=EVALUATION_ID,
             protocol_sha256=self.protocol_sha256,
             protocol_freeze_sha=self.protocol_freeze_sha,
@@ -297,11 +296,43 @@ class PreparedEvaluation:
     population: EvaluationPopulation
     gate: OutcomeAccessGate
     protocol_path: Path
+    _factory_token: InitVar[object]
     source_head: str | None = None
     protocol_freeze_sha: str | None = None
     probabilities: np.ndarray[Any, Any] | None = None
     opened_at: str | None = None
     opened_labels: np.ndarray[Any, Any] | None = None
+
+    def __post_init__(self, factory_token: object) -> None:
+        if factory_token is not _PREPARED_EVALUATION_FACTORY_TOKEN:
+            raise EvaluationContractError(
+                "PreparedEvaluation must be created by the canonical preparation factory"
+            )
+
+    def _validate_frozen_inputs(self) -> None:
+        """Recheck every immutable input binding immediately before inference."""
+        validate_protocol(self.protocol)
+        if protocol_sha256(self.protocol) != self.protocol_sha256:
+            raise EvaluationContractError("prepared protocol hash binding mismatch")
+        validate_candidate_metadata_binding(
+            self.candidate.metadata,
+            artifact_sha256=self.candidate.artifact_sha256,
+            metadata_sha256=self.candidate.metadata_sha256,
+            protocol=self.protocol,
+        )
+        if (
+            self.candidate.feature_names != FEATURE_ORDER
+            or self.candidate.class_order != CLASS_ORDER
+        ):
+            raise EvaluationContractError("prepared candidate contract binding mismatch")
+        validate_population_binding(self.population, self.protocol)
+        if self.gate._population is not self.population:
+            raise EvaluationContractError("prepared outcome gate population binding mismatch")
+        if (
+            self.gate._expected_reserved_row_id_hash
+            != self.protocol["population"]["reserved_evaluation_row_id_hash"]
+        ):
+            raise EvaluationContractError("prepared outcome gate row binding mismatch")
 
     def freeze_protocol(self, *, source_head: str, protocol_freeze_sha: str) -> None:
         """Bind the evaluation source HEAD and protocol freeze SHA."""
@@ -309,6 +340,7 @@ class PreparedEvaluation:
         _assert_git_sha(protocol_freeze_sha, "protocol freeze SHA")
         if not isinstance(self.protocol_path, Path):
             raise EvaluationContractError("canonical protocol path binding is required")
+        self._validate_frozen_inputs()
         _assert_protocol_git_binding(
             self.protocol_path,
             self.protocol_sha256,
@@ -412,7 +444,7 @@ def prepare_evaluation(
     candidate = load_verified_candidate(candidate_path, metadata_path, protocol)
     population = _load_population(frame_path, receipt_path, protocol)
     validate_population_binding(population, protocol)
-    return PreparedEvaluation(
+    return _make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=candidate,
@@ -422,6 +454,27 @@ def prepare_evaluation(
             expected_reserved_row_id_hash=protocol["population"]["reserved_evaluation_row_id_hash"],
         ),
         protocol_path=checked_in_protocol_path,
+    )
+
+
+def _make_prepared_evaluation(
+    *,
+    protocol: dict[str, Any],
+    protocol_sha256: str,
+    candidate: VerifiedCandidate,
+    population: EvaluationPopulation,
+    gate: OutcomeAccessGate,
+    protocol_path: Path,
+) -> PreparedEvaluation:
+    """Construct only through the private canonical preparation factory."""
+    return PreparedEvaluation(
+        protocol=protocol,
+        protocol_sha256=protocol_sha256,
+        candidate=candidate,
+        population=population,
+        gate=gate,
+        protocol_path=protocol_path,
+        _factory_token=_PREPARED_EVALUATION_FACTORY_TOKEN,
     )
 
 

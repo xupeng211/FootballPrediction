@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import tempfile
@@ -62,83 +63,95 @@ def _append_newline_json(path: Path, value: Mapping[str, Any]) -> bytes:
     return payload
 
 
-class _JournalCapability:
-    """Opaque, one-use proof that an opening-intent event was fsynced."""
+@dataclass(frozen=True)
+class _JournalCapabilityRecord:
+    """Private registry record for one post-fsync opaque capability."""
 
-    __slots__ = ("_consumed", "_event_fields", "_event_type", "_journal_path", "_payload")
+    journal_path: Path
+    event_fields: Mapping[str, Any]
+    payload: bytes
+    device: int
+    inode: int
+    size: int
+    journal_sha256: str
 
-    def __init__(
-        self,
-        journal_path: Path,
-        *,
-        event_type: str,
-        event_fields: Mapping[str, Any],
-        payload: bytes,
-    ) -> None:
-        self._journal_path = journal_path
-        self._event_type = event_type
-        self._event_fields = MappingProxyType(dict(event_fields))
-        self._payload = payload
-        self._consumed = False
 
-    def _validate_event_identity(
-        self,
-        *,
-        evaluation_id: str,
-        protocol_sha256: str | None,
-        protocol_freeze_sha: str | None,
-        reserved_row_count: int,
-        reserved_row_id_hash: str | None,
-    ) -> None:
-        if self._event_type != "OUTCOME_OPENING_STARTED":
-            raise EvaluationContractError("journal capability is not an opening-intent event")
-        if self._event_fields.get("event_type") != "OUTCOME_OPENING_STARTED":
-            raise EvaluationContractError("journal capability event type is invalid")
-        if self._event_fields.get("evaluation_id") != evaluation_id:
-            raise EvaluationContractError("journal capability evaluation identity is invalid")
-        if self._event_fields.get("evaluation_protocol_sha256") != protocol_sha256:
-            raise EvaluationContractError("journal capability protocol identity is invalid")
-        if self._event_fields.get("protocol_freeze_sha") != protocol_freeze_sha:
-            raise EvaluationContractError("journal capability freeze identity is invalid")
-        if self._event_fields.get("reserved_row_count") != reserved_row_count:
-            raise EvaluationContractError("journal capability reserved row count is invalid")
-        if (
-            reserved_row_id_hash is not None
-            and self._event_fields.get("reserved_row_id_hash") != reserved_row_id_hash
-        ):
-            raise EvaluationContractError("journal capability reserved row identity is invalid")
+_JOURNAL_CAPABILITIES: dict[object, _JournalCapabilityRecord] = {}
 
-    def _validate_journal_integrity(self) -> None:
-        if self._journal_path.is_symlink() or not self._journal_path.is_file():
-            raise EvaluationContractError("durable evaluation journal is unavailable")
-        try:
-            if not self._journal_path.read_bytes().endswith(self._payload):
-                raise EvaluationContractError("durable evaluation journal was replaced")
-        except OSError as exc:
-            raise EvaluationContractError("durable evaluation journal is unavailable") from exc
 
-    def authorize(
-        self,
-        *,
-        evaluation_id: str,
-        protocol_sha256: str | None,
-        protocol_freeze_sha: str | None,
-        reserved_row_count: int,
-        reserved_row_id_hash: str | None,
-    ) -> Path:
-        """Consume only when the fsynced event matches the current evaluation."""
-        if self._consumed:
-            raise EvaluationContractError("evaluation journal capability was already consumed")
-        self._validate_event_identity(
-            evaluation_id=evaluation_id,
-            protocol_sha256=protocol_sha256,
-            protocol_freeze_sha=protocol_freeze_sha,
-            reserved_row_count=reserved_row_count,
-            reserved_row_id_hash=reserved_row_id_hash,
+def _validate_capability_event_identity(
+    record: _JournalCapabilityRecord,
+    *,
+    evaluation_id: str,
+    protocol_sha256: str | None,
+    protocol_freeze_sha: str | None,
+    reserved_row_count: int,
+    reserved_row_id_hash: str | None,
+) -> None:
+    fields = record.event_fields
+    if fields.get("event_type") != "OUTCOME_OPENING_STARTED":
+        raise EvaluationContractError("journal capability event type is invalid")
+    if fields.get("evaluation_id") != evaluation_id:
+        raise EvaluationContractError("journal capability evaluation identity is invalid")
+    if fields.get("evaluation_protocol_sha256") != protocol_sha256:
+        raise EvaluationContractError("journal capability protocol identity is invalid")
+    if fields.get("protocol_freeze_sha") != protocol_freeze_sha:
+        raise EvaluationContractError("journal capability freeze identity is invalid")
+    if fields.get("reserved_row_count") != reserved_row_count:
+        raise EvaluationContractError("journal capability reserved row count is invalid")
+    if (
+        reserved_row_id_hash is not None
+        and fields.get("reserved_row_id_hash") != reserved_row_id_hash
+    ):
+        raise EvaluationContractError("journal capability reserved row identity is invalid")
+
+
+def _consume_journal_capability(
+    capability: object,
+    *,
+    evaluation_id: str,
+    protocol_sha256: str | None,
+    protocol_freeze_sha: str | None,
+    reserved_row_count: int,
+    reserved_row_id_hash: str | None,
+) -> Path:
+    """Consume a registry-issued capability after exact file identity checks."""
+    try:
+        record = _JOURNAL_CAPABILITIES.get(capability)
+    except TypeError as exc:
+        raise EvaluationContractError(
+            "reserved outcomes require a post-fsync journal capability (opaque)"
+        ) from exc
+    if record is None:
+        raise EvaluationContractError(
+            "reserved outcomes require a post-fsync journal capability (opaque)"
         )
-        self._validate_journal_integrity()
-        self._consumed = True
-        return self._journal_path
+    _validate_capability_event_identity(
+        record,
+        evaluation_id=evaluation_id,
+        protocol_sha256=protocol_sha256,
+        protocol_freeze_sha=protocol_freeze_sha,
+        reserved_row_count=reserved_row_count,
+        reserved_row_id_hash=reserved_row_id_hash,
+    )
+    path = record.journal_path
+    try:
+        stat = path.stat()
+        journal_bytes = path.read_bytes()
+    except OSError as exc:
+        raise EvaluationContractError("durable evaluation journal is unavailable") from exc
+    if (
+        path.is_symlink()
+        or not path.is_file()
+        or stat.st_dev != record.device
+        or stat.st_ino != record.inode
+        or stat.st_size != record.size
+        or _sha256_bytes(journal_bytes) != record.journal_sha256
+        or not journal_bytes.endswith(record.payload)
+    ):
+        raise EvaluationContractError("durable evaluation journal was replaced")
+    del _JOURNAL_CAPABILITIES[capability]
+    return path
 
 
 def append_evaluation_journal_event(
@@ -149,11 +162,12 @@ def append_evaluation_journal_event(
     fields: Mapping[str, Any],
 ) -> Path:
     """Append and fsync one non-sensitive lifecycle event before returning."""
-    journal_path, _ = _append_evaluation_journal_event_with_capability(
+    journal_path, _ = _append_evaluation_journal_event(
         output_dir,
         event_type=event_type,
         event_at=event_at,
         fields=fields,
+        issue_capability=False,
     )
     return journal_path
 
@@ -164,11 +178,34 @@ def _append_evaluation_journal_event_with_capability(
     event_type: str,
     event_at: str,
     fields: Mapping[str, Any],
-) -> tuple[Path, _JournalCapability]:
+) -> tuple[Path, object]:
     """Append an event and issue a one-use post-fsync capability."""
+    journal_path, capability = _append_evaluation_journal_event(
+        output_dir,
+        event_type=event_type,
+        event_at=event_at,
+        fields=fields,
+        issue_capability=True,
+    )
+    if capability is None:
+        raise EvaluationContractError("opening journal capability was not issued")
+    return journal_path, capability
+
+
+def _append_evaluation_journal_event(
+    output_dir: str | Path,
+    *,
+    event_type: str,
+    event_at: str,
+    fields: Mapping[str, Any],
+    issue_capability: bool,
+) -> tuple[Path, object | None]:
+    """Append an event and optionally issue its opaque post-fsync capability."""
     directory = _assert_external_path(output_dir, "evaluation journal directory")
     directory.mkdir(parents=True, exist_ok=True)
     journal_path = directory / JOURNAL_FILENAME
+    if journal_path.is_symlink():
+        raise EvaluationContractError("evaluation attempt journal path is a symlink")
     event: dict[str, Any] = {
         "event_type": event_type,
         "event_at": event_at,
@@ -176,11 +213,22 @@ def _append_evaluation_journal_event_with_capability(
     }
     event.update(dict(fields))
     payload = _append_newline_json(journal_path, event)
-    capability = _JournalCapability(
-        journal_path,
-        event_type=event_type,
-        event_fields=event,
+    if not issue_capability:
+        return journal_path, None
+    try:
+        stat = journal_path.stat()
+        journal_bytes = journal_path.read_bytes()
+    except OSError as exc:
+        raise EvaluationContractError("evaluation attempt journal read failed") from exc
+    capability = object()
+    _JOURNAL_CAPABILITIES[capability] = _JournalCapabilityRecord(
+        journal_path=journal_path,
+        event_fields=MappingProxyType(dict(event)),
         payload=payload,
+        device=stat.st_dev,
+        inode=stat.st_ino,
+        size=stat.st_size,
+        journal_sha256=_sha256_bytes(journal_bytes),
     )
     return journal_path, capability
 

@@ -115,6 +115,17 @@ def _candidate() -> evaluation.VerifiedCandidate:
     )
 
 
+def _allow_synthetic_bindings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep synthetic unit fixtures focused on sequencing, not production identity."""
+    monkeypatch.setattr(evaluation, "validate_protocol", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        evaluation,
+        "validate_candidate_metadata_binding",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(evaluation, "validate_population_binding", lambda *_args, **_kwargs: None)
+
+
 def test_protocol_is_frozen_and_primary_metric_is_log_loss() -> None:
     protocol, digest, path = evaluation.load_protocol(PROTOCOL_PATH)
 
@@ -126,6 +137,7 @@ def test_protocol_is_frozen_and_primary_metric_is_log_loss() -> None:
 
 
 def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     population = _population()
@@ -153,12 +165,16 @@ def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
         )
 
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
-    prepared = evaluation.PreparedEvaluation(
+    _allow_synthetic_bindings(monkeypatch)
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=PROTOCOL_PATH,
     )
     prepared.freeze_protocol(
@@ -181,6 +197,32 @@ def test_tampered_reserved_row_ids_are_rejected() -> None:
 
     with pytest.raises(evaluation.EvaluationContractError, match="row ID binding"):
         evaluation.validate_population_binding(tampered, protocol)
+
+
+def test_journal_capability_rejects_prefix_replacement(tmp_path: Path) -> None:
+    population = _population()
+    _protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    gate = evaluation.OutcomeAccessGate(
+        population,
+        expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+    )
+    gate.freeze(protocol_hash, PROTOCOL_FREEZE_SHA)
+    journal_path, capability = evaluation._append_evaluation_journal_event_with_capability(
+        tmp_path,
+        event_type="OUTCOME_OPENING_STARTED",
+        event_at="2026-08-23T00:00:00Z",
+        fields={
+            "evaluation_protocol_sha256": protocol_hash,
+            "protocol_freeze_sha": PROTOCOL_FREEZE_SHA,
+            "reserved_row_count": len(population.reserved_ids),
+            "reserved_row_id_hash": evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        },
+    )
+    original = journal_path.read_bytes()
+    journal_path.write_bytes(b"tampered-prefix\n" + original)
+
+    with pytest.raises(evaluation.EvaluationContractError, match="replaced"):
+        gate._authorize_journal(capability)
 
 
 def test_tampered_candidate_bytes_are_rejected_before_deserialization(tmp_path: Path) -> None:
@@ -343,16 +385,21 @@ def test_candidate_metadata_binding_rejects_tampered_artifact_and_source_revisio
 
 
 def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    _allow_synthetic_bindings(monkeypatch)
     population = _population()
-    prepared = evaluation.PreparedEvaluation(
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=PROTOCOL_PATH,
     )
     prepared.freeze_protocol(
@@ -375,15 +422,22 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
     assert "roi" not in json.dumps(artifact["prediction_rows"], sort_keys=True).lower()
 
 
-def test_evaluation_output_cannot_target_repository_manifest(tmp_path: Path) -> None:
+def test_evaluation_output_cannot_target_repository_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    _allow_synthetic_bindings(monkeypatch)
     population = _population()
-    prepared = evaluation.PreparedEvaluation(
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=PROTOCOL_PATH,
     )
     prepared.freeze_protocol(
@@ -434,12 +488,16 @@ def test_protocol_git_binding_rejects_fake_and_stale_heads(
 ) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     population = _population()
-    prepared = evaluation.PreparedEvaluation(
+    _allow_synthetic_bindings(monkeypatch)
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=PROTOCOL_PATH,
     )
 
@@ -455,12 +513,15 @@ def test_protocol_git_binding_rejects_fake_and_stale_heads(
 def test_protocol_git_binding_cannot_be_skipped_for_manual_prepared_objects() -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     population = _population()
-    prepared = evaluation.PreparedEvaluation(
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=None,  # type: ignore[arg-type]
     )
 
@@ -468,6 +529,21 @@ def test_protocol_git_binding_cannot_be_skipped_for_manual_prepared_objects() ->
         prepared.freeze_protocol(
             source_head=evaluation.current_git_head(),
             protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+        )
+
+
+def test_prepared_evaluation_is_factory_only() -> None:
+    protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    population = _population()
+
+    with pytest.raises(TypeError):
+        evaluation.PreparedEvaluation(
+            protocol=protocol,
+            protocol_sha256=protocol_hash,
+            candidate=_candidate(),
+            population=population,
+            gate=evaluation.OutcomeAccessGate(population),
+            protocol_path=PROTOCOL_PATH,
         )
 
 
@@ -523,12 +599,16 @@ def test_partial_outcome_opening_leaves_durable_invalidation_evidence(
     labels["reserved-0"] = evaluation._OpaqueOutcome(_ExplodingLabel(outcome=2))
     population = replace(population, labels_by_id=labels)
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
-    prepared = evaluation.PreparedEvaluation(
+    _allow_synthetic_bindings(monkeypatch)
+    prepared = evaluation._make_prepared_evaluation(
         protocol=protocol,
         protocol_sha256=protocol_hash,
         candidate=_candidate(),
         population=population,
-        gate=evaluation.OutcomeAccessGate(population),
+        gate=evaluation.OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=evaluation.EXPECTED_RESERVED_ROW_ID_SHA256,
+        ),
         protocol_path=PROTOCOL_PATH,
     )
     monkeypatch.setattr(evaluation, "prepare_evaluation", lambda **_kwargs: prepared)
