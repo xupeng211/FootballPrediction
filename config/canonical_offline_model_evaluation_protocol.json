@@ -59,7 +59,7 @@
     "sanity": {
       "finite": true,
       "range": "[0,1]",
-      "row_sum_atol": 1e-8
+      "row_sum_atol": 1e-6
     }
   },
   "metrics": {

@@ -158,6 +158,9 @@ def test_tampered_candidate_bytes_are_rejected_before_deserialization(tmp_path: 
 
 def test_probability_class_order_and_sanity_are_fail_closed() -> None:
     evaluation.validate_probability_matrix(np.asarray([[0.2, 0.3, 0.5]]), expected_rows=1)
+    evaluation.validate_probability_matrix(
+        np.asarray([[0.1, 0.2, 0.7]], dtype=np.float32), expected_rows=1
+    )
     with pytest.raises(evaluation.EvaluationContractError, match="non-finite"):
         evaluation.validate_probability_matrix(np.asarray([[np.nan, 0.3, 0.7]]))
     with pytest.raises(evaluation.EvaluationContractError, match="sum"):

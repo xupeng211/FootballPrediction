@@ -66,7 +66,10 @@ CALIBRATION_BIN_EDGES = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
 BOOTSTRAP_SEED = 20260823
 BOOTSTRAP_RESAMPLES = 5000
 LOG_LOSS_EPSILON = 1e-15
-PROBABILITY_SUM_ATOL = 1e-8
+# XGBoost emits float32 probabilities. Permit the rounding error introduced
+# when those values are accumulated in float64, while still rejecting a
+# materially non-normalized probability vector.
+PROBABILITY_SUM_ATOL = 1e-6
 SHA256_HEX_LENGTH = 64
 GIT_SHA_LENGTH = 40
 FEATURE_COUNT = 9
