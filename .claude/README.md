@@ -10,11 +10,17 @@
 
 ## Skill inventory
 
-`.claude/skills/` 下的内容按需手动使用，具体能力是否可用取决于宿主工具配置；skill 文件本身不构成项目强制 gate。
+Inventory task `STALE_AGENT_KNOWLEDGE_RETIREMENT` retired the 17 audited
+legacy Claude skill manifests and READMEs that previously occupied the current
+`.claude/skills/` surface. The audit found no unique current contract,
+incident, or governance evidence in those generic examples; their historical
+commits remain recoverable for background use. They are not a current
+capability, workflow, or execution authority.
 
-- `codex-review`：STRICT 任务可用的 approved independent reviewer capability；review 必须绑定当前完整 PR HEAD。
-- `codex-loop`：异常情况下的 bounded helper，不是默认流程，也不是独立 authority。
-- 其他目录技能：tooling / domain helper；使用前仍须遵守 `AGENTS.md` 的安全边界和 canonical validation profiles。
+Any remaining files under `.claude/skills/` are optional tooling/domain
+references and must be inspected manually. They are not automatically loaded,
+do not form a project gate, and must still obey `AGENTS.md` and the canonical
+validation profiles.
 
 当前仓库 `.claude/settings.json` 明确 `skills.enabled=false`，因此不能把自动加载或自动执行技能当作已实现的机器强制行为。`settings.local.json` 和 `mcp-config.json` 是环境相关配置，不得保存 workflow state、review state 或 SHA authority；其中绝对路径是否仍由宿主 runtime 使用，需要单独确认。
 
