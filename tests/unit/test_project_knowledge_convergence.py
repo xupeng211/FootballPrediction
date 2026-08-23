@@ -165,22 +165,40 @@ def test_readme_current_model_status_matches_current_state_docs():
     assert "canonical candidate" in readme_current
 
 
-def test_agent_specific_prediction_skills_are_legacy_pointers():
+def test_agent_specific_skills_are_legacy_pointers():
     skill_paths = (
+        ".claude/skills/api-testing/SKILL.md",
+        ".claude/skills/data-collection/SKILL.md",
+        ".claude/skills/data-engineering/SKILL.md",
+        ".claude/skills/data-engineering/README.md",
+        ".claude/skills/database-operations/SKILL.md",
+        ".claude/skills/deployment-management/SKILL.md",
+        ".claude/skills/deployment-operations/SKILL.md",
+        ".claude/skills/docker-devops/SKILL.md",
         ".claude/skills/football-prediction/SKILL.md",
         ".claude/skills/feature-engineering/SKILL.md",
         ".claude/skills/machine-learning-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/README.md",
+        ".claude/skills/fastapi-development/SKILL.md",
+        ".claude/skills/fastapi-development/README.md",
+        ".claude/skills/performance-monitoring/SKILL.md",
+        ".claude/skills/report-generation/SKILL.md",
         ".claude/skills/v26-harvest/SKILL.md",
     )
     stale_claims = (
+        "58.69%",
         "67.2%",
         "65.52%",
+        "65%+",
         "12061",
+        "<100ms",
         "3-model",
         "production baseline",
         "predict_match_v2",
         "InferenceServiceV2",
         "xgboost_v2",
+        "/api/predict",
+        "当前端点",
     )
 
     for relative_path in skill_paths:

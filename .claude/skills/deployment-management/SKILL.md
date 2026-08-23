@@ -1,9 +1,24 @@
 ---
 name: deployment-management
-description: Manage application deployment including Docker containers, production environments, and service orchestration. Use when deploying to production, managing Docker services, or handling deployment rollbacks.
+description: Legacy/background deployment reference. Current runtime readiness, deployment entrypoints, and authorization are defined by the project authority docs.
 ---
 
-# Deployment Management Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical deployment and production-environment
+> examples only. It is not a current production-readiness declaration,
+> runtime capability statement, activation authority, or rollback instruction.
+> Its commands require an explicitly authorized task.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). The canonical
+> model is not production-ready or activated.
+
+## Historical / Legacy Reference
+
+### Deployment Management Skill (legacy)
 
 ## 概述
 专业的应用部署管理技能，支持Docker容器化部署、生产环境管理和自动化运维操作。

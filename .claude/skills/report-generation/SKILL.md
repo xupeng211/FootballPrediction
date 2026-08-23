@@ -1,9 +1,21 @@
 ---
 name: report-generation
-description: Generate professional football analysis reports in PDF, Word, and Excel formats. Use when creating match analysis reports, data visualizations, or exporting prediction results. Includes professional charts and statistical analysis.
+description: Legacy/background report-generation reference. Current prediction, value, and reporting capabilities are defined by the project authority docs.
 ---
 
-# Report Generation Skill
+> Lifecycle: `LEGACY_BACKGROUND`。
+>
+> 本文件仅保留历史足球分析、预测报告和可视化示例，不是当前预测、价值引擎、
+> profitability、runtime 或生产能力声明。示例需要明确授权。
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), README 的
+> `Canonical Business Entrypoints`、[`docs/PROJECT_VISION.md`](../../../docs/PROJECT_VISION.md)、
+> [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md) 和
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md)。
+
+## Historical / Legacy Reference
+
+### Report Generation Skill (legacy)
 
 ## 技能概述
 专业的足球分析报告生成系统，支持多种格式的报告输出，包括PDF、Word、Excel等，为不同用户提供定制化的分析报告。

@@ -1,9 +1,24 @@
 ---
 name: fastapi-development
-description: Build high-performance async APIs using FastAPI for football prediction system. Use when creating REST endpoints, optimizing API performance, implementing authentication, or handling async database operations.
+description: Legacy/background FastAPI reference. Current endpoints, runtime readiness, and authorization are defined by the project authority docs.
 ---
 
-# FastAPI Development Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical API and runtime examples only. It is not a
+> current endpoint catalog, prediction capability declaration, production
+> readiness claim, or activation authority. Do not treat its routes,
+> performance targets, or monitoring examples as current project facts.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). The canonical
+> runtime prediction surface is not activated by this skill.
+
+## Historical / Legacy Reference
+
+### FastAPI Development Skill (legacy)
 
 ## 技能概述
 专业的FastAPI开发技能模块，专注于高性能异步API设计、优化和最佳实践。

@@ -1,9 +1,23 @@
 ---
 name: docker-devops
-description: Containerize and deploy applications using Docker and DevOps best practices. Use when creating Dockerfiles, managing docker-compose, setting up CI/CD pipelines, or optimizing container orchestration.
+description: Legacy/background Docker/DevOps reference. Current runtime, deployment, and CI authority are defined by the project workflow docs.
 ---
 
-# Docker DevOps Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical containerization, deployment, and CI examples
+> only. It is not a current production environment, runtime capability, model
+> activation, or deployment authority. Its commands require an explicitly
+> authorized task.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md).
+
+## Historical / Legacy Reference
+
+### Docker DevOps Skill (legacy)
 
 ## 技能概述
 专业的Docker和DevOps技能模块，专注于容器化部署、编排优化和CI/CD流水线自动化。

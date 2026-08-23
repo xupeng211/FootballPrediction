@@ -1,4 +1,19 @@
-# FastAPI Development Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This README is retained as historical API and performance examples. It is
+> not a current endpoint catalog, runtime capability declaration, production
+> readiness claim, or activation authority. Do not treat its routes,
+> performance targets, or monitoring examples as current project facts.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). The canonical
+> runtime prediction surface is not activated by this skill.
+
+## Historical / Legacy Reference
+
+### FastAPI Development Skill (legacy)
 
 ## 📋 概述
 

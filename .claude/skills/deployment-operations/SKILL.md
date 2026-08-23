@@ -1,9 +1,22 @@
 ---
 name: deployment-operations
-description: 专业级容器化部署和自动化运维技能，基于FootballPrediction项目实战经验，提供Docker容器管理、权限修复、健康监控、故障诊断、一键部署等10个核心能力。
+description: Legacy/background deployment-operations reference. Current runtime readiness and deployment authorization are defined by the project authority docs.
 ---
 
-# Deployment & Operations 技能
+> Lifecycle: `LEGACY_BACKGROUND`。
+>
+> 本文件仅保留历史容器化、部署和运维示例，不是当前生产就绪、runtime
+> capability、model activation 或 rollback authority。示例命令必须有明确授权。
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), README 的
+> `Canonical Business Entrypoints`、[`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md)、
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md) 和
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md)。当前 canonical
+> model 尚未 production-ready，也未激活。
+
+## Historical / Legacy Reference
+
+### Deployment & Operations 技能（legacy）
 
 ## 概述
 

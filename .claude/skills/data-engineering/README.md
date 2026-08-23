@@ -1,4 +1,18 @@
-# Data Engineering Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This README is retained as historical data-engineering examples. It is not a
+> current data contract, database state, runtime capability declaration, or
+> write/migration authority.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). Data and DB
+> actions remain controlled and separately authorized.
+
+## Historical / Legacy Reference
+
+### Data Engineering Skill (legacy)
 
 ## 📋 概述
 
