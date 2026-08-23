@@ -86,14 +86,14 @@ class PreparedOutputDestination:
         ):
             raise EvaluationContractError("evaluation output destination was replaced")
 
-        if self.journal_path.is_symlink() or (
+        if require_empty_outputs:
+            for path in (self.journal_path, self.artifact_path, self.receipt_path):
+                if os.path.lexists(path):
+                    raise EvaluationContractError(f"evaluation output already exists: {path.name}")
+        elif self.journal_path.is_symlink() or (
             self.journal_path.exists() and not self.journal_path.is_file()
         ):
             raise EvaluationContractError("evaluation attempt journal path is not reusable")
-        if require_empty_outputs:
-            for path in (self.artifact_path, self.receipt_path):
-                if os.path.lexists(path):
-                    raise EvaluationContractError(f"evaluation output already exists: {path.name}")
 
 
 def prepare_evaluation_output_destination(
@@ -592,8 +592,16 @@ def _write_new_bytes(path: Path, payload: bytes) -> None:
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        temporary_path.replace(path)
+        try:
+            os.link(temporary_path, path)
+        except FileExistsError as exc:
+            raise EvaluationContractError(f"evaluation output already exists: {path.name}") from exc
+        temporary_path.unlink()
         temporary_path = None
+    except EvaluationContractError:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
     except Exception as exc:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
@@ -610,7 +618,7 @@ def write_evaluation_outputs(
     """Write exactly one external artifact and receipt without manifest state."""
     if not isinstance(output_destination, PreparedOutputDestination):
         raise EvaluationContractError("evaluation outputs require a claimed output destination")
-    output_destination.assert_current()
+    output_destination.assert_current(require_empty_outputs=False)
     artifact_path = output_destination.artifact_path
     receipt_path = output_destination.receipt_path
     artifact_bytes = _canonical_json_bytes(dict(artifact)) + b"\n"

@@ -7,7 +7,6 @@ metrics, and external evidence.  The public sequence remains
 
 from __future__ import annotations
 
-from contextlib import suppress
 from dataclasses import InitVar, dataclass
 from pathlib import Path
 import subprocess
@@ -444,6 +443,7 @@ class PreparedEvaluation:
                 "reserved_row_count": len(labels),
                 "holdout_status_after": RESERVED_STATUS_AFTER,
             },
+            allow_existing_outputs=True,
         )
         return labels.copy()
 
@@ -551,6 +551,7 @@ def run_evaluation(
                 "holdout_status_after": RESERVED_STATUS_AFTER,
                 **prepared.replay_evidence_fields(),
             },
+            allow_existing_outputs=True,
         )
         artifact_built = True
     except Exception as exc:
@@ -560,7 +561,7 @@ def run_evaluation(
             and prepared.gate.outcome_access_started
             and not artifact_built
         ):
-            with suppress(EvaluationContractError):
+            try:
                 append_evaluation_journal_event(
                     output_destination,
                     event_type="EVALUATION_ATTEMPT_INVALIDATED",
@@ -573,7 +574,12 @@ def run_evaluation(
                         "holdout_status_after": RESERVED_STATUS_AFTER,
                         **prepared.replay_evidence_fields(),
                     },
+                    allow_existing_outputs=True,
                 )
+            except EvaluationContractError as journal_exc:
+                raise EvaluationContractError(
+                    "reserved outcomes were consumed but invalidation journal write failed"
+                ) from journal_exc
         raise
     return artifact
 
