@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import tempfile
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -49,8 +50,8 @@ from .canonical_offline_model_evaluation_metrics import (
 JOURNAL_FILENAME = "canonical-offline-model-evaluation.attempt.journal.jsonl"
 
 
-def _append_newline_json(path: Path, value: Mapping[str, Any]) -> None:
-    payload = _canonical_json_bytes(dict(value)) + b"\n"
+def _append_newline_json(path: Path, value: Mapping[str, Any]) -> bytes:
+    payload = bytes(_canonical_json_bytes(dict(value))) + b"\n"
     try:
         with path.open("ab") as handle:
             handle.write(payload)
@@ -58,6 +59,86 @@ def _append_newline_json(path: Path, value: Mapping[str, Any]) -> None:
             os.fsync(handle.fileno())
     except OSError as exc:
         raise EvaluationContractError("evaluation attempt journal write failed") from exc
+    return payload
+
+
+class _JournalCapability:
+    """Opaque, one-use proof that an opening-intent event was fsynced."""
+
+    __slots__ = ("_consumed", "_event_fields", "_event_type", "_journal_path", "_payload")
+
+    def __init__(
+        self,
+        journal_path: Path,
+        *,
+        event_type: str,
+        event_fields: Mapping[str, Any],
+        payload: bytes,
+    ) -> None:
+        self._journal_path = journal_path
+        self._event_type = event_type
+        self._event_fields = MappingProxyType(dict(event_fields))
+        self._payload = payload
+        self._consumed = False
+
+    def _validate_event_identity(
+        self,
+        *,
+        evaluation_id: str,
+        protocol_sha256: str | None,
+        protocol_freeze_sha: str | None,
+        reserved_row_count: int,
+        reserved_row_id_hash: str | None,
+    ) -> None:
+        if self._event_type != "OUTCOME_OPENING_STARTED":
+            raise EvaluationContractError("journal capability is not an opening-intent event")
+        if self._event_fields.get("event_type") != "OUTCOME_OPENING_STARTED":
+            raise EvaluationContractError("journal capability event type is invalid")
+        if self._event_fields.get("evaluation_id") != evaluation_id:
+            raise EvaluationContractError("journal capability evaluation identity is invalid")
+        if self._event_fields.get("evaluation_protocol_sha256") != protocol_sha256:
+            raise EvaluationContractError("journal capability protocol identity is invalid")
+        if self._event_fields.get("protocol_freeze_sha") != protocol_freeze_sha:
+            raise EvaluationContractError("journal capability freeze identity is invalid")
+        if self._event_fields.get("reserved_row_count") != reserved_row_count:
+            raise EvaluationContractError("journal capability reserved row count is invalid")
+        if (
+            reserved_row_id_hash is not None
+            and self._event_fields.get("reserved_row_id_hash") != reserved_row_id_hash
+        ):
+            raise EvaluationContractError("journal capability reserved row identity is invalid")
+
+    def _validate_journal_integrity(self) -> None:
+        if self._journal_path.is_symlink() or not self._journal_path.is_file():
+            raise EvaluationContractError("durable evaluation journal is unavailable")
+        try:
+            if not self._journal_path.read_bytes().endswith(self._payload):
+                raise EvaluationContractError("durable evaluation journal was replaced")
+        except OSError as exc:
+            raise EvaluationContractError("durable evaluation journal is unavailable") from exc
+
+    def authorize(
+        self,
+        *,
+        evaluation_id: str,
+        protocol_sha256: str | None,
+        protocol_freeze_sha: str | None,
+        reserved_row_count: int,
+        reserved_row_id_hash: str | None,
+    ) -> Path:
+        """Consume only when the fsynced event matches the current evaluation."""
+        if self._consumed:
+            raise EvaluationContractError("evaluation journal capability was already consumed")
+        self._validate_event_identity(
+            evaluation_id=evaluation_id,
+            protocol_sha256=protocol_sha256,
+            protocol_freeze_sha=protocol_freeze_sha,
+            reserved_row_count=reserved_row_count,
+            reserved_row_id_hash=reserved_row_id_hash,
+        )
+        self._validate_journal_integrity()
+        self._consumed = True
+        return self._journal_path
 
 
 def append_evaluation_journal_event(
@@ -68,6 +149,23 @@ def append_evaluation_journal_event(
     fields: Mapping[str, Any],
 ) -> Path:
     """Append and fsync one non-sensitive lifecycle event before returning."""
+    journal_path, _ = _append_evaluation_journal_event_with_capability(
+        output_dir,
+        event_type=event_type,
+        event_at=event_at,
+        fields=fields,
+    )
+    return journal_path
+
+
+def _append_evaluation_journal_event_with_capability(
+    output_dir: str | Path,
+    *,
+    event_type: str,
+    event_at: str,
+    fields: Mapping[str, Any],
+) -> tuple[Path, _JournalCapability]:
+    """Append an event and issue a one-use post-fsync capability."""
     directory = _assert_external_path(output_dir, "evaluation journal directory")
     directory.mkdir(parents=True, exist_ok=True)
     journal_path = directory / JOURNAL_FILENAME
@@ -77,8 +175,14 @@ def append_evaluation_journal_event(
         "evaluation_id": EVALUATION_ID,
     }
     event.update(dict(fields))
-    _append_newline_json(journal_path, event)
-    return journal_path
+    payload = _append_newline_json(journal_path, event)
+    capability = _JournalCapability(
+        journal_path,
+        event_type=event_type,
+        event_fields=event,
+        payload=payload,
+    )
+    return journal_path, capability
 
 
 def build_evaluation_artifact(prepared: Any, labels: np.ndarray[Any, Any]) -> dict[str, Any]:

@@ -18,6 +18,8 @@ import numpy as np
 from . import canonical_offline_model_evaluation_contract as _contract
 from .canonical_offline_model_evaluation_artifacts import (
     JOURNAL_FILENAME,
+    _append_evaluation_journal_event_with_capability,
+    _JournalCapability,
     append_evaluation_journal_event,
     build_evaluation_artifact,
     build_evaluation_receipt,
@@ -200,8 +202,14 @@ def _assert_protocol_git_binding(
 class OutcomeAccessGate:
     """One-way gate for the first semantic read of reserved outcomes."""
 
-    def __init__(self, population: EvaluationPopulation):
+    def __init__(
+        self,
+        population: EvaluationPopulation,
+        *,
+        expected_reserved_row_id_hash: str | None = None,
+    ):
         self._population = population
+        self._expected_reserved_row_id_hash = expected_reserved_row_id_hash
         self._journal_token = object()
         self._journal_path: Path | None = None
         self.protocol_frozen = False
@@ -227,10 +235,19 @@ class OutcomeAccessGate:
         self.protocol_freeze_sha = protocol_freeze_sha
         self.protocol_frozen = True
 
-    def _authorize_journal(self, journal_path: Path) -> object:
-        """Create private authorization after the opening-intent event is fsynced."""
-        if not journal_path.is_file() or journal_path.is_symlink():
-            raise EvaluationContractError("durable evaluation journal is unavailable")
+    def _authorize_journal(self, capability: object) -> object:
+        """Create private authorization from a one-use post-fsync capability."""
+        if not isinstance(capability, _JournalCapability):
+            raise EvaluationContractError(
+                "reserved outcomes require a post-fsync journal capability"
+            )
+        journal_path = capability.authorize(
+            evaluation_id=EVALUATION_ID,
+            protocol_sha256=self.protocol_sha256,
+            protocol_freeze_sha=self.protocol_freeze_sha,
+            reserved_row_count=len(self._population.reserved_ids),
+            reserved_row_id_hash=self._expected_reserved_row_id_hash,
+        )
         self._journal_path = journal_path
         return self._journal_token
 
@@ -279,7 +296,7 @@ class PreparedEvaluation:
     candidate: VerifiedCandidate
     population: EvaluationPopulation
     gate: OutcomeAccessGate
-    protocol_path: Path | None = None
+    protocol_path: Path
     source_head: str | None = None
     protocol_freeze_sha: str | None = None
     probabilities: np.ndarray[Any, Any] | None = None
@@ -290,13 +307,14 @@ class PreparedEvaluation:
         """Bind the evaluation source HEAD and protocol freeze SHA."""
         _assert_git_sha(source_head, "evaluation source HEAD")
         _assert_git_sha(protocol_freeze_sha, "protocol freeze SHA")
-        if self.protocol_path is not None:
-            _assert_protocol_git_binding(
-                self.protocol_path,
-                self.protocol_sha256,
-                source_head=source_head,
-                protocol_freeze_sha=protocol_freeze_sha,
-            )
+        if not isinstance(self.protocol_path, Path):
+            raise EvaluationContractError("canonical protocol path binding is required")
+        _assert_protocol_git_binding(
+            self.protocol_path,
+            self.protocol_sha256,
+            source_head=source_head,
+            protocol_freeze_sha=protocol_freeze_sha,
+        )
         self.source_head = source_head
         self.protocol_freeze_sha = protocol_freeze_sha
         self.gate.freeze(self.protocol_sha256, protocol_freeze_sha)
@@ -337,7 +355,7 @@ class PreparedEvaluation:
                 "reserved outcomes require an external durable attempt journal directory"
             )
         _parse_opened_at(opened_at)
-        journal_path = append_evaluation_journal_event(
+        journal_path, journal_capability = _append_evaluation_journal_event_with_capability(
             journal_output_dir,
             event_type="OUTCOME_OPENING_STARTED",
             event_at=opened_at,
@@ -358,7 +376,7 @@ class PreparedEvaluation:
                 "holdout_status_before": RESERVED_STATUS_BEFORE,
             },
         )
-        authorization = self.gate._authorize_journal(journal_path)
+        authorization = self.gate._authorize_journal(journal_capability)
         self.opened_at = opened_at
         labels = self.gate.open_reserved_outcomes(
             opened_at,
@@ -399,7 +417,10 @@ def prepare_evaluation(
         protocol_sha256=protocol_hash,
         candidate=candidate,
         population=population,
-        gate=OutcomeAccessGate(population),
+        gate=OutcomeAccessGate(
+            population,
+            expected_reserved_row_id_hash=protocol["population"]["reserved_evaluation_row_id_hash"],
+        ),
         protocol_path=checked_in_protocol_path,
     )
 

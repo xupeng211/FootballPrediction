@@ -143,14 +143,35 @@ def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
         event_at="2026-08-23T00:00:00Z",
         fields={},
     )
-    authorization = gate._authorize_journal(journal_path)
-    opened = gate.open_reserved_outcomes(
+    with pytest.raises(evaluation.EvaluationContractError, match="post-fsync journal capability"):
+        gate._authorize_journal(journal_path)
+    with pytest.raises(evaluation.EvaluationContractError, match="durable evaluation journal"):
+        gate.open_reserved_outcomes(
+            "2026-08-23T00:00:00Z",
+            journal_path=journal_path,
+            authorization=object(),
+        )
+
+    protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    prepared = evaluation.PreparedEvaluation(
+        protocol=protocol,
+        protocol_sha256=protocol_hash,
+        candidate=_candidate(),
+        population=population,
+        gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=PROTOCOL_PATH,
+    )
+    prepared.freeze_protocol(
+        source_head=evaluation.current_git_head(),
+        protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+    )
+    prepared.infer_reserved()
+    opened = prepared.open_outcomes(
         "2026-08-23T00:00:00Z",
-        journal_path=journal_path,
-        authorization=authorization,
+        journal_output_dir=tmp_path,
     )
     assert opened.tolist() == [2, 0]
-    assert gate.outcomes_opened is True
+    assert prepared.gate.outcomes_opened is True
 
 
 def test_tampered_reserved_row_ids_are_rejected() -> None:
@@ -332,8 +353,12 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
         candidate=_candidate(),
         population=population,
         gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=PROTOCOL_PATH,
     )
-    prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="a" * 40)
+    prepared.freeze_protocol(
+        source_head=evaluation.current_git_head(),
+        protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+    )
     prepared.infer_reserved()
     with pytest.raises(evaluation.EvaluationContractError, match="durable attempt journal"):
         prepared.open_outcomes("2026-08-23T00:00:00Z")
@@ -359,8 +384,12 @@ def test_evaluation_output_cannot_target_repository_manifest(tmp_path: Path) -> 
         candidate=_candidate(),
         population=population,
         gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=PROTOCOL_PATH,
     )
-    prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="a" * 40)
+    prepared.freeze_protocol(
+        source_head=evaluation.current_git_head(),
+        protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+    )
     prepared.infer_reserved()
     labels = prepared.open_outcomes("2026-08-23T00:00:00Z", journal_output_dir=tmp_path)
     artifact = evaluation.build_evaluation_artifact(prepared, labels)
@@ -423,6 +452,25 @@ def test_protocol_git_binding_rejects_fake_and_stale_heads(
         prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="b" * 40)
 
 
+def test_protocol_git_binding_cannot_be_skipped_for_manual_prepared_objects() -> None:
+    protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    population = _population()
+    prepared = evaluation.PreparedEvaluation(
+        protocol=protocol,
+        protocol_sha256=protocol_hash,
+        candidate=_candidate(),
+        population=population,
+        gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=None,  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(evaluation.EvaluationContractError, match="canonical protocol path"):
+        prepared.freeze_protocol(
+            source_head=evaluation.current_git_head(),
+            protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+        )
+
+
 def test_protocol_git_binding_accepts_the_real_ancestor_freeze() -> None:
     _, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     evaluation._assert_protocol_git_binding(
@@ -481,6 +529,7 @@ def test_partial_outcome_opening_leaves_durable_invalidation_evidence(
         candidate=_candidate(),
         population=population,
         gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=PROTOCOL_PATH,
     )
     monkeypatch.setattr(evaluation, "prepare_evaluation", lambda **_kwargs: prepared)
 
@@ -492,8 +541,8 @@ def test_partial_outcome_opening_leaves_durable_invalidation_evidence(
             frame_path="/external/frame.json",
             receipt_path="/external/frame.receipt.json",
             protocol_path=PROTOCOL_PATH,
-            source_head="a" * 40,
-            protocol_freeze_sha="b" * 40,
+            source_head=evaluation.current_git_head(),
+            protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
             outcome_opened_at="2026-08-23T00:00:00Z",
             journal_output_dir=journal_dir,
         )
