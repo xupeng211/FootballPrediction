@@ -48,12 +48,41 @@ def main(argv: list[str] | None = None) -> int:
         source_head=source_head,
         protocol_freeze_sha=args.protocol_freeze_sha,
         outcome_opened_at=args.outcome_opened_at,
+        journal_output_dir=Path(args.output_dir),
     )
-    output = evaluation.write_evaluation_outputs(
-        artifact,
-        output_dir=Path(args.output_dir),
-        protocol_freeze_sha=args.protocol_freeze_sha,
-        evaluation_source_head=source_head,
+    try:
+        output = evaluation.write_evaluation_outputs(
+            artifact,
+            output_dir=Path(args.output_dir),
+            protocol_freeze_sha=args.protocol_freeze_sha,
+            evaluation_source_head=source_head,
+        )
+    except Exception as exc:
+        evaluation.append_evaluation_journal_event(
+            Path(args.output_dir),
+            event_type="EVALUATION_ATTEMPT_INVALIDATED",
+            event_at=args.outcome_opened_at,
+            fields={
+                "evaluation_protocol_sha256": artifact["evaluation_protocol_sha256"],
+                "protocol_freeze_sha": args.protocol_freeze_sha,
+                "evaluation_source_head": source_head,
+                "error_type": type(exc).__name__,
+                "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
+            },
+        )
+        raise
+    evaluation.append_evaluation_journal_event(
+        Path(args.output_dir),
+        event_type="EVALUATION_ARTIFACT_WRITTEN",
+        event_at=args.outcome_opened_at,
+        fields={
+            "evaluation_protocol_sha256": artifact["evaluation_protocol_sha256"],
+            "protocol_freeze_sha": args.protocol_freeze_sha,
+            "evaluation_source_head": source_head,
+            "artifact_sha256": output["artifact_sha256"],
+            "receipt_sha256": output["receipt_sha256"],
+            "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
+        },
     )
     summary = {
         "evaluation_id": artifact["evaluation_id"],

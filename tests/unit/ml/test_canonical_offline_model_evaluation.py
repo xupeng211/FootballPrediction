@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 import json
 from pathlib import Path
@@ -16,6 +17,7 @@ from src.ml.training import canonical_training_producer as producer
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PROTOCOL_PATH = PROJECT_ROOT / "config" / "canonical_offline_model_evaluation_protocol.json"
 SYNTHETIC_RESERVED_ROWS = 2
+PROTOCOL_FREEZE_SHA = "82fbcd55db98b710089483b9c7d13f1ad6937e11"
 
 
 class _ExplodingLabel(dict):
@@ -351,3 +353,138 @@ def test_evaluation_output_cannot_target_repository_manifest() -> None:
             protocol_freeze_sha="a" * 40,
             evaluation_source_head="a" * 40,
         )
+
+
+def test_opaque_outcome_has_no_public_payload_or_unscoped_accessor() -> None:
+    opaque = evaluation._OpaqueOutcome({"outcome": 2})
+
+    assert not hasattr(opaque, "payload")
+    with pytest.raises(evaluation.EvaluationContractError, match="evaluation gate"):
+        opaque.open(object())
+
+
+def test_protocol_rejects_external_copy_and_tampered_metric_or_baseline(tmp_path: Path) -> None:
+    external_protocol = tmp_path / "protocol.json"
+    external_protocol.write_bytes(PROTOCOL_PATH.read_bytes())
+    with pytest.raises(evaluation.EvaluationContractError, match="canonical"):
+        evaluation.load_protocol(external_protocol)
+
+    protocol, _, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    tampered = deepcopy(protocol)
+    tampered["baselines"]["training_class_prior"]["counts"]["HOME"] = 999
+    with pytest.raises(evaluation.EvaluationContractError, match="baseline"):
+        evaluation.validate_protocol(tampered)
+
+    tampered = deepcopy(protocol)
+    tampered["metrics"]["direction"]["accuracy"] = "lower_is_better"
+    with pytest.raises(evaluation.EvaluationContractError, match="directions"):
+        evaluation.validate_protocol(tampered)
+
+
+def test_protocol_git_binding_rejects_fake_and_stale_heads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    population = _population()
+    prepared = evaluation.PreparedEvaluation(
+        protocol=protocol,
+        protocol_sha256=protocol_hash,
+        candidate=_candidate(),
+        population=population,
+        gate=evaluation.OutcomeAccessGate(population),
+        protocol_path=PROTOCOL_PATH,
+    )
+
+    monkeypatch.setattr(evaluation, "current_git_head", lambda: "a" * 40)
+    with pytest.raises(evaluation.EvaluationContractError, match="current worktree HEAD"):
+        prepared.freeze_protocol(source_head="b" * 40, protocol_freeze_sha="a" * 40)
+
+    monkeypatch.setattr(evaluation, "current_git_head", lambda: "a" * 40)
+    with pytest.raises(evaluation.EvaluationContractError, match="freeze commit"):
+        prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="b" * 40)
+
+
+def test_protocol_git_binding_accepts_the_real_ancestor_freeze() -> None:
+    _, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    evaluation._assert_protocol_git_binding(
+        PROTOCOL_PATH,
+        protocol_hash,
+        source_head=evaluation.current_git_head(),
+        protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
+    )
+
+
+def test_receipt_rejects_source_or_freeze_mismatch() -> None:
+    with pytest.raises(evaluation.EvaluationContractError, match="freeze SHA"):
+        evaluation.build_evaluation_receipt(
+            {"protocol_freeze_sha": "a" * 40},
+            b"{}",
+            protocol_freeze_sha="b" * 40,
+            evaluation_source_head="c" * 40,
+        )
+
+    with pytest.raises(evaluation.EvaluationContractError, match="source HEAD"):
+        evaluation.build_evaluation_receipt(
+            {"protocol_freeze_sha": "b" * 40, "evaluation_code_revision": "a" * 40},
+            b"{}",
+            protocol_freeze_sha="b" * 40,
+            evaluation_source_head="c" * 40,
+        )
+
+
+def test_bootstrap_intervals_are_deterministic() -> None:
+    protocol, _, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    candidate_probabilities = np.asarray([[0.6, 0.2, 0.2], [0.2, 0.2, 0.6]])
+    prior_probabilities = np.tile(np.asarray([0.3, 0.2, 0.5]), (2, 1))
+    labels = np.asarray([0, 2])
+
+    first = evaluation._bootstrap_intervals(
+        candidate_probabilities, prior_probabilities, labels, 2, protocol
+    )
+    second = evaluation._bootstrap_intervals(
+        candidate_probabilities, prior_probabilities, labels, 2, protocol
+    )
+    assert first == second
+
+
+def test_partial_outcome_opening_leaves_durable_invalidation_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    population = _population()
+    labels = dict(population.labels_by_id)
+    labels["reserved-0"] = evaluation._OpaqueOutcome(_ExplodingLabel(outcome=2))
+    population = replace(population, labels_by_id=labels)
+    protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
+    prepared = evaluation.PreparedEvaluation(
+        protocol=protocol,
+        protocol_sha256=protocol_hash,
+        candidate=_candidate(),
+        population=population,
+        gate=evaluation.OutcomeAccessGate(population),
+    )
+    monkeypatch.setattr(evaluation, "prepare_evaluation", lambda **_kwargs: prepared)
+
+    journal_dir = tmp_path / "attempt"
+    with pytest.raises(AssertionError, match="reserved outcome"):
+        evaluation.run_evaluation(
+            candidate_path="/external/candidate.joblib",
+            metadata_path="/external/candidate.metadata.json",
+            frame_path="/external/frame.json",
+            receipt_path="/external/frame.receipt.json",
+            protocol_path=PROTOCOL_PATH,
+            source_head="a" * 40,
+            protocol_freeze_sha="b" * 40,
+            outcome_opened_at="2026-08-23T00:00:00Z",
+            journal_output_dir=journal_dir,
+        )
+
+    events = [
+        json.loads(line)
+        for line in (journal_dir / evaluation.JOURNAL_FILENAME).read_text().splitlines()
+    ]
+    assert [event["event_type"] for event in events] == [
+        "OUTCOME_OPENING_STARTED",
+        "EVALUATION_ATTEMPT_INVALIDATED",
+    ]
+    assert all("reserved-0" not in json.dumps(event) for event in events)
