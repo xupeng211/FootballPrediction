@@ -1,10 +1,46 @@
-# TITAN Football Prediction Platform
+# FootballPrediction
 
-> 工业级足球数据采集与预测平台 | Production-Ready Data Harvesting System
+> 当前 mission / North Star：持续运行、可验证、可审计的足球价值投注决策支持系统；
+> 最终 target system 由 [`docs/PROJECT_VISION.md`](docs/PROJECT_VISION.md) 定义。
 >
-> **Version**: V4.51.2-TOTAL-WAR | **Status**: Production-Ready | **Verification**: profile-based
+> 当前 maturity：`pre-production research / evidence-building`。当前 canonical offline
+> evidence 为 `PROMISING`，但不代表模型质量、盈利能力或生产就绪已被证明。
 
----
+## Current State
+
+### 当前 canonical research path
+
+- pipeline：GD-A01 → GD-A02 → GD-A03 → canonical prematch feature frame → training candidate production → offline evaluation
+- current canonical candidate：`canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41`
+- family：`xgboost_multiclass_1x2`
+- feature contract：`canonical_prematch/vnext-v1`；accepted-for-training features：`9`
+- population：`888 accounted / 545 eligible / 343 ineligible`
+- split：`436 training / 109 reserved evaluation`；holdout：`CONSUMED_FOR_OFFLINE_EVALUATION`
+- market research boundary：`VALUE_MVP-1` 是独立的 13-feature vs provider-defined closing-market path，结果为 `MARKET_BETTER_THAN_MODEL`，不得与上述 candidate 混合解读
+
+```text
+MODEL_OFFLINE_QUALITY_STATUS=PROMISING
+MODEL_QUALITY_PROVEN=NO
+PROFITABILITY_PROVEN=NO
+PRODUCTION_READY=NO
+MODEL_ACTIVATED=NO
+CANONICAL_BETTING_BACKTEST=NOT_ESTABLISHED
+CANONICAL_VALUE_ENGINE=NOT_ESTABLISHED
+STRICT_DECISION_TIME_ODDS_VALUE_READINESS=NOT_READY / NOT_ESTABLISHED
+```
+
+当前状态、能力和下一步边界见 [`docs/CAPABILITY_INDEX.md`](docs/CAPABILITY_INDEX.md)、
+[`docs/ACTIVE_MILESTONE.md`](docs/ACTIVE_MILESTONE.md) 和
+[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)。业务命令仍以本文的
+`Canonical Business Entrypoints` 为唯一入口 authority；当前模型不代表已激活的 runtime
+prediction surface。
+
+## Historical / Legacy Background
+
+> 以下 TITAN / V11 / V4.x 架构、指标、命令和品牌材料仅保留作 `HISTORICAL / LEGACY`
+> 背景，不是当前产品、模型、特征维度、生产就绪或 runtime prediction 的声明。
+
+### TITAN-era platform overview (HISTORICAL / LEGACY)
 
 ## 📐 Architecture
 
@@ -327,7 +363,14 @@ The next schema change has exactly one location: add a reviewed, versioned
 
 ---
 
-## 🚀 Quick Start
+## Historical / Legacy Operations Reference
+
+> 本节保留旧版 TITAN 运行、部署、数据字典、监控和版本资料，属于
+> `HISTORICAL / LEGACY` 背景。不要把其中的命令、数量、指标或生产措辞当作当前
+> canonical capability；当前业务入口和授权边界以上方 `Canonical Business Entrypoints`
+> 及 `AGENTS.md` 为准。
+
+### Legacy Quick Start
 
 ### Prerequisites
 
@@ -368,6 +411,8 @@ docker-compose -f docker-compose.dev.yml exec dev \
 
 ---
 
+> End of legacy quick-start material. The verification section below is current workflow guidance.
+
 ## 🛡️ Current Development Verification
 
 开发工作流唯一权威是 [`AGENTS.md`](AGENTS.md)，详细说明见
@@ -398,7 +443,11 @@ main Production Gate 验证实际 merge 的完整 SHA，才算 DONE。
 
 ---
 
-## 📦 Deployment
+## Historical / Legacy Operations Reference (continued)
+
+> 以下部署、数据字典、监控、排障和版本信息仍是历史背景，不是当前生产就绪或运行授权声明。
+
+### Legacy Deployment
 
 ### Docker 部署
 
@@ -666,6 +715,8 @@ tail -f logs/sentinel.log
 
 ---
 
+> End of legacy operations material. The repository-gate section below remains current governance guidance.
+
 ## ✅ Current Repository Gates
 
 - GitHub ruleset required checks: `Environment / Proxy / Static / Unit Gate` and
@@ -686,6 +737,6 @@ tail -f logs/sentinel.log
 ---
 
 <p align="center">
-  <strong>TITAN —— 工业级足球预测平台</strong><br>
-  <em>Production-Ready. Zero Compromise.</em>
+  <strong>FootballPrediction</strong><br>
+  <em>Pre-production research / evidence-building</em>
 </p>

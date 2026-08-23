@@ -1,9 +1,26 @@
 ---
 name: football-prediction
-description: Professional football match prediction and analysis using XGBoost 2.0+ ML model. Use when predicting match results, analyzing team performance, or calculating win probabilities. Features 67.2% accuracy with <100ms response time.
+description: Legacy/background football prediction reference. Current model, runtime, authorization, and maturity facts are defined by the project authority docs.
 ---
 
-# Football Prediction Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file is an agent-specific historical reference, not a current capability
+> declaration or a parallel project authority. Do not use its model metrics,
+> feature dimensions, prediction commands, API examples, or runtime claims as
+> current project facts.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/PROJECT_VISION.md`](../../../docs/PROJECT_VISION.md),
+> [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). Prediction and
+> model activation remain separately authorized and currently blocked by the
+> canonical readiness state.
+
+## Historical / Legacy Reference
+
+### Football Prediction Skill (legacy)
 
 ## 技能概述
 专业的足球比赛预测和分析技能，基于XGBoost 2.0+机器学习模型，提供高精度的比赛结果预测。

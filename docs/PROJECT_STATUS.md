@@ -12,10 +12,13 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 当前战线。当前主线事实已按 `origin/main` 与 canonical code/config 独立核对。
 `docs/PROJECT_VISION.md` 只描述最终 target system；本文件只报告当前事实、evidence、blockers
 和 supporting history，不把 vision gap 当成已实现能力。
+表中的 `Last knowledge audit base` 是 documented business snapshot 的审计基线，
+不是实时 main HEAD。实时 `CURRENT_GIT_HEAD`、`CURRENT_ORIGIN_MAIN` 和 `GITHUB_MAIN`
+必须从 Git/GitHub 获取。
 
 | Field | Current truth |
 |---|---|
-| Current main | `0e21c2c9be52d0e760d57aa95d1deb511f516e7f`（本次审计基线；以后以 Git 完整 SHA 刷新） |
+| Last knowledge audit base | `b0995c36fcd2f84cc6f1034450881d6f15103e68`（只表示 documented audit snapshot，不是实时 main HEAD） |
 | Current system stage | `CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE`；pre-production research evidence |
 | Completed canonical pipeline | GD-A01 → GD-A02 → GD-A03 → Canonical Prematch Feature Frame → Training Candidate Production → Offline Evaluation |
 | Current model asset | `canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41`; `xgboost_multiclass_1x2`; `canonical_prematch/vnext-v1`; 9 accepted-for-training features |

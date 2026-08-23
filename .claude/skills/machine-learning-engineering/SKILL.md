@@ -1,9 +1,25 @@
 ---
 name: machine-learning-engineering
-description: Optimize and maintain XGBoost machine learning models for football predictions. Use when tuning hyperparameters, implementing feature engineering, analyzing model performance, or deploying ML models to production.
+description: Legacy/background machine-learning engineering reference. Current model evidence, contracts, and authorization boundaries are defined by the project authority docs.
 ---
 
-# Machine Learning Engineering Skill
+> Lifecycle: `LEGACY_BACKGROUND`.
+>
+> This file contains historical optimization, evaluation, and deployment
+> examples. It is not a current model specification, production-readiness
+> claim, or activation authority; its examples must not be run as current
+> project work without an explicitly authorized task.
+>
+> Current project truth: read [`AGENTS.md`](../../../AGENTS.md), the README
+> `Canonical Business Entrypoints`, [`docs/PROJECT_VISION.md`](../../../docs/PROJECT_VISION.md),
+> [`docs/CAPABILITY_INDEX.md`](../../../docs/CAPABILITY_INDEX.md),
+> [`docs/ACTIVE_MILESTONE.md`](../../../docs/ACTIVE_MILESTONE.md), and
+> [`docs/PROJECT_STATUS.md`](../../../docs/PROJECT_STATUS.md). Training,
+> prediction, backtest, and model activation remain separately authorized.
+
+## Historical / Legacy Reference
+
+### Machine Learning Engineering Skill (legacy)
 
 ## 技能概述
 专业的机器学习工程技能模块，专注于模型优化、特征工程和模型部署的最佳实践。

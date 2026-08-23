@@ -73,6 +73,13 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "CLAUDE.md",
         "GEMINI.md",
         ".claude/README.md",
+        # Agent-facing legacy/current pointers may be reviewed in the same
+        # governed change; they do not become project authority. Keep this
+        # allowlist exact rather than allowing all skills.
+        ".claude/skills/football-prediction/SKILL.md",
+        ".claude/skills/feature-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/SKILL.md",
+        ".claude/skills/v26-harvest/SKILL.md",
         ".eslintrc.json",
         ".github/pull_request_template.md",
         "README.md",
