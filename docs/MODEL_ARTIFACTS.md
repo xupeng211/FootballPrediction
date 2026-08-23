@@ -340,6 +340,29 @@ They do not create `model_zoo/production/v26.7_aligned_production.pkl`, alter
 the tracked pending/null API row, or make `/predict` ready. Production
 activation remains a separately reviewed operation.
 
+## Canonical Offline Model Evaluation
+
+The first formal evaluation node for a frozen vnext candidate is
+`src/ml/evaluation/canonical_offline_model_evaluation.py`, with its immutable
+protocol in `config/canonical_offline_model_evaluation_protocol.json`. It is
+not the historical VALUE_MVP market benchmark and it is not a backtest.
+
+The evaluator hash-binds the candidate artifact and metadata, the external
+canonical frame and receipt, the nine-feature order, and the producer's exact
+436/109 chronological split. It keeps `target_label.outcome` behind an
+explicit `OutcomeAccessGate`; outcomes are opened only after the protocol is
+frozen and candidate/frame identity has passed. The primary metric is
+multiclass log loss. Training-class-prior and training-majority baselines use
+training provenance only. Calibration uses fixed five bins and marks small
+occupied cells `INSUFFICIENT_SAMPLE`; deterministic bootstrap intervals are
+uncertainty estimates only.
+
+The output is a new repository-external research artifact plus receipt with
+`HOLDOUT_STATUS=CONSUMED_FOR_OFFLINE_EVALUATION`. The evaluator does not
+write candidate files, the production manifest, database, raw data, or model
+activation state. It never computes ROI, profit, stake, Kelly, CLV, value-edge,
+or betting counts.
+
 ## Important
 
 Fresh clones do not include production model artifacts.

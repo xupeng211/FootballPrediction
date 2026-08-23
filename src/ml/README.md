@@ -487,3 +487,23 @@ feature contract remain noncanonical; the historical 11/42 question is
 deferred because the missing feature semantics are not proven. Candidate
 generation does not activate a model, change the pending/null manifest state,
 or make `/predict` ready.
+
+## Current Canonical Offline Model Evaluation
+
+The frozen candidate is evaluated only through
+`src/ml/evaluation/canonical_offline_model_evaluation.py`, exposed by
+`npm run evaluate:offline` with explicit candidate, metadata, frame, receipt,
+protocol, protocol-freeze SHA, timestamp, and new repository-external output
+directory. Its protocol is committed in
+`config/canonical_offline_model_evaluation_protocol.json` before any reserved
+outcome is opened.
+
+The evaluator reconstructs the exact 545 eligible / 436 training / 109
+reserved chronological population, checks Away/Draw/Home class order and
+finite normalized probabilities, and computes multiclass log loss, multiclass
+Brier, accuracy, diagnostics, fixed five-bin calibration, and deterministic
+bootstrap uncertainty intervals. The only baselines are the 436-row training
+class prior and training majority class. This is probability evaluation only:
+it does not train, tune, select, backtest, use odds, calculate ROI/CLV/value,
+write DB/raw/manifest state, or activate a model. The 109-row holdout is
+reported as `CONSUMED_FOR_OFFLINE_EVALUATION` after opening.

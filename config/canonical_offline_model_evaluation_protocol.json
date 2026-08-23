@@ -1,0 +1,152 @@
+{
+  "schema_version": "canonical-offline-model-evaluation-protocol/v1",
+  "evaluation_id": "canonical-offline-model-evaluation-20260823-candidate-a",
+  "task": "CANONICAL_OFFLINE_MODEL_EVALUATION",
+  "candidate": {
+    "candidate_id": "canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41",
+    "artifact_sha256": "a841169d51d90ddfad89dfa48defbe8875d10e1c0ed6d205a06b15a307f7160c",
+    "metadata_sha256": "1b3343eb4f050f0b32372b66a1ba84c68656ddad745fc83083680f5a1fdf97df",
+    "source_revision": "00708a5a5b76481f312aaf110dd356bb749cb96c",
+    "model_family": "xgboost_multiclass_1x2",
+    "model_version": "canonical-prematch-vnext-xgb/v1",
+    "created_as": "NON_PRODUCTION_CANDIDATE",
+    "activated": "NO"
+  },
+  "frame": {
+    "artifact_sha256": "206c65788d8f815f79e3281401fbca8e540a2ebd5f24af4421077ac428bc0524",
+    "receipt_sha256": "7dd88606ffc74f4ed1a015898b0950af98f41af65405df81aa5e59f3ce14b159",
+    "business_sha256": "b3650cb698bdb6bd6e8fcf22a6e1f78e7b6e80978eb3279d6c4a087c96c975b3",
+    "code_revision": "1bd14026c9bea3098d36ecc91dd816d94b69ac54"
+  },
+  "population": {
+    "frame_eligible_rows": 545,
+    "training_rows": 436,
+    "reserved_evaluation_rows": 109,
+    "reserved_evaluation_row_id_hash": "ea42247460b9993b4963bf4c26a372d58498865526e1401312055125a466bbde",
+    "training_row_id_hash": "7d48e4b5d42493ddb54bab6a1a0c1185b7258b32500b8eccb3b2bef50df76baf",
+    "validation_fraction": 0.2,
+    "temporal_partition": "chronological_reserved_evaluation_holdout/v1",
+    "train_date_range": [
+      "2022-09-03T11:30:00+00:00",
+      "2024-02-17T17:30:00+00:00"
+    ],
+    "reserved_date_range": [
+      "2024-02-18T14:00:00+00:00",
+      "2024-05-19T15:00:00+00:00"
+    ]
+  },
+  "feature_contract": {
+    "contract_id": "canonical_prematch/vnext-v1",
+    "version": "canonical_prematch/vnext/v1",
+    "feature_count": 9,
+    "feature_order": [
+      "rolling_xg_home",
+      "rolling_xg_away",
+      "home_points",
+      "away_points",
+      "points_diff",
+      "home_recent_form_points",
+      "home_fatigue_index",
+      "away_fatigue_index",
+      "fatigue_diff"
+    ]
+  },
+  "model_output": {
+    "class_order": [0, 1, 2],
+    "class_names": ["AWAY", "DRAW", "HOME"],
+    "probability_column_order": ["P_AWAY", "P_DRAW", "P_HOME"],
+    "probability_source": "candidate.model.predict_proba",
+    "sanity": {
+      "finite": true,
+      "range": "[0,1]",
+      "row_sum_atol": 1e-8
+    }
+  },
+  "metrics": {
+    "primary_metric": "multiclass_log_loss",
+    "secondary_metrics": [
+      "multiclass_brier_score",
+      "accuracy",
+      "per_class_diagnostics",
+      "confusion_matrix",
+      "calibration_diagnostics"
+    ],
+    "log_loss_definition": "mean(-log(max(P(actual), 1e-15)))",
+    "log_loss_epsilon": 1e-15,
+    "brier_definition": "mean(sum_k((P_k - one_hot_k)^2))",
+    "accuracy_definition": "mean(argmax(P) == actual_class)",
+    "direction": {
+      "multiclass_log_loss": "lower_is_better",
+      "multiclass_brier_score": "lower_is_better",
+      "accuracy": "higher_is_better"
+    }
+  },
+  "baselines": {
+    "training_class_prior": {
+      "definition": "constant probability vector from 436 training rows only",
+      "counts": {
+        "AWAY": 135,
+        "DRAW": 97,
+        "HOME": 204
+      },
+      "probability_order": ["P_AWAY", "P_DRAW", "P_HOME"]
+    },
+    "training_majority_class": {
+      "definition": "constant argmax class from 436 training rows only",
+      "class": "HOME",
+      "class_index": 2
+    },
+    "reserved_outcomes_may_enter_baseline": false,
+    "bookmaker_odds_baseline": false
+  },
+  "calibration": {
+    "method": "fixed_probability_bins",
+    "bin_edges": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+    "minimum_nonempty_bin_count": 10,
+    "report": "class-wise counts, predicted mean, observed frequency, absolute gap, and pooled weighted gap",
+    "interpretation": "descriptive_only; mark INSUFFICIENT_SAMPLE when any occupied cell is below the minimum count"
+  },
+  "uncertainty": {
+    "method": "deterministic_percentile_bootstrap",
+    "resample_unit": "reserved_row_with_replacement",
+    "resamples": 5000,
+    "seed": 20260823,
+    "confidence_level": 0.95,
+    "interval": "linear_percentile",
+    "comparisons": [
+      "candidate_log_loss_minus_training_prior_log_loss",
+      "candidate_brier_minus_training_prior_brier",
+      "candidate_accuracy_minus_training_majority_accuracy"
+    ],
+    "claim_boundary": "uncertainty estimate only; not a proof of generalization or profitability"
+  },
+  "acceptance_rules": {
+    "quality_status_vocabulary": [
+      "PROMISING",
+      "MIXED",
+      "WEAK",
+      "CLEARLY_UNDERPERFORMING"
+    ],
+    "promising": "both probability deltas are below zero, accuracy delta is non-negative, bootstrap intervals are not clearly adverse, and calibration is not descriptively clearly misaligned",
+    "mixed": "probability metrics disagree, accuracy trades off against probability quality, or uncertainty prevents a stronger classification",
+    "weak": "both probability deltas are above zero without both bootstrap intervals being clearly adverse",
+    "clearly_underperforming": "both probability deltas are above zero and both 95% bootstrap lower bounds are above zero",
+    "model_quality_proven": false,
+    "profitability_proven": false,
+    "production_ready": false,
+    "model_selected": false
+  },
+  "forbidden_scope": [
+    "TRAINING",
+    "RETRAINING",
+    "HYPERPARAMETER_TUNING",
+    "MODEL_SELECTION_ACROSS_NEW_CANDIDATES",
+    "BACKTEST",
+    "BETTING_VALUE_EVALUATION",
+    "ROI_EVALUATION",
+    "CLV_EVALUATION",
+    "PRODUCTION_ACTIVATION",
+    "LIVE_FETCH",
+    "PRODUCTION_DB_WRITE"
+  ]
+}
