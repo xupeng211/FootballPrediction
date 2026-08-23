@@ -12,15 +12,6 @@
         "NODE_OPTIONS": "--max-old-space-size=4096"
       }
     },
-    "postgres": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://claude_reader:claude_readonly_2026@localhost:5432/football_db"
-      ],
-      "description": "PostgreSQL MCP - 只读数据库查询 (claude_reader 用户)"
-    },
     "pytest": {
       "command": "python3",
       "args": ["/home/xupeng/projects/FootballPrediction/mcp_servers/pytest_server.py"],

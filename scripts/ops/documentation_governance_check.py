@@ -138,6 +138,16 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     }
 )
 
+# Agent host configuration is allowed only as these exact paths.  These files
+# do not become project authority merely because the governance checker knows
+# how to permit a bounded reality-reconciliation change.
+AGENT_CONFIG_ALLOWED_CHANGED = frozenset(
+    {
+        ".claude/settings.json",
+        ".claude/mcp-config.json",
+    }
+)
+
 # WF01 intentionally removes the second pull-request template. WF05 also
 # removes the obsolete CI setup note after proving that it has no supported
 # caller or current workflow reference. This bounded retirement removes only
@@ -176,7 +186,9 @@ ALLOWED_ADDED = (
     | AI_AUDIT_ALLOWED_ADDED
     | TEST_DEBT_AUDIT_ALLOWED_ADDED
 )
-ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | ALLOWED_DELETED
+ALLOWED_CHANGED = (
+    ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | AGENT_CONFIG_ALLOWED_CHANGED | ALLOWED_DELETED
+)
 
 REQUIRED_DOCS = (
     "AGENTS.md",

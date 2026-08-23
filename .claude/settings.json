@@ -17,41 +17,5 @@
       "Task(*)",
       "NotebookEdit(*)"
     ]
-  },
-  "project": {
-    "name": "Football Prediction System",
-    "description": "Enterprise AI football prediction platform with Service Layer v2.0 architecture",
-    "version": "2.0.0-Stable",
-    "type": "machine-learning",
-    "framework": "fastapi"
-  },
-  "environment": {
-    "python_version": "3.11+",
-    "primary_language": "python",
-    "architecture": "microservices",
-    "database": "postgresql",
-    "cache": "redis",
-    "monitoring": "prometheus-grafana"
-  },
-  "tools": {
-    "development": [
-      "pytest",
-      "black",
-      "flake8",
-      "mypy",
-      "coverage"
-    ],
-    "deployment": [
-      "docker",
-      "docker-compose",
-      "kubernetes"
-    ],
-    "ml": [
-      "xgboost",
-      "pandas",
-      "numpy",
-      "scikit-learn",
-      "shap"
-    ]
   }
 }

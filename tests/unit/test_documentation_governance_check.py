@@ -5,7 +5,9 @@ lifecycle: test-fixture
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -15,6 +17,12 @@ GOVERNANCE = ROOT / "docs/DOCUMENTATION_GOVERNANCE.md"
 AGENTS = ROOT / "AGENTS.md"
 WORKFLOW = ROOT / "docs/AGENT_WORKFLOW.md"
 AUDIT = ROOT / "docs/_reports/DOCUMENTATION_GOVERNANCE_AUDIT_NO_DELETION.md"
+AGENT_CONFIG_FILES = (
+    ROOT / ".claude/settings.json",
+    ROOT / ".claude/settings.local.json",
+    ROOT / ".claude/mcp-config.json",
+)
+INLINE_USERINFO_URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://[^/@\s]+@")
 
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import documentation_governance_check as checker  # noqa: E402
@@ -179,6 +187,48 @@ def test_no_wildcard_paths_in_source_of_truth_allowlist():
     assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
     assert "package.json" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
     assert "package-lock.json" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
+def test_agent_config_allowlist_uses_exact_paths():
+    expected = {".claude/settings.json", ".claude/mcp-config.json"}
+    assert expected == set(checker.AGENT_CONFIG_ALLOWED_CHANGED)
+    assert not any("*" in path for path in checker.AGENT_CONFIG_ALLOWED_CHANGED)
+
+
+def _iter_scalar_fields(value, path=()):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from _iter_scalar_fields(child, (*path, str(key)))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _iter_scalar_fields(child, (*path, str(index)))
+    else:
+        yield ".".join(path), value
+
+
+def test_tracked_claude_configs_have_no_inline_userinfo_credentials():
+    offenders = []
+    for path in AGENT_CONFIG_FILES:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for field_path, value in _iter_scalar_fields(data):
+            if isinstance(value, str) and INLINE_USERINFO_URI.search(value):
+                offenders.append(f"{path.relative_to(ROOT)}:{field_path}")
+    assert not offenders, "inline credential-like URI fields: " + ", ".join(offenders)
+
+
+def test_claude_settings_retains_only_host_configuration_sections():
+    settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
+    assert settings["skills"]["enabled"] is False
+    assert set(settings) <= {"skills", "mcpServers", "permissions"}
+    assert not {"project", "environment", "tools"} & set(settings)
+
+
+def test_claude_readme_fences_host_config_from_project_authority():
+    text = _read(ROOT / ".claude/README.md")
+    assert "不是项目授权" in text
+    assert "不证明" in text
+    assert "inline credential" in text
+    assert "没有对应的 MCP loader" in text
 
 
 def test_unexpected_paths_still_rejected():
