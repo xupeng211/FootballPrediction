@@ -295,35 +295,35 @@ API row therefore reports successfully as informational state while
 `artifact_verified=false`, `model_loaded=false`, and `service_ready=false`;
 activation remains separate reviewed operational work.
 
-## Canonical Training Producer and Parity (PR-6)
+## Canonical Training Candidate Producer
 
 The permanent canonical producer is
 `src/ml/training/canonical_training_producer.py`, exposed through
-`npm run train` (and the `train:fast` / `train:deep` variants). Its input
-boundary is an explicit offline CSV, JSON, JSONL, or Parquet feature frame;
-it does not query PostgreSQL, fetch live data, scan model directories, or
-consume the unsafe general `l3_features` surface. The frame must already
-contain the proven pre-match values and the `match_date` / `result` metadata.
-Missing, non-finite, unknown, or post-match-marked inputs fail closed; the
-producer does not hide missing required signals with zero filling.
+`npm run train` (and the `train:fast` / `train:deep` variants). For the
+canonical JSON frame, the explicit receipt is required:
+`npm run train -- --input <frame> --receipt <receipt> --output <candidate>`.
+The input is repository-external and already materialized; the producer does
+not query PostgreSQL, fetch live data, scan model directories, or consume the
+unsafe general `l3_features` surface. Missing, non-finite, unknown,
+post-match, ineligible, or incorrectly ordered values fail closed.
 
-The producer resolves `v26_7_aligned/v1` through
-`FeatureContractRegistry`, checks the exact
-`v26_6_pre_match/v1` binding and ordered 20-feature declaration against
-`V26_6_PreMatchAdapter`, maps the established Away/Draw/Home classes to
-`0/1/2`, fits the scaler on the earlier partition only, and evaluates only
-later rows. The split is deterministic and chronological, with train and OOS
-date ranges, class distributions, metrics, estimator settings, contract
-identity, source revision, and a safe logical source identity recorded in
-bounded provenance. No production-quality or profitability claim follows from
-this validation.
+Candidate production resolves `canonical_prematch/vnext-v1` through
+`FeatureContractRegistry` and projects only the nine features marked
+`ACCEPTED_FOR_TRAINING`. The established Away/Draw/Home labels map to
+`0/1/2`. The deterministic split is chronological: the earlier fit partition
+is used for `StandardScaler` and XGBoost fitting, while the later partition is
+reserved for the next independent evaluation node and is not passed as an
+`eval_set`. No training diagnostic is a model-quality, betting-value,
+backtest, or production-readiness claim.
 
-The result is an existing-loader-compatible candidate envelope containing the
-model, scaler, exact feature columns, identity fields, and provenance.
-Candidate serialization uses a same-directory temporary file, flush/fsync,
-atomic replacement, final-byte SHA256, and a second structural validation of
-the bytes at the destination. The output path is explicit and production
-paths are rejected. `config/model_artifacts.json` and
+The result is a non-production candidate envelope plus a metadata sidecar;
+both bind the candidate identity, vnext contract and feature order, exact
+frame/receipt hashes, fit/reserved row-ID hashes, label/split/preprocessor
+contracts, seed, hyperparameters, source revision, and model hash. Candidate
+serialization uses a same-directory temporary file, flush/fsync, atomic
+replacement, final-byte SHA256, sidecar integrity validation, and a second
+structural validation of the bytes at the destination. The output path is
+explicit and repository-external. `config/model_artifacts.json` and
 `config/model_feature_contracts.json` are never written by the producer; it
 does not provide activation, status/checksum mutation, reload, or deployment.
 
