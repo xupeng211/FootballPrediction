@@ -7,7 +7,9 @@ lifecycle: permanent
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 from typing import TYPE_CHECKING
@@ -147,6 +149,54 @@ AGENT_CONFIG_ALLOWED_CHANGED = frozenset(
         ".claude/mcp-config.json",
     }
 )
+
+AGENT_CONFIG_RELATIVE_PATHS: tuple[str, ...] = (
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".claude/mcp-config.json",
+)
+INLINE_USERINFO_URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://[^/\s?#@]+@[^/\s?#]+(?:[/\?#]|$)")
+
+
+def _iter_json_string_values(
+    value: object, field_path: tuple[str, ...] = ()
+) -> Iterable[tuple[str, str]]:
+    """Yield JSON string values with redaction-safe field paths."""
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from _iter_json_string_values(child, (*field_path, str(key)))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _iter_json_string_values(child, (*field_path, str(index)))
+    elif isinstance(value, str):
+        yield ".".join(field_path), value
+
+
+def scan_tracked_claude_config_credentials(root: Path | None = None) -> list[str]:
+    """Fail closed on inline userinfo in the exact tracked Claude config paths.
+
+    The JSON is parsed before scalar values are inspected. Findings contain only
+    a repository-relative path, JSON field path, and violation type; values are
+    deliberately never included in the result.
+    """
+    workspace = root if root is not None else ROOT
+    findings: list[str] = []
+    for relative_path in AGENT_CONFIG_RELATIVE_PATHS:
+        config_path = workspace / relative_path
+        if not config_path.is_file():
+            continue
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            findings.append(f"{relative_path}:INVALID_JSON")
+            continue
+
+        for field_path, value in _iter_json_string_values(payload):
+            if INLINE_USERINFO_URI.match(value):
+                safe_field_path = field_path or "<root>"
+                findings.append(f"{relative_path}:{safe_field_path}:INLINE_USERINFO_URI")
+    return findings
+
 
 # WF01 intentionally removes the second pull-request template. WF05 also
 # removes the obsolete CI setup note after proving that it has no supported

@@ -215,6 +215,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
 )
 from scripts.ops.helpers import section_content_quality as _section_content_quality  # noqa: E402
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow  # noqa: E402
+from scripts.ops import documentation_governance_check as _documentation_governance_check  # noqa: E402
 
 CANONICAL_REQUIRED_SECTIONS = _section_content_quality.CANONICAL_REQUIRED_SECTIONS
 LEGACY_REQUIRED_SECTIONS = _section_content_quality.LEGACY_REQUIRED_SECTIONS
@@ -566,9 +567,11 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     added = added_paths(changes)
     changed = changed_paths(changes)
     has_pr_metadata = not skip_body_checks
-
-    errors: list[str] = []
-
+    # Mandatory for every PR/main-push AI gate call; independent of changed-file classification.
+    errors = [
+        f"Claude config credential policy violation: {finding}"
+        for finding in _documentation_governance_check.scan_tracked_claude_config_credentials(ROOT)
+    ]
     if has_pr_metadata:
         # 1. Required sections
         missing = check_required_sections(pr_body)
@@ -591,17 +594,14 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     if has_pr_metadata:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
         errors.extend(check_documentation_backflow(pr_body, changed))
-
     if has_pr_metadata:
         errors.extend(
             check_report_restricted_task_type(added, pr_body, skip_body_checks=skip_body_checks)
         )
-
     if has_pr_metadata:
         errors.extend(
             check_report_lifecycle_required(added, pr_body, skip_body_checks=skip_body_checks)
         )
-
     errors.extend(check_no_generated_artifacts_wrapper(added))
 
     # 5. Dangerous keywords in docs/tests blind spots

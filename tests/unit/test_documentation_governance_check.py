@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 
@@ -22,8 +21,6 @@ AGENT_CONFIG_FILES = (
     ROOT / ".claude/settings.local.json",
     ROOT / ".claude/mcp-config.json",
 )
-INLINE_USERINFO_URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://[^/@\s]+@")
-
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import documentation_governance_check as checker  # noqa: E402
 
@@ -195,24 +192,8 @@ def test_agent_config_allowlist_uses_exact_paths():
     assert not any("*" in path for path in checker.AGENT_CONFIG_ALLOWED_CHANGED)
 
 
-def _iter_scalar_fields(value, path=()):
-    if isinstance(value, dict):
-        for key, child in value.items():
-            yield from _iter_scalar_fields(child, (*path, str(key)))
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            yield from _iter_scalar_fields(child, (*path, str(index)))
-    else:
-        yield ".".join(path), value
-
-
 def test_tracked_claude_configs_have_no_inline_userinfo_credentials():
-    offenders = []
-    for path in AGENT_CONFIG_FILES:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for field_path, value in _iter_scalar_fields(data):
-            if isinstance(value, str) and INLINE_USERINFO_URI.search(value):
-                offenders.append(f"{path.relative_to(ROOT)}:{field_path}")
+    offenders = checker.scan_tracked_claude_config_credentials(ROOT)
     assert not offenders, "inline credential-like URI fields: " + ", ".join(offenders)
 
 
