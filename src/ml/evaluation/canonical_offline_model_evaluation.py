@@ -202,6 +202,8 @@ class OutcomeAccessGate:
 
     def __init__(self, population: EvaluationPopulation):
         self._population = population
+        self._journal_token = object()
+        self._journal_path: Path | None = None
         self.protocol_frozen = False
         self.outcomes_opened = False
         self.outcome_access_started = False
@@ -225,13 +227,36 @@ class OutcomeAccessGate:
         self.protocol_freeze_sha = protocol_freeze_sha
         self.protocol_frozen = True
 
-    def open_reserved_outcomes(self, opened_at: str) -> np.ndarray[Any, Any]:
+    def _authorize_journal(self, journal_path: Path) -> object:
+        """Create private authorization after the opening-intent event is fsynced."""
+        if not journal_path.is_file() or journal_path.is_symlink():
+            raise EvaluationContractError("durable evaluation journal is unavailable")
+        self._journal_path = journal_path
+        return self._journal_token
+
+    def open_reserved_outcomes(
+        self,
+        opened_at: str,
+        *,
+        journal_path: Path | None = None,
+        authorization: object | None = None,
+    ) -> np.ndarray[Any, Any]:
         """Open exactly the reserved labels once, after the freeze marker exists."""
         if not self.protocol_frozen:
             raise EvaluationContractError("reserved outcomes are forbidden before protocol freeze")
         if self.outcomes_opened or self.outcome_access_started:
             raise EvaluationContractError(
                 "reserved outcomes may only be opened once per evaluation"
+            )
+        if (
+            authorization is not self._journal_token
+            or journal_path is None
+            or journal_path != self._journal_path
+            or not journal_path.is_file()
+            or journal_path.is_symlink()
+        ):
+            raise EvaluationContractError(
+                "reserved outcomes require a durable evaluation journal authorization"
             )
         _parse_opened_at(opened_at)
         self.outcome_access_started = True
@@ -307,45 +332,52 @@ class PreparedEvaluation:
             raise EvaluationContractError("candidate inference must complete before outcome access")
         if self.source_head is None or self.protocol_freeze_sha is None:
             raise EvaluationContractError("evaluation Git binding is incomplete")
+        if journal_output_dir is None:
+            raise EvaluationContractError(
+                "reserved outcomes require an external durable attempt journal directory"
+            )
         _parse_opened_at(opened_at)
-        if journal_output_dir is not None:
-            append_evaluation_journal_event(
-                journal_output_dir,
-                event_type="OUTCOME_OPENING_STARTED",
-                event_at=opened_at,
-                fields={
-                    "evaluation_protocol_version": self.protocol["schema_version"],
-                    "evaluation_protocol_sha256": self.protocol_sha256,
-                    "protocol_freeze_sha": self.protocol_freeze_sha,
-                    "evaluation_source_head": self.source_head,
-                    "candidate_id": self.candidate.identity()["candidate_id"],
-                    "candidate_artifact_sha256": self.candidate.artifact_sha256,
-                    "candidate_metadata_sha256": self.candidate.metadata_sha256,
-                    "frame_artifact_sha256": self.population.frame_binding.artifact_sha256,
-                    "frame_receipt_sha256": self.population.frame_binding.receipt_sha256,
-                    "reserved_row_count": len(self.population.reserved_ids),
-                    "reserved_row_id_hash": self.protocol["population"][
-                        "reserved_evaluation_row_id_hash"
-                    ],
-                    "holdout_status_before": RESERVED_STATUS_BEFORE,
-                },
-            )
+        journal_path = append_evaluation_journal_event(
+            journal_output_dir,
+            event_type="OUTCOME_OPENING_STARTED",
+            event_at=opened_at,
+            fields={
+                "evaluation_protocol_version": self.protocol["schema_version"],
+                "evaluation_protocol_sha256": self.protocol_sha256,
+                "protocol_freeze_sha": self.protocol_freeze_sha,
+                "evaluation_source_head": self.source_head,
+                "candidate_id": self.candidate.identity()["candidate_id"],
+                "candidate_artifact_sha256": self.candidate.artifact_sha256,
+                "candidate_metadata_sha256": self.candidate.metadata_sha256,
+                "frame_artifact_sha256": self.population.frame_binding.artifact_sha256,
+                "frame_receipt_sha256": self.population.frame_binding.receipt_sha256,
+                "reserved_row_count": len(self.population.reserved_ids),
+                "reserved_row_id_hash": self.protocol["population"][
+                    "reserved_evaluation_row_id_hash"
+                ],
+                "holdout_status_before": RESERVED_STATUS_BEFORE,
+            },
+        )
+        authorization = self.gate._authorize_journal(journal_path)
         self.opened_at = opened_at
-        labels = self.gate.open_reserved_outcomes(opened_at)
+        labels = self.gate.open_reserved_outcomes(
+            opened_at,
+            journal_path=journal_path,
+            authorization=authorization,
+        )
         self.opened_labels = labels.copy()
-        if journal_output_dir is not None:
-            append_evaluation_journal_event(
-                journal_output_dir,
-                event_type="OUTCOMES_OPENED",
-                event_at=opened_at,
-                fields={
-                    "evaluation_protocol_sha256": self.protocol_sha256,
-                    "protocol_freeze_sha": self.protocol_freeze_sha,
-                    "evaluation_source_head": self.source_head,
-                    "reserved_row_count": len(labels),
-                    "holdout_status_after": RESERVED_STATUS_AFTER,
-                },
-            )
+        append_evaluation_journal_event(
+            journal_output_dir,
+            event_type="OUTCOMES_OPENED",
+            event_at=opened_at,
+            fields={
+                "evaluation_protocol_sha256": self.protocol_sha256,
+                "protocol_freeze_sha": self.protocol_freeze_sha,
+                "evaluation_source_head": self.source_head,
+                "reserved_row_count": len(labels),
+                "holdout_status_after": RESERVED_STATUS_AFTER,
+            },
+        )
         return labels.copy()
 
 

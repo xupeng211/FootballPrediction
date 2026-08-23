@@ -125,7 +125,9 @@ def test_protocol_is_frozen_and_primary_metric_is_log_loss() -> None:
     assert digest == evaluation.protocol_sha256(protocol)
 
 
-def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows() -> None:
+def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
+    tmp_path: Path,
+) -> None:
     population = _population()
     gate = evaluation.OutcomeAccessGate(population)
 
@@ -133,7 +135,20 @@ def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
         gate.open_reserved_outcomes("2026-08-23T00:00:00Z")
 
     gate.freeze("a" * 64, "b" * 40)
-    opened = gate.open_reserved_outcomes("2026-08-23T00:00:00Z")
+    with pytest.raises(evaluation.EvaluationContractError, match="durable evaluation journal"):
+        gate.open_reserved_outcomes("2026-08-23T00:00:00Z")
+    journal_path = evaluation.append_evaluation_journal_event(
+        tmp_path,
+        event_type="OUTCOME_OPENING_STARTED",
+        event_at="2026-08-23T00:00:00Z",
+        fields={},
+    )
+    authorization = gate._authorize_journal(journal_path)
+    opened = gate.open_reserved_outcomes(
+        "2026-08-23T00:00:00Z",
+        journal_path=journal_path,
+        authorization=authorization,
+    )
     assert opened.tolist() == [2, 0]
     assert gate.outcomes_opened is True
 
@@ -306,7 +321,9 @@ def test_candidate_metadata_binding_rejects_tampered_artifact_and_source_revisio
         )
 
 
-def test_artifact_provenance_holdout_consumption_and_no_production_mutation() -> None:
+def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
+    tmp_path: Path,
+) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     population = _population()
     prepared = evaluation.PreparedEvaluation(
@@ -318,7 +335,9 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation() ->
     )
     prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="a" * 40)
     prepared.infer_reserved()
-    labels = prepared.open_outcomes("2026-08-23T00:00:00Z")
+    with pytest.raises(evaluation.EvaluationContractError, match="durable attempt journal"):
+        prepared.open_outcomes("2026-08-23T00:00:00Z")
+    labels = prepared.open_outcomes("2026-08-23T00:00:00Z", journal_output_dir=tmp_path)
     artifact = evaluation.build_evaluation_artifact(prepared, labels)
 
     assert artifact["protocol_frozen_before_outcome_open"] is True
@@ -331,7 +350,7 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation() ->
     assert "roi" not in json.dumps(artifact["prediction_rows"], sort_keys=True).lower()
 
 
-def test_evaluation_output_cannot_target_repository_manifest() -> None:
+def test_evaluation_output_cannot_target_repository_manifest(tmp_path: Path) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     population = _population()
     prepared = evaluation.PreparedEvaluation(
@@ -343,7 +362,7 @@ def test_evaluation_output_cannot_target_repository_manifest() -> None:
     )
     prepared.freeze_protocol(source_head="a" * 40, protocol_freeze_sha="a" * 40)
     prepared.infer_reserved()
-    labels = prepared.open_outcomes("2026-08-23T00:00:00Z")
+    labels = prepared.open_outcomes("2026-08-23T00:00:00Z", journal_output_dir=tmp_path)
     artifact = evaluation.build_evaluation_artifact(prepared, labels)
 
     with pytest.raises(evaluation.EvaluationContractError, match="repository-external"):
