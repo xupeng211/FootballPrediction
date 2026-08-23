@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-
-from scripts.ops.helpers.documentation_backflow import check_documentation_backflow
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.ops.helpers.documentation_backflow import check_documentation_backflow  # noqa: E402, I001
 
 
 def _impact_body(
@@ -122,6 +125,13 @@ def test_capability_change_with_index_update_passes():
     changed = {"src/ml/training/new_capability.py", "docs/CAPABILITY_INDEX.md"}
 
     assert check_documentation_backflow(body, changed) == []
+
+
+def test_contract_change_without_current_state_update_fails():
+    body = _impact_body(contract="yes")
+    errors = check_documentation_backflow(body, {"scripts/ops/ai_workflow_gate.py"})
+
+    assert any("contract changed=yes cannot" in error for error in errors)
 
 
 def test_bugfix_without_capability_change_accepts_specific_reason():

@@ -248,7 +248,14 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     if not source_updated:
         errors.extend(
             f"{category} changed=yes cannot use no-update reason instead of its mapped current-state doc"
-            for category in ("capability", "milestone", "entrypoint", "blocker", "navigation")
+            for category in (
+                "capability",
+                "milestone",
+                "entrypoint",
+                "blocker",
+                "contract",
+                "navigation",
+            )
             if _normalise(values[category]) == "yes"
         )
 

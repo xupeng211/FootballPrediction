@@ -219,7 +219,7 @@ The stable mapping is intentionally small:
 
 The PR body uses machine-readable `yes` / `no` declarations for capability,
 milestone, canonical entrypoint, current blocker, data/model/authorization
-contract, and repository-navigation impact. A positive capability/status/entrypoint/milestone/blocker
+contract, and repository-navigation impact. A positive capability/status/entrypoint/milestone/blocker/contract
 declaration cannot be bypassed by a generic no-update sentence. A bugfix that
 does not change the declared long-lived semantics may use a specific reason that
 states what changed and why lifecycle, status, entrypoint, contract, blocker, or
