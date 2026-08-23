@@ -8,7 +8,8 @@
 
 回答：当前活动里程碑是什么、基线在哪、已完成什么、未完成什么、下一步需要什么授权、
 绝对不能做什么。
-不回答：完整能力清单（docs/CAPABILITY_INDEX.md）、仓库结构（docs/PROJECT_MAP.md）。
+不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
+仓库结构（docs/PROJECT_MAP.md）。
 
 ## Current State Snapshot — 2026-08-23
 

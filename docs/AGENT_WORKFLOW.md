@@ -82,13 +82,20 @@ profile 的边界：
 `EXISTING_CAPABILITIES_REVIEWED=YES` 和 `CURRENT_MILESTONE_REVIEWED=YES`；结束前要判断
 `CAPABILITY_INDEX_UPDATE_REQUIRED`、`ACTIVE_MILESTONE_UPDATE_REQUIRED`、
 `PROJECT_STATUS_UPDATE_REQUIRED`、`README_ENTRYPOINT_UPDATE_REQUIRED` 和
-`PROJECT_MAP_UPDATE_REQUIRED`。PR 的 `Documentation Impact` 以 yes/no 字段表达这些判断。
+`PROJECT_MAP_UPDATE_REQUIRED`。涉及长期能力或目标架构时，还要先阅读
+`docs/PROJECT_VISION.md` 并确认 `VISION_ALIGNMENT_REVIEWED=YES`：说明能力对应的目标层、
+可复用资产、当前缺口和是否偏离 North Star。结束时同时判断
+`PROJECT_VISION_UPDATE_REQUIRED`。普通 bugfix 若不改变长期语义，不要求修改 vision。
+PR 的 `Documentation Impact` 以 yes/no 字段表达这些判断。
 
 现有 `AI Workflow Gate` 会根据少量稳定 changed-path 分类检查：能力变化是否回写
 `docs/CAPABILITY_INDEX.md`，里程碑变化是否回写 `docs/ACTIVE_MILESTONE.md`，canonical
 入口变化是否同时回写 `README.md` 与能力索引，blocker 变化是否回写
 `docs/PROJECT_STATUS.md`，以及仓库结构/authority navigation 变化是否回写
-`docs/PROJECT_MAP.md`。没有改变长期语义的 bugfix 可以填写具体 no-update reason；空泛理由会失败。
+`docs/PROJECT_MAP.md`。如果 PR 改变 North Star、target architecture 或将 vision 中的能力
+推进到新的 maturity 状态，必须回写 `docs/PROJECT_VISION.md`；vision 的正向声明不能用
+no-update reason 绕过。没有改变长期语义的 bugfix（包括 vision=no）可以填写具体 no-update
+reason；空泛理由会失败。
 
 ## 5. Review freshness
 

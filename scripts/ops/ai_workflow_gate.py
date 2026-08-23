@@ -99,7 +99,7 @@ GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
         "scripts/devops/exact_head.py",
         ".github/workflows/production-gate.yml",
         "CONTRIBUTING.md",
-        "docs/PROJECT_MAP.md",
+        *{"docs/PROJECT_MAP.md", "docs/PROJECT_VISION.md"},
         "Makefile",
     }
 )
@@ -109,7 +109,7 @@ AUTHORITATIVE_DOC_PATHS: frozenset[str] = frozenset(
         "docs/PROJECT_STATUS.md",
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "AGENTS.md",
-        "docs/AGENT_WORKFLOW.md",
+        *{"docs/AGENT_WORKFLOW.md", "docs/PROJECT_VISION.md"},
         "docs/DATA_SOURCE_STRATEGY.md",
         "docs/data/FOTMOB_CURRENT_STATE.md",
         "README.md",

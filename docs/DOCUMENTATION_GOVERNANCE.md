@@ -30,6 +30,7 @@ read first. They summarize current state and link to supporting evidence.
 |---|---|---|
 | README.md | active | `Canonical Business Entrypoints` is the formal business-entrypoint authority. |
 | docs/PROJECT_MAP.md | active | Repository structure and Agent navigation map; not a progress ledger. |
+| docs/PROJECT_VISION.md | active | Permanent North Star and target-system blueprint; not workflow, current-state, or execution authority. |
 | docs/CAPABILITY_INDEX.md | active | Long-lived capability, asset, status, entrypoint, and authorization index. |
 | docs/ACTIVE_MILESTONE.md | active | Current battle line, completed node, blockers, and next Owner decision. |
 | docs/PROJECT_STATUS.md | active | Overall current state, blockers, and supporting completed history. |
@@ -166,6 +167,7 @@ Every PR body must include:
 | Current blocker changed? | `yes` / `no` |
 | Data/model/authorization contract changed? | `yes` / `no` |
 | Repository structure/authority navigation changed? | `yes` / `no` |
+| Project vision / target-state changed? | `yes` / `no` |
 
 ## Source of Truth Rule
 
@@ -173,7 +175,7 @@ Any long-term conclusion must be recorded in source-of-truth docs. Phase reports
 can support the conclusion, but they cannot permanently be the only place where
 active truth lives.
 
-`AGENTS.md`, `docs/AGENT_WORKFLOW.md`, `docs/PROJECT_MAP.md`,
+`AGENTS.md`, `docs/AGENT_WORKFLOW.md`, `docs/PROJECT_VISION.md`, `docs/PROJECT_MAP.md`,
 `docs/CAPABILITY_INDEX.md`, `docs/ACTIVE_MILESTONE.md`,
 `docs/PROJECT_STATUS.md`, `docs/DOCUMENTATION_GOVERNANCE.md`,
 `docs/DATA_SOURCE_STRATEGY.md`, `docs/data/FOTMOB_CURRENT_STATE.md`,
@@ -201,7 +203,8 @@ links to evidence.
 This is a lightweight contract over the existing documents, not a second project
 map or workflow authority. A PR that changes a long-lived business capability,
 canonical entrypoint, capability status, training/evaluation behavior,
-data/model/authorization contract, major blocker, or milestone completion must
+data/model/authorization contract, major blocker, milestone completion, North Star,
+target architecture, or vision maturity state must
 either update the relevant current-state source of truth or provide a concrete
 no-update reason in its `Documentation Impact` table.
 
@@ -216,16 +219,22 @@ The stable mapping is intentionally small:
 | FotMob acquisition/retention/domain blocker | `docs/data/FOTMOB_CURRENT_STATE.md` |
 | Workflow or authorization semantics | `AGENTS.md` + `docs/AGENT_WORKFLOW.md` |
 | Repository structure or authority navigation | `docs/PROJECT_MAP.md` |
+| North Star, target architecture, or vision maturity state | `docs/PROJECT_VISION.md` |
 
 The PR body uses machine-readable `yes` / `no` declarations for capability,
 milestone, canonical entrypoint, current blocker, data/model/authorization
-contract, and repository-navigation impact. A positive capability/status/entrypoint/milestone/blocker/contract
+contract, repository-navigation, and project-vision impact. A positive capability/status/entrypoint/milestone/blocker/contract/vision
 declaration cannot be bypassed by a generic no-update sentence. A bugfix that
 does not change the declared long-lived semantics may use a specific reason that
 states what changed and why lifecycle, status, entrypoint, contract, blocker, or
 navigation truth did not change. `n/a`, `none`, `not needed`, `no update needed`,
 `无`, and `无需` are invalid reasons, including when a classified category is
 explicitly declared unchanged.
+
+When `Project vision / target-state changed?` is `yes`, the PR must update and
+declare `docs/PROJECT_VISION.md`; a no-update reason is never an acceptable
+substitute. A routine implementation bugfix may set it to `no` when its target
+state is unchanged and explain that boundary concretely.
 
 The existing `scripts/ops/ai_workflow_gate.py` required CI step calls its small
 `scripts/ops/helpers/documentation_backflow.py` path classifier. It checks only

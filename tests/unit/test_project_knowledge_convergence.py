@@ -21,6 +21,7 @@ def _impact_body(
     blocker: str = "no",
     contract: str = "no",
     navigation: str = "no",
+    vision: str = "no",
     source_updated: str = "no",
     updated_docs: str = "none",
     reason: str = "The patch fixes a local behavior without changing the capability or current state.",
@@ -35,6 +36,7 @@ def _impact_body(
 | Current blocker changed? | {blocker} |
 | Data/model/authorization contract changed? | {contract} |
 | Repository structure/authority navigation changed? | {navigation} |
+| Project vision / target-state changed? | {vision} |
 | Source-of-truth docs updated | {source_updated} |
 | Updated authoritative docs | {updated_docs} |
 | If not updated, explicit reason | {reason} |
@@ -128,10 +130,44 @@ def test_capability_change_with_index_update_passes():
 
 
 def test_contract_change_without_current_state_update_fails():
-    body = _impact_body(contract="yes")
+    body = _impact_body(
+        contract="yes",
+        reason="This local gate fix does not change the documented contract boundary or semantics.",
+    )
     errors = check_documentation_backflow(body, {"scripts/ops/ai_workflow_gate.py"})
 
     assert any("contract changed=yes cannot" in error for error in errors)
+
+
+def test_api_capability_change_without_current_state_update_fails():
+    body = _impact_body(
+        capability="yes",
+        reason="This API change is described as a capability change but omits its current-state index update.",
+    )
+    errors = check_documentation_backflow(body, {"src/api/model_management.py"})
+
+    assert any("capability changed=yes cannot" in error for error in errors)
+
+
+def test_feature_engine_capability_change_without_current_state_update_fails():
+    body = _impact_body(
+        capability="yes",
+        reason="This feature-engine change is described as a capability change but omits its current-state update.",
+    )
+    errors = check_documentation_backflow(
+        body,
+        {"src/feature_engine/extractors/GoldenFeatureExtractor.js"},
+    )
+
+    assert any("capability changed=yes cannot" in error for error in errors)
+
+
+def test_api_bugfix_without_capability_change_accepts_specific_reason():
+    body = _impact_body(
+        reason="This API bugfix changes validation only and does not change capability, status, or contract.",
+    )
+
+    assert check_documentation_backflow(body, {"src/api/health.py"}) == []
 
 
 def test_bugfix_without_capability_change_accepts_specific_reason():
@@ -143,7 +179,7 @@ def test_bugfix_without_capability_change_accepts_specific_reason():
 
 
 def test_hollow_no_update_reasons_are_rejected():
-    for reason in ("n/a", "none", "not needed", "no update needed", "无需"):
+    for reason in ("n/a", "none", "not needed", "no update needed", "无需", "无需更新"):
         body = _impact_body(reason=reason)
         errors = check_documentation_backflow(body, {"src/ml/training/existing.py"})
         assert any("specific, non-hollow" in error for error in errors)
@@ -184,3 +220,58 @@ def test_fotmob_current_state_is_the_blocker_mapping_when_changed():
     }
 
     assert check_documentation_backflow(body, changed) == []
+
+
+def test_project_vision_exists_and_is_not_workflow_authority():
+    vision = ROOT / "docs/PROJECT_VISION.md"
+    text = vision.read_text(encoding="utf-8")
+
+    assert vision.is_file()
+    assert "lifecycle: permanent" in text
+    assert "North Star" in text
+    assert "它不替代" in text
+    assert "`AGENTS.md`" in text
+    assert "不负责仓库的操作规则" in text
+
+
+def test_project_vision_is_in_startup_order_and_project_map_role_is_clear():
+    project_map = (ROOT / "docs/PROJECT_MAP.md").read_text(encoding="utf-8")
+    workflow = (ROOT / "docs/AGENT_WORKFLOW.md").read_text(encoding="utf-8")
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    order_start = project_map.index("## 当前可信阅读顺序")
+    order_end = project_map.index("## 技术栈摘要")
+    reading_order = project_map[order_start:order_end]
+
+    assert reading_order.index("`docs/AGENT_WORKFLOW.md`") < reading_order.index(
+        "`docs/PROJECT_VISION.md`"
+    )
+    assert reading_order.index("`docs/PROJECT_VISION.md`") < reading_order.index("本文档")
+    assert "PROJECT_VISION.md" in workflow
+    assert "VISION_ALIGNMENT_REVIEWED=YES" in agents
+
+
+def test_vision_change_requires_vision_source_update():
+    body = _impact_body(vision="yes", source_updated="yes", updated_docs="docs/PROJECT_MAP.md")
+    errors = check_documentation_backflow(body, {"docs/PROJECT_MAP.md"})
+
+    assert any("vision changed=yes requires docs/PROJECT_VISION.md" in error for error in errors)
+
+
+def test_vision_change_cannot_use_no_update_reason():
+    body = _impact_body(
+        vision="yes",
+        reason="The target-state change is intentional but this PR omits the vision source document.",
+    )
+    errors = check_documentation_backflow(body, {"docs/PROJECT_MAP.md"})
+
+    assert any("vision changed=yes cannot" in error for error in errors)
+
+
+def test_vision_source_update_passes_when_declared():
+    body = _impact_body(
+        vision="yes",
+        source_updated="yes",
+        updated_docs="docs/PROJECT_VISION.md",
+    )
+
+    assert check_documentation_backflow(body, {"docs/PROJECT_VISION.md"}) == []

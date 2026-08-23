@@ -6,6 +6,9 @@
 > 权威细节指向 README canonical 表、代码合同与 current-state 文档。
 > 首次建立：2026-08-01（PROJECT_KNOWLEDGE_ENTRY_AND_DOCUMENTATION_SAFETY 任务）。
 
+`docs/PROJECT_VISION.md` 描述 target system / North Star；本文件仍是“已经有什么能力、资产、
+状态和授权边界”的 current-state 索引，不把愿景层误报为已实现能力。
+
 ## 状态词（固定词汇）
 
 | 状态                    | 含义                                                                                                       |

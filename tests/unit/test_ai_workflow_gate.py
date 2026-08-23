@@ -152,6 +152,7 @@ def _valid_pr_body() -> str:
     | Current blocker changed? | no |
     | Data/model/authorization contract changed? | no |
     | Repository structure/authority navigation changed? | no |
+    | Project vision / target-state changed? | no |
     | Source-of-truth docs updated | no |
     | Updated authoritative docs | none |
     | If not updated, explicit reason | This fixture changes no business capability or current-state status. |

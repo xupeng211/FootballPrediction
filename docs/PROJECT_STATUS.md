@@ -10,6 +10,8 @@ Last updated: 2026-08-23
 本节是当前状态摘要；下方的 M3、VALUE_MVP-1、SC-002 和 FotMob 长篇段落是
 supporting history / completed evidence，保留用于追溯，不再把旧阶段标题当作
 当前战线。当前主线事实已按 `origin/main` 与 canonical code/config 独立核对。
+`docs/PROJECT_VISION.md` 只描述最终 target system；本文件只报告当前事实、evidence、blockers
+和 supporting history，不把 vision gap 当成已实现能力。
 
 | Field | Current truth |
 |---|---|

@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 
 DOCUMENTATION_IMPACT_HEADING = "## Documentation Impact"
+VISION_IMPACT_FIELD = "Project vision / target-state changed?"
 DOCUMENTATION_IMPACT_FIELDS: tuple[str, ...] = (
     "Capability changed?",
     "Milestone changed?",
@@ -20,6 +21,7 @@ DOCUMENTATION_IMPACT_FIELDS: tuple[str, ...] = (
     "Current blocker changed?",
     "Data/model/authorization contract changed?",
     "Repository structure/authority navigation changed?",
+    VISION_IMPACT_FIELD,
     "Source-of-truth docs updated",
     "Updated authoritative docs",
     "If not updated, explicit reason",
@@ -32,6 +34,7 @@ YES_NO_FIELDS: dict[str, str] = {
     "blocker": "Current blocker changed?",
     "contract": "Data/model/authorization contract changed?",
     "navigation": "Repository structure/authority navigation changed?",
+    "vision": VISION_IMPACT_FIELD,
     "source_of_truth": "Source-of-truth docs updated",
 }
 
@@ -39,6 +42,8 @@ PATH_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "capability",
         (
+            "src/api/",
+            "src/feature_engine/",
             "src/ml/",
             "src/infrastructure/golden_dataset/",
             "src/infrastructure/odds_staging/",
@@ -80,6 +85,10 @@ PATH_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("docs/PROJECT_MAP.md",),
     ),
     (
+        "vision",
+        ("docs/PROJECT_VISION.md",),
+    ),
+    (
         "contract",
         (
             "AGENTS.md",
@@ -99,6 +108,7 @@ REQUIRED_DOCS_BY_CATEGORY: dict[str, tuple[str, ...]] = {
     "entrypoint": ("README.md", "docs/CAPABILITY_INDEX.md"),
     "blocker": ("docs/PROJECT_STATUS.md",),
     "navigation": ("docs/PROJECT_MAP.md",),
+    "vision": ("docs/PROJECT_VISION.md",),
     "contract": ("AGENTS.md", "docs/AGENT_WORKFLOW.md"),
 }
 
@@ -192,11 +202,12 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     Ordinary paths are intentionally ignored.  Long-lived capability and state
     paths must declare the impact fields; a concrete reason can explain a
     legitimate bugfix that does not change the declared category.  A positive
-    capability/status/entrypoint/milestone declaration cannot be bypassed by a
-    generic no-update reason.
+    capability/status/entrypoint/milestone/vision declaration cannot be bypassed
+    by a generic no-update reason.
     """
     classified = classify_changed_paths(changed)
-    if not classified:
+    vision_value = _table_value(pr_body, VISION_IMPACT_FIELD)
+    if not classified and _normalise(vision_value) != "yes":
         return []
 
     errors: list[str] = []
@@ -207,10 +218,18 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
         ]
 
     values = {name: _table_value(pr_body, label) for name, label in YES_NO_FIELDS.items()}
-    missing_fields = [label for label in YES_NO_FIELDS.values() if not _table_value(pr_body, label)]
+    missing_fields = [
+        label
+        for name, label in YES_NO_FIELDS.items()
+        if name != "vision" and not _table_value(pr_body, label)
+    ]
     if missing_fields:
         errors.append(
             "Documentation Impact is missing machine-readable fields: " + ", ".join(missing_fields)
+        )
+    if "vision" in classified and not vision_value:
+        errors.append(
+            f"Documentation Impact is missing machine-readable field: {VISION_IMPACT_FIELD}"
         )
 
     for name, value in values.items():
@@ -255,8 +274,19 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
                 "blocker",
                 "contract",
                 "navigation",
+                "vision",
             )
             if _normalise(values[category]) == "yes"
         )
+
+    if _normalise(values["vision"]) == "yes":
+        if not source_updated:
+            errors.append(
+                "vision changed=yes cannot use no-update reason instead of docs/PROJECT_VISION.md"
+            )
+        if "docs/PROJECT_VISION.md" not in changed or "docs/PROJECT_VISION.md" not in updated_docs:
+            errors.append(
+                "vision changed=yes requires docs/PROJECT_VISION.md in the changed and declared docs"
+            )
 
     return errors
