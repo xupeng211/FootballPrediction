@@ -20,6 +20,7 @@ from .canonical_offline_model_evaluation_artifacts import (
     ARTIFACT_FILENAME,
     JOURNAL_FILENAME,
     RECEIPT_FILENAME,
+    REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT,
     PreparedOutputDestination,
     _append_evaluation_journal_event_with_capability,
     _consume_journal_capability,
@@ -306,12 +307,26 @@ class PreparedEvaluation:
     probabilities: np.ndarray[Any, Any] | None = None
     opened_at: str | None = None
     opened_labels: np.ndarray[Any, Any] | None = None
+    replay_of_consumed_holdout: bool = False
 
     def __post_init__(self, factory_token: object) -> None:
         if factory_token is not _PREPARED_EVALUATION_FACTORY_TOKEN:
             raise EvaluationContractError(
                 "PreparedEvaluation must be created by the canonical preparation factory"
             )
+
+    @property
+    def holdout_status_before(self) -> str:
+        """Return the truthful state for a first open or a consumed replay."""
+        if self.replay_of_consumed_holdout:
+            return RESERVED_STATUS_AFTER
+        return RESERVED_STATUS_BEFORE
+
+    def replay_evidence_fields(self) -> dict[str, str]:
+        """Return an explicit replay marker without changing the frozen protocol."""
+        if not self.replay_of_consumed_holdout:
+            return {}
+        return {"evaluation_attempt": REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT}
 
     def _validate_frozen_inputs(self) -> None:
         """Recheck every immutable input binding immediately before inference."""
@@ -389,26 +404,26 @@ class PreparedEvaluation:
         if output_destination is None:
             raise EvaluationContractError("reserved outcomes require a prepared output destination")
         _parse_opened_at(opened_at)
+        opening_fields: dict[str, Any] = {
+            "evaluation_protocol_version": self.protocol["schema_version"],
+            "evaluation_protocol_sha256": self.protocol_sha256,
+            "protocol_freeze_sha": self.protocol_freeze_sha,
+            "evaluation_source_head": self.source_head,
+            "candidate_id": self.candidate.identity()["candidate_id"],
+            "candidate_artifact_sha256": self.candidate.artifact_sha256,
+            "candidate_metadata_sha256": self.candidate.metadata_sha256,
+            "frame_artifact_sha256": self.population.frame_binding.artifact_sha256,
+            "frame_receipt_sha256": self.population.frame_binding.receipt_sha256,
+            "reserved_row_count": len(self.population.reserved_ids),
+            "reserved_row_id_hash": self.protocol["population"]["reserved_evaluation_row_id_hash"],
+            "holdout_status_before": self.holdout_status_before,
+        }
+        opening_fields.update(self.replay_evidence_fields())
         journal_path, journal_capability = _append_evaluation_journal_event_with_capability(
             output_destination,
             event_type="OUTCOME_OPENING_STARTED",
             event_at=opened_at,
-            fields={
-                "evaluation_protocol_version": self.protocol["schema_version"],
-                "evaluation_protocol_sha256": self.protocol_sha256,
-                "protocol_freeze_sha": self.protocol_freeze_sha,
-                "evaluation_source_head": self.source_head,
-                "candidate_id": self.candidate.identity()["candidate_id"],
-                "candidate_artifact_sha256": self.candidate.artifact_sha256,
-                "candidate_metadata_sha256": self.candidate.metadata_sha256,
-                "frame_artifact_sha256": self.population.frame_binding.artifact_sha256,
-                "frame_receipt_sha256": self.population.frame_binding.receipt_sha256,
-                "reserved_row_count": len(self.population.reserved_ids),
-                "reserved_row_id_hash": self.protocol["population"][
-                    "reserved_evaluation_row_id_hash"
-                ],
-                "holdout_status_before": RESERVED_STATUS_BEFORE,
-            },
+            fields=opening_fields,
         )
         authorization = self.gate._authorize_journal(journal_capability)
         self.opened_at = opened_at
@@ -440,6 +455,7 @@ def prepare_evaluation(
     frame_path: str | Path,
     receipt_path: str | Path,
     protocol_path: str | Path,
+    replay_of_consumed_holdout: bool = False,
 ) -> PreparedEvaluation:
     """Prepare all identity evidence without opening a reserved outcome."""
     protocol, protocol_hash, checked_in_protocol_path = load_protocol(protocol_path)
@@ -456,6 +472,7 @@ def prepare_evaluation(
             expected_reserved_row_id_hash=protocol["population"]["reserved_evaluation_row_id_hash"],
         ),
         protocol_path=checked_in_protocol_path,
+        replay_of_consumed_holdout=replay_of_consumed_holdout,
     )
 
 
@@ -467,6 +484,7 @@ def _make_prepared_evaluation(
     population: EvaluationPopulation,
     gate: OutcomeAccessGate,
     protocol_path: Path,
+    replay_of_consumed_holdout: bool = False,
 ) -> PreparedEvaluation:
     """Construct only through the private canonical preparation factory."""
     return PreparedEvaluation(
@@ -476,6 +494,7 @@ def _make_prepared_evaluation(
         population=population,
         gate=gate,
         protocol_path=protocol_path,
+        replay_of_consumed_holdout=replay_of_consumed_holdout,
         _factory_token=_PREPARED_EVALUATION_FACTORY_TOKEN,
     )
 
@@ -492,6 +511,7 @@ def run_evaluation(
     outcome_opened_at: str,
     output_destination: PreparedOutputDestination | None = None,
     journal_output_dir: str | Path | None = None,
+    replay_of_consumed_holdout: bool = False,
 ) -> dict[str, Any]:
     """Execute the exact one-way evaluation sequence and return its artifact."""
     if output_destination is not None and journal_output_dir is not None:
@@ -511,6 +531,7 @@ def run_evaluation(
             frame_path=frame_path,
             receipt_path=receipt_path,
             protocol_path=protocol_path,
+            replay_of_consumed_holdout=replay_of_consumed_holdout,
         )
         prepared.freeze_protocol(source_head=source_head, protocol_freeze_sha=protocol_freeze_sha)
         prepared.infer_reserved()
@@ -528,6 +549,7 @@ def run_evaluation(
                 "protocol_freeze_sha": prepared.protocol_freeze_sha,
                 "evaluation_source_head": prepared.source_head,
                 "holdout_status_after": RESERVED_STATUS_AFTER,
+                **prepared.replay_evidence_fields(),
             },
         )
         artifact_built = True
@@ -549,6 +571,7 @@ def run_evaluation(
                         "evaluation_source_head": prepared.source_head,
                         "error_type": type(exc).__name__,
                         "holdout_status_after": RESERVED_STATUS_AFTER,
+                        **prepared.replay_evidence_fields(),
                     },
                 )
         raise
@@ -589,6 +612,7 @@ __all__ = [
     "PROTOCOL_SCHEMA_VERSION",
     "RECEIPT_FILENAME",
     "RECEIPT_SCHEMA_VERSION",
+    "REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT",
     "RESERVED_ROWS",
     "RESERVED_STATUS_AFTER",
     "RESERVED_STATUS_BEFORE",

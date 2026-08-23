@@ -31,6 +31,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--outcome-opened-at", required=True, help="UTC/RFC3339 outcome-open timestamp"
     )
     parser.add_argument("--json", action="store_true", help="emit one machine-readable summary")
+    parser.add_argument(
+        "--replay-of-consumed-holdout",
+        action="store_true",
+        help="mark this run as a reproducibility replay of the consumed holdout",
+    )
     return parser.parse_args(argv)
 
 
@@ -50,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         protocol_freeze_sha=args.protocol_freeze_sha,
         outcome_opened_at=args.outcome_opened_at,
         output_destination=output_destination,
+        replay_of_consumed_holdout=args.replay_of_consumed_holdout,
     )
     try:
         output = evaluation.write_evaluation_outputs(
@@ -68,9 +74,11 @@ def main(argv: list[str] | None = None) -> int:
                 "protocol_freeze_sha": args.protocol_freeze_sha,
                 "evaluation_source_head": source_head,
                 "error_type": type(exc).__name__,
-                "evaluation_attempt": "INVALIDATED_BY_OUTPUT_FAILURE",
                 "invalidated_by": "OUTPUT_FAILURE",
                 "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
+                "evaluation_attempt": artifact.get(
+                    "evaluation_attempt", "INVALIDATED_BY_OUTPUT_FAILURE"
+                ),
             },
             allow_existing_outputs=True,
         )
@@ -86,6 +94,9 @@ def main(argv: list[str] | None = None) -> int:
             "artifact_sha256": output["artifact_sha256"],
             "receipt_sha256": output["receipt_sha256"],
             "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
+            "evaluation_attempt": artifact.get(
+                "evaluation_attempt", "INITIAL_OFFLINE_MODEL_EVALUATION"
+            ),
         },
         allow_existing_outputs=True,
     )

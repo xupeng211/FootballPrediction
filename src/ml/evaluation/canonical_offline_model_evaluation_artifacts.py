@@ -26,7 +26,6 @@ from .canonical_offline_model_evaluation_contract import (
     PROBABILITY_COLUMN_ORDER,
     RECEIPT_SCHEMA_VERSION,
     RESERVED_STATUS_AFTER,
-    RESERVED_STATUS_BEFORE,
     EvaluationContractError,
     _assert_external_path,
     _assert_git_sha,
@@ -51,6 +50,7 @@ from .canonical_offline_model_evaluation_metrics import (
 JOURNAL_FILENAME = "canonical-offline-model-evaluation.attempt.journal.jsonl"
 ARTIFACT_FILENAME = "canonical-offline-model-evaluation.json"
 RECEIPT_FILENAME = "canonical-offline-model-evaluation.receipt.json"
+REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT = "REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT"
 _OUTPUT_DESTINATION_FACTORY_TOKEN = object()
 
 
@@ -402,7 +402,7 @@ def build_evaluation_artifact(prepared: Any, labels: np.ndarray[Any, Any]) -> di
         axis=1,
     )
     confidence_values = np.max(candidate_probabilities, axis=1)
-    return {
+    artifact = {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "evaluation_id": EVALUATION_ID,
         "evaluation_protocol_version": prepared.protocol["schema_version"],
@@ -438,7 +438,7 @@ def build_evaluation_artifact(prepared: Any, labels: np.ndarray[Any, Any]) -> di
             "temporal_partition": prepared.protocol["population"]["temporal_partition"],
         },
         "holdout": {
-            "status_before": RESERVED_STATUS_BEFORE,
+            "status_before": prepared.holdout_status_before,
             "outcomes_opened": True,
             "outcome_opened_at": prepared.opened_at,
             "status_after": RESERVED_STATUS_AFTER,
@@ -518,6 +518,9 @@ def build_evaluation_artifact(prepared: Any, labels: np.ndarray[Any, Any]) -> di
         },
         "prediction_rows": prediction_rows,
     }
+    if prepared.replay_of_consumed_holdout:
+        artifact["evaluation_attempt"] = REPRODUCIBILITY_REPLAY_OF_CONSUMED_HOLDOUT
+    return artifact
 
 
 def build_evaluation_receipt(
@@ -570,6 +573,8 @@ def build_evaluation_receipt(
         "non_production_research_evidence": True,
         "receipt_content_sha256": None,
     }
+    if "evaluation_attempt" in artifact:
+        receipt["evaluation_attempt"] = artifact["evaluation_attempt"]
     receipt["receipt_content_sha256"] = _sha256_json(receipt)
     return receipt
 
