@@ -73,26 +73,6 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
         "CLAUDE.md",
         "GEMINI.md",
         ".claude/README.md",
-        # Agent-facing legacy/current pointers may be reviewed in the same
-        # governed change; they do not become project authority. Keep this
-        # allowlist exact rather than allowing all skills.
-        ".claude/skills/api-testing/SKILL.md",
-        ".claude/skills/data-collection/SKILL.md",
-        ".claude/skills/data-engineering/SKILL.md",
-        ".claude/skills/data-engineering/README.md",
-        ".claude/skills/database-operations/SKILL.md",
-        ".claude/skills/deployment-management/SKILL.md",
-        ".claude/skills/deployment-operations/SKILL.md",
-        ".claude/skills/docker-devops/SKILL.md",
-        ".claude/skills/performance-monitoring/SKILL.md",
-        ".claude/skills/report-generation/SKILL.md",
-        ".claude/skills/football-prediction/SKILL.md",
-        ".claude/skills/feature-engineering/SKILL.md",
-        ".claude/skills/machine-learning-engineering/SKILL.md",
-        ".claude/skills/machine-learning-engineering/README.md",
-        ".claude/skills/fastapi-development/SKILL.md",
-        ".claude/skills/fastapi-development/README.md",
-        ".claude/skills/v26-harvest/SKILL.md",
         ".eslintrc.json",
         ".github/pull_request_template.md",
         "README.md",
@@ -160,13 +140,31 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
 
 # WF01 intentionally removes the second pull-request template. WF05 also
 # removes the obsolete CI setup note after proving that it has no supported
-# caller or current workflow reference. Other deletion or rename remains
-# prohibited by this checker.
+# caller or current workflow reference. This bounded retirement removes only
+# the exact audited legacy Claude skill documents; other deletion or rename
+# remains prohibited by this checker.
 ALLOWED_DELETED = frozenset(
     {
         ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/ci-setup.md",
         "tests/setup.js",
+        ".claude/skills/api-testing/SKILL.md",
+        ".claude/skills/data-collection/SKILL.md",
+        ".claude/skills/data-engineering/SKILL.md",
+        ".claude/skills/data-engineering/README.md",
+        ".claude/skills/database-operations/SKILL.md",
+        ".claude/skills/deployment-management/SKILL.md",
+        ".claude/skills/deployment-operations/SKILL.md",
+        ".claude/skills/docker-devops/SKILL.md",
+        ".claude/skills/performance-monitoring/SKILL.md",
+        ".claude/skills/report-generation/SKILL.md",
+        ".claude/skills/football-prediction/SKILL.md",
+        ".claude/skills/feature-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/SKILL.md",
+        ".claude/skills/machine-learning-engineering/README.md",
+        ".claude/skills/fastapi-development/SKILL.md",
+        ".claude/skills/fastapi-development/README.md",
+        ".claude/skills/v26-harvest/SKILL.md",
     }
 )
 

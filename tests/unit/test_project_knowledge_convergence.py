@@ -322,7 +322,7 @@ def test_readme_legacy_markers_remain_structurally_fenced():
             ), f"{marker!r} escaped historical/legacy fencing at README:{line_number}"
 
 
-def test_agent_specific_skills_are_legacy_pointers():
+def test_retired_agent_specific_skills_are_absent_from_current_surface():
     skill_paths = (
         ".claude/skills/api-testing/SKILL.md",
         ".claude/skills/data-collection/SKILL.md",
@@ -342,29 +342,13 @@ def test_agent_specific_skills_are_legacy_pointers():
         ".claude/skills/report-generation/SKILL.md",
         ".claude/skills/v26-harvest/SKILL.md",
     )
-    stale_claims = (
-        "58.69%",
-        "67.2%",
-        "65.52%",
-        "65%+",
-        "12061",
-        "<100ms",
-        "3-model",
-        "production baseline",
-        "predict_match_v2",
-        "InferenceServiceV2",
-        "xgboost_v2",
-        "/api/predict",
-        "当前端点",
-    )
-
     for relative_path in skill_paths:
-        text = (ROOT / relative_path).read_text(encoding="utf-8")
-        assert "Lifecycle: `LEGACY_BACKGROUND`" in text
-        assert "## Historical / Legacy Reference" in text
-        current_pointer = text.split("## Historical / Legacy Reference", maxsplit=1)[0]
-        for stale_claim in stale_claims:
-            assert stale_claim.casefold() not in current_pointer.casefold(), relative_path
+        assert not (ROOT / relative_path).exists(), relative_path
+
+    claude_readme = (ROOT / ".claude/README.md").read_text(encoding="utf-8")
+    settings = (ROOT / ".claude/settings.json").read_text(encoding="utf-8")
+    assert "retired" in claude_readme.casefold()
+    assert '"enabled": false' in settings
 
 
 def test_agents_keeps_agent_specific_files_out_of_project_authority():
