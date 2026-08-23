@@ -18,6 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PROTOCOL_PATH = PROJECT_ROOT / "config" / "canonical_offline_model_evaluation_protocol.json"
 SYNTHETIC_RESERVED_ROWS = 2
 PROTOCOL_FREEZE_SHA = "82fbcd55db98b710089483b9c7d13f1ad6937e11"
+EXPECTED_PROTOCOL_SHA256 = "ac97da6d3c3f870505c1de27509e3c91710d36ff40dfd24b0c4cc489d43b653a"
 
 
 class _ExplodingLabel(dict):
@@ -126,6 +127,12 @@ def _allow_synthetic_bindings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(evaluation, "validate_population_binding", lambda *_args, **_kwargs: None)
 
 
+def _output_destination(
+    tmp_path: Path, name: str = "attempt"
+) -> evaluation.PreparedOutputDestination:
+    return evaluation.prepare_evaluation_output_destination(tmp_path / name)
+
+
 def test_protocol_is_frozen_and_primary_metric_is_log_loss() -> None:
     protocol, digest, path = evaluation.load_protocol(PROTOCOL_PATH)
 
@@ -134,6 +141,7 @@ def test_protocol_is_frozen_and_primary_metric_is_log_loss() -> None:
     assert protocol["candidate"]["artifact_sha256"] == evaluation.EXPECTED_CANDIDATE_ARTIFACT_SHA256
     assert protocol["population"]["reserved_evaluation_rows"] == evaluation.RESERVED_ROWS
     assert digest == evaluation.protocol_sha256(protocol)
+    assert digest == EXPECTED_PROTOCOL_SHA256
 
 
 def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
@@ -150,7 +158,7 @@ def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
     with pytest.raises(evaluation.EvaluationContractError, match="durable evaluation journal"):
         gate.open_reserved_outcomes("2026-08-23T00:00:00Z")
     journal_path = evaluation.append_evaluation_journal_event(
-        tmp_path,
+        _output_destination(tmp_path, "manual-journal"),
         event_type="OUTCOME_OPENING_STARTED",
         event_at="2026-08-23T00:00:00Z",
         fields={},
@@ -184,7 +192,7 @@ def test_outcome_access_is_forbidden_until_protocol_freeze_and_skips_train_rows(
     prepared.infer_reserved()
     opened = prepared.open_outcomes(
         "2026-08-23T00:00:00Z",
-        journal_output_dir=tmp_path,
+        output_destination=_output_destination(tmp_path, "successful"),
     )
     assert opened.tolist() == [2, 0]
     assert prepared.gate.outcomes_opened is True
@@ -208,7 +216,7 @@ def test_journal_capability_rejects_prefix_replacement(tmp_path: Path) -> None:
     )
     gate.freeze(protocol_hash, PROTOCOL_FREEZE_SHA)
     journal_path, capability = evaluation._append_evaluation_journal_event_with_capability(
-        tmp_path,
+        _output_destination(tmp_path, "capability"),
         event_type="OUTCOME_OPENING_STARTED",
         event_at="2026-08-23T00:00:00Z",
         fields={
@@ -407,9 +415,12 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
         protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
     )
     prepared.infer_reserved()
-    with pytest.raises(evaluation.EvaluationContractError, match="durable attempt journal"):
+    with pytest.raises(evaluation.EvaluationContractError, match="prepared output destination"):
         prepared.open_outcomes("2026-08-23T00:00:00Z")
-    labels = prepared.open_outcomes("2026-08-23T00:00:00Z", journal_output_dir=tmp_path)
+    labels = prepared.open_outcomes(
+        "2026-08-23T00:00:00Z",
+        output_destination=_output_destination(tmp_path, "artifact"),
+    )
     artifact = evaluation.build_evaluation_artifact(prepared, labels)
 
     assert artifact["protocol_frozen_before_outcome_open"] is True
@@ -424,7 +435,6 @@ def test_artifact_provenance_holdout_consumption_and_no_production_mutation(
 
 def test_evaluation_output_cannot_target_repository_manifest(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
 ) -> None:
     protocol, protocol_hash, _ = evaluation.load_protocol(PROTOCOL_PATH)
     _allow_synthetic_bindings(monkeypatch)
@@ -444,17 +454,47 @@ def test_evaluation_output_cannot_target_repository_manifest(
         source_head=evaluation.current_git_head(),
         protocol_freeze_sha=PROTOCOL_FREEZE_SHA,
     )
-    prepared.infer_reserved()
-    labels = prepared.open_outcomes("2026-08-23T00:00:00Z", journal_output_dir=tmp_path)
-    artifact = evaluation.build_evaluation_artifact(prepared, labels)
-
     with pytest.raises(evaluation.EvaluationContractError, match="repository-external"):
-        evaluation.write_evaluation_outputs(
-            artifact,
-            output_dir=PROJECT_ROOT / "config" / "offline-evaluation-attempt",
-            protocol_freeze_sha="a" * 40,
-            evaluation_source_head="a" * 40,
+        evaluation.prepare_evaluation_output_destination(
+            PROJECT_ROOT / "config" / "offline-evaluation-attempt"
         )
+    assert prepared.gate.outcome_access_started is False
+
+
+@pytest.mark.parametrize(
+    "conflicting_name",
+    [
+        None,
+        evaluation.ARTIFACT_FILENAME,
+        evaluation.RECEIPT_FILENAME,
+        evaluation.JOURNAL_FILENAME,
+    ],
+    ids=["directory", "artifact", "receipt", "journal"],
+)
+def test_existing_output_destination_fails_before_outcome_access(
+    conflicting_name: str | None,
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "already-claimed"
+    output_dir.mkdir()
+    if conflicting_name is not None:
+        (output_dir / conflicting_name).write_text("sentinel\n", encoding="utf-8")
+
+    with pytest.raises(
+        evaluation.EvaluationContractError,
+        match="new directory",
+    ):
+        evaluation.prepare_evaluation_output_destination(output_dir)
+
+
+def test_clean_output_destination_is_atomically_claimed(tmp_path: Path) -> None:
+    destination = evaluation.prepare_evaluation_output_destination(tmp_path / "clean")
+
+    assert destination.path.is_dir()
+    assert destination.path.stat().st_ino == destination.inode
+    assert not destination.artifact_path.exists()
+    assert not destination.receipt_path.exists()
+    assert not destination.journal_path.exists()
 
 
 def test_opaque_outcome_has_no_public_payload_or_unscoped_accessor() -> None:
@@ -588,6 +628,108 @@ def test_bootstrap_intervals_are_deterministic() -> None:
         candidate_probabilities, prior_probabilities, labels, 2, protocol
     )
     assert first == second
+
+
+def test_quality_status_matches_frozen_protocol_parity_cases() -> None:
+    def intervals(
+        log_loss: tuple[float, float], brier: tuple[float, float]
+    ) -> dict[str, dict[str, float]]:
+        return {
+            "log_loss_delta": {"lower": log_loss[0], "upper": log_loss[1]},
+            "brier_delta": {"lower": brier[0], "upper": brier[1]},
+            "accuracy_delta": {"lower": -0.1, "upper": 0.1},
+        }
+
+    calibration_ok = {
+        "sample_status": "DESCRIPTIVE_ONLY",
+        "overall": {"weighted_mean_absolute_gap": 0.05},
+    }
+    calibration_misaligned = {
+        "sample_status": "DESCRIPTIVE_ONLY",
+        "overall": {"weighted_mean_absolute_gap": 0.25},
+    }
+    cases = [
+        (
+            "promising clearly improved",
+            {
+                "log_loss_delta_vs_prior": -0.1,
+                "brier_delta_vs_prior": -0.1,
+                "accuracy_delta_vs_majority": 0.0,
+            },
+            intervals((-0.2, -0.01), (-0.2, -0.01)),
+            calibration_ok,
+            "PROMISING",
+        ),
+        (
+            "promising interval crosses zero but is not adverse",
+            {
+                "log_loss_delta_vs_prior": -0.1,
+                "brier_delta_vs_prior": -0.1,
+                "accuracy_delta_vs_majority": 0.01,
+            },
+            intervals((-0.2, 0.05), (-0.2, -0.01)),
+            calibration_ok,
+            "PROMISING",
+        ),
+        (
+            "accuracy tradeoff",
+            {
+                "log_loss_delta_vs_prior": -0.1,
+                "brier_delta_vs_prior": -0.1,
+                "accuracy_delta_vs_majority": -0.01,
+            },
+            intervals((-0.2, 0.05), (-0.2, -0.01)),
+            calibration_ok,
+            "MIXED",
+        ),
+        (
+            "clearly underperforming",
+            {
+                "log_loss_delta_vs_prior": 0.1,
+                "brier_delta_vs_prior": 0.1,
+                "accuracy_delta_vs_majority": 0.0,
+            },
+            intervals((0.01, 0.2), (0.01, 0.2)),
+            calibration_ok,
+            "CLEARLY_UNDERPERFORMING",
+        ),
+        (
+            "weak without clearly adverse intervals",
+            {
+                "log_loss_delta_vs_prior": 0.1,
+                "brier_delta_vs_prior": 0.1,
+                "accuracy_delta_vs_majority": 0.0,
+            },
+            intervals((-0.01, 0.2), (0.01, 0.2)),
+            calibration_ok,
+            "WEAK",
+        ),
+        (
+            "probability metrics disagree",
+            {
+                "log_loss_delta_vs_prior": -0.1,
+                "brier_delta_vs_prior": 0.1,
+                "accuracy_delta_vs_majority": 0.0,
+            },
+            intervals((-0.2, 0.1), (-0.2, 0.2)),
+            calibration_ok,
+            "MIXED",
+        ),
+        (
+            "descriptively misaligned calibration",
+            {
+                "log_loss_delta_vs_prior": -0.1,
+                "brier_delta_vs_prior": -0.1,
+                "accuracy_delta_vs_majority": 0.0,
+            },
+            intervals((-0.2, 0.1), (-0.2, 0.1)),
+            calibration_misaligned,
+            "MIXED",
+        ),
+    ]
+
+    for name, deltas, bootstrap, calibration, expected in cases:
+        assert evaluation._quality_status(deltas, bootstrap, calibration) == expected, name
 
 
 def test_partial_outcome_opening_leaves_durable_invalidation_evidence(

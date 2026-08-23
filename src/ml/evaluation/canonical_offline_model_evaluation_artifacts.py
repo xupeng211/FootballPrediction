@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 import os
 from pathlib import Path
 import tempfile
@@ -49,16 +49,110 @@ from .canonical_offline_model_evaluation_metrics import (
 )
 
 JOURNAL_FILENAME = "canonical-offline-model-evaluation.attempt.journal.jsonl"
+ARTIFACT_FILENAME = "canonical-offline-model-evaluation.json"
+RECEIPT_FILENAME = "canonical-offline-model-evaluation.receipt.json"
+_OUTPUT_DESTINATION_FACTORY_TOKEN = object()
+
+
+@dataclass(frozen=True)
+class PreparedOutputDestination:
+    """An atomically claimed, one-shot output directory for one evaluation."""
+
+    path: Path
+    device: int
+    inode: int
+    journal_path: Path
+    artifact_path: Path
+    receipt_path: Path
+    _factory_token: InitVar[object]
+
+    def __post_init__(self, factory_token: object) -> None:
+        if factory_token is not _OUTPUT_DESTINATION_FACTORY_TOKEN:
+            raise EvaluationContractError(
+                "PreparedOutputDestination must be created by the canonical preparation factory"
+            )
+
+    def assert_current(self, *, require_empty_outputs: bool = True) -> None:
+        """Reject replacement, symlink traversal, or stale output targets."""
+        try:
+            stat = self.path.stat()
+        except OSError as exc:
+            raise EvaluationContractError("evaluation output destination is unavailable") from exc
+        if (
+            self.path.is_symlink()
+            or not self.path.is_dir()
+            or stat.st_dev != self.device
+            or stat.st_ino != self.inode
+        ):
+            raise EvaluationContractError("evaluation output destination was replaced")
+
+        if self.journal_path.is_symlink() or (
+            self.journal_path.exists() and not self.journal_path.is_file()
+        ):
+            raise EvaluationContractError("evaluation attempt journal path is not reusable")
+        if require_empty_outputs:
+            for path in (self.artifact_path, self.receipt_path):
+                if os.path.lexists(path):
+                    raise EvaluationContractError(f"evaluation output already exists: {path.name}")
+
+
+def prepare_evaluation_output_destination(
+    output_dir: str | Path,
+) -> PreparedOutputDestination:
+    """Atomically claim a fresh external directory before outcome access."""
+    requested = _assert_external_path(output_dir, "evaluation output destination")
+    try:
+        directory = requested.resolve(strict=False)
+    except OSError as exc:
+        raise EvaluationContractError(
+            "evaluation output destination identity is unavailable"
+        ) from exc
+    if not directory.parent.is_dir() or directory.parent.is_symlink():
+        raise EvaluationContractError("evaluation output destination parent is unavailable")
+    if os.path.lexists(directory):
+        raise EvaluationContractError("evaluation output destination must be a new directory")
+    try:
+        directory.mkdir(mode=0o700, exist_ok=False)
+    except FileExistsError as exc:
+        raise EvaluationContractError(
+            "evaluation output destination must be a new directory"
+        ) from exc
+    except OSError as exc:
+        raise EvaluationContractError("evaluation output destination cannot be created") from exc
+
+    try:
+        stat = directory.stat()
+    except OSError as exc:
+        raise EvaluationContractError("evaluation output destination cannot be inspected") from exc
+    destination = PreparedOutputDestination(
+        path=directory,
+        device=stat.st_dev,
+        inode=stat.st_ino,
+        journal_path=directory / JOURNAL_FILENAME,
+        artifact_path=directory / ARTIFACT_FILENAME,
+        receipt_path=directory / RECEIPT_FILENAME,
+        _factory_token=_OUTPUT_DESTINATION_FACTORY_TOKEN,
+    )
+    destination.assert_current()
+    return destination
 
 
 def _append_newline_json(path: Path, value: Mapping[str, Any]) -> bytes:
     payload = bytes(_canonical_json_bytes(dict(value))) + b"\n"
+    descriptor = None
     try:
-        with path.open("ab") as handle:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(path, flags, 0o600)
+        with os.fdopen(descriptor, "ab") as handle:
+            descriptor = None
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
     except OSError as exc:
+        if descriptor is not None:
+            os.close(descriptor)
         raise EvaluationContractError("evaluation attempt journal write failed") from exc
     return payload
 
@@ -155,25 +249,27 @@ def _consume_journal_capability(
 
 
 def append_evaluation_journal_event(
-    output_dir: str | Path,
+    output_destination: PreparedOutputDestination,
     *,
     event_type: str,
     event_at: str,
     fields: Mapping[str, Any],
+    allow_existing_outputs: bool = False,
 ) -> Path:
     """Append and fsync one non-sensitive lifecycle event before returning."""
     journal_path, _ = _append_evaluation_journal_event(
-        output_dir,
+        output_destination,
         event_type=event_type,
         event_at=event_at,
         fields=fields,
         issue_capability=False,
+        require_empty_outputs=not allow_existing_outputs,
     )
     return journal_path
 
 
 def _append_evaluation_journal_event_with_capability(
-    output_dir: str | Path,
+    output_destination: PreparedOutputDestination,
     *,
     event_type: str,
     event_at: str,
@@ -181,11 +277,12 @@ def _append_evaluation_journal_event_with_capability(
 ) -> tuple[Path, object]:
     """Append an event and issue a one-use post-fsync capability."""
     journal_path, capability = _append_evaluation_journal_event(
-        output_dir,
+        output_destination,
         event_type=event_type,
         event_at=event_at,
         fields=fields,
         issue_capability=True,
+        require_empty_outputs=True,
     )
     if capability is None:
         raise EvaluationContractError("opening journal capability was not issued")
@@ -193,19 +290,19 @@ def _append_evaluation_journal_event_with_capability(
 
 
 def _append_evaluation_journal_event(
-    output_dir: str | Path,
+    output_destination: PreparedOutputDestination,
     *,
     event_type: str,
     event_at: str,
     fields: Mapping[str, Any],
     issue_capability: bool,
+    require_empty_outputs: bool,
 ) -> tuple[Path, object | None]:
     """Append an event and optionally issue its opaque post-fsync capability."""
-    directory = _assert_external_path(output_dir, "evaluation journal directory")
-    directory.mkdir(parents=True, exist_ok=True)
-    journal_path = directory / JOURNAL_FILENAME
-    if journal_path.is_symlink():
-        raise EvaluationContractError("evaluation attempt journal path is a symlink")
+    if not isinstance(output_destination, PreparedOutputDestination):
+        raise EvaluationContractError("evaluation journal requires a claimed output destination")
+    output_destination.assert_current(require_empty_outputs=require_empty_outputs)
+    journal_path = output_destination.journal_path
     event: dict[str, Any] = {
         "event_type": event_type,
         "event_at": event_at,
@@ -478,7 +575,7 @@ def build_evaluation_receipt(
 
 
 def _write_new_bytes(path: Path, payload: bytes) -> None:
-    if path.exists():
+    if os.path.lexists(path):
         raise EvaluationContractError(f"evaluation output already exists: {path.name}")
     temporary_path: Path | None = None
     try:
@@ -501,15 +598,16 @@ def _write_new_bytes(path: Path, payload: bytes) -> None:
 def write_evaluation_outputs(
     artifact: Mapping[str, Any],
     *,
-    output_dir: str | Path,
+    output_destination: PreparedOutputDestination,
     protocol_freeze_sha: str,
     evaluation_source_head: str,
 ) -> dict[str, Any]:
     """Write exactly one external artifact and receipt without manifest state."""
-    directory = _assert_external_path(output_dir, "evaluation output directory")
-    directory.mkdir(parents=True, exist_ok=True)
-    artifact_path = directory / "canonical-offline-model-evaluation.json"
-    receipt_path = directory / "canonical-offline-model-evaluation.receipt.json"
+    if not isinstance(output_destination, PreparedOutputDestination):
+        raise EvaluationContractError("evaluation outputs require a claimed output destination")
+    output_destination.assert_current()
+    artifact_path = output_destination.artifact_path
+    receipt_path = output_destination.receipt_path
     artifact_bytes = _canonical_json_bytes(dict(artifact)) + b"\n"
     receipt = build_evaluation_receipt(
         artifact,
@@ -535,9 +633,13 @@ def write_evaluation_outputs(
 
 
 __all__ = [
+    "ARTIFACT_FILENAME",
     "JOURNAL_FILENAME",
+    "RECEIPT_FILENAME",
+    "PreparedOutputDestination",
     "append_evaluation_journal_event",
     "build_evaluation_artifact",
     "build_evaluation_receipt",
+    "prepare_evaluation_output_destination",
     "write_evaluation_outputs",
 ]

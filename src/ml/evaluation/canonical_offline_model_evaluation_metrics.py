@@ -87,7 +87,7 @@ def _confusion_matrix(
     matrix = np.zeros((len(CLASS_ORDER), len(CLASS_ORDER)), dtype=int)
     for actual, predicted in zip(labels, predictions, strict=True):
         matrix[int(actual), int(predicted)] += 1
-    return matrix.tolist()
+    return [[int(value) for value in row] for row in matrix.tolist()]
 
 
 def _round_number(value: float | None) -> float | None:
@@ -268,7 +268,6 @@ def _quality_status(
     log_interval = intervals["log_loss_delta"]
     brier_interval = intervals["brier_delta"]
     clearly_adverse = float(log_interval["lower"]) > 0 and float(brier_interval["lower"]) > 0
-    clearly_improved = float(log_interval["upper"]) < 0 and float(brier_interval["upper"]) < 0
     clearly_misaligned = (
         calibration.get("sample_status") == "DESCRIPTIVE_ONLY"
         and float(calibration["overall"]["weighted_mean_absolute_gap"] or 0.0)
@@ -278,7 +277,7 @@ def _quality_status(
         log_loss_delta < 0
         and brier_delta < 0
         and accuracy_delta >= 0
-        and clearly_improved
+        and not clearly_adverse
         and not clearly_misaligned
     ):
         return "PROMISING"

@@ -17,12 +17,16 @@ import numpy as np
 
 from . import canonical_offline_model_evaluation_contract as _contract
 from .canonical_offline_model_evaluation_artifacts import (
+    ARTIFACT_FILENAME,
     JOURNAL_FILENAME,
+    RECEIPT_FILENAME,
+    PreparedOutputDestination,
     _append_evaluation_journal_event_with_capability,
     _consume_journal_capability,
     append_evaluation_journal_event,
     build_evaluation_artifact,
     build_evaluation_receipt,
+    prepare_evaluation_output_destination,
     write_evaluation_outputs,
 )
 from .canonical_offline_model_evaluation_contract import (
@@ -375,20 +379,18 @@ class PreparedEvaluation:
         self,
         opened_at: str,
         *,
-        journal_output_dir: str | Path | None = None,
+        output_destination: PreparedOutputDestination | None = None,
     ) -> np.ndarray[Any, Any]:
         """Durably record opening intent, then open outcomes through the gate."""
         if self.probabilities is None:
             raise EvaluationContractError("candidate inference must complete before outcome access")
         if self.source_head is None or self.protocol_freeze_sha is None:
             raise EvaluationContractError("evaluation Git binding is incomplete")
-        if journal_output_dir is None:
-            raise EvaluationContractError(
-                "reserved outcomes require an external durable attempt journal directory"
-            )
+        if output_destination is None:
+            raise EvaluationContractError("reserved outcomes require a prepared output destination")
         _parse_opened_at(opened_at)
         journal_path, journal_capability = _append_evaluation_journal_event_with_capability(
-            journal_output_dir,
+            output_destination,
             event_type="OUTCOME_OPENING_STARTED",
             event_at=opened_at,
             fields={
@@ -417,7 +419,7 @@ class PreparedEvaluation:
         )
         self.opened_labels = labels.copy()
         append_evaluation_journal_event(
-            journal_output_dir,
+            output_destination,
             event_type="OUTCOMES_OPENED",
             event_at=opened_at,
             fields={
@@ -488,13 +490,18 @@ def run_evaluation(
     source_head: str,
     protocol_freeze_sha: str,
     outcome_opened_at: str,
+    output_destination: PreparedOutputDestination | None = None,
     journal_output_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     """Execute the exact one-way evaluation sequence and return its artifact."""
-    if journal_output_dir is None:
-        raise EvaluationContractError(
-            "real evaluation requires an external durable attempt journal directory"
-        )
+    if output_destination is not None and journal_output_dir is not None:
+        raise EvaluationContractError("evaluation output destination must be provided only once")
+    if output_destination is None:
+        if journal_output_dir is None:
+            raise EvaluationContractError(
+                "real evaluation requires an external durable attempt journal directory"
+            )
+        output_destination = prepare_evaluation_output_destination(journal_output_dir)
     prepared: PreparedEvaluation | None = None
     artifact_built = False
     try:
@@ -509,32 +516,31 @@ def run_evaluation(
         prepared.infer_reserved()
         labels = prepared.open_outcomes(
             outcome_opened_at,
-            journal_output_dir=journal_output_dir,
+            output_destination=output_destination,
         )
         artifact = build_evaluation_artifact(prepared, labels)
-        if journal_output_dir is not None:
-            append_evaluation_journal_event(
-                journal_output_dir,
-                event_type="EVALUATION_ARTIFACT_BUILT",
-                event_at=outcome_opened_at,
-                fields={
-                    "evaluation_protocol_sha256": prepared.protocol_sha256,
-                    "protocol_freeze_sha": prepared.protocol_freeze_sha,
-                    "evaluation_source_head": prepared.source_head,
-                    "holdout_status_after": RESERVED_STATUS_AFTER,
-                },
-            )
+        append_evaluation_journal_event(
+            output_destination,
+            event_type="EVALUATION_ARTIFACT_BUILT",
+            event_at=outcome_opened_at,
+            fields={
+                "evaluation_protocol_sha256": prepared.protocol_sha256,
+                "protocol_freeze_sha": prepared.protocol_freeze_sha,
+                "evaluation_source_head": prepared.source_head,
+                "holdout_status_after": RESERVED_STATUS_AFTER,
+            },
+        )
         artifact_built = True
     except Exception as exc:
         if (
-            journal_output_dir is not None
+            output_destination is not None
             and prepared is not None
             and prepared.gate.outcome_access_started
             and not artifact_built
         ):
             with suppress(EvaluationContractError):
                 append_evaluation_journal_event(
-                    journal_output_dir,
+                    output_destination,
                     event_type="EVALUATION_ATTEMPT_INVALIDATED",
                     event_at=outcome_opened_at,
                     fields={
@@ -550,6 +556,7 @@ def run_evaluation(
 
 
 __all__ = [
+    "ARTIFACT_FILENAME",
     "ARTIFACT_SCHEMA_VERSION",
     "BOOTSTRAP_CONFIDENCE_LEVEL",
     "BOOTSTRAP_RESAMPLES",
@@ -580,6 +587,7 @@ __all__ = [
     "PROBABILITY_MATRIX_DIMENSIONS",
     "PROBABILITY_SUM_ATOL",
     "PROTOCOL_SCHEMA_VERSION",
+    "RECEIPT_FILENAME",
     "RECEIPT_SCHEMA_VERSION",
     "RESERVED_ROWS",
     "RESERVED_STATUS_AFTER",
@@ -592,6 +600,7 @@ __all__ = [
     "EvaluationRow",
     "OutcomeAccessGate",
     "PreparedEvaluation",
+    "PreparedOutputDestination",
     "VerifiedCandidate",
     "_OpaqueOutcome",
     "_bootstrap_intervals",
@@ -607,6 +616,7 @@ __all__ = [
     "load_verified_candidate",
     "metric_bundle",
     "prepare_evaluation",
+    "prepare_evaluation_output_destination",
     "protocol_sha256",
     "run_evaluation",
     "validate_candidate_metadata_binding",

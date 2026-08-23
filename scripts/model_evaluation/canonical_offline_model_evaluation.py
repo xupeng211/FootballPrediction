@@ -39,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     source_head = args.source_head or evaluation.current_git_head()
     evaluation.assert_clean_worktree()
+    output_destination = evaluation.prepare_evaluation_output_destination(Path(args.output_dir))
     artifact = evaluation.run_evaluation(
         candidate_path=Path(args.candidate),
         metadata_path=Path(args.metadata),
@@ -48,18 +49,18 @@ def main(argv: list[str] | None = None) -> int:
         source_head=source_head,
         protocol_freeze_sha=args.protocol_freeze_sha,
         outcome_opened_at=args.outcome_opened_at,
-        journal_output_dir=Path(args.output_dir),
+        output_destination=output_destination,
     )
     try:
         output = evaluation.write_evaluation_outputs(
             artifact,
-            output_dir=Path(args.output_dir),
+            output_destination=output_destination,
             protocol_freeze_sha=args.protocol_freeze_sha,
             evaluation_source_head=source_head,
         )
     except Exception as exc:
         evaluation.append_evaluation_journal_event(
-            Path(args.output_dir),
+            output_destination,
             event_type="EVALUATION_ATTEMPT_INVALIDATED",
             event_at=args.outcome_opened_at,
             fields={
@@ -67,12 +68,15 @@ def main(argv: list[str] | None = None) -> int:
                 "protocol_freeze_sha": args.protocol_freeze_sha,
                 "evaluation_source_head": source_head,
                 "error_type": type(exc).__name__,
+                "evaluation_attempt": "INVALIDATED_BY_OUTPUT_FAILURE",
+                "invalidated_by": "OUTPUT_FAILURE",
                 "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
             },
+            allow_existing_outputs=True,
         )
         raise
     evaluation.append_evaluation_journal_event(
-        Path(args.output_dir),
+        output_destination,
         event_type="EVALUATION_ARTIFACT_WRITTEN",
         event_at=args.outcome_opened_at,
         fields={
@@ -83,6 +87,7 @@ def main(argv: list[str] | None = None) -> int:
             "receipt_sha256": output["receipt_sha256"],
             "holdout_status_after": evaluation.RESERVED_STATUS_AFTER,
         },
+        allow_existing_outputs=True,
     )
     summary = {
         "evaluation_id": artifact["evaluation_id"],
