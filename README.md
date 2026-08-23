@@ -231,7 +231,6 @@ this section rather than maintaining duplicate command lists.
 | Domain | Canonical status | Primary entrypoint / surface | Safety & authorization |
 |---|---|---|---|
 | **Data collection** | Controlled canonical surface | `data-l1-*` and `data-l2-*` Makefile targets (use `make data-help` to list) | Preview/read-only stages first; commit/execute/write stages require explicit authorization per target |
-| **Odds** | Primary canonical | `npm run odds:harvest` | May access network and write DB. Confirm authorization, environment, and credentials before execution |
 | **DB schema evolution** | Canonical definition surface (execution blocked by default) | Add the next reviewed versioned `V*.sql` file under `database/migrations/` | The location is canonical; execution is not authorized by location. Use the existing `make data-schema-*` / specialized gate and obtain separate authorization. Application startup never auto-applies schema changes |
 | **FotMob** | Not yet established for production acquisition | Controlled preview/gated `data-*` workflows only | New code must not depend on legacy acquisition scripts. A unified FotMob entrypoint belongs to a future business milestone |
 | **FotMob detail capture** | Controlled canonical surface (make data-*) | `make data-fotmob-detail-capture-{help,plan,preflight,execute,replay}` are the canonical entrypoints. PLAN / PREFLIGHT / REPLAY run fully offline (zero network, zero DB writes). The direct Node CLI (`scripts/ops/fotmob_detail_capture.js`) is the internal engine / specialized implementation detail, not the canonical interface | EXECUTE is the only real-network entry and fails in make before Node unless every variable is explicit (`PLAN`, `EXPECTED_PLAN_SHA256`, `AUTHORIZATION_ID`, `MAX_REQUESTS`, `DELAY_MS`, `OUTPUT_ROOT`, `RUN_ID`, `CONFIRM_REAL_FOTMOB_DETAIL_CAPTURE=1`, `CONFIRM_MAX_FOTMOB_REQUESTS == MAX_REQUESTS`, `NETWORK_AUTHORIZATION=yes`; the `DELAY_MS >= 60000` value check is enforced in Node before any fetch); the plan hash is recomputed from business fields before any fetch; retention is a stable allowlisted payload + manifest (no raw HTML persisted); replay is offline validation/materialization of the stable payload. The frozen 888-population acquisition (GDI1C, 2026-08-10/11) was executed under explicit Owner authorization (14 formal batches / 812 unique targets / 888 raw frozen; ACQUISITION_NETWORK_PHASE=CLOSED — see docs/data/FOTMOB_CURRENT_STATE.md closeout block); any NEW capture beyond the frozen population still requires explicit authorization and all tests are mocked |
@@ -241,12 +240,37 @@ this section rather than maintaining duplicate command lists.
 | **GD-A02 file-first facts assembly** | Specialized / internal offline surface | `npm run gd:a02 -- {build,validate}` with every input/output path explicit | Projects the validated GD-A01 admitted population onto the frozen FotMob capture/staging facts contract (five sections, result label, xG coverage) with exact provenance, deterministic ordering, population conservation, and postmatch-only semantics; zero DB, zero network, zero raw mutation, zero features/training. This does not complete the Golden Dataset |
 | **GD-A03 prior-state feature view** | Specialized / internal offline surface | `npm run gd:a03 -- {build,validate}` with every input/output path explicit | Derives strict target-kickoff-exclusive prior-state features from GD-A01 identity, GD-A02 facts, and the canonical 1,140-fixture schedule; records feature-level numeric lineage and availability without defaults/proxies; zero DB, zero network, zero raw mutation, zero training/backtest. This does not prove decision-time readiness or complete the Golden Dataset |
 | **Canonical prematch training feature frame** | Specialized / internal offline surface | `npm run feature:frame -- {build,validate}` with explicit repository-external GD-A03 artifact/receipt and output paths; `validate` rebinds the frozen GD-A03 inputs | Derives a versioned training-ready projection from the validated GD-A03 artifact and the single V-next registry: 9 accepted features, 2 excluded, 6 blocked; preserves every target row, label isolation, cutoff/provenance, and deterministic receipt. Offline/file-first only; zero DB, network, raw writes, training, backtest, prediction, or model activation. Decision-time (T-aware) readiness remains separate and unproven |
-| **Feature build** | Primary canonical | `npm run l3:stitch` | Schema must already be provisioned from the selected `database/migrations/` authority; the main stitch pipeline checks the L3 precondition and its Elo child checks the pre-provisioned `team_elo_ratings` relation before writing data. Neither path performs runtime schema creation. The raw SQL tree currently has no canonical `team_elo_ratings` definition; that provisioning gap is carried forward and is not repaired by A4-F1. Execution remains separately authorized. Confirm input/write scope; `npm run smelt` is a specialized internal alternative |
 | **Training** | Primary canonical | `npm run train -- --input <offline-feature-frame> --receipt <frame-receipt> --output <candidate-path>` | **Only with explicit training authorization.** The canonical producer consumes the repository-external `canonical_prematch/vnext-v1` frame projection (9 accepted features), reserves a later chronological holdout, writes only a non-production candidate + metadata sidecar, and never activates the tracked manifest. `train:fast` and `train:deep` are variants |
 | **Canonical offline model evaluation** | Research evaluation (STRICT, repository-external evidence) | `npm run evaluate:offline -- --candidate <candidate> --metadata <metadata> --frame <frame> --receipt <receipt> --protocol <checked-in-protocol> --output-dir <new-external-dir> --protocol-freeze-sha <full-sha> --outcome-opened-at <RFC3339>` | **Only with explicit offline evaluation and reserved-outcome authorization.** Uses the frozen vnext candidate on exactly the 109-row chronological reserved holdout after protocol freeze; primary metric is multiclass log loss. No training, tuning, backtest, odds/value/ROI/CLV evaluation, live fetch, DB write, manifest mutation, or activation. See `docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md` |
 | **Prediction** | Primary canonical | `npm run predict -- --input <json-file>` (or JSON stdin) | HTTP and default CLI share `src/ml/inference/prediction_runtime.py`; the CLI does not perform legacy DB-batch discovery, fetch network data, or write artifacts. The canonical API artifact is currently pending, so prediction fails closed; execution still requires explicit prediction authorization |
 | **Backtest** | Not yet established | None — must be implemented and accepted in a future business milestone | Historical scripts (`recon_scanner.js`, `gold_pilot_50.js`, `titan_marathon.js`) are not canonical backtest entrypoints |
 | **Offline probability benchmark (Value MVP-1)** | Research evaluation (DOCUMENTED_ONLY) | Internal research-evaluation entrypoint: `scripts/model_training/value_mvp_baseline_vs_closing.py` (not a README canonical entrypoint; see Entry classification below) | Strictly offline probability benchmark evaluation: zero DB, zero network, zero new data, no odds as model features, walk-forward by season, protocol frozen before OOS. This is NOT an executable betting backtest and makes no ROI / profitability / CLV claim — the **Backtest** row above remains Not yet established |
+
+### Implemented but non-canonical surfaces
+
+The following package scripts remain for explicit internal or compatibility callers. They are
+`DOCUMENTED_ONLY`: `IMPLEMENTED`, `REFERENCED`, and **not default new-work entrypoints**.
+They are not part of the canonical table and their presence in `package.json` does not create a
+controlled canonical contract. This section records a documentation truth correction only; it
+does not change runtime behavior or remove either caller.
+
+- **Odds / `npm run odds:harvest` — `DOCUMENTED_ONLY`**: `package.json` invokes the direct Node
+  runtime `scripts/ops/odds_harvest_pipeline.js`; no `make data-*` multi-stage authorization /
+  preflight / execute wrapper exists. The implementation may access external OddsPortal sources
+  through Playwright/fetch, write odds and mapping rows when its write-site guard is authorized,
+  and its default configuration can trigger the L3 pipeline and Elo child. Treat it as a
+  restricted internal/compatibility surface requiring explicit authorization, not as the default
+  odds entrypoint.
+- **Feature build / `npm run l3:stitch` — `DOCUMENTED_ONLY`**: `package.json` invokes the direct
+  Node runtime `scripts/ops/l3_stitch_pipeline.js`; `scripts/ops/total_war_pipeline.js` also
+  invokes it for that orchestrator's `smelt` task, while `npm run smelt` invokes the separate
+  `scripts/ops/smelt_all.js` surface. `make data-l3-dry-run` and
+  `make data-l3-write-dry-run` are distinct fixture/local paths, while the corresponding commit
+  targets remain blocked; they are not equivalent to `npm run l3:stitch`. The implementation
+  may backfill scores in `matches`, writes L3 data only after pre-provisioned-schema checks,
+  forks L3 workers, and invokes the Elo child; it performs no runtime DDL. Treat it as a
+  restricted internal data-writer surface requiring explicit authorization, not as the default
+  feature-build entrypoint.
 
 ### Prediction authority (PR-A3 current state)
 
@@ -317,6 +341,9 @@ this section rather than maintaining duplicate command lists.
   VALUE_MVP-1 offline probability benchmark (`scripts/model_training/value_mvp_baseline_vs_closing.py` +
   `src/ml/value_mvp/`) also belongs here: it is a research evaluation entrypoint, not a canonical backtest
   (see the **Offline probability benchmark** row above; Backtest remains Not yet established).
+- **DOCUMENTED_ONLY** — implemented and referenced, but without a controlled canonical contract;
+  `npm run odds:harvest` and `npm run l3:stitch` are restricted internal/compatibility surfaces
+  documented above and are not default new-work entrypoints.
 - **Legacy / Admin-only** — retained but **must not** become a new code dependency:
   `scripts/ops/run_production.js`, `scripts/ops/titan_discovery.js`,
   `scripts/ops/total_war_pipeline.js`, and Phase/ADG-numbered scripts as a category.

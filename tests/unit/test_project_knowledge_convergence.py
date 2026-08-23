@@ -242,6 +242,39 @@ def test_readme_current_model_status_matches_current_state_docs():
     assert "canonical candidate" in readme_current
 
 
+def test_odds_and_l3_entrypoint_classification_converges_across_authorities():
+    """Implemented direct npm callers must not be advertised as canonical surfaces."""
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    capability_index = (ROOT / "docs/CAPABILITY_INDEX.md").read_text(encoding="utf-8")
+
+    canonical_section_start = readme.index("## Canonical Business Entrypoints")
+    table_start = readme.index("| Domain | Canonical status |", canonical_section_start)
+    table_end = readme.index("\n\n### Implemented but non-canonical surfaces", table_start)
+    canonical_table = readme[table_start:table_end]
+    non_canonical_section = readme[
+        table_end : readme.index("\n### Prediction authority", table_end)
+    ]
+
+    for command in ("odds:harvest", "l3:stitch"):
+        assert f"`npm run {command}`" not in canonical_table
+        assert f"`npm run {command}`" in non_canonical_section
+        assert "DOCUMENTED_ONLY" in non_canonical_section
+        assert "not default new-work entrypoints" in non_canonical_section
+
+        row = next(
+            line
+            for line in capability_index.splitlines()
+            if line.startswith("|") and command in line
+        )
+        cells = [cell.strip() for cell in row.strip().strip("|").split("|")]
+        assert cells[2] == "DOCUMENTED_ONLY"
+        assert "IMPLEMENTED" in row
+        assert "REFERENCED" in row
+        assert "NOT DEFAULT NEW-WORK ENTRYPOINT" in row
+        assert "README canonical table登记为 Primary canonical" not in row
+
+
 def test_readme_legacy_markers_remain_structurally_fenced():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     readme_lines = readme.splitlines()
