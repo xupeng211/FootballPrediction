@@ -143,7 +143,7 @@ def test_agents_and_claude_md_in_source_of_truth_allowlist():
     assert "CLAUDE.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 
-def test_audited_agent_skill_pointers_are_exact_allowlist_entries():
+def test_retired_agent_skill_paths_are_exact_delete_allowlist_entries():
     expected = {
         ".claude/skills/api-testing/SKILL.md",
         ".claude/skills/data-collection/SKILL.md",
@@ -164,8 +164,9 @@ def test_audited_agent_skill_pointers_are_exact_allowlist_entries():
         ".claude/skills/v26-harvest/SKILL.md",
     }
 
-    assert expected <= checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
-    assert ".claude/skills/**" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert expected <= checker.ALLOWED_DELETED
+    assert not expected & checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert ".claude/skills/**" not in checker.ALLOWED_DELETED
 
 
 def test_project_vision_is_a_source_of_truth_allowlist_entry():
