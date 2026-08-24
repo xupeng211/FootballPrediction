@@ -59,16 +59,18 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
-ROLE_ANAPHORA_PATTERN = re.compile(
-    r"\b(?:it|(?:that|this|the)\s+"
-    r"(?:(?:historical|retained|acl|postgres(?:ql)?|mcp|reader|database)\s+){0,4}"
-    r"(?:role|account|identity|user|reader))\b",
+ROLE_REFERENCE_PATTERN = re.compile(
+    r"(?:^|[.!?]\s+)(?:it|this|that)\b|"
+    r"\b(?:role|account|identity|user|reader|one)\b",
     flags=re.IGNORECASE,
 )
 DIRECT_SESSION_OR_AUTH_TERM_PATTERN = re.compile(
-    r"\b(?:login|logs?\s+in|connect(?:s|ed|ing|ion|ions)?|"
-    r"authenticat(?:e|es|ed|ing|ion)|sessions?|"
-    r"(?:database|postgres(?:ql)?)\s+access)\b",
+    r"\b(?:connect(?:s|ed|ing)?|authenticat(?:e|es|ed|ing)?|logs?\s+in|signs?\s+in|"
+    r"(?:establish(?:es|ed|ing)?|open(?:s|ed|ing)?|start(?:s|ed|ing)?)\s+"
+    r"(?:(?:a|the)\s+)?"
+    r"(?:(?:database|postgres(?:ql)?)\s+)?(?:sessions?|connections?)|"
+    r"has\s+(?:database|postgres(?:ql)?)\s+access|"
+    r"access(?:es|ed|ing)?\s+(?:the\s+)?(?:database|postgres(?:ql)?))\b",
     flags=re.IGNORECASE,
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
@@ -361,14 +363,10 @@ def _markdown_units(documentation: str) -> tuple[MarkdownUnit, ...]:
 
 def _is_sensitive_sc002_unit(unit: MarkdownUnit) -> bool:
     text = unit.normalized_text
-    has_anaphoric_session_claim = bool(
-        ROLE_ANAPHORA_PATTERN.search(text) and DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
-    )
     return bool(
         TARGET_ROLE_PATTERN.search(text)
         or MCP_PATTERN.search(text)
         or ROLE_IDENTITY_DECLARATION_PATTERN.search(text)
-        or has_anaphoric_session_claim
         or any(marker.casefold() in text for marker in CURRENT_ROLE_STATE_MARKERS)
     )
 
@@ -393,8 +391,36 @@ def _counter_fingerprint(counter: Counter[MarkdownUnit]) -> str:
     return sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
+    return bool(
+        TARGET_ROLE_PATTERN.search(unit.normalized_text)
+        and MCP_PATTERN.search(unit.normalized_text)
+    )
+
+
+def _cross_unit_role_reference_violation_count(all_units: tuple[MarkdownUnit, ...]) -> int:
+    explicit_target_mcp_headings = {
+        unit.heading_path for unit in all_units if _has_explicit_target_mcp(unit)
+    }
+    violation_count = 0
+    for index, unit in enumerate(all_units):
+        text = unit.normalized_text
+        has_reference_and_predicate = bool(
+            ROLE_REFERENCE_PATTERN.search(text) and DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
+        )
+        if not has_reference_and_predicate or _has_explicit_target_mcp(unit):
+            continue
+        adjacent_units = all_units[max(0, index - 1) : index] + all_units[index + 1 : index + 2]
+        if unit.heading_path in explicit_target_mcp_headings or any(
+            _has_explicit_target_mcp(adjacent) for adjacent in adjacent_units
+        ):
+            violation_count += 1
+    return violation_count
+
+
 def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
-    actual = Counter(_sensitive_sc002_units(documentation))
+    all_units = _markdown_units(documentation)
+    actual = Counter(unit for unit in all_units if _is_sensitive_sc002_unit(unit))
     expected = _expected_sensitive_unit_counter()
     violations: list[str] = []
 
@@ -425,6 +451,10 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
         locality_violations += has_target != has_mcp
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
+
+    cross_unit_violations = _cross_unit_role_reference_violation_count(all_units)
+    if cross_unit_violations:
+        violations.append(f"cross_unit_role_reference={cross_unit_violations}")
 
     if DIRECT_LOGIN_COMMAND_PATTERN.search(documentation):
         violations.append("target_direct_login_command")
@@ -539,6 +569,11 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             doc + "\n\nThat role establishes database sessions.\n",
             doc + "\n\nIt opens PostgreSQL connections.\n",
             doc + "\n\nThis account has database access.\n",
+            doc + "\n\nThe same role connects to PostgreSQL.\n",
+            doc + "\n\nThe retained read-only role authenticates to PostgreSQL.\n",
+            doc + "\n\nThe former role logs in to PostgreSQL.\n",
+            doc + "\n\nThis one establishes database sessions.\n",
+            doc + "\n\nThis connects to PostgreSQL.\n",
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
             doc.replace(
                 "### Current-state fence (updated 2026-08-25)",
