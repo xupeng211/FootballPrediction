@@ -1,12 +1,12 @@
 -- ============================================
--- PostgreSQL 只读用户配置 (Claude Reader)
+-- Historical Claude Reader ACL Role Setup
 -- ============================================
--- 用途: MCP PostgreSQL 连接，仅允许 SELECT
+-- Retains read-only ACLs for the retired PostgreSQL MCP identity; direct login is disabled
 -- 创建时间: 2026-02-27
 -- ============================================
 
--- 1. 创建只读用户
-CREATE USER claude_reader WITH PASSWORD 'claude_readonly_2026';
+-- Create the retained NOLOGIN ACL role if it does not exist
+CREATE ROLE claude_reader NOLOGIN;
 
 -- 2. 授予连接权限
 GRANT CONNECT ON DATABASE football_db TO claude_reader;

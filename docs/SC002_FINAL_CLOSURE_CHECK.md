@@ -140,7 +140,8 @@ Evidence:
   - All passwords are dev-only placeholders (`*_dev_poc`).
 - **Dev config:** `docker-compose.dev.yml` has role-specific env vars for all 6 roles.
   `.env.example` has role-specific connection templates.
-- **Read-only MCP user:** `deploy/docker/init_claude_reader.sql` creates `claude_reader`.
+- **Historical MCP ACL role:** `deploy/docker/init_claude_reader.sql` retains `claude_reader`
+  as `NOLOGIN`; it is not a current PostgreSQL MCP login identity.
 - **Gate B guard:** `deploy/docker/init_db.sql` protected by `SET sc002.init_sql_context` guard.
 - **Tests:** 54 static tests in `test_runtime_db_role_permission_dev_poc.py`.
 - **Remaining gap:** Role model not yet deployed to staging/production PostgreSQL instances.
