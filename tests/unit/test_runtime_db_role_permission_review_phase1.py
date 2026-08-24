@@ -44,14 +44,15 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
-DIRECT_SESSION_OR_AUTH_TERM_PATTERN = re.compile(
-    r"\b(?:connect(?:s|ed|ing)?|authenticat(?:e|es|ed|ing)?|logs?\s+in|signs?\s+in|"
-    r"(?:establish(?:es|ed|ing)?|open(?:s|ed|ing)?|start(?:s|ed|ing)?)\s+"
-    r"(?:(?:a|the)\s+)?"
-    r"(?:(?:database|postgres(?:ql)?)\s+)?(?:sessions?|connections?)|"
-    r"has\s+(?:database|postgres(?:ql)?)\s+access|"
-    r"access(?:es|ed|ing)?\s+(?:the\s+)?(?:database|postgres(?:ql)?))\b",
+SECURITY_SURFACE_PATTERN = re.compile(
+    r"\b(?:postgres(?:ql)?|database|db|psql|login|"
+    r"log(?:s|ged|ging)?\s+in|sign(?:s|ed|ing)?\s+in|authenticat\w*|"
+    r"sessions?|connections?|credentials?|passwords?|access(?:es|ed|ing)?)\b",
     flags=re.IGNORECASE,
+)
+SECURITY_SURFACE_EXPECTED_COUNT = 64
+SECURITY_SURFACE_EXPECTED_FINGERPRINT = (
+    "ba1a067da4e945261d8275b39913f16fe404b3dda309c4e72500202d946b31bd"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -386,7 +387,7 @@ def _counter_fingerprint(counter: Counter[MarkdownUnit]) -> str:
         f"{unit.heading_path}\0{unit.unit_type}\0{unit.normalized_text}\0{count}"
         for unit, count in sorted(counter.items())
     )
-    return sha256(payload.encode("utf-8")).hexdigest()[:16]
+    return sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
@@ -396,29 +397,11 @@ def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
     )
 
 
-def _contextual_session_claim_violation_count(all_units: tuple[MarkdownUnit, ...]) -> int:
-    explicit_target_mcp_headings = {
-        unit.heading_path for unit in all_units if _has_explicit_target_mcp(unit)
-    }
-    violation_count = 0
-    for index, unit in enumerate(all_units):
-        text = unit.normalized_text
-        if (
-            not DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
-            or _has_explicit_target_mcp(unit)
-            or unit in CONTEXTUAL_SESSION_SAFE_UNITS
-        ):
-            continue
-        adjacent_units = all_units[max(0, index - 1) : index] + all_units[index + 1 : index + 2]
-        in_target_heading_context = any(
-            unit.heading_path == heading or unit.heading_path.startswith(f"{heading} > ")
-            for heading in explicit_target_mcp_headings
-        )
-        if in_target_heading_context or any(
-            _has_explicit_target_mcp(adjacent) for adjacent in adjacent_units
-        ):
-            violation_count += 1
-    return violation_count
+def _security_surface_counter(all_units: tuple[MarkdownUnit, ...]) -> Counter[MarkdownUnit]:
+    """Inventory every DB/auth/session unit without trying to classify its prose grammar."""
+    return Counter(
+        unit for unit in all_units if SECURITY_SURFACE_PATTERN.search(unit.normalized_text)
+    )
 
 
 def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
@@ -455,9 +438,17 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
 
-    cross_unit_violations = _contextual_session_claim_violation_count(all_units)
-    if cross_unit_violations:
-        violations.append(f"cross_unit_role_reference={cross_unit_violations}")
+    security_surface = _security_surface_counter(all_units)
+    security_surface_count = sum(security_surface.values())
+    security_surface_fingerprint = _counter_fingerprint(security_surface)
+    if (
+        security_surface_count != SECURITY_SURFACE_EXPECTED_COUNT
+        or security_surface_fingerprint != SECURITY_SURFACE_EXPECTED_FINGERPRINT
+    ):
+        violations.append(
+            "security_surface_contract:"
+            f"count={security_surface_count},fingerprint={security_surface_fingerprint}"
+        )
 
     if DIRECT_LOGIN_COMMAND_PATTERN.search(documentation):
         violations.append("target_direct_login_command")
@@ -577,6 +568,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             doc + "\n\nThe former role logs in to PostgreSQL.\n",
             doc + "\n\nThis one establishes database sessions.\n",
             doc + "\n\nThis connects to PostgreSQL.\n",
+            doc + "\n\nThe same role maintains a PostgreSQL session.\n",
+            doc + "\n\n## Session status\n\nThe same role connects to PostgreSQL.\n",
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
             doc.replace(
                 "### Current-state fence (updated 2026-08-25)",
@@ -593,8 +586,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         """Ordinary non-sensitive prose is intentionally outside this narrow contract."""
         doc = _load_review()
         mutated_doc = doc.replace(
-            "for the FootballPrediction system",
-            "for the FootballPrediction project",
+            "owner: project governance",
+            "owner: repository governance",
             1,
         )
         assert mutated_doc != doc
