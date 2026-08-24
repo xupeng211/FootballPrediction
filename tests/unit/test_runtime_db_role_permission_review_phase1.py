@@ -44,10 +44,13 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
-PROTECTED_BODY_START_HEADING = "sc-002 runtime db role / permission review — phase 1 > summary"
-PROTECTED_BODY_EXPECTED_COUNT = 176
-PROTECTED_BODY_EXPECTED_FINGERPRINT = (
-    "f7fb6c071d982f991d0666a56ff7fb95449d053336ae93eec291908340bd55d1"
+DOCUMENT_ROOT_HEADING = "sc-002 runtime db role / permission review — phase 1"
+REVIEWED_OWNER_METADATA_ALIAS = (
+    "owner: project governance; reviewers access this page through the docs index"
+)
+FULL_DOCUMENT_EXPECTED_COUNT = 183
+FULL_DOCUMENT_EXPECTED_FINGERPRINT = (
+    "f418f810058f52b8f078fb5563536715ae66ef3d78eb949c9ab4f74e162ac6b6"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -392,16 +395,17 @@ def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
     )
 
 
-def _protected_body_units(all_units: tuple[MarkdownUnit, ...]) -> tuple[MarkdownUnit, ...]:
-    """Inventory the complete substantive security-review body after frontmatter."""
-    protected_units: list[MarkdownUnit] = []
-    in_protected_body = False
-    for unit in all_units:
-        if unit.unit_type == "heading" and unit.heading_path == PROTECTED_BODY_START_HEADING:
-            in_protected_body = True
-        if in_protected_body:
-            protected_units.append(unit)
-    return tuple(protected_units)
+def _canonical_contract_units(
+    all_units: tuple[MarkdownUnit, ...],
+) -> tuple[MarkdownUnit, ...]:
+    return tuple(
+        MarkdownUnit(unit.heading_path, unit.unit_type, "owner: project governance")
+        if unit.heading_path == DOCUMENT_ROOT_HEADING
+        and unit.unit_type == "list_item"
+        and unit.normalized_text == REVIEWED_OWNER_METADATA_ALIAS
+        else unit
+        for unit in all_units
+    )
 
 
 def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
@@ -438,20 +442,19 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
 
-    protected_body = _protected_body_units(all_units)
-    protected_body_count = len(protected_body)
-    protected_body_payload = "\n".join(
+    contract_units = _canonical_contract_units(all_units)
+    contract_count = len(contract_units)
+    contract_payload = "\n".join(
         f"{index}\0{unit.heading_path}\0{unit.unit_type}\0{unit.normalized_text}"
-        for index, unit in enumerate(protected_body)
+        for index, unit in enumerate(contract_units)
     )
-    protected_body_fingerprint = sha256(protected_body_payload.encode("utf-8")).hexdigest()
+    contract_fingerprint = sha256(contract_payload.encode("utf-8")).hexdigest()
     if (
-        protected_body_count != PROTECTED_BODY_EXPECTED_COUNT
-        or protected_body_fingerprint != PROTECTED_BODY_EXPECTED_FINGERPRINT
+        contract_count != FULL_DOCUMENT_EXPECTED_COUNT
+        or contract_fingerprint != FULL_DOCUMENT_EXPECTED_FINGERPRINT
     ):
         violations.append(
-            "protected_body_contract:"
-            f"count={protected_body_count},fingerprint={protected_body_fingerprint}"
+            f"full_document_contract:count={contract_count},fingerprint={contract_fingerprint}"
         )
 
     if DIRECT_LOGIN_COMMAND_PATTERN.search(documentation):
@@ -573,6 +576,13 @@ class TestRuntimeDBRolePermissionReviewPhase1:
                 1,
             ),
             doc.replace(
+                "review_type: static audit / documentation — no DB connection, "
+                "no permission changes",
+                "review_type: current target behavior — the role identified by the "
+                "Current-state fence now signs on directly to PostgreSQL",
+                1,
+            ),
+            doc.replace(
                 "unless explicitly marked as current.",
                 "unless explicitly marked as current.\n\n"
                 "That same role now signs on directly to the server.",
@@ -661,7 +671,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
                 raise AssertionError("Provisioning comment missing reviewed NOLOGIN role marker")
 
     def test_review_states_no_db_connection(self):
-        """Review must state it did NOT connect to DB."""
         doc = _load_review()
         no_connect_indicators = [
             "does NOT connect",
@@ -673,28 +682,24 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         assert found, "Review must explicitly state no DB connection was made."
 
     def test_review_has_uncertainties_section(self):
-        """Review must list uncertainties."""
         doc = _load_review()
         assert "Uncertainties" in doc or "uncertain" in doc.lower(), (
             "Review must list uncertainties."
         )
 
     def test_review_sc002_partial_mitigation(self):
-        """Review must state SC-002 remains partial mitigation only."""
         doc = _load_review()
         assert "partial mitigation only" in doc, (
             "Review must state SC-002 remains partial mitigation only."
         )
 
     def test_review_training_blocked(self):
-        """Review must state training/data expansion remain blocked."""
         doc = _load_review()
         doc_lower = doc.lower()
         assert "training" in doc_lower, "Review must mention training"
         assert "blocked" in doc_lower, "Review must state blocked status"
 
     def test_no_real_secrets_in_review(self):
-        """Review must NOT output real production credentials beyond placeholders."""
         # The review discusses "secrets manager" and "SecretStr" as code abstractions.
         # It says it does NOT read/output real secrets in its non-goals.
         # Verify it doesn't contain credential values beyond known dev placeholders;
@@ -704,11 +709,9 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         _assert_no_real_looking_credentials(_load_review())
 
     def test_historical_mcp_credential_field_stays_redacted(self):
-        """The historical MCP password table cell must remain a safe placeholder."""
         _assert_historical_credential_field_redacted(_load_review())
 
     def test_secret_guard_failures_do_not_echo_unreviewed_candidate_values(self):
-        """Credential guard failures must report only structural metadata."""
         sentinel = "synthetic_candidate_value_for_output_safety_probe"
         with pytest.raises(AssertionError) as candidate_error:
             _assert_no_real_looking_credentials(f"'{sentinel}'")
@@ -725,7 +728,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             raise AssertionError("Credential-field guard repeated an unreviewed candidate value")
 
     def test_review_has_no_embedded_postgres_credential_uri(self):
-        """Current review text must not embed username/password URI userinfo."""
         doc = _load_review()
         credential_uri_count = len(
             re.findall(
@@ -736,7 +738,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         assert credential_uri_count == 0
 
     def test_no_forbidden_claims(self):
-        """Review must NOT contain forbidden SC-002 completion claims."""
         doc = _load_review()
         lines = doc.split("\n")
         in_negation = False
@@ -763,14 +764,12 @@ class TestRuntimeDBRolePermissionReviewPhase1:
     # ---- Cross-reference tests ----
 
     def test_closure_plan_criterion_6_updated(self):
-        """CLOSURE_PLAN criterion #6 must reference the review."""
         closure = _load_text(CLOSURE_PLAN_PATH)
         assert "SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md" in closure, (
             "CLOSURE_PLAN must reference the review doc."
         )
 
     def test_closure_plan_has_review_results(self):
-        """CLOSURE_PLAN section 6 must show COMPLETED status."""
         closure = _load_text(CLOSURE_PLAN_PATH)
         assert "runtime_db_role_permission_review_phase1" in closure, (
             "CLOSURE_PLAN must reference the review task."
