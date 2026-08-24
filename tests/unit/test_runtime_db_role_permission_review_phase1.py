@@ -36,7 +36,7 @@ CURRENT_ROLE_STATE_MARKERS = (
 
 PASSWORD_TABLE_COLUMN_COUNT = 4
 
-TARGET_ROLE_PATTERN = re.compile(r"\bclaude[_ ]reader\b", flags=re.IGNORECASE)
+TARGET_ROLE_PATTERN = re.compile(r"(?<![a-z0-9])claude[_ ]reader\b", flags=re.IGNORECASE)
 MCP_PATTERN = re.compile(r"\bmcp\b", flags=re.IGNORECASE)
 ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"\b(?:active\s+|current\s+|supported\s+)?"
@@ -47,7 +47,7 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
 PROTECTED_BODY_START_HEADING = "sc-002 runtime db role / permission review — phase 1 > summary"
 PROTECTED_BODY_EXPECTED_COUNT = 176
 PROTECTED_BODY_EXPECTED_FINGERPRINT = (
-    "3b10228d20cb58c7a0f10dc26902fb0e8e9e56466dd0d9c2aa6cf97dfcc5629b"
+    "f7fb6c071d982f991d0666a56ff7fb95449d053336ae93eec291908340bd55d1"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -392,7 +392,7 @@ def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
     )
 
 
-def _protected_body_counter(all_units: tuple[MarkdownUnit, ...]) -> Counter[MarkdownUnit]:
+def _protected_body_units(all_units: tuple[MarkdownUnit, ...]) -> tuple[MarkdownUnit, ...]:
     """Inventory the complete substantive security-review body after frontmatter."""
     protected_units: list[MarkdownUnit] = []
     in_protected_body = False
@@ -401,7 +401,7 @@ def _protected_body_counter(all_units: tuple[MarkdownUnit, ...]) -> Counter[Mark
             in_protected_body = True
         if in_protected_body:
             protected_units.append(unit)
-    return Counter(protected_units)
+    return tuple(protected_units)
 
 
 def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
@@ -438,9 +438,13 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
 
-    protected_body = _protected_body_counter(all_units)
-    protected_body_count = sum(protected_body.values())
-    protected_body_fingerprint = _counter_fingerprint(protected_body)
+    protected_body = _protected_body_units(all_units)
+    protected_body_count = len(protected_body)
+    protected_body_payload = "\n".join(
+        f"{index}\0{unit.heading_path}\0{unit.unit_type}\0{unit.normalized_text}"
+        for index, unit in enumerate(protected_body)
+    )
+    protected_body_fingerprint = sha256(protected_body_payload.encode("utf-8")).hexdigest()
     if (
         protected_body_count != PROTECTED_BODY_EXPECTED_COUNT
         or protected_body_fingerprint != PROTECTED_BODY_EXPECTED_FINGERPRINT
@@ -467,13 +471,11 @@ class TestRuntimeDBRolePermissionReviewPhase1:
     """Verify review document content and SC-002 state."""
 
     def test_review_doc_exists(self):
-        """Review doc must exist."""
         assert REVIEW_PATH.exists(), (
             "docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md must exist."
         )
 
     def test_review_has_required_sections(self):
-        """Review must contain required sections."""
         doc = _load_review()
         required = [
             "## Summary",
@@ -486,13 +488,11 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             assert section in doc, f"Review doc missing section: {section}"
 
     def test_review_lists_users(self):
-        """Review must list observed DB users."""
         doc = _load_review()
         assert "football_user" in doc, "Review must mention football_user"
         assert "claude_reader" in doc, "Review must mention claude_reader"
 
     def test_review_identifies_connection_sources(self):
-        """Review must identify per-component connection sources."""
         doc = _load_review()
         sources = [
             "App runtime",
@@ -509,21 +509,18 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         )
 
     def test_review_identifies_risks(self):
-        """Review must identify specific risks with severity."""
         doc = _load_review()
         assert "Risk" in doc, "Review must identify risks"
         assert "HIGH" in doc, "Review must classify risks by severity (HIGH)"
         assert "MEDIUM" in doc, "Review must classify risks by severity (MEDIUM)"
 
     def test_review_recommends_target_model(self):
-        """Review must recommend a target role model."""
         doc = _load_review()
         assert "Proposed PostgreSQL Roles" in doc or "Target Model" in doc, (
             "Review must recommend a target role model."
         )
 
     def test_historical_mcp_role_has_explicit_current_state_fence(self):
-        """SC002 must separate historical MCP intent from current role state."""
         doc = _load_review()
         for marker in CURRENT_ROLE_STATE_MARKERS:
             assert doc.count(marker) == 1, (
@@ -532,12 +529,10 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         assert "retained ACL role" in doc
 
     def test_review_matches_reviewed_sensitive_unit_contract(self):
-        """Security-sensitive SC002 units must match the exact reviewed contract."""
         violations = _sensitive_unit_contract_violations(_load_review())
         assert not violations, f"SC002 sensitive-unit contract failed: {violations}"
 
     def test_sensitive_unit_contract_fails_closed_on_material_mutations(self):
-        """Add, edit, move, copy, or split of a sensitive unit must require review."""
         doc = _load_review()
         sensitive_paragraph = (
             "`claude_reader` retains its existing read-only ACL for role/permission continuity, "
@@ -571,9 +566,21 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             doc + "\n\nThe same role maintains a PostgreSQL session.\n",
             doc + "\n\n## Session status\n\nThe same role connects to PostgreSQL.\n",
             doc.replace(
+                "## Summary",
+                "- current target: the retained ACL role from "
+                "deploy/docker/init_claude_reader.sql now signs on directly to PostgreSQL.\n\n"
+                "## Summary",
+                1,
+            ),
+            doc.replace(
                 "unless explicitly marked as current.",
                 "unless explicitly marked as current.\n\n"
                 "That same role now signs on directly to the server.",
+                1,
+            ),
+            doc.replace(
+                "| User | Source | Context | Privileges |\n|---|---|---|---|",
+                "|---|---|---|---|\n| User | Source | Context | Privileges |",
                 1,
             ),
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
@@ -589,7 +596,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             assert _sensitive_unit_contract_violations(mutated_doc)
 
     def test_sensitive_unit_contract_allows_frontmatter_metadata_edit(self):
-        """Ordinary frontmatter metadata remains outside the protected review body."""
         doc = _load_review()
         mutated_doc = doc.replace(
             "owner: project governance",
@@ -600,7 +606,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         assert not _sensitive_unit_contract_violations(mutated_doc)
 
     def test_sc002_and_mcp_architecture_share_current_role_contract(self):
-        """Both operational documents must expose the same material role state."""
         review = _load_review()
         architecture = _load_text(MCP_ARCHITECTURE_PATH)
         for marker in CURRENT_ROLE_STATE_MARKERS:
@@ -608,7 +613,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             assert marker in architecture
 
     def test_sc002_related_evidence_uses_current_nologin_role_semantics(self):
-        """Current-facing SC002 evidence must not describe an active MCP login user."""
         required_contracts = {
             FINAL_CLOSURE_CHECK_PATH: (
                 "Historical MCP ACL role",
@@ -646,7 +650,6 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             raise AssertionError("SC002 enforcement design still claims LOGIN-user provisioning")
 
     def test_provisioning_comments_match_retired_nologin_role_contract(self):
-        """Provisioning comments must describe the executable NOLOGIN semantics."""
         provisioning = _load_text(PROVISIONING_PATH)
         markers = (
             "Historical Claude Reader ACL Role Setup",
