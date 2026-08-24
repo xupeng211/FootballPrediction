@@ -13,6 +13,22 @@ This document provides a **static review** of the current database role, permiss
 runtime account model for the FootballPrediction system. It evaluates whether the current
 model creates risks for production write safety (SC-002) and recommends a target model.
 
+### Current-state fence (updated 2026-08-25)
+
+This remains a Phase 1 static-review/evidence document. Later development-role retirement
+work changed the operational status of the historical PostgreSQL MCP identity:
+
+- `CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE`
+- `CURRENT_LOGIN_STATE=NOLOGIN`
+- `CURRENT_DIRECT_LOGIN_SUPPORT=NO`
+- `CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED`
+- `CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT`
+
+`claude_reader` retains its existing read-only ACL for role/permission continuity, but its
+historical MCP login workflow is retired. It is not a current connection identity, and the
+repository does not establish a replacement PostgreSQL MCP LOGIN identity. References below
+to its MCP reader intent are historical observations unless explicitly marked as current.
+
 **This review does NOT:**
 - Connect to any database
 - Execute any SQL
@@ -39,7 +55,8 @@ model creates risks for production write safety (SC-002) and recommends a target
 - `src/config/common.py` — environment detection
 - `deploy/docker/init_db.sql` — Docker dev schema initialization (**now guarded: SC-002 Gate B
   dev-only execution guard with `sc002.init_sql_context` parameter, before all DDL/DCL**)
-- `deploy/docker/init_claude_reader.sql` — read-only MCP user creation
+- `deploy/docker/init_claude_reader.sql` — historical MCP ACL-role provisioning; current
+  provisioning retains the role as `NOLOGIN` without a password
 - `src/database/migrations/env.py` — Alembic migration environment
 - `scripts/devops/gatekeeper.sh` — CI gatekeeper cold-start probe
 - `scripts/maintenance/*.py` — maintenance scripts with DB connections
@@ -53,7 +70,7 @@ model creates risks for production write safety (SC-002) and recommends a target
 | User | Source | Context | Privileges |
 |---|---|---|---|
 | `football_user` | `docker-compose.dev.yml`, `.env.example`, `db_settings.py` | **Universal** — app runtime, dev work, CI, migration, ingestion, training | Full DDL + DML on `football_db` (table owner) |
-| `claude_reader` | `deploy/docker/init_claude_reader.sql` | MCP read-only PostgreSQL connection | SELECT only on all tables in `football_db` |
+| `claude_reader` | `deploy/docker/init_claude_reader.sql` | Historical MCP reader; retained ACL role | `NOLOGIN`; existing read-only ACL retained; not a current connection identity |
 | `postgres` (admin) | `gatekeeper.sh` cold-start probe | Gatekeeper temporary DB creation | CREATEDB (via `admin_db=postgres`) |
 
 ### Connection Sources by Role
@@ -67,7 +84,7 @@ model creates risks for production write safety (SC-002) and recommends a target
 | **Data ingestion** | `football_user` | `collector_repository.py`, `odds_api_client_v38.py`, `streaming_db_writer.py` | Full write access to all tables, not just ingestion targets |
 | **Training** | `football_user` | `train_baseline_v1.py`, `predict_pipeline.py` | Full write access to all tables |
 | **Maintenance** | `football_user` | `database_detox.py`, `reset_l2_collection.py`, `clean_corrupt_l2.py`, `fix_zombie_matches.py` | Full DDL/DML — can TRUNCATE, ALTER TABLE |
-| **MCP read-only** | `claude_reader` | `init_claude_reader.sql` | SELECT only — properly restricted |
+| **Historical MCP read-only** (retired login) | `claude_reader` | `init_claude_reader.sql` | Retained ACL role with `NOLOGIN`; no current PostgreSQL MCP login identity is established |
 | **Gatekeeper cold-start** | `football_user` + `postgres` | `gatekeeper.sh` | Creates temporary database via `admin_db=postgres` |
 
 ### Password Management
@@ -111,15 +128,18 @@ that requires `ALLOW_SCHEMA_WRITE=yes`. The app-level guard also blocks DDL with
 
 ### Risk 3: No Read-Only App Runtime User (MEDIUM)
 
-All read-only operations (health checks, SELECT queries, dashboard, MCP) use
-`football_user` with full write privileges, except for MCP which has `claude_reader`.
+At the original Phase 1 review, read-only operations (health checks, SELECT queries,
+dashboard, MCP) used `football_user` with full write privileges, while the historical MCP
+path was intended to use `claude_reader` as a dedicated reader.
 
 **Impact:** A read-only query path that is compromised could be used to write data.
 Connection strings for read-only use cases have full write credentials.
 
 **Current mitigation:** The application-layer guard blocks writes by default
-(`DRY_RUN=true`). MCP has a dedicated read-only user (`claude_reader`) — good
-practice, but only used for MCP.
+(`DRY_RUN=true`). The historical dedicated MCP reader remains as the retained ACL role
+`claude_reader`, but it is now `NOLOGIN` and its direct-login workflow is retired. No current
+supported PostgreSQL MCP login identity is established, so this role does not provide an
+active read-only connection path.
 
 ### Risk 4: Ingestion User Has Overly Broad Write Access (MEDIUM)
 
@@ -178,7 +198,7 @@ blocks writes to RDS, Cloud SQL, Supabase, etc.
 | `football_app` | SELECT, INSERT, UPDATE on all tables; no DDL | FastAPI app runtime | No — currently `football_user` |
 | `football_ingestion` | INSERT, UPDATE on matches, raw_match_data, odds tables only | Data collectors, streaming writers | No — currently `football_user` |
 | `football_training` | SELECT on all tables; INSERT, UPDATE on training/predictions tables only | Training pipelines | No — currently `football_user` |
-| `football_reader` | SELECT on all tables | MCP, health checks, dashboards, read-only audits | Partially — `claude_reader` exists for MCP only |
+| `football_reader` | SELECT on all tables | MCP, health checks, dashboards, read-only audits | Historical precursor only — `claude_reader` is a retained `NOLOGIN` ACL role, not an active LOGIN implementation |
 | `football_gatekeeper` | CREATEDB (temporary), SELECT on all tables | CI cold-start blueprint check | Partially — uses `postgres` admin + `football_user` |
 
 ### Transition Principles
@@ -292,6 +312,6 @@ The dev-only proof-of-concept has been implemented in the following files:
 | `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md` | Overall SC-002 gap analysis |
 | `src/config/db_settings.py` | DatabaseConfig + environment detection |
 | `deploy/docker/init_db.sql` | Schema DDL — no role creation beyond tables |
-| `deploy/docker/init_claude_reader.sql` | Only existing role separation (read-only MCP) |
+| `deploy/docker/init_claude_reader.sql` | Historical MCP reader provisioning; current target is retained as a `NOLOGIN` ACL role |
 | `scripts/ops/helpers/python_db_write_guard.py` | Application-layer guard — current primary protection |
 | `src/database/migrations/env.py` | Alembic migration environment — now guarded |

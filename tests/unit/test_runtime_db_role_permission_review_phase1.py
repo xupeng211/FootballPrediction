@@ -12,6 +12,7 @@ Validates:
 8. Doc states training/data expansion/real DB write remain blocked
 9. CLOSURE_PLAN criterion #6 updated to reference this review
 10. OVERALL_CLOSURE_ASSESSMENT updated for criterion #6
+11. Historical claude_reader MCP intent is fenced from its current NOLOGIN state
 """
 
 from pathlib import Path
@@ -19,6 +20,7 @@ import re
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 REVIEW_PATH = PROJECT_ROOT / "docs" / "SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md"
+MCP_ARCHITECTURE_PATH = PROJECT_ROOT / "docs" / "MCP_ARCHITECTURE.md"
 CLOSURE_PLAN_PATH = PROJECT_ROOT / "docs" / "SC002_CLOSURE_PLAN.md"
 ASSESSMENT_PATH = PROJECT_ROOT / "docs" / "SC002_OVERALL_CLOSURE_ASSESSMENT.md"
 PROJECT_STATUS_PATH = PROJECT_ROOT / "docs" / "PROJECT_STATUS.md"
@@ -31,10 +33,38 @@ FORBIDDEN_CLAIMS = [
     "production ready",
 ]
 
-FORBIDDEN_SECRET_PATTERNS = [
-    "football_pass",
-    "[REDACTED]",
-]
+CURRENT_ROLE_STATE_MARKERS = (
+    "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE",
+    "CURRENT_LOGIN_STATE=NOLOGIN",
+    "CURRENT_DIRECT_LOGIN_SUPPORT=NO",
+    "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED",
+    "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
+)
+
+HISTORICAL_MCP_FENCE_MARKERS = (
+    "historical",
+    "retired",
+    "nologin",
+    "retained acl",
+    "not a current",
+    "no current",
+    "original phase 1",
+)
+
+ACTIVE_MCP_IDENTITY_MARKERS = (
+    "connection",
+    "login",
+    "identity",
+    "user",
+    "dedicated",
+    "mcp read-only",
+    "read-only mcp",
+    "exists for mcp",
+    "role separation",
+    "mcp which has",
+)
+
+PASSWORD_TABLE_COLUMN_COUNT = 4
 
 
 def _load_review():
@@ -43,6 +73,44 @@ def _load_review():
 
 def _load_text(path: Path):
     return path.read_text(encoding="utf-8")
+
+
+def _semantic_units(documentation: str) -> tuple[str, ...]:
+    """Group prose paragraphs while keeping each Markdown table row independent."""
+    units: list[str] = []
+    paragraph: list[str] = []
+
+    def flush_paragraph() -> None:
+        if paragraph:
+            units.append(" ".join(paragraph))
+            paragraph.clear()
+
+    for raw_line in documentation.splitlines():
+        line = raw_line.strip()
+        if not line:
+            flush_paragraph()
+        elif line.startswith("|"):
+            flush_paragraph()
+            units.append(line)
+        else:
+            paragraph.append(line)
+    flush_paragraph()
+    return tuple(units)
+
+
+def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
+    count = 0
+    for unit in _semantic_units(documentation):
+        normalized = unit.casefold()
+        if "claude_reader" not in normalized or "mcp" not in normalized:
+            continue
+        has_active_identity_semantics = any(
+            marker in normalized for marker in ACTIVE_MCP_IDENTITY_MARKERS
+        )
+        has_historical_fence = any(marker in normalized for marker in HISTORICAL_MCP_FENCE_MARKERS)
+        if has_active_identity_semantics and not has_historical_fence:
+            count += 1
+    return count
 
 
 # ---- Tests ----
@@ -107,6 +175,46 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             "Review must recommend a target role model."
         )
 
+    def test_historical_mcp_role_has_explicit_current_state_fence(self):
+        """SC002 must separate historical MCP intent from current role state."""
+        doc = _load_review()
+        for marker in CURRENT_ROLE_STATE_MARKERS:
+            assert marker in doc, f"SC002 current-state fence missing marker: {marker}"
+        assert "retained ACL role" in doc
+
+    def test_review_has_no_unfenced_active_claude_reader_mcp_claim(self):
+        """Historical context must not read as current MCP LOGIN support."""
+        claim_count = _unfenced_active_claude_reader_mcp_claim_count(_load_review())
+        assert claim_count == 0, (
+            f"SC002 contains unfenced active claude_reader MCP identity claims; count={claim_count}"
+        )
+
+    def test_active_mcp_claim_detector_distinguishes_current_and_historical_context(self):
+        """Regression detector must catch active claims without banning history."""
+        active_claims = (
+            "| claude_reader | MCP read-only PostgreSQL connection | SELECT only |",
+            "| MCP read-only | claude_reader | SELECT only |",
+            "MCP has a dedicated read-only user claude_reader.",
+            "claude_reader exists for MCP only.",
+            "Current PostgreSQL MCP login identity is claude_reader.",
+        )
+        historical_claim = (
+            "Historically claude_reader was the MCP reader; the retained ACL role "
+            "is now NOLOGIN and that login is retired."
+        )
+
+        for claim in active_claims:
+            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
+        assert _unfenced_active_claude_reader_mcp_claim_count(historical_claim) == 0
+
+    def test_sc002_and_mcp_architecture_share_current_role_contract(self):
+        """Both operational documents must expose the same material role state."""
+        review = _load_review()
+        architecture = _load_text(MCP_ARCHITECTURE_PATH)
+        for marker in CURRENT_ROLE_STATE_MARKERS:
+            assert marker in review
+            assert marker in architecture
+
     def test_review_states_no_db_connection(self):
         """Review must state it did NOT connect to DB."""
         doc = _load_review()
@@ -145,9 +253,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         doc = _load_review()
         # The review discusses "secrets manager" and "SecretStr" as code abstractions.
         # It says it does NOT read/output real secrets in its non-goals.
-        # Verify it doesn't contain any actual credential values beyond the known
-        # dev placeholders (football_pass, [REDACTED] are dev-only, documented).
-        # Known dev placeholders listed for documentation are acceptable.
+        # Verify it doesn't contain credential values beyond known dev placeholders;
+        # [REDACTED] is a placeholder, not a development credential.
         # Check that there's no password that looks like a real production value
         # (longer than 20 chars, random-looking, not a known placeholder).
         pwd_pattern = re.findall(r"['\"]\S{20,}['\"]", doc)
@@ -163,8 +270,29 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             and "football_pass" not in p
         ]
         assert len(real_looking) == 0, (
-            f"Review appears to contain real-looking passwords: {real_looking}"
+            f"Review appears to contain real-looking passwords; candidate_count={len(real_looking)}"
         )
+
+    def test_historical_mcp_credential_field_stays_redacted(self):
+        """The historical MCP password table cell must remain a safe placeholder."""
+        rows = [
+            line for line in _load_review().splitlines() if "Claude reader (historical MCP)" in line
+        ]
+        assert len(rows) == 1
+        cells = [cell.strip() for cell in rows[0].strip("|").split("|")]
+        assert len(cells) == PASSWORD_TABLE_COLUMN_COUNT
+        assert cells[1] == "`[REDACTED]`"
+
+    def test_review_has_no_embedded_postgres_credential_uri(self):
+        """Current review text must not embed username/password URI userinfo."""
+        doc = _load_review()
+        credential_uri_count = len(
+            re.findall(
+                r"(?i)\bpostgres(?:ql)?://[^\s/:@]+:[^\s/@]+@",
+                doc,
+            )
+        )
+        assert credential_uri_count == 0
 
     def test_no_forbidden_claims(self):
         """Review must NOT contain forbidden SC-002 completion claims."""
