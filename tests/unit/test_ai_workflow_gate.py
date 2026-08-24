@@ -6,6 +6,7 @@ lifecycle: test-fixture
 from __future__ import annotations
 
 from contextlib import contextmanager
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -16,6 +17,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "scripts/ops/ai_workflow_gate.py"
+MIN_AI_GATE_INVOCATIONS = 3
 
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
@@ -1081,6 +1083,73 @@ def test_gate_cli_skip_body_checks_passes():
     )
     # Should pass because this branch only adds governance files (no mixed changes)
     assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
+
+
+def _write_claude_mcp_config(root: Path, argument: str) -> None:
+    config_path = root / ".claude/mcp-config.json"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(
+        json.dumps({"mcpServers": {"example": {"args": [argument]}}}),
+        encoding="utf-8",
+    )
+
+
+def test_claude_config_credential_scanner_is_json_parsed_and_redacted(tmp_path):
+    _write_claude_mcp_config(
+        tmp_path,
+        "protocol://user:dummy-secret@example.invalid/resource",
+    )
+
+    findings = gate._documentation_governance_check.scan_tracked_claude_config_credentials(tmp_path)
+
+    assert findings == [".claude/mcp-config.json:mcpServers.example.args.0:INLINE_USERINFO_URI"]
+    assert all("dummy-secret" not in finding for finding in findings)
+
+    _write_claude_mcp_config(tmp_path, "https://example.invalid/resource")
+    _write_claude_mcp_config(tmp_path, "support@example.invalid")
+    assert (
+        gate._documentation_governance_check.scan_tracked_claude_config_credentials(tmp_path) == []
+    )
+
+
+@pytest.mark.parametrize(
+    ("mode", "skip_body_checks"),
+    [("pr", False), ("push", True)],
+)
+def test_config_only_change_cannot_bypass_canonical_credential_gate(
+    tmp_path,
+    monkeypatch,
+    mode,
+    skip_body_checks,
+):
+    """Both PR and push-style AI gate calls scan a config-only diff."""
+    _write_claude_mcp_config(
+        tmp_path,
+        "protocol://user:dummy-secret@example.invalid/resource",
+    )
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    changes = [gate.Change("M", ".claude/mcp-config.json")]
+    body = "" if skip_body_checks else _valid_pr_body()
+
+    failing_errors = gate.validate(body, changes, skip_body_checks=skip_body_checks)
+
+    assert {change.path for change in changes} == {".claude/mcp-config.json"}
+    assert any("INLINE_USERINFO_URI" in error for error in failing_errors)
+    assert all("dummy-secret" not in error for error in failing_errors)
+
+    _write_claude_mcp_config(tmp_path, "https://example.invalid/resource")
+    passing_errors = gate.validate(body, changes, skip_body_checks=skip_body_checks)
+    assert not any("INLINE_USERINFO_URI" in error for error in passing_errors)
+    assert mode in {"pr", "push"}
+
+
+def test_production_gate_invokes_ai_gate_for_pr_and_main_push():
+    workflow = (ROOT / ".github/workflows/production-gate.yml").read_text(encoding="utf-8")
+
+    assert 'if [ "${GATE_EVENT_NAME}" = "pull_request" ]' in workflow
+    assert 'elif [ "${GATE_EVENT_NAME}" = "push" ]' in workflow
+    assert workflow.count("python3 scripts/ops/ai_workflow_gate.py") >= MIN_AI_GATE_INVOCATIONS
+    assert "--skip-body-checks" in workflow
 
 
 def test_skip_body_checks_skips_sections():
