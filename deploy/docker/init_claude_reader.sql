@@ -6,7 +6,7 @@
 -- ============================================
 
 -- 1. 创建只读用户
-CREATE USER claude_reader WITH PASSWORD 'claude_readonly_2026';
+CREATE ROLE claude_reader NOLOGIN;
 
 -- 2. 授予连接权限
 GRANT CONNECT ON DATABASE football_db TO claude_reader;
