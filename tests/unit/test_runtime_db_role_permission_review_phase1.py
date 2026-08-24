@@ -64,6 +64,25 @@ ACTIVE_MCP_IDENTITY_MARKERS = (
     "mcp which has",
 )
 
+EXPLICIT_CURRENT_STATUS_PATTERN = re.compile(
+    r"\b(?:current|currently|active|supported|present-day)\b|当前|现行|受支持",
+    flags=re.IGNORECASE,
+)
+
+EXPLICIT_MCP_IDENTITY_PATTERN = re.compile(
+    r"\b(?:login|identity|user|connection|dedicated)\b"
+    r"|\bmcp\s+read[- ]only\b|\bread[- ]only\s+mcp\b"
+    r"|\brole\s+separation\b|\bexists\s+for\s+mcp\b",
+    flags=re.IGNORECASE,
+)
+
+EXPLICIT_CURRENT_NEGATION_PATTERN = re.compile(
+    r"\bno\s+(?:current|supported)\b"
+    r"|\bnot\s+(?:a\s+|an\s+)?(?:current|active|supported)\b"
+    r"|\bdoes\s+not\s+establish\b|\bnot[ _-]established\b|不支持|未建立|已退役",
+    flags=re.IGNORECASE,
+)
+
 PASSWORD_TABLE_COLUMN_COUNT = 4
 
 
@@ -76,25 +95,41 @@ def _load_text(path: Path):
 
 
 def _semantic_units(documentation: str) -> tuple[str, ...]:
-    """Group prose paragraphs while keeping each Markdown table row independent."""
+    """Group prose while keeping Markdown table rows and list items independent."""
     units: list[str] = []
     paragraph: list[str] = []
+    list_item: list[str] = []
 
     def flush_paragraph() -> None:
         if paragraph:
             units.append(" ".join(paragraph))
             paragraph.clear()
 
+    def flush_list_item() -> None:
+        if list_item:
+            units.append(" ".join(list_item))
+            list_item.clear()
+
     for raw_line in documentation.splitlines():
         line = raw_line.strip()
         if not line:
             flush_paragraph()
+            flush_list_item()
         elif line.startswith("|"):
             flush_paragraph()
+            flush_list_item()
             units.append(line)
+        elif re.match(r"^[-*]\s+", line):
+            flush_paragraph()
+            flush_list_item()
+            list_item.append(line)
+        elif list_item and raw_line.startswith(("  ", "\t")):
+            list_item.append(line)
         else:
+            flush_list_item()
             paragraph.append(line)
     flush_paragraph()
+    flush_list_item()
     return tuple(units)
 
 
@@ -103,6 +138,24 @@ def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
     for unit in _semantic_units(documentation):
         normalized = unit.casefold()
         if "claude_reader" not in normalized or "mcp" not in normalized:
+            continue
+        claim_segments = (
+            normalized,
+            *re.split(
+                r"[.;。；,，]|\b(?:but|however|although|while)\b|但是|不过|但",
+                normalized,
+            ),
+        )
+        has_explicit_positive_current_claim = any(
+            "claude_reader" in segment
+            and "mcp" in segment
+            and EXPLICIT_CURRENT_STATUS_PATTERN.search(segment)
+            and EXPLICIT_MCP_IDENTITY_PATTERN.search(segment)
+            and not EXPLICIT_CURRENT_NEGATION_PATTERN.search(segment)
+            for segment in claim_segments
+        )
+        if has_explicit_positive_current_claim:
+            count += 1
             continue
         has_active_identity_semantics = any(
             marker in normalized for marker in ACTIVE_MCP_IDENTITY_MARKERS
@@ -197,15 +250,31 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             "MCP has a dedicated read-only user claude_reader.",
             "claude_reader exists for MCP only.",
             "Current PostgreSQL MCP login identity is claude_reader.",
+            "Current PostgreSQL MCP login identity is claude_reader and has no password.",
+        )
+        historical_masking_active_claims = (
+            (
+                "Historically claude_reader was an MCP reader; current PostgreSQL MCP "
+                "login identity is claude_reader."
+            ),
+            ("| Historical MCP reader | claude_reader | current supported connection user |"),
+            ("claude_reader is retired, but remains an active PostgreSQL MCP connection user."),
         )
         historical_claim = (
             "Historically claude_reader was the MCP reader; the retained ACL role "
             "is now NOLOGIN and that login is retired."
         )
+        explicitly_unsupported_claim = (
+            "claude_reader is not a current PostgreSQL MCP login identity; "
+            "the historical login is retired."
+        )
 
         for claim in active_claims:
             assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
+        for claim in historical_masking_active_claims:
+            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
         assert _unfenced_active_claude_reader_mcp_claim_count(historical_claim) == 0
+        assert _unfenced_active_claude_reader_mcp_claim_count(explicitly_unsupported_claim) == 0
 
     def test_sc002_and_mcp_architecture_share_current_role_contract(self):
         """Both operational documents must expose the same material role state."""
