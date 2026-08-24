@@ -1,19 +1,4 @@
-"""
-Static test: SC-002 Runtime DB Role Permission Review Phase1 validation.
-
-Validates:
-1. Review doc exists and has required sections
-2. Doc lists observed users and connection sources
-3. Doc identifies specific risks with severity levels
-4. Doc recommends a target model with least-privilege roles
-5. Doc explicitly states no DB connection, no permission changes
-6. Doc does NOT contain real secrets/passwords (only placeholders)
-7. Doc states SC-002 remains partial mitigation only
-8. Doc states training/data expansion/real DB write remain blocked
-9. CLOSURE_PLAN criterion #6 updated to reference this review
-10. OVERALL_CLOSURE_ASSESSMENT updated for criterion #6
-11. Historical claude_reader MCP intent is fenced from its current NOLOGIN state
-"""
+"""Validate SC-002 Phase 1 evidence and its current NOLOGIN role contract."""
 
 from collections import Counter
 from hashlib import sha256
@@ -59,11 +44,6 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
-ROLE_REFERENCE_PATTERN = re.compile(
-    r"(?:^|[.!?]\s+)(?:it|this|that)\b|"
-    r"\b(?:role|account|identity|user|reader|one)\b",
-    flags=re.IGNORECASE,
-)
 DIRECT_SESSION_OR_AUTH_TERM_PATTERN = re.compile(
     r"\b(?:connect(?:s|ed|ing)?|authenticat(?:e|es|ed|ing)?|logs?\s+in|signs?\s+in|"
     r"(?:establish(?:es|ed|ing)?|open(?:s|ed|ing)?|start(?:s|ed|ing)?)\s+"
@@ -91,6 +71,16 @@ class MarkdownUnit(NamedTuple):
     heading_path: str
     unit_type: str
     normalized_text: str
+
+
+CONTEXTUAL_SESSION_SAFE_UNITS = (
+    MarkdownUnit(
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "connect to any database",
+    ),
+)
 
 
 # This is intentionally a narrow, reviewed contract for security-sensitive SC002 units,
@@ -156,6 +146,13 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "claude_reader, but it is now nologin and its direct-login workflow is retired. no current "
         "supported postgresql mcp login identity is established, so this role does not provide an "
         "active read-only connection path.",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "connect to any database",
         1,
     ),
     (
@@ -367,6 +364,7 @@ def _is_sensitive_sc002_unit(unit: MarkdownUnit) -> bool:
         TARGET_ROLE_PATTERN.search(text)
         or MCP_PATTERN.search(text)
         or ROLE_IDENTITY_DECLARATION_PATTERN.search(text)
+        or unit in CONTEXTUAL_SESSION_SAFE_UNITS
         or any(marker.casefold() in text for marker in CURRENT_ROLE_STATE_MARKERS)
     )
 
@@ -398,20 +396,25 @@ def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
     )
 
 
-def _cross_unit_role_reference_violation_count(all_units: tuple[MarkdownUnit, ...]) -> int:
+def _contextual_session_claim_violation_count(all_units: tuple[MarkdownUnit, ...]) -> int:
     explicit_target_mcp_headings = {
         unit.heading_path for unit in all_units if _has_explicit_target_mcp(unit)
     }
     violation_count = 0
     for index, unit in enumerate(all_units):
         text = unit.normalized_text
-        has_reference_and_predicate = bool(
-            ROLE_REFERENCE_PATTERN.search(text) and DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
-        )
-        if not has_reference_and_predicate or _has_explicit_target_mcp(unit):
+        if (
+            not DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
+            or _has_explicit_target_mcp(unit)
+            or unit in CONTEXTUAL_SESSION_SAFE_UNITS
+        ):
             continue
         adjacent_units = all_units[max(0, index - 1) : index] + all_units[index + 1 : index + 2]
-        if unit.heading_path in explicit_target_mcp_headings or any(
+        in_target_heading_context = any(
+            unit.heading_path == heading or unit.heading_path.startswith(f"{heading} > ")
+            for heading in explicit_target_mcp_headings
+        )
+        if in_target_heading_context or any(
             _has_explicit_target_mcp(adjacent) for adjacent in adjacent_units
         ):
             violation_count += 1
@@ -452,7 +455,7 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
 
-    cross_unit_violations = _cross_unit_role_reference_violation_count(all_units)
+    cross_unit_violations = _contextual_session_claim_violation_count(all_units)
     if cross_unit_violations:
         violations.append(f"cross_unit_role_reference={cross_unit_violations}")
 
