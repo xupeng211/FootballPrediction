@@ -33,7 +33,7 @@ FORBIDDEN_CLAIMS = [
 
 FORBIDDEN_SECRET_PATTERNS = [
     "football_pass",
-    "claude_readonly_2026",
+    "[REDACTED]",
 ]
 
 
@@ -146,7 +146,7 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         # The review discusses "secrets manager" and "SecretStr" as code abstractions.
         # It says it does NOT read/output real secrets in its non-goals.
         # Verify it doesn't contain any actual credential values beyond the known
-        # dev placeholders (football_pass, claude_readonly_2026 are dev-only, documented).
+        # dev placeholders (football_pass, [REDACTED] are dev-only, documented).
         # Known dev placeholders listed for documentation are acceptable.
         # Check that there's no password that looks like a real production value
         # (longer than 20 chars, random-looking, not a known placeholder).
@@ -156,7 +156,7 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             for p in pwd_pattern
             if p
             not in (
-                "'claude_readonly_2026'",
+                "'[REDACTED]'",
                 "'your_secure_password_here'",
                 "'change-me-in-production'",
             )

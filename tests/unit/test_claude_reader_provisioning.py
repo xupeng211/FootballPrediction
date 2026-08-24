@@ -12,6 +12,7 @@ COMPOSE_FILES = (ROOT / "docker-compose.yml", ROOT / "docker-compose.dev.yml")
 MCP_ARCHITECTURE = ROOT / "docs/MCP_ARCHITECTURE.md"
 MCP_CONFIG = ROOT / ".claude/mcp-config.json"
 TARGET_ROLE_PATTERN = r'"?CLAUDE_READER"?'
+TARGET_ROLE_NAME = "claude_reader"
 
 
 def _normalized_statements() -> tuple[str, ...]:
@@ -22,6 +23,46 @@ def _normalized_statements() -> tuple[str, ...]:
         for statement in sql_without_comments.split(";")
         if statement.strip()
     )
+
+
+def _has_direct_target_login_instruction(documentation: str) -> bool:
+    username_option = r"(?:-U(?:=|\s+)|--username(?:=|\s+))"
+    role_token = rf"[`'\"]?{TARGET_ROLE_NAME}[`'\"]?"
+    return bool(
+        re.search(
+            rf"\bpsql\b[^\n]*{username_option}{role_token}\b",
+            documentation,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def _has_active_target_login_claim(documentation: str) -> bool:
+    role_token = rf"`?{TARGET_ROLE_NAME}`?"
+    identity_label = r"(?:login\s+(?:user|identity)|user|登录身份|登录用户|用户)"
+    forward_claim = re.search(
+        rf"(?im)^\s*(?:[-*]\s*)?(?:current|active|当前|当前支持的)?"
+        rf"[^\n]{{0,80}}?{identity_label}\s*(?:is|=|:|：|为|是)\s*{role_token}\b",
+        documentation,
+    )
+    reverse_claim = re.search(
+        rf"(?im)^\s*(?:[-*]\s*)?{role_token}\s+(?:is|为|是)"
+        rf"[^\n]{{0,80}}?(?:current|active|当前)[^\n]{{0,40}}?{identity_label}\b",
+        documentation,
+    )
+    return bool(forward_claim or reverse_claim)
+
+
+def _is_postgres_mcp_entry(name: str, payload: object) -> bool:
+    serialized = json.dumps({"name": name, "payload": payload}, ensure_ascii=False).casefold()
+    postgres_markers = (
+        "postgresql://",
+        "postgres://",
+        "server-postgres",
+        "mcp-postgres",
+        "postgres-mcp",
+    )
+    return any(marker in serialized for marker in postgres_markers)
 
 
 def test_historical_development_role_is_provisioned_without_login_or_password() -> None:
@@ -102,19 +143,8 @@ def test_compose_keeps_the_hardened_provisioning_entrypoint() -> None:
 def test_mcp_documentation_retires_the_historical_direct_login() -> None:
     documentation = MCP_ARCHITECTURE.read_text(encoding="utf-8")
 
-    direct_login_instruction = re.search(
-        r"psql\b[^\n]*\s-U\s+claude_reader\b",
-        documentation,
-        flags=re.IGNORECASE,
-    )
-    active_login_user_claim = re.search(
-        r"(?:用户|user)\s*[:：]\s*`?claude_reader`?",
-        documentation,
-        flags=re.IGNORECASE,
-    )
-
-    assert direct_login_instruction is None
-    assert active_login_user_claim is None
+    assert not _has_direct_target_login_instruction(documentation)
+    assert not _has_active_target_login_claim(documentation)
     assert "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE" in documentation
     assert "CURRENT_LOGIN_STATE=NOLOGIN" in documentation
     assert "CURRENT_DIRECT_LOGIN_SUPPORT=NO" in documentation
@@ -126,10 +156,37 @@ def test_mcp_documentation_retires_the_historical_direct_login() -> None:
 def test_mcp_documentation_matches_current_tracked_configuration() -> None:
     documentation = MCP_ARCHITECTURE.read_text(encoding="utf-8")
     configuration = json.loads(MCP_CONFIG.read_text(encoding="utf-8"))
-    configured_server_names = {name.casefold() for name in configuration.get("mcpServers", {})}
+    configured_postgres_entries = [
+        name
+        for name, payload in configuration.get("mcpServers", {}).items()
+        if _is_postgres_mcp_entry(name, payload)
+    ]
 
-    assert "postgres" not in configured_server_names
+    assert configured_postgres_entries == []
     assert "当前 tracked `.claude/mcp-config.json` 也没有 PostgreSQL MCP entry" in documentation
     assert "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED" in documentation
     assert "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT" in documentation
     assert "仓库没有 MCP loader" in documentation
+
+
+def test_direct_login_detector_covers_short_and_long_username_options() -> None:
+    assert _has_direct_target_login_instruction("psql -U claude_reader -d example")
+    assert _has_direct_target_login_instruction("psql --username claude_reader -d example")
+    assert _has_direct_target_login_instruction("psql --username=claude_reader -d example")
+
+
+def test_active_login_claim_detector_covers_current_user_wording() -> None:
+    assert _has_active_target_login_claim("Current PostgreSQL MCP login user is `claude_reader`.")
+    assert _has_active_target_login_claim("当前 PostgreSQL MCP 登录用户是 `claude_reader`。")
+    assert not _has_active_target_login_claim(
+        "`claude_reader` 曾是 historical login identity；该登录已退役。"
+    )
+
+
+def test_postgres_mcp_detector_covers_aliased_entry_payload() -> None:
+    aliased_entry = {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-postgres"],
+    }
+
+    assert _is_postgres_mcp_entry("readonly-database", aliased_entry)

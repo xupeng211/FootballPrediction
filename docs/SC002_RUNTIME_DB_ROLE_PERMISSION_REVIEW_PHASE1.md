@@ -77,7 +77,7 @@ model creates risks for production write safety (SC-002) and recommends a target
 | Docker dev | `football_pass` | `docker-compose.dev.yml` (inline) | Hardcoded — acceptable for local dev only |
 | Docker production | `change-me-in-production` | `db_settings.py` (fallback) | Placeholder — must be overridden via env var |
 | WSL2 development | `change-me-in-production` | `db_settings.py` (fallback) | Placeholder — low risk for local dev |
-| Claude reader (MCP) | `claude_readonly_2026` | `init_claude_reader.sql` (inline) | Hardcoded — must be overridden in production |
+| Claude reader (historical MCP) | `[REDACTED]` | Historical tracked provisioning (removed) | Retained ACL role is `NOLOGIN`; no current credential is provisioned |
 | `.env.example` | `your_secure_password_here` | template file | Placeholder — must be filled by operator |
 
 ## Risk Analysis
@@ -145,7 +145,7 @@ training-specific tables.
 ### Risk 6: Hardcoded Credentials in Source Control (MEDIUM)
 
 - `football_pass` in `docker-compose.dev.yml` — acceptable for local dev
-- `claude_readonly_2026` in `init_claude_reader.sql` — should be env var
+- Historical credential was removed from current provisioning and redacted here; it may remain in Git history, while the retained ACL role is `NOLOGIN`
 - `change-me-in-production` placeholder in `db_settings.py` — should fail loudly if not overridden
 
 ### Risk 7: Application-Layer Only Protection (MEDIUM)
