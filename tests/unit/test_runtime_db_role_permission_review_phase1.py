@@ -44,15 +44,10 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
-SECURITY_SURFACE_PATTERN = re.compile(
-    r"\b(?:postgres(?:ql)?|database|db|psql|login|"
-    r"log(?:s|ged|ging)?\s+in|sign(?:s|ed|ing)?\s+in|authenticat\w*|"
-    r"sessions?|connections?|credentials?|passwords?|access(?:es|ed|ing)?)\b",
-    flags=re.IGNORECASE,
-)
-SECURITY_SURFACE_EXPECTED_COUNT = 64
-SECURITY_SURFACE_EXPECTED_FINGERPRINT = (
-    "ba1a067da4e945261d8275b39913f16fe404b3dda309c4e72500202d946b31bd"
+PROTECTED_BODY_START_HEADING = "sc-002 runtime db role / permission review — phase 1 > summary"
+PROTECTED_BODY_EXPECTED_COUNT = 176
+PROTECTED_BODY_EXPECTED_FINGERPRINT = (
+    "3b10228d20cb58c7a0f10dc26902fb0e8e9e56466dd0d9c2aa6cf97dfcc5629b"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -397,11 +392,16 @@ def _has_explicit_target_mcp(unit: MarkdownUnit) -> bool:
     )
 
 
-def _security_surface_counter(all_units: tuple[MarkdownUnit, ...]) -> Counter[MarkdownUnit]:
-    """Inventory every DB/auth/session unit without trying to classify its prose grammar."""
-    return Counter(
-        unit for unit in all_units if SECURITY_SURFACE_PATTERN.search(unit.normalized_text)
-    )
+def _protected_body_counter(all_units: tuple[MarkdownUnit, ...]) -> Counter[MarkdownUnit]:
+    """Inventory the complete substantive security-review body after frontmatter."""
+    protected_units: list[MarkdownUnit] = []
+    in_protected_body = False
+    for unit in all_units:
+        if unit.unit_type == "heading" and unit.heading_path == PROTECTED_BODY_START_HEADING:
+            in_protected_body = True
+        if in_protected_body:
+            protected_units.append(unit)
+    return Counter(protected_units)
 
 
 def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
@@ -438,16 +438,16 @@ def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
     if locality_violations:
         violations.append(f"sensitive_unit_locality={locality_violations}")
 
-    security_surface = _security_surface_counter(all_units)
-    security_surface_count = sum(security_surface.values())
-    security_surface_fingerprint = _counter_fingerprint(security_surface)
+    protected_body = _protected_body_counter(all_units)
+    protected_body_count = sum(protected_body.values())
+    protected_body_fingerprint = _counter_fingerprint(protected_body)
     if (
-        security_surface_count != SECURITY_SURFACE_EXPECTED_COUNT
-        or security_surface_fingerprint != SECURITY_SURFACE_EXPECTED_FINGERPRINT
+        protected_body_count != PROTECTED_BODY_EXPECTED_COUNT
+        or protected_body_fingerprint != PROTECTED_BODY_EXPECTED_FINGERPRINT
     ):
         violations.append(
-            "security_surface_contract:"
-            f"count={security_surface_count},fingerprint={security_surface_fingerprint}"
+            "protected_body_contract:"
+            f"count={protected_body_count},fingerprint={protected_body_fingerprint}"
         )
 
     if DIRECT_LOGIN_COMMAND_PATTERN.search(documentation):
@@ -570,6 +570,12 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             doc + "\n\nThis connects to PostgreSQL.\n",
             doc + "\n\nThe same role maintains a PostgreSQL session.\n",
             doc + "\n\n## Session status\n\nThe same role connects to PostgreSQL.\n",
+            doc.replace(
+                "unless explicitly marked as current.",
+                "unless explicitly marked as current.\n\n"
+                "That same role now signs on directly to the server.",
+                1,
+            ),
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
             doc.replace(
                 "### Current-state fence (updated 2026-08-25)",
@@ -582,12 +588,12 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         for mutated_doc in mutations:
             assert _sensitive_unit_contract_violations(mutated_doc)
 
-    def test_sensitive_unit_contract_allows_unrelated_prose_edit(self):
-        """Ordinary non-sensitive prose is intentionally outside this narrow contract."""
+    def test_sensitive_unit_contract_allows_frontmatter_metadata_edit(self):
+        """Ordinary frontmatter metadata remains outside the protected review body."""
         doc = _load_review()
         mutated_doc = doc.replace(
             "owner: project governance",
-            "owner: repository governance",
+            "owner: project governance; reviewers access this page through the docs index",
             1,
         )
         assert mutated_doc != doc
