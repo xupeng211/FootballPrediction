@@ -83,6 +83,23 @@ EXPLICIT_CURRENT_NEGATION_PATTERN = re.compile(
     flags=re.IGNORECASE,
 )
 
+POSITIVE_ROLE_FIRST_MCP_IDENTITY_PATTERN = re.compile(
+    r"`?claude_reader`?(?:\s*\|\s*)?\s+"
+    r"(?:(?:is\s+(?!not\b)(?:still\s+)?)|(?:still\s+is\s+(?!not\b))|"
+    r"remains\s+(?!not\b)|"
+    r"serves\s+as\s+|continues\s+as\s+)"
+    r"(?=[^.;。；\n]{0,160}\bmcp\b)"
+    r"(?=[^.;。；\n]{0,160}\b(?:login|identity|user|connection|dedicated)\b)",
+    flags=re.IGNORECASE,
+)
+
+POSITIVE_IDENTITY_FIRST_ROLE_PATTERN = re.compile(
+    r"(?:postgres(?:ql)?\s+)?mcp"
+    r"(?=[^.;。；\n]{0,120}\b(?:login|identity|user|connection|dedicated)\b)"
+    r"[^.;。；\n]{0,120}\b(?:is|remains|=|:)\s*`?claude_reader`?\b",
+    flags=re.IGNORECASE,
+)
+
 PASSWORD_TABLE_COLUMN_COUNT = 4
 
 
@@ -139,10 +156,17 @@ def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
         normalized = unit.casefold()
         if "claude_reader" not in normalized or "mcp" not in normalized:
             continue
+        has_bare_positive_identity_claim = bool(
+            POSITIVE_ROLE_FIRST_MCP_IDENTITY_PATTERN.search(normalized)
+            or POSITIVE_IDENTITY_FIRST_ROLE_PATTERN.search(normalized)
+        )
+        if has_bare_positive_identity_claim:
+            count += 1
+            continue
         claim_segments = (
             normalized,
             *re.split(
-                r"[.;。；,，]|\b(?:but|however|although|while)\b|但是|不过|但",
+                r"[.;。；,，]|\b(?:and|but|however|although|while)\b|并且|而且|但是|不过|但",
                 normalized,
             ),
         )
@@ -259,6 +283,23 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             ),
             ("| Historical MCP reader | claude_reader | current supported connection user |"),
             ("claude_reader is retired, but remains an active PostgreSQL MCP connection user."),
+            "claude_reader is the PostgreSQL MCP login identity; the role is NOLOGIN.",
+            (
+                "claude_reader remains the PostgreSQL MCP connection user; "
+                "historical provisioning is retired."
+            ),
+            (
+                "claude_reader is still the PostgreSQL MCP login identity; "
+                "the historical path is retired."
+            ),
+            (
+                "No current replacement exists and claude_reader is the active "
+                "PostgreSQL MCP login identity."
+            ),
+            (
+                "| claude_reader | remains the PostgreSQL MCP connection user | "
+                "historical path retired |"
+            ),
         )
         historical_claim = (
             "Historically claude_reader was the MCP reader; the retained ACL role "
