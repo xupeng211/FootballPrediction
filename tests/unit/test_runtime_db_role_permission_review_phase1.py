@@ -83,20 +83,30 @@ EXPLICIT_CURRENT_NEGATION_PATTERN = re.compile(
     flags=re.IGNORECASE,
 )
 
-POSITIVE_ROLE_FIRST_MCP_IDENTITY_PATTERN = re.compile(
+ROLE_FIRST_MCP_IDENTITY_RELATION_PATTERN = re.compile(
     r"`?claude_reader`?(?:\s*\|\s*)?\s+"
-    r"(?:(?:is\s+(?!not\b)(?:still\s+)?)|(?:still\s+is\s+(?!not\b))|"
-    r"remains\s+(?!not\b)|"
-    r"serves\s+as\s+|continues\s+as\s+)"
-    r"(?=[^.;。；\n]{0,160}\bmcp\b)"
-    r"(?=[^.;。；\n]{0,160}\b(?:login|identity|user|connection|dedicated)\b)",
+    r"(?:(?:is\s+(?:still\s+)?)|(?:still\s+is\s+)|remains\s+|"
+    r"serves\s+as\s+|continues\s+(?:to\s+be|as)\s+|acts\s+as\s+)"
+    r"(?P<predicate>[^.;。；\n]{0,180})",
     flags=re.IGNORECASE,
 )
 
-POSITIVE_IDENTITY_FIRST_ROLE_PATTERN = re.compile(
+IDENTITY_FIRST_ROLE_RELATION_PATTERN = re.compile(
     r"(?:postgres(?:ql)?\s+)?mcp"
     r"(?=[^.;。；\n]{0,120}\b(?:login|identity|user|connection|dedicated)\b)"
     r"[^.;。；\n]{0,120}\b(?:is|remains|=|:)\s*`?claude_reader`?\b",
+    flags=re.IGNORECASE,
+)
+
+MCP_USES_ROLE_PATTERN = re.compile(
+    r"(?:the\s+)?(?:postgres(?:ql)?\s+)?mcp\s+"
+    r"(?:continues\s+to\s+use|uses|authenticates\s+as|connects\s+as|relies\s+on)\s+"
+    r"`?claude_reader`?\b",
+    flags=re.IGNORECASE,
+)
+
+HISTORICAL_IDENTITY_QUALIFIER_PATTERN = re.compile(
+    r"\b(?:historical|retired)\s+(?:postgres(?:ql)?\s+)?mcp\b|历史(?:的)?\s*mcp|已退役(?:的)?\s*mcp",
     flags=re.IGNORECASE,
 )
 
@@ -150,44 +160,71 @@ def _semantic_units(documentation: str) -> tuple[str, ...]:
     return tuple(units)
 
 
-def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
-    count = 0
-    for unit in _semantic_units(documentation):
-        normalized = unit.casefold()
-        if "claude_reader" not in normalized or "mcp" not in normalized:
+def _has_role_first_positive_identity_claim(normalized: str) -> bool:
+    for relation in ROLE_FIRST_MCP_IDENTITY_RELATION_PATTERN.finditer(normalized):
+        predicate = relation.group("predicate")
+        if "mcp" not in predicate or not EXPLICIT_MCP_IDENTITY_PATTERN.search(predicate):
             continue
-        has_bare_positive_identity_claim = bool(
-            POSITIVE_ROLE_FIRST_MCP_IDENTITY_PATTERN.search(normalized)
-            or POSITIVE_IDENTITY_FIRST_ROLE_PATTERN.search(normalized)
-        )
-        if has_bare_positive_identity_claim:
-            count += 1
+        if EXPLICIT_CURRENT_NEGATION_PATTERN.search(predicate):
             continue
-        claim_segments = (
+        if HISTORICAL_IDENTITY_QUALIFIER_PATTERN.search(predicate):
+            continue
+        return True
+    return False
+
+
+def _has_identity_first_positive_claim(normalized: str) -> bool:
+    for relation in IDENTITY_FIRST_ROLE_RELATION_PATTERN.finditer(normalized):
+        context_start = max(0, relation.start() - 40)
+        relation_context = normalized[context_start : relation.end()]
+        if HISTORICAL_IDENTITY_QUALIFIER_PATTERN.search(relation_context):
+            continue
+        if EXPLICIT_CURRENT_NEGATION_PATTERN.search(relation_context):
+            continue
+        return True
+    return False
+
+
+def _has_explicit_positive_current_claim(normalized: str) -> bool:
+    claim_segments = (
+        normalized,
+        *re.split(
+            r"[.;。；,，]|\b(?:and|but|however|although|while)\b|并且|而且|但是|不过|但",
             normalized,
-            *re.split(
-                r"[.;。；,，]|\b(?:and|but|however|although|while)\b|并且|而且|但是|不过|但",
-                normalized,
-            ),
-        )
-        has_explicit_positive_current_claim = any(
-            "claude_reader" in segment
-            and "mcp" in segment
-            and EXPLICIT_CURRENT_STATUS_PATTERN.search(segment)
-            and EXPLICIT_MCP_IDENTITY_PATTERN.search(segment)
-            and not EXPLICIT_CURRENT_NEGATION_PATTERN.search(segment)
-            for segment in claim_segments
-        )
-        if has_explicit_positive_current_claim:
-            count += 1
-            continue
-        has_active_identity_semantics = any(
-            marker in normalized for marker in ACTIVE_MCP_IDENTITY_MARKERS
-        )
-        has_historical_fence = any(marker in normalized for marker in HISTORICAL_MCP_FENCE_MARKERS)
-        if has_active_identity_semantics and not has_historical_fence:
-            count += 1
-    return count
+        ),
+    )
+    return any(
+        "claude_reader" in segment
+        and "mcp" in segment
+        and EXPLICIT_CURRENT_STATUS_PATTERN.search(segment)
+        and EXPLICIT_MCP_IDENTITY_PATTERN.search(segment)
+        and not EXPLICIT_CURRENT_NEGATION_PATTERN.search(segment)
+        for segment in claim_segments
+    )
+
+
+def _is_unfenced_active_claude_reader_mcp_claim(unit: str) -> bool:
+    normalized = unit.casefold()
+    if "claude_reader" not in normalized or "mcp" not in normalized:
+        return False
+    if (
+        _has_role_first_positive_identity_claim(normalized)
+        or _has_identity_first_positive_claim(normalized)
+        or MCP_USES_ROLE_PATTERN.search(normalized)
+        or _has_explicit_positive_current_claim(normalized)
+    ):
+        return True
+    has_active_identity_semantics = any(
+        marker in normalized for marker in ACTIVE_MCP_IDENTITY_MARKERS
+    )
+    has_historical_fence = any(marker in normalized for marker in HISTORICAL_MCP_FENCE_MARKERS)
+    return has_active_identity_semantics and not has_historical_fence
+
+
+def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
+    return sum(
+        _is_unfenced_active_claude_reader_mcp_claim(unit) for unit in _semantic_units(documentation)
+    )
 
 
 # ---- Tests ----
@@ -300,6 +337,23 @@ class TestRuntimeDBRolePermissionReviewPhase1:
                 "| claude_reader | remains the PostgreSQL MCP connection user | "
                 "historical path retired |"
             ),
+            (
+                "claude_reader continues to be the PostgreSQL MCP login identity; "
+                "the historical path is retired."
+            ),
+            ("claude_reader acts as the PostgreSQL MCP connection user; the role is NOLOGIN."),
+            (
+                "The PostgreSQL MCP uses claude_reader as its login identity; "
+                "the historical path is retired."
+            ),
+            (
+                "The PostgreSQL MCP continues to use claude_reader as its login identity; "
+                "the role is NOLOGIN."
+            ),
+            "claude_reader serves as the PostgreSQL MCP login user.",
+            "The PostgreSQL MCP authenticates as claude_reader.",
+            "The PostgreSQL MCP connects as claude_reader.",
+            "The PostgreSQL MCP login identity is claude_reader.",
         )
         historical_claim = (
             "Historically claude_reader was the MCP reader; the retained ACL role "
@@ -309,6 +363,17 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             "claude_reader is not a current PostgreSQL MCP login identity; "
             "the historical login is retired."
         )
+        safe_copular_historical_claims = (
+            ("claude_reader is a historical PostgreSQL MCP login identity; the login is retired."),
+            "claude_reader is the retired PostgreSQL MCP login identity.",
+            (
+                "claude_reader is a retained ACL role and is not a current "
+                "PostgreSQL MCP login identity."
+            ),
+            "Historical PostgreSQL MCP login identity is claude_reader.",
+            "Retired PostgreSQL MCP login identity is claude_reader.",
+            "claude_reader serves as a historical PostgreSQL MCP login identity.",
+        )
 
         for claim in active_claims:
             assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
@@ -316,6 +381,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
             assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
         assert _unfenced_active_claude_reader_mcp_claim_count(historical_claim) == 0
         assert _unfenced_active_claude_reader_mcp_claim_count(explicitly_unsupported_claim) == 0
+        for claim in safe_copular_historical_claims:
+            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 0
 
     def test_sc002_and_mcp_architecture_share_current_role_contract(self):
         """Both operational documents must expose the same material role state."""
