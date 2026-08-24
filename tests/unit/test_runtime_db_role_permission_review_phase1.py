@@ -59,6 +59,18 @@ ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
     r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
     flags=re.IGNORECASE,
 )
+ROLE_ANAPHORA_PATTERN = re.compile(
+    r"\b(?:it|(?:that|this|the)\s+"
+    r"(?:(?:historical|retained|acl|postgres(?:ql)?|mcp|reader|database)\s+){0,4}"
+    r"(?:role|account|identity|user|reader))\b",
+    flags=re.IGNORECASE,
+)
+DIRECT_SESSION_OR_AUTH_TERM_PATTERN = re.compile(
+    r"\b(?:login|logs?\s+in|connect(?:s|ed|ing|ion|ions)?|"
+    r"authenticat(?:e|es|ed|ing|ion)|sessions?|"
+    r"(?:database|postgres(?:ql)?)\s+access)\b",
+    flags=re.IGNORECASE,
+)
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
     flags=re.IGNORECASE,
@@ -349,10 +361,14 @@ def _markdown_units(documentation: str) -> tuple[MarkdownUnit, ...]:
 
 def _is_sensitive_sc002_unit(unit: MarkdownUnit) -> bool:
     text = unit.normalized_text
+    has_anaphoric_session_claim = bool(
+        ROLE_ANAPHORA_PATTERN.search(text) and DIRECT_SESSION_OR_AUTH_TERM_PATTERN.search(text)
+    )
     return bool(
         TARGET_ROLE_PATTERN.search(text)
         or MCP_PATTERN.search(text)
         or ROLE_IDENTITY_DECLARATION_PATTERN.search(text)
+        or has_anaphoric_session_claim
         or any(marker.casefold() in text for marker in CURRENT_ROLE_STATE_MARKERS)
     )
 
@@ -517,6 +533,12 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         mutations = (
             doc + "\n\nCurrent PostgreSQL MCP login identity is `claude_reader`.\n",
             doc + "\n\nThat retained role is now the active PostgreSQL login identity.\n",
+            doc + "\n\nThat retained role connects to PostgreSQL.\n",
+            doc + "\n\nThis ACL role authenticates to PostgreSQL.\n",
+            doc + "\n\nThe retained reader role logs in to PostgreSQL.\n",
+            doc + "\n\nThat role establishes database sessions.\n",
+            doc + "\n\nIt opens PostgreSQL connections.\n",
+            doc + "\n\nThis account has database access.\n",
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
             doc.replace(
                 "### Current-state fence (updated 2026-08-25)",
