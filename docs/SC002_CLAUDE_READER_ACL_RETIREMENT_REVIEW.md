@@ -13,9 +13,10 @@
 
 **[CONFIRMED] `claude_reader` exists in the development PostgreSQL cluster and is
 `NOLOGIN`.** The catalog audit found no membership, active session, ownership, or
-grantable privilege for the role. It found 40 cluster dependency rows, 54 current
-direct ACL privilege entries, and two default-ACL rows containing three exploded
-privileges.
+grantable privilege for the role. A password verifier is still present as a
+boolean catalog fact; its value was never read. It found 40 cluster dependency
+rows, 54 current direct ACL privilege entries, and two default-ACL rows containing
+three exploded privileges.
 
 **[UNKNOWN / BLOCKER] A host outside the repository and development cluster could
 still be a consumer.** The repository contains no current runtime consumer proof,
@@ -67,8 +68,9 @@ Out of scope:
   `football_prediction_db_dev` PostgreSQL 15.17 container as an administrator
   metadata path. The final evidence queries used `BEGIN; SET TRANSACTION READ ONLY;`
   and `ROLLBACK`; they selected catalog/session metadata only.
-- **[CONFIRMED]** No query authenticated as the target role and no password verifier,
-  credential URI, or historical secret value was retrieved or printed.
+- **[CONFIRMED]** No query authenticated as the target role. No password verifier
+  value/hash, credential URI, or historical secret value was retrieved or printed;
+  only the boolean `rolpassword IS NOT NULL` state was inspected.
 
 ## Current role state
 
@@ -83,6 +85,7 @@ Out of scope:
 | `rolreplication` | `false` | CONFIRMED |
 | `rolbypassrls` | `false` | CONFIRMED |
 | `rolconnlimit` | `-1` (unlimited, but unusable for login while `NOLOGIN`) | CONFIRMED |
+| password verifier presence | `true` (`rolpassword IS NOT NULL`; value intentionally not read) | CONFIRMED |
 
 `rolinherit=true` would matter if another role became a member of
 `claude_reader`; the membership audit below found no such path. The role has no
@@ -218,8 +221,12 @@ runtime application consumer.
 present. Tracked `.claude/settings.json` reports skills disabled. No current
 `src/` runtime caller or tracked inline credential for `claude_reader` was proven.
 The remaining repository references are provisioning, governance, tests, or
-historical documentation. The ignored host-local `.claude/settings.local.json` was
-not modified or retired.
+historical documentation. `.claude/settings.local.json` is a tracked host-local
+configuration blob (its host-local semantics do not make it untracked); it was not
+modified or retired, and no raw configuration value was printed. A sanitized
+structural scan finds one stale `mcp__postgres__query` permission reference in that
+file. This is not proof of a loader, endpoint, identity, or active consumer, but it
+must be included in the external-consumer UNKNOWN rather than omitted.
 
 **[UNKNOWN]** Repository evidence cannot establish whether an external host, proxy,
 or operator tool still holds a connection configuration. `EXTERNAL_HOST_CONSUMER_STATE`
@@ -253,11 +260,15 @@ historical/current documentation that intentionally describe the retained role.
 
 ### Authentication risk
 
-**[CONFIRMED] Current direct-login risk is closed** by the completed #1882 state:
-the role is `NOLOGIN`, current tracked PostgreSQL MCP entry is absent, and current
-repository provisioning does not create a password. This does not claim that a
-historical credential has been erased from Git history; historical secret history
-remediation is out of scope.
+**[CONFIRMED] Current direct-login risk is closed while the role remains
+`NOLOGIN`** by the completed #1882 state: the current tracked PostgreSQL MCP entry
+is absent and current repository provisioning does not create a password. The
+catalog still reports a password verifier present (`rolpassword IS NOT NULL=true`),
+but its value was not read. That verifier would become relevant again if an
+unauthorized change restored `LOGIN`; this review neither restores login nor
+performs password rotation. This does not claim that a historical credential has
+been erased from Git history; historical secret history remediation is out of
+scope.
 
 ### Privilege and maintenance debt
 
@@ -303,12 +314,15 @@ provisioning still recreates the role.
 
 Only after an Owner authorizes a separate execution task:
 
-1. Keep the role `NOLOGIN`; do not restore login or create a password.
+1. Keep the role `NOLOGIN`; do not restore login or create a password. Treat the
+   existing verifier as a conditional residual risk and never print or copy its
+   value.
 2. Reconfirm all non-template cluster databases, active sessions, both membership
    directions, ownership, default ACLs, and external consumer attestations.
 3. Remove/retire the future provisioning role/ACL statements and both compose initdb
-   mounts, then update their tests/allowlists/documentation in the same reviewed
-   change.
+   mounts, then update their tests/allowlists/documentation and review the tracked
+   `.claude/settings.local.json` `mcp__postgres__query` permission reference in the
+   same reviewed change.
 4. Remove the two default-ACL rows/privileges with precise, owner-aware
    `ALTER DEFAULT PRIVILEGES` operations.
 5. Revoke the 54 current direct ACL entries only after consumer approval and a
