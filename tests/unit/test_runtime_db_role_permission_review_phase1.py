@@ -21,12 +21,17 @@ from pathlib import Path
 import re
 from typing import NamedTuple
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 REVIEW_PATH = PROJECT_ROOT / "docs" / "SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md"
 MCP_ARCHITECTURE_PATH = PROJECT_ROOT / "docs" / "MCP_ARCHITECTURE.md"
 CLOSURE_PLAN_PATH = PROJECT_ROOT / "docs" / "SC002_CLOSURE_PLAN.md"
+FINAL_CLOSURE_CHECK_PATH = PROJECT_ROOT / "docs" / "SC002_FINAL_CLOSURE_CHECK.md"
 ASSESSMENT_PATH = PROJECT_ROOT / "docs" / "SC002_OVERALL_CLOSURE_ASSESSMENT.md"
+ENFORCEMENT_DESIGN_PATH = PROJECT_ROOT / "docs" / "SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md"
 PROJECT_STATUS_PATH = PROJECT_ROOT / "docs" / "PROJECT_STATUS.md"
+PROVISIONING_PATH = PROJECT_ROOT / "deploy" / "docker" / "init_claude_reader.sql"
 
 FORBIDDEN_CLAIMS = [
     "SC-002 is complete",
@@ -48,6 +53,12 @@ PASSWORD_TABLE_COLUMN_COUNT = 4
 
 TARGET_ROLE_PATTERN = re.compile(r"\bclaude[_ ]reader\b", flags=re.IGNORECASE)
 MCP_PATTERN = re.compile(r"\bmcp\b", flags=re.IGNORECASE)
+ROLE_IDENTITY_DECLARATION_PATTERN = re.compile(
+    r"\b(?:active\s+|current\s+|supported\s+)?"
+    r"(?:postgres(?:ql)?\s+)?(?:mcp\s+)?"
+    r"(?:login|connection|authentication)\s+(?:identity|user|role)\b",
+    flags=re.IGNORECASE,
+)
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
     flags=re.IGNORECASE,
@@ -207,6 +218,36 @@ def _load_text(path: Path):
     return path.read_text(encoding="utf-8")
 
 
+def _assert_no_real_looking_credentials(documentation: str) -> None:
+    candidates = re.findall(r"['\"]\S{20,}['\"]", documentation)
+    unexpected = [
+        candidate
+        for candidate in candidates
+        if candidate
+        not in (
+            "'[REDACTED]'",
+            "'your_secure_password_here'",
+            "'change-me-in-production'",
+        )
+        and "football_pass" not in candidate
+    ]
+    if unexpected:
+        raise AssertionError(
+            f"Review appears to contain real-looking passwords; candidate_count={len(unexpected)}"
+        )
+
+
+def _assert_historical_credential_field_redacted(documentation: str) -> None:
+    rows = [line for line in documentation.splitlines() if "Claude reader (historical MCP)" in line]
+    if len(rows) != 1:
+        raise AssertionError(f"Historical credential row count must be 1; count={len(rows)}")
+    cells = [cell.strip() for cell in rows[0].strip("|").split("|")]
+    if len(cells) != PASSWORD_TABLE_COLUMN_COUNT:
+        raise AssertionError("Historical credential row has an unexpected structural column count")
+    if cells[1] != "`[REDACTED]`":
+        raise AssertionError("Historical credential field must remain redacted")
+
+
 def _normalize_markdown_text(text: str) -> str:
     """Remove formatting noise without deleting semantic words or punctuation."""
     return re.sub(r"\s+", " ", text.replace("`", "").replace("**", "").strip()).casefold()
@@ -311,6 +352,7 @@ def _is_sensitive_sc002_unit(unit: MarkdownUnit) -> bool:
     return bool(
         TARGET_ROLE_PATTERN.search(text)
         or MCP_PATTERN.search(text)
+        or ROLE_IDENTITY_DECLARATION_PATTERN.search(text)
         or any(marker.casefold() in text for marker in CURRENT_ROLE_STATE_MARKERS)
     )
 
@@ -474,6 +516,7 @@ class TestRuntimeDBRolePermissionReviewPhase1:
 
         mutations = (
             doc + "\n\nCurrent PostgreSQL MCP login identity is `claude_reader`.\n",
+            doc + "\n\nThat retained role is now the active PostgreSQL login identity.\n",
             doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
             doc.replace(
                 "### Current-state fence (updated 2026-08-25)",
@@ -504,6 +547,56 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         for marker in CURRENT_ROLE_STATE_MARKERS:
             assert marker in review
             assert marker in architecture
+
+    def test_sc002_related_evidence_uses_current_nologin_role_semantics(self):
+        """Current-facing SC002 evidence must not describe an active MCP login user."""
+        required_contracts = {
+            FINAL_CLOSURE_CHECK_PATH: (
+                "Historical MCP ACL role",
+                "NOLOGIN",
+                "not a current PostgreSQL MCP login identity",
+            ),
+            ASSESSMENT_PATH: (
+                "historical MCP reader",
+                "NOLOGIN",
+                "no current PostgreSQL MCP login identity is established",
+            ),
+            ENFORCEMENT_DESIGN_PATH: (
+                "CREATE ROLE, GRANT, ALTER DEFAULT PRIVILEGES",
+                "NOLOGIN",
+                "no current PostgreSQL MCP login identity is established",
+            ),
+        }
+        for path, markers in required_contracts.items():
+            text = _load_text(path).casefold()
+            for marker in markers:
+                if marker.casefold() not in text:
+                    raise AssertionError(f"{path.name} missing reviewed NOLOGIN contract marker")
+
+        design_rows = [
+            line
+            for line in _load_text(ENFORCEMENT_DESIGN_PATH).splitlines()
+            if "deploy/docker/init_claude_reader.sql" in line
+        ]
+        if len(design_rows) != 1:
+            raise AssertionError(
+                "SC002 enforcement design must contain exactly one provisioning inventory row"
+            )
+        normalized_row = design_rows[0].casefold()
+        if "create user" in normalized_row or "creates read-only db user" in normalized_row:
+            raise AssertionError("SC002 enforcement design still claims LOGIN-user provisioning")
+
+    def test_provisioning_comments_match_retired_nologin_role_contract(self):
+        """Provisioning comments must describe the executable NOLOGIN semantics."""
+        provisioning = _load_text(PROVISIONING_PATH)
+        markers = (
+            "Historical Claude Reader ACL Role Setup",
+            "retired PostgreSQL MCP identity; direct login is disabled",
+            "Create the retained NOLOGIN ACL role if it does not exist",
+        )
+        for marker in markers:
+            if marker not in provisioning:
+                raise AssertionError("Provisioning comment missing reviewed NOLOGIN role marker")
 
     def test_review_states_no_db_connection(self):
         """Review must state it did NOT connect to DB."""
@@ -540,38 +633,34 @@ class TestRuntimeDBRolePermissionReviewPhase1:
 
     def test_no_real_secrets_in_review(self):
         """Review must NOT output real production credentials beyond placeholders."""
-        doc = _load_review()
         # The review discusses "secrets manager" and "SecretStr" as code abstractions.
         # It says it does NOT read/output real secrets in its non-goals.
         # Verify it doesn't contain credential values beyond known dev placeholders;
         # [REDACTED] is a placeholder, not a development credential.
         # Check that there's no password that looks like a real production value
         # (longer than 20 chars, random-looking, not a known placeholder).
-        pwd_pattern = re.findall(r"['\"]\S{20,}['\"]", doc)
-        real_looking = [
-            p
-            for p in pwd_pattern
-            if p
-            not in (
-                "'[REDACTED]'",
-                "'your_secure_password_here'",
-                "'change-me-in-production'",
-            )
-            and "football_pass" not in p
-        ]
-        assert len(real_looking) == 0, (
-            f"Review appears to contain real-looking passwords; candidate_count={len(real_looking)}"
-        )
+        _assert_no_real_looking_credentials(_load_review())
 
     def test_historical_mcp_credential_field_stays_redacted(self):
         """The historical MCP password table cell must remain a safe placeholder."""
-        rows = [
-            line for line in _load_review().splitlines() if "Claude reader (historical MCP)" in line
-        ]
-        assert len(rows) == 1
-        cells = [cell.strip() for cell in rows[0].strip("|").split("|")]
-        assert len(cells) == PASSWORD_TABLE_COLUMN_COUNT
-        assert cells[1] == "`[REDACTED]`"
+        _assert_historical_credential_field_redacted(_load_review())
+
+    def test_secret_guard_failures_do_not_echo_unreviewed_candidate_values(self):
+        """Credential guard failures must report only structural metadata."""
+        sentinel = "synthetic_candidate_value_for_output_safety_probe"
+        with pytest.raises(AssertionError) as candidate_error:
+            _assert_no_real_looking_credentials(f"'{sentinel}'")
+        if sentinel in str(candidate_error.value):
+            raise AssertionError("Credential guard repeated an unreviewed candidate value")
+
+        unsafe_row = (
+            "| Claude reader (historical MCP) | "
+            f"`{sentinel}` | Historical tracked provisioning | Retained role |"
+        )
+        with pytest.raises(AssertionError) as field_error:
+            _assert_historical_credential_field_redacted(unsafe_row)
+        if sentinel in str(field_error.value):
+            raise AssertionError("Credential-field guard repeated an unreviewed candidate value")
 
     def test_review_has_no_embedded_postgres_credential_uri(self):
         """Current review text must not embed username/password URI userinfo."""

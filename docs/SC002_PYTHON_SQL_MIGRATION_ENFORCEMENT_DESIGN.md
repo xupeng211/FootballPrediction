@@ -371,7 +371,7 @@ These files have ambiguous signals that require deeper human analysis.
 | # | Path | DDL | DML | Destructive? | Classification | Notes |
 |---|---|---|---|---|---|---|
 | 14 | `deploy/docker/init_db.sql` | CREATE TABLE, CREATE EXTENSION, CREATE INDEX | INSERT (seed data) | No (IF NOT EXISTS) | `sql_seed_or_data_write_needs_gate` | Docker dev environment init. Contains full schema + seed data. Should only run in dev Docker context. |
-| 15 | `deploy/docker/init_claude_reader.sql` | CREATE USER, GRANT, ALTER DEFAULT PRIVILEGES | None | No | `sql_schema_definition` | Creates read-only DB user for MCP. Legitimate infrastructure SQL. |
+| 15 | `deploy/docker/init_claude_reader.sql` | CREATE ROLE, GRANT, ALTER DEFAULT PRIVILEGES | None | No | `sql_schema_definition` | Retains the historical MCP reader as a `NOLOGIN` ACL role; no current PostgreSQL MCP login identity is established. |
 
 #### Maintenance Migrations
 

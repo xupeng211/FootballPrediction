@@ -205,7 +205,8 @@ does not block this criterion.
 - Application-layer guard (`assertDbWriteAllowed` / `assert_db_write_allowed`) enforces
   write authorization through environment variables.
 - Production-like DB host hard block at the application layer.
-- `deploy/docker/init_claude_reader.sql` creates a read-only PostgreSQL user for MCP.
+- `deploy/docker/init_claude_reader.sql` retains the historical MCP reader as a `NOLOGIN` ACL
+  role; no current PostgreSQL MCP login identity is established.
 
 **What is missing:**
 - Staging/production deployment of the role model.
