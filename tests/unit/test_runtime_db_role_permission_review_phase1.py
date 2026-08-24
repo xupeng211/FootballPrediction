@@ -15,8 +15,11 @@ Validates:
 11. Historical claude_reader MCP intent is fenced from its current NOLOGIN state
 """
 
+from collections import Counter
+from hashlib import sha256
 from pathlib import Path
 import re
+from typing import NamedTuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 REVIEW_PATH = PROJECT_ROOT / "docs" / "SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md"
@@ -41,76 +44,159 @@ CURRENT_ROLE_STATE_MARKERS = (
     "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
 )
 
-HISTORICAL_MCP_FENCE_MARKERS = (
-    "historical",
-    "retired",
-    "nologin",
-    "retained acl",
-    "not a current",
-    "no current",
-    "original phase 1",
-)
-
-ACTIVE_MCP_IDENTITY_MARKERS = (
-    "connection",
-    "login",
-    "identity",
-    "user",
-    "dedicated",
-    "mcp read-only",
-    "read-only mcp",
-    "exists for mcp",
-    "role separation",
-    "mcp which has",
-)
-
-EXPLICIT_CURRENT_STATUS_PATTERN = re.compile(
-    r"\b(?:current|currently|active|supported|present-day)\b|当前|现行|受支持",
-    flags=re.IGNORECASE,
-)
-
-EXPLICIT_MCP_IDENTITY_PATTERN = re.compile(
-    r"\b(?:login|identity|user|connection|dedicated)\b"
-    r"|\bmcp\s+read[- ]only\b|\bread[- ]only\s+mcp\b"
-    r"|\brole\s+separation\b|\bexists\s+for\s+mcp\b",
-    flags=re.IGNORECASE,
-)
-
-EXPLICIT_CURRENT_NEGATION_PATTERN = re.compile(
-    r"\bno\s+(?:current|supported)\b"
-    r"|\bnot\s+(?:a\s+|an\s+)?(?:current|active|supported)\b"
-    r"|\bdoes\s+not\s+establish\b|\bnot[ _-]established\b|不支持|未建立|已退役",
-    flags=re.IGNORECASE,
-)
-
-ROLE_FIRST_MCP_IDENTITY_RELATION_PATTERN = re.compile(
-    r"`?claude_reader`?(?:\s*\|\s*)?\s+"
-    r"(?:(?:is\s+(?:still\s+)?)|(?:still\s+is\s+)|remains\s+|"
-    r"serves\s+as\s+|continues\s+(?:to\s+be|as)\s+|acts\s+as\s+)"
-    r"(?P<predicate>[^.;。；\n]{0,180})",
-    flags=re.IGNORECASE,
-)
-
-IDENTITY_FIRST_ROLE_RELATION_PATTERN = re.compile(
-    r"(?:postgres(?:ql)?\s+)?mcp"
-    r"(?=[^.;。；\n]{0,120}\b(?:login|identity|user|connection|dedicated)\b)"
-    r"[^.;。；\n]{0,120}\b(?:is|remains|=|:)\s*`?claude_reader`?\b",
-    flags=re.IGNORECASE,
-)
-
-MCP_USES_ROLE_PATTERN = re.compile(
-    r"(?:the\s+)?(?:postgres(?:ql)?\s+)?mcp\s+"
-    r"(?:continues\s+to\s+use|uses|authenticates\s+as|connects\s+as|relies\s+on)\s+"
-    r"`?claude_reader`?\b",
-    flags=re.IGNORECASE,
-)
-
-HISTORICAL_IDENTITY_QUALIFIER_PATTERN = re.compile(
-    r"\b(?:historical|retired)\s+(?:postgres(?:ql)?\s+)?mcp\b|历史(?:的)?\s*mcp|已退役(?:的)?\s*mcp",
-    flags=re.IGNORECASE,
-)
-
 PASSWORD_TABLE_COLUMN_COUNT = 4
+
+TARGET_ROLE_PATTERN = re.compile(r"\bclaude[_ ]reader\b", flags=re.IGNORECASE)
+MCP_PATTERN = re.compile(r"\bmcp\b", flags=re.IGNORECASE)
+DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
+    r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
+    flags=re.IGNORECASE,
+)
+FORBIDDEN_CURRENT_STATE_MARKERS = (
+    "CURRENT_LOGIN_STATE=LOGIN",
+    "CURRENT_DIRECT_LOGIN_SUPPORT=YES",
+    "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=CLAUDE_READER",
+    "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=PRESENT",
+)
+
+
+class MarkdownUnit(NamedTuple):
+    """A deterministic semantic unit tied to its Markdown location."""
+
+    heading_path: str
+    unit_type: str
+    normalized_text: str
+
+
+# This is intentionally a narrow, reviewed contract for security-sensitive SC002 units,
+# not a natural-language classifier and not a snapshot of the whole document. Any edit,
+# addition, move, copy, or split involving claude_reader/MCP semantics must update this
+# allowlist in a STRICT exact-head change and receive independent semantic review.
+SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
+    (
+        "sc-002 runtime db role / permission review — phase 1 > current db role / account "
+        "model > connection sources by role",
+        "table_row",
+        "| historical mcp read-only (retired login) | claude_reader | init_claude_reader.sql | "
+        "retained acl role with nologin; no current postgresql mcp login identity is established |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > current db role / account "
+        "model > observed users",
+        "table_row",
+        "| claude_reader | deploy/docker/init_claude_reader.sql | historical mcp reader; retained "
+        "acl role | nologin; existing read-only acl retained; not a current connection identity |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > current db role / account "
+        "model > password management",
+        "table_row",
+        "| claude reader (historical mcp) | [redacted] | historical tracked provisioning "
+        "(removed) | retained acl role is nologin; no current credential is provisioned |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > recommended target model > "
+        "proposed postgresql roles",
+        "table_row",
+        "| football_reader | select on all tables | mcp, health checks, dashboards, read-only "
+        "audits | historical precursor only — claude_reader is a retained nologin acl role, not "
+        "an active login implementation |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > references",
+        "table_row",
+        "| deploy/docker/init_claude_reader.sql | historical claude_reader mcp reader "
+        "provisioning; current target is retained as a nologin acl role |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > risk analysis > risk 3: no "
+        "read-only app runtime user (medium)",
+        "paragraph",
+        "at the original phase 1 review, read-only operations (health checks, select queries, "
+        "dashboard, mcp) used football_user with full write privileges, while the historical mcp "
+        "path was intended to use claude_reader as a dedicated reader.",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > risk analysis > risk 3: no "
+        "read-only app runtime user (medium)",
+        "paragraph",
+        "current mitigation: the application-layer guard blocks writes by default "
+        "(dry_run=true). the historical dedicated mcp reader remains as the retained acl role "
+        "claude_reader, but it is now nologin and its direct-login workflow is retired. no current "
+        "supported postgresql mcp login identity is established, so this role does not provide an "
+        "active read-only connection path.",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "current_direct_login_support=no",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "current_login_state=nologin",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "current_postgresql_mcp_login_identity=not_established",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "current_role_type=retained_acl_role",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "current_tracked_postgres_mcp_entry=absent",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "list_item",
+        "deploy/docker/init_claude_reader.sql — historical claude_reader mcp acl-role "
+        "provisioning; current provisioning retains the role as nologin without a password",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "paragraph",
+        "claude_reader retains its existing read-only acl for role/permission continuity, but its "
+        "historical mcp login workflow is retired. it is not a current connection identity, and "
+        "the repository does not establish a replacement postgresql mcp login identity. "
+        "references below to its mcp reader intent are historical observations unless explicitly "
+        "marked as current.",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+        "(updated 2026-08-25)",
+        "paragraph",
+        "this remains a phase 1 static-review/evidence document. later development-role "
+        "retirement work changed the operational status of the historical claude_reader "
+        "postgresql mcp identity:",
+        1,
+    ),
+)
 
 
 def _load_review():
@@ -121,110 +207,175 @@ def _load_text(path: Path):
     return path.read_text(encoding="utf-8")
 
 
-def _semantic_units(documentation: str) -> tuple[str, ...]:
-    """Group prose while keeping Markdown table rows and list items independent."""
-    units: list[str] = []
-    paragraph: list[str] = []
-    list_item: list[str] = []
-
-    def flush_paragraph() -> None:
-        if paragraph:
-            units.append(" ".join(paragraph))
-            paragraph.clear()
-
-    def flush_list_item() -> None:
-        if list_item:
-            units.append(" ".join(list_item))
-            list_item.clear()
-
-    for raw_line in documentation.splitlines():
-        line = raw_line.strip()
-        if not line:
-            flush_paragraph()
-            flush_list_item()
-        elif line.startswith("|"):
-            flush_paragraph()
-            flush_list_item()
-            units.append(line)
-        elif re.match(r"^[-*]\s+", line):
-            flush_paragraph()
-            flush_list_item()
-            list_item.append(line)
-        elif list_item and raw_line.startswith(("  ", "\t")):
-            list_item.append(line)
-        else:
-            flush_list_item()
-            paragraph.append(line)
-    flush_paragraph()
-    flush_list_item()
-    return tuple(units)
+def _normalize_markdown_text(text: str) -> str:
+    """Remove formatting noise without deleting semantic words or punctuation."""
+    return re.sub(r"\s+", " ", text.replace("`", "").replace("**", "").strip()).casefold()
 
 
-def _has_role_first_positive_identity_claim(normalized: str) -> bool:
-    for relation in ROLE_FIRST_MCP_IDENTITY_RELATION_PATTERN.finditer(normalized):
-        predicate = relation.group("predicate")
-        if "mcp" not in predicate or not EXPLICIT_MCP_IDENTITY_PATTERN.search(predicate):
-            continue
-        if EXPLICIT_CURRENT_NEGATION_PATTERN.search(predicate):
-            continue
-        if HISTORICAL_IDENTITY_QUALIFIER_PATTERN.search(predicate):
-            continue
-        return True
-    return False
+class _MarkdownUnitParser:
+    """Small deterministic Markdown parser for the reviewed semantic-unit contract."""
 
+    def __init__(self) -> None:
+        self.units: list[MarkdownUnit] = []
+        self.heading_stack: list[str] = []
+        self.buffer: list[str] = []
+        self.buffer_type = ""
+        self.in_fence = False
 
-def _has_identity_first_positive_claim(normalized: str) -> bool:
-    for relation in IDENTITY_FIRST_ROLE_RELATION_PATTERN.finditer(normalized):
-        context_start = max(0, relation.start() - 40)
-        relation_context = normalized[context_start : relation.end()]
-        if HISTORICAL_IDENTITY_QUALIFIER_PATTERN.search(relation_context):
-            continue
-        if EXPLICIT_CURRENT_NEGATION_PATTERN.search(relation_context):
-            continue
-        return True
-    return False
+    def _heading_path(self) -> str:
+        return " > ".join(_normalize_markdown_text(heading) for heading in self.heading_stack)
 
+    def _append_unit(self, unit_type: str, text: str) -> None:
+        self.units.append(
+            MarkdownUnit(self._heading_path(), unit_type, _normalize_markdown_text(text))
+        )
 
-def _has_explicit_positive_current_claim(normalized: str) -> bool:
-    claim_segments = (
-        normalized,
-        *re.split(
-            r"[.;。；,，]|\b(?:and|but|however|although|while)\b|并且|而且|但是|不过|但",
-            normalized,
-        ),
-    )
-    return any(
-        "claude_reader" in segment
-        and "mcp" in segment
-        and EXPLICIT_CURRENT_STATUS_PATTERN.search(segment)
-        and EXPLICIT_MCP_IDENTITY_PATTERN.search(segment)
-        and not EXPLICIT_CURRENT_NEGATION_PATTERN.search(segment)
-        for segment in claim_segments
-    )
+    def _flush_buffer(self) -> None:
+        if self.buffer:
+            self._append_unit(self.buffer_type, " ".join(self.buffer))
+            self.buffer.clear()
+        self.buffer_type = ""
 
-
-def _is_unfenced_active_claude_reader_mcp_claim(unit: str) -> bool:
-    normalized = unit.casefold()
-    if "claude_reader" not in normalized or "mcp" not in normalized:
+    def _consume_fence(self, line: str) -> bool:
+        if line.startswith("```"):
+            if self.in_fence:
+                self.buffer.append(line)
+                self._flush_buffer()
+            else:
+                self._flush_buffer()
+                self.buffer_type = "code_block"
+                self.buffer.append(line)
+            self.in_fence = not self.in_fence
+            return True
+        if self.in_fence:
+            self.buffer.append(line)
+            return True
         return False
-    if (
-        _has_role_first_positive_identity_claim(normalized)
-        or _has_identity_first_positive_claim(normalized)
-        or MCP_USES_ROLE_PATTERN.search(normalized)
-        or _has_explicit_positive_current_claim(normalized)
-    ):
+
+    def _consume_heading(self, line: str) -> bool:
+        heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if not heading_match:
+            return False
+        self._flush_buffer()
+        level = len(heading_match.group(1))
+        title = heading_match.group(2)
+        self.heading_stack[level - 1 :] = [title]
+        self._append_unit("heading", title)
         return True
-    has_active_identity_semantics = any(
-        marker in normalized for marker in ACTIVE_MCP_IDENTITY_MARKERS
-    )
-    has_historical_fence = any(marker in normalized for marker in HISTORICAL_MCP_FENCE_MARKERS)
-    return has_active_identity_semantics and not has_historical_fence
+
+    def _consume_table_or_list(self, raw_line: str, line: str) -> bool:
+        if line.startswith("|"):
+            self._flush_buffer()
+            self._append_unit("table_row", line)
+            return True
+        list_match = re.match(r"^\s*(?:[-*+]|\d+[.)])\s+(.+)$", raw_line)
+        if list_match:
+            self._flush_buffer()
+            self.buffer_type = "list_item"
+            self.buffer.append(list_match.group(1).strip())
+            return True
+        if self.buffer_type == "list_item" and raw_line.startswith(("  ", "\t")):
+            self.buffer.append(line)
+            return True
+        return False
+
+    def consume(self, raw_line: str) -> None:
+        line = raw_line.strip()
+        if self._consume_fence(line) or self._consume_heading(line):
+            return
+        if not line:
+            self._flush_buffer()
+            return
+        if self._consume_table_or_list(raw_line, line):
+            return
+        if self.buffer_type == "list_item":
+            self._flush_buffer()
+        if not self.buffer_type:
+            self.buffer_type = "paragraph"
+        self.buffer.append(line)
+
+    def parse(self, documentation: str) -> tuple[MarkdownUnit, ...]:
+        for raw_line in documentation.splitlines():
+            self.consume(raw_line)
+        self._flush_buffer()
+        return tuple(self.units)
 
 
-def _unfenced_active_claude_reader_mcp_claim_count(documentation: str) -> int:
-    return sum(
-        _is_unfenced_active_claude_reader_mcp_claim(unit) for unit in _semantic_units(documentation)
+def _markdown_units(documentation: str) -> tuple[MarkdownUnit, ...]:
+    """Parse headings, paragraphs, lists, tables, and code blocks deterministically."""
+    return _MarkdownUnitParser().parse(documentation)
+
+
+def _is_sensitive_sc002_unit(unit: MarkdownUnit) -> bool:
+    text = unit.normalized_text
+    return bool(
+        TARGET_ROLE_PATTERN.search(text)
+        or MCP_PATTERN.search(text)
+        or any(marker.casefold() in text for marker in CURRENT_ROLE_STATE_MARKERS)
     )
+
+
+def _sensitive_sc002_units(documentation: str) -> tuple[MarkdownUnit, ...]:
+    return tuple(unit for unit in _markdown_units(documentation) if _is_sensitive_sc002_unit(unit))
+
+
+def _expected_sensitive_unit_counter() -> Counter[MarkdownUnit]:
+    expected: Counter[MarkdownUnit] = Counter()
+    for heading_path, unit_type, normalized_text, multiplicity in SC002_SENSITIVE_UNIT_ALLOWLIST:
+        expected[MarkdownUnit(heading_path, unit_type, normalized_text)] += multiplicity
+    return expected
+
+
+def _counter_fingerprint(counter: Counter[MarkdownUnit]) -> str:
+    """Return a safe digest; never echo unreviewed document content on failure."""
+    payload = "\n".join(
+        f"{unit.heading_path}\0{unit.unit_type}\0{unit.normalized_text}\0{count}"
+        for unit, count in sorted(counter.items())
+    )
+    return sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
+def _sensitive_unit_contract_violations(documentation: str) -> tuple[str, ...]:
+    actual = Counter(_sensitive_sc002_units(documentation))
+    expected = _expected_sensitive_unit_counter()
+    violations: list[str] = []
+
+    if actual != expected:
+        missing = sum((expected - actual).values())
+        unexpected = sum((actual - expected).values())
+        violations.append(
+            "allowlist_mismatch:"
+            f"missing={missing},unexpected={unexpected},"
+            f"actual={_counter_fingerprint(actual)},expected={_counter_fingerprint(expected)}"
+        )
+
+    marker_units = {
+        marker.casefold(): sum(
+            count for unit, count in actual.items() if marker.casefold() in unit.normalized_text
+        )
+        for marker in CURRENT_ROLE_STATE_MARKERS
+    }
+    if any(count != 1 for count in marker_units.values()):
+        violations.append("current_state_marker_multiplicity")
+
+    locality_violations = 0
+    for unit in actual:
+        if any(marker.casefold() in unit.normalized_text for marker in CURRENT_ROLE_STATE_MARKERS):
+            continue
+        has_target = bool(TARGET_ROLE_PATTERN.search(unit.normalized_text))
+        has_mcp = bool(MCP_PATTERN.search(unit.normalized_text))
+        locality_violations += has_target != has_mcp
+    if locality_violations:
+        violations.append(f"sensitive_unit_locality={locality_violations}")
+
+    if DIRECT_LOGIN_COMMAND_PATTERN.search(documentation):
+        violations.append("target_direct_login_command")
+    if any(
+        marker.casefold() in documentation.casefold() for marker in FORBIDDEN_CURRENT_STATE_MARKERS
+    ):
+        violations.append("forbidden_current_state_marker")
+
+    return tuple(violations)
 
 
 # ---- Tests ----
@@ -293,96 +444,58 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         """SC002 must separate historical MCP intent from current role state."""
         doc = _load_review()
         for marker in CURRENT_ROLE_STATE_MARKERS:
-            assert marker in doc, f"SC002 current-state fence missing marker: {marker}"
+            assert doc.count(marker) == 1, (
+                f"SC002 current-state fence marker must occur exactly once: {marker}"
+            )
         assert "retained ACL role" in doc
 
-    def test_review_has_no_unfenced_active_claude_reader_mcp_claim(self):
-        """Historical context must not read as current MCP LOGIN support."""
-        claim_count = _unfenced_active_claude_reader_mcp_claim_count(_load_review())
-        assert claim_count == 0, (
-            f"SC002 contains unfenced active claude_reader MCP identity claims; count={claim_count}"
-        )
+    def test_review_matches_reviewed_sensitive_unit_contract(self):
+        """Security-sensitive SC002 units must match the exact reviewed contract."""
+        violations = _sensitive_unit_contract_violations(_load_review())
+        assert not violations, f"SC002 sensitive-unit contract failed: {violations}"
 
-    def test_active_mcp_claim_detector_distinguishes_current_and_historical_context(self):
-        """Regression detector must catch active claims without banning history."""
-        active_claims = (
-            "| claude_reader | MCP read-only PostgreSQL connection | SELECT only |",
-            "| MCP read-only | claude_reader | SELECT only |",
-            "MCP has a dedicated read-only user claude_reader.",
-            "claude_reader exists for MCP only.",
-            "Current PostgreSQL MCP login identity is claude_reader.",
-            "Current PostgreSQL MCP login identity is claude_reader and has no password.",
+    def test_sensitive_unit_contract_fails_closed_on_material_mutations(self):
+        """Add, edit, move, copy, or split of a sensitive unit must require review."""
+        doc = _load_review()
+        sensitive_paragraph = (
+            "`claude_reader` retains its existing read-only ACL for role/permission continuity, "
+            "but its\nhistorical MCP login workflow is retired. It is not a current connection "
+            "identity, and the\nrepository does not establish a replacement PostgreSQL MCP LOGIN "
+            "identity. References below\nto its MCP reader intent are historical observations "
+            "unless explicitly marked as current."
         )
-        historical_masking_active_claims = (
-            (
-                "Historically claude_reader was an MCP reader; current PostgreSQL MCP "
-                "login identity is claude_reader."
-            ),
-            ("| Historical MCP reader | claude_reader | current supported connection user |"),
-            ("claude_reader is retired, but remains an active PostgreSQL MCP connection user."),
-            "claude_reader is the PostgreSQL MCP login identity; the role is NOLOGIN.",
-            (
-                "claude_reader remains the PostgreSQL MCP connection user; "
-                "historical provisioning is retired."
-            ),
-            (
-                "claude_reader is still the PostgreSQL MCP login identity; "
-                "the historical path is retired."
-            ),
-            (
-                "No current replacement exists and claude_reader is the active "
-                "PostgreSQL MCP login identity."
-            ),
-            (
-                "| claude_reader | remains the PostgreSQL MCP connection user | "
-                "historical path retired |"
-            ),
-            (
-                "claude_reader continues to be the PostgreSQL MCP login identity; "
-                "the historical path is retired."
-            ),
-            ("claude_reader acts as the PostgreSQL MCP connection user; the role is NOLOGIN."),
-            (
-                "The PostgreSQL MCP uses claude_reader as its login identity; "
-                "the historical path is retired."
-            ),
-            (
-                "The PostgreSQL MCP continues to use claude_reader as its login identity; "
-                "the role is NOLOGIN."
-            ),
-            "claude_reader serves as the PostgreSQL MCP login user.",
-            "The PostgreSQL MCP authenticates as claude_reader.",
-            "The PostgreSQL MCP connects as claude_reader.",
-            "The PostgreSQL MCP login identity is claude_reader.",
+        sensitive_row = (
+            "| `claude_reader` | `deploy/docker/init_claude_reader.sql` | Historical MCP reader; "
+            "retained ACL role | `NOLOGIN`; existing read-only ACL retained; not a current "
+            "connection identity |"
         )
-        historical_claim = (
-            "Historically claude_reader was the MCP reader; the retained ACL role "
-            "is now NOLOGIN and that login is retired."
-        )
-        explicitly_unsupported_claim = (
-            "claude_reader is not a current PostgreSQL MCP login identity; "
-            "the historical login is retired."
-        )
-        safe_copular_historical_claims = (
-            ("claude_reader is a historical PostgreSQL MCP login identity; the login is retired."),
-            "claude_reader is the retired PostgreSQL MCP login identity.",
-            (
-                "claude_reader is a retained ACL role and is not a current "
-                "PostgreSQL MCP login identity."
-            ),
-            "Historical PostgreSQL MCP login identity is claude_reader.",
-            "Retired PostgreSQL MCP login identity is claude_reader.",
-            "claude_reader serves as a historical PostgreSQL MCP login identity.",
-        )
+        assert sensitive_paragraph in doc
+        assert sensitive_row in doc
 
-        for claim in active_claims:
-            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
-        for claim in historical_masking_active_claims:
-            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 1
-        assert _unfenced_active_claude_reader_mcp_claim_count(historical_claim) == 0
-        assert _unfenced_active_claude_reader_mcp_claim_count(explicitly_unsupported_claim) == 0
-        for claim in safe_copular_historical_claims:
-            assert _unfenced_active_claude_reader_mcp_claim_count(claim) == 0
+        mutations = (
+            doc + "\n\nCurrent PostgreSQL MCP login identity is `claude_reader`.\n",
+            doc.replace("CURRENT_LOGIN_STATE=NOLOGIN", "CURRENT_LOGIN_STATE=LOGIN", 1),
+            doc.replace(
+                "### Current-state fence (updated 2026-08-25)",
+                "### Current-state fence (updated 2026-08-25)\n\n#### Relocated role status",
+                1,
+            ),
+            doc.replace(sensitive_row, f"{sensitive_row}\n{sensitive_row}", 1),
+            doc.replace("continuity, but its\nhistorical", "continuity.\n\nIts historical", 1),
+        )
+        for mutated_doc in mutations:
+            assert _sensitive_unit_contract_violations(mutated_doc)
+
+    def test_sensitive_unit_contract_allows_unrelated_prose_edit(self):
+        """Ordinary non-sensitive prose is intentionally outside this narrow contract."""
+        doc = _load_review()
+        mutated_doc = doc.replace(
+            "for the FootballPrediction system",
+            "for the FootballPrediction project",
+            1,
+        )
+        assert mutated_doc != doc
+        assert not _sensitive_unit_contract_violations(mutated_doc)
 
     def test_sc002_and_mcp_architecture_share_current_role_contract(self):
         """Both operational documents must expose the same material role state."""

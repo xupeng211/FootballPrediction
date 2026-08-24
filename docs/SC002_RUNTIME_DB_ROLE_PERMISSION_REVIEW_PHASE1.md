@@ -16,7 +16,7 @@ model creates risks for production write safety (SC-002) and recommends a target
 ### Current-state fence (updated 2026-08-25)
 
 This remains a Phase 1 static-review/evidence document. Later development-role retirement
-work changed the operational status of the historical PostgreSQL MCP identity:
+work changed the operational status of the historical `claude_reader` PostgreSQL MCP identity:
 
 - `CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE`
 - `CURRENT_LOGIN_STATE=NOLOGIN`
@@ -55,8 +55,8 @@ to its MCP reader intent are historical observations unless explicitly marked as
 - `src/config/common.py` — environment detection
 - `deploy/docker/init_db.sql` — Docker dev schema initialization (**now guarded: SC-002 Gate B
   dev-only execution guard with `sc002.init_sql_context` parameter, before all DDL/DCL**)
-- `deploy/docker/init_claude_reader.sql` — historical MCP ACL-role provisioning; current
-  provisioning retains the role as `NOLOGIN` without a password
+- `deploy/docker/init_claude_reader.sql` — historical `claude_reader` MCP ACL-role provisioning;
+  current provisioning retains the role as `NOLOGIN` without a password
 - `src/database/migrations/env.py` — Alembic migration environment
 - `scripts/devops/gatekeeper.sh` — CI gatekeeper cold-start probe
 - `scripts/maintenance/*.py` — maintenance scripts with DB connections
@@ -312,6 +312,6 @@ The dev-only proof-of-concept has been implemented in the following files:
 | `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md` | Overall SC-002 gap analysis |
 | `src/config/db_settings.py` | DatabaseConfig + environment detection |
 | `deploy/docker/init_db.sql` | Schema DDL — no role creation beyond tables |
-| `deploy/docker/init_claude_reader.sql` | Historical MCP reader provisioning; current target is retained as a `NOLOGIN` ACL role |
+| `deploy/docker/init_claude_reader.sql` | Historical `claude_reader` MCP reader provisioning; current target is retained as a `NOLOGIN` ACL role |
 | `scripts/ops/helpers/python_db_write_guard.py` | Application-layer guard — current primary protection |
 | `src/database/migrations/env.py` | Alembic migration environment — now guarded |
