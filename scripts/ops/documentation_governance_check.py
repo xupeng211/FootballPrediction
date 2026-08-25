@@ -254,6 +254,117 @@ ALLOWED_DELETED = frozenset(
     }
 )
 
+# These patterns cover only the completed historical-report categories audited
+# in Batch 02. They are consulted for DELETE status only; they are deliberately
+# not part of ALLOWED_CHANGED, so a future ADD/MODIFY of a retired category is
+# still rejected. The alternatives avoid allowing the neighboring live or
+# unresolved data-operation reports in the same directories.
+RETIRED_HISTORY_DELETE_ONLY_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"^docs/_manifests/"
+        r"fotmob_pageprops_v2_ligue1_2025_2026_profile_001\."
+        r"architecture_decision_gate\.phase521\.json$"
+    ),
+    re.compile(
+        r"^docs/_reports/(?:"
+        r"ACQUISITION_ENGINE_RATIONALIZATION_PHASE4_55C|"
+        r"ACQUISITION_ENGINE_REGISTRY_PHASE4_54|"
+        r"ACQUISITION_GATE_NO_NETWORK_TESTS_PHASE4_55B|"
+        r"ACQUISITION_REGISTRY_GOVERNANCE_PHASE4_56C|"
+        r"ADAPTER_CANDIDATE_READINESS_CLOSURE_PHASE4_60C|"
+        r"DATASET_STATUS_AUDIT_GATE_PHASE4_36|"
+        r"DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3B|"
+        r"FETCH_ADAPT_EURO_LEAGUES_NO_NETWORK_PHASE4_57C|"
+        r"FINISHED_CSV_DRY_RUN_GATE_PHASE4_38|"
+        r"FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37|"
+        r"FOOTBALL_DATA_ADAPTER_EXTRACTION_PLAN_PHASE4_61C|"
+        r"FOOTBALL_DATA_LOCAL_CSV_PARSER_COVERAGE_HOTFIX_PHASE4_62C|"
+        r"FOOTBALL_DATA_PACKET_FILE_AUTH_PACKET_DRAFT_PHASE4_74C|"
+        r"FOOTBALL_DATA_PACKET_FILE_AUTH_REVIEW_CONSOLIDATION_PHASE4_75C|"
+        r"FOOTBALL_DATA_PACKET_FILE_READINESS_PHASE4_73C|"
+        r"FOTMOB_ADG60_RAW_PAYLOAD_STORAGE_REVIEW_NO_DB|"
+        r"FOTMOB_IDENTITY_ARCHITECTURE_DECISION_GATE_PHASE5_21|"
+        r"FOTMOB_LIGUE1_ADG60_LIVE_FETCH_FINAL_BATCH_NO_WRITE_REVIEW|"
+        r"FOTMOB_LIGUE1_SOURCE_INVENTORY_INVERSION_CORRECTION_IMPLEMENTATION_ADG14|"
+        r"FOTMOB_LIGUE1_SOURCE_INVENTORY_INVERSION_CORRECTION_PLAN_ADG13|"
+        r"FOTMOB_OBSERVED_IDENTITY_EVIDENCE_ACQUISITION_PLAN_ADG11|"
+        r"FOTMOB_RAW_DETAIL_FETCHER_CONSOLIDATION_PHASE5_20L2A|"
+        r"FOTMOB_RAW_DETAIL_HASH_STABILITY_AUDIT_PHASE5_20L2D|"
+        r"FOTMOB_URL_HASH_DETAIL_IDENTITY_PROPAGATION_IMPLEMENTATION_ADG3|"
+        r"L3H_WARNING_ONLY_CLASSIFIER_VISIBILITY_CALIBRATION_REPORT|"
+        r"L3_FEATURES_LOCAL_WRITE_GATE_PHASE4_26|"
+        r"LARGE_SCALE_TARGET_INVENTORY_SCHEMA_READINESS_AUDIT_PHASE5_21L2R|"
+        r"LOCAL_HTML_ODDS_COMMIT_PHASE4_16|"
+        r"MATCH_FEATURES_TRAINING_GATE_PHASE4_30|"
+        r"MATCH_SEED_RUNBOOK_PHASE4_12|"
+        r"ODDS_HARVEST_PIPELINE_NO_NETWORK_PHASE4_59C|"
+        r"PREDICTION_WRITE_GATE_PHASE4_32|"
+        r"REAL_DATA_SOURCE_STRATEGY_PHASE4_51|"
+        r"REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52|"
+        r"RECON_LEAGUE_DICTIONARY_FLOW_MAIN_CI_HOTFIX|"
+        r"SINGLE_TARGET_ACQUISITION_RUNTIME_SCAFFOLD_PHASE4_79D|"
+        r"SYNTHETIC_L3_PREFLIGHT_PHASE4_44|"
+        r"SYNTHETIC_PREDICTION_PREFLIGHT_PHASE4_48|"
+        r"SYNTHETIC_RAW_FIXTURE_PHASE4_42|"
+        r"authoritative_workflow_enforcement_dry_run_20260621"
+        r")\.md$"
+    ),
+    re.compile(
+        r"^docs/_reports/fotmob_l2_(?:"
+        r"(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)"
+        r"_guarded_reconciliation_(?:execution_plan|execution_verification|"
+        r"post_execution_audit)_202606(?:15|16|17|18)"
+        r"|guarded_reconciliation_limit10_change_20260616"
+        r"|guarded_reconciliation_write_draft_20260615"
+        r"|limit10_selection_investigation_20260616"
+        r")\.md$"
+    ),
+    re.compile(
+        r"^docs/_reports/(?:"
+        r"fotmob_null_id_event_shape_audit_20260611|"
+        r"fotmob_parser_dry_run_4_retained_rerun_20260611|"
+        r"fotmob_parser_dry_run_after_synthetic_id_policy_20260612|"
+        r"fotmob_parser_expanded_retained_dry_run_20260612|"
+        r"fotmob_raw_parser_stage_gate_20260612"
+        r")\.md$"
+    ),
+    re.compile(
+        r"^docs/_reports/(?:"
+        r"matches_labeling_backfill_write_verification_20260619|"
+        r"matches_labeling_post_backfill_audit_20260619|"
+        r"matches_labeling_schema_design_proposal_20260619|"
+        r"matches_labeling_schema_migration_verification_20260619|"
+        r"score_backfill_dry_run_20260619|"
+        r"score_backfill_write_verification_20260619|"
+        r"score_fields_result_label_audit_20260619|"
+        r"smoke_training_dataset_dry_run_20260619|"
+        r"training_eligibility_after_score_dry_run_20260619|"
+        r"training_eligibility_dry_run_20260619|"
+        r"training_eligibility_write_verification_20260619|"
+        r"training_pipeline_smoke_dry_run_20260619"
+        r")\.md$"
+    ),
+    re.compile(
+        r"^docs/_reports/REPO_SLIMMING_PHASE(?:"
+        r"2_5_MODEL_ARTIFACT_RECOVERY|2_INDEX_CLEANUP|3_1_DRY_RUN|"
+        r"3_2_NARROW_DRY_RUN|3_3_MANUAL_DRY_RUN|3_4_GO_NO_GO|3_HISTORY_AUDIT"
+        r")\.md$"
+    ),
+    re.compile(r"^docs/(?:FORENSIC_AUDIT_REPORT|REPO_HISTORY_REWRITE_GO_NO_GO)\.md$"),
+    re.compile(r"^docs/V26_7_STRESS_TEST_20260107_111453\.txt$"),
+    re.compile(r"^docs/architecture/DEEP_CLEAN_TECH_DEBT_MAP\.md$"),
+    re.compile(r"^docs/audit/yield_audit_20251223_182617\.txt$"),
+)
+
+
+def is_delete_allowed(path: str) -> bool:
+    """Return whether a path is in an exact or audited delete-only retirement set."""
+
+    return path in ALLOWED_DELETED or any(
+        pattern.fullmatch(path) for pattern in RETIRED_HISTORY_DELETE_ONLY_PATTERNS
+    )
+
+
 ALLOWED_ADDED = (
     PHASE0_ALLOWED_ADDED
     | PHASE1_ALLOWED_ADDED
@@ -519,7 +630,7 @@ def validate_change_budget(changes: list[Change], errors: list[str]) -> None:
     changed = changed_paths(changes)
     max_added = max_added_files_for(added)
     allowed_deleted = {
-        change.path for change in changes if change.status == "D" and change.path in ALLOWED_DELETED
+        change.path for change in changes if change.status == "D" and is_delete_allowed(change.path)
     }
     unexpected = sorted(changed - (ALLOWED_CHANGED | allowed_deleted))
     missing = sorted(ALLOWED_ADDED - {path for path in ALLOWED_ADDED if (ROOT / path).exists()})
@@ -548,7 +659,7 @@ def validate_prohibited_files(changes: list[Change], errors: list[str]) -> None:
             errors.append(f"new decision report is prohibited: {path}")
 
     for change in changes:
-        if change.status == "D" and change.path not in ALLOWED_DELETED:
+        if change.status == "D" and not is_delete_allowed(change.path):
             errors.append(f"deleted file is prohibited: {change.path}")
         if change.status == "R":
             errors.append(
