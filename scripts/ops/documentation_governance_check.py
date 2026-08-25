@@ -260,9 +260,7 @@ ALLOWED_ADDED = (
     | AI_AUDIT_ALLOWED_ADDED
     | TEST_DEBT_AUDIT_ALLOWED_ADDED
 )
-ALLOWED_CHANGED = (
-    ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | AGENT_CONFIG_ALLOWED_CHANGED | ALLOWED_DELETED
-)
+ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | AGENT_CONFIG_ALLOWED_CHANGED
 
 REQUIRED_DOCS = (
     "AGENTS.md",
@@ -518,7 +516,10 @@ def validate_change_budget(changes: list[Change], errors: list[str]) -> None:
     added = added_paths(changes)
     changed = changed_paths(changes)
     max_added = max_added_files_for(added)
-    unexpected = sorted(changed - ALLOWED_CHANGED)
+    allowed_deleted = {
+        change.path for change in changes if change.status == "D" and change.path in ALLOWED_DELETED
+    }
+    unexpected = sorted(changed - (ALLOWED_CHANGED | allowed_deleted))
     missing = sorted(ALLOWED_ADDED - {path for path in ALLOWED_ADDED if (ROOT / path).exists()})
 
     if len(added) > max_added:
