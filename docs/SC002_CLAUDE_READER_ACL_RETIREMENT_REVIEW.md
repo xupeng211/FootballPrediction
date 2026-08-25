@@ -247,7 +247,7 @@ therefore remains `UNKNOWN`, not `NONE`.
 | all public sequences `USAGE, SELECT` | 16 sequences × 2 privileges | MATCH |
 | default table `SELECT` | one default-ACL row / one exploded privilege | MATCH |
 | default sequence `USAGE, SELECT` | one default-ACL row / two exploded privileges | MATCH |
-| repository password provisioning | absent | current DB retains a verifier (`rolpassword IS NOT NULL=true`) — `CONTRACT_ONLY`, not a state match |
+| password absent in fresh repository provisioning | verifier present (`rolpassword IS NOT NULL=true`) | `CONTRACT_ONLY` — intentional state non-match |
 
 The ACL/category rows reconcile to the repository contract. The password row is
 intentionally **not** a state match: the repository no longer provisions a
