@@ -250,6 +250,7 @@ ALLOWED_DELETED = frozenset(
         ".claude/skills/naming_convention.md",
         ".claude/test_guard.skill.md",
         "docs/templates/HISTORY_REWRITE_COLLABORATOR_NOTICE.md",
+        "scripts/test_gui.js",
     }
 )
 

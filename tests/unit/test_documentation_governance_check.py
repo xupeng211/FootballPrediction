@@ -242,3 +242,17 @@ def test_obsolete_history_rewrite_notice_is_delete_only():
     errors = []
     checker.validate_change_budget([checker.Change("D", retired_path, None)], errors)
     assert not any("deleted file is prohibited" in error for error in errors)
+
+
+def test_unreferenced_gui_probe_is_delete_only():
+    retired_path = "scripts/test_gui.js"
+    assert retired_path in checker.ALLOWED_DELETED
+
+    for status in ("A", "M"):
+        errors: list[str] = []
+        checker.validate_change_budget([checker.Change(status, retired_path, None)], errors)
+        assert any("unexpected changed paths" in error for error in errors)
+
+    errors = []
+    checker.validate_change_budget([checker.Change("D", retired_path, None)], errors)
+    assert not any("deleted file is prohibited" in error for error in errors)
