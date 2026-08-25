@@ -181,6 +181,11 @@ services:
     container_name: football_prediction_db_dev
     restart: always
 
+    # Fail closed before the official image can turn the retired identity from
+    # stale DB_USER configuration into a fresh LOGIN bootstrap owner.
+    entrypoint:
+      - /usr/local/bin/postgres-entrypoint-retired-role-guard.sh
+
     # SC-002 Gate B: PostgreSQL server-level guard parameter.
     # Reinforces the dev-only guard in init_db.sql at the server level.
     # Without this, init_db.sql will abort with a clear error message.
@@ -204,6 +209,7 @@ services:
 
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
+      - ./deploy/docker/postgres-entrypoint-retired-role-guard.sh:/usr/local/bin/postgres-entrypoint-retired-role-guard.sh:ro
       - ./deploy/docker/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
 
     healthcheck:

@@ -44,7 +44,7 @@ GitHub/Actions 状态仍以机器事实为准；本摘要不授权训练、预�
 |---|---|
 | Direct-login retirement | `LOGIN_RETIREMENT_STATE=DONE`；existing live PostgreSQL role `claude_reader` 的 last-audited 状态为 `NOLOGIN`；本次没有重新连接或查询 live DB |
 | ACL retirement review | `COMPLETE`；decision-support evidence 见 [`docs/SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md`](SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md)，该 audit artifact 的 authority 仍为 `NONE` |
-| Future provisioning retirement | `FUTURE_PROVISIONING_RETIREMENT_STATE=DONE`；`CURRENT_FUTURE_PROVISIONING_STATE=RETIRED`；repository fresh bootstrap 不再创建 `claude_reader` 或授予其 direct/default ACL；`FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO`；`PROVISIONING_BLOCKER_REMAINS=NO` |
+| Future provisioning retirement | `FUTURE_PROVISIONING_RETIREMENT_STATE=DONE`；`CURRENT_FUTURE_PROVISIONING_STATE=RETIRED`；repository fresh bootstrap 不再创建 `claude_reader` 或授予其 direct/default ACL；fresh-only entrypoint guard 会在 official initdb 前拒绝解析为该退休身份的旧 `DB_USER`；`FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO`；`PROVISIONING_BLOCKER_REMAINS=NO` |
 | Consumer visibility | `PROCESS_ENV_COVERAGE_COMPLETE=NO`；`KNOWN_PROCESS_CONSUMER_STATE=UNKNOWN_INCOMPLETE_ENVIRONMENT_VISIBILITY`；`LOCAL_DEVELOPMENT_HOST_CONSUMER_STATE=UNKNOWN_DUE_TO_INCOMPLETE_PROCESS_ENVIRONMENT_VISIBILITY`；`HOST_COVERAGE_COMPLETE=NO` |
 | External consumer boundary | `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`；`EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO`；没有把 incomplete host/process visibility 升级为 absence |
 | Existing live DB ACL | `LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED`；last-audited 54 direct privileges、3 default ACL privileges、40 dependencies 保持未动 |

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 RETIRED_PROVISIONING_SQL = ROOT / "deploy/docker/init_claude_reader.sql"
@@ -12,10 +14,13 @@ ACTIVE_INIT_SQL_FILES = tuple(sorted((ROOT / "deploy/docker").glob("*.sql")))
 DEV_COMPOSE = ROOT / "docker-compose.dev.yml"
 UNIFIED_COMPOSE = ROOT / "docker-compose.yml"
 COMPOSE_FILES = (DEV_COMPOSE, UNIFIED_COMPOSE)
+BOOTSTRAP_GUARD = ROOT / "deploy/docker/postgres-entrypoint-retired-role-guard.sh"
+BOOTSTRAP_GUARD_CONTAINER_PATH = "/usr/local/bin/postgres-entrypoint-retired-role-guard.sh"
 MCP_ARCHITECTURE = ROOT / "docs/MCP_ARCHITECTURE.md"
 PROJECT_STATUS = ROOT / "docs/PROJECT_STATUS.md"
 MCP_CONFIG = ROOT / ".claude/mcp-config.json"
 TARGET_ROLE_NAME = "claude_reader"
+FRESH_BOOTSTRAP_GUARD_REJECTION_EXIT_CODE = 78
 PREEXISTING_DEV_POC_ROLES = {
     "football_app",
     "football_gatekeeper",
@@ -105,6 +110,38 @@ def test_compose_files_do_not_mount_retired_provisioning() -> None:
         assert TARGET_ROLE_NAME not in compose
 
 
+def test_compose_fresh_bootstrap_is_guarded_before_official_entrypoint() -> None:
+    expected_mount = f"./deploy/docker/{BOOTSTRAP_GUARD.name}:{BOOTSTRAP_GUARD_CONTAINER_PATH}:ro"
+
+    assert BOOTSTRAP_GUARD.is_file()
+    assert os.access(BOOTSTRAP_GUARD, os.X_OK)
+    for compose_file in COMPOSE_FILES:
+        compose = compose_file.read_text(encoding="utf-8")
+        assert compose.count(f"- {BOOTSTRAP_GUARD_CONTAINER_PATH}") == 1
+        assert compose.count(expected_mount) == 1
+        assert compose.count("POSTGRES_USER=${DB_USER:-football_user}") == 1
+
+
+def test_fresh_bootstrap_guard_rejects_stale_target_db_user(tmp_path: Path) -> None:
+    environment = {
+        "PATH": os.environ.get("PATH", ""),
+        "PGDATA": str(tmp_path),
+        "POSTGRES_USER": TARGET_ROLE_NAME,
+    }
+
+    result = subprocess.run(
+        [str(BOOTSTRAP_GUARD), "postgres"],
+        check=False,
+        capture_output=True,
+        env=environment,
+        text=True,
+    )
+
+    assert result.returncode == FRESH_BOOTSTRAP_GUARD_REJECTION_EXIT_CODE
+    assert "fresh PostgreSQL bootstrap refuses retired POSTGRES_USER=claude_reader" in result.stderr
+    assert not (tmp_path / "PG_VERSION").exists()
+
+
 def test_active_future_provisioning_does_not_recreate_target_role_or_acl() -> None:
     sql = _without_sql_comments(_active_init_sql()).casefold()
 
@@ -144,6 +181,7 @@ def test_unified_database_keeps_existing_data_boundary_without_init_scripts() ->
 
     assert "./data/postgres:/var/lib/postgresql/data" in compose
     assert "/docker-entrypoint-initdb.d/" not in compose
+    assert re.search(r"(?m)^\s+command:\n\s+- postgres$", compose)
     assert "schema 不在 unified/production-like Compose 启动时自动创建" in compose
     assert "pg_isready -U ${DB_USER:-football_user}" in compose
 

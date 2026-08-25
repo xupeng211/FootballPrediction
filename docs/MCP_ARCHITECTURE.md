@@ -66,7 +66,9 @@
 │   └── docker_server.py         # Docker MCP 服务器
 │
 ├── deploy/docker/
-│   └── init_db.sql              # development fresh schema / role POC 初始化脚本
+│   ├── init_db.sql              # development fresh schema / role POC 初始化脚本
+│   └── postgres-entrypoint-retired-role-guard.sh
+│                               # fresh PGDATA 在 official initdb 前拒绝退休身份
 │
 ├── scripts/ops/
 │   └── verify_mcp.sh            # MCP 验证与重载提示脚本
@@ -88,6 +90,8 @@ docker-compose -f docker-compose.dev.yml up -d
 Repository 已删除历史 `init_claude_reader.sql`，development 与 unified/production-like
 Compose 均不再把它挂载到 PostgreSQL 官方 initdb 入口。因此 future/fresh database 不会再由
 repository 自动创建 `claude_reader`，也不会再自动授予该 role 的 direct ACL 或 default ACL。
+两个 Compose 还在官方 entrypoint 前挂载 fresh-only guard；若旧 `DB_USER` 解析为该退休身份，
+empty PGDATA 会以 exit 78 fail closed，官方 initdb 无机会把它重建为 LOGIN bootstrap owner。
 
 这项 future provisioning 变更不执行 SQL，也不会改变 existing live database。该 live role 的
 last-audited 状态仍是 `NOLOGIN`，既有 ACL、default ACL 与 dependencies 保留；任何重新查询、
