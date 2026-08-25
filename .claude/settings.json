@@ -1,7 +1,6 @@
 {
   "skills": {
-    "enabled": false,
-    "note": "Skills configuration disabled - auto-load mechanism not verified. See .claude/skills/ for reference documentation."
+    "enabled": false
   },
   "mcpServers": {},
   "permissions": {
