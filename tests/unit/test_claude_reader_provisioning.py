@@ -1,28 +1,60 @@
-"""Regression coverage for the retired development PostgreSQL login role."""
+"""Regression coverage for retired future ``claude_reader`` provisioning."""
 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-PROVISIONING_SQL = ROOT / "deploy/docker/init_claude_reader.sql"
-COMPOSE_FILES = (ROOT / "docker-compose.yml", ROOT / "docker-compose.dev.yml")
+RETIRED_PROVISIONING_SQL = ROOT / "deploy/docker/init_claude_reader.sql"
+ACTIVE_INIT_SQL_FILES = tuple(sorted((ROOT / "deploy/docker").glob("*.sql")))
+DEV_COMPOSE = ROOT / "docker-compose.dev.yml"
+UNIFIED_COMPOSE = ROOT / "docker-compose.yml"
+COMPOSE_FILES = (DEV_COMPOSE, UNIFIED_COMPOSE)
+BOOTSTRAP_GUARD = ROOT / "deploy/docker/postgres-entrypoint-retired-role-guard.sh"
+BOOTSTRAP_GUARD_CONTAINER_PATH = "/usr/local/bin/postgres-entrypoint-retired-role-guard.sh"
 MCP_ARCHITECTURE = ROOT / "docs/MCP_ARCHITECTURE.md"
+PROJECT_STATUS = ROOT / "docs/PROJECT_STATUS.md"
 MCP_CONFIG = ROOT / ".claude/mcp-config.json"
-TARGET_ROLE_PATTERN = r'"?CLAUDE_READER"?'
 TARGET_ROLE_NAME = "claude_reader"
+FRESH_BOOTSTRAP_GUARD_REJECTION_EXIT_CODE = 78
+PREEXISTING_DEV_POC_ROLES = {
+    "football_app",
+    "football_gatekeeper",
+    "football_ingestion",
+    "football_owner",
+    "football_reader",
+    "football_training",
+}
+FORBIDDEN_REPLACEMENT_ROLE_NAMES = {
+    "ai_reader",
+    "claude_reader_v2",
+    "codex_reader",
+    "mcp_reader",
+    "readonly_ai",
+}
 
 
-def _normalized_statements() -> tuple[str, ...]:
-    sql = PROVISIONING_SQL.read_text(encoding="utf-8")
-    sql_without_comments = re.sub(r"(?m)--.*$", "", sql)
-    return tuple(
-        " ".join(statement.split()).upper()
-        for statement in sql_without_comments.split(";")
-        if statement.strip()
-    )
+def _without_sql_comments(sql: str) -> str:
+    return re.sub(r"(?m)--.*$", "", sql)
+
+
+def _active_init_sql() -> str:
+    return "\n".join(path.read_text(encoding="utf-8") for path in ACTIVE_INIT_SQL_FILES)
+
+
+def _created_roles(sql: str) -> set[str]:
+    return {
+        match.group(1).casefold()
+        for match in re.finditer(
+            r"\bCREATE\s+(?:ROLE|USER)\s+\"?([a-z_][a-z0-9_]*)\"?",
+            _without_sql_comments(sql),
+            flags=re.IGNORECASE,
+        )
+    }
 
 
 def _has_direct_target_login_instruction(documentation: str) -> bool:
@@ -65,92 +97,139 @@ def _is_postgres_mcp_entry(name: str, payload: object) -> bool:
     return any(marker in serialized for marker in postgres_markers)
 
 
-def test_historical_development_role_is_provisioned_without_login_or_password() -> None:
-    statements = _normalized_statements()
-    target_statements = tuple(
-        statement
-        for statement in statements
-        if re.search(rf"\b(?:USER|ROLE)\s+{TARGET_ROLE_PATTERN}\b", statement)
-    )
-
-    create_user_count = sum(
-        bool(re.match(rf"CREATE\s+USER\s+{TARGET_ROLE_PATTERN}\b", statement))
-        for statement in statements
-    )
-    create_nologin_count = sum(
-        bool(
-            re.match(rf"CREATE\s+ROLE\s+{TARGET_ROLE_PATTERN}\b", statement)
-            and re.search(r"\bNOLOGIN\b", statement)
-        )
-        for statement in statements
-    )
-    target_login_count = sum(
-        bool(re.search(r"\bLOGIN\b", statement)) for statement in target_statements
-    )
-    target_password_count = sum(
-        bool(re.search(r"\bPASSWORD\b", statement)) for statement in target_statements
-    )
-    alter_target_login_count = sum(
-        bool(
-            re.match(rf"ALTER\s+ROLE\s+{TARGET_ROLE_PATTERN}\b", statement)
-            and re.search(r"\bLOGIN\b", statement)
-        )
-        for statement in statements
-    )
-
-    assert create_user_count == 0
-    assert create_nologin_count == 1
-    assert target_login_count == 0
-    assert target_password_count == 0
-    assert alter_target_login_count == 0
+def test_retired_provisioning_sql_is_deleted() -> None:
+    assert not RETIRED_PROVISIONING_SQL.exists()
+    assert RETIRED_PROVISIONING_SQL not in ACTIVE_INIT_SQL_FILES
 
 
-def test_historical_role_acl_provisioning_is_preserved() -> None:
-    statements = set(_normalized_statements())
-    expected_acl_statements = {
-        "GRANT CONNECT ON DATABASE FOOTBALL_DB TO CLAUDE_READER",
-        "GRANT USAGE ON SCHEMA PUBLIC TO CLAUDE_READER",
-        "GRANT SELECT ON ALL TABLES IN SCHEMA PUBLIC TO CLAUDE_READER",
-        "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA PUBLIC TO CLAUDE_READER",
-        ("ALTER DEFAULT PRIVILEGES IN SCHEMA PUBLIC GRANT SELECT ON TABLES TO CLAUDE_READER"),
-        (
-            "ALTER DEFAULT PRIVILEGES IN SCHEMA PUBLIC "
-            "GRANT USAGE, SELECT ON SEQUENCES TO CLAUDE_READER"
-        ),
-    }
+def test_compose_files_do_not_mount_retired_provisioning() -> None:
+    for compose_file in COMPOSE_FILES:
+        compose = compose_file.read_text(encoding="utf-8").casefold()
 
-    missing_acl_statement_count = len(expected_acl_statements - statements)
-    acl_statement_count = sum(
-        statement.startswith(("GRANT ", "ALTER DEFAULT PRIVILEGES ")) for statement in statements
-    )
-
-    assert missing_acl_statement_count == 0
-    assert acl_statement_count == len(expected_acl_statements)
+        assert "init_claude_reader.sql" not in compose
+        assert TARGET_ROLE_NAME not in compose
 
 
-def test_compose_keeps_the_hardened_provisioning_entrypoint() -> None:
+def test_compose_fresh_bootstrap_is_guarded_before_official_entrypoint() -> None:
+    expected_mount = f"./deploy/docker/{BOOTSTRAP_GUARD.name}:{BOOTSTRAP_GUARD_CONTAINER_PATH}:ro"
+
+    assert BOOTSTRAP_GUARD.is_file()
+    assert os.access(BOOTSTRAP_GUARD, os.X_OK)
     for compose_file in COMPOSE_FILES:
         compose = compose_file.read_text(encoding="utf-8")
-        source_reference_count = compose.count("./deploy/docker/init_claude_reader.sql:")
-        initdb_destination_count = compose.count(
-            "/docker-entrypoint-initdb.d/init_claude_reader.sql:ro"
-        )
-
-        assert source_reference_count == 1
-        assert initdb_destination_count == 1
+        assert compose.count(f"- {BOOTSTRAP_GUARD_CONTAINER_PATH}") == 1
+        assert compose.count(expected_mount) == 1
+        assert compose.count("POSTGRES_USER=${DB_USER:-football_user}") == 1
 
 
-def test_mcp_documentation_retires_the_historical_direct_login() -> None:
+def test_fresh_bootstrap_guard_rejects_stale_target_db_user(tmp_path: Path) -> None:
+    environment = {
+        "PATH": os.environ.get("PATH", ""),
+        "PGDATA": str(tmp_path),
+        "POSTGRES_USER": TARGET_ROLE_NAME,
+    }
+
+    result = subprocess.run(
+        [str(BOOTSTRAP_GUARD), "postgres"],
+        check=False,
+        capture_output=True,
+        env=environment,
+        text=True,
+    )
+
+    assert result.returncode == FRESH_BOOTSTRAP_GUARD_REJECTION_EXIT_CODE
+    assert "fresh PostgreSQL bootstrap refuses retired POSTGRES_USER=claude_reader" in result.stderr
+    assert not (tmp_path / "PG_VERSION").exists()
+
+
+def test_active_future_provisioning_does_not_recreate_target_role_or_acl() -> None:
+    sql = _without_sql_comments(_active_init_sql()).casefold()
+
+    assert TARGET_ROLE_NAME not in sql
+    assert not re.search(rf"\bcreate\s+(?:role|user)\s+\"?{TARGET_ROLE_NAME}\b", sql)
+    assert not re.search(rf"\bgrant\b[^;]*\bto\s+\"?{TARGET_ROLE_NAME}\b", sql)
+    assert not re.search(
+        rf"\balter\s+default\s+privileges\b[^;]*\bto\s+\"?{TARGET_ROLE_NAME}\b",
+        sql,
+    )
+
+
+def test_active_init_sql_role_set_has_no_replacement_identity() -> None:
+    sql = _active_init_sql()
+    created_roles = _created_roles(sql)
+
+    # These six development POC roles predate this retirement. Pinning the complete
+    # set makes any new replacement identity an explicit, reviewed contract change.
+    assert created_roles == PREEXISTING_DEV_POC_ROLES
+    assert created_roles.isdisjoint(FORBIDDEN_REPLACEMENT_ROLE_NAMES | {TARGET_ROLE_NAME})
+    for role_name in FORBIDDEN_REPLACEMENT_ROLE_NAMES:
+        assert role_name not in sql.casefold()
+
+
+def test_development_schema_bootstrap_remains_active() -> None:
+    compose = DEV_COMPOSE.read_text(encoding="utf-8")
+
+    assert compose.count("./deploy/docker/init_db.sql:") == 1
+    assert compose.count("/docker-entrypoint-initdb.d/init_db.sql:ro") == 1
+    assert "sc002.init_sql_context=development" in compose
+    assert "postgres_dev_data:/var/lib/postgresql/data" in compose
+    assert "pg_isready -U ${DB_USER:-football_user}" in compose
+
+
+def test_unified_database_keeps_existing_data_boundary_without_init_scripts() -> None:
+    compose = UNIFIED_COMPOSE.read_text(encoding="utf-8")
+
+    assert "./data/postgres:/var/lib/postgresql/data" in compose
+    assert "/docker-entrypoint-initdb.d/" not in compose
+    assert re.search(r"(?m)^\s+command:\n\s+- postgres$", compose)
+    assert "schema 不在 unified/production-like Compose 启动时自动创建" in compose
+    assert "pg_isready -U ${DB_USER:-football_user}" in compose
+
+
+def test_mcp_documentation_records_future_provisioning_retirement() -> None:
     documentation = MCP_ARCHITECTURE.read_text(encoding="utf-8")
 
     assert not _has_direct_target_login_instruction(documentation)
     assert not _has_active_target_login_claim(documentation)
-    assert "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE" in documentation
-    assert "CURRENT_LOGIN_STATE=NOLOGIN" in documentation
-    assert "CURRENT_DIRECT_LOGIN_SUPPORT=NO" in documentation
-    assert "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED" in documentation
-    assert "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT" in documentation
-    assert "PostgreSQL MCP（历史 / 已退役登录）" in documentation
+    for marker in (
+        "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE",
+        "CURRENT_LOGIN_STATE=NOLOGIN",
+        "CURRENT_DIRECT_LOGIN_SUPPORT=NO",
+        "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader",
+        "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
+        "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO",
+        "CURRENT_FUTURE_PROVISIONING_STATE=RETIRED",
+        "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO",
+        "EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN",
+        "EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO",
+        "LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED",
+        "ROLE_DROP_STATE=BLOCKED",
+    ):
+        assert marker in documentation
+    assert "PostgreSQL MCP（历史 / 已退役 `claude_reader` 登录）" in documentation
+
+
+def test_project_status_preserves_the_layer_boundaries() -> None:
+    status = PROJECT_STATUS.read_text(encoding="utf-8")
+
+    for marker in (
+        "LOGIN_RETIREMENT_STATE=DONE",
+        "FUTURE_PROVISIONING_RETIREMENT_STATE=DONE",
+        "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO",
+        "PROVISIONING_BLOCKER_REMAINS=NO",
+        "PROCESS_ENV_COVERAGE_COMPLETE=NO",
+        "KNOWN_PROCESS_CONSUMER_STATE=UNKNOWN_INCOMPLETE_ENVIRONMENT_VISIBILITY",
+        "LOCAL_DEVELOPMENT_HOST_CONSUMER_STATE="
+        "UNKNOWN_DUE_TO_INCOMPLETE_PROCESS_ENVIRONMENT_VISIBILITY",
+        "HOST_COVERAGE_COMPLETE=NO",
+        "EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN",
+        "EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO",
+        "LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED",
+        "ROLE_DROP_STATE=BLOCKED",
+        "CLAUDE_READER_FULL_RETIREMENT=NOT_DONE",
+        "UNKNOWN_STALE_FRESH_BOOTSTRAP_COMPATIBILITY_RISK",
+    ):
+        assert marker in status
 
 
 def test_mcp_documentation_matches_current_tracked_configuration() -> None:
@@ -163,9 +242,12 @@ def test_mcp_documentation_matches_current_tracked_configuration() -> None:
     ]
 
     assert configured_postgres_entries == []
-    assert "当前 tracked `.claude/mcp-config.json` 也没有 PostgreSQL MCP entry" in documentation
-    assert "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED" in documentation
+    assert "当前 tracked `.claude/mcp-config.json` 没有 PostgreSQL MCP entry" in documentation
+    assert "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader" in documentation
     assert "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT" in documentation
+    assert "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO" in documentation
+    assert "development `init_db.sql` 会创建 pre-existing `football_reader`" in documentation
+    assert "不表示\nrepository 没有 provision 任何 LOGIN role" in documentation
     assert "仓库没有 MCP loader" in documentation
 
 

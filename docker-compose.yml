@@ -30,6 +30,14 @@ services:
     image: postgres:15-alpine
     container_name: football_prediction_db
     restart: always
+    # Preserve the existing DB_USER contract, but reject the retired identity
+    # before official-image initdb can recreate it on an empty data directory.
+    entrypoint:
+      - /usr/local/bin/postgres-entrypoint-retired-role-guard.sh
+    # Compose does not inherit the image CMD after an entrypoint override.
+    # Keep the official postgres server command explicit.
+    command:
+      - postgres
     env_file:
       - .env
     environment:
@@ -49,10 +57,10 @@ services:
     volumes:
       # V150.5: 持久化存储 (bind mount - 恢复旧数据库)
       - ./data/postgres:/var/lib/postgresql/data
+      - ./deploy/docker/postgres-entrypoint-retired-role-guard.sh:/usr/local/bin/postgres-entrypoint-retired-role-guard.sh:ro
       # schema 不在 unified/production-like Compose 启动时自动创建；
       # deploy/docker/init_db.sql 仅由 docker-compose.dev.yml 提供本地开发 bootstrap。
       # forward schema evolution 必须按 database/migrations/ 单独授权并执行。
-      - ./deploy/docker/init_claude_reader.sql:/docker-entrypoint-initdb.d/init_claude_reader.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db}"]
       interval: 10s

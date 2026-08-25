@@ -30,8 +30,15 @@ CURRENT_ROLE_STATE_MARKERS = (
     "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE",
     "CURRENT_LOGIN_STATE=NOLOGIN",
     "CURRENT_DIRECT_LOGIN_SUPPORT=NO",
-    "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED",
+    "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader",
     "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
+    "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO",
+    "CURRENT_FUTURE_PROVISIONING_STATE=RETIRED",
+    "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO",
+    "EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN",
+    "EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO",
+    "LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED",
+    "ROLE_DROP_STATE=BLOCKED",
 )
 
 PASSWORD_TABLE_COLUMN_COUNT = 4
@@ -48,9 +55,13 @@ DOCUMENT_ROOT_HEADING = "sc-002 runtime db role / permission review — phase 1"
 REVIEWED_OWNER_METADATA_ALIAS = (
     "owner: project governance; reviewers access this page through the docs index"
 )
-FULL_DOCUMENT_EXPECTED_COUNT = 183
+CURRENT_STATE_FENCE_HEADING = (
+    "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
+    "(updated 2026-08-25)"
+)
+FULL_DOCUMENT_EXPECTED_COUNT = 190
 FULL_DOCUMENT_EXPECTED_FINGERPRINT = (
-    "f418f810058f52b8f078fb5563536715ae66ef3d78eb949c9ab4f74e162ac6b6"
+    "ba1e852a2a8be9833a0a2848948dc456ca0e5eed16964dc7a2d92a2386898c7c"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -61,6 +72,11 @@ FORBIDDEN_CURRENT_STATE_MARKERS = (
     "CURRENT_DIRECT_LOGIN_SUPPORT=YES",
     "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=CLAUDE_READER",
     "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=PRESENT",
+    "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=YES",
+    "CURRENT_FUTURE_PROVISIONING_STATE=ACTIVE",
+    "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=YES",
+    "LIVE_DATABASE_ACL_RETIREMENT_STATE=DONE",
+    "ROLE_DROP_STATE=DONE",
 )
 
 
@@ -74,8 +90,7 @@ class MarkdownUnit(NamedTuple):
 
 CONTEXTUAL_SESSION_SAFE_UNITS = (
     MarkdownUnit(
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
+        CURRENT_STATE_FENCE_HEADING,
         "list_item",
         "connect to any database",
     ),
@@ -88,19 +103,61 @@ CONTEXTUAL_SESSION_SAFE_UNITS = (
 # allowlist in a STRICT exact-head change and receive independent semantic review.
 SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
     (
-        "sc-002 runtime db role / permission review — phase 1 > current db role / account "
-        "model > connection sources by role",
-        "table_row",
-        "| historical mcp read-only (retired login) | claude_reader | init_claude_reader.sql | "
-        "retained acl role with nologin; no current postgresql mcp login identity is established |",
+        CURRENT_STATE_FENCE_HEADING,
+        "paragraph",
+        "this remains a phase 1 static-review/evidence document. later development-role "
+        "retirement work changed both the login and future-provisioning status of the historical "
+        "claude_reader postgresql mcp identity:",
+        1,
+    ),
+    *(
+        (CURRENT_STATE_FENCE_HEADING, "list_item", marker.casefold(), 1)
+        for marker in CURRENT_ROLE_STATE_MARKERS
+    ),
+    (
+        CURRENT_STATE_FENCE_HEADING,
+        "paragraph",
+        "the existing live claude_reader role retains its last-audited read-only acl for "
+        "role/permission continuity, but its historical mcp login workflow and repository future "
+        "provisioning are retired. it is not a current connection identity. this retirement does "
+        "not create, rename, or designate a replacement postgresql login identity. separately, "
+        "the repository already provisions the dev-only football_reader login role in init_db.sql "
+        "and exposes its development credentials through compose; it predates this retirement, "
+        "remains part of the six-role dev poc, and no tracked postgresql mcp entry currently "
+        "selects it. existing live acl/default acl retirement and role drop remain blocked. "
+        "references below to claude_reader mcp reader intent are historical observations unless "
+        "explicitly marked as current.",
+        1,
+    ),
+    (
+        CURRENT_STATE_FENCE_HEADING,
+        "list_item",
+        "connect to any database",
+        1,
+    ),
+    (
+        CURRENT_STATE_FENCE_HEADING,
+        "list_item",
+        "deploy/docker/init_claude_reader.sql — deleted historical claude_reader mcp acl-role "
+        "provisioning; no current executable provisioning path remains",
         1,
     ),
     (
         "sc-002 runtime db role / permission review — phase 1 > current db role / account "
         "model > observed users",
         "table_row",
-        "| claude_reader | deploy/docker/init_claude_reader.sql | historical mcp reader; retained "
-        "acl role | nologin; existing read-only acl retained; not a current connection identity |",
+        "| claude_reader | existing live db (last audited); historical provisioning deleted | "
+        "historical mcp reader; retained acl role | nologin; existing read-only acl retained; not "
+        "a current connection identity or future-provisioned role |",
+        1,
+    ),
+    (
+        "sc-002 runtime db role / permission review — phase 1 > current db role / account "
+        "model > connection sources by role",
+        "table_row",
+        "| historical mcp read-only (retired login) | claude_reader | historical provisioning "
+        "(retired and deleted) | retained live acl role with nologin; no current postgresql mcp "
+        "login identity or future provisioning is established |",
         1,
     ),
     (
@@ -109,22 +166,6 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "table_row",
         "| claude reader (historical mcp) | [redacted] | historical tracked provisioning "
         "(removed) | retained acl role is nologin; no current credential is provisioned |",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > recommended target model > "
-        "proposed postgresql roles",
-        "table_row",
-        "| football_reader | select on all tables | mcp, health checks, dashboards, read-only "
-        "audits | historical precursor only — claude_reader is a retained nologin acl role, not "
-        "an active login implementation |",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > references",
-        "table_row",
-        "| deploy/docker/init_claude_reader.sql | historical claude_reader mcp reader "
-        "provisioning; current target is retained as a nologin acl role |",
         1,
     ),
     (
@@ -142,79 +183,29 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "paragraph",
         "current mitigation: the application-layer guard blocks writes by default "
         "(dry_run=true). the historical dedicated mcp reader remains as the retained acl role "
-        "claude_reader, but it is now nologin and its direct-login workflow is retired. no current "
-        "supported postgresql mcp login identity is established, so this role does not provide an "
-        "active read-only connection path.",
+        "claude_reader, but it is now nologin and its direct-login workflow is retired, so this "
+        "role does not provide an active read-only connection path. separately, football_reader "
+        "remains a pre-existing dev-only login poc role; this retirement did not create, rename, "
+        "or designate it, and no tracked postgresql mcp entry currently selects it. repository "
+        "future provisioning for claude_reader is also retired; existing live acl/default acl "
+        "remains a separate blocked layer.",
         1,
     ),
     (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "connect to any database",
+        "sc-002 runtime db role / permission review — phase 1 > recommended target model > "
+        "proposed postgresql roles",
+        "table_row",
+        "| football_reader | select on all tables | mcp, health checks, dashboards, read-only "
+        "audits | current dev-only login poc role; predates this retirement, is not a replacement "
+        "for claude_reader, and is not selected by a tracked postgresql mcp entry |",
         1,
     ),
     (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "current_direct_login_support=no",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "current_login_state=nologin",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "current_postgresql_mcp_login_identity=not_established",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "current_role_type=retained_acl_role",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "current_tracked_postgres_mcp_entry=absent",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "list_item",
-        "deploy/docker/init_claude_reader.sql — historical claude_reader mcp acl-role "
-        "provisioning; current provisioning retains the role as nologin without a password",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "paragraph",
-        "claude_reader retains its existing read-only acl for role/permission continuity, but its "
-        "historical mcp login workflow is retired. it is not a current connection identity, and "
-        "the repository does not establish a replacement postgresql mcp login identity. "
-        "references below to its mcp reader intent are historical observations unless explicitly "
-        "marked as current.",
-        1,
-    ),
-    (
-        "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
-        "(updated 2026-08-25)",
-        "paragraph",
-        "this remains a phase 1 static-review/evidence document. later development-role "
-        "retirement work changed the operational status of the historical claude_reader "
-        "postgresql mcp identity:",
+        "sc-002 runtime db role / permission review — phase 1 > references",
+        "table_row",
+        "| deploy/docker/init_claude_reader.sql | deleted historical claude_reader mcp reader "
+        "provisioning; existing live target remains a last-audited nologin acl role, while future "
+        "provisioning is retired |",
         1,
     ),
 )
@@ -538,16 +529,13 @@ class TestRuntimeDBRolePermissionReviewPhase1:
     def test_sensitive_unit_contract_fails_closed_on_material_mutations(self):
         doc = _load_review()
         sensitive_paragraph = (
-            "`claude_reader` retains its existing read-only ACL for role/permission continuity, "
-            "but its\nhistorical MCP login workflow is retired. It is not a current connection "
-            "identity, and the\nrepository does not establish a replacement PostgreSQL MCP LOGIN "
-            "identity. References below\nto its MCP reader intent are historical observations "
-            "unless explicitly marked as current."
+            "This retirement does not create, rename, or designate a\n"
+            "replacement PostgreSQL LOGIN identity."
         )
         sensitive_row = (
-            "| `claude_reader` | `deploy/docker/init_claude_reader.sql` | Historical MCP reader; "
-            "retained ACL role | `NOLOGIN`; existing read-only ACL retained; not a current "
-            "connection identity |"
+            "| `claude_reader` | Existing live DB (last audited); historical provisioning deleted "
+            "| Historical MCP reader; retained ACL role | `NOLOGIN`; existing read-only ACL "
+            "retained; not a current connection identity or future-provisioned role |"
         )
         assert sensitive_paragraph in doc
         assert sensitive_row in doc
@@ -600,9 +588,14 @@ class TestRuntimeDBRolePermissionReviewPhase1:
                 1,
             ),
             doc.replace(sensitive_row, f"{sensitive_row}\n{sensitive_row}", 1),
-            doc.replace("continuity, but its\nhistorical", "continuity.\n\nIts historical", 1),
+            doc.replace(
+                "continuity, but its historical MCP login workflow",
+                "continuity.\n\nIts historical MCP login workflow",
+                1,
+            ),
         )
         for mutated_doc in mutations:
+            assert mutated_doc != doc
             assert _sensitive_unit_contract_violations(mutated_doc)
 
     def test_sensitive_unit_contract_allows_frontmatter_metadata_edit(self):
@@ -659,16 +652,18 @@ class TestRuntimeDBRolePermissionReviewPhase1:
         if "create user" in normalized_row or "creates read-only db user" in normalized_row:
             raise AssertionError("SC002 enforcement design still claims LOGIN-user provisioning")
 
-    def test_provisioning_comments_match_retired_nologin_role_contract(self):
-        provisioning = _load_text(PROVISIONING_PATH)
-        markers = (
-            "Historical Claude Reader ACL Role Setup",
-            "retired PostgreSQL MCP identity; direct login is disabled",
-            "Create the retained NOLOGIN ACL role if it does not exist",
-        )
-        for marker in markers:
-            if marker not in provisioning:
-                raise AssertionError("Provisioning comment missing reviewed NOLOGIN role marker")
+    def test_future_provisioning_for_historical_role_is_retired(self):
+        assert not PROVISIONING_PATH.exists()
+        active_provisioning = "\n".join(
+            _load_text(path)
+            for path in (
+                PROJECT_ROOT / "docker-compose.dev.yml",
+                PROJECT_ROOT / "docker-compose.yml",
+                *(PROJECT_ROOT / "deploy" / "docker").glob("*.sql"),
+            )
+        ).casefold()
+        assert "init_claude_reader.sql" not in active_provisioning
+        assert "claude_reader" not in active_provisioning
 
     def test_review_states_no_db_connection(self):
         doc = _load_review()

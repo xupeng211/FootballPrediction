@@ -217,18 +217,6 @@
       "review_note": "Docker dev init only. Must not be executed against production DB. Requires explicit env gate."
     },
     {
-      "path": "deploy/docker/init_claude_reader.sql",
-      "file_type": "sql_docker_init",
-      "classification": "historical_sql_schema_definition",
-      "reason": "Creates read-only PostgreSQL user for MCP connection. Contains CREATE USER, GRANT, ALTER DEFAULT PRIVILEGES. Infrastructure SQL for read-only access.",
-      "evidence": "DDL/Privilege: CREATE USER, GRANT SELECT, ALTER DEFAULT PRIVILEGES. See design doc #15.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "sql_migration_policy_implementation_phase2B",
-      "allowed_operations": ["CREATE USER", "GRANT SELECT", "ALTER DEFAULT PRIVILEGES (read-only)"],
-      "disallowed_operations": ["GRANT ALL", "GRANT INSERT", "GRANT UPDATE", "GRANT DELETE", "DROP USER", "DROP DATABASE"],
-      "review_note": "Read-only user creation for MCP. Infrastructure SQL. Should not grant write privileges."
-    },
-    {
       "path": "scripts/maintenance/migrations/V6_0_add_backfill_progress.sql",
       "file_type": "sql_migration",
       "classification": "historical_sql_allowed_migration_candidate",
