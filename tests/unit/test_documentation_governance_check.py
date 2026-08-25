@@ -125,7 +125,7 @@ def test_test_debt_audit_report_is_exact_path_allowed():
 def test_destructive_actions_forbidden():
     changes = checker.collect_changes()
     assert not any(
-        change.status == "D" and change.path not in checker.ALLOWED_DELETED for change in changes
+        change.status == "D" and not checker.is_delete_allowed(change.path) for change in changes
     )
     assert not any(change.status == "R" for change in changes)
     assert not any(change.path.startswith("docs/_archive/") for change in changes)
@@ -228,3 +228,61 @@ def test_retired_paths_are_allowed_only_when_deleted():
     checker.validate_change_budget([checker.Change("A", retired_path, None)], errors)
 
     assert any("unexpected changed paths" in error for error in errors)
+
+
+def test_obsolete_history_rewrite_notice_is_delete_only():
+    retired_path = "docs/templates/HISTORY_REWRITE_COLLABORATOR_NOTICE.md"
+    assert retired_path in checker.ALLOWED_DELETED
+
+    for status in ("A", "M"):
+        errors: list[str] = []
+        checker.validate_change_budget([checker.Change(status, retired_path, None)], errors)
+        assert any("unexpected changed paths" in error for error in errors)
+
+    errors = []
+    checker.validate_change_budget([checker.Change("D", retired_path, None)], errors)
+    assert not any("deleted file is prohibited" in error for error in errors)
+
+
+def test_unreferenced_gui_probe_is_delete_only():
+    retired_path = "scripts/test_gui.js"
+    assert retired_path in checker.ALLOWED_DELETED
+
+    for status in ("A", "M"):
+        errors: list[str] = []
+        checker.validate_change_budget([checker.Change(status, retired_path, None)], errors)
+        assert any("unexpected changed paths" in error for error in errors)
+
+    errors = []
+    checker.validate_change_budget([checker.Change("D", retired_path, None)], errors)
+    assert not any("deleted file is prohibited" in error for error in errors)
+
+
+def test_retired_history_categories_are_delete_only_and_narrow():
+    retired_paths = (
+        "docs/_reports/fotmob_l2_first_guarded_reconciliation_execution_plan_20260615.md",
+        "docs/_reports/fotmob_l2_third_guarded_reconciliation_post_execution_audit_20260616.md",
+        "docs/_reports/fotmob_l2_tenth_guarded_reconciliation_execution_verification_20260618.md",
+    )
+    protected_neighbors = (
+        "docs/_reports/fotmob_l2_first_guarded_reconciliation_execution_plan_20260618.md",
+        "docs/_reports/fotmob_l2_third_guarded_reconciliation_execution_plan_20260616.md",
+        "docs/_reports/fotmob_l2_pending_target_selection_dry_run_20260613.md",
+    )
+
+    assert all(checker.is_delete_allowed(path) for path in retired_paths)
+    assert not any(checker.is_delete_allowed(path) for path in protected_neighbors)
+
+    for status in ("A", "M"):
+        errors: list[str] = []
+        checker.validate_change_budget([checker.Change(status, retired_paths[0], None)], errors)
+        assert any("unexpected changed paths" in error for error in errors)
+
+    errors = []
+    checker.validate_change_budget([checker.Change("D", retired_paths[0], None)], errors)
+    assert not any("deleted file is prohibited" in error for error in errors)
+
+    for protected_neighbor in protected_neighbors:
+        errors = []
+        checker.validate_prohibited_files([checker.Change("D", protected_neighbor, None)], errors)
+        assert any("deleted file is prohibited" in error for error in errors)
