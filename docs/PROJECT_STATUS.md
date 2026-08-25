@@ -42,15 +42,20 @@ GitHub/Actions 状态仍以机器事实为准；本摘要不授权训练、预�
 
 | Field | Current truth |
 |---|---|
-| Direct-login retirement | `DONE`；development PostgreSQL role `claude_reader` 当前必须继续保持 `NOLOGIN` |
+| Direct-login retirement | `LOGIN_RETIREMENT_STATE=DONE`；existing live PostgreSQL role `claude_reader` 的 last-audited 状态为 `NOLOGIN`；本次没有重新连接或查询 live DB |
 | ACL retirement review | `COMPLETE`；decision-support evidence 见 [`docs/SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md`](SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md)，该 audit artifact 的 authority 仍为 `NONE` |
-| Retirement decision | `RETIREMENT_REVIEW_BLOCKED_INCOMPLETE_EVIDENCE`；ACL retirement 尚未获准执行 |
-| Current blockers | `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`；fresh development provisioning 仍会重新创建 `claude_reader`、current ACL 与 default ACL |
-| Owner decision gate | 当前保持 `NOLOGIN`；若要继续，只能另行授权 external-consumer attestation / provisioning-retirement planning |
-| Prohibited automatic actions | 不得自动 `REVOKE`、`DROP ROLE`、恢复 `LOGIN` 或执行 provisioning retirement |
+| Future provisioning retirement | `FUTURE_PROVISIONING_RETIREMENT_STATE=DONE`；`CURRENT_FUTURE_PROVISIONING_STATE=RETIRED`；repository fresh bootstrap 不再创建 `claude_reader` 或授予其 direct/default ACL；`FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO`；`PROVISIONING_BLOCKER_REMAINS=NO` |
+| Consumer visibility | `PROCESS_ENV_COVERAGE_COMPLETE=NO`；`KNOWN_PROCESS_CONSUMER_STATE=UNKNOWN_INCOMPLETE_ENVIRONMENT_VISIBILITY`；`LOCAL_DEVELOPMENT_HOST_CONSUMER_STATE=UNKNOWN_DUE_TO_INCOMPLETE_PROCESS_ENVIRONMENT_VISIBILITY`；`HOST_COVERAGE_COMPLETE=NO` |
+| External consumer boundary | `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`；`EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO`；没有把 incomplete host/process visibility 升级为 absence |
+| Existing live DB ACL | `LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED`；last-audited 54 direct privileges、3 default ACL privileges、40 dependencies 保持未动 |
+| Role drop | `ROLE_DROP_STATE=BLOCKED`；`CLAUDE_READER_FULL_RETIREMENT=NOT_DONE` |
+| Accepted Layer-2 risk | `UNKNOWN_STALE_FRESH_BOOTSTRAP_COMPATIBILITY_RISK`；未知外部环境若在未来 fresh bootstrap 仍依赖旧 repository provisioning，可能出现兼容性失败；这不是 live DB mutation risk |
+| Owner decision gate | Layer 2 已获 Owner 授权并落实到 repository contract；任何 live ACL/default ACL retirement 或 role drop 都必须另行举证并单独授权 |
+| Prohibited automatic actions | 不得自动 `REVOKE`、`ALTER DEFAULT PRIVILEGES`、`DROP ROLE`、恢复 `LOGIN`、创建替代 login identity 或 credential |
 
-上述结论是当前安全维护边界，不代表 retained ACL 是 active direct-login vulnerability，
-也不表示 role retirement 已完成。详细 catalog ledger、证据标签和 future plan 只保留在
+上述结论是当前安全维护边界。Future provisioning retirement 不会自动改变 existing live
+database，也不代表 retained ACL 是 active direct-login vulnerability 或 full role retirement
+已完成。详细 catalog ledger、证据标签和 future plan 只保留在
 linked audit evidence 中；本 current-state backflow 不复制其完整审计账本。
 
 ## Historical evidence / completed history

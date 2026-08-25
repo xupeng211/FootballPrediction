@@ -66,7 +66,7 @@
 │   └── docker_server.py         # Docker MCP 服务器
 │
 ├── deploy/docker/
-│   └── init_claude_reader.sql   # PostgreSQL NOLOGIN ACL role 初始化脚本
+│   └── init_db.sql              # development fresh schema / role POC 初始化脚本
 │
 ├── scripts/ops/
 │   └── verify_mcp.sh            # MCP 验证与重载提示脚本
@@ -83,16 +83,16 @@ cd /home/xupeng/projects/FootballPrediction
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-### Step 2: 确认历史 PostgreSQL MCP 登录已退役
+### Step 2: 确认历史 PostgreSQL MCP 登录及 future provisioning 已退役
 
-`deploy/docker/init_claude_reader.sql` 由 PostgreSQL 官方 initdb 入口在 fresh development
-database 初始化时调用。它保留 `claude_reader` 的既有 ACL，但将该 role provision 为
-`NOLOGIN`，且不再 provision password。不要以 `claude_reader` 发起认证探测或把它作为
+Repository 已删除历史 `init_claude_reader.sql`，development 与 unified/production-like
+Compose 均不再把它挂载到 PostgreSQL 官方 initdb 入口。因此 future/fresh database 不会再由
+repository 自动创建 `claude_reader`，也不会再自动授予该 role 的 direct ACL 或 default ACL。
+
+这项 future provisioning 变更不执行 SQL，也不会改变 existing live database。该 live role 的
+last-audited 状态仍是 `NOLOGIN`，既有 ACL、default ACL 与 dependencies 保留；任何重新查询、
+撤权或 drop 都需要未来独立授权。不要以 `claude_reader` 发起认证探测或把它作为
 interactive/MCP 登录身份。
-
-如需核对已运行 development database 的状态，应通过受支持的管理员 metadata 路径查询
-`pg_roles.rolcanlogin`，预期 `claude_reader` 为 `false`；该检查不需要也不应使用历史
-credential。
 
 ### Step 3: 宿主配置变更后的重载
 
@@ -133,7 +133,8 @@ bash scripts/ops/verify_mcp.sh
 | MCP reference 格式 | `python3 -m json.tool .claude/mcp-config.json >/dev/null` | exit 0 |
 | Filesystem MCP 可用 | `npx -y @modelcontextprotocol/server-filesystem --help` | 帮助信息 |
 | Python MCP SDK 安装 | `python -c "import mcp"` | 无错误 |
-| 历史 PostgreSQL ACL role | 通过管理员 metadata 路径查询 `pg_roles.rolcanlogin` | `claude_reader` 存在且为 `false` |
+| Future PostgreSQL provisioning | 检查两个 Compose 与 `deploy/docker/` active init SQL | 不创建或挂载 `claude_reader`；不授予其 direct/default ACL |
+| Existing live PostgreSQL ACL role | 查阅 last-audited current-state evidence；重新查询必须单独授权 | last-audited 为 `NOLOGIN`；本 repository 变更不触碰 live DB |
 | PostgreSQL MCP 登录状态 | 检查 tracked `.claude/mcp-config.json` | 无 PostgreSQL entry；无受支持 LOGIN identity |
 | Docker 可用 | `docker ps` | 容器列表 |
 | Docker Compose 可用 | `docker-compose ps` | 服务列表 |
@@ -155,10 +156,19 @@ bash scripts/ops/verify_mcp.sh
 - `CURRENT_DIRECT_LOGIN_SUPPORT=NO`
 - `CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED`
 - `CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT`
+- `CURRENT_FUTURE_PROVISIONING_STATE=RETIRED`
+- `FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO`
+- `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`
+- `EXTERNAL_CONSUMER_BLOCKER_CLEARED=NO`
+- `LIVE_DATABASE_ACL_RETIREMENT_STATE=BLOCKED`
+- `ROLE_DROP_STATE=BLOCKED`
 
 `claude_reader` 曾是 development PostgreSQL MCP 的登录身份；该登录工作流现已退役。
-role 仍保留既有只读 ACL，供 ownership/ACL 语义延续，但 `NOLOGIN` 明确禁止它建立
-direct session。当前 tracked `.claude/mcp-config.json` 也没有 PostgreSQL MCP entry。
+existing live role 的 last-audited 状态仍保留既有只读 ACL，供 ownership/ACL 语义延续，
+但 `NOLOGIN` 明确禁止它建立 direct session；repository 的 future provisioning 也已独立
+退役。当前 tracked `.claude/mcp-config.json` 没有 PostgreSQL MCP entry。External consumer
+visibility 仍不完整，因此 UNKNOWN 没有被解释为 ABSENT；Owner 接受的是未来 fresh
+bootstrap 的兼容性风险，不是 live database mutation。
 
 PostgreSQL MCP package 或历史实现仍可存在于依赖和历史说明中，这不代表仓库当前已经建立
 可用的 PostgreSQL MCP 登录身份。恢复该能力需要未来独立的身份、secret sink 与安全授权，
@@ -190,6 +200,7 @@ PostgreSQL MCP package 或历史实现仍可存在于依赖和历史说明中，
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
 | 保留 ACL role 的权限漂移 | 潜在访问面扩大 | 保持 `NOLOGIN`，并独立审计 ACL 变更 |
+| 未知外部环境仍依赖旧 fresh bootstrap contract | 未来重建时出现兼容性失败 | 归类为 `UNKNOWN_STALE_FRESH_BOOTSTRAP_COMPATIBILITY_RISK`；不回滚 Layer 2，也不据此触碰 live DB |
 | Docker 命令注入 | 容器被破坏 | 黑名单过滤危险命令 |
 | Filesystem 访问越界 | 敏感文件泄露 | 限制项目目录范围 |
 | MCP 服务资源占用 | 系统性能下降 | 设置资源限制 |
@@ -221,9 +232,9 @@ docker-compose ps db
 ```
 
 当前没有受支持的 PostgreSQL MCP LOGIN identity。不要通过重新创建 `claude_reader`、恢复
-`LOGIN` 或添加 password 来排查连接问题。若只需确认 retirement 状态，通过 development
-管理员 metadata 路径检查该 role 存在且 `rolcanlogin=false`；需要恢复 PostgreSQL MCP
-能力时，应启动独立的安全设计与授权流程。
+`LOGIN`、恢复已退役 provisioning 或添加 password 来排查连接问题。Repository 静态合同应
+保持 future provisioning absent；查询 existing live role metadata、撤销 ACL 或恢复
+PostgreSQL MCP 能力，都必须启动独立的安全设计与授权流程。
 
 ### pytest MCP 报错
 

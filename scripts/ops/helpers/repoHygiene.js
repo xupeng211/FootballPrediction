@@ -7,8 +7,7 @@ const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const SQL_ALLOWLIST = new Set([
-  'deploy/docker/init_db.sql',
-  'deploy/docker/init_claude_reader.sql'
+  'deploy/docker/init_db.sql'
 ]);
 const DATA_ALLOWLIST_PREFIXES = [
   'data/production/',
