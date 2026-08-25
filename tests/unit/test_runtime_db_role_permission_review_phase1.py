@@ -30,8 +30,9 @@ CURRENT_ROLE_STATE_MARKERS = (
     "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE",
     "CURRENT_LOGIN_STATE=NOLOGIN",
     "CURRENT_DIRECT_LOGIN_SUPPORT=NO",
-    "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED",
+    "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader",
     "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
+    "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO",
     "CURRENT_FUTURE_PROVISIONING_STATE=RETIRED",
     "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO",
     "EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN",
@@ -58,9 +59,9 @@ CURRENT_STATE_FENCE_HEADING = (
     "sc-002 runtime db role / permission review — phase 1 > summary > current-state fence "
     "(updated 2026-08-25)"
 )
-FULL_DOCUMENT_EXPECTED_COUNT = 189
+FULL_DOCUMENT_EXPECTED_COUNT = 190
 FULL_DOCUMENT_EXPECTED_FINGERPRINT = (
-    "6dcf2156803240f53275836d6b47ab4245f22384a655eb1f1323ab44bef4722c"
+    "ba1e852a2a8be9833a0a2848948dc456ca0e5eed16964dc7a2d92a2386898c7c"
 )
 DIRECT_LOGIN_COMMAND_PATTERN = re.compile(
     r"\bpsql\b[^\n]{0,200}(?:\s-U\s+claude_reader\b|\buser(?:name)?=claude_reader\b)",
@@ -71,6 +72,7 @@ FORBIDDEN_CURRENT_STATE_MARKERS = (
     "CURRENT_DIRECT_LOGIN_SUPPORT=YES",
     "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=CLAUDE_READER",
     "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=PRESENT",
+    "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=YES",
     "CURRENT_FUTURE_PROVISIONING_STATE=ACTIVE",
     "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=YES",
     "LIVE_DATABASE_ACL_RETIREMENT_STATE=DONE",
@@ -117,10 +119,14 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "paragraph",
         "the existing live claude_reader role retains its last-audited read-only acl for "
         "role/permission continuity, but its historical mcp login workflow and repository future "
-        "provisioning are retired. it is not a current connection identity, and the repository "
-        "does not establish a replacement postgresql mcp login identity. existing live "
-        "acl/default acl retirement and role drop remain blocked. references below to its mcp "
-        "reader intent are historical observations unless explicitly marked as current.",
+        "provisioning are retired. it is not a current connection identity. this retirement does "
+        "not create, rename, or designate a replacement postgresql login identity. separately, "
+        "the repository already provisions the dev-only football_reader login role in init_db.sql "
+        "and exposes its development credentials through compose; it predates this retirement, "
+        "remains part of the six-role dev poc, and no tracked postgresql mcp entry currently "
+        "selects it. existing live acl/default acl retirement and role drop remain blocked. "
+        "references below to claude_reader mcp reader intent are historical observations unless "
+        "explicitly marked as current.",
         1,
     ),
     (
@@ -177,10 +183,12 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "paragraph",
         "current mitigation: the application-layer guard blocks writes by default "
         "(dry_run=true). the historical dedicated mcp reader remains as the retained acl role "
-        "claude_reader, but it is now nologin and its direct-login workflow is retired. no current "
-        "supported postgresql mcp login identity is established, so this role does not provide an "
-        "active read-only connection path. repository future provisioning for this role is also "
-        "retired; existing live acl/default acl remains a separate blocked layer.",
+        "claude_reader, but it is now nologin and its direct-login workflow is retired, so this "
+        "role does not provide an active read-only connection path. separately, football_reader "
+        "remains a pre-existing dev-only login poc role; this retirement did not create, rename, "
+        "or designate it, and no tracked postgresql mcp entry currently selects it. repository "
+        "future provisioning for claude_reader is also retired; existing live acl/default acl "
+        "remains a separate blocked layer.",
         1,
     ),
     (
@@ -188,8 +196,8 @@ SC002_SENSITIVE_UNIT_ALLOWLIST: tuple[tuple[str, str, str, int], ...] = (
         "proposed postgresql roles",
         "table_row",
         "| football_reader | select on all tables | mcp, health checks, dashboards, read-only "
-        "audits | historical precursor only — claude_reader is a retained nologin acl role, not "
-        "an active login implementation |",
+        "audits | current dev-only login poc role; predates this retirement, is not a replacement "
+        "for claude_reader, and is not selected by a tracked postgresql mcp entry |",
         1,
     ),
     (
@@ -521,12 +529,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
     def test_sensitive_unit_contract_fails_closed_on_material_mutations(self):
         doc = _load_review()
         sensitive_paragraph = (
-            "The existing live `claude_reader` role retains its last-audited read-only ACL for "
-            "role/permission\ncontinuity, but its historical MCP login workflow and repository "
-            "future provisioning are retired.\nIt is not a current connection identity, and the "
-            "repository does not establish a replacement\nPostgreSQL MCP LOGIN identity. Existing "
-            "live ACL/default ACL retirement and role drop remain\nblocked. References below to "
-            "its MCP reader intent are historical observations unless explicitly\nmarked as current."
+            "This retirement does not create, rename, or designate a\n"
+            "replacement PostgreSQL LOGIN identity."
         )
         sensitive_row = (
             "| `claude_reader` | Existing live DB (last audited); historical provisioning deleted "
@@ -567,8 +571,8 @@ class TestRuntimeDBRolePermissionReviewPhase1:
                 1,
             ),
             doc.replace(
-                "unless explicitly\nmarked as current.",
-                "unless explicitly\nmarked as current.\n\n"
+                "unless explicitly marked as current.",
+                "unless explicitly marked as current.\n\n"
                 "That same role now signs on directly to the server.",
                 1,
             ),

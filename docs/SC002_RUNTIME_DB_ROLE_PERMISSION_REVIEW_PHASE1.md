@@ -22,8 +22,9 @@ PostgreSQL MCP identity:
 - `CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE`
 - `CURRENT_LOGIN_STATE=NOLOGIN`
 - `CURRENT_DIRECT_LOGIN_SUPPORT=NO`
-- `CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED`
+- `PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader`
 - `CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT`
+- `REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO`
 - `CURRENT_FUTURE_PROVISIONING_STATE=RETIRED`
 - `FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO`
 - `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`
@@ -33,10 +34,13 @@ PostgreSQL MCP identity:
 
 The existing live `claude_reader` role retains its last-audited read-only ACL for role/permission
 continuity, but its historical MCP login workflow and repository future provisioning are retired.
-It is not a current connection identity, and the repository does not establish a replacement
-PostgreSQL MCP LOGIN identity. Existing live ACL/default ACL retirement and role drop remain
-blocked. References below to its MCP reader intent are historical observations unless explicitly
-marked as current.
+It is not a current connection identity. This retirement does not create, rename, or designate a
+replacement PostgreSQL LOGIN identity. Separately, the repository already provisions the dev-only
+`football_reader` LOGIN role in `init_db.sql` and exposes its development credentials through
+Compose; it predates this retirement, remains part of the six-role dev POC, and no tracked
+PostgreSQL MCP entry currently selects it. Existing live ACL/default ACL retirement and role drop
+remain blocked. References below to `claude_reader` MCP reader intent are historical observations
+unless explicitly marked as current.
 
 **This review does NOT:**
 - Connect to any database
@@ -146,10 +150,11 @@ Connection strings for read-only use cases have full write credentials.
 
 **Current mitigation:** The application-layer guard blocks writes by default
 (`DRY_RUN=true`). The historical dedicated MCP reader remains as the retained ACL role
-`claude_reader`, but it is now `NOLOGIN` and its direct-login workflow is retired. No current
-supported PostgreSQL MCP login identity is established, so this role does not provide an
-active read-only connection path. Repository future provisioning for this role is also retired;
-existing live ACL/default ACL remains a separate blocked layer.
+`claude_reader`, but it is now `NOLOGIN` and its direct-login workflow is retired, so this role does
+not provide an active read-only connection path. Separately, `football_reader` remains a
+pre-existing dev-only LOGIN POC role; this retirement did not create, rename, or designate it, and
+no tracked PostgreSQL MCP entry currently selects it. Repository future provisioning for
+`claude_reader` is also retired; existing live ACL/default ACL remains a separate blocked layer.
 
 ### Risk 4: Ingestion User Has Overly Broad Write Access (MEDIUM)
 
@@ -208,7 +213,7 @@ blocks writes to RDS, Cloud SQL, Supabase, etc.
 | `football_app` | SELECT, INSERT, UPDATE on all tables; no DDL | FastAPI app runtime | No — currently `football_user` |
 | `football_ingestion` | INSERT, UPDATE on matches, raw_match_data, odds tables only | Data collectors, streaming writers | No — currently `football_user` |
 | `football_training` | SELECT on all tables; INSERT, UPDATE on training/predictions tables only | Training pipelines | No — currently `football_user` |
-| `football_reader` | SELECT on all tables | MCP, health checks, dashboards, read-only audits | Historical precursor only — `claude_reader` is a retained `NOLOGIN` ACL role, not an active LOGIN implementation |
+| `football_reader` | SELECT on all tables | MCP, health checks, dashboards, read-only audits | Current dev-only LOGIN POC role; predates this retirement, is not a replacement for `claude_reader`, and is not selected by a tracked PostgreSQL MCP entry |
 | `football_gatekeeper` | CREATEDB (temporary), SELECT on all tables | CI cold-start blueprint check | Partially — uses `postgres` admin + `football_user` |
 
 ### Transition Principles

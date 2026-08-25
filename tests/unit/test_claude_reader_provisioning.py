@@ -195,8 +195,9 @@ def test_mcp_documentation_records_future_provisioning_retirement() -> None:
         "CURRENT_ROLE_TYPE=RETAINED_ACL_ROLE",
         "CURRENT_LOGIN_STATE=NOLOGIN",
         "CURRENT_DIRECT_LOGIN_SUPPORT=NO",
-        "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED",
+        "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader",
         "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT",
+        "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO",
         "CURRENT_FUTURE_PROVISIONING_STATE=RETIRED",
         "FRESH_PROVISIONING_RECREATES_ROLE_ACL_DEFAULT_ACL=NO",
         "EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN",
@@ -205,7 +206,7 @@ def test_mcp_documentation_records_future_provisioning_retirement() -> None:
         "ROLE_DROP_STATE=BLOCKED",
     ):
         assert marker in documentation
-    assert "PostgreSQL MCP（历史 / 已退役登录）" in documentation
+    assert "PostgreSQL MCP（历史 / 已退役 `claude_reader` 登录）" in documentation
 
 
 def test_project_status_preserves_the_layer_boundaries() -> None:
@@ -242,8 +243,11 @@ def test_mcp_documentation_matches_current_tracked_configuration() -> None:
 
     assert configured_postgres_entries == []
     assert "当前 tracked `.claude/mcp-config.json` 没有 PostgreSQL MCP entry" in documentation
-    assert "CURRENT_POSTGRESQL_MCP_LOGIN_IDENTITY=NOT_ESTABLISHED" in documentation
+    assert "PREEXISTING_DEV_POC_LOGIN_IDENTITY=football_reader" in documentation
     assert "CURRENT_TRACKED_POSTGRES_MCP_ENTRY=ABSENT" in documentation
+    assert "REPLACEMENT_POSTGRES_LOGIN_IDENTITY_CREATED=NO" in documentation
+    assert "development `init_db.sql` 会创建 pre-existing `football_reader`" in documentation
+    assert "不表示\nrepository 没有 provision 任何 LOGIN role" in documentation
     assert "仓库没有 MCP loader" in documentation
 
 
