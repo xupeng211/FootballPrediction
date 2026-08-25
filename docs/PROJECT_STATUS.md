@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-08-23
+Last updated: 2026-08-25
 
 ## Current State
 
@@ -34,6 +34,24 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
 `docs/MODEL_ARTIFACTS.md` 和 `docs/data/FOTMOB_CURRENT_STATE.md`。代码合同与
 GitHub/Actions 状态仍以机器事实为准；本摘要不授权训练、预测、回测、写入或激活。
+
+### Security / maintenance current state — `claude_reader` ACL retirement
+
+本节是 security / maintenance current-state，不加入上表的业务 Hard blockers，也不改变
+`docs/ACTIVE_MILESTONE.md` 中的 value-betting 业务战线或下一项业务证据决策。
+
+| Field | Current truth |
+|---|---|
+| Direct-login retirement | `DONE`；development PostgreSQL role `claude_reader` 当前必须继续保持 `NOLOGIN` |
+| ACL retirement review | `COMPLETE`；decision-support evidence 见 [`docs/SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md`](SC002_CLAUDE_READER_ACL_RETIREMENT_REVIEW.md)，该 audit artifact 的 authority 仍为 `NONE` |
+| Retirement decision | `RETIREMENT_REVIEW_BLOCKED_INCOMPLETE_EVIDENCE`；ACL retirement 尚未获准执行 |
+| Current blockers | `EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN`；fresh development provisioning 仍会重新创建 `claude_reader`、current ACL 与 default ACL |
+| Owner decision gate | 当前保持 `NOLOGIN`；若要继续，只能另行授权 external-consumer attestation / provisioning-retirement planning |
+| Prohibited automatic actions | 不得自动 `REVOKE`、`DROP ROLE`、恢复 `LOGIN` 或执行 provisioning retirement |
+
+上述结论是当前安全维护边界，不代表 retained ACL 是 active direct-login vulnerability，
+也不表示 role retirement 已完成。详细 catalog ledger、证据标签和 future plan 只保留在
+linked audit evidence 中；本 current-state backflow 不复制其完整审计账本。
 
 ## Historical evidence / completed history
 
