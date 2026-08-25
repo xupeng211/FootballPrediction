@@ -18,14 +18,16 @@
 
 ## Executive attestation
 
-**[CONFIRMED] No current consumer was found on the one known development/operator
-host within the explicitly audited surfaces.** The current main repository, tracked MCP
-reference, repository-local permission file, current Codex and Claude configuration,
-known PostgreSQL client configuration, current shell environment and startup files,
-running process snapshot, running containers, user services, relevant system services,
-scheduled jobs, running Compose operator configuration, and GitHub Actions workflow all
-contain no evidence that a current executable consumer uses `claude_reader` as a
-PostgreSQL or MCP login identity.
+**[CONFIRMED] No active consumer proof was found on the one known
+development/operator host within the evidence that was readable under the authorized
+non-privileged method.** The current main repository, tracked MCP reference,
+repository-local permission file, current Codex and Claude configuration, known
+PostgreSQL client configuration, current shell environment and startup files, readable
+parts of the running process snapshot, running containers, user services, relevant
+system services, scheduled jobs, running Compose operator configuration, and GitHub
+Actions workflow contain no observed evidence that a current executable consumer uses
+`claude_reader` as a PostgreSQL or MCP login identity. This is a no-proof-found result,
+not proof of local absence: only 217 of 689 process environments were readable.
 
 **[UNKNOWN / FAIL CLOSED] The complete external-host topology is not established.**
 Repository/config evidence identifies and permits auditing the current host
@@ -34,18 +36,21 @@ that no unenumerated external proxy, SaaS secret sink, or owner-controlled clien
 Therefore:
 
 ```text
-LOCAL_DEVELOPMENT_HOST_CONSUMER_STATE=ABSENT
+LOCAL_ACTIVE_CONSUMER_PROOF_FOUND=NO
+LOCAL_DEVELOPMENT_HOST_CONSUMER_STATE=UNKNOWN_DUE_TO_INCOMPLETE_PROCESS_ENVIRONMENT_VISIBILITY
+LOCAL_PROCESS_ENVIRONMENT_COVERAGE_COMPLETE=NO
+PROCESS_ABSENCE_PROVEN=NO
 EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN
 HOST_COVERAGE_COMPLETE=NO
 NO_UNAUDITED_RELEVANT_HOSTS=NO
 ACTIVE_CONSUMER_PROOF_COUNT=0
-POTENTIAL_CONSUMER_UNRESOLVED_COUNT=1
+POTENTIAL_CONSUMER_UNRESOLVED_COUNT=2
 ```
 
-`ABSENT` above is limited to the defined and completed local-host audit scope. It is not
-the statement “no consumer exists anywhere.” The external-consumer blocker is not
-cleared. The separate fresh-provisioning blocker remains unchanged, and the safe posture
-continues to be `KEEP_NOLOGIN_ROLE_FOR_NOW`.
+No process-level or local-host `ABSENT` conclusion is asserted. The process-environment
+visibility gap and the separate external-topology gap each prevent an absence proof. The
+external-consumer blocker is not cleared. The separate fresh-provisioning blocker remains
+unchanged, and the safe posture continues to be `KEEP_NOLOGIN_ROLE_FOR_NOW`.
 
 ## Baseline and closure gates
 
@@ -114,7 +119,7 @@ WHY_SCOPE_EXPANSION_REQUIRED=EXPLICIT_MCP_CLIENT_CONFIG_COVERAGE_WITHOUT_HOME_WI
 
 | Host/surface | Evidence | Audited | Consumer result |
 | --- | --- | --- | --- |
-| `xupeng-MS-7D76` — current development/operator host | local hostname, active worktree, host configs, process/service/container/schedule snapshots | YES | ABSENT within the defined surfaces |
+| `xupeng-MS-7D76` — current development/operator host | local hostname, active worktree, host configs, process/service/container/schedule snapshots | YES, with incomplete process-environment visibility | UNKNOWN — no active proof found; only 217/689 process environments readable |
 | GitHub-hosted `ubuntu-latest` runner class | the only workflow declares two `ubuntu-latest` jobs; no target, DB key, secret, or variable reference | static workflow audited | no CI consumer proof |
 | Other development/operator host | no authoritative inventory or exclusivity statement exists | NO — not enumerable | UNKNOWN |
 | External proxy/SaaS secret sink | no authoritative inventory or value-readable evidence exists | NO — not enumerable | UNKNOWN |
@@ -183,7 +188,7 @@ identity, or current MCP server exists.
 | `STALE_PERMISSION_ONLY` | `.claude/settings.local.json` stale `mcp__postgres__query` allow-entry |
 | `ACTIVE_CONSUMER_PROOF` | none |
 | `POTENTIAL_CONSUMER_REQUIRES_REVIEW` | none among observed literal references |
-| `UNKNOWN` | unenumerated external operator host/proxy/SaaS identity boundary; this is a coverage gap, not an observed target-role reference |
+| `UNKNOWN` | local process-environment visibility gap (472/689 unreadable); unenumerated external operator host/proxy/SaaS identity boundary; these are coverage gaps, not observed target-role references |
 
 The new `docs/SC002_CLAUDE_READER_EXTERNAL_CONSUMER_ATTESTATION.md` file is itself
 `GOVERNANCE_ONLY` audit evidence with `ARTIFACT_AUTHORITY=NONE`; it is not a runtime
@@ -247,19 +252,41 @@ SHELL_PROFILE_TARGET_ROLE_MATCH_COUNT=0
 
 The scanner excluded itself and its ancestor chain. It inspected 689 other PIDs. All 689
 argv files were readable and none contained the target. Environment files were readable
-for 217 PIDs; 472 were permission-inaccessible. All 49 inaccessible environments whose
-process names matched the task's relevant classes (`node`, `python`, `npx`, `codex`,
+for 217 PIDs; 472 were permission-inaccessible. Of those 472, the 49 whose process names
+matched the task's predefined relevant classes (`node`, `python`, `npx`, `codex`,
 `claude`, PostgreSQL, MCP, proxy, or Docker) mapped to one of the inspected Docker
-containers or `docker.service`; uncovered relevant processes were zero.
+containers or `docker.service`; uncovered processes within that predefined class were
+zero.
+
+That 49-process mapping establishes only
+`PREDEFINED_RELEVANT_PROCESS_CLASS_COVERAGE`. It does not establish
+`ALL_PROCESS_ENVIRONMENT_COVERAGE`: the remaining unreadable environments could belong
+to a shell, Java or Electron process, custom binary, wrapper, operator helper, or another
+executable outside the predefined name classes. No privilege escalation or attempt to
+read those inaccessible environments was authorized or performed.
 
 ```text
+PROCESS_TOTAL_PIDS_INSPECTED=689
+PROCESS_ARGV_READABLE_COUNT=689
+PROCESS_ARGV_TARGET_MATCH_COUNT=0
+PROCESS_ENV_READABLE_COUNT=217
+PROCESS_ENV_UNREADABLE_COUNT=472
+UNREADABLE_PROCESS_ENV_COUNT=472
+PROCESS_ENV_COVERAGE=217_OF_689_READABLE
+PROCESS_ENV_COVERAGE_COMPLETE=NO
+LOCAL_PROCESS_ENVIRONMENT_COVERAGE_COMPLETE=NO
+PREDEFINED_RELEVANT_UNREADABLE_PROCESS_COUNT=49
+PREDEFINED_RELEVANT_UNCOVERED_PROCESS_COUNT=0
 PROCESS_MATCH_COUNT=0
 PROCESS_CURRENT_CONSUMER_PROVEN=NO
-KNOWN_PROCESS_CONSUMER_STATE=ABSENT
+ACTIVE_PROCESS_CONSUMER_PROOF_FOUND=NO
+PROCESS_ABSENCE_PROVEN=NO
+KNOWN_PROCESS_CONSUMER_STATE=UNKNOWN_INCOMPLETE_ENVIRONMENT_VISIBILITY
 FULL_PROCESS_ARGV_PRINTED=NO
 ```
 
-This is a current snapshot, not a historical or future process guarantee.
+This is a current snapshot with incomplete environment visibility, not a local-process
+absence proof and not a historical or future process guarantee.
 
 ### Containers and running Compose
 
@@ -342,16 +369,21 @@ absence.
 
 ## Unknowns and final decision
 
-The single unresolved set is:
+There are two independent unresolved evidence boundaries:
 
 ```text
-POTENTIAL_CONSUMER_UNRESOLVED_SET=UNENUMERATED_EXTERNAL_OPERATOR_HOST_OR_EXTERNAL_PROXY_SAAS_IDENTITY_BOUNDARY
+POTENTIAL_CONSUMER_UNRESOLVED_COUNT=2
+POTENTIAL_CONSUMER_UNRESOLVED_SET=LOCAL_PROCESS_ENVIRONMENT_VISIBILITY_INCOMPLETE;UNENUMERATED_EXTERNAL_OPERATOR_HOST_OR_EXTERNAL_PROXY_SAAS_IDENTITY_BOUNDARY
 ```
 
-No repository document, local client configuration, SSH structure, workflow, or machine
-fact proves that every development/operator host is in the inventory. Because
-`HOST_COVERAGE_COMPLETE=NO`, the `ABSENT` gate is not satisfied even though every known
-and authorized local surface returned no consumer proof.
+First, only 217 of 689 process environments were readable, so local process absence and
+local-host absence are not proven. Second, no repository document, local client
+configuration, SSH structure, workflow, or machine fact proves that every
+development/operator host is in the inventory. Thus neither
+`LOCAL_PROCESS_ENVIRONMENT_COVERAGE_COMPLETE` nor `HOST_COVERAGE_COMPLETE` is `YES`.
+Even if future topology evidence established that this is the only relevant host, this
+artifact alone still could not establish global absence while local process-environment
+visibility remains incomplete.
 
 ```text
 EXTERNAL_HOST_CONSUMER_STATE=UNKNOWN
@@ -388,6 +420,8 @@ PARALLEL_AUTHORITY_CREATED=NO
 
 ```text
 READ_ONLY_ATTESTATION=YES
+PRIVILEGE_ESCALATION_ATTEMPTS=0
+UNREADABLE_PROCESS_ENVIRONMENTS_READ=0
 DB_CONNECTION_ATTEMPTS=0
 TARGET_ROLE_AUTH_PROBES=0
 
@@ -408,6 +442,7 @@ SHELL_XTRACE_ENABLED=NO
 
 DROP_ROLE_EXECUTED=NO
 DROP_OWNED_EXECUTED=NO
+REASSIGN_OWNED_EXECUTED=NO
 REVOKE_EXECUTED=NO
 GRANT_EXECUTED=NO
 ALTER_ROLE_EXECUTED=NO
