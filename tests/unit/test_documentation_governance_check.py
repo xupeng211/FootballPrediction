@@ -220,3 +220,11 @@ def test_unexpected_paths_still_rejected():
         errors,
     )
     assert any("unexpected changed paths" in error for error in errors)
+
+
+def test_retired_paths_are_allowed_only_when_deleted():
+    retired_path = ".claude/architecture_boundary.skill.md"
+    errors: list[str] = []
+    checker.validate_change_budget([checker.Change("A", retired_path, None)], errors)
+
+    assert any("unexpected changed paths" in error for error in errors)

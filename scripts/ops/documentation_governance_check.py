@@ -200,8 +200,8 @@ def scan_tracked_claude_config_credentials(root: Path | None = None) -> list[str
 
 # WF01 intentionally removes the second pull-request template. WF05 also
 # removes the obsolete CI setup note after proving that it has no supported
-# caller or current workflow reference. This bounded retirement removes only
-# the exact audited legacy Claude skill documents; other deletion or rename
+# caller or current workflow reference. The bounded retirements below remove
+# only exact audited legacy Claude skill assets; other deletion or rename
 # remains prohibited by this checker.
 ALLOWED_DELETED = frozenset(
     {
@@ -225,6 +225,30 @@ ALLOWED_DELETED = frozenset(
         ".claude/skills/fastapi-development/SKILL.md",
         ".claude/skills/fastapi-development/README.md",
         ".claude/skills/v26-harvest/SKILL.md",
+        ".claude/architecture_boundary.skill.md",
+        ".claude/change_impact.skill.md",
+        ".claude/context_lock.skill.md",
+        ".claude/minimal_change.skill.md",
+        ".claude/skills/async_testing.md",
+        ".claude/skills/code-quality/SKILL.md",
+        ".claude/skills/custom/__init__.py",
+        ".claude/skills/custom/data_collection.py",
+        ".claude/skills/data-engineering/examples/data_integration_example.py",
+        ".claude/skills/data-engineering/scripts/cache_strategy_manager.py",
+        ".claude/skills/data-engineering/scripts/database_connection_optimizer.py",
+        ".claude/skills/dependency_injection_mock.md",
+        ".claude/skills/deployment-operations/deployment_operations.py",
+        ".claude/skills/docker-devops/examples/deployment_integration_example.py",
+        ".claude/skills/docker-devops/scripts/docker_optimizer.py",
+        ".claude/skills/fastapi-development/examples/api_integration_example.py",
+        ".claude/skills/fastapi-development/scripts/api_performance_optimizer.py",
+        ".claude/skills/fastapi-development/templates/performance_middleware.py",
+        ".claude/skills/machine-learning-engineering/examples/integration_example.py",
+        ".claude/skills/machine-learning-engineering/scripts/feature_engineering_analyzer.py",
+        ".claude/skills/machine-learning-engineering/scripts/xgboost_optimizer.py",
+        ".claude/skills/machine-learning-engineering/templates/model_training_pipeline.py",
+        ".claude/skills/naming_convention.md",
+        ".claude/test_guard.skill.md",
     }
 )
 
@@ -236,9 +260,7 @@ ALLOWED_ADDED = (
     | AI_AUDIT_ALLOWED_ADDED
     | TEST_DEBT_AUDIT_ALLOWED_ADDED
 )
-ALLOWED_CHANGED = (
-    ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | AGENT_CONFIG_ALLOWED_CHANGED | ALLOWED_DELETED
-)
+ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED | AGENT_CONFIG_ALLOWED_CHANGED
 
 REQUIRED_DOCS = (
     "AGENTS.md",
@@ -494,7 +516,10 @@ def validate_change_budget(changes: list[Change], errors: list[str]) -> None:
     added = added_paths(changes)
     changed = changed_paths(changes)
     max_added = max_added_files_for(added)
-    unexpected = sorted(changed - ALLOWED_CHANGED)
+    allowed_deleted = {
+        change.path for change in changes if change.status == "D" and change.path in ALLOWED_DELETED
+    }
+    unexpected = sorted(changed - (ALLOWED_CHANGED | allowed_deleted))
     missing = sorted(ALLOWED_ADDED - {path for path in ALLOWED_ADDED if (ROOT / path).exists()})
 
     if len(added) > max_added:
