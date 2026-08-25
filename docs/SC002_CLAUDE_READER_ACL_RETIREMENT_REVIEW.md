@@ -88,9 +88,12 @@ Out of scope:
 | `rolconnlimit` | `-1` (unlimited, but unusable for login while `NOLOGIN`) | CONFIRMED |
 | password verifier presence | `true` (`rolpassword IS NOT NULL`; value intentionally not read) | CONFIRMED |
 
-`rolinherit=true` would matter if another role became a member of
-`claude_reader`; the membership audit below found no such path. The role has no
-cluster-level elevated attribute identified by this review.
+`rolinherit=true` applies when `claude_reader` itself is a member of another role
+(the outgoing membership direction); it would allow the target to inherit that
+parent role's privileges. If another `LOGIN` role became a member of
+`claude_reader`, the member role's own `rolinherit` would govern that inbound
+path. Both directions are currently zero, so neither inheritance path exists.
+The role has no cluster-level elevated attribute identified by this review.
 
 ## Database scope
 
