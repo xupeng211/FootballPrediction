@@ -201,8 +201,8 @@ def scan_tracked_claude_config_credentials(root: Path | None = None) -> list[str
 # WF01 intentionally removes the second pull-request template. WF05 also
 # removes the obsolete CI setup note after proving that it has no supported
 # caller or current workflow reference. The bounded retirements below remove
-# only exact audited legacy Claude skill assets; other deletion or rename
-# remains prohibited by this checker.
+# only exact audited legacy Claude skill assets and the obsolete history-rewrite
+# notice template; other deletion or rename remains prohibited by this checker.
 ALLOWED_DELETED = frozenset(
     {
         ".github/PULL_REQUEST_TEMPLATE.md",
@@ -249,6 +249,7 @@ ALLOWED_DELETED = frozenset(
         ".claude/skills/machine-learning-engineering/templates/model_training_pipeline.py",
         ".claude/skills/naming_convention.md",
         ".claude/test_guard.skill.md",
+        "docs/templates/HISTORY_REWRITE_COLLABORATOR_NOTICE.md",
     }
 )
 
