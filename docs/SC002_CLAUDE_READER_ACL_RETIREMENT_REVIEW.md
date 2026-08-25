@@ -39,7 +39,8 @@ In scope:
   development cluster;
 - `pg_roles`, `pg_auth_members`, `pg_shdepend`, `pg_default_acl`, `pg_database`,
   `pg_namespace`, `pg_class`, `pg_proc`, `pg_type`, `pg_stat_activity`, and ACL
-  expansion metadata;
+  expansion metadata; `pg_authid` was used only through the boolean
+  `rolpassword IS NOT NULL` check, never to read a verifier value;
 - static repository provisioning and consumer references on the current main tree;
 - a plan for a future, separately authorized retirement change.
 
@@ -243,9 +244,12 @@ therefore remains `UNKNOWN`, not `NONE`.
 | all public sequences `USAGE, SELECT` | 16 sequences × 2 privileges | MATCH |
 | default table `SELECT` | one default-ACL row / one exploded privilege | MATCH |
 | default sequence `USAGE, SELECT` | one default-ACL row / two exploded privileges | MATCH |
-| password provisioning | absent | MATCH |
+| repository password provisioning | absent | current DB retains a verifier (`rolpassword IS NOT NULL=true`) — `CONTRACT_ONLY`, not a state match |
 
-The reconciliation is a category/object-set match; the schema ACL's
+The ACL/category rows reconcile to the repository contract. The password row is
+intentionally **not** a state match: the repository no longer provisions a
+password on a fresh database, while this existing database still retains a
+verifier. The schema ACL's
 `pg_database_owner` grantor display is a PostgreSQL catalog representation, not an
 unexplained extra privilege.
 
