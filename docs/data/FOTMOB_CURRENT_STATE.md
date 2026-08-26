@@ -591,7 +591,7 @@ and `VERIFIED_PACKAGE_RECEIPT` only for legitimate `HISTORICAL_REUSE` loose
 pairs; and emits the existing `fotmob-detail-source-index/v1` consumed by the
 staging CLI. It is offline-only and has no provider, browser, database, or
 capture capability. Canonical operator entrypoint:
-`make data-fotmob-frozen-replay-packaging`.
+`npm run fotmob:frozen:replay-package`.
 
 The offline staging layer (`scripts/ops/fotmob_detail_staging.js` plus
 `src/infrastructure/fotmob/FotMobDetailStaging{Contract,Converter,Retention}.js`
