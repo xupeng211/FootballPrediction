@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
 
 ## Current State
 
@@ -1141,9 +1141,18 @@ legacy-writer execution is authorized.
 
 - The frozen 888 replay packaging bridge is implemented in PR #1888: it
   reuses verified packages, wraps legitimate historical-reuse loose pairs, and
-  emits the contract-valid staging source index offline. Technical Stage A
-  evidence is complete, while PR CI, independent STRICT review, and merge
-  closure remain pending.
+  emits the contract-valid staging source index offline. The
+  `FOTMOB_EXISTING_ASSET_CLOSURE` engineering closure is complete: PR #1888
+  was merged after the reviewed head
+  `ea366be4dbba5be5f8d4948b06f0af9d493b05cb` received an independent STRICT
+  Review `PASS` (P0/P1/P2 = 0), and the exact-head Production Gate
+  `32975493213` (attempt 2) succeeded. The authoritative Stage A squash/main
+  closeout SHA is
+  `371e86e67c35ff2d4b5bb690349bdda8e2cf067e`; exact-main push Production Gate
+  `32992442762` succeeded. Stage A business/data engineering work is complete.
+  Repository status reconciliation is the remaining governance action before
+  Chief Engineer final Phase Gate signoff; `CHIEF_ENGINEER_PHASE_GATE=
+  PENDING_FINAL_SIGNOFF`. Stage B is `NOT_STARTED`.
 - Production FotMob acquisition is `Not yet established`; see
   `docs/data/FOTMOB_CURRENT_STATE.md` for the authoritative state.
 - The current read-only inventory records 58 retained `fotmob_live_v1` rows and
