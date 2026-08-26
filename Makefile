@@ -11,7 +11,7 @@
         data-help data-check data-fotmob-candidates-network-export data-m3-canonical-inventory-preflight data-m3-canonical-inventory-disposable-proof data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
-        data-fotmob-detail-staging-help data-fotmob-detail-staging-receipt data-fotmob-detail-staging-build data-fotmob-detail-staging-validate \
+        data-fotmob-detail-staging-help data-fotmob-detail-staging-receipt data-fotmob-detail-staging-build data-fotmob-detail-staging-validate data-fotmob-frozen-replay-packaging \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-large-scale-pageprops-v2-acquisition-strategy-plan data-large-scale-target-inventory-schema-readiness-audit data-single-league-small-batch-target-manifest-plan data-single-league-target-discovery-source-inventory-preflight data-single-league-small-batch-pageprops-v2-preflight data-single-league-pageprops-v2-controlled-write-plan data-single-league-pageprops-v2-controlled-write-execute data-controlled-matches-identity-seed-prerequisite-plan data-controlled-matches-identity-seed-execute data-post-seed-matches-identity-raw-write-readiness-audit data-renewed-pageprops-v2-raw-write-execute data-renewed-pageprops-v2-baseline-proposal-plan data-training-dataset-dry-run data-training-dataset-export \
@@ -788,6 +788,13 @@ data-fotmob-detail-staging-validate: ## Fully offline staging validator: re-vali
 		exit 1; \
 	fi
 	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_detail_staging.js validate --output-root "$(OUTPUT_ROOT)" $(if $(EXPECTED_LATEST_MARKER_SHA256),--expected-latest-marker-sha256 "$(EXPECTED_LATEST_MARKER_SHA256)",)$(if $(ANCHOR_CHECKPOINT),--anchor-checkpoint "$(ANCHOR_CHECKPOINT)",)
+
+data-fotmob-frozen-replay-packaging: ## Fully offline frozen replay packager: reuses verified archives, packages only historical loose pairs, and emits a contract-valid staging source index. ZERO NETWORK / ZERO DATABASE / NO CAPTURE.
+	@if [ -z "$(FREEZE)" ] || [ -z "$(ASSET_MANIFEST)" ] || [ -z "$(REPLAY_INPUT)" ] || [ -z "$(OUTPUT_ROOT)" ]; then \
+		echo "ERROR: provide FREEZE, ASSET_MANIFEST, REPLAY_INPUT and OUTPUT_ROOT as absolute repository-external paths"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/fotmob_frozen_replay_packaging.js --freeze="$(FREEZE)" --asset-manifest="$(ASSET_MANIFEST)" --input="$(REPLAY_INPUT)" --output-root="$(OUTPUT_ROOT)"
 
 data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
 	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \
