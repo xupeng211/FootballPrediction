@@ -166,6 +166,89 @@ test('PR1888-P2-001 rejects conflicting archive declarations before archive cons
     assert.throws(() => build(fixture, 'conflict'), /conflicting archive binding/);
 });
 
+test('PR1888-P2-001 permits repeated declarations of the same canonical archive for one package ID', () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    const firstPair = buildPair({ source_match_id: '3901023', candidate_id: '47_20222023_3901023' });
+    const secondPair = buildPair({ source_match_id: '3901024', candidate_id: '47_20222023_3901024' });
+    const archive = writeFixtureArchive(fixture.dir, [
+        { sourceMatchId: '3901023', pair: firstPair },
+        { sourceMatchId: '3901024', pair: secondPair },
+    ], { packageId: 'existing' });
+    input.entries = [
+        { ...input.entries[0], payload_path: archive.payloadFiles['3901023'], manifest_path: archive.manifestFiles['3901023'], archive_path: archive.archivePath, archive_sha256: archive.archiveSha256, payload_member: archive.payloadMembers['3901023'], manifest_member: archive.manifestMembers['3901023'] },
+        { kind: 'EXISTING_PACKAGE', fotmob_match_id: '3901024', canonical_match_id: secondPair.payload.candidate_id, payload_path: archive.payloadFiles['3901024'], manifest_path: archive.manifestFiles['3901024'], package_id: 'existing', archive_path: archive.archivePath, archive_sha256: archive.archiveSha256, payload_member: archive.payloadMembers['3901024'], manifest_member: archive.manifestMembers['3901024'] },
+    ];
+    write(fixture.inputPath, input);
+    const result = build(fixture, 'same-package-canonical-archive');
+    assert.deepEqual(Object.keys(result.sourceIndex.archive_bindings), ['existing']);
+});
+
+test('PR1888-P2-001 rejects a canonical archive alias across different package IDs before output publication', () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    input.entries[1] = {
+        ...input.entries[0],
+        fotmob_match_id: input.entries[1].fotmob_match_id,
+        canonical_match_id: input.entries[1].canonical_match_id,
+        package_id: 'other-existing-package',
+    };
+    write(fixture.inputPath, input);
+    const output = path.join(fixture.outputBase, 'cross-package-alias');
+    assert.throws(() => build(fixture, 'cross-package-alias'), /canonical archive path is already bound/);
+    assert.equal(fs.existsSync(output), false);
+});
+
+test('PR1888-P2-001 rejects a symlink archive alias at the input safety gate', { skip: process.platform === 'win32' }, () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    const archiveAlias = path.join(fixture.dir, 'archive-alias.tar.gz');
+    fs.symlinkSync(input.entries[0].archive_path, archiveAlias);
+    input.entries[1] = {
+        ...input.entries[0],
+        fotmob_match_id: input.entries[1].fotmob_match_id,
+        canonical_match_id: input.entries[1].canonical_match_id,
+        package_id: 'other-existing-package',
+        archive_path: archiveAlias,
+    };
+    write(fixture.inputPath, input);
+    assert.throws(() => build(fixture, 'symlink-archive-alias'), /symlink/);
+    assert.equal(fs.existsSync(path.join(fixture.outputBase, 'symlink-archive-alias')), false);
+});
+
+test('PR1888-P2-001 permits distinct physical archives for different package IDs', () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    const secondPair = buildPair({ source_match_id: '3901024', candidate_id: '47_20222023_3901024' });
+    const secondArchive = writeFixtureArchive(fixture.dir, [{ sourceMatchId: '3901024', pair: secondPair }], { packageId: 'other-existing-package' });
+    input.entries[1] = {
+        kind: 'EXISTING_PACKAGE',
+        fotmob_match_id: '3901024',
+        canonical_match_id: secondPair.payload.candidate_id,
+        payload_path: secondArchive.payloadFiles['3901024'],
+        manifest_path: secondArchive.manifestFiles['3901024'],
+        package_id: 'other-existing-package',
+        archive_path: secondArchive.archivePath,
+        archive_sha256: secondArchive.archiveSha256,
+        payload_member: secondArchive.payloadMembers['3901024'],
+        manifest_member: secondArchive.manifestMembers['3901024'],
+    };
+    write(fixture.inputPath, input);
+    const result = build(fixture, 'distinct-archives');
+    assert.equal(result.sourceIndex.entries.length, 2);
+    assert.deepEqual(Object.keys(result.sourceIndex.archive_bindings).sort(), ['existing', 'other-existing-package']);
+});
+
+test('NEW-P2-001 rejects an existing package that collides with the generated historical reuse ID before publication', () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    input.entries[0].package_id = 'historical-reuse-replay';
+    write(fixture.inputPath, input);
+    const output = path.join(fixture.outputBase, 'reserved-package-id');
+    assert.throws(() => build(fixture, 'reserved-package-id'), /reserves generated package namespace/);
+    assert.equal(fs.existsSync(output), false);
+});
+
 test('PR1888-P2-004 strict CLI parser enforces allowlist and exactly-once required keys', () => {
     const valid = ['--freeze=/tmp/a', '--asset-manifest=/tmp/m', '--input=/tmp/i=a.json', '--output-root=/tmp/o'];
     assert.deepEqual(parseArgs(valid)['input'], '/tmp/i=a.json');
