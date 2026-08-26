@@ -1139,6 +1139,11 @@ legacy-writer execution is authorized.
 
 ## Current FotMob status
 
+- The frozen 888 replay packaging bridge is implemented in PR #1888: it
+  reuses verified packages, wraps legitimate historical-reuse loose pairs, and
+  emits the contract-valid staging source index offline. Technical Stage A
+  evidence is complete, while PR CI, independent STRICT review, and merge
+  closure remain pending.
 - Production FotMob acquisition is `Not yet established`; see
   `docs/data/FOTMOB_CURRENT_STATE.md` for the authoritative state.
 - The current read-only inventory records 58 retained `fotmob_live_v1` rows and
