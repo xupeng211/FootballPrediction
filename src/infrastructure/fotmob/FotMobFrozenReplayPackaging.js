@@ -39,10 +39,12 @@ function within(child, root) { const r = path.relative(root, child); return r ==
 function canonicalPath(abs) {
     let candidate = path.resolve(abs);
     const suffix = [];
-    while (true) {
+    let resolved = false;
+    while (!resolved) {
         try {
             const real = fs.realpathSync.native(candidate);
-            return path.join(real, ...suffix.reverse());
+            candidate = path.join(real, ...suffix.reverse());
+            resolved = true;
         } catch (error) {
             if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
             const parent = path.dirname(candidate);
@@ -51,6 +53,7 @@ function canonicalPath(abs) {
             candidate = parent;
         }
     }
+    return candidate;
 }
 function assertOutputIsolation(outputRoot, protectedFiles, repositoryRoot) {
     const out = verifyRepositoryExternalPath(outputRoot, { repositoryRoot });
@@ -63,6 +66,7 @@ function assertOutputIsolation(outputRoot, protectedFiles, repositoryRoot) {
     }
     return out;
 }
+// eslint-disable-next-line complexity
 function inputRows(input, repositoryRoot) {
     if (!input || input.schema_version !== 'fotmob-frozen-replay-package-input/v1') fail('input schema_version must be fotmob-frozen-replay-package-input/v1'); if (!Array.isArray(input.entries) || !input.entries.length) fail('input entries must be non-empty');
     const byId = new Map();
