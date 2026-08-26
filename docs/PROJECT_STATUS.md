@@ -1150,8 +1150,9 @@ legacy-writer execution is authorized.
   closeout SHA is
   `371e86e67c35ff2d4b5bb690349bdda8e2cf067e`; exact-main push Production Gate
   `32992442762` succeeded. Stage A business/data engineering work is complete.
-  Repository status reconciliation is the remaining governance action before
-  Chief Engineer final Phase Gate signoff; `CHIEF_ENGINEER_PHASE_GATE=
+  `STAGE_A_ENGINEERING_CLOSURE=COMPLETE` and
+  `REPOSITORY_CURRENT_STATE_AUTHORITY_RECONCILED=YES`. Chief Engineer final
+  Phase Gate signoff remains pending; `CHIEF_ENGINEER_PHASE_GATE=
   PENDING_FINAL_SIGNOFF`. Stage B is `NOT_STARTED`.
 - Production FotMob acquisition is `Not yet established`; see
   `docs/data/FOTMOB_CURRENT_STATE.md` for the authoritative state.
