@@ -9,9 +9,13 @@ const { buildReplaySourceIndex } = require('../../src/infrastructure/fotmob/FotM
 
 function parseArgs(argv) {
     const args = {};
+    const allowed = new Set(['freeze', 'asset-manifest', 'input', 'output-root']);
     for (const token of argv) {
         if (!token.startsWith('--') || !token.includes('=')) throw Object.assign(new Error(`expected --key=value, got ${token}`), { code: 'INPUT_ERROR' });
         const [key, ...rest] = token.slice(2).split('=');
+        if (!/^[a-z][a-z-]*$/.test(key) || !allowed.has(key)) throw Object.assign(new Error(`unknown or invalid argument: --${key}`), { code: 'INPUT_ERROR' });
+        if (!rest.length || rest.join('=') === '') throw Object.assign(new Error(`argument --${key} requires a value`), { code: 'INPUT_ERROR' });
+        if (Object.hasOwn(args, key)) throw Object.assign(new Error(`duplicate argument: --${key}`), { code: 'INPUT_ERROR' });
         args[key] = rest.join('=');
     }
     return args;

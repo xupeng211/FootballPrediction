@@ -12,7 +12,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { buildReplaySourceIndex, sha256 } = require('../../src/infrastructure/fotmob/FotMobFrozenReplayPackaging');
+const { buildReplaySourceIndex, sha256, assertOutputIsolation } = require('../../src/infrastructure/fotmob/FotMobFrozenReplayPackaging');
+const { parseArgs } = require('../../scripts/ops/fotmob_frozen_replay_packaging');
 const { validateSourceIndex } = require('../../src/infrastructure/fotmob/FotMobDetailStagingContract');
 const { buildPair, writeFixtureArchive } = require('../helpers/fotmobDetailStagingFixtures');
 
@@ -31,11 +32,31 @@ function setup(options = {}) {
     const looseManifest = path.join(dir, 'loose.manifest.json');
     fs.writeFileSync(loosePayload, pairs[1].pair.payloadBytes);
     fs.writeFileSync(looseManifest, `${JSON.stringify(pairs[1].pair.manifest, null, 2)}\n`);
-    const assets = pairs.map(({ id, pair }) => ({ fotmob_match_id: id, canonical_match_id: pair.payload.candidate_id, raw_payload_sha256: sha256(pair.payloadBytes) }));
+    const snapshotId = 'a'.repeat(64);
+    const populationHash = 'b'.repeat(64);
+    const assets = pairs.map(({ id, pair }) => ({
+        asset_manifest_schema: 'fotmob-888-raw-asset-manifest/v1',
+        canonical_match_id: pair.payload.candidate_id,
+        capture_timestamp_if_available: '',
+        fotmob_match_id: id,
+        kickoff_at: pair.payload.expected_identity.kickoff_at,
+        raw_payload_sha256: sha256(pair.payloadBytes),
+        season: pair.payload.season,
+        snapshot_id: snapshotId,
+        source_provider: 'FotMob',
+        target_population_hash: populationHash,
+    }));
     const assetPath = path.join(dir, 'assets.jsonl');
-    fs.writeFileSync(assetPath, assets.map(row => JSON.stringify(row)).join('\n') + '\n');
+    const assetBytes = Buffer.from(assets.map(row => JSON.stringify(row)).join('\n') + '\n');
+    fs.writeFileSync(assetPath, assetBytes);
     const freezePath = path.join(dir, 'freeze.json');
-    write(freezePath, { raw_payload_count: 2 });
+    write(freezePath, {
+        schema: 'fotmob-888-asset-freeze/v1', snapshot_id: snapshotId,
+        target_population_hash: populationHash, manifest_sha256: sha256(assetBytes),
+        raw_payload_count: 2, missing: 0, extra: 0, duplicate: 0,
+        full_raw_retention: true, raw_mutability: 'immutable', acquisition_status: 'complete',
+        golden_dataset_status: 'not_complete', live_fotmob_network: false, db_writes_performed: false,
+    });
     const inputPath = path.join(dir, 'input.json');
     write(inputPath, {
         schema_version: 'fotmob-frozen-replay-package-input/v1',
@@ -44,14 +65,14 @@ function setup(options = {}) {
             { kind: 'HISTORICAL_REUSE_LOOSE', source_provenance: 'HISTORICAL_REUSE', fotmob_match_id: pairs[1].id, canonical_match_id: pairs[1].pair.payload.candidate_id, payload_path: loosePayload, manifest_path: looseManifest },
         ],
     });
-    return { dir, freezePath, assetPath, inputPath };
+    return { dir, freezePath, assetPath, inputPath, outputBase: temp() };
 }
 
 function build(fixture, name) {
-    return buildReplaySourceIndex({ freezePath: fixture.freezePath, assetManifestPath: fixture.assetPath, inputPath: fixture.inputPath, outputRoot: path.join(fixture.dir, name), repositoryRoot: REPO_ROOT });
+    return buildReplaySourceIndex({ freezePath: fixture.freezePath, assetManifestPath: fixture.assetPath, inputPath: fixture.inputPath, outputRoot: path.join(fixture.outputBase, name), repositoryRoot: REPO_ROOT });
 }
 
-test('packages loose historical reuse, reuses an existing archive, and emits an official valid source index', () => {
+test('PR1888-P1-001/P2-002 packages only frozen-authority-bound valid observations', () => {
     const fixture = setup();
     const result = build(fixture, 'out-a');
     assert.equal(result.summary.existing_packaged_count, 1);
@@ -60,20 +81,20 @@ test('packages loose historical reuse, reuses an existing archive, and emits an 
     assert.equal(validateSourceIndex(result.sourceIndex).ok, true);
     assert.ok(result.sourceIndex.archive_bindings.existing);
     assert.ok(result.sourceIndex.archive_bindings['historical-reuse-replay']);
-    assert.equal(fs.existsSync(path.join(fixture.dir, 'out-a', 'packages', 'historical-reuse-replay.tar.gz')), true);
+    assert.equal(fs.existsSync(path.join(fixture.outputBase, 'out-a', 'packages', 'historical-reuse-replay.tar.gz')), true);
 });
 
-test('is deterministic for independent output roots', () => {
+test('PR1888-P2-003 publishes deterministically into an atomic output tree', () => {
     const fixture = setup();
     const a = build(fixture, 'out-a');
     const b = build(fixture, 'out-b');
     const project = value => ({ ...value, archive_bindings: Object.fromEntries(Object.entries(value.archive_bindings).map(([id, binding]) => [id, { ...binding, path: path.basename(binding.path), receipt: path.basename(binding.receipt) }])) , entries: value.entries.map(entry => ({ ...entry, payload_file: path.basename(entry.payload_file), manifest_file: path.basename(entry.manifest_file) })) });
     assert.deepEqual(project(a.sourceIndex), project(b.sourceIndex));
     assert.equal(a.summary.source_ids_sha256, b.summary.source_ids_sha256);
-    assert.equal(sha256(fs.readFileSync(path.join(fixture.dir, 'out-a', 'packages', 'historical-reuse-replay.tar.gz'))), sha256(fs.readFileSync(path.join(fixture.dir, 'out-b', 'packages', 'historical-reuse-replay.tar.gz'))));
+    assert.equal(sha256(fs.readFileSync(path.join(fixture.outputBase, 'out-a', 'packages', 'historical-reuse-replay.tar.gz'))), sha256(fs.readFileSync(path.join(fixture.outputBase, 'out-b', 'packages', 'historical-reuse-replay.tar.gz'))));
 });
 
-test('fails closed for malformed historical provenance, hash mismatch, and existing output', () => {
+test('PR1888-P2-002 fails closed for malformed provenance/hash and P2-003 output conflict', () => {
     const fixture = setup();
     const input = JSON.parse(fs.readFileSync(fixture.inputPath));
     input.entries[1].source_provenance = 'FORMAL_CAPTURE';
@@ -83,15 +104,22 @@ test('fails closed for malformed historical provenance, hash mismatch, and exist
     write(fixture.inputPath, input);
     const asset = fs.readFileSync(fixture.assetPath, 'utf8').split('\n').filter(Boolean).map(JSON.parse);
     asset[1].raw_payload_sha256 = '0'.repeat(64);
-    fs.writeFileSync(fixture.assetPath, asset.map(JSON.stringify).join('\n') + '\n');
+    const changedAssetBytes = Buffer.from(asset.map(JSON.stringify).join('\n') + '\n');
+    fs.writeFileSync(fixture.assetPath, changedAssetBytes);
+    const freeze = JSON.parse(fs.readFileSync(fixture.freezePath));
+    freeze.manifest_sha256 = sha256(changedAssetBytes);
+    write(fixture.freezePath, freeze);
     assert.throws(() => build(fixture, 'bad-hash'), /payload SHA mismatch/);
     asset[1].raw_payload_sha256 = sha256(fs.readFileSync(input.entries[1].payload_path));
-    fs.writeFileSync(fixture.assetPath, asset.map(JSON.stringify).join('\n') + '\n');
+    const restoredAssetBytes = Buffer.from(asset.map(JSON.stringify).join('\n') + '\n');
+    fs.writeFileSync(fixture.assetPath, restoredAssetBytes);
+    freeze.manifest_sha256 = sha256(restoredAssetBytes);
+    write(fixture.freezePath, freeze);
     build(fixture, 'out');
     assert.throws(() => build(fixture, 'out'), /output root already exists/);
 });
 
-test('fails closed for duplicate IDs, missing entries, and symlinked input', { skip: process.platform === 'win32' }, () => {
+test('PR1888-P1-001 fails closed for duplicate IDs, missing entries, and symlinked input', { skip: process.platform === 'win32' }, () => {
     const fixture = setup();
     const input = JSON.parse(fs.readFileSync(fixture.inputPath));
     input.entries.push({ ...input.entries[1] });
@@ -107,4 +135,43 @@ test('fails closed for duplicate IDs, missing entries, and symlinked input', { s
     data.entries[1].payload_path = link;
     write(clean.inputPath, data);
     assert.throws(() => build(clean, 'symlink'), /symlink/);
+});
+
+test('PR1888-P1-002 rejects equal/ancestor/descendant evidence overlap but allows similar prefixes', () => {
+    const root = temp();
+    const evidence = path.join(root, 'snapshot');
+    fs.mkdirSync(path.join(evidence, 'raw'), { recursive: true });
+    const freeze = path.join(evidence, 'freeze.json'); fs.writeFileSync(freeze, '{}');
+    assert.throws(() => assertOutputIsolation(path.join(evidence, 'derived'), [freeze], REPO_ROOT), /overlaps/);
+    assert.throws(() => assertOutputIsolation(evidence, [freeze], REPO_ROOT), /overlaps/);
+    assert.throws(() => assertOutputIsolation(root, [freeze], REPO_ROOT), /overlaps/);
+    const sibling = path.join(root, 'snapshot-derived');
+    assert.equal(assertOutputIsolation(sibling, [freeze], REPO_ROOT), sibling);
+});
+
+test('PR1888-P2-001 rejects conflicting archive declarations before archive consumption', () => {
+    const fixture = setup();
+    const input = JSON.parse(fs.readFileSync(fixture.inputPath));
+    const alternate = path.join(fixture.dir, 'alternate.tar.gz');
+    fs.copyFileSync(input.entries[0].archive_path, alternate);
+    input.entries[1].kind = 'EXISTING_PACKAGE';
+    input.entries[1].package_id = 'existing';
+    input.entries[1].archive_path = alternate;
+    input.entries[1].archive_sha256 = sha256(fs.readFileSync(alternate));
+    input.entries[1].payload_path = input.entries[0].payload_path;
+    input.entries[1].manifest_path = input.entries[0].manifest_path;
+    input.entries[1].payload_member = input.entries[0].payload_member;
+    input.entries[1].manifest_member = input.entries[0].manifest_member;
+    write(fixture.inputPath, input);
+    assert.throws(() => build(fixture, 'conflict'), /conflicting archive binding/);
+});
+
+test('PR1888-P2-004 strict CLI parser enforces allowlist and exactly-once required keys', () => {
+    const valid = ['--freeze=/tmp/a', '--asset-manifest=/tmp/m', '--input=/tmp/i=a.json', '--output-root=/tmp/o'];
+    assert.deepEqual(parseArgs(valid)['input'], '/tmp/i=a.json');
+    assert.throws(() => parseArgs([...valid, '--freeze=/tmp/b']), /duplicate/);
+    assert.throws(() => parseArgs([...valid, '--foo=bar']), /unknown/);
+    assert.throws(() => parseArgs(['foo']), /expected/);
+    assert.throws(() => parseArgs(['--freeze']), /expected/);
+    assert.throws(() => parseArgs(['--=abc']), /unknown or invalid/);
 });
