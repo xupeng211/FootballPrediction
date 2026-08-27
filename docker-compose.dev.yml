@@ -118,6 +118,10 @@ services:
       - http_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
       - https_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
       - all_proxy=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      # The Odds API is a regular HTTPS provider and deliberately uses this
+      # single stable HTTP CONNECT endpoint, never the rotating SOCKS pool.
+      - THE_ODDS_API_TRANSPORT=${THE_ODDS_API_TRANSPORT:-direct}
+      - THE_ODDS_API_PROXY_URL=${THE_ODDS_API_PROXY_URL:-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
       - CONTAINER_PROXY=${DEV_CONTAINER_PROXY:-}
       - NO_PROXY=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
       - no_proxy=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}

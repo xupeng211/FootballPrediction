@@ -37,7 +37,12 @@ const {
     latestAsOfMarket,
     deriveTimeline,
 } = require('../../../src/infrastructure/market_evidence/asOfView');
-const { createTheOddsApiClient } = require('../../../src/infrastructure/market_evidence/theOddsApiClient');
+const {
+    createDirectRequestFn,
+    createStableProxyRequestFn,
+    createTheOddsApiClient,
+    resolveTransportPolicy,
+} = require('../../../src/infrastructure/market_evidence/theOddsApiClient');
 const { replayRaw } = require('../../../src/infrastructure/market_evidence/replay');
 
 const rawText = fs.readFileSync(
@@ -969,4 +974,113 @@ test('live client captures one bounded response and exposes only sanitized quota
     assert.equal(result.provider_quota['x-provider-internal'], undefined);
     assert.equal(client.request_count, 1);
     assert.throws(() => client.capture({ markets: 'totals' }), /only permits/);
+});
+
+test('The Odds API client defaults to native DIRECT HTTPS without proxy selection or proxy environment use', async t => {
+    const previous = process.env.THE_ODDS_API_KEY;
+    const previousProxy = process.env.ALL_PROXY;
+    process.env.THE_ODDS_API_KEY = 'test-only-not-persisted';
+    process.env.ALL_PROXY = 'socks5://proxy.invalid:1080';
+    t.after(() => {
+        if (previous === undefined) delete process.env.THE_ODDS_API_KEY;
+        else process.env.THE_ODDS_API_KEY = previous;
+        if (previousProxy === undefined) delete process.env.ALL_PROXY;
+        else process.env.ALL_PROXY = previousProxy;
+    });
+    const requests = [];
+    class NativeAgent {
+        constructor(options) {
+            this.options = options;
+        }
+    }
+    const requestFn = createDirectRequestFn({
+        httpsModule: {
+            Agent: NativeAgent,
+            request(options, callback) {
+                requests.push(options);
+                const response = new EventEmitter();
+                response.statusCode = 200;
+                response.headers = {};
+                process.nextTick(() => {
+                    callback(response);
+                    response.emit('data', Buffer.from(rawText));
+                    response.emit('end');
+                });
+                const request = new EventEmitter();
+                request.setTimeout = () => {};
+                return request;
+            },
+        },
+    });
+    const client = createTheOddsApiClient({ requestFn });
+    const result = await client.capture();
+    assert.equal(result.http_status, 200);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].hostname, 'api.the-odds-api.com');
+    assert.equal(requests[0].port, 443);
+    assert.equal(requests[0].agent instanceof NativeAgent, true);
+    assert.equal(requests[0].agent.options.keepAlive, false);
+    assert.equal(Object.hasOwn(requests[0], 'proxy'), false);
+    assert.doesNotMatch(require('node:fs').readFileSync(
+        require.resolve('../../../src/infrastructure/market_evidence/theOddsApiClient'), 'utf8'
+    ), /ProxyProvider|SocksProxyAgent|HTTPS_PROXY|ALL_PROXY/);
+});
+
+test('non-200 direct responses and network failures do not create live RAW payloads', async t => {
+    const previous = process.env.THE_ODDS_API_KEY;
+    process.env.THE_ODDS_API_KEY = 'test-only-not-persisted';
+    t.after(() => {
+        if (previous === undefined) delete process.env.THE_ODDS_API_KEY;
+        else process.env.THE_ODDS_API_KEY = previous;
+    });
+    const non200Client = createTheOddsApiClient({
+        requestFn: (_url, _options, callback) => {
+            const response = new EventEmitter();
+            response.statusCode = 503;
+            response.headers = {};
+            process.nextTick(() => {
+                callback(response);
+                response.emit('data', Buffer.from('{"error":"unavailable"}'));
+                response.emit('end');
+            });
+            return new EventEmitter();
+        },
+    });
+    await assert.rejects(non200Client.capture(), error => error.http_status === 503 && !Object.hasOwn(error, 'rawText'));
+    const networkClient = createTheOddsApiClient({
+        requestFn: () => {
+            const request = new EventEmitter();
+            process.nextTick(() => request.emit('error', Object.assign(new Error('secret-free failure'), { code: 'ECONNRESET' })));
+            return request;
+        },
+    });
+    await assert.rejects(networkClient.capture(), /ECONNRESET/);
+});
+
+test('stable_proxy uses only its configured fixed agent and fails closed without a proxy URL', async () => {
+    const stableAgent = { stable: true };
+    const requestFn = createStableProxyRequestFn({ proxyUrl: 'http://127.0.0.1:7897', agent: stableAgent });
+    const originalRequest = require('node:https').request;
+    let receivedOptions;
+    require('node:https').request = (options, callback) => {
+        receivedOptions = options;
+        const response = new EventEmitter();
+        response.statusCode = 204;
+        response.headers = {};
+        process.nextTick(() => callback(response));
+        const request = new EventEmitter();
+        request.setTimeout = () => {};
+        return request;
+    };
+    try {
+        requestFn('https://api.the-odds-api.com/', { headers: {} }, () => {});
+    } finally {
+        require('node:https').request = originalRequest;
+    }
+    assert.equal(receivedOptions.agent, stableAgent);
+    assert.equal(receivedOptions.rejectUnauthorized, true);
+    assert.equal(resolveTransportPolicy('stable_proxy'), 'STABLE_PROXY');
+    assert.equal(resolveTransportPolicy('direct'), 'DIRECT');
+    assert.throws(() => createStableProxyRequestFn({ proxyUrl: '' }), /must be an HTTP\(S\) proxy URL/);
+    assert.throws(() => resolveTransportPolicy('rotating_proxy_pool'), /direct or stable_proxy/);
 });

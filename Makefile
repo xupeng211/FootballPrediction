@@ -664,7 +664,9 @@ data-fotmob-candidates-network-export: ## Explicitly authorized live FotMob cand
 		-e FOTMOB_CANDIDATE_SEASONS="$(SEASONS)" \
 		-e FOTMOB_CANDIDATE_SLUG="$(SLUG)" \
 		-e FOTMOB_CANDIDATE_OUTPUT="$(OUTPUT)" \
-		dev bash -lc 'set -eu; set -f; cd /app; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
+		-e FOTMOB_CANDIDATE_OUTPUT_SCHEMA="$(OUTPUT_SCHEMA)" \
+		-e FOTMOB_CANDIDATE_RETAIN_RAW_RESPONSES="$(RETAIN_RAW_RESPONSES)" \
+		dev bash -lc 'set -eu; set -f; cd /app; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT_SCHEMA" ]; then set -- "$$@" --output-schema="$$FOTMOB_CANDIDATE_OUTPUT_SCHEMA"; fi; if [ -n "$$FOTMOB_CANDIDATE_RETAIN_RAW_RESPONSES" ]; then set -- "$$@" --retain-raw-responses="$$FOTMOB_CANDIDATE_RETAIN_RAW_RESPONSES"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
 
 data-fotmob-detail-capture-help: ## Show safe FotMob detail capture entrypoint policy (PLAN/PREFLIGHT/REPLAY offline; EXECUTE is the only canonical real-network entry).
 	@echo "FotMob detail capture entrypoints are safety-gated."

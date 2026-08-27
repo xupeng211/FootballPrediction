@@ -454,7 +454,7 @@ path_is_leak_allowlisted() {
 path_is_contract_allowlisted() {
   local file="$1"
   case "$file" in
-    src/infrastructure/recon/ReconHealthServer.js|src/infrastructure/monitoring/MetricsClient.js|scripts/ops/generate_league_dictionary.js|scripts/ops/titan_seeder.js|scripts/ops/backfill_historical_raw_match_data.js)
+    src/infrastructure/recon/ReconHealthServer.js|src/infrastructure/monitoring/MetricsClient.js|src/infrastructure/market_evidence/theOddsApiClient.js|scripts/ops/generate_league_dictionary.js|scripts/ops/titan_seeder.js|scripts/ops/backfill_historical_raw_match_data.js)
       return 0
       ;;
     *)
