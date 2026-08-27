@@ -1,0 +1,61 @@
+{
+    "version": "stage-c-fixture/v1",
+    "events": [
+        {
+            "kind": "event",
+            "provider": "the-odds-api",
+            "provider_id": "epl-fixture-001",
+            "canonical_id": "fotmob:fixture-001",
+            "season": "2026/2027",
+            "provenance": "fixture"
+        }
+    ],
+    "bookmakers": [
+        {
+            "kind": "bookmaker",
+            "provider": "the-odds-api",
+            "provider_id": "williamhill",
+            "canonical_id": "bookmaker:william-hill",
+            "price_side": "BOOKMAKER",
+            "provenance": "fixture"
+        }
+    ],
+    "markets": [
+        {
+            "kind": "market",
+            "provider": "the-odds-api",
+            "provider_id": "h2h",
+            "canonical_id": "MATCH/1X2/NULL",
+            "period": "MATCH",
+            "market_type": "1X2",
+            "line": null,
+            "provenance": "fixture"
+        }
+    ],
+    "selections": [
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Arsenal",
+            "canonical_id": "HOME",
+            "selection": "HOME",
+            "provenance": "fixture"
+        },
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Draw",
+            "canonical_id": "DRAW",
+            "selection": "DRAW",
+            "provenance": "fixture"
+        },
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Chelsea",
+            "canonical_id": "AWAY",
+            "selection": "AWAY",
+            "provenance": "fixture"
+        }
+    ]
+}
