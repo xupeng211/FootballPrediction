@@ -24,6 +24,8 @@ const MAPPING_FIELDS = Object.freeze({
         'home_team',
         'away_team',
         'kickoff_utc',
+        'identity_decision_id',
+        'identity_ruleset_version',
         'provenance',
     ]),
     bookmaker: new Set(['kind', 'provider', 'provider_id', 'canonical_id', 'price_side', 'provenance']),
@@ -86,6 +88,11 @@ function assertEventMapping(mapping) {
     }
     if (!isUtcTimestamp(mapping.kickoff_utc)) {
         throw new Error(`event mapping requires valid kickoff_utc: ${mapping.provider_id}`);
+    }
+    for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
+        if (mapping[field] !== undefined && (typeof mapping[field] !== 'string' || !mapping[field].trim())) {
+            throw new Error(`event mapping ${field} must be a non-empty string when present: ${mapping.provider_id}`);
+        }
     }
 }
 

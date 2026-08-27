@@ -198,6 +198,8 @@
         "projection_version": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "observation_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "canonical_event_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "identity_decision_id": { "type": ["string", "null"], "minLength": 1, "pattern": "\\S" },
+        "identity_ruleset_version": { "type": ["string", "null"], "minLength": 1, "pattern": "\\S" },
         "provider": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "provider_event_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "canonical_market_id": {

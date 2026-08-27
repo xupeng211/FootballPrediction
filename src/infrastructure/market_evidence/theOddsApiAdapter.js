@@ -15,6 +15,7 @@ const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
 
 function resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker) {
+    if (market.key === 'h2h_lay') return 'LAY';
     const rawSides = [outcome.price_side, market.price_side, bookmaker.price_side].filter(
         side => typeof side === 'string' && side.trim()
     );
@@ -191,13 +192,26 @@ function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = 
     return { ...evidence, evidence_sha256: sha256Text(stableStringify(evidence)) };
 }
 
-function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVersion = '1' }) {
+function adaptTheOddsApiRawInternal({
+    rawText,
+    capture,
+    registry,
+    projectionVersion = '1',
+    allowedProviderEventIds = null,
+    supportedMarketKeys = ['h2h'],
+}) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
     const payload = JSON.parse(rawText);
     if (!Array.isArray(payload)) throw new Error('The Odds API payload must be an array');
     const rawSha256 = sha256Text(rawText);
     if (capture.raw_sha256 !== rawSha256) throw new Error('capture raw_sha256 does not match provider payload');
     const observations = [];
+    if (allowedProviderEventIds !== null && !(allowedProviderEventIds instanceof Set)) {
+        throw new Error('allowedProviderEventIds must be a Set or null');
+    }
+    if (!Array.isArray(supportedMarketKeys) || supportedMarketKeys.some(key => typeof key !== 'string')) {
+        throw new Error('supportedMarketKeys must be a string array');
+    }
     const seenObservationIds = new Set();
     const seenProviderEventIds = new Set();
     for (const rawEvent of payload) {
@@ -219,6 +233,7 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
             throw new Error(`duplicate provider event identity: ${event.id}`);
         }
         seenProviderEventIds.add(event.id);
+        if (allowedProviderEventIds !== null && !allowedProviderEventIds.has(event.id)) continue;
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
         if (
             event.home_team.trim() !== canonicalEvent.home_team.trim() ||
@@ -254,7 +269,7 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                     throw new Error(`duplicate provider market identity: ${event.id}:${bookmaker.key}:${market.key}`);
                 }
                 seenProviderMarketIds.add(market.key);
-                if (market.key !== 'h2h') {
+                if (!supportedMarketKeys.includes(market.key)) {
                     throw new Error(`unsupported Stage C provider market: ${market.key}`);
                 }
                 const canonicalMarket = registry.resolve('market', 'the-odds-api', market.key);
@@ -271,7 +286,14 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                     if (typeof outcome.name !== 'string' || !outcome.name.trim()) {
                         throw new Error(`provider selection identity is incomplete: ${market.key}`);
                     }
-                    const canonicalSelection = registry.resolve('selection', 'the-odds-api', outcome.name);
+                    // Provider team labels are event-contextual, so HOME/AWAY
+                    // are resolved from the already governed event identity.
+                    const canonicalSelection =
+                        canonicalEvent.identity_decision_id && outcome.name.trim() === canonicalEvent.home_team.trim()
+                            ? { canonical_id: 'HOME', selection: 'HOME' }
+                            : canonicalEvent.identity_decision_id && outcome.name.trim() === canonicalEvent.away_team.trim()
+                              ? { canonical_id: 'AWAY', selection: 'AWAY' }
+                              : registry.resolve('selection', 'the-odds-api', outcome.name);
                     const expectedProviderTeam =
                         canonicalSelection.selection === 'HOME'
                             ? canonicalEvent.home_team
@@ -304,6 +326,8 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                         projection_version: projectionVersion,
                         observation_id: sha256Text(idSeed),
                         canonical_event_id: canonicalEvent.canonical_id,
+                        identity_decision_id: canonicalEvent.identity_decision_id || null,
+                        identity_ruleset_version: canonicalEvent.identity_ruleset_version || null,
                         provider: 'the-odds-api',
                         provider_event_id: event.id,
                         canonical_market_id: canonicalMarket.canonical_id,
