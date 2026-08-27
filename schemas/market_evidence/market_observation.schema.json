@@ -44,6 +44,20 @@
         "identity_registry_version",
         "quality_flags"
     ],
+    "allOf": [
+        {
+            "if": { "properties": { "market_type": { "const": "1X2" } } },
+            "then": { "properties": { "line": { "type": "null" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "market_type": { "enum": ["ASIAN_HANDICAP", "TOTAL"] }
+                }
+            },
+            "then": { "properties": { "line": { "type": "number" } } }
+        }
+    ],
     "properties": {
         "schema_version": { "const": "footballprediction-market-observation/v1" },
         "projection_version": { "type": "string", "minLength": 1 },

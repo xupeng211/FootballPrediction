@@ -60,7 +60,9 @@ function validateMarketIdentity({ period, market_type: marketType, line }, error
     if (!PERIODS.has(period)) errors.push('invalid period');
     if (!MARKET_TYPES.has(marketType)) errors.push('invalid market_type');
     if (marketType === '1X2' && line !== null && line !== undefined) errors.push('1X2 line must be null');
-    if (marketType !== '1X2' && !Number.isFinite(Number(line))) errors.push('non-1X2 line must be numeric');
+    if (marketType !== '1X2' && (line === null || line === undefined || !Number.isFinite(Number(line)))) {
+        errors.push('non-1X2 line must be numeric');
+    }
 }
 
 function semanticProjection(observation) {

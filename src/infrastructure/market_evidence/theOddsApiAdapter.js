@@ -6,8 +6,10 @@ const { createObservation, sha256Text } = require('./contracts');
 const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
 
-function resolvePriceSide(bookmaker, market, outcome) {
-    return outcome.price_side || market.price_side || bookmaker.price_side || 'BOOKMAKER';
+function resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker) {
+    return (
+        outcome.price_side || market.price_side || bookmaker.price_side || canonicalBookmaker.price_side || 'BOOKMAKER'
+    );
 }
 
 function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1' }) {
@@ -59,7 +61,7 @@ function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1
                             line: canonicalMarket.line ?? null,
                             canonical_selection_id: canonicalSelection.canonical_id,
                             selection: canonicalSelection.selection,
-                            price_side: resolvePriceSide(bookmaker, market, outcome),
+                            price_side: resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker),
                             odds_decimal: outcome.price,
                             bookmaker_last_update_at: market.last_update || bookmaker.last_update || null,
                             source_snapshot_at: event.last_update || null,

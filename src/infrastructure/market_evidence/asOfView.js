@@ -1,4 +1,12 @@
 'use strict';
+
+const { isUtcTimestamp } = require('./contracts');
+
+function parseUtcTime(value, field) {
+    if (!isUtcTimestamp(value)) throw new Error(`${field} must be UTC ISO-8601`);
+    return Date.parse(value);
+}
+
 function latestAsOf(
     observations,
     {
@@ -11,8 +19,7 @@ function latestAsOf(
         decision_time,
     }
 ) {
-    const time = Date.parse(decision_time);
-    if (!Number.isFinite(time)) throw new Error('decision_time must be ISO-8601');
+    const time = parseUtcTime(decision_time, 'decision_time');
     return (
         observations
             .filter(
@@ -35,6 +42,7 @@ function latestAsOf(
     );
 }
 function latestAsOfMarket(observations, query) {
+    const decisionTime = parseUtcTime(query.decision_time, 'decision_time');
     const candidates = observations.filter(
         row =>
             row.canonical_event_id === query.canonical_event_id &&
@@ -44,7 +52,7 @@ function latestAsOfMarket(observations, query) {
             row.line === (query.line ?? null) &&
             Array.isArray(row.quality_flags) &&
             row.quality_flags.length === 0 &&
-            Date.parse(row.response_received_at) <= Date.parse(query.decision_time)
+            Date.parse(row.response_received_at) <= decisionTime
     );
     const bySelection = new Map();
     for (const row of candidates) {
@@ -64,8 +72,7 @@ function deriveTimeline(
     observations,
     { canonical_event_id, canonical_bookmaker_id, period = 'MATCH', market_type = '1X2', line = null, kickoff_utc }
 ) {
-    const kickoffTime = Date.parse(kickoff_utc);
-    if (!Number.isFinite(kickoffTime)) throw new Error('kickoff_utc must be ISO-8601');
+    const kickoffTime = parseUtcTime(kickoff_utc, 'kickoff_utc');
     const eligible = observations.filter(
         row =>
             row.canonical_event_id === canonical_event_id &&
@@ -79,6 +86,14 @@ function deriveTimeline(
     const preKickoff = eligible.filter(row => Date.parse(row.response_received_at) <= kickoffTime);
     const bySelection = selection =>
         eligible
+            .filter(row => row.canonical_selection_id === selection)
+            .sort(
+                (a, b) =>
+                    Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
+                    a.observation_id.localeCompare(b.observation_id)
+            );
+    const preKickoffBySelection = selection =>
+        preKickoff
             .filter(row => row.canonical_selection_id === selection)
             .sort(
                 (a, b) =>
@@ -111,27 +126,13 @@ function deriveTimeline(
             ['HOME', 'DRAW', 'AWAY'].map(selection => [selection, bySelection(selection)])
         ),
         opening_by_selection: Object.fromEntries(
-            ['HOME', 'DRAW', 'AWAY'].map(selection => [selection, bySelection(selection)[0] || null])
+            ['HOME', 'DRAW', 'AWAY'].map(selection => [selection, preKickoffBySelection(selection)[0] || null])
         ),
         current_by_selection: Object.fromEntries(
             ['HOME', 'DRAW', 'AWAY'].map(selection => [selection, bySelection(selection).at(-1) || null])
         ),
         closing_by_selection: Object.fromEntries(
-            ['HOME', 'DRAW', 'AWAY'].map(selection => [
-                selection,
-                eligible
-                    .filter(
-                        row =>
-                            row.canonical_selection_id === selection &&
-                            Date.parse(row.response_received_at) <= kickoffTime
-                    )
-                    .sort(
-                        (a, b) =>
-                            Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                            a.observation_id.localeCompare(b.observation_id)
-                    )
-                    .at(-1) || null,
-            ])
+            ['HOME', 'DRAW', 'AWAY'].map(selection => [selection, preKickoffBySelection(selection).at(-1) || null])
         ),
     };
 }

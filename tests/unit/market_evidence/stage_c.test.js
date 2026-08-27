@@ -103,6 +103,7 @@ const capture = Object.freeze({
     response_received_at: '2026-08-27T13:31:49Z',
     ingested_at: '2026-08-27T13:32:00Z',
     raw_evidence_reference: 'raw/fixture.json',
+    raw_sha256: sha256Text(rawText),
 });
 function observations(version = '1') {
     return adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion: version });
@@ -218,10 +219,10 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
 test('replay has deterministic semantic projection while ingestion metadata is explicit evidence metadata', () => {
     const first = observations();
     const second = observations();
-    assert.equal(
-        sha256Text(stableStringify(first.map(semanticProjection))),
-        sha256Text(stableStringify(second.map(semanticProjection)))
-    );
+    const replay1Sha256 = sha256Text(stableStringify(first.map(semanticProjection)));
+    const replay2Sha256 = sha256Text(stableStringify(second.map(semanticProjection)));
+    assert.match(replay1Sha256, /^[a-f0-9]{64}$/);
+    assert.equal(replay1Sha256, replay2Sha256, 'REPLAY_1_SHA256 must equal REPLAY_2_SHA256');
     const v2 = observations('2');
     assert.notEqual(v2[0].observation_id, first[0].observation_id);
     assert.equal(first[0].projection_version, '1');
@@ -237,6 +238,16 @@ test('offline replay reads immutable raw and can append projections without netw
     const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', ledgerPath });
     assert.equal(replayed.length, 3);
     assert.equal(fs.readFileSync(ledgerPath, 'utf8').trim().split('\n').length, 3);
+    assert.throws(
+        () =>
+            replayRaw({
+                rawPath,
+                capture: { ...capture, raw_sha256: '0'.repeat(64) },
+                registry,
+                projectionVersion: '1',
+            }),
+        /does not match replay input/
+    );
 });
 
 test('append-only ledger preserves old projections and appends new versions', t => {
@@ -262,6 +273,7 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
         line: null,
     };
     assert.equal(latestAsOf([row], { ...query, decision_time: '2026-08-27T13:31:30Z' }), null);
+    assert.throws(() => latestAsOf([row], { ...query, decision_time: '2026-08-27T13:31:30+00:00' }), /UTC ISO-8601/);
     assert.equal(
         latestAsOf([row], { ...query, decision_time: '2026-08-27T13:31:50Z' }).observation_id,
         row.observation_id
@@ -283,6 +295,18 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
     });
     assert.ok(timeline.opening && timeline.current && timeline.closing);
     assert.deepEqual(Object.keys(timeline.opening_by_selection).sort(), ['AWAY', 'DRAW', 'HOME']);
+    const postKickoffHome = {
+        ...row,
+        response_received_at: '2026-09-12T15:01:00Z',
+        ingested_at: '2026-09-12T15:01:01Z',
+    };
+    const timelineWithPostKickoff = deriveTimeline([row, ...observations().slice(1), postKickoffHome], {
+        canonical_event_id: row.canonical_event_id,
+        canonical_bookmaker_id: row.canonical_bookmaker_id,
+        kickoff_utc: row.kickoff_utc,
+    });
+    assert.equal(timelineWithPostKickoff.opening_by_selection.HOME.observation_id, row.observation_id);
+    assert.equal(timelineWithPostKickoff.closing_by_selection.HOME.observation_id, row.observation_id);
 });
 
 test('live client is key-gated and bounded to three requests without logging secrets', async () => {
