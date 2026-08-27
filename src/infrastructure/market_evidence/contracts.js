@@ -206,8 +206,8 @@ function createObservation(fields) {
         projection_version: requireText(fields.projection_version, 'projection_version', errors),
         observation_id: requireText(fields.observation_id, 'observation_id', errors),
         canonical_event_id: requireText(fields.canonical_event_id, 'canonical_event_id', errors),
-        identity_decision_id: optionalText(fields.identity_decision_id, 'identity_decision_id', errors),
-        identity_ruleset_version: optionalText(fields.identity_ruleset_version, 'identity_ruleset_version', errors),
+        identity_decision_id: requireText(fields.identity_decision_id, 'identity_decision_id', errors),
+        identity_ruleset_version: requireText(fields.identity_ruleset_version, 'identity_ruleset_version', errors),
         provider: requireText(fields.provider, 'provider', errors),
         provider_event_id: requireText(fields.provider_event_id, 'provider_event_id', errors),
         canonical_market_id: requireText(fields.canonical_market_id, 'canonical_market_id', errors),
@@ -299,10 +299,6 @@ function createObservation(fields) {
         errors.push('ingested_at precedes response_received_at');
     }
     if (errors.length) throw new Error(`invalid MarketObservation: ${errors.join('; ')}`);
-    // Identity binding is an additive Stage C extension. Preserve exact legacy
-    // projections when no governed fixture decision was supplied.
-    if (observation.identity_decision_id === null) delete observation.identity_decision_id;
-    if (observation.identity_ruleset_version === null) delete observation.identity_ruleset_version;
     return Object.freeze(observation);
 }
 

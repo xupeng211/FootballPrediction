@@ -6,7 +6,7 @@
 // football world have distinct authorities.
 const crypto = require('node:crypto');
 const { extractNextData, extractFixtures, extractPageIdentity } = require('../fotmob/FotMobCandidateExporter');
-const { sha256Text, stableStringify, compareUtcTimestamps } = require('../market_evidence/contracts');
+const { sha256Text, stableStringify, compareUtcTimestamps, isUtcTimestamp } = require('../market_evidence/contracts');
 const { createIdentityRegistry } = require('../market_evidence/identityRegistry');
 
 const SCHEMA_VERSION = 'footballprediction-fixture-universe/v1';
@@ -29,18 +29,32 @@ function semanticHash(value) { return sha256Text(stableStringify(value)); }
 function secondsBetween(a, b) { return Math.abs(Date.parse(a) - Date.parse(b)) / 1000; }
 function by(value, field) { return [...value].sort((a, b) => String(a[field]).localeCompare(String(b[field]))); }
 
-function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = null, allocate = null }) {
+function validateAllocationSnapshot(allocation, rawSha256) {
+    if (!allocation || typeof allocation !== 'object' || Array.isArray(allocation)) throw new Error('REPLAY requires immutable allocation snapshot');
+    if (allocation.schema_version !== 'fixture-identity-allocation/v1' || allocation.authority !== 'FootballPrediction') throw new Error('allocation snapshot schema is invalid');
+    if (!/^[a-f0-9]{64}$/.test(allocation.content_sha256 || '') || allocation.content_sha256 !== semanticHash({ schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256 })) throw new Error('allocation snapshot content hash is invalid');
+    if (allocation.provenance_raw_sha256 !== rawSha256 || !Array.isArray(allocation.fixtures) || !Array.isArray(allocation.teams)) throw new Error('allocation snapshot provenance is invalid');
+    for (const [rows, key] of [[allocation.fixtures, 'fotmob_event_id'], [allocation.teams, 'fotmob_name']]) {
+        const values = rows.map(row => row?.[key]);
+        if (values.some(value => typeof value !== 'string' || !value) || new Set(values).size !== values.length) throw new Error(`allocation snapshot ${key} is not unique`);
+    }
+    return allocation;
+}
+function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = null, allocate = null, mode = 'INITIAL_SEED' }) {
     if (!/^[a-f0-9]{64}$/.test(rawSha256 || '')) throw new Error('FotMob raw SHA-256 is required');
     const page = extractPageIdentity(extractNextData(rawHtml));
     const extracted = extractFixtures(extractNextData(rawHtml));
     if (page?.league_id !== '47' || page?.season_canonical !== SEASON || extracted.fixtures.length !== 380) {
         throw new Error('FotMob fixture evidence is not the authorized EPL 2026/2027 universe');
     }
-    const prior = new Map((allocation?.fixtures || []).map(row => [row.fotmob_event_id, row]));
-    const priorTeams = new Map((allocation?.teams || []).map(row => [normalize(row.fotmob_name), row]));
+    if (!['INITIAL_SEED', 'REPLAY'].includes(mode)) throw new Error('fixture seed mode is invalid');
+    const validatedAllocation = mode === 'REPLAY' ? validateAllocationSnapshot(allocation, rawSha256) : allocation;
+    const prior = new Map((validatedAllocation?.fixtures || []).map(row => [row.fotmob_event_id, row]));
+    const priorTeams = new Map((validatedAllocation?.teams || []).map(row => [normalize(row.fotmob_name), row]));
     const teams = new Map();
     const fixtures = extracted.fixtures.map(source => {
         let row = prior.get(source.id);
+        if (!row && mode === 'REPLAY') throw new Error(`REPLAY allocation missing fixture: ${source.id}`);
         if (!row) {
             row = {
                 fotmob_event_id: source.id,
@@ -52,6 +66,7 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
             const key = normalize(name);
             if (!teams.has(key)) {
                 const existingTeam = priorTeams.get(key);
+                if (!existingTeam && mode === 'REPLAY') throw new Error(`REPLAY allocation missing team: ${name}`);
                 teams.set(key, existingTeam ? { ...existingTeam } : { canonical_team_id: opaque('team', allocate), canonical_name: name, fotmob_name: name });
             }
         }
@@ -74,7 +89,8 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
         canonical_fixture_id: fixture.canonical_fixture_id,
         canonical_event_id: fixture.canonical_event_id,
     }));
-    const allocationSnapshot = { schema_version: 'fixture-identity-allocation/v1', authority: 'FootballPrediction', fixtures: by(allocations, 'fotmob_event_id'), teams: by([...teams.values()].map(team => ({ fotmob_name: team.fotmob_name, canonical_team_id: team.canonical_team_id, canonical_name: team.canonical_name })), 'fotmob_name') };
+    const allocationUnsigned = { schema_version: 'fixture-identity-allocation/v1', authority: 'FootballPrediction', fixtures: by(allocations, 'fotmob_event_id'), teams: by([...teams.values()].map(team => ({ fotmob_name: team.fotmob_name, canonical_team_id: team.canonical_team_id, canonical_name: team.canonical_name })), 'fotmob_name'), provenance_raw_sha256: rawSha256 };
+    const allocationSnapshot = { ...allocationUnsigned, content_sha256: semanticHash(allocationUnsigned) };
     const competitionRegistry = {
         schema_version: REGISTRY_VERSION, version: 'competition-registry/v1',
         competitions: [{ canonical_competition_id: COMPETITION_ID, name: 'English Premier League' }],
@@ -109,7 +125,8 @@ function resolveOddsEvents({ oddsRawText, oddsRawSha256, universe, decidedAt }) 
         const candidates = !reason ? fixtures.filter(f => f.canonical_home_team_id === home.canonical_team_id && f.canonical_away_team_id === away.canonical_team_id && f.canonical_competition_id === COMPETITION_ID && f.season === SEASON) : [];
         if (!reason && candidates.length === 0) reason = 'NO_FIXTURE_CANDIDATE';
         if (!reason && candidates.length > 1) reason = 'MULTIPLE_FIXTURE_CANDIDATES';
-        const candidate = candidates[0]; const delta = candidate ? secondsBetween(candidate.scheduled_kickoff_utc, event.commence_time) : null;
+        if (!reason && !isUtcTimestamp(event.commence_time)) reason = 'INVALID_KICKOFF_UTC';
+        const candidate = candidates[0]; const delta = candidate && !reason ? secondsBetween(candidate.scheduled_kickoff_utc, event.commence_time) : null;
         if (!reason && delta > KICKOFF_TOLERANCE_SECONDS) reason = 'KICKOFF_CONFLICT';
         if (reason) {
             const decision = { ...base, canonical_event_id: null, decision: 'QUARANTINED', method: 'LEVEL_2_FAIL_CLOSED', competition_match: event.sport_key === 'soccer_epl', season_evidence_status: 'NOT_PROVIDED', season_resolution_method: 'FIXTURE_UNIVERSE_CONTEXT', home_team_match: Boolean(home), away_team_match: Boolean(away), kickoff_delta_seconds: delta, candidate_count: candidates.length, quarantine_reason: reason };
@@ -127,7 +144,7 @@ function buildMarketIdentityRegistry({ universe, aliases, decisions, odds = [] }
     const fixtureByEvent = new Map(universe.snapshot.fixtures.map(f => [f.canonical_event_id, f]));
     const teamById = new Map(universe.teamRegistry.teams.map(t => [t.canonical_team_id, t]));
     const decisionByEvent = new Map(decisions.filter(d => d.decision === 'MATCHED').map(d => [d.candidate_provider_event_id, d]));
-    const events = aliases.map(alias => { const f = fixtureByEvent.get(alias.canonical_event_id); const d = decisionByEvent.get(alias.provider_event_id); return { kind: 'event', provider: 'the-odds-api', provider_id: alias.provider_event_id, canonical_id: alias.canonical_event_id, season: f.season, home_team: teamById.get(f.canonical_home_team_id).canonical_name, away_team: teamById.get(f.canonical_away_team_id).canonical_name, kickoff_utc: f.scheduled_kickoff_utc, identity_decision_id: d.identity_decision_id, identity_ruleset_version: RULESET_VERSION, provenance: 'fixture-universe/v1' }; });
+    const events = aliases.map(alias => { const f = fixtureByEvent.get(alias.canonical_event_id); const d = decisionByEvent.get(alias.provider_event_id); const source = odds.find(event => event.id === alias.provider_event_id); return { kind: 'event', provider: 'the-odds-api', provider_id: alias.provider_event_id, canonical_id: alias.canonical_event_id, season: f.season, home_team: teamById.get(f.canonical_home_team_id).canonical_name, away_team: teamById.get(f.canonical_away_team_id).canonical_name, kickoff_utc: f.scheduled_kickoff_utc, provider_observed_kickoff_utc: source.commence_time, identity_decision_id: d.identity_decision_id, identity_ruleset_version: RULESET_VERSION, provenance: 'fixture-universe/v1' }; });
     const bookmakerIds = [...new Set(odds.flatMap(event => (event.bookmakers || []).map(bookmaker => bookmaker.key)))].sort();
     // Team outcome labels are event-contextual (a club is HOME one week and
     // AWAY another); only Draw is a global provider selection alias.

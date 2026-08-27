@@ -24,6 +24,7 @@ const MAPPING_FIELDS = Object.freeze({
         'home_team',
         'away_team',
         'kickoff_utc',
+        'provider_observed_kickoff_utc',
         'identity_decision_id',
         'identity_ruleset_version',
         'provenance',
@@ -90,9 +91,12 @@ function assertEventMapping(mapping) {
         throw new Error(`event mapping requires valid kickoff_utc: ${mapping.provider_id}`);
     }
     for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
-        if (mapping[field] !== undefined && (typeof mapping[field] !== 'string' || !mapping[field].trim())) {
-            throw new Error(`event mapping ${field} must be a non-empty string when present: ${mapping.provider_id}`);
+        if (typeof mapping[field] !== 'string' || !mapping[field].trim()) {
+            throw new Error(`event mapping requires ${field}: ${mapping.provider_id}`);
         }
+    }
+    if (!isUtcTimestamp(mapping.provider_observed_kickoff_utc)) {
+        throw new Error(`event mapping requires valid provider_observed_kickoff_utc: ${mapping.provider_id}`);
     }
 }
 

@@ -239,7 +239,10 @@ function adaptTheOddsApiRawInternal({
             event.home_team.trim() !== canonicalEvent.home_team.trim() ||
             event.away_team.trim() !== canonicalEvent.away_team.trim() ||
             !isUtcTimestamp(event.commence_time) ||
-            compareUtcTimestamps(event.commence_time, canonicalEvent.kickoff_utc) !== 0
+            !canonicalEvent.identity_decision_id ||
+            !canonicalEvent.identity_ruleset_version ||
+            !isUtcTimestamp(canonicalEvent.provider_observed_kickoff_utc) ||
+            compareUtcTimestamps(event.commence_time, canonicalEvent.provider_observed_kickoff_utc) !== 0
         ) {
             throw new Error(`provider event identity conflicts with registry: ${event.id}`);
         }
@@ -288,12 +291,21 @@ function adaptTheOddsApiRawInternal({
                     }
                     // Provider team labels are event-contextual, so HOME/AWAY
                     // are resolved from the already governed event identity.
+                    let registrySelection = null;
+                    try {
+                        registrySelection = registry.resolve('selection', 'the-odds-api', outcome.name);
+                    } catch (error) {
+                        if (outcome.name.trim() !== canonicalEvent.home_team.trim() && outcome.name.trim() !== canonicalEvent.away_team.trim()) throw error;
+                    }
                     const canonicalSelection =
-                        canonicalEvent.identity_decision_id && outcome.name.trim() === canonicalEvent.home_team.trim()
+                        outcome.name.trim() === canonicalEvent.home_team.trim()
                             ? { canonical_id: 'HOME', selection: 'HOME' }
-                            : canonicalEvent.identity_decision_id && outcome.name.trim() === canonicalEvent.away_team.trim()
+                            : outcome.name.trim() === canonicalEvent.away_team.trim()
                               ? { canonical_id: 'AWAY', selection: 'AWAY' }
-                              : registry.resolve('selection', 'the-odds-api', outcome.name);
+                              : registrySelection;
+                    if (registrySelection && registrySelection.selection !== canonicalSelection.selection) {
+                        throw new Error(`provider selection identity conflicts with event identity: ${event.id}:${outcome.name}`);
+                    }
                     const expectedProviderTeam =
                         canonicalSelection.selection === 'HOME'
                             ? canonicalEvent.home_team
@@ -326,8 +338,8 @@ function adaptTheOddsApiRawInternal({
                         projection_version: projectionVersion,
                         observation_id: sha256Text(idSeed),
                         canonical_event_id: canonicalEvent.canonical_id,
-                        identity_decision_id: canonicalEvent.identity_decision_id || null,
-                        identity_ruleset_version: canonicalEvent.identity_ruleset_version || null,
+                        identity_decision_id: canonicalEvent.identity_decision_id,
+                        identity_ruleset_version: canonicalEvent.identity_ruleset_version,
                         provider: 'the-odds-api',
                         provider_event_id: event.id,
                         canonical_market_id: canonicalMarket.canonical_id,

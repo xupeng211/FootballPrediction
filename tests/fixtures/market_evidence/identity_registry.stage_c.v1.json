@@ -1,6 +1,6 @@
 {
     "version": "stage-c-fixture/v1",
-    "content_sha256": "ab3ca435c51c87523ed4e41bf9e91b90db75de9800eefec5faadab49e7ad903e",
+    "content_sha256": "17e403b927905a7c53f1b92b77bd3b8ea5feeeaa13fa317db84e66e59facf1d8",
     "events": [
         {
             "kind": "event",
@@ -11,6 +11,9 @@
             "home_team": "Arsenal",
             "away_team": "Chelsea",
             "kickoff_utc": "2026-09-12T15:00:00Z",
+            "provider_observed_kickoff_utc": "2026-09-12T15:00:00Z",
+            "identity_decision_id": "idn-fixture-001",
+            "identity_ruleset_version": "fixture-identity-ruleset/v1",
             "provenance": "fixture"
         }
     ],

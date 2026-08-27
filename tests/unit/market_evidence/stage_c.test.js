@@ -61,6 +61,9 @@ const registry = createIdentityRegistry({
             home_team: 'Arsenal',
             away_team: 'Chelsea',
             kickoff_utc: '2026-09-12T15:00:00Z',
+            provider_observed_kickoff_utc: '2026-09-12T15:00:00Z',
+            identity_decision_id: 'idn-fixture-001',
+            identity_ruleset_version: 'fixture-identity-ruleset/v1',
             provenance: 'fixture',
         },
     ],
@@ -413,6 +416,9 @@ test('event identity is checked against the independently governed registry and 
                 home_team: 'Arsenal',
                 away_team: 'Chelsea',
                 kickoff_utc: '2026-09-12T15:00:00Z',
+                provider_observed_kickoff_utc: '2026-09-12T15:00:00Z',
+                identity_decision_id: 'idn-fixture-001',
+                identity_ruleset_version: 'fixture-identity-ruleset/v1',
                 provenance: 'fixture-v2',
             },
         ],
@@ -586,6 +592,14 @@ test('adapter fails closed for malformed or incomplete EPL market payloads and s
 test('UTC contract rejects calendar-invalid timestamps instead of Date.parse normalization', () => {
     const sample = observations()[0];
     assert.throws(() => createObservation({ ...sample, kickoff_utc: '2026-02-30T00:00:00Z' }), /UTC ISO-8601/);
+});
+
+test('canonical observations require governed identity decision and ruleset', () => {
+    const sample = observations()[0];
+    for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
+        assert.throws(() => createObservation({ ...sample, [field]: undefined }), new RegExp(`${field} is required`));
+        assert.throws(() => createObservation({ ...sample, [field]: null }), new RegExp(`${field} is required`));
+    }
 });
 
 test('raw is sha256-verifiable and receipts are immutable and secret-safe', t => {
@@ -911,6 +925,44 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
             }),
         /decision_time must be UTC ISO-8601/
     );
+});
+
+test('as-of projection selection is explicit and later reprojection cannot rewrite historical selection', () => {
+    const v1 = observations('1')[0];
+    const v2 = { ...observations('2')[0], odds_decimal: 9.99 };
+    const query = {
+        canonical_event_id: v1.canonical_event_id,
+        canonical_bookmaker_id: v1.canonical_bookmaker_id,
+        canonical_selection_id: v1.canonical_selection_id,
+        period: v1.period,
+        market_type: v1.market_type,
+        line: v1.line,
+        decision_time: '2026-08-27T13:31:50Z',
+    };
+    assert.throws(() => latestAsOf([v1, v2], query), /projection_version is required/);
+    assert.equal(latestAsOf([v1, v2], { ...query, projection_version: '1' }).odds_decimal, v1.odds_decimal);
+    assert.equal(latestAsOf([v1, v2], { ...query, projection_version: '2' }).odds_decimal, 9.99);
+});
+
+test('same raw acquisition preserves two independent immutable receipts', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-two-receipts-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const raw = writeImmutableRaw({ rootDir: root, rawText });
+    const receiptBase = {
+        ...capture,
+        provider: 'the-odds-api',
+        http_status: 200,
+        sanitized_request_parameters: { regions: 'uk', markets: 'h2h' },
+        response_size_bytes: Buffer.byteLength(rawText),
+        raw_sha256: raw.raw_sha256,
+        raw_evidence_reference: raw.raw_evidence_reference,
+    };
+    const first = createCaptureReceipt({ ...receiptBase, capture_id: 'acquisition-001' });
+    const second = createCaptureReceipt({ ...receiptBase, capture_id: 'acquisition-002', request_started_at: '2026-08-27T13:32:20Z', response_received_at: '2026-08-27T13:32:49Z', ingested_at: '2026-08-27T13:32:49Z' });
+    writeReceipt({ rootDir: root, receipt: first });
+    writeReceipt({ rootDir: root, receipt: second });
+    assert.equal(fs.readdirSync(path.join(root, 'raw')).length, 1);
+    assert.deepEqual(fs.readdirSync(path.join(root, 'receipts')).sort(), ['acquisition-001.json', 'acquisition-002.json']);
 });
 
 test('live client is key-gated and bounded to three requests without logging secrets', async () => {

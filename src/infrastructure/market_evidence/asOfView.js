@@ -41,6 +41,16 @@ function parsePriceSide(value) {
     return value;
 }
 
+function selectProjection(rows, projectionVersion) {
+    const versions = [...new Set(rows.map(row => row.projection_version))];
+    if (projectionVersion !== undefined && projectionVersion !== null) {
+        if (typeof projectionVersion !== 'string' || !projectionVersion.trim()) throw new Error('projection_version must be a non-empty string');
+        return rows.filter(row => row.projection_version === projectionVersion);
+    }
+    if (versions.length > 1) throw new Error('projection_version is required when multiple projections are visible');
+    return rows;
+}
+
 function latestAsOf(
     observations,
     {
@@ -52,12 +62,14 @@ function latestAsOf(
         line = null,
         price_side = 'BOOKMAKER',
         decision_time,
+        projection_version,
     }
 ) {
     const time = parseUtcTime(decision_time, 'decision_time');
     const side = parsePriceSide(price_side);
+    const projected = selectProjection(observations, projection_version);
     return (
-        observations
+        projected
             .filter(
                 row =>
                     row.canonical_event_id === canonical_event_id &&
@@ -78,7 +90,7 @@ function latestAsOf(
 function latestAsOfMarket(observations, query) {
     const decisionTime = parseUtcTime(query.decision_time, 'decision_time');
     const side = parsePriceSide(query.price_side ?? 'BOOKMAKER');
-    const candidates = observations.filter(
+    const candidates = selectProjection(observations, query.projection_version).filter(
         row =>
             row.canonical_event_id === query.canonical_event_id &&
             row.canonical_bookmaker_id === query.canonical_bookmaker_id &&
@@ -117,12 +129,13 @@ function deriveTimeline(
         price_side = 'BOOKMAKER',
         kickoff_utc,
         decision_time,
+        projection_version,
     }
 ) {
     const kickoffTime = parseUtcTime(kickoff_utc, 'kickoff_utc');
     const decisionTime = parseUtcTime(decision_time, 'decision_time');
     const side = parsePriceSide(price_side);
-    const eligible = observations.filter(
+    const eligible = selectProjection(observations, projection_version).filter(
         row =>
             row.canonical_event_id === canonical_event_id &&
             row.canonical_bookmaker_id === canonical_bookmaker_id &&
