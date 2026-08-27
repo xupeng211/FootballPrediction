@@ -110,6 +110,7 @@ const registry = createIdentityRegistry({
 });
 const capture = Object.freeze({
     capture_id: 'capture-fixture-001',
+    provider: 'the-odds-api',
     acquisition_mode: 'REPLAY',
     request_started_at: '2026-08-27T13:31:20Z',
     response_received_at: '2026-08-27T13:31:49Z',
@@ -421,6 +422,16 @@ test('event identity is checked against the independently governed registry and 
 test('adapter fails closed for malformed or incomplete EPL market payloads and side conflicts', () => {
     const payload = JSON.parse(rawText);
     assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText,
+                capture: { ...capture, provider: undefined },
+                registry,
+                projectionVersion: '1',
+            }),
+        /capture provider must be the-odds-api/
+    );
+    assert.throws(
         () => adaptTheOddsApiRaw({ rawText: '{}', capture: captureForRaw('{}'), registry, projectionVersion: '1' }),
         /payload must be an array/
     );
@@ -505,6 +516,29 @@ test('adapter fails closed for malformed or incomplete EPL market payloads and s
                 projectionVersion: '1',
             }),
         /conflicts with identity registry/
+    );
+    const swappedSelectionRegistry = createIdentityRegistry({
+        version: 'selection-swap/v1',
+        events: registry.list('event', 'the-odds-api'),
+        bookmakers: registry.list('bookmaker', 'the-odds-api'),
+        markets: registry.list('market', 'the-odds-api'),
+        selections: [
+            {
+                ...registry.resolve('selection', 'the-odds-api', 'Arsenal'),
+                canonical_id: 'AWAY',
+                selection: 'AWAY',
+            },
+            registry.resolve('selection', 'the-odds-api', 'Draw'),
+            {
+                ...registry.resolve('selection', 'the-odds-api', 'Chelsea'),
+                canonical_id: 'HOME',
+                selection: 'HOME',
+            },
+        ],
+    });
+    assert.throws(
+        () => adaptTheOddsApiRaw({ rawText, capture, registry: swappedSelectionRegistry, projectionVersion: '1' }),
+        /provider selection identity conflicts with event identity/
     );
 });
 
@@ -637,6 +671,15 @@ test('coverage evidence explicitly records observed and missing provider bookmak
     const evidence = buildCoverageEvidence({ rawText, expectedProviderBookmakerIds: expected });
     assert.equal(evidence.status, 'PARTIAL');
     assert.deepEqual(evidence.missing_expected_provider_bookmaker_ids, ['betfair_exchange', 'pinnacle']);
+    const missingMarketPayload = JSON.parse(rawText);
+    missingMarketPayload[0].bookmakers[0].markets = [];
+    const missingMarketEvidence = buildCoverageEvidence({
+        rawText: JSON.stringify(missingMarketPayload),
+        expectedProviderBookmakerIds: ['williamhill'],
+    });
+    assert.equal(missingMarketEvidence.status, 'PARTIAL');
+    assert.equal(missingMarketEvidence.reason, 'EXPECTED_MARKET_NOT_OBSERVED');
+    assert.deepEqual(missingMarketEvidence.missing_expected_provider_market_bookmaker_ids, ['williamhill']);
     const captureResult = adaptTheOddsApiCapture({ rawText, capture, registry, projectionVersion: '1' });
     assert.equal(captureResult.observations.length, 3);
     assert.equal(captureResult.coverage_evidence.status, 'OBSERVED');

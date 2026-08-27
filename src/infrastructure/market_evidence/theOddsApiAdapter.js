@@ -47,7 +47,7 @@ function assertCaptureMetadata({ rawText, capture, registry, projectionVersion }
     if (!registry || typeof registry.resolve !== 'function' || typeof registry.version !== 'string') {
         throw new Error('identity registry is required');
     }
-    if (capture.provider !== undefined && capture.provider !== 'the-odds-api') {
+    if (capture.provider !== 'the-odds-api') {
         throw new Error('capture provider must be the-odds-api');
     }
     if (!/^[a-f0-9]{64}$/.test(registry.content_sha256 || '')) {
@@ -97,6 +97,7 @@ function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = 
         observed_provider_bookmakers: [],
         observed_market_keys: [],
         missing_expected_provider_bookmaker_ids: [],
+        missing_expected_provider_market_bookmaker_ids: [],
         status: 'QUARANTINED',
         reason: null,
     };
@@ -149,8 +150,37 @@ function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = 
     evidence.missing_expected_provider_bookmaker_ids = evidence.expected_provider_bookmaker_ids.filter(
         providerId => !bookmakerById.has(providerId)
     );
-    evidence.status = evidence.missing_expected_provider_bookmaker_ids.length > 0 ? 'PARTIAL' : 'OBSERVED';
-    if (evidence.status === 'PARTIAL') evidence.reason = 'EXPECTED_BOOKMAKER_NOT_OBSERVED';
+    evidence.missing_expected_provider_market_bookmaker_ids = evidence.expected_provider_bookmaker_ids.filter(
+        providerId => {
+            const bookmaker = bookmakerById.get(providerId);
+            return (
+                bookmaker &&
+                evidence.requested_market_keys.some(requestedKey => !bookmaker.market_keys.has(requestedKey))
+            );
+        }
+    );
+    const missingExpectedMarketKeys = evidence.requested_market_keys.filter(key => !marketKeys.has(key));
+    if (
+        evidence.missing_expected_provider_bookmaker_ids.length > 0 ||
+        evidence.missing_expected_provider_market_bookmaker_ids.length > 0 ||
+        missingExpectedMarketKeys.length > 0
+    ) {
+        evidence.status = 'PARTIAL';
+        if (
+            evidence.missing_expected_provider_bookmaker_ids.length > 0 &&
+            (evidence.missing_expected_provider_market_bookmaker_ids.length > 0 || missingExpectedMarketKeys.length > 0)
+        ) {
+            evidence.reason = 'EXPECTED_BOOKMAKER_AND_MARKET_NOT_OBSERVED';
+        } else if (evidence.missing_expected_provider_bookmaker_ids.length > 0) {
+            evidence.reason = 'EXPECTED_BOOKMAKER_NOT_OBSERVED';
+        } else if (missingExpectedMarketKeys.length > 0) {
+            evidence.reason = 'EXPECTED_MARKET_NOT_OBSERVED';
+        } else {
+            evidence.reason = 'EXPECTED_BOOKMAKER_MARKET_NOT_OBSERVED';
+        }
+    } else {
+        evidence.status = 'OBSERVED';
+    }
     return { ...evidence, evidence_sha256: sha256Text(stableStringify(evidence)) };
 }
 
@@ -219,6 +249,17 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                         throw new Error(`provider selection identity is incomplete: ${market.key}`);
                     }
                     const canonicalSelection = registry.resolve('selection', 'the-odds-api', outcome.name);
+                    const expectedProviderTeam =
+                        canonicalSelection.selection === 'HOME'
+                            ? canonicalEvent.home_team
+                            : canonicalSelection.selection === 'AWAY'
+                              ? canonicalEvent.away_team
+                              : null;
+                    if (expectedProviderTeam !== null && outcome.name.trim() !== expectedProviderTeam.trim()) {
+                        throw new Error(
+                            `provider selection identity conflicts with event identity: ${event.id}:${outcome.name}`
+                        );
+                    }
                     if (seenSelections.has(canonicalSelection.canonical_id)) {
                         throw new Error(`duplicate canonical selection: ${canonicalSelection.canonical_id}`);
                     }

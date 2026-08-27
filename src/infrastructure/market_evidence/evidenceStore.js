@@ -107,6 +107,7 @@ function validateCoverageEvidence(value) {
         'observed_provider_bookmakers',
         'observed_market_keys',
         'missing_expected_provider_bookmaker_ids',
+        'missing_expected_provider_market_bookmaker_ids',
         'status',
         'reason',
         'evidence_sha256',
@@ -152,6 +153,12 @@ function validateCoverageEvidence(value) {
         value.missing_expected_provider_bookmaker_ids.some(id => typeof id !== 'string' || !id.trim())
     ) {
         throw new Error('coverage evidence missing bookmaker IDs are invalid');
+    }
+    if (
+        !Array.isArray(value.missing_expected_provider_market_bookmaker_ids) ||
+        value.missing_expected_provider_market_bookmaker_ids.some(id => typeof id !== 'string' || !id.trim())
+    ) {
+        throw new Error('coverage evidence missing market bookmaker IDs are invalid');
     }
     if (!COVERAGE_STATUSES.has(value.status)) throw new Error('coverage evidence status is invalid');
     if (value.reason !== null && (typeof value.reason !== 'string' || !value.reason.trim())) {
