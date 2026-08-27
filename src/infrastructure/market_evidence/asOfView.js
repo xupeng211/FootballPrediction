@@ -1,10 +1,39 @@
 'use strict';
 
-const { isUtcTimestamp, compareCodeUnits } = require('./contracts');
+const {
+    isUtcTimestamp,
+    normalizeUtcTimestamp,
+    compareUtcTimestamps,
+    compareCodeUnits,
+    PRICE_SIDES,
+} = require('./contracts');
 
 function parseUtcTime(value, field) {
     if (!isUtcTimestamp(value)) throw new Error(`${field} must be UTC ISO-8601`);
-    return Date.parse(value);
+    return normalizeUtcTimestamp(value);
+}
+
+function knowledgeTime(row) {
+    return isUtcTimestamp(row?.response_received_at) ? normalizeUtcTimestamp(row.response_received_at) : null;
+}
+
+function isKnownBy(row, cutoff) {
+    const receivedAt = knowledgeTime(row);
+    return receivedAt !== null && compareUtcTimestamps(receivedAt, cutoff) <= 0;
+}
+
+function compareKnowledgeToCutoff(row, cutoff) {
+    const receivedAt = knowledgeTime(row);
+    return receivedAt === null ? null : compareUtcTimestamps(receivedAt, cutoff);
+}
+
+function compareKnowledgeTime(left, right) {
+    return compareUtcTimestamps(knowledgeTime(left), knowledgeTime(right));
+}
+
+function parsePriceSide(value) {
+    if (!PRICE_SIDES.has(value)) throw new Error('price_side must be BOOKMAKER, BACK or LAY');
+    return value;
 }
 
 function latestAsOf(
@@ -16,10 +45,12 @@ function latestAsOf(
         period,
         market_type,
         line = null,
+        price_side = 'BOOKMAKER',
         decision_time,
     }
 ) {
     const time = parseUtcTime(decision_time, 'decision_time');
+    const side = parsePriceSide(price_side);
     return (
         observations
             .filter(
@@ -29,20 +60,19 @@ function latestAsOf(
                     row.period === period &&
                     row.market_type === market_type &&
                     row.line === line &&
+                    row.price_side === side &&
                     (canonical_selection_id === null || row.canonical_selection_id === canonical_selection_id) &&
                     Array.isArray(row.quality_flags) &&
                     row.quality_flags.length === 0 &&
-                    Date.parse(row.response_received_at) <= time
+                    isKnownBy(row, time)
             )
-            .sort(
-                (a, b) =>
-                    Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                    compareCodeUnits(b.observation_id, a.observation_id)
-            )[0] || null
+            .sort((a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id))[0] ||
+        null
     );
 }
 function latestAsOfMarket(observations, query) {
     const decisionTime = parseUtcTime(query.decision_time, 'decision_time');
+    const side = parsePriceSide(query.price_side ?? 'BOOKMAKER');
     const candidates = observations.filter(
         row =>
             row.canonical_event_id === query.canonical_event_id &&
@@ -50,17 +80,18 @@ function latestAsOfMarket(observations, query) {
             row.period === query.period &&
             row.market_type === query.market_type &&
             row.line === (query.line ?? null) &&
+            row.price_side === side &&
             Array.isArray(row.quality_flags) &&
             row.quality_flags.length === 0 &&
-            Date.parse(row.response_received_at) <= decisionTime
+            isKnownBy(row, decisionTime)
     );
     const bySelection = new Map();
     for (const row of candidates) {
         const current = bySelection.get(row.canonical_selection_id);
         if (
             !current ||
-            Date.parse(row.response_received_at) > Date.parse(current.response_received_at) ||
-            (Date.parse(row.response_received_at) === Date.parse(current.response_received_at) &&
+            compareKnowledgeTime(row, current) > 0 ||
+            (compareKnowledgeTime(row, current) === 0 &&
                 compareCodeUnits(row.observation_id, current.observation_id) > 0)
         ) {
             bySelection.set(row.canonical_selection_id, row);
@@ -72,9 +103,20 @@ function latestAsOfMarket(observations, query) {
 }
 function deriveTimeline(
     observations,
-    { canonical_event_id, canonical_bookmaker_id, period = 'MATCH', market_type = '1X2', line = null, kickoff_utc }
+    {
+        canonical_event_id,
+        canonical_bookmaker_id,
+        period = 'MATCH',
+        market_type = '1X2',
+        line = null,
+        price_side = 'BOOKMAKER',
+        kickoff_utc,
+        decision_time,
+    }
 ) {
     const kickoffTime = parseUtcTime(kickoff_utc, 'kickoff_utc');
+    const decisionTime = parseUtcTime(decision_time, 'decision_time');
+    const side = parsePriceSide(price_side);
     const eligible = observations.filter(
         row =>
             row.canonical_event_id === canonical_event_id &&
@@ -82,43 +124,31 @@ function deriveTimeline(
             row.period === period &&
             row.market_type === market_type &&
             row.line === line &&
+            row.price_side === side &&
             Array.isArray(row.quality_flags) &&
             row.quality_flags.length === 0
     );
-    const preKickoff = eligible.filter(row => Date.parse(row.response_received_at) <= kickoffTime);
+    const visible = eligible.filter(row => isKnownBy(row, decisionTime));
+    const preKickoff = visible.filter(row => compareKnowledgeToCutoff(row, kickoffTime) < 0);
     const bySelection = selection =>
-        eligible
+        visible
             .filter(row => row.canonical_selection_id === selection)
-            .sort(
-                (a, b) =>
-                    Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                    compareCodeUnits(a.observation_id, b.observation_id)
-            );
+            .sort((a, b) => compareKnowledgeTime(a, b) || compareCodeUnits(a.observation_id, b.observation_id));
     const preKickoffBySelection = selection =>
         preKickoff
             .filter(row => row.canonical_selection_id === selection)
-            .sort(
-                (a, b) =>
-                    Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                    compareCodeUnits(a.observation_id, b.observation_id)
-            );
+            .sort((a, b) => compareKnowledgeTime(a, b) || compareCodeUnits(a.observation_id, b.observation_id));
     const opening =
         [...preKickoff].sort(
-            (a, b) =>
-                Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                compareCodeUnits(a.observation_id, b.observation_id)
+            (a, b) => compareKnowledgeTime(a, b) || compareCodeUnits(a.observation_id, b.observation_id)
         )[0] || null;
     const current =
-        [...eligible].sort(
-            (a, b) =>
-                Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                compareCodeUnits(b.observation_id, a.observation_id)
+        [...visible].sort(
+            (a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id)
         )[0] || null;
     const closing =
         [...preKickoff].sort(
-            (a, b) =>
-                Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                compareCodeUnits(b.observation_id, a.observation_id)
+            (a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id)
         )[0] || null;
     return {
         opening,

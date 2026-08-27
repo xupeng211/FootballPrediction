@@ -109,6 +109,10 @@ function observations(version = '1') {
     return adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion: version });
 }
 
+function captureForRaw(rawPayload) {
+    return { ...capture, raw_sha256: sha256Text(rawPayload) };
+}
+
 test('Stage C canonical contract rejects invalid odds, modes, sides, market identities and decision coupling', () => {
     const sample = observations()[0];
     for (const override of [
@@ -118,16 +122,26 @@ test('Stage C canonical contract rejects invalid odds, modes, sides, market iden
         { market_type: '1X2', line: 2.5 },
         { market_type: 'TOTAL', line: null },
         { market_type: 'TOTAL', line: ' ' },
+        { odds_decimal: '2.1' },
+        { line: 2.5, canonical_market_id: 'MATCH/1X2/NULL' },
+        { available_volume: '10' },
+        { bet_limit: '10' },
+        { season: 2026 },
+        { canonical_market_id: 'MATCH/TOTAL/2.5' },
+        { canonical_selection_id: 'HOME_ALIAS' },
+        { raw_evidence_reference: '../outside.json' },
         { quality_flags: ['quarantined', 'quarantined'] },
         { decision_target_at: '2026-08-27T13:00:00Z' },
     ]) {
         assert.throws(() => createObservation({ ...sample, ...override }));
     }
+    assert.throws(() => createObservation({ ...sample, decision_target_at: undefined }));
     const extensible = createObservation({
         ...sample,
         period: 'MATCH',
         market_type: 'ASIAN_HANDICAP',
         line: -0.25,
+        canonical_market_id: 'MATCH/ASIAN_HANDICAP/-0.25',
         price_side: 'BACK',
     });
     assert.equal(extensible.line, -0.25);
@@ -141,6 +155,9 @@ test('Stage C canonical contract rejects invalid odds, modes, sides, market iden
 });
 
 test('identity registry is independent and fails closed for unknown or ambiguous provider identities', () => {
+    for (const kind of ['event', 'bookmaker', 'market', 'selection']) {
+        assert.throws(() => registry.resolve(kind, 'the-odds-api', 'not-guessed'));
+    }
     assert.throws(() => registry.resolve('bookmaker', 'the-odds-api', 'not-guessed'));
     assert.throws(() =>
         createIdentityRegistry({
@@ -155,6 +172,121 @@ test('identity registry is independent and fails closed for unknown or ambiguous
         loadIdentityRegistry(path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json'))
             .version,
         'stage-c-fixture/v1'
+    );
+    const registryWithoutHashDir = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-registry-'));
+    const registryWithoutHashPath = path.join(registryWithoutHashDir, 'registry.json');
+    fs.writeFileSync(registryWithoutHashPath, JSON.stringify({ version: 'v1' }));
+    try {
+        assert.throws(() => loadIdentityRegistry(registryWithoutHashPath), /content_sha256 is required/);
+    } finally {
+        fs.rmSync(registryWithoutHashDir, { recursive: true, force: true });
+    }
+    assert.throws(
+        () =>
+            createIdentityRegistry({
+                version: 'bad-market',
+                markets: [
+                    {
+                        kind: 'market',
+                        provider: 'x',
+                        provider_id: 'h2h',
+                        canonical_id: 'MATCH/TOTAL/2.5',
+                        period: 'MATCH',
+                        market_type: '1X2',
+                        line: null,
+                        provenance: 'fixture',
+                    },
+                ],
+            }),
+        /canonical_id does not match/
+    );
+    assert.throws(
+        () =>
+            createIdentityRegistry({
+                version: 'bad-selection',
+                selections: [
+                    {
+                        kind: 'selection',
+                        provider: 'x',
+                        provider_id: 'home',
+                        canonical_id: 'HOME_ALIAS',
+                        selection: 'HOME',
+                        provenance: 'fixture',
+                    },
+                ],
+            }),
+        /canonical_id does not match selection/
+    );
+    assert.throws(
+        () =>
+            createIdentityRegistry({
+                version: 'bad-kind',
+                events: [
+                    { kind: 'bookmaker', provider: 'x', provider_id: 'x', canonical_id: 'x', provenance: 'fixture' },
+                ],
+            }),
+        /invalid mapping kind/
+    );
+    assert.throws(
+        () =>
+            createIdentityRegistry({
+                version: 'bad-hash',
+                content_sha256: '0'.repeat(64),
+            }),
+        /content_sha256 does not match/
+    );
+    assert.throws(
+        () => createIdentityRegistry({ version: 'bad-field', unexpected: true }),
+        /unknown identity registry field/
+    );
+    assert.throws(
+        () =>
+            createIdentityRegistry({
+                version: 'missing-side',
+                bookmakers: [
+                    {
+                        kind: 'bookmaker',
+                        provider: 'the-odds-api',
+                        provider_id: 'unknown-side',
+                        canonical_id: 'bookmaker:unknown-side',
+                        provenance: 'fixture',
+                    },
+                ],
+            }),
+        /price_side/
+    );
+    const exchangeRegistry = createIdentityRegistry({
+        version: 'exchange/v1',
+        bookmakers: [
+            {
+                kind: 'bookmaker',
+                provider: 'the-odds-api',
+                provider_id: 'betfair_exchange',
+                canonical_id: 'bookmaker:betfair-exchange',
+                price_side: 'BACK',
+                provenance: 'official-provider-response',
+            },
+        ],
+    });
+    assert.equal(exchangeRegistry.resolve('bookmaker', 'the-odds-api', 'betfair_exchange').price_side, 'BACK');
+    const asianRegistry = createIdentityRegistry({
+        version: 'market-extensibility/v1',
+        markets: [
+            {
+                kind: 'market',
+                provider: 'the-odds-api',
+                provider_id: 'asian_handicap',
+                canonical_id: 'MATCH/ASIAN_HANDICAP/-0.25',
+                period: 'MATCH',
+                market_type: 'ASIAN_HANDICAP',
+                line: -0.25,
+                provenance: 'contract-only',
+            },
+        ],
+    });
+    assert.equal(
+        asianRegistry.resolve('market', 'the-odds-api', 'asian_handicap').canonical_id,
+        'MATCH/ASIAN_HANDICAP/-0.25'
     );
 });
 
@@ -173,6 +305,102 @@ test('The Odds API EPL h2h fixture normalizes to three versioned canonical obser
     assert.equal(rows[0].bookmaker_last_update_at, '2026-08-27T13:31:22Z');
     assert.equal(rows[0].response_received_at, '2026-08-27T13:31:49Z');
     assert.equal(rows[0].source_snapshot_at, null);
+    assert.match(rows[0].identity_registry_sha256, /^[a-f0-9]{64}$/);
+});
+
+test('adapter fails closed for malformed or incomplete EPL market payloads and side conflicts', () => {
+    const payload = JSON.parse(rawText);
+    assert.throws(
+        () => adaptTheOddsApiRaw({ rawText: '{}', capture: captureForRaw('{}'), registry, projectionVersion: '1' }),
+        /payload must be an array/
+    );
+    const unknownEvent = JSON.parse(rawText);
+    unknownEvent[0].id = 'not-mapped-event';
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(unknownEvent),
+                capture: captureForRaw(JSON.stringify(unknownEvent)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /identity mapping unknown: event/
+    );
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify([{ ...payload[0], bookmakers: [] }]),
+                capture: captureForRaw(JSON.stringify([{ ...payload[0], bookmakers: [] }])),
+                registry,
+                projectionVersion: '1',
+            }),
+        /bookmakers must be a non-empty array/
+    );
+    const unknownMarket = JSON.parse(rawText);
+    unknownMarket[0].bookmakers[0].markets[0].key = 'totals';
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(unknownMarket),
+                capture: captureForRaw(JSON.stringify(unknownMarket)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /unsupported Stage C provider market/
+    );
+    const unknownBookmaker = JSON.parse(rawText);
+    unknownBookmaker[0].bookmakers[0].key = 'not-mapped-bookmaker';
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(unknownBookmaker),
+                capture: captureForRaw(JSON.stringify(unknownBookmaker)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /identity mapping unknown: bookmaker/
+    );
+    const unknownSelection = JSON.parse(rawText);
+    unknownSelection[0].bookmakers[0].markets[0].outcomes[0].name = 'Arsenal FC';
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(unknownSelection),
+                capture: captureForRaw(JSON.stringify(unknownSelection)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /identity mapping unknown: selection/
+    );
+    const missingSelection = JSON.parse(rawText);
+    missingSelection[0].bookmakers[0].markets[0].outcomes.pop();
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(missingSelection),
+                capture: captureForRaw(JSON.stringify(missingSelection)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /missing canonical selection: AWAY/
+    );
+    const sideConflict = JSON.parse(rawText);
+    sideConflict[0].bookmakers[0].markets[0].outcomes[0].price_side = 'LAY';
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(sideConflict),
+                capture: captureForRaw(JSON.stringify(sideConflict)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /conflicts with identity registry/
+    );
+});
+
+test('UTC contract rejects calendar-invalid timestamps instead of Date.parse normalization', () => {
+    const sample = observations()[0];
+    assert.throws(() => createObservation({ ...sample, kickoff_utc: '2026-02-30T00:00:00Z' }), /UTC ISO-8601/);
 });
 
 test('raw is sha256-verifiable and receipts are immutable and secret-safe', t => {
@@ -182,6 +410,8 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
     assert.equal(evidence.raw_sha256, sha256Text(rawText));
     assert.equal(fs.readFileSync(path.join(root, evidence.raw_evidence_reference), 'utf8'), rawText);
     writeImmutableRaw({ rootDir: root, rawText });
+    fs.writeFileSync(path.join(root, evidence.raw_evidence_reference), `${rawText}tampered`);
+    assert.throws(() => writeImmutableRaw({ rootDir: root, rawText }), /immutable raw hash collision/);
     const receipt = createCaptureReceipt({
         ...capture,
         provider: 'the-odds-api',
@@ -191,10 +421,34 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
         response_size_bytes: Buffer.byteLength(rawText),
     });
     writeReceipt({ rootDir: root, receipt });
+    assert.equal(
+        JSON.parse(fs.readFileSync(path.join(root, 'receipts', `${receipt.capture_id}.json`), 'utf8')).ingested_at,
+        capture.ingested_at
+    );
+    assert.throws(
+        () =>
+            createCaptureReceipt({
+                ...receipt,
+                ingested_at: '2026-08-27T13:31:48Z',
+            }),
+        /ingestion precedes response/
+    );
     assert.throws(() =>
         writeReceipt({
             rootDir: root,
             receipt: { ...capture, capture_id: 'capture-fixture-001', provider: 'the-odds-api' },
+        })
+    );
+    assert.throws(() =>
+        createCaptureReceipt({
+            ...receipt,
+            ingested_at: undefined,
+        })
+    );
+    assert.throws(() =>
+        writeReceipt({
+            rootDir: root,
+            receipt: { ...receipt, capture_id: 'invalid-extra-field', unexpected: 'not-allowed' },
         })
     );
     assert.throws(() =>
@@ -239,8 +493,28 @@ test('offline replay reads immutable raw and can append projections without netw
     fs.writeFileSync(rawPath, rawText, 'utf8');
     const ledgerPath = path.join(root, 'ledger.jsonl');
     const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', ledgerPath });
+    const replayedAgain = replayRaw({ rawPath, capture, registry, projectionVersion: '1' });
     assert.equal(replayed.length, 3);
     assert.equal(fs.readFileSync(ledgerPath, 'utf8').trim().split('\n').length, 3);
+    assert.equal(
+        sha256Text(stableStringify(replayed.map(semanticProjection))),
+        sha256Text(stableStringify(replayedAgain.map(semanticProjection))),
+        'replaying the same raw with fixed adapter and registry versions is deterministic'
+    );
+    assert.throws(
+        () => replayRaw({ rawPath, capture: { ...capture, raw_sha256: undefined }, registry, projectionVersion: '1' }),
+        /raw_sha256 is required/
+    );
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText,
+                capture: { ...capture, raw_sha256: '0'.repeat(64) },
+                registry,
+                projectionVersion: '1',
+            }),
+        /does not match provider payload/
+    );
     assert.throws(
         () =>
             replayRaw({
@@ -259,6 +533,10 @@ test('append-only ledger preserves old projections and appends new versions', t 
     const ledger = path.join(root, 'ledger.jsonl');
     appendProjection({ ledgerPath: ledger, projection: observations('1')[0] });
     appendProjection({ ledgerPath: ledger, projection: observations('2')[0] });
+    assert.throws(
+        () => appendProjection({ ledgerPath: ledger, projection: { foo: 'bar' } }),
+        /invalid MarketObservation/
+    );
     const rows = fs.readFileSync(ledger, 'utf8').trim().split('\n').map(JSON.parse);
     assert.deepEqual(
         rows.map(row => row.projection_version),
@@ -282,6 +560,18 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
         row.observation_id
     );
     assert.equal(
+        latestAsOf([{ ...row, price_side: 'BACK', observation_id: `${row.observation_id}-back` }], {
+            ...query,
+            price_side: 'BACK',
+            decision_time: '2026-08-27T13:31:50Z',
+        }).price_side,
+        'BACK'
+    );
+    assert.throws(
+        () => latestAsOf([row], { ...query, price_side: 'MID', decision_time: '2026-08-27T13:31:50Z' }),
+        /price_side/
+    );
+    assert.equal(
         latestAsOf([{ ...row, quality_flags: ['quarantined'] }], { ...query, decision_time: '2026-08-27T13:31:50Z' }),
         null
     );
@@ -295,11 +585,13 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
         canonical_event_id: row.canonical_event_id,
         canonical_bookmaker_id: row.canonical_bookmaker_id,
         kickoff_utc: row.kickoff_utc,
+        decision_time: '2026-09-12T14:00:00Z',
     });
     assert.ok(timeline.opening && timeline.current && timeline.closing);
     assert.deepEqual(Object.keys(timeline.opening_by_selection).sort(), ['AWAY', 'DRAW', 'HOME']);
     const postKickoffHome = {
         ...row,
+        observation_id: `${row.observation_id}-post`,
         response_received_at: '2026-09-12T15:01:00Z',
         ingested_at: '2026-09-12T15:01:01Z',
     };
@@ -307,9 +599,33 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
         canonical_event_id: row.canonical_event_id,
         canonical_bookmaker_id: row.canonical_bookmaker_id,
         kickoff_utc: row.kickoff_utc,
+        decision_time: '2026-09-12T15:02:00Z',
     });
     assert.equal(timelineWithPostKickoff.opening_by_selection.HOME.observation_id, row.observation_id);
     assert.equal(timelineWithPostKickoff.closing_by_selection.HOME.observation_id, row.observation_id);
+    assert.equal(timelineWithPostKickoff.current_by_selection.HOME.observation_id, postKickoffHome.observation_id);
+    const atKickoffHome = {
+        ...row,
+        observation_id: `${row.observation_id}-at-kickoff`,
+        response_received_at: row.kickoff_utc,
+        ingested_at: row.kickoff_utc,
+    };
+    const timelineWithAtKickoff = deriveTimeline([row, ...observations().slice(1), atKickoffHome], {
+        canonical_event_id: row.canonical_event_id,
+        canonical_bookmaker_id: row.canonical_bookmaker_id,
+        kickoff_utc: row.kickoff_utc,
+        decision_time: '2026-09-12T15:02:00Z',
+    });
+    assert.equal(timelineWithAtKickoff.closing_by_selection.HOME.observation_id, row.observation_id);
+    assert.throws(
+        () =>
+            deriveTimeline(observations(), {
+                canonical_event_id: row.canonical_event_id,
+                canonical_bookmaker_id: row.canonical_bookmaker_id,
+                kickoff_utc: row.kickoff_utc,
+            }),
+        /decision_time must be UTC ISO-8601/
+    );
 });
 
 test('live client is key-gated and bounded to three requests without logging secrets', async () => {

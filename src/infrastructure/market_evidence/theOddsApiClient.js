@@ -29,6 +29,9 @@ function buildRequestUrl({ regions = 'uk', markets = 'h2h', oddsFormat = 'decima
 
 function captureEplOdds({ request = {}, requestFn } = {}) {
     const requestCount = Number(request.request_count || 0);
+    if (!Number.isInteger(requestCount) || requestCount < 0) {
+        throw new Error('live request count is invalid');
+    }
     if (requestCount >= MAX_REQUESTS) throw new Error(`live request limit exceeded (${MAX_REQUESTS})`);
     if (typeof requestFn !== 'function') throw new Error('a ProxyProvider-backed request transport is required');
     const url = buildRequestUrl(request);
@@ -45,6 +48,7 @@ function captureEplOdds({ request = {}, requestFn } = {}) {
                     raw_sha256: sha256Text(rawText),
                     request_started_at: started,
                     response_received_at: received,
+                    ingested_at: received,
                     http_status: response.statusCode,
                     response_size_bytes: Buffer.byteLength(rawText),
                     provider_quota: sanitizeHeaders(response.headers),

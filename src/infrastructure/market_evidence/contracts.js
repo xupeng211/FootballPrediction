@@ -10,6 +10,47 @@ const PERIODS = new Set(['MATCH', 'FIRST_HALF']);
 const MARKET_TYPES = new Set(['1X2', 'ASIAN_HANDICAP', 'TOTAL']);
 const SELECTIONS = new Set(['HOME', 'DRAW', 'AWAY']);
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
+const OBSERVATION_FIELDS = new Set([
+    'schema_version',
+    'projection_version',
+    'observation_id',
+    'canonical_event_id',
+    'provider',
+    'provider_event_id',
+    'canonical_market_id',
+    'provider_market_id',
+    'canonical_bookmaker_id',
+    'provider_bookmaker_id',
+    'provider_bookmaker_name',
+    'competition',
+    'season',
+    'home_team',
+    'away_team',
+    'kickoff_utc',
+    'period',
+    'market_type',
+    'line',
+    'canonical_selection_id',
+    'selection',
+    'price_side',
+    'odds_decimal',
+    'available_volume',
+    'bet_limit',
+    'bookmaker_last_update_at',
+    'source_snapshot_at',
+    'capture_started_at',
+    'response_received_at',
+    'ingested_at',
+    'acquisition_mode',
+    'capture_id',
+    'raw_evidence_reference',
+    'raw_sha256',
+    'adapter_name',
+    'adapter_version',
+    'identity_registry_version',
+    'identity_registry_sha256',
+    'quality_flags',
+]);
 
 function stableCanonicalize(value) {
     if (Array.isArray(value)) return value.map(stableCanonicalize);
@@ -42,18 +83,70 @@ function requireText(value, field, errors) {
     return text || null;
 }
 
+function optionalText(value, field, errors) {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'string') {
+        errors.push(`${field} must be a string or null`);
+        return null;
+    }
+    const text = value.trim();
+    if (!text) errors.push(`${field} must not be empty`);
+    return text || null;
+}
+
+function optionalNumber(value, field, errors) {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'number') {
+        errors.push(`${field} must be a number or null`);
+        return Number.NaN;
+    }
+    return value;
+}
+
 function requireUtc(value, field, errors, nullable = false) {
     if (value === null || value === undefined || value === '') {
         if (!nullable) errors.push(`${field} is required`);
         return null;
     }
     const text = String(value);
-    if (!ISO_UTC.test(text) || !Number.isFinite(Date.parse(text))) errors.push(`${field} must be UTC ISO-8601`);
+    if (!isUtcTimestamp(text)) errors.push(`${field} must be UTC ISO-8601`);
     return text;
 }
 
 function isUtcTimestamp(value) {
-    return ISO_UTC.test(String(value ?? '')) && Number.isFinite(Date.parse(String(value)));
+    const text = String(value ?? '');
+    if (!ISO_UTC.test(text)) return false;
+    const year = Number(text.slice(0, 4));
+    const month = Number(text.slice(5, 7));
+    const day = Number(text.slice(8, 10));
+    const hour = Number(text.slice(11, 13));
+    const minute = Number(text.slice(14, 16));
+    const second = Number(text.slice(17, 19));
+    const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+    return (
+        month >= 1 &&
+        month <= 12 &&
+        day >= 1 &&
+        day <= daysInMonth &&
+        hour >= 0 &&
+        hour <= 23 &&
+        minute >= 0 &&
+        minute <= 59 &&
+        second >= 0 &&
+        second <= 59
+    );
+}
+
+function isSafeEvidenceReference(value) {
+    return (
+        typeof value === 'string' &&
+        value.trim() === value &&
+        value.length > 0 &&
+        /^[A-Za-z0-9._/-]+$/.test(value) &&
+        !value.startsWith('/') &&
+        !value.split('/').includes('..')
+    );
 }
 
 function validateMarketIdentity({ period, market_type: marketType, line }, errors) {
@@ -69,6 +162,18 @@ function compareCodeUnits(left, right) {
     return left === right ? 0 : left < right ? -1 : 1;
 }
 
+function normalizeUtcTimestamp(value) {
+    const text = String(value);
+    const fractionStart = text.indexOf('.');
+    if (fractionStart === -1) return `${text.slice(0, -1)}.000000000Z`;
+    const fractionEnd = text.length - 1;
+    return `${text.slice(0, fractionStart)}.${text.slice(fractionStart + 1, fractionEnd).padEnd(9, '0')}Z`;
+}
+
+function compareUtcTimestamps(left, right) {
+    return compareCodeUnits(normalizeUtcTimestamp(left), normalizeUtcTimestamp(right));
+}
+
 function semanticProjection(observation) {
     const copy = { ...observation };
     delete copy.ingested_at;
@@ -76,8 +181,18 @@ function semanticProjection(observation) {
 }
 
 function createObservation(fields) {
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+        throw new Error('invalid MarketObservation: fields must be an object');
+    }
     const errors = [];
-    if (fields.decision_target_at !== undefined) errors.push('decision_target_at is not part of MarketObservation');
+    if (Object.prototype.hasOwnProperty.call(fields, 'decision_target_at')) {
+        errors.push('decision_target_at is not part of MarketObservation');
+    }
+    for (const field of Object.keys(fields)) {
+        if (!OBSERVATION_FIELDS.has(field) && field !== 'decision_target_at') {
+            errors.push(`unknown MarketObservation field: ${field}`);
+        }
+    }
     if (fields.quality_flags !== undefined && !Array.isArray(fields.quality_flags)) {
         errors.push('quality_flags must be an array');
     }
@@ -96,27 +211,19 @@ function createObservation(fields) {
         provider_bookmaker_id: requireText(fields.provider_bookmaker_id, 'provider_bookmaker_id', errors),
         provider_bookmaker_name: requireText(fields.provider_bookmaker_name, 'provider_bookmaker_name', errors),
         competition: requireText(fields.competition, 'competition', errors),
-        season: fields.season === null || fields.season === undefined ? null : String(fields.season),
+        season: optionalText(fields.season, 'season', errors),
         home_team: requireText(fields.home_team, 'home_team', errors),
         away_team: requireText(fields.away_team, 'away_team', errors),
         kickoff_utc: requireUtc(fields.kickoff_utc, 'kickoff_utc', errors),
         period: fields.period,
         market_type: fields.market_type,
-        line:
-            fields.line === null || fields.line === undefined
-                ? null
-                : typeof fields.line === 'string' && fields.line.trim() === ''
-                  ? Number.NaN
-                  : Number(fields.line),
+        line: optionalNumber(fields.line, 'line', errors),
         canonical_selection_id: requireText(fields.canonical_selection_id, 'canonical_selection_id', errors),
         selection: fields.selection,
         price_side: fields.price_side,
-        odds_decimal: Number(fields.odds_decimal),
-        available_volume:
-            fields.available_volume === null || fields.available_volume === undefined
-                ? null
-                : Number(fields.available_volume),
-        bet_limit: fields.bet_limit === null || fields.bet_limit === undefined ? null : Number(fields.bet_limit),
+        odds_decimal: typeof fields.odds_decimal === 'number' ? fields.odds_decimal : Number.NaN,
+        available_volume: optionalNumber(fields.available_volume, 'available_volume', errors),
+        bet_limit: optionalNumber(fields.bet_limit, 'bet_limit', errors),
         bookmaker_last_update_at: requireUtc(fields.bookmaker_last_update_at, 'bookmaker_last_update_at', errors, true),
         source_snapshot_at: requireUtc(fields.source_snapshot_at, 'source_snapshot_at', errors, true),
         capture_started_at: requireUtc(fields.capture_started_at, 'capture_started_at', errors),
@@ -129,6 +236,7 @@ function createObservation(fields) {
         adapter_name: requireText(fields.adapter_name, 'adapter_name', errors),
         adapter_version: requireText(fields.adapter_version, 'adapter_version', errors),
         identity_registry_version: requireText(fields.identity_registry_version, 'identity_registry_version', errors),
+        identity_registry_sha256: requireText(fields.identity_registry_sha256, 'identity_registry_sha256', errors),
         quality_flags: Array.isArray(fields.quality_flags)
             ? Object.freeze([...fields.quality_flags].sort())
             : Object.freeze([]),
@@ -137,6 +245,17 @@ function createObservation(fields) {
     if (!SELECTIONS.has(observation.selection)) errors.push('invalid selection');
     if (observation.market_type === '1X2' && !['HOME', 'DRAW', 'AWAY'].includes(observation.selection)) {
         errors.push('1X2 selection must be HOME, DRAW or AWAY');
+    }
+    if (PERIODS.has(observation.period) && MARKET_TYPES.has(observation.market_type)) {
+        const expectedMarketId = `${observation.period}/${observation.market_type}/${
+            observation.line === null ? 'NULL' : observation.line
+        }`;
+        if (observation.canonical_market_id !== expectedMarketId) {
+            errors.push('canonical_market_id does not match market identity');
+        }
+    }
+    if (SELECTIONS.has(observation.selection) && observation.canonical_selection_id !== observation.selection) {
+        errors.push('canonical_selection_id does not match selection');
     }
     if (!PRICE_SIDES.has(observation.price_side)) errors.push('invalid price_side');
     if (!ACQUISITION_MODES.has(observation.acquisition_mode)) errors.push('invalid acquisition_mode');
@@ -155,16 +274,22 @@ function createObservation(fields) {
     if (!/^[a-f0-9]{64}$/.test(observation.raw_sha256 || '')) {
         errors.push('raw_sha256 must be lowercase SHA-256');
     }
+    if (!/^[a-f0-9]{64}$/.test(observation.identity_registry_sha256 || '')) {
+        errors.push('identity_registry_sha256 must be lowercase SHA-256');
+    }
+    if (!isSafeEvidenceReference(observation.raw_evidence_reference)) {
+        errors.push('raw_evidence_reference must be a safe relative reference');
+    }
     if (observation.quality_flags.some(flag => typeof flag !== 'string')) {
         errors.push('quality_flags must contain strings');
     }
     if (new Set(observation.quality_flags).size !== observation.quality_flags.length) {
         errors.push('quality_flags must be unique');
     }
-    if (Date.parse(observation.response_received_at) < Date.parse(observation.capture_started_at)) {
+    if (compareUtcTimestamps(observation.response_received_at, observation.capture_started_at) < 0) {
         errors.push('response_received_at precedes capture_started_at');
     }
-    if (Date.parse(observation.ingested_at) < Date.parse(observation.response_received_at)) {
+    if (compareUtcTimestamps(observation.ingested_at, observation.response_received_at) < 0) {
         errors.push('ingested_at precedes response_received_at');
     }
     if (errors.length) throw new Error(`invalid MarketObservation: ${errors.join('; ')}`);
@@ -179,7 +304,10 @@ module.exports = {
     stableStringify,
     sha256Text,
     isUtcTimestamp,
+    isSafeEvidenceReference,
     compareCodeUnits,
+    normalizeUtcTimestamp,
+    compareUtcTimestamps,
     semanticProjection,
     createObservation,
 };

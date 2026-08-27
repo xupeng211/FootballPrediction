@@ -42,6 +42,7 @@
         "adapter_name",
         "adapter_version",
         "identity_registry_version",
+        "identity_registry_sha256",
         "quality_flags"
     ],
     "allOf": [
@@ -65,7 +66,10 @@
         "canonical_event_id": { "type": "string", "minLength": 1 },
         "provider": { "type": "string", "minLength": 1 },
         "provider_event_id": { "type": "string", "minLength": 1 },
-        "canonical_market_id": { "type": "string", "minLength": 1 },
+        "canonical_market_id": {
+            "type": "string",
+            "pattern": "^(MATCH|FIRST_HALF)/(1X2|ASIAN_HANDICAP|TOTAL)/(NULL|-?(?:0|[1-9]\\d*)(?:\\.\\d+)?)$"
+        },
         "provider_market_id": { "type": "string", "minLength": 1 },
         "canonical_bookmaker_id": { "type": "string", "minLength": 1 },
         "provider_bookmaker_id": { "type": "string", "minLength": 1 },
@@ -74,28 +78,51 @@
         "season": { "type": ["string", "null"] },
         "home_team": { "type": "string", "minLength": 1 },
         "away_team": { "type": "string", "minLength": 1 },
-        "kickoff_utc": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T.*Z$" },
+        "kickoff_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
         "period": { "enum": ["MATCH", "FIRST_HALF"] },
         "market_type": { "enum": ["1X2", "ASIAN_HANDICAP", "TOTAL"] },
         "line": { "type": ["number", "null"] },
-        "canonical_selection_id": { "type": "string", "minLength": 1 },
+        "canonical_selection_id": { "enum": ["HOME", "DRAW", "AWAY"] },
         "selection": { "enum": ["HOME", "DRAW", "AWAY"] },
         "price_side": { "enum": ["BOOKMAKER", "BACK", "LAY"] },
         "odds_decimal": { "type": "number", "exclusiveMinimum": 1 },
         "available_volume": { "type": ["number", "null"], "minimum": 0 },
         "bet_limit": { "type": ["number", "null"], "minimum": 0 },
-        "bookmaker_last_update_at": { "type": ["string", "null"] },
-        "source_snapshot_at": { "type": ["string", "null"] },
-        "capture_started_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T.*Z$" },
-        "response_received_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T.*Z$" },
-        "ingested_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T.*Z$" },
+        "bookmaker_last_update_at": {
+            "type": ["string", "null"],
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
+        "source_snapshot_at": {
+            "type": ["string", "null"],
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
+        "capture_started_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
+        "response_received_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
+        "ingested_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
         "acquisition_mode": { "enum": ["LIVE_CAPTURE", "HISTORICAL_API", "HISTORICAL_FILE", "REPLAY"] },
         "capture_id": { "type": "string", "minLength": 1 },
-        "raw_evidence_reference": { "type": "string", "minLength": 1 },
+        "raw_evidence_reference": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
+            "minLength": 1
+        },
         "raw_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "adapter_name": { "type": "string", "minLength": 1 },
         "adapter_version": { "type": "string", "minLength": 1 },
         "identity_registry_version": { "type": "string", "minLength": 1 },
+        "identity_registry_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "quality_flags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
     }
 }
