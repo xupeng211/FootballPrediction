@@ -813,22 +813,28 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
 
 test('live client is key-gated and bounded to three requests without logging secrets', async () => {
     const previous = process.env.THE_ODDS_API_KEY;
-    delete process.env.THE_ODDS_API_KEY;
-    const { buildRequestUrl } = require('../../../src/infrastructure/market_evidence/theOddsApiClient');
-    assert.throws(() => buildRequestUrl(), /required/);
-    process.env.THE_ODDS_API_KEY = 'test-only-not-persisted';
-    assert.throws(() => buildRequestUrl({ markets: 'totals' }), /only permits/);
-    assert.throws(() => buildRequestUrl({ regions: 'credential-token' }), /unsupported region/);
-    delete process.env.THE_ODDS_API_KEY;
-    if (previous !== undefined) process.env.THE_ODDS_API_KEY = previous;
-    const client = createTheOddsApiClient({
-        requestFn: () => {
-            throw new Error('network should be stubbed in this test');
-        },
-    });
-    assert.equal(client.request_count, 0);
-    assert.throws(() => client.capture(), /required/);
-    assert.equal(client.request_count, 0);
+    try {
+        // Keep the key absent for the key-gating assertion even when the test
+        // process was launched with a real or otherwise pre-existing key.
+        delete process.env.THE_ODDS_API_KEY;
+        const { buildRequestUrl } = require('../../../src/infrastructure/market_evidence/theOddsApiClient');
+        assert.throws(() => buildRequestUrl(), /required/);
+        process.env.THE_ODDS_API_KEY = 'test-only-not-persisted';
+        assert.throws(() => buildRequestUrl({ markets: 'totals' }), /only permits/);
+        assert.throws(() => buildRequestUrl({ regions: 'credential-token' }), /unsupported region/);
+        delete process.env.THE_ODDS_API_KEY;
+        const client = createTheOddsApiClient({
+            requestFn: () => {
+                throw new Error('network should be stubbed in this test');
+            },
+        });
+        assert.equal(client.request_count, 0);
+        assert.throws(() => client.capture(), /required/);
+        assert.equal(client.request_count, 0);
+    } finally {
+        if (previous !== undefined) process.env.THE_ODDS_API_KEY = previous;
+        else delete process.env.THE_ODDS_API_KEY;
+    }
 });
 
 test('live client captures one bounded response and exposes only sanitized quota headers', async t => {

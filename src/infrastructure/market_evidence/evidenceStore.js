@@ -16,7 +16,7 @@ function assertNoSecret(value) {
     const configuredApiKey = process.env.THE_ODDS_API_KEY;
     if (
         /api[-_]?key|authorization|secret|token|THE_ODDS_API_KEY/i.test(value) ||
-        (configuredApiKey && configuredApiKey.length >= 8 && String(value).includes(configuredApiKey))
+        (configuredApiKey && String(value).includes(configuredApiKey))
     ) {
         throw new Error('secret-bearing value is prohibited');
     }
