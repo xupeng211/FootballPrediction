@@ -117,7 +117,14 @@ function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = 
     const bookmakerById = new Map();
     const marketKeys = new Set();
     for (const event of payload) {
-        if (!event || typeof event !== 'object' || !Array.isArray(event.bookmakers)) continue;
+        if (
+            !event ||
+            typeof event !== 'object' ||
+            event.sport_key !== 'soccer_epl' ||
+            !Array.isArray(event.bookmakers)
+        ) {
+            continue;
+        }
         for (const bookmaker of event.bookmakers) {
             if (!bookmaker || typeof bookmaker !== 'object' || typeof bookmaker.key !== 'string') continue;
             const entry = bookmakerById.get(bookmaker.key) || {
@@ -337,7 +344,7 @@ function coverageForArgs(args = {}) {
     return buildCoverageEvidence({ rawText: args.rawText, expectedProviderBookmakerIds });
 }
 
-function adaptTheOddsApiRaw(args) {
+function adaptTheOddsApiRaw(args = {}) {
     try {
         return adaptTheOddsApiRawInternal(args);
     } catch (error) {
@@ -348,7 +355,7 @@ function adaptTheOddsApiRaw(args) {
     }
 }
 
-function adaptTheOddsApiCapture(args) {
+function adaptTheOddsApiCapture(args = {}) {
     const observations = adaptTheOddsApiRaw(args);
     return Object.freeze({ observations, coverage_evidence: coverageForArgs(args) });
 }

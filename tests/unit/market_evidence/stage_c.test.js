@@ -680,6 +680,14 @@ test('coverage evidence explicitly records observed and missing provider bookmak
     assert.equal(missingMarketEvidence.status, 'PARTIAL');
     assert.equal(missingMarketEvidence.reason, 'EXPECTED_MARKET_NOT_OBSERVED');
     assert.deepEqual(missingMarketEvidence.missing_expected_provider_market_bookmaker_ids, ['williamhill']);
+    const nonEplPayload = JSON.parse(rawText);
+    nonEplPayload[0].sport_key = 'soccer_fa_cup';
+    const nonEplEvidence = buildCoverageEvidence({
+        rawText: JSON.stringify(nonEplPayload),
+        expectedProviderBookmakerIds: ['williamhill'],
+    });
+    assert.equal(nonEplEvidence.status, 'PARTIAL');
+    assert.deepEqual(nonEplEvidence.missing_expected_provider_bookmaker_ids, ['williamhill']);
     const captureResult = adaptTheOddsApiCapture({ rawText, capture, registry, projectionVersion: '1' });
     assert.equal(captureResult.observations.length, 3);
     assert.equal(captureResult.coverage_evidence.status, 'OBSERVED');
