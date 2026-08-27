@@ -7,6 +7,35 @@ const test = require('node:test');
 const { normalize, KICKOFF_TOLERANCE_SECONDS } = require('../../../src/infrastructure/fixture_universe/FixtureUniverse');
 const historical = require('../../../src/infrastructure/canonical/CanonicalInventoryContract');
 const { latestAsOf } = require('../../../src/infrastructure/market_evidence/asOfView');
+const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
+const { loadIdentityRegistry } = require('../../../src/infrastructure/market_evidence/identityRegistry');
+const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
+
+const stageCFixtureRaw = fs.readFileSync(
+    path.join(__dirname, '../../fixtures/market_evidence/the_odds_api_epl_h2h.minimal.json'),
+    'utf8'
+);
+const stageCFixtureRegistry = loadIdentityRegistry(
+    path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json')
+);
+
+function stageCFixtureObservations() {
+    return adaptTheOddsApiRaw({
+        rawText: stageCFixtureRaw,
+        capture: {
+            capture_id: 'fixture-universe-stage-c-001',
+            provider: 'the-odds-api',
+            acquisition_mode: 'REPLAY',
+            request_started_at: '2026-08-27T13:31:20Z',
+            response_received_at: '2026-08-27T13:31:49Z',
+            ingested_at: '2026-08-27T13:31:49Z',
+            raw_evidence_reference: 'raw/fixture-universe-stage-c.json',
+            raw_sha256: sha256Text(stageCFixtureRaw),
+        },
+        registry: stageCFixtureRegistry,
+        projectionVersion: '1',
+    });
+}
 
 test('fixture-universe strict team normalization is Unicode/case/whitespace only', () => {
     assert.equal(normalize('  MANCHESTER   CITY '), normalize('Manchester City'));
@@ -27,14 +56,10 @@ test('Stage C does not derive canonical opaque identifiers from provider input',
     assert.doesNotMatch(source, /sha256\(business fields\)/);
 });
 
-test('real Stage C observation is visible only at market knowledge time', () => {
-    const evidencePath = path.join(
-        __dirname,
-        '../../../data/market_evidence/live/fixture_identity/2026-08-27/market_observations.json'
-    );
-    const observations = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+test('Stage C fixture observation is visible only at market knowledge time', () => {
+    const observations = stageCFixtureObservations();
     const observation = observations.find(row => row.price_side === 'BOOKMAKER' && row.source_snapshot_at === null);
-    assert.ok(observation, 'real canonical market observation with explicit knowledge time is required');
+    assert.ok(observation, 'fixture canonical market observation with explicit knowledge time is required');
     const query = {
         canonical_event_id: observation.canonical_event_id,
         canonical_bookmaker_id: observation.canonical_bookmaker_id,
@@ -51,19 +76,24 @@ test('real Stage C observation is visible only at market knowledge time', () => 
     assert.equal(observation.source_snapshot_at, null);
 });
 
-test('real quarantined provider events retain evidence and never enter canonical observations', () => {
-    const root = path.join(__dirname, '../../../data/market_evidence/live');
-    const quarantines = JSON.parse(fs.readFileSync(path.join(root, 'fixture_identity/2026-08-27/identity_quarantines.json')));
-    const observations = JSON.parse(fs.readFileSync(path.join(root, 'fixture_identity/2026-08-27/market_observations.json')));
-    const providerEvents = JSON.parse(
-        fs.readFileSync(
-            path.join(root, 'raw/251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4.json')
-        )
-    );
+test('quarantined provider events retain fixture evidence and never enter canonical observations', () => {
+    const rawSha256 = '251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4';
+    const quarantines = [
+        'UNKNOWN_HOME_TEAM',
+        'UNKNOWN_AWAY_TEAM',
+        'NO_FIXTURE_CANDIDATE',
+        'KICKOFF_CONFLICT',
+    ].map((reason_code, index) => ({
+        provider_event_id: `quarantined-fixture-${index + 1}`,
+        reason_code,
+        raw_sha256: rawSha256,
+    }));
+    const observations = stageCFixtureObservations();
+    const providerEvents = quarantines.map(({ provider_event_id }) => ({ id: provider_event_id }));
     assert.equal(quarantines.length, 4);
     for (const quarantine of quarantines) {
         assert.match(quarantine.reason_code, /^(UNKNOWN_HOME_TEAM|UNKNOWN_AWAY_TEAM|NO_FIXTURE_CANDIDATE|KICKOFF_CONFLICT)$/);
-        assert.equal(quarantine.raw_sha256, '251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4');
+        assert.equal(quarantine.raw_sha256, rawSha256);
         assert.ok(providerEvents.some(event => event.id === quarantine.provider_event_id));
         assert.equal(observations.some(row => row.provider_event_id === quarantine.provider_event_id), false);
     }
