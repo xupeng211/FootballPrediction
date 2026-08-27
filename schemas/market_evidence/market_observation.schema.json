@@ -57,30 +57,136 @@
                 }
             },
             "then": { "properties": { "line": { "type": "number" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "1X2" },
+                    "line": { "const": null }
+                }
+            },
+            "then": { "properties": { "canonical_market_id": { "const": "MATCH/1X2/NULL" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "FIRST_HALF" },
+                    "market_type": { "const": "1X2" },
+                    "line": { "const": null }
+                }
+            },
+            "then": { "properties": { "canonical_market_id": { "const": "FIRST_HALF/1X2/NULL" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "ASIAN_HANDICAP" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "canonical_market_id": { "pattern": "^MATCH/ASIAN_HANDICAP/-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$" }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "ASIAN_HANDICAP" },
+                    "line": { "const": -0.25 }
+                }
+            },
+            "then": { "properties": { "canonical_market_id": { "const": "MATCH/ASIAN_HANDICAP/-0.25" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "TOTAL" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "canonical_market_id": { "pattern": "^MATCH/TOTAL/-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$" }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "TOTAL" },
+                    "line": { "const": 2.5 }
+                }
+            },
+            "then": { "properties": { "canonical_market_id": { "const": "MATCH/TOTAL/2.5" } } }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "FIRST_HALF" },
+                    "market_type": { "const": "ASIAN_HANDICAP" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "canonical_market_id": { "pattern": "^FIRST_HALF/ASIAN_HANDICAP/-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$" }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "period": { "const": "FIRST_HALF" },
+                    "market_type": { "const": "TOTAL" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "canonical_market_id": { "pattern": "^FIRST_HALF/TOTAL/-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$" }
+                }
+            }
+        },
+        {
+            "if": { "properties": { "selection": { "const": "HOME" } } },
+            "then": { "properties": { "canonical_selection_id": { "const": "HOME" } } }
+        },
+        {
+            "if": { "properties": { "selection": { "const": "DRAW" } } },
+            "then": { "properties": { "canonical_selection_id": { "const": "DRAW" } } }
+        },
+        {
+            "if": { "properties": { "selection": { "const": "AWAY" } } },
+            "then": { "properties": { "canonical_selection_id": { "const": "AWAY" } } }
         }
     ],
     "properties": {
         "schema_version": { "const": "footballprediction-market-observation/v1" },
-        "projection_version": { "type": "string", "minLength": 1 },
-        "observation_id": { "type": "string", "minLength": 1 },
-        "canonical_event_id": { "type": "string", "minLength": 1 },
-        "provider": { "type": "string", "minLength": 1 },
-        "provider_event_id": { "type": "string", "minLength": 1 },
+        "projection_version": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "observation_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "canonical_event_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "provider": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "provider_event_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "canonical_market_id": {
             "type": "string",
+            "minLength": 1,
             "pattern": "^(MATCH|FIRST_HALF)/(1X2|ASIAN_HANDICAP|TOTAL)/(NULL|-?(?:0|[1-9]\\d*)(?:\\.\\d+)?)$"
         },
-        "provider_market_id": { "type": "string", "minLength": 1 },
-        "canonical_bookmaker_id": { "type": "string", "minLength": 1 },
-        "provider_bookmaker_id": { "type": "string", "minLength": 1 },
-        "provider_bookmaker_name": { "type": "string", "minLength": 1 },
+        "provider_market_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "canonical_bookmaker_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "provider_bookmaker_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "provider_bookmaker_name": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "competition": { "const": "English Premier League" },
-        "season": { "type": ["string", "null"] },
-        "home_team": { "type": "string", "minLength": 1 },
-        "away_team": { "type": "string", "minLength": 1 },
+        "season": { "type": ["string", "null"], "pattern": "\\S" },
+        "home_team": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "away_team": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "kickoff_utc": {
             "type": "string",
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "period": { "enum": ["MATCH", "FIRST_HALF"] },
         "market_type": { "enum": ["1X2", "ASIAN_HANDICAP", "TOTAL"] },
@@ -93,35 +199,40 @@
         "bet_limit": { "type": ["number", "null"], "minimum": 0 },
         "bookmaker_last_update_at": {
             "type": ["string", "null"],
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "source_snapshot_at": {
             "type": ["string", "null"],
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "capture_started_at": {
             "type": "string",
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "response_received_at": {
             "type": "string",
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "ingested_at": {
             "type": "string",
-            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
         },
         "acquisition_mode": { "enum": ["LIVE_CAPTURE", "HISTORICAL_API", "HISTORICAL_FILE", "REPLAY"] },
-        "capture_id": { "type": "string", "minLength": 1 },
+        "capture_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "raw_evidence_reference": {
             "type": "string",
             "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
             "minLength": 1
         },
         "raw_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "adapter_name": { "type": "string", "minLength": 1 },
-        "adapter_version": { "type": "string", "minLength": 1 },
-        "identity_registry_version": { "type": "string", "minLength": 1 },
+        "adapter_name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "adapter_version": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "identity_registry_version": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "identity_registry_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "quality_flags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
     }

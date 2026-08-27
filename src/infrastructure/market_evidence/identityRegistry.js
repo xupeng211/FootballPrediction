@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
-const { sha256Text, stableStringify } = require('./contracts');
+const { sha256Text, stableStringify, isUtcTimestamp } = require('./contracts');
 
 const KINDS = new Set(['event', 'bookmaker', 'market', 'selection']);
 const PERIODS = new Set(['MATCH', 'FIRST_HALF']);
@@ -13,6 +13,22 @@ const COLLECTION_KINDS = Object.freeze({
     bookmakers: 'bookmaker',
     markets: 'market',
     selections: 'selection',
+});
+const MAPPING_FIELDS = Object.freeze({
+    event: new Set([
+        'kind',
+        'provider',
+        'provider_id',
+        'canonical_id',
+        'season',
+        'home_team',
+        'away_team',
+        'kickoff_utc',
+        'provenance',
+    ]),
+    bookmaker: new Set(['kind', 'provider', 'provider_id', 'canonical_id', 'price_side', 'provenance']),
+    market: new Set(['kind', 'provider', 'provider_id', 'canonical_id', 'period', 'market_type', 'line', 'provenance']),
+    selection: new Set(['kind', 'provider', 'provider_id', 'canonical_id', 'selection', 'provenance']),
 });
 
 function key(...parts) {
@@ -62,6 +78,17 @@ function assertBookmakerMapping(mapping) {
     }
 }
 
+function assertEventMapping(mapping) {
+    for (const field of ['home_team', 'away_team']) {
+        if (typeof mapping[field] !== 'string' || !mapping[field].trim()) {
+            throw new Error(`event mapping requires ${field}: ${mapping.provider_id}`);
+        }
+    }
+    if (!isUtcTimestamp(mapping.kickoff_utc)) {
+        throw new Error(`event mapping requires valid kickoff_utc: ${mapping.provider_id}`);
+    }
+}
+
 function assertMarketMapping(mapping) {
     if (!PERIODS.has(mapping.period) || !MARKET_TYPES.has(mapping.market_type)) {
         throw new Error(`invalid market identity mapping: ${mapping.provider_id}`);
@@ -89,6 +116,9 @@ function assertSelectionMapping(mapping) {
 
 function validateMapping(mapping) {
     assertBaseMapping(mapping);
+    const unknownFields = Object.keys(mapping).filter(field => !MAPPING_FIELDS[mapping.kind].has(field));
+    if (unknownFields.length) throw new Error(`unknown identity mapping field: ${unknownFields[0]}`);
+    if (mapping.kind === 'event') assertEventMapping(mapping);
     if (mapping.kind === 'bookmaker') assertBookmakerMapping(mapping);
     if (mapping.kind === 'market') assertMarketMapping(mapping);
     if (mapping.kind === 'selection') assertSelectionMapping(mapping);
@@ -136,7 +166,13 @@ function createIdentityRegistry(options = {}) {
         if (!mapping) throw new Error(`identity mapping unknown: ${kind}:${provider}:${providerId}`);
         return mapping;
     }
-    return Object.freeze({ version, content_sha256: contentSha256, resolve });
+    const list = (kind, provider) =>
+        Object.freeze(
+            mappings
+                .filter(mapping => mapping.kind === kind && (provider === undefined || mapping.provider === provider))
+                .map(mapping => Object.freeze({ ...mapping }))
+        );
+    return Object.freeze({ version, content_sha256: contentSha256, resolve, list });
 }
 
 function loadIdentityRegistry(filePath) {

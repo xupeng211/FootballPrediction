@@ -7,6 +7,7 @@ const {
     createObservation,
     isUtcTimestamp,
     sha256Text,
+    stableStringify,
 } = require('./contracts');
 
 const ADAPTER_NAME = 'the-odds-api';
@@ -76,7 +77,80 @@ function assertCaptureMetadata({ rawText, capture, registry, projectionVersion }
     }
 }
 
-function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1' }) {
+function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = {}) {
+    if (
+        !Array.isArray(expectedProviderBookmakerIds) ||
+        expectedProviderBookmakerIds.some(id => typeof id !== 'string' || !id.trim())
+    ) {
+        throw new Error('expected provider bookmaker IDs must be a string array');
+    }
+    const evidence = {
+        schema_version: 'footballprediction-market-coverage/v1',
+        provider: 'the-odds-api',
+        competition: 'English Premier League',
+        requested_market_keys: ['h2h'],
+        expected_provider_bookmaker_ids: [...new Set(expectedProviderBookmakerIds)].sort(),
+        observed_provider_bookmakers: [],
+        observed_market_keys: [],
+        missing_expected_provider_bookmaker_ids: [],
+        status: 'QUARANTINED',
+        reason: null,
+    };
+    let payload;
+    try {
+        payload = JSON.parse(String(rawText));
+    } catch {
+        evidence.reason = 'MALFORMED_JSON';
+        evidence.missing_expected_provider_bookmaker_ids = [...evidence.expected_provider_bookmaker_ids];
+        return { ...evidence, evidence_sha256: sha256Text(stableStringify(evidence)) };
+    }
+    if (!Array.isArray(payload)) {
+        evidence.reason = 'PAYLOAD_NOT_ARRAY';
+        evidence.missing_expected_provider_bookmaker_ids = [...evidence.expected_provider_bookmaker_ids];
+        return { ...evidence, evidence_sha256: sha256Text(stableStringify(evidence)) };
+    }
+    const bookmakerById = new Map();
+    const marketKeys = new Set();
+    for (const event of payload) {
+        if (!event || typeof event !== 'object' || !Array.isArray(event.bookmakers)) continue;
+        for (const bookmaker of event.bookmakers) {
+            if (!bookmaker || typeof bookmaker !== 'object' || typeof bookmaker.key !== 'string') continue;
+            const entry = bookmakerById.get(bookmaker.key) || {
+                provider_bookmaker_id: bookmaker.key,
+                provider_bookmaker_names: new Set(),
+                market_keys: new Set(),
+            };
+            if (typeof bookmaker.title === 'string' && bookmaker.title.trim()) {
+                entry.provider_bookmaker_names.add(bookmaker.title.trim());
+            }
+            if (Array.isArray(bookmaker.markets)) {
+                for (const market of bookmaker.markets) {
+                    if (market && typeof market.key === 'string' && market.key.trim()) {
+                        entry.market_keys.add(market.key.trim());
+                        marketKeys.add(market.key.trim());
+                    }
+                }
+            }
+            bookmakerById.set(bookmaker.key, entry);
+        }
+    }
+    evidence.observed_provider_bookmakers = [...bookmakerById.values()]
+        .sort((left, right) => (left.provider_bookmaker_id < right.provider_bookmaker_id ? -1 : 1))
+        .map(entry => ({
+            provider_bookmaker_id: entry.provider_bookmaker_id,
+            provider_bookmaker_names: [...entry.provider_bookmaker_names].sort(),
+            market_keys: [...entry.market_keys].sort(),
+        }));
+    evidence.observed_market_keys = [...marketKeys].sort();
+    evidence.missing_expected_provider_bookmaker_ids = evidence.expected_provider_bookmaker_ids.filter(
+        providerId => !bookmakerById.has(providerId)
+    );
+    evidence.status = evidence.missing_expected_provider_bookmaker_ids.length > 0 ? 'PARTIAL' : 'OBSERVED';
+    if (evidence.status === 'PARTIAL') evidence.reason = 'EXPECTED_BOOKMAKER_NOT_OBSERVED';
+    return { ...evidence, evidence_sha256: sha256Text(stableStringify(evidence)) };
+}
+
+function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVersion = '1' }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
     const payload = JSON.parse(rawText);
     if (!Array.isArray(payload)) throw new Error('The Odds API payload must be an array');
@@ -99,6 +173,14 @@ function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1
             throw new Error('provider EPL event identity or kickoff is incomplete');
         }
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
+        if (
+            event.home_team.trim() !== canonicalEvent.home_team.trim() ||
+            event.away_team.trim() !== canonicalEvent.away_team.trim() ||
+            !isUtcTimestamp(event.commence_time) ||
+            compareUtcTimestamps(event.commence_time, canonicalEvent.kickoff_utc) !== 0
+        ) {
+            throw new Error(`provider event identity conflicts with registry: ${event.id}`);
+        }
         for (const rawBookmaker of requireNonEmptyArray(event.bookmakers, `event ${event.id} bookmakers`)) {
             const bookmaker = requireObject(rawBookmaker, 'provider bookmaker');
             if (
@@ -140,6 +222,8 @@ function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1
                     const idSeed = [
                         rawSha256,
                         projectionVersion,
+                        ADAPTER_VERSION,
+                        registry.content_sha256,
                         capture.capture_id,
                         capture.response_received_at,
                         event.id,
@@ -199,4 +283,35 @@ function adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion = '1
     }
     return observations;
 }
-module.exports = { ADAPTER_NAME, ADAPTER_VERSION, adaptTheOddsApiRaw };
+
+function coverageForArgs(args = {}) {
+    const expectedProviderBookmakerIds =
+        typeof args.registry?.list === 'function'
+            ? args.registry.list('bookmaker', 'the-odds-api').map(mapping => mapping.provider_id)
+            : [];
+    return buildCoverageEvidence({ rawText: args.rawText, expectedProviderBookmakerIds });
+}
+
+function adaptTheOddsApiRaw(args) {
+    try {
+        return adaptTheOddsApiRawInternal(args);
+    } catch (error) {
+        if (error && typeof error === 'object' && !error.coverage_evidence) {
+            error.coverage_evidence = coverageForArgs(args);
+        }
+        throw error;
+    }
+}
+
+function adaptTheOddsApiCapture(args) {
+    const observations = adaptTheOddsApiRaw(args);
+    return Object.freeze({ observations, coverage_evidence: coverageForArgs(args) });
+}
+
+module.exports = {
+    ADAPTER_NAME,
+    ADAPTER_VERSION,
+    adaptTheOddsApiRaw,
+    adaptTheOddsApiCapture,
+    buildCoverageEvidence,
+};

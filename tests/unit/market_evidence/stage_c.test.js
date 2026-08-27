@@ -16,11 +16,17 @@ const {
     createIdentityRegistry,
     loadIdentityRegistry,
 } = require('../../../src/infrastructure/market_evidence/identityRegistry');
-const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
+const {
+    adaptTheOddsApiRaw,
+    adaptTheOddsApiCapture,
+    buildCoverageEvidence,
+} = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
 const {
     writeImmutableRaw,
+    readImmutableRaw,
     createCaptureReceipt,
     writeReceipt,
+    writeCoverageEvidence,
     appendProjection,
 } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 const {
@@ -44,6 +50,9 @@ const registry = createIdentityRegistry({
             provider_id: 'epl-fixture-001',
             canonical_id: 'fotmob:fixture-001',
             season: '2026/2027',
+            home_team: 'Arsenal',
+            away_team: 'Chelsea',
+            kickoff_utc: '2026-09-12T15:00:00Z',
             provenance: 'fixture',
         },
     ],
@@ -154,6 +163,29 @@ test('Stage C canonical contract rejects invalid odds, modes, sides, market iden
     assert.equal(createObservation({ ...sample, price_side: 'LAY' }).price_side, 'LAY');
 });
 
+test('machine-readable JSON Schema rejects calendar-invalid, blank and inconsistent observations', () => {
+    const Ajv = require('ajv');
+    const schema = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../../../schemas/market_evidence/market_observation.schema.json'), 'utf8')
+    );
+    delete schema.$schema;
+    const validate = new Ajv({ allErrors: true, format: 'full' }).compile(schema);
+    const sample = observations()[0];
+    assert.equal(validate(sample), true);
+    assert.equal(validate({ ...sample, kickoff_utc: '2026-02-30T00:00:00Z' }), false);
+    assert.equal(validate({ ...sample, provider: '   ' }), false);
+    assert.equal(validate({ ...sample, canonical_market_id: 'MATCH/TOTAL/2.5' }), false);
+    assert.equal(
+        validate({
+            ...sample,
+            market_type: 'ASIAN_HANDICAP',
+            line: -0.25,
+            canonical_market_id: 'MATCH/ASIAN_HANDICAP/0.25',
+        }),
+        false
+    );
+});
+
 test('identity registry is independent and fails closed for unknown or ambiguous provider identities', () => {
     for (const kind of ['event', 'bookmaker', 'market', 'selection']) {
         assert.throws(() => registry.resolve(kind, 'the-odds-api', 'not-guessed'));
@@ -242,6 +274,24 @@ test('identity registry is independent and fails closed for unknown or ambiguous
     assert.throws(
         () =>
             createIdentityRegistry({
+                version: 'bad-mapping-field',
+                bookmakers: [
+                    {
+                        kind: 'bookmaker',
+                        provider: 'the-odds-api',
+                        provider_id: 'williamhill',
+                        canonical_id: 'bookmaker:william-hill',
+                        price_side: 'BOOKMAKER',
+                        provenance: 'fixture',
+                        hidden_alias: true,
+                    },
+                ],
+            }),
+        /unknown identity mapping field/
+    );
+    assert.throws(
+        () =>
+            createIdentityRegistry({
                 version: 'missing-side',
                 bookmakers: [
                     {
@@ -306,6 +356,45 @@ test('The Odds API EPL h2h fixture normalizes to three versioned canonical obser
     assert.equal(rows[0].response_received_at, '2026-08-27T13:31:49Z');
     assert.equal(rows[0].source_snapshot_at, null);
     assert.match(rows[0].identity_registry_sha256, /^[a-f0-9]{64}$/);
+});
+
+test('event identity is checked against the independently governed registry and IDs bind projection versions', () => {
+    const swapped = JSON.parse(rawText);
+    swapped[0].home_team = 'Chelsea';
+    swapped[0].away_team = 'Arsenal';
+    const swappedText = JSON.stringify(swapped);
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: swappedText,
+                capture: captureForRaw(swappedText),
+                registry,
+                projectionVersion: '1',
+            }),
+        /event identity conflicts with registry/
+    );
+    const v1 = observations('1');
+    const v2Registry = createIdentityRegistry({
+        version: 'stage-c-fixture/v2',
+        events: [
+            {
+                kind: 'event',
+                provider: 'the-odds-api',
+                provider_id: 'epl-fixture-001',
+                canonical_id: 'fotmob:fixture-001',
+                season: '2026/2027',
+                home_team: 'Arsenal',
+                away_team: 'Chelsea',
+                kickoff_utc: '2026-09-12T15:00:00Z',
+                provenance: 'fixture-v2',
+            },
+        ],
+        bookmakers: registry.list('bookmaker', 'the-odds-api'),
+        markets: registry.list('market', 'the-odds-api'),
+        selections: registry.list('selection', 'the-odds-api'),
+    });
+    const v2 = adaptTheOddsApiRaw({ rawText, capture, registry: v2Registry, projectionVersion: '1' });
+    assert.notEqual(v1[0].observation_id, v2[0].observation_id);
 });
 
 test('adapter fails closed for malformed or incomplete EPL market payloads and side conflicts', () => {
@@ -410,17 +499,33 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
     assert.equal(evidence.raw_sha256, sha256Text(rawText));
     assert.equal(fs.readFileSync(path.join(root, evidence.raw_evidence_reference), 'utf8'), rawText);
     writeImmutableRaw({ rootDir: root, rawText });
+    fs.chmodSync(path.join(root, evidence.raw_evidence_reference), 0o644);
     fs.writeFileSync(path.join(root, evidence.raw_evidence_reference), `${rawText}tampered`);
     assert.throws(() => writeImmutableRaw({ rootDir: root, rawText }), /immutable raw hash collision/);
+    fs.chmodSync(path.join(root, evidence.raw_evidence_reference), 0o444);
+    assert.throws(
+        () =>
+            readImmutableRaw({
+                rootDir: root,
+                rawEvidenceReference: evidence.raw_evidence_reference,
+                expectedSha256: evidence.raw_sha256,
+            }),
+        /does not match immutable content/
+    );
     const receipt = createCaptureReceipt({
         ...capture,
         provider: 'the-odds-api',
         http_status: 200,
         sanitized_request_parameters: { regions: 'uk', markets: 'h2h' },
+        coverage_evidence: buildCoverageEvidence({
+            rawText,
+            expectedProviderBookmakerIds: ['williamhill', 'pinnacle'],
+        }),
         raw_sha256: evidence.raw_sha256,
         response_size_bytes: Buffer.byteLength(rawText),
     });
     writeReceipt({ rootDir: root, receipt });
+    assert.equal(fs.statSync(path.join(root, 'receipts', `${receipt.capture_id}.json`)).mode & 0o222, 0);
     assert.equal(
         JSON.parse(fs.readFileSync(path.join(root, 'receipts', `${receipt.capture_id}.json`), 'utf8')).ingested_at,
         capture.ingested_at
@@ -471,6 +576,33 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
             },
         })
     );
+    assert.throws(() =>
+        createCaptureReceipt({
+            ...receipt,
+            sanitized_request_parameters: { headers: { x: 'secret-value-without-keyword' } },
+        })
+    );
+    assert.throws(() =>
+        createCaptureReceipt({
+            ...receipt,
+            provider_quota: { 'x-provider-internal': '123' },
+        })
+    );
+});
+
+test('coverage evidence explicitly records observed and missing provider bookmaker coverage', t => {
+    const expected = ['williamhill', 'pinnacle', 'betfair_exchange'];
+    const evidence = buildCoverageEvidence({ rawText, expectedProviderBookmakerIds: expected });
+    assert.equal(evidence.status, 'PARTIAL');
+    assert.deepEqual(evidence.missing_expected_provider_bookmaker_ids, ['betfair_exchange', 'pinnacle']);
+    const captureResult = adaptTheOddsApiCapture({ rawText, capture, registry, projectionVersion: '1' });
+    assert.equal(captureResult.observations.length, 3);
+    assert.equal(captureResult.coverage_evidence.status, 'OBSERVED');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-coverage-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const target = writeCoverageEvidence({ rootDir: root, captureId: capture.capture_id, evidence });
+    assert.equal(JSON.parse(fs.readFileSync(target, 'utf8')).status, 'PARTIAL');
+    assert.throws(() => writeCoverageEvidence({ rootDir: root, captureId: capture.capture_id, evidence }), /immutable/);
 });
 
 test('replay has deterministic semantic projection while ingestion metadata is explicit evidence metadata', () => {
@@ -491,6 +623,7 @@ test('offline replay reads immutable raw and can append projections without netw
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const rawPath = path.join(root, 'capture.json');
     fs.writeFileSync(rawPath, rawText, 'utf8');
+    fs.chmodSync(rawPath, 0o444);
     const ledgerPath = path.join(root, 'ledger.jsonl');
     const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', ledgerPath });
     const replayedAgain = replayRaw({ rawPath, capture, registry, projectionVersion: '1' });

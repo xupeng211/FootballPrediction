@@ -1,6 +1,6 @@
 {
     "version": "stage-c-fixture/v1",
-    "content_sha256": "d530f7240797f442722a563d59322ead3d889edcc10ffaa0cb6d91dfdad7225d",
+    "content_sha256": "ab3ca435c51c87523ed4e41bf9e91b90db75de9800eefec5faadab49e7ad903e",
     "events": [
         {
             "kind": "event",
@@ -8,6 +8,9 @@
             "provider_id": "epl-fixture-001",
             "canonical_id": "fotmob:fixture-001",
             "season": "2026/2027",
+            "home_team": "Arsenal",
+            "away_team": "Chelsea",
+            "kickoff_utc": "2026-09-12T15:00:00Z",
             "provenance": "fixture"
         }
     ],
