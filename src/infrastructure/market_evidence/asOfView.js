@@ -1,6 +1,6 @@
 'use strict';
 
-const { isUtcTimestamp } = require('./contracts');
+const { isUtcTimestamp, compareCodeUnits } = require('./contracts');
 
 function parseUtcTime(value, field) {
     if (!isUtcTimestamp(value)) throw new Error(`${field} must be UTC ISO-8601`);
@@ -37,7 +37,7 @@ function latestAsOf(
             .sort(
                 (a, b) =>
                     Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                    b.observation_id.localeCompare(a.observation_id)
+                    compareCodeUnits(b.observation_id, a.observation_id)
             )[0] || null
     );
 }
@@ -61,12 +61,14 @@ function latestAsOfMarket(observations, query) {
             !current ||
             Date.parse(row.response_received_at) > Date.parse(current.response_received_at) ||
             (Date.parse(row.response_received_at) === Date.parse(current.response_received_at) &&
-                row.observation_id > current.observation_id)
+                compareCodeUnits(row.observation_id, current.observation_id) > 0)
         ) {
             bySelection.set(row.canonical_selection_id, row);
         }
     }
-    return [...bySelection.values()].sort((a, b) => a.canonical_selection_id.localeCompare(b.canonical_selection_id));
+    return [...bySelection.values()].sort((a, b) =>
+        compareCodeUnits(a.canonical_selection_id, b.canonical_selection_id)
+    );
 }
 function deriveTimeline(
     observations,
@@ -90,7 +92,7 @@ function deriveTimeline(
             .sort(
                 (a, b) =>
                     Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                    a.observation_id.localeCompare(b.observation_id)
+                    compareCodeUnits(a.observation_id, b.observation_id)
             );
     const preKickoffBySelection = selection =>
         preKickoff
@@ -98,25 +100,25 @@ function deriveTimeline(
             .sort(
                 (a, b) =>
                     Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                    a.observation_id.localeCompare(b.observation_id)
+                    compareCodeUnits(a.observation_id, b.observation_id)
             );
     const opening =
         [...preKickoff].sort(
             (a, b) =>
                 Date.parse(a.response_received_at) - Date.parse(b.response_received_at) ||
-                a.observation_id.localeCompare(b.observation_id)
+                compareCodeUnits(a.observation_id, b.observation_id)
         )[0] || null;
     const current =
         [...eligible].sort(
             (a, b) =>
                 Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                b.observation_id.localeCompare(a.observation_id)
+                compareCodeUnits(b.observation_id, a.observation_id)
         )[0] || null;
     const closing =
         [...preKickoff].sort(
             (a, b) =>
                 Date.parse(b.response_received_at) - Date.parse(a.response_received_at) ||
-                b.observation_id.localeCompare(a.observation_id)
+                compareCodeUnits(b.observation_id, a.observation_id)
         )[0] || null;
     return {
         opening,

@@ -65,6 +65,10 @@ function validateMarketIdentity({ period, market_type: marketType, line }, error
     }
 }
 
+function compareCodeUnits(left, right) {
+    return left === right ? 0 : left < right ? -1 : 1;
+}
+
 function semanticProjection(observation) {
     const copy = { ...observation };
     delete copy.ingested_at;
@@ -98,7 +102,12 @@ function createObservation(fields) {
         kickoff_utc: requireUtc(fields.kickoff_utc, 'kickoff_utc', errors),
         period: fields.period,
         market_type: fields.market_type,
-        line: fields.line === null || fields.line === undefined ? null : Number(fields.line),
+        line:
+            fields.line === null || fields.line === undefined
+                ? null
+                : typeof fields.line === 'string' && fields.line.trim() === ''
+                  ? Number.NaN
+                  : Number(fields.line),
         canonical_selection_id: requireText(fields.canonical_selection_id, 'canonical_selection_id', errors),
         selection: fields.selection,
         price_side: fields.price_side,
@@ -149,6 +158,9 @@ function createObservation(fields) {
     if (observation.quality_flags.some(flag => typeof flag !== 'string')) {
         errors.push('quality_flags must contain strings');
     }
+    if (new Set(observation.quality_flags).size !== observation.quality_flags.length) {
+        errors.push('quality_flags must be unique');
+    }
     if (Date.parse(observation.response_received_at) < Date.parse(observation.capture_started_at)) {
         errors.push('response_received_at precedes capture_started_at');
     }
@@ -167,6 +179,7 @@ module.exports = {
     stableStringify,
     sha256Text,
     isUtcTimestamp,
+    compareCodeUnits,
     semanticProjection,
     createObservation,
 };

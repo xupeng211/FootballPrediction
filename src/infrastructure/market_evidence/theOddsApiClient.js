@@ -7,9 +7,12 @@ const API_PATH = '/v4/sports/soccer_epl/odds';
 const MAX_REQUESTS = 3;
 
 function sanitizeHeaders(headers = {}) {
+    const quotaHeader =
+        /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
     return Object.entries(headers).reduce((result, [key, value]) => {
-        if (/authorization|api[-_]?key|token|secret/i.test(key)) return result;
-        result[key.toLowerCase()] = String(value);
+        const normalizedKey = key.toLowerCase();
+        if (!quotaHeader.test(normalizedKey)) return result;
+        result[normalizedKey] = String(value);
         return result;
     }, {});
 }

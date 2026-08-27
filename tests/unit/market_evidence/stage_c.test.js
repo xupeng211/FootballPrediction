@@ -116,6 +116,9 @@ test('Stage C canonical contract rejects invalid odds, modes, sides, market iden
         { acquisition_mode: 'guess' },
         { price_side: 'MID' },
         { market_type: '1X2', line: 2.5 },
+        { market_type: 'TOTAL', line: null },
+        { market_type: 'TOTAL', line: ' ' },
+        { quality_flags: ['quarantined', 'quarantined'] },
         { decision_target_at: '2026-08-27T13:00:00Z' },
     ]) {
         assert.throws(() => createObservation({ ...sample, ...override }));
@@ -342,7 +345,11 @@ test('live client captures one bounded response and exposes only sanitized quota
             assert.equal(options.headers['User-Agent'], 'FootballPrediction-stage-c-pilot/1.0');
             const response = new EventEmitter();
             response.statusCode = 200;
-            response.headers = { 'x-requests-remaining': '499', authorization: 'must-not-propagate' };
+            response.headers = {
+                'x-requests-remaining': '499',
+                authorization: 'must-not-propagate',
+                'x-provider-internal': 'must-not-propagate',
+            };
             process.nextTick(() => {
                 callback(response);
                 response.emit('data', Buffer.from(rawText));
@@ -356,6 +363,7 @@ test('live client captures one bounded response and exposes only sanitized quota
     assert.equal(result.http_status, 200);
     assert.equal(result.provider_quota['x-requests-remaining'], '499');
     assert.equal(result.provider_quota.authorization, undefined);
+    assert.equal(result.provider_quota['x-provider-internal'], undefined);
     assert.equal(client.request_count, 1);
     assert.throws(() => client.capture({ markets: 'totals' }), /only permits/);
 });

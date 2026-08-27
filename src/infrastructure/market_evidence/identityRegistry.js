@@ -3,11 +3,11 @@
 const fs = require('node:fs');
 
 function key(...parts) {
-    return parts.join(':');
+    return JSON.stringify(parts);
 }
 
 function createIdentityRegistry({ version, events = [], bookmakers = [], markets = [], selections = [] }) {
-    if (!version) throw new Error('identity registry version is required');
+    if (typeof version !== 'string' || !version.trim()) throw new Error('identity registry version is required');
     const index = new Map();
     for (const mapping of [...events, ...bookmakers, ...markets, ...selections]) {
         if (
