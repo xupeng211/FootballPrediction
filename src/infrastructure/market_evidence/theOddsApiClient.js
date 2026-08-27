@@ -1,6 +1,7 @@
 'use strict';
 
 const { sha256Text } = require('./contracts');
+const { sanitizeRequestParameters } = require('./evidenceStore');
 
 const API_HOST = 'api.the-odds-api.com';
 const API_PATH = '/v4/sports/soccer_epl/odds';
@@ -23,7 +24,8 @@ function buildRequestUrl({ regions = 'uk', markets = 'h2h', oddsFormat = 'decima
     if (markets !== 'h2h' || oddsFormat !== 'decimal') {
         throw new Error('Stage C live client only permits EPL h2h decimal odds');
     }
-    const params = new URLSearchParams({ apiKey, regions, markets, oddsFormat });
+    const sanitized = sanitizeRequestParameters({ regions, markets, oddsFormat });
+    const params = new URLSearchParams({ apiKey, ...sanitized });
     return `https://${API_HOST}${API_PATH}?${params.toString()}`;
 }
 

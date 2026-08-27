@@ -4,6 +4,7 @@
 const crypto = require('node:crypto');
 
 const SCHEMA_VERSION = 'footballprediction-market-observation/v1';
+const COMPETITION = 'English Premier League';
 const ACQUISITION_MODES = new Set(['LIVE_CAPTURE', 'HISTORICAL_API', 'HISTORICAL_FILE', 'REPLAY']);
 const PRICE_SIDES = new Set(['BOOKMAKER', 'BACK', 'LAY']);
 const PERIODS = new Set(['MATCH', 'FIRST_HALF']);
@@ -242,6 +243,7 @@ function createObservation(fields) {
             : Object.freeze([]),
     };
     validateMarketIdentity(observation, errors);
+    if (observation.competition !== COMPETITION) errors.push('competition must be English Premier League');
     if (!SELECTIONS.has(observation.selection)) errors.push('invalid selection');
     if (observation.market_type === '1X2' && !['HOME', 'DRAW', 'AWAY'].includes(observation.selection)) {
         errors.push('1X2 selection must be HOME, DRAW or AWAY');
@@ -298,6 +300,7 @@ function createObservation(fields) {
 
 module.exports = {
     SCHEMA_VERSION,
+    COMPETITION,
     ACQUISITION_MODES,
     PRICE_SIDES,
     stableCanonicalize,

@@ -3,6 +3,7 @@
 /* eslint-disable complexity -- provider payload traversal is intentionally bounded to four schema levels. */
 const {
     ACQUISITION_MODES,
+    COMPETITION,
     compareUtcTimestamps,
     createObservation,
     isUtcTimestamp,
@@ -46,6 +47,9 @@ function assertCaptureMetadata({ rawText, capture, registry, projectionVersion }
     if (!registry || typeof registry.resolve !== 'function' || typeof registry.version !== 'string') {
         throw new Error('identity registry is required');
     }
+    if (capture.provider !== undefined && capture.provider !== 'the-odds-api') {
+        throw new Error('capture provider must be the-odds-api');
+    }
     if (!/^[a-f0-9]{64}$/.test(registry.content_sha256 || '')) {
         throw new Error('identity registry content_sha256 is required');
     }
@@ -87,7 +91,7 @@ function buildCoverageEvidence({ rawText, expectedProviderBookmakerIds = [] } = 
     const evidence = {
         schema_version: 'footballprediction-market-coverage/v1',
         provider: 'the-odds-api',
-        competition: 'English Premier League',
+        competition: COMPETITION,
         requested_market_keys: ['h2h'],
         expected_provider_bookmaker_ids: [...new Set(expectedProviderBookmakerIds)].sort(),
         observed_provider_bookmakers: [],
@@ -244,7 +248,7 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                             canonical_bookmaker_id: canonicalBookmaker.canonical_id,
                             provider_bookmaker_id: bookmaker.key,
                             provider_bookmaker_name: bookmaker.title,
-                            competition: 'English Premier League',
+                            competition: COMPETITION,
                             season: canonicalEvent.season || null,
                             home_team: event.home_team,
                             away_team: event.away_team,

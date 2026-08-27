@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable max-lines -- Stage C acceptance tests intentionally keep the full invariant matrix together. */
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -28,6 +29,8 @@ const {
     writeReceipt,
     writeCoverageEvidence,
     appendProjection,
+    readProjectionLedger,
+    ledgerManifestPath,
 } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 const {
     latestAsOf,
@@ -132,6 +135,7 @@ test('Stage C canonical contract rejects invalid odds, modes, sides, market iden
         { market_type: 'TOTAL', line: null },
         { market_type: 'TOTAL', line: ' ' },
         { odds_decimal: '2.1' },
+        { competition: 'Championship' },
         { line: 2.5, canonical_market_id: 'MATCH/1X2/NULL' },
         { available_volume: '10' },
         { bet_limit: '10' },
@@ -168,7 +172,6 @@ test('machine-readable JSON Schema rejects calendar-invalid, blank and inconsist
     const schema = JSON.parse(
         fs.readFileSync(path.join(__dirname, '../../../schemas/market_evidence/market_observation.schema.json'), 'utf8')
     );
-    delete schema.$schema;
     const validate = new Ajv({ allErrors: true, format: 'full' }).compile(schema);
     const sample = observations()[0];
     assert.equal(validate(sample), true);
@@ -178,11 +181,29 @@ test('machine-readable JSON Schema rejects calendar-invalid, blank and inconsist
     assert.equal(
         validate({
             ...sample,
+            market_type: 'TOTAL',
+            line: 3.5,
+            canonical_market_id: 'MATCH/TOTAL/2.5',
+        }),
+        false
+    );
+    assert.equal(
+        validate({
+            ...sample,
             market_type: 'ASIAN_HANDICAP',
             line: -0.25,
             canonical_market_id: 'MATCH/ASIAN_HANDICAP/0.25',
         }),
         false
+    );
+    assert.equal(
+        validate({
+            ...sample,
+            market_type: 'ASIAN_HANDICAP',
+            line: -0.25,
+            canonical_market_id: 'MATCH/ASIAN_HANDICAP/-0.25',
+        }),
+        true
     );
 });
 
@@ -588,6 +609,27 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
             provider_quota: { 'x-provider-internal': '123' },
         })
     );
+    assert.throws(() =>
+        createCaptureReceipt({
+            ...receipt,
+            provider_endpoint_identity: 'api.the-odds-api.com/v4/sports/soccer_epl/odds/internal-secret-path',
+        })
+    );
+    assert.throws(() => createCaptureReceipt({ ...receipt, provider: 'unapproved-provider' }), /identity/);
+    assert.throws(() =>
+        createCaptureReceipt({
+            ...receipt,
+            sanitized_request_parameters: { regions: 'private-token', markets: 'h2h' },
+        })
+    );
+    assert.throws(
+        () =>
+            readImmutableRaw({
+                rawEvidenceReference: evidence.raw_evidence_reference,
+                expectedSha256: evidence.raw_sha256,
+            }),
+        /evidence root is required/
+    );
 });
 
 test('coverage evidence explicitly records observed and missing provider bookmaker coverage', t => {
@@ -665,6 +707,8 @@ test('append-only ledger preserves old projections and appends new versions', t 
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const ledger = path.join(root, 'ledger.jsonl');
     appendProjection({ ledgerPath: ledger, projection: observations('1')[0] });
+    assert.equal(fs.statSync(ledger).mode & 0o222, 0);
+    assert.equal(fs.statSync(ledgerManifestPath(ledger)).mode & 0o222, 0);
     appendProjection({ ledgerPath: ledger, projection: observations('2')[0] });
     assert.throws(
         () => appendProjection({ ledgerPath: ledger, projection: { foo: 'bar' } }),
@@ -675,6 +719,12 @@ test('append-only ledger preserves old projections and appends new versions', t 
         rows.map(row => row.projection_version),
         ['1', '2']
     );
+    assert.equal(readProjectionLedger({ ledgerPath: ledger }).length, 2);
+    fs.chmodSync(ledger, 0o644);
+    fs.appendFileSync(ledger, '\n');
+    fs.chmodSync(ledger, 0o444);
+    assert.throws(() => readProjectionLedger({ ledgerPath: ledger }), /integrity/);
+    assert.throws(() => appendProjection({ ledgerPath: ledger, projection: observations('2')[1] }), /integrity/);
 });
 
 test('as-of view strictly uses knowledge time, not earlier bookmaker source time', () => {
@@ -768,6 +818,7 @@ test('live client is key-gated and bounded to three requests without logging sec
     assert.throws(() => buildRequestUrl(), /required/);
     process.env.THE_ODDS_API_KEY = 'test-only-not-persisted';
     assert.throws(() => buildRequestUrl({ markets: 'totals' }), /only permits/);
+    assert.throws(() => buildRequestUrl({ regions: 'credential-token' }), /unsupported region/);
     delete process.env.THE_ODDS_API_KEY;
     if (previous !== undefined) process.env.THE_ODDS_API_KEY = previous;
     const client = createTheOddsApiClient({

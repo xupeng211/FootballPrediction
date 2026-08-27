@@ -8,19 +8,27 @@ const {
     isSafeEvidenceReference,
     compareUtcTimestamps,
     createObservation,
+    COMPETITION,
 } = require('./contracts');
 /* eslint-disable complexity -- receipt validation enumerates independent safety invariants. */
 
 function assertNoSecret(value) {
-    if (/api[-_]?key|authorization|secret|token|THE_ODDS_API_KEY/i.test(value)) {
+    const configuredApiKey = process.env.THE_ODDS_API_KEY;
+    if (
+        /api[-_]?key|authorization|secret|token|THE_ODDS_API_KEY/i.test(value) ||
+        (configuredApiKey && configuredApiKey.length >= 8 && String(value).includes(configuredApiKey))
+    ) {
         throw new Error('secret-bearing value is prohibited');
     }
 }
 
 const REQUEST_PARAMETER_KEYS = Object.freeze(['regions', 'markets', 'oddsFormat']);
+const ALLOWED_REGIONS = new Set(['au', 'eu', 'uk', 'us', 'us2']);
+const PROVIDER_ENDPOINT_IDENTITIES = new Set(['api.the-odds-api.com/v4/sports/soccer_epl/odds']);
 const QUOTA_HEADER_PATTERN =
     /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
 const COVERAGE_STATUSES = new Set(['OBSERVED', 'PARTIAL', 'QUARANTINED']);
+const LEDGER_MANIFEST_SCHEMA_VERSION = 'footballprediction-market-ledger-integrity/v1';
 
 function isPlainRecord(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -41,6 +49,18 @@ function sanitizeRequestParameters(value) {
         const normalized = value[field].trim();
         if (!/^[A-Za-z0-9][A-Za-z0-9,_-]{0,127}$/.test(normalized)) {
             throw new Error(`request parameter ${field} contains unsafe characters`);
+        }
+        if (field === 'regions') {
+            const regions = normalized.split(',');
+            if (
+                regions.length === 0 ||
+                regions.some(region => !ALLOWED_REGIONS.has(region)) ||
+                new Set(regions).size !== regions.length
+            ) {
+                throw new Error('request parameter regions contains an unsupported region');
+            }
+            result[field] = regions.join(',');
+            continue;
         }
         if (field === 'markets' && normalized !== 'h2h') {
             throw new Error('request parameter markets must be h2h');
@@ -96,7 +116,7 @@ function validateCoverageEvidence(value) {
     if (value.schema_version !== 'footballprediction-market-coverage/v1') {
         throw new Error('unsupported coverage evidence schema_version');
     }
-    if (value.provider !== 'the-odds-api' || value.competition !== 'English Premier League') {
+    if (value.provider !== 'the-odds-api' || value.competition !== COMPETITION) {
         throw new Error('coverage evidence provider or competition is invalid');
     }
     if (!Array.isArray(value.requested_market_keys) || value.requested_market_keys.some(key => key !== 'h2h')) {
@@ -174,6 +194,9 @@ function writeImmutableRaw({ rootDir, rawText }) {
 }
 
 function readImmutableRaw({ rootDir, rawEvidenceReference, rawPath, expectedSha256 }) {
+    if (!rawPath && (typeof rootDir !== 'string' || !rootDir.trim())) {
+        throw new Error('evidence root is required when rawPath is not provided');
+    }
     if (!rawPath && !isSafeEvidenceReference(rawEvidenceReference)) throw new Error('raw evidence reference is unsafe');
     if (!/^[a-f0-9]{64}$/.test(expectedSha256 || '')) throw new Error('raw SHA-256 is required');
     const target = rawPath ? path.resolve(rawPath) : path.resolve(rootDir, rawEvidenceReference);
@@ -266,7 +289,7 @@ function createCaptureReceipt(options = {}) {
     if (
         !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(capture_id || '')) ||
         typeof provider !== 'string' ||
-        !provider.trim() ||
+        provider !== 'the-odds-api' ||
         !['LIVE_CAPTURE', 'HISTORICAL_API', 'HISTORICAL_FILE', 'REPLAY'].includes(acquisition_mode)
     ) {
         throw new Error('invalid capture receipt identity or acquisition_mode');
@@ -285,9 +308,9 @@ function createCaptureReceipt(options = {}) {
     }
     if (
         typeof provider_endpoint_identity !== 'string' ||
-        !provider_endpoint_identity.trim() ||
+        !PROVIDER_ENDPOINT_IDENTITIES.has(provider_endpoint_identity) ||
         typeof software_version !== 'string' ||
-        !software_version.trim() ||
+        !/^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/.test(software_version) ||
         (receipt.provider_quota !== null && !isPlainRecord(receipt.provider_quota))
     ) {
         throw new Error('capture receipt endpoint or quota metadata is invalid');
@@ -300,9 +323,6 @@ function createCaptureReceipt(options = {}) {
     }
     if (compareUtcTimestamps(ingested_at, response_received_at) < 0) {
         throw new Error('capture receipt ingestion precedes response');
-    }
-    if (/\?|#|api[-_]?key|authorization|token|secret/i.test(provider_endpoint_identity)) {
-        throw new Error('provider endpoint identity must be secret-free');
     }
     return Object.freeze(receipt);
 }
@@ -321,15 +341,115 @@ function writeCoverageEvidence({ rootDir, captureId, evidence }) {
     fs.chmodSync(target, 0o444);
     return target;
 }
+
+function assertRegularFile(target, label) {
+    const stat = fs.lstatSync(target);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error(`${label} must be a regular file`);
+    return stat;
+}
+
+function ledgerManifestPath(ledgerPath) {
+    return `${ledgerPath}.manifest.json`;
+}
+
+function parseLedgerRows(content) {
+    const lines = content.split('\n');
+    if (lines.at(-1) === '') lines.pop();
+    if (lines.some(line => !line.trim())) throw new Error('ledger integrity check failed: blank line');
+    return lines.map(line => {
+        let parsed;
+        try {
+            parsed = JSON.parse(line);
+        } catch (error) {
+            throw new Error(`ledger integrity check failed: invalid JSON: ${error.message}`, { cause: error });
+        }
+        return createObservation(parsed);
+    });
+}
+
+function readLedgerManifest(ledgerPath) {
+    const manifestPath = ledgerManifestPath(ledgerPath);
+    if (!fs.existsSync(manifestPath)) throw new Error('ledger integrity manifest is missing');
+    const manifestStat = assertRegularFile(manifestPath, 'ledger integrity manifest');
+    if ((manifestStat.mode & 0o222) !== 0) throw new Error('ledger integrity manifest must be read-only');
+    let manifest;
+    try {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    } catch (error) {
+        throw new Error(`ledger integrity manifest is invalid: ${error.message}`, { cause: error });
+    }
+    if (
+        !isPlainRecord(manifest) ||
+        manifest.schema_version !== LEDGER_MANIFEST_SCHEMA_VERSION ||
+        !/^[a-f0-9]{64}$/.test(manifest.ledger_sha256 || '') ||
+        !Number.isInteger(manifest.line_count) ||
+        manifest.line_count < 0
+    ) {
+        throw new Error('ledger integrity manifest is invalid');
+    }
+    return manifest;
+}
+
+function verifyLedgerIntegrity(ledgerPath) {
+    if (!fs.existsSync(ledgerPath)) return { content: '', rows: [], manifest: null };
+    const stat = assertRegularFile(ledgerPath, 'ledger');
+    if ((stat.mode & 0o222) !== 0) throw new Error('ledger must be read-only');
+    const content = fs.readFileSync(ledgerPath, 'utf8');
+    const rows = parseLedgerRows(content);
+    const manifest = readLedgerManifest(ledgerPath);
+    if (manifest.line_count !== rows.length || manifest.ledger_sha256 !== sha256Text(content)) {
+        throw new Error('ledger integrity check failed');
+    }
+    return { content, rows, manifest };
+}
+
+function writeLedgerManifest(ledgerPath, content, lineCount) {
+    const manifestPath = ledgerManifestPath(ledgerPath);
+    const serialized = `${stableStringify({
+        schema_version: LEDGER_MANIFEST_SCHEMA_VERSION,
+        ledger_sha256: sha256Text(content),
+        line_count: lineCount,
+    })}\n`;
+    if (fs.existsSync(manifestPath)) {
+        const existing = assertRegularFile(manifestPath, 'ledger integrity manifest');
+        fs.chmodSync(manifestPath, existing.mode | 0o200);
+    }
+    try {
+        fs.writeFileSync(manifestPath, serialized, { flag: 'w', mode: 0o444 });
+    } finally {
+        if (fs.existsSync(manifestPath)) fs.chmodSync(manifestPath, 0o444);
+    }
+}
+
 function appendProjection({ ledgerPath, projection }) {
     const validated = createObservation(projection);
+    if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
     const parentDir = path.dirname(ledgerPath);
     ensureDirectory(parentDir, 'ledger parent directory');
-    if (fs.existsSync(ledgerPath)) {
-        const stat = fs.lstatSync(ledgerPath);
-        if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('ledger must be a regular file');
+    if (!fs.existsSync(ledgerPath) && fs.existsSync(ledgerManifestPath(ledgerPath))) {
+        throw new Error('ledger integrity manifest exists without ledger');
     }
-    fs.appendFileSync(ledgerPath, `${stableStringify(validated)}\n`);
+    const existing = fs.existsSync(ledgerPath) ? verifyLedgerIntegrity(ledgerPath) : { content: '', rows: [] };
+    const line = `${stableStringify(validated)}\n`;
+    if (fs.existsSync(ledgerPath)) {
+        const stat = assertRegularFile(ledgerPath, 'ledger');
+        fs.chmodSync(ledgerPath, stat.mode | 0o200);
+    }
+    try {
+        fs.appendFileSync(ledgerPath, line, { mode: 0o444 });
+        const content = `${existing.content}${line}`;
+        writeLedgerManifest(ledgerPath, content, existing.rows.length + 1);
+    } finally {
+        if (fs.existsSync(ledgerPath)) {
+            fs.chmodSync(ledgerPath, 0o444);
+        }
+    }
+    return validated;
+}
+
+function readProjectionLedger({ ledgerPath }) {
+    if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
+    return verifyLedgerIntegrity(ledgerPath).rows;
 }
 module.exports = {
     writeImmutableRaw,
@@ -338,7 +458,11 @@ module.exports = {
     writeReceipt,
     writeCoverageEvidence,
     appendProjection,
+    readProjectionLedger,
+    ledgerManifestPath,
     sanitizeRequestParameters,
     sanitizeProviderQuota,
     validateCoverageEvidence,
+    ALLOWED_REGIONS,
+    PROVIDER_ENDPOINT_IDENTITIES,
 };

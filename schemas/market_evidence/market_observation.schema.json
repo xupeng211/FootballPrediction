@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "footballprediction-market-observation/v1",
     "title": "FootballPrediction MarketObservation",
     "type": "object",
@@ -147,6 +147,36 @@
             "then": {
                 "properties": {
                     "canonical_market_id": { "pattern": "^FIRST_HALF/TOTAL/-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$" }
+                }
+            }
+        },
+        {
+            "$comment": "Dynamic line-to-ID equality is enforced by the runtime MarketObservation contract. These representative branches prevent drift for the pilot's documented extension examples.",
+            "if": {
+                "properties": {
+                    "canonical_market_id": { "const": "MATCH/ASIAN_HANDICAP/-0.25" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "ASIAN_HANDICAP" },
+                    "line": { "const": -0.25 }
+                }
+            }
+        },
+        {
+            "$comment": "Dynamic line-to-ID equality is enforced by the runtime MarketObservation contract. These representative branches prevent drift for the pilot's documented extension examples.",
+            "if": {
+                "properties": {
+                    "canonical_market_id": { "const": "MATCH/TOTAL/2.5" }
+                }
+            },
+            "then": {
+                "properties": {
+                    "period": { "const": "MATCH" },
+                    "market_type": { "const": "TOTAL" },
+                    "line": { "const": 2.5 }
                 }
             }
         },
