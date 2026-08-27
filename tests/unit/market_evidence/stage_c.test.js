@@ -114,7 +114,7 @@ const capture = Object.freeze({
     acquisition_mode: 'REPLAY',
     request_started_at: '2026-08-27T13:31:20Z',
     response_received_at: '2026-08-27T13:31:49Z',
-    ingested_at: '2026-08-27T13:32:00Z',
+    ingested_at: '2026-08-27T13:31:49Z',
     raw_evidence_reference: 'raw/fixture.json',
     raw_sha256: sha256Text(rawText),
 });
@@ -540,6 +540,42 @@ test('adapter fails closed for malformed or incomplete EPL market payloads and s
         () => adaptTheOddsApiRaw({ rawText, capture, registry: swappedSelectionRegistry, projectionVersion: '1' }),
         /provider selection identity conflicts with event identity/
     );
+    const duplicateEvent = JSON.parse(rawText);
+    duplicateEvent.push(duplicateEvent[0]);
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(duplicateEvent),
+                capture: captureForRaw(JSON.stringify(duplicateEvent)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /duplicate provider event identity/
+    );
+    const duplicateBookmaker = JSON.parse(rawText);
+    duplicateBookmaker[0].bookmakers.push({ ...duplicateBookmaker[0].bookmakers[0] });
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(duplicateBookmaker),
+                capture: captureForRaw(JSON.stringify(duplicateBookmaker)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /duplicate provider bookmaker identity/
+    );
+    const duplicateMarket = JSON.parse(rawText);
+    duplicateMarket[0].bookmakers[0].markets.push({ ...duplicateMarket[0].bookmakers[0].markets[0] });
+    assert.throws(
+        () =>
+            adaptTheOddsApiRaw({
+                rawText: JSON.stringify(duplicateMarket),
+                capture: captureForRaw(JSON.stringify(duplicateMarket)),
+                registry,
+                projectionVersion: '1',
+            }),
+        /duplicate provider market identity/
+    );
 });
 
 test('UTC contract rejects calendar-invalid timestamps instead of Date.parse normalization', () => {
@@ -791,6 +827,16 @@ test('as-of view strictly uses knowledge time, not earlier bookmaker source time
     assert.throws(() => latestAsOf([row], { ...query, decision_time: '2026-08-27T13:31:30+00:00' }), /UTC ISO-8601/);
     assert.equal(
         latestAsOf([row], { ...query, decision_time: '2026-08-27T13:31:50Z' }).observation_id,
+        row.observation_id
+    );
+    const lateIngestion = {
+        ...row,
+        response_received_at: '2026-08-27T13:31:49Z',
+        ingested_at: '2026-08-27T13:40:00Z',
+    };
+    assert.equal(latestAsOf([lateIngestion], { ...query, decision_time: '2026-08-27T13:35:00Z' }), null);
+    assert.equal(
+        latestAsOf([lateIngestion], { ...query, decision_time: '2026-08-27T13:40:00Z' }).observation_id,
         row.observation_id
     );
     assert.equal(

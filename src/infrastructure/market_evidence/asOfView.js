@@ -14,7 +14,12 @@ function parseUtcTime(value, field) {
 }
 
 function knowledgeTime(row) {
-    return isUtcTimestamp(row?.response_received_at) ? normalizeUtcTimestamp(row.response_received_at) : null;
+    const receivedAt = isUtcTimestamp(row?.response_received_at)
+        ? normalizeUtcTimestamp(row.response_received_at)
+        : null;
+    const ingestedAt = isUtcTimestamp(row?.ingested_at) ? normalizeUtcTimestamp(row.ingested_at) : null;
+    if (receivedAt === null || ingestedAt === null) return null;
+    return compareUtcTimestamps(receivedAt, ingestedAt) >= 0 ? receivedAt : ingestedAt;
 }
 
 function isKnownBy(row, cutoff) {

@@ -198,6 +198,8 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
     const rawSha256 = sha256Text(rawText);
     if (capture.raw_sha256 !== rawSha256) throw new Error('capture raw_sha256 does not match provider payload');
     const observations = [];
+    const seenObservationIds = new Set();
+    const seenProviderEventIds = new Set();
     for (const rawEvent of payload) {
         const event = requireObject(rawEvent, 'provider event');
         if (
@@ -213,6 +215,10 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
         ) {
             throw new Error('provider EPL event identity or kickoff is incomplete');
         }
+        if (seenProviderEventIds.has(event.id)) {
+            throw new Error(`duplicate provider event identity: ${event.id}`);
+        }
+        seenProviderEventIds.add(event.id);
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
         if (
             event.home_team.trim() !== canonicalEvent.home_team.trim() ||
@@ -222,6 +228,7 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
         ) {
             throw new Error(`provider event identity conflicts with registry: ${event.id}`);
         }
+        const seenProviderBookmakerIds = new Set();
         for (const rawBookmaker of requireNonEmptyArray(event.bookmakers, `event ${event.id} bookmakers`)) {
             const bookmaker = requireObject(rawBookmaker, 'provider bookmaker');
             if (
@@ -232,12 +239,21 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
             ) {
                 throw new Error(`provider bookmaker identity is incomplete: ${event.id}`);
             }
+            if (seenProviderBookmakerIds.has(bookmaker.key)) {
+                throw new Error(`duplicate provider bookmaker identity: ${event.id}:${bookmaker.key}`);
+            }
+            seenProviderBookmakerIds.add(bookmaker.key);
             const canonicalBookmaker = registry.resolve('bookmaker', 'the-odds-api', bookmaker.key);
+            const seenProviderMarketIds = new Set();
             for (const rawMarket of requireNonEmptyArray(bookmaker.markets, `bookmaker ${bookmaker.key} markets`)) {
                 const market = requireObject(rawMarket, 'provider market');
                 if (typeof market.key !== 'string' || !market.key.trim()) {
                     throw new Error(`provider market identity is incomplete: ${bookmaker.key}`);
                 }
+                if (seenProviderMarketIds.has(market.key)) {
+                    throw new Error(`duplicate provider market identity: ${event.id}:${bookmaker.key}:${market.key}`);
+                }
+                seenProviderMarketIds.add(market.key);
                 if (market.key !== 'h2h') {
                     throw new Error(`unsupported Stage C provider market: ${market.key}`);
                 }
@@ -284,46 +300,49 @@ function adaptTheOddsApiRawInternal({ rawText, capture, registry, projectionVers
                         outcome.name,
                         outcome.price,
                     ].join('|');
-                    observations.push(
-                        createObservation({
-                            projection_version: projectionVersion,
-                            observation_id: sha256Text(idSeed),
-                            canonical_event_id: canonicalEvent.canonical_id,
-                            provider: 'the-odds-api',
-                            provider_event_id: event.id,
-                            canonical_market_id: canonicalMarket.canonical_id,
-                            provider_market_id: market.key,
-                            canonical_bookmaker_id: canonicalBookmaker.canonical_id,
-                            provider_bookmaker_id: bookmaker.key,
-                            provider_bookmaker_name: bookmaker.title,
-                            competition: COMPETITION,
-                            season: canonicalEvent.season || null,
-                            home_team: event.home_team,
-                            away_team: event.away_team,
-                            kickoff_utc: event.commence_time,
-                            period: canonicalMarket.period,
-                            market_type: canonicalMarket.market_type,
-                            line: canonicalMarket.line ?? null,
-                            canonical_selection_id: canonicalSelection.canonical_id,
-                            selection: canonicalSelection.selection,
-                            price_side: resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker),
-                            odds_decimal: outcome.price,
-                            bookmaker_last_update_at: market.last_update || bookmaker.last_update || null,
-                            source_snapshot_at: event.last_update || null,
-                            capture_started_at: capture.request_started_at,
-                            response_received_at: capture.response_received_at,
-                            ingested_at: capture.ingested_at,
-                            acquisition_mode: capture.acquisition_mode,
-                            capture_id: capture.capture_id,
-                            raw_evidence_reference: capture.raw_evidence_reference,
-                            raw_sha256: rawSha256,
-                            adapter_name: ADAPTER_NAME,
-                            adapter_version: ADAPTER_VERSION,
-                            identity_registry_version: registry.version,
-                            identity_registry_sha256: registry.content_sha256,
-                            quality_flags: [],
-                        })
-                    );
+                    const observation = createObservation({
+                        projection_version: projectionVersion,
+                        observation_id: sha256Text(idSeed),
+                        canonical_event_id: canonicalEvent.canonical_id,
+                        provider: 'the-odds-api',
+                        provider_event_id: event.id,
+                        canonical_market_id: canonicalMarket.canonical_id,
+                        provider_market_id: market.key,
+                        canonical_bookmaker_id: canonicalBookmaker.canonical_id,
+                        provider_bookmaker_id: bookmaker.key,
+                        provider_bookmaker_name: bookmaker.title,
+                        competition: COMPETITION,
+                        season: canonicalEvent.season || null,
+                        home_team: event.home_team,
+                        away_team: event.away_team,
+                        kickoff_utc: event.commence_time,
+                        period: canonicalMarket.period,
+                        market_type: canonicalMarket.market_type,
+                        line: canonicalMarket.line ?? null,
+                        canonical_selection_id: canonicalSelection.canonical_id,
+                        selection: canonicalSelection.selection,
+                        price_side: resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker),
+                        odds_decimal: outcome.price,
+                        bookmaker_last_update_at: market.last_update || bookmaker.last_update || null,
+                        source_snapshot_at: event.last_update || null,
+                        capture_started_at: capture.request_started_at,
+                        response_received_at: capture.response_received_at,
+                        ingested_at: capture.ingested_at,
+                        acquisition_mode: capture.acquisition_mode,
+                        capture_id: capture.capture_id,
+                        raw_evidence_reference: capture.raw_evidence_reference,
+                        raw_sha256: rawSha256,
+                        adapter_name: ADAPTER_NAME,
+                        adapter_version: ADAPTER_VERSION,
+                        identity_registry_version: registry.version,
+                        identity_registry_sha256: registry.content_sha256,
+                        quality_flags: [],
+                    });
+                    if (seenObservationIds.has(observation.observation_id)) {
+                        throw new Error(`duplicate canonical observation identity: ${observation.observation_id}`);
+                    }
+                    seenObservationIds.add(observation.observation_id);
+                    observations.push(observation);
                 }
                 for (const requiredSelection of ['HOME', 'DRAW', 'AWAY']) {
                     if (!seenSelections.has(requiredSelection)) {
