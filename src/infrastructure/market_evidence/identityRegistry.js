@@ -26,6 +26,7 @@ const MAPPING_FIELDS = Object.freeze({
         'kickoff_utc',
         'provider_observed_kickoff_utc',
         'identity_decision_id',
+        'identity_decision_status',
         'identity_ruleset_version',
         'provenance',
     ]),
@@ -98,6 +99,8 @@ function assertEventMapping(mapping) {
     if (!isUtcTimestamp(mapping.provider_observed_kickoff_utc)) {
         throw new Error(`event mapping requires valid provider_observed_kickoff_utc: ${mapping.provider_id}`);
     }
+    if (mapping.identity_decision_status !== 'MATCHED') throw new Error(`event mapping requires MATCHED identity decision: ${mapping.provider_id}`);
+    if (Math.abs(Date.parse(mapping.kickoff_utc) - Date.parse(mapping.provider_observed_kickoff_utc)) / 1000 > 900) throw new Error(`event mapping kickoff exceeds identity tolerance: ${mapping.provider_id}`);
 }
 
 function assertMarketMapping(mapping) {

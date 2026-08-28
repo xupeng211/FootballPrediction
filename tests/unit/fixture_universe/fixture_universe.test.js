@@ -2,7 +2,9 @@
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const {
     normalize,
@@ -154,6 +156,17 @@ test('fixture resolver uses real universe evidence for invalid and tolerance-bou
     const capture = { capture_id: 'fixture-universe-within-900', provider: 'the-odds-api', acquisition_mode: 'REPLAY', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/within-900.json', raw_sha256: sha256Text(withinText) };
     const projections = adaptTheOddsApiRaw({ rawText: withinText, capture, registry: withinResolution.registry, projectionVersion: 'fixture-universe/v1', allowedProviderEventIds: new Set(withinResolution.aliases.map(alias => alias.provider_event_id)) });
     assert.ok(projections.length > 0, 'resolver-matched provider kickoff must be adaptable');
+    const normalized = JSON.parse(JSON.stringify(within));
+    normalized[0].home_team = '  ＡＲＳＥＮＡＬ  ';
+    normalized[0].away_team = ' CHELSEA ';
+    normalized[0].bookmakers[0].markets[0].outcomes = normalized[0].bookmakers[0].markets[0].outcomes.map(outcome => ({
+        ...outcome,
+        name: outcome.name === 'Arsenal' ? ' ａｒｓｅｎａｌ ' : outcome.name === 'Chelsea' ? '  CHELSEA  ' : outcome.name,
+    }));
+    const normalizedText = JSON.stringify(normalized);
+    const normalizedResolution = resolveOddsEvents({ oddsRawText: normalizedText, oddsRawSha256: sha256Text(normalizedText), universe, decidedAt: '2026-08-27T13:31:49Z' });
+    assert.equal(normalizedResolution.decisions[0].decision, 'MATCHED');
+    assert.ok(adaptTheOddsApiRaw({ rawText: normalizedText, capture: { ...capture, capture_id: 'fixture-universe-normalized', raw_sha256: sha256Text(normalizedText) }, registry: normalizedResolution.registry, projectionVersion: 'fixture-universe/v1', allowedProviderEventIds: new Set(normalizedResolution.aliases.map(alias => alias.provider_event_id)) }).length > 0);
     const outside = JSON.parse(JSON.stringify([event]));
     outside[0].commence_time = new Date(baseKickoff + (KICKOFF_TOLERANCE_SECONDS + 1) * 1000).toISOString().replace('.000Z', 'Z');
     const outsideText = JSON.stringify(outside);
@@ -168,6 +181,17 @@ test('fixture resolver uses real universe evidence for invalid and tolerance-bou
     assert.equal(invalidResolution.quarantines[0].reason_code, 'INVALID_KICKOFF_UTC');
 });
 
+test('fixture identity rejects forged RAW provenance and duplicate canonical allocation identities', () => {
+    const universe = seededUniverse();
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: '0'.repeat(64), mode: 'INITIAL_SEED' }), /does not match content/);
+    assert.throws(() => resolveOddsEvents({ oddsRawText: fixtureUniverseOddsRaw, oddsRawSha256: '0'.repeat(64), universe, decidedAt: '2026-08-27T13:31:49Z' }), /does not match content/);
+    const duplicate = JSON.parse(JSON.stringify(universe.allocationSnapshot));
+    duplicate.fixtures[1].canonical_event_id = duplicate.fixtures[0].canonical_event_id;
+    const unsigned = { schema_version: duplicate.schema_version, authority: duplicate.authority, fixtures: duplicate.fixtures, teams: duplicate.teams, provenance_raw_sha256: duplicate.provenance_raw_sha256 };
+    duplicate.content_sha256 = semanticReplayHash(unsigned);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: duplicate, mode: 'REPLAY' }), /canonical_event_id is not unique/);
+});
+
 test('fixture replay requires an immutable allocation and is deterministic with the same allocation', () => {
     assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, mode: 'REPLAY' }), /requires immutable allocation/);
     const initial = seededUniverse();
@@ -176,4 +200,22 @@ test('fixture replay requires an immutable allocation and is deterministic with 
     assert.deepEqual(replayOne.snapshot.fixtures, replayTwo.snapshot.fixtures);
     assert.equal(replayOne.snapshot.allocation_snapshot_sha256, replayTwo.snapshot.allocation_snapshot_sha256);
     assert.equal(semanticReplayHash(replayOne.snapshot), semanticReplayHash(replayTwo.snapshot));
+});
+
+test('offline replay script requires an allocation and explicitly uses REPLAY mode', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-replay-script-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const fotmob = path.join(root, 'fotmob.html'); const odds = path.join(root, 'odds.json'); const receipt = path.join(root, 'receipt.json');
+    fs.writeFileSync(fotmob, '{}'); fs.writeFileSync(odds, '[]'); fs.writeFileSync(receipt, '{}');
+    const script = path.join(__dirname, '../../../scripts/ops/stage_c_fixture_identity_replay.js');
+    const run = spawnSync(process.execPath, [script, path.join(root, 'out')], { env: { ...process.env, FOTMOB_RAW_PATH: fotmob, ODDS_RAW_PATH: odds, ODDS_RECEIPT_PATH: receipt }, encoding: 'utf8' });
+    assert.notEqual(run.status, 0);
+    assert.match(run.stderr, /IDENTITY_ALLOCATION_PATH is required for REPLAY/);
+    assert.match(fs.readFileSync(script, 'utf8'), /mode:\s*'REPLAY'/);
+});
+
+test('live smoke creates receipt identities independent of the RAW hash', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../../../scripts/ops/stage_c_the_odds_api_live_smoke.js'), 'utf8');
+    assert.match(source, /crypto\.randomUUID\(\)/);
+    assert.doesNotMatch(source, /live-\$\{raw\.raw_sha256/);
 });

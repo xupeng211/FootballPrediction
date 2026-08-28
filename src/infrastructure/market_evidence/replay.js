@@ -18,7 +18,7 @@ function replayRaw({ rawPath, capture, registry, projectionVersion = '1', ledger
         throw new Error(`replay raw input does not match replay input: ${error.message}`, { cause: error });
     }
     const observations = adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion });
-    if (ledgerPath) observations.forEach(projection => appendProjection({ ledgerPath, projection }));
+    if (ledgerPath) observations.forEach(projection => appendProjection({ ledgerPath, projection, registry }));
     return observations;
 }
 

@@ -1,6 +1,6 @@
 {
     "version": "stage-c-fixture/v1",
-    "content_sha256": "17e403b927905a7c53f1b92b77bd3b8ea5feeeaa13fa317db84e66e59facf1d8",
+    "content_sha256": "e57fb770831ef4c555b1f205c78605d559d67e15c11893abed1cdf68885e757d",
     "events": [
         {
             "kind": "event",
@@ -13,6 +13,7 @@
             "kickoff_utc": "2026-09-12T15:00:00Z",
             "provider_observed_kickoff_utc": "2026-09-12T15:00:00Z",
             "identity_decision_id": "idn-fixture-001",
+            "identity_decision_status": "MATCHED",
             "identity_ruleset_version": "fixture-identity-ruleset/v1",
             "provenance": "fixture"
         }

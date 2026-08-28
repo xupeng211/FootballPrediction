@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { API_HOST, createTheOddsApiClient, createTransportRequestFn } = require('../../src/infrastructure/market_evidence/theOddsApiClient');
 const { loadIdentityRegistry } = require('../../src/infrastructure/market_evidence/identityRegistry');
 const { adaptTheOddsApiCapture, buildCoverageEvidence } = require('../../src/infrastructure/market_evidence/theOddsApiAdapter');
@@ -48,7 +49,7 @@ async function main() {
     const connectivityStatus = await directConnectivity();
     const client = createTheOddsApiClient();
     const live = await client.capture({ regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' });
-    const captureId = `live-${live.raw_sha256.slice(0, 16)}`;
+    const captureId = `live-${crypto.randomUUID()}`;
     const raw = writeImmutableRaw({ rootDir: evidenceRoot, rawText: live.rawText });
     const receipt = createCaptureReceipt({
         capture_id: captureId,
@@ -81,7 +82,7 @@ async function main() {
     }
     writeCoverageEvidence({ rootDir: evidenceRoot, captureId, evidence: coverage });
     const ledgerPath = path.join(evidenceRoot, 'projections', `${captureId}.jsonl`);
-    observations.forEach(projection => appendProjection({ ledgerPath, projection }));
+    observations.forEach(projection => appendProjection({ ledgerPath, projection, registry }));
     const replay = observations.length
         ? [
             replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry }),

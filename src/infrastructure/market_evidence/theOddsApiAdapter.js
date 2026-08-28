@@ -13,6 +13,7 @@ const {
 
 const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
+function normalizeIdentityText(value) { return String(value || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US'); }
 
 function resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker) {
     if (market.key === 'h2h_lay') return 'LAY';
@@ -236,10 +237,11 @@ function adaptTheOddsApiRawInternal({
         if (allowedProviderEventIds !== null && !allowedProviderEventIds.has(event.id)) continue;
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
         if (
-            event.home_team.trim() !== canonicalEvent.home_team.trim() ||
-            event.away_team.trim() !== canonicalEvent.away_team.trim() ||
+            normalizeIdentityText(event.home_team) !== normalizeIdentityText(canonicalEvent.home_team) ||
+            normalizeIdentityText(event.away_team) !== normalizeIdentityText(canonicalEvent.away_team) ||
             !isUtcTimestamp(event.commence_time) ||
             !canonicalEvent.identity_decision_id ||
+            canonicalEvent.identity_decision_status !== 'MATCHED' ||
             !canonicalEvent.identity_ruleset_version ||
             !isUtcTimestamp(canonicalEvent.provider_observed_kickoff_utc) ||
             compareUtcTimestamps(event.commence_time, canonicalEvent.provider_observed_kickoff_utc) !== 0
@@ -295,12 +297,12 @@ function adaptTheOddsApiRawInternal({
                     try {
                         registrySelection = registry.resolve('selection', 'the-odds-api', outcome.name);
                     } catch (error) {
-                        if (outcome.name.trim() !== canonicalEvent.home_team.trim() && outcome.name.trim() !== canonicalEvent.away_team.trim()) throw error;
+                        if (normalizeIdentityText(outcome.name) !== normalizeIdentityText(canonicalEvent.home_team) && normalizeIdentityText(outcome.name) !== normalizeIdentityText(canonicalEvent.away_team)) throw error;
                     }
                     const canonicalSelection =
-                        outcome.name.trim() === canonicalEvent.home_team.trim()
+                        normalizeIdentityText(outcome.name) === normalizeIdentityText(canonicalEvent.home_team)
                             ? { canonical_id: 'HOME', selection: 'HOME' }
-                            : outcome.name.trim() === canonicalEvent.away_team.trim()
+                            : normalizeIdentityText(outcome.name) === normalizeIdentityText(canonicalEvent.away_team)
                               ? { canonical_id: 'AWAY', selection: 'AWAY' }
                               : registrySelection;
                     if (registrySelection && registrySelection.selection !== canonicalSelection.selection) {
@@ -312,7 +314,7 @@ function adaptTheOddsApiRawInternal({
                             : canonicalSelection.selection === 'AWAY'
                               ? canonicalEvent.away_team
                               : null;
-                    if (expectedProviderTeam !== null && outcome.name.trim() !== expectedProviderTeam.trim()) {
+                    if (expectedProviderTeam !== null && normalizeIdentityText(outcome.name) !== normalizeIdentityText(expectedProviderTeam)) {
                         throw new Error(
                             `provider selection identity conflicts with event identity: ${event.id}:${outcome.name}`
                         );

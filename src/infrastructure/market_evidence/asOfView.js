@@ -41,14 +41,31 @@ function parsePriceSide(value) {
     return value;
 }
 
+function governanceBoundary(row) {
+    const fields = ['projection_version', 'adapter_name', 'adapter_version', 'identity_registry_version', 'identity_registry_sha256', 'identity_ruleset_version'];
+    const values = fields.map(field => row?.[field]);
+    if (values.some(value => typeof value !== 'string' || !value.trim())) throw new Error('projection governance boundary is incomplete');
+    return values.join('\u001f');
+}
+
+// Version choice is an as-of concern: only observations actually visible at
+// the requested decision time participate.  A later reprojection therefore
+// cannot turn a historical query ambiguous.  Within a version, changing any
+// governed adapter/registry/ruleset boundary is likewise ambiguous rather
+// than being silently hidden by observation_id ordering.
 function selectProjection(rows, projectionVersion) {
-    const versions = [...new Set(rows.map(row => row.projection_version))];
-    if (projectionVersion !== undefined && projectionVersion !== null) {
-        if (typeof projectionVersion !== 'string' || !projectionVersion.trim()) throw new Error('projection_version must be a non-empty string');
-        return rows.filter(row => row.projection_version === projectionVersion);
+    const candidates = projectionVersion === undefined || projectionVersion === null
+        ? rows
+        : (() => {
+            if (typeof projectionVersion !== 'string' || !projectionVersion.trim()) throw new Error('projection_version must be a non-empty string');
+            return rows.filter(row => row.projection_version === projectionVersion);
+        })();
+    const boundaries = new Set(candidates.map(governanceBoundary));
+    if (boundaries.size > 1) {
+        if (projectionVersion === undefined || projectionVersion === null) throw new Error('projection_version is required when multiple projections are visible');
+        throw new Error('projection governance boundary is ambiguous');
     }
-    if (versions.length > 1) throw new Error('projection_version is required when multiple projections are visible');
-    return rows;
+    return candidates;
 }
 
 function latestAsOf(
@@ -67,22 +84,22 @@ function latestAsOf(
 ) {
     const time = parseUtcTime(decision_time, 'decision_time');
     const side = parsePriceSide(price_side);
-    const projected = selectProjection(observations, projection_version);
+    const eligible = observations.filter(
+        row =>
+            row.canonical_event_id === canonical_event_id &&
+            row.canonical_bookmaker_id === canonical_bookmaker_id &&
+            row.period === period &&
+            row.market_type === market_type &&
+            row.line === line &&
+            row.price_side === side &&
+            (canonical_selection_id === null || row.canonical_selection_id === canonical_selection_id) &&
+            Array.isArray(row.quality_flags) &&
+            row.quality_flags.length === 0 &&
+            isKnownBy(row, time)
+    );
+    const projected = selectProjection(eligible, projection_version);
     return (
         projected
-            .filter(
-                row =>
-                    row.canonical_event_id === canonical_event_id &&
-                    row.canonical_bookmaker_id === canonical_bookmaker_id &&
-                    row.period === period &&
-                    row.market_type === market_type &&
-                    row.line === line &&
-                    row.price_side === side &&
-                    (canonical_selection_id === null || row.canonical_selection_id === canonical_selection_id) &&
-                    Array.isArray(row.quality_flags) &&
-                    row.quality_flags.length === 0 &&
-                    isKnownBy(row, time)
-            )
             .sort((a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id))[0] ||
         null
     );
@@ -90,7 +107,7 @@ function latestAsOf(
 function latestAsOfMarket(observations, query) {
     const decisionTime = parseUtcTime(query.decision_time, 'decision_time');
     const side = parsePriceSide(query.price_side ?? 'BOOKMAKER');
-    const candidates = selectProjection(observations, query.projection_version).filter(
+    const eligible = observations.filter(
         row =>
             row.canonical_event_id === query.canonical_event_id &&
             row.canonical_bookmaker_id === query.canonical_bookmaker_id &&
@@ -102,6 +119,7 @@ function latestAsOfMarket(observations, query) {
             row.quality_flags.length === 0 &&
             isKnownBy(row, decisionTime)
     );
+    const candidates = selectProjection(eligible, query.projection_version);
     const bySelection = new Map();
     for (const row of candidates) {
         const current = bySelection.get(row.canonical_selection_id);
@@ -135,7 +153,7 @@ function deriveTimeline(
     const kickoffTime = parseUtcTime(kickoff_utc, 'kickoff_utc');
     const decisionTime = parseUtcTime(decision_time, 'decision_time');
     const side = parsePriceSide(price_side);
-    const eligible = selectProjection(observations, projection_version).filter(
+    const eligible = observations.filter(
         row =>
             row.canonical_event_id === canonical_event_id &&
             row.canonical_bookmaker_id === canonical_bookmaker_id &&
@@ -147,9 +165,10 @@ function deriveTimeline(
             row.quality_flags.length === 0
     );
     const visible = eligible.filter(row => isKnownBy(row, decisionTime));
-    const preKickoff = visible.filter(row => compareKnowledgeToCutoff(row, kickoffTime) < 0);
+    const governed = selectProjection(visible, projection_version);
+    const preKickoff = governed.filter(row => compareKnowledgeToCutoff(row, kickoffTime) < 0);
     const bySelection = selection =>
-        visible
+        governed
             .filter(row => row.canonical_selection_id === selection)
             .sort((a, b) => compareKnowledgeTime(a, b) || compareCodeUnits(a.observation_id, b.observation_id));
     const preKickoffBySelection = selection =>
@@ -161,7 +180,7 @@ function deriveTimeline(
             (a, b) => compareKnowledgeTime(a, b) || compareCodeUnits(a.observation_id, b.observation_id)
         )[0] || null;
     const current =
-        [...visible].sort(
+        [...governed].sort(
             (a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id)
         )[0] || null;
     const closing =

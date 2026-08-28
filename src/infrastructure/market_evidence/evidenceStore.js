@@ -428,8 +428,11 @@ function writeLedgerManifest(ledgerPath, content, lineCount) {
     }
 }
 
-function appendProjection({ ledgerPath, projection }) {
+function appendProjection({ ledgerPath, projection, registry }) {
     const validated = createObservation(projection);
+    if (!registry || typeof registry.resolve !== 'function') throw new Error('identity registry is required for canonical ledger append');
+    const event = registry.resolve('event', validated.provider, validated.provider_event_id);
+    if (event.canonical_id !== validated.canonical_event_id || event.identity_decision_id !== validated.identity_decision_id || event.identity_ruleset_version !== validated.identity_ruleset_version || event.identity_decision_status !== 'MATCHED' || registry.version !== validated.identity_registry_version || registry.content_sha256 !== validated.identity_registry_sha256) throw new Error('canonical observation identity decision is not a valid MATCHED registry decision');
     if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
     const parentDir = path.dirname(ledgerPath);
     ensureDirectory(parentDir, 'ledger parent directory');

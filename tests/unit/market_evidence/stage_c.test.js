@@ -63,6 +63,7 @@ const registry = createIdentityRegistry({
             kickoff_utc: '2026-09-12T15:00:00Z',
             provider_observed_kickoff_utc: '2026-09-12T15:00:00Z',
             identity_decision_id: 'idn-fixture-001',
+            identity_decision_status: 'MATCHED',
             identity_ruleset_version: 'fixture-identity-ruleset/v1',
             provenance: 'fixture',
         },
@@ -230,6 +231,10 @@ test('identity registry is independent and fails closed for unknown or ambiguous
             ],
         })
     );
+    assert.throws(() => createIdentityRegistry({
+        version: 'outside-kickoff-tolerance',
+        events: [{ ...registry.resolve('event', 'the-odds-api', 'epl-fixture-001'), provider_observed_kickoff_utc: '2026-09-12T15:15:01Z' }],
+    }), /kickoff exceeds identity tolerance/);
     assert.equal(
         loadIdentityRegistry(path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json'))
             .version,
@@ -418,6 +423,7 @@ test('event identity is checked against the independently governed registry and 
                 kickoff_utc: '2026-09-12T15:00:00Z',
                 provider_observed_kickoff_utc: '2026-09-12T15:00:00Z',
                 identity_decision_id: 'idn-fixture-001',
+                identity_decision_status: 'MATCHED',
                 identity_ruleset_version: 'fixture-identity-ruleset/v1',
                 provenance: 'fixture-v2',
             },
@@ -599,6 +605,16 @@ test('canonical observations require governed identity decision and ruleset', ()
     for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
         assert.throws(() => createObservation({ ...sample, [field]: undefined }), new RegExp(`${field} is required`));
         assert.throws(() => createObservation({ ...sample, [field]: null }), new RegExp(`${field} is required`));
+    }
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-identity-ledger-'));
+    try {
+        for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
+            assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, [field]: null }, registry }), /invalid MarketObservation/);
+        }
+        assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, identity_decision_id: 'forged-decision' }, registry }), /valid MATCHED registry decision/);
+        assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, identity_registry_sha256: 'f'.repeat(64) }, registry }), /valid MATCHED registry decision/);
+    } finally {
+        fs.rmSync(root, { recursive: true, force: true });
     }
 });
 
@@ -812,12 +828,12 @@ test('append-only ledger preserves old projections and appends new versions', t 
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-ledger-'));
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const ledger = path.join(root, 'ledger.jsonl');
-    appendProjection({ ledgerPath: ledger, projection: observations('1')[0] });
+    appendProjection({ ledgerPath: ledger, projection: observations('1')[0], registry });
     assert.equal(fs.statSync(ledger).mode & 0o222, 0);
     assert.equal(fs.statSync(ledgerManifestPath(ledger)).mode & 0o222, 0);
-    appendProjection({ ledgerPath: ledger, projection: observations('2')[0] });
+    appendProjection({ ledgerPath: ledger, projection: observations('2')[0], registry });
     assert.throws(
-        () => appendProjection({ ledgerPath: ledger, projection: { foo: 'bar' } }),
+        () => appendProjection({ ledgerPath: ledger, projection: { foo: 'bar' }, registry }),
         /invalid MarketObservation/
     );
     const rows = fs.readFileSync(ledger, 'utf8').trim().split('\n').map(JSON.parse);
@@ -830,7 +846,7 @@ test('append-only ledger preserves old projections and appends new versions', t 
     fs.appendFileSync(ledger, '\n');
     fs.chmodSync(ledger, 0o444);
     assert.throws(() => readProjectionLedger({ ledgerPath: ledger }), /integrity/);
-    assert.throws(() => appendProjection({ ledgerPath: ledger, projection: observations('2')[1] }), /integrity/);
+    assert.throws(() => appendProjection({ ledgerPath: ledger, projection: observations('2')[1], registry }), /integrity/);
 });
 
 test('as-of view strictly uses knowledge time, not earlier bookmaker source time', () => {
@@ -939,9 +955,13 @@ test('as-of projection selection is explicit and later reprojection cannot rewri
         line: v1.line,
         decision_time: '2026-08-27T13:31:50Z',
     };
+    const futureV2 = { ...v2, response_received_at: '2026-08-28T13:31:49Z', ingested_at: '2026-08-28T13:31:49Z' };
+    assert.equal(latestAsOf([v1, futureV2], query).odds_decimal, v1.odds_decimal, 'a later-known reprojection cannot alter the past as-of result');
     assert.throws(() => latestAsOf([v1, v2], query), /projection_version is required/);
     assert.equal(latestAsOf([v1, v2], { ...query, projection_version: '1' }).odds_decimal, v1.odds_decimal);
     assert.equal(latestAsOf([v1, v2], { ...query, projection_version: '2' }).odds_decimal, 9.99);
+    const forgedSameVersion = { ...v1, observation_id: `${v1.observation_id}-forged`, odds_decimal: 9.99, identity_registry_sha256: 'f'.repeat(64) };
+    assert.throws(() => latestAsOf([v1, forgedSameVersion], { ...query, projection_version: '1' }), /governance boundary is ambiguous/);
 });
 
 test('same raw acquisition preserves two independent immutable receipts', t => {

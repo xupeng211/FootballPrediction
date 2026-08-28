@@ -38,10 +38,17 @@ function validateAllocationSnapshot(allocation, rawSha256) {
         const values = rows.map(row => row?.[key]);
         if (values.some(value => typeof value !== 'string' || !value) || new Set(values).size !== values.length) throw new Error(`allocation snapshot ${key} is not unique`);
     }
+    for (const key of ['canonical_fixture_id', 'canonical_event_id']) {
+        const values = allocation.fixtures.map(row => row?.[key]);
+        if (values.some(value => typeof value !== 'string' || !value) || new Set(values).size !== values.length) throw new Error(`allocation snapshot ${key} is not unique`);
+    }
+    const teamIds = allocation.teams.map(row => row?.canonical_team_id);
+    if (teamIds.some(value => typeof value !== 'string' || !value) || new Set(teamIds).size !== teamIds.length) throw new Error('allocation snapshot canonical_team_id is not unique');
     return allocation;
 }
 function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = null, allocate = null, mode = 'INITIAL_SEED' }) {
     if (!/^[a-f0-9]{64}$/.test(rawSha256 || '')) throw new Error('FotMob raw SHA-256 is required');
+    if (sha256Text(rawHtml) !== rawSha256) throw new Error('FotMob raw SHA-256 does not match content');
     const page = extractPageIdentity(extractNextData(rawHtml));
     const extracted = extractFixtures(extractNextData(rawHtml));
     if (page?.league_id !== '47' || page?.season_canonical !== SEASON || extracted.fixtures.length !== 380) {
@@ -109,6 +116,7 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
 }
 
 function resolveOddsEvents({ oddsRawText, oddsRawSha256, universe, decidedAt }) {
+    if (sha256Text(oddsRawText) !== oddsRawSha256) throw new Error('Odds raw SHA-256 does not match content');
     const odds = JSON.parse(oddsRawText);
     if (!Array.isArray(odds) || semanticHash(oddsRawText) === '') throw new Error('Odds raw must be an array');
     const snapshot = universe.snapshot;
@@ -144,7 +152,7 @@ function buildMarketIdentityRegistry({ universe, aliases, decisions, odds = [] }
     const fixtureByEvent = new Map(universe.snapshot.fixtures.map(f => [f.canonical_event_id, f]));
     const teamById = new Map(universe.teamRegistry.teams.map(t => [t.canonical_team_id, t]));
     const decisionByEvent = new Map(decisions.filter(d => d.decision === 'MATCHED').map(d => [d.candidate_provider_event_id, d]));
-    const events = aliases.map(alias => { const f = fixtureByEvent.get(alias.canonical_event_id); const d = decisionByEvent.get(alias.provider_event_id); const source = odds.find(event => event.id === alias.provider_event_id); return { kind: 'event', provider: 'the-odds-api', provider_id: alias.provider_event_id, canonical_id: alias.canonical_event_id, season: f.season, home_team: teamById.get(f.canonical_home_team_id).canonical_name, away_team: teamById.get(f.canonical_away_team_id).canonical_name, kickoff_utc: f.scheduled_kickoff_utc, provider_observed_kickoff_utc: source.commence_time, identity_decision_id: d.identity_decision_id, identity_ruleset_version: RULESET_VERSION, provenance: 'fixture-universe/v1' }; });
+    const events = aliases.map(alias => { const f = fixtureByEvent.get(alias.canonical_event_id); const d = decisionByEvent.get(alias.provider_event_id); const source = odds.find(event => event.id === alias.provider_event_id); return { kind: 'event', provider: 'the-odds-api', provider_id: alias.provider_event_id, canonical_id: alias.canonical_event_id, season: f.season, home_team: teamById.get(f.canonical_home_team_id).canonical_name, away_team: teamById.get(f.canonical_away_team_id).canonical_name, kickoff_utc: f.scheduled_kickoff_utc, provider_observed_kickoff_utc: source.commence_time, identity_decision_id: d.identity_decision_id, identity_decision_status: 'MATCHED', identity_ruleset_version: RULESET_VERSION, provenance: 'fixture-universe/v1' }; });
     const bookmakerIds = [...new Set(odds.flatMap(event => (event.bookmakers || []).map(bookmaker => bookmaker.key)))].sort();
     // Team outcome labels are event-contextual (a club is HOME one week and
     // AWAY another); only Draw is a global provider selection alias.
