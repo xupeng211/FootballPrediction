@@ -24,14 +24,20 @@ const stageCFixtureRaw = fs.readFileSync(
 const stageCFixtureRegistry = loadIdentityRegistry(
     path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json')
 );
-const fixtureUniverseRaw = fs.readFileSync(
-    path.join(__dirname, '../../../data/market_evidence/live/fotmob/raw/fotmob-fixtures-47-2026_2027-e8cfe0500b1b.html'),
-    'utf8'
-);
-const fixtureUniverseOddsRaw = fs.readFileSync(
-    path.join(__dirname, '../../../data/market_evidence/live/raw/251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4.json'),
-    'utf8'
-);
+function buildFixtureUniverseRaw() {
+    const allMatches = Array.from({ length: 380 }, (_, index) => ({
+        id: String(900000 + index),
+        home: { name: index === 0 ? 'Arsenal' : `Home ${index}` },
+        away: { name: index === 0 ? 'Chelsea' : `Away ${index}` },
+        status: { utcTime: index === 0 ? '2026-09-12T15:00:00Z' : `2026-10-${String((index % 28) + 1).padStart(2, '0')}T15:00:00Z` },
+    }));
+    return `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ query: { season: '2026/2027' }, props: { pageProps: { details: { id: 47 }, fixtures: { allMatches } } } })}</script>`;
+}
+const fixtureUniverseRaw = buildFixtureUniverseRaw();
+const fixtureUniverseOddsRaw = JSON.stringify([{
+    id: 'fixture-universe-arsenal-chelsea', sport_key: 'soccer_epl', home_team: 'Arsenal', away_team: 'Chelsea', commence_time: '2026-09-12T15:00:00Z',
+    bookmakers: [{ key: 'fixture-bookmaker', title: 'Fixture Bookmaker', markets: [{ key: 'h2h', outcomes: [{ name: 'Arsenal', price: 2.1 }, { name: 'Draw', price: 3.2 }, { name: 'Chelsea', price: 3.6 }] }] }],
+}]);
 const fixtureUniverseRawSha = sha256Text(fixtureUniverseRaw);
 const fixtureUniverseOddsSha = sha256Text(fixtureUniverseOddsRaw);
 
