@@ -129,6 +129,25 @@ test('real resolver quarantine path retains evidence, creates no aliases or obse
     }
 });
 
+test('quarantine production path appends governance only and never observations', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'quarantine-production-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl') }); const observationPath = path.join(root, 'observations.jsonl'); const universe = seededUniverse(); const source = JSON.parse(fixtureUniverseOddsRaw)[0];
+    const cases = [['UNKNOWN_HOME_TEAM', { home_team: 'Unknown' }], ['UNKNOWN_AWAY_TEAM', { away_team: 'Unknown' }], ['NO_FIXTURE_CANDIDATE', { home_team: 'Chelsea', away_team: 'Arsenal' }], ['INVALID_KICKOFF_UTC', { commence_time: 'invalid' }], ['KICKOFF_CONFLICT', { commence_time: '2026-09-12T16:00:01Z' }]];
+    for (const [reason, override] of cases) {
+        const raw = JSON.stringify([{ ...source, ...override, id: `full-path-${reason}` }]); const result = resolveOddsEvents({ oddsRawText: raw, oddsRawSha256: sha256Text(raw), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger });
+        assert.equal(result.quarantines[0].reason_code, reason); assert.equal(result.quarantines[0].provider_event_id, `full-path-${reason}`); assert.equal(result.quarantines[0].raw_sha256, sha256Text(raw)); assert.equal(result.aliases.length, 0); assert.equal(ledger.activeMappings().has(`the-odds-api\u0000full-path-${reason}`), false);
+        const observations = adaptTheOddsApiRaw({ rawText: raw, capture: { capture_id: `capture-${reason}`, provider: 'the-odds-api', acquisition_mode: 'HISTORICAL_FILE', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/quarantine.json', raw_sha256: sha256Text(raw) }, registry: result.registry, decisionLedger: ledger, allowedProviderEventIds: new Set(), projectionVersion: '1' });
+        assert.equal(observations.length, 0); assert.equal(fs.existsSync(observationPath), false);
+    }
+});
+
+test('failed identity batches leave ledger state unchanged', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'atomic-batch-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl') }); const universe = seededUniverse();
+    const event = JSON.parse(fixtureUniverseOddsRaw)[0]; const raw = JSON.stringify([event, { ...event }]); const before = JSON.stringify(ledger.read());
+    assert.throws(() => resolveOddsEvents({ oddsRawText: raw, oddsRawSha256: sha256Text(raw), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger }), /duplicate/);
+    assert.equal(JSON.stringify(ledger.read()), before); assert.equal(ledger.activeMappings().size, 0);
+});
+
 test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'decisions.jsonl') }); const universe = seededUniverse();
