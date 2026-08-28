@@ -148,6 +148,19 @@ test('failed identity batches leave ledger state unchanged', t => {
     assert.equal(JSON.stringify(ledger.read()), before); assert.equal(ledger.activeMappings().size, 0);
 });
 
+test('late resolver and registry failures are atomic before decision append', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'late-atomic-batch-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl') }); const universe = seededUniverse(); const event = JSON.parse(fixtureUniverseOddsRaw)[0];
+    const cases = [
+        ['LAST_EVENT_REGISTRY_CONFLICT', [{ ...event, id: 'first-ok' }, { ...event, id: 'last-registry-conflict', bookmakers: [{ ...event.bookmakers[0], key: null }] }]],
+        ['LAST_EVENT_DUPLICATE', [{ ...event, id: 'first-ok' }, { ...event, id: 'first-ok' }]],
+    ];
+    for (const [, payload] of cases) {
+        const raw = JSON.stringify(payload); const before = JSON.stringify(ledger.read());
+        assert.throws(() => resolveOddsEvents({ oddsRawText: raw, oddsRawSha256: sha256Text(raw), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger }));
+        assert.equal(JSON.stringify(ledger.read()), before); assert.equal(ledger.activeMappings().size, 0);
+    }
+});
+
 test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'decisions.jsonl') }); const universe = seededUniverse();
