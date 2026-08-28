@@ -67,6 +67,11 @@ function createIdentityDecisionLedger({ ledgerPath }) {
         const line = `${serialized}\n`; try { fs.appendFileSync(ledgerPath, line, { mode: 0o444 }); rewriteManifest(ledgerPath, `${existing.content}${line}`, existing.rows.length + 1); } finally { fs.chmodSync(ledgerPath, 0o444); }
         return Object.freeze({ ...row });
     }
-    return Object.freeze({ append, activeMappings, read: () => Object.freeze(verify(ledgerPath).rows.map(row => Object.freeze({ ...row }))), verify: () => verify(ledgerPath) });
+    function assertActiveMatched({ provider, providerEventId, canonicalEventId, decisionId, rulesetVersion }) {
+        const active = activeMappings().get(`${provider}\u0000${providerEventId}`);
+        if (!active || active.decision !== 'MATCHED' || (active.decision_id || active.identity_decision_id) !== decisionId || active.canonical_event_id !== canonicalEventId || active.ruleset_version !== rulesetVersion) throw new Error('identity decision is not the exact active MATCHED ledger mapping');
+        return Object.freeze({ ...active });
+    }
+    return Object.freeze({ append, activeMappings, assertActiveMatched, read: () => Object.freeze(verify(ledgerPath).rows.map(row => Object.freeze({ ...row }))), verify: () => verify(ledgerPath) });
 }
 module.exports = { createIdentityDecisionLedger, verifyIdentityDecisionLedger: verify, identityDecisionLedgerManifestPath: manifestPath };

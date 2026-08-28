@@ -429,7 +429,7 @@ function writeLedgerManifest(ledgerPath, content, lineCount) {
     }
 }
 
-function appendProjection({ ledgerPath, projection, registry }) {
+function appendProjection({ ledgerPath, projection, registry, decisionLedger = null }) {
     const validated = createObservation(projection);
     if (!registry || typeof registry.resolve !== 'function') throw new Error('identity registry is required for canonical ledger append');
     const event = registry.resolve('event', validated.provider, validated.provider_event_id);
@@ -440,6 +440,10 @@ function appendProjection({ ledgerPath, projection, registry }) {
     const marketMatches = bookmaker.canonical_id === validated.canonical_bookmaker_id && bookmaker.price_side === validated.price_side && market.canonical_id === validated.canonical_market_id && market.period === validated.period && market.market_type === validated.market_type && market.line === validated.line;
     const selectionMatches = validated.selection === 'HOME' || validated.selection === 'AWAY' ? validated.canonical_selection_id === validated.selection : selection.canonical_id === validated.canonical_selection_id && selection.selection === validated.selection;
     if (!eventMatches || !marketMatches || !selectionMatches || registry.version !== validated.identity_registry_version || registry.content_sha256 !== validated.identity_registry_sha256) throw new Error('canonical observation identity decision is not a valid MATCHED registry decision');
+    if (decisionLedger !== null) {
+        if (typeof decisionLedger.assertActiveMatched !== 'function') throw new Error('identity decision ledger is invalid');
+        decisionLedger.assertActiveMatched({ provider: validated.provider, providerEventId: validated.provider_event_id, canonicalEventId: validated.canonical_event_id, decisionId: validated.identity_decision_id, rulesetVersion: validated.identity_ruleset_version });
+    }
     if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
     const parentDir = path.dirname(ledgerPath);
     ensureDirectory(parentDir, 'ledger parent directory');
