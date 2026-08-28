@@ -161,6 +161,16 @@ test('late resolver and registry failures are atomic before decision append', t 
     }
 });
 
+test('late allocation, decision and supersession failures preserve all ledger state', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'late-governance-atomic-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl') }); const universe = seededUniverse(); const event = JSON.parse(fixtureUniverseOddsRaw)[0];
+    const seed = JSON.stringify([{ ...event, id: 'existing' }]); resolveOddsEvents({ oddsRawText: seed, oddsRawSha256: sha256Text(seed), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger }); const before = JSON.stringify(ledger.read());
+    const malformedAllocation = { ...universe, snapshot: { ...universe.snapshot, authority: 'unverified', fixtures: universe.snapshot.fixtures.map((row, index) => index ? row : { ...row, canonical_event_id: 'fotmob:tampered' }) } };
+    const lateAllocation = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'last-allocation' }]);
+    assert.throws(() => resolveOddsEvents({ oddsRawText: lateAllocation, oddsRawSha256: sha256Text(lateAllocation), universe: malformedAllocation, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger })); assert.equal(JSON.stringify(ledger.read()), before);
+    const changed = JSON.parse(JSON.stringify(universe.allocationSnapshot)); changed.fixtures[0].canonical_event_id = 'evt_changed'; const unsigned = { schema_version: changed.schema_version, authority: changed.authority, fixtures: changed.fixtures, teams: changed.teams, provenance_raw_sha256: changed.provenance_raw_sha256, identity_ruleset_version: changed.identity_ruleset_version, resolver_version: changed.resolver_version }; changed.content_sha256 = semanticReplayHash(unsigned); const corrected = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: changed, mode: 'REPLAY' });
+    const conflict = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'existing' }]); assert.throws(() => resolveOddsEvents({ oddsRawText: conflict, oddsRawSha256: sha256Text(conflict), universe: corrected, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /supersession/); assert.equal(JSON.stringify(ledger.read()), before);
+});
+
 test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'decisions.jsonl') }); const universe = seededUniverse();
