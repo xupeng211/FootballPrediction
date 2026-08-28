@@ -120,7 +120,7 @@ const registry = createIdentityRegistry({
 const capture = Object.freeze({
     capture_id: 'capture-fixture-001',
     provider: 'the-odds-api',
-    acquisition_mode: 'REPLAY',
+    acquisition_mode: 'HISTORICAL_FILE',
     request_started_at: '2026-08-27T13:31:20Z',
     response_received_at: '2026-08-27T13:31:49Z',
     ingested_at: '2026-08-27T13:31:49Z',

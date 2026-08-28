@@ -203,6 +203,7 @@ function adaptTheOddsApiRawInternal({
     supportedMarketKeys = ['h2h'],
 }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
+    if (capture.acquisition_mode === 'REPLAY' && projectionAvailableAt === null) throw new Error('REPLAY projection availability is required');
     const projectionAvailable = projectionAvailableAt === null ? capture.ingested_at : projectionAvailableAt;
     if (!isUtcTimestamp(projectionAvailable) || compareUtcTimestamps(projectionAvailable, capture.ingested_at) < 0) throw new Error('projection availability must be UTC and not precede ingestion');
     const payload = JSON.parse(rawText);

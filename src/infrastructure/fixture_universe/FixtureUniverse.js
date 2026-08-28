@@ -29,10 +29,10 @@ function by(value, field) { return [...value].sort((a, b) => String(a[field]).lo
 
 function validateAllocationSnapshot(allocation, rawSha256) {
     if (!allocation || typeof allocation !== 'object' || Array.isArray(allocation)) throw new Error('REPLAY requires immutable allocation snapshot');
-    const topLevel = ['schema_version', 'authority', 'fixtures', 'teams', 'provenance_raw_sha256', 'content_sha256'];
+    const topLevel = ['schema_version', 'authority', 'fixtures', 'teams', 'provenance_raw_sha256', 'identity_ruleset_version', 'resolver_version', 'content_sha256'];
     if (Object.keys(allocation).some(key => !topLevel.includes(key))) throw new Error('allocation snapshot contains unknown field');
     if (allocation.schema_version !== 'fixture-identity-allocation/v1' || allocation.authority !== 'FootballPrediction') throw new Error('allocation snapshot schema is invalid');
-    if (!/^[a-f0-9]{64}$/.test(allocation.content_sha256 || '') || allocation.content_sha256 !== semanticHash({ schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256 })) throw new Error('allocation snapshot content hash is invalid');
+    if (!/^[a-f0-9]{64}$/.test(allocation.content_sha256 || '') || allocation.identity_ruleset_version !== RULESET_VERSION || allocation.resolver_version !== RESOLVER_VERSION || allocation.content_sha256 !== semanticHash({ schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256, identity_ruleset_version: allocation.identity_ruleset_version, resolver_version: allocation.resolver_version })) throw new Error('allocation snapshot content hash is invalid');
     if (allocation.provenance_raw_sha256 !== rawSha256 || !Array.isArray(allocation.fixtures) || !Array.isArray(allocation.teams)) throw new Error('allocation snapshot provenance is invalid');
     for (const [rows, key] of [[allocation.fixtures, 'fotmob_event_id'], [allocation.teams, 'fotmob_name']]) {
         const values = rows.map(row => row?.[key]);
@@ -61,6 +61,8 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
         throw new Error('FotMob fixture evidence is not the authorized EPL 2026/2027 universe');
     }
     if (!['INITIAL_SEED', 'REPLAY'].includes(mode)) throw new Error('fixture seed mode is invalid');
+    if (mode === 'INITIAL_SEED' && allocation !== null) throw new Error('INITIAL_SEED must not accept a replay allocation');
+    if (mode === 'REPLAY' && allocate !== null) throw new Error('REPLAY must not accept an allocator');
     const validatedAllocation = mode === 'REPLAY' ? validateAllocationSnapshot(allocation, rawSha256) : allocation;
     if (mode === 'REPLAY') {
         const fixtureIds = new Set(extracted.fixtures.map(source => source.id));
@@ -108,7 +110,7 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
         canonical_fixture_id: fixture.canonical_fixture_id,
         canonical_event_id: fixture.canonical_event_id,
     }));
-    const allocationUnsigned = { schema_version: 'fixture-identity-allocation/v1', authority: 'FootballPrediction', fixtures: by(allocations, 'fotmob_event_id'), teams: by([...teams.values()].map(team => ({ fotmob_name: team.fotmob_name, canonical_team_id: team.canonical_team_id, canonical_name: team.canonical_name })), 'fotmob_name'), provenance_raw_sha256: rawSha256 };
+    const allocationUnsigned = { schema_version: 'fixture-identity-allocation/v1', authority: 'FootballPrediction', fixtures: by(allocations, 'fotmob_event_id'), teams: by([...teams.values()].map(team => ({ fotmob_name: team.fotmob_name, canonical_team_id: team.canonical_team_id, canonical_name: team.canonical_name })), 'fotmob_name'), provenance_raw_sha256: rawSha256, identity_ruleset_version: RULESET_VERSION, resolver_version: RESOLVER_VERSION };
     const allocationSnapshot = { ...allocationUnsigned, content_sha256: semanticHash(allocationUnsigned) };
     const competitionRegistry = {
         schema_version: REGISTRY_VERSION, version: 'competition-registry/v1',

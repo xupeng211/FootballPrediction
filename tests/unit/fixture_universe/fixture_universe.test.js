@@ -64,7 +64,7 @@ function stageCFixtureObservations() {
         capture: {
             capture_id: 'fixture-universe-stage-c-001',
             provider: 'the-odds-api',
-            acquisition_mode: 'REPLAY',
+            acquisition_mode: 'HISTORICAL_FILE',
             request_started_at: '2026-08-27T13:31:20Z',
             response_received_at: '2026-08-27T13:31:49Z',
             ingested_at: '2026-08-27T13:31:49Z',
@@ -153,7 +153,7 @@ test('fixture resolver uses real universe evidence for invalid and tolerance-bou
     const withinText = JSON.stringify(within);
     const withinResolution = resolveOddsEvents({ oddsRawText: withinText, oddsRawSha256: sha256Text(withinText), universe, decidedAt: '2026-08-27T13:31:49Z' });
     assert.equal(withinResolution.decisions[0].decision, 'MATCHED');
-    const capture = { capture_id: 'fixture-universe-within-900', provider: 'the-odds-api', acquisition_mode: 'REPLAY', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/within-900.json', raw_sha256: sha256Text(withinText) };
+    const capture = { capture_id: 'fixture-universe-within-900', provider: 'the-odds-api', acquisition_mode: 'HISTORICAL_FILE', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/within-900.json', raw_sha256: sha256Text(withinText) };
     const projections = adaptTheOddsApiRaw({ rawText: withinText, capture, registry: withinResolution.registry, projectionVersion: 'fixture-universe/v1', allowedProviderEventIds: new Set(withinResolution.aliases.map(alias => alias.provider_event_id)) });
     assert.ok(projections.length > 0, 'resolver-matched provider kickoff must be adaptable');
     const normalized = JSON.parse(JSON.stringify(within));
@@ -187,12 +187,12 @@ test('fixture identity rejects forged RAW provenance and duplicate canonical all
     assert.throws(() => resolveOddsEvents({ oddsRawText: fixtureUniverseOddsRaw, oddsRawSha256: '0'.repeat(64), universe, decidedAt: '2026-08-27T13:31:49Z' }), /does not match content/);
     const duplicate = JSON.parse(JSON.stringify(universe.allocationSnapshot));
     duplicate.fixtures[1].canonical_event_id = duplicate.fixtures[0].canonical_event_id;
-    const unsigned = { schema_version: duplicate.schema_version, authority: duplicate.authority, fixtures: duplicate.fixtures, teams: duplicate.teams, provenance_raw_sha256: duplicate.provenance_raw_sha256 };
+    const unsigned = { schema_version: duplicate.schema_version, authority: duplicate.authority, fixtures: duplicate.fixtures, teams: duplicate.teams, provenance_raw_sha256: duplicate.provenance_raw_sha256, identity_ruleset_version: duplicate.identity_ruleset_version, resolver_version: duplicate.resolver_version };
     duplicate.content_sha256 = semanticReplayHash(unsigned);
     assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: duplicate, mode: 'REPLAY' }), /canonical_event_id is not unique/);
     const providerDerived = JSON.parse(JSON.stringify(universe.allocationSnapshot));
     providerDerived.fixtures[0].canonical_event_id = 'provider-business-id';
-    const providerUnsigned = { schema_version: providerDerived.schema_version, authority: providerDerived.authority, fixtures: providerDerived.fixtures, teams: providerDerived.teams, provenance_raw_sha256: providerDerived.provenance_raw_sha256 };
+    const providerUnsigned = { schema_version: providerDerived.schema_version, authority: providerDerived.authority, fixtures: providerDerived.fixtures, teams: providerDerived.teams, provenance_raw_sha256: providerDerived.provenance_raw_sha256, identity_ruleset_version: providerDerived.identity_ruleset_version, resolver_version: providerDerived.resolver_version };
     providerDerived.content_sha256 = semanticReplayHash(providerUnsigned);
     assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: providerDerived, mode: 'REPLAY' }), /canonical fixture IDs are invalid/);
 });

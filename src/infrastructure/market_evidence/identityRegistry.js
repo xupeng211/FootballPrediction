@@ -141,10 +141,12 @@ function validateMapping(mapping) {
 
 function buildIndex(mappings) {
     const index = new Map();
+    const decisions = new Set();
     for (const mapping of mappings) {
         validateMapping(mapping);
         const mappingKey = key(mapping.kind, mapping.provider, mapping.provider_id);
         if (index.has(mappingKey)) throw new Error(`ambiguous identity mapping: ${mappingKey}`);
+        if (mapping.kind === 'event') { if (decisions.has(mapping.identity_decision_id)) throw new Error(`duplicate identity decision: ${mapping.identity_decision_id}`); decisions.add(mapping.identity_decision_id); }
         index.set(mappingKey, Object.freeze({ ...mapping }));
     }
     return index;
