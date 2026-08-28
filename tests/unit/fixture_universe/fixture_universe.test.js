@@ -185,6 +185,11 @@ test('identity decision ledger is append-only, idempotent and requires authorize
     const decisionPath = path.join(root, 'decisions.jsonl'); fs.chmodSync(decisionPath, 0o644); fs.appendFileSync(decisionPath, '\n'); fs.chmodSync(decisionPath, 0o444); assert.throws(() => ledger.verify(), /integrity/);
 });
 
+test('identity ledger rejects orphan manifest symlink before first append', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-symlink-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const target = path.join(root, 'victim'); fs.writeFileSync(target, 'safe'); const ledgerPath = path.join(root, 'identity.jsonl'); fs.symlinkSync(target, `${ledgerPath}.manifest.json`); const ledger = createIdentityDecisionLedger({ ledgerPath });
+    assert.throws(() => ledger.append({ identity_decision_id: 'idn_symlink', candidate_provider: 'the-odds-api', candidate_provider_event_id: 'x', decision: 'QUARANTINED', canonical_event_id: null, ruleset_version: 'r', resolver_version: 'v', decided_at: '2026-08-27T13:31:49Z', raw_sha256: 'a'.repeat(64) }), /manifest exists without ledger/); assert.equal(fs.readFileSync(target, 'utf8'), 'safe');
+});
+
 test('observation ledger rejects semantic collision and preserves historical decision', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'observation-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const row = stageCFixtureObservations()[0]; const ledgerPath = path.join(root, 'observations.jsonl');
     appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); assert.equal(readProjectionLedger({ ledgerPath }).length, 1);

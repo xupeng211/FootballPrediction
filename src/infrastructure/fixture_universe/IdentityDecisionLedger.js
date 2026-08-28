@@ -21,11 +21,14 @@ function validate(row) {
     if (row.supersedes_decision_id !== undefined && row.supersedes_decision_id !== null && (typeof row.supersedes_decision_id !== 'string' || !row.supersedes_decision_id)) throw new Error('identity supersession reference is invalid');
 }
 function verify(ledgerPath) {
-    if (!fs.existsSync(ledgerPath)) return { content: '', rows: [] };
+    const mp = manifestPath(ledgerPath);
+    if (!fs.existsSync(ledgerPath)) {
+        if (fs.existsSync(mp)) throw new Error('identity decision ledger manifest exists without ledger');
+        return { content: '', rows: [] };
+    }
     const stat = fs.lstatSync(ledgerPath);
     if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('identity decision ledger must be a read-only regular file');
     const content = fs.readFileSync(ledgerPath, 'utf8'); const rows = parse(content);
-    const mp = manifestPath(ledgerPath);
     if (!fs.existsSync(mp)) throw new Error('identity decision ledger manifest is missing');
     const manifestStat = fs.lstatSync(mp);
     if (manifestStat.isSymbolicLink() || !manifestStat.isFile() || (manifestStat.mode & 0o222) !== 0) throw new Error('identity decision ledger manifest must be a read-only regular file');
@@ -34,7 +37,12 @@ function verify(ledgerPath) {
     rows.forEach(validate); return { content, rows };
 }
 function rewriteManifest(ledgerPath, content, lineCount) {
-    const mp = manifestPath(ledgerPath); if (fs.existsSync(mp)) fs.chmodSync(mp, 0o644);
+    const mp = manifestPath(ledgerPath);
+    if (fs.existsSync(mp)) {
+        const stat = fs.lstatSync(mp);
+        if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('identity decision ledger manifest must be a regular file');
+        fs.chmodSync(mp, 0o644);
+    }
     try { fs.writeFileSync(mp, `${stableStringify({ schema_version: MANIFEST_VERSION, ledger_sha256: sha256Text(content), line_count: lineCount })}\n`, { mode: 0o444 }); } finally { fs.chmodSync(mp, 0o444); }
 }
 function createIdentityDecisionLedger({ ledgerPath }) {
