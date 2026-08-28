@@ -447,6 +447,11 @@ function appendProjection({ ledgerPath, projection, registry }) {
         throw new Error('ledger integrity manifest exists without ledger');
     }
     const existing = fs.existsSync(ledgerPath) ? verifyLedgerIntegrity(ledgerPath) : { content: '', rows: [] };
+    const duplicate = existing.rows.find(row => row.observation_id === validated.observation_id);
+    if (duplicate) {
+        if (stableStringify(duplicate) === stableStringify(validated)) return validated;
+        throw new Error(`conflicting MarketObservation append: ${validated.observation_id}`);
+    }
     const line = `${stableStringify(validated)}\n`;
     if (fs.existsSync(ledgerPath)) {
         const stat = assertRegularFile(ledgerPath, 'ledger');

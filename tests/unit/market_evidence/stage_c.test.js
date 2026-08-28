@@ -51,12 +51,13 @@ const rawText = fs.readFileSync(
 );
 const registry = createIdentityRegistry({
     version: 'stage-c-fixture/v1',
+    governed_event_ids: ['evt_fixture001'],
     events: [
         {
             kind: 'event',
             provider: 'the-odds-api',
             provider_id: 'epl-fixture-001',
-            canonical_id: 'fotmob:fixture-001',
+            canonical_id: 'evt_fixture001',
             season: '2026/2027',
             home_team: 'Arsenal',
             away_team: 'Chelsea',
@@ -225,6 +226,7 @@ test('identity registry is independent and fails closed for unknown or ambiguous
     assert.throws(() =>
         createIdentityRegistry({
             version: 'bad',
+            governed_event_ids: ['evt_bad'],
             events: [
                 { kind: 'event', provider: 'x', provider_id: 'x' },
                 { kind: 'event', provider: 'x', provider_id: 'x' },
@@ -233,6 +235,7 @@ test('identity registry is independent and fails closed for unknown or ambiguous
     );
     assert.throws(() => createIdentityRegistry({
         version: 'outside-kickoff-tolerance',
+        governed_event_ids: ['evt_fixture001'],
         events: [{ ...registry.resolve('event', 'the-odds-api', 'epl-fixture-001'), provider_observed_kickoff_utc: '2026-09-12T15:15:01Z' }],
     }), /kickoff exceeds identity tolerance/);
     assert.equal(
@@ -375,6 +378,21 @@ test('identity registry is independent and fails closed for unknown or ambiguous
     );
 });
 
+test('event registry accepts only governed FootballPrediction allocations', () => {
+    const event = registry.resolve('event', 'the-odds-api', 'epl-fixture-001');
+    assert.throws(() => createIdentityRegistry({ version: 'provider-shaped', governed_event_ids: ['evt_fixture001'], events: [{ ...event, canonical_id: 'fotmob:fixture-001' }] }), /governed FootballPrediction event/);
+    assert.throws(() => createIdentityRegistry({ version: 'unknown-event', governed_event_ids: ['evt_other'], events: [{ ...event, canonical_id: 'evt_fixture001' }] }), /governed FootballPrediction event/);
+    assert.equal(createIdentityRegistry({ version: 'governed-event', governed_event_ids: ['evt_fixture001'], events: [event] }).resolve('event', 'the-odds-api', 'epl-fixture-001').canonical_id, 'evt_fixture001');
+});
+
+test('LIVE_CAPTURE requires an explicit post-projection availability boundary', () => {
+    const live = { ...capture, acquisition_mode: 'LIVE_CAPTURE' };
+    assert.throws(() => adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1' }), /LIVE_CAPTURE projection availability is required/);
+    const rows = adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1', projectionAvailableAt: '2026-08-27T13:31:50Z' }); const row = rows[0];
+    const query = { canonical_event_id: row.canonical_event_id, canonical_bookmaker_id: row.canonical_bookmaker_id, canonical_selection_id: row.canonical_selection_id, period: row.period, market_type: row.market_type, line: row.line };
+    assert.equal(latestAsOf(rows, { ...query, decision_time: '2026-08-27T13:31:49Z' }), null); assert.equal(latestAsOf(rows, { ...query, decision_time: '2026-08-27T13:31:50Z' }).observation_id, row.observation_id);
+});
+
 test('The Odds API EPL h2h fixture normalizes to three versioned canonical observations', () => {
     const rows = observations();
     assert.equal(rows.length, 3);
@@ -411,12 +429,13 @@ test('event identity is checked against the independently governed registry and 
     const v1 = observations('1');
     const v2Registry = createIdentityRegistry({
         version: 'stage-c-fixture/v2',
+        governed_event_ids: ['evt_fixture001'],
         events: [
             {
                 kind: 'event',
                 provider: 'the-odds-api',
                 provider_id: 'epl-fixture-001',
-                canonical_id: 'fotmob:fixture-001',
+                canonical_id: 'evt_fixture001',
                 season: '2026/2027',
                 home_team: 'Arsenal',
                 away_team: 'Chelsea',
@@ -536,6 +555,7 @@ test('adapter fails closed for malformed or incomplete EPL market payloads and s
     );
     const swappedSelectionRegistry = createIdentityRegistry({
         version: 'selection-swap/v1',
+        governed_event_ids: ['evt_fixture001'],
         events: registry.list('event', 'the-odds-api'),
         bookmakers: registry.list('bookmaker', 'the-odds-api'),
         markets: registry.list('market', 'the-odds-api'),

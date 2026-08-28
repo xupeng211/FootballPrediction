@@ -18,6 +18,8 @@ const { latestAsOf } = require('../../../src/infrastructure/market_evidence/asOf
 const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
 const { loadIdentityRegistry } = require('../../../src/infrastructure/market_evidence/identityRegistry');
 const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
+const { createIdentityDecisionLedger } = require('../../../src/infrastructure/fixture_universe/IdentityDecisionLedger');
+const { appendProjection, readProjectionLedger } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 
 const stageCFixtureRaw = fs.readFileSync(
     path.join(__dirname, '../../fixtures/market_evidence/the_odds_api_epl_h2h.minimal.json'),
@@ -115,27 +117,36 @@ test('Stage C fixture observation is visible only at market knowledge time', () 
     assert.equal(observation.source_snapshot_at, null);
 });
 
-test('quarantined provider events retain fixture evidence and never enter canonical observations', () => {
-    const rawSha256 = '251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4';
-    const quarantines = [
-        'UNKNOWN_HOME_TEAM',
-        'UNKNOWN_AWAY_TEAM',
-        'NO_FIXTURE_CANDIDATE',
-        'KICKOFF_CONFLICT',
-    ].map((reason_code, index) => ({
-        provider_event_id: `quarantined-fixture-${index + 1}`,
-        reason_code,
-        raw_sha256: rawSha256,
-    }));
-    const observations = stageCFixtureObservations();
-    const providerEvents = quarantines.map(({ provider_event_id }) => ({ id: provider_event_id }));
-    assert.equal(quarantines.length, 4);
-    for (const quarantine of quarantines) {
-        assert.match(quarantine.reason_code, /^(UNKNOWN_HOME_TEAM|UNKNOWN_AWAY_TEAM|NO_FIXTURE_CANDIDATE|KICKOFF_CONFLICT)$/);
-        assert.equal(quarantine.raw_sha256, rawSha256);
-        assert.ok(providerEvents.some(event => event.id === quarantine.provider_event_id));
-        assert.equal(observations.some(row => row.provider_event_id === quarantine.provider_event_id), false);
+test('real resolver quarantine path retains evidence, creates no aliases or observations', () => {
+    const universe = seededUniverse(); const source = JSON.parse(fixtureUniverseOddsRaw)[0];
+    const cases = [
+        ['UNKNOWN_HOME_TEAM', { home_team: 'Unknown Home' }], ['UNKNOWN_AWAY_TEAM', { away_team: 'Unknown Away' }],
+        ['NO_FIXTURE_CANDIDATE', { home_team: 'Chelsea', away_team: 'Arsenal' }], ['KICKOFF_CONFLICT', { commence_time: '2026-09-12T16:00:01Z' }], ['INVALID_KICKOFF_UTC', { commence_time: 'invalid' }],
+    ];
+    for (const [reason, override] of cases) {
+        const raw = JSON.stringify([{ ...source, ...override, id: `quarantine-${reason}` }]); const resolution = resolveOddsEvents({ oddsRawText: raw, oddsRawSha256: sha256Text(raw), universe, decidedAt: '2026-08-27T13:31:49Z' });
+        assert.equal(resolution.quarantines[0].reason_code, reason); assert.equal(resolution.quarantines[0].raw_sha256, sha256Text(raw)); assert.equal(resolution.aliases.length, 0); assert.equal(resolution.decisions[0].candidate_provider_event_id, `quarantine-${reason}`);
     }
+});
+
+test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'decisions.jsonl') }); const universe = seededUniverse();
+    const rawA = fixtureUniverseOddsRaw; const first = resolveOddsEvents({ oddsRawText: rawA, oddsRawSha256: sha256Text(rawA), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger });
+    assert.equal(ledger.read().length, 1); resolveOddsEvents({ oddsRawText: rawA, oddsRawSha256: sha256Text(rawA), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger }); assert.equal(ledger.read().length, 1);
+    const allocation = JSON.parse(JSON.stringify(universe.allocationSnapshot)); allocation.fixtures[0].canonical_event_id = 'evt_corrected001'; const unsigned = { schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256, identity_ruleset_version: allocation.identity_ruleset_version, resolver_version: allocation.resolver_version }; allocation.content_sha256 = semanticReplayHash(unsigned);
+    const correctedUniverse = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation, mode: 'REPLAY' });
+    const changed = JSON.parse(fixtureUniverseOddsRaw); changed[0].bookmakers[0].markets[0].outcomes[0].price = 2.2; const rawB = JSON.stringify(changed);
+    assert.throws(() => resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /authorized supersession/);
+    const second = resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger, authorizedSupersessions: new Set(['fixture-universe-arsenal-chelsea']) });
+    assert.equal(second.decisions[0].supersedes_decision_id, first.decisions[0].identity_decision_id); assert.equal(ledger.activeMappings().get('the-odds-api\u0000fixture-universe-arsenal-chelsea').canonical_event_id, 'evt_corrected001'); assert.equal(ledger.read().length, 2);
+    const decisionPath = path.join(root, 'decisions.jsonl'); fs.chmodSync(decisionPath, 0o644); fs.appendFileSync(decisionPath, '\n'); fs.chmodSync(decisionPath, 0o444); assert.throws(() => ledger.verify(), /integrity/);
+});
+
+test('observation ledger rejects semantic collision and preserves historical decision', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'observation-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const row = stageCFixtureObservations()[0]; const ledgerPath = path.join(root, 'observations.jsonl');
+    appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); assert.equal(readProjectionLedger({ ledgerPath }).length, 1);
+    assert.throws(() => appendProjection({ ledgerPath, projection: { ...row, projection_available_at: '2026-08-27T13:31:50Z' }, registry: stageCFixtureRegistry }), /conflicting MarketObservation append/);
 });
 
 test('fixture resolver uses real universe evidence for invalid and tolerance-bound kickoff decisions', () => {

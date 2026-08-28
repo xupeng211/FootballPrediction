@@ -203,7 +203,7 @@ function adaptTheOddsApiRawInternal({
     supportedMarketKeys = ['h2h'],
 }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
-    if (capture.acquisition_mode === 'REPLAY' && projectionAvailableAt === null) throw new Error('REPLAY projection availability is required');
+    if (['REPLAY', 'LIVE_CAPTURE'].includes(capture.acquisition_mode) && projectionAvailableAt === null) throw new Error(`${capture.acquisition_mode} projection availability is required`);
     const projectionAvailable = projectionAvailableAt === null ? capture.ingested_at : projectionAvailableAt;
     if (!isUtcTimestamp(projectionAvailable) || compareUtcTimestamps(projectionAvailable, capture.ingested_at) < 0) throw new Error('projection availability must be UTC and not precede ingestion');
     const payload = JSON.parse(rawText);
@@ -334,6 +334,8 @@ function adaptTheOddsApiRawInternal({
                         registry.content_sha256,
                         capture.capture_id,
                         capture.response_received_at,
+                        projectionAvailable,
+                        canonicalEvent.identity_decision_id,
                         event.id,
                         bookmaker.key,
                         market.key,

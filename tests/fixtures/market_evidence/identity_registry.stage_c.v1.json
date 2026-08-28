@@ -1,12 +1,13 @@
 {
     "version": "stage-c-fixture/v1",
-    "content_sha256": "e57fb770831ef4c555b1f205c78605d559d67e15c11893abed1cdf68885e757d",
+    "content_sha256": "dcbdc7420fa8a1cc72787131c9eba28da8ccabf71d297a379fa791d573e89069",
+    "governed_event_ids": ["evt_fixture001"],
     "events": [
         {
             "kind": "event",
             "provider": "the-odds-api",
             "provider_id": "epl-fixture-001",
-            "canonical_id": "fotmob:fixture-001",
+            "canonical_id": "evt_fixture001",
             "season": "2026/2027",
             "home_team": "Arsenal",
             "away_team": "Chelsea",

@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable complexity -- registry validation deliberately enumerates independent authority checks. */
 
 const fs = require('node:fs');
 const { sha256Text, stableStringify, isUtcTimestamp } = require('./contracts');
@@ -83,7 +84,10 @@ function assertBookmakerMapping(mapping) {
     }
 }
 
-function assertEventMapping(mapping) {
+function assertEventMapping(mapping, governedEventIds) {
+    if (!/^evt_[A-Za-z0-9]+$/.test(mapping.canonical_id) || !governedEventIds.has(mapping.canonical_id)) {
+        throw new Error(`event mapping canonical_id is not a governed FootballPrediction event: ${mapping.provider_id}`);
+    }
     for (const field of ['home_team', 'away_team']) {
         if (typeof mapping[field] !== 'string' || !mapping[field].trim()) {
             throw new Error(`event mapping requires ${field}: ${mapping.provider_id}`);
@@ -129,21 +133,21 @@ function assertSelectionMapping(mapping) {
     }
 }
 
-function validateMapping(mapping) {
+function validateMapping(mapping, governedEventIds) {
     assertBaseMapping(mapping);
     const unknownFields = Object.keys(mapping).filter(field => !MAPPING_FIELDS[mapping.kind].has(field));
     if (unknownFields.length) throw new Error(`unknown identity mapping field: ${unknownFields[0]}`);
-    if (mapping.kind === 'event') assertEventMapping(mapping);
+    if (mapping.kind === 'event') assertEventMapping(mapping, governedEventIds);
     if (mapping.kind === 'bookmaker') assertBookmakerMapping(mapping);
     if (mapping.kind === 'market') assertMarketMapping(mapping);
     if (mapping.kind === 'selection') assertSelectionMapping(mapping);
 }
 
-function buildIndex(mappings) {
+function buildIndex(mappings, governedEventIds) {
     const index = new Map();
     const decisions = new Set();
     for (const mapping of mappings) {
-        validateMapping(mapping);
+        validateMapping(mapping, governedEventIds);
         const mappingKey = key(mapping.kind, mapping.provider, mapping.provider_id);
         if (index.has(mappingKey)) throw new Error(`ambiguous identity mapping: ${mappingKey}`);
         if (mapping.kind === 'event') { if (decisions.has(mapping.identity_decision_id)) throw new Error(`duplicate identity decision: ${mapping.identity_decision_id}`); decisions.add(mapping.identity_decision_id); }
@@ -152,7 +156,7 @@ function buildIndex(mappings) {
     return index;
 }
 
-function hashMappings(version, mappings) {
+function hashMappings(version, mappings, governedEventIds) {
     const sortedMappings = mappings
         .map(mapping => ({ ...mapping }))
         .sort((left, right) => {
@@ -160,21 +164,25 @@ function hashMappings(version, mappings) {
             const rightKey = key(right.kind, right.provider, right.provider_id);
             return leftKey === rightKey ? 0 : leftKey < rightKey ? -1 : 1;
         });
-    return sha256Text(stableStringify({ version, mappings: sortedMappings }));
+    return sha256Text(stableStringify({ version, governed_event_ids: [...governedEventIds].sort(), mappings: sortedMappings }));
 }
 
 function createIdentityRegistry(options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) {
         throw new Error('identity registry must be an object');
     }
-    const allowedFields = new Set(['version', 'events', 'bookmakers', 'markets', 'selections', 'content_sha256']);
+    const allowedFields = new Set(['version', 'governed_event_ids', 'events', 'bookmakers', 'markets', 'selections', 'content_sha256']);
     const unknownFields = Object.keys(options).filter(field => !allowedFields.has(field));
     if (unknownFields.length) throw new Error(`unknown identity registry field: ${unknownFields[0]}`);
-    const { version, events = [], bookmakers = [], markets = [], selections = [], content_sha256 } = options;
+    const { version, governed_event_ids, events = [], bookmakers = [], markets = [], selections = [], content_sha256 } = options;
     if (typeof version !== 'string' || !version.trim()) throw new Error('identity registry version is required');
     const mappings = collectMappings({ events, bookmakers, markets, selections });
-    const index = buildIndex(mappings);
-    const contentSha256 = hashMappings(version, mappings);
+    if ((!Array.isArray(governed_event_ids) && events.length > 0) || (governed_event_ids !== undefined && (!Array.isArray(governed_event_ids) || governed_event_ids.some(id => !/^evt_[A-Za-z0-9]+$/.test(id)) || new Set(governed_event_ids).size !== governed_event_ids.length))) {
+        throw new Error('identity registry governed_event_ids must contain unique FootballPrediction evt_* allocations');
+    }
+    const governedEventIds = new Set(governed_event_ids || []);
+    const index = buildIndex(mappings, governedEventIds);
+    const contentSha256 = hashMappings(version, mappings, governedEventIds);
     if (content_sha256 !== undefined && content_sha256 !== contentSha256) {
         throw new Error('identity registry content_sha256 does not match mappings');
     }
