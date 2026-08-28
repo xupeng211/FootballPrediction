@@ -22,9 +22,13 @@ function validate(row) {
 }
 function verify(ledgerPath) {
     if (!fs.existsSync(ledgerPath)) return { content: '', rows: [] };
+    const stat = fs.lstatSync(ledgerPath);
+    if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('identity decision ledger must be a read-only regular file');
     const content = fs.readFileSync(ledgerPath, 'utf8'); const rows = parse(content);
     const mp = manifestPath(ledgerPath);
     if (!fs.existsSync(mp)) throw new Error('identity decision ledger manifest is missing');
+    const manifestStat = fs.lstatSync(mp);
+    if (manifestStat.isSymbolicLink() || !manifestStat.isFile() || (manifestStat.mode & 0o222) !== 0) throw new Error('identity decision ledger manifest must be a read-only regular file');
     const manifest = JSON.parse(fs.readFileSync(mp, 'utf8'));
     if (manifest.schema_version !== MANIFEST_VERSION || manifest.ledger_sha256 !== sha256Text(content) || manifest.line_count !== rows.length) throw new Error('identity decision ledger integrity check failed');
     rows.forEach(validate); return { content, rows };

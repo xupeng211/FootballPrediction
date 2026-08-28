@@ -68,13 +68,16 @@ async function main() {
     const registry = loadIdentityRegistry(registryPath);
     let observations = [];
     let identityError = null;
+    let processingError = null;
     let coverage;
     try {
-        const adapted = adaptTheOddsApiCapture({ rawText: live.rawText, capture: receipt, registry, projectionVersion: '1' });
+        const projectionAvailableAt = new Date(Math.max(Date.now(), Date.parse(receipt.response_received_at) + 1)).toISOString();
+        const adapted = adaptTheOddsApiCapture({ rawText: live.rawText, capture: receipt, registry, projectionVersion: '1', projectionAvailableAt });
         observations = adapted.observations;
         coverage = adapted.coverage_evidence;
     } catch (error) {
-        identityError = error.message;
+        if (/identity mapping|provider event identity conflicts|MATCHED identity decision/.test(error.message)) identityError = error.message;
+        else processingError = error.message;
         coverage = error.coverage_evidence || buildCoverageEvidence({
             rawText: live.rawText,
             expectedProviderBookmakerIds: registry.list('bookmaker', 'the-odds-api').map(entry => entry.provider_id),
@@ -103,6 +106,7 @@ async function main() {
         real_canonical_observations: observations.length,
         real_quarantined_observations: identityError ? JSON.parse(live.rawText).length : 0,
         identity_fail_closed: identityError !== null,
+        processing_fail_closed: processingError !== null,
         live_replay_1_sha256: replay[0] ? sha256Text(stableStringify(replay[0])) : null,
         live_replay_2_sha256: replay[1] ? sha256Text(stableStringify(replay[1])) : null,
     };
