@@ -11,6 +11,7 @@ const {
     stableStringify,
 } = require('./contracts');
 const { normalizeIdentityText } = require('../fixture_universe/identityRules');
+const { ledgerForRegistry } = require('../fixture_universe/VerifiedAllocationAuthority');
 
 const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
@@ -241,10 +242,9 @@ function adaptTheOddsApiRawInternal({
         seenProviderEventIds.add(event.id);
         if (allowedProviderEventIds !== null && !allowedProviderEventIds.has(event.id)) continue;
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
-        if (decisionLedger !== null) {
-            if (typeof decisionLedger.assertActiveMatched !== 'function') throw new Error('identity decision ledger is invalid');
-            decisionLedger.assertActiveMatched({ provider: 'the-odds-api', providerEventId: event.id, canonicalEventId: canonicalEvent.canonical_id, decisionId: canonicalEvent.identity_decision_id, rulesetVersion: canonicalEvent.identity_ruleset_version });
-        }
+        const verifiedLedger = decisionLedger || ledgerForRegistry(registry);
+        if (!verifiedLedger || typeof verifiedLedger.assertActiveMatched !== 'function') throw new Error('verified identity decision ledger is required');
+        verifiedLedger.assertActiveMatched({ provider: 'the-odds-api', providerEventId: event.id, canonicalEventId: canonicalEvent.canonical_id, decisionId: canonicalEvent.identity_decision_id, rulesetVersion: canonicalEvent.identity_ruleset_version, resolverVersion: 'fixture-identity-resolver/v1' });
         if (
             normalizeIdentityText(event.home_team) !== normalizeIdentityText(canonicalEvent.home_team) ||
             normalizeIdentityText(event.away_team) !== normalizeIdentityText(canonicalEvent.away_team) ||

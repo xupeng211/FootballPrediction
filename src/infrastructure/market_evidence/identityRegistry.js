@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const { sha256Text, stableStringify, isUtcTimestamp } = require('./contracts');
 const { KICKOFF_TOLERANCE_SECONDS } = require('../fixture_universe/identityRules');
+const { assertAllocationAuthority } = require('../fixture_universe/VerifiedAllocationAuthority');
 
 const KINDS = new Set(['event', 'bookmaker', 'market', 'selection']);
 const PERIODS = new Set(['MATCH', 'FIRST_HALF']);
@@ -84,10 +85,11 @@ function assertBookmakerMapping(mapping) {
     }
 }
 
-function assertEventMapping(mapping, governedEventIds) {
-    if (!/^evt_[A-Za-z0-9]+$/.test(mapping.canonical_id) || !governedEventIds.has(mapping.canonical_id)) {
+function assertEventMapping(mapping, allocationAuthority) {
+    if (!/^evt_[A-Za-z0-9]+$/.test(mapping.canonical_id)) {
         throw new Error(`event mapping canonical_id is not a governed FootballPrediction event: ${mapping.provider_id}`);
     }
+    assertAllocationAuthority(allocationAuthority, mapping.canonical_id);
     for (const field of ['home_team', 'away_team']) {
         if (typeof mapping[field] !== 'string' || !mapping[field].trim()) {
             throw new Error(`event mapping requires ${field}: ${mapping.provider_id}`);
@@ -133,21 +135,21 @@ function assertSelectionMapping(mapping) {
     }
 }
 
-function validateMapping(mapping, governedEventIds) {
+function validateMapping(mapping, allocationAuthority) {
     assertBaseMapping(mapping);
     const unknownFields = Object.keys(mapping).filter(field => !MAPPING_FIELDS[mapping.kind].has(field));
     if (unknownFields.length) throw new Error(`unknown identity mapping field: ${unknownFields[0]}`);
-    if (mapping.kind === 'event') assertEventMapping(mapping, governedEventIds);
+    if (mapping.kind === 'event') assertEventMapping(mapping, allocationAuthority);
     if (mapping.kind === 'bookmaker') assertBookmakerMapping(mapping);
     if (mapping.kind === 'market') assertMarketMapping(mapping);
     if (mapping.kind === 'selection') assertSelectionMapping(mapping);
 }
 
-function buildIndex(mappings, governedEventIds) {
+function buildIndex(mappings, allocationAuthority) {
     const index = new Map();
     const decisions = new Set();
     for (const mapping of mappings) {
-        validateMapping(mapping, governedEventIds);
+        validateMapping(mapping, allocationAuthority);
         const mappingKey = key(mapping.kind, mapping.provider, mapping.provider_id);
         if (index.has(mappingKey)) throw new Error(`ambiguous identity mapping: ${mappingKey}`);
         if (mapping.kind === 'event') { if (decisions.has(mapping.identity_decision_id)) throw new Error(`duplicate identity decision: ${mapping.identity_decision_id}`); decisions.add(mapping.identity_decision_id); }
@@ -156,13 +158,7 @@ function buildIndex(mappings, governedEventIds) {
     return index;
 }
 
-function verifiedAllocation(snapshot) {
-    if (!snapshot || typeof snapshot !== 'object' || snapshot.authority !== 'FootballPrediction' || !Array.isArray(snapshot.fixtures) || !/^[a-f0-9]{64}$/.test(snapshot.allocation_snapshot_sha256 || '')) throw new Error('verified allocation snapshot is invalid');
-    const ids = snapshot.fixtures.map(row => row?.canonical_event_id);
-    if (ids.some(id => !/^evt_[A-Za-z0-9]+$/.test(id)) || new Set(ids).size !== ids.length) throw new Error('verified allocation event identities are invalid');
-    return new Set(ids);
-}
-function hashMappings(version, mappings, governedEventIds, allocationSha256 = null) {
+function hashMappings(version, mappings) {
     const sortedMappings = mappings
         .map(mapping => ({ ...mapping }))
         .sort((left, right) => {
@@ -170,28 +166,22 @@ function hashMappings(version, mappings, governedEventIds, allocationSha256 = nu
             const rightKey = key(right.kind, right.provider, right.provider_id);
             return leftKey === rightKey ? 0 : leftKey < rightKey ? -1 : 1;
         });
-    const payload = { version, governed_event_ids: [...governedEventIds].sort(), mappings: sortedMappings };
-    if (allocationSha256) payload.allocation_snapshot_sha256 = allocationSha256;
-    return sha256Text(stableStringify(payload));
+    return sha256Text(stableStringify({ version, mappings: sortedMappings }));
 }
 
 function createIdentityRegistry(options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) {
         throw new Error('identity registry must be an object');
     }
-    const allowedFields = new Set(['version', 'allocation_snapshot', 'governed_event_ids', 'events', 'bookmakers', 'markets', 'selections', 'content_sha256']);
+    const allowedFields = new Set(['version', 'allocationAuthority', 'events', 'bookmakers', 'markets', 'selections', 'content_sha256']);
     const unknownFields = Object.keys(options).filter(field => !allowedFields.has(field));
     if (unknownFields.length) throw new Error(`unknown identity registry field: ${unknownFields[0]}`);
-    const { version, allocation_snapshot, governed_event_ids, events = [], bookmakers = [], markets = [], selections = [], content_sha256 } = options;
+    const { version, allocationAuthority, events = [], bookmakers = [], markets = [], selections = [], content_sha256 } = options;
     if (typeof version !== 'string' || !version.trim()) throw new Error('identity registry version is required');
     const mappings = collectMappings({ events, bookmakers, markets, selections });
-    if ((!allocation_snapshot && !Array.isArray(governed_event_ids) && events.length > 0) || (governed_event_ids !== undefined && (!Array.isArray(governed_event_ids) || governed_event_ids.some(id => !/^evt_[A-Za-z0-9]+$/.test(id)) || new Set(governed_event_ids).size !== governed_event_ids.length))) {
-        throw new Error('identity registry governed_event_ids must contain unique FootballPrediction evt_* allocations');
-    }
-    const governedEventIds = allocation_snapshot ? verifiedAllocation(allocation_snapshot) : new Set(governed_event_ids || []);
-    if (allocation_snapshot && governed_event_ids !== undefined) throw new Error('verified allocation cannot be combined with caller governed_event_ids');
-    const index = buildIndex(mappings, governedEventIds);
-    const contentSha256 = hashMappings(version, mappings, governedEventIds, allocation_snapshot?.allocation_snapshot_sha256 || null);
+    if (events.length) assertAllocationAuthority(allocationAuthority, events[0].canonical_id);
+    const index = buildIndex(mappings, allocationAuthority);
+    const contentSha256 = hashMappings(version, mappings);
     if (content_sha256 !== undefined && content_sha256 !== contentSha256) {
         throw new Error('identity registry content_sha256 does not match mappings');
     }
@@ -206,7 +196,7 @@ function createIdentityRegistry(options = {}) {
                 .filter(mapping => mapping.kind === kind && (provider === undefined || mapping.provider === provider))
                 .map(mapping => Object.freeze({ ...mapping }))
         );
-    return Object.freeze({ version, content_sha256: contentSha256, allocation_snapshot_sha256: allocation_snapshot?.allocation_snapshot_sha256 || null, resolve, list });
+    return Object.freeze({ version, content_sha256: contentSha256, allocationAuthority, resolve, list });
 }
 
 function loadIdentityRegistry(filePath) {
@@ -214,7 +204,7 @@ function loadIdentityRegistry(filePath) {
     if (!/^[a-f0-9]{64}$/.test(parsed.content_sha256 || '')) {
         throw new Error('identity registry content_sha256 is required');
     }
-    return createIdentityRegistry(parsed);
+    throw new Error('identity registries containing event mappings must be built from a verified Fixture Universe allocation authority');
 }
 
 module.exports = { createIdentityRegistry, loadIdentityRegistry };

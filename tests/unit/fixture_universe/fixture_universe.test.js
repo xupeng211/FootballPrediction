@@ -16,18 +16,17 @@ const {
 const historical = require('../../../src/infrastructure/canonical/CanonicalInventoryContract');
 const { latestAsOf } = require('../../../src/infrastructure/market_evidence/asOfView');
 const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
-const { loadIdentityRegistry } = require('../../../src/infrastructure/market_evidence/identityRegistry');
 const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
 const { createIdentityDecisionLedger } = require('../../../src/infrastructure/fixture_universe/IdentityDecisionLedger');
 const { appendProjection, readProjectionLedger } = require('../../../src/infrastructure/market_evidence/evidenceStore');
+const { createGovernedFixtureTestContext } = require('../../helpers/market_evidence_authority');
 
 const stageCFixtureRaw = fs.readFileSync(
     path.join(__dirname, '../../fixtures/market_evidence/the_odds_api_epl_h2h.minimal.json'),
     'utf8'
 );
-const stageCFixtureRegistry = loadIdentityRegistry(
-    path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json')
-);
+const stageCFixtureContext = createGovernedFixtureTestContext({ rawText: stageCFixtureRaw });
+const stageCFixtureRegistry = stageCFixtureContext.registry;
 function buildFixtureUniverseRaw() {
     const allMatches = Array.from({ length: 380 }, (_, index) => ({
         id: String(900000 + index),
@@ -73,7 +72,7 @@ function stageCFixtureObservations() {
             raw_evidence_reference: 'raw/fixture-universe-stage-c.json',
             raw_sha256: sha256Text(stageCFixtureRaw),
         },
-        registry: stageCFixtureRegistry,
+        registry: stageCFixtureRegistry, decisionLedger: stageCFixtureContext.decisionLedger,
         projectionVersion: '1',
     });
 }
@@ -168,7 +167,7 @@ test('late allocation, decision and supersession failures preserve all ledger st
     const lateAllocation = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'last-allocation' }]);
     assert.throws(() => resolveOddsEvents({ oddsRawText: lateAllocation, oddsRawSha256: sha256Text(lateAllocation), universe: malformedAllocation, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger })); assert.equal(JSON.stringify(ledger.read()), before);
     const changed = JSON.parse(JSON.stringify(universe.allocationSnapshot)); changed.fixtures[0].canonical_event_id = 'evt_changed'; const unsigned = { schema_version: changed.schema_version, authority: changed.authority, fixtures: changed.fixtures, teams: changed.teams, provenance_raw_sha256: changed.provenance_raw_sha256, identity_ruleset_version: changed.identity_ruleset_version, resolver_version: changed.resolver_version }; changed.content_sha256 = semanticReplayHash(unsigned); const corrected = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: changed, mode: 'REPLAY' });
-    const conflict = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'existing' }]); assert.throws(() => resolveOddsEvents({ oddsRawText: conflict, oddsRawSha256: sha256Text(conflict), universe: corrected, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /supersession/); assert.equal(JSON.stringify(ledger.read()), before);
+    const conflict = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'existing' }]); assert.throws(() => resolveOddsEvents({ oddsRawText: conflict, oddsRawSha256: sha256Text(conflict), universe: corrected, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /allocation authority cannot change/); assert.equal(JSON.stringify(ledger.read()), before);
 });
 
 test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
@@ -179,15 +178,14 @@ test('identity decision ledger is append-only, idempotent and requires authorize
     const allocation = JSON.parse(JSON.stringify(universe.allocationSnapshot)); allocation.fixtures[0].canonical_event_id = 'evt_corrected001'; const unsigned = { schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256, identity_ruleset_version: allocation.identity_ruleset_version, resolver_version: allocation.resolver_version }; allocation.content_sha256 = semanticReplayHash(unsigned);
     const correctedUniverse = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation, mode: 'REPLAY' });
     const changed = JSON.parse(fixtureUniverseOddsRaw); changed[0].bookmakers[0].markets[0].outcomes[0].price = 2.2; const rawB = JSON.stringify(changed);
-    assert.throws(() => resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /authorized supersession/);
-    const second = resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger, authorizedSupersessions: new Set(['fixture-universe-arsenal-chelsea']) });
-    assert.equal(second.decisions[0].supersedes_decision_id, first.decisions[0].identity_decision_id); assert.equal(ledger.activeMappings().get('the-odds-api\u0000fixture-universe-arsenal-chelsea').canonical_event_id, 'evt_corrected001'); assert.equal(ledger.read().length, 2);
+    assert.throws(() => resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /allocation authority cannot change/);
+    assert.equal(ledger.read().length, 1);
     const decisionPath = path.join(root, 'decisions.jsonl'); fs.chmodSync(decisionPath, 0o644); fs.appendFileSync(decisionPath, '\n'); fs.chmodSync(decisionPath, 0o444); assert.throws(() => ledger.verify(), /integrity/);
 });
 
 test('identity ledger rejects orphan manifest symlink before first append', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'identity-ledger-symlink-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const target = path.join(root, 'victim'); fs.writeFileSync(target, 'safe'); const ledgerPath = path.join(root, 'identity.jsonl'); fs.symlinkSync(target, `${ledgerPath}.manifest.json`); const ledger = createIdentityDecisionLedger({ ledgerPath });
-    assert.throws(() => ledger.append({ identity_decision_id: 'idn_symlink', candidate_provider: 'the-odds-api', candidate_provider_event_id: 'x', decision: 'QUARANTINED', canonical_event_id: null, ruleset_version: 'r', resolver_version: 'v', decided_at: '2026-08-27T13:31:49Z', raw_sha256: 'a'.repeat(64) }), /manifest exists without ledger/); assert.equal(fs.readFileSync(target, 'utf8'), 'safe');
+    assert.throws(() => ledger.append({ identity_decision_id: 'idn_symlink', candidate_provider: 'the-odds-api', candidate_provider_event_id: 'x', decision: 'QUARANTINED', canonical_event_id: null, ruleset_version: 'r', resolver_version: 'v', decided_at: '2026-08-27T13:31:49Z', raw_sha256: 'a'.repeat(64) }), /verified allocation authority/); assert.equal(fs.readFileSync(target, 'utf8'), 'safe');
 });
 
 test('observation ledger rejects semantic collision and preserves historical decision', t => {
@@ -196,8 +194,10 @@ test('observation ledger rejects semantic collision and preserves historical dec
     assert.throws(() => appendProjection({ ledgerPath, projection: { ...row, projection_available_at: '2026-08-27T13:31:50Z' }, registry: stageCFixtureRegistry }), /conflicting MarketObservation append/);
 });
 
-test('fixture resolver uses real universe evidence for invalid and tolerance-bound kickoff decisions', () => {
+test('fixture resolver uses real universe evidence for invalid and tolerance-bound kickoff decisions', t => {
     const universe = seededUniverse();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fixture-resolver-governed-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const decisionLedger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl'), allocationAuthority: universe.allocationAuthority });
     const source = JSON.parse(fixtureUniverseOddsRaw);
     const event = source.find(candidate => candidate.sport_key === 'soccer_epl');
     assert.ok(event, 'committed odds fixture requires EPL event');
@@ -209,7 +209,7 @@ test('fixture resolver uses real universe evidence for invalid and tolerance-bou
     const baseKickoff = Date.parse(within[0].commence_time);
     within[0].commence_time = new Date(baseKickoff + KICKOFF_TOLERANCE_SECONDS * 1000).toISOString().replace('.000Z', 'Z');
     const withinText = JSON.stringify(within);
-    const withinResolution = resolveOddsEvents({ oddsRawText: withinText, oddsRawSha256: sha256Text(withinText), universe, decidedAt: '2026-08-27T13:31:49Z' });
+    const withinResolution = resolveOddsEvents({ oddsRawText: withinText, oddsRawSha256: sha256Text(withinText), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger });
     assert.equal(withinResolution.decisions[0].decision, 'MATCHED');
     const capture = { capture_id: 'fixture-universe-within-900', provider: 'the-odds-api', acquisition_mode: 'HISTORICAL_FILE', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/within-900.json', raw_sha256: sha256Text(withinText) };
     const projections = adaptTheOddsApiRaw({ rawText: withinText, capture, registry: withinResolution.registry, projectionVersion: 'fixture-universe/v1', allowedProviderEventIds: new Set(withinResolution.aliases.map(alias => alias.provider_event_id)) });
@@ -222,7 +222,7 @@ test('fixture resolver uses real universe evidence for invalid and tolerance-bou
         name: outcome.name === 'Arsenal' ? ' ａｒｓｅｎａｌ ' : outcome.name === 'Chelsea' ? '  CHELSEA  ' : outcome.name,
     }));
     const normalizedText = JSON.stringify(normalized);
-    const normalizedResolution = resolveOddsEvents({ oddsRawText: normalizedText, oddsRawSha256: sha256Text(normalizedText), universe, decidedAt: '2026-08-27T13:31:49Z' });
+    const normalizedResolution = resolveOddsEvents({ oddsRawText: normalizedText, oddsRawSha256: sha256Text(normalizedText), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger });
     assert.equal(normalizedResolution.decisions[0].decision, 'MATCHED');
     assert.ok(adaptTheOddsApiRaw({ rawText: normalizedText, capture: { ...capture, capture_id: 'fixture-universe-normalized', raw_sha256: sha256Text(normalizedText) }, registry: normalizedResolution.registry, projectionVersion: 'fixture-universe/v1', allowedProviderEventIds: new Set(normalizedResolution.aliases.map(alias => alias.provider_event_id)) }).length > 0);
     const outside = JSON.parse(JSON.stringify([event]));

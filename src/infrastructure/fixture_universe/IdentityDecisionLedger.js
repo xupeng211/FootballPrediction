@@ -6,6 +6,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { sha256Text, stableStringify, isUtcTimestamp } = require('../market_evidence/contracts');
+const { assertAllocationAuthority, assertResolvedDecision } = require('./VerifiedAllocationAuthority');
 
 const MANIFEST_VERSION = 'footballprediction-identity-decision-ledger/v1';
 function manifestPath(ledgerPath) { return `${ledgerPath}.manifest.json`; }
@@ -45,11 +46,19 @@ function rewriteManifest(ledgerPath, content, lineCount) {
     }
     try { fs.writeFileSync(mp, `${stableStringify({ schema_version: MANIFEST_VERSION, ledger_sha256: sha256Text(content), line_count: lineCount })}\n`, { mode: 0o444 }); } finally { fs.chmodSync(mp, 0o444); }
 }
-function createIdentityDecisionLedger({ ledgerPath }) {
+function createIdentityDecisionLedger({ ledgerPath, allocationAuthority = null }) {
     if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('identity decision ledger path is required');
+    if (allocationAuthority !== null) assertAllocationAuthority(allocationAuthority, undefined);
+    function bindAllocationAuthority(authority) {
+        assertAllocationAuthority(authority, undefined);
+        if (allocationAuthority !== null && allocationAuthority !== authority) throw new Error('identity decision ledger allocation authority cannot change');
+        allocationAuthority = authority;
+    }
     function activeMappings() {
         const rows = verify(ledgerPath).rows; const active = new Map(); const known = new Map();
         for (const row of rows) {
+            if (!allocationAuthority) throw new Error('identity decision ledger has no verified allocation authority');
+            if (row.decision === 'MATCHED') assertAllocationAuthority(allocationAuthority, row.canonical_event_id);
             const id = row.decision_id || row.identity_decision_id; known.set(id, row);
             const key = `${row.candidate_provider}\u0000${row.candidate_provider_event_id}`;
             if (row.supersedes_decision_id) {
@@ -65,7 +74,8 @@ function createIdentityDecisionLedger({ ledgerPath }) {
         return active;
     }
     function append(row) {
-        validate(row); const existing = verify(ledgerPath); const serialized = stableStringify(row);
+        if (!allocationAuthority) throw new Error('identity decision ledger has no verified allocation authority');
+        validate(row); assertResolvedDecision(row, allocationAuthority); if (row.decision === 'MATCHED') assertAllocationAuthority(allocationAuthority, row.canonical_event_id); const existing = verify(ledgerPath); const serialized = stableStringify(row);
         const sameId = existing.rows.find(item => item.identity_decision_id === row.identity_decision_id);
         if (sameId) { if (stableStringify(sameId) === serialized) return Object.freeze({ ...sameId }); throw new Error(`conflicting identity decision append: ${row.identity_decision_id}`); }
         const active = activeMappings(); const key = `${row.candidate_provider}\u0000${row.candidate_provider_event_id}`;
@@ -75,11 +85,11 @@ function createIdentityDecisionLedger({ ledgerPath }) {
         const line = `${serialized}\n`; try { fs.appendFileSync(ledgerPath, line, { mode: 0o444 }); rewriteManifest(ledgerPath, `${existing.content}${line}`, existing.rows.length + 1); } finally { fs.chmodSync(ledgerPath, 0o444); }
         return Object.freeze({ ...row });
     }
-    function assertActiveMatched({ provider, providerEventId, canonicalEventId, decisionId, rulesetVersion }) {
+    function assertActiveMatched({ provider, providerEventId, canonicalEventId, decisionId, rulesetVersion, resolverVersion }) {
         const active = activeMappings().get(`${provider}\u0000${providerEventId}`);
-        if (!active || active.decision !== 'MATCHED' || (active.decision_id || active.identity_decision_id) !== decisionId || active.canonical_event_id !== canonicalEventId || active.ruleset_version !== rulesetVersion) throw new Error('identity decision is not the exact active MATCHED ledger mapping');
+        if (!active || active.decision !== 'MATCHED' || (active.decision_id || active.identity_decision_id) !== decisionId || active.canonical_event_id !== canonicalEventId || active.ruleset_version !== rulesetVersion || active.resolver_version !== resolverVersion) throw new Error('identity decision is not the exact active MATCHED ledger mapping');
         return Object.freeze({ ...active });
     }
-    return Object.freeze({ append, activeMappings, assertActiveMatched, read: () => Object.freeze(verify(ledgerPath).rows.map(row => Object.freeze({ ...row }))), verify: () => verify(ledgerPath) });
+    return Object.freeze({ append, bindAllocationAuthority, activeMappings, assertActiveMatched, read: () => Object.freeze(verify(ledgerPath).rows.map(row => Object.freeze({ ...row }))), verify: () => verify(ledgerPath) });
 }
 module.exports = { createIdentityDecisionLedger, verifyIdentityDecisionLedger: verify, identityDecisionLedgerManifestPath: manifestPath };

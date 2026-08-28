@@ -18,7 +18,7 @@ function main() {
     const allocation = JSON.parse(fs.readFileSync(process.env.IDENTITY_ALLOCATION_PATH, 'utf8'));
     const universe = seedFotMobFixtureUniverse({ rawHtml: fotmobRaw, rawSha256: sha(fotmob), manifest: { raw_file_relative_path: path.basename(fotmob) }, allocation, mode: 'REPLAY' });
     fs.mkdirSync(root, { recursive: true });
-    const decisionLedger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity_decisions.jsonl') });
+    const decisionLedger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity_decisions.jsonl'), allocationAuthority: universe.allocationAuthority });
     const resolution = resolveOddsEvents({ oddsRawText: oddsRaw, oddsRawSha256: sha(odds), universe, decidedAt: capture.response_received_at, decisionLedger });
     if (!process.env.PROJECTION_AVAILABLE_AT) throw new Error('PROJECTION_AVAILABLE_AT is required for REPLAY');
     const observations = adaptTheOddsApiRaw({ rawText: oddsRaw, capture, registry: resolution.registry, decisionLedger, projectionVersion: 'fixture-universe/v1', projectionAvailableAt: process.env.PROJECTION_AVAILABLE_AT, allowedProviderEventIds: new Set(resolution.aliases.map(alias => alias.provider_event_id)), supportedMarketKeys: ['h2h', 'h2h_lay'] });

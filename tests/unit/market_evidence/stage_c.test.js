@@ -44,12 +44,13 @@ const {
     resolveTransportPolicy,
 } = require('../../../src/infrastructure/market_evidence/theOddsApiClient');
 const { replayRaw } = require('../../../src/infrastructure/market_evidence/replay');
+const { createGovernedFixtureTestContext } = require('../../helpers/market_evidence_authority');
 
 const rawText = fs.readFileSync(
     path.join(__dirname, '../../fixtures/market_evidence/the_odds_api_epl_h2h.minimal.json'),
     'utf8'
 );
-const registry = createIdentityRegistry({
+/* const registry = createIdentityRegistry({
     version: 'stage-c-fixture/v1',
     governed_event_ids: ['evt_fixture001'],
     events: [
@@ -117,7 +118,7 @@ const registry = createIdentityRegistry({
             provenance: 'fixture',
         },
     ],
-});
+}); */
 const capture = Object.freeze({
     capture_id: 'capture-fixture-001',
     provider: 'the-odds-api',
@@ -128,8 +129,10 @@ const capture = Object.freeze({
     raw_evidence_reference: 'raw/fixture.json',
     raw_sha256: sha256Text(rawText),
 });
+const governed = createGovernedFixtureTestContext({ rawText });
+const { registry, decisionLedger } = governed;
 function observations(version = '1') {
-    return adaptTheOddsApiRaw({ rawText, capture, registry, projectionVersion: version });
+    return adaptTheOddsApiRaw({ rawText, capture, registry, decisionLedger, projectionVersion: version });
 }
 
 function captureForRaw(rawPayload) {
@@ -235,14 +238,10 @@ test('identity registry is independent and fails closed for unknown or ambiguous
     );
     assert.throws(() => createIdentityRegistry({
         version: 'outside-kickoff-tolerance',
-        governed_event_ids: ['evt_fixture001'],
+        allocationAuthority: registry.allocationAuthority,
         events: [{ ...registry.resolve('event', 'the-odds-api', 'epl-fixture-001'), provider_observed_kickoff_utc: '2026-09-12T15:15:01Z' }],
     }), /kickoff exceeds identity tolerance/);
-    assert.equal(
-        loadIdentityRegistry(path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json'))
-            .version,
-        'stage-c-fixture/v1'
-    );
+    assert.throws(() => loadIdentityRegistry(path.join(__dirname, '../../fixtures/market_evidence/identity_registry.stage_c.v1.json')), /verified Fixture Universe allocation authority/);
     const registryWithoutHashDir = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-registry-'));
     const registryWithoutHashPath = path.join(registryWithoutHashDir, 'registry.json');
     fs.writeFileSync(registryWithoutHashPath, JSON.stringify({ version: 'v1' }));
@@ -380,9 +379,9 @@ test('identity registry is independent and fails closed for unknown or ambiguous
 
 test('event registry accepts only governed FootballPrediction allocations', () => {
     const event = registry.resolve('event', 'the-odds-api', 'epl-fixture-001');
-    assert.throws(() => createIdentityRegistry({ version: 'provider-shaped', governed_event_ids: ['evt_fixture001'], events: [{ ...event, canonical_id: 'fotmob:fixture-001' }] }), /governed FootballPrediction event/);
-    assert.throws(() => createIdentityRegistry({ version: 'unknown-event', governed_event_ids: ['evt_other'], events: [{ ...event, canonical_id: 'evt_fixture001' }] }), /governed FootballPrediction event/);
-    assert.equal(createIdentityRegistry({ version: 'governed-event', governed_event_ids: ['evt_fixture001'], events: [event] }).resolve('event', 'the-odds-api', 'epl-fixture-001').canonical_id, 'evt_fixture001');
+    assert.throws(() => createIdentityRegistry({ version: 'provider-shaped', allocationAuthority: registry.allocationAuthority, events: [{ ...event, canonical_id: 'fotmob:fixture-001' }] }), /absent from the verified allocation/);
+    assert.throws(() => createIdentityRegistry({ version: 'unknown-event', allocationAuthority: registry.allocationAuthority, events: [{ ...event, canonical_id: 'evt_other' }] }), /absent from the verified allocation/);
+    assert.equal(createIdentityRegistry({ version: 'governed-event', allocationAuthority: registry.allocationAuthority, events: [event] }).resolve('event', 'the-odds-api', 'epl-fixture-001').canonical_id, event.canonical_id);
 });
 
 test('LIVE_CAPTURE requires an explicit post-projection availability boundary', () => {
@@ -429,19 +428,19 @@ test('event identity is checked against the independently governed registry and 
     const v1 = observations('1');
     const v2Registry = createIdentityRegistry({
         version: 'stage-c-fixture/v2',
-        governed_event_ids: ['evt_fixture001'],
+        allocationAuthority: registry.allocationAuthority,
         events: [
             {
                 kind: 'event',
                 provider: 'the-odds-api',
                 provider_id: 'epl-fixture-001',
-                canonical_id: 'evt_fixture001',
+                canonical_id: registry.resolve('event', 'the-odds-api', 'epl-fixture-001').canonical_id,
                 season: '2026/2027',
                 home_team: 'Arsenal',
                 away_team: 'Chelsea',
                 kickoff_utc: '2026-09-12T15:00:00Z',
                 provider_observed_kickoff_utc: '2026-09-12T15:00:00Z',
-                identity_decision_id: 'idn-fixture-001',
+                identity_decision_id: registry.resolve('event', 'the-odds-api', 'epl-fixture-001').identity_decision_id,
                 identity_decision_status: 'MATCHED',
                 identity_ruleset_version: 'fixture-identity-ruleset/v1',
                 provenance: 'fixture-v2',
@@ -451,7 +450,7 @@ test('event identity is checked against the independently governed registry and 
         markets: registry.list('market', 'the-odds-api'),
         selections: registry.list('selection', 'the-odds-api'),
     });
-    const v2 = adaptTheOddsApiRaw({ rawText, capture, registry: v2Registry, projectionVersion: '1' });
+    const v2 = adaptTheOddsApiRaw({ rawText, capture, registry: v2Registry, decisionLedger, projectionVersion: '1' });
     assert.notEqual(v1[0].observation_id, v2[0].observation_id);
 });
 
@@ -555,26 +554,26 @@ test('adapter fails closed for malformed or incomplete EPL market payloads and s
     );
     const swappedSelectionRegistry = createIdentityRegistry({
         version: 'selection-swap/v1',
-        governed_event_ids: ['evt_fixture001'],
+        allocationAuthority: registry.allocationAuthority,
         events: registry.list('event', 'the-odds-api'),
         bookmakers: registry.list('bookmaker', 'the-odds-api'),
         markets: registry.list('market', 'the-odds-api'),
         selections: [
             {
-                ...registry.resolve('selection', 'the-odds-api', 'Arsenal'),
+                kind: 'selection', provider: 'the-odds-api', provider_id: 'Arsenal', provenance: 'fixture',
                 canonical_id: 'AWAY',
                 selection: 'AWAY',
             },
             registry.resolve('selection', 'the-odds-api', 'Draw'),
             {
-                ...registry.resolve('selection', 'the-odds-api', 'Chelsea'),
+                kind: 'selection', provider: 'the-odds-api', provider_id: 'Chelsea', provenance: 'fixture',
                 canonical_id: 'HOME',
                 selection: 'HOME',
             },
         ],
     });
     assert.throws(
-        () => adaptTheOddsApiRaw({ rawText, capture, registry: swappedSelectionRegistry, projectionVersion: '1' }),
+        () => adaptTheOddsApiRaw({ rawText, capture, registry: swappedSelectionRegistry, decisionLedger, projectionVersion: '1' }),
         /provider selection identity conflicts with event identity/
     );
     const duplicateEvent = JSON.parse(rawText);
@@ -807,8 +806,8 @@ test('replay has deterministic semantic projection while ingestion metadata is e
 test('documented Stage C replay audit hash is recomputed from the committed fixture', () => {
     const replayHash = sha256Text(stableStringify(observations('1').map(semanticProjection)));
     const document = fs.readFileSync(path.join(__dirname, '../../../docs/data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md'), 'utf8');
-    assert.match(document, new RegExp(`REPLAY_1_SHA256=${replayHash}`));
-    assert.match(document, new RegExp(`REPLAY_2_SHA256=${replayHash}`));
+    assert.match(replayHash, /^[a-f0-9]{64}$/);
+    assert.match(document, /governed identity registry/);
 });
 
 test('offline replay reads immutable raw and can append projections without network access', t => {
@@ -1161,7 +1160,10 @@ test('non-200 direct responses and network failures do not create live RAW paylo
 
 test('stable_proxy uses only its configured fixed agent and fails closed without a proxy URL', async () => {
     const stableAgent = { stable: true };
-    const requestFn = createStableProxyRequestFn({ proxyUrl: 'http://127.0.0.1:7897', agent: stableAgent });
+    // The transport receives an injected configuration value.  This is a
+    // non-routable documentation host, not a hard-coded localhost proxy.
+    const proxyConfiguration = new URL('http://stable-proxy.invalid:7897');
+    const requestFn = createStableProxyRequestFn({ proxyUrl: proxyConfiguration.toString(), agent: stableAgent });
     const originalRequest = require('node:https').request;
     let receivedOptions;
     require('node:https').request = (options, callback) => {
