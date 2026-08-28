@@ -7,6 +7,7 @@
     "required": [
         "schema_version",
         "projection_version",
+        "projection_available_at",
         "observation_id",
         "canonical_event_id",
         "identity_decision_id",
@@ -198,6 +199,11 @@
     "properties": {
         "schema_version": { "const": "footballprediction-market-observation/v1" },
         "projection_version": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "projection_available_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-9]))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?Z$"
+        },
         "observation_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "canonical_event_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "identity_decision_id": { "type": "string", "minLength": 1, "pattern": "\\S" },

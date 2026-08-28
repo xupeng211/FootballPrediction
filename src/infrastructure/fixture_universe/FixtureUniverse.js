@@ -8,12 +8,12 @@ const crypto = require('node:crypto');
 const { extractNextData, extractFixtures, extractPageIdentity } = require('../fotmob/FotMobCandidateExporter');
 const { sha256Text, stableStringify, compareUtcTimestamps, isUtcTimestamp } = require('../market_evidence/contracts');
 const { createIdentityRegistry } = require('../market_evidence/identityRegistry');
+const { KICKOFF_TOLERANCE_SECONDS, normalizeIdentityText } = require('./identityRules');
 
 const SCHEMA_VERSION = 'footballprediction-fixture-universe/v1';
 const REGISTRY_VERSION = 'fixture-identity-registry/v1';
 const RULESET_VERSION = 'fixture-identity-ruleset/v1';
 const RESOLVER_VERSION = 'fixture-identity-resolver/v1';
-const KICKOFF_TOLERANCE_SECONDS = 900;
 const COMPETITION_ID = 'cmp_epl';
 const SEASON = '2026/2027';
 
@@ -22,15 +22,15 @@ function opaque(prefix, allocate) {
     if (typeof value !== 'string' || !value) throw new Error('opaque ID allocator returned an invalid value');
     return `${prefix}_${value.replace(new RegExp(`^${prefix}_`), '')}`;
 }
-function normalize(value) {
-    return String(value || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
-}
+const normalize = normalizeIdentityText;
 function semanticHash(value) { return sha256Text(stableStringify(value)); }
 function secondsBetween(a, b) { return Math.abs(Date.parse(a) - Date.parse(b)) / 1000; }
 function by(value, field) { return [...value].sort((a, b) => String(a[field]).localeCompare(String(b[field]))); }
 
 function validateAllocationSnapshot(allocation, rawSha256) {
     if (!allocation || typeof allocation !== 'object' || Array.isArray(allocation)) throw new Error('REPLAY requires immutable allocation snapshot');
+    const topLevel = ['schema_version', 'authority', 'fixtures', 'teams', 'provenance_raw_sha256', 'content_sha256'];
+    if (Object.keys(allocation).some(key => !topLevel.includes(key))) throw new Error('allocation snapshot contains unknown field');
     if (allocation.schema_version !== 'fixture-identity-allocation/v1' || allocation.authority !== 'FootballPrediction') throw new Error('allocation snapshot schema is invalid');
     if (!/^[a-f0-9]{64}$/.test(allocation.content_sha256 || '') || allocation.content_sha256 !== semanticHash({ schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256 })) throw new Error('allocation snapshot content hash is invalid');
     if (allocation.provenance_raw_sha256 !== rawSha256 || !Array.isArray(allocation.fixtures) || !Array.isArray(allocation.teams)) throw new Error('allocation snapshot provenance is invalid');
@@ -44,6 +44,12 @@ function validateAllocationSnapshot(allocation, rawSha256) {
     }
     const teamIds = allocation.teams.map(row => row?.canonical_team_id);
     if (teamIds.some(value => typeof value !== 'string' || !value) || new Set(teamIds).size !== teamIds.length) throw new Error('allocation snapshot canonical_team_id is not unique');
+    if (allocation.fixtures.some(row => Object.keys(row || {}).some(key => !['fotmob_event_id', 'canonical_fixture_id', 'canonical_event_id'].includes(key)))) throw new Error('allocation fixture contains unknown field');
+    if (allocation.teams.some(row => Object.keys(row || {}).some(key => !['fotmob_name', 'canonical_team_id', 'canonical_name'].includes(key)))) throw new Error('allocation team contains unknown field');
+    if (allocation.fixtures.some(row => !/^fx_[A-Za-z0-9]+$/.test(row.canonical_fixture_id) || !/^evt_[A-Za-z0-9]+$/.test(row.canonical_event_id))) throw new Error('allocation snapshot canonical fixture IDs are invalid');
+    if (allocation.teams.some(row => !/^team_[A-Za-z0-9]+$/.test(row.canonical_team_id) || typeof row.canonical_name !== 'string' || !row.canonical_name.trim())) throw new Error('allocation snapshot canonical team IDs are invalid');
+    const normalizedTeams = allocation.teams.map(row => normalize(row.fotmob_name));
+    if (normalizedTeams.some(value => !value) || new Set(normalizedTeams).size !== normalizedTeams.length) throw new Error('allocation snapshot normalized fotmob_name is not unique');
     return allocation;
 }
 function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = null, allocate = null, mode = 'INITIAL_SEED' }) {
@@ -56,6 +62,12 @@ function seedFotMobFixtureUniverse({ rawHtml, rawSha256, manifest, allocation = 
     }
     if (!['INITIAL_SEED', 'REPLAY'].includes(mode)) throw new Error('fixture seed mode is invalid');
     const validatedAllocation = mode === 'REPLAY' ? validateAllocationSnapshot(allocation, rawSha256) : allocation;
+    if (mode === 'REPLAY') {
+        const fixtureIds = new Set(extracted.fixtures.map(source => source.id));
+        const teamNames = new Set(extracted.fixtures.flatMap(source => [normalize(source.home), normalize(source.away)]));
+        if (validatedAllocation.fixtures.length !== fixtureIds.size || validatedAllocation.fixtures.some(row => !fixtureIds.has(row.fotmob_event_id))) throw new Error('REPLAY allocation fixture coverage is invalid');
+        if (validatedAllocation.teams.length !== teamNames.size || validatedAllocation.teams.some(row => !teamNames.has(normalize(row.fotmob_name)))) throw new Error('REPLAY allocation team coverage is invalid');
+    }
     const prior = new Map((validatedAllocation?.fixtures || []).map(row => [row.fotmob_event_id, row]));
     const priorTeams = new Map((validatedAllocation?.teams || []).map(row => [normalize(row.fotmob_name), row]));
     const teams = new Map();

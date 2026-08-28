@@ -10,10 +10,10 @@ const {
     sha256Text,
     stableStringify,
 } = require('./contracts');
+const { normalizeIdentityText } = require('../fixture_universe/identityRules');
 
 const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
-function normalizeIdentityText(value) { return String(value || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US'); }
 
 function resolvePriceSide(bookmaker, market, outcome, canonicalBookmaker) {
     if (market.key === 'h2h_lay') return 'LAY';
@@ -198,10 +198,13 @@ function adaptTheOddsApiRawInternal({
     capture,
     registry,
     projectionVersion = '1',
+    projectionAvailableAt = null,
     allowedProviderEventIds = null,
     supportedMarketKeys = ['h2h'],
 }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
+    const projectionAvailable = projectionAvailableAt === null ? capture.ingested_at : projectionAvailableAt;
+    if (!isUtcTimestamp(projectionAvailable) || compareUtcTimestamps(projectionAvailable, capture.ingested_at) < 0) throw new Error('projection availability must be UTC and not precede ingestion');
     const payload = JSON.parse(rawText);
     if (!Array.isArray(payload)) throw new Error('The Odds API payload must be an array');
     const rawSha256 = sha256Text(rawText);
@@ -338,6 +341,7 @@ function adaptTheOddsApiRawInternal({
                     ].join('|');
                     const observation = createObservation({
                         projection_version: projectionVersion,
+                        projection_available_at: projectionAvailable,
                         observation_id: sha256Text(idSeed),
                         canonical_event_id: canonicalEvent.canonical_id,
                         identity_decision_id: canonicalEvent.identity_decision_id,

@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const { sha256Text, stableStringify, isUtcTimestamp } = require('./contracts');
+const { KICKOFF_TOLERANCE_SECONDS } = require('../fixture_universe/identityRules');
 
 const KINDS = new Set(['event', 'bookmaker', 'market', 'selection']);
 const PERIODS = new Set(['MATCH', 'FIRST_HALF']);
@@ -100,7 +101,7 @@ function assertEventMapping(mapping) {
         throw new Error(`event mapping requires valid provider_observed_kickoff_utc: ${mapping.provider_id}`);
     }
     if (mapping.identity_decision_status !== 'MATCHED') throw new Error(`event mapping requires MATCHED identity decision: ${mapping.provider_id}`);
-    if (Math.abs(Date.parse(mapping.kickoff_utc) - Date.parse(mapping.provider_observed_kickoff_utc)) / 1000 > 900) throw new Error(`event mapping kickoff exceeds identity tolerance: ${mapping.provider_id}`);
+    if (Math.abs(Date.parse(mapping.kickoff_utc) - Date.parse(mapping.provider_observed_kickoff_utc)) / 1000 > KICKOFF_TOLERANCE_SECONDS) throw new Error(`event mapping kickoff exceeds identity tolerance: ${mapping.provider_id}`);
 }
 
 function assertMarketMapping(mapping) {

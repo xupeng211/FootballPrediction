@@ -85,8 +85,8 @@ async function main() {
     observations.forEach(projection => appendProjection({ ledgerPath, projection, registry }));
     const replay = observations.length
         ? [
-            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry }),
-            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry }),
+            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry, projectionAvailableAt: receipt.ingested_at }),
+            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry, projectionAvailableAt: receipt.ingested_at }),
         ]
         : [];
     const summary = {

@@ -613,6 +613,8 @@ test('canonical observations require governed identity decision and ruleset', ()
         }
         assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, identity_decision_id: 'forged-decision' }, registry }), /valid MATCHED registry decision/);
         assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, identity_registry_sha256: 'f'.repeat(64) }, registry }), /valid MATCHED registry decision/);
+        assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, home_team: 'Forged Home' }, registry }), /valid MATCHED registry decision/);
+        assert.throws(() => appendProjection({ ledgerPath: path.join(root, 'ledger.jsonl'), projection: { ...sample, provider_bookmaker_id: 'forged-bookmaker' }, registry }), /identity mapping unknown/);
     } finally {
         fs.rmSync(root, { recursive: true, force: true });
     }
@@ -782,6 +784,13 @@ test('replay has deterministic semantic projection while ingestion metadata is e
     assert.equal(v2[0].projection_version, '2');
 });
 
+test('documented Stage C replay audit hash is recomputed from the committed fixture', () => {
+    const replayHash = sha256Text(stableStringify(observations('1').map(semanticProjection)));
+    const document = fs.readFileSync(path.join(__dirname, '../../../docs/data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md'), 'utf8');
+    assert.match(document, new RegExp(`REPLAY_1_SHA256=${replayHash}`));
+    assert.match(document, new RegExp(`REPLAY_2_SHA256=${replayHash}`));
+});
+
 test('offline replay reads immutable raw and can append projections without network access', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-replay-'));
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -789,8 +798,8 @@ test('offline replay reads immutable raw and can append projections without netw
     fs.writeFileSync(rawPath, rawText, 'utf8');
     fs.chmodSync(rawPath, 0o444);
     const ledgerPath = path.join(root, 'ledger.jsonl');
-    const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', ledgerPath });
-    const replayedAgain = replayRaw({ rawPath, capture, registry, projectionVersion: '1' });
+    const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', projectionAvailableAt: capture.ingested_at, ledgerPath });
+    const replayedAgain = replayRaw({ rawPath, capture, registry, projectionVersion: '1', projectionAvailableAt: capture.ingested_at });
     assert.equal(replayed.length, 3);
     assert.equal(fs.readFileSync(ledgerPath, 'utf8').trim().split('\n').length, 3);
     assert.equal(
@@ -819,6 +828,7 @@ test('offline replay reads immutable raw and can append projections without netw
                 capture: { ...capture, raw_sha256: '0'.repeat(64) },
                 registry,
                 projectionVersion: '1',
+                projectionAvailableAt: capture.ingested_at,
             }),
         /does not match replay input/
     );
@@ -955,7 +965,7 @@ test('as-of projection selection is explicit and later reprojection cannot rewri
         line: v1.line,
         decision_time: '2026-08-27T13:31:50Z',
     };
-    const futureV2 = { ...v2, response_received_at: '2026-08-28T13:31:49Z', ingested_at: '2026-08-28T13:31:49Z' };
+    const futureV2 = { ...v2, projection_available_at: '2026-08-28T13:31:49Z' };
     assert.equal(latestAsOf([v1, futureV2], query).odds_decimal, v1.odds_decimal, 'a later-known reprojection cannot alter the past as-of result');
     assert.throws(() => latestAsOf([v1, v2], query), /projection_version is required/);
     assert.equal(latestAsOf([v1, v2], { ...query, projection_version: '1' }).odds_decimal, v1.odds_decimal);

@@ -18,8 +18,9 @@ function knowledgeTime(row) {
         ? normalizeUtcTimestamp(row.response_received_at)
         : null;
     const ingestedAt = isUtcTimestamp(row?.ingested_at) ? normalizeUtcTimestamp(row.ingested_at) : null;
-    if (receivedAt === null || ingestedAt === null) return null;
-    return compareUtcTimestamps(receivedAt, ingestedAt) >= 0 ? receivedAt : ingestedAt;
+    const projectionAt = isUtcTimestamp(row?.projection_available_at) ? normalizeUtcTimestamp(row.projection_available_at) : null;
+    if (receivedAt === null || ingestedAt === null || projectionAt === null) return null;
+    return [receivedAt, ingestedAt, projectionAt].sort(compareCodeUnits).at(-1);
 }
 
 function isKnownBy(row, cutoff) {
@@ -34,6 +35,20 @@ function compareKnowledgeToCutoff(row, cutoff) {
 
 function compareKnowledgeTime(left, right) {
     return compareUtcTimestamps(knowledgeTime(left), knowledgeTime(right));
+}
+
+function assertNoSemanticTie(left, right) {
+    if (compareKnowledgeTime(left, right) !== 0) return;
+    const fields = ['odds_decimal', 'raw_sha256', 'capture_id', 'provider_event_id', 'provider_bookmaker_id', 'provider_market_id', 'canonical_selection_id'];
+    if (fields.some(field => left[field] !== right[field])) throw new Error('as-of observation semantic conflict at identical knowledge time');
+}
+
+function assertNoEqualKnowledgeConflicts(rows) {
+    for (let index = 0; index < rows.length; index += 1) {
+        for (let other = index + 1; other < rows.length; other += 1) {
+            if (rows[index].canonical_selection_id === rows[other].canonical_selection_id) assertNoSemanticTie(rows[index], rows[other]);
+        }
+    }
 }
 
 function parsePriceSide(value) {
@@ -98,6 +113,7 @@ function latestAsOf(
             isKnownBy(row, time)
     );
     const projected = selectProjection(eligible, projection_version);
+    assertNoEqualKnowledgeConflicts(projected);
     return (
         projected
             .sort((a, b) => compareKnowledgeTime(b, a) || compareCodeUnits(b.observation_id, a.observation_id))[0] ||
@@ -120,6 +136,7 @@ function latestAsOfMarket(observations, query) {
             isKnownBy(row, decisionTime)
     );
     const candidates = selectProjection(eligible, query.projection_version);
+    assertNoEqualKnowledgeConflicts(candidates);
     const bySelection = new Map();
     for (const row of candidates) {
         const current = bySelection.get(row.canonical_selection_id);
@@ -129,6 +146,7 @@ function latestAsOfMarket(observations, query) {
             (compareKnowledgeTime(row, current) === 0 &&
                 compareCodeUnits(row.observation_id, current.observation_id) > 0)
         ) {
+            if (current) assertNoSemanticTie(row, current);
             bySelection.set(row.canonical_selection_id, row);
         }
     }
@@ -166,6 +184,7 @@ function deriveTimeline(
     );
     const visible = eligible.filter(row => isKnownBy(row, decisionTime));
     const governed = selectProjection(visible, projection_version);
+    assertNoEqualKnowledgeConflicts(governed);
     const preKickoff = governed.filter(row => compareKnowledgeToCutoff(row, kickoffTime) < 0);
     const bySelection = selection =>
         governed

@@ -14,6 +14,7 @@ const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
 const OBSERVATION_FIELDS = new Set([
     'schema_version',
     'projection_version',
+    'projection_available_at',
     'observation_id',
     'canonical_event_id',
     'identity_decision_id',
@@ -204,6 +205,7 @@ function createObservation(fields) {
     const observation = {
         schema_version: schemaVersion,
         projection_version: requireText(fields.projection_version, 'projection_version', errors),
+        projection_available_at: requireUtc(fields.projection_available_at, 'projection_available_at', errors),
         observation_id: requireText(fields.observation_id, 'observation_id', errors),
         canonical_event_id: requireText(fields.canonical_event_id, 'canonical_event_id', errors),
         identity_decision_id: requireText(fields.identity_decision_id, 'identity_decision_id', errors),
@@ -297,6 +299,9 @@ function createObservation(fields) {
     }
     if (compareUtcTimestamps(observation.ingested_at, observation.response_received_at) < 0) {
         errors.push('ingested_at precedes response_received_at');
+    }
+    if (compareUtcTimestamps(observation.projection_available_at, observation.ingested_at) < 0) {
+        errors.push('projection_available_at precedes ingested_at');
     }
     if (errors.length) throw new Error(`invalid MarketObservation: ${errors.join('; ')}`);
     return Object.freeze(observation);

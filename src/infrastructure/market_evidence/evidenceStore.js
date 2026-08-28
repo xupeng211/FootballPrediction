@@ -10,6 +10,7 @@ const {
     createObservation,
     COMPETITION,
 } = require('./contracts');
+const { normalizeIdentityText } = require('../fixture_universe/identityRules');
 /* eslint-disable complexity -- receipt validation enumerates independent safety invariants. */
 
 function assertNoSecret(value) {
@@ -432,7 +433,13 @@ function appendProjection({ ledgerPath, projection, registry }) {
     const validated = createObservation(projection);
     if (!registry || typeof registry.resolve !== 'function') throw new Error('identity registry is required for canonical ledger append');
     const event = registry.resolve('event', validated.provider, validated.provider_event_id);
-    if (event.canonical_id !== validated.canonical_event_id || event.identity_decision_id !== validated.identity_decision_id || event.identity_ruleset_version !== validated.identity_ruleset_version || event.identity_decision_status !== 'MATCHED' || registry.version !== validated.identity_registry_version || registry.content_sha256 !== validated.identity_registry_sha256) throw new Error('canonical observation identity decision is not a valid MATCHED registry decision');
+    const bookmaker = registry.resolve('bookmaker', validated.provider, validated.provider_bookmaker_id);
+    const market = registry.resolve('market', validated.provider, validated.provider_market_id);
+    const selection = validated.selection === 'DRAW' ? registry.resolve('selection', validated.provider, 'Draw') : null;
+    const eventMatches = event.canonical_id === validated.canonical_event_id && event.identity_decision_id === validated.identity_decision_id && event.identity_ruleset_version === validated.identity_ruleset_version && event.identity_decision_status === 'MATCHED' && normalizeIdentityText(event.home_team) === normalizeIdentityText(validated.home_team) && normalizeIdentityText(event.away_team) === normalizeIdentityText(validated.away_team) && event.provider_observed_kickoff_utc === validated.kickoff_utc;
+    const marketMatches = bookmaker.canonical_id === validated.canonical_bookmaker_id && bookmaker.price_side === validated.price_side && market.canonical_id === validated.canonical_market_id && market.period === validated.period && market.market_type === validated.market_type && market.line === validated.line;
+    const selectionMatches = validated.selection === 'HOME' || validated.selection === 'AWAY' ? validated.canonical_selection_id === validated.selection : selection.canonical_id === validated.canonical_selection_id && selection.selection === validated.selection;
+    if (!eventMatches || !marketMatches || !selectionMatches || registry.version !== validated.identity_registry_version || registry.content_sha256 !== validated.identity_registry_sha256) throw new Error('canonical observation identity decision is not a valid MATCHED registry decision');
     if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
     const parentDir = path.dirname(ledgerPath);
     ensureDirectory(parentDir, 'ledger parent directory');

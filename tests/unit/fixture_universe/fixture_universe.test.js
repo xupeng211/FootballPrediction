@@ -190,6 +190,11 @@ test('fixture identity rejects forged RAW provenance and duplicate canonical all
     const unsigned = { schema_version: duplicate.schema_version, authority: duplicate.authority, fixtures: duplicate.fixtures, teams: duplicate.teams, provenance_raw_sha256: duplicate.provenance_raw_sha256 };
     duplicate.content_sha256 = semanticReplayHash(unsigned);
     assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: duplicate, mode: 'REPLAY' }), /canonical_event_id is not unique/);
+    const providerDerived = JSON.parse(JSON.stringify(universe.allocationSnapshot));
+    providerDerived.fixtures[0].canonical_event_id = 'provider-business-id';
+    const providerUnsigned = { schema_version: providerDerived.schema_version, authority: providerDerived.authority, fixtures: providerDerived.fixtures, teams: providerDerived.teams, provenance_raw_sha256: providerDerived.provenance_raw_sha256 };
+    providerDerived.content_sha256 = semanticReplayHash(providerUnsigned);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: providerDerived, mode: 'REPLAY' }), /canonical fixture IDs are invalid/);
 });
 
 test('fixture replay requires an immutable allocation and is deterministic with the same allocation', () => {
