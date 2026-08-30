@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FootballPrediction Market Evidence Transaction Store V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "store_type", "authority_owner", "allocation", "genesis_state_hash", "transaction_schema_version", "bootstrap_metadata", "store_sha256"],
+  "properties": {
+    "schema_version": {"const": "footballprediction-market-evidence-transaction-store/v1"},
+    "store_type": {"const": "market-evidence-transaction-v1"},
+    "authority_owner": {"const": "FootballPrediction"},
+    "allocation": {"type": "object"},
+    "genesis_state_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "transaction_schema_version": {"const": "footballprediction-market-evidence-transaction/v1"},
+    "bootstrap_metadata": {"type": "object"},
+    "store_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

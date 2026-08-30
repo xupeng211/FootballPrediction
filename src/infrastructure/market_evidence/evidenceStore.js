@@ -8,10 +8,12 @@ const {
     isSafeEvidenceReference,
     compareUtcTimestamps,
     createObservation,
+    semanticProjection,
     COMPETITION,
 } = require('./contracts');
 const { normalizeIdentityText } = require('../fixture_universe/identityRules');
 const { ledgerForRegistry } = require('../fixture_universe/VerifiedAllocationAuthority');
+const { isVerifiedIdentityDecisionLedger } = require('../fixture_universe/IdentityDecisionLedger');
 /* eslint-disable complexity -- receipt validation enumerates independent safety invariants. */
 
 function assertNoSecret(value) {
@@ -234,8 +236,20 @@ function writeReceipt({ rootDir, receipt }) {
     }
     const target = path.join(rootDir, 'receipts', `${validated.capture_id}.json`);
     ensureDirectory(path.join(rootDir, 'receipts'), 'receipt directory');
-    if (fs.existsSync(target)) throw new Error('capture receipt is immutable');
-    fs.writeFileSync(target, `${serialized}\n`, { flag: 'wx', mode: 0o444 });
+    const bytes = `${serialized}\n`;
+    const existingReceipt = () => {
+        const stat = fs.lstatSync(target);
+        if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('capture receipt must be an immutable regular file');
+        const existingBytes = fs.readFileSync(target, 'utf8');
+        if (existingBytes === bytes) return target;
+        throw new Error('capture receipt already exists with different content');
+    };
+    try {
+        fs.writeFileSync(target, bytes, { flag: 'wx', mode: 0o444 });
+    } catch (error) {
+        if (error?.code === 'EEXIST') return existingReceipt();
+        throw error;
+    }
     fs.chmodSync(target, 0o444);
     return target;
 }
@@ -437,13 +451,15 @@ function appendProjection({ ledgerPath, projection, registry, decisionLedger }) 
     const bookmaker = registry.resolve('bookmaker', validated.provider, validated.provider_bookmaker_id);
     const market = registry.resolve('market', validated.provider, validated.provider_market_id);
     const selection = validated.selection === 'DRAW' ? registry.resolve('selection', validated.provider, 'Draw') : null;
-    const eventMatches = event.canonical_id === validated.canonical_event_id && event.identity_decision_id === validated.identity_decision_id && event.identity_ruleset_version === validated.identity_ruleset_version && event.identity_decision_status === 'MATCHED' && event.season === validated.season && normalizeIdentityText(event.home_team) === normalizeIdentityText(validated.home_team) && normalizeIdentityText(event.away_team) === normalizeIdentityText(validated.away_team) && compareUtcTimestamps(event.provider_observed_kickoff_utc, validated.kickoff_utc) === 0;
+    const eventMatches = event.canonical_id === validated.canonical_event_id && event.identity_decision_id === validated.identity_decision_id && event.identity_ruleset_version === validated.identity_ruleset_version && event.identity_resolver_version === validated.identity_resolver_version && event.identity_decision_status === 'MATCHED' && event.season === validated.season && normalizeIdentityText(event.home_team) === normalizeIdentityText(validated.home_team) && normalizeIdentityText(event.away_team) === normalizeIdentityText(validated.away_team) && compareUtcTimestamps(event.provider_observed_kickoff_utc, validated.kickoff_utc) === 0;
     const marketMatches = bookmaker.canonical_id === validated.canonical_bookmaker_id && bookmaker.price_side === validated.price_side && market.canonical_id === validated.canonical_market_id && market.period === validated.period && market.market_type === validated.market_type && market.line === validated.line;
     const selectionMatches = validated.selection === 'HOME' || validated.selection === 'AWAY' ? validated.canonical_selection_id === validated.selection : selection.canonical_id === validated.canonical_selection_id && selection.selection === validated.selection;
     if (!eventMatches || !marketMatches || !selectionMatches || registry.version !== validated.identity_registry_version || registry.content_sha256 !== validated.identity_registry_sha256) throw new Error('canonical observation identity decision is not a valid MATCHED registry decision');
-    const verifiedLedger = decisionLedger || ledgerForRegistry(registry);
+    const registryLedger = ledgerForRegistry(registry);
+    if (decisionLedger !== undefined && decisionLedger !== null && !isVerifiedIdentityDecisionLedger(decisionLedger, registry.allocationAuthority)) throw new Error('unverified identity decision ledger was supplied');
+    const verifiedLedger = decisionLedger || registryLedger;
     if (!verifiedLedger || typeof verifiedLedger.assertActiveMatched !== 'function') throw new Error('verified identity decision ledger is required');
-    verifiedLedger.assertActiveMatched({ provider: validated.provider, providerEventId: validated.provider_event_id, canonicalEventId: validated.canonical_event_id, decisionId: validated.identity_decision_id, rulesetVersion: validated.identity_ruleset_version, resolverVersion: 'fixture-identity-resolver/v1' });
+    verifiedLedger.assertActiveMatched({ provider: validated.provider, providerEventId: validated.provider_event_id, canonicalEventId: validated.canonical_event_id, decisionId: validated.identity_decision_id, rulesetVersion: validated.identity_ruleset_version, resolverVersion: validated.identity_resolver_version });
     if (typeof ledgerPath !== 'string' || !ledgerPath.trim()) throw new Error('ledger path is required');
     const parentDir = path.dirname(ledgerPath);
     ensureDirectory(parentDir, 'ledger parent directory');
@@ -453,7 +469,7 @@ function appendProjection({ ledgerPath, projection, registry, decisionLedger }) 
     const existing = fs.existsSync(ledgerPath) ? verifyLedgerIntegrity(ledgerPath) : { content: '', rows: [] };
     const duplicate = existing.rows.find(row => row.observation_id === validated.observation_id);
     if (duplicate) {
-        if (stableStringify(duplicate) === stableStringify(validated)) return validated;
+        if (stableStringify(semanticProjection(duplicate)) === stableStringify(semanticProjection(validated))) return duplicate;
         throw new Error(`conflicting MarketObservation append: ${validated.observation_id}`);
     }
     const line = `${stableStringify(validated)}\n`;

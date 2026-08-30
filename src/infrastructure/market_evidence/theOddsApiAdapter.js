@@ -12,6 +12,8 @@ const {
 } = require('./contracts');
 const { normalizeIdentityText } = require('../fixture_universe/identityRules');
 const { ledgerForRegistry } = require('../fixture_universe/VerifiedAllocationAuthority');
+const { isVerifiedIdentityDecisionLedger } = require('../fixture_universe/IdentityDecisionLedger');
+const { isVerifiedProspectiveGovernanceContext } = require('../fixture_universe/ProspectiveGovernanceContext');
 
 const ADAPTER_NAME = 'the-odds-api';
 const ADAPTER_VERSION = '1.0.0';
@@ -81,6 +83,9 @@ function assertCaptureMetadata({ rawText, capture, registry, projectionVersion }
     }
     if (compareUtcTimestamps(capture.response_received_at, capture.request_started_at) < 0) {
         throw new Error('capture response precedes request');
+    }
+    if (compareUtcTimestamps(capture.ingested_at, capture.response_received_at) < 0) {
+        throw new Error('capture ingestion precedes response');
     }
 }
 
@@ -205,8 +210,10 @@ function adaptTheOddsApiRawInternal({
     supportedMarketKeys = ['h2h'],
 }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
-    if (['REPLAY', 'LIVE_CAPTURE'].includes(capture.acquisition_mode) && projectionAvailableAt === null) throw new Error(`${capture.acquisition_mode} projection availability is required`);
-    const projectionAvailable = projectionAvailableAt === null ? capture.ingested_at : projectionAvailableAt;
+    if (projectionAvailableAt !== null && projectionAvailableAt !== undefined) throw new Error('projection availability is publisher-owned and cannot be supplied by the caller');
+    const projectionAvailable = ['REPLAY', 'LIVE_CAPTURE'].includes(capture.acquisition_mode)
+        ? new Date(Math.max(Date.now(), Date.parse(capture.ingested_at))).toISOString()
+        : capture.ingested_at;
     if (!isUtcTimestamp(projectionAvailable) || compareUtcTimestamps(projectionAvailable, capture.ingested_at) < 0) throw new Error('projection availability must be UTC and not precede ingestion');
     const payload = JSON.parse(rawText);
     if (!Array.isArray(payload)) throw new Error('The Odds API payload must be an array');
@@ -242,9 +249,11 @@ function adaptTheOddsApiRawInternal({
         seenProviderEventIds.add(event.id);
         if (allowedProviderEventIds !== null && !allowedProviderEventIds.has(event.id)) continue;
         const canonicalEvent = registry.resolve('event', 'the-odds-api', event.id);
-        const verifiedLedger = decisionLedger || ledgerForRegistry(registry);
+        const registryLedger = ledgerForRegistry(registry);
+        if (decisionLedger !== undefined && decisionLedger !== null && !isVerifiedIdentityDecisionLedger(decisionLedger, registry.allocationAuthority) && !isVerifiedProspectiveGovernanceContext(decisionLedger, registry.allocationAuthority)) throw new Error('unverified identity decision ledger was supplied');
+        const verifiedLedger = decisionLedger || registryLedger;
         if (!verifiedLedger || typeof verifiedLedger.assertActiveMatched !== 'function') throw new Error('verified identity decision ledger is required');
-        verifiedLedger.assertActiveMatched({ provider: 'the-odds-api', providerEventId: event.id, canonicalEventId: canonicalEvent.canonical_id, decisionId: canonicalEvent.identity_decision_id, rulesetVersion: canonicalEvent.identity_ruleset_version, resolverVersion: 'fixture-identity-resolver/v1' });
+        verifiedLedger.assertActiveMatched({ provider: 'the-odds-api', providerEventId: event.id, canonicalEventId: canonicalEvent.canonical_id, decisionId: canonicalEvent.identity_decision_id, rulesetVersion: canonicalEvent.identity_ruleset_version, resolverVersion: canonicalEvent.identity_resolver_version });
         if (
             normalizeIdentityText(event.home_team) !== normalizeIdentityText(canonicalEvent.home_team) ||
             normalizeIdentityText(event.away_team) !== normalizeIdentityText(canonicalEvent.away_team) ||
@@ -339,7 +348,6 @@ function adaptTheOddsApiRawInternal({
                         registry.content_sha256,
                         capture.capture_id,
                         capture.response_received_at,
-                        projectionAvailable,
                         canonicalEvent.identity_decision_id,
                         event.id,
                         bookmaker.key,
@@ -354,6 +362,7 @@ function adaptTheOddsApiRawInternal({
                         canonical_event_id: canonicalEvent.canonical_id,
                         identity_decision_id: canonicalEvent.identity_decision_id,
                         identity_ruleset_version: canonicalEvent.identity_ruleset_version,
+                        identity_resolver_version: canonicalEvent.identity_resolver_version,
                         provider: 'the-odds-api',
                         provider_event_id: event.id,
                         canonical_market_id: canonicalMarket.canonical_id,

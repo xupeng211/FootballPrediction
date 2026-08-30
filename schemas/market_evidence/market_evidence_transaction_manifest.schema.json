@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FootballPrediction Market Evidence Transaction V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "transaction_id", "sequence", "logical_batch_key", "batch_content_hash", "transaction_content_hash", "parent_transaction_id", "parent_transaction_content_hash", "expected_parent_state_hash", "post_state_hash", "allocation", "source", "versions", "artifacts", "decision_count", "observation_count", "registry_delta_count", "quarantine_count", "publication_metadata", "manifest_sha256"],
+  "properties": {
+    "schema_version": {"const": "footballprediction-market-evidence-transaction/v1"},
+    "transaction_id": {"type": "string", "pattern": "^tx_[a-f0-9]{64}$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "logical_batch_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "batch_content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "transaction_content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "parent_transaction_id": {"type": ["string", "null"], "pattern": "^tx_[a-f0-9]{64}$"},
+    "parent_transaction_content_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "expected_parent_state_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "post_state_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "allocation": {"type": "object"},
+    "source": {"type": "object"},
+    "versions": {"type": "object"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_decisions.jsonl", "observations.jsonl", "registry_delta.json", "metadata.json"],
+      "patternProperties": {
+        "^(identity_decisions\\.jsonl|observations\\.jsonl|registry_delta\\.json|metadata\\.json)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "byte_count", "semantic_sha256", "record_count"],
+          "properties": {
+            "path": {"type": "string"},
+            "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "byte_count": {"type": "integer", "minimum": 0},
+            "semantic_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "record_count": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "decision_count": {"type": "integer", "minimum": 0},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "registry_delta_count": {"type": "integer", "minimum": 0},
+    "quarantine_count": {"type": "integer", "minimum": 0},
+    "publication_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["knowledge_time"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "prepared_at": {"type": ["string", "null"]},
+        "committed_at": {"type": ["string", "null"]},
+        "knowledge_time": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?Z$"}
+      }
+    },
+    "manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

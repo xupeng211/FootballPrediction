@@ -19,6 +19,7 @@ const OBSERVATION_FIELDS = new Set([
     'canonical_event_id',
     'identity_decision_id',
     'identity_ruleset_version',
+    'identity_resolver_version',
     'provider',
     'provider_event_id',
     'canonical_market_id',
@@ -181,6 +182,11 @@ function compareUtcTimestamps(left, right) {
 function semanticProjection(observation) {
     const copy = { ...observation };
     delete copy.ingested_at;
+    // projection_available_at is publisher-owned knowledge time.  It is
+    // intentionally excluded from the semantic replay identity so a replay
+    // cannot turn a historical source timestamp into a deterministic
+    // backdated authority fact.
+    delete copy.projection_available_at;
     return stableCanonicalize(copy);
 }
 
@@ -210,6 +216,7 @@ function createObservation(fields) {
         canonical_event_id: requireText(fields.canonical_event_id, 'canonical_event_id', errors),
         identity_decision_id: requireText(fields.identity_decision_id, 'identity_decision_id', errors),
         identity_ruleset_version: requireText(fields.identity_ruleset_version, 'identity_ruleset_version', errors),
+        identity_resolver_version: requireText(fields.identity_resolver_version, 'identity_resolver_version', errors),
         provider: requireText(fields.provider, 'provider', errors),
         provider_event_id: requireText(fields.provider_event_id, 'provider_event_id', errors),
         canonical_market_id: requireText(fields.canonical_market_id, 'canonical_market_id', errors),

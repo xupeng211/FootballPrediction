@@ -7,9 +7,9 @@ const universeAuthorities = new WeakMap();
 const decisionAuthorities = new WeakMap();
 const registryLedgers = new WeakMap();
 
-function issueAllocationAuthority(universe, allocationSnapshotSha256) {
+function issueAllocationAuthority(universe, allocationSnapshot) {
     const authority = Object.freeze({});
-    universeAuthorities.set(universe, { authority, allocationSnapshotSha256 });
+    universeAuthorities.set(universe, { authority, allocationSnapshot });
     return authority;
 }
 function allocationAuthorityFor(universe) {
@@ -24,8 +24,8 @@ function assertAllocationAuthority(authority, canonicalEventId) {
     return record;
 }
 const allocationBrands = new WeakMap();
-function bindAllocationEvents(authority, allocationSnapshotSha256, eventIds) {
-    allocationBrands.set(authority, { allocationSnapshotSha256, eventIds: new Set(eventIds) });
+function bindAllocationEvents(authority, allocationSnapshot, eventIds) {
+    allocationBrands.set(authority, { allocationSnapshotSha256: allocationSnapshot.content_sha256, provenanceRawSha256: allocationSnapshot.provenance_raw_sha256, schemaVersion: allocationSnapshot.schema_version, allocationSnapshot, eventIds: new Set(eventIds) });
     return authority;
 }
 function markResolvedDecision(decision, authority) { decisionAuthorities.set(decision, authority); return decision; }
@@ -34,4 +34,5 @@ function assertResolvedDecision(decision, authority) {
 }
 function bindRegistryDecisionLedger(registry, ledger) { registryLedgers.set(registry, ledger); }
 function ledgerForRegistry(registry) { return registryLedgers.get(registry) || null; }
-module.exports = { issueAllocationAuthority, allocationAuthorityFor, bindAllocationEvents, assertAllocationAuthority, markResolvedDecision, assertResolvedDecision, bindRegistryDecisionLedger, ledgerForRegistry };
+function allocationDescriptor(authority) { return assertAllocationAuthority(authority, undefined); }
+module.exports = { issueAllocationAuthority, allocationAuthorityFor, bindAllocationEvents, assertAllocationAuthority, allocationDescriptor, markResolvedDecision, assertResolvedDecision, bindRegistryDecisionLedger, ledgerForRegistry };

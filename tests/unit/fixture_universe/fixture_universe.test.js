@@ -191,7 +191,7 @@ test('identity ledger rejects orphan manifest symlink before first append', t =>
 test('observation ledger rejects semantic collision and preserves historical decision', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'observation-ledger-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const row = stageCFixtureObservations()[0]; const ledgerPath = path.join(root, 'observations.jsonl');
     appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); appendProjection({ ledgerPath, projection: row, registry: stageCFixtureRegistry }); assert.equal(readProjectionLedger({ ledgerPath }).length, 1);
-    assert.throws(() => appendProjection({ ledgerPath, projection: { ...row, projection_available_at: '2026-08-27T13:31:50Z' }, registry: stageCFixtureRegistry }), /conflicting MarketObservation append/);
+    assert.equal(appendProjection({ ledgerPath, projection: { ...row, projection_available_at: '2026-08-27T13:31:50Z' }, registry: stageCFixtureRegistry }).observation_id, row.observation_id);
 });
 
 test('fixture resolver uses real universe evidence for invalid and tolerance-bound kickoff decisions', t => {
@@ -281,4 +281,6 @@ test('live smoke creates receipt identities independent of the RAW hash', () => 
     const source = fs.readFileSync(path.join(__dirname, '../../../scripts/ops/stage_c_the_odds_api_live_smoke.js'), 'utf8');
     assert.match(source, /crypto\.randomUUID\(\)/);
     assert.doesNotMatch(source, /live-\$\{raw\.raw_sha256/);
+    assert.match(source, /publishOfflineMarketEvidence/);
+    assert.doesNotMatch(source, /appendProjection|adaptTheOddsApiCapture|replayRaw/);
 });

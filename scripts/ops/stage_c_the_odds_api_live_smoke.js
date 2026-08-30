@@ -2,51 +2,44 @@
 
 require('dotenv').config();
 
+// The Odds API live entrypoint shares the exact transaction-v1 publication
+// path with offline replay.  Network capture is opt-in; normal execution
+// consumes the already captured evidence bundle and makes no provider call.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { API_HOST, createTheOddsApiClient, createTransportRequestFn } = require('../../src/infrastructure/market_evidence/theOddsApiClient');
-const { loadIdentityRegistry } = require('../../src/infrastructure/market_evidence/identityRegistry');
-const { adaptTheOddsApiCapture, buildCoverageEvidence } = require('../../src/infrastructure/market_evidence/theOddsApiAdapter');
-const { sha256Text, stableStringify } = require('../../src/infrastructure/market_evidence/contracts');
-const {
-    writeImmutableRaw,
-    readImmutableRaw,
-    createCaptureReceipt,
-    writeReceipt,
-    writeCoverageEvidence,
-    appendProjection,
-} = require('../../src/infrastructure/market_evidence/evidenceStore');
-const { replayRaw } = require('../../src/infrastructure/market_evidence/replay');
+const { createTheOddsApiClient } = require('../../src/infrastructure/market_evidence/theOddsApiClient');
+const { writeImmutableRaw, createCaptureReceipt, writeReceipt } = require('../../src/infrastructure/market_evidence/evidenceStore');
+const { loadOfflineEvidence, publishOfflineMarketEvidence } = require('../../src/infrastructure/market_evidence/offlinePipeline');
 
 const evidenceRoot = path.resolve(process.env.STAGE_C_EVIDENCE_ROOT || 'data/market_evidence/live');
-const registryPath = path.resolve('tests/fixtures/market_evidence/identity_registry.stage_c.v1.json');
-
-function directConnectivity() {
-    const requestFn = createTransportRequestFn();
-    return new Promise((resolve, reject) => {
-        const request = requestFn(`https://${API_HOST}/`, { headers: { 'User-Agent': 'FootballPrediction-stage-c-pilot/1.0' } }, response => {
-            response.resume();
-            response.on('end', () => resolve(response.statusCode || null));
-            response.on('error', reject);
-        });
-        request.on('error', reject);
-        request.end();
-    });
-}
+const defaultPaths = {
+    fotmobRawPath: path.join(evidenceRoot, 'fotmob/raw/fotmob-fixtures-47-2026_2027-e8cfe0500b1b.html'),
+    oddsRawPath: path.join(evidenceRoot, 'raw/251ee69904f1b74fd23dd49b5b331826c7ed22232167125ec2e460a3734f15c4.json'),
+    receiptPath: path.join(evidenceRoot, 'receipts/live-251ee69904f1b74f.json'),
+    allocationPath: path.join(evidenceRoot, 'fixture_identity/2026-08-27/allocation_snapshot.json'),
+};
 
 function summarizeBookmakers(rawText) {
     const payload = JSON.parse(rawText);
     const names = new Set();
-    for (const event of payload) {
-        for (const bookmaker of event.bookmakers || []) names.add(String(bookmaker.title || bookmaker.key || '').trim());
-    }
+    for (const event of payload) for (const bookmaker of event.bookmakers || []) names.add(String(bookmaker.title || bookmaker.key || '').trim());
     return [...names].filter(Boolean).sort();
 }
 
-async function main() {
-    if (!process.env.THE_ODDS_API_KEY) throw new Error('THE_ODDS_API_KEY is required');
-    const connectivityStatus = await directConnectivity();
+function offlineInputPaths() {
+    const values = {
+        fotmobRawPath: process.env.STAGE_C_FOTMOB_RAW_PATH || defaultPaths.fotmobRawPath,
+        oddsRawPath: process.env.STAGE_C_ODDS_RAW_PATH || defaultPaths.oddsRawPath,
+        receiptPath: process.env.STAGE_C_ODDS_RECEIPT_PATH || defaultPaths.receiptPath,
+        allocationPath: process.env.STAGE_C_IDENTITY_ALLOCATION_PATH || defaultPaths.allocationPath,
+    };
+    return Object.values(values).every(filePath => fs.existsSync(filePath)) ? values : null;
+}
+
+async function acquireOptInLiveEvidence() {
+    if (process.env.STAGE_C_ALLOW_NETWORK !== 'yes') throw new Error('live network acquisition is disabled; provide existing offline evidence or set STAGE_C_ALLOW_NETWORK=yes');
+    if (!process.env.THE_ODDS_API_KEY) throw new Error('THE_ODDS_API_KEY is required for explicitly authorized live capture');
     const client = createTheOddsApiClient();
     const live = await client.capture({ regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' });
     const captureId = `live-${crypto.randomUUID()}`;
@@ -64,51 +57,36 @@ async function main() {
         raw_evidence_reference: raw.raw_evidence_reference,
         provider_quota: live.provider_quota,
     });
-    writeReceipt({ rootDir: evidenceRoot, receipt });
-    const registry = loadIdentityRegistry(registryPath);
-    let observations = [];
-    let identityError = null;
-    let processingError = null;
-    let coverage;
-    try {
-        const projectionAvailableAt = new Date(Math.max(Date.now(), Date.parse(receipt.response_received_at) + 1)).toISOString();
-        const adapted = adaptTheOddsApiCapture({ rawText: live.rawText, capture: receipt, registry, projectionVersion: '1', projectionAvailableAt });
-        observations = adapted.observations;
-        coverage = adapted.coverage_evidence;
-    } catch (error) {
-        if (/identity mapping|provider event identity conflicts|MATCHED identity decision/.test(error.message)) identityError = error.message;
-        else processingError = error.message;
-        coverage = error.coverage_evidence || buildCoverageEvidence({
-            rawText: live.rawText,
-            expectedProviderBookmakerIds: registry.list('bookmaker', 'the-odds-api').map(entry => entry.provider_id),
-        });
-    }
-    writeCoverageEvidence({ rootDir: evidenceRoot, captureId, evidence: coverage });
-    const ledgerPath = path.join(evidenceRoot, 'projections', `${captureId}.jsonl`);
-    observations.forEach(projection => appendProjection({ ledgerPath, projection, registry }));
-    const replay = observations.length
-        ? [
-            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry, projectionAvailableAt: receipt.ingested_at }),
-            replayRaw({ rawPath: path.join(evidenceRoot, raw.raw_evidence_reference), capture: receipt, registry, projectionAvailableAt: receipt.ingested_at }),
-        ]
-        : [];
+    const receiptPath = writeReceipt({ rootDir: evidenceRoot, receipt });
+    const paths = offlineInputPaths() || {};
+    return { client, live, paths: { ...paths, oddsRawPath: path.join(evidenceRoot, raw.raw_evidence_reference), receiptPath } };
+}
+
+async function main() {
+    const existing = offlineInputPaths();
+    const capture = existing ? { paths: existing, client: null, live: null } : await acquireOptInLiveEvidence();
+    const transactionRoot = path.resolve(process.env.STAGE_C_TRANSACTION_ROOT || path.join(evidenceRoot, 'transactions'));
+    const allocationArtifactPath = path.resolve(process.env.STAGE_C_ALLOCATION_ARTIFACT_PATH || path.join(transactionRoot, 'allocation.authority.json'));
+    const evidence = loadOfflineEvidence(capture.paths);
+    const result = publishOfflineMarketEvidence({
+        ...evidence,
+        allocationArtifactPath,
+        storeRoot: transactionRoot,
+        projectionVersion: '1',
+        supportedMarketKeys: ['h2h', 'h2h_lay'],
+    });
     const summary = {
-        THE_ODDS_API_KEY_PRESENT: 'YES',
-        THE_ODDS_API_DIRECT_CONNECTIVITY: 'PASS',
-        connectivity_http_status: connectivityStatus,
-        http_status: live.http_status,
-        live_api_request_count: client.request_count,
-        real_epl_events_returned: JSON.parse(live.rawText).length,
-        live_bookmakers_returned: summarizeBookmakers(live.rawText),
-        capture_id: captureId,
-        raw_sha256: raw.raw_sha256,
-        raw_sha256_reverify: sha256Text(readImmutableRaw({ rootDir: evidenceRoot, ...raw, expectedSha256: raw.raw_sha256 })) === raw.raw_sha256,
-        real_canonical_observations: observations.length,
-        real_quarantined_observations: identityError ? JSON.parse(live.rawText).length : 0,
-        identity_fail_closed: identityError !== null,
-        processing_fail_closed: processingError !== null,
-        live_replay_1_sha256: replay[0] ? sha256Text(stableStringify(replay[0])) : null,
-        live_replay_2_sha256: replay[1] ? sha256Text(stableStringify(replay[1])) : null,
+        acquisition_mode: evidence.receipt.acquisition_mode,
+        network_acquisition_performed: capture.live !== null,
+        live_api_request_count: capture.client?.request_count || 0,
+        epl_events_returned: JSON.parse(evidence.oddsRawText).length,
+        bookmakers_returned: summarizeBookmakers(evidence.oddsRawText),
+        matched_decision_count: result.matched_decision_count,
+        quarantined_decision_count: result.quarantined_decision_count,
+        canonical_observation_count: result.observation_count,
+        transaction_id: result.published.transaction_id,
+        authority_head: result.freshAuthoritySnapshot.head_transaction_id,
+        publisher_knowledge_time: result.knowledge_time,
     };
     process.stdout.write(`${JSON.stringify(summary)}\n`);
 }

@@ -31,6 +31,7 @@ const MAPPING_FIELDS = Object.freeze({
         'identity_decision_id',
         'identity_decision_status',
         'identity_ruleset_version',
+        'identity_resolver_version',
         'provenance',
     ]),
     bookmaker: new Set(['kind', 'provider', 'provider_id', 'canonical_id', 'price_side', 'provenance']),
@@ -98,7 +99,7 @@ function assertEventMapping(mapping, allocationAuthority) {
     if (!isUtcTimestamp(mapping.kickoff_utc)) {
         throw new Error(`event mapping requires valid kickoff_utc: ${mapping.provider_id}`);
     }
-    for (const field of ['identity_decision_id', 'identity_ruleset_version']) {
+    for (const field of ['identity_decision_id', 'identity_ruleset_version', 'identity_resolver_version']) {
         if (typeof mapping[field] !== 'string' || !mapping[field].trim()) {
             throw new Error(`event mapping requires ${field}: ${mapping.provider_id}`);
         }

@@ -384,12 +384,13 @@ test('event registry accepts only governed FootballPrediction allocations', () =
     assert.equal(createIdentityRegistry({ version: 'governed-event', allocationAuthority: registry.allocationAuthority, events: [event] }).resolve('event', 'the-odds-api', 'epl-fixture-001').canonical_id, event.canonical_id);
 });
 
-test('LIVE_CAPTURE requires an explicit post-projection availability boundary', () => {
+test('LIVE_CAPTURE projection availability is publisher-owned', () => {
     const live = { ...capture, acquisition_mode: 'LIVE_CAPTURE' };
-    assert.throws(() => adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1' }), /LIVE_CAPTURE projection availability is required/);
-    const rows = adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1', projectionAvailableAt: '2026-08-27T13:31:50Z' }); const row = rows[0];
+    const rows = adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1' }); const row = rows[0];
+    assert.ok(Date.parse(row.projection_available_at) > Date.parse(capture.ingested_at));
+    assert.throws(() => adaptTheOddsApiRaw({ rawText, capture: live, registry, projectionVersion: '1', projectionAvailableAt: '2026-08-27T13:31:50Z' }), /publisher-owned/);
     const query = { canonical_event_id: row.canonical_event_id, canonical_bookmaker_id: row.canonical_bookmaker_id, canonical_selection_id: row.canonical_selection_id, period: row.period, market_type: row.market_type, line: row.line };
-    assert.equal(latestAsOf(rows, { ...query, decision_time: '2026-08-27T13:31:49Z' }), null); assert.equal(latestAsOf(rows, { ...query, decision_time: '2026-08-27T13:31:50Z' }).observation_id, row.observation_id);
+    assert.equal(latestAsOf(rows, { ...query, decision_time: capture.ingested_at }), null); assert.equal(latestAsOf(rows, { ...query, decision_time: row.projection_available_at }).observation_id, row.observation_id);
 });
 
 test('The Odds API EPL h2h fixture normalizes to three versioned canonical observations', () => {
@@ -443,6 +444,7 @@ test('event identity is checked against the independently governed registry and 
                 identity_decision_id: registry.resolve('event', 'the-odds-api', 'epl-fixture-001').identity_decision_id,
                 identity_decision_status: 'MATCHED',
                 identity_ruleset_version: 'fixture-identity-ruleset/v1',
+                identity_resolver_version: 'fixture-identity-resolver/v1',
                 provenance: 'fixture-v2',
             },
         ],
@@ -685,12 +687,8 @@ test('raw is sha256-verifiable and receipts are immutable and secret-safe', t =>
             }),
         /ingestion precedes response/
     );
-    assert.throws(() =>
-        writeReceipt({
-            rootDir: root,
-            receipt: { ...capture, capture_id: 'capture-fixture-001', provider: 'the-odds-api' },
-        })
-    );
+    assert.doesNotThrow(() => writeReceipt({ rootDir: root, receipt }));
+    assert.throws(() => writeReceipt({ rootDir: root, receipt: { ...receipt, response_size_bytes: receipt.response_size_bytes + 1 } }), /different content/);
     assert.throws(() =>
         createCaptureReceipt({
             ...receipt,
@@ -810,16 +808,21 @@ test('documented Stage C replay audit hash is recomputed from the committed fixt
     assert.match(document, /governed identity registry/);
 });
 
-test('offline replay reads immutable raw and can append projections without network access', t => {
+test('offline replay reads immutable raw, owns T2 and can append projections without network access', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-replay-'));
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const rawPath = path.join(root, 'capture.json');
     fs.writeFileSync(rawPath, rawText, 'utf8');
     fs.chmodSync(rawPath, 0o444);
     const ledgerPath = path.join(root, 'ledger.jsonl');
-    const replayed = replayRaw({ rawPath, capture, registry, projectionVersion: '1', projectionAvailableAt: capture.ingested_at, ledgerPath });
-    const replayedAgain = replayRaw({ rawPath, capture, registry, projectionVersion: '1', projectionAvailableAt: capture.ingested_at });
+    const replayCapture = { ...capture, acquisition_mode: 'REPLAY' };
+    const replayed = replayRaw({ rawPath, capture: replayCapture, registry, projectionVersion: '1', ledgerPath });
+    const replayedAgain = replayRaw({ rawPath, capture: replayCapture, registry, projectionVersion: '1' });
     assert.equal(replayed.length, 3);
+    assert.ok(Date.parse(replayed[0].projection_available_at) > Date.parse(capture.ingested_at));
+    const replayQuery = { canonical_event_id: replayed[0].canonical_event_id, canonical_bookmaker_id: replayed[0].canonical_bookmaker_id, canonical_selection_id: replayed[0].canonical_selection_id, period: replayed[0].period, market_type: replayed[0].market_type, line: replayed[0].line };
+    assert.equal(latestAsOf(replayed, { ...replayQuery, decision_time: capture.ingested_at }), null);
+    assert.equal(latestAsOf(replayed, { ...replayQuery, decision_time: replayed[0].projection_available_at }).observation_id, replayed[0].observation_id);
     assert.equal(fs.readFileSync(ledgerPath, 'utf8').trim().split('\n').length, 3);
     assert.equal(
         sha256Text(stableStringify(replayed.map(semanticProjection))),
@@ -847,10 +850,10 @@ test('offline replay reads immutable raw and can append projections without netw
                 capture: { ...capture, raw_sha256: '0'.repeat(64) },
                 registry,
                 projectionVersion: '1',
-                projectionAvailableAt: capture.ingested_at,
             }),
         /does not match replay input/
     );
+    assert.throws(() => replayRaw({ rawPath, capture: replayCapture, registry, projectionVersion: '1', projectionAvailableAt: capture.ingested_at }), /publisher-owned/);
 });
 
 test('append-only ledger preserves old projections and appends new versions', t => {

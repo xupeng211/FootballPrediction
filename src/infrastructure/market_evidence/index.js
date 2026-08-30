@@ -8,4 +8,10 @@ module.exports = {
     ...require('./evidenceStore'),
     ...require('./replay'),
     ...require('./asOfView'),
+    ...require('./transactionContract'),
+    ...require('./transactionStore'),
+    ...require('./authorityReader'),
+    ...require('./prospectiveBatch'),
+    ...require('./atomicPublisher'),
+    ...require('./offlinePipeline'),
 };

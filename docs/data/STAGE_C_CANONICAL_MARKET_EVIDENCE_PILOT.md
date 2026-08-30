@@ -1,47 +1,57 @@
 # Stage C — Canonical Market Evidence Pilot
 
-## Objective and boundary
+## 目标与边界
 
-Stage C proves a provider-agnostic, immutable, versioned, replayable and auditable market-evidence spine for EPL pre-match 1X2 only. The Odds API is the **initial primary acquisition provider**, never the canonical provider. Canonical data is the FootballPrediction Market Contract. This pilot has no PostgreSQL persistence, scheduler, value/de-vig/CLV engine, backtest, training, second provider, betting automation or OddsPortal collector.
+Stage C 建立 provider-neutral、不可变、可版本化、可重放且可审计的 EPL 赛前 1X2 market-evidence spine。The Odds API 是初始 acquisition provider，不是 canonical provider；canonical authority 属于 FootballPrediction transaction-v1 contract。本阶段不包含 PostgreSQL、scheduler、value/de-vig/CLV、backtest、training、second provider、OddsPortal 或 betting automation。
 
-## Architecture
+当前文档描述实现事实和安全边界，不宣称 Stage C 已 merge、已完成 fresh Sol review 或已获得独立 review approval。
 
-`Capture receipt → immutable raw object → versioned adapter projection → append-only JSONL observation ledger → derived as-of view`. Live acquisition is an explicitly separate boundary and never runs during offline replay.
+## Canonical architecture
 
-Receipts hold sanitized endpoint/request metadata, timing, status, byte size and raw SHA-256. They must not contain secrets. Raw payloads are content-addressed by SHA-256 and are never changed. Multiple receipts may point to one raw object. Local live evidence is gitignored; fixtures are minimal synthetic schema-shaped data.
+真实 capture 或已有离线证据统一经过：
 
-`MarketObservation` is factual evidence, not a strategy instruction: it deliberately has no `decision_target_at`. The machine-readable contract is [schemas/market_evidence/market_observation.schema.json](../../schemas/market_evidence/market_observation.schema.json), using the repository's Ajv 6-compatible draft-07 dialect. It includes canonical/provider event and bookmaker identities, ordered home/away event teams, competition/kickoff, `period/market_type/line`, `selection`, `price_side`, price/provenance, source timestamps and knowledge timestamps. Market identity supports `MATCH/1X2/NULL` now and represents `MATCH/ASIAN_HANDICAP/-0.25` without implementing handicap ingestion. Price sides are `BOOKMAKER`, `BACK`, and `LAY`. The schema binds the pilot's fixed and representative identity examples; the runtime contract's exact `period/market_type/line`-to-ID equality check is authoritative for arbitrary future numeric lines.
+`capture receipt + immutable RAW → verified allocation authority → current authority snapshot → prospective builder → atomic publisher → fresh authority reader`
 
-## Time and derived semantics
+`transaction-v1` 的 committed transaction directory 是唯一 canonical authority。Prospective builder 只做全批次内存校验和 candidate 构造，不写 identity、observation、registry 或 authority。Publisher 在同一 filesystem 上获取 writer lock，重新读取并校验 parent，独占写入并 fsync staging 文件和目录，再以一次 directory rename 进入 `committed/`，之后由 authority reader 重建整条 parent chain。旧 JSONL identity/observation ledger 仅保留为 legacy/derived compatibility surface，不能成为新 canonical live/replay 的 authority。
 
-Source time (`bookmaker_last_update_at`, `source_snapshot_at`) is distinct from knowledge time (`capture_started_at`, `response_received_at`, `ingested_at`, `projection_available_at`). All timestamps are UTC ISO-8601 with calendar validation. The effective knowledge boundary is the conservative maximum of `response_received_at`, `ingested_at` and governed `projection_available_at`: for decision/as-of time T, eligibility requires that maximum to be at most T plus no quality flags. This prevents a row received early, ingested later, or projected later from leaking into an earlier decision replay; a prior source timestamp never makes later-known data visible. `deriveTimeline` requires an explicit UTC `decision_time`; every returned current/observation view is bounded by that knowledge-time cutoff.
+机器可读合同见 [market observation schema](../../schemas/market_evidence/market_observation.schema.json)、[transaction manifest schema](../../schemas/market_evidence/market_evidence_transaction_manifest.schema.json) 和 [transaction store schema](../../schemas/market_evidence/market_evidence_transaction_store.schema.json)。
 
-The timeline is derived from the ledger, not a source of truth. `OPENING` defaults to `OUR_FIRST_SEEN` (earliest quality-valid pre-match observation); a provider-labelled opening remains separately identified as `PROVIDER_OPENING` and is never inferred from our first seen row. `CURRENT_AS_OF_T` is the latest eligible observation known by T. A Decision Snapshot applies the same query but belongs to the decision layer. `CLOSING` is the latest valid observation known strictly before kickoff; a provider “closing” label is provenance, not an unconditional sole truth. `close_age_seconds` may be derived later.
+## Bitemporal contract 与 T2
 
-As-of views default to `price_side=BOOKMAKER`; exchange callers must query `BACK` or `LAY` explicitly so sides can never be mixed silently.
+Source time（`bookmaker_last_update_at`、`source_snapshot_at`）表示 provider 描述的市场时间；capture time（`capture_started_at`、`response_received_at`、`ingested_at`）表示证据被取得和接收的时间；knowledge time / projection availability（T2，`projection_available_at`）表示 FootballPrediction 实际发布 canonical projection 的时间。三者不能互换。
 
-The four `acquisition_mode` values are explicit: `LIVE_CAPTURE` is forward collection, `HISTORICAL_API` and `HISTORICAL_FILE` are historical reconstruction, and `REPLAY` is offline re-projection. Historical reconstruction is never represented as a forward capture.
+调用方不能通过 `projectionAvailableAt`、`projection_available_at`、`knowledge_time`、`ingested_at` 或旧 raw timestamp backdate T2。Adapter 和 replay 对 caller projection time fail closed；prospective builder 不接受 projection time。Candidate 中的时间只用于内存验证；publisher 只有在 lock、fresh parent reread 和 publication boundary 都通过后，才生成当前 publisher-owned `knowledge_time`，并把所有已发布 observation 的 `projection_available_at` 与 manifest metadata 绑定。
 
-## Identity, versioning and replay
+T2 不进入 transaction 的 deterministic retry identity：observation semantic digest、batch semantic digest 和 authority state hash 对 publisher-owned T2 做规范化；manifest/artifact 的实际 SHA-256 仍绑定磁盘上的精确 T2。因而晚到的 replay 在旧 `AS_OF(decision_time)` 不可见，在 publisher knowledge time 及之后可见，且相同 canonical batch 的重试不会因新的 wall-clock T2 产生 fork。
 
-The adapter only parses The Odds API schema. The independently versioned registry maps provider event/bookmaker/market/selection IDs to canonical identities; unknown, ambiguous, semantically inconsistent or duplicate mappings fail closed. Event mappings bind provider home/away/kickoff facts to the existing FotMob/canonical-match ID, so a payload with swapped teams or kickoff cannot project. The pilot fixture records only the fixture mapping for `williamhill`; Pinnacle and Betfair Exchange have no live coverage because the provider smoke test is key-blocked, and no unavailable bookmaker is fabricated. `buildCoverageEvidence` emits a hashed, immutable coverage/quarantine record for observed and missing provider bookmaker IDs.
+`deriveTimeline` / `latestAsOf` 仍要求显式 UTC `decision_time`，并只选择 knowledge boundary 不晚于该时间且没有 quality flags 的 observation。历史 source timestamp 不能让后知数据泄漏到过去。
 
-Each projection includes adapter, adapter version, identity-registry version and content hash, and projection version. Observation identity is additionally bound to the capture ID, response knowledge time, adapter version and registry content hash, so repeated identical payloads from distinct captures or mappings remain auditable observations. Reprojection of the same raw with a new version creates another appended record; it never updates the old projection. Replay is `raw + fixed capture metadata (including required provider and raw SHA-256) + adapter version + registry version`; deterministic semantic projection excludes only `ingested_at`, which is explicitly evidence metadata rather than semantic market fact. RAW, receipt, coverage and ledger files are created read-only; the ledger also has a read-only content-hash manifest and every read/append verifies the manifest before accepting new rows. Receipt request parameters, endpoint identity and quota metadata are structural allowlists, with a denylist and configured-key check as defense in depth. Coverage is `PARTIAL` whenever an expected bookmaker or requested `h2h` market is absent, including the case where a bookmaker is present with no requested market. The fixture registry is at `tests/fixtures/market_evidence/identity_registry.stage_c.v1.json` and is content-hash bound; production promotion requires a separately governed mapping artifact.
+## Identity、observation 与 receipt
 
-## Provider boundary and production blockers
+Fixture/Event canonical IDs 由 FootballPrediction verified allocation authority 和 governed identity registry 提供；provider-shaped ID、swapped team/kickoff、未绑定 allocation 的 registry、fake/duck-typed ledger、错误 decision/ruleset/resolver 或 active 非 `MATCHED` 映射都 fail closed。`MATCHED → QUARANTINED → MATCHED` 通过 append-only supersession 恢复；quarantined event 不产生 market observations。
 
-The client boundary is limited to current pre-match EPL `h2h` and environment-only `THE_ODDS_API_KEY`; no key is hardcoded or logged. The Odds API client alone supports explicit `DIRECT` and `STABLE_PROXY` policies with TLS validation and a finite timeout. `STABLE_PROXY` requires a single HTTP(S) CONNECT endpoint from environment configuration and never selects the rotating SOCKS proxy pool; missing configuration fails closed. Other provider networking is unchanged. Provider bookmaker keys must come from official definitions or real responses, never guesses. Before promotion to a long-term production provider, the Owner must confirm retention rights, analytical-use permission, redistribution restrictions and commercial-use boundaries. This pilot makes no legal conclusion.
+每条 observation 绑定 canonical/provider identity、decision、registry version/hash、adapter version、RAW SHA-256、capture receipt 和 publisher T2。RAW 与 receipt 不可变。相同 `capture_id` 的 receipt retry 只有在 canonical receipt bytes 完全一致时才 no-op；相同 identity 的不同内容 fail closed，不覆盖原 receipt。旧 JSONL derived append 对同一 observation identity 只允许 T2-neutral semantic retry，市场内容变化仍拒绝。
 
-Promotion remains blocked until the Owner confirms those provider terms, a governed identity registry binds real canonical events/bookmakers with auditable provenance, live capture coverage and quota evidence are observed, and production storage/operational controls are separately reviewed. Stage C does not authorize any of those production changes.
+## Live 与 offline replay
 
-## Test evidence
+`scripts/ops/stage_c_the_odds_api_live_smoke.js` 是 transaction-v1 live/offline integration entrypoint。默认优先读取已有本地 FotMob RAW、The Odds API RAW、receipt 和 allocation evidence，因此验证不产生 provider request；network capture 只有显式 `STAGE_C_ALLOW_NETWORK=yes` 且具备 key 时才可运行。live 与 replay 都调用同一个 `offlinePipeline`、prospective builder、atomic publisher 和 fresh authority reader，不再执行 legacy identity append、observation append 或 registry authority write。
 
-`tests/unit/market_evidence/stage_c.test.js` covers contract rejects, schema-shaped fixture parsing, event identity binding, structural secret safety, immutable raw/SHA, coverage evidence, deterministic replay, projection governance/as-of invariance, append-only ledger and tamper detection, identity fail-closed, all acquisition modes, market/price extensibility, decision-target isolation and the strict source-time/knowledge-time look-ahead boundary. `tests/unit/fixture_universe/fixture_universe.test.js` additionally exercises resolver quarantine, shared kickoff tolerance, immutable replay allocation, provenance hashes and receipt identity behavior through the actual offline paths. With the checked-in fixture (785 bytes), `RAW_SHA256=56cfff5c863a4a6fec1f506a293e3370b1ed96e87139282425912240aa24c01d`; the content-hash-bound registry is `IDENTITY_REGISTRY_SHA256=dcbdc7420fa8a1cc72787131c9eba28da8ccabf71d297a379fa791d573e89069`; replaying the same raw with adapter `1.0.0`, registry `stage-c-fixture/v1`, fixed capture metadata and an explicit projection-availability boundary yields `REPLAY_1_SHA256=6074e2317a8045ec98aa87c1c9d15395e57534047d175538e9813b3536b61989` and `REPLAY_2_SHA256=6074e2317a8045ec98aa87c1c9d15395e57534047d175538e9813b3536b61989`. The corresponding unit test recomputes this value directly. Live smoke is `BLOCKED_MISSING_API_KEY` when `THE_ODDS_API_KEY` is absent; no live request or raw live evidence is committed.
+`scripts/ops/stage_c_fixture_identity_replay.js` 只接受已有 immutable evidence，支持把早期 allocation snapshot 补足当前 provenance/hash envelope 后重新验证；`PROJECTION_AVAILABLE_AT` 被禁止，T2 由 publisher 生成。缺失 RAW、receipt、allocation 或 hash/provenance 不得用 synthetic data 替代。
 
-Pilot evidence is recorded from the current worktree runs below; command exit codes and exact test counts are reported in the owner handoff rather than treated as source-of-truth state in this document.
+本地已有 capture evidence 可离线重放并用于验证：20 个 provider events 中 16 个 MATCHED、4 个 QUARANTINED，生成 915 条 canonical observations；这些是当前 worktree 的 local evidence，不是 production coverage、provider terms 或 merge/review approval。
 
-Known limitations: no live EPL match was captured, so live coverage and provider credits are unknown; the synthetic fixture contains one EPL match and one fixture-only bookmaker key (`williamhill`) only. The identity registry fixture is not a production mapping authority. Production promotion additionally requires Owner confirmation of The Odds API retention/analytical-use/redistribution/commercial terms and a governed, independently evidenced event/bookmaker mapping.
+## Provider 与生产边界
+
+Adapter 只解析 The Odds API 当前 EPL `h2h` / `h2h_lay` 形状；未知、重复、冲突或不完整 payload fail closed。receipt 只保存 allowlisted sanitized request、endpoint、timing、status、size、quota 和 hashes，不保存 secret。任何新的 provider acquisition、production DB/Redis mutation、raw write、migration、training、prediction、backtest、model activation、second provider 和 Stage D 均不在本阶段授权范围内。
+
+生产 promotion 仍需 Owner 单独确认 provider retention/analytical-use/redistribution/commercial terms、真实 governed event/bookmaker mappings、覆盖率/quota evidence 以及 production storage/operations controls。本 pilot 不作法律或 production readiness 结论。
+
+## 验证与状态
+
+受影响测试覆盖 observation contract、schema、identity trust root、allocation/ledger binding、quarantine recovery、prospective zero-write、T2 no-lookahead、receipt idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename、concurrency 和 cross-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；gate 必须实际识别并执行受影响 Stage C paths，`changed_files=0` / no-op 不算通过。
+
+实现闭环后仍需 fresh independent Sol exact-head strict review、owner merge decision 以及 merge 后 main Production Gate；本文不把这些治理状态提前标记为通过。
 
 ## FUTURE_WORK
 
-Production promotion work is intentionally deferred: obtain Owner confirmation of provider terms, govern real event/bookmaker mappings, capture a bounded live pilot with quota evidence, and separately review production persistence and operations. Value/de-vig/CLV analytics, backtests, schedulers, additional providers, exchange APIs, UI and Stage D remain out of scope.
+生产 promotion、真实 mapping governance、受控 live pilot、production persistence/operations、value/de-vig/CLV、backtest、scheduler、additional provider、exchange APIs、UI 和 Stage D 另行授权，当前不启动。
