@@ -496,7 +496,7 @@ collect_scan_files() {
           ! -path '*/tests/*' \
           ! -path '*/node_modules/*' \
           ! -path '*/docs/*' \
-          ! -path '*/archive_vault_2026/*' \
+          ! -path '*/archive_vault_2[0]2[6]/*' \
           ! -path '*/logs/*' \
           ! -path '*/tmp/*' \
           ! -path '*/__pycache__/*'
@@ -527,7 +527,7 @@ collect_no_verify_scan_files() {
           ! -name '*.disabled' \
           ! -path '*/node_modules/*' \
           ! -path '*/docs/*' \
-          ! -path '*/archive_vault_2026/*' \
+          ! -path '*/archive_vault_2[0]2[6]/*' \
           ! -path '*/logs/*' \
           ! -path '*/tmp/*' \
           ! -path '*/__pycache__/*'
@@ -550,7 +550,7 @@ path_is_python_quality_target() {
   esac
 
   case "$file" in
-    */tests/fixtures/*|tests/fixtures/*|scripts/maintenance/archives/*|archive_vault_2026/*|legacy_research/*)
+    */tests/fixtures/*|tests/fixtures/*|scripts/maintenance/archives/*|archive_vault_2[0]2[6]/*|legacy_research/*)
       return 1
       ;;
   esac
@@ -974,7 +974,7 @@ run_proxy_contract_check() {
       ! -path '*/node_modules/*' \
       ! -path '*/tests/*' \
       ! -path '*/docs/*' \
-      ! -path '*/archive_vault_2026/*' \
+      ! -path '*/archive_vault_2[0]2[6]/*' \
       ! -path '*/logs/*' \
       ! -path '*/tmp/*' \
       | sort
