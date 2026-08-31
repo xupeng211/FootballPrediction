@@ -76,7 +76,7 @@ async function main() {
         supportedMarketKeys: ['h2h', 'h2h_lay'],
     });
     const summary = {
-        acquisition_mode: evidence.receipt.acquisition_mode,
+        acquisition_mode: evidence.receiptEvidence.receipt.acquisition_mode,
         network_acquisition_performed: capture.live !== null,
         live_api_request_count: capture.client?.request_count || 0,
         epl_events_returned: JSON.parse(evidence.oddsRawText).length,

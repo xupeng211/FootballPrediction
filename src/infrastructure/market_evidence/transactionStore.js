@@ -5,6 +5,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { loadVerifiedAllocationAuthority } = require('../fixture_universe/AllocationAuthorityArtifact');
+const { isUtcTimestamp } = require('./contracts');
 const { STORE_SCHEMA_VERSION, STORE_TYPE, TRANSACTION_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, validateAllocationBinding, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
 
 const STORE_FILE = 'STORE.json';
@@ -25,13 +26,14 @@ function writeExclusive(filePath, bytes) {
 }
 function allocationBindingFromPath(allocationArtifactPath) {
     const allocation = loadVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath });
-    return { allocation_schema_version: allocation.allocationSnapshot.schema_version, allocation_content_hash: allocation.allocationHash, allocation_artifact_sha256: allocation.artifactHash, allocation_provenance_raw_sha256: allocation.provenanceRawSha256 };
+    return { allocation_schema_version: allocation.allocationSnapshot.schema_version, allocation_content_hash: allocation.allocationHash, allocation_artifact_sha256: allocation.artifactHash, allocation_provenance_raw_sha256: allocation.provenanceRawSha256, allocation_snapshot: allocation.allocationSnapshot };
 }
 function validateStoreDocument(store) {
     assertPlainObject(store, 'STORE.json');
-    const keys = ['schema_version', 'store_type', 'authority_owner', 'allocation', 'genesis_state_hash', 'transaction_schema_version', 'bootstrap_metadata', 'store_sha256'];
+    const keys = ['schema_version', 'store_type', 'authority_owner', 'authority_created_at', 'allocation', 'genesis_state_hash', 'transaction_schema_version', 'bootstrap_metadata', 'store_sha256'];
     if (Object.keys(store).some(key => !keys.includes(key)) || keys.some(key => !Object.prototype.hasOwnProperty.call(store, key))) throw new Error('STORE.json fields are invalid');
     if (store.schema_version !== STORE_SCHEMA_VERSION || store.store_type !== STORE_TYPE || store.authority_owner !== 'FootballPrediction' || store.transaction_schema_version !== TRANSACTION_SCHEMA_VERSION) throw new Error('STORE.json identity is invalid');
+    if (!isUtcTimestamp(store.authority_created_at)) throw new Error('STORE.json authority_created_at is invalid');
     const allocation = validateAllocationBinding(store.allocation);
     assertPlainObject(store.bootstrap_metadata, 'STORE.json bootstrap_metadata');
     const expectedGenesis = computeAuthorityStateHash({ allocation, decisions: [], latestDecisions: [], activeMatched: [], registryState: [], observationIndex: [] });
@@ -59,13 +61,17 @@ function bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifact
     assertPlainObject(bootstrapMetadata, 'bootstrapMetadata');
     const root = path.resolve(storeRoot); ensureDirectory(root, 'transaction store root');
     ensureDirectory(path.join(root, '.staging'), 'transaction staging directory'); ensureDirectory(path.join(root, 'committed'), 'transaction committed directory');
+    const storePath = path.join(root, STORE_FILE);
+    if (fs.existsSync(storePath)) {
+        const existing = readStoreContract({ storeRoot: root, allocationArtifactPath });
+        if (canonicalJson(existing.store.bootstrap_metadata) !== canonicalJson(bootstrapMetadata)) throw new Error('STORE.json already exists with different content');
+        return existing;
+    }
     const allocation = allocationBindingFromPath(allocationArtifactPath);
     const genesisStateHash = computeAuthorityStateHash({ allocation, decisions: [], latestDecisions: [], activeMatched: [], registryState: [], observationIndex: [] });
-    const unsigned = { schema_version: STORE_SCHEMA_VERSION, store_type: STORE_TYPE, authority_owner: 'FootballPrediction', allocation, genesis_state_hash: genesisStateHash, transaction_schema_version: TRANSACTION_SCHEMA_VERSION, bootstrap_metadata: bootstrapMetadata };
-    const document = { ...unsigned, store_sha256: hashCanonical(unsigned) }; const bytes = canonicalBytes(document); const storePath = path.join(root, STORE_FILE);
-    if (fs.existsSync(storePath)) {
-        lstatRegular(storePath, 'STORE.json'); const existing = fs.readFileSync(storePath, 'utf8'); if (existing !== bytes) throw new Error('STORE.json already exists with different content');
-    } else writeExclusive(storePath, bytes);
+    const unsigned = { schema_version: STORE_SCHEMA_VERSION, store_type: STORE_TYPE, authority_owner: 'FootballPrediction', authority_created_at: new Date().toISOString(), allocation, genesis_state_hash: genesisStateHash, transaction_schema_version: TRANSACTION_SCHEMA_VERSION, bootstrap_metadata: bootstrapMetadata };
+    const document = { ...unsigned, store_sha256: hashCanonical(unsigned) }; const bytes = canonicalBytes(document);
+    writeExclusive(storePath, bytes);
     return readStoreContract({ storeRoot: root, allocationArtifactPath });
 }
 

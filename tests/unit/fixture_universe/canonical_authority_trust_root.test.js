@@ -13,18 +13,20 @@ const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evide
 const { appendProjection, writeImmutableRaw } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 const { replayRaw } = require('../../../src/infrastructure/market_evidence/replay');
 const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
+const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infrastructure/market_evidence/transactionStore');
+const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastructure/market_evidence/authorityReader');
 
 function universe() {
     const allMatches = Array.from({ length: 380 }, (_, index) => ({ id: String(700000 + index), home: { name: index ? `Home ${index}` : 'Arsenal' }, away: { name: index ? `Away ${index}` : 'Chelsea' }, status: { utcTime: index ? `2026-10-${String((index % 28) + 1).padStart(2, '0')}T15:00:00Z` : '2026-09-12T15:00:00Z' } }));
     const raw = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ query: { season: '2026/2027' }, props: { pageProps: { details: { id: 47 }, fixtures: { allMatches } } } })}</script>`;
-    let n = 0;
-    return seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: sha256Text(raw), mode: 'INITIAL_SEED', allocate: prefix => `${prefix}_${String(++n).padStart(6, '0')}` });
+    return seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: sha256Text(raw), mode: 'INITIAL_SEED' });
 }
 function capture(raw) { return { capture_id: 'trust-root', provider: 'the-odds-api', acquisition_mode: 'HISTORICAL_FILE', request_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', raw_evidence_reference: 'raw/trust-root.json', raw_sha256: sha256Text(raw) }; }
 
 test('canonical authority has no caller-controlled allocation or ledger path', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-c-trust-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     const u = universe(); const event = { id: 'real-event', sport_key: 'soccer_epl', home_team: 'Arsenal', away_team: 'Chelsea', commence_time: '2026-09-12T15:00:00Z', bookmakers: [{ key: 'book', title: 'Book', markets: [{ key: 'h2h', outcomes: [{ name: 'Arsenal', price: 2 }, { name: 'Draw', price: 3 }, { name: 'Chelsea', price: 4 }] }] }] }; const raw = JSON.stringify([event]);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: '<invalid>', rawSha256: sha256Text('<invalid>'), mode: 'INITIAL_SEED', allocate: () => 'evt_provider-shaped' }), /caller-controlled canonical ID allocator is forbidden/);
     const ledger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity.jsonl') });
     const resolution = resolveOddsEvents({ oddsRawText: raw, oddsRawSha256: sha256Text(raw), universe: u, decidedAt: capture(raw).ingested_at, decisionLedger: ledger });
     const admitted = adaptTheOddsApiRaw({ rawText: raw, capture: capture(raw), registry: resolution.registry, decisionLedger: ledger, projectionVersion: '1' });
@@ -55,6 +57,20 @@ test('persisted allocation and bound ledger reopen from fresh runtime objects an
     assert.throws(() => openIdentityDecisionLedger({ ledgerPath, allocationArtifactPath: reboundPath }), /bound to a different allocation artifact/);
     fs.chmodSync(artifactPath, 0o644); const tampered = JSON.parse(fs.readFileSync(artifactPath, 'utf8')); tampered.allocation.fixtures[0].canonical_fixture_id = 'fx_tampered'; fs.writeFileSync(artifactPath, `${JSON.stringify(tampered)}\n`); fs.chmodSync(artifactPath, 0o444);
     assert.throws(() => loadVerifiedAllocationAuthority({ artifactPath }), /hash is invalid/);
+});
+
+test('fully rehashed Fixture/Event relation swap cannot replace the STORE trust root', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'allocation-store-root-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const u = universe(); const artifactPath = path.join(root, 'allocation.json'); persistVerifiedAllocationAuthority({ artifactPath, allocationAuthority: u.allocationAuthority });
+    const storeRoot = path.join(root, 'store'); bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath: artifactPath, bootstrapMetadata: { test: 'mapping-swap' } });
+    const forged = JSON.parse(fs.readFileSync(artifactPath, 'utf8')); const first = forged.allocation.fixtures[0].canonical_event_id; forged.allocation.fixtures[0].canonical_event_id = forged.allocation.fixtures[1].canonical_event_id; forged.allocation.fixtures[1].canonical_event_id = first;
+    const unsignedAllocation = { schema_version: forged.allocation.schema_version, authority: forged.allocation.authority, fixtures: forged.allocation.fixtures, teams: forged.allocation.teams, provenance_raw_sha256: forged.allocation.provenance_raw_sha256, identity_ruleset_version: forged.allocation.identity_ruleset_version, resolver_version: forged.allocation.resolver_version };
+    forged.allocation.content_sha256 = sha256Text(stableStringify(unsignedAllocation)); forged.allocation_hash = forged.allocation.content_sha256;
+    const unsignedArtifact = { schema_version: forged.schema_version, authority_owner: forged.authority_owner, allocation_hash: forged.allocation_hash, allocation_provenance_raw_sha256: forged.allocation_provenance_raw_sha256, allocation: forged.allocation };
+    forged.artifact_sha256 = sha256Text(stableStringify(unsignedArtifact)); const forgedPath = path.join(root, 'forged-allocation.json'); fs.writeFileSync(forgedPath, `${stableStringify(forged)}\n`, { mode: 0o444 }); fs.chmodSync(forgedPath, 0o444);
+    const selfConsistentLie = loadVerifiedAllocationAuthority({ artifactPath: forgedPath }); assert.equal(selfConsistentLie.allocationHash, forged.allocation_hash, 'attack must recompute every self-describing hash');
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath: forgedPath }), /bound to a different allocation authority/);
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath: path.join(root, 'missing.json') }), /artifact is missing/);
 });
 
 test('append-only ledger reconstructs latest and active MATCHED through quarantine recovery', t => {

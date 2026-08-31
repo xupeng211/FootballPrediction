@@ -805,7 +805,7 @@ test('documented Stage C replay audit hash is recomputed from the committed fixt
     const replayHash = sha256Text(stableStringify(observations('1').map(semanticProjection)));
     const document = fs.readFileSync(path.join(__dirname, '../../../docs/data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md'), 'utf8');
     assert.match(replayHash, /^[a-f0-9]{64}$/);
-    assert.match(document, /governed identity registry/);
+    assert.match(document, /Fresh authority reader/);
 });
 
 test('offline replay reads immutable raw, owns T2 and can append projections without network access', t => {

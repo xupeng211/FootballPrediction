@@ -7,8 +7,9 @@ const universeAuthorities = new WeakMap();
 const decisionAuthorities = new WeakMap();
 const registryLedgers = new WeakMap();
 
-function issueAllocationAuthority(universe, allocationSnapshot) {
-    const authority = Object.freeze({});
+function issueAllocationAuthority(universe, allocationSnapshot, existingAuthority = null) {
+    const authority = existingAuthority || Object.freeze({});
+    if (existingAuthority) assertAllocationAuthority(existingAuthority, undefined);
     universeAuthorities.set(universe, { authority, allocationSnapshot });
     return authority;
 }

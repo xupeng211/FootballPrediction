@@ -26,8 +26,17 @@ function safeWrite(target, bytes, fault, point) {
 }
 function acquireLock(root) {
     const lock = path.join(root, '.writer-lock'); let fd;
-    try { fd = fs.openSync(lock, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), 0o400); fs.writeFileSync(fd, 'market-evidence-transaction-v1\n'); fs.fsyncSync(fd); }
-    catch (error) { if (error?.code === 'EEXIST') fail('WRITER_LOCKED', 'transaction store writer lock exists; manual recovery is required'); throw error; }
+    const deadline = Date.now() + 5000;
+    while (fd === undefined) {
+        try { fd = fs.openSync(lock, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), 0o400); }
+        catch (error) {
+            if (error?.code !== 'EEXIST') throw error;
+            const stat = fs.lstatSync(lock); if (stat.isSymbolicLink() || !stat.isFile()) fail('UNSAFE_LOCK', 'transaction store writer lock is unsafe');
+            if (Date.now() >= deadline) fail('WRITER_LOCKED', 'transaction store writer lock did not clear; manual recovery is required');
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+        }
+    }
+    fs.writeFileSync(fd, 'market-evidence-transaction-v1\n'); fs.fsyncSync(fd);
     return () => { try { fs.closeSync(fd); } finally { const stat = fs.lstatSync(lock); if (stat.isSymbolicLink() || !stat.isFile()) fail('UNSAFE_LOCK', 'writer lock changed while held'); fs.unlinkSync(lock); } };
 }
 function candidateFiles(candidate) {
@@ -55,11 +64,14 @@ function existingLogicalBatch(committed, logicalBatchKey) {
 function assertParent(snapshot, manifest) {
     if (snapshot.head_transaction_id !== manifest.parent_transaction_id || snapshot.head_transaction_content_hash !== manifest.parent_transaction_content_hash || snapshot.state_hash !== manifest.expected_parent_state_hash) fail('STALE_PARENT_TRANSACTION', 'candidate parent no longer matches the authoritative head');
 }
+function commitOutcomeUnknown(candidate, original) {
+    fail('COMMIT_OUTCOME_UNKNOWN', 'rename outcome cannot be authoritatively resolved; reopen the transaction authority before retrying', { transaction_id: candidate.transaction_id, logical_batch_key: candidate.logical_batch_key, cause: original, resolution: 'fresh authority reopen required before retry' });
+}
 function resolveAfterRename({ storeRoot, allocationArtifactPath, candidate, original }) {
     try {
         const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath });
         if (snapshot.head_transaction_id === candidate.transaction_id && snapshot.state_hash === candidate.post_state_hash) return Object.freeze({ status: 'COMMITTED', transaction_id: candidate.transaction_id, reused: false, snapshot });
-    } catch (error) { fail('COMMIT_OUTCOME_UNKNOWN', 'rename outcome cannot be authoritatively resolved', { transaction_id: candidate.transaction_id, cause: error }); }
+    } catch (error) { commitOutcomeUnknown(candidate, error); }
     throw original;
 }
 // eslint-disable-next-line complexity -- publication explicitly enumerates every durability boundary.
@@ -68,7 +80,7 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
     const contract = readStoreContract({ storeRoot, allocationArtifactPath }); const root = contract.root;
     const staging = path.join(root, '.staging'); const committed = path.join(root, 'committed'); const stagingStat = statDir(staging, 'staging directory'); const committedStat = statDir(committed, 'committed directory');
     if (stagingStat.dev !== committedStat.dev) fail('CROSS_DEVICE_PUBLICATION', 'staging and committed directories must share a filesystem');
-    const release = acquireLock(root);
+    const release = acquireLock(root); let possibleRename = false; let outcome = null; let pendingError = null; let publicationCandidate = null;
     try {
         const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath });
         const sameLogical = existingLogicalBatch(committed, planned.manifest.logical_batch_key);
@@ -78,38 +90,49 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
             // batch.  Only that exact retry shape may reuse the prior commit;
             // a non-empty delta with the same logical source identity is a
             // conflicting projection/configuration and must fail closed.
-            const isExactRetry = sameLogical.transaction_id === planned.manifest.transaction_id && sameLogical.transaction_content_hash === planned.manifest.transaction_content_hash;
+            const sameSource = canonicalJson(sameLogical.source) === canonicalJson(planned.manifest.source);
+            const isExactRetry = sameSource && sameLogical.logical_content_hash === planned.manifest.logical_content_hash;
             const isEmptyRetry = planned.manifest.decision_count === 0 && planned.manifest.observation_count === 0 && planned.manifest.registry_delta_count === 0;
-            if (!isExactRetry && !isEmptyRetry) fail('LOGICAL_BATCH_CONFLICT', 'logical batch key already exists with a different transaction delta');
-            return Object.freeze({ status: 'COMMITTED', transaction_id: sameLogical.transaction_id, reused: true, snapshot });
+            if (!isExactRetry && !(sameSource && isEmptyRetry)) fail('LOGICAL_BATCH_CONFLICT', 'logical batch key already exists with different source content or transaction delta');
+            outcome = Object.freeze({ status: 'COMMITTED', transaction_id: sameLogical.transaction_id, reused: true, snapshot });
+        } else {
+            assertParent(snapshot, planned.manifest);
+            // T2 is finalized only after lock acquisition and the authoritative
+            // parent recheck.  It participates in the exact transaction ID;
+            // logical retry identity remains a separate contract.
+            publicationCandidate = finalizeProspectiveMarketEvidenceTransactionForPublication(candidate);
+            const { manifest, bytes } = candidateFiles(publicationCandidate);
+            if (manifest.logical_batch_key !== planned.manifest.logical_batch_key || manifest.logical_content_hash !== planned.manifest.logical_content_hash) fail('CANDIDATE_CONTRACT', 'publisher finalization changed logical batch identity');
+            assertParent(snapshot, manifest);
+            const finalPath = path.join(committed, manifest.transaction_id);
+            if (fs.existsSync(finalPath)) fail('FINAL_TARGET_EXISTS', 'committed transaction target already exists without a matching logical batch');
+            const stagePath = path.join(staging, manifest.transaction_id); if (fs.existsSync(stagePath)) fail('STAGING_RESIDUE_EXISTS', 'staging residue exists; manual recovery is required');
+            fs.mkdirSync(stagePath, { mode: 0o700 });
+            for (const name of [...ARTIFACT_FILES, 'manifest.json', 'COMMITTED']) safeWrite(path.join(stagePath, name), bytes[name], fault, name);
+            fsyncDir(stagePath, fault, 'staging-directory-fsync');
+            if (fault === 'staging-tamper') fs.appendFileSync(path.join(stagePath, 'observations.jsonl'), 'tamper\n');
+            readPackage(staging, manifest.transaction_id);
+            if (fault === 'before-rename') fail('INJECTED_IO_FAILURE', 'injected failure before rename');
+            try { if (fault === 'rename') fail('INJECTED_IO_FAILURE', 'injected failure at rename'); fs.renameSync(stagePath, finalPath); possibleRename = true; }
+            catch (error) { const resolved = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error }); possibleRename = resolved.status === 'COMMITTED'; outcome = resolved; }
+            if (!outcome) {
+                try { fsyncDir(committed, fault, 'committed-directory-fsync'); }
+                catch (error) { outcome = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error }); }
+            }
+            if (!outcome) {
+                try {
+                    if (fault === 'final-reader-io') fail('INJECTED_IO_FAILURE', 'injected final authority reader I/O failure');
+                    if (fault === 'final-reader-tamper') { const target = path.join(finalPath, 'manifest.json'); fs.chmodSync(target, 0o600); fs.appendFileSync(target, 'tamper\n'); fs.chmodSync(target, 0o400); }
+                    const reopened = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath });
+                    if (reopened.head_transaction_id !== publicationCandidate.transaction_id || reopened.state_hash !== publicationCandidate.post_state_hash) fail('POST_RENAME_VERIFICATION_FAILED', 'committed transaction did not become the verified authority head');
+                    outcome = Object.freeze({ status: 'COMMITTED', transaction_id: publicationCandidate.transaction_id, reused: false, snapshot: reopened });
+                } catch (error) { commitOutcomeUnknown(publicationCandidate, error); }
+            }
         }
-        assertParent(snapshot, planned.manifest);
-        // T2 is deliberately finalized only after the writer lock and the
-        // authoritative parent recheck.  The finalized candidate keeps the
-        // planned transaction identity because its semantic artifact hashes
-        // exclude publisher-owned knowledge time.
-        const publicationCandidate = finalizeProspectiveMarketEvidenceTransactionForPublication(candidate);
-        const { manifest, bytes } = candidateFiles(publicationCandidate);
-        if (manifest.transaction_id !== planned.manifest.transaction_id || manifest.transaction_content_hash !== planned.manifest.transaction_content_hash) fail('CANDIDATE_CONTRACT', 'publisher finalization changed transaction identity');
-        assertParent(snapshot, manifest);
-        const finalPath = path.join(committed, manifest.transaction_id);
-        if (fs.existsSync(finalPath)) fail('FINAL_TARGET_EXISTS', 'committed transaction target already exists without a matching logical batch');
-        const stagePath = path.join(staging, manifest.transaction_id); if (fs.existsSync(stagePath)) fail('STAGING_RESIDUE_EXISTS', 'staging residue exists; manual recovery is required');
-        fs.mkdirSync(stagePath, { mode: 0o700 });
-        for (const name of [...ARTIFACT_FILES, 'manifest.json', 'COMMITTED']) safeWrite(path.join(stagePath, name), bytes[name], fault, name);
-        fsyncDir(stagePath, fault, 'staging-directory-fsync');
-        if (fault === 'staging-tamper') fs.appendFileSync(path.join(stagePath, 'observations.jsonl'), 'tamper\n');
-        // Re-read the bytes through the same validator used by authority replay.
-        readPackage(staging, manifest.transaction_id);
-        if (fault === 'before-rename') fail('INJECTED_IO_FAILURE', 'injected failure before rename');
-        try { if (fault === 'rename') fail('INJECTED_IO_FAILURE', 'injected failure at rename'); fs.renameSync(stagePath, finalPath); }
-        catch (error) { return resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate, original: error }); }
-        try { fsyncDir(committed, fault, 'committed-directory-fsync'); }
-        catch (error) { return resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate, original: error }); }
-        const reopened = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath });
-        if (reopened.head_transaction_id !== publicationCandidate.transaction_id || reopened.state_hash !== publicationCandidate.post_state_hash) fail('COMMIT_OUTCOME_UNKNOWN', 'committed transaction did not become the verified authority head', { transaction_id: publicationCandidate.transaction_id });
-        return Object.freeze({ status: 'COMMITTED', transaction_id: publicationCandidate.transaction_id, reused: false, snapshot: reopened });
-    } finally { release(); }
+    } catch (error) { pendingError = error; }
+    try { release(); } catch (error) { pendingError = possibleRename && publicationCandidate ? (() => { try { commitOutcomeUnknown(publicationCandidate, error); } catch (unknown) { return unknown; } })() : error; }
+    if (pendingError) throw pendingError;
+    return outcome;
 }
 
 module.exports = { publishProspectiveMarketEvidenceTransaction };

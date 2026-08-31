@@ -5,6 +5,7 @@
 // directories nor publishes files; identities are derived only from canonical
 // supplied content.
 const { sha256Text, stableStringify, isUtcTimestamp } = require('./contracts');
+const { validateAllocationSnapshot } = require('../fixture_universe/FixtureUniverse');
 
 const TRANSACTION_SCHEMA_VERSION = 'footballprediction-market-evidence-transaction/v1';
 const STORE_SCHEMA_VERSION = 'footballprediction-market-evidence-transaction-store/v1';
@@ -53,10 +54,12 @@ function validateArtifactDescriptor(value, expectedPath = null) {
     return Object.freeze({ ...value });
 }
 function validateAllocationBinding(value) {
-    assertExactKeys(value, ['allocation_schema_version', 'allocation_content_hash', 'allocation_artifact_sha256', 'allocation_provenance_raw_sha256'], 'allocation binding');
+    assertExactKeys(value, ['allocation_schema_version', 'allocation_content_hash', 'allocation_artifact_sha256', 'allocation_provenance_raw_sha256', 'allocation_snapshot'], 'allocation binding');
     if (typeof value.allocation_schema_version !== 'string' || !value.allocation_schema_version) throw new Error('allocation schema version is invalid');
     for (const key of ['allocation_content_hash', 'allocation_artifact_sha256', 'allocation_provenance_raw_sha256']) assertHash(value[key], key);
-    return Object.freeze({ ...value });
+    const snapshot = validateAllocationSnapshot(value.allocation_snapshot, value.allocation_provenance_raw_sha256);
+    if (snapshot.schema_version !== value.allocation_schema_version || snapshot.content_sha256 !== value.allocation_content_hash) throw new Error('allocation binding does not match the full allocation snapshot');
+    return Object.freeze({ ...value, allocation_snapshot: Object.freeze(JSON.parse(canonicalJson(snapshot))) });
 }
 function validateSource(value) {
     assertExactKeys(value, ['provider', 'capture_id', 'raw_sha256', 'receipt_sha256'], 'transaction source');
@@ -71,7 +74,11 @@ function validateVersions(value) {
 }
 function computeLogicalBatchKey({ source, allocation, versions }) {
     source = validateSource(source); allocation = validateAllocationBinding(allocation); versions = validateVersions(versions);
-    return hashCanonical({ provider: source.provider, capture_id: source.capture_id, raw_sha256: source.raw_sha256, receipt_sha256: source.receipt_sha256, allocation_hash: allocation.allocation_content_hash, adapter_version: versions.adapter_version, projection_version: versions.projection_version, ruleset_version: versions.ruleset_version, resolver_version: versions.resolver_version, observation_schema_version: versions.observation_schema_version });
+    return hashCanonical({ provider: source.provider, capture_id: source.capture_id, allocation_hash: allocation.allocation_content_hash, adapter_version: versions.adapter_version, projection_version: versions.projection_version, ruleset_version: versions.ruleset_version, resolver_version: versions.resolver_version, observation_schema_version: versions.observation_schema_version });
+}
+function computeLogicalContentHash({ source, artifacts }) {
+    source = validateSource(source); const descriptors = artifactMap(artifacts);
+    return hashCanonical({ source, artifacts: Object.fromEntries(ARTIFACT_FILES.map(path => [path, { path, semantic_sha256: descriptors[path].semantic_sha256, record_count: descriptors[path].record_count }])) });
 }
 function artifactMap(artifacts) {
     assertPlainObject(artifacts, 'transaction artifacts');
@@ -83,11 +90,7 @@ function artifactMap(artifacts) {
 }
 function computeBatchContentHash(artifacts) {
     const descriptors = artifactMap(artifacts);
-    // Actual bytes remain bound by every manifest descriptor.  Transaction
-    // identity uses the T2-neutral semantic digest so a publisher-owned
-    // knowledge time can be finalized after the lock without changing the
-    // logical retry identity.
-    return hashCanonical({ artifacts: Object.fromEntries(ARTIFACT_FILES.map(path => [path, { path, semantic_sha256: descriptors[path].semantic_sha256, record_count: descriptors[path].record_count }])) });
+    return hashCanonical({ artifacts: Object.fromEntries(ARTIFACT_FILES.map(path => [path, descriptors[path]])) });
 }
 function transactionContentFields(manifest) {
     return {
@@ -97,7 +100,18 @@ function transactionContentFields(manifest) {
         parent_transaction_content_hash: manifest.parent_transaction_content_hash,
         expected_parent_state_hash: manifest.expected_parent_state_hash,
         logical_batch_key: manifest.logical_batch_key,
+        logical_content_hash: manifest.logical_content_hash,
         batch_content_hash: manifest.batch_content_hash,
+        post_state_hash: manifest.post_state_hash,
+        allocation: manifest.allocation,
+        source: manifest.source,
+        versions: manifest.versions,
+        artifacts: manifest.artifacts,
+        decision_count: manifest.decision_count,
+        observation_count: manifest.observation_count,
+        registry_delta_count: manifest.registry_delta_count,
+        quarantine_count: manifest.quarantine_count,
+        publication_metadata: manifest.publication_metadata,
     };
 }
 function computeTransactionContentHash(manifest) { return hashCanonical(transactionContentFields(manifest)); }
@@ -116,13 +130,13 @@ function validatePublicationMetadata(value) {
     if (value.knowledge_time !== undefined && value.knowledge_time !== null && !isUtcTimestamp(value.knowledge_time)) throw new Error('publication_metadata knowledge_time must be UTC ISO-8601');
     return Object.freeze({ ...value });
 }
-const MANIFEST_KEYS = Object.freeze(['schema_version', 'transaction_id', 'sequence', 'logical_batch_key', 'batch_content_hash', 'transaction_content_hash', 'parent_transaction_id', 'parent_transaction_content_hash', 'expected_parent_state_hash', 'post_state_hash', 'allocation', 'source', 'versions', 'artifacts', 'decision_count', 'observation_count', 'registry_delta_count', 'quarantine_count', 'publication_metadata', 'manifest_sha256']);
+const MANIFEST_KEYS = Object.freeze(['schema_version', 'transaction_id', 'sequence', 'logical_batch_key', 'logical_content_hash', 'batch_content_hash', 'transaction_content_hash', 'parent_transaction_id', 'parent_transaction_content_hash', 'expected_parent_state_hash', 'post_state_hash', 'allocation', 'source', 'versions', 'artifacts', 'decision_count', 'observation_count', 'registry_delta_count', 'quarantine_count', 'publication_metadata', 'manifest_sha256']);
 function validateManifest(manifest) {
     assertExactKeys(manifest, MANIFEST_KEYS, 'transaction manifest');
     if (manifest.schema_version !== TRANSACTION_SCHEMA_VERSION) throw new Error('transaction manifest schema_version is invalid');
     if (!TX_ID.test(manifest.transaction_id)) throw new Error('transaction_id is invalid');
     if (!Number.isInteger(manifest.sequence) || manifest.sequence < 1) throw new Error('transaction sequence is invalid');
-    for (const key of ['logical_batch_key', 'batch_content_hash', 'transaction_content_hash', 'expected_parent_state_hash', 'post_state_hash', 'manifest_sha256']) assertHash(manifest[key], key);
+    for (const key of ['logical_batch_key', 'logical_content_hash', 'batch_content_hash', 'transaction_content_hash', 'expected_parent_state_hash', 'post_state_hash', 'manifest_sha256']) assertHash(manifest[key], key);
     if (manifest.parent_transaction_id !== null && !TX_ID.test(manifest.parent_transaction_id)) throw new Error('parent_transaction_id is invalid');
     if (manifest.parent_transaction_content_hash !== null) assertHash(manifest.parent_transaction_content_hash, 'parent_transaction_content_hash');
     if ((manifest.parent_transaction_id === null) !== (manifest.parent_transaction_content_hash === null)) throw new Error('parent transaction fields must both be null or both be present');
@@ -130,6 +144,7 @@ function validateManifest(manifest) {
     for (const key of ['decision_count', 'observation_count', 'registry_delta_count', 'quarantine_count']) if (!Number.isInteger(manifest[key]) || manifest[key] < 0) throw new Error(`transaction ${key} is invalid`);
     validatePublicationMetadata(manifest.publication_metadata);
     if (manifest.logical_batch_key !== computeLogicalBatchKey({ source, allocation, versions })) throw new Error('logical_batch_key does not match transaction inputs');
+    if (manifest.logical_content_hash !== computeLogicalContentHash({ source, artifacts })) throw new Error('logical_content_hash does not match transaction inputs');
     if (manifest.batch_content_hash !== computeBatchContentHash(artifacts)) throw new Error('batch_content_hash does not match artifacts');
     if (manifest.transaction_content_hash !== computeTransactionContentHash(manifest) || manifest.transaction_id !== computeTransactionId(manifest)) throw new Error('transaction content identity is invalid');
     if (manifest.manifest_sha256 !== computeManifestHash(manifest)) throw new Error('manifest_sha256 is invalid');
@@ -139,6 +154,7 @@ function createManifest(fields) {
     assertPlainObject(fields, 'manifest fields');
     const base = { ...fields, schema_version: TRANSACTION_SCHEMA_VERSION };
     base.logical_batch_key = computeLogicalBatchKey({ source: base.source, allocation: base.allocation, versions: base.versions });
+    base.logical_content_hash = computeLogicalContentHash({ source: base.source, artifacts: base.artifacts });
     base.batch_content_hash = computeBatchContentHash(base.artifacts);
     base.transaction_content_hash = computeTransactionContentHash(base);
     base.transaction_id = `tx_${base.transaction_content_hash}`;
@@ -161,9 +177,9 @@ function computeAuthorityStateHash({ allocation, decisions, latestDecisions, act
     validateAllocationBinding(allocation);
     const authorityObservation = row => {
         const copy = { ...row };
-        // T2 is publication metadata, not the semantic authority state.  The
-        // transaction manifest and artifact hashes still bind the exact
-        // publisher timestamp on disk.
+        // Transaction identity and the parent content chain bind publisher T2.
+        // State identity remains a semantic projection so a logical retry can
+        // compare authority state independently from publication metadata.
         delete copy.projection_available_at;
         return copy;
     };
@@ -177,4 +193,4 @@ function computeAuthorityStateHash({ allocation, decisions, latestDecisions, act
     });
 }
 
-module.exports = { TRANSACTION_SCHEMA_VERSION, STORE_SCHEMA_VERSION, STORE_TYPE, MARKER_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, ARTIFACT_FILES, TRANSACTION_FILES, canonicalJson, canonicalBytes, hashCanonical, descriptorForBytes, validateArtifactDescriptor, validateAllocationBinding, validateSource, validateVersions, computeLogicalBatchKey, computeBatchContentHash, computeTransactionContentHash, computeTransactionId, computeManifestHash, validateManifest, createManifest, validateCommittedMarker, createCommittedMarker, computeAuthorityStateHash, assertHash, assertPlainObject };
+module.exports = { TRANSACTION_SCHEMA_VERSION, STORE_SCHEMA_VERSION, STORE_TYPE, MARKER_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, ARTIFACT_FILES, TRANSACTION_FILES, canonicalJson, canonicalBytes, hashCanonical, descriptorForBytes, validateArtifactDescriptor, validateAllocationBinding, validateSource, validateVersions, computeLogicalBatchKey, computeLogicalContentHash, computeBatchContentHash, computeTransactionContentHash, computeTransactionId, computeManifestHash, validateManifest, createManifest, validateCommittedMarker, createCommittedMarker, computeAuthorityStateHash, assertHash, assertPlainObject };

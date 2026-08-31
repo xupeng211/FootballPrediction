@@ -29,6 +29,7 @@ function assertNoSecret(value) {
 const REQUEST_PARAMETER_KEYS = Object.freeze(['regions', 'markets', 'oddsFormat']);
 const ALLOWED_REGIONS = new Set(['au', 'eu', 'uk', 'us', 'us2']);
 const PROVIDER_ENDPOINT_IDENTITIES = new Set(['api.the-odds-api.com/v4/sports/soccer_epl/odds']);
+const verifiedReceiptEvidence = new WeakMap();
 const QUOTA_HEADER_PATTERN =
     /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
 const COVERAGE_STATUSES = new Set(['OBSERVED', 'PARTIAL', 'QUARANTINED']);
@@ -252,6 +253,25 @@ function writeReceipt({ rootDir, receipt }) {
     }
     fs.chmodSync(target, 0o444);
     return target;
+}
+function loadVerifiedCaptureReceipt({ receiptPath }) {
+    if (typeof receiptPath !== 'string' || !receiptPath.trim()) throw new Error('capture receipt path is required');
+    const stat = fs.lstatSync(receiptPath);
+    if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('capture receipt must be an immutable regular file');
+    const bytes = fs.readFileSync(receiptPath, 'utf8');
+    let parsed;
+    try { parsed = JSON.parse(bytes); } catch (error) { throw new Error(`capture receipt is invalid JSON: ${error.message}`, { cause: error }); }
+    const receipt = createCaptureReceipt(parsed);
+    const canonical = `${stableStringify(receipt)}\n`;
+    if (bytes !== canonical) throw new Error('capture receipt must use canonical serialization');
+    const evidence = Object.freeze({ receipt, receipt_sha256: sha256Text(canonical) });
+    verifiedReceiptEvidence.set(evidence, { receipt, receipt_sha256: evidence.receipt_sha256 });
+    return evidence;
+}
+function verifiedCaptureReceipt(value) {
+    const record = verifiedReceiptEvidence.get(value);
+    if (!record) throw new Error('verified persisted capture receipt evidence is required');
+    return record;
 }
 function createCaptureReceipt(options = {}) {
     const {
@@ -498,6 +518,8 @@ module.exports = {
     readImmutableRaw,
     createCaptureReceipt,
     writeReceipt,
+    loadVerifiedCaptureReceipt,
+    verifiedCaptureReceipt,
     writeCoverageEvidence,
     appendProjection,
     readProjectionLedger,

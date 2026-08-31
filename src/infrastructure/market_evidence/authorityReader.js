@@ -8,7 +8,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loadVerifiedAllocationAuthority } = require('../fixture_universe/AllocationAuthorityArtifact');
 const { projectIdentityDecisionState } = require('../fixture_universe/IdentityDecisionLedger');
-const { createObservation, stableStringify, isUtcTimestamp } = require('./contracts');
+const { createObservation, stableStringify, isUtcTimestamp, sha256Text } = require('./contracts');
+const { createCaptureReceipt } = require('./evidenceStore');
 const { readStoreContract } = require('./transactionStore');
 const { ARTIFACT_FILES, TRANSACTION_FILES, REGISTRY_DELTA_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, descriptorForBytes, validateManifest, validateCommittedMarker, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
 
@@ -54,9 +55,12 @@ function validateRegistryDelta(value) {
 }
 function validateMetadata(value, manifest) {
     assertPlainObject(value, 'metadata');
+    if (canonicalJson(Object.keys(value).sort()) !== canonicalJson(['capture_receipt', 'schema_version', 'source'])) throw new Error('metadata fields are invalid');
     if (value.schema_version !== METADATA_SCHEMA_VERSION) throw new Error('metadata schema_version is invalid');
     if (canonicalJson(value.source || null) !== canonicalJson(manifest.source)) throw new Error('metadata source does not bind manifest source');
-    return Object.freeze(JSON.parse(canonicalJson(value)));
+    const receipt = createCaptureReceipt(value.capture_receipt);
+    if (sha256Text(canonicalBytes(receipt)) !== manifest.source.receipt_sha256 || receipt.provider !== manifest.source.provider || receipt.capture_id !== manifest.source.capture_id || receipt.raw_sha256 !== manifest.source.raw_sha256) throw new Error('metadata capture receipt does not bind transaction source');
+    return Object.freeze({ ...JSON.parse(canonicalJson(value)), capture_receipt: receipt });
 }
 function semanticObservationBytes(observations) {
     if (!observations.length) return '';
@@ -66,6 +70,20 @@ function validatePublisherKnowledgeTime(manifest, observations) {
     const knowledgeTime = manifest.publication_metadata?.knowledge_time;
     if (typeof knowledgeTime !== 'string' || !isUtcTimestamp(knowledgeTime)) throw new Error('transaction publication knowledge_time is required and must be UTC ISO-8601');
     if (observations.some(row => row.projection_available_at !== knowledgeTime)) throw new Error('observation projection_available_at does not match publisher knowledge_time');
+}
+function captureKey(source) { return `${source.provider}\u0000${source.capture_id}`; }
+function assertObservationGovernance(row, manifest, projected, registry, receipt) {
+    const active = projected.active.get(`${row.provider}\u0000${row.provider_event_id}`);
+    if (!active || active.decision !== 'MATCHED' || active.identity_decision_id !== row.identity_decision_id || active.canonical_event_id !== row.canonical_event_id || active.ruleset_version !== row.identity_ruleset_version || active.resolver_version !== row.identity_resolver_version) throw new Error(`observation does not reference the exact active MATCHED decision: ${row.observation_id}`);
+    if (row.provider !== manifest.source.provider || row.capture_id !== manifest.source.capture_id || row.raw_sha256 !== manifest.source.raw_sha256) throw new Error(`observation source does not bind transaction source: ${row.observation_id}`);
+    if (row.capture_started_at !== receipt.request_started_at || row.response_received_at !== receipt.response_received_at || row.ingested_at !== receipt.ingested_at || row.acquisition_mode !== receipt.acquisition_mode || row.raw_evidence_reference !== receipt.raw_evidence_reference) throw new Error(`observation temporal/acquisition evidence does not bind capture receipt: ${row.observation_id}`);
+    if (row.identity_ruleset_version !== manifest.versions.ruleset_version || row.identity_resolver_version !== manifest.versions.resolver_version || row.adapter_version !== manifest.versions.adapter_version || row.projection_version !== manifest.versions.projection_version || row.identity_registry_version !== manifest.versions.registry_version || row.schema_version !== manifest.versions.observation_schema_version) throw new Error(`observation versions do not bind transaction manifest: ${row.observation_id}`);
+    const event = registry.get(`event\u0000${row.provider}\u0000${row.provider_event_id}`);
+    if (!event || event.canonical_id !== row.canonical_event_id || event.identity_decision_id !== row.identity_decision_id || event.identity_decision_status !== 'MATCHED' || event.identity_ruleset_version !== row.identity_ruleset_version || event.identity_resolver_version !== row.identity_resolver_version || event.home_team !== row.home_team || event.away_team !== row.away_team || event.kickoff_utc !== row.kickoff_utc) throw new Error(`observation event registry governance is invalid: ${row.observation_id}`);
+    const bookmaker = registry.get(`bookmaker\u0000${row.provider}\u0000${row.provider_bookmaker_id}`);
+    if (!bookmaker || bookmaker.canonical_id !== row.canonical_bookmaker_id || bookmaker.price_side !== row.price_side) throw new Error(`observation bookmaker registry governance is invalid: ${row.observation_id}`);
+    const market = registry.get(`market\u0000${row.provider}\u0000${row.provider_market_id}`);
+    if (!market || market.canonical_id !== row.canonical_market_id || market.period !== row.period || market.market_type !== row.market_type || market.line !== row.line) throw new Error(`observation market registry governance is invalid: ${row.observation_id}`);
 }
 function entrySet(committedPath) {
     statDirectory(committedPath, 'committed directory');
@@ -98,7 +116,7 @@ function readPackage(committedPath, directoryName) {
     return Object.freeze({ manifest, metadata, registryDelta, decisions: Object.freeze(decisions), observations: Object.freeze(observations) });
 }
 function reconstruct(packages, store, allocationAuthority) {
-    if (!packages.length) return buildSnapshot({ store, allocationAuthority, head: null, decisions: [], registry: new Map(), observations: new Map() });
+    if (!packages.length) return buildSnapshot({ store, allocationAuthority, head: null, decisions: [], registry: new Map(), observations: new Map(), captures: new Map() });
     const byId = new Map(packages.map(item => [item.manifest.transaction_id, item]));
     const children = new Map(); const roots = [];
     for (const item of packages) {
@@ -114,13 +132,20 @@ function reconstruct(packages, store, allocationAuthority) {
     let current = roots[0]; const ordered = [];
     while (current) { ordered.push(current); const next = children.get(current.manifest.transaction_id) || []; if (next.length > 1) throw new Error(`transaction fork at ${current.manifest.transaction_id}`); current = next[0] || null; }
     if (ordered.length !== packages.length) throw new Error('transaction chain contains an orphan or multiple head');
-    const decisions = []; const registry = new Map(); const observations = new Map(); let stateHash = store.genesis_state_hash; let parent = null;
+    const decisions = []; const registry = new Map(); const observations = new Map(); const captures = new Map(); let stateHash = store.genesis_state_hash; let parent = null; let priorKnowledgeTime = null;
     for (const item of ordered) {
         const m = item.manifest;
         if (m.sequence !== ordered.indexOf(item) + 1) throw new Error(`transaction sequence gap at ${m.transaction_id}`);
         if (parent === null) { if (m.parent_transaction_id !== null || m.parent_transaction_content_hash !== null) throw new Error('root transaction has a parent'); }
         else if (m.parent_transaction_id !== parent.manifest.transaction_id || m.parent_transaction_content_hash !== parent.manifest.transaction_content_hash) throw new Error(`wrong parent transaction: ${m.transaction_id}`);
         if (m.expected_parent_state_hash !== stateHash) throw new Error(`wrong parent state hash: ${m.transaction_id}`);
+        if (canonicalJson(m.allocation) !== canonicalJson(store.allocation)) throw new Error(`transaction allocation does not match STORE.json trust root: ${m.transaction_id}`);
+        if (Date.parse(m.publication_metadata.knowledge_time) < Date.parse(store.authority_created_at)) throw new Error(`transaction knowledge time predates its immutable STORE.json authority: ${m.transaction_id}`);
+        if (priorKnowledgeTime !== null && Date.parse(m.publication_metadata.knowledge_time) <= Date.parse(priorKnowledgeTime)) throw new Error(`transaction knowledge time is not strictly increasing: ${m.transaction_id}`);
+        const sourceKey = captureKey(m.source); const existingCapture = captures.get(sourceKey);
+        if (existingCapture && canonicalJson(existingCapture) !== canonicalJson(m.source)) throw new Error(`capture identity is bound to conflicting receipt or RAW content: ${m.source.capture_id}`);
+        captures.set(sourceKey, m.source);
+        for (const row of item.decisions) if (row.raw_sha256 !== m.source.raw_sha256 || row.decided_at !== item.metadata.capture_receipt.response_received_at || row.ruleset_version !== m.versions.ruleset_version || row.resolver_version !== m.versions.resolver_version || row.candidate_provider !== m.source.provider) throw new Error(`identity decision does not bind transaction governance: ${row.identity_decision_id}`);
         for (const row of item.decisions) { if (decisions.some(old => old.identity_decision_id === row.identity_decision_id)) throw new Error(`duplicate decision across transactions: ${row.identity_decision_id}`); decisions.push(row); }
         const projected = projectIdentityDecisionState(decisions, allocationAuthority);
         const baseRegistryHash = hashCanonical([...registry.entries()].sort(([a], [b]) => a.localeCompare(b)));
@@ -136,14 +161,14 @@ function reconstruct(packages, store, allocationAuthority) {
         }
         const resultRegistryHash = hashCanonical([...registry.entries()].sort(([a], [b]) => a.localeCompare(b)));
         if (item.registryDelta.result_registry_state_sha256 !== undefined && item.registryDelta.result_registry_state_sha256 !== resultRegistryHash) throw new Error(`registry delta result state hash is invalid: ${m.transaction_id}`);
-        for (const row of item.observations) { const existing = observations.get(row.observation_id); if (existing) throw new Error(`duplicate observation across transactions: ${row.observation_id}`); observations.set(row.observation_id, row); }
+        for (const row of item.observations) { assertObservationGovernance(row, m, projected, registry, item.metadata.capture_receipt); const existing = observations.get(row.observation_id); if (existing) throw new Error(`duplicate observation across transactions: ${row.observation_id}`); observations.set(row.observation_id, row); }
         stateHash = computeAuthorityStateHash({ allocation: store.allocation, decisions, latestDecisions: projected.latest, activeMatched: projected.active, registryState: registry, observationIndex: observations });
         if (stateHash !== m.post_state_hash) throw new Error(`post_state_hash is invalid: ${m.transaction_id}`);
-        parent = item;
+        parent = item; priorKnowledgeTime = m.publication_metadata.knowledge_time;
     }
-    return buildSnapshot({ store, allocationAuthority, head: parent, decisions, registry, observations });
+    return buildSnapshot({ store, allocationAuthority, head: parent, decisions, registry, observations, captures });
 }
-function buildSnapshot({ store, allocationAuthority, head, decisions, registry, observations }) {
+function buildSnapshot({ store, allocationAuthority, head, decisions, registry, observations, captures }) {
     const projected = projectIdentityDecisionState(decisions, allocationAuthority);
     const stateHash = computeAuthorityStateHash({ allocation: store.allocation, decisions, latestDecisions: projected.latest, activeMatched: projected.active, registryState: registry, observationIndex: observations });
     const freezeRows = rows => Object.freeze(rows.map(row => Object.freeze({ ...row })));
@@ -159,6 +184,7 @@ function buildSnapshot({ store, allocationAuthority, head, decisions, registry, 
         decisions: decisionRows,
         observations: observationRows,
         registry_state: registryRows,
+        capture_bindings: Object.freeze([...captures.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, source]) => Object.freeze({ key, ...source }))),
         latestDecision: (provider, providerEventId) => latest.get(`${provider}\u0000${providerEventId}`) || null,
         activeMatched: (provider, providerEventId) => active.get(`${provider}\u0000${providerEventId}`) || null,
         aliases: Object.freeze([...active.entries()].map(([key, row]) => Object.freeze({ key, provider: row.candidate_provider, provider_event_id: row.candidate_provider_event_id, canonical_event_id: row.canonical_event_id, identity_decision_id: row.identity_decision_id }))),

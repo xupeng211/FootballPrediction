@@ -22,21 +22,21 @@ Source time（`bookmaker_last_update_at`、`source_snapshot_at`）表示 provide
 
 调用方不能通过 `projectionAvailableAt`、`projection_available_at`、`knowledge_time`、`ingested_at` 或旧 raw timestamp backdate T2。Adapter 和 replay 对 caller projection time fail closed；prospective builder 不接受 projection time。Candidate 中的时间只用于内存验证；publisher 只有在 lock、fresh parent reread 和 publication boundary 都通过后，才生成当前 publisher-owned `knowledge_time`，并把所有已发布 observation 的 `projection_available_at` 与 manifest metadata 绑定。
 
-T2 不进入 transaction 的 deterministic retry identity：observation semantic digest、batch semantic digest 和 authority state hash 对 publisher-owned T2 做规范化；manifest/artifact 的实际 SHA-256 仍绑定磁盘上的精确 T2。因而晚到的 replay 在旧 `AS_OF(decision_time)` 不可见，在 publisher knowledge time 及之后可见，且相同 canonical batch 的重试不会因新的 wall-clock T2 产生 fork。
+逻辑批次身份与 authoritative transaction content identity 分离。`logical_batch_key` / `logical_content_hash` 用于识别同一 acquisition/projection 工作和冲突；transaction ID、exact artifact descriptors、manifest 及 parent content chain 则绑定 publisher-owned T2 的精确字节。已提交逻辑批次的重试复用原 transaction 与原 T2；未提交的重试可获得新的 T2。`STORE.json` 的 immutable `authority_created_at` 与严格递增的 transaction knowledge time 共同拒绝完整重哈希后的历史回填。因而晚到 replay 在旧 `AS_OF(decision_time)` 不可见，在 publisher knowledge time 及之后可见。
 
 `deriveTimeline` / `latestAsOf` 仍要求显式 UTC `decision_time`，并只选择 knowledge boundary 不晚于该时间且没有 quality flags 的 observation。历史 source timestamp 不能让后知数据泄漏到过去。
 
 ## Identity、observation 与 receipt
 
-Fixture/Event canonical IDs 由 FootballPrediction verified allocation authority 和 governed identity registry 提供；provider-shaped ID、swapped team/kickoff、未绑定 allocation 的 registry、fake/duck-typed ledger、错误 decision/ruleset/resolver 或 active 非 `MATCHED` 映射都 fail closed。`MATCHED → QUARANTINED → MATCHED` 通过 append-only supersession 恢复；quarantined event 不产生 market observations。
+Fixture/Event canonical IDs 只由 FootballPrediction 内部 bootstrap allocator 生成，public production API 拒绝 caller allocator。首次 bootstrap 把完整 allocation bytes、hash、provenance、Fixture/Event ID 与 Fixture→Event relation 写入 immutable `STORE.json` trust root；reopen/replay 必须逐字节匹配该根，重新计算自描述 hash 不能重绑定映射。Fresh authority reader 会重算 deterministic decision ID，重建 append-only supersession 状态，并逐条验证 observation 引用同一历史中 exact ACTIVE+MATCHED decision、registry 和 manifest versions。provider-shaped ID、mapping swap、fake/duck-typed ledger 或错误 governance 都 fail closed。`MATCHED → QUARANTINED → MATCHED` 通过已发布 transaction 恢复；quarantined event 不产生 market observations。
 
-每条 observation 绑定 canonical/provider identity、decision、registry version/hash、adapter version、RAW SHA-256、capture receipt 和 publisher T2。RAW 与 receipt 不可变。相同 `capture_id` 的 receipt retry 只有在 canonical receipt bytes 完全一致时才 no-op；相同 identity 的不同内容 fail closed，不覆盖原 receipt。旧 JSONL derived append 对同一 observation identity 只允许 T2-neutral semantic retry，市场内容变化仍拒绝。
+每条 observation 绑定 canonical/provider identity、decision、registry version/hash、adapter version、RAW SHA-256、verified persisted capture receipt 和 publisher T2。RAW content identity 与 acquisition identity 分离：不同 `capture_id` 可以引用相同 RAW；同一 `(provider, capture_id)` 在 transaction chain 中只允许同一 receipt SHA 与 RAW SHA，exact retry 复用既有 transaction，冲突 fail closed。普通 caller receipt object 不能进入 prospective builder。旧 JSONL derived append 对同一 observation identity 只允许 T2-neutral semantic retry，市场内容变化仍拒绝。
 
 ## Live 与 offline replay
 
 `scripts/ops/stage_c_the_odds_api_live_smoke.js` 是 transaction-v1 live/offline integration entrypoint。默认优先读取已有本地 FotMob RAW、The Odds API RAW、receipt 和 allocation evidence，因此验证不产生 provider request；network capture 只有显式 `STAGE_C_ALLOW_NETWORK=yes` 且具备 key 时才可运行。live 与 replay 都调用同一个 `offlinePipeline`、prospective builder、atomic publisher 和 fresh authority reader，不再执行 legacy identity append、observation append 或 registry authority write。
 
-`scripts/ops/stage_c_fixture_identity_replay.js` 只接受已有 immutable evidence，支持把早期 allocation snapshot 补足当前 provenance/hash envelope 后重新验证；`PROJECTION_AVAILABLE_AT` 被禁止，T2 由 publisher 生成。缺失 RAW、receipt、allocation 或 hash/provenance 不得用 synthetic data 替代。
+`scripts/ops/stage_c_fixture_identity_replay.js` 只接受已有 immutable provider evidence；早期 allocation snapshot 仅用于校验 fixture coverage/provenance，不能提供或替换 canonical IDs。首次 canonical bootstrap 由内部 allocator 建立 allocation artifact 与 STORE trust root；之后 replay 必须同时重开两者，缺一即 fail closed。`PROJECTION_AVAILABLE_AT` 被禁止，T2 由 publisher 生成。缺失 RAW、receipt 或 provenance 不得用 synthetic data 替代。
 
 本地已有 capture evidence 可离线重放并用于验证：20 个 provider events 中 16 个 MATCHED、4 个 QUARANTINED，生成 915 条 canonical observations；这些是当前 worktree 的 local evidence，不是 production coverage、provider terms 或 merge/review approval。
 
@@ -48,7 +48,7 @@ Adapter 只解析 The Odds API 当前 EPL `h2h` / `h2h_lay` 形状；未知、�
 
 ## 验证与状态
 
-受影响测试覆盖 observation contract、schema、identity trust root、allocation/ledger binding、quarantine recovery、prospective zero-write、T2 no-lookahead、receipt idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename、concurrency 和 cross-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；gate 必须实际识别并执行受影响 Stage C paths，`changed_files=0` / no-op 不算通过。
+受影响测试覆盖 observation contract、schema、production allocation bootstrap/reopen、完整重哈希的 mapping/decision/T2 攻击、quarantine recovery、prospective zero-write、receipt/capture idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename 与 post-rename unknown outcome。独立 Node 子进程测试同时覆盖 identical writers（one commit + reuse）、competing writers（one commit + stale parent）和 fresh-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；targeted JS profile 会先校验/初始化 lockfile dependency tree，并拒绝 global ESLint fallback；`changed_files=0` / no-op 不算通过。
 
 实现闭环后仍需 fresh independent Sol exact-head strict review、owner merge decision 以及 merge 后 main Production Gate；本文不把这些治理状态提前标记为通过。
 

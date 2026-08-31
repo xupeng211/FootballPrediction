@@ -12,7 +12,7 @@ function allocationEquals(left, right) { return stableStringify(left) === stable
 function createProspectiveGovernanceContext({ authoritySnapshot, allocationAuthority, candidateDecisions }) {
     if (!isVerifiedMarketEvidenceAuthoritySnapshot(authoritySnapshot)) throw new Error('verified MarketEvidenceAuthoritySnapshot is required');
     const descriptor = allocationDescriptor(allocationAuthority);
-    if (!allocationEquals(authoritySnapshot.allocation, { allocation_schema_version: descriptor.schemaVersion, allocation_content_hash: descriptor.allocationSnapshotSha256, allocation_artifact_sha256: authoritySnapshot.allocation.allocation_artifact_sha256, allocation_provenance_raw_sha256: descriptor.provenanceRawSha256 })) throw new Error('authority snapshot is bound to a different allocation authority');
+    if (!allocationEquals(authoritySnapshot.allocation, { allocation_schema_version: descriptor.schemaVersion, allocation_content_hash: descriptor.allocationSnapshotSha256, allocation_artifact_sha256: authoritySnapshot.allocation.allocation_artifact_sha256, allocation_provenance_raw_sha256: descriptor.provenanceRawSha256, allocation_snapshot: descriptor.allocationSnapshot })) throw new Error('authority snapshot is bound to a different allocation authority');
     if (!Array.isArray(candidateDecisions)) throw new Error('candidate decisions must be an array');
     const decisions = [...authoritySnapshot.decisions, ...candidateDecisions];
     const state = projectIdentityDecisionState(decisions, allocationAuthority);

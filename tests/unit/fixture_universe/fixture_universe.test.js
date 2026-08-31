@@ -44,17 +44,11 @@ const fixtureUniverseOddsRaw = JSON.stringify([{
 const fixtureUniverseRawSha = sha256Text(fixtureUniverseRaw);
 const fixtureUniverseOddsSha = sha256Text(fixtureUniverseOddsRaw);
 
-function deterministicAllocator() {
-    let index = 0;
-    return prefix => `${prefix}_${String(++index).padStart(4, '0')}`;
-}
-
 function seededUniverse() {
     return seedFotMobFixtureUniverse({
         rawHtml: fixtureUniverseRaw,
         rawSha256: fixtureUniverseRawSha,
         manifest: { raw_file_relative_path: 'fixture-universe.html' },
-        allocate: deterministicAllocator(),
         mode: 'INITIAL_SEED',
     });
 }
@@ -166,8 +160,9 @@ test('late allocation, decision and supersession failures preserve all ledger st
     const malformedAllocation = { ...universe, snapshot: { ...universe.snapshot, authority: 'unverified', fixtures: universe.snapshot.fixtures.map((row, index) => index ? row : { ...row, canonical_event_id: 'fotmob:tampered' }) } };
     const lateAllocation = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'last-allocation' }]);
     assert.throws(() => resolveOddsEvents({ oddsRawText: lateAllocation, oddsRawSha256: sha256Text(lateAllocation), universe: malformedAllocation, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger })); assert.equal(JSON.stringify(ledger.read()), before);
-    const changed = JSON.parse(JSON.stringify(universe.allocationSnapshot)); changed.fixtures[0].canonical_event_id = 'evt_changed'; const unsigned = { schema_version: changed.schema_version, authority: changed.authority, fixtures: changed.fixtures, teams: changed.teams, provenance_raw_sha256: changed.provenance_raw_sha256, identity_ruleset_version: changed.identity_ruleset_version, resolver_version: changed.resolver_version }; changed.content_sha256 = semanticReplayHash(unsigned); const corrected = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: changed, mode: 'REPLAY' });
-    const conflict = JSON.stringify([{ ...event, id: 'first-valid' }, { ...event, id: 'existing' }]); assert.throws(() => resolveOddsEvents({ oddsRawText: conflict, oddsRawSha256: sha256Text(conflict), universe: corrected, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /allocation authority cannot change/); assert.equal(JSON.stringify(ledger.read()), before);
+    const changed = JSON.parse(JSON.stringify(universe.allocationSnapshot)); changed.fixtures[0].canonical_event_id = 'evt_changed'; const unsigned = { schema_version: changed.schema_version, authority: changed.authority, fixtures: changed.fixtures, teams: changed.teams, provenance_raw_sha256: changed.provenance_raw_sha256, identity_ruleset_version: changed.identity_ruleset_version, resolver_version: changed.resolver_version }; changed.content_sha256 = semanticReplayHash(unsigned);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: changed, allocationAuthority: universe.allocationAuthority, mode: 'REPLAY' }), /does not match verified allocation authority/);
+    assert.equal(JSON.stringify(ledger.read()), before);
 });
 
 test('identity decision ledger is append-only, idempotent and requires authorized supersession', t => {
@@ -176,9 +171,7 @@ test('identity decision ledger is append-only, idempotent and requires authorize
     const rawA = fixtureUniverseOddsRaw; const first = resolveOddsEvents({ oddsRawText: rawA, oddsRawSha256: sha256Text(rawA), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger });
     assert.equal(ledger.read().length, 1); resolveOddsEvents({ oddsRawText: rawA, oddsRawSha256: sha256Text(rawA), universe, decidedAt: '2026-08-27T13:31:49Z', decisionLedger: ledger }); assert.equal(ledger.read().length, 1);
     const allocation = JSON.parse(JSON.stringify(universe.allocationSnapshot)); allocation.fixtures[0].canonical_event_id = 'evt_corrected001'; const unsigned = { schema_version: allocation.schema_version, authority: allocation.authority, fixtures: allocation.fixtures, teams: allocation.teams, provenance_raw_sha256: allocation.provenance_raw_sha256, identity_ruleset_version: allocation.identity_ruleset_version, resolver_version: allocation.resolver_version }; allocation.content_sha256 = semanticReplayHash(unsigned);
-    const correctedUniverse = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation, mode: 'REPLAY' });
-    const changed = JSON.parse(fixtureUniverseOddsRaw); changed[0].bookmakers[0].markets[0].outcomes[0].price = 2.2; const rawB = JSON.stringify(changed);
-    assert.throws(() => resolveOddsEvents({ oddsRawText: rawB, oddsRawSha256: sha256Text(rawB), universe: correctedUniverse, decidedAt: '2026-08-27T13:32:49Z', decisionLedger: ledger }), /allocation authority cannot change/);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation, allocationAuthority: universe.allocationAuthority, mode: 'REPLAY' }), /does not match verified allocation authority/);
     assert.equal(ledger.read().length, 1);
     const decisionPath = path.join(root, 'decisions.jsonl'); fs.chmodSync(decisionPath, 0o644); fs.appendFileSync(decisionPath, '\n'); fs.chmodSync(decisionPath, 0o444); assert.throws(() => ledger.verify(), /integrity/);
 });
@@ -247,19 +240,19 @@ test('fixture identity rejects forged RAW provenance and duplicate canonical all
     duplicate.fixtures[1].canonical_event_id = duplicate.fixtures[0].canonical_event_id;
     const unsigned = { schema_version: duplicate.schema_version, authority: duplicate.authority, fixtures: duplicate.fixtures, teams: duplicate.teams, provenance_raw_sha256: duplicate.provenance_raw_sha256, identity_ruleset_version: duplicate.identity_ruleset_version, resolver_version: duplicate.resolver_version };
     duplicate.content_sha256 = semanticReplayHash(unsigned);
-    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: duplicate, mode: 'REPLAY' }), /canonical_event_id is not unique/);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: duplicate, allocationAuthority: universe.allocationAuthority, mode: 'REPLAY' }), /canonical_event_id is not unique/);
     const providerDerived = JSON.parse(JSON.stringify(universe.allocationSnapshot));
     providerDerived.fixtures[0].canonical_event_id = 'provider-business-id';
     const providerUnsigned = { schema_version: providerDerived.schema_version, authority: providerDerived.authority, fixtures: providerDerived.fixtures, teams: providerDerived.teams, provenance_raw_sha256: providerDerived.provenance_raw_sha256, identity_ruleset_version: providerDerived.identity_ruleset_version, resolver_version: providerDerived.resolver_version };
     providerDerived.content_sha256 = semanticReplayHash(providerUnsigned);
-    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: providerDerived, mode: 'REPLAY' }), /canonical fixture IDs are invalid/);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: providerDerived, allocationAuthority: universe.allocationAuthority, mode: 'REPLAY' }), /canonical fixture IDs are invalid/);
 });
 
 test('fixture replay requires an immutable allocation and is deterministic with the same allocation', () => {
-    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, mode: 'REPLAY' }), /requires immutable allocation/);
+    assert.throws(() => seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, mode: 'REPLAY' }), /verified FootballPrediction allocation authority is required/);
     const initial = seededUniverse();
-    const replayOne = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: initial.allocationSnapshot, mode: 'REPLAY' });
-    const replayTwo = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: initial.allocationSnapshot, mode: 'REPLAY' });
+    const replayOne = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: initial.allocationSnapshot, allocationAuthority: initial.allocationAuthority, mode: 'REPLAY' });
+    const replayTwo = seedFotMobFixtureUniverse({ rawHtml: fixtureUniverseRaw, rawSha256: fixtureUniverseRawSha, allocation: initial.allocationSnapshot, allocationAuthority: initial.allocationAuthority, mode: 'REPLAY' });
     assert.deepEqual(replayOne.snapshot.fixtures, replayTwo.snapshot.fixtures);
     assert.equal(replayOne.snapshot.allocation_snapshot_sha256, replayTwo.snapshot.allocation_snapshot_sha256);
     assert.equal(semanticReplayHash(replayOne.snapshot), semanticReplayHash(replayTwo.snapshot));

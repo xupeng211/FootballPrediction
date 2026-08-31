@@ -6,6 +6,7 @@ const path = require('node:path');
 const { seedFotMobFixtureUniverse, resolveOddsEvents } = require('../../src/infrastructure/fixture_universe/FixtureUniverse');
 const { createIdentityDecisionLedger } = require('../../src/infrastructure/fixture_universe/IdentityDecisionLedger');
 const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
+const { createCaptureReceipt, writeReceipt, loadVerifiedCaptureReceipt } = require('../../src/infrastructure/market_evidence/evidenceStore');
 
 function fixtureUniverseHtml() {
     const allMatches = Array.from({ length: 380 }, (_, index) => ({
@@ -19,12 +20,30 @@ function fixtureUniverseHtml() {
 
 function createGovernedFixtureTestContext({ rawText, decidedAt = '2026-08-27T13:31:49Z' }) {
     const rawHtml = fixtureUniverseHtml();
-    let sequence = 0;
-    const universe = seedFotMobFixtureUniverse({ rawHtml, rawSha256: sha256Text(rawHtml), mode: 'INITIAL_SEED', allocate: prefix => `${prefix}_${String(++sequence).padStart(6, '0')}` });
+    const universe = seedFotMobFixtureUniverse({ rawHtml, rawSha256: sha256Text(rawHtml), mode: 'INITIAL_SEED' });
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'market-evidence-governed-'));
     const decisionLedger = createIdentityDecisionLedger({ ledgerPath: path.join(root, 'identity-decisions.jsonl'), allocationAuthority: universe.allocationAuthority });
     const resolution = resolveOddsEvents({ oddsRawText: rawText, oddsRawSha256: sha256Text(rawText), universe, decidedAt, decisionLedger });
     return Object.freeze({ root, universe, decisionLedger, resolution, registry: resolution.registry, canonicalEventId: resolution.aliases[0]?.canonical_event_id ?? null, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) });
 }
 
-module.exports = { createGovernedFixtureTestContext };
+function createVerifiedTestReceipt({ root, rawText, overrides = {} }) {
+    const receipt = createCaptureReceipt({
+        provider: 'the-odds-api',
+        capture_id: 'test-capture',
+        acquisition_mode: 'HISTORICAL_FILE',
+        request_started_at: '2026-08-27T13:31:20Z',
+        response_received_at: '2026-08-27T13:31:49Z',
+        ingested_at: '2026-08-27T13:31:49Z',
+        http_status: 200,
+        sanitized_request_parameters: { regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' },
+        response_size_bytes: Buffer.byteLength(rawText, 'utf8'),
+        raw_sha256: sha256Text(rawText),
+        raw_evidence_reference: `raw/${sha256Text(rawText)}.json`,
+        ...overrides,
+    });
+    const receiptPath = writeReceipt({ rootDir: root, receipt });
+    return loadVerifiedCaptureReceipt({ receiptPath });
+}
+
+module.exports = { createGovernedFixtureTestContext, createVerifiedTestReceipt };

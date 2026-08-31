@@ -1,7 +1,6 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -9,110 +8,171 @@ const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const { seedFotMobFixtureUniverse } = require('../../../src/infrastructure/fixture_universe/FixtureUniverse');
 const { persistVerifiedAllocationAuthority } = require('../../../src/infrastructure/fixture_universe/AllocationAuthorityArtifact');
-const { projectIdentityDecisionState } = require('../../../src/infrastructure/fixture_universe/IdentityDecisionLedger');
-const { createObservation, sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
-const { bootstrapMarketEvidenceTransactionStore, readStoreContract } = require('../../../src/infrastructure/market_evidence/transactionStore');
+const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
+const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infrastructure/market_evidence/transactionStore');
 const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastructure/market_evidence/authorityReader');
-const { REGISTRY_DELTA_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, canonicalBytes, descriptorForBytes, createManifest, createCommittedMarker, computeAuthorityStateHash } = require('../../../src/infrastructure/market_evidence/transactionContract');
+const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
+const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
+const { loadVerifiedCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
+const { publishOfflineMarketEvidence } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
+const { canonicalBytes, createCommittedMarker, createManifest, descriptorForBytes } = require('../../../src/infrastructure/market_evidence/transactionContract');
+const { createVerifiedTestReceipt } = require('../../helpers/market_evidence_authority');
 
-const H = value => sha256Text(value);
-const HASH = char => char.repeat(64);
-function allocator() { let n = 0; return prefix => `${prefix}_${String(++n).padStart(4, '0')}`; }
-function fotmobRaw() {
-    const allMatches = Array.from({ length: 380 }, (_, i) => ({ id: String(810000 + i), home: { name: i ? `Home ${i}` : 'Arsenal' }, away: { name: i ? `Away ${i}` : 'Chelsea' }, status: { utcTime: i ? `2026-10-${String((i % 28) + 1).padStart(2, '0')}T15:00:00Z` : '2026-09-12T15:00:00Z' } }));
+const clone = value => JSON.parse(JSON.stringify(value));
+function fixtureRaw() {
+    const allMatches = Array.from({ length: 380 }, (_, index) => ({ id: String(940000 + index), home: { name: index ? `Home ${index}` : 'Arsenal' }, away: { name: index ? `Away ${index}` : 'Chelsea' }, status: { utcTime: index ? `2026-10-${String((index % 28) + 1).padStart(2, '0')}T15:00:00Z` : '2026-09-12T15:00:00Z' } }));
     return `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ query: { season: '2026/2027' }, props: { pageProps: { details: { id: 47 }, fixtures: { allMatches } } } })}</script>`;
 }
+function oddsRaw(id = 'provider-event', price = 2) {
+    return JSON.stringify([{ id, sport_key: 'soccer_epl', home_team: 'Arsenal', away_team: 'Chelsea', commence_time: '2026-09-12T15:00:00Z', bookmakers: [{ key: 'fixture', title: 'Fixture', markets: [{ key: 'h2h', outcomes: [{ name: 'Arsenal', price }, { name: 'Draw', price: 3 }, { name: 'Chelsea', price: 4 }] }] }] }]);
+}
 function setup(t) {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'transaction-v1-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-    const raw = fotmobRaw(); const universe = seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: H(raw), manifest: { raw_file_relative_path: 'fixture.html' }, allocate: allocator(), mode: 'INITIAL_SEED' });
-    const allocationPath = path.join(root, 'allocation.json'); persistVerifiedAllocationAuthority({ artifactPath: allocationPath, allocationAuthority: universe.allocationAuthority });
-    const storeRoot = path.join(root, 'market_evidence_transactions'); bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath: allocationPath, bootstrapMetadata: { fixture: 'transaction-v1' } });
-    const store = readStoreContract({ storeRoot, allocationArtifactPath: allocationPath }).store;
-    return { root, allocationPath, storeRoot, store, authority: universe.allocationAuthority, eventId: universe.snapshot.fixtures[0].canonical_event_id };
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'transaction-v1-production-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const raw = fixtureRaw();
+    const initial = seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: sha256Text(raw), mode: 'INITIAL_SEED' });
+    const allocationPath = path.join(root, 'allocation.json');
+    const persisted = persistVerifiedAllocationAuthority({ artifactPath: allocationPath, allocationAuthority: initial.allocationAuthority });
+    const universe = seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: sha256Text(raw), allocation: persisted.allocationSnapshot, allocationAuthority: persisted.allocationAuthority, mode: 'REPLAY' });
+    const storeRoot = path.join(root, 'store');
+    bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath: allocationPath, bootstrapMetadata: { test: 'transaction-v1-production' } });
+    return { root, universe, allocationPath, storeRoot };
 }
-function decision({ eventId, id = 'idn_1', prior = null, decision = 'MATCHED', raw = 'a' }) {
-    return { identity_decision_id: id, candidate_provider: 'the-odds-api', candidate_provider_event_id: 'provider-event', decision, canonical_event_id: decision === 'MATCHED' ? eventId : null, ruleset_version: 'fixture-identity-ruleset/v1', resolver_version: 'fixture-identity-resolver/v1', decided_at: '2026-08-27T13:31:49Z', raw_sha256: HASH(raw), ...(decision === 'QUARANTINED' ? { quarantine_reason: 'UNKNOWN_HOME_TEAM' } : {}), ...(prior ? { supersedes_decision_id: prior } : {}) };
+function candidate(ctx, { captureId = 'capture-1', eventId = 'provider-event', price = 2, rawText = null, receiptOverrides = {}, receiptRootTag = '' } = {}) {
+    const oddsRawText = rawText || oddsRaw(eventId, price);
+    const captureReceipt = createVerifiedTestReceipt({ root: path.join(ctx.root, 'receipts', `${captureId}-${sha256Text(oddsRawText).slice(0, 8)}${receiptRootTag}`), rawText: oddsRawText, overrides: { capture_id: captureId, ...receiptOverrides } });
+    return buildProspectiveMarketEvidenceTransaction({ authoritySnapshot: openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), universe: ctx.universe, oddsRawText, captureReceipt });
 }
-function observation(eventId, decisionId, id = 'obs_1') {
-    return createObservation({ projection_version: '1', projection_available_at: '2026-08-27T13:31:50Z', observation_id: id, canonical_event_id: eventId, identity_decision_id: decisionId, identity_ruleset_version: 'fixture-identity-ruleset/v1', identity_resolver_version: 'fixture-identity-resolver/v1', provider: 'the-odds-api', provider_event_id: 'provider-event', canonical_market_id: 'MATCH/1X2/NULL', provider_market_id: 'h2h', canonical_bookmaker_id: 'bookmaker:fixture', provider_bookmaker_id: 'fixture', provider_bookmaker_name: 'Fixture', competition: 'English Premier League', season: '2026/2027', home_team: 'Arsenal', away_team: 'Chelsea', kickoff_utc: '2026-09-12T15:00:00Z', period: 'MATCH', market_type: '1X2', line: null, canonical_selection_id: 'HOME', selection: 'HOME', price_side: 'BOOKMAKER', odds_decimal: 2, available_volume: null, bet_limit: null, bookmaker_last_update_at: null, source_snapshot_at: null, capture_started_at: '2026-08-27T13:31:20Z', response_received_at: '2026-08-27T13:31:49Z', ingested_at: '2026-08-27T13:31:49Z', acquisition_mode: 'HISTORICAL_FILE', capture_id: 'capture-1', raw_evidence_reference: 'raw/x.json', raw_sha256: HASH('b'), adapter_name: 'the-odds-api', adapter_version: '1.0.0', identity_registry_version: 'fixture/v1', identity_registry_sha256: HASH('c'), quality_flags: [] });
-}
+function publish(ctx, value) { return publishProspectiveMarketEvidenceTransaction({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath, candidate: value }); }
 function jsonl(rows) { return rows.length ? `${rows.map(stableStringify).join('\n')}\n` : ''; }
-function semanticObservationJsonl(rows) { return jsonl(rows.map(row => { const copy = { ...row }; delete copy.projection_available_at; return copy; })); }
-function overwrite(target, bytes) { fs.chmodSync(target, 0o644); fs.writeFileSync(target, bytes); fs.chmodSync(target, 0o444); }
-function writePackage(ctx, previous, { decisions = [], observations = [], entries = [], name = null, manifestPatch = null } = {}) {
-    const metadata = { schema_version: METADATA_SCHEMA_VERSION, source: { provider: 'the-odds-api', capture_id: 'capture-1', raw_sha256: HASH('b'), receipt_sha256: HASH('d') } };
-    const delta = { schema_version: REGISTRY_DELTA_SCHEMA_VERSION, entries };
-    const bytes = { 'identity_decisions.jsonl': jsonl(decisions), 'observations.jsonl': jsonl(observations), 'registry_delta.json': canonicalBytes(delta), 'metadata.json': canonicalBytes(metadata) };
-    const artifacts = Object.fromEntries(Object.entries(bytes).map(([file, value]) => [file, descriptorForBytes(file, value, file === 'identity_decisions.jsonl' ? decisions.length : file === 'observations.jsonl' ? observations.length : file === 'registry_delta.json' ? entries.length : 1, file === 'observations.jsonl' ? semanticObservationJsonl(observations) : value)]));
-    const allDecisions = [...(previous?.decisions || []), ...decisions]; const projected = projectIdentityDecisionState(allDecisions, ctx.authority);
-    const registry = new Map(previous?.registry || []); for (const entry of entries) registry.set(`${entry.kind}\u0000${entry.provider}\u0000${entry.provider_id}`, entry);
-    const index = new Map(previous?.observations || []); for (const row of observations) index.set(row.observation_id, row);
-    const postState = computeAuthorityStateHash({ allocation: ctx.store.allocation, decisions: allDecisions, latestDecisions: projected.latest, activeMatched: projected.active, registryState: registry, observationIndex: index });
-    let manifestFields = { sequence: previous ? previous.sequence + 1 : 1, parent_transaction_id: previous ? previous.id : null, parent_transaction_content_hash: previous ? previous.hash : null, expected_parent_state_hash: previous ? previous.state : ctx.store.genesis_state_hash, post_state_hash: postState, allocation: ctx.store.allocation, source: metadata.source, versions: { resolver_version: 'fixture-identity-resolver/v1', ruleset_version: 'fixture-identity-ruleset/v1', adapter_version: '1.0.0', projection_version: '1', registry_schema_version: REGISTRY_DELTA_SCHEMA_VERSION, registry_version: 'fixture/v1', observation_schema_version: 'footballprediction-market-observation/v1' }, artifacts, decision_count: decisions.length, observation_count: observations.length, registry_delta_count: entries.length, quarantine_count: decisions.filter(row => row.decision === 'QUARANTINED').length, publication_metadata: { schema_version: 'transaction-publication/v1', knowledge_time: '2026-08-27T13:31:50Z' } };
-    if (manifestPatch) manifestFields = manifestPatch({ ...manifestFields });
-    const manifest = createManifest(manifestFields);
-    const dirName = name || manifest.transaction_id; const dir = path.join(ctx.storeRoot, 'committed', dirName); fs.mkdirSync(dir, { recursive: true });
-    for (const [file, value] of Object.entries(bytes)) fs.writeFileSync(path.join(dir, file), value, { mode: 0o444 });
-    fs.writeFileSync(path.join(dir, 'manifest.json'), canonicalBytes(manifest), { mode: 0o444 }); fs.writeFileSync(path.join(dir, 'COMMITTED'), canonicalBytes(createCommittedMarker(manifest)), { mode: 0o444 });
-    return { id: manifest.transaction_id, hash: manifest.transaction_content_hash, state: manifest.post_state_hash, sequence: manifest.sequence, decisions: allDecisions, registry, observations: index, dir };
+function semanticObservationBytes(rows) { return jsonl(rows.map(row => { const copy = { ...row }; delete copy.projection_available_at; return copy; })); }
+function makeWritable(file) { fs.chmodSync(file, 0o644); }
+function rewritePackage(ctx, transactionId, mutation, { retainTransactionId = false } = {}) {
+    const oldDir = path.join(ctx.storeRoot, 'committed', transactionId);
+    const manifest = JSON.parse(fs.readFileSync(path.join(oldDir, 'manifest.json'), 'utf8'));
+    const data = {
+        decisions: fs.readFileSync(path.join(oldDir, 'identity_decisions.jsonl'), 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse),
+        observations: fs.readFileSync(path.join(oldDir, 'observations.jsonl'), 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse),
+        registry: JSON.parse(fs.readFileSync(path.join(oldDir, 'registry_delta.json'), 'utf8')),
+        metadata: JSON.parse(fs.readFileSync(path.join(oldDir, 'metadata.json'), 'utf8')),
+        publication: clone(manifest.publication_metadata),
+    };
+    mutation(data);
+    const bytes = {
+        'identity_decisions.jsonl': jsonl(data.decisions),
+        'observations.jsonl': jsonl(data.observations),
+        'registry_delta.json': canonicalBytes(data.registry),
+        'metadata.json': canonicalBytes(data.metadata),
+    };
+    const artifacts = {
+        'identity_decisions.jsonl': descriptorForBytes('identity_decisions.jsonl', bytes['identity_decisions.jsonl'], data.decisions.length),
+        'observations.jsonl': descriptorForBytes('observations.jsonl', bytes['observations.jsonl'], data.observations.length, semanticObservationBytes(data.observations)),
+        'registry_delta.json': descriptorForBytes('registry_delta.json', bytes['registry_delta.json'], data.registry.entries.length),
+        'metadata.json': descriptorForBytes('metadata.json', bytes['metadata.json'], 1),
+    };
+    const fields = clone(manifest);
+    for (const key of ['schema_version', 'transaction_id', 'logical_batch_key', 'logical_content_hash', 'batch_content_hash', 'transaction_content_hash', 'manifest_sha256']) delete fields[key];
+    Object.assign(fields, { artifacts, source: data.metadata.source, publication_metadata: data.publication });
+    const rebuilt = createManifest(fields);
+    const finalManifest = retainTransactionId ? { ...rebuilt, transaction_id: transactionId } : rebuilt;
+    if (retainTransactionId) { const unsigned = { ...finalManifest }; delete unsigned.manifest_sha256; finalManifest.manifest_sha256 = sha256Text(stableStringify(unsigned)); }
+    for (const [name, content] of Object.entries(bytes)) { const file = path.join(oldDir, name); makeWritable(file); fs.writeFileSync(file, content); fs.chmodSync(file, 0o444); }
+    for (const name of ['manifest.json', 'COMMITTED']) makeWritable(path.join(oldDir, name));
+    fs.writeFileSync(path.join(oldDir, 'manifest.json'), canonicalBytes(finalManifest));
+    fs.writeFileSync(path.join(oldDir, 'COMMITTED'), canonicalBytes(createCommittedMarker(rebuilt)));
+    fs.chmodSync(path.join(oldDir, 'manifest.json'), 0o444); fs.chmodSync(path.join(oldDir, 'COMMITTED'), 0o444);
+    if (!retainTransactionId && rebuilt.transaction_id !== transactionId) { const newDir = path.join(ctx.storeRoot, 'committed', rebuilt.transaction_id); fs.renameSync(oldDir, newDir); return rebuilt.transaction_id; }
+    return transactionId;
 }
 
-test('EMPTY_STORE_GENESIS_READER_PASS and immutable allocation binding', t => {
-    const ctx = setup(t); const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
-    assert.equal(snapshot.head_transaction_id, null); assert.equal(snapshot.state_hash, ctx.store.genesis_state_hash); assert.equal(snapshot.decisions.length, 0); assert.equal(snapshot.observations.length, 0);
-    assert.throws(() => bootstrapMarketEvidenceTransactionStore({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath, bootstrapMetadata: { fixture: 'different' } }), /different content/);
-    const raw = fotmobRaw(); let n = 0; const other = seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: H(raw), manifest: { raw_file_relative_path: 'fixture.html' }, allocate: prefix => `${prefix}_other${String(++n).padStart(4, '0')}`, mode: 'INITIAL_SEED' }); const otherPath = path.join(ctx.root, 'other-allocation.json'); persistVerifiedAllocationAuthority({ artifactPath: otherPath, allocationAuthority: other.allocationAuthority }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: otherPath }), /different allocation authority/);
+test('production transaction reader reopens exact committed authority in a fresh process', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx));
+    const program = "const r=require('./src/infrastructure/market_evidence/authorityReader');const s=r.openMarketEvidenceAuthoritySnapshot({storeRoot:process.argv[1],allocationArtifactPath:process.argv[2]});process.stdout.write(JSON.stringify({id:s.head_transaction_id,d:s.decisions.length,o:s.observations.length}))";
+    const child = spawnSync(process.execPath, ['-e', program, ctx.storeRoot, ctx.allocationPath], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr); assert.deepEqual(JSON.parse(child.stdout), { id: result.transaction_id, d: 1, o: 3 });
 });
 
-test('VALID_SINGLE_TRANSACTION_READER_PASS and NO_COMMIT_TRANSACTION_NOT_DISCOVERED', t => {
-    const ctx = setup(t); const d = decision({ eventId: ctx.eventId }); const transaction = writePackage(ctx, null, { decisions: [d], observations: [observation(ctx.eventId, d.identity_decision_id)] });
-    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }); assert.equal(snapshot.head_transaction_id, transaction.id); assert.equal(snapshot.decisions.length, 1); assert.equal(snapshot.observations.length, 1);
-    const uncommitted = path.join(ctx.storeRoot, '.staging', 'tx_' + 'f'.repeat(64)); fs.mkdirSync(uncommitted); fs.writeFileSync(path.join(uncommitted, 'manifest.json'), '{}\n'); assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }).head_transaction_id, transaction.id);
+test('LIVE/offline entrypoint bootstraps internal allocation and shares publisher-owned T2', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'live-offline-transaction-v1-')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const fotmobRawText = fixtureRaw(); const oddsRawText = oddsRaw('live-event');
+    const receiptEvidence = createVerifiedTestReceipt({ root: path.join(root, 'receipt'), rawText: oddsRawText, overrides: { capture_id: 'live-offline-capture', acquisition_mode: 'LIVE_CAPTURE' } }); const allocationArtifactPath = path.join(root, 'authority', 'allocation.json'); const storeRoot = path.join(root, 'authority', 'store');
+    const result = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText, receiptEvidence, allocationArtifactPath, storeRoot, knowledge_time: '2026-08-27T13:31:49Z' });
+    assert.equal(result.published.status, 'COMMITTED'); assert.equal(result.freshAuthoritySnapshot.head_transaction_id, result.published.transaction_id); assert.notEqual(result.knowledge_time, '2026-08-27T13:31:49Z');
+    const store = JSON.parse(fs.readFileSync(path.join(storeRoot, 'STORE.json'), 'utf8')); assert.ok(Date.parse(result.knowledge_time) >= Date.parse(store.authority_created_at));
 });
 
-test('VALID_MULTI_TRANSACTION_PARENT_CHAIN_PASS reconstructs one combined snapshot', t => {
-    const ctx = setup(t); const firstDecision = decision({ eventId: ctx.eventId }); const first = writePackage(ctx, null, { decisions: [firstDecision], observations: [observation(ctx.eventId, firstDecision.identity_decision_id)], entries: [{ kind: 'event', provider: 'the-odds-api', provider_id: 'provider-event', canonical_id: ctx.eventId }] });
-    const secondDecision = decision({ eventId: ctx.eventId, id: 'idn_2', prior: firstDecision.identity_decision_id, decision: 'QUARANTINED', raw: 'e' }); const second = writePackage(ctx, first, { decisions: [secondDecision] });
-    const thirdDecision = decision({ eventId: ctx.eventId, id: 'idn_3', prior: secondDecision.identity_decision_id, raw: 'f' }); writePackage(ctx, second, { decisions: [thirdDecision], observations: [observation(ctx.eventId, thirdDecision.identity_decision_id, 'obs_2')] });
-    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
-    assert.equal(snapshot.decisions.length, 3); assert.equal(snapshot.observations.length, 2); assert.equal(snapshot.latestDecision('the-odds-api', 'provider-event').identity_decision_id, 'idn_3'); assert.equal(snapshot.activeMatched('the-odds-api', 'provider-event').identity_decision_id, 'idn_3'); assert.equal(snapshot.aliases[0].identity_decision_id, 'idn_3'); assert.equal(snapshot.head_transaction_id.startsWith('tx_'), true);
+test('fully rehashed invented decision identity cannot self-authorize observations', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx));
+    rewritePackage(ctx, result.transaction_id, data => {
+        data.decisions[0].identity_decision_id = `idn_${'f'.repeat(64)}`;
+        for (const row of data.observations) row.identity_decision_id = data.decisions[0].identity_decision_id;
+        for (const entry of data.registry.entries) if (entry.kind === 'event') entry.identity_decision_id = data.decisions[0].identity_decision_id;
+    });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /deterministic identity is invalid/);
 });
 
-test('PARTIAL_STAGING_IGNORED and STAGING_WITH_COMMITTED_MARKER_IGNORED', t => {
-    const ctx = setup(t); const residue = path.join(ctx.storeRoot, '.staging', 'tx_deadbeef'); fs.mkdirSync(residue); fs.writeFileSync(path.join(residue, 'COMMITTED'), '{}\n'); fs.writeFileSync(path.join(residue, 'garbage'), 'x');
-    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }); assert.equal(snapshot.head_transaction_id, null);
+test('fully rehashed decision governance forgeries fail closed independently', t => {
+    const attacks = [
+        data => { data.decisions[0].candidate_provider = 'evil-provider'; },
+        data => { data.decisions[0].candidate_provider_event_id = 'wrong-event'; },
+        data => { data.decisions[0].canonical_event_id = `evt_${'e'.repeat(32)}`; },
+        data => { data.decisions[0].ruleset_version = 'evil-ruleset/v1'; },
+        data => { data.decisions[0].resolver_version = 'evil-resolver/v1'; },
+    ];
+    for (const attack of attacks) {
+        const ctx = setup(t); const result = publish(ctx, candidate(ctx)); rewritePackage(ctx, result.transaction_id, attack);
+        assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /identity decision|canonical event|canonical_event_id|ruleset|resolver|provider/);
+    }
 });
 
-test('committed package tampering and exact-file violations fail closed', t => {
-    const ctx = setup(t); const d = decision({ eventId: ctx.eventId }); const tx = writePackage(ctx, null, { decisions: [d] });
-    fs.writeFileSync(path.join(tx.dir, 'extra'), 'x'); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /unexpected file set/);
+test('observation must bind exact active MATCHED decision and registry governance', t => {
+    for (const attack of [
+        data => { data.observations[0].provider = 'evil-provider'; },
+        data => { data.observations[0].provider_event_id = 'wrong-event'; },
+        data => { data.observations[0].canonical_event_id = `evt_${'e'.repeat(32)}`; },
+        data => { data.observations[0].identity_ruleset_version = 'evil-ruleset/v1'; },
+    ]) {
+        const ctx = setup(t); const result = publish(ctx, candidate(ctx)); rewritePackage(ctx, result.transaction_id, attack);
+        assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /observation/);
+    }
 });
 
-test('MISSING_ARTIFACT_REJECTED, MANIFEST_PAYLOAD_HASH_MISMATCH_REJECTED and COMMITTED mismatch reject persisted bytes', t => {
-    const ctx = setup(t); const d = decision({ eventId: ctx.eventId }); const tx = writePackage(ctx, null, { decisions: [d] });
-    fs.unlinkSync(path.join(tx.dir, 'metadata.json')); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /unexpected file set/);
-    const ctx2 = setup(t); const tx2 = writePackage(ctx2, null, { decisions: [decision({ eventId: ctx2.eventId })] }); overwrite(path.join(tx2.dir, 'identity_decisions.jsonl'), 'x\n'); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx2.storeRoot, allocationArtifactPath: ctx2.allocationPath }), /invalid JSON/);
-    const ctx3 = setup(t); const tx3 = writePackage(ctx3, null, { decisions: [decision({ eventId: ctx3.eventId })] }); overwrite(path.join(tx3.dir, 'COMMITTED'), canonicalBytes({ schema_version: 'footballprediction-market-evidence-transaction-commit/v1', transaction_id: tx3.id, transaction_content_hash: tx3.hash, manifest_sha256: HASH('0') })); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx3.storeRoot, allocationArtifactPath: ctx3.allocationPath }), /does not bind manifest/);
+test('fully rehashed registry and receipt provenance forgeries fail semantic reopen', t => {
+    const registryContext = setup(t); const registryResult = publish(registryContext, candidate(registryContext));
+    rewritePackage(registryContext, registryResult.transaction_id, data => { const event = data.registry.entries.find(entry => entry.kind === 'event'); event.canonical_id = `evt_${'e'.repeat(32)}`; delete data.registry.result_registry_state_sha256; });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: registryContext.storeRoot, allocationArtifactPath: registryContext.allocationPath }), /observation event registry governance is invalid/);
+    const receiptContext = setup(t); const receiptResult = publish(receiptContext, candidate(receiptContext));
+    rewritePackage(receiptContext, receiptResult.transaction_id, data => { data.metadata.capture_receipt.http_status = 201; });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: receiptContext.storeRoot, allocationArtifactPath: receiptContext.allocationPath }), /capture receipt does not bind transaction source/);
 });
 
-test('wrong parent, gap, orphan, fork, noncanonical name and transaction identity all fail closed', t => {
-    const ctx = setup(t); const d = decision({ eventId: ctx.eventId }); const first = writePackage(ctx, null, { decisions: [d] });
-    writePackage(ctx, first, { name: 'tx_' + '0'.repeat(64) }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /directory name does not match/);
-    const ctx2 = setup(t); const p = writePackage(ctx2, null, { decisions: [decision({ eventId: ctx2.eventId })] }); writePackage(ctx2, p, { observations: [observation(ctx2.eventId, 'idn_1', 'obs_a')] }); writePackage(ctx2, p, { observations: [observation(ctx2.eventId, 'idn_1', 'obs_b')] }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx2.storeRoot, allocationArtifactPath: ctx2.allocationPath }), /fork|multiple head/);
-    const ctx3 = setup(t); writePackage(ctx3, null, { decisions: [decision({ eventId: ctx3.eventId })], manifestPatch: fields => ({ ...fields, sequence: 2, parent_transaction_id: 'tx_' + 'a'.repeat(64), parent_transaction_content_hash: HASH('a') }) }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx3.storeRoot, allocationArtifactPath: ctx3.allocationPath }), /orphan|root/);
-    const ctx4 = setup(t); const first4 = writePackage(ctx4, null, { decisions: [decision({ eventId: ctx4.eventId })] }); writePackage(ctx4, first4, { manifestPatch: fields => ({ ...fields, parent_transaction_content_hash: HASH('b') }) }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx4.storeRoot, allocationArtifactPath: ctx4.allocationPath }), /wrong parent content hash/);
-    const ctx5 = setup(t); const first5 = writePackage(ctx5, null, { decisions: [decision({ eventId: ctx5.eventId })] }); writePackage(ctx5, first5, { manifestPatch: fields => ({ ...fields, expected_parent_state_hash: HASH('c') }) }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx5.storeRoot, allocationArtifactPath: ctx5.allocationPath }), /wrong parent state hash/);
-    const ctx6 = setup(t); const first6 = writePackage(ctx6, null, { decisions: [decision({ eventId: ctx6.eventId })] }); writePackage(ctx6, first6, { manifestPatch: fields => ({ ...fields, sequence: 3 }) }); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx6.storeRoot, allocationArtifactPath: ctx6.allocationPath }), /sequence gap/);
+test('transaction identity binds T2 and fully rehashed backdating predates STORE trust root', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx)); const oldT2 = '2026-08-27T13:31:49Z';
+    rewritePackage(ctx, result.transaction_id, data => { data.publication.knowledge_time = oldT2; for (const row of data.observations) row.projection_available_at = oldT2; }, { retainTransactionId: true });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /transaction content identity is invalid/);
+    const second = setup(t); const committed = publish(second, candidate(second));
+    rewritePackage(second, committed.transaction_id, data => { data.publication.knowledge_time = oldT2; for (const row of data.observations) row.projection_available_at = oldT2; });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: second.storeRoot, allocationArtifactPath: second.allocationPath }), /predates its immutable STORE.json authority/);
 });
 
-test('SYMLINK_TRANSACTION_REJECTED and SYMLINK_ARTIFACT_REJECTED', t => {
-    const ctx = setup(t); const target = path.join(ctx.root, 'target'); fs.mkdirSync(target); fs.symlinkSync(target, path.join(ctx.storeRoot, 'committed', 'tx_' + '1'.repeat(64))); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /transaction directory/);
-    const ctx2 = setup(t); const tx = writePackage(ctx2, null, { decisions: [decision({ eventId: ctx2.eventId })] }); const targetFile = path.join(ctx2.root, 'target-file'); fs.writeFileSync(targetFile, 'safe'); fs.unlinkSync(path.join(tx.dir, 'metadata.json')); fs.symlinkSync(targetFile, path.join(tx.dir, 'metadata.json')); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx2.storeRoot, allocationArtifactPath: ctx2.allocationPath }), /regular file/);
+test('capture acquisition identity is unique while RAW content identity remains reusable', t => {
+    const ctx = setup(t); const sameRaw = oddsRaw(); const firstCandidate = candidate(ctx, { captureId: 'same-capture', rawText: sameRaw }); const first = publish(ctx, firstCandidate);
+    const retry = publish(ctx, candidate(ctx, { captureId: 'same-capture', rawText: sameRaw })); assert.equal(retry.reused, true); assert.equal(retry.transaction_id, first.transaction_id);
+    assert.throws(() => candidate(ctx, { captureId: 'same-capture', rawText: oddsRaw('provider-event', 2.5) }), /capture identity is already bound/);
+    assert.throws(() => candidate(ctx, { captureId: 'same-capture', rawText: sameRaw, receiptRootTag: '-conflict', receiptOverrides: { request_started_at: '2026-08-27T13:31:21Z' } }), /capture identity is already bound/);
+    const second = publish(ctx, candidate(ctx, { captureId: 'different-capture', rawText: sameRaw })); assert.notEqual(second.transaction_id, first.transaction_id);
+    assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }).capture_bindings.length, 2);
 });
 
-test('STATE_HASH_DETERMINISTIC, TRANSACTION_ID_DETERMINISTIC and CROSS_PROCESS_REOPEN', t => {
-    const ctx = setup(t); const d = decision({ eventId: ctx.eventId }); const a = writePackage(ctx, null, { decisions: [d], observations: [observation(ctx.eventId, d.identity_decision_id)] }); const one = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }); const two = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }); assert.equal(one.state_hash, two.state_hash);
-    const identical = setup(t); const identicalDecision = decision({ eventId: identical.eventId }); const b = writePackage(identical, null, { decisions: [identicalDecision], observations: [observation(identical.eventId, identicalDecision.identity_decision_id)] }); const other = openMarketEvidenceAuthoritySnapshot({ storeRoot: identical.storeRoot, allocationArtifactPath: identical.allocationPath }); assert.equal(a.id, b.id); assert.equal(one.state_hash, other.state_hash);
-    const program = "const r=require('./src/infrastructure/market_evidence/authorityReader');process.stdout.write(r.openMarketEvidenceAuthoritySnapshot({storeRoot:process.argv[1],allocationArtifactPath:process.argv[2]}).state_hash)";
-    const child = spawnSync(process.execPath, ['-e', program, ctx.storeRoot, ctx.allocationPath], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' }); assert.equal(child.status, 0, child.stderr); assert.equal(child.stdout, one.state_hash);
+test('plain duck-typed receipt evidence and persisted receipt tamper are rejected', t => {
+    const ctx = setup(t); const fake = { receipt: { capture_id: 'fake' }, receipt_sha256: 'a'.repeat(64) };
+    assert.throws(() => buildProspectiveMarketEvidenceTransaction({ authoritySnapshot: openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), universe: ctx.universe, oddsRawText: oddsRaw(), captureReceipt: fake }), /verified persisted capture receipt/);
+    const receiptRoot = path.join(ctx.root, 'tampered-receipt'); createVerifiedTestReceipt({ root: receiptRoot, rawText: oddsRaw(), overrides: { capture_id: 'tampered' } }); const receiptPath = path.join(receiptRoot, 'receipts', 'tampered.json'); makeWritable(receiptPath); fs.appendFileSync(receiptPath, ' '); fs.chmodSync(receiptPath, 0o444);
+    assert.throws(() => loadVerifiedCaptureReceipt({ receiptPath }), /invalid JSON|canonical serialization/);
+});
+
+test('committed whitelist, symlinks and staging residue fail closed', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx)); const txDir = path.join(ctx.storeRoot, 'committed', result.transaction_id);
+    fs.writeFileSync(path.join(txDir, 'extra'), 'x'); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /unexpected file set/);
+    const ctx2 = setup(t); const staging = path.join(ctx2.storeRoot, '.staging', `tx_${'a'.repeat(64)}`); fs.mkdirSync(staging); fs.writeFileSync(path.join(staging, 'COMMITTED'), '{}\n'); assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx2.storeRoot, allocationArtifactPath: ctx2.allocationPath }).head_transaction_id, null);
+    const target = path.join(ctx2.root, 'target'); fs.mkdirSync(target); fs.symlinkSync(target, path.join(ctx2.storeRoot, 'committed', `tx_${'b'.repeat(64)}`)); assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx2.storeRoot, allocationArtifactPath: ctx2.allocationPath }), /transaction directory/);
 });

@@ -8,28 +8,41 @@ const path = require('node:path');
 const { sha256Text, stableStringify, isUtcTimestamp } = require('../market_evidence/contracts');
 const { assertAllocationAuthority, assertResolvedDecision, allocationDescriptor } = require('./VerifiedAllocationAuthority');
 const { loadVerifiedAllocationAuthority } = require('./AllocationAuthorityArtifact');
+const { RULESET_VERSION, RESOLVER_VERSION, computeIdentityDecisionId } = require('./FixtureUniverse');
 
 const MANIFEST_VERSION = 'footballprediction-identity-decision-ledger/v1';
 const authenticLedgers = new WeakMap();
 function manifestPath(ledgerPath) { return `${ledgerPath}.manifest.json`; }
 function parse(content) { return content === '' ? [] : content.trimEnd().split('\n').map(line => JSON.parse(line)); }
-function validate(row) {
+const DECISION_FIELDS = new Set(['identity_decision_id', 'candidate_provider', 'candidate_provider_event_id', 'decision', 'ruleset_version', 'resolver_version', 'decided_at', 'raw_sha256', 'evidence_refs', 'canonical_event_id', 'method', 'competition_match', 'season_evidence_status', 'season_resolution_method', 'home_team_match', 'away_team_match', 'kickoff_delta_seconds', 'candidate_count', 'quarantine_reason', 'supersedes_decision_id']);
+function validate(row, allocationAuthority = null) {
     if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('identity decision must be an object');
     for (const field of ['identity_decision_id', 'candidate_provider', 'candidate_provider_event_id', 'decision', 'ruleset_version', 'resolver_version', 'raw_sha256']) {
         if (typeof row[field] !== 'string' || !row[field].trim()) throw new Error(`identity decision requires ${field}`);
     }
     if (!['MATCHED', 'QUARANTINED'].includes(row.decision) || !isUtcTimestamp(row.decided_at) || !/^[a-f0-9]{64}$/.test(row.raw_sha256)) throw new Error('identity decision contract is invalid');
+    const unknown = Object.keys(row).find(key => !DECISION_FIELDS.has(key));
+    if (unknown) throw new Error(`identity decision contains unknown field: ${unknown}`);
+    if (row.candidate_provider !== 'the-odds-api' || row.ruleset_version !== RULESET_VERSION || row.resolver_version !== RESOLVER_VERSION) throw new Error('identity decision governance version or provider is invalid');
+    if (!Array.isArray(row.evidence_refs) || row.evidence_refs.length !== 2 || row.evidence_refs.some(value => typeof value !== 'string' || !value)) throw new Error('identity decision evidence refs are invalid');
+    if (!Number.isInteger(row.candidate_count) || row.candidate_count < 0 || (row.kickoff_delta_seconds !== null && (!Number.isFinite(row.kickoff_delta_seconds) || row.kickoff_delta_seconds < 0))) throw new Error('identity decision candidate evidence is invalid');
     if (row.decision === 'MATCHED' && !/^evt_[A-Za-z0-9]+$/.test(row.canonical_event_id || '')) throw new Error('matched identity decision requires governed canonical event');
     if (row.decision === 'QUARANTINED' && row.canonical_event_id !== null) throw new Error('quarantined identity decision cannot map an event');
+    if (row.decision === 'MATCHED' && (row.method !== 'LEVEL_2_STRICT_FIXTURE' || row.candidate_count !== 1 || row.competition_match !== true || row.home_team_match !== true || row.away_team_match !== true || row.quarantine_reason !== undefined)) throw new Error('matched identity decision evidence is invalid');
+    if (row.decision === 'QUARANTINED' && (row.method !== 'LEVEL_2_FAIL_CLOSED' || typeof row.quarantine_reason !== 'string' || !row.quarantine_reason)) throw new Error('quarantined identity decision evidence is invalid');
     if (row.supersedes_decision_id !== undefined && row.supersedes_decision_id !== null && (typeof row.supersedes_decision_id !== 'string' || !row.supersedes_decision_id)) throw new Error('identity supersession reference is invalid');
+    if (allocationAuthority) {
+        if (row.decision === 'MATCHED') assertAllocationAuthority(allocationAuthority, row.canonical_event_id);
+        const allocationHash = allocationDescriptor(allocationAuthority).allocationSnapshotSha256;
+        if (row.identity_decision_id !== computeIdentityDecisionId(row, allocationHash)) throw new Error('identity decision deterministic identity is invalid');
+    }
 }
 function projectDecisionState(rows, allocationAuthority) {
     if (!Array.isArray(rows)) throw new Error('identity decision rows must be an array');
     const active = new Map(); const known = new Map(); const latest = new Map();
     for (const row of rows) {
-        validate(row);
+        validate(row, allocationAuthority);
         if (!allocationAuthority) throw new Error('identity decision ledger has no verified allocation authority');
-        if (row.decision === 'MATCHED') assertAllocationAuthority(allocationAuthority, row.canonical_event_id);
         const id = row.decision_id || row.identity_decision_id;
         if (known.has(id)) throw new Error(`duplicate identity decision: ${id}`);
         known.set(id, row);
@@ -63,7 +76,7 @@ function verify(ledgerPath) {
     if (manifestStat.isSymbolicLink() || !manifestStat.isFile() || (manifestStat.mode & 0o222) !== 0) throw new Error('identity decision ledger manifest must be a read-only regular file');
     const manifest = JSON.parse(fs.readFileSync(mp, 'utf8'));
     if (manifest.schema_version !== MANIFEST_VERSION || manifest.ledger_sha256 !== sha256Text(content) || manifest.line_count !== rows.length) throw new Error('identity decision ledger integrity check failed');
-    rows.forEach(validate); return { content, rows, manifest };
+    rows.forEach(row => validate(row)); return { content, rows, manifest };
 }
 function rewriteManifest(ledgerPath, content, lineCount, allocation) {
     const mp = manifestPath(ledgerPath);
@@ -94,7 +107,7 @@ function createIdentityDecisionLedger({ ledgerPath, allocationAuthority = null }
     function latestDecisions() { return decisionState().latest; }
     function append(row) {
         if (!allocationAuthority) throw new Error('identity decision ledger has no verified allocation authority');
-        validate(row); assertResolvedDecision(row, allocationAuthority); if (row.decision === 'MATCHED') assertAllocationAuthority(allocationAuthority, row.canonical_event_id); const existing = verify(ledgerPath); const serialized = stableStringify(row);
+        validate(row, allocationAuthority); assertResolvedDecision(row, allocationAuthority); const existing = verify(ledgerPath); const serialized = stableStringify(row);
         const sameId = existing.rows.find(item => item.identity_decision_id === row.identity_decision_id);
         if (sameId) { if (stableStringify(sameId) === serialized) return Object.freeze({ ...sameId }); throw new Error(`conflicting identity decision append: ${row.identity_decision_id}`); }
         const state = decisionState(); const key = `${row.candidate_provider}\u0000${row.candidate_provider_event_id}`; const latest = state.latest.get(key) || null;

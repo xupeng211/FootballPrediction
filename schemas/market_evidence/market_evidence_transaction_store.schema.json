@@ -3,11 +3,12 @@
   "title": "FootballPrediction Market Evidence Transaction Store V1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "store_type", "authority_owner", "allocation", "genesis_state_hash", "transaction_schema_version", "bootstrap_metadata", "store_sha256"],
+  "required": ["schema_version", "store_type", "authority_owner", "authority_created_at", "allocation", "genesis_state_hash", "transaction_schema_version", "bootstrap_metadata", "store_sha256"],
   "properties": {
     "schema_version": {"const": "footballprediction-market-evidence-transaction-store/v1"},
     "store_type": {"const": "market-evidence-transaction-v1"},
     "authority_owner": {"const": "FootballPrediction"},
+    "authority_created_at": {"type": "string", "format": "date-time", "pattern": "Z$"},
     "allocation": {"type": "object"},
     "genesis_state_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "transaction_schema_version": {"const": "footballprediction-market-evidence-transaction/v1"},
