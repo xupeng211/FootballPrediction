@@ -12,7 +12,7 @@ const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infras
 const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastructure/market_evidence/authorityReader');
 const { latestAsOf } = require('../../../src/infrastructure/market_evidence/asOfView');
 const { createCommittedMarker, canonicalBytes, descriptorForBytes, createManifest, computeAuthorityStateHash, hashCanonical } = require('../../../src/infrastructure/market_evidence/transactionContract');
-const { buildProspectiveMarketEvidenceTransaction, snapshotPlainData } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
+const { buildProspectiveMarketEvidenceTransaction, finalizeProspectiveMarketEvidenceTransactionForPublication, snapshotPlainData } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
 const { adaptTheOddsApiRaw } = require('../../../src/infrastructure/market_evidence/theOddsApiAdapter');
 const { projectIdentityDecisionState } = require('../../../src/infrastructure/fixture_universe/IdentityDecisionLedger');
@@ -65,6 +65,29 @@ function materializeCandidate(ctx, candidate) {
     fs.writeFileSync(path.join(dir, 'manifest.json'), canonicalBytes(candidate.manifest));
     fs.writeFileSync(path.join(dir, 'COMMITTED'), canonicalBytes(createCommittedMarker(candidate.manifest)));
 }
+function materializeCandidateWithKnowledgeTime(ctx, candidate, knowledgeTime) {
+    const manifest = createManifest({
+        sequence: candidate.sequence,
+        parent_transaction_id: candidate.parent_transaction_id,
+        parent_transaction_content_hash: candidate.parent_transaction_content_hash,
+        expected_parent_state_hash: candidate.expected_parent_state_hash,
+        post_state_hash: candidate.post_state_hash,
+        allocation: candidate.allocation,
+        source: candidate.metadata.source,
+        versions: candidate.manifest.versions,
+        artifacts: candidate.artifacts,
+        decision_count: candidate.decision_count,
+        observation_count: candidate.observation_count,
+        registry_delta_count: candidate.registry_delta_count,
+        quarantine_count: candidate.quarantine_count,
+        publication_metadata: { ...candidate.manifest.publication_metadata, knowledge_time: knowledgeTime },
+    });
+    const dir = path.join(ctx.storeRoot, 'committed', manifest.transaction_id); fs.mkdirSync(dir);
+    for (const [file, bytes] of Object.entries(candidate.artifact_bytes)) fs.writeFileSync(path.join(dir, file), bytes);
+    fs.writeFileSync(path.join(dir, 'manifest.json'), canonicalBytes(manifest));
+    fs.writeFileSync(path.join(dir, 'COMMITTED'), canonicalBytes(createCommittedMarker(manifest)));
+    return manifest;
+}
 test('PROSPECTIVE_VALID_BATCH_BUILDS_CANDIDATE with one coherent zero-write authority head', t => {
     const ctx = setup(t); const beforeTree = tree(ctx.storeRoot); const before = ctx.snapshot();
     const candidate = build(ctx, [rawEvent(0, 'event-0'), rawEvent(1, 'event-1')]); const after = ctx.snapshot();
@@ -96,6 +119,39 @@ test('late replay cannot backdate T2 and is visible only after publisher knowled
     const query = { canonical_event_id: row.canonical_event_id, canonical_bookmaker_id: row.canonical_bookmaker_id, canonical_selection_id: row.canonical_selection_id, period: row.period, market_type: row.market_type, line: row.line };
     assert.equal(latestAsOf([row], { ...query, decision_time: replayCapture.receipt.ingested_at }), null);
     assert.equal(latestAsOf([row], { ...query, decision_time: row.projection_available_at }).observation_id, row.observation_id);
+});
+
+test('ALL_QUARANTINED zero-observation candidate cannot finalize before persisted receipt evidence', t => {
+    const ctx = setup(t); const now = Date.now();
+    const responseReceivedAt = new Date(now + 120_000).toISOString(); const ingestedAt = new Date(now + 180_000).toISOString();
+    const candidate = build(ctx, [rawEvent(0, 'unresolved-future', { home: 'Unknown FC' })], {
+        receiptOverrides: { capture_id: 'quarantine-future', response_received_at: responseReceivedAt, ingested_at: ingestedAt },
+    });
+    assert.equal(candidate.identity_decisions.length, 1); assert.equal(candidate.identity_decisions[0].decision, 'QUARANTINED'); assert.equal(candidate.observations.length, 0);
+    assert.throws(() => finalizeProspectiveMarketEvidenceTransactionForPublication(candidate), /publisher clock precedes captured evidence/);
+    assert.throws(() => publishProspectiveMarketEvidenceTransaction({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath, candidate }), /publisher clock precedes captured evidence/);
+    assert.equal(ctx.snapshot().head_transaction_id, null);
+});
+
+test('authority reader rejects zero-observation transaction T2 before receipt and decision evidence', t => {
+    const ctx = setup(t); const now = Date.now();
+    const responseReceivedAt = new Date(now + 120_000).toISOString(); const ingestedAt = new Date(now + 180_000).toISOString();
+    const candidate = build(ctx, [rawEvent(0, 'unresolved-reopen', { home: 'Unknown FC' })], {
+        receiptOverrides: { capture_id: 'quarantine-reopen', response_received_at: responseReceivedAt, ingested_at: ingestedAt },
+    });
+    assert.equal(candidate.identity_decisions[0].decided_at, responseReceivedAt); assert.equal(candidate.observations.length, 0);
+    const invalidKnowledgeTime = new Date(now + 60_000).toISOString(); materializeCandidateWithKnowledgeTime(ctx, candidate, invalidKnowledgeTime);
+    assert.throws(() => ctx.snapshot(), /transaction knowledge time precedes capture receipt response evidence/);
+});
+
+test('authority reader rejects zero-observation transaction T2 before receipt ingestion evidence', t => {
+    const ctx = setup(t); const now = Date.now();
+    const responseReceivedAt = new Date(now + 120_000).toISOString(); const ingestedAt = new Date(now + 180_000).toISOString();
+    const candidate = build(ctx, [rawEvent(0, 'unresolved-ingestion', { home: 'Unknown FC' })], {
+        receiptOverrides: { capture_id: 'quarantine-ingestion', response_received_at: responseReceivedAt, ingested_at: ingestedAt },
+    });
+    const invalidKnowledgeTime = new Date(now + 150_000).toISOString(); materializeCandidateWithKnowledgeTime(ctx, candidate, invalidKnowledgeTime);
+    assert.throws(() => ctx.snapshot(), /transaction knowledge time precedes capture receipt ingestion evidence/);
 });
 
 test('PROSPECTIVE_QUARANTINE_NO_OBSERVATION and fake prospective context is rejected', t => {

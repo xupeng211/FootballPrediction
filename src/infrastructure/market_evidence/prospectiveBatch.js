@@ -2,7 +2,7 @@
 /* eslint-disable complexity -- this is the deliberate all-or-nothing business validation boundary. */
 
 const util = require('node:util');
-const { stableStringify, sha256Text, createObservation } = require('./contracts');
+const { stableStringify, sha256Text, createObservation, isUtcTimestamp } = require('./contracts');
 const { resolveOddsEventsProspectively } = require('../fixture_universe/FixtureUniverse');
 const { allocationAuthorityFor, allocationDescriptor } = require('../fixture_universe/VerifiedAllocationAuthority');
 const { projectIdentityDecisionState } = require('../fixture_universe/IdentityDecisionLedger');
@@ -122,8 +122,14 @@ function isVerifiedProspectiveTransactionCandidate(value) { return authenticCand
 function finalizeProspectiveMarketEvidenceTransactionForPublication(candidate) {
     if (!isVerifiedProspectiveTransactionCandidate(candidate)) throw new Error('verified ProspectiveTransactionCandidate is required');
     const wallClockNow = Date.now();
-    const evidenceTimes = candidate.observations.flatMap(row => [Date.parse(row.response_received_at), Date.parse(row.ingested_at)]);
-    const latestEvidenceTime = evidenceTimes.length ? Math.max(...evidenceTimes) : wallClockNow;
+    const governedEvidenceTimes = [
+        candidate.metadata.capture_receipt.response_received_at,
+        candidate.metadata.capture_receipt.ingested_at,
+        ...candidate.identity_decisions.map(row => row.decided_at),
+        ...candidate.observations.flatMap(row => [row.response_received_at, row.ingested_at]),
+    ];
+    if (governedEvidenceTimes.some(value => !isUtcTimestamp(value))) throw new Error('publisher governed evidence time is invalid');
+    const latestEvidenceTime = Math.max(...governedEvidenceTimes.map(value => Date.parse(value)));
     if (!Number.isFinite(latestEvidenceTime) || wallClockNow < latestEvidenceTime) throw new Error('publisher clock precedes captured evidence');
     const parentTime = candidate.parent_knowledge_time === null ? Number.NEGATIVE_INFINITY : Date.parse(candidate.parent_knowledge_time);
     if (!Number.isFinite(parentTime) && candidate.parent_knowledge_time !== null) throw new Error('parent authority knowledge time is invalid');

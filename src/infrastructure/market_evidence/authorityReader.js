@@ -66,9 +66,19 @@ function semanticObservationBytes(observations) {
     if (!observations.length) return '';
     return `${observations.map(row => { const copy = { ...row }; delete copy.projection_available_at; return stableStringify(copy); }).join('\n')}\n`;
 }
-function validatePublisherKnowledgeTime(manifest, observations) {
+function validatePublisherKnowledgeTime(manifest, observations, receipt, decisions) {
     const knowledgeTime = manifest.publication_metadata?.knowledge_time;
     if (typeof knowledgeTime !== 'string' || !isUtcTimestamp(knowledgeTime)) throw new Error('transaction publication knowledge_time is required and must be UTC ISO-8601');
+    const governedEvidenceTimes = [
+        ['capture receipt response evidence', receipt?.response_received_at],
+        ['capture receipt ingestion evidence', receipt?.ingested_at],
+        ...decisions.map(row => ['contained identity decision', row?.decided_at]),
+        ...observations.flatMap(row => [['observation response evidence', row.response_received_at], ['observation ingestion evidence', row.ingested_at]]),
+    ];
+    for (const [label, value] of governedEvidenceTimes) {
+        if (!isUtcTimestamp(value)) throw new Error(`transaction ${label} time is invalid`);
+        if (Date.parse(knowledgeTime) < Date.parse(value)) throw new Error(`transaction knowledge time precedes ${label}`);
+    }
     if (observations.some(row => row.projection_available_at !== knowledgeTime)) throw new Error('observation projection_available_at does not match publisher knowledge_time');
 }
 function captureKey(source) { return `${source.provider}\u0000${source.capture_id}`; }
@@ -103,7 +113,7 @@ function readPackage(committedPath, directoryName) {
     const registryDelta = validateRegistryDelta(parseCanonicalJson(bytes['registry_delta.json'], 'registry_delta.json'));
     const decisions = parseCanonicalJsonl(bytes['identity_decisions.jsonl'], 'identity_decisions.jsonl');
     const observations = parseCanonicalJsonl(bytes['observations.jsonl'], 'observations.jsonl').map(createObservation);
-    validatePublisherKnowledgeTime(manifest, observations);
+    validatePublisherKnowledgeTime(manifest, observations, metadata.capture_receipt, decisions);
     const actual = {
         'identity_decisions.jsonl': descriptorForBytes('identity_decisions.jsonl', bytes['identity_decisions.jsonl'], decisions.length),
         'observations.jsonl': descriptorForBytes('observations.jsonl', bytes['observations.jsonl'], observations.length, semanticObservationBytes(observations)),
