@@ -18,6 +18,7 @@ here.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shlex
@@ -34,6 +35,55 @@ PUBLIC_PROFILES: tuple[str, ...] = ("targeted", "pr", "strict")
 PYTHON_CODE_PREFIXES: tuple[str, ...] = ("src/", "scripts/", "tests/")
 JS_TRIGGER_SUFFIXES: frozenset[str] = frozenset({".cjs", ".js", ".json", ".mjs"})
 JS_TRIGGER_FILES: frozenset[str] = frozenset({"package.json", "package-lock.json"})
+
+
+def _ensure_locked_node_dependencies() -> int:
+    """Install and verify the exact lockfile dependency tree before JS checks."""
+    lock_path = ROOT / "package-lock.json"
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        expected = lock["packages"]["node_modules/eslint"]["version"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        print(f"[Validation] cannot resolve lockfile ESLint version: {exc}", file=sys.stderr)
+        return 2
+
+    installed_path = ROOT / "node_modules" / "eslint" / "package.json"
+    try:
+        installed = json.loads(installed_path.read_text(encoding="utf-8"))["version"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        installed = None
+
+    if installed != expected:
+        print(
+            f"[Validation] initializing repository-locked Node dependencies "
+            f"(ESLint {expected}, found {installed or 'none'}).",
+            flush=True,
+        )
+        result = subprocess.run(
+            ["npm", "ci", "--ignore-scripts", "--no-fund", "--no-audit"],
+            cwd=ROOT,
+            check=False,
+        )
+        if result.returncode != 0:
+            print("[Validation] npm ci failed; refusing any global tool fallback.", file=sys.stderr)
+            return result.returncode
+
+    try:
+        installed = json.loads(installed_path.read_text(encoding="utf-8"))["version"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        print(
+            f"[Validation] repository-local ESLint is unavailable after npm ci: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+    if installed != expected:
+        print(
+            f"[Validation] repository-local ESLint {installed} != lockfile {expected}.",
+            file=sys.stderr,
+        )
+        return 2
+    print(f"[Validation] repository-local ESLint={installed} (lockfile exact).", flush=True)
+    return 0
 
 
 def _git_output(args: Sequence[str]) -> str:
@@ -265,6 +315,11 @@ def run_profile(profile: str, changed_files: Sequence[str] | None = None) -> int
     if not commands:
         print("[Validation] no targeted runtime/test paths; profile is a no-op.", flush=True)
         return 0
+
+    if normalised == "targeted" and any(_is_js_trigger_path(path) for path in paths):
+        dependency_status = _ensure_locked_node_dependencies()
+        if dependency_status != 0:
+            return dependency_status
 
     for label, argv, gatekeeper in commands:
         status = _run_command(label, argv, gatekeeper=gatekeeper)

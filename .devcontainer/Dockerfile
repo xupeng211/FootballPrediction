@@ -122,7 +122,6 @@ RUN npm config set registry "${NPM_REGISTRY}"
 RUN npm install -g \
     typescript \
     ts-node \
-    eslint \
     prettier \
     nodemon \
     pnpm

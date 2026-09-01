@@ -150,7 +150,7 @@
     }
   },
 
-  "postCreateCommand": "pip install -r requirements.txt && npm install",
+  "postCreateCommand": "pip install -r requirements.txt && npm ci --no-fund --no-audit",
 
   "postStartCommand": "git config --global --add safe.directory /app",
 

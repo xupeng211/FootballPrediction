@@ -1,0 +1,70 @@
+{
+    "version": "stage-c-fixture/v1",
+    "content_sha256": "dcbdc7420fa8a1cc72787131c9eba28da8ccabf71d297a379fa791d573e89069",
+    "governed_event_ids": ["evt_fixture001"],
+    "events": [
+        {
+            "kind": "event",
+            "provider": "the-odds-api",
+            "provider_id": "epl-fixture-001",
+            "canonical_id": "evt_fixture001",
+            "season": "2026/2027",
+            "home_team": "Arsenal",
+            "away_team": "Chelsea",
+            "kickoff_utc": "2026-09-12T15:00:00Z",
+            "provider_observed_kickoff_utc": "2026-09-12T15:00:00Z",
+            "identity_decision_id": "idn-fixture-001",
+            "identity_decision_status": "MATCHED",
+            "identity_ruleset_version": "fixture-identity-ruleset/v1",
+            "provenance": "fixture"
+        }
+    ],
+    "bookmakers": [
+        {
+            "kind": "bookmaker",
+            "provider": "the-odds-api",
+            "provider_id": "williamhill",
+            "canonical_id": "bookmaker:william-hill",
+            "price_side": "BOOKMAKER",
+            "provenance": "fixture"
+        }
+    ],
+    "markets": [
+        {
+            "kind": "market",
+            "provider": "the-odds-api",
+            "provider_id": "h2h",
+            "canonical_id": "MATCH/1X2/NULL",
+            "period": "MATCH",
+            "market_type": "1X2",
+            "line": null,
+            "provenance": "fixture"
+        }
+    ],
+    "selections": [
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Arsenal",
+            "canonical_id": "HOME",
+            "selection": "HOME",
+            "provenance": "fixture"
+        },
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Draw",
+            "canonical_id": "DRAW",
+            "selection": "DRAW",
+            "provenance": "fixture"
+        },
+        {
+            "kind": "selection",
+            "provider": "the-odds-api",
+            "provider_id": "Chelsea",
+            "canonical_id": "AWAY",
+            "selection": "AWAY",
+            "provenance": "fixture"
+        }
+    ]
+}

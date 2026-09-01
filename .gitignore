@@ -69,6 +69,7 @@ data/snapshots/*.sql
 !data/snapshots/.gitkeep
 data/raw_json/
 data/raw/
+data/market_evidence/live/
 data/models/*.pkl
 data/models/*.joblib
 data/models/baseline_*

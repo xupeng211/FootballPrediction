@@ -3,6 +3,7 @@
 lifecycle: test-fixture
 """
 
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -68,6 +69,39 @@ def test_profile_runner_propagates_required_failure_and_stops():
 
     assert status == expected_status
     assert calls == ["canonical gate"]
+
+
+def test_locked_node_dependency_guard_initializes_missing_tree_and_rejects_global_fallback(
+    tmp_path,
+):
+    expected = "8.57.1"
+    (tmp_path / "package-lock.json").write_text(
+        json.dumps({"packages": {"node_modules/eslint": {"version": expected}}}),
+        encoding="utf-8",
+    )
+
+    def fake_ci(argv, **_kwargs):
+        assert argv == ["npm", "ci", "--ignore-scripts", "--no-fund", "--no-audit"]
+        target = tmp_path / "node_modules/eslint"
+        target.mkdir(parents=True)
+        (target / "package.json").write_text(json.dumps({"version": expected}), encoding="utf-8")
+        return SimpleNamespace(returncode=0)
+
+    with (
+        patch.object(profiles, "ROOT", tmp_path),
+        patch.object(profiles.subprocess, "run", side_effect=fake_ci),
+    ):
+        assert profiles._ensure_locked_node_dependencies() == 0
+
+
+def test_targeted_js_profile_stops_when_locked_dependency_initialization_fails():
+    expected_status = 41
+    with (
+        patch.object(profiles, "_ensure_locked_node_dependencies", return_value=expected_status),
+        patch.object(profiles, "_run_command") as run_command,
+    ):
+        assert profiles.run_profile("targeted", ["src/example.js"]) == expected_status
+    run_command.assert_not_called()
 
 
 def test_gatekeeper_dispatch_preserves_host_container_boundary():
