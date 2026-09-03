@@ -54,6 +54,12 @@ profile 的边界：
 - `verify-targeted`：受影响测试、必要 static check 和最小 targeted regression；快反馈，不宣称完整 CI。
 - `verify-pr`：通过 `scripts/devops/validation_profiles.py pr` 调用现有 PR gatekeeper；GitHub PR 的
   `Run Gatekeeper` 步骤调用同一个 profile implementation，required failure 必须返回非零。
+
+### Pre-push ref 删除
+
+本地 pre-push Gatekeeper 按 Git 提供的 ref-update 输入分类事务。仅当至少一条更新存在且全部
+使用全零 local object ID 表示删除时，才进入纯 ref 删除维护路径并跳过不适用的源代码质量检查。
+空输入、解析失败以及删除与更新混合的事务均按完整源代码 push 门禁处理；不存在通用 bypass。
 - `verify-strict`：通过同一 dispatcher 调用现有 push/full gate（覆盖率、完整性、安全和 runtime
   smoke）；只用于 STRICT，不把昂贵检查默认施加给 NORMAL。
 
