@@ -84,6 +84,44 @@ if [[ -n "$CLI_PARSE_ERROR" ]]; then
   fail "$CLI_PARSE_ERROR"
 fi
 
+# Git's pre-push protocol supplies one line per ref update on stdin:
+# local-ref local-oid remote-ref remote-oid.  A deletion has a zero local oid.
+# This parser is deliberately fail-closed: malformed or empty input is never
+# granted the deletion-only exemption.
+REF_TRANSACTION_CLASS='SOURCE_UPDATING_PUSH'
+classify_ref_updates() {
+  local line local_ref local_oid remote_ref remote_oid extra
+  local update_count=0
+  local all_deletions=1
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || { REF_TRANSACTION_CLASS='INVALID_OR_UNPARSEABLE_INPUT'; return 0; }
+    local_ref=''; local_oid=''; remote_ref=''; remote_oid=''; extra=''
+    read -r local_ref local_oid remote_ref remote_oid extra <<<"$line"
+    if [[ -n "$extra" || -z "$local_ref" || -z "$local_oid" || -z "$remote_ref" || -z "$remote_oid" \
+      || ! "$local_oid" =~ ^[0-9a-fA-F]{40}$ || ! "$remote_oid" =~ ^[0-9a-fA-F]{40}$ ]]; then
+      REF_TRANSACTION_CLASS='INVALID_OR_UNPARSEABLE_INPUT'
+      return 0
+    fi
+    update_count=$((update_count + 1))
+    if [[ "$local_oid" == '0000000000000000000000000000000000000000' && "$remote_oid" == '0000000000000000000000000000000000000000' ]]; then
+      REF_TRANSACTION_CLASS='INVALID_OR_UNPARSEABLE_INPUT'
+      return 0
+    fi
+    if [[ "$local_oid" != '0000000000000000000000000000000000000000' ]]; then
+      all_deletions=0
+    fi
+  done
+
+  if [[ "$update_count" -gt 0 && "$all_deletions" == "1" ]]; then
+    REF_TRANSACTION_CLASS='PURE_REF_DELETE'
+  elif [[ "$update_count" -eq 0 ]]; then
+    REF_TRANSACTION_CLASS='NO_REF_UPDATES'
+  else
+    REF_TRANSACTION_CLASS='SOURCE_UPDATING_PUSH'
+  fi
+}
+
 if [[ "$LOCAL_HOOK_MODE" == "1" ]]; then
   if [[ "$MODE_ARGUMENT_SEEN" != "1" ]]; then
     fail '--local-hook 必须与显式 --mode=commit、--mode=push、--mode=pr 或 --mode=auto 一起使用。'
@@ -401,6 +439,7 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   log '切入 dev 容器执行门禁。'
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" \
     env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" GATEKEEPER_WORKSPACE_ROOT="$WORKSPACE_ROOT" \
+    GATEKEEPER_PRE_PUSH="${GATEKEEPER_PRE_PUSH:-0}" \
     GATEKEEPER_HOST_PREFLIGHT_DONE=1 GITHUB_ACTIONS="${GITHUB_ACTIONS:-}" CI="${CI:-}" \
     DB_BLUEPRINT_DEBUG="${DB_BLUEPRINT_DEBUG:-}" \
     DB_BLUEPRINT_CONNECT_TIMEOUT_MS="${DB_BLUEPRINT_CONNECT_TIMEOUT_MS:-}" \
@@ -1539,6 +1578,25 @@ run_commit_smoke_tests() {
 
 run_local_hook_checks() {
   log "执行本地 Git Hook hermetic 门禁（mode=${MODE}，禁止 Docker/DB）。"
+
+  if [[ "${GATEKEEPER_PRE_PUSH:-0}" == "1" ]]; then
+    classify_ref_updates
+    case "$REF_TRANSACTION_CLASS" in
+    PURE_REF_DELETE)
+      log '检测到纯远端 ref 删除；跳过不适用的源代码质量检查。'
+      run_branch_workspace_preflight
+      ensure_git_context
+      run_no_verify_backdoor_guard
+      return 0
+      ;;
+    INVALID_OR_UNPARSEABLE_INPUT)
+      warn '无法安全解析 pre-push ref 更新流；按源代码 push 执行完整门禁。'
+      ;;
+    NO_REF_UPDATES)
+      warn 'pre-push 未提供 ref 更新；按源代码 push 执行完整门禁。'
+      ;;
+    esac
+  fi
 
   run_branch_workspace_preflight
   ensure_git_context
