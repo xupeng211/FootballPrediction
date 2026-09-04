@@ -10,7 +10,7 @@ const { persistVerifiedAllocationAuthority, loadVerifiedAllocationAuthority } = 
 const { sha256Text, stableStringify } = require('./contracts');
 const { readImmutableRaw, loadVerifiedCaptureReceipt } = require('./evidenceStore');
 const { bootstrapMarketEvidenceTransactionStore, readStoreContract } = require('./transactionStore');
-const { openMarketEvidenceAuthoritySnapshot } = require('./authorityReader');
+const { openMarketEvidenceAuthoritySnapshot, readPackage } = require('./authorityReader');
 const { buildProspectiveMarketEvidenceTransaction } = require('./prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('./atomicPublisher');
 
@@ -59,6 +59,20 @@ function loadOfflineEvidence({ fotmobRawPath, oddsRawPath, receiptPath, allocati
     return Object.freeze({ fotmobRawText, fotmobRawSha256, oddsRawText, receiptEvidence, allocationSnapshot });
 }
 
+function verifyPublishedLogicalBatch({ storeRoot, candidate, published, freshAuthoritySnapshot }) {
+    const packagePath = path.join(path.resolve(storeRoot), 'committed');
+    const transaction = readPackage(packagePath, published.transaction_id);
+    const sourceMatches = stableStringify(transaction.manifest.source) === stableStringify(candidate.manifest.source);
+    if (transaction.manifest.logical_batch_key !== candidate.logical_batch_key || !sourceMatches) throw new Error('published transaction does not bind the requested logical batch and capture source');
+    const captureKey = `${transaction.manifest.source.provider}\u0000${transaction.manifest.source.capture_id}`;
+    const captureBinding = freshAuthoritySnapshot.capture_bindings.find(row => row.key === captureKey);
+    if (!captureBinding) throw new Error('fresh authority reader did not retain the published capture binding');
+    const captureSource = { ...captureBinding }; delete captureSource.key;
+    if (stableStringify(captureSource) !== stableStringify(transaction.manifest.source)) throw new Error('fresh authority reader did not retain the published capture binding');
+    if (!published.reused && freshAuthoritySnapshot.head_transaction_id !== published.transaction_id) throw new Error('fresh authority reader did not reopen the published transaction');
+    return transaction.manifest.publication_metadata.knowledge_time;
+}
+
 function publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256, oddsRawText, receiptEvidence, allocationArtifactPath, storeRoot, projectionVersion = '1', supportedMarketKeys = ['h2h', 'h2h_lay'], authorizedSupersessions = [] }) {
     const storePath = path.join(path.resolve(storeRoot), 'STORE.json');
     const artifactExists = fs.existsSync(allocationArtifactPath); const storeExists = fs.existsSync(storePath);
@@ -79,7 +93,7 @@ function publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256, oddsRawT
     const candidate = buildProspectiveMarketEvidenceTransaction({ authoritySnapshot, universe, oddsRawText, captureReceipt: receiptEvidence, projectionVersion, supportedMarketKeys, authorizedSupersessions });
     const published = publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArtifactPath, candidate });
     const freshAuthoritySnapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath });
-    if (freshAuthoritySnapshot.head_transaction_id !== published.transaction_id) throw new Error('fresh authority reader did not reopen the published transaction');
+    const publishedKnowledgeTime = verifyPublishedLogicalBatch({ storeRoot, candidate, published, freshAuthoritySnapshot });
     return Object.freeze({
         published,
         candidate,
@@ -87,7 +101,8 @@ function publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256, oddsRawT
         matched_decision_count: candidate.identity_decisions.filter(row => row.decision === 'MATCHED').length,
         quarantined_decision_count: candidate.identity_decisions.filter(row => row.decision === 'QUARANTINED').length,
         observation_count: freshAuthoritySnapshot.observations.length,
-        knowledge_time: freshAuthoritySnapshot.head_knowledge_time,
+        knowledge_time: publishedKnowledgeTime,
+        authority_head_knowledge_time: freshAuthoritySnapshot.head_knowledge_time,
     });
 }
 
