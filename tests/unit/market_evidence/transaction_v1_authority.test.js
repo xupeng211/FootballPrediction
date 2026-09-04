@@ -14,7 +14,7 @@ const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastruc
 const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
 const { loadVerifiedCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
-const { publishOfflineMarketEvidence } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
+const { publishOfflineMarketEvidence, verifyPublishedLogicalBatch } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
 const { canonicalBytes, createCommittedMarker, createManifest, descriptorForBytes } = require('../../../src/infrastructure/market_evidence/transactionContract');
 const { createVerifiedTestReceipt } = require('../../helpers/market_evidence_authority');
 
@@ -125,6 +125,16 @@ test('offline pipeline retries a prior logical batch without binding it to a new
     assert.equal(retryB.published.reused, true); assert.equal(retryB.published.transaction_id, second.published.transaction_id);
     assert.equal(repeatedRetryA.published.reused, true); assert.equal(repeatedRetryA.published.transaction_id, first.published.transaction_id);
     assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath }).capture_bindings.length, 2);
+});
+
+test('published batch verification accepts A after B advances the authority head', t => {
+    const ctx = setup(t); const firstCandidate = candidate(ctx, { captureId: 'interleave-a' }); const first = publish(ctx, firstCandidate);
+    const secondCandidate = candidate(ctx, { captureId: 'interleave-b', rawText: oddsRaw('provider-event', 2.5) }); const second = publish(ctx, secondCandidate);
+    const freshAuthoritySnapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+
+    assert.equal(freshAuthoritySnapshot.head_transaction_id, second.transaction_id);
+    assert.equal(verifyPublishedLogicalBatch({ storeRoot: ctx.storeRoot, candidate: firstCandidate, published: first, freshAuthoritySnapshot }), first.snapshot.head_knowledge_time);
+    assert.equal(freshAuthoritySnapshot.observations.length, 6);
 });
 
 test('fully rehashed invented decision identity cannot self-authorize observations', t => {

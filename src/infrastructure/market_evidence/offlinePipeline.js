@@ -69,7 +69,10 @@ function verifyPublishedLogicalBatch({ storeRoot, candidate, published, freshAut
     if (!captureBinding) throw new Error('fresh authority reader did not retain the published capture binding');
     const captureSource = { ...captureBinding }; delete captureSource.key;
     if (stableStringify(captureSource) !== stableStringify(transaction.manifest.source)) throw new Error('fresh authority reader did not retain the published capture binding');
-    if (!published.reused && freshAuthoritySnapshot.head_transaction_id !== published.transaction_id) throw new Error('fresh authority reader did not reopen the published transaction');
+    // The publisher has already committed this exact transaction. Another
+    // writer may legitimately advance the head after its lock is released, so
+    // success is proven by the immutable package and its reopened lineage—not
+    // by requiring this batch to remain the current head.
     return transaction.manifest.publication_metadata.knowledge_time;
 }
 
@@ -106,4 +109,4 @@ function publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256, oddsRawT
     });
 }
 
-module.exports = { loadOfflineEvidence, publishOfflineMarketEvidence };
+module.exports = { loadOfflineEvidence, publishOfflineMarketEvidence, verifyPublishedLogicalBatch };
