@@ -145,7 +145,7 @@ MODEL_ACTIVATED=NO
 | Prematch feature set | 稳定、可追溯、只消费决策时刻可用特征 | canonical 9-feature frame 已有，GD-A01/A02/A03 已完成 | 需要在 market-relative forward evidence 中继续验证 |
 | Probability model | 输出 H/D/A 概率、版本、校准和不确定性 | canonical XGBoost candidate 已有，offline quality 为 `PROMISING` | quality proven、fresh evidence、production boundary |
 | Uncertainty | 概率不确定性和 risk grade 进入 policy | 当前有离线概率指标，没有完整 decision-time uncertainty contract | uncertainty / calibration policy |
-| Market odds timeline | 真实 provider price 的 decision-time/as-of 时间线 | historical odds staging 与 provider closing semantics 研究资产存在 | strict decision-time odds timeline `NOT_ESTABLISHED` |
+| Market odds timeline | 真实 provider price 的 decision-time/as-of 时间线 | historical odds 研究资产与 Stage C canonical decision-time/as-of spine 已存在；maturity 为 `REPRODUCIBLE_PILOT` | continuous durable capture 尚未就绪；Stage D 未启动，须先完成 Owner 门禁 |
 | De-vig | 可解释的 fair-market probability 基准 | canonical de-vig layer `NOT_ESTABLISHED` | 建立并验证市场概率语义 |
 | Value engine | 计算 fair odds、minimum odds、edge、EV | canonical value engine `NOT_ESTABLISHED`；VALUE_MVP-1 为独立研究 | canonical market-relative engine |
 | `NO BET` policy | 缺少 edge、质量或风险条件时稳定输出 `NO BET` | canonical policy `NOT_ESTABLISHED` | policy contract 与 forward evidence |
@@ -160,7 +160,7 @@ MODEL_ACTIVATED=NO
 
 依据 current-state 文档，当前只记录、不在本 vision 任务中启动的缺口包括：
 
-- strict decision-time odds evidence and market/de-vig semantics
+- continuous durable decision-time odds evidence（已有 Stage C pilot）and market/de-vig semantics
 - canonical value engine and `NO BET` policy
 - canonical backtest / market-relative evaluation engine
 - fresh independent forward holdout and prediction/odds ledger
