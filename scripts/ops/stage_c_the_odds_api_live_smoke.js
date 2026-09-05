@@ -63,7 +63,7 @@ async function acquireOptInLiveEvidence() {
         credentialPresent: true,
         downstreamAvailable: true,
     });
-    const client = createTheOddsApiClient();
+    const client = createTheOddsApiClient({ captureNon200: true });
     const captureId = `live-${crypto.randomUUID()}`;
     const persisted = await executePreparedPreflight({
         prepared,

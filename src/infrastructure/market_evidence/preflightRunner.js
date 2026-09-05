@@ -6,10 +6,16 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { createCaptureReceipt, loadVerifiedCaptureReceipt, readImmutableRaw } = require('./evidenceStore');
+const {
+    createCaptureReceipt,
+    loadVerifiedCaptureReceipt,
+    readImmutableRaw,
+    sanitizeRequestParameters,
+} = require('./evidenceStore');
 const { stableStringify } = require('./contracts');
 
 const preparedRoots = new WeakSet();
+const consumedPreparations = new WeakSet();
 const MAX_PROVIDER_REQUESTS = 1;
 
 function sha256(value) {
@@ -69,6 +75,16 @@ function sanitizeHeaders(headers = {}) {
 function assertPrepared(prepared) {
     if (!preparedRoots.has(prepared)) throw new Error('prepared preflight context is required');
 }
+function recordFailure(prepared, captureId, stage, error) {
+    try {
+        atomicWrite(
+            path.join(prepared.root, 'attempts', `${captureId}.failure.json`),
+            `${JSON.stringify({ capture_id: captureId, state: 'FAILED', stage, message: String(error.message || error).replace(/https?:\/\/\S+/g, '[redacted-url]') }, null, 2)}\n`
+        );
+    } catch {
+        /* original error remains authoritative */
+    }
+}
 
 function preparePreflight({ rootDir, requestMetadata, credentialPresent, downstreamAvailable = true }) {
     if (credentialPresent !== true) {
@@ -80,17 +96,19 @@ function preparePreflight({ rootDir, requestMetadata, credentialPresent, downstr
     regularDirectory(root, 'evidence root');
     for (const name of ['raw', 'receipts', 'headers', 'metadata', 'attempts', 'manifest-workspace']) {
         regularDirectory(path.join(root, name), `${name} directory`);
+        writeProbe(path.join(root, name));
     }
     writeProbe(root);
+    const sanitizedRequestMetadata = sanitizeRequestParameters(requestMetadata);
     const metadataPath = path.join(root, 'metadata', 'request.json');
     atomicWrite(
         metadataPath,
-        `${JSON.stringify({ ...requestMetadata, credential_present: 'YES', max_provider_requests: MAX_PROVIDER_REQUESTS }, null, 2)}\n`
+        `${JSON.stringify({ ...sanitizedRequestMetadata, credential_present: 'YES', max_provider_requests: MAX_PROVIDER_REQUESTS }, null, 2)}\n`
     );
     const prepared = Object.freeze({
         root,
         metadataPath,
-        requestMetadata: Object.freeze({ ...requestMetadata }),
+        requestMetadata: Object.freeze({ ...sanitizedRequestMetadata }),
         max_provider_requests: MAX_PROVIDER_REQUESTS,
     });
     preparedRoots.add(prepared);
@@ -113,7 +131,17 @@ function persistResponse({ prepared, captureId, response }) {
         headerPath,
         `${JSON.stringify({ http_status: response.status, response_headers: sanitizeHeaders(response.headers), response_received_at: response.receivedAt }, null, 2)}\n`
     );
-    if (!fs.existsSync(rawPath)) atomicWrite(rawPath, body, 0o444);
+    if (fs.existsSync(rawPath)) {
+        const stat = fs.lstatSync(rawPath);
+        if (
+            stat.isSymbolicLink() ||
+            !stat.isFile() ||
+            (stat.mode & 0o222) !== 0 ||
+            fs.readFileSync(rawPath, 'utf8') !== body
+        ) {
+            throw new Error('existing immutable RAW target is invalid');
+        }
+    } else atomicWrite(rawPath, body, 0o444);
     fs.chmodSync(rawPath, 0o444);
     atomicWrite(
         attemptPath,
@@ -130,11 +158,13 @@ async function executePreparedPreflight({
     downstream = null,
 }) {
     assertPrepared(prepared);
+    if (consumedPreparations.has(prepared)) throw new Error('provider request guard blocked a reused preparation');
     if (typeof transport !== 'function') throw new Error('an explicit transport is required');
     if (typeof captureId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(captureId)) {
         throw new Error('capture_id is invalid');
     }
     let calls = 0;
+    consumedPreparations.add(prepared);
     const startedAt = now();
     let response;
     try {
@@ -144,13 +174,16 @@ async function executePreparedPreflight({
             Object.freeze({ requestMetadata: prepared.requestMetadata, maxProviderRequests: MAX_PROVIDER_REQUESTS })
         );
     } catch (error) {
-        atomicWrite(
-            path.join(prepared.root, 'attempts', `${captureId}.failure.json`),
-            `${JSON.stringify({ capture_id: captureId, state: 'TRANSPORT_FAILED', transport_calls: calls, message: String(error.message || error).replace(/https?:\/\/\S+/g, '[redacted-url]') }, null, 2)}\n`
-        );
+        recordFailure(prepared, captureId, 'TRANSPORT', error);
         throw error;
     }
-    const persisted = persistResponse({ prepared, captureId, response });
+    let persisted;
+    try {
+        persisted = persistResponse({ prepared, captureId, response });
+    } catch (error) {
+        recordFailure(prepared, captureId, 'RESPONSE_PERSISTENCE', error);
+        throw error;
+    }
     if (response.status !== 200) {
         throw Object.assign(new Error(`The Odds API returned HTTP ${response.status}`), {
             transport_calls: calls,
@@ -158,21 +191,32 @@ async function executePreparedPreflight({
         });
     }
     const receivedAt = response.receivedAt || now();
-    const receipt = createCaptureReceipt({
-        capture_id: captureId,
-        acquisition_mode: 'LIVE_CAPTURE',
-        request_started_at: startedAt,
-        response_received_at: receivedAt,
-        ingested_at: now(),
-        http_status: response.status,
-        sanitized_request_parameters: prepared.requestMetadata,
-        response_size_bytes: Buffer.byteLength(response.body, 'utf8'),
-        raw_sha256: persisted.rawSha,
-        raw_evidence_reference: persisted.rawRelative,
-        provider_quota: sanitizeHeaders(response.headers),
-    });
+    let receipt;
+    try {
+        receipt = createCaptureReceipt({
+            capture_id: captureId,
+            acquisition_mode: 'LIVE_CAPTURE',
+            request_started_at: startedAt,
+            response_received_at: receivedAt,
+            ingested_at: now(),
+            http_status: response.status,
+            sanitized_request_parameters: prepared.requestMetadata,
+            response_size_bytes: Buffer.byteLength(response.body, 'utf8'),
+            raw_sha256: persisted.rawSha,
+            raw_evidence_reference: persisted.rawRelative,
+            provider_quota: sanitizeHeaders(response.headers),
+        });
+    } catch (error) {
+        recordFailure(prepared, captureId, 'RECEIPT_CONSTRUCTION', error);
+        throw error;
+    }
     const receiptPath = path.join(prepared.root, 'receipts', `${captureId}.json`);
-    atomicWrite(receiptPath, `${stableStringify(receipt)}\n`, 0o444);
+    try {
+        atomicWrite(receiptPath, `${stableStringify(receipt)}\n`, 0o444);
+    } catch (error) {
+        recordFailure(prepared, captureId, 'RECEIPT_PERSISTENCE', error);
+        throw error;
+    }
     const verified = loadVerifiedCaptureReceipt({ receiptPath });
     readImmutableRaw({ rawPath: persisted.rawPath, expectedSha256: verified.receipt.raw_sha256 });
     const downstreamResult = downstream

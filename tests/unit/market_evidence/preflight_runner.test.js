@@ -104,6 +104,41 @@ test('root preparation failure blocks transport', t => {
     );
     assert.equal(calls, 0);
 });
+test('prepared context is single-use and unsafe metadata is rejected before transport', async t => {
+    const prepared = prepare(t);
+    let calls = 0;
+    await executePreparedPreflight({
+        prepared,
+        captureId: 'once',
+        now: () => '2020-09-06T00:00:00Z',
+        transport: async () => {
+            calls += 1;
+            return response(200);
+        },
+    });
+    await assert.rejects(
+        () =>
+            executePreparedPreflight({
+                prepared,
+                captureId: 'twice',
+                transport: async () => {
+                    calls += 1;
+                    return response(200);
+                },
+            }),
+        /reused preparation/
+    );
+    assert.equal(calls, 1);
+    assert.throws(
+        () =>
+            preparePreflight({
+                rootDir: path.join(root(t), 'unsafe'),
+                requestMetadata: { apiKey: 'forbidden' },
+                credentialPresent: true,
+            }),
+        /unsupported request parameter/
+    );
+});
 test('429, 500 and timeout use one transport call and never retry', async t => {
     for (const scenario of ['429', '500', 'timeout']) {
         const prepared = prepare(t);
