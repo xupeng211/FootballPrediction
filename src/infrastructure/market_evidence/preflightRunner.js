@@ -59,6 +59,19 @@ function writeProbe(root) {
     fs.unlinkSync(probe);
     fsyncDirectory(root);
 }
+function atomicCreate(target, bytes, mode = 0o600) {
+    const temporary = `${target}.${crypto.randomUUID()}.partial`;
+    atomicWrite(temporary, bytes, mode);
+    try {
+        fs.linkSync(temporary, target);
+    } catch (error) {
+        fs.unlinkSync(temporary);
+        throw error.code === 'EEXIST' ? new Error('preflight attempt already exists for this evidence root') : error;
+    }
+    fs.unlinkSync(temporary);
+    fs.chmodSync(target, mode);
+    fsyncDirectory(path.dirname(target));
+}
 function sanitizeHeaders(headers = {}) {
     const result = {};
     for (const [key, value] of Object.entries(headers)) {
@@ -76,10 +89,14 @@ function assertPrepared(prepared) {
     if (!preparedRoots.has(prepared)) throw new Error('prepared preflight context is required');
 }
 function recordFailure(prepared, captureId, stage, error) {
+    const raw = String(error.message || error);
+    const message = /api[-_]?key|authorization|secret|token/i.test(raw)
+        ? 'redacted secret-bearing error'
+        : raw.replace(/https?:\/\/\S+/g, '[redacted-url]');
     try {
         atomicWrite(
             path.join(prepared.root, 'attempts', `${captureId}.failure.json`),
-            `${JSON.stringify({ capture_id: captureId, state: 'FAILED', stage, message: String(error.message || error).replace(/https?:\/\/\S+/g, '[redacted-url]') }, null, 2)}\n`
+            `${JSON.stringify({ capture_id: captureId, state: 'FAILED', stage, message }, null, 2)}\n`
         );
     } catch {
         /* original error remains authoritative */
@@ -94,6 +111,10 @@ function preparePreflight({ rootDir, requestMetadata, credentialPresent, downstr
     if (typeof rootDir !== 'string' || !rootDir.trim()) throw new Error('evidence root is required');
     const root = path.resolve(rootDir);
     regularDirectory(root, 'evidence root');
+    const attemptsPath = path.join(root, 'attempts');
+    if (fs.existsSync(attemptsPath) && fs.readdirSync(attemptsPath).some(name => name.endsWith('.armed.json'))) {
+        throw new Error('evidence root has an armed preflight attempt and requires explicit reconciliation');
+    }
     for (const name of ['raw', 'receipts', 'headers', 'metadata', 'attempts', 'manifest-workspace']) {
         regularDirectory(path.join(root, name), `${name} directory`);
         writeProbe(path.join(root, name));
@@ -165,6 +186,10 @@ async function executePreparedPreflight({
     }
     let calls = 0;
     consumedPreparations.add(prepared);
+    atomicCreate(
+        path.join(prepared.root, 'attempts', `${captureId}.armed.json`),
+        `${JSON.stringify({ capture_id: captureId, state: 'ATTEMPT_ARMED', max_provider_requests: MAX_PROVIDER_REQUESTS })}\n`
+    );
     const startedAt = now();
     let response;
     try {
