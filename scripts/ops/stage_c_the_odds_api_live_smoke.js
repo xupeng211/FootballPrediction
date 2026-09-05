@@ -9,8 +9,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { createTheOddsApiClient } = require('../../src/infrastructure/market_evidence/theOddsApiClient');
-const { writeImmutableRaw, createCaptureReceipt, writeReceipt } = require('../../src/infrastructure/market_evidence/evidenceStore');
-const { loadOfflineEvidence, publishOfflineMarketEvidence } = require('../../src/infrastructure/market_evidence/offlinePipeline');
+const {
+    loadOfflineEvidence,
+    publishOfflineMarketEvidence,
+} = require('../../src/infrastructure/market_evidence/offlinePipeline');
+const {
+    preparePreflight,
+    executePreparedPreflight,
+} = require('../../src/infrastructure/market_evidence/preflightRunner');
 
 const evidenceRoot = path.resolve(process.env.STAGE_C_EVIDENCE_ROOT || 'data/market_evidence/live');
 const defaultPaths = {
@@ -23,7 +29,11 @@ const defaultPaths = {
 function summarizeBookmakers(rawText) {
     const payload = JSON.parse(rawText);
     const names = new Set();
-    for (const event of payload) for (const bookmaker of event.bookmakers || []) names.add(String(bookmaker.title || bookmaker.key || '').trim());
+    for (const event of payload) {
+        for (const bookmaker of event.bookmakers || []) {
+            names.add(String(bookmaker.title || bookmaker.key || '').trim());
+        }
+    }
     return [...names].filter(Boolean).sort();
 }
 
@@ -38,35 +48,53 @@ function offlineInputPaths() {
 }
 
 async function acquireOptInLiveEvidence() {
-    if (process.env.STAGE_C_ALLOW_NETWORK !== 'yes') throw new Error('live network acquisition is disabled; provide existing offline evidence or set STAGE_C_ALLOW_NETWORK=yes');
-    if (!process.env.THE_ODDS_API_KEY) throw new Error('THE_ODDS_API_KEY is required for explicitly authorized live capture');
-    const client = createTheOddsApiClient();
-    const live = await client.capture({ regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' });
-    const captureId = `live-${crypto.randomUUID()}`;
-    const raw = writeImmutableRaw({ rootDir: evidenceRoot, rawText: live.rawText });
-    const receipt = createCaptureReceipt({
-        capture_id: captureId,
-        acquisition_mode: 'LIVE_CAPTURE',
-        request_started_at: live.request_started_at,
-        response_received_at: live.response_received_at,
-        ingested_at: live.ingested_at,
-        http_status: live.http_status,
-        sanitized_request_parameters: { regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' },
-        response_size_bytes: live.response_size_bytes,
-        raw_sha256: raw.raw_sha256,
-        raw_evidence_reference: raw.raw_evidence_reference,
-        provider_quota: live.provider_quota,
+    if (process.env.STAGE_C_ALLOW_NETWORK !== 'yes') {
+        throw new Error(
+            'live network acquisition is disabled; provide existing offline evidence or set STAGE_C_ALLOW_NETWORK=yes'
+        );
+    }
+    if (!process.env.THE_ODDS_API_KEY) {
+        throw new Error('THE_ODDS_API_KEY is required for explicitly authorized live capture');
+    }
+    const request = { regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' };
+    const prepared = preparePreflight({
+        rootDir: evidenceRoot,
+        requestMetadata: request,
+        credentialPresent: true,
+        downstreamAvailable: true,
     });
-    const receiptPath = writeReceipt({ rootDir: evidenceRoot, receipt });
+    const client = createTheOddsApiClient();
+    const captureId = `live-${crypto.randomUUID()}`;
+    const persisted = await executePreparedPreflight({
+        prepared,
+        captureId,
+        transport: async () => {
+            const live = await client.capture(request);
+            return {
+                status: live.http_status,
+                headers: live.provider_quota,
+                body: live.rawText,
+                receivedAt: live.response_received_at,
+            };
+        },
+    });
     const paths = offlineInputPaths() || {};
-    return { client, live, paths: { ...paths, oddsRawPath: path.join(evidenceRoot, raw.raw_evidence_reference), receiptPath } };
+    return {
+        client,
+        live: persisted,
+        paths: { ...paths, oddsRawPath: persisted.persisted.rawPath, receiptPath: persisted.receiptPath },
+    };
 }
 
 async function main() {
     const existing = offlineInputPaths();
     const capture = existing ? { paths: existing, client: null, live: null } : await acquireOptInLiveEvidence();
-    const transactionRoot = path.resolve(process.env.STAGE_C_TRANSACTION_ROOT || path.join(evidenceRoot, 'transactions'));
-    const allocationArtifactPath = path.resolve(process.env.STAGE_C_ALLOCATION_ARTIFACT_PATH || path.join(transactionRoot, 'allocation.authority.json'));
+    const transactionRoot = path.resolve(
+        process.env.STAGE_C_TRANSACTION_ROOT || path.join(evidenceRoot, 'transactions')
+    );
+    const allocationArtifactPath = path.resolve(
+        process.env.STAGE_C_ALLOCATION_ARTIFACT_PATH || path.join(transactionRoot, 'allocation.authority.json')
+    );
     const evidence = loadOfflineEvidence(capture.paths);
     const result = publishOfflineMarketEvidence({
         ...evidence,
