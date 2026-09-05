@@ -14,7 +14,7 @@ const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastruc
 const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
 const { loadVerifiedCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
-const { publishOfflineMarketEvidence } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
+const { publishOfflineMarketEvidence, verifyPublishedLogicalBatch } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
 const { canonicalBytes, createCommittedMarker, createManifest, descriptorForBytes } = require('../../../src/infrastructure/market_evidence/transactionContract');
 const { createVerifiedTestReceipt } = require('../../helpers/market_evidence_authority');
 
@@ -98,6 +98,43 @@ test('LIVE/offline entrypoint bootstraps internal allocation and shares publishe
     const result = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText, receiptEvidence, allocationArtifactPath, storeRoot, knowledge_time: '2026-08-27T13:31:49Z' });
     assert.equal(result.published.status, 'COMMITTED'); assert.equal(result.freshAuthoritySnapshot.head_transaction_id, result.published.transaction_id); assert.notEqual(result.knowledge_time, '2026-08-27T13:31:49Z');
     const store = JSON.parse(fs.readFileSync(path.join(storeRoot, 'STORE.json'), 'utf8')); assert.ok(Date.parse(result.knowledge_time) >= Date.parse(store.authority_created_at));
+});
+
+test('offline pipeline retries a prior logical batch without binding it to a newer authority head', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'offline-non-head-retry-')); t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const fotmobRawText = fixtureRaw(); const allocationArtifactPath = path.join(root, 'authority', 'allocation.json'); const storeRoot = path.join(root, 'authority', 'store');
+    const rawA = oddsRaw('retry-event', 2); const receiptA = createVerifiedTestReceipt({ root: path.join(root, 'receipt-a'), rawText: rawA, overrides: { capture_id: 'capture-a' } });
+    const first = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText: rawA, receiptEvidence: receiptA, allocationArtifactPath, storeRoot });
+    const immediateRetryA = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText: rawA, receiptEvidence: receiptA, allocationArtifactPath, storeRoot });
+    assert.equal(immediateRetryA.published.reused, true); assert.equal(immediateRetryA.published.transaction_id, first.published.transaction_id);
+    const rawB = oddsRaw('retry-event', 2.5); const receiptB = createVerifiedTestReceipt({ root: path.join(root, 'receipt-b'), rawText: rawB, overrides: { capture_id: 'capture-b' } });
+    const second = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText: rawB, receiptEvidence: receiptB, allocationArtifactPath, storeRoot });
+
+    const fixturePath = path.join(root, 'fotmob-fixtures.html'); const rawAPath = path.join(root, 'odds-a.json'); fs.writeFileSync(fixturePath, fotmobRawText); fs.writeFileSync(rawAPath, rawA);
+    const retryProgram = "const fs=require('node:fs');const {sha256Text}=require('./src/infrastructure/market_evidence/contracts');const {loadVerifiedCaptureReceipt}=require('./src/infrastructure/market_evidence/evidenceStore');const {publishOfflineMarketEvidence}=require('./src/infrastructure/market_evidence/offlinePipeline');const [fixturePath,rawPath,receiptPath,allocationArtifactPath,storeRoot]=process.argv.slice(1);const fotmobRawText=fs.readFileSync(fixturePath,'utf8');const oddsRawText=fs.readFileSync(rawPath,'utf8');const result=publishOfflineMarketEvidence({fotmobRawText,fotmobRawSha256:sha256Text(fotmobRawText),oddsRawText,receiptEvidence:loadVerifiedCaptureReceipt({receiptPath}),allocationArtifactPath,storeRoot});process.stdout.write(JSON.stringify({transaction_id:result.published.transaction_id,reused:result.published.reused,head_transaction_id:result.freshAuthoritySnapshot.head_transaction_id,observation_count:result.observation_count,knowledge_time:result.knowledge_time,authority_head_knowledge_time:result.authority_head_knowledge_time}));";
+    const child = spawnSync(process.execPath, ['-e', retryProgram, fixturePath, rawAPath, path.join(root, 'receipt-a', 'receipts', 'capture-a.json'), allocationArtifactPath, storeRoot], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr); const retry = JSON.parse(child.stdout);
+
+    assert.equal(retry.reused, true); assert.equal(retry.transaction_id, first.published.transaction_id);
+    assert.equal(retry.head_transaction_id, second.published.transaction_id);
+    assert.equal(retry.observation_count, second.observation_count);
+    assert.equal(retry.knowledge_time, first.knowledge_time);
+    assert.equal(retry.authority_head_knowledge_time, second.knowledge_time);
+    const retryB = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText: rawB, receiptEvidence: receiptB, allocationArtifactPath, storeRoot });
+    const repeatedRetryA = publishOfflineMarketEvidence({ fotmobRawText, fotmobRawSha256: sha256Text(fotmobRawText), oddsRawText: rawA, receiptEvidence: receiptA, allocationArtifactPath, storeRoot });
+    assert.equal(retryB.published.reused, true); assert.equal(retryB.published.transaction_id, second.published.transaction_id);
+    assert.equal(repeatedRetryA.published.reused, true); assert.equal(repeatedRetryA.published.transaction_id, first.published.transaction_id);
+    assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath }).capture_bindings.length, 2);
+});
+
+test('published batch verification accepts A after B advances the authority head', t => {
+    const ctx = setup(t); const firstCandidate = candidate(ctx, { captureId: 'interleave-a' }); const first = publish(ctx, firstCandidate);
+    const secondCandidate = candidate(ctx, { captureId: 'interleave-b', rawText: oddsRaw('provider-event', 2.5) }); const second = publish(ctx, secondCandidate);
+    const freshAuthoritySnapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+
+    assert.equal(freshAuthoritySnapshot.head_transaction_id, second.transaction_id);
+    assert.equal(verifyPublishedLogicalBatch({ storeRoot: ctx.storeRoot, candidate: firstCandidate, published: first, freshAuthoritySnapshot }), first.snapshot.head_knowledge_time);
+    assert.equal(freshAuthoritySnapshot.observations.length, 6);
 });
 
 test('fully rehashed invented decision identity cannot self-authorize observations', t => {
