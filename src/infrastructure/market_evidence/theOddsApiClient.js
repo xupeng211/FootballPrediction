@@ -65,7 +65,11 @@ function createDirectRequestFn({ httpsModule = https, timeoutMs = DEFAULT_TIMEOU
     };
 }
 
-function createStableProxyRequestFn({ proxyUrl = process.env.THE_ODDS_API_PROXY_URL, timeoutMs = DEFAULT_TIMEOUT_MS, agent } = {}) {
+function createStableProxyRequestFn({
+    proxyUrl = process.env.THE_ODDS_API_PROXY_URL,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    agent,
+} = {}) {
     if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new Error('stable proxy timeout must be positive');
     if (typeof proxyUrl !== 'string' || !/^https?:\/\/[^\s]+$/i.test(proxyUrl)) {
         throw new Error('THE_ODDS_API_PROXY_URL must be an HTTP(S) proxy URL for stable_proxy transport');
@@ -78,16 +82,19 @@ function createStableProxyRequestFn({ proxyUrl = process.env.THE_ODDS_API_PROXY_
         if (parsed.protocol !== 'https:' || parsed.hostname !== API_HOST) {
             throw new Error('The Odds API stable proxy transport target is invalid');
         }
-        const request = https.request({
-            protocol: 'https:',
-            hostname: API_HOST,
-            port: 443,
-            method: 'GET',
-            path: `${parsed.pathname}${parsed.search}`,
-            headers: options.headers,
-            agent: stableAgent,
-            rejectUnauthorized: true,
-        }, callback);
+        const request = https.request(
+            {
+                protocol: 'https:',
+                hostname: API_HOST,
+                port: 443,
+                method: 'GET',
+                path: `${parsed.pathname}${parsed.search}`,
+                headers: options.headers,
+                agent: stableAgent,
+                rejectUnauthorized: true,
+            },
+            callback
+        );
         request.setTimeout(timeoutMs, () => request.destroy(new Error('The Odds API stable proxy request timed out')));
         return request;
     };
@@ -111,7 +118,7 @@ function directTransportError(error) {
     return new Error(`The Odds API direct transport failed${code}`);
 }
 
-function captureEplOdds({ request = {}, requestFn = createDirectRequestFn() } = {}) {
+function captureEplOdds({ request = {}, requestFn = createDirectRequestFn(), captureNon200 = false } = {}) {
     const requestCount = Number(request.request_count || 0);
     if (!Number.isInteger(requestCount) || requestCount < 0) {
         throw new Error('live request count is invalid');
@@ -127,10 +134,12 @@ function captureEplOdds({ request = {}, requestFn = createDirectRequestFn() } = 
             response.on('end', () => {
                 const rawText = Buffer.concat(chunks).toString('utf8');
                 const received = new Date().toISOString();
-                if (response.statusCode !== 200) {
-                    reject(Object.assign(new Error(`The Odds API returned HTTP ${response.statusCode || 'UNKNOWN'}`), {
-                        http_status: response.statusCode || null,
-                    }));
+                if (response.statusCode !== 200 && !captureNon200) {
+                    reject(
+                        Object.assign(new Error(`The Odds API returned HTTP ${response.statusCode || 'UNKNOWN'}`), {
+                            http_status: response.statusCode || null,
+                        })
+                    );
                     return;
                 }
                 resolve({
@@ -164,7 +173,11 @@ function createTheOddsApiClient(options = {}) {
             if (requestCount >= MAX_REQUESTS) throw new Error(`live request limit exceeded (${MAX_REQUESTS})`);
             if (!process.env.THE_ODDS_API_KEY) throw new Error('THE_ODDS_API_KEY is required for live capture');
             requestCount += 1;
-            return captureEplOdds({ request: { ...request, request_count: requestCount - 1 }, requestFn });
+            return captureEplOdds({
+                request: { ...request, request_count: requestCount - 1 },
+                requestFn,
+                captureNon200: options.captureNon200 === true,
+            });
         },
     });
 }
