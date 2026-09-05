@@ -4,7 +4,9 @@
 
 Stage C 建立 provider-neutral、不可变、可版本化、可重放且可审计的 EPL 赛前 1X2 market-evidence spine。The Odds API 是初始 acquisition provider，不是 canonical provider；canonical authority 属于 FootballPrediction transaction-v1 contract。本阶段不包含 PostgreSQL、scheduler、value/de-vig/CLV、backtest、training、second provider、OddsPortal 或 betting automation。
 
-当前文档描述实现事实和安全边界，不宣称 Stage C 已 merge、已完成 fresh Sol review 或已获得独立 review approval。
+Stage C pilot 已完成独立 strict review、正常合并（PR #1890）及 post-merge main Production Gate。
+当前 maturity = `REPRODUCIBLE_PILOT`；`CONTINUOUS_CAPTURE_READY=NO`。
+非 head 逻辑批次 retry 修复已在 PR #1893 合并闭环；`CONDITION_1_NON_HEAD_RETRY=COMPLETE`。
 
 ## Canonical architecture
 
@@ -72,8 +74,12 @@ Adapter 只解析 The Odds API 当前 EPL `h2h` / `h2h_lay` 形状；未知、�
 
 受影响测试覆盖 observation contract、schema、production allocation bootstrap/reopen、trusted local root 内的 mapping/decision/T2 consistency、quarantine recovery、prospective zero-write、receipt/capture idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename 与 post-rename unknown outcome。独立 Node 子进程测试同时覆盖 identical writers（one commit + reuse）、competing writers（one commit + stale parent）和 fresh-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；targeted JS profile 会先校验/初始化 lockfile dependency tree，并拒绝 global ESLint fallback；`changed_files=0` / no-op 不算通过。
 
-实现闭环后仍需 fresh independent Sol exact-head strict review、owner merge decision 以及 merge 后 main Production Gate；本文不把这些治理状态提前标记为通过。
+上述 Stage C review / merge / main Gate 是已完成生命周期事实；实时 SHA/CI 状态仍从 Git/GitHub 获取。
+Stage D readiness = `GO_WITH_CONDITIONS`，`STAGE_D_STARTED=NO`。下一步是 Owner 确认
+provider quota/permission、production authority root、independent backup、retention/RPO/RTO、
+credential rotation，再单独授权一次 bounded live preflight。当前战线见
+[ACTIVE_MILESTONE](../ACTIVE_MILESTONE.md) 与 [PROJECT_STATUS](../PROJECT_STATUS.md)。
 
 ## FUTURE_WORK
 
-生产 promotion、真实 mapping governance、受控 live pilot、production persistence/operations、value/de-vig/CLV、backtest、scheduler、additional provider、exchange APIs、UI 和 Stage D 另行授权，当前不启动。
+生产 promotion、真实 mapping governance、后续单独授权的 bounded live preflight、production persistence/operations、value/de-vig/CLV、backtest、scheduler、additional provider、exchange APIs、UI 和 Stage D 另行授权，当前不启动。

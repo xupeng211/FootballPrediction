@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-08-27
+Last updated: 2026-09-05
 
 ## Current State
 
@@ -18,17 +18,35 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 
 | Field | Current truth |
 |---|---|
-| Last knowledge audit base | `b0995c36fcd2f84cc6f1034450881d6f15103e68`（只表示 documented audit snapshot，不是实时 main HEAD） |
-| Current system stage | `CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE`；pre-production research evidence |
+| Last knowledge audit base | `05e485670d680d9c7a7afb466702e9d64649845c`（只表示 documented audit snapshot，不是实时 main HEAD） |
+| Current system stage | `STAGE_C_COMPLETE__PRE_STAGE_D`；`STAGE_C_DONE=YES` / `STAGE_C_MERGE_COMPLETE=YES` |
 | Completed canonical pipeline | GD-A01 → GD-A02 → GD-A03 → Canonical Prematch Feature Frame → Training Candidate Production → Offline Evaluation |
 | Current model asset | `canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41`; `xgboost_multiclass_1x2`; `canonical_prematch/vnext-v1`; 9 accepted-for-training features |
 | Population / split | 888 accounted; 545 eligible; 343 ineligible; 436 training; 109 reserved evaluation |
 | Predictive evidence | log loss `0.97834` vs prior `1.05654`; Brier `0.58456` vs prior `0.63590`; accuracy `55.96%` vs majority `48.62%`; `MODEL_OFFLINE_QUALITY_STATUS=PROMISING` |
 | Holdout | `CONSUMED_FOR_OFFLINE_EVALUATION`（109 outcomes，不再是 untouched/unopened） |
-| Market / odds evidence | historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
-| Hard blockers | strict decision-time odds timeline；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation |
+| Market / odds evidence | Stage C canonical market-evidence spine = `IMPLEMENTED / PILOT`；maturity = `REPRODUCIBLE_PILOT`；historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
+| Remaining downstream gaps | continuous durable capture（`CONTINUOUS_CAPTURE_READY=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation |
 | Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
-| Next Owner decision | 明确授权下一项证据任务：优先 fresh independent future holdout，或另行设计 strict decision-time market evidence；不自动开始、不混合 VALUE_MVP-1 与 canonical candidate |
+| Next Owner decision | 完成下列 pre-Stage-D 运营决策后，单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
+
+Stage C 已在 PR #1890 正常合并并通过 main Production Gate，canonical transaction-v1
+architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据完整性，不证明持续采集、
+独立灾备或生产运营就绪。PR #1893 的非 head 逻辑批次重试修复已合并并通过 main Gate：
+`CONDITION_1_NON_HEAD_RETRY=COMPLETE`。单 Owner 治理已收敛，
+`SINGLE_OWNER_GOVERNANCE_RECONCILED=YES`，不重开 ruleset 工作。
+
+`STAGE_D_READINESS_VERDICT=GO_WITH_CONDITIONS`；Stage D 名称为
+**EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS**；
+`NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE`；
+**`STAGE_D_STARTED=NO`**。GO_WITH_CONDITIONS 是有条件 readiness 结论，不是执行授权。
+
+下一步尚待 Owner：核实 subscription/monthly quota；确认 provider usage/retention/analysis
+permission；批准 production authority root；指定独立物理故障域的 backup target；批准
+retention/RPO/RTO；轮换已暴露 credential；最后单独授权一次 bounded live preflight。
+这些门禁未被本次文档回流完成；不得使用旧凭据、消耗 quota、初始化 Stage D production
+authority 或启动 continuous scheduler。Stage C 细节见
+[`Stage C pilot`](data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md)。
 
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、

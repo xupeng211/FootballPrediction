@@ -11,7 +11,7 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-08-23
+## Current State Snapshot — 2026-09-05
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
 下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
@@ -20,10 +20,21 @@
 和 `GITHUB_MAIN` 必须从 Git/GitHub 获取；后续 main 变化不会由 Markdown 自动推断。
 
 ```text
-LAST_KNOWLEDGE_AUDIT_BASE_SHA=b0995c36fcd2f84cc6f1034450881d6f15103e68
+LAST_KNOWLEDGE_AUDIT_BASE_SHA=05e485670d680d9c7a7afb466702e9d64649845c
 DOCUMENTED_SHA_ROLE=LAST_KNOWLEDGE_AUDIT_SNAPSHOT_ONLY
 REALTIME_MAIN_AUTHORITY=Git/GitHub
-CURRENT_BUSINESS_STAGE=CANONICAL_OFFLINE_MODEL_EVALUATION_COMPLETE__PRE_PRODUCTION_EVIDENCE
+CURRENT_BUSINESS_STAGE=STAGE_C_COMPLETE__PRE_STAGE_D
+STAGE_C_DONE=YES
+STAGE_C_MERGE_COMPLETE=YES
+CANONICAL_MARKET_EVIDENCE_SPINE=IMPLEMENTED / PILOT
+CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
+CONTINUOUS_CAPTURE_READY=NO
+CONDITION_1_NON_HEAD_RETRY=COMPLETE
+SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
+STAGE_D_READINESS_VERDICT=GO_WITH_CONDITIONS
+STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
+NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
+STAGE_D_STARTED=NO
 
 RECENTLY_COMPLETED=
 - GD-A01 / GD-A02 / GD-A03 file-first evidence chain
@@ -51,19 +62,35 @@ CURRENT_MARKET_ASSETS=
 - historical odds staging/rebuild evidence
 
 CURRENT_HARD_BLOCKERS=
-- strict decision-time odds timeline and source capture are NOT_READY
+- continuous durable market-evidence capture is NOT_READY; Stage C decision-time/as-of pilot exists
 - canonical value engine and canonical betting backtest are NOT_ESTABLISHED
 - bankroll/staking and CLV tracking are not established
 - fresh independent future holdout is not yet evaluated
 - production model activation remains NO / separately authorized
 
-NEXT_OWNER_DECISION=在明确授权后选择下一项证据任务；推荐先做 fresh independent future holdout，或另行进入 strict decision-time market-evidence design；不得把两条实验路径合并。
+NEXT_OWNER_DECISION=完成下列 Owner-controlled pre-Stage-D 运营决策，再单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
+Stage C canonical market-evidence pilot 已通过独立 review、正常合并及 main Production Gate
+闭环（PR #1890）；非 head 逻辑批次 A → B → retry-A 修复也已闭环（PR #1893）。
+transaction-v1 spine 已在 main，支持不可变 RAW/receipt binding、replay、publisher knowledge time
+和 as-of 语义；这不代表 production continuous capture、value engine 或盈利证明。
+
+剩余 pre-Stage-D 门禁均由 Owner 控制，尚未在本次任务中批准或执行：
+
+- 核实 The Odds API subscription / monthly quota。
+- 确认 provider usage / retention / analysis permission。
+- 批准 production authority root。
+- 指定不同物理故障域的 independent backup target。
+- 批准 retention / RPO / RTO。
+- 轮换已暴露的 provider credential；任何 live 使用前必须完成。
+- 单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
+
 细节入口：`docs/CAPABILITY_INDEX.md`、`docs/PROJECT_STATUS.md`、
 `docs/data/FOTMOB_CURRENT_STATE.md`、`docs/MODEL_ARTIFACTS.md`、
-`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`。
+`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
+`docs/data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md`。
 
 ## Historical evidence — superseded M3 / FotMob milestone snapshot
 
