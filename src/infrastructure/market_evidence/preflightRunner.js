@@ -189,7 +189,7 @@ async function executePreparedPreflight({
     let calls = 0;
     consumedPreparations.add(prepared);
     atomicCreate(
-        path.join(prepared.root, 'attempts', `${captureId}.armed.json`),
+        path.join(prepared.root, 'attempts', 'preflight.armed.json'),
         `${JSON.stringify({ capture_id: captureId, state: 'ATTEMPT_ARMED', max_provider_requests: MAX_PROVIDER_REQUESTS })}\n`
     );
     const startedAt = now();
