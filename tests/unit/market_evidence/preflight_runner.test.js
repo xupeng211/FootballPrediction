@@ -139,6 +139,31 @@ test('prepared context is single-use and unsafe metadata is rejected before tran
         /unsupported request parameter/
     );
 });
+test('configured credential text is redacted from transport failures', async t => {
+    const old = process.env.THE_ODDS_API_KEY;
+    process.env.THE_ODDS_API_KEY = 'test-secret-not-persisted';
+    try {
+        const prepared = prepare(t);
+        await assert.rejects(() =>
+            executePreparedPreflight({
+                prepared,
+                captureId: 'secret-error',
+                transport: async () => {
+                    throw new Error(process.env.THE_ODDS_API_KEY);
+                },
+            })
+        );
+        assert.equal(
+            fs
+                .readFileSync(path.join(prepared.root, 'attempts', 'secret-error.failure.json'), 'utf8')
+                .includes('test-secret-not-persisted'),
+            false
+        );
+    } finally {
+        if (old === undefined) delete process.env.THE_ODDS_API_KEY;
+        else process.env.THE_ODDS_API_KEY = old;
+    }
+});
 test('429, 500 and timeout use one transport call and never retry', async t => {
     for (const scenario of ['429', '500', 'timeout']) {
         const prepared = prepare(t);

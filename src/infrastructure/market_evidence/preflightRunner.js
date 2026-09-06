@@ -90,9 +90,11 @@ function assertPrepared(prepared) {
 }
 function recordFailure(prepared, captureId, stage, error) {
     const raw = String(error.message || error);
-    const message = /api[-_]?key|authorization|secret|token/i.test(raw)
-        ? 'redacted secret-bearing error'
-        : raw.replace(/https?:\/\/\S+/g, '[redacted-url]');
+    const configuredKey = process.env.THE_ODDS_API_KEY;
+    const message =
+        /api[-_]?key|authorization|secret|token/i.test(raw) || (configuredKey && raw.includes(configuredKey))
+            ? 'redacted secret-bearing error'
+            : raw.replace(/https?:\/\/\S+/g, '[redacted-url]');
     try {
         atomicWrite(
             path.join(prepared.root, 'attempts', `${captureId}.failure.json`),
