@@ -17,6 +17,7 @@ const {
     preparePreflight,
     executePreparedPreflight,
 } = require('../../src/infrastructure/market_evidence/preflightRunner');
+const { assertDownstreamInputReadiness } = require('../../src/infrastructure/market_evidence/downstreamReadiness');
 
 const evidenceRoot = path.resolve(process.env.STAGE_C_EVIDENCE_ROOT || 'data/market_evidence/live');
 const defaultPaths = {
@@ -37,14 +38,29 @@ function summarizeBookmakers(rawText) {
     return [...names].filter(Boolean).sort();
 }
 
-function offlineInputPaths() {
-    const values = {
+function configuredInputPaths() {
+    return {
         fotmobRawPath: process.env.STAGE_C_FOTMOB_RAW_PATH || defaultPaths.fotmobRawPath,
         oddsRawPath: process.env.STAGE_C_ODDS_RAW_PATH || defaultPaths.oddsRawPath,
         receiptPath: process.env.STAGE_C_ODDS_RECEIPT_PATH || defaultPaths.receiptPath,
         allocationPath: process.env.STAGE_C_IDENTITY_ALLOCATION_PATH || defaultPaths.allocationPath,
     };
+}
+
+function offlineInputPaths() {
+    const values = configuredInputPaths();
     return Object.values(values).every(filePath => fs.existsSync(filePath)) ? values : null;
+}
+
+function downstreamReadinessCheck({ rootDir = evidenceRoot, paths = configuredInputPaths() } = {}) {
+    const transactionRoot = path.resolve(process.env.STAGE_C_TRANSACTION_ROOT || path.join(rootDir, 'transactions'));
+    const allocationArtifactPath = path.resolve(process.env.STAGE_C_ALLOCATION_ARTIFACT_PATH || path.join(transactionRoot, 'allocation.authority.json'));
+    return () => assertDownstreamInputReadiness({
+        fotmobRawPath: paths.fotmobRawPath,
+        allocationPath: paths.allocationPath,
+        storeRoot: transactionRoot,
+        allocationArtifactPath,
+    });
 }
 
 async function acquireOptInLiveEvidence() {
@@ -68,6 +84,7 @@ async function acquireOptInLiveEvidence() {
     const persisted = await executePreparedPreflight({
         prepared,
         captureId,
+        preTransportCheck: downstreamReadinessCheck(),
         transport: async () => {
             const live = await client.capture(request);
             return {
@@ -119,7 +136,11 @@ async function main() {
     process.stdout.write(`${JSON.stringify(summary)}\n`);
 }
 
-main().catch(error => {
-    process.stderr.write(`STAGE_C_LIVE_SMOKE_FAILED=${error.message.replace(/https?:\/\/\S+/g, '[redacted-url]')}\n`);
-    process.exitCode = 1;
-});
+if (require.main === module) {
+    main().catch(error => {
+        process.stderr.write(`STAGE_C_LIVE_SMOKE_FAILED=${error.message.replace(/https?:\/\/\S+/g, '[redacted-url]')}\n`);
+        process.exitCode = 1;
+    });
+}
+
+module.exports = { configuredInputPaths, offlineInputPaths, downstreamReadinessCheck, acquireOptInLiveEvidence };
