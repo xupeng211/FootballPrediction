@@ -15,7 +15,7 @@ const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infr
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
 const { loadVerifiedCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 const { publishOfflineMarketEvidence, verifyPublishedLogicalBatch } = require('../../../src/infrastructure/market_evidence/offlinePipeline');
-const { canonicalBytes, createCommittedMarker, createManifest, descriptorForBytes } = require('../../../src/infrastructure/market_evidence/transactionContract');
+const { canonicalBytes, createCommittedMarker, createManifest, descriptorForBytes, LEGACY_REGISTRY_DELTA_SCHEMA_VERSION } = require('../../../src/infrastructure/market_evidence/transactionContract');
 const { createVerifiedTestReceipt } = require('../../helpers/market_evidence_authority');
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -25,6 +25,9 @@ function fixtureRaw() {
 }
 function oddsRaw(id = 'provider-event', price = 2) {
     return JSON.stringify([{ id, sport_key: 'soccer_epl', home_team: 'Arsenal', away_team: 'Chelsea', commence_time: '2026-09-12T15:00:00Z', bookmakers: [{ key: 'fixture', title: 'Fixture', markets: [{ key: 'h2h', outcomes: [{ name: 'Arsenal', price }, { name: 'Draw', price: 3 }, { name: 'Chelsea', price: 4 }] }] }] }]);
+}
+function multiSideOddsRaw(id = 'provider-event') {
+    return JSON.stringify([{ id, sport_key: 'soccer_epl', home_team: 'Arsenal', away_team: 'Chelsea', commence_time: '2026-09-12T15:00:00Z', bookmakers: [{ key: 'exchange', title: 'Exchange', markets: [{ key: 'h2h', outcomes: [{ name: 'Arsenal', price: 2 }, { name: 'Draw', price: 3 }, { name: 'Chelsea', price: 4 }] }, { key: 'h2h_lay', outcomes: [{ name: 'Arsenal', price: 2.1 }, { name: 'Draw', price: 3.1 }, { name: 'Chelsea', price: 4.1 }] }] }] }]);
 }
 function setup(t) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'transaction-v1-production-'));
@@ -38,10 +41,10 @@ function setup(t) {
     bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath: allocationPath, bootstrapMetadata: { test: 'transaction-v1-production' } });
     return { root, universe, allocationPath, storeRoot };
 }
-function candidate(ctx, { captureId = 'capture-1', eventId = 'provider-event', price = 2, rawText = null, receiptOverrides = {}, receiptRootTag = '' } = {}) {
+function candidate(ctx, { captureId = 'capture-1', eventId = 'provider-event', price = 2, rawText = null, receiptOverrides = {}, receiptRootTag = '', supportedMarketKeys = undefined, registrySchemaVersion = undefined } = {}) {
     const oddsRawText = rawText || oddsRaw(eventId, price);
     const captureReceipt = createVerifiedTestReceipt({ root: path.join(ctx.root, 'receipts', `${captureId}-${sha256Text(oddsRawText).slice(0, 8)}${receiptRootTag}`), rawText: oddsRawText, overrides: { capture_id: captureId, ...receiptOverrides } });
-    return buildProspectiveMarketEvidenceTransaction({ authoritySnapshot: openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), universe: ctx.universe, oddsRawText, captureReceipt });
+    return buildProspectiveMarketEvidenceTransaction({ authoritySnapshot: openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), universe: ctx.universe, oddsRawText, captureReceipt, ...(supportedMarketKeys ? { supportedMarketKeys } : {}), ...(registrySchemaVersion ? { registrySchemaVersion } : {}) });
 }
 function publish(ctx, value) { return publishProspectiveMarketEvidenceTransaction({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath, candidate: value }); }
 function jsonl(rows) { return rows.length ? `${rows.map(stableStringify).join('\n')}\n` : ''; }
@@ -56,6 +59,7 @@ function rewritePackage(ctx, transactionId, mutation, { retainTransactionId = fa
         registry: JSON.parse(fs.readFileSync(path.join(oldDir, 'registry_delta.json'), 'utf8')),
         metadata: JSON.parse(fs.readFileSync(path.join(oldDir, 'metadata.json'), 'utf8')),
         publication: clone(manifest.publication_metadata),
+        versions: clone(manifest.versions),
     };
     mutation(data);
     const bytes = {
@@ -72,7 +76,7 @@ function rewritePackage(ctx, transactionId, mutation, { retainTransactionId = fa
     };
     const fields = clone(manifest);
     for (const key of ['schema_version', 'transaction_id', 'logical_batch_key', 'logical_content_hash', 'batch_content_hash', 'transaction_content_hash', 'manifest_sha256']) delete fields[key];
-    Object.assign(fields, { artifacts, source: data.metadata.source, publication_metadata: data.publication });
+    Object.assign(fields, { artifacts, source: data.metadata.source, publication_metadata: data.publication, versions: data.versions });
     const rebuilt = createManifest(fields);
     const finalManifest = retainTransactionId ? { ...rebuilt, transaction_id: transactionId } : rebuilt;
     if (retainTransactionId) { const unsigned = { ...finalManifest }; delete unsigned.manifest_sha256; finalManifest.manifest_sha256 = sha256Text(stableStringify(unsigned)); }
@@ -90,6 +94,41 @@ test('production transaction reader reopens exact committed authority in a fresh
     const program = "const r=require('./src/infrastructure/market_evidence/authorityReader');const s=r.openMarketEvidenceAuthoritySnapshot({storeRoot:process.argv[1],allocationArtifactPath:process.argv[2]});process.stdout.write(JSON.stringify({id:s.head_transaction_id,d:s.decisions.length,o:s.observations.length}))";
     const child = spawnSync(process.execPath, ['-e', program, ctx.storeRoot, ctx.allocationPath], { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
     assert.equal(child.status, 0, child.stderr); assert.deepEqual(JSON.parse(child.stdout), { id: result.transaction_id, d: 1, o: 3 });
+});
+
+test('registry delta v2 preserves strict governance for one bookmaker with BOOKMAKER and LAY observations', t => {
+    const ctx = setup(t); const value = candidate(ctx, { captureId: 'multi-side', rawText: multiSideOddsRaw(), supportedMarketKeys: ['h2h', 'h2h_lay'] });
+    assert.deepEqual([...new Set(value.observations.map(row => row.price_side))].sort(), ['BOOKMAKER', 'LAY']);
+    const result = publish(ctx, value);
+    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+    const entries = snapshot.registry_state.filter(row => row.kind === 'bookmaker' && row.provider_id === 'exchange');
+    assert.deepEqual(entries.map(row => row.price_side).sort(), ['BOOKMAKER', 'LAY']);
+    assert.equal(snapshot.head_transaction_id, result.transaction_id);
+    rewritePackage(ctx, result.transaction_id, data => {
+        const lay = data.registry.entries.find(entry => entry.kind === 'bookmaker' && entry.provider_id === 'exchange' && entry.price_side === 'LAY');
+        lay.canonical_id = 'bookmaker:forged'; delete data.registry.result_registry_state_sha256;
+    });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /bookmaker registry governance is invalid/);
+});
+
+test('legacy registry-delta v1 remains readable with its original three-part bookmaker key', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx, { registrySchemaVersion: LEGACY_REGISTRY_DELTA_SCHEMA_VERSION }));
+    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+    assert.equal(snapshot.head_transaction_id, result.transaction_id);
+    assert.equal(snapshot.observations.length, 3);
+});
+
+test('legacy v1 chain can append a v2 multi-side bookmaker transaction without reinterpreting history', t => {
+    const ctx = setup(t);
+    const legacyPayload = JSON.parse(multiSideOddsRaw()); legacyPayload[0].bookmakers[0].markets.pop(); const legacyRaw = JSON.stringify(legacyPayload);
+    const legacy = publish(ctx, candidate(ctx, { captureId: 'legacy-exchange', rawText: legacyRaw, supportedMarketKeys: ['h2h'], registrySchemaVersion: LEGACY_REGISTRY_DELTA_SCHEMA_VERSION }));
+    const evolved = publish(ctx, candidate(ctx, { captureId: 'v2-exchange', rawText: multiSideOddsRaw(), supportedMarketKeys: ['h2h', 'h2h_lay'] }));
+    const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+    assert.equal(snapshot.head_transaction_id, evolved.transaction_id);
+    assert.equal(snapshot.head_sequence, 2);
+    assert.ok(snapshot.registry_state.some(row => row.key === 'bookmaker\u0000the-odds-api\u0000exchange'));
+    assert.ok(snapshot.registry_state.some(row => row.key === 'bookmaker\u0000the-odds-api\u0000exchange\u0000LAY'));
+    assert.equal(legacy.snapshot.head_transaction_id, legacy.transaction_id);
 });
 
 test('LIVE/offline entrypoint bootstraps internal allocation and shares publisher-owned T2', t => {

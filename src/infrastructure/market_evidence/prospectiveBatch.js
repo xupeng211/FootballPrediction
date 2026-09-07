@@ -10,7 +10,7 @@ const { createProspectiveGovernanceContext } = require('../fixture_universe/Pros
 const { isVerifiedMarketEvidenceAuthoritySnapshot } = require('./authorityReader');
 const { adaptTheOddsApiRaw } = require('./theOddsApiAdapter');
 const { verifiedCaptureReceipt } = require('./evidenceStore');
-const { TRANSACTION_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, descriptorForBytes, createManifest, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
+const { TRANSACTION_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS, METADATA_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, descriptorForBytes, createManifest, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
 const authenticCandidates = new WeakSet();
 
 function assertStrictInputObject(value, label) {
@@ -45,7 +45,12 @@ function assertSnapshotAllocation(snapshot, authority) {
     if (snapshot.allocation.allocation_schema_version !== descriptor.schemaVersion || snapshot.allocation.allocation_content_hash !== descriptor.allocationSnapshotSha256 || snapshot.allocation.allocation_provenance_raw_sha256 !== descriptor.provenanceRawSha256) throw new Error('authoritySnapshot is bound to a different allocation authority');
 }
 function decisionKey(row) { return `${row.candidate_provider}\u0000${row.candidate_provider_event_id}`; }
-function registryKey(row) { return `${row.kind}\u0000${row.provider}\u0000${row.provider_id}`; }
+function registryKey(row, schemaVersion) {
+    const base = `${row.kind}\u0000${row.provider}\u0000${row.provider_id}`;
+    return schemaVersion === REGISTRY_DELTA_SCHEMA_VERSION && row.kind === 'bookmaker'
+        ? `${base}\u0000${row.price_side}`
+        : base;
+}
 function registryStateHash(registry) { return hashCanonical([...registry.entries()].sort(([a], [b]) => a.localeCompare(b))); }
 function sortedRows(rows, key) { return [...rows].sort((left, right) => key(left).localeCompare(key(right))); }
 function jsonl(rows) { return rows.length ? `${rows.map(stableStringify).join('\n')}\n` : ''; }
@@ -60,12 +65,25 @@ function sourceForCapture(capture, receiptSha256) {
     if (typeof capture.provider !== 'string' || typeof capture.capture_id !== 'string' || !/^[a-f0-9]{64}$/.test(capture.raw_sha256 || '')) throw new Error('captureReceipt identity is invalid');
     return { provider: capture.provider, capture_id: capture.capture_id, raw_sha256: capture.raw_sha256, receipt_sha256: receiptSha256 };
 }
-function registryEntries(registry) { return ['event', 'bookmaker', 'market', 'selection'].flatMap(kind => registry.list(kind)).map(entry => snapshotPlainData(entry, 'registry entry')); }
-function buildRegistryDelta({ authoritySnapshot, registry, candidateDecisions }) {
+function registryEntries(registry, observations) {
+    const observedSides = new Map();
+    for (const row of observations) {
+        const key = `${row.provider}\u0000${row.provider_bookmaker_id}`;
+        const sides = observedSides.get(key) || new Set(); sides.add(row.price_side); observedSides.set(key, sides);
+    }
+    return ['event', 'market', 'selection'].flatMap(kind => registry.list(kind))
+        .concat(registry.list('bookmaker').flatMap(entry => {
+            const sides = observedSides.get(`${entry.provider}\u0000${entry.provider_id}`);
+            if (!sides || !sides.size) return [entry];
+            return [...sides].sort().map(price_side => ({ ...entry, price_side }));
+        }))
+        .map(entry => snapshotPlainData(entry, 'registry entry'));
+}
+function buildRegistryDelta({ authoritySnapshot, registry, candidateDecisions, observations, schemaVersion }) {
     const base = new Map((authoritySnapshot.registry_state || []).map(row => [row.key, snapshotPlainData(Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'key')), 'parent registry entry')]));
     const baseHash = registryStateHash(base); const delta = [];
-    for (const entry of sortedRows(registryEntries(registry), registryKey)) {
-        const key = registryKey(entry); const old = base.get(key);
+    for (const entry of sortedRows(registryEntries(registry, observations), row => registryKey(row, schemaVersion))) {
+        const key = registryKey(entry, schemaVersion); const old = base.get(key);
         if (!old) { base.set(key, entry); delta.push(entry); continue; }
         if (canonicalJson(old) === canonicalJson(entry)) continue;
         const allowedDecisionRefresh = entry.kind === 'event' && old.kind === 'event' && candidateDecisions.some(row => row.candidate_provider === entry.provider && row.candidate_provider_event_id === entry.provider_id && row.identity_decision_id === entry.identity_decision_id && row.supersedes_decision_id);
@@ -85,9 +103,10 @@ function duplicateSafeObservations(parent, observations) {
 }
 function buildProspectiveMarketEvidenceTransaction(options = {}) {
     assertStrictInputObject(options, 'prospective builder options');
-    const { authoritySnapshot, universe, oddsRawText, captureReceipt, projectionVersion = '1', projectionAvailableAt = undefined, supportedMarketKeys = ['h2h'], authorizedSupersessions = [] } = options;
+    const { authoritySnapshot, universe, oddsRawText, captureReceipt, projectionVersion = '1', projectionAvailableAt = undefined, supportedMarketKeys = ['h2h'], authorizedSupersessions = [], registrySchemaVersion = REGISTRY_DELTA_SCHEMA_VERSION } = options;
     if (projectionAvailableAt !== undefined && projectionAvailableAt !== null) throw new Error('projection_available_at is publisher-owned and cannot be supplied to the prospective builder');
     if (!isVerifiedMarketEvidenceAuthoritySnapshot(authoritySnapshot)) throw new Error('verified MarketEvidenceAuthoritySnapshot is required');
+    if (!SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS.has(registrySchemaVersion)) throw new Error('registrySchemaVersion is invalid');
     const authority = allocationAuthorityFor(universe); assertSnapshotAllocation(authoritySnapshot, authority);
     if (typeof oddsRawText !== 'string') throw new Error('oddsRawText is required');
     const verifiedReceipt = verifiedCaptureReceipt(captureReceipt);
@@ -101,15 +120,15 @@ function buildProspectiveMarketEvidenceTransaction(options = {}) {
     const parentDecisionIds = new Set(authoritySnapshot.decisions.map(row => row.identity_decision_id));
     const decisions = Object.freeze(sortedRows(resolved.decisions.filter(row => !parentDecisionIds.has(row.identity_decision_id)).map(row => snapshotPlainData(row, 'identity decision')), decisionKey));
     const overlay = createProspectiveGovernanceContext({ authoritySnapshot, allocationAuthority: authority, candidateDecisions: decisions });
-    const registry = buildRegistryDelta({ authoritySnapshot, registry: resolved.registry, candidateDecisions: decisions });
     const adapted = adaptTheOddsApiRaw({ rawText: oddsRawText, capture, registry: resolved.registry, decisionLedger: overlay, projectionVersion, allowedProviderEventIds: new Set(resolved.aliases.map(alias => alias.provider_event_id)), supportedMarketKeys: safeSupportedMarketKeys });
+    const registry = buildRegistryDelta({ authoritySnapshot, registry: resolved.registry, candidateDecisions: decisions, observations: adapted, schemaVersion: registrySchemaVersion });
     const observationState = duplicateSafeObservations(authoritySnapshot, adapted.map(row => createObservation(row)));
     const allDecisions = [...authoritySnapshot.decisions, ...decisions]; const projected = projectIdentityDecisionState(allDecisions, authority);
     const binding = { ...authoritySnapshot.allocation }; const postStateHash = computeAuthorityStateHash({ allocation: binding, decisions: allDecisions, latestDecisions: projected.latest, activeMatched: projected.active, registryState: registry.registry, observationIndex: observationState.index });
-    const metadata = Object.freeze({ schema_version: METADATA_SCHEMA_VERSION, source, capture_receipt: capture }); const registryDelta = Object.freeze({ schema_version: REGISTRY_DELTA_SCHEMA_VERSION, base_registry_state_sha256: registry.base_registry_state_sha256, result_registry_state_sha256: registry.result_registry_state_sha256, entries: registry.delta });
+    const metadata = Object.freeze({ schema_version: METADATA_SCHEMA_VERSION, source, capture_receipt: capture }); const registryDelta = Object.freeze({ schema_version: registrySchemaVersion, base_registry_state_sha256: registry.base_registry_state_sha256, result_registry_state_sha256: registry.result_registry_state_sha256, entries: registry.delta });
     const bytes = Object.freeze({ 'identity_decisions.jsonl': jsonl(decisions), 'observations.jsonl': jsonl(observationState.accepted), 'registry_delta.json': canonicalBytes(registryDelta), 'metadata.json': canonicalBytes(metadata) });
     const artifacts = Object.freeze({ 'identity_decisions.jsonl': descriptorForBytes('identity_decisions.jsonl', bytes['identity_decisions.jsonl'], decisions.length), 'observations.jsonl': descriptorForBytes('observations.jsonl', bytes['observations.jsonl'], observationState.accepted.length, semanticObservationJsonl(observationState.accepted)), 'registry_delta.json': descriptorForBytes('registry_delta.json', bytes['registry_delta.json'], registry.delta.length), 'metadata.json': descriptorForBytes('metadata.json', bytes['metadata.json'], 1) });
-    const versions = { resolver_version: decisions[0]?.resolver_version || 'fixture-identity-resolver/v1', ruleset_version: decisions[0]?.ruleset_version || 'fixture-identity-ruleset/v1', adapter_version: '1.0.0', projection_version: String(projectionVersion), registry_schema_version: REGISTRY_DELTA_SCHEMA_VERSION, registry_version: resolved.registry.version, observation_schema_version: 'footballprediction-market-observation/v1' };
+    const versions = { resolver_version: decisions[0]?.resolver_version || 'fixture-identity-resolver/v1', ruleset_version: decisions[0]?.ruleset_version || 'fixture-identity-ruleset/v1', adapter_version: '1.0.0', projection_version: String(projectionVersion), registry_schema_version: registrySchemaVersion, registry_version: resolved.registry.version, observation_schema_version: 'footballprediction-market-observation/v1' };
     const sequence = authoritySnapshot.head_sequence + 1;
     if (!Number.isInteger(authoritySnapshot.head_sequence) || authoritySnapshot.head_sequence < 0) throw new Error('authoritySnapshot head sequence is invalid');
     const manifest = createManifest({ sequence, parent_transaction_id: authoritySnapshot.head_transaction_id, parent_transaction_content_hash: authoritySnapshot.head_transaction_content_hash, expected_parent_state_hash: authoritySnapshot.state_hash, post_state_hash: postStateHash, allocation: binding, source, versions, artifacts, decision_count: decisions.length, observation_count: observationState.accepted.length, registry_delta_count: registry.delta.length, quarantine_count: decisions.filter(row => row.decision === 'QUARANTINED').length, publication_metadata: { schema_version: 'transaction-publication/v1' } });

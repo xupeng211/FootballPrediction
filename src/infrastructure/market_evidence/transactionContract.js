@@ -12,7 +12,16 @@ const STORE_SCHEMA_VERSION = 'footballprediction-market-evidence-transaction-sto
 const STORE_TYPE = 'market-evidence-transaction-v1';
 const MARKER_SCHEMA_VERSION = 'footballprediction-market-evidence-transaction-commit/v1';
 const METADATA_SCHEMA_VERSION = 'footballprediction-market-evidence-transaction-metadata/v1';
-const REGISTRY_DELTA_SCHEMA_VERSION = 'footballprediction-market-evidence-registry-delta/v1';
+// v1 keyed bookmaker registry entries by provider identity only.  That cannot
+// represent an exchange that publishes both ordinary and lay prices under one
+// provider bookmaker key.  v2 keeps every other registry key stable and adds
+// the governed observation side to bookmaker keys only.
+const LEGACY_REGISTRY_DELTA_SCHEMA_VERSION = 'footballprediction-market-evidence-registry-delta/v1';
+const REGISTRY_DELTA_SCHEMA_VERSION = 'footballprediction-market-evidence-registry-delta/v2';
+const SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS = new Set([
+    LEGACY_REGISTRY_DELTA_SCHEMA_VERSION,
+    REGISTRY_DELTA_SCHEMA_VERSION,
+]);
 const ARTIFACT_FILES = Object.freeze([
     'identity_decisions.jsonl',
     'observations.jsonl',
@@ -193,4 +202,4 @@ function computeAuthorityStateHash({ allocation, decisions, latestDecisions, act
     });
 }
 
-module.exports = { TRANSACTION_SCHEMA_VERSION, STORE_SCHEMA_VERSION, STORE_TYPE, MARKER_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, ARTIFACT_FILES, TRANSACTION_FILES, canonicalJson, canonicalBytes, hashCanonical, descriptorForBytes, validateArtifactDescriptor, validateAllocationBinding, validateSource, validateVersions, computeLogicalBatchKey, computeLogicalContentHash, computeBatchContentHash, computeTransactionContentHash, computeTransactionId, computeManifestHash, validateManifest, createManifest, validateCommittedMarker, createCommittedMarker, computeAuthorityStateHash, assertHash, assertPlainObject };
+module.exports = { TRANSACTION_SCHEMA_VERSION, STORE_SCHEMA_VERSION, STORE_TYPE, MARKER_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, LEGACY_REGISTRY_DELTA_SCHEMA_VERSION, REGISTRY_DELTA_SCHEMA_VERSION, SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS, ARTIFACT_FILES, TRANSACTION_FILES, canonicalJson, canonicalBytes, hashCanonical, descriptorForBytes, validateArtifactDescriptor, validateAllocationBinding, validateSource, validateVersions, computeLogicalBatchKey, computeLogicalContentHash, computeBatchContentHash, computeTransactionContentHash, computeTransactionId, computeManifestHash, validateManifest, createManifest, validateCommittedMarker, createCommittedMarker, computeAuthorityStateHash, assertHash, assertPlainObject };
