@@ -399,6 +399,7 @@ dev-build: ## 构建开发镜像
 dev-up: ## 启动容器化开发环境
 	@mkdir -p data/browser_profile
 	$(COMPOSE_DEV) up -d --build --remove-orphans
+	$(COMPOSE_DEV) exec -T dev npm ci --ignore-scripts --no-audit --no-fund
 
 dev-ps: ## 查看开发容器状态
 	$(COMPOSE_DEV) ps
