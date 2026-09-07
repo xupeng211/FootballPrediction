@@ -9,6 +9,8 @@ const path = require('node:path');
 const test = require('node:test');
 const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
 const { seedFotMobFixtureUniverse } = require('../../../src/infrastructure/fixture_universe/FixtureUniverse');
+const { persistVerifiedAllocationAuthority } = require('../../../src/infrastructure/fixture_universe/AllocationAuthorityArtifact');
+const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infrastructure/market_evidence/transactionStore');
 const { assertDownstreamInputReadiness } = require('../../../src/infrastructure/market_evidence/downstreamReadiness');
 const { preparePreflight, executePreparedPreflight } = require('../../../src/infrastructure/market_evidence/preflightRunner');
 
@@ -37,15 +39,19 @@ function readyInputs(t) {
     fs.writeFileSync(rawPath, raw, { mode: 0o600 });
     const universe = seedFotMobFixtureUniverse({ rawHtml: raw, rawSha256: sha256Text(raw), mode: 'INITIAL_SEED' });
     fs.writeFileSync(allocationPath, JSON.stringify(universe.allocationSnapshot), { mode: 0o600 });
-    return { root, fotmobRawPath: rawPath, allocationPath, storeRoot: path.join(root, 'transactions'), allocationArtifactPath: path.join(root, 'transactions', 'allocation.authority.json') };
+    const storeRoot = path.join(root, 'transactions');
+    const allocationArtifactPath = path.join(storeRoot, 'allocation.authority.json');
+    persistVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath, allocationAuthority: universe.allocationAuthority });
+    bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath, bootstrapMetadata: { test: 'downstream-readiness' } });
+    return { root, fotmobRawPath: rawPath, allocationPath, storeRoot, allocationArtifactPath };
 }
 
-test('valid fixture and identity authorities make a bootstrap target transport-eligible', t => {
+test('valid fixture, identity, and transaction authorities make a target transport-eligible', t => {
     const inputs = readyInputs(t);
     const result = assertDownstreamInputReadiness(inputs);
     assert.equal(result.ready, true);
     assert.equal(result.fixture_count, 380);
-    assert.equal(result.transaction_authority, 'BOOTSTRAP_ELIGIBLE');
+    assert.equal(result.transaction_authority, 'EXISTING_AUTHORITY_VERIFIED');
 });
 
 test('missing, non-regular, malformed, incompatible, and missing identity authorities fail closed', t => {
@@ -90,7 +96,14 @@ test('failed downstream readiness cannot arm or invoke a transport', async t => 
 
 test('an incomplete existing transaction authority fails closed without mutation', t => {
     const inputs = readyInputs(t);
+    fs.rmSync(inputs.storeRoot, { recursive: true });
     fs.mkdirSync(inputs.storeRoot);
     fs.writeFileSync(path.join(inputs.storeRoot, 'STORE.json'), '{}');
     assert.throws(() => assertDownstreamInputReadiness(inputs), /incomplete/);
+});
+
+test('a missing transaction authority fails closed and cannot bootstrap identities during live preflight', t => {
+    const inputs = readyInputs(t);
+    fs.rmSync(inputs.storeRoot, { recursive: true });
+    assert.throws(() => assertDownstreamInputReadiness(inputs), /cannot bootstrap canonical identities/);
 });

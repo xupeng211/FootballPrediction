@@ -72,14 +72,7 @@ function assertTransactionAuthorityReady({ storeRoot, allocationArtifactPath }) 
     const storeExists = fs.existsSync(storePath);
     const artifactExists = fs.existsSync(allocationArtifactPath);
     if (storeExists !== artifactExists) throw new Error('transaction authority is incomplete: STORE.json and allocation artifact must coexist');
-    if (!storeExists) {
-        if (fs.existsSync(root)) {
-            const stat = fs.lstatSync(root);
-            if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error('transaction authority bootstrap root must be a non-symlink directory');
-            if (fs.readdirSync(root).length !== 0) throw new Error('transaction authority bootstrap root contains incomplete state');
-        }
-        return Object.freeze({ mode: 'BOOTSTRAP_ELIGIBLE' });
-    }
+    if (!storeExists) throw new Error('transaction authority is missing; live preflight cannot bootstrap canonical identities');
     readStoreContract({ storeRoot, allocationArtifactPath });
     const verified = loadVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath });
     openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath });
