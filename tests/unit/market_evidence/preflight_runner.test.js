@@ -26,6 +26,7 @@ const {
     publishProspectiveMarketEvidenceTransaction,
 } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
 const { loadVerifiedCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
+const { assertDownstreamInputReadiness } = require('../../../src/infrastructure/market_evidence/downstreamReadiness');
 
 const payload = JSON.stringify([
     {
@@ -103,6 +104,21 @@ test('root preparation failure blocks transport', t => {
         })
     );
     assert.equal(calls, 0);
+});
+test('a failed pre-transport readiness check blocks arming and transport', async t => {
+    const prepared = prepare(t);
+    let calls = 0;
+    await assert.rejects(
+        () => executePreparedPreflight({
+            prepared,
+            captureId: 'pre-transport-fail',
+            preTransportCheck: () => { throw new Error('fixture authority missing'); },
+            transport: async () => { calls += 1; return response(200); },
+        }),
+        /fixture authority missing/
+    );
+    assert.equal(calls, 0);
+    assert.equal(fs.existsSync(path.join(prepared.root, 'attempts', 'preflight.armed.json')), false);
 });
 test('prepared context is single-use and unsafe metadata is rejected before transport', async t => {
     const prepared = prepare(t);
@@ -232,12 +248,16 @@ test('offline dry run publishes the canonical transaction from persisted synthet
         },
     }));
     const fixtureRaw = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ query: { season: '2026/2027' }, props: { pageProps: { details: { id: 47 }, fixtures: { allMatches: matches } } } })}</script>`;
+    const fixtureRawPath = path.join(fixtureRoot, 'fotmob.html');
+    fs.writeFileSync(fixtureRawPath, fixtureRaw);
     const initial = seedFotMobFixtureUniverse({
         rawHtml: fixtureRaw,
         rawSha256: sha256Text(fixtureRaw),
         mode: 'INITIAL_SEED',
     });
     const allocationPath = path.join(fixtureRoot, 'allocation.json');
+    const allocationSnapshotPath = path.join(fixtureRoot, 'allocation-snapshot.json');
+    fs.writeFileSync(allocationSnapshotPath, JSON.stringify(initial.allocationSnapshot));
     const persistedAllocation = persistVerifiedAllocationAuthority({
         artifactPath: allocationPath,
         allocationAuthority: initial.allocationAuthority,
@@ -259,6 +279,12 @@ test('offline dry run publishes the canonical transaction from persisted synthet
         prepared,
         captureId: 'case-canonical',
         now: () => '2020-09-06T00:00:00Z',
+        preTransportCheck: () => assertDownstreamInputReadiness({
+            fotmobRawPath: fixtureRawPath,
+            allocationPath: allocationSnapshotPath,
+            storeRoot,
+            allocationArtifactPath: allocationPath,
+        }),
         transport: async () => response(200),
         downstream: ({ rawPath, receiptPath }) => {
             const candidate = buildProspectiveMarketEvidenceTransaction({

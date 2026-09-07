@@ -173,11 +173,21 @@ function persistResponse({ prepared, captureId, response }) {
     return { rawSha, rawRelative, rawPath, headerPath, attemptPath };
 }
 
+async function assertPreTransportCheck({ preTransportCheck, prepared, captureId }) {
+    if (preTransportCheck === null) return;
+    if (typeof preTransportCheck !== 'function') throw new Error('pre-transport readiness check must be a function');
+    const readiness = await preTransportCheck(
+        Object.freeze({ rootDir: prepared.root, requestMetadata: prepared.requestMetadata, captureId })
+    );
+    if (!readiness || readiness.ready !== true) throw new Error('pre-transport downstream readiness check did not pass');
+}
+
 async function executePreparedPreflight({
     prepared,
     transport,
     captureId = `preflight-${crypto.randomUUID()}`,
     now = () => new Date().toISOString(),
+    preTransportCheck = null,
     downstream = null,
 }) {
     assertPrepared(prepared);
@@ -186,6 +196,10 @@ async function executePreparedPreflight({
     if (typeof captureId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(captureId)) {
         throw new Error('capture_id is invalid');
     }
+    // This hook deliberately runs before the durable request guard is armed.
+    // A caller can therefore prove all deterministic downstream authorities
+    // before consuming its one allowed provider attempt.
+    await assertPreTransportCheck({ preTransportCheck, prepared, captureId });
     let calls = 0;
     consumedPreparations.add(prepared);
     atomicCreate(
