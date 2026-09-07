@@ -211,6 +211,11 @@ RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
 # -----------------------------------------------------------------------------
 WORKDIR /app
 
+# 开发容器也必须通过仓库 lockfile 安装项目 Node runtime 依赖。compose
+# 会将 /app/node_modules 作为容器卷挂载；新卷会从这里的已验证依赖树初始化。
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+
 # 创建必要的目录
 RUN mkdir -p /app/logs /app/data /app/model_zoo /app/.cache
 
