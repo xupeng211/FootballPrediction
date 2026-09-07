@@ -116,6 +116,9 @@ function readPackage(committedPath, directoryName) {
     validateCommittedMarker(parseCanonicalJson(bytes.COMMITTED, 'COMMITTED'), manifest);
     const metadata = validateMetadata(parseCanonicalJson(bytes['metadata.json'], 'metadata.json'), manifest);
     const registryDelta = validateRegistryDelta(parseCanonicalJson(bytes['registry_delta.json'], 'registry_delta.json'));
+    if (manifest.versions.registry_schema_version !== registryDelta.schema_version) {
+        throw new Error('transaction manifest registry schema version does not bind registry_delta');
+    }
     const decisions = parseCanonicalJsonl(bytes['identity_decisions.jsonl'], 'identity_decisions.jsonl');
     const observations = parseCanonicalJsonl(bytes['observations.jsonl'], 'observations.jsonl').map(createObservation);
     validatePublisherKnowledgeTime(manifest, observations, metadata.capture_receipt, decisions);

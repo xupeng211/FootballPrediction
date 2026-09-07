@@ -118,6 +118,12 @@ test('legacy registry-delta v1 remains readable with its original three-part boo
     assert.equal(snapshot.observations.length, 3);
 });
 
+test('reader rejects a manifest registry-schema declaration that differs from registry_delta bytes', t => {
+    const ctx = setup(t); const result = publish(ctx, candidate(ctx));
+    rewritePackage(ctx, result.transaction_id, data => { data.versions.registry_schema_version = LEGACY_REGISTRY_DELTA_SCHEMA_VERSION; });
+    assert.throws(() => openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }), /registry schema version does not bind registry_delta/);
+});
+
 test('legacy v1 chain can append a v2 multi-side bookmaker transaction without reinterpreting history', t => {
     const ctx = setup(t);
     const legacyPayload = JSON.parse(multiSideOddsRaw()); legacyPayload[0].bookmakers[0].markets.pop(); const legacyRaw = JSON.stringify(legacyPayload);
