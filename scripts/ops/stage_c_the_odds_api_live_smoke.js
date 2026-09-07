@@ -52,6 +52,14 @@ function offlineInputPaths() {
     return Object.values(values).every(filePath => fs.existsSync(filePath)) ? values : null;
 }
 
+function liveCaptureInputPaths({ oddsRawPath, receiptPath }) {
+    return {
+        ...configuredInputPaths(),
+        oddsRawPath,
+        receiptPath,
+    };
+}
+
 function downstreamReadinessCheck({ rootDir = evidenceRoot, paths = configuredInputPaths() } = {}) {
     const transactionRoot = path.resolve(process.env.STAGE_C_TRANSACTION_ROOT || path.join(rootDir, 'transactions'));
     const allocationArtifactPath = path.resolve(process.env.STAGE_C_ALLOCATION_ARTIFACT_PATH || path.join(transactionRoot, 'allocation.authority.json'));
@@ -95,11 +103,13 @@ async function acquireOptInLiveEvidence() {
             };
         },
     });
-    const paths = offlineInputPaths() || {};
     return {
         client,
         live: persisted,
-        paths: { ...paths, oddsRawPath: persisted.persisted.rawPath, receiptPath: persisted.receiptPath },
+        paths: liveCaptureInputPaths({
+            oddsRawPath: persisted.persisted.rawPath,
+            receiptPath: persisted.receiptPath,
+        }),
     };
 }
 
@@ -143,4 +153,10 @@ if (require.main === module) {
     });
 }
 
-module.exports = { configuredInputPaths, offlineInputPaths, downstreamReadinessCheck, acquireOptInLiveEvidence };
+module.exports = {
+    configuredInputPaths,
+    offlineInputPaths,
+    liveCaptureInputPaths,
+    downstreamReadinessCheck,
+    acquireOptInLiveEvidence,
+};
