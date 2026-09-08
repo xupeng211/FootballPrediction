@@ -11,7 +11,7 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-05
+## Current State Snapshot — 2026-09-08
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
 下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
@@ -29,9 +29,13 @@ STAGE_C_MERGE_COMPLETE=YES
 CANONICAL_MARKET_EVIDENCE_SPINE=IMPLEMENTED / PILOT
 CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
 CONTINUOUS_CAPTURE_READY=NO
+STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__OPERATIONALLY_DISABLED
+STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
+STAGE_D_PROVIDER_QUOTA_EVIDENCE=OPEN
+STAGE_D_INDEPENDENT_BACKUP_RESTORE=OPEN
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
-STAGE_D_READINESS_VERDICT=GO_WITH_CONDITIONS
+STAGE_D_READINESS_VERDICT=NOT_READY
 STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
 STAGE_D_STARTED=NO
@@ -62,13 +66,14 @@ CURRENT_MARKET_ASSETS=
 - historical odds staging/rebuild evidence
 
 CURRENT_HARD_BLOCKERS=
-- continuous durable market-evidence capture is NOT_READY; Stage C decision-time/as-of pilot exists
+- Stage D provider subscription/monthly quota, reset and cost evidence is not verified; quota gate therefore remains fail-closed
+- no physically independent backup target or isolated restore proof exists; all discovered local paths share `/dev/nvme0n1p5`
 - canonical value engine and canonical betting backtest are NOT_ESTABLISHED
 - bankroll/staking and CLV tracking are not established
 - fresh independent future holdout is not yet evaluated
 - production model activation remains NO / separately authorized
 
-NEXT_OWNER_DECISION=完成下列 Owner-controlled pre-Stage-D 运营决策，再单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=提供可核验 The Odds API plan/quota/reset/cost 与 usage-rights evidence，并指定独立故障域 backup target 后执行隔离 restore proof；不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -77,15 +82,23 @@ Stage C canonical market-evidence pilot 已通过独立 review、正常合并及
 transaction-v1 spine 已在 main，支持不可变 RAW/receipt binding、replay、publisher knowledge time
 和 as-of 语义；这不代表 production continuous capture、value engine 或盈利证明。
 
-剩余 pre-Stage-D 门禁均由 Owner 控制，尚未在本次任务中批准或执行：
+本次受控 source change 定义了 `scripts/ops/stage_d_cycle.js --dry-run` 的单周期 offline
+contract、不可自动回收的 run lock、sealed request-accounting epoch、prospective request
+ledger/verified-quota fail-close 实现，以及 factory-bound live adapter。live executor 仍默认禁用，
+必须显式 runtime authorization 且 quota verified 才可进入 transmission boundary。
+本地 sidecar epoch 精确绑定当前 Stage C authority，保留
+`HISTORICAL_PRE_EPOCH_REQUEST_TOTAL=AT_LEAST_2_CONFIRMED` 与
+`HISTORICAL_PRE_EPOCH_EXACT_TOTAL=UNKNOWN`；它没有发起 provider request、启动 scheduler 或
+新增 canonical transaction。详见 `docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md`。
+
+剩余 pre-Stage-D 门禁仍由 Owner 或独立基础设施控制，尚未在本次任务中批准或执行：
 
 - 核实 The Odds API subscription / monthly quota。
 - 确认 provider usage / retention / analysis permission。
-- 批准 production authority root。
 - 指定不同物理故障域的 independent backup target。
-- 批准 retention / RPO / RTO。
+- 批准 retention / RPO / RTO（当前仅有 proposal）。
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
-- 单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
+- 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
 细节入口：`docs/CAPABILITY_INDEX.md`、`docs/PROJECT_STATUS.md`、
 `docs/data/FOTMOB_CURRENT_STATE.md`、`docs/MODEL_ARTIFACTS.md`、

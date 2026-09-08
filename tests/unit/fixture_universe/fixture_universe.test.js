@@ -270,10 +270,10 @@ test('offline replay script requires an allocation and explicitly uses REPLAY mo
     assert.match(fs.readFileSync(script, 'utf8'), /mode:\s*'REPLAY'/);
 });
 
-test('live smoke creates receipt identities independent of the RAW hash', () => {
+test('retired Stage C live smoke cannot bypass the Stage D controlled adapter', () => {
     const source = fs.readFileSync(path.join(__dirname, '../../../scripts/ops/stage_c_the_odds_api_live_smoke.js'), 'utf8');
-    assert.match(source, /crypto\.randomUUID\(\)/);
+    assert.match(source, /Stage C live acquisition is retired/);
+    assert.match(source, /Stage D run lock, request ledger and verified quota gate/);
     assert.doesNotMatch(source, /live-\$\{raw\.raw_sha256/);
-    assert.match(source, /publishOfflineMarketEvidence/);
     assert.doesNotMatch(source, /appendProjection|adaptTheOddsApiCapture|replayRaw/);
 });

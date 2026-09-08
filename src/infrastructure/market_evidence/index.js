@@ -14,4 +14,5 @@ module.exports = {
     ...require('./prospectiveBatch'),
     ...require('./atomicPublisher'),
     ...require('./offlinePipeline'),
+    ...require('./stageDOperations'),
 };

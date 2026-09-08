@@ -58,7 +58,7 @@ RAW→resolver replay 可以作为独立 audit/reconstruction tooling；若执�
 
 ## Live 与 offline replay
 
-`scripts/ops/stage_c_the_odds_api_live_smoke.js` 是 transaction-v1 live/offline integration entrypoint。默认优先读取已有本地 FotMob RAW、The Odds API RAW、receipt 和 allocation evidence，因此验证不产生 provider request；network capture 只有显式 `STAGE_C_ALLOW_NETWORK=yes` 且具备 key 时才可运行。live 与 replay 都调用同一个 `offlinePipeline`、prospective builder、atomic publisher 和 fresh authority reader，不再执行 legacy identity append、observation append 或 registry authority write。
+`scripts/ops/stage_c_the_odds_api_live_smoke.js` 是 transaction-v1 offline replay integration entrypoint。它只读取已有本地 FotMob RAW、The Odds API RAW、receipt 和 allocation evidence；Stage C live acquisition 已退役，即使旧 `STAGE_C_ALLOW_NETWORK=yes` 变量存在也会 fail closed。任何未来 The Odds API transmission 必须先经过 Stage D run lock、request ledger 和 verified quota gate。replay 调用同一个 `offlinePipeline`、prospective builder、atomic publisher 和 fresh authority reader，不执行 legacy identity append、observation append 或 registry authority write。
 
 `scripts/ops/stage_c_fixture_identity_replay.js` 只接受已有 immutable provider evidence；早期 allocation snapshot 仅用于校验 fixture coverage/provenance，不能提供或替换 canonical IDs。首次 canonical bootstrap 由内部 allocator 建立 allocation artifact 与 STORE trust root；之后 replay 必须同时重开两者，缺一即 fail closed。`PROJECTION_AVAILABLE_AT` 被禁止，T2 由 publisher 生成。缺失 RAW、receipt 或 provenance 不得用 synthetic data 替代。
 
