@@ -20,6 +20,7 @@ const { isVerifiedProspectiveTransactionCandidate, buildProspectiveMarketEvidenc
 const EPOCH_SCHEMA_VERSION = 'footballprediction-stage-d-request-accounting-epoch/v1';
 const LEDGER_SCHEMA_VERSION = 'footballprediction-stage-d-request-ledger/v1';
 const RUN_LOCK_SCHEMA_VERSION = 'footballprediction-stage-d-run-lock/v1';
+const RUN_LOCK_GENERATION_SCHEMA_VERSION = 'footballprediction-stage-d-ledger-generation/v1';
 const QUOTA_SCHEMA_VERSION = 'footballprediction-stage-d-quota-budget/v1';
 const EPOCH_FILE = 'REQUEST_ACCOUNTING_EPOCH.json';
 const ENTRY_DIRECTORY = 'entries';
@@ -27,6 +28,7 @@ const RUN_LOCK_FILE = 'stage-d-run.lock.json';
 const RUN_LOCK_PARENT_FILE_PREFIX = '.stage-d-run-';
 const RUN_LOCK_ANCESTOR_FILE_PREFIX = '.stage-d-run-ancestor-';
 const RUN_LOCK_TRUST_FILE_PREFIX = '.stage-d-runtime-fence-';
+const RUN_LOCK_GENERATION_FILE_PREFIX = '.stage-d-ledger-generation-';
 const PROVIDER = 'the-odds-api';
 const MARKET_SCOPE = 'EPL_1X2_H2H';
 const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
@@ -231,6 +233,12 @@ function runLockAncestorFile(operationRoot) {
 function runLockTrustFile(operationRoot) {
     const resolved = path.resolve(operationRoot);
     return `${RUN_LOCK_TRUST_FILE_PREFIX}${sha256Text(resolved)}.lock.json`;
+}
+
+function runLockGenerationFile(operationRoot, entryCount) {
+    assertNonNegativeInteger(entryCount, 'ledger generation entry_count');
+    const resolved = path.resolve(operationRoot);
+    return `${RUN_LOCK_GENERATION_FILE_PREFIX}${sha256Text(resolved)}-${String(entryCount).padStart(12, '0')}.json`;
 }
 
 function defaultRunLockTrustRoot(operationRoot) {
@@ -680,6 +688,127 @@ function readRequestLedger({ ledgerRoot, expectedRootIdentity = null } = {}) {
         closeDirectoryDescriptor(entriesDescriptor);
         closeDirectoryDescriptor(rootDescriptor);
     }
+}
+
+function validateRunLockGeneration(value) {
+    assertExactKeys(value, [
+        'schema_version',
+        'operation_root',
+        'operation_identity',
+        'ledger_root',
+        'ledger_identity',
+        'epoch_id',
+        'epoch_genesis_hash',
+        'entry_count',
+        'last_entry_hash',
+        'generation_hash',
+    ], 'Stage D ledger generation anchor');
+    if (value.schema_version !== RUN_LOCK_GENERATION_SCHEMA_VERSION) fail('INVALID_LEDGER_GENERATION', 'ledger generation schema is invalid');
+    if (typeof value.operation_root !== 'string' || !path.isAbsolute(value.operation_root)) fail('INVALID_LEDGER_GENERATION', 'ledger generation operation_root is invalid');
+    for (const identityField of ['operation_identity', 'ledger_identity']) {
+        assertPlainObject(value[identityField], `ledger generation ${identityField}`);
+        assertExactKeys(value[identityField], ['dev', 'ino', 'mode', 'uid', 'gid'], `ledger generation ${identityField}`);
+        for (const field of ['dev', 'ino', 'mode', 'uid', 'gid']) assertNonNegativeInteger(value[identityField][field], `ledger generation ${identityField}.${field}`);
+    }
+    if (typeof value.ledger_root !== 'string' || !path.isAbsolute(value.ledger_root)) fail('INVALID_LEDGER_GENERATION', 'ledger generation ledger_root is invalid');
+    assertToken(value.epoch_id, 'ledger generation epoch_id');
+    if (!/^[a-f0-9]{64}$/.test(value.epoch_genesis_hash || '') || !/^[a-f0-9]{64}$/.test(value.last_entry_hash || '')) {
+        fail('INVALID_LEDGER_GENERATION', 'ledger generation hashes are invalid');
+    }
+    assertNonNegativeInteger(value.entry_count, 'ledger generation entry_count');
+    const unsigned = { ...value };
+    delete unsigned.generation_hash;
+    if (value.generation_hash !== sha256Text(stableStringify(unsigned))) fail('TAMPERED_LEDGER_GENERATION', 'ledger generation hash is invalid');
+    return Object.freeze({
+        ...value,
+        operation_identity: Object.freeze({ ...value.operation_identity }),
+        ledger_identity: Object.freeze({ ...value.ledger_identity }),
+    });
+}
+
+function buildRunLockGeneration({ operationRoot, operationIdentity, ledgerRoot, ledgerIdentity, ledger } = {}) {
+    const root = path.resolve(operationRoot);
+    const resolvedLedgerRoot = path.resolve(ledgerRoot);
+    assertPlainObject(operationIdentity, 'ledger generation operation identity');
+    assertPlainObject(ledgerIdentity, 'ledger generation ledger identity');
+    assertPlainObject(ledger, 'ledger generation ledger');
+    const entryCount = ledger.entries.length;
+    const lastEntryHash = entryCount === 0 ? ledger.epoch.genesis_entry_hash : ledger.last_entry_hash;
+    const unsigned = {
+        schema_version: RUN_LOCK_GENERATION_SCHEMA_VERSION,
+        operation_root: root,
+        operation_identity: { ...operationIdentity },
+        ledger_root: resolvedLedgerRoot,
+        ledger_identity: { ...ledgerIdentity },
+        epoch_id: ledger.epoch.epoch_id,
+        epoch_genesis_hash: ledger.epoch.genesis_entry_hash,
+        entry_count: entryCount,
+        last_entry_hash: lastEntryHash,
+    };
+    return validateRunLockGeneration({ ...unsigned, generation_hash: sha256Text(stableStringify(unsigned)) });
+}
+
+function readRunLockGenerations(token) {
+    const prefix = `${RUN_LOCK_GENERATION_FILE_PREFIX}${sha256Text(token.root)}-`;
+    const names = fs.readdirSync(directoryFdPath(token.trust_directory_fd)).filter(name => name.startsWith(prefix));
+    const generations = [];
+    for (const name of names) {
+        if (!/^\d{12}\.json$/.test(name.slice(prefix.length))) {
+            fail('INVALID_LEDGER_GENERATION', 'ledger generation anchor filename is invalid');
+        }
+        const generation = validateRunLockGeneration(readCanonicalJson(scopedPath(token.trust_directory_fd, name), 'Stage D ledger generation anchor'));
+        if (name !== runLockGenerationFile(token.root, generation.entry_count)) fail('INVALID_LEDGER_GENERATION', 'ledger generation anchor filename does not bind entry_count');
+        generations.push(generation);
+    }
+    return generations.sort((left, right) => left.entry_count - right.entry_count);
+}
+
+function assertRunLockGenerationMatchesLedger(generation, ledger, { operationRoot, operationIdentity, ledgerRoot, ledgerIdentity } = {}) {
+    if (generation.operation_root !== path.resolve(operationRoot) || !sameDirectoryIdentity(generation.operation_identity, operationIdentity)) fail('LEDGER_GENERATION_CHANGED', 'Stage D operation root identity changed since the last cycle');
+    if (generation.ledger_root !== path.resolve(ledgerRoot) || !sameDirectoryIdentity(generation.ledger_identity, ledgerIdentity)) fail('LEDGER_GENERATION_CHANGED', 'request ledger root identity changed since the last Stage D cycle');
+    if (generation.epoch_id !== ledger.epoch.epoch_id || generation.epoch_genesis_hash !== ledger.epoch.genesis_entry_hash) {
+        fail('LEDGER_GENERATION_CHANGED', 'request accounting epoch changed since the last Stage D cycle');
+    }
+    if (generation.entry_count > ledger.entries.length) fail('LEDGER_GENERATION_ROLLBACK', 'request ledger lost entries since the last Stage D cycle');
+    const observed = generation.entry_count === 0
+        ? ledger.epoch.genesis_entry_hash
+        : ledger.entries[generation.entry_count - 1]?.entry_hash;
+    if (observed !== generation.last_entry_hash) fail('LEDGER_GENERATION_ROLLBACK', 'request ledger history no longer contains the anchored last entry');
+}
+
+function bindStageDRunLockGeneration(token, { ledgerRoot = token?.root } = {}) {
+    if (!activeLockTokens.has(token)) fail('INVALID_LOCK_TOKEN', 'an active Stage D run lock token is required');
+    if (typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('LEDGER_GENERATION_CHANGED', 'request ledger root is required');
+    const resolvedLedgerRoot = path.resolve(ledgerRoot);
+    const ledger = readRequestLedger({ ledgerRoot: resolvedLedgerRoot });
+    const generations = readRunLockGenerations(token);
+    const latest = generations.at(-1);
+    if (latest) {
+        assertRunLockGenerationMatchesLedger(latest, ledger, {
+            operationRoot: token.root,
+            operationIdentity: token.root_identity,
+            ledgerRoot: resolvedLedgerRoot,
+            ledgerIdentity: ledger.root_identity,
+        });
+    }
+    const current = buildRunLockGeneration({
+        operationRoot: token.root,
+        operationIdentity: token.root_identity,
+        ledgerRoot: resolvedLedgerRoot,
+        ledgerIdentity: ledger.root_identity,
+        ledger,
+    });
+    if (!latest || current.entry_count > latest.entry_count) {
+        writeExclusiveImmutable(
+            scopedPath(token.trust_directory_fd, runLockGenerationFile(token.root, current.entry_count)),
+            current,
+            'Stage D ledger generation anchor',
+            { directoryFd: token.trust_directory_fd, mode: 0o400 },
+        );
+    } else if (current.last_entry_hash !== latest.last_entry_hash) {
+        fail('LEDGER_GENERATION_CHANGED', 'request ledger generation hash changed without an append-only extension');
+    }
+    return current;
 }
 
 function appendRequestEvent({ ledgerRoot, expectedRootIdentity = null, eventType, request, recordedAt, eventId } = {}) {
@@ -1692,7 +1821,18 @@ async function executeStageDOneCycle({
     let reconcileRequired = false;
     let intentPersisted = false;
     let authorityDescriptor;
+    let finalizationError = null;
+    let cycleResult;
+    let cycleError = null;
     try {
+        // eslint-disable-next-line complexity -- the inner cycle intentionally enumerates each durable boundary.
+        cycleResult = await (async () => {
+        try {
+            bindStageDRunLockGeneration(token, { ledgerRoot });
+        } catch (error) {
+            reconcileRequired = true;
+            throw error;
+        }
         try {
             authorityDescriptor = openTrustedDirectoryDescriptor(canonicalAuthorityRoot, 'transaction authority root', canonicalAuthorityRootIdentity);
         } catch (error) {
@@ -1711,7 +1851,13 @@ async function executeStageDOneCycle({
         });
         if (!isVerifiedMarketEvidenceAuthoritySnapshot(authoritySnapshot)) fail('AUTHORITY_NOT_READY', 'canonical Stage C authority is not verified');
         const lockedLedgerRootIdentity = token.root_identity;
-        let ledger = readRequestLedger({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity });
+        let ledger;
+        try {
+            ledger = readRequestLedger({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity });
+        } catch (error) {
+            reconcileRequired = true;
+            throw error;
+        }
         if (ledger.requests.some(row => row.run_id === runId)) fail('DUPLICATE_RUN_ID', 'run_id has already been accounted and cannot be reused');
         const budgetNow = trustedClock();
         assertUtc(budgetNow, 'budget now');
@@ -1872,15 +2018,29 @@ async function executeStageDOneCycle({
             reconcileRequired = true;
             throw error;
         }
+        })();
+    } catch (error) {
+        cycleError = error;
     } finally {
         try {
+            if (!reconcileRequired) {
+                try {
+                    bindStageDRunLockGeneration(token, { ledgerRoot });
+                } catch (error) {
+                    reconcileRequired = true;
+                    finalizationError = error;
+                }
+            }
             if (reconcileRequired) abandonStageDRunLock(token);
             else releaseStageDRunLock(token);
         } finally {
             closeDirectoryDescriptor(authorityDescriptor);
         }
-        if (!intentPersisted && reconcileRequired) fail('REQUEST_INTENT_RECONCILIATION_REQUIRED', 'request intent outcome is ambiguous; manual reconciliation is required');
     }
+    if (finalizationError) throw finalizationError;
+    if (!intentPersisted && reconcileRequired) fail('REQUEST_INTENT_RECONCILIATION_REQUIRED', 'request intent outcome is ambiguous; manual reconciliation is required');
+    if (cycleError) throw cycleError;
+    return cycleResult;
 }
 
 function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, runId, now, runLockTrustRoot } = {}) {
@@ -1891,7 +2051,14 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
     assertToken(runId, 'run_id');
     assertUtc(now, 'run now');
     const token = acquireStageDRunLock({ operationRoot, runId, acquiredAt: now, runLockTrustRoot });
+    let reconcileRequired = false;
     try {
+        try {
+            bindStageDRunLockGeneration(token, { ledgerRoot });
+        } catch (error) {
+            reconcileRequired = true;
+            throw error;
+        }
         let ledger;
         let ledgerState;
         try {
@@ -1926,7 +2093,8 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
             canonical_authority_writes: 0,
         });
     } finally {
-        releaseStageDRunLock(token);
+        if (reconcileRequired) abandonStageDRunLock(token);
+        else releaseStageDRunLock(token);
     }
 }
 
@@ -1945,6 +2113,7 @@ module.exports = {
     EPOCH_SCHEMA_VERSION,
     LEDGER_SCHEMA_VERSION,
     RUN_LOCK_SCHEMA_VERSION,
+    RUN_LOCK_GENERATION_SCHEMA_VERSION,
     QUOTA_SCHEMA_VERSION,
     EPOCH_FILE,
     ENTRY_DIRECTORY,
@@ -1952,6 +2121,7 @@ module.exports = {
     runLockParentFile,
     runLockAncestorFile,
     runLockTrustFile,
+    runLockGenerationFile,
     PROVIDER,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
@@ -1965,6 +2135,7 @@ module.exports = {
     inspectStageDRunLock,
     acquireStageDRunLock,
     releaseStageDRunLock,
+    bindStageDRunLockGeneration,
     validateQuotaConfiguration,
     createStageDTestRuntimeAuthorization,
     createStageDTestQuotaConfiguration,

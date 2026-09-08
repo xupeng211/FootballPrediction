@@ -10,6 +10,12 @@ const { openMarketEvidenceAuthoritySnapshot, readPackage } = require('./authorit
 const { isVerifiedProspectiveTransactionCandidate, finalizeProspectiveMarketEvidenceTransactionForPublication } = require('./prospectiveBatch');
 
 function fail(code, message, extra = {}) { const error = new Error(message); error.code = code; Object.assign(error, extra); throw error; }
+function assertControlledDirectory(stat, label) {
+    const owner = typeof process.getuid === 'function' ? process.getuid() : stat.uid;
+    if ((stat.uid !== owner && stat.uid !== 0) || (stat.mode & 0o022) !== 0) {
+        fail('UNSAFE_PATH', `${label} must be runtime- or root-owned and not group/world writable`);
+    }
+}
 // eslint-disable-next-line complexity -- pinned /proc descriptors and path-bound opens have distinct safety checks.
 function openDirectoryDescriptor(target, label, expected = null) {
     const pinnedDescriptorPath = /^\/proc\/self\/fd\/\d+$/.test(target);
@@ -19,6 +25,7 @@ function openDirectoryDescriptor(target, label, expected = null) {
             fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0));
             const opened = fs.fstatSync(fd);
             if (!opened.isDirectory()) fail('UNSAFE_PATH', `${label} descriptor is not a directory`);
+            assertControlledDirectory(opened, label);
             if (expected && (opened.dev !== expected.dev || opened.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} identity is not the expected authority generation`);
             return Object.freeze({ fd, identity: Object.freeze({ dev: opened.dev, ino: opened.ino, mode: opened.mode, uid: opened.uid, gid: opened.gid }) });
         } catch (error) {
@@ -32,6 +39,7 @@ function openDirectoryDescriptor(target, label, expected = null) {
     try {
         const opened = fs.fstatSync(fd);
         if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        assertControlledDirectory(opened, label);
         if (expected && (opened.dev !== expected.dev || opened.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} identity is not the expected authority generation`);
         return Object.freeze({ fd, identity: Object.freeze({ dev: opened.dev, ino: opened.ino, mode: opened.mode, uid: opened.uid, gid: opened.gid }) });
     } catch (error) { fs.closeSync(fd); throw error; }

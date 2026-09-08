@@ -13,9 +13,11 @@ const {
     runLockParentFile,
     runLockAncestorFile,
     runLockTrustFile,
+    bindStageDRunLockGeneration,
     acquireStageDRunLock,
     releaseStageDRunLock,
     inspectStageDRunLock,
+    initializeRequestAccountingEpoch,
     createStageDOddsApiTransport,
     createStageDFakeTransport,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
@@ -81,4 +83,42 @@ test('fake transport accepts only serialized data fixtures and never evaluates a
     Object.defineProperty(response, 'raw_text', { enumerable: true, get() { getterCalled = true; throw new Error('getter must not execute'); } });
     assert.throws(() => createStageDFakeTransport({ response }), error => error.code === 'INVALID_CONTRACT');
     assert.equal(getterCalled, false);
+});
+
+test('clean release preserves a ledger-generation anchor and rejects a valid old ledger copy', t => {
+    const container = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-ledger-generation-'));
+    const trustContainer = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-ledger-generation-trust-'));
+    const root = path.join(container, 'ledger');
+    const trustRoot = path.join(trustContainer, 'runtime-trust');
+    fs.mkdirSync(root, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(trustRoot, { recursive: true, mode: 0o700 });
+    initializeRequestAccountingEpoch({
+        ledgerRoot: root,
+        authoritySnapshot: { head_transaction_id: `tx_${'a'.repeat(64)}`, state_hash: 'b'.repeat(64) },
+        startedAt: '2026-09-08T00:00:00Z',
+        epochId: `sde_${'c'.repeat(64)}`,
+    });
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(container, { recursive: true, force: true });
+        fs.rmSync(trustContainer, { recursive: true, force: true });
+    });
+    const token = acquireStageDRunLock({ operationRoot: root, runId: 'ledger-generation-run', acquiredAt: '2026-09-08T00:00:00Z', runLockTrustRoot: trustRoot });
+    bindStageDRunLockGeneration(token, { ledgerRoot: root });
+    releaseStageDRunLock(token);
+    const moved = `${root}.moved`;
+    fs.renameSync(root, moved);
+    fs.cpSync(moved, root, { recursive: true });
+    const replacement = acquireStageDRunLock({ operationRoot: root, runId: 'ledger-generation-replacement', acquiredAt: '2026-09-08T00:00:01Z', runLockTrustRoot: trustRoot });
+    assert.throws(() => bindStageDRunLockGeneration(replacement, { ledgerRoot: root }), error => error.code === 'LEDGER_GENERATION_CHANGED');
+    releaseStageDRunLock(replacement);
+});
+
+test('runtime trust root contained by the operation root is rejected', t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-contained-trust-'));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    assert.throws(
+        () => acquireStageDRunLock({ operationRoot: root, runId: 'contained-trust-run', acquiredAt: '2026-09-08T00:00:00Z', runLockTrustRoot: path.join(root, '.trust') }),
+        error => error.code === 'UNSAFE_TRUST_ROOT',
+    );
 });

@@ -43,7 +43,11 @@ non-replaceable admission/release anchor: replacing the operation root or its
 parent cannot hide an active or ambiguous run. Production requires
 `runLockTrustRoot`; the deterministic per-root fallback exists only for
 `NODE_ENV=test`. The trust root and every parent must be real directories owned
-by the runtime user and not group/world writable. A second run, an old/stale
+by the runtime user and not group/world writable, and it must be a separate
+path domain from the operation root. A persistent append-only ledger-generation
+anchor in that trust root binds operation and ledger device/inode identities,
+epoch and last-entry hash across clean releases; a valid old ledger copy is
+therefore a reconciliation failure, not a new run. A second run, an old/stale
 lock, a malformed lock, ownership change, or a process crash all stop the next
 run with reconciliation required.
 There is deliberately no TTL takeover or automatic stale-lock deletion.
