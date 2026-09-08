@@ -18,6 +18,9 @@ const {
     releaseStageDRunLock,
     inspectStageDRunLock,
     initializeRequestAccountingEpoch,
+    recordRequestIntent,
+    markTransmissionStarted,
+    markRequestTerminal,
     createStageDOddsApiTransport,
     createStageDFakeTransport,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
@@ -106,11 +109,20 @@ test('clean release preserves a ledger-generation anchor and rejects a valid old
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'ledger-generation-run', acquiredAt: '2026-09-08T00:00:00Z', runLockTrustRoot: trustRoot });
     bindStageDRunLockGeneration(token, { ledgerRoot: root });
     releaseStageDRunLock(token);
+    const oldCopy = `${root}.old`;
+    fs.cpSync(root, oldCopy, { recursive: true });
+    const consumedToken = acquireStageDRunLock({ operationRoot: root, runId: 'ledger-generation-consumed', acquiredAt: '2026-09-08T00:00:01Z', runLockTrustRoot: trustRoot });
+    bindStageDRunLockGeneration(consumedToken, { ledgerRoot: root });
+    recordRequestIntent({ ledgerRoot: root, requestId: 'generation-request', runId: 'ledger-generation-consumed', createdAt: '2026-09-08T00:00:02Z' });
+    markTransmissionStarted({ ledgerRoot: root, requestId: 'generation-request', transmittedAt: '2026-09-08T00:00:03Z' });
+    markRequestTerminal({ ledgerRoot: root, requestId: 'generation-request', terminalState: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', at: '2026-09-08T00:00:04Z', errorClassification: 'TEST_TIMEOUT' });
+    bindStageDRunLockGeneration(consumedToken, { ledgerRoot: root });
+    releaseStageDRunLock(consumedToken);
     const moved = `${root}.moved`;
     fs.renameSync(root, moved);
-    fs.cpSync(moved, root, { recursive: true });
+    fs.renameSync(oldCopy, root);
     const replacement = acquireStageDRunLock({ operationRoot: root, runId: 'ledger-generation-replacement', acquiredAt: '2026-09-08T00:00:01Z', runLockTrustRoot: trustRoot });
-    assert.throws(() => bindStageDRunLockGeneration(replacement, { ledgerRoot: root }), error => error.code === 'LEDGER_GENERATION_CHANGED');
+    assert.throws(() => bindStageDRunLockGeneration(replacement, { ledgerRoot: root }), error => ['LEDGER_GENERATION_CHANGED', 'LEDGER_GENERATION_ROLLBACK'].includes(error.code));
     releaseStageDRunLock(replacement);
 });
 
