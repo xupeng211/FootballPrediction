@@ -11,6 +11,7 @@ const {
     buildOfflineStageDRunPlan,
     initializeRequestAccountingEpoch,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
+const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
 
 function valueAfter(flag) {
     const index = process.argv.indexOf(flag);
@@ -56,13 +57,21 @@ function main() {
         return;
     }
     const operationRoot = valueAfter('--operation-root') || fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-offline-plan-'));
+    const resolvedLedgerRoot = path.resolve(ledgerRoot);
+    const runLockTrustRoot = path.resolve(valueAfter('--run-lock-trust-root') || path.join(
+        os.homedir(),
+        '.stage-d-runtime-trust',
+        sha256Text(resolvedLedgerRoot),
+    ));
+    if (!fs.existsSync(runLockTrustRoot)) fs.mkdirSync(runLockTrustRoot, { recursive: true, mode: 0o700 });
     const plan = buildOfflineStageDRunPlan({
         operationRoot: path.resolve(operationRoot),
-        ledgerRoot: path.resolve(ledgerRoot),
+        ledgerRoot: resolvedLedgerRoot,
         authoritySnapshot: snapshot,
         quotaConfig: readQuotaConfig(valueAfter('--quota-config')),
         runId: valueAfter('--run-id') || `stage-d-dry-run-${Date.now()}`,
         now,
+        runLockTrustRoot,
     });
     process.stdout.write(`${JSON.stringify(plan)}\n`);
 }

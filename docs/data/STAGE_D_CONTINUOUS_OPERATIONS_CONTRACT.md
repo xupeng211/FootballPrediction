@@ -36,10 +36,14 @@ must not revive the retired Stage C live route or introduce another writer.
 
 The external scheduler supplies an opaque `run_id` for exactly one cycle. Before
 any provider boundary the engine acquires `stage-d-run.lock.json` using exclusive
-creation and fsync, plus hash-bound reconciliation sentinels in the operation
-root's parent and its stable ancestor. The ancestor sentinel remains visible
-when either the root or its immediate parent is replaced, so a replacement
-directory cannot hide an active or ambiguous run. A second run, an old/stale
+creation and fsync, plus a hash-bound fence in an explicitly configured,
+owner-controlled runtime trust root. The operation-root parent and stable
+ancestor sentinels remain defense-in-depth, but the external fence is the
+non-replaceable admission/release anchor: replacing the operation root or its
+parent cannot hide an active or ambiguous run. Production requires
+`runLockTrustRoot`; the deterministic per-root fallback exists only for
+`NODE_ENV=test`. The trust root and every parent must be real directories owned
+by the runtime user and not group/world writable. A second run, an old/stale
 lock, a malformed lock, ownership change, or a process crash all stop the next
 run with reconciliation required.
 There is deliberately no TTL takeover or automatic stale-lock deletion.
@@ -147,7 +151,8 @@ allowed. Production transport, persistence, candidate-builder, publisher and
 runtime-authorization capabilities are factory-bound. The test-only seams
 (the networkless fake transport accepts only serialized JSON fixtures; candidate
 and publisher failures are declarative descriptors; temporary roots,
-deterministic clocks and local filesystem fault hooks) are available only under
+deterministic clocks and a small allow-listed declarative filesystem-fault
+descriptor) are available only under
 `NODE_ENV=test` and cannot arm production transport. The transaction-v1 publisher receives a pinned
 authority directory descriptor for the complete read/lock/stage/rename/reopen
 session; it does not re-resolve the mutable authority path during publication.

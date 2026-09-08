@@ -10,7 +10,22 @@ const { openMarketEvidenceAuthoritySnapshot, readPackage } = require('./authorit
 const { isVerifiedProspectiveTransactionCandidate, finalizeProspectiveMarketEvidenceTransactionForPublication } = require('./prospectiveBatch');
 
 function fail(code, message, extra = {}) { const error = new Error(message); error.code = code; Object.assign(error, extra); throw error; }
+// eslint-disable-next-line complexity -- pinned /proc descriptors and path-bound opens have distinct safety checks.
 function openDirectoryDescriptor(target, label, expected = null) {
+    const pinnedDescriptorPath = /^\/proc\/self\/fd\/\d+$/.test(target);
+    if (pinnedDescriptorPath) {
+        let fd;
+        try {
+            fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0));
+            const opened = fs.fstatSync(fd);
+            if (!opened.isDirectory()) fail('UNSAFE_PATH', `${label} descriptor is not a directory`);
+            if (expected && (opened.dev !== expected.dev || opened.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} identity is not the expected authority generation`);
+            return Object.freeze({ fd, identity: Object.freeze({ dev: opened.dev, ino: opened.ino, mode: opened.mode, uid: opened.uid, gid: opened.gid }) });
+        } catch (error) {
+            if (fd !== undefined) fs.closeSync(fd);
+            throw error;
+        }
+    }
     const before = fs.lstatSync(target);
     if (before.isSymbolicLink() || !before.isDirectory()) fail('UNSAFE_PATH', `${label} must be a non-symlink directory`);
     const fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0) | (fs.constants.O_NOFOLLOW || 0));
@@ -39,8 +54,12 @@ function safeWrite(target, bytes, fault, point) {
         fs.fsyncSync(fd);
     } finally { if (fd !== undefined) fs.closeSync(fd); }
 }
-function acquireLock(root) {
-    const lock = path.join(root, '.writer-lock'); let fd;
+function acquireLock(root, rootDescriptor = null) {
+    const lock = rootDescriptor ? path.join(descriptorPath(rootDescriptor.fd), '.writer-lock') : path.join(root, '.writer-lock'); let fd;
+    const syncRoot = () => {
+        if (rootDescriptor) fs.fsyncSync(rootDescriptor.fd);
+        else fsyncDir(root);
+    };
     const deadline = Date.now() + 5000;
     while (fd === undefined) {
         try { fd = fs.openSync(lock, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), 0o400); }
@@ -51,20 +70,38 @@ function acquireLock(root) {
             Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
         }
     }
-    fs.writeFileSync(fd, 'market-evidence-transaction-v1\n'); fs.fsyncSync(fd);
+    fs.writeFileSync(fd, 'market-evidence-transaction-v1\n'); fs.fchmodSync(fd, 0o400); fs.fsyncSync(fd);
     const lockIdentity = fs.fstatSync(fd);
+    // eslint-disable-next-line complexity -- release distinguishes held, replaced and next-owner lock states.
     return () => {
         let released = false;
+        let releaseError = null;
         try {
             const held = fs.fstatSync(fd);
             if (held.dev !== lockIdentity.dev || held.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock descriptor changed while held');
             const current = fs.lstatSync(lock);
             if (current.isSymbolicLink() || !current.isFile() || current.dev !== lockIdentity.dev || current.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock changed while held');
+            const final = fs.lstatSync(lock);
+            if (final.isSymbolicLink() || !final.isFile() || final.dev !== lockIdentity.dev || final.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock changed during release');
             fs.unlinkSync(lock);
+            syncRoot();
+            // A competing publisher may legitimately create the next lock
+            // immediately after this unlink.  Only a same-inode reappearance
+            // is ambiguous; a different inode is the next owner and must not
+            // turn the completed publication into COMMIT_OUTCOME_UNKNOWN.
+            if (fs.existsSync(lock)) {
+                const replacement = fs.lstatSync(lock);
+                if (replacement.isSymbolicLink() || !replacement.isFile() || replacement.dev === lockIdentity.dev && replacement.ino === lockIdentity.ino) {
+                    fail('UNSAFE_LOCK', 'writer lock reappeared with the held inode');
+                }
+            }
             released = true;
+        } catch (error) {
+            releaseError = error;
+            throw error;
         } finally {
             fs.closeSync(fd);
-            if (!released) fail('UNSAFE_LOCK', 'writer lock release was ambiguous; manual recovery is required');
+            if (!released && !releaseError) fail('UNSAFE_LOCK', 'writer lock release was ambiguous; manual recovery is required');
         }
     };
 }
@@ -107,15 +144,19 @@ function resolveAfterRename({ storeRoot, allocationArtifactPath, candidate, orig
 function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArtifactPath, candidate, fault = null, expectedStagingIdentity = null, expectedCommittedIdentity = null } = {}) {
     const planned = candidateFiles(candidate);
     const contract = readStoreContract({ storeRoot, allocationArtifactPath }); const root = contract.root;
+    let rootDescriptor;
     const stagingPath = path.join(root, '.staging'); const committedPath = path.join(root, 'committed');
     let stagingDescriptor;
     let committedDescriptor;
     try {
-        stagingDescriptor = openDirectoryDescriptor(stagingPath, 'staging directory', expectedStagingIdentity);
-        committedDescriptor = openDirectoryDescriptor(committedPath, 'committed directory', expectedCommittedIdentity);
+        rootDescriptor = openDirectoryDescriptor(root, 'transaction authority root');
+        const pinnedRoot = descriptorPath(rootDescriptor.fd);
+        stagingDescriptor = openDirectoryDescriptor(path.join(pinnedRoot, '.staging'), 'staging directory', expectedStagingIdentity);
+        committedDescriptor = openDirectoryDescriptor(path.join(pinnedRoot, 'committed'), 'committed directory', expectedCommittedIdentity);
     } catch (error) {
         closeDirectoryDescriptor(committedDescriptor);
         closeDirectoryDescriptor(stagingDescriptor);
+        closeDirectoryDescriptor(rootDescriptor);
         throw error;
     }
     const staging = descriptorPath(stagingDescriptor.fd);
@@ -124,13 +165,15 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
     if (stagingStat.dev !== committedStat.dev) {
         closeDirectoryDescriptor(committedDescriptor);
         closeDirectoryDescriptor(stagingDescriptor);
+        closeDirectoryDescriptor(rootDescriptor);
         fail('CROSS_DEVICE_PUBLICATION', 'staging and committed directories must share a filesystem');
     }
     let release;
-    try { release = acquireLock(root); }
+    try { release = acquireLock(root, rootDescriptor); }
     catch (error) {
         closeDirectoryDescriptor(committedDescriptor);
         closeDirectoryDescriptor(stagingDescriptor);
+        closeDirectoryDescriptor(rootDescriptor);
         throw error;
     }
     let possibleRename = false; let outcome = null; let pendingError = null; let publicationCandidate = null;
@@ -186,6 +229,7 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
     try { release(); } catch (error) { pendingError = possibleRename && publicationCandidate ? (() => { try { commitOutcomeUnknown(publicationCandidate, error); } catch (unknown) { return unknown; } })() : error; }
     closeDirectoryDescriptor(committedDescriptor);
     closeDirectoryDescriptor(stagingDescriptor);
+    closeDirectoryDescriptor(rootDescriptor);
     if (pendingError) throw pendingError;
     return outcome;
 }

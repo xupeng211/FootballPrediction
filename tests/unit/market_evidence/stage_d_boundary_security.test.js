@@ -7,10 +7,12 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
 const {
     RUN_LOCK_FILE,
     runLockParentFile,
     runLockAncestorFile,
+    runLockTrustFile,
     acquireStageDRunLock,
     releaseStageDRunLock,
     inspectStageDRunLock,
@@ -24,6 +26,7 @@ function removeRunLockArtifacts(root) {
         path.join(resolved, RUN_LOCK_FILE),
         path.join(path.dirname(resolved), runLockParentFile(resolved)),
         path.join(path.dirname(path.dirname(resolved)), runLockAncestorFile(resolved)),
+        path.join(path.dirname(path.dirname(resolved)), '.stage-d-runtime-trust', sha256Text(resolved), runLockTrustFile(resolved)),
     ]) {
         if (fs.existsSync(target)) fs.unlinkSync(target);
     }
@@ -48,6 +51,26 @@ test('run-lock parent-directory replacement cannot hide the ancestor reconciliat
     assert.equal(inspectStageDRunLock({ operationRoot: path.join(movedParent, 'ledger') }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
     removeRunLockArtifacts(root); removeRunLockArtifacts(path.join(movedParent, 'ledger'));
     fs.rmSync(parent, { recursive: true, force: true }); fs.renameSync(movedParent, parent);
+});
+
+test('external runtime trust fence survives replacement of the operation parent', t => {
+    const container = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-external-trust-'));
+    const parent = path.join(container, 'parent');
+    const root = path.join(parent, 'ledger');
+    const trustRoot = path.join(container, 'runtime-trust');
+    fs.mkdirSync(root, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(trustRoot, { recursive: true, mode: 0o700 });
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        removeRunLockArtifacts(path.join(`${parent}.moved`, 'ledger'));
+        fs.rmSync(container, { recursive: true, force: true });
+    });
+    const token = acquireStageDRunLock({ operationRoot: root, runId: 'external-trust-run', acquiredAt: '2026-09-08T00:00:00Z', runLockTrustRoot: trustRoot });
+    const movedParent = `${parent}.moved`;
+    fs.renameSync(parent, movedParent);
+    fs.mkdirSync(root, { recursive: true, mode: 0o700 });
+    assert.equal(inspectStageDRunLock({ operationRoot: root, runLockTrustRoot: trustRoot }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
+    assert.throws(() => releaseStageDRunLock(token), error => ['AMBIGUOUS_RUN_LOCK', 'DIRECTORY_IDENTITY_CHANGED'].includes(error.code));
 });
 
 test('fake transport accepts only serialized data fixtures and never evaluates a getter', () => {

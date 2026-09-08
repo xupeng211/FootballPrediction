@@ -21,6 +21,7 @@ const {
     RUN_LOCK_FILE,
     runLockParentFile,
     runLockAncestorFile,
+    runLockTrustFile,
     initializeRequestAccountingEpoch,
     readRequestLedger,
     recordRequestIntent,
@@ -53,7 +54,10 @@ function removeRunLockArtifacts(rootOrToken) {
     const ancestorLockPath = typeof rootOrToken === 'string'
         ? path.join(path.dirname(path.dirname(path.resolve(root))), runLockAncestorFile(root))
         : rootOrToken.ancestor_lock_path;
-    for (const target of [lockPath, parentLockPath, ancestorLockPath]) {
+    const trustLockPath = typeof rootOrToken === 'string'
+        ? path.join(path.dirname(path.dirname(path.resolve(root))), '.stage-d-runtime-trust', sha256Text(path.resolve(root)), runLockTrustFile(root))
+        : rootOrToken.trust_lock_path;
+    for (const target of [lockPath, parentLockPath, ancestorLockPath, trustLockPath]) {
         if (target && fs.existsSync(target)) fs.unlinkSync(target);
     }
 }
@@ -500,12 +504,7 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
     });
     rawComponents.evidencePersistence = createStageDEvidencePersistence({
         evidenceRoot: originalEvidenceRoot,
-        testHooks: {
-            beforePersistRaw() {
-            fs.renameSync(originalEvidenceRoot, movedEvidenceRoot);
-            fs.mkdirSync(originalEvidenceRoot, { mode: 0o700 });
-            },
-        },
+        testHooks: { fault: 'RAW_ROOT_SWAP' },
     });
     await assert.rejects(
         executeLive(rawFailure, { components: rawComponents, runId: 'raw-failure-run', requestId: 'raw-failure-request' }),
@@ -515,6 +514,8 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
     const rawRequest = readRequestLedger({ ledgerRoot: rawFailure.ledgerRoot }).requests[0];
     assert.equal(rawRequest.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
     assert.equal(rawRequest.quota_units_charged_or_assumed, 1);
+    fs.rmSync(originalEvidenceRoot, { recursive: true, force: true });
+    fs.renameSync(movedEvidenceRoot, originalEvidenceRoot);
 
     const receiptFailure = liveAuthoritySetup(t);
     const receiptPersistence = createStageDEvidencePersistence({ evidenceRoot: receiptFailure.evidenceRoot });
@@ -584,12 +585,7 @@ test('authority reopen failure after a consumed response retains the reconciliat
     const components = liveComponents(ctx);
     components.evidencePersistence = createStageDEvidencePersistence({
         evidenceRoot: ctx.evidenceRoot,
-        testHooks: {
-            beforePersistReceipt() {
-                fs.renameSync(ctx.authorityRoot, movedAuthorityRoot);
-                fs.mkdirSync(ctx.authorityRoot, { mode: 0o700 });
-            },
-        },
+        testHooks: { fault: 'AUTHORITY_ROOT_SWAP_BEFORE_RECEIPT', authorityRoot: ctx.authorityRoot },
     });
     await assert.rejects(
         executeLive(ctx, { components, runId: 'authority-reopen-failure-run', requestId: 'authority-reopen-failure-request' }),
