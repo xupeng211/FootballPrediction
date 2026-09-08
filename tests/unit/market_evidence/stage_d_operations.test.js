@@ -36,6 +36,8 @@ const {
     executeStageDOneCycle,
     createStageDTestRuntimeAuthorization,
     createStageDTestQuotaConfiguration,
+    validateQuotaConfiguration,
+    reconcileProviderQuotaHeaders,
     createStageDEvidencePersistence,
     createStageDFakeTransport,
     createStageDOddsApiTransport,
@@ -86,8 +88,11 @@ function setup(t) {
 }
 
 function quotaConfig(overrides = {}) {
-    return createStageDTestQuotaConfiguration({
-        schema_version: 'footballprediction-stage-d-quota-budget/v1',
+    const config = {
+        schema_version: 'footballprediction-stage-d-quota-budget/v2',
+        provider: 'the-odds-api',
+        subscription_tier: 'starter_free',
+        quota_evidence_class: 'OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE',
         quota_evidence_verified: true,
         quota_evidence_source: 'test-only verified owner record',
         billing_period_id: '2026-09',
@@ -95,11 +100,61 @@ function quotaConfig(overrides = {}) {
         period_end_at: '2026-10-01T00:00:00Z',
         monthly_quota_limit: 20,
         reserved_safety_buffer: 2,
+        automated_spend_limit: 17,
         max_requests_per_stage_d_run: 1,
         max_requests_per_day: 4,
         stop_before_quota_exhaustion_threshold: 1,
+        configured_markets: ['h2h'],
+        configured_regions: ['uk'],
+        market_count: 1,
+        region_count: 1,
+        expected_request_cost_credits: 1,
+        max_provider_requests_per_cycle: 1,
+        quota_reset_rule: 'PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET',
+        automatic_zero_on_calendar_change: false,
+        historical_pre_epoch_request_total: 'AT_LEAST_2_CONFIRMED',
+        historical_pre_epoch_exact_total: 'UNKNOWN',
+        post_epoch_usage_source: 'read_from_durable_request_ledger',
         ...overrides,
-    });
+    };
+    if (!Object.prototype.hasOwnProperty.call(overrides, 'automated_spend_limit')) {
+        config.automated_spend_limit = config.monthly_quota_limit - config.reserved_safety_buffer - config.stop_before_quota_exhaustion_threshold;
+    }
+    return createStageDTestQuotaConfiguration(config);
+}
+
+function reconciledQuota(overrides = {}) {
+    return {
+        raw_headers: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' },
+        reported_used: 1,
+        reported_remaining: 19,
+        reported_last_cost: 1,
+        expected_request_cost_credits: 1,
+        reconciliation_status: 'RECONCILED',
+        ...overrides,
+    };
+}
+
+function syntheticConsumedLedger(ctx, count) {
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    return {
+        ...ledger,
+        requests: Array.from({ length: count }, (_, index) => ({
+            request_id: `request-${String(index).padStart(3, '0')}`,
+            run_id: `run-${String(index).padStart(3, '0')}`,
+            provider: 'the-odds-api',
+            market_scope: 'EPL_1X2_H2H',
+            created_at: '2026-09-08T06:00:00Z',
+            transmission_state: 'TRANSMISSION_STARTED_OR_MAY_HAVE_STARTED',
+            transmitted_at: '2026-09-08T06:00:01Z',
+            response_received_at: '2026-09-08T06:00:02Z',
+            terminal_state: 'HTTP_FAILURE_AFTER_TRANSMISSION',
+            quota_units_charged_or_assumed: 1,
+            receipt_evidence_reference: null,
+            error_classification: 'HTTP_503',
+            provider_quota: null,
+        })),
+    };
 }
 
 function clockSequence(...timestamps) {
@@ -152,7 +207,7 @@ function liveComponents(ctx, { response, error = null, publisherStatus = 'FAKE_N
         raw_text: ctx.rawText,
         http_status: 200,
         response_received_at: '2026-09-08T08:00:03Z',
-        provider_quota: null,
+        provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' },
     };
     const transport = createStageDFakeTransport({ response: error ? null : JSON.stringify(fixtureResponse), error });
     return {
@@ -246,6 +301,7 @@ test('success, HTTP error and timeout after possible transmission are all durabl
             at: '2026-09-08T02:00:01Z',
             receiptEvidenceReference: terminalState === 'RESPONSE_RECEIVED' ? `receipts/${requestId}.json` : null,
             errorClassification,
+            providerQuota: terminalState === 'RESPONSE_RECEIVED' ? reconciledQuota() : null,
         });
     }
     const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
@@ -265,12 +321,123 @@ test('crash immediately after the transmission boundary remains ambiguous-consum
     );
 });
 
+test('zero consumed and exact below-ceiling spend are admitted, while 450 plus one is blocked', t => {
+    const empty = setup(t);
+    const config = quotaConfig({ monthly_quota_limit: 500, reserved_safety_buffer: 50, stop_before_quota_exhaustion_threshold: 0 });
+    assert.equal(assertRequestBudget({ ledger: readRequestLedger({ ledgerRoot: empty.ledgerRoot }), quotaConfig: config, runId: 'empty-run', now: '2026-09-08T06:00:00Z' }).monthly_used, 0);
+
+    const below = setup(t);
+    const belowConfig = quotaConfig({ monthly_quota_limit: 500, reserved_safety_buffer: 50, stop_before_quota_exhaustion_threshold: 0, max_requests_per_day: null });
+    const belowLedger = syntheticConsumedLedger(below, 449);
+    assert.equal(assertRequestBudget({ ledger: belowLedger, quotaConfig: belowConfig, runId: 'below-run', now: '2026-09-08T06:00:00Z' }).monthly_used, 449);
+
+    const ceiling = setup(t);
+    const ceilingLedger = syntheticConsumedLedger(ceiling, 450);
+    assert.throws(
+        () => assertRequestBudget({ ledger: ceilingLedger, quotaConfig: belowConfig, runId: 'ceiling-run', now: '2026-09-08T06:00:00Z' }),
+        error => error.code === 'REQUEST_BUDGET_DENIED'
+    );
+});
+
+test('malformed or missing plan configuration fails closed before a budget decision', t => {
+    const ctx = setup(t);
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    assert.throws(
+        () => assertRequestBudget({ ledger, quotaConfig: quotaConfig({ monthly_quota_limit: '500' }), runId: 'malformed-plan', now: '2026-09-08T06:00:00Z' }),
+        error => error.code === 'INVALID_CONTRACT'
+    );
+    assert.throws(
+        () => assertRequestBudget({ ledger, quotaConfig: null, runId: 'missing-plan', now: '2026-09-08T06:00:00Z' }),
+        error => error.code === 'UNVERIFIED_QUOTA_CONFIGURATION'
+    );
+});
+
+test('durable owner quota configuration binds to the Stage D cost model and safety policy', () => {
+    const value = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../config/stage_d_quota_budget.json'), 'utf8'));
+    const validated = validateQuotaConfiguration(value, { now: '2026-09-09T00:00:00Z' });
+    assert.equal(validated.monthly_quota_limit, 500);
+    assert.equal(validated.automated_spend_limit, 450);
+    assert.equal(validated.expected_request_cost_credits, 1);
+    assert.equal(validated.max_provider_requests_per_cycle, 1);
+});
+
+test('provider quota headers are reconciled, raw evidence is preserved, and divergence fails closed', t => {
+    const ctx = setup(t);
+    const config = quotaConfig({ monthly_quota_limit: 500, reserved_safety_buffer: 50, stop_before_quota_exhaustion_threshold: 0 });
+    const reconciled = reconcileProviderQuotaHeaders({
+        headers: { 'x-requests-used': '1', 'x-requests-remaining': '499', 'x-requests-last': '1' },
+        quotaConfig: config,
+        expectedRequestCostCredits: 1,
+        localConsumedAfterRequest: 1,
+    });
+    assert.deepEqual(reconciled.raw_headers, { 'x-requests-used': '1', 'x-requests-remaining': '499', 'x-requests-last': '1' });
+    assert.equal(reconciled.reported_used, 1);
+    assert.equal(reconciled.reported_remaining, 499);
+
+    assert.throws(
+        () => reconcileProviderQuotaHeaders({
+            headers: { 'x-requests-used': '5', 'x-requests-remaining': '495', 'x-requests-last': '1' },
+            quotaConfig: config,
+            expectedRequestCostCredits: 1,
+            localConsumedAfterRequest: 450,
+        }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+    );
+    assert.throws(
+        () => reconcileProviderQuotaHeaders({
+            headers: { 'x-requests-used': '1', 'x-requests-remaining': '499', 'x-requests-last': '2' },
+            quotaConfig: config,
+            expectedRequestCostCredits: 1,
+            localConsumedAfterRequest: 1,
+        }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+    );
+    assert.throws(
+        () => reconcileProviderQuotaHeaders({
+            headers: { 'x-requests-used': 'not-a-number', 'x-requests-remaining': '499', 'x-requests-last': '1' },
+            quotaConfig: config,
+            expectedRequestCostCredits: 1,
+            localConsumedAfterRequest: 1,
+        }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+    );
+    assert.throws(
+        () => reconcileProviderQuotaHeaders({
+            headers: { 'x-requests-used': '3', 'x-requests-remaining': '497', 'x-requests-last': '1' },
+            quotaConfig: config,
+            expectedRequestCostCredits: 1,
+            localConsumedAfterRequest: 1,
+            previousProviderQuota: reconciled,
+        }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+    );
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+});
+
+test('calendar change never resets the local ledger without trusted reconciliation', t => {
+    const ctx = setup(t);
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    assert.throws(
+        () => assertRequestBudget({
+            ledger,
+            quotaConfig: quotaConfig({ billing_period_id: '2026-10', period_start_at: '2026-10-01T00:00:00Z', period_end_at: '2026-11-01T00:00:00Z' }),
+            runId: 'untrusted-reset',
+            now: '2026-09-30T23:59:59Z',
+        }),
+        error => error.code === 'INVALID_QUOTA_CONFIGURATION'
+    );
+    assert.throws(
+        () => quotaConfig({ automatic_zero_on_calendar_change: true }),
+        error => error.code === 'INVALID_QUOTA_CONFIGURATION'
+    );
+});
+
 test('duplicate request IDs and post-terminal transitions fail closed', t => {
     const ctx = setup(t);
     intent(ctx);
     assert.throws(() => intent(ctx), error => error.code === 'DUPLICATE_REQUEST_ID');
     markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-a', transmittedAt: '2026-09-08T04:00:00Z' });
-    markRequestTerminal({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-a', terminalState: 'RESPONSE_RECEIVED', at: '2026-09-08T04:00:01Z' });
+    markRequestTerminal({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-a', terminalState: 'RESPONSE_RECEIVED', at: '2026-09-08T04:00:01Z', providerQuota: reconciledQuota() });
     assert.throws(
         () => markRequestTerminal({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-a', terminalState: 'RESPONSE_RECEIVED', at: '2026-09-08T04:00:02Z' }),
         error => error.code === 'INVALID_LEDGER_TRANSITION'
@@ -281,6 +448,7 @@ test('same run ID cannot exceed its independently enforced request cap', t => {
     const ctx = setup(t);
     intent(ctx, 'request-first', 'run-one');
     markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-first', transmittedAt: '2026-09-08T05:00:00Z' });
+    markRequestTerminal({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-first', terminalState: 'HTTP_FAILURE_AFTER_TRANSMISSION', at: '2026-09-08T05:00:01Z', errorClassification: 'HTTP_503' });
     const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
     assert.throws(
         () => assertRequestBudget({ ledger, quotaConfig: quotaConfig(), runId: 'run-one', now: '2026-09-08T05:00:01Z' }),
@@ -412,7 +580,7 @@ test('live adapter with a local fake transport persists intent, consumes exactly
             raw_text: ctx.rawText,
             http_status: 200,
             response_received_at: '2026-09-08T08:00:03Z',
-            provider_quota: null,
+            provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' },
         },
         publisherStatus: 'unexpected-publish',
     });
@@ -432,6 +600,11 @@ test('live adapter with a local fake transport persists intent, consumes exactly
         ambiguous_consumed_request_ids: [],
     });
     assert.equal(ledger.requests[0].terminal_state, 'RESPONSE_RECEIVED');
+    assert.deepEqual(ledger.requests[0].provider_quota.raw_headers, {
+        'x-requests-used': '1',
+        'x-requests-remaining': '19',
+        'x-requests-last': '1',
+    });
     assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
 });
 
@@ -448,6 +621,7 @@ test('unknown or exhausted quota and an existing run lock prevent any fake trans
     const exhausted = liveAuthoritySetup(t);
     intent({ ledgerRoot: exhausted.ledgerRoot }, 'prior-request', 'prior-run');
     markTransmissionStarted({ ledgerRoot: exhausted.ledgerRoot, requestId: 'prior-request', transmittedAt: '2026-09-08T07:00:00Z' });
+    markRequestTerminal({ ledgerRoot: exhausted.ledgerRoot, requestId: 'prior-request', terminalState: 'HTTP_FAILURE_AFTER_TRANSMISSION', at: '2026-09-08T07:00:01Z', errorClassification: 'HTTP_503' });
     const exhaustedComponents = liveComponents(exhausted);
     await assert.rejects(
         executeLive(exhausted, {
@@ -500,7 +674,7 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
     const originalEvidenceRoot = rawFailure.evidenceRoot;
     const movedEvidenceRoot = `${originalEvidenceRoot}.moved`;
     const rawComponents = liveComponents(rawFailure, {
-        response: { raw_text: rawFailure.rawText, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
+        response: { raw_text: rawFailure.rawText, http_status: 200, response_received_at: '2026-09-08T08:00:03Z', provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' } },
     });
     rawComponents.evidencePersistence = createStageDEvidencePersistence({
         evidenceRoot: originalEvidenceRoot,
@@ -534,7 +708,7 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
     });
     receiptPersistence.persistReceipt({ receipt: conflictingReceipt });
     const receiptComponents = liveComponents(receiptFailure, {
-        response: { raw_text: receiptFailure.rawText, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
+        response: { raw_text: receiptFailure.rawText, http_status: 200, response_received_at: '2026-09-08T08:00:03Z', provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' } },
     });
     await assert.rejects(
         executeLive(receiptFailure, { components: { ...receiptComponents, evidencePersistence: receiptPersistence }, runId: 'receipt-failure-run', requestId: 'receipt-failure-request' }),
@@ -549,7 +723,7 @@ test('candidate/parser failure releases the lock after consumed response, while 
     const parserFailure = liveAuthoritySetup(t);
     const parserRaw = parserFailure.rawText.replace('epl-fixture-001', 'epl-fixture-002');
     const parserComponents = liveComponents(parserFailure, {
-        response: { raw_text: parserRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
+        response: { raw_text: parserRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z', provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' } },
         candidateFailure: { errorCode: 'PARSER_FAILURE', errorMessage: 'parser failure' },
     });
     await assert.rejects(
@@ -565,7 +739,7 @@ test('candidate/parser failure releases the lock after consumed response, while 
     const changedRaw = publicationFailure.rawText.replace('epl-fixture-001', 'epl-fixture-002');
     const prospectiveBuilder = createStageDProspectiveCandidateBuilder({ universe: publicationFailure.fixture.universe });
     const publicationComponents = liveComponents(publicationFailure, {
-        response: { raw_text: changedRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
+        response: { raw_text: changedRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z', provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' } },
         candidateBuilder: prospectiveBuilder,
         publisherFailure: { code: 'PUBLISH_FAILED', message: 'publisher failure' },
     });

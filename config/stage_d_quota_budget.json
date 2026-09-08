@@ -1,0 +1,32 @@
+{
+  "schema_version": "footballprediction-stage-d-quota-budget/v2",
+  "provider": "the-odds-api",
+  "subscription_tier": "starter_free",
+  "quota_evidence_class": "OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE",
+  "quota_evidence_verified": true,
+  "quota_evidence_source": "Owner declaration 2026-09-09 plus current public Starter Free plan evidence; no API quota probe performed",
+  "billing_period_id": "2026-09",
+  "period_start_at": "2026-09-08T05:56:56Z",
+  "period_end_at": "2026-10-01T00:00:00Z",
+  "monthly_quota_limit": 500,
+  "reserved_safety_buffer": 50,
+  "automated_spend_limit": 450,
+  "max_requests_per_stage_d_run": 1,
+  "max_requests_per_day": null,
+  "stop_before_quota_exhaustion_threshold": 0,
+  "configured_markets": [
+    "h2h"
+  ],
+  "configured_regions": [
+    "uk"
+  ],
+  "market_count": 1,
+  "region_count": 1,
+  "expected_request_cost_credits": 1,
+  "max_provider_requests_per_cycle": 1,
+  "quota_reset_rule": "PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET",
+  "automatic_zero_on_calendar_change": false,
+  "historical_pre_epoch_request_total": "AT_LEAST_2_CONFIRMED",
+  "historical_pre_epoch_exact_total": "UNKNOWN",
+  "post_epoch_usage_source": "read_from_durable_request_ledger"
+}
