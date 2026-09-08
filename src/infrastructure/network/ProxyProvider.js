@@ -180,6 +180,10 @@ class ProxyProvider extends EventEmitter {
     this.stickyLeases = new Map();
     this.sequence = 0;
     this.healthTimer = null;
+    // Stage D may only bind a provider whose health scheduler is explicitly
+    // disabled at construction time.  This marker lets the adapter reject a
+    // pre-existing singleton that was created with the normal probe policy.
+    this.stage_d_health_probe_disabled = this.config.healthCheckIntervalMs === 0;
     this.started = false;
     this.initialized = false;
     this.initializationPromise = null;
@@ -217,9 +221,11 @@ class ProxyProvider extends EventEmitter {
       ports,
       defaultPort: Number(options.defaultPort) || resolvedPoolConfig.defaultPort || ports[0] || 0,
       targetLatencyMs: Number(options.targetLatencyMs) || DEFAULT_TARGET_LATENCY_MS,
-      healthCheckIntervalMs: Number(options.healthCheckIntervalMs)
-        || resolvedPoolConfig.healthCheckIntervalMs
-        || 30000,
+      healthCheckIntervalMs: options.disableHealthChecks === true
+        ? 0
+        : (Number(options.healthCheckIntervalMs)
+          || resolvedPoolConfig.healthCheckIntervalMs
+          || 30000),
       tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
       httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
       heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),

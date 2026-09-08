@@ -254,11 +254,29 @@ function writeReceipt({ rootDir, receipt }) {
     fs.chmodSync(target, 0o444);
     return target;
 }
-function loadVerifiedCaptureReceipt({ receiptPath }) {
+function loadVerifiedCaptureReceipt({ receiptPath, receiptBytes = undefined, expectedIdentity = null }) {
     if (typeof receiptPath !== 'string' || !receiptPath.trim()) throw new Error('capture receipt path is required');
-    const stat = fs.lstatSync(receiptPath);
-    if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('capture receipt must be an immutable regular file');
-    const bytes = fs.readFileSync(receiptPath, 'utf8');
+    let bytes;
+    if (receiptBytes !== undefined) {
+        if (typeof receiptBytes !== 'string') throw new Error('capture receipt bytes must be text');
+        const fd = fs.openSync(receiptPath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+        try {
+            const opened = fs.fstatSync(fd);
+            if (!opened.isFile() || (opened.mode & 0o222) !== 0 || (expectedIdentity && (opened.dev !== expectedIdentity.dev || opened.ino !== expectedIdentity.ino))) {
+                throw new Error('capture receipt identity changed');
+            }
+            bytes = fs.readFileSync(fd, 'utf8');
+            const after = fs.fstatSync(fd);
+            if (after.dev !== opened.dev || after.ino !== opened.ino) throw new Error('capture receipt identity changed while reading');
+        } finally {
+            fs.closeSync(fd);
+        }
+        if (bytes !== receiptBytes) throw new Error('capture receipt changed while being verified');
+    } else {
+        const stat = fs.lstatSync(receiptPath);
+        if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & 0o222) !== 0) throw new Error('capture receipt must be an immutable regular file');
+        bytes = fs.readFileSync(receiptPath, 'utf8');
+    }
     let parsed;
     try { parsed = JSON.parse(bytes); } catch (error) { throw new Error(`capture receipt is invalid JSON: ${error.message}`, { cause: error }); }
     const receipt = createCaptureReceipt(parsed);

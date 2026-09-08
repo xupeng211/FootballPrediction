@@ -13,6 +13,7 @@ const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infras
 const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastructure/market_evidence/authorityReader');
 const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
+const { createStageDTransactionPublisher } = require('../../../src/infrastructure/market_evidence/stageDOperations');
 const { createVerifiedTestReceipt } = require('../../helpers/market_evidence_authority');
 
 function fixtures() {
@@ -111,4 +112,19 @@ test('real cross-process competing writers produce one head and one stale-parent
     const results = await Promise.all([runConcurrentPublisher(ctx, first, barrier, 'a'), runConcurrentPublisher(ctx, second, barrier, 'b')]); const payloads = results.map(row => JSON.parse(row.stdout));
     assert.equal(payloads.filter(row => row.ok).length, 1); assert.equal(payloads.filter(row => !row.ok && /authoritative head/.test(row.message)).length, 1);
     const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath }); assert.equal(snapshot.head_sequence, 1); assert.equal(fs.readdirSync(path.join(ctx.storeRoot, 'committed')).length, 1);
+});
+
+test('descriptor-bound Stage D publisher rejects staging and committed generation swaps', t => {
+    const ctx = setup(t); const c = candidate(ctx, 'swap');
+    const publisher = createStageDTransactionPublisher({ storeRoot: ctx.storeRoot, allocationArtifactPath: ctx.allocationPath });
+    for (const name of ['.staging', 'committed']) {
+        const original = path.join(ctx.storeRoot, name); const moved = `${original}.moved`;
+        fs.renameSync(original, moved); fs.mkdirSync(original, { mode: 0o700 });
+        try { assert.throws(() => publisher.publish(c), error => error.code === 'DIRECTORY_IDENTITY_CHANGED'); }
+        finally { fs.rmSync(original, { recursive: true, force: true }); fs.renameSync(moved, original); }
+    }
+    const original = path.join(ctx.storeRoot, '.staging'); const moved = `${original}.moved`; const target = path.join(ctx.root, 'staging-target');
+    fs.renameSync(original, moved); fs.mkdirSync(target, { mode: 0o700 }); fs.symlinkSync(target, original);
+    try { assert.throws(() => publisher.publish(c), error => ['UNSAFE_PATH', 'DIRECTORY_IDENTITY_CHANGED'].includes(error.code)); }
+    finally { fs.unlinkSync(original); fs.rmSync(target, { recursive: true, force: true }); fs.renameSync(moved, original); }
 });

@@ -15,7 +15,27 @@ const { ARTIFACT_FILES, TRANSACTION_FILES, REGISTRY_DELTA_SCHEMA_VERSION, SUPPOR
 
 const TX_DIRECTORY = /^tx_[a-f0-9]{64}$/;
 const authenticSnapshots = new WeakSet();
-function statDirectory(target, label) { const stat = fs.lstatSync(target); if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${label} must be a non-symlink directory`); return stat; }
+const DIRECTORY_FD_ROOT = '/proc/self/fd';
+function isPinnedDirectoryFdPath(target) { return typeof target === 'string' && /^\/proc\/self\/fd\/\d+$/.test(target); }
+function openDirectoryDescriptor(target, label, expected = null) {
+    const pinned = isPinnedDirectoryFdPath(target);
+    const before = pinned ? fs.statSync(target) : fs.lstatSync(target);
+    if ((!pinned && before.isSymbolicLink()) || !before.isDirectory()) throw new Error(`${label} must be a non-symlink directory`);
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0) | (pinned ? 0 : (fs.constants.O_NOFOLLOW || 0));
+    const fd = fs.openSync(target, flags);
+    try {
+        const opened = fs.fstatSync(fd);
+        if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) throw new Error(`${label} changed during open`);
+        if (expected && (opened.dev !== expected.dev || opened.ino !== expected.ino)) throw new Error(`${label} identity is not the expected authority generation`);
+        return Object.freeze({ fd, identity: Object.freeze({ dev: opened.dev, ino: opened.ino, mode: opened.mode, uid: opened.uid, gid: opened.gid }) });
+    } catch (error) { fs.closeSync(fd); throw error; }
+}
+function closeDirectoryDescriptor(descriptor) { if (descriptor && Number.isInteger(descriptor.fd)) fs.closeSync(descriptor.fd); }
+function directoryFdPath(fd) { return `${DIRECTORY_FD_ROOT}/${fd}`; }
+function scopedPath(directoryFd, name) {
+    if (!Number.isInteger(directoryFd) || directoryFd < 0 || typeof name !== 'string' || name.includes('/') || name === '' || name === '.' || name === '..') throw new Error('directory-scoped path is invalid');
+    return `${DIRECTORY_FD_ROOT}/${directoryFd}/${name}`;
+}
 function readRegularFile(target, label) {
     const before = fs.lstatSync(target); if (before.isSymbolicLink() || !before.isFile()) throw new Error(`${label} must be a regular file`);
     const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0); let fd;
@@ -101,16 +121,31 @@ function assertObservationGovernance(row, manifest, projected, registry, receipt
     if (!market || market.canonical_id !== row.canonical_market_id || market.period !== row.period || market.market_type !== row.market_type || market.line !== row.line) throw new Error(`observation market registry governance is invalid: ${row.observation_id}`);
 }
 function entrySet(committedPath) {
-    statDirectory(committedPath, 'committed directory');
-    const entries = fs.readdirSync(committedPath).sort();
+    const descriptor = openDirectoryDescriptor(committedPath, 'committed directory');
+    let entries;
+    try { entries = fs.readdirSync(directoryFdPath(descriptor.fd)).sort(); }
+    finally { closeDirectoryDescriptor(descriptor); }
     for (const name of entries) if (!TX_DIRECTORY.test(name)) throw new Error(`unexpected committed entry: ${name}`);
     return entries;
 }
 function readPackage(committedPath, directoryName) {
-    const txPath = path.join(committedPath, directoryName); statDirectory(txPath, 'transaction directory');
-    const names = fs.readdirSync(txPath).sort();
-    if (canonicalJson(names) !== canonicalJson([...TRANSACTION_FILES].sort())) throw new Error(`transaction ${directoryName} has an unexpected file set`);
-    const bytes = {}; for (const name of TRANSACTION_FILES) bytes[name] = readRegularFile(path.join(txPath, name), `transaction artifact ${name}`);
+    if (!TX_DIRECTORY.test(directoryName)) throw new Error(`transaction directory name is invalid: ${directoryName}`);
+    const committedDescriptor = openDirectoryDescriptor(committedPath, 'committed directory');
+    let transactionDescriptor;
+    try {
+        const txPath = scopedPath(committedDescriptor.fd, directoryName);
+        transactionDescriptor = openDirectoryDescriptor(txPath, 'transaction directory');
+        const names = fs.readdirSync(directoryFdPath(transactionDescriptor.fd)).sort();
+        if (canonicalJson(names) !== canonicalJson([...TRANSACTION_FILES].sort())) throw new Error(`transaction ${directoryName} has an unexpected file set`);
+        const bytes = {};
+        for (const name of TRANSACTION_FILES) bytes[name] = readRegularFile(scopedPath(transactionDescriptor.fd, name), `transaction artifact ${name}`);
+        return readPackageBytes(bytes, directoryName);
+    } finally {
+        closeDirectoryDescriptor(transactionDescriptor);
+        closeDirectoryDescriptor(committedDescriptor);
+    }
+}
+function readPackageBytes(bytes, directoryName) {
     const manifest = validateManifest(parseCanonicalJson(bytes['manifest.json'], 'manifest.json'));
     if (directoryName !== manifest.transaction_id) throw new Error('transaction directory name does not match manifest transaction_id');
     validateCommittedMarker(parseCanonicalJson(bytes.COMMITTED, 'COMMITTED'), manifest);
@@ -210,13 +245,21 @@ function buildSnapshot({ store, allocationAuthority, head, decisions, registry, 
     authenticSnapshots.add(snapshot);
     return snapshot;
 }
-function openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath, maxRetries = 2 }) {
+function openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath, maxRetries = 2, expectedRootIdentity = null, expectedCommittedIdentity = null }) {
     if (!Number.isInteger(maxRetries) || maxRetries < 0 || maxRetries > 10) throw new Error('maxRetries is invalid');
-    const contract = readStoreContract({ storeRoot, allocationArtifactPath }); const allocation = loadVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath }); const committedPath = path.join(contract.root, 'committed');
-    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-        const before = entrySet(committedPath); const packages = before.map(name => readPackage(committedPath, name)); const snapshot = reconstruct(packages, contract.store, allocation.allocationAuthority); const after = entrySet(committedPath);
-        if (canonicalJson(before) === canonicalJson(after)) return snapshot;
-    }
+    const rootDescriptor = openDirectoryDescriptor(storeRoot, 'transaction authority root', expectedRootIdentity);
+    try {
+        const pinnedRoot = directoryFdPath(rootDescriptor.fd);
+        const contract = readStoreContract({ storeRoot: pinnedRoot, allocationArtifactPath }); const allocation = loadVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath });
+        const committedDescriptor = openDirectoryDescriptor(path.join(pinnedRoot, 'committed'), 'committed directory', expectedCommittedIdentity);
+        try {
+            const committedPath = directoryFdPath(committedDescriptor.fd);
+            for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+                const before = entrySet(committedPath); const packages = before.map(name => readPackage(committedPath, name)); const snapshot = reconstruct(packages, contract.store, allocation.allocationAuthority); const after = entrySet(committedPath);
+                if (canonicalJson(before) === canonicalJson(after)) return snapshot;
+            }
+        } finally { closeDirectoryDescriptor(committedDescriptor); }
+    } finally { closeDirectoryDescriptor(rootDescriptor); }
     throw new Error('committed transaction entries changed during authority read');
 }
 

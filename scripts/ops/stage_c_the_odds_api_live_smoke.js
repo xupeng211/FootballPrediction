@@ -1,22 +1,14 @@
 'use strict';
 
-require('dotenv').config();
-
 // The Odds API live entrypoint shares the exact transaction-v1 publication
 // path with offline replay.  Network capture is opt-in; normal execution
 // consumes the already captured evidence bundle and makes no provider call.
 const fs = require('node:fs');
 const path = require('node:path');
-const crypto = require('node:crypto');
-const { createTheOddsApiClient } = require('../../src/infrastructure/market_evidence/theOddsApiClient');
 const {
     loadOfflineEvidence,
     publishOfflineMarketEvidence,
 } = require('../../src/infrastructure/market_evidence/offlinePipeline');
-const {
-    preparePreflight,
-    executePreparedPreflight,
-} = require('../../src/infrastructure/market_evidence/preflightRunner');
 const { assertDownstreamInputReadiness } = require('../../src/infrastructure/market_evidence/downstreamReadiness');
 
 const evidenceRoot = path.resolve(process.env.STAGE_C_EVIDENCE_ROOT || 'data/market_evidence/live');
@@ -72,45 +64,9 @@ function downstreamReadinessCheck({ rootDir = evidenceRoot, paths = configuredIn
 }
 
 async function acquireOptInLiveEvidence() {
-    if (process.env.STAGE_C_ALLOW_NETWORK !== 'yes') {
-        throw new Error(
-            'live network acquisition is disabled; provide existing offline evidence or set STAGE_C_ALLOW_NETWORK=yes'
-        );
-    }
-    if (!process.env.THE_ODDS_API_KEY) {
-        throw new Error('THE_ODDS_API_KEY is required for explicitly authorized live capture');
-    }
-    const request = { regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' };
-    const prepared = preparePreflight({
-        rootDir: evidenceRoot,
-        requestMetadata: request,
-        credentialPresent: true,
-        downstreamAvailable: true,
-    });
-    const client = createTheOddsApiClient({ captureNon200: true });
-    const captureId = `live-${crypto.randomUUID()}`;
-    const persisted = await executePreparedPreflight({
-        prepared,
-        captureId,
-        preTransportCheck: downstreamReadinessCheck(),
-        transport: async () => {
-            const live = await client.capture(request);
-            return {
-                status: live.http_status,
-                headers: live.provider_quota,
-                body: live.rawText,
-                receivedAt: live.response_received_at,
-            };
-        },
-    });
-    return {
-        client,
-        live: persisted,
-        paths: liveCaptureInputPaths({
-            oddsRawPath: persisted.persisted.rawPath,
-            receiptPath: persisted.receiptPath,
-        }),
-    };
+    throw new Error(
+        'Stage C live acquisition is retired: every future The Odds API transmission must pass the Stage D run lock, request ledger and verified quota gate'
+    );
 }
 
 async function main() {
