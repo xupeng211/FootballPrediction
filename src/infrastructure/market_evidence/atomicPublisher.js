@@ -93,16 +93,14 @@ function acquireLock(root, rootDescriptor = null) {
             if (final.isSymbolicLink() || !final.isFile() || final.dev !== lockIdentity.dev || final.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock changed during release');
             fs.unlinkSync(lock);
             syncRoot();
-            // A competing publisher may legitimately create the next lock
-            // immediately after this unlink.  Only a same-inode reappearance
-            // is ambiguous; a different inode is the next owner and must not
-            // turn the completed publication into COMMIT_OUTCOME_UNKNOWN.
-            if (fs.existsSync(lock)) {
-                const replacement = fs.lstatSync(lock);
-                if (replacement.isSymbolicLink() || !replacement.isFile() || replacement.dev === lockIdentity.dev && replacement.ino === lockIdentity.ino) {
-                    fail('UNSAFE_LOCK', 'writer lock reappeared with the held inode');
-                }
-            }
+            // Do not inspect the pathname again after unlink.  A legitimate
+            // next owner may create a fresh lock between unlink and the
+            // directory fsync; treating that fresh inode as our release
+            // outcome would reintroduce a check-then-use race and could turn a
+            // completed publication into COMMIT_OUTCOME_UNKNOWN.  The
+            // pre-unlink identity checks plus successful unlink/fsync are the
+            // authoritative release boundary. Any unlink or fsync error
+            // remains ambiguous and is surfaced to the caller.
             released = true;
         } catch (error) {
             releaseError = error;

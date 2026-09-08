@@ -1268,18 +1268,21 @@ function releaseStageDRunLock(token) {
         }
         fs.unlinkSync(lockPath);
         fsyncDirectoryFd(token.directory_fd);
-        if (fs.existsSync(lockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock remained after release');
         fs.unlinkSync(parentLockPath);
         fsyncDirectoryFd(token.parent_directory_fd);
-        if (fs.existsSync(parentLockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock remained after release');
         fs.unlinkSync(ancestorLockPath);
         fsyncDirectoryFd(token.ancestor_directory_fd);
-        if (fs.existsSync(ancestorLockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D ancestor run lock remained after release');
         // The external fence is removed last.  If any earlier unlink fails,
         // it still prevents a replacement operation root from re-entering.
         fs.unlinkSync(trustLockPath);
         fsyncDirectoryFd(token.trust_directory_fd);
-        if (fs.existsSync(trustLockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D runtime trust lock remained after release');
+        // Do not inspect these paths after unlink. A next owner may create a
+        // fresh generation immediately after the fence is removed; that is
+        // not evidence that this release failed. The pinned directory
+        // identities, pre-unlink record identities/content, successful
+        // unlink and directory fsync define the release boundary. Any
+        // unlink/fsync error remains ambiguous and leaves reconciliation
+        // required.
         released = true;
         activeLockTokens.delete(token);
     } finally {
