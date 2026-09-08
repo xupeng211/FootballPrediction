@@ -103,8 +103,6 @@ PR 的 `Documentation Impact` 以 yes/no 字段表达这些判断。
 no-update reason 绕过。没有改变长期语义的 bugfix（包括 vision=no）可以填写具体 no-update
 reason；空泛理由会失败。
 
-当前 Stage D provider quota governance 属于 runtime authorization/data contract：其非 secret policy source 是 `config/stage_d_quota_budget.json`，current-state 说明位于 README、milestone、capability、status 与 Stage D contract 文档。任何改变该 contract 的 source/config 变更都必须按 STRICT 处理，并在同一 PR 回写 `AGENTS.md` 与本文件，保持 workflow authority 对 fail-closed、review、CI 与 current-state backflow 的解释同步；这不代表 provider balance 已被查询，也不授权 Stage D 或 scheduler。
-
 ## 5. Review freshness
 
 review 记录必须绑定完整 PR HEAD。有效性不依赖 reviewer 口头说 PASS，而依赖：

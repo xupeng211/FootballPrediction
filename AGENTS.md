@@ -153,13 +153,6 @@ feature worktree、PR 当前完整 HEAD、active ruleset 的 required checks 和
 
 未经逐项授权，不得执行 live fetch/detail fetch、浏览器采集、DB write、`raw_match_data` write、re-acceptance、rollback、schema migration apply、训练、预测、backtest 或模型激活。治理任务也不得用新增 report、manifest、phase snapshot、test-only 或 metadata-only 变更伪装 runtime 进展。
 
-### 7.1 Stage D provider quota contract（current）
-
-- `config/stage_d_quota_budget.json` 是当前非 secret 的 provider quota policy source；现行 Owner-declared 计划为 Starter Free、500 monthly credits，保留 50 credits，自动化 spend ceiling 为 450 credits。
-- 当前研究范围按 1 market × 1 region 计算，单个 Stage D cycle 最多允许 1 个 provider request；provider-reported used、remaining 和 last cost 在首次单独授权的正常 response 前必须保持 unknown。
-- 缺少或 malformed plan、ledger、quota header，ambiguous consumed request，或 local/provider accounting divergence，均必须在 transmission 前或下一 cycle fail closed；calendar month change 不得未经 provider reconciliation 自动清零本地 ledger。
-- 该 contract 只治理 provider quota；它不关闭 independent backup/restore blocker，也不授权或启动 Stage D，不启用 scheduler。
-
 ## 8. 真实入口和文档优先级
 
 1. 本文件：唯一 operational workflow authority。
