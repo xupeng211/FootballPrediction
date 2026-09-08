@@ -11,7 +11,7 @@ const { projectIdentityDecisionState } = require('../fixture_universe/IdentityDe
 const { createObservation, stableStringify, isUtcTimestamp, sha256Text } = require('./contracts');
 const { createCaptureReceipt } = require('./evidenceStore');
 const { readStoreContract } = require('./transactionStore');
-const { ARTIFACT_FILES, TRANSACTION_FILES, REGISTRY_DELTA_SCHEMA_VERSION, METADATA_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, descriptorForBytes, validateManifest, validateCommittedMarker, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
+const { ARTIFACT_FILES, TRANSACTION_FILES, REGISTRY_DELTA_SCHEMA_VERSION, SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS, METADATA_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, descriptorForBytes, validateManifest, validateCommittedMarker, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
 
 const TX_DIRECTORY = /^tx_[a-f0-9]{64}$/;
 const authenticSnapshots = new WeakSet();
@@ -40,16 +40,21 @@ function parseCanonicalJsonl(bytes, label) {
         return parsed;
     });
 }
-function registryKey(entry) {
+function registryKey(entry, schemaVersion) {
     assertPlainObject(entry, 'registry delta entry');
     for (const key of ['kind', 'provider', 'provider_id']) if (typeof entry[key] !== 'string' || !entry[key]) throw new Error(`registry delta entry requires ${key}`);
-    return `${entry.kind}\u0000${entry.provider}\u0000${entry.provider_id}`;
+    const base = `${entry.kind}\u0000${entry.provider}\u0000${entry.provider_id}`;
+    if (schemaVersion === REGISTRY_DELTA_SCHEMA_VERSION && entry.kind === 'bookmaker') {
+        if (!['BOOKMAKER', 'BACK', 'LAY'].includes(entry.price_side)) throw new Error('v2 bookmaker registry entry requires valid price_side');
+        return `${base}\u0000${entry.price_side}`;
+    }
+    return base;
 }
 function validateRegistryDelta(value) {
     assertPlainObject(value, 'registry_delta');
     const keys = ['schema_version', 'entries', 'base_registry_state_sha256', 'result_registry_state_sha256']; if (Object.keys(value).some(key => !keys.includes(key)) || !Object.prototype.hasOwnProperty.call(value, 'schema_version') || !Object.prototype.hasOwnProperty.call(value, 'entries')) throw new Error('registry_delta fields are invalid');
-    if (value.schema_version !== REGISTRY_DELTA_SCHEMA_VERSION || !Array.isArray(value.entries)) throw new Error('registry_delta contract is invalid');
-    const seen = new Set(); const entries = value.entries.map(entry => { const key = registryKey(entry); if (seen.has(key)) throw new Error(`duplicate registry delta entry: ${key}`); seen.add(key); return Object.freeze(JSON.parse(canonicalJson(entry))); });
+    if (!SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS.has(value.schema_version) || !Array.isArray(value.entries)) throw new Error('registry_delta contract is invalid');
+    const seen = new Set(); const entries = value.entries.map(entry => { const key = registryKey(entry, value.schema_version); if (seen.has(key)) throw new Error(`duplicate registry delta entry: ${key}`); seen.add(key); return Object.freeze(JSON.parse(canonicalJson(entry))); });
     for (const key of ['base_registry_state_sha256', 'result_registry_state_sha256']) if (value[key] !== undefined && !/^[a-f0-9]{64}$/.test(value[key])) throw new Error(`registry_delta ${key} is invalid`);
     return Object.freeze({ schema_version: value.schema_version, entries: Object.freeze(entries), ...(value.base_registry_state_sha256 === undefined ? {} : { base_registry_state_sha256: value.base_registry_state_sha256 }), ...(value.result_registry_state_sha256 === undefined ? {} : { result_registry_state_sha256: value.result_registry_state_sha256 }) });
 }
@@ -82,7 +87,7 @@ function validatePublisherKnowledgeTime(manifest, observations, receipt, decisio
     if (observations.some(row => row.projection_available_at !== knowledgeTime)) throw new Error('observation projection_available_at does not match publisher knowledge_time');
 }
 function captureKey(source) { return `${source.provider}\u0000${source.capture_id}`; }
-function assertObservationGovernance(row, manifest, projected, registry, receipt) {
+function assertObservationGovernance(row, manifest, projected, registry, receipt, registrySchemaVersion) {
     const active = projected.active.get(`${row.provider}\u0000${row.provider_event_id}`);
     if (!active || active.decision !== 'MATCHED' || active.identity_decision_id !== row.identity_decision_id || active.canonical_event_id !== row.canonical_event_id || active.ruleset_version !== row.identity_ruleset_version || active.resolver_version !== row.identity_resolver_version) throw new Error(`observation does not reference the exact active MATCHED decision: ${row.observation_id}`);
     if (row.provider !== manifest.source.provider || row.capture_id !== manifest.source.capture_id || row.raw_sha256 !== manifest.source.raw_sha256) throw new Error(`observation source does not bind transaction source: ${row.observation_id}`);
@@ -90,7 +95,7 @@ function assertObservationGovernance(row, manifest, projected, registry, receipt
     if (row.identity_ruleset_version !== manifest.versions.ruleset_version || row.identity_resolver_version !== manifest.versions.resolver_version || row.adapter_version !== manifest.versions.adapter_version || row.projection_version !== manifest.versions.projection_version || row.identity_registry_version !== manifest.versions.registry_version || row.schema_version !== manifest.versions.observation_schema_version) throw new Error(`observation versions do not bind transaction manifest: ${row.observation_id}`);
     const event = registry.get(`event\u0000${row.provider}\u0000${row.provider_event_id}`);
     if (!event || event.canonical_id !== row.canonical_event_id || event.identity_decision_id !== row.identity_decision_id || event.identity_decision_status !== 'MATCHED' || event.identity_ruleset_version !== row.identity_ruleset_version || event.identity_resolver_version !== row.identity_resolver_version || event.home_team !== row.home_team || event.away_team !== row.away_team || event.kickoff_utc !== row.kickoff_utc) throw new Error(`observation event registry governance is invalid: ${row.observation_id}`);
-    const bookmaker = registry.get(`bookmaker\u0000${row.provider}\u0000${row.provider_bookmaker_id}`);
+    const bookmaker = registry.get(registryKey({ kind: 'bookmaker', provider: row.provider, provider_id: row.provider_bookmaker_id, price_side: row.price_side }, registrySchemaVersion));
     if (!bookmaker || bookmaker.canonical_id !== row.canonical_bookmaker_id || bookmaker.price_side !== row.price_side) throw new Error(`observation bookmaker registry governance is invalid: ${row.observation_id}`);
     const market = registry.get(`market\u0000${row.provider}\u0000${row.provider_market_id}`);
     if (!market || market.canonical_id !== row.canonical_market_id || market.period !== row.period || market.market_type !== row.market_type || market.line !== row.line) throw new Error(`observation market registry governance is invalid: ${row.observation_id}`);
@@ -111,6 +116,9 @@ function readPackage(committedPath, directoryName) {
     validateCommittedMarker(parseCanonicalJson(bytes.COMMITTED, 'COMMITTED'), manifest);
     const metadata = validateMetadata(parseCanonicalJson(bytes['metadata.json'], 'metadata.json'), manifest);
     const registryDelta = validateRegistryDelta(parseCanonicalJson(bytes['registry_delta.json'], 'registry_delta.json'));
+    if (manifest.versions.registry_schema_version !== registryDelta.schema_version) {
+        throw new Error('transaction manifest registry schema version does not bind registry_delta');
+    }
     const decisions = parseCanonicalJsonl(bytes['identity_decisions.jsonl'], 'identity_decisions.jsonl');
     const observations = parseCanonicalJsonl(bytes['observations.jsonl'], 'observations.jsonl').map(createObservation);
     validatePublisherKnowledgeTime(manifest, observations, metadata.capture_receipt, decisions);
@@ -161,7 +169,7 @@ function reconstruct(packages, store, allocationAuthority) {
         const baseRegistryHash = hashCanonical([...registry.entries()].sort(([a], [b]) => a.localeCompare(b)));
         if (item.registryDelta.base_registry_state_sha256 !== undefined && item.registryDelta.base_registry_state_sha256 !== baseRegistryHash) throw new Error(`registry delta base state hash is invalid: ${m.transaction_id}`);
         for (const entry of item.registryDelta.entries) {
-            const key = registryKey(entry); const existing = registry.get(key);
+            const key = registryKey(entry, item.registryDelta.schema_version); const existing = registry.get(key);
             // Event aliases are an append-only governance projection: a later
             // MATCHED decision may replace only the active alias it explicitly
             // supersedes.  Other registry keys are immutable across the chain.
@@ -171,7 +179,7 @@ function reconstruct(packages, store, allocationAuthority) {
         }
         const resultRegistryHash = hashCanonical([...registry.entries()].sort(([a], [b]) => a.localeCompare(b)));
         if (item.registryDelta.result_registry_state_sha256 !== undefined && item.registryDelta.result_registry_state_sha256 !== resultRegistryHash) throw new Error(`registry delta result state hash is invalid: ${m.transaction_id}`);
-        for (const row of item.observations) { assertObservationGovernance(row, m, projected, registry, item.metadata.capture_receipt); const existing = observations.get(row.observation_id); if (existing) throw new Error(`duplicate observation across transactions: ${row.observation_id}`); observations.set(row.observation_id, row); }
+        for (const row of item.observations) { assertObservationGovernance(row, m, projected, registry, item.metadata.capture_receipt, item.registryDelta.schema_version); const existing = observations.get(row.observation_id); if (existing) throw new Error(`duplicate observation across transactions: ${row.observation_id}`); observations.set(row.observation_id, row); }
         stateHash = computeAuthorityStateHash({ allocation: store.allocation, decisions, latestDecisions: projected.latest, activeMatched: projected.active, registryState: registry, observationIndex: observations });
         if (stateHash !== m.post_state_hash) throw new Error(`post_state_hash is invalid: ${m.transaction_id}`);
         parent = item; priorKnowledgeTime = m.publication_metadata.knowledge_time;
