@@ -249,9 +249,19 @@ function resolveRunLockTrustRoot(operationRoot, supplied) {
     if (supplied !== undefined && (typeof supplied !== 'string' || !supplied.trim())) {
         fail('UNSAFE_TRUST_ROOT', 'runLockTrustRoot must be an explicit non-empty path');
     }
-    if (typeof supplied === 'string' && supplied.trim()) return path.resolve(supplied);
+    const resolvedOperationRoot = path.resolve(operationRoot);
+    const resolvedTrustRoot = typeof supplied === 'string' && supplied.trim()
+        ? path.resolve(supplied)
+        : defaultRunLockTrustRoot(resolvedOperationRoot);
+    const trustContainsOperation = path.relative(resolvedTrustRoot, resolvedOperationRoot);
+    const operationContainsTrust = path.relative(resolvedOperationRoot, resolvedTrustRoot);
+    const isNested = relative => relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+    if (isNested(trustContainsOperation) || isNested(operationContainsTrust)) {
+        fail('UNSAFE_TRUST_ROOT', 'runtime trust root must be a separate path domain from the Stage D operation root');
+    }
+    if (typeof supplied === 'string' && supplied.trim()) return resolvedTrustRoot;
     if (process.env.NODE_ENV !== 'test') fail('RUN_LOCK_TRUST_ROOT_REQUIRED', 'production Stage D runs require an explicit external runtime trust root');
-    return defaultRunLockTrustRoot(operationRoot);
+    return resolvedTrustRoot;
 }
 
 function assertControlledTrustParentChain(directory) {

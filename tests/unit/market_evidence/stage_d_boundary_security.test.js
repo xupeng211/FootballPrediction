@@ -55,15 +55,17 @@ test('run-lock parent-directory replacement cannot hide the ancestor reconciliat
 
 test('external runtime trust fence survives replacement of the operation parent', t => {
     const container = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-external-trust-'));
+    const trustContainer = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-trust-domain-'));
     const parent = path.join(container, 'parent');
     const root = path.join(parent, 'ledger');
-    const trustRoot = path.join(container, 'runtime-trust');
+    const trustRoot = path.join(trustContainer, 'runtime-trust');
     fs.mkdirSync(root, { recursive: true, mode: 0o700 });
     fs.mkdirSync(trustRoot, { recursive: true, mode: 0o700 });
     t.after(() => {
         removeRunLockArtifacts(root);
         removeRunLockArtifacts(path.join(`${parent}.moved`, 'ledger'));
         fs.rmSync(container, { recursive: true, force: true });
+        fs.rmSync(trustContainer, { recursive: true, force: true });
     });
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'external-trust-run', acquiredAt: '2026-09-08T00:00:00Z', runLockTrustRoot: trustRoot });
     const movedParent = `${parent}.moved`;
