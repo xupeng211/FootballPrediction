@@ -21,7 +21,7 @@ const EPOCH_SCHEMA_VERSION = 'footballprediction-stage-d-request-accounting-epoc
 const LEDGER_SCHEMA_VERSION = 'footballprediction-stage-d-request-ledger/v1';
 const RUN_LOCK_SCHEMA_VERSION = 'footballprediction-stage-d-run-lock/v1';
 const RUN_LOCK_GENERATION_SCHEMA_VERSION = 'footballprediction-stage-d-ledger-generation/v1';
-const QUOTA_SCHEMA_VERSION = 'footballprediction-stage-d-quota-budget/v1';
+const QUOTA_SCHEMA_VERSION = 'footballprediction-stage-d-quota-budget/v2';
 const EPOCH_FILE = 'REQUEST_ACCOUNTING_EPOCH.json';
 const ENTRY_DIRECTORY = 'entries';
 const RUN_LOCK_FILE = 'stage-d-run.lock.json';
@@ -31,6 +31,18 @@ const RUN_LOCK_TRUST_FILE_PREFIX = '.stage-d-runtime-fence-';
 const RUN_LOCK_GENERATION_FILE_PREFIX = '.stage-d-ledger-generation-';
 const PROVIDER = 'the-odds-api';
 const MARKET_SCOPE = 'EPL_1X2_H2H';
+const SUBSCRIPTION_TIER = 'starter_free';
+const QUOTA_EVIDENCE_CLASS = 'OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE';
+const QUOTA_RESET_RULE = 'PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET';
+const LOCAL_LEDGER_AUTOMATIC_ZERO_ON_CALENDAR_CHANGE = false;
+const CONFIGURED_MARKETS = Object.freeze(['h2h']);
+const CONFIGURED_REGIONS = Object.freeze(['uk']);
+const STAGE_D_MARKET_COUNT = CONFIGURED_MARKETS.length;
+const STAGE_D_REGION_COUNT = CONFIGURED_REGIONS.length;
+const EXPECTED_REQUEST_COST_CREDITS = STAGE_D_MARKET_COUNT * STAGE_D_REGION_COUNT;
+const MAX_PROVIDER_REQUESTS_PER_CYCLE = 1;
+const REQUIRED_QUOTA_HEADERS = Object.freeze(['x-requests-used', 'x-requests-remaining', 'x-requests-last']);
+const PROVIDER_QUOTA_HEADER_PATTERN = /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|last|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
 const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
 const HISTORICAL_PRE_EPOCH_EXACT_TOTAL = 'UNKNOWN';
 const EVENT_TYPES = new Set([
@@ -533,6 +545,52 @@ function initializeRequestAccountingEpoch({ ledgerRoot, authoritySnapshot, start
     }
 }
 
+function validateProviderQuotaRecord(value) {
+    assertExactKeys(
+        value,
+        [
+            'raw_headers',
+            'reported_used',
+            'reported_remaining',
+            'reported_last_cost',
+            'expected_request_cost_credits',
+            'reconciliation_status',
+        ],
+        'provider quota reconciliation record'
+    );
+    assertPlainObject(value.raw_headers, 'provider quota raw_headers');
+    for (const [key, rawValue] of Object.entries(value.raw_headers)) {
+        if (!PROVIDER_QUOTA_HEADER_PATTERN.test(key) || typeof rawValue !== 'string' || rawValue.includes('\n') || rawValue.includes('\r')) {
+            fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider quota raw header evidence is invalid');
+        }
+    }
+    for (const header of REQUIRED_QUOTA_HEADERS) {
+        if (!Object.prototype.hasOwnProperty.call(value.raw_headers, header)) {
+            fail('INVALID_PROVIDER_QUOTA_HEADERS', `provider quota header ${header} is missing`);
+        }
+        if (!/^\d+$/.test(value.raw_headers[header])) {
+            fail('INVALID_PROVIDER_QUOTA_HEADERS', `provider quota header ${header} must be a non-negative integer`);
+        }
+    }
+    for (const field of ['reported_used', 'reported_remaining', 'reported_last_cost', 'expected_request_cost_credits']) {
+        assertNonNegativeInteger(value[field], `provider quota ${field}`);
+    }
+    if (value.reported_used !== Number(value.raw_headers['x-requests-used'])) {
+        fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider reported used value does not bind to raw header evidence');
+    }
+    if (value.reported_remaining !== Number(value.raw_headers['x-requests-remaining'])) {
+        fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider reported remaining value does not bind to raw header evidence');
+    }
+    if (value.reported_last_cost !== Number(value.raw_headers['x-requests-last'])) {
+        fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider reported last cost does not bind to raw header evidence');
+    }
+    if (value.reconciliation_status !== 'RECONCILED') fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider quota reconciliation status is invalid');
+    return Object.freeze({
+        ...value,
+        raw_headers: Object.freeze({ ...value.raw_headers }),
+    });
+}
+
 function validateRequestRecord(record) {
     assertExactKeys(
         record,
@@ -549,6 +607,7 @@ function validateRequestRecord(record) {
             'quota_units_charged_or_assumed',
             'receipt_evidence_reference',
             'error_classification',
+            'provider_quota',
         ],
         'request ledger record'
     );
@@ -568,7 +627,8 @@ function validateRequestRecord(record) {
             fail('INVALID_REQUEST', `${field} is invalid`);
         }
     }
-    return Object.freeze({ ...record });
+    if (record.provider_quota !== null) validateProviderQuotaRecord(record.provider_quota);
+    return Object.freeze({ ...record, provider_quota: record.provider_quota === null ? null : validateProviderQuotaRecord(record.provider_quota) });
 }
 
 function intentRecord({ requestId, runId, createdAt }) {
@@ -585,6 +645,7 @@ function intentRecord({ requestId, runId, createdAt }) {
         quota_units_charged_or_assumed: 0,
         receipt_evidence_reference: null,
         error_classification: null,
+        provider_quota: null,
     });
 }
 
@@ -607,7 +668,8 @@ function validateTransition(previous, eventType, record) {
             record.transmission_state !== 'TRANSMISSION_STARTED_OR_MAY_HAVE_STARTED' ||
             record.transmitted_at === null ||
             record.terminal_state !== null ||
-            record.quota_units_charged_or_assumed < 1
+            record.quota_units_charged_or_assumed < 1 ||
+            record.provider_quota !== null
         ) fail('INVALID_LEDGER_TRANSITION', 'transmission start must durably consume quota before transport');
         if (Date.parse(record.transmitted_at) < Date.parse(previous.created_at)) {
             fail('INVALID_LEDGER_TRANSITION', 'transmission cannot precede request intent');
@@ -626,6 +688,9 @@ function validateTransition(previous, eventType, record) {
     ) fail('INVALID_LEDGER_TRANSITION', 'post-transmission outcome must remain consumed');
     if (eventType === 'RESPONSE_RECEIVED' && record.response_received_at === null) {
         fail('INVALID_LEDGER_TRANSITION', 'response terminal state requires response_received_at');
+    }
+    if (eventType === 'RESPONSE_RECEIVED' && record.provider_quota === null) {
+        fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'successful provider responses require quota header reconciliation');
     }
     if (record.response_received_at !== null && Date.parse(record.response_received_at) < Date.parse(previous.transmitted_at)) {
         fail('INVALID_LEDGER_TRANSITION', 'response cannot precede transmission');
@@ -866,7 +931,7 @@ function markTransmissionStarted({ ledgerRoot, expectedRootIdentity = null, requ
     });
 }
 
-function markRequestTerminal({ ledgerRoot, expectedRootIdentity = null, requestId, terminalState, at, receiptEvidenceReference = null, errorClassification = null, recordedAt = at }) {
+function markRequestTerminal({ ledgerRoot, expectedRootIdentity = null, requestId, terminalState, at, receiptEvidenceReference = null, errorClassification = null, providerQuota = null, recordedAt = at }) {
     if (!TERMINAL_STATES.has(terminalState)) fail('INVALID_REQUEST', 'terminalState is invalid');
     const ledger = readRequestLedger({ ledgerRoot, expectedRootIdentity });
     const previous = latestRequest(ledger, requestId);
@@ -876,6 +941,7 @@ function markRequestTerminal({ ledgerRoot, expectedRootIdentity = null, requestI
         ...(['RESPONSE_RECEIVED', 'HTTP_FAILURE_AFTER_TRANSMISSION'].includes(terminalState) ? { response_received_at: at } : {}),
         receipt_evidence_reference: receiptEvidenceReference,
         error_classification: errorClassification,
+        provider_quota: providerQuota,
     };
     return appendRequestEvent({ ledgerRoot, expectedRootIdentity, eventType: terminalState, request, recordedAt });
 }
@@ -1304,6 +1370,9 @@ function validateQuotaConfiguration(value, { now } = {}) {
         value,
         [
             'schema_version',
+            'provider',
+            'subscription_tier',
+            'quota_evidence_class',
             'quota_evidence_verified',
             'quota_evidence_source',
             'billing_period_id',
@@ -1311,35 +1380,82 @@ function validateQuotaConfiguration(value, { now } = {}) {
             'period_end_at',
             'monthly_quota_limit',
             'reserved_safety_buffer',
+            'automated_spend_limit',
             'max_requests_per_stage_d_run',
             'max_requests_per_day',
             'stop_before_quota_exhaustion_threshold',
+            'configured_markets',
+            'configured_regions',
+            'market_count',
+            'region_count',
+            'expected_request_cost_credits',
+            'max_provider_requests_per_cycle',
+            'quota_reset_rule',
+            'automatic_zero_on_calendar_change',
+            'historical_pre_epoch_request_total',
+            'historical_pre_epoch_exact_total',
+            'post_epoch_usage_source',
         ],
         'Stage D quota configuration'
     );
     if (value.schema_version !== QUOTA_SCHEMA_VERSION || value.quota_evidence_verified !== true) {
         fail('UNVERIFIED_QUOTA_CONFIGURATION', 'verified quota configuration is required before provider transmission');
     }
+    if (value.provider !== PROVIDER || value.subscription_tier !== SUBSCRIPTION_TIER) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'provider plan identity is invalid');
+    }
+    if (value.quota_evidence_class !== QUOTA_EVIDENCE_CLASS) fail('INVALID_QUOTA_CONFIGURATION', 'quota evidence class is invalid');
     if (typeof value.quota_evidence_source !== 'string' || !value.quota_evidence_source.trim()) fail('INVALID_QUOTA_CONFIGURATION', 'quota evidence source is required');
     if (!/^\d{4}-\d{2}$/.test(value.billing_period_id || '')) fail('INVALID_QUOTA_CONFIGURATION', 'billing period ID is invalid');
     assertUtc(value.period_start_at, 'period_start_at');
     assertUtc(value.period_end_at, 'period_end_at');
     if (Date.parse(value.period_start_at) >= Date.parse(value.period_end_at)) fail('INVALID_QUOTA_CONFIGURATION', 'quota period is invalid');
-    for (const field of ['monthly_quota_limit', 'reserved_safety_buffer', 'max_requests_per_stage_d_run', 'stop_before_quota_exhaustion_threshold']) {
+    for (const field of ['monthly_quota_limit', 'reserved_safety_buffer', 'automated_spend_limit', 'max_requests_per_stage_d_run', 'stop_before_quota_exhaustion_threshold', 'market_count', 'region_count', 'expected_request_cost_credits', 'max_provider_requests_per_cycle']) {
         assertNonNegativeInteger(value[field], field);
     }
-    if (value.monthly_quota_limit < 1 || value.max_requests_per_stage_d_run < 1) fail('INVALID_QUOTA_CONFIGURATION', 'quota limit and run cap must be positive');
+    if (value.monthly_quota_limit < 1 || value.max_requests_per_stage_d_run < 1 || value.automated_spend_limit < 1) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'quota limit, automated spend limit and run cap must be positive');
+    }
     if (value.max_requests_per_day !== null) {
         assertNonNegativeInteger(value.max_requests_per_day, 'max_requests_per_day');
         if (value.max_requests_per_day < 1) fail('INVALID_QUOTA_CONFIGURATION', 'daily request cap must be positive when configured');
     }
+    if (value.automated_spend_limit > value.monthly_quota_limit - value.reserved_safety_buffer - value.stop_before_quota_exhaustion_threshold) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'automated spend limit would consume the configured safety reserve');
+    }
     if (value.reserved_safety_buffer + value.stop_before_quota_exhaustion_threshold >= value.monthly_quota_limit) {
         fail('INVALID_QUOTA_CONFIGURATION', 'quota safety buffers exhaust the monthly quota');
     }
-    if (now && (Date.parse(now) < Date.parse(value.period_start_at) || Date.parse(now) >= Date.parse(value.period_end_at))) {
-        fail('INVALID_QUOTA_CONFIGURATION', 'current time is outside the configured quota period');
+    if (!Array.isArray(value.configured_markets) || value.configured_markets.length !== STAGE_D_MARKET_COUNT || value.configured_markets.some((market, index) => market !== CONFIGURED_MARKETS[index])) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'configured markets do not bind to the Stage D request');
     }
-    return Object.freeze({ ...value });
+    if (!Array.isArray(value.configured_regions) || value.configured_regions.length !== STAGE_D_REGION_COUNT || value.configured_regions.some((region, index) => region !== CONFIGURED_REGIONS[index])) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'configured regions do not bind to the Stage D request');
+    }
+    if (value.market_count !== STAGE_D_MARKET_COUNT || value.region_count !== STAGE_D_REGION_COUNT) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'configured market/region counts are invalid');
+    }
+    if (value.expected_request_cost_credits !== value.market_count * value.region_count) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'expected request cost does not equal market count times region count');
+    }
+    if (value.max_provider_requests_per_cycle !== MAX_PROVIDER_REQUESTS_PER_CYCLE || value.max_requests_per_stage_d_run !== MAX_PROVIDER_REQUESTS_PER_CYCLE) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'provider request cycle cap is invalid');
+    }
+    if (value.quota_reset_rule !== QUOTA_RESET_RULE || value.automatic_zero_on_calendar_change !== LOCAL_LEDGER_AUTOMATIC_ZERO_ON_CALENDAR_CHANGE) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'quota reset uncertainty policy is invalid');
+    }
+    if (value.historical_pre_epoch_request_total !== HISTORICAL_PRE_EPOCH_REQUEST_TOTAL || value.historical_pre_epoch_exact_total !== HISTORICAL_PRE_EPOCH_EXACT_TOTAL) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'historical pre-epoch uncertainty must be preserved');
+    }
+    if (value.post_epoch_usage_source !== 'read_from_durable_request_ledger') fail('INVALID_QUOTA_CONFIGURATION', 'post-epoch usage source is invalid');
+    if (now && (Date.parse(now) < Date.parse(value.period_start_at) || Date.parse(now) >= Date.parse(value.period_end_at))) {
+        fail('INVALID_QUOTA_CONFIGURATION', 'current time is outside the locally governed quota period');
+    }
+    return Object.freeze({
+        ...value,
+        configured_markets: Object.freeze([...value.configured_markets]),
+        configured_regions: Object.freeze([...value.configured_regions]),
+    });
 }
 
 function createStageDTestQuotaConfiguration(value, { now } = {}) {
@@ -1354,14 +1470,43 @@ function assertApprovedQuotaConfiguration(value, { now } = {}) {
     return validateQuotaConfiguration(value, { now });
 }
 
+// eslint-disable-next-line complexity -- local budget admission enumerates every ambiguous ledger state.
+function assertBudgetLedgerValid(ledger, config) {
+    if (!ledger || !ledger.epoch || !Array.isArray(ledger.requests)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'durable request ledger is unavailable');
+    validateEpoch(ledger.epoch);
+    const periodStart = Date.parse(config.period_start_at);
+    const periodEnd = Date.parse(config.period_end_at);
+    const epochStarted = Date.parse(ledger.epoch.started_at);
+    if (epochStarted < periodStart || epochStarted >= periodEnd) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request accounting epoch is outside the locally governed budget period');
+    const summary = ledgerUsageSummary(ledger);
+    if (summary.ambiguous_consumed_request_ids.length) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'ambiguous consumed request state requires reconciliation');
+    for (const request of ledger.requests) {
+        if (Date.parse(request.created_at) < epochStarted) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request predates the sealed accounting epoch');
+        if (request.transmitted_at !== null) {
+            const transmittedAt = Date.parse(request.transmitted_at);
+            if (transmittedAt < epochStarted || transmittedAt < periodStart || transmittedAt >= periodEnd) {
+                fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request transmission is outside the sealed local accounting period');
+            }
+        }
+        if (request.terminal_state === 'RESPONSE_RECEIVED' && request.provider_quota === null) {
+            fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a successful response has no reconciled provider quota evidence');
+        }
+        if (request.error_classification?.startsWith('PROVIDER_QUOTA_')) {
+            fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
+        }
+    }
+    return summary;
+}
+
 function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits = 1 }) {
     const config = validateQuotaConfiguration(quotaConfig, { now });
     assertToken(runId, 'run_id');
     assertUtc(now, 'budget now');
     assertNonNegativeInteger(requestedUnits, 'requestedUnits');
-    if (requestedUnits < 1 || requestedUnits > config.max_requests_per_stage_d_run) {
-        fail('REQUEST_BUDGET_DENIED', 'requested units exceed the per-run request cap');
+    if (requestedUnits !== config.expected_request_cost_credits || requestedUnits > config.max_requests_per_stage_d_run) {
+        fail('REQUEST_BUDGET_DENIED', 'expected provider request cost is not bounded by the cycle contract');
     }
+    assertBudgetLedgerValid(ledger, config);
     const timestamped = ledger.requests.filter(request => requestIsConsumed(request) && request.transmitted_at !== null);
     const monthly = timestamped.filter(request => Date.parse(request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.transmitted_at) < Date.parse(config.period_end_at));
     const day = now.slice(0, 10);
@@ -1370,9 +1515,8 @@ function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits =
     const monthlyUsed = monthly.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
     const dailyUsed = daily.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
     const runUsed = thisRun.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
-    const protectedRemaining = config.reserved_safety_buffer + config.stop_before_quota_exhaustion_threshold;
-    if (monthlyUsed + requestedUnits > config.monthly_quota_limit - protectedRemaining) {
-        fail('REQUEST_BUDGET_DENIED', 'monthly budget would cross the configured safety threshold');
+    if (monthlyUsed + requestedUnits > config.automated_spend_limit) {
+        fail('REQUEST_BUDGET_DENIED', 'monthly budget would cross the configured automated spend limit');
     }
     if (runUsed + requestedUnits > config.max_requests_per_stage_d_run) fail('REQUEST_BUDGET_DENIED', 'run request budget is exhausted');
     if (config.max_requests_per_day !== null && dailyUsed + requestedUnits > config.max_requests_per_day) {
@@ -1383,8 +1527,59 @@ function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits =
         billing_period_id: config.billing_period_id,
         monthly_used: monthlyUsed,
         monthly_remaining_after_request: config.monthly_quota_limit - monthlyUsed - requestedUnits,
+        automated_spend_limit: config.automated_spend_limit,
+        expected_request_cost_credits: config.expected_request_cost_credits,
         daily_used: dailyUsed,
         run_used: runUsed,
+    });
+}
+
+function latestReconciledProviderQuota(ledger) {
+    return ledger.requests
+        .filter(request => request.provider_quota?.reconciliation_status === 'RECONCILED')
+        .sort((left, right) => Date.parse(left.response_received_at || left.transmitted_at) - Date.parse(right.response_received_at || right.transmitted_at))
+        .at(-1)?.provider_quota || null;
+}
+
+function reconcileProviderQuotaHeaders({ headers, quotaConfig, expectedRequestCostCredits, localConsumedAfterRequest, previousProviderQuota = null } = {}) {
+    const config = validateQuotaConfiguration(quotaConfig);
+    assertNonNegativeInteger(expectedRequestCostCredits, 'expectedRequestCostCredits');
+    assertNonNegativeInteger(localConsumedAfterRequest, 'localConsumedAfterRequest');
+    if (expectedRequestCostCredits !== config.expected_request_cost_credits) fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider request cost does not match the governed cost model');
+    const rawHeaders = sanitizeProviderHeaders(headers);
+    for (const header of REQUIRED_QUOTA_HEADERS) {
+        if (!Object.prototype.hasOwnProperty.call(rawHeaders, header) || !/^\d+$/.test(rawHeaders[header])) {
+            fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', `provider quota header ${header} is missing or malformed`);
+        }
+    }
+    const reportedUsed = Number(rawHeaders['x-requests-used']);
+    const reportedRemaining = Number(rawHeaders['x-requests-remaining']);
+    const reportedLastCost = Number(rawHeaders['x-requests-last']);
+    if (reportedUsed + reportedRemaining !== config.monthly_quota_limit) {
+        fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider used and remaining headers do not reconcile to the configured plan limit');
+    }
+    if (reportedLastCost !== expectedRequestCostCredits) {
+        fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider x-requests-last does not match the expected request cost');
+    }
+    if (reportedUsed < localConsumedAfterRequest) {
+        fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider used balance is lower than local consumed accounting');
+    }
+    const localSafeRemaining = config.automated_spend_limit - localConsumedAfterRequest;
+    if (reportedRemaining < localSafeRemaining) {
+        fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider remaining balance is below the local safe budget expectation');
+    }
+    if (previousProviderQuota) {
+        if (reportedUsed !== previousProviderQuota.reported_used + expectedRequestCostCredits || reportedRemaining !== previousProviderQuota.reported_remaining - expectedRequestCostCredits) {
+            fail('PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider quota headers diverge from the prior reconciled response');
+        }
+    }
+    return validateProviderQuotaRecord({
+        raw_headers: rawHeaders,
+        reported_used: reportedUsed,
+        reported_remaining: reportedRemaining,
+        reported_last_cost: reportedLastCost,
+        expected_request_cost_credits: expectedRequestCostCredits,
+        reconciliation_status: 'RECONCILED',
     });
 }
 
@@ -1556,7 +1751,7 @@ function createStageDFakeTransport({ response = null, error = null } = {}) {
 }
 
 function sanitizeProviderHeaders(headers = {}) {
-    const allowed = /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
+    const allowed = PROVIDER_QUOTA_HEADER_PATTERN;
     return Object.fromEntries(Object.entries(headers).filter(([key]) => allowed.test(key)).map(([key, value]) => [key.toLowerCase(), String(value)]));
 }
 
@@ -1578,7 +1773,7 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
             assertTransportCallToken(token);
             transport.preflight();
             const url = new URL('https://api.the-odds-api.com/v4/sports/soccer_epl/odds');
-            url.search = new URLSearchParams({ apiKey, regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' }).toString();
+            url.search = new URLSearchParams({ apiKey, regions: CONFIGURED_REGIONS.join(','), markets: CONFIGURED_MARKETS.join(','), oddsFormat: 'decimal' }).toString();
             const requestStartedAt = request.transmission_started_at;
             const provider = proxyProvider || getProxyProvider({ poolName: proxyPoolName, disableHealthChecks: true });
             const healthInterval = provider?.config?.healthCheckIntervalMs;
@@ -1864,7 +2059,7 @@ async function executeStageDOneCycle({
         if (ledger.requests.some(row => row.run_id === runId)) fail('DUPLICATE_RUN_ID', 'run_id has already been accounted and cannot be reused');
         const budgetNow = trustedClock();
         assertUtc(budgetNow, 'budget now');
-        assertRequestBudget({ ledger, quotaConfig, runId, now: budgetNow, requestedUnits: 1 });
+        const budgetDecision = assertRequestBudget({ ledger, quotaConfig, runId, now: budgetNow, requestedUnits: EXPECTED_REQUEST_COST_CREDITS });
         try {
             // The descriptor pins the authority read, while this path check
             // prevents a replaced public root from becoming the authority
@@ -1948,6 +2143,18 @@ async function executeStageDOneCycle({
             return Object.freeze({ status: 'HTTP_FAILURE_AFTER_TRANSMISSION', request_id: requestId, run_id: runId });
         }
         if (typeof response.raw_text !== 'string') terminalizePostBoundaryFailure(Object.assign(new Error('successful response raw_text is required'), { code: 'RAW_PERSISTENCE_FAILED' }));
+        let reconciledProviderQuota;
+        try {
+            reconciledProviderQuota = reconcileProviderQuotaHeaders({
+                headers: response.provider_quota,
+                quotaConfig,
+                expectedRequestCostCredits: budgetDecision.expected_request_cost_credits,
+                localConsumedAfterRequest: budgetDecision.monthly_used + budgetDecision.expected_request_cost_credits,
+                previousProviderQuota: latestReconciledProviderQuota(ledger),
+            });
+        } catch (error) {
+            terminalizePostBoundaryFailure(error);
+        }
         let persistedRaw;
         let persistedReceipt;
         try {
@@ -1978,7 +2185,7 @@ async function executeStageDOneCycle({
             throw error;
         }
         try {
-            markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'RESPONSE_RECEIVED', at: responseAt, receiptEvidenceReference: persistedReceipt.receipt_evidence_reference });
+            markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'RESPONSE_RECEIVED', at: responseAt, receiptEvidenceReference: persistedReceipt.receipt_evidence_reference, providerQuota: reconciledProviderQuota });
         } catch (error) {
             reconcileRequired = true;
             throw error;
@@ -2073,7 +2280,7 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
         let budget;
         try {
             if (!ledger) fail('REQUEST_LEDGER_UNAVAILABLE', 'request ledger is unavailable');
-            budget = assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits: 1 });
+            budget = assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits: EXPECTED_REQUEST_COST_CREDITS });
         } catch (error) {
             budget = { allowed: false, code: error.code || 'REQUEST_BUDGET_DENIED', message: error.message };
         }
@@ -2126,6 +2333,17 @@ module.exports = {
     runLockTrustFile,
     runLockGenerationFile,
     PROVIDER,
+    SUBSCRIPTION_TIER,
+    QUOTA_EVIDENCE_CLASS,
+    QUOTA_RESET_RULE,
+    LOCAL_LEDGER_AUTOMATIC_ZERO_ON_CALENDAR_CHANGE,
+    CONFIGURED_MARKETS,
+    CONFIGURED_REGIONS,
+    STAGE_D_MARKET_COUNT,
+    STAGE_D_REGION_COUNT,
+    EXPECTED_REQUEST_COST_CREDITS,
+    MAX_PROVIDER_REQUESTS_PER_CYCLE,
+    REQUIRED_QUOTA_HEADERS,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
     HISTORICAL_PRE_EPOCH_EXACT_TOTAL,
@@ -2140,6 +2358,8 @@ module.exports = {
     releaseStageDRunLock,
     bindStageDRunLockGeneration,
     validateQuotaConfiguration,
+    validateProviderQuotaRecord,
+    reconcileProviderQuotaHeaders,
     createStageDTestRuntimeAuthorization,
     createStageDTestQuotaConfiguration,
     assertRequestBudget,

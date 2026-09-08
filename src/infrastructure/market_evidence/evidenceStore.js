@@ -31,7 +31,7 @@ const ALLOWED_REGIONS = new Set(['au', 'eu', 'uk', 'us', 'us2']);
 const PROVIDER_ENDPOINT_IDENTITIES = new Set(['api.the-odds-api.com/v4/sports/soccer_epl/odds']);
 const verifiedReceiptEvidence = new WeakMap();
 const QUOTA_HEADER_PATTERN =
-    /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
+    /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|last|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
 const COVERAGE_STATUSES = new Set(['OBSERVED', 'PARTIAL', 'QUARANTINED']);
 const LEDGER_MANIFEST_SCHEMA_VERSION = 'footballprediction-market-ledger-integrity/v1';
 

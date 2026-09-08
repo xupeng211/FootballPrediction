@@ -100,42 +100,82 @@ ambiguity after the durable transmission boundary remains consumed.
 
 ## Quota and request-budget contract
 
-Provider transmission requires a repository-external, exact
-`footballprediction-stage-d-quota-budget/v1` configuration containing all of:
+Provider transmission requires an exact
+`footballprediction-stage-d-quota-budget/v2` configuration. The non-secret
+current Owner configuration is tracked at `config/stage_d_quota_budget.json`;
+any future live bootstrap must still load it through the reviewed runtime
+authorization path and must not place credentials in the repository. The
+configuration contains all of:
 
 ```text
+provider / subscription_tier / quota_evidence_class
 quota_evidence_verified=true
 quota_evidence_source
-billing_period_id / period_start_at / period_end_at
+billing_period_id / period_start_at / period_end_at (local governed guard period)
 monthly_quota_limit
 reserved_safety_buffer
+automated_spend_limit
 max_requests_per_stage_d_run
 max_requests_per_day (or null)
 stop_before_quota_exhaustion_threshold
+configured_markets / configured_regions / market_count / region_count
+expected_request_cost_credits / max_provider_requests_per_cycle
+quota_reset_rule / automatic_zero_on_calendar_change
+historical_pre_epoch_request_total / historical_pre_epoch_exact_total
+post_epoch_usage_source
 ```
 
 Absent, malformed, expired, or unverified configuration fails closed before an
 intent can become a transmission. Credential readiness is checked locally after
 intent but before the transmission boundary; invalid credentials become a
 non-consumed cancellation. The gate counts terminal and ambiguous
-consumed entries in the configured billing period and rejects work that would
-cross per-run, daily, monthly, safety-buffer, or stop-threshold limits. It does
-not infer a plan, quota reset rule, cost, or available credit from historic
-headers.
+consumed entries in the configured local guard period and rejects work that
+would cross per-run, daily, automated-monthly, safety-buffer, or stop-threshold
+limits. Ambiguous consumed requests and prior provider-quota divergence block
+the next cycle. It does not infer a plan, quota reset rule, cost, or available
+credit from historic headers.
 
-Current quota facts remain:
+The current Owner-declared plan and governed cost facts are:
 
 ```text
-THE_ODDS_API_SUBSCRIPTION_TIER=UNKNOWN
-THE_ODDS_API_MONTHLY_QUOTA=UNKNOWN
-THE_ODDS_API_QUOTA_RESET_RULE=UNKNOWN
-THE_ODDS_API_REQUEST_COST_MODEL=UNKNOWN
-QUOTA_EVIDENCE_VERIFIED=NO
+THE_ODDS_API_SUBSCRIPTION_TIER=STARTER_FREE
+THE_ODDS_API_MONTHLY_QUOTA=500
+RESERVED_SAFETY_CREDITS=50
+AUTOMATED_MONTHLY_SPEND_LIMIT=450
+STAGE_D_MARKET_COUNT=1
+STAGE_D_REGION_COUNT=1
+EXPECTED_REQUEST_COST_CREDITS=1
+MAX_PROVIDER_REQUESTS_PER_CYCLE=1
+QUOTA_EVIDENCE_CLASS=OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE
+QUOTA_RESET_RULE=PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET
+LOCAL_LEDGER_AUTOMATIC_ZERO_ON_CALENDAR_CHANGE=NO
+QUOTA_EVIDENCE_VERIFIED=YES
 QUOTA_FAIL_CLOSED=YES
 ```
 
-Thus `REQUESTS_PER_CYCLE_MAX=1` is a code-bound upper limit, while daily and
-monthly estimates are non-authoritative and must not authorize a cycle.
+`period_start_at` and `period_end_at` are local guard boundaries, not an
+invented provider reset timestamp. A calendar change never zeros the local
+ledger. A new period is admitted only after a contractually valid provider
+reconciliation or explicit Owner-controlled configuration action; otherwise
+the expired configuration fails closed.
+
+The plan limit is separate from live provider state. Until a separately
+authorized successful provider response supplies quota headers:
+
+```text
+PROVIDER_REPORTED_USED=UNKNOWN_UNTIL_AUTHORIZED_RESPONSE
+PROVIDER_REPORTED_REMAINING=UNKNOWN_UNTIL_AUTHORIZED_RESPONSE
+PROVIDER_REPORTED_LAST_COST=UNKNOWN_UNTIL_AUTHORIZED_RESPONSE
+```
+
+For every future successful HTTP response, the request ledger stores the raw
+safe values and parsed values for `x-requests-used`, `x-requests-remaining`,
+and `x-requests-last`. The reconciliation requires non-negative integers,
+`used + remaining = 500`, `last = expected_request_cost_credits`, and a
+monotonic one-credit transition from the prior reconciled response. A provider
+remaining balance below the local safe budget, a missing/malformed header, or
+any local/provider divergence consumes the attempt and blocks later cycles
+until explicit reconciliation.
 
 ## Capture, publication, duplicate and temporal policy
 
@@ -189,10 +229,16 @@ restore proof exists.
 
 When an owner designates a physically/administratively independent target, a
 backup snapshot must include immutable transaction packages, `STORE.json`,
-allocation authority, request ledger epoch/entries, required run state and a
-checksummed manifest. It must snapshot only a cold-load-valid transaction root,
-then restore to an isolated root and prove the exact head/state/registry/
-provenance/ledger again before being called a backup.
+allocation authority, request ledger epoch/entries, required run state and the
+non-secret quota configuration required to interpret exact accounting, plus a
+checksummed manifest. Secrets are provisioned separately and are never part
+of the snapshot. The copy contract records the source authority identity and
+state hash before and after staging, includes committed packages only, writes
+the manifest/checksums before a final completeness marker, and treats any
+missing marker or source identity change as an invalid snapshot. It must
+snapshot only a cold-load-valid transaction root, then restore to an isolated
+root and prove the exact head/state/registry/provenance/ledger again before
+being called a backup.
 
 Proposed but unapproved service policy is: irrecoverable evidence retained
 indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.

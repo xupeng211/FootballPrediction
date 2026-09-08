@@ -11,7 +11,7 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-08
+## Current State Snapshot — 2026-09-09
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
 下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
@@ -31,11 +31,11 @@ CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
 CONTINUOUS_CAPTURE_READY=NO
 STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__OPERATIONALLY_DISABLED
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
-STAGE_D_PROVIDER_QUOTA_EVIDENCE=OPEN
-STAGE_D_INDEPENDENT_BACKUP_RESTORE=OPEN
+STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
+STAGE_D_INDEPENDENT_BACKUP_RESTORE=OPEN_OWNER_TARGET_REQUIRED
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
-STAGE_D_READINESS_VERDICT=NOT_READY
+STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY
 STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
 STAGE_D_STARTED=NO
@@ -66,14 +66,13 @@ CURRENT_MARKET_ASSETS=
 - historical odds staging/rebuild evidence
 
 CURRENT_HARD_BLOCKERS=
-- Stage D provider subscription/monthly quota, reset and cost evidence is not verified; quota gate therefore remains fail-closed
 - no physically independent backup target or isolated restore proof exists; all discovered local paths share `/dev/nvme0n1p5`
 - canonical value engine and canonical betting backtest are NOT_ESTABLISHED
 - bankroll/staking and CLV tracking are not established
 - fresh independent future holdout is not yet evaluated
 - production model activation remains NO / separately authorized
 
-NEXT_OWNER_DECISION=提供可核验 The Odds API plan/quota/reset/cost 与 usage-rights evidence，并指定独立故障域 backup target 后执行隔离 restore proof；不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=指定独立故障域 backup target 并完成隔离 restore proof；quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -93,12 +92,16 @@ ledger/verified-quota fail-close 实现，以及 factory-bound live adapter。li
 
 剩余 pre-Stage-D 门禁仍由 Owner 或独立基础设施控制，尚未在本次任务中批准或执行：
 
-- 核实 The Odds API subscription / monthly quota。
-- 确认 provider usage / retention / analysis permission。
 - 指定不同物理故障域的 independent backup target。
 - 批准 retention / RPO / RTO（当前仅有 proposal）。
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
+
+本轮已把 Owner 声明的 `STARTER_FREE / 500` 计划、`50` safety reserve、`450`
+自动额度、`h2h × uk = 1` credit cost、exact post-epoch ledger accounting、provider
+quota-header reconciliation 和 no-unverified-reset contract 写入版本化配置与代码合同。
+provider-reported used/remaining/last 仍保持 `UNKNOWN_UNTIL_AUTHORIZED_RESPONSE`，不以配置
+数据冒充 live balance。
 
 细节入口：`docs/CAPABILITY_INDEX.md`、`docs/PROJECT_STATUS.md`、
 `docs/data/FOTMOB_CURRENT_STATE.md`、`docs/MODEL_ARTIFACTS.md`、
