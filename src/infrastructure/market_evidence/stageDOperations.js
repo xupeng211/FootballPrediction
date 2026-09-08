@@ -24,6 +24,7 @@ const QUOTA_SCHEMA_VERSION = 'footballprediction-stage-d-quota-budget/v1';
 const EPOCH_FILE = 'REQUEST_ACCOUNTING_EPOCH.json';
 const ENTRY_DIRECTORY = 'entries';
 const RUN_LOCK_FILE = 'stage-d-run.lock.json';
+const RUN_LOCK_PARENT_FILE_PREFIX = '.stage-d-run-';
 const PROVIDER = 'the-odds-api';
 const MARKET_SCOPE = 'EPL_1X2_H2H';
 const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
@@ -73,6 +74,23 @@ function assertPlainObject(value, label) {
     }
 }
 
+function clonePlainData(value, label, seen = new Set()) {
+    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+    if (typeof value !== 'object') fail('INVALID_CONTRACT', `${label} contains executable or unsupported data`);
+    if (seen.has(value)) fail('INVALID_CONTRACT', `${label} contains a cycle`);
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null && !Array.isArray(value)) fail('INVALID_CONTRACT', `${label} must contain plain data`);
+    const nextSeen = new Set(seen);
+    nextSeen.add(value);
+    const output = Array.isArray(value) ? [] : {};
+    for (const key of Object.keys(value)) {
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) fail('INVALID_CONTRACT', `${label}.${key} must be a data property`);
+        output[key] = clonePlainData(descriptor.value, `${label}.${key}`, nextSeen);
+    }
+    return output;
+}
+
 function assertExactKeys(value, keys, label) {
     assertPlainObject(value, label);
     const actual = Object.keys(value).sort();
@@ -105,11 +123,20 @@ function canonicalBytes(value) {
 function directoryIdentity(directory, label) {
     const stat = fs.lstatSync(directory);
     if (stat.isSymbolicLink() || !stat.isDirectory()) fail('UNSAFE_PATH', `${label} must be a non-symlink directory`);
-    return Object.freeze({ dev: stat.dev, ino: stat.ino, mode: stat.mode });
+    return directoryIdentityFromStat(stat);
 }
 
 function sameDirectoryIdentity(left, right) {
-    return Boolean(left && right && left.dev === right.dev && left.ino === right.ino);
+    return Boolean(left && right
+        && left.dev === right.dev
+        && left.ino === right.ino
+        && left.mode === right.mode
+        && left.uid === right.uid
+        && left.gid === right.gid);
+}
+
+function directoryIdentityFromStat(stat) {
+    return Object.freeze({ dev: stat.dev, ino: stat.ino, mode: stat.mode, uid: stat.uid, gid: stat.gid });
 }
 
 function trustedDirectoryIdentity(directory, label) {
@@ -129,9 +156,9 @@ function openDirectoryDescriptor(directory, label, expected = null) {
     try {
         const stat = fs.fstatSync(fd);
         if (!stat.isDirectory()) fail('UNSAFE_PATH', `${label} descriptor is not a directory`);
-        if (stat.dev !== observed.dev || stat.ino !== observed.ino) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
-        if (expected && (stat.dev !== expected.dev || stat.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
-        return Object.freeze({ fd, path: resolved, identity: Object.freeze({ dev: stat.dev, ino: stat.ino, mode: stat.mode }) });
+        if (!sameDirectoryIdentity(stat, observed)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        if (expected && !sameDirectoryIdentity(stat, expected)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        return Object.freeze({ fd, path: resolved, identity: directoryIdentityFromStat(stat) });
     } catch (error) {
         fs.closeSync(fd);
         throw error;
@@ -146,9 +173,9 @@ function openChildDirectoryDescriptor(parentFd, name, label, expected = null) {
     try {
         const stat = fs.fstatSync(fd);
         if (!stat.isDirectory()) fail('UNSAFE_PATH', `${label} descriptor is not a directory`);
-        if (stat.dev !== observed.dev || stat.ino !== observed.ino) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
-        if (expected && (stat.dev !== expected.dev || stat.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
-        return Object.freeze({ fd, path: childPath, identity: Object.freeze({ dev: stat.dev, ino: stat.ino, mode: stat.mode }) });
+        if (!sameDirectoryIdentity(stat, observed)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        if (expected && !sameDirectoryIdentity(stat, expected)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        return Object.freeze({ fd, path: childPath, identity: directoryIdentityFromStat(stat) });
     } catch (error) {
         fs.closeSync(fd);
         throw error;
@@ -169,7 +196,7 @@ function openTrustedDirectoryDescriptor(directory, label, expected = null) {
     try {
         const observed = directoryIdentity(scopedPath(parentDescriptor.fd, name), label);
         const identity = expected || observed;
-        if (expected && (observed.dev !== expected.dev || observed.ino !== expected.ino)) {
+        if (expected && !sameDirectoryIdentity(observed, expected)) {
             fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed before open`);
         }
         const child = openChildDirectoryDescriptor(parentDescriptor.fd, name, label, identity);
@@ -183,12 +210,45 @@ function closeDirectoryDescriptor(descriptor) {
     if (descriptor && Number.isInteger(descriptor.fd)) fs.closeSync(descriptor.fd);
 }
 
+function runLockParentFile(operationRoot) {
+    const resolved = path.resolve(operationRoot);
+    return `${RUN_LOCK_PARENT_FILE_PREFIX}${sha256Text(resolved)}.parent.lock.json`;
+}
+
+// Keep the parent descriptor open for the complete lock lifetime.  The parent
+// sentinel is deliberately outside the operation root: replacing the root
+// directory therefore cannot make an active run invisible to the next run.
+function openTrustedRootWithParent(directory, label, expected = null) {
+    const resolved = path.resolve(directory);
+    const parentPath = path.dirname(resolved);
+    const name = path.basename(resolved);
+    if (!name || name === '.' || name === '..') fail('UNSAFE_PATH', `${label} path is invalid`);
+    const parentDescriptor = openDirectoryDescriptor(parentPath, `${label} parent`);
+    try {
+        const observed = directoryIdentity(scopedPath(parentDescriptor.fd, name), label);
+        if (expected && !sameDirectoryIdentity(observed, expected)) {
+            fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed before open`);
+        }
+        const rootDescriptor = openChildDirectoryDescriptor(parentDescriptor.fd, name, label, expected || observed);
+        return Object.freeze({ parentDescriptor, rootDescriptor: Object.freeze({ ...rootDescriptor, path: resolved }) });
+    } catch (error) {
+        closeDirectoryDescriptor(parentDescriptor);
+        throw error;
+    }
+}
+
 function scopedPath(directoryFd, name) {
     if (!Number.isInteger(directoryFd) || directoryFd < 0 || typeof name !== 'string' || name.includes('/') || name === '' || name === '.' || name === '..') {
         fail('UNSAFE_PATH', 'directory-scoped path is invalid');
     }
     if (process.platform !== 'linux') fail('UNSUPPORTED_PLATFORM', 'directory-scoped Stage D mutation requires Linux /proc/self/fd');
     return path.join(DIRECTORY_FD_ROOT, String(directoryFd), name);
+}
+
+function directoryFdPath(directoryFd) {
+    if (!Number.isInteger(directoryFd) || directoryFd < 0) fail('UNSAFE_PATH', 'directory descriptor is invalid');
+    if (process.platform !== 'linux') fail('UNSUPPORTED_PLATFORM', 'descriptor-bound Stage D publication requires Linux /proc/self/fd');
+    return path.join(DIRECTORY_FD_ROOT, String(directoryFd));
 }
 
 function fsyncDirectoryFd(directoryFd) {
@@ -612,12 +672,33 @@ function ledgerUsageSummary(ledger) {
 }
 
 function inspectStageDRunLock({ operationRoot } = {}) {
-    const rootDescriptor = openTrustedDirectoryDescriptor(path.resolve(operationRoot), 'Stage D operation root');
+    const resolvedRoot = path.resolve(operationRoot);
+    const { parentDescriptor, rootDescriptor } = openTrustedRootWithParent(resolvedRoot, 'Stage D operation root');
     const root = rootDescriptor.path;
     const lockPath = path.join(root, RUN_LOCK_FILE);
+    const parentLockPath = path.join(parentDescriptor.path, runLockParentFile(resolvedRoot));
     try {
+        const scopedParentLockPath = scopedPath(parentDescriptor.fd, runLockParentFile(resolvedRoot));
+        // The external parent sentinel is the reconciliation fence.  It must
+        // be checked before the child lock so a replaced child root cannot
+        // hide a run whose transmission outcome is still unresolved.
+        if (fs.existsSync(scopedParentLockPath)) {
+            try {
+                const parentLock = readCanonicalJson(scopedParentLockPath, 'Stage D parent run lock');
+                assertExactKeys(parentLock, ['schema_version', 'run_id', 'acquired_at', 'lock_hash'], 'Stage D parent run lock');
+                if (parentLock.schema_version !== RUN_LOCK_SCHEMA_VERSION) fail('INVALID_LOCK', 'Stage D parent run lock schema is invalid');
+                assertToken(parentLock.run_id, 'run_id');
+                assertUtc(parentLock.acquired_at, 'parent lock acquired_at');
+                const unsignedParent = { ...parentLock };
+                delete unsignedParent.lock_hash;
+                if (parentLock.lock_hash !== sha256Text(stableStringify(unsignedParent))) fail('TAMPERED_LOCK', 'Stage D parent run lock hash is invalid');
+                return Object.freeze({ state: 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION', lock_path: lockPath, parent_lock_path: parentLockPath, lock: Object.freeze(parentLock) });
+            } catch (error) {
+                return Object.freeze({ state: 'AMBIGUOUS_REQUIRES_RECONCILIATION', lock_path: lockPath, parent_lock_path: parentLockPath, error_code: error.code || 'INVALID_LOCK' });
+            }
+        }
         const scopedLockPath = scopedPath(rootDescriptor.fd, RUN_LOCK_FILE);
-        if (!fs.existsSync(scopedLockPath)) return Object.freeze({ state: 'ABSENT', lock_path: lockPath });
+        if (!fs.existsSync(scopedLockPath)) return Object.freeze({ state: 'ABSENT', lock_path: lockPath, parent_lock_path: parentLockPath });
         const lock = readCanonicalJson(scopedLockPath, 'Stage D run lock');
         assertExactKeys(lock, ['schema_version', 'run_id', 'acquired_at', 'lock_hash'], 'Stage D run lock');
         if (lock.schema_version !== RUN_LOCK_SCHEMA_VERSION) fail('INVALID_LOCK', 'Stage D run lock schema is invalid');
@@ -626,28 +707,58 @@ function inspectStageDRunLock({ operationRoot } = {}) {
         const unsigned = { ...lock };
         delete unsigned.lock_hash;
         if (lock.lock_hash !== sha256Text(stableStringify(unsigned))) fail('TAMPERED_LOCK', 'Stage D run lock hash is invalid');
-        return Object.freeze({ state: 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION', lock_path: lockPath, lock: Object.freeze(lock) });
+        return Object.freeze({ state: 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION', lock_path: lockPath, parent_lock_path: parentLockPath, lock: Object.freeze(lock) });
     } catch (error) {
-        return Object.freeze({ state: 'AMBIGUOUS_REQUIRES_RECONCILIATION', lock_path: lockPath, error_code: error.code || 'INVALID_LOCK' });
+        return Object.freeze({ state: 'AMBIGUOUS_REQUIRES_RECONCILIATION', lock_path: lockPath, parent_lock_path: parentLockPath, error_code: error.code || 'INVALID_LOCK' });
     } finally {
         closeDirectoryDescriptor(rootDescriptor);
+        closeDirectoryDescriptor(parentDescriptor);
     }
 }
 
+// eslint-disable-next-line complexity -- lock acquisition enumerates parent/root reconciliation states.
 function acquireStageDRunLock({ operationRoot, runId, acquiredAt } = {}) {
     const root = path.resolve(operationRoot);
     assertToken(runId, 'run_id');
     assertUtc(acquiredAt, 'lock acquiredAt');
     const lockPath = path.join(root, RUN_LOCK_FILE);
+    const parentLockPath = path.join(path.dirname(root), runLockParentFile(root));
     const unsigned = { schema_version: RUN_LOCK_SCHEMA_VERSION, run_id: runId, acquired_at: acquiredAt };
     const lock = { ...unsigned, lock_hash: sha256Text(stableStringify(unsigned)) };
-    const directoryDescriptor = openTrustedDirectoryDescriptor(root, 'Stage D operation root');
+    const { parentDescriptor, rootDescriptor: directoryDescriptor } = openTrustedRootWithParent(root, 'Stage D operation root');
+    let parentLockCreated = false;
     let lockCreated = false;
     try {
-        writeExclusiveImmutable(scopedPath(directoryDescriptor.fd, RUN_LOCK_FILE), lock, 'Stage D run lock', { directoryFd: directoryDescriptor.fd });
-        lockCreated = true;
-    } catch (error) {
-        if (error?.code === 'EEXIST') {
+        try {
+            writeExclusiveImmutable(scopedPath(parentDescriptor.fd, runLockParentFile(root)), lock, 'Stage D parent run lock', { directoryFd: parentDescriptor.fd });
+            parentLockCreated = true;
+        } catch (error) {
+            if (error?.code === 'EEXIST') {
+                let current;
+                try {
+                    const existing = readCanonicalJson(scopedPath(parentDescriptor.fd, runLockParentFile(root)), 'Stage D parent run lock');
+                    assertExactKeys(existing, ['schema_version', 'run_id', 'acquired_at', 'lock_hash'], 'Stage D parent run lock');
+                    const unsignedExisting = { ...existing };
+                    delete unsignedExisting.lock_hash;
+                    if (existing.lock_hash !== sha256Text(stableStringify(unsignedExisting))) fail('TAMPERED_LOCK', 'Stage D parent run lock hash is invalid');
+                    current = { state: 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION' };
+                } catch (readError) {
+                    current = { state: 'AMBIGUOUS_REQUIRES_RECONCILIATION', error_code: readError.code || 'INVALID_LOCK' };
+                }
+                if (current.state === 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION') fail('STAGE_D_RUN_ACTIVE_OR_STALE', 'a prior Stage D run lock exists; reconciliation is required before another provider request');
+                fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock is ambiguous; reconciliation is required before another provider request');
+            }
+            throw error;
+        }
+        try {
+            writeExclusiveImmutable(scopedPath(directoryDescriptor.fd, RUN_LOCK_FILE), lock, 'Stage D run lock', { directoryFd: directoryDescriptor.fd });
+        } catch (error) {
+            if (error?.code !== 'EEXIST') throw error;
+            // We own the parent sentinel, so remove it before reporting the
+            // existing child lock.  A failed cleanup remains fail-closed.
+            fs.unlinkSync(scopedPath(parentDescriptor.fd, runLockParentFile(root)));
+            fsyncDirectoryFd(parentDescriptor.fd);
+            parentLockCreated = false;
             let current;
             try {
                 const existing = readCanonicalJson(scopedPath(directoryDescriptor.fd, RUN_LOCK_FILE), 'Stage D run lock');
@@ -659,31 +770,62 @@ function acquireStageDRunLock({ operationRoot, runId, acquiredAt } = {}) {
             } catch (readError) {
                 current = { state: 'AMBIGUOUS_REQUIRES_RECONCILIATION', error_code: readError.code || 'INVALID_LOCK' };
             }
-            if (current.state === 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION') {
-                fail('STAGE_D_RUN_ACTIVE_OR_STALE', 'a prior Stage D run lock exists; reconciliation is required before another provider request');
-            }
+            if (current.state === 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION') fail('STAGE_D_RUN_ACTIVE_OR_STALE', 'a prior Stage D run lock exists; reconciliation is required before another provider request');
             fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock is ambiguous; reconciliation is required before another provider request');
         }
-        throw error;
+        lockCreated = true;
     } finally {
-        if (!lockCreated) closeDirectoryDescriptor(directoryDescriptor);
+        if (!lockCreated) {
+            if (parentLockCreated) {
+                try {
+                    fs.unlinkSync(scopedPath(parentDescriptor.fd, runLockParentFile(root)));
+                    fsyncDirectoryFd(parentDescriptor.fd);
+                } catch {
+                    // Preserve the sentinel when cleanup is ambiguous.
+                }
+            }
+            closeDirectoryDescriptor(directoryDescriptor);
+            closeDirectoryDescriptor(parentDescriptor);
+        }
     }
     const stat = fs.lstatSync(scopedPath(directoryDescriptor.fd, RUN_LOCK_FILE));
     if (stat.isSymbolicLink() || !stat.isFile()) fail('UNSAFE_PATH', 'new Stage D run lock is unsafe');
-    const token = Object.freeze({ root, lock_path: lockPath, lock_hash: lock.lock_hash, run_id: runId, dev: stat.dev, ino: stat.ino, directory_fd: directoryDescriptor.fd, root_identity: directoryDescriptor.identity });
+    const parentStat = fs.lstatSync(scopedPath(parentDescriptor.fd, runLockParentFile(root)));
+    if (parentStat.isSymbolicLink() || !parentStat.isFile()) fail('UNSAFE_PATH', 'new Stage D parent run lock is unsafe');
+    const token = Object.freeze({
+        root,
+        lock_path: lockPath,
+        parent_lock_path: parentLockPath,
+        lock_hash: lock.lock_hash,
+        run_id: runId,
+        dev: stat.dev,
+        ino: stat.ino,
+        parent_dev: parentStat.dev,
+        parent_ino: parentStat.ino,
+        directory_fd: directoryDescriptor.fd,
+        parent_directory_fd: parentDescriptor.fd,
+        root_identity: directoryDescriptor.identity,
+        parent_identity: parentDescriptor.identity,
+    });
     activeLockTokens.add(token);
     return token;
 }
 
+// eslint-disable-next-line complexity -- release validates two descriptors and two immutable lock records.
 function releaseStageDRunLock(token) {
     if (!activeLockTokens.has(token)) fail('INVALID_LOCK_TOKEN', 'an active Stage D run lock token is required');
     let released = false;
     try {
         const rootStat = fs.fstatSync(token.directory_fd);
-        if (!rootStat.isDirectory() || rootStat.dev !== token.root_identity.dev || rootStat.ino !== token.root_identity.ino) {
+        if (!rootStat.isDirectory() || !sameDirectoryIdentity(rootStat, token.root_identity)) {
             fail('AMBIGUOUS_RUN_LOCK', 'Stage D run-lock directory identity changed; manual reconciliation is required');
         }
+        const parentStat = fs.fstatSync(token.parent_directory_fd);
+        if (!parentStat.isDirectory() || !sameDirectoryIdentity(parentStat, token.parent_identity)) {
+            fail('AMBIGUOUS_RUN_LOCK', 'Stage D run-lock parent identity changed; manual reconciliation is required');
+        }
         const lockPath = scopedPath(token.directory_fd, RUN_LOCK_FILE);
+        const parentLockPath = scopedPath(token.parent_directory_fd, runLockParentFile(token.root));
         const observed = readRegularFileBytes(lockPath, 'Stage D run lock');
         if (observed.stat.dev !== token.dev || observed.stat.ino !== token.ino) {
             fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock inode changed; manual reconciliation is required');
@@ -691,6 +833,14 @@ function releaseStageDRunLock(token) {
         const lock = parseCanonicalJsonBytes(observed.bytes, 'Stage D run lock');
         if (lock.lock_hash !== token.lock_hash || lock.run_id !== token.run_id) {
             fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock ownership changed; manual reconciliation is required');
+        }
+        const observedParent = readRegularFileBytes(parentLockPath, 'Stage D parent run lock');
+        if (observedParent.stat.dev !== token.parent_dev || observedParent.stat.ino !== token.parent_ino) {
+            fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock inode changed; manual reconciliation is required');
+        }
+        const parentLock = parseCanonicalJsonBytes(observedParent.bytes, 'Stage D parent run lock');
+        if (parentLock.lock_hash !== token.lock_hash || parentLock.run_id !== token.run_id) {
+            fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock ownership changed; manual reconciliation is required');
         }
         // Re-open and revalidate immediately before the unlink.  The directory
         // descriptor keeps the operation scoped to the trusted root, while the
@@ -700,14 +850,22 @@ function releaseStageDRunLock(token) {
         if (finalObserved.stat.dev !== token.dev || finalObserved.stat.ino !== token.ino || finalObserved.bytes !== observed.bytes) {
             fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock changed during release; manual reconciliation is required');
         }
+        const finalParentObserved = readRegularFileBytes(parentLockPath, 'Stage D parent run lock');
+        if (finalParentObserved.stat.dev !== token.parent_dev || finalParentObserved.stat.ino !== token.parent_ino || finalParentObserved.bytes !== observedParent.bytes) {
+            fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock changed during release; manual reconciliation is required');
+        }
         fs.unlinkSync(lockPath);
         fsyncDirectoryFd(token.directory_fd);
         if (fs.existsSync(lockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D run lock remained after release');
+        fs.unlinkSync(parentLockPath);
+        fsyncDirectoryFd(token.parent_directory_fd);
+        if (fs.existsSync(parentLockPath)) fail('AMBIGUOUS_RUN_LOCK', 'Stage D parent run lock remained after release');
         released = true;
         activeLockTokens.delete(token);
     } finally {
         if (!released) activeLockTokens.delete(token);
         fs.closeSync(token.directory_fd);
+        fs.closeSync(token.parent_directory_fd);
     }
 }
 
@@ -915,7 +1073,10 @@ function assertTransportCallToken(token) {
 function createStageDFakeTransport({ response = null, error = null } = {}) {
     if (process.env.NODE_ENV !== 'test') fail('INVALID_TRANSPORT', 'fake transport is test-only');
     if ((response === null) === (error === null)) fail('INVALID_TRANSPORT', 'fake transport requires exactly one static response or error');
-    if (response !== null) assertPlainObject(response, 'fake transport response');
+    if (response !== null) {
+        assertPlainObject(response, 'fake transport response');
+        response = Object.freeze(clonePlainData(response, 'fake transport response'));
+    }
     if (error !== null && !(error instanceof Error)) fail('INVALID_TRANSPORT', 'fake transport error must be an Error');
     let callCount = 0;
     const transport = {
@@ -956,13 +1117,16 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
         market_scope: MARKET_SCOPE,
         network_capability: 'provider',
         explicit_binding: 'the-odds-api-stage-d-controlled-adapter/v1',
+        preflight() {
+            if (typeof apiKey !== 'string' || !apiKey.trim()) fail('CREDENTIAL_INVALID', 'The Odds API credential is unavailable');
+        },
         send(request, token) {
             assertTransportCallToken(token);
-            if (typeof apiKey !== 'string' || !apiKey.trim()) fail('CREDENTIAL_INVALID', 'The Odds API credential is unavailable');
+            transport.preflight();
             const url = new URL('https://api.the-odds-api.com/v4/sports/soccer_epl/odds');
             url.search = new URLSearchParams({ apiKey, regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' }).toString();
             const requestStartedAt = request.transmission_started_at;
-            const provider = proxyProvider || getProxyProvider({ poolName: proxyPoolName });
+            const provider = proxyProvider || getProxyProvider({ poolName: proxyPoolName, disableHealthChecks: true });
             return Promise.resolve(provider.acquire({ consumer: 'stage-d-controlled-adapter', sticky: false })).then(lease => {
                 if (!lease?.proxy?.server) fail('PROXY_LEASE_INVALID', 'ProxyProvider returned an invalid lease');
                 const proxyUrl = lease.proxy.server;
@@ -1015,7 +1179,7 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
     return transport;
 }
 
-function createStageDCandidateBuilder(build) {
+function createReviewedCandidateBuilder(build) {
     if (typeof build !== 'function') fail('INVALID_CANDIDATE_BUILDER', 'candidate builder function is required');
     const builder = Object.freeze({
         schema_version: 'footballprediction-stage-d-candidate-builder/v1',
@@ -1025,9 +1189,14 @@ function createStageDCandidateBuilder(build) {
     return builder;
 }
 
+function createStageDCandidateBuilder(build) {
+    if (process.env.NODE_ENV !== 'test') fail('INVALID_CANDIDATE_BUILDER', 'generic candidate builders are test-only');
+    return createReviewedCandidateBuilder(build);
+}
+
 function createStageDProspectiveCandidateBuilder({ universe, projectionVersion = '1', supportedMarketKeys = ['h2h'], authorizedSupersessions = [] } = {}) {
     if (!universe || typeof universe !== 'object') fail('INVALID_CANDIDATE_BUILDER', 'verified fixture universe is required');
-    return createStageDCandidateBuilder(({ authoritySnapshot, evidence }) => buildProspectiveMarketEvidenceTransaction({
+    return createReviewedCandidateBuilder(({ authoritySnapshot, evidence }) => buildProspectiveMarketEvidenceTransaction({
         authoritySnapshot,
         universe,
         oddsRawText: evidence.raw_text,
@@ -1066,16 +1235,24 @@ function createStageDTransactionPublisher({ storeRoot, allocationArtifactPath } 
         allocation_artifact_path: path.resolve(allocationArtifactPath),
         publish(candidate) {
             if (!isVerifiedProspectiveTransactionCandidate(candidate)) fail('UNVERIFIED_CANDIDATE', 'verified transaction-v1 candidate is required');
-            const rootIdentity = trustedDirectoryIdentity(resolvedStoreRoot, 'transaction authority root');
-            if (!sameDirectoryIdentity(rootIdentity, publisher.authority_root_identity)) fail('DIRECTORY_IDENTITY_CHANGED', 'transaction authority root identity changed before publication');
-            const result = publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArtifactPath, candidate });
-            const afterIdentity = trustedDirectoryIdentity(resolvedStoreRoot, 'transaction authority root');
-            if (!sameDirectoryIdentity(afterIdentity, publisher.authority_root_identity)) fail('DIRECTORY_IDENTITY_CHANGED', 'transaction authority root identity changed after publication');
-            const fresh = openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath });
-            if (!isVerifiedMarketEvidenceAuthoritySnapshot(fresh) || fresh.head_transaction_id !== result.transaction_id || fresh.state_hash !== candidate.post_state_hash) {
-                fail('AUTHORITY_REOPEN_FAILED', 'published transaction did not reopen as the expected authority head');
+            const rootDescriptor = openTrustedDirectoryDescriptor(resolvedStoreRoot, 'transaction authority root', publisher.authority_root_identity);
+            const pinnedRoot = directoryFdPath(rootDescriptor.fd);
+            try {
+                // The transaction-v1 publisher receives a pinned descriptor
+                // path for every read, lock, stage write, rename and reopen.
+                // It never re-resolves the mutable authority path during the
+                // publication window.
+                const result = publishProspectiveMarketEvidenceTransaction({ storeRoot: pinnedRoot, allocationArtifactPath, candidate });
+                const afterIdentity = trustedDirectoryIdentity(resolvedStoreRoot, 'transaction authority root');
+                if (!sameDirectoryIdentity(afterIdentity, publisher.authority_root_identity)) fail('DIRECTORY_IDENTITY_CHANGED', 'transaction authority root identity changed after publication');
+                const fresh = openMarketEvidenceAuthoritySnapshot({ storeRoot: pinnedRoot, allocationArtifactPath });
+                if (!isVerifiedMarketEvidenceAuthoritySnapshot(fresh) || fresh.head_transaction_id !== result.transaction_id || fresh.state_hash !== candidate.post_state_hash) {
+                    fail('AUTHORITY_REOPEN_FAILED', 'published transaction did not reopen as the expected authority head');
+                }
+                return Object.freeze({ ...result, fresh_authority_snapshot: fresh });
+            } finally {
+                closeDirectoryDescriptor(rootDescriptor);
             }
-            return Object.freeze({ ...result, fresh_authority_snapshot: fresh });
         },
     };
     Object.freeze(publisher);
@@ -1091,6 +1268,7 @@ function abandonStageDRunLock(token) {
     if (!activeLockTokens.has(token)) return;
     activeLockTokens.delete(token);
     fs.closeSync(token.directory_fd);
+    fs.closeSync(token.parent_directory_fd);
 }
 
 // eslint-disable-next-line complexity -- the adapter deliberately enumerates each durable failure boundary.
@@ -1164,6 +1342,22 @@ async function executeStageDOneCycle({
             // never assume a pre-transmission intent failure was clean.
             reconcileRequired = true;
             throw error;
+        }
+        if (transport.network_capability === 'provider' && typeof transport.preflight === 'function') {
+            try {
+                // Credential readiness is a local check and must precede the
+                // transmission boundary; missing credentials cannot consume
+                // provider quota.
+                transport.preflight();
+            } catch (error) {
+                try {
+                    markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'CANCELLED_BEFORE_TRANSMISSION', at: trustedClock(), errorClassification: error.code || 'CREDENTIAL_INVALID' });
+                } catch (terminalError) {
+                    reconcileRequired = true;
+                    throw terminalError;
+                }
+                throw error;
+            }
         }
         const transmissionStartedAt = trustedClock();
         assertUtc(transmissionStartedAt, 'transmission_started_at');
@@ -1354,6 +1548,7 @@ module.exports = {
     EPOCH_FILE,
     ENTRY_DIRECTORY,
     RUN_LOCK_FILE,
+    runLockParentFile,
     PROVIDER,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,

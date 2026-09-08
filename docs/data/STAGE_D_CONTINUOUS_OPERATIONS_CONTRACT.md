@@ -12,7 +12,7 @@ STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 TARGET_COMPETITION=EPL
 MARKET_SCOPE=1X2 / The Odds API h2h decimal response
 PROVIDER_SCOPE=The Odds API only
-STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run
+STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run (public offline); executeStageDOneCycle (internal live adapter)
 STAGE_D_SINGLE_CYCLE_ENGINE=executeStageDOneCycle factory-bound controlled adapter
 LIVE_EXECUTOR_IMPLEMENTED=YES
 LIVE_EXECUTOR_DEFAULT_STATE=DISABLED
@@ -36,8 +36,11 @@ must not revive the retired Stage C live route or introduce another writer.
 
 The external scheduler supplies an opaque `run_id` for exactly one cycle. Before
 any provider boundary the engine acquires `stage-d-run.lock.json` using exclusive
-creation and fsync. A second run, an old/stale lock, a malformed lock, ownership
-change, or a process crash all stop the next run with reconciliation required.
+creation and fsync, plus a hash-bound parent-directory reconciliation sentinel.
+The parent sentinel is outside the operation root, so replacing the root inode
+cannot hide an active or ambiguous run. A second run, an old/stale lock, a
+malformed lock, ownership change, or a process crash all stop the next run with
+reconciliation required.
 There is deliberately no TTL takeover or automatic stale-lock deletion.
 
 The scheduler itself owns cadence. Until the owner supplies verified quota and a
@@ -67,12 +70,15 @@ For each provider attempt the only valid lifecycle is:
 
 ```text
 REQUEST_INTENT / TRANSMISSION_NOT_STARTED
+  -> (local credential preflight)
   -> TRANSMISSION_STARTED_OR_MAY_HAVE_STARTED / consumed
   -> RESPONSE_RECEIVED
+     | HTTP_FAILURE_AFTER_TRANSMISSION
      | TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION
      | (remain ambiguous-consumed after crash)
 
 REQUEST_INTENT / TRANSMISSION_NOT_STARTED
+  -> (credential preflight failure)
   -> CANCELLED_BEFORE_TRANSMISSION / not consumed
 ```
 
@@ -100,7 +106,9 @@ stop_before_quota_exhaustion_threshold
 ```
 
 Absent, malformed, expired, or unverified configuration fails closed before an
-intent can become a transmission. The gate counts terminal and ambiguous
+intent can become a transmission. Credential readiness is checked locally after
+intent but before the transmission boundary; invalid credentials become a
+non-consumed cancellation. The gate counts terminal and ambiguous
 consumed entries in the configured billing period and rejects work that would
 cross per-run, daily, monthly, safety-buffer, or stop-threshold limits. It does
 not infer a plan, quota reset rule, cost, or available credit from historic
@@ -138,7 +146,11 @@ allowed. Production transport, persistence, candidate-builder, publisher and
 runtime-authorization capabilities are factory-bound. The test-only seams
 (networkless fake transport, temporary roots, deterministic clock and local
 filesystem fault hooks) are available only under `NODE_ENV=test` and cannot
-arm production transport.
+arm production transport. The transaction-v1 publisher receives a pinned
+authority directory descriptor for the complete read/lock/stage/rename/reopen
+session; it does not re-resolve the mutable authority path during publication.
+The default proxy lease adapter disables background health probes, so a Stage D
+request cannot create an unaccounted provider health request.
 
 An already canonical The Odds API RAW SHA-256 is a successful
 `NO_OP_DUPLICATE_RAW_HASH`: the request remains accounted, the scheduler records
@@ -177,7 +189,7 @@ indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.
 | Provider timeout / no response | yes | only new request + budget | no | after terminal ledger and clean lock release | no |
 | HTTP error | yes | only new request + budget | no | after terminal ledger and clean lock release | no |
 | Quota exhausted / quota unknown | no | no until configuration changes | no | no | quota owner for unknown/exhausted |
-| Credential invalid | yes if transmitted | only new request + budget | no | after terminal ledger | credential owner |
+| Credential invalid before transmission | no | no until credentials are corrected | no | after terminal ledger and clean lock release | credential owner |
 | Scheduler duplicate / stale lock / lock ambiguity | no | no | no | no | yes |
 | RAW or receipt persistence failure after possible transmission | yes | only new request + budget | no | after terminal ledger | yes |
 | Parser, identity, registry failure | yes | only new request + budget | no | after terminal ledger | yes |

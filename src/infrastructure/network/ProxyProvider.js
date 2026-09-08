@@ -217,9 +217,11 @@ class ProxyProvider extends EventEmitter {
       ports,
       defaultPort: Number(options.defaultPort) || resolvedPoolConfig.defaultPort || ports[0] || 0,
       targetLatencyMs: Number(options.targetLatencyMs) || DEFAULT_TARGET_LATENCY_MS,
-      healthCheckIntervalMs: Number(options.healthCheckIntervalMs)
-        || resolvedPoolConfig.healthCheckIntervalMs
-        || 30000,
+      healthCheckIntervalMs: options.disableHealthChecks === true
+        ? 0
+        : (Number(options.healthCheckIntervalMs)
+          || resolvedPoolConfig.healthCheckIntervalMs
+          || 30000),
       tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
       httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
       heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),

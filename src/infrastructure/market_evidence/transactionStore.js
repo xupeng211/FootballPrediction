@@ -9,6 +9,9 @@ const { isUtcTimestamp } = require('./contracts');
 const { STORE_SCHEMA_VERSION, STORE_TYPE, TRANSACTION_SCHEMA_VERSION, canonicalBytes, canonicalJson, hashCanonical, validateAllocationBinding, computeAuthorityStateHash, assertPlainObject } = require('./transactionContract');
 
 const STORE_FILE = 'STORE.json';
+function isPinnedDirectoryFdPath(value) {
+    return typeof value === 'string' && /^\/proc\/self\/fd\/\d+$/.test(value);
+}
 function lstatRegular(filePath, label) { const stat = fs.lstatSync(filePath); if (stat.isSymbolicLink() || !stat.isFile()) throw new Error(`${label} must be a regular file`); return stat; }
 function ensureDirectory(dir, label) {
     if (fs.existsSync(dir)) { const stat = fs.lstatSync(dir); if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${label} must be a non-symlink directory`); return; }
@@ -44,7 +47,7 @@ function validateStoreDocument(store) {
 }
 function readStoreContract({ storeRoot, allocationArtifactPath }) {
     if (typeof storeRoot !== 'string' || !storeRoot) throw new Error('storeRoot is required');
-    const root = path.resolve(storeRoot); const stat = fs.lstatSync(root); if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error('transaction store root must be a non-symlink directory');
+    const root = path.resolve(storeRoot); const stat = isPinnedDirectoryFdPath(root) ? fs.statSync(root) : fs.lstatSync(root); if ((!isPinnedDirectoryFdPath(root) && stat.isSymbolicLink()) || !stat.isDirectory()) throw new Error('transaction store root must be a non-symlink directory');
     const storePath = path.join(root, STORE_FILE); const storeStat = lstatRegular(storePath, 'STORE.json'); if ((storeStat.mode & 0o222) !== 0) throw new Error('STORE.json must be read-only');
     const bytes = fs.readFileSync(storePath, 'utf8'); let parsed;
     try { parsed = JSON.parse(bytes); } catch (error) { throw new Error(`STORE.json is invalid JSON: ${error.message}`, { cause: error }); }

@@ -19,6 +19,7 @@ const {
     HISTORICAL_PRE_EPOCH_EXACT_TOTAL,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
     RUN_LOCK_FILE,
+    runLockParentFile,
     initializeRequestAccountingEpoch,
     readRequestLedger,
     recordRequestIntent,
@@ -39,7 +40,19 @@ const {
     createStageDCandidateBuilder,
     createStageDProspectiveCandidateBuilder,
     createStageDFakePublisher,
+    createStageDTransactionPublisher,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
+
+function removeRunLockArtifacts(rootOrToken) {
+    const root = typeof rootOrToken === 'string' ? rootOrToken : rootOrToken.root;
+    const lockPath = typeof rootOrToken === 'string' ? path.join(root, RUN_LOCK_FILE) : rootOrToken.lock_path;
+    const parentLockPath = typeof rootOrToken === 'string'
+        ? path.join(path.dirname(path.resolve(root)), runLockParentFile(root))
+        : rootOrToken.parent_lock_path;
+    for (const target of [lockPath, parentLockPath]) {
+        if (target && fs.existsSync(target)) fs.unlinkSync(target);
+    }
+}
 
 const START = '2026-09-08T00:00:00Z';
 const AUTHORITY = Object.freeze({
@@ -50,7 +63,10 @@ const AUTHORITY = Object.freeze({
 
 function setup(t) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-operations-'));
-    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
     const ledgerRoot = path.join(root, 'ledger');
     const epoch = initializeRequestAccountingEpoch({
         ledgerRoot,
@@ -88,7 +104,11 @@ function liveAuthoritySetup(t) {
     const fixture = createGovernedFixtureTestContext({ rawText });
     t.after(fixture.cleanup);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-live-adapter-'));
-    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        removeRunLockArtifacts(path.join(root, 'request-accounting'));
+        fs.rmSync(root, { recursive: true, force: true });
+    });
     const allocationArtifactPath = path.join(root, 'allocation.authority.json');
     const persisted = persistVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath, allocationAuthority: fixture.universe.allocationAuthority });
     const authorityRoot = path.join(root, 'transactions');
@@ -278,11 +298,15 @@ test('ledger and lock readers reject symlink or inode replacement instead of fol
     fs.unlinkSync(token.lock_path);
     fs.writeFileSync(token.lock_path, '{"replacement":true}\n', { mode: 0o400 });
     assert.throws(() => releaseStageDRunLock(token), error => error.code === 'AMBIGUOUS_RUN_LOCK');
+    removeRunLockArtifacts(token);
 });
 
 test('run-lock release rejects a byte-identical replacement inode before unlinking it', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-byte-identical-'));
-    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'byte-identical-run', acquiredAt: START });
     const lockBytes = fs.readFileSync(token.lock_path);
     fs.renameSync(token.lock_path, `${token.lock_path}.replaced`);
@@ -292,11 +316,15 @@ test('run-lock release rejects a byte-identical replacement inode before unlinki
         error => error.code === 'AMBIGUOUS_RUN_LOCK'
     );
     assert.equal(inspectStageDRunLock({ operationRoot: root }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
+    removeRunLockArtifacts(token);
 });
 
 test('run lock rejects duplicate, stale and ambiguous ownership instead of reclaiming it', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-run-lock-'));
-    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'run-a', acquiredAt: START });
     assert.throws(
         () => acquireStageDRunLock({ operationRoot: root, runId: 'run-b', acquiredAt: '2026-09-08T01:00:00Z' }),
@@ -311,6 +339,7 @@ test('run lock rejects duplicate, stale and ambiguous ownership instead of recla
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
     fs.unlinkSync(stale.lock_path); // explicit test-only reconciliation; production never auto-reclaims.
+    if (fs.existsSync(stale.parent_lock_path)) fs.unlinkSync(stale.parent_lock_path);
     const corruptPath = path.join(root, RUN_LOCK_FILE);
     fs.writeFileSync(corruptPath, '{}\n', { mode: 0o400 });
     assert.equal(inspectStageDRunLock({ operationRoot: root }).state, 'AMBIGUOUS_REQUIRES_RECONCILIATION');
@@ -328,6 +357,7 @@ test('crash before request and crash after request both prevent another provider
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
     fs.unlinkSync(before.lock_path); // explicit test-only recovery from a simulated crash.
+    if (fs.existsSync(before.parent_lock_path)) fs.unlinkSync(before.parent_lock_path);
     intent(ctx, 'request-after', 'run-after');
     markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-after', transmittedAt: '2026-09-08T06:00:00Z' });
     acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-after', acquiredAt: '2026-09-08T06:00:00Z' });
@@ -563,6 +593,7 @@ test('authority reopen failure after a consumed response retains the reconciliat
     assert.equal(request.terminal_state, 'RESPONSE_RECEIVED');
     assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
     fs.unlinkSync(path.join(ctx.ledgerRoot, RUN_LOCK_FILE));
+    removeRunLockArtifacts(ctx.ledgerRoot);
     fs.rmSync(ctx.authorityRoot, { recursive: true, force: true });
     fs.renameSync(movedAuthorityRoot, ctx.authorityRoot);
 });
@@ -622,7 +653,10 @@ test('evidence persistence rejects parent-directory replacement and unsafe captu
 
 test('run-lock directory replacement fails closed instead of unlinking a lock in another inode', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-identity-'));
-    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'identity-run', acquiredAt: START });
     const moved = `${root}.moved`;
     fs.renameSync(root, moved);
@@ -655,6 +689,8 @@ test('ledger failure before the transmission boundary makes the run ambiguous wi
     assert.equal(components.transport.call_count, 0);
     assert.equal(readRequestLedger({ ledgerRoot: movedLedgerRoot }).requests[0].transmission_state, 'TRANSMISSION_NOT_STARTED');
     assert.equal(ledgerUsageSummary(readRequestLedger({ ledgerRoot: movedLedgerRoot })).consumed_request_count, 0);
+    removeRunLockArtifacts(originalLedgerRoot);
+    if (fs.existsSync(path.join(movedLedgerRoot, RUN_LOCK_FILE))) fs.unlinkSync(path.join(movedLedgerRoot, RUN_LOCK_FILE));
     fs.rmSync(originalLedgerRoot, { recursive: true, force: true });
     fs.renameSync(movedLedgerRoot, originalLedgerRoot);
 });
@@ -680,12 +716,50 @@ test('a valid ledger-copy swap after lock acquisition fails closed before any pr
         error => error.code === 'REQUEST_INTENT_RECONCILIATION_REQUIRED'
     );
     assert.equal(components.transport.call_count, 0);
-    assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+    assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
+    assert.throws(
+        () => acquireStageDRunLock({ operationRoot: ctx.ledgerRoot, runId: 'ledger-copy-swap-next-run', acquiredAt: '2026-09-08T08:00:02Z' }),
+        error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
+    );
     assert.equal(readRequestLedger({ ledgerRoot: moved }).requests.length, 0);
     assert.equal(inspectStageDRunLock({ operationRoot: moved }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
-    fs.unlinkSync(path.join(moved, RUN_LOCK_FILE));
+    removeRunLockArtifacts(ctx.ledgerRoot);
+    if (fs.existsSync(path.join(moved, RUN_LOCK_FILE))) fs.unlinkSync(path.join(moved, RUN_LOCK_FILE));
     fs.rmSync(ctx.ledgerRoot, { recursive: true, force: true });
     fs.renameSync(moved, ctx.ledgerRoot);
+});
+
+test('fake transport rejects accessor-backed responses instead of executing test-controlled getters', () => {
+    let getterCalled = false;
+    const response = {};
+    Object.defineProperty(response, 'raw_text', {
+        enumerable: true,
+        get() {
+            getterCalled = true;
+            throw new Error('getter must not execute');
+        },
+    });
+    assert.throws(() => createStageDFakeTransport({ response }), error => error.code === 'INVALID_CONTRACT');
+    assert.equal(getterCalled, false);
+});
+
+test('transaction-v1 publisher uses a pinned authority descriptor for the full publication session', t => {
+    const ctx = liveAuthoritySetup(t);
+    const receiptEvidence = createVerifiedTestReceipt({
+        root: path.join(ctx.root, 'publisher-receipt'),
+        rawText: ctx.rawText,
+        overrides: { capture_id: 'publisher-capture' },
+    });
+    const candidate = buildProspectiveMarketEvidenceTransaction({
+        authoritySnapshot: ctx.authoritySnapshot,
+        universe: ctx.fixture.universe,
+        oddsRawText: ctx.rawText,
+        captureReceipt: receiptEvidence,
+    });
+    const publisher = createStageDTransactionPublisher({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath });
+    const result = publisher.publish(candidate);
+    assert.equal(result.status, 'COMMITTED');
+    assert.equal(result.fresh_authority_snapshot.head_transaction_id, result.transaction_id);
 });
 
 test('live one-cycle primitive is an explicit authorization firewall, not an injectable transport or publisher bypass', async () => {
