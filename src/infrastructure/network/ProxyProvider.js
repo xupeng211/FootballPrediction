@@ -180,6 +180,10 @@ class ProxyProvider extends EventEmitter {
     this.stickyLeases = new Map();
     this.sequence = 0;
     this.healthTimer = null;
+    // Stage D may only bind a provider whose health scheduler is explicitly
+    // disabled at construction time.  This marker lets the adapter reject a
+    // pre-existing singleton that was created with the normal probe policy.
+    this.stage_d_health_probe_disabled = this.config.healthCheckIntervalMs === 0;
     this.started = false;
     this.initialized = false;
     this.initializationPromise = null;

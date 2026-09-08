@@ -10,7 +10,22 @@ const { openMarketEvidenceAuthoritySnapshot, readPackage } = require('./authorit
 const { isVerifiedProspectiveTransactionCandidate, finalizeProspectiveMarketEvidenceTransactionForPublication } = require('./prospectiveBatch');
 
 function fail(code, message, extra = {}) { const error = new Error(message); error.code = code; Object.assign(error, extra); throw error; }
-function statDir(target, label) { const stat = fs.lstatSync(target); if (stat.isSymbolicLink() || !stat.isDirectory()) fail('UNSAFE_PATH', `${label} must be a non-symlink directory`); return stat; }
+function openDirectoryDescriptor(target, label, expected = null) {
+    const before = fs.lstatSync(target);
+    if (before.isSymbolicLink() || !before.isDirectory()) fail('UNSAFE_PATH', `${label} must be a non-symlink directory`);
+    const fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0) | (fs.constants.O_NOFOLLOW || 0));
+    try {
+        const opened = fs.fstatSync(fd);
+        if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) fail('DIRECTORY_IDENTITY_CHANGED', `${label} changed during open`);
+        if (expected && (opened.dev !== expected.dev || opened.ino !== expected.ino)) fail('DIRECTORY_IDENTITY_CHANGED', `${label} identity is not the expected authority generation`);
+        return Object.freeze({ fd, identity: Object.freeze({ dev: opened.dev, ino: opened.ino, mode: opened.mode, uid: opened.uid, gid: opened.gid }) });
+    } catch (error) { fs.closeSync(fd); throw error; }
+}
+function descriptorPath(fd) {
+    if (process.platform !== 'linux') fail('UNSUPPORTED_PLATFORM', 'descriptor-bound transaction publication requires Linux /proc/self/fd');
+    return `/proc/self/fd/${fd}`;
+}
+function closeDirectoryDescriptor(descriptor) { if (descriptor && Number.isInteger(descriptor.fd)) fs.closeSync(descriptor.fd); }
 function fsyncDir(target, fault, point) { if (fault === point) fail('INJECTED_IO_FAILURE', `injected failure at ${point}`); const fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0)); try { fs.fsyncSync(fd); } finally { fs.closeSync(fd); } }
 function safeWrite(target, bytes, fault, point) {
     if (fault === point) fail('INJECTED_IO_FAILURE', `injected failure at ${point}`);
@@ -19,10 +34,10 @@ function safeWrite(target, bytes, fault, point) {
         fd = fs.openSync(target, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), 0o400);
         const buffer = Buffer.from(bytes, 'utf8'); let offset = 0;
         while (offset < buffer.length) { const written = fs.writeSync(fd, buffer, offset, buffer.length - offset); if (!Number.isInteger(written) || written <= 0 || written > buffer.length - offset) fail('SHORT_WRITE', `short write at ${point}`); offset += written; }
+        fs.fchmodSync(fd, 0o400);
         if (fault === `${point}:fsync`) fail('INJECTED_IO_FAILURE', `injected failure at ${point}:fsync`);
         fs.fsyncSync(fd);
     } finally { if (fd !== undefined) fs.closeSync(fd); }
-    fs.chmodSync(target, 0o400);
 }
 function acquireLock(root) {
     const lock = path.join(root, '.writer-lock'); let fd;
@@ -37,7 +52,21 @@ function acquireLock(root) {
         }
     }
     fs.writeFileSync(fd, 'market-evidence-transaction-v1\n'); fs.fsyncSync(fd);
-    return () => { try { fs.closeSync(fd); } finally { const stat = fs.lstatSync(lock); if (stat.isSymbolicLink() || !stat.isFile()) fail('UNSAFE_LOCK', 'writer lock changed while held'); fs.unlinkSync(lock); } };
+    const lockIdentity = fs.fstatSync(fd);
+    return () => {
+        let released = false;
+        try {
+            const held = fs.fstatSync(fd);
+            if (held.dev !== lockIdentity.dev || held.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock descriptor changed while held');
+            const current = fs.lstatSync(lock);
+            if (current.isSymbolicLink() || !current.isFile() || current.dev !== lockIdentity.dev || current.ino !== lockIdentity.ino) fail('UNSAFE_LOCK', 'writer lock changed while held');
+            fs.unlinkSync(lock);
+            released = true;
+        } finally {
+            fs.closeSync(fd);
+            if (!released) fail('UNSAFE_LOCK', 'writer lock release was ambiguous; manual recovery is required');
+        }
+    };
 }
 function candidateFiles(candidate) {
     if (!isVerifiedProspectiveTransactionCandidate(candidate)) fail('UNVERIFIED_CANDIDATE', 'verified ProspectiveTransactionCandidate is required');
@@ -67,22 +96,46 @@ function assertParent(snapshot, manifest) {
 function commitOutcomeUnknown(candidate, original) {
     fail('COMMIT_OUTCOME_UNKNOWN', 'rename outcome cannot be authoritatively resolved; reopen the transaction authority before retrying', { transaction_id: candidate.transaction_id, logical_batch_key: candidate.logical_batch_key, cause: original, resolution: 'fresh authority reopen required before retry' });
 }
-function resolveAfterRename({ storeRoot, allocationArtifactPath, candidate, original }) {
+function resolveAfterRename({ storeRoot, allocationArtifactPath, candidate, original, expectedCommittedIdentity = null }) {
     try {
-        const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath });
+        const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot, allocationArtifactPath, expectedCommittedIdentity });
         if (snapshot.head_transaction_id === candidate.transaction_id && snapshot.state_hash === candidate.post_state_hash) return Object.freeze({ status: 'COMMITTED', transaction_id: candidate.transaction_id, reused: false, snapshot });
     } catch (error) { commitOutcomeUnknown(candidate, error); }
     throw original;
 }
 // eslint-disable-next-line complexity -- publication explicitly enumerates every durability boundary.
-function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArtifactPath, candidate, fault = null } = {}) {
+function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArtifactPath, candidate, fault = null, expectedStagingIdentity = null, expectedCommittedIdentity = null } = {}) {
     const planned = candidateFiles(candidate);
     const contract = readStoreContract({ storeRoot, allocationArtifactPath }); const root = contract.root;
-    const staging = path.join(root, '.staging'); const committed = path.join(root, 'committed'); const stagingStat = statDir(staging, 'staging directory'); const committedStat = statDir(committed, 'committed directory');
-    if (stagingStat.dev !== committedStat.dev) fail('CROSS_DEVICE_PUBLICATION', 'staging and committed directories must share a filesystem');
-    const release = acquireLock(root); let possibleRename = false; let outcome = null; let pendingError = null; let publicationCandidate = null;
+    const stagingPath = path.join(root, '.staging'); const committedPath = path.join(root, 'committed');
+    let stagingDescriptor;
+    let committedDescriptor;
     try {
-        const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath });
+        stagingDescriptor = openDirectoryDescriptor(stagingPath, 'staging directory', expectedStagingIdentity);
+        committedDescriptor = openDirectoryDescriptor(committedPath, 'committed directory', expectedCommittedIdentity);
+    } catch (error) {
+        closeDirectoryDescriptor(committedDescriptor);
+        closeDirectoryDescriptor(stagingDescriptor);
+        throw error;
+    }
+    const staging = descriptorPath(stagingDescriptor.fd);
+    const committed = descriptorPath(committedDescriptor.fd);
+    const stagingStat = fs.fstatSync(stagingDescriptor.fd); const committedStat = fs.fstatSync(committedDescriptor.fd);
+    if (stagingStat.dev !== committedStat.dev) {
+        closeDirectoryDescriptor(committedDescriptor);
+        closeDirectoryDescriptor(stagingDescriptor);
+        fail('CROSS_DEVICE_PUBLICATION', 'staging and committed directories must share a filesystem');
+    }
+    let release;
+    try { release = acquireLock(root); }
+    catch (error) {
+        closeDirectoryDescriptor(committedDescriptor);
+        closeDirectoryDescriptor(stagingDescriptor);
+        throw error;
+    }
+    let possibleRename = false; let outcome = null; let pendingError = null; let publicationCandidate = null;
+    try {
+        const snapshot = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath, expectedCommittedIdentity: committedDescriptor.identity });
         const sameLogical = existingLogicalBatch(committed, planned.manifest.logical_batch_key);
         if (sameLogical) {
             // A retry rebuilt against the already-published parent contains a
@@ -114,16 +167,16 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
             readPackage(staging, manifest.transaction_id);
             if (fault === 'before-rename') fail('INJECTED_IO_FAILURE', 'injected failure before rename');
             try { if (fault === 'rename') fail('INJECTED_IO_FAILURE', 'injected failure at rename'); fs.renameSync(stagePath, finalPath); possibleRename = true; }
-            catch (error) { const resolved = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error }); possibleRename = resolved.status === 'COMMITTED'; outcome = resolved; }
+            catch (error) { const resolved = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error, expectedCommittedIdentity: committedDescriptor.identity }); possibleRename = resolved.status === 'COMMITTED'; outcome = resolved; }
             if (!outcome) {
                 try { fsyncDir(committed, fault, 'committed-directory-fsync'); }
-                catch (error) { outcome = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error }); }
+                catch (error) { outcome = resolveAfterRename({ storeRoot: root, allocationArtifactPath, candidate: publicationCandidate, original: error, expectedCommittedIdentity: committedDescriptor.identity }); }
             }
             if (!outcome) {
                 try {
                     if (fault === 'final-reader-io') fail('INJECTED_IO_FAILURE', 'injected final authority reader I/O failure');
                     if (fault === 'final-reader-tamper') { const target = path.join(finalPath, 'manifest.json'); fs.chmodSync(target, 0o600); fs.appendFileSync(target, 'tamper\n'); fs.chmodSync(target, 0o400); }
-                    const reopened = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath });
+                    const reopened = openMarketEvidenceAuthoritySnapshot({ storeRoot: root, allocationArtifactPath, expectedCommittedIdentity: committedDescriptor.identity });
                     if (reopened.head_transaction_id !== publicationCandidate.transaction_id || reopened.state_hash !== publicationCandidate.post_state_hash) fail('POST_RENAME_VERIFICATION_FAILED', 'committed transaction did not become the verified authority head');
                     outcome = Object.freeze({ status: 'COMMITTED', transaction_id: publicationCandidate.transaction_id, reused: false, snapshot: reopened });
                 } catch (error) { commitOutcomeUnknown(publicationCandidate, error); }
@@ -131,6 +184,8 @@ function publishProspectiveMarketEvidenceTransaction({ storeRoot, allocationArti
         }
     } catch (error) { pendingError = error; }
     try { release(); } catch (error) { pendingError = possibleRename && publicationCandidate ? (() => { try { commitOutcomeUnknown(publicationCandidate, error); } catch (unknown) { return unknown; } })() : error; }
+    closeDirectoryDescriptor(committedDescriptor);
+    closeDirectoryDescriptor(stagingDescriptor);
     if (pendingError) throw pendingError;
     return outcome;
 }

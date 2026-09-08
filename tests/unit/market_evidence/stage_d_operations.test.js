@@ -20,6 +20,7 @@ const {
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
     RUN_LOCK_FILE,
     runLockParentFile,
+    runLockAncestorFile,
     initializeRequestAccountingEpoch,
     readRequestLedger,
     recordRequestIntent,
@@ -49,7 +50,10 @@ function removeRunLockArtifacts(rootOrToken) {
     const parentLockPath = typeof rootOrToken === 'string'
         ? path.join(path.dirname(path.resolve(root)), runLockParentFile(root))
         : rootOrToken.parent_lock_path;
-    for (const target of [lockPath, parentLockPath]) {
+    const ancestorLockPath = typeof rootOrToken === 'string'
+        ? path.join(path.dirname(path.dirname(path.resolve(root))), runLockAncestorFile(root))
+        : rootOrToken.ancestor_lock_path;
+    for (const target of [lockPath, parentLockPath, ancestorLockPath]) {
         if (target && fs.existsSync(target)) fs.unlinkSync(target);
     }
 }
@@ -139,18 +143,26 @@ function liveAuthoritySetup(t) {
     };
 }
 
-function liveComponents(ctx, { response, error = null, publisher = async () => ({ status: 'FAKE_NOT_CALLED' }), build = () => { throw new Error('candidate builder must not be called'); }, candidateBuilder = null } = {}) {
-    const transport = createStageDFakeTransport({ response: error ? null : (response || {
+function liveComponents(ctx, { response, error = null, publisherStatus = 'FAKE_NOT_CALLED', publisherFailure = null, candidateFailure = null, candidateBuilder = null } = {}) {
+    const fixtureResponse = response || {
         raw_text: ctx.rawText,
         http_status: 200,
         response_received_at: '2026-09-08T08:00:03Z',
         provider_quota: null,
-    }), error });
+    };
+    const transport = createStageDFakeTransport({ response: error ? null : JSON.stringify(fixtureResponse), error });
     return {
         transport,
         evidencePersistence: createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot }),
-        candidateBuilder: candidateBuilder || createStageDCandidateBuilder(build),
-        transactionPublisher: createStageDFakePublisher(publisher, { authorityRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath }),
+        candidateBuilder: candidateBuilder || createStageDCandidateBuilder(candidateFailure || {}),
+        transactionPublisher: createStageDFakePublisher({
+            mode: publisherFailure ? 'ERROR' : 'RETURN',
+            status: publisherStatus,
+            errorCode: publisherFailure?.code || 'FAKE_PUBLISH_FAILURE',
+            errorMessage: publisherFailure?.message || 'test publisher failure',
+            authorityRoot: ctx.authorityRoot,
+            allocationArtifactPath: ctx.allocationArtifactPath,
+        }),
     };
 }
 
@@ -297,7 +309,7 @@ test('ledger and lock readers reject symlink or inode replacement instead of fol
     const token = acquireStageDRunLock({ operationRoot: lockRoot, runId: 'inode-lock', acquiredAt: START });
     fs.unlinkSync(token.lock_path);
     fs.writeFileSync(token.lock_path, '{"replacement":true}\n', { mode: 0o400 });
-    assert.throws(() => releaseStageDRunLock(token), error => error.code === 'AMBIGUOUS_RUN_LOCK');
+    assert.throws(() => releaseStageDRunLock(token), error => ['AMBIGUOUS_RUN_LOCK', 'DIRECTORY_IDENTITY_CHANGED'].includes(error.code));
     removeRunLockArtifacts(token);
 });
 
@@ -338,8 +350,7 @@ test('run lock rejects duplicate, stale and ambiguous ownership instead of recla
         () => acquireStageDRunLock({ operationRoot: root, runId: 'run-next', acquiredAt: '2026-09-08T01:00:00Z' }),
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
-    fs.unlinkSync(stale.lock_path); // explicit test-only reconciliation; production never auto-reclaims.
-    if (fs.existsSync(stale.parent_lock_path)) fs.unlinkSync(stale.parent_lock_path);
+    removeRunLockArtifacts(stale); // explicit test-only reconciliation; production never auto-reclaims.
     const corruptPath = path.join(root, RUN_LOCK_FILE);
     fs.writeFileSync(corruptPath, '{}\n', { mode: 0o400 });
     assert.equal(inspectStageDRunLock({ operationRoot: root }).state, 'AMBIGUOUS_REQUIRES_RECONCILIATION');
@@ -356,8 +367,7 @@ test('crash before request and crash after request both prevent another provider
         () => acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-next', acquiredAt: '2026-09-08T01:00:00Z' }),
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
-    fs.unlinkSync(before.lock_path); // explicit test-only recovery from a simulated crash.
-    if (fs.existsSync(before.parent_lock_path)) fs.unlinkSync(before.parent_lock_path);
+    removeRunLockArtifacts(before); // explicit test-only recovery from a simulated crash.
     intent(ctx, 'request-after', 'run-after');
     markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-after', transmittedAt: '2026-09-08T06:00:00Z' });
     acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-after', acquiredAt: '2026-09-08T06:00:00Z' });
@@ -393,7 +403,6 @@ test('offline dry run acquires/releases a lock, loads authority and ledger, and 
 
 test('live adapter with a local fake transport persists intent, consumes exactly one request, and records a duplicate no-op without publishing', async t => {
     const ctx = liveAuthoritySetup(t);
-    let publisherCalls = 0;
     const components = liveComponents(ctx, {
         response: {
             raw_text: ctx.rawText,
@@ -401,10 +410,7 @@ test('live adapter with a local fake transport persists intent, consumes exactly
             response_received_at: '2026-09-08T08:00:03Z',
             provider_quota: null,
         },
-        publisher: async () => {
-            publisherCalls += 1;
-            return { status: 'unexpected-publish' };
-        },
+        publisherStatus: 'unexpected-publish',
     });
     const before = openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath });
     const result = await executeLive(ctx, { components, runId: 'live-success-run', requestId: 'live-success-request' });
@@ -412,7 +418,7 @@ test('live adapter with a local fake transport persists intent, consumes exactly
     const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
     assert.equal(result.status, 'NO_OP_DUPLICATE_RAW_HASH');
     assert.equal(components.transport.call_count, 1);
-    assert.equal(publisherCalls, 0);
+    assert.equal(components.transactionPublisher.call_count, 0);
     assert.equal(after.head_transaction_id, before.head_transaction_id);
     assert.equal(after.state_hash, before.state_hash);
     assert.deepEqual(ledgerUsageSummary(ledger), {
@@ -543,7 +549,7 @@ test('candidate/parser failure releases the lock after consumed response, while 
     const parserRaw = parserFailure.rawText.replace('epl-fixture-001', 'epl-fixture-002');
     const parserComponents = liveComponents(parserFailure, {
         response: { raw_text: parserRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
-        build: () => { throw Object.assign(new Error('parser failure'), { code: 'PARSER_FAILURE' }); },
+        candidateFailure: { errorCode: 'PARSER_FAILURE', errorMessage: 'parser failure' },
     });
     await assert.rejects(
         executeLive(parserFailure, { components: parserComponents, runId: 'parser-failure-run', requestId: 'parser-failure-request' }),
@@ -560,7 +566,7 @@ test('candidate/parser failure releases the lock after consumed response, while 
     const publicationComponents = liveComponents(publicationFailure, {
         response: { raw_text: changedRaw, http_status: 200, response_received_at: '2026-09-08T08:00:03Z' },
         candidateBuilder: prospectiveBuilder,
-        publisher: async () => { throw Object.assign(new Error('publisher failure'), { code: 'PUBLISH_FAILED' }); },
+        publisherFailure: { code: 'PUBLISH_FAILED', message: 'publisher failure' },
     });
     await assert.rejects(
         executeLive(publicationFailure, { components: publicationComponents, runId: 'publication-failure-run', requestId: 'publication-failure-request' }),
@@ -622,8 +628,8 @@ test('provider transport is unavailable to test execution even with local fake a
             clock: () => '2026-09-08T08:00:00Z',
             transport,
             evidencePersistence: createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot }),
-            candidateBuilder: createStageDCandidateBuilder(() => { throw new Error('must not build'); }),
-            transactionPublisher: createStageDFakePublisher(async () => { throw new Error('must not publish'); }, {
+            candidateBuilder: createStageDCandidateBuilder(),
+            transactionPublisher: createStageDFakePublisher({ mode: 'ERROR', errorCode: 'FAKE_PUBLISH_FAILURE', errorMessage: 'must not publish',
                 authorityRoot: ctx.authorityRoot,
                 allocationArtifactPath: ctx.allocationArtifactPath,
             }),
@@ -651,7 +657,7 @@ test('evidence persistence rejects parent-directory replacement and unsafe captu
     );
 });
 
-test('run-lock directory replacement fails closed instead of unlinking a lock in another inode', t => {
+test('run-lock directory replacement fails closed and keeps the reconciliation fence', t => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-identity-'));
     t.after(() => {
         removeRunLockArtifacts(root);
@@ -661,9 +667,11 @@ test('run-lock directory replacement fails closed instead of unlinking a lock in
     const moved = `${root}.moved`;
     fs.renameSync(root, moved);
     fs.mkdirSync(root, { mode: 0o700 });
-    assert.doesNotThrow(() => releaseStageDRunLock(token));
-    assert.equal(inspectStageDRunLock({ operationRoot: root }).state, 'ABSENT');
-    assert.equal(inspectStageDRunLock({ operationRoot: moved }).state, 'ABSENT');
+    assert.throws(() => releaseStageDRunLock(token), error => ['AMBIGUOUS_RUN_LOCK', 'DIRECTORY_IDENTITY_CHANGED'].includes(error.code));
+    assert.equal(inspectStageDRunLock({ operationRoot: root }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
+    assert.equal(inspectStageDRunLock({ operationRoot: moved }).state, 'ACTIVE_OR_STALE_REQUIRES_RECONCILIATION');
+    removeRunLockArtifacts(root);
+    if (fs.existsSync(path.join(moved, RUN_LOCK_FILE))) fs.unlinkSync(path.join(moved, RUN_LOCK_FILE));
     fs.rmSync(root, { recursive: true, force: true });
     fs.renameSync(moved, root);
 });
@@ -727,20 +735,6 @@ test('a valid ledger-copy swap after lock acquisition fails closed before any pr
     if (fs.existsSync(path.join(moved, RUN_LOCK_FILE))) fs.unlinkSync(path.join(moved, RUN_LOCK_FILE));
     fs.rmSync(ctx.ledgerRoot, { recursive: true, force: true });
     fs.renameSync(moved, ctx.ledgerRoot);
-});
-
-test('fake transport rejects accessor-backed responses instead of executing test-controlled getters', () => {
-    let getterCalled = false;
-    const response = {};
-    Object.defineProperty(response, 'raw_text', {
-        enumerable: true,
-        get() {
-            getterCalled = true;
-            throw new Error('getter must not execute');
-        },
-    });
-    assert.throws(() => createStageDFakeTransport({ response }), error => error.code === 'INVALID_CONTRACT');
-    assert.equal(getterCalled, false);
 });
 
 test('transaction-v1 publisher uses a pinned authority descriptor for the full publication session', t => {

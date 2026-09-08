@@ -36,11 +36,12 @@ must not revive the retired Stage C live route or introduce another writer.
 
 The external scheduler supplies an opaque `run_id` for exactly one cycle. Before
 any provider boundary the engine acquires `stage-d-run.lock.json` using exclusive
-creation and fsync, plus a hash-bound parent-directory reconciliation sentinel.
-The parent sentinel is outside the operation root, so replacing the root inode
-cannot hide an active or ambiguous run. A second run, an old/stale lock, a
-malformed lock, ownership change, or a process crash all stop the next run with
-reconciliation required.
+creation and fsync, plus hash-bound reconciliation sentinels in the operation
+root's parent and its stable ancestor. The ancestor sentinel remains visible
+when either the root or its immediate parent is replaced, so a replacement
+directory cannot hide an active or ambiguous run. A second run, an old/stale
+lock, a malformed lock, ownership change, or a process crash all stop the next
+run with reconciliation required.
 There is deliberately no TTL takeover or automatic stale-lock deletion.
 
 The scheduler itself owns cadence. Until the owner supplies verified quota and a
@@ -144,11 +145,17 @@ authority reader, the production system clock and the existing Stage C
 chain; no direct observation, registry, allocation or transaction file write is
 allowed. Production transport, persistence, candidate-builder, publisher and
 runtime-authorization capabilities are factory-bound. The test-only seams
-(networkless fake transport, temporary roots, deterministic clock and local
-filesystem fault hooks) are available only under `NODE_ENV=test` and cannot
-arm production transport. The transaction-v1 publisher receives a pinned
+(the networkless fake transport accepts only serialized JSON fixtures; candidate
+and publisher failures are declarative descriptors; temporary roots,
+deterministic clocks and local filesystem fault hooks) are available only under
+`NODE_ENV=test` and cannot arm production transport. The transaction-v1 publisher receives a pinned
 authority directory descriptor for the complete read/lock/stage/rename/reopen
 session; it does not re-resolve the mutable authority path during publication.
+The authority reader pins the root and committed directory descriptors for each
+replay and each transaction package, and the adapter revalidates the public root
+identity before any duplicate no-op or publication decision. A directory
+generation mismatch is an ambiguity requiring reconciliation, never a reason to
+continue.
 The default proxy lease adapter disables background health probes, so a Stage D
 request cannot create an unaccounted provider health request.
 
