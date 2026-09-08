@@ -61,7 +61,7 @@ status 或执行授权来源；这些职责仍分别属于 AGENTS.md、CAPABILIT
 | 目录 | 职责 | 说明 |
 |---|---|---|
 | `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1/M3-R2 离线确定性重建入口 `historical_odds_rebuild.js` + 同级 canonical 模块 `historical_odds_rebuild_canonical.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
-| `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（13 个模块，含 M3-R2 provider 合同 `footballDataProviderContract.js`）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract）和 `market_evidence/stageDOperations.js`（Stage D factory-bound live adapter plus offline lock/ledger/quota control plane；默认不授权网络） |
+| `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（13 个模块，含 M3-R2 provider 合同 `footballDataProviderContract.js`）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
 | `src/ml/` | 训练、特征、推理 | 训练 / 预测需显式授权；`value_mvp/`（离线概率基准 VALUE_MVP-1，lifecycle: permanent，纯离线只读，见 docs/PROJECT_STATUS.md VALUE_MVP-1 节） |
 | `src/feature_engine/` | Node 侧特征工程 | |
 | `src/config/` | Python 侧配置 | 与 `config/`、`src/config_unified/` 多目录并存（见 config 风险提示） |
