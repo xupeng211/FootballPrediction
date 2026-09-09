@@ -71,6 +71,11 @@ const approvedQuotaConfigs = new WeakSet();
 const STAGE_D_RUNTIME_AUTHORIZATION = Symbol('stage-d-runtime-authorization');
 const STAGE_D_TEST_RUNTIME_AUTHORIZATION = Symbol('stage-d-test-runtime-authorization');
 const STAGE_D_TRANSPORT_CALL_TOKEN = Object.freeze({ stage_d: 'transport-call' });
+const CONTROLLED_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v1';
+const CONTROLLED_AUTHORIZATION_STATUS = 'OWNER_AND_CHIEF_ENGINEER_AUTHORIZED';
+const CONTROLLED_AUTHORIZATION_MISSION = 'CONTROLLED_STAGE_D_SINGLE_CYCLE';
+const CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX = '.stage-d-authorization-consumed-';
 const DIRECTORY_FD_ROOT = '/proc/self/fd';
 
 function fail(code, message) {
@@ -82,6 +87,12 @@ function fail(code, message) {
 function createStageDTestRuntimeAuthorization() {
     if (process.env.NODE_ENV !== 'test') fail('STAGE_D_NOT_AUTHORIZED', 'test runtime authorization is unavailable outside NODE_ENV=test');
     return STAGE_D_TEST_RUNTIME_AUTHORIZATION;
+}
+
+function createStageDProductionQuotaConfiguration(value, { now } = {}) {
+    const normalized = validateQuotaConfiguration(value, { now });
+    approvedQuotaConfigs.add(normalized);
+    return normalized;
 }
 
 function assertPlainObject(value, label) {
@@ -417,6 +428,171 @@ function parseCanonicalJsonBytes(bytes, label) {
     }
     if (bytes !== canonicalBytes(parsed)) fail('NON_CANONICAL_EVIDENCE', `${label} must use canonical serialization`);
     return parsed;
+}
+
+function assertSha256(value, label) {
+    if (typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value)) fail('INVALID_AUTHORIZATION', `${label} must be a lowercase SHA-256`);
+    return value;
+}
+
+function isDirectChild(parent, child) {
+    return path.dirname(path.resolve(child)) === path.resolve(parent);
+}
+
+function readStageDControlledAuthorization({ authorizationArtifactPath, ledgerRoot, runLockTrustRoot } = {}) {
+    if (typeof authorizationArtifactPath !== 'string' || !authorizationArtifactPath.trim()) fail('INVALID_AUTHORIZATION', 'authorizationArtifactPath is required');
+    if (typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('INVALID_AUTHORIZATION', 'ledgerRoot is required for authorization binding');
+    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
+    try {
+        const resolvedPath = path.resolve(authorizationArtifactPath);
+        if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_AUTHORIZATION', 'authorization artifact must be a direct child of the external runtime trust root');
+        const observed = readRegularFileBytes(resolvedPath, 'Stage D controlled authorization', { immutable: true });
+        const authorization = parseCanonicalJsonBytes(observed.bytes, 'Stage D controlled authorization');
+        if (observed.stat.uid !== process.getuid?.() && observed.stat.uid !== 0) fail('UNTRUSTED_AUTHORIZATION', 'authorization artifact owner is not the runtime user or root');
+        return Object.freeze({
+            path: resolvedPath,
+            authorization: Object.freeze(authorization),
+            authorization_sha256: sha256Text(observed.bytes),
+        });
+    } finally {
+        closeDirectoryDescriptor(trustDescriptor);
+    }
+}
+
+function sha256RegularFile(filePath, label) {
+    return sha256Text(readRegularFileBytes(filePath, label, { immutable: true }).bytes);
+}
+
+function controlledAuthorizationScope(authorization) {
+    return Object.freeze({
+        mission: authorization.mission,
+        provider: authorization.provider,
+        configured_markets: [...authorization.configured_markets],
+        configured_regions: [...authorization.configured_regions],
+        max_provider_requests: authorization.max_provider_requests,
+        expected_request_cost_credits: authorization.expected_request_cost_credits,
+        accounting_epoch_id: authorization.accounting_epoch_id,
+        authority_pre_head: authorization.authority_pre_head,
+        authority_pre_state_hash: authorization.authority_pre_state_hash,
+        authority_pre_observation_count: authorization.authority_pre_observation_count,
+        authority_pre_store_sha256: authorization.authority_pre_store_sha256,
+        authority_pre_allocation_authority_sha256: authorization.authority_pre_allocation_authority_sha256,
+        quota_config_sha256: authorization.quota_config_sha256,
+        fixture_universe_raw_sha256: authorization.fixture_universe_raw_sha256,
+        run_id: authorization.run_id,
+        request_id: authorization.request_id,
+    });
+}
+
+// eslint-disable-next-line complexity -- controlled authorization validates each immutable scope field independently.
+function validateStageDControlledAuthorization({ authorization, authoritySnapshot, authorityRoot, allocationArtifactPath, ledger, quotaConfig, quotaConfigSha256, fixtureUniverseRawSha256, now } = {}) {
+    assertExactKeys(
+        authorization,
+        [
+            'schema_version',
+            'authorization_id',
+            'authorization_status',
+            'mission',
+            'provider',
+            'configured_markets',
+            'configured_regions',
+            'max_provider_requests',
+            'expected_request_cost_credits',
+            'accounting_epoch_id',
+            'authority_pre_head',
+            'authority_pre_state_hash',
+            'authority_pre_observation_count',
+            'authority_pre_store_sha256',
+            'authority_pre_allocation_authority_sha256',
+            'quota_config_sha256',
+            'fixture_universe_raw_sha256',
+            'run_id',
+            'request_id',
+            'issued_at',
+            'expires_at',
+        ],
+        'Stage D controlled authorization'
+    );
+    if (authorization.schema_version !== CONTROLLED_AUTHORIZATION_SCHEMA_VERSION || authorization.authorization_status !== CONTROLLED_AUTHORIZATION_STATUS) fail('INVALID_AUTHORIZATION', 'controlled authorization schema or approval status is invalid');
+    if (!/^sda_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(authorization.authorization_id)) fail('INVALID_AUTHORIZATION', 'authorization_id is invalid');
+    if (authorization.mission !== CONTROLLED_AUTHORIZATION_MISSION || authorization.provider !== PROVIDER) fail('INVALID_AUTHORIZATION', 'authorization mission or provider scope is invalid');
+    if (stableStringify(authorization.configured_markets) !== stableStringify(CONFIGURED_MARKETS) || stableStringify(authorization.configured_regions) !== stableStringify(CONFIGURED_REGIONS)) fail('INVALID_AUTHORIZATION', 'authorization market or region scope is invalid');
+    if (authorization.max_provider_requests !== MAX_PROVIDER_REQUESTS_PER_CYCLE || authorization.expected_request_cost_credits !== EXPECTED_REQUEST_COST_CREDITS) fail('INVALID_AUTHORIZATION', 'authorization request scope is not bounded to one expected credit');
+    assertToken(authorization.accounting_epoch_id, 'authorization.accounting_epoch_id');
+    if (!/^tx_[a-f0-9]{64}$/.test(authorization.authority_pre_head || '') || !/^[a-f0-9]{64}$/.test(authorization.authority_pre_state_hash || '')) fail('INVALID_AUTHORIZATION', 'authorization authority pre-state is invalid');
+    assertNonNegativeInteger(authorization.authority_pre_observation_count, 'authorization.authority_pre_observation_count');
+    assertSha256(authorization.authority_pre_store_sha256, 'authorization.authority_pre_store_sha256');
+    assertSha256(authorization.authority_pre_allocation_authority_sha256, 'authorization.authority_pre_allocation_authority_sha256');
+    assertSha256(authorization.quota_config_sha256, 'authorization.quota_config_sha256');
+    assertSha256(authorization.fixture_universe_raw_sha256, 'authorization.fixture_universe_raw_sha256');
+    assertToken(authorization.run_id, 'authorization.run_id');
+    assertToken(authorization.request_id, 'authorization.request_id');
+    assertUtc(authorization.issued_at, 'authorization.issued_at');
+    assertUtc(authorization.expires_at, 'authorization.expires_at');
+    assertUtc(now, 'authorization validation time');
+    const issuedAt = Date.parse(authorization.issued_at);
+    const expiresAt = Date.parse(authorization.expires_at);
+    const currentAt = Date.parse(now);
+    if (expiresAt <= issuedAt || expiresAt - issuedAt > CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS) fail('INVALID_AUTHORIZATION', 'authorization lifetime is invalid or unbounded');
+    if (currentAt < issuedAt || currentAt >= expiresAt) fail('STAGE_D_AUTHORIZATION_EXPIRED', 'controlled authorization is not currently valid');
+    if (authorization.accounting_epoch_id !== ledger?.epoch?.epoch_id) fail('AUTHORIZATION_EPOCH_MISMATCH', 'authorization accounting epoch does not match the durable ledger');
+    if (authorization.authority_pre_head !== authoritySnapshot?.head_transaction_id || authorization.authority_pre_state_hash !== authoritySnapshot?.state_hash || authorization.authority_pre_observation_count !== authoritySnapshot?.observations?.length) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authorization authority pre-state does not match the fresh authority snapshot');
+    const resolvedAuthorityRoot = path.resolve(authorityRoot);
+    const resolvedAllocationPath = path.resolve(allocationArtifactPath);
+    if (authorization.authority_pre_store_sha256 !== sha256RegularFile(path.join(resolvedAuthorityRoot, 'STORE.json'), 'Stage D authority STORE.json')) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authorization STORE hash does not match the authority root');
+    if (authorization.authority_pre_allocation_authority_sha256 !== sha256RegularFile(resolvedAllocationPath, 'Stage D allocation authority')) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authorization allocation authority hash does not match the authority root');
+    if (authorization.quota_config_sha256 !== quotaConfigSha256) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization quota configuration hash does not match the supplied governed configuration');
+    if (authorization.fixture_universe_raw_sha256 !== fixtureUniverseRawSha256) fail('AUTHORIZATION_FIXTURE_UNIVERSE_MISMATCH', 'authorization fixture-universe RAW hash does not match the supplied replay input');
+    const validatedQuota = validateQuotaConfiguration(quotaConfig, { now });
+    if (validatedQuota.provider !== authorization.provider || validatedQuota.expected_request_cost_credits !== authorization.expected_request_cost_credits || validatedQuota.max_provider_requests_per_cycle !== authorization.max_provider_requests || validatedQuota.max_requests_per_stage_d_run !== authorization.max_provider_requests) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization does not bind the governed one-request quota configuration');
+    return Object.freeze({
+        authorization,
+        scope: controlledAuthorizationScope(authorization),
+        scope_sha256: sha256Text(stableStringify(controlledAuthorizationScope(authorization))),
+    });
+}
+
+function consumeStageDControlledAuthorization({ authorizationRecord, ledgerRoot, runLockTrustRoot, consumedAt } = {}) {
+    assertPlainObject(authorizationRecord, 'authorizationRecord');
+    const { authorization, scope, scope_sha256, authorization_sha256 } = authorizationRecord;
+    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
+    const markerName = `${CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX}${authorization.authorization_id}.json`;
+    try {
+        writeExclusiveImmutable(
+            scopedPath(trustDescriptor.fd, markerName),
+            {
+                schema_version: 'footballprediction-stage-d-controlled-initialization-consumption/v1',
+                authorization_id: authorization.authorization_id,
+                authorization_sha256,
+                scope_sha256,
+                mission: scope.mission,
+                provider: scope.provider,
+                market: scope.configured_markets[0],
+                region: scope.configured_regions[0],
+                max_provider_requests: scope.max_provider_requests,
+                expected_request_cost_credits: scope.expected_request_cost_credits,
+                accounting_epoch_id: scope.accounting_epoch_id,
+                authority_pre_head: scope.authority_pre_head,
+                run_id: scope.run_id,
+                request_id: scope.request_id,
+                consumed_at: consumedAt,
+            },
+            'Stage D controlled authorization consumption marker',
+            { directoryFd: trustDescriptor.fd },
+        );
+    } catch (error) {
+        if (error?.code === 'EEXIST') fail('STAGE_D_AUTHORIZATION_REPLAY', 'controlled authorization has already been consumed');
+        throw error;
+    } finally {
+        closeDirectoryDescriptor(trustDescriptor);
+    }
+    return Object.freeze({ marker_name: markerName, scope_sha256 });
+}
+
+function assertStageDAuthorityPreState({ authoritySnapshot, authorityRoot, allocationArtifactPath, expected } = {}) {
+    assertExactKeys(expected, ['head_transaction_id', 'state_hash', 'observation_count', 'store_sha256', 'allocation_authority_sha256'], 'Stage D authority pre-state expectation');
+    if (expected.head_transaction_id !== authoritySnapshot?.head_transaction_id || expected.state_hash !== authoritySnapshot?.state_hash || expected.observation_count !== authoritySnapshot?.observations?.length) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authority changed after controlled authorization validation');
+    if (expected.store_sha256 !== sha256RegularFile(path.join(path.resolve(authorityRoot), 'STORE.json'), 'Stage D authority STORE.json') || expected.allocation_authority_sha256 !== sha256RegularFile(path.resolve(allocationArtifactPath), 'Stage D allocation authority')) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authority artifact hash changed after controlled authorization validation');
 }
 
 function fsyncDirectory(directory) {
@@ -1969,6 +2145,130 @@ function abandonStageDRunLock(token) {
     fs.closeSync(token.trust_directory_fd);
 }
 
+function createStageDProductionRuntimeAuthorization() {
+    // This function is intentionally private.  The caller receives only the
+    // cycle result; the Symbol never crosses the binder boundary.
+    return STAGE_D_RUNTIME_AUTHORIZATION;
+}
+
+// eslint-disable-next-line complexity -- the binder deliberately orders validation, consumption and shared-cycle admission.
+async function executeStageDControlledInitialization(options = {}) {
+    assertPlainObject(options, 'Stage D controlled initialization options');
+    if (Object.prototype.hasOwnProperty.call(options, 'runtimeAuthorization')) fail('STAGE_D_RUNTIME_AUTHORIZATION_INPUT_FORBIDDEN', 'runtimeAuthorization is private and cannot be supplied to the production binder');
+    const {
+        authorizationArtifactPath,
+        authorityRoot,
+        allocationArtifactPath,
+        ledgerRoot,
+        quotaConfig,
+        quotaConfigSha256,
+        fixtureUniverseRawSha256,
+        fixtureUniverse,
+        evidenceRoot,
+        runLockTrustRoot,
+        transport,
+        evidencePersistence,
+        candidateBuilder,
+        transactionPublisher,
+        clock = systemClock,
+    } = options;
+    if (typeof authorityRoot !== 'string' || !authorityRoot.trim() || typeof allocationArtifactPath !== 'string' || !allocationArtifactPath.trim() || typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'authorityRoot, allocationArtifactPath and ledgerRoot are required');
+    if (typeof quotaConfigSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(quotaConfigSha256)) fail('STAGE_D_INPUT_INVALID', 'quotaConfigSha256 is required');
+    if (typeof fixtureUniverseRawSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(fixtureUniverseRawSha256)) fail('STAGE_D_INPUT_INVALID', 'fixtureUniverseRawSha256 is required');
+    if (typeof clock !== 'function') fail('TRUSTED_CLOCK_REQUIRED', 'clock must be callable');
+    const now = clock();
+    assertUtc(now, 'controlled authorization validation time');
+    const authorizationRecord = readStageDControlledAuthorization({ authorizationArtifactPath, ledgerRoot, runLockTrustRoot });
+    const authoritySnapshot = openMarketEvidenceAuthoritySnapshot({
+        storeRoot: path.resolve(authorityRoot),
+        allocationArtifactPath: path.resolve(allocationArtifactPath),
+    });
+    const ledger = readRequestLedger({ ledgerRoot: path.resolve(ledgerRoot) });
+    const normalizedQuotaConfig = createStageDProductionQuotaConfiguration(quotaConfig, { now });
+    const validatedAuthorization = validateStageDControlledAuthorization({
+        authorization: authorizationRecord.authorization,
+        authoritySnapshot,
+        authorityRoot,
+        allocationArtifactPath,
+        ledger,
+        quotaConfig: normalizedQuotaConfig,
+        quotaConfigSha256,
+        fixtureUniverseRawSha256,
+        now,
+    });
+    const componentKeys = ['transport', 'evidencePersistence', 'candidateBuilder', 'transactionPublisher'];
+    const hasComponentOverride = componentKeys.some(key => Object.prototype.hasOwnProperty.call(options, key));
+    let boundTransport;
+    let boundEvidencePersistence;
+    let boundCandidateBuilder;
+    let boundTransactionPublisher;
+    if (process.env.NODE_ENV === 'test') {
+        if (!componentKeys.every(key => Object.prototype.hasOwnProperty.call(options, key))) fail('STAGE_D_TEST_COMPONENTS_REQUIRED', 'networkless tests must supply every reviewed fake component explicitly');
+        boundTransport = transport;
+        boundEvidencePersistence = evidencePersistence;
+        boundCandidateBuilder = candidateBuilder;
+        boundTransactionPublisher = transactionPublisher;
+    } else {
+        if (hasComponentOverride) fail('STAGE_D_COMPONENT_OVERRIDE_FORBIDDEN', 'production binder components are fixed to reviewed factories');
+        if (!fixtureUniverse || typeof fixtureUniverse !== 'object') fail('STAGE_D_INPUT_INVALID', 'verified fixture universe replay input is required');
+        if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim() || typeof runLockTrustRoot !== 'string' || !runLockTrustRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'production evidenceRoot and runLockTrustRoot are required');
+        boundTransport = createStageDOddsApiTransport();
+        boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
+        boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureUniverse, supportedMarketKeys: CONFIGURED_MARKETS });
+        boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
+    }
+    const consumed = consumeStageDControlledAuthorization({
+        authorizationRecord: { ...authorizationRecord, ...validatedAuthorization },
+        ledgerRoot,
+        runLockTrustRoot,
+        consumedAt: now,
+    });
+    const cycleResult = await executeStageDOneCycle({
+        authorityRoot,
+        allocationArtifactPath,
+        ledgerRoot,
+        quotaConfig: normalizedQuotaConfig,
+        runId: validatedAuthorization.authorization.run_id,
+        requestId: validatedAuthorization.authorization.request_id,
+        runtimeAuthorization: createStageDProductionRuntimeAuthorization(),
+        transport: boundTransport,
+        evidencePersistence: boundEvidencePersistence,
+        candidateBuilder: boundCandidateBuilder,
+        transactionPublisher: boundTransactionPublisher,
+        runLockTrustRoot,
+        clock,
+        expectedAuthorityPreState: {
+            head_transaction_id: validatedAuthorization.authorization.authority_pre_head,
+            state_hash: validatedAuthorization.authorization.authority_pre_state_hash,
+            observation_count: validatedAuthorization.authorization.authority_pre_observation_count,
+            store_sha256: validatedAuthorization.authorization.authority_pre_store_sha256,
+            allocation_authority_sha256: validatedAuthorization.authorization.authority_pre_allocation_authority_sha256,
+        },
+    });
+    const providerTransmissionAttempted = cycleResult.status !== 'CANCELLED_BEFORE_TRANSMISSION';
+    return Object.freeze({
+        ...cycleResult,
+        authorization_audit: Object.freeze({
+            schema_version: 'footballprediction-stage-d-controlled-initialization-audit/v1',
+            authorization_id: validatedAuthorization.authorization.authorization_id,
+            authorization_sha256: authorizationRecord.authorization_sha256,
+            scope_sha256: validatedAuthorization.scope_sha256,
+            consumed_marker: consumed.marker_name,
+            mission: CONTROLLED_AUTHORIZATION_MISSION,
+            provider: PROVIDER,
+            market: CONFIGURED_MARKETS[0],
+            region: CONFIGURED_REGIONS[0],
+            max_provider_requests: MAX_PROVIDER_REQUESTS_PER_CYCLE,
+            expected_request_cost_credits: EXPECTED_REQUEST_COST_CREDITS,
+            accounting_epoch_id: validatedAuthorization.authorization.accounting_epoch_id,
+            run_id: validatedAuthorization.authorization.run_id,
+            request_id: validatedAuthorization.authorization.request_id,
+            provider_transmission_attempted: providerTransmissionAttempted,
+            terminal_result: cycleResult.status,
+        }),
+    });
+}
+
 // eslint-disable-next-line complexity -- the adapter deliberately enumerates each durable failure boundary.
 async function executeStageDOneCycle({
     authorityRoot,
@@ -1984,6 +2284,7 @@ async function executeStageDOneCycle({
     transactionPublisher,
     runLockTrustRoot,
     clock = systemClock,
+    expectedAuthorityPreState = null,
 } = {}) {
     if (runtimeAuthorization !== STAGE_D_RUNTIME_AUTHORIZATION
         && !(process.env.NODE_ENV === 'test' && runtimeAuthorization === STAGE_D_TEST_RUNTIME_AUTHORIZATION)) {
@@ -2048,6 +2349,14 @@ async function executeStageDOneCycle({
             ...authoritySnapshotOptions,
         });
         if (!isVerifiedMarketEvidenceAuthoritySnapshot(authoritySnapshot)) fail('AUTHORITY_NOT_READY', 'canonical Stage C authority is not verified');
+        if (expectedAuthorityPreState !== null) {
+            assertStageDAuthorityPreState({
+                authoritySnapshot,
+                authorityRoot: pinnedAuthorityRoot,
+                allocationArtifactPath: canonicalAllocationArtifactPath,
+                expected: expectedAuthorityPreState,
+            });
+        }
         const lockedLedgerRootIdentity = token.root_identity;
         let ledger;
         try {
@@ -2325,6 +2634,9 @@ module.exports = {
     RUN_LOCK_SCHEMA_VERSION,
     RUN_LOCK_GENERATION_SCHEMA_VERSION,
     QUOTA_SCHEMA_VERSION,
+    CONTROLLED_AUTHORIZATION_SCHEMA_VERSION,
+    CONTROLLED_AUTHORIZATION_STATUS,
+    CONTROLLED_AUTHORIZATION_MISSION,
     EPOCH_FILE,
     ENTRY_DIRECTORY,
     RUN_LOCK_FILE,
@@ -2371,6 +2683,7 @@ module.exports = {
     createStageDFakePublisher,
     createStageDTransactionPublisher,
     buildOfflineStageDRunPlan,
+    executeStageDControlledInitialization,
     classifyDuplicateCapture,
     executeStageDOneCycle,
 };

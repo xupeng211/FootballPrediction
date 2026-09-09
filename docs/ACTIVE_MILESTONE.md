@@ -30,6 +30,8 @@ CANONICAL_MARKET_EVIDENCE_SPINE=IMPLEMENTED / PILOT
 CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
 CONTINUOUS_CAPTURE_READY=NO
 STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__OPERATIONALLY_DISABLED
+STAGE_D_SINGLE_CYCLE_BINDER=IMPLEMENTED_ON_REMEDIATION_BRANCH__NOT_AUTHORIZED
+STAGE_D_BINDER_AUTHORIZATION=NO
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
 STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
 STAGE_D_INDEPENDENT_BACKUP_RESTORE=OPEN_OWNER_TARGET_REQUIRED
@@ -83,8 +85,11 @@ transaction-v1 spine 已在 main，支持不可变 RAW/receipt binding、replay�
 
 本次受控 source change 定义了 `scripts/ops/stage_d_cycle.js --dry-run` 的单周期 offline
 contract、不可自动回收的 run lock、sealed request-accounting epoch、prospective request
-ledger/verified-quota fail-close 实现，以及 factory-bound live adapter。live executor 仍默认禁用，
-必须显式 runtime authorization 且 quota verified 才可进入 transmission boundary。
+ledger/verified-quota fail-close 实现，以及唯一的
+`scripts/ops/stage_d_controlled_initialization.js` single-cycle binder。binder 在模块内部
+校验 bounded authorization artifact 后才创建 private runtime capability，并把
+`the_odds_api / h2h / uk / max=1 / cost=1` 绑定到同一 cycle path；live executor 仍默认禁用，
+本次 remediation 不授予 Stage D、provider request、scheduler 或 Gate 3 authorization。
 本地 sidecar epoch 精确绑定当前 Stage C authority，保留
 `HISTORICAL_PRE_EPOCH_REQUEST_TOTAL=AT_LEAST_2_CONFIRMED` 与
 `HISTORICAL_PRE_EPOCH_EXACT_TOTAL=UNKNOWN`；它没有发起 provider request、启动 scheduler 或
@@ -95,6 +100,8 @@ ledger/verified-quota fail-close 实现，以及 factory-bound live adapter。li
 - 指定不同物理故障域的 independent backup target。
 - 批准 retention / RPO / RTO（当前仅有 proposal）。
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
+- 完成普通 runtime user 对 committed transaction package 的 cold-load 权限合同（Blocker #2）。
+- 指定不同物理故障域并完成 isolated restore proof（Blocker #3）。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
 本轮已把 Owner 声明的 `STARTER_FREE / 500` 计划、`50` safety reserve、`450`
