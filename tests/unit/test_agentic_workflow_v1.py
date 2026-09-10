@@ -480,6 +480,7 @@ def test_reviewer_run_uses_separate_codex_context():
         final_message_path=Path("/tmp/final.json"),
     )
     assert command[:2] == ["codex", "exec"]
+    assert command.index("review") > command.index("--ignore-user-config")
     assert "review" in command
     with pytest.raises(ReviewReceiptError):
         _assert_contexts_separate("reviewer-1234", "reviewer-1234")
