@@ -21,6 +21,7 @@ import pr_ready_check as ready  # noqa: E402
 
 HEAD = "a" * 40
 OTHER_HEAD = "b" * 40
+BASE = "c" * 40
 REPO = "xupeng211/FootballPrediction"
 
 
@@ -43,16 +44,15 @@ def _fake_commands(  # noqa: C901
     def fake_gh(args: list[str]) -> str:
         if args[:2] == ["repo", "view"]:
             return json.dumps({"nameWithOwner": REPO, "defaultBranchRef": {"name": "main"}})
-        if args[:2] == ["pr", "view"]:
+        if args[0] == "api" and args[1] == f"repos/{REPO}/pulls/1866":
             return json.dumps(
                 {
                     "title": "test: workflow change",
                     "state": "OPEN",
-                    "isDraft": False,
-                    "baseRefName": "main",
-                    "headRefName": branch,
-                    "headRefOid": HEAD,
-                    "mergeable": "MERGEABLE",
+                    "draft": False,
+                    "base": {"ref": "main", "sha": BASE},
+                    "head": {"ref": branch, "sha": HEAD},
+                    "mergeable": True,
                     "body": "## Summary\nworkflow change",
                 }
             )
@@ -173,8 +173,16 @@ def test_missing_ruleset_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     def no_ruleset(args: list[str]) -> str:
         if args[:2] == ["repo", "view"]:
             return json.dumps({"nameWithOwner": REPO, "defaultBranchRef": {"name": "main"}})
-        if args[:2] == ["pr", "view"]:
-            return json.dumps({"headRefOid": HEAD})
+        if args[0] == "api" and args[1] == f"repos/{REPO}/pulls/1866":
+            return json.dumps(
+                {
+                    "state": "OPEN",
+                    "draft": False,
+                    "base": {"ref": "main", "sha": BASE},
+                    "head": {"ref": "feature/example", "sha": HEAD},
+                    "mergeable": True,
+                }
+            )
         if args[0] == "api" and args[1].split("?", 1)[0].endswith("/rulesets"):
             return json.dumps([[]])
         raise AssertionError(args)
@@ -190,6 +198,7 @@ def test_json_output_contains_exact_head_and_findings(monkeypatch: pytest.Monkey
     data = json.loads(ready.format_json(ready.evaluate(1866)))
 
     assert data["verdict"] == "PASS"
+    assert data["pr"]["base_sha"] == BASE
     assert data["pr"]["head_sha"] == HEAD
     assert data["local"]["head_sha"] == HEAD
     assert data["required_checks"]

@@ -60,9 +60,11 @@ class PrInfo:
     state: str
     is_draft: bool
     base_branch: str
+    base_sha: str
     head_branch: str
     head_sha: str
     mergeable: str
+    body: str
     body_present: bool
 
 
@@ -189,29 +191,42 @@ def fetch_repo() -> RepoInfo:
     return RepoInfo(name_with_owner=name_with_owner, default_branch=default_branch)
 
 
-def fetch_pr(number: int) -> PrInfo:
-    """Read the current metadata and head SHA for a pull request."""
+def fetch_pr(number: int, repository: str) -> PrInfo:
+    """Read PR metadata and exact base/head SHAs through the REST API.
+
+    ``baseRefOid`` is not exposed by every installed ``gh pr view`` version.
+    The REST payload has carried ``base.sha``/``head.sha`` across the supported
+    CLI versions, so use it as the canonical exact-head source.
+    """
     data = _load_json(
         run_gh(
             [
-                "pr",
-                "view",
-                str(number),
-                "--json",
-                "title,state,isDraft,baseRefName,headRefName,headRefOid,mergeable,body",
+                "api",
+                f"repos/{repository}/pulls/{number}",
             ]
         ),
-        "gh pr view",
+        "GitHub pull request API",
     )
+    base = data.get("base") or {}
+    head = data.get("head") or {}
+    mergeable_value = data.get("mergeable")
+    if mergeable_value is True:
+        mergeable = "MERGEABLE"
+    elif mergeable_value is False:
+        mergeable = "CONFLICTING"
+    else:
+        mergeable = str(data.get("mergeable_state") or "UNKNOWN").upper()
     return PrInfo(
         number=number,
         title=str(data.get("title") or ""),
         state=str(data.get("state") or "UNKNOWN"),
-        is_draft=bool(data.get("isDraft")),
-        base_branch=str(data.get("baseRefName") or ""),
-        head_branch=str(data.get("headRefName") or ""),
-        head_sha=str(data.get("headRefOid") or "").lower(),
-        mergeable=str(data.get("mergeable") or "UNKNOWN"),
+        is_draft=bool(data.get("draft")),
+        base_branch=str(base.get("ref") or ""),
+        base_sha=str(base.get("sha") or "").lower(),
+        head_branch=str(head.get("ref") or ""),
+        head_sha=str(head.get("sha") or "").lower(),
+        mergeable=mergeable,
+        body=str(data.get("body") or ""),
         body_present=bool(str(data.get("body") or "").strip()),
     )
 
@@ -315,7 +330,7 @@ def _finding(name: str, passed: bool, message: str) -> Finding:
 def evaluate(pr_number: int) -> PreflightResult:
     """Collect current state and return one read-only readiness verdict."""
     repo = fetch_repo()
-    pr = fetch_pr(pr_number)
+    pr = fetch_pr(pr_number, repo.name_with_owner)
     local = fetch_local()
     required_checks = fetch_required_checks(repo)
     check_runs = fetch_check_runs(repo, pr.head_sha)
@@ -334,6 +349,13 @@ def evaluate(pr_number: int) -> PreflightResult:
             "base-is-default-branch",
             pr.base_branch == repo.default_branch,
             f"base={pr.base_branch or 'MISSING'}; expected {repo.default_branch}",
+        )
+    )
+    findings.append(
+        _finding(
+            "base-is-full-sha",
+            _is_full_sha(pr.base_sha),
+            f"PR base={pr.base_sha or 'MISSING'}; full 40-character SHA required",
         )
     )
     findings.append(_finding("title-present", bool(pr.title.strip()), "PR title is present"))
@@ -426,6 +448,7 @@ def format_json(result: PreflightResult) -> str:
                 "state": result.pr.state,
                 "draft": result.pr.is_draft,
                 "base_branch": result.pr.base_branch,
+                "base_sha": result.pr.base_sha,
                 "head_branch": result.pr.head_branch,
                 "head_sha": result.pr.head_sha,
                 "mergeable": result.pr.mergeable,

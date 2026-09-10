@@ -61,6 +61,8 @@ status 或执行授权来源；这些职责仍分别属于 AGENTS.md、CAPABILIT
 | 目录 | 职责 | 说明 |
 |---|---|---|
 | `scripts/ops/` | 生产与运维脚本入口；canonical CLI（`fotmob_candidates_export.js`、`canonical_inventory_writer.js` 等；`odds_staging_dry_run.js` 为 internal 执行入口，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） | 同时保留大量历史 / legacy 脚本（见下）；`scripts/ops/helpers/` 承载 DB write guard 与治理检查；`scripts/ops/odds_staging/` 含 M3-R1/M3-R2 离线确定性重建入口 `historical_odds_rebuild.js` + 同级 canonical 模块 `historical_odds_rebuild_canonical.js`（`npm run odds:staging:rebuild`，同 dry-run 分类，未登记 README canonical 表，见 docs/CAPABILITY_INDEX.md） |
+| `scripts/devops/` | Git/PR/Agent engineering workflow infrastructure | `validation_profiles.py`、`pr_ready_check.py`、`exact_head.py` 保持既有 canonical devops authority；Agentic Workflow V1 的 `agent_workflow_preflight.py`、`codex_independent_review.py`、`agent_workflow.py` 只做 `ENGINEERING_INDEPENDENT_REVIEW` 的本地治理、fresh Codex exact-head receipt 和 merge-readiness 检查，hash 仅为 integrity evidence，永不代替 owner merge |
+| `docs/agentic/missions/` | 每个 bounded mission 的显式 scope contract | `schemas/agentic/mission_scope.schema.json` 定义结构；`<mission-id>.json` 明确 authorized/excluded paths、protected invariants 和 forbidden side effects；它是当前 mission 输入，不是全局 workflow allowlist |
 | `src/infrastructure/` | 抓取、网络、侦察、监控基础设施 | 含 M3 模块：`odds_staging/`（13 个模块，含 M3-R2 provider 合同 `footballDataProviderContract.js`）、`canonical/`（Authorization/Contract/Writer）、`fotmob/`（CandidateExporter/StatusContract） |
 | `src/ml/` | 训练、特征、推理 | 训练 / 预测需显式授权；`value_mvp/`（离线概率基准 VALUE_MVP-1，lifecycle: permanent，纯离线只读，见 docs/PROJECT_STATUS.md VALUE_MVP-1 节） |
 | `src/feature_engine/` | Node 侧特征工程 | |
@@ -163,6 +165,7 @@ README canonical 表只定义"正式入口"，不授予执行权。所有含副�
 ## 文档维护触发条件
 
 - 目录结构发生结构性变化（新增 / 移除顶层业务目录、migration 树职责明确化）。
+- Agent workflow infrastructure 的 canonical entry、receipt schema 或 role boundary 发生变化时，同步检查 `AGENTS.md`、`docs/AGENT_WORKFLOW.md`、`docs/CAPABILITY_INDEX.md` 和本节。
 - README canonical 表入口集合变化时，同步检查本文档目录职责表。
 - `config/db_schema_authority.json` 的 authority、lifecycle 或 startup policy 发生变化时，
   同步更新 README、CAPABILITY_INDEX 与本节。

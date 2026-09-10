@@ -8,8 +8,11 @@
 | --- | --- |
 | Task type | `source-code`, `workflow-governance`, or another matrix task type |
 | Workflow class | `NORMAL` or `STRICT` |
+| Mission ID | Current bounded mission identifier |
+| Mission scope contract | `docs/agentic/missions/<mission-id>.json` (tracked exact-head contract) |
 | Changed paths | `path/to/file` |
-| Authorized paths | `path/to/file` or `none` |
+| Authorized paths | Summary only; canonical authorization is read from Mission scope contract |
+| Excluded paths | Summary only; exclusions always override authorization |
 | Runtime behavior changed | `yes` / `no` |
 | Business progress | one concise sentence |
 
@@ -65,15 +68,26 @@ State the task type, authorized paths, and why the change is in scope.
 
 ## Strict Review Evidence
 
-<!-- Required when Workflow class is STRICT. NORMAL PRs may leave these placeholders. -->
+<!--
+Required when Workflow class is STRICT. Before the independent Codex reviewer
+has run, local preflight may temporarily use Result=PENDING with the exact
+current PR HEAD as the review target; after review, replace it with
+PASS/FINDINGS_RESOLVED before relying on required remote governance CI.
+PENDING can never make the PR merge-ready.
+
+For Agentic Workflow V1, the review assurance model is engineering independence:
+fresh separate Codex context, exact-head clean read-only worktree and stale-review
+rejection. It is not cryptographic reviewer attestation; same-UID local evidence
+tampering remains an explicitly accepted residual risk.
+-->
 
 | Field | Value |
 | --- | --- |
 | Version | `1` |
 | Task type | `STRICT` |
-| Provider | approved independent reviewer |
-| Reviewed full SHA | 40-character SHA |
-| Result | `PASS` or `FINDINGS_RESOLVED` |
+| Provider | `codex-independent-reviewer` (or `pending`) |
+| Reviewed full SHA | 40-character current PR HEAD (target while PENDING) |
+| Result | `PENDING`, `PASS`, or `FINDINGS_RESOLVED` |
 | Timestamp | ISO-8601 timestamp with timezone |
 
 Do not use the PR body as a runtime database, workflow state database, SHA database, or review registry. The only exception is the narrow, machine-checked `Strict Review Evidence` contract above; it records one provider-neutral result and its exact reviewed HEAD, and does not replace the reviewer's durable result.
