@@ -248,7 +248,9 @@ def validate_codex_session_evidence(  # noqa: C901, PLR0912, PLR0915
     session_meta = metadata[0]
     if session_meta.get("id") != reviewer_id or session_meta.get("session_id") != reviewer_id:
         raise ReviewReceiptError("Codex session_meta identity 与 reviewer invocation 不一致")
-    if session_meta.get("source") != "cli" or not str(session_meta.get("cli_version") or ""):
+    if session_meta.get("source") not in {"cli", "exec"} or not str(
+        session_meta.get("cli_version") or ""
+    ):
         raise ReviewReceiptError("Codex session_meta 缺少 CLI provenance")
     try:
         session_cwd = Path(str(session_meta.get("cwd") or "")).resolve(strict=True)
