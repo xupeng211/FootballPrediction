@@ -115,6 +115,11 @@ MISSION_EXCLUDED_PREFIXES: tuple[str, ...] = (
     "scripts/ops/stage_d",
     "scripts/ops/the_odds_api",
     "scripts/ops/odds_api",
+    "scripts/ops/helpers/db_write_guard",
+    "scripts/ops/helpers/python_db_write_guard",
+    "scripts/ops/helpers/python_db_write_enforcement_check",
+    "scripts/ops/helpers/sql_migration_policy_enforcement_check",
+    "scripts/ops/helpers/dbBlueprint.js",
 )
 MISSION_EXCLUDED_TOKENS: tuple[str, ...] = (
     "blocker_1",

@@ -248,7 +248,11 @@ def merge_ready_command(args: argparse.Namespace) -> int:
         GateCheck("protected-invariants", "PASS" if protected == "PASS" else protected, protected)
     )
     checks.append(
-        GateCheck("forbidden-side-effects", "PASS" if forbidden == "NO" else forbidden, forbidden)
+        GateCheck(
+            "forbidden-side-effects",
+            "PASS" if forbidden == "NO" else ("UNKNOWN" if forbidden == "UNKNOWN" else "FAIL"),
+            "NO" if forbidden == "NO" else f"required NO, received {forbidden}",
+        )
     )
     if args.pr is not None:
         checks.append(
@@ -292,7 +296,9 @@ def merge_ready_command(args: argparse.Namespace) -> int:
         "current_pr_head_sha": actual_head or "UNKNOWN",
         "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
         "protected_invariants": protected,
-        "forbidden_side_effects": forbidden,
+        "forbidden_side_effects": "NO"
+        if forbidden == "NO"
+        else ("UNKNOWN" if forbidden == "UNKNOWN" else "FAIL"),
         "required_pr_governance": "PASS"
         if next(
             (c for c in checks if c.name == "required-pr-governance"), GateCheck("", "UNKNOWN", "")

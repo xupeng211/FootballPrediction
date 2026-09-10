@@ -38,7 +38,7 @@ branch/worktree → base/head snapshot → implementation
 ```
 
 NORMAL 不默认运行本地 Codex review、DeepSeek、codex-loop、manifest/audit package 或 GitHub Codex Review。STRICT 只要求一个 primary independent reviewer；额外意见只能是 advisory，并且不能改变 owner 的 merge authority。
-STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定 review target 与当前完整 PR HEAD。V1 的 pre-review CI 阶段可声明 `Result=PENDING`；这只是阶段性 metadata，永远不能让 PR merge-ready。真正的独立 Codex receipt 产生后，Builder 将其更新为 `PASS` 或 `FINDINGS_RESOLVED`。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
+STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定 review target 与当前完整 PR HEAD。V1 的本地 pre-review 阶段可暂时声明 `Result=PENDING`；它永远不能让 PR merge-ready，也不能通过最终 required remote governance CI。真正的独立 Codex receipt 产生后，Builder 将其更新为 `PASS` 或 `FINDINGS_RESOLVED`。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
 
 ## 3. 验证 profile
 
@@ -277,8 +277,8 @@ protected-invariant evidence 都返回 `MERGE_READY=NO`。命令没有 merge API
 ### 11.5 CI enforcement 与 staged review
 
 GitHub `Production Gate` 的 PR AI Workflow Gate 开启
-`--enforce-agent-workflow-contract --allow-review-pending`，所以 CI 在 reviewer 尚未
-运行时可以验证 Task type / Workflow class / Documentation Impact / lifecycle；它不把
+`--enforce-agent-workflow-contract`，所以 required remote CI 始终要求有效的最终
+STRICT review evidence，并验证 Task type / Workflow class / Documentation Impact / lifecycle；它不把
 本 mission 的 path allowlist当成所有 PR 的全局限制，也不能把 PENDING 当作 final
 approval。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
 和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前

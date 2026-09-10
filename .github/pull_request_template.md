@@ -67,9 +67,10 @@ State the task type, authorized paths, and why the change is in scope.
 
 <!--
 Required when Workflow class is STRICT. Before the independent Codex reviewer
-has run, use Result=PENDING with the exact current PR HEAD as the review target;
-after review, replace it with PASS/FINDINGS_RESOLVED. PENDING can pass staged
-governance CI but can never make the PR merge-ready.
+has run, local preflight may temporarily use Result=PENDING with the exact
+current PR HEAD as the review target; after review, replace it with
+PASS/FINDINGS_RESOLVED before relying on required remote governance CI.
+PENDING can never make the PR merge-ready.
 -->
 
 | Field | Value |

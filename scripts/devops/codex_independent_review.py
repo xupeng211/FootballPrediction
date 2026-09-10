@@ -226,9 +226,10 @@ def _assert_successful_codex_completion(events: list[dict[str, Any]], final_text
         if event.get("type") == "item.completed"
         and event.get("item", {}).get("type") == "agent_message"
     ]
-    if len(messages) != 1 or not isinstance(messages[0][1], str):
-        raise ReviewReceiptError("Codex JSONL 必须包含恰好一个 completed agent_message")
-    if messages[0][0] > completed_turns[0] or messages[0][1] != final_text:
+    if not messages or not isinstance(messages[-1][1], str):
+        raise ReviewReceiptError("Codex JSONL 必须包含 completed agent_message")
+    final_index, final_message = messages[-1]
+    if final_index > completed_turns[0] or final_message != final_text:
         raise ReviewReceiptError("Codex raw completed agent_message 与 final message 不一致")
 
 

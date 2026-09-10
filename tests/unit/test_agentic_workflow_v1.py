@@ -155,6 +155,26 @@ def _write_valid_receipt(
                 json.dumps(
                     {
                         "type": "item.completed",
+                        "item": {
+                            "id": "item-progress-1",
+                            "type": "agent_message",
+                            "text": "检查中",
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "id": "item-progress-2",
+                            "type": "agent_message",
+                            "text": "即将输出结果",
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "item.completed",
                         "item": {"id": "item-1", "type": "agent_message", "text": final_text},
                     }
                 ),
@@ -439,6 +459,53 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
     assert agent_workflow.merge_ready_command(args) == 0
 
 
+@pytest.mark.parametrize("forbidden_status", ["PASS", "UNKNOWN"])
+def test_non_no_forbidden_side_effect_status_rejects_merge_ready(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    forbidden_status: str,
+):
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    local = tmp_path / "local.json"
+    local.write_text(
+        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        encoding="utf-8",
+    )
+    args = agent_workflow.build_parser().parse_args(
+        [
+            "merge-ready",
+            "--repo-root",
+            str(repo),
+            "--base-sha",
+            base,
+            "--head-sha",
+            head,
+            "--mission-id",
+            "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--local-preflight-json",
+            str(local),
+            "--receipt",
+            str(receipt),
+            "--pr",
+            "1",
+            "--protected-invariants",
+            "PASS",
+            "--forbidden-side-effects",
+            forbidden_status,
+        ]
+    )
+    monkeypatch.setattr(
+        agent_workflow,
+        "_remote_pr_check",
+        lambda _pr_number, *, expected_head, **_kwargs: (
+            agent_workflow.GateCheck("remote-required-ci", "PASS", "mock exact-head CI"),
+            {"verdict": "PASS", "head_sha": expected_head},
+        ),
+    )
+    assert agent_workflow.merge_ready_command(args) == 1
+
+
 def test_invalid_task_type_caught_locally():
     errors = validate_pr_metadata(
         _body(task_type="not-a-task"), ["scripts/devops/agent_workflow.py"]
@@ -594,5 +661,19 @@ def test_merge_ready_command_has_no_merge_operation():
 
 def test_protected_stage_d_path_is_out_of_scope():
     errors = validate_mission_scope(["scripts/ops/stage_d_cycle.js"])
+    assert errors
+    assert "SCOPE_ESCALATE" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "scripts/ops/helpers/db_write_guard.js",
+        "scripts/ops/helpers/python_db_write_guard.py",
+        "scripts/ops/helpers/python_db_write_enforcement_check.py",
+    ],
+)
+def test_production_db_write_guard_paths_are_out_of_scope(path: str):
+    errors = validate_mission_scope([path])
     assert errors
     assert "SCOPE_ESCALATE" in errors[0]
