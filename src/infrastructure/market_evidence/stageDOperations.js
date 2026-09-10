@@ -2471,13 +2471,30 @@ async function executeStageDOneCycle({
             }
         }
         if (controlledAuthorizationWindow !== null) {
-            assertPlainObject(controlledAuthorizationWindow, 'controlled authorization window');
-            assertExactKeys(controlledAuthorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
-            assertControlledAuthorizationWindow({
-                issuedAt: controlledAuthorizationWindow.issuedAt,
-                expiresAt: controlledAuthorizationWindow.expiresAt,
-                now: trustedClock(),
-            });
+            try {
+                assertPlainObject(controlledAuthorizationWindow, 'controlled authorization window');
+                assertExactKeys(controlledAuthorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
+                assertControlledAuthorizationWindow({
+                    issuedAt: controlledAuthorizationWindow.issuedAt,
+                    expiresAt: controlledAuthorizationWindow.expiresAt,
+                    now: trustedClock(),
+                });
+            } catch (error) {
+                try {
+                    markRequestTerminal({
+                        ledgerRoot,
+                        expectedRootIdentity: lockedLedgerRootIdentity,
+                        requestId,
+                        terminalState: 'CANCELLED_BEFORE_TRANSMISSION',
+                        at: trustedClock(),
+                        errorClassification: error.code || 'CONTROLLED_AUTHORIZATION_INVALID',
+                    });
+                } catch (terminalError) {
+                    reconcileRequired = true;
+                    throw terminalError;
+                }
+                throw error;
+            }
         }
         const transmissionStartedAt = trustedClock();
         assertUtc(transmissionStartedAt, 'transmission_started_at');

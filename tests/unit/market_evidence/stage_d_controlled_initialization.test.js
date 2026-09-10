@@ -325,6 +325,22 @@ test('controlled binder rejects a replaced fixture RAW input that retains the ol
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
 });
 
+test('authorization expiry after request intent is terminalized before fake transport', async t => {
+    const ctx = makeContext(t, { expires_at: '2026-09-08T08:00:02Z' });
+    const components = componentsFor(ctx);
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components, controlledClock())),
+        error => error.code === 'STAGE_D_AUTHORIZATION_EXPIRED',
+    );
+    assert.equal(components.transport.call_count, 0);
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    assert.equal(ledger.requests.length, 1);
+    assert.equal(ledger.requests[0].transmission_state, 'TRANSMISSION_NOT_STARTED');
+    assert.equal(ledger.requests[0].terminal_state, 'CANCELLED_BEFORE_TRANSMISSION');
+    assert.equal(ledger.requests[0].quota_units_charged_or_assumed, 0);
+    assert.equal(ledger.requests[0].error_classification, 'STAGE_D_AUTHORIZATION_EXPIRED');
+});
+
 test('valid controlled authorization reaches the shared cycle path and sends at most once', async t => {
     const ctx = makeContext(t);
     const components = componentsFor(ctx);
