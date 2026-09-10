@@ -269,8 +269,11 @@ FORBIDDEN_SIDE_EFFECTS=NO
 REQUIRED_PR_GOVERNANCE=PASS
 ```
 
-任何 `UNKNOWN`、failed/stale receipt、PENDING review、缺少 PR context 或缺少
-protected-invariant evidence 都返回 `MERGE_READY=NO`。命令没有 merge API、push、commit
+`PROTECTED_INVARIANTS=PASS` 与 `FORBIDDEN_SIDE_EFFECTS=NO` 既是必需声明，也必须与
+当前 exact-head、mission-scope 和已验证 local preflight 推导出的机器状态一致；调用者
+单独自报 PASS/NO 不能覆盖缺失或失败的机器证据。任何 `UNKNOWN`、failed/stale receipt、
+PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返回
+`MERGE_READY=NO`。命令没有 merge API、push、commit
 或 cleanup 分支；`MERGE_READY=YES` 只产生
 `READY_FOR_EXECUTION_CONTROLLER_MERGE_REVIEW=YES`，随后必须停止。
 

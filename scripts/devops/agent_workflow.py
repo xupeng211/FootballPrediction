@@ -104,6 +104,7 @@ def _local_preflight_check(path: Path, base_sha: str, head_sha: str) -> GateChec
                 "local-required-checks", "FAIL", f"local preflight verdict={value.get('verdict')}"
             )
         assert_exact_head(base_sha, value.get("base_sha"), role="local preflight base")
+        assert_exact_head(head_sha, value.get("head_sha"), role="local preflight scanned HEAD")
         assert_exact_head(head_sha, value.get("current_head_sha"), role="local preflight HEAD")
     except (RuntimeError, TypeError, ExactHeadError) as exc:
         return GateCheck("local-required-checks", "FAIL", str(exc))
@@ -160,7 +161,7 @@ def _remote_pr_check(
     ), evidence
 
 
-def merge_ready_command(args: argparse.Namespace) -> int:
+def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     """Evaluate merge readiness without performing any merge-side effect."""
 
     repo_root = Path(args.repo_root).resolve()
@@ -203,7 +204,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:
             )
         )
 
-    checks.append(_local_preflight_check(Path(args.local_preflight_json), base_sha, expected_head))
+    local_check = _local_preflight_check(Path(args.local_preflight_json), base_sha, expected_head)
+    checks.append(local_check)
 
     if args.pr is not None:
         remote_check, remote_evidence = _remote_pr_check(
@@ -242,16 +244,35 @@ def merge_ready_command(args: argparse.Namespace) -> int:
             )
         )
 
-    protected = _status(args.protected_invariants)
-    forbidden = _status(args.forbidden_side_effects)
+    exact_check = next(
+        (check for check in checks if check.name == "exact-head"), GateCheck("", "UNKNOWN", "")
+    )
+    scope_check = next(
+        (check for check in checks if check.name == "mission-scope"), GateCheck("", "UNKNOWN", "")
+    )
+    machine_safety_pass = all(
+        check.status == "PASS" for check in (exact_check, scope_check, local_check)
+    )
+    machine_protected = "PASS" if machine_safety_pass else "UNKNOWN"
+    machine_forbidden = "NO" if machine_safety_pass else "UNKNOWN"
+    declared_protected = _status(args.protected_invariants)
+    declared_forbidden = _status(args.forbidden_side_effects)
     checks.append(
-        GateCheck("protected-invariants", "PASS" if protected == "PASS" else protected, protected)
+        GateCheck(
+            "protected-invariants",
+            "PASS"
+            if declared_protected == "PASS" and machine_protected == "PASS"
+            else ("UNKNOWN" if declared_protected == "UNKNOWN" else "FAIL"),
+            f"declared={declared_protected}; derived={machine_protected}",
+        )
     )
     checks.append(
         GateCheck(
             "forbidden-side-effects",
-            "PASS" if forbidden == "NO" else ("UNKNOWN" if forbidden == "UNKNOWN" else "FAIL"),
-            "NO" if forbidden == "NO" else f"required NO, received {forbidden}",
+            "PASS"
+            if declared_forbidden == "NO" and machine_forbidden == "NO"
+            else ("UNKNOWN" if declared_forbidden == "UNKNOWN" else "FAIL"),
+            f"declared={declared_forbidden}; derived={machine_forbidden}",
         )
     )
     if args.pr is not None:
@@ -295,10 +316,12 @@ def merge_ready_command(args: argparse.Namespace) -> int:
         "reviewed_head_sha": receipt.get("reviewed_head_sha", "UNKNOWN"),
         "current_pr_head_sha": actual_head or "UNKNOWN",
         "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
-        "protected_invariants": protected,
-        "forbidden_side_effects": "NO"
-        if forbidden == "NO"
-        else ("UNKNOWN" if forbidden == "UNKNOWN" else "FAIL"),
+        "protected_invariants": machine_protected
+        if declared_protected == "PASS" and machine_protected == "PASS"
+        else ("UNKNOWN" if declared_protected == "UNKNOWN" else "FAIL"),
+        "forbidden_side_effects": machine_forbidden
+        if declared_forbidden == "NO" and machine_forbidden == "NO"
+        else ("UNKNOWN" if declared_forbidden == "UNKNOWN" else "FAIL"),
         "required_pr_governance": "PASS"
         if next(
             (c for c in checks if c.name == "required-pr-governance"), GateCheck("", "UNKNOWN", "")

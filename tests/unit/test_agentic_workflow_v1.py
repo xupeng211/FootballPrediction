@@ -344,7 +344,9 @@ def test_blocking_finding_rejects_merge_ready(tmp_path: Path):
     )
     local = tmp_path / "local.json"
     local.write_text(
-        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        json.dumps(
+            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
+        ),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -384,7 +386,9 @@ def test_missing_review_rejects_merge_ready(tmp_path: Path):
     repo, base, head = _make_repo(tmp_path)
     local = tmp_path / "local.json"
     local.write_text(
-        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        json.dumps(
+            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
+        ),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -420,7 +424,9 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
     local.write_text(
-        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        json.dumps(
+            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
+        ),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -469,7 +475,9 @@ def test_non_no_forbidden_side_effect_status_rejects_merge_ready(
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
     local.write_text(
-        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        json.dumps(
+            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
+        ),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -536,7 +544,9 @@ def test_merge_ready_without_pr_context_fails_closed(tmp_path: Path):
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
     local.write_text(
-        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        json.dumps(
+            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
+        ),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -565,6 +575,24 @@ def test_merge_ready_without_pr_context_fails_closed(tmp_path: Path):
         ]
     )
     assert agent_workflow.merge_ready_command(args) == 1
+
+
+def test_local_preflight_rejects_pass_for_different_scanned_head(tmp_path: Path):
+    local = tmp_path / "local.json"
+    local.write_text(
+        json.dumps(
+            {
+                "verdict": "PASS",
+                "base_sha": "1" * 40,
+                "head_sha": "2" * 40,
+                "current_head_sha": "3" * 40,
+            }
+        ),
+        encoding="utf-8",
+    )
+    check = agent_workflow._local_preflight_check(local, "1" * 40, "3" * 40)
+    assert check.status == "FAIL"
+    assert "scanned HEAD" in check.message
 
 
 def test_remote_merge_check_rejects_pending_pr_review_evidence(
