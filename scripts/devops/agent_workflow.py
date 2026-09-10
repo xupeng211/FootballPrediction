@@ -362,6 +362,10 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
         )
 
     ready = bool(checks) and all(check.status == "PASS" for check in checks)
+    governance_check = next(
+        (c for c in checks if c.name == "required-pr-governance"),
+        GateCheck("required-pr-governance", "UNKNOWN", ""),
+    )
     output: dict[str, Any] = {
         "schema_version": CONTRACT_SCHEMA_VERSION,
         "mission_id": args.mission_id,
@@ -391,11 +395,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
         "forbidden_side_effects": machine_forbidden
         if declared_forbidden == "NO" and machine_forbidden == "NO"
         else ("UNKNOWN" if declared_forbidden == "UNKNOWN" else "FAIL"),
-        "required_pr_governance": "PASS"
-        if next(
-            (c for c in checks if c.name == "required-pr-governance"), GateCheck("", "UNKNOWN", "")
-        ).status
-        == "PASS"
+        "required_pr_governance": governance_check.status
+        if governance_check.status in {"PASS", "FAIL"}
         else "UNKNOWN",
         "checks": [asdict(check) for check in checks],
         "remote_evidence": remote_evidence,
