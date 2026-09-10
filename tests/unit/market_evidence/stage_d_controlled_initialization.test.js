@@ -83,7 +83,14 @@ function removeRunLockArtifacts({ ledgerRoot, trustRoot }) {
 }
 
 function writeReadOnlyCanonicalJson(filePath, value) {
+    if (fs.existsSync(filePath)) fs.chmodSync(filePath, 0o600);
     fs.writeFileSync(filePath, `${stableStringify(value)}\n`, { mode: 0o444 });
+    fs.chmodSync(filePath, 0o444);
+}
+
+function overwriteReadOnlyFile(filePath, bytes) {
+    fs.chmodSync(filePath, 0o600);
+    fs.writeFileSync(filePath, bytes);
     fs.chmodSync(filePath, 0o444);
 }
 
@@ -142,6 +149,11 @@ function makeContext(t, authorizationOverrides = {}) {
     fs.mkdirSync(trustRoot, { recursive: true, mode: 0o700 });
     fs.mkdirSync(evidenceRoot, { recursive: true, mode: 0o700 });
     const quotaConfig = quotaConfiguration();
+    const quotaConfigPath = path.join(root, 'quota-config.json');
+    writeReadOnlyCanonicalJson(quotaConfigPath, quotaConfig);
+    const fixtureUniverseRawPath = path.join(root, 'fixture-universe.raw.html');
+    fs.writeFileSync(fixtureUniverseRawPath, rawText, { mode: 0o444 });
+    fs.chmodSync(fixtureUniverseRawPath, 0o444);
     const quotaConfigSha256 = sha256Text(`${stableStringify(quotaConfig)}\n`);
     const storeSha256 = sha256Text(fs.readFileSync(path.join(authorityRoot, 'STORE.json'), 'utf8'));
     const allocationSha256 = sha256Text(fs.readFileSync(allocationArtifactPath, 'utf8'));
@@ -158,6 +170,8 @@ function makeContext(t, authorizationOverrides = {}) {
         trustRoot,
         evidenceRoot,
         quotaConfig,
+        quotaConfigPath,
+        fixtureUniverseRawPath,
         quotaConfigSha256,
         storeSha256,
         allocationSha256,
@@ -175,7 +189,7 @@ function componentsFor(ctx, { error = null } = {}) {
     const response = {
         raw_text: ctx.rawText,
         http_status: 200,
-        response_received_at: '2026-09-08T08:00:03Z',
+        response_received_at: '2026-09-08T08:00:05Z',
         provider_quota: {
             'x-requests-used': '1',
             'x-requests-remaining': '19',
@@ -200,9 +214,9 @@ function binderOptions(ctx, components, clock = () => AUTHORIZATION_NOW) {
         authorityRoot: ctx.authorityRoot,
         allocationArtifactPath: ctx.allocationArtifactPath,
         ledgerRoot: ctx.ledgerRoot,
-        quotaConfig: ctx.quotaConfig,
-        quotaConfigSha256: ctx.quotaConfigSha256,
-        fixtureUniverseRawSha256: ctx.rawSha256,
+        quotaConfigPath: ctx.quotaConfigPath,
+        fixtureUniverseRawPath: ctx.fixtureUniverseRawPath,
+        fixtureUniverse: ctx.fixture.universe,
         evidenceRoot: ctx.evidenceRoot,
         runLockTrustRoot: ctx.trustRoot,
         ...components,
@@ -270,13 +284,42 @@ test('unknown quota state fails closed before fake transport', async t => {
     const ctx = makeContext(t);
     const components = componentsFor(ctx);
     const unknownQuota = quotaConfiguration({ quota_evidence_verified: false });
+    const unknownQuotaSha256 = sha256Text(`${stableStringify(unknownQuota)}\n`);
+    overwriteReadOnlyFile(ctx.quotaConfigPath, `${stableStringify(unknownQuota)}\n`);
+    makeAuthorization(ctx, { quota_config_sha256: unknownQuotaSha256 });
     await assert.rejects(
         executeStageDControlledInitialization({
             ...binderOptions(ctx, components),
-            quotaConfig: unknownQuota,
-            quotaConfigSha256: ctx.quotaConfigSha256,
         }),
         error => error.code === 'UNVERIFIED_QUOTA_CONFIGURATION',
+    );
+    assert.equal(components.transport.call_count, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+});
+
+test('controlled binder rejects a replaced quota input that retains the old authorization hash', async t => {
+    const ctx = makeContext(t);
+    const components = componentsFor(ctx);
+    const replacedQuota = quotaConfiguration({
+        monthly_quota_limit: 19,
+        automated_spend_limit: 16,
+    });
+    overwriteReadOnlyFile(ctx.quotaConfigPath, `${stableStringify(replacedQuota)}\n`);
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === 'AUTHORIZATION_QUOTA_MISMATCH',
+    );
+    assert.equal(components.transport.call_count, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+});
+
+test('controlled binder rejects a replaced fixture RAW input that retains the old authorization hash', async t => {
+    const ctx = makeContext(t);
+    const components = componentsFor(ctx);
+    overwriteReadOnlyFile(ctx.fixtureUniverseRawPath, `${ctx.rawText}\n`);
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === 'AUTHORIZATION_FIXTURE_UNIVERSE_MISMATCH',
     );
     assert.equal(components.transport.call_count, 0);
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
@@ -332,6 +375,26 @@ test('binder refuses caller-supplied private runtime authorization', async t => 
         error => error.code === 'STAGE_D_RUNTIME_AUTHORIZATION_INPUT_FORBIDDEN',
     );
     assert.equal(components.transport.call_count, 0);
+});
+
+test('production binder refuses caller-supplied clock injection before any provider component is created', async t => {
+    const ctx = makeContext(t);
+    const components = componentsFor(ctx);
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+        await assert.rejects(
+            executeStageDControlledInitialization({
+                ...binderOptions(ctx, components),
+                clock: () => AUTHORIZATION_NOW,
+            }),
+            error => error.code === 'TRUSTED_CLOCK_REQUIRED',
+        );
+    } finally {
+        process.env.NODE_ENV = previousNodeEnv;
+    }
+    assert.equal(components.transport.call_count, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
 });
 
 test('CLI parser exposes only bounded artifact paths and cannot accept a private runtime authorization token', () => {

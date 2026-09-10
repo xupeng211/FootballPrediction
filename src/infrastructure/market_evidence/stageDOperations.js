@@ -12,6 +12,8 @@ const { HttpsProxyAgent } = require('https-proxy-agent');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const { getProxyProvider } = require('../network/ProxyProvider');
 const { isUtcTimestamp, sha256Text, stableStringify } = require('./contracts');
+const { seedFotMobFixtureUniverse } = require('../fixture_universe/FixtureUniverse');
+const { loadVerifiedAllocationAuthority } = require('../fixture_universe/AllocationAuthorityArtifact');
 const { createCaptureReceipt, loadVerifiedCaptureReceipt } = require('./evidenceStore');
 const { openMarketEvidenceAuthoritySnapshot, isVerifiedMarketEvidenceAuthoritySnapshot } = require('./authorityReader');
 const { publishProspectiveMarketEvidenceTransaction } = require('./atomicPublisher');
@@ -412,6 +414,44 @@ function readRegularFileBytes(filePath, label, { immutable = true } = {}) {
     } finally {
         if (fd !== undefined) fs.closeSync(fd);
     }
+}
+
+function parseJsonInputBytes(bytes, label) {
+    try {
+        return JSON.parse(bytes);
+    } catch (error) {
+        fail('INVALID_JSON', `${label} is invalid JSON: ${error.message}`);
+    }
+}
+
+function readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256 } = {}) {
+    const observed = readRegularFileBytes(quotaConfigPath, 'Stage D quota configuration', { immutable: false });
+    const observedSha256 = sha256Text(observed.bytes);
+    if (observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization quota configuration hash does not match the bytes read from the governed configuration');
+    return Object.freeze({
+        value: Object.freeze(parseJsonInputBytes(observed.bytes, 'Stage D quota configuration')),
+        sha256: observedSha256,
+    });
+}
+
+function readBoundFixtureUniverse({ fixtureUniverseRawPath, allocationArtifactPath, expectedSha256, testUniverse = null } = {}) {
+    const observed = readRegularFileBytes(fixtureUniverseRawPath, 'Stage D fixture-universe RAW', { immutable: false });
+    const observedSha256 = sha256Text(observed.bytes);
+    if (observedSha256 !== expectedSha256) fail('AUTHORIZATION_FIXTURE_UNIVERSE_MISMATCH', 'authorization fixture-universe RAW hash does not match the bytes read from the replay input');
+    if (testUniverse !== null) {
+        if (process.env.NODE_ENV !== 'test' || !testUniverse || typeof testUniverse !== 'object') fail('STAGE_D_INPUT_BINDING_FORBIDDEN', 'fixture universe injection is test-only');
+        return Object.freeze({ universe: testUniverse, raw_sha256: observedSha256 });
+    }
+    const allocation = loadVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath });
+    const universe = seedFotMobFixtureUniverse({
+        rawHtml: observed.bytes,
+        rawSha256: observedSha256,
+        allocation: allocation.allocationSnapshot,
+        allocationAuthority: allocation.allocationAuthority,
+        manifest: { raw_file_relative_path: path.basename(fixtureUniverseRawPath) },
+        mode: 'REPLAY',
+    });
+    return Object.freeze({ universe, raw_sha256: observedSha256 });
 }
 
 function readCanonicalJson(filePath, label, options = {}) {
@@ -2132,6 +2172,17 @@ function createStageDTransactionPublisher({ storeRoot, allocationArtifactPath } 
     return publisher;
 }
 
+function assertControlledAuthorizationWindow({ issuedAt, expiresAt, now } = {}) {
+    assertUtc(issuedAt, 'controlled authorization issued_at');
+    assertUtc(expiresAt, 'controlled authorization expires_at');
+    assertUtc(now, 'controlled authorization transmission validation time');
+    const issuedAtMs = Date.parse(issuedAt);
+    const expiresAtMs = Date.parse(expiresAt);
+    const nowMs = Date.parse(now);
+    if (expiresAtMs <= issuedAtMs || expiresAtMs - issuedAtMs > CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS) fail('INVALID_AUTHORIZATION', 'authorization lifetime is invalid or unbounded');
+    if (nowMs < issuedAtMs || nowMs >= expiresAtMs) fail('STAGE_D_AUTHORIZATION_EXPIRED', 'controlled authorization is not currently valid at the provider transmission boundary');
+}
+
 function systemClock() {
     return new Date().toISOString();
 }
@@ -2155,14 +2206,16 @@ function createStageDProductionRuntimeAuthorization() {
 async function executeStageDControlledInitialization(options = {}) {
     assertPlainObject(options, 'Stage D controlled initialization options');
     if (Object.prototype.hasOwnProperty.call(options, 'runtimeAuthorization')) fail('STAGE_D_RUNTIME_AUTHORIZATION_INPUT_FORBIDDEN', 'runtimeAuthorization is private and cannot be supplied to the production binder');
+    for (const forbiddenInput of ['quotaConfig', 'quotaConfigSha256', 'fixtureUniverseRawSha256']) {
+        if (Object.prototype.hasOwnProperty.call(options, forbiddenInput)) fail('STAGE_D_INPUT_BINDING_FORBIDDEN', `${forbiddenInput} is bound to the governed input bytes and cannot be supplied to the production binder`);
+    }
     const {
         authorizationArtifactPath,
         authorityRoot,
         allocationArtifactPath,
         ledgerRoot,
-        quotaConfig,
-        quotaConfigSha256,
-        fixtureUniverseRawSha256,
+        quotaConfigPath,
+        fixtureUniverseRawPath,
         fixtureUniverse,
         evidenceRoot,
         runLockTrustRoot,
@@ -2170,21 +2223,30 @@ async function executeStageDControlledInitialization(options = {}) {
         evidencePersistence,
         candidateBuilder,
         transactionPublisher,
-        clock = systemClock,
+        clock,
     } = options;
     if (typeof authorityRoot !== 'string' || !authorityRoot.trim() || typeof allocationArtifactPath !== 'string' || !allocationArtifactPath.trim() || typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'authorityRoot, allocationArtifactPath and ledgerRoot are required');
-    if (typeof quotaConfigSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(quotaConfigSha256)) fail('STAGE_D_INPUT_INVALID', 'quotaConfigSha256 is required');
-    if (typeof fixtureUniverseRawSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(fixtureUniverseRawSha256)) fail('STAGE_D_INPUT_INVALID', 'fixtureUniverseRawSha256 is required');
-    if (typeof clock !== 'function') fail('TRUSTED_CLOCK_REQUIRED', 'clock must be callable');
-    const now = clock();
+    if (typeof quotaConfigPath !== 'string' || !quotaConfigPath.trim() || typeof fixtureUniverseRawPath !== 'string' || !fixtureUniverseRawPath.trim()) fail('STAGE_D_INPUT_INVALID', 'quotaConfigPath and fixtureUniverseRawPath are required');
+    if (process.env.NODE_ENV !== 'test' && Object.prototype.hasOwnProperty.call(options, 'clock')) fail('TRUSTED_CLOCK_REQUIRED', 'production binder clock is fixed to the system clock');
+    const trustedClock = process.env.NODE_ENV === 'test' ? (clock || systemClock) : systemClock;
+    if (typeof trustedClock !== 'function') fail('TRUSTED_CLOCK_REQUIRED', 'clock must be callable');
+    const now = trustedClock();
     assertUtc(now, 'controlled authorization validation time');
     const authorizationRecord = readStageDControlledAuthorization({ authorizationArtifactPath, ledgerRoot, runLockTrustRoot });
+    if (process.env.NODE_ENV !== 'test' && Object.prototype.hasOwnProperty.call(options, 'fixtureUniverse')) fail('STAGE_D_INPUT_BINDING_FORBIDDEN', 'production fixture universe is constructed only from the bound RAW input');
+    const quotaSource = readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256: authorizationRecord.authorization.quota_config_sha256 });
+    const fixtureSource = readBoundFixtureUniverse({
+        fixtureUniverseRawPath,
+        allocationArtifactPath,
+        expectedSha256: authorizationRecord.authorization.fixture_universe_raw_sha256,
+        testUniverse: process.env.NODE_ENV === 'test' ? fixtureUniverse : null,
+    });
     const authoritySnapshot = openMarketEvidenceAuthoritySnapshot({
         storeRoot: path.resolve(authorityRoot),
         allocationArtifactPath: path.resolve(allocationArtifactPath),
     });
     const ledger = readRequestLedger({ ledgerRoot: path.resolve(ledgerRoot) });
-    const normalizedQuotaConfig = createStageDProductionQuotaConfiguration(quotaConfig, { now });
+    const normalizedQuotaConfig = createStageDProductionQuotaConfiguration(quotaSource.value, { now });
     const validatedAuthorization = validateStageDControlledAuthorization({
         authorization: authorizationRecord.authorization,
         authoritySnapshot,
@@ -2192,8 +2254,8 @@ async function executeStageDControlledInitialization(options = {}) {
         allocationArtifactPath,
         ledger,
         quotaConfig: normalizedQuotaConfig,
-        quotaConfigSha256,
-        fixtureUniverseRawSha256,
+        quotaConfigSha256: quotaSource.sha256,
+        fixtureUniverseRawSha256: fixtureSource.raw_sha256,
         now,
     });
     const componentKeys = ['transport', 'evidencePersistence', 'candidateBuilder', 'transactionPublisher'];
@@ -2210,11 +2272,10 @@ async function executeStageDControlledInitialization(options = {}) {
         boundTransactionPublisher = transactionPublisher;
     } else {
         if (hasComponentOverride) fail('STAGE_D_COMPONENT_OVERRIDE_FORBIDDEN', 'production binder components are fixed to reviewed factories');
-        if (!fixtureUniverse || typeof fixtureUniverse !== 'object') fail('STAGE_D_INPUT_INVALID', 'verified fixture universe replay input is required');
         if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim() || typeof runLockTrustRoot !== 'string' || !runLockTrustRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'production evidenceRoot and runLockTrustRoot are required');
         boundTransport = createStageDOddsApiTransport();
         boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
-        boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureUniverse, supportedMarketKeys: CONFIGURED_MARKETS });
+        boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
         boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
     }
     const consumed = consumeStageDControlledAuthorization({
@@ -2236,7 +2297,11 @@ async function executeStageDControlledInitialization(options = {}) {
         candidateBuilder: boundCandidateBuilder,
         transactionPublisher: boundTransactionPublisher,
         runLockTrustRoot,
-        clock,
+        clock: trustedClock,
+        controlledAuthorizationWindow: {
+            issuedAt: validatedAuthorization.authorization.issued_at,
+            expiresAt: validatedAuthorization.authorization.expires_at,
+        },
         expectedAuthorityPreState: {
             head_transaction_id: validatedAuthorization.authorization.authority_pre_head,
             state_hash: validatedAuthorization.authorization.authority_pre_state_hash,
@@ -2284,6 +2349,7 @@ async function executeStageDOneCycle({
     transactionPublisher,
     runLockTrustRoot,
     clock = systemClock,
+    controlledAuthorizationWindow = null,
     expectedAuthorityPreState = null,
 } = {}) {
     if (runtimeAuthorization !== STAGE_D_RUNTIME_AUTHORIZATION
@@ -2403,6 +2469,15 @@ async function executeStageDOneCycle({
                 }
                 throw error;
             }
+        }
+        if (controlledAuthorizationWindow !== null) {
+            assertPlainObject(controlledAuthorizationWindow, 'controlled authorization window');
+            assertExactKeys(controlledAuthorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
+            assertControlledAuthorizationWindow({
+                issuedAt: controlledAuthorizationWindow.issuedAt,
+                expiresAt: controlledAuthorizationWindow.expiresAt,
+                now: trustedClock(),
+            });
         }
         const transmissionStartedAt = trustedClock();
         assertUtc(transmissionStartedAt, 'transmission_started_at');

@@ -102,20 +102,13 @@ async function main(argv = process.argv.slice(2)) {
         process.stdout.write(`${helpText()}\n`);
         return;
     }
-    const quota = readJsonFile(args['--quota-config'], 'quota configuration');
-    const replay = loadReplayUniverse({
-        fixtureRawPath: args['--fixture-universe-raw'],
-        allocationArtifactPath: args['--allocation-authority'],
-    });
     const result = await executeStageDControlledInitialization({
         authorizationArtifactPath: args['--authorization'],
         authorityRoot: args['--authority-root'],
         allocationArtifactPath: args['--allocation-authority'],
         ledgerRoot: args['--ledger-root'],
-        quotaConfig: quota.value,
-        quotaConfigSha256: quota.sha256,
-        fixtureUniverseRawSha256: replay.raw_sha256,
-        fixtureUniverse: replay.universe,
+        quotaConfigPath: args['--quota-config'],
+        fixtureUniverseRawPath: args['--fixture-universe-raw'],
         evidenceRoot: args['--evidence-root'],
         runLockTrustRoot: args['--run-lock-trust-root'],
     });
