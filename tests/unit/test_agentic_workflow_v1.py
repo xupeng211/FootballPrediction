@@ -5,6 +5,7 @@ lifecycle: test-fixture
 
 from __future__ import annotations
 
+import hashlib
 import inspect
 import json
 import os
@@ -57,13 +58,11 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     codex_root = tmp_path / "codex-home"
     codex_root.mkdir(mode=0o700)
-    bin_root = tmp_path / "bin"
-    bin_root.mkdir(mode=0o700)
-    codex_binary = bin_root / "codex"
-    codex_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    codex_binary.chmod(0o700)
+    trusted_codex_root = Path("/usr/lib/chatgpt/resources")
+    if not (trusted_codex_root / "codex").is_file():
+        pytest.skip("structural receipt tests require the installed trusted Codex CLI")
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
-    monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("PATH", f"{trusted_codex_root}{os.pathsep}{os.environ['PATH']}")
 
 
 def test_agent_entry_points_to_canonical_workflow():
@@ -109,6 +108,78 @@ def test_receipt_without_codex_owned_session_is_rejected(tmp_path: Path):
     receipt_value = json.loads(receipt.read_text(encoding="utf-8"))
     Path(receipt_value["provenance"]["codex_session_path"]).unlink()
     with pytest.raises(ReviewReceiptError, match="evidence 文件不存在"):
+        validate_receipt(
+            receipt,
+            repo_root=repo,
+            current_head=head,
+            expected_base=base,
+            expected_mission_id=MISSION_ID,
+        )
+
+
+def test_rebound_pass_against_persisted_fail_session_is_rejected(tmp_path: Path):
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(
+        tmp_path,
+        repo,
+        base,
+        head,
+        result="FAIL",
+        finding={
+            "severity": "P2",
+            "title": "persisted finding",
+            "path": "Makefile",
+            "line": 1,
+            "summary": "persisted blocking finding",
+        },
+    )
+    value = json.loads(receipt.read_text(encoding="utf-8"))
+    provenance = value["provenance"]
+    raw_path = Path(provenance["raw_output_path"])
+    final_path = Path(provenance["final_message_path"])
+    old_final = final_path.read_text(encoding="utf-8")
+    new_final = json.dumps(
+        {
+            "result": "PASS",
+            "review_challenge": value["review_challenge"],
+            "findings": [],
+        }
+    )
+    final_path.write_text(new_final, encoding="utf-8")
+    raw_lines = []
+    for line in raw_path.read_text(encoding="utf-8").splitlines():
+        event = json.loads(line)
+        item = event.get("item")
+        if (
+            isinstance(item, dict)
+            and item.get("type") == "agent_message"
+            and item.get("text") == old_final
+        ):
+            item["text"] = new_final
+        raw_lines.append(json.dumps(event, ensure_ascii=False))
+    raw_path.write_text("\n".join(raw_lines) + "\n", encoding="utf-8")
+    counts = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
+    value["finding_counts_by_severity"] = counts
+    value["blocking_findings"] = 0
+    value["review_result"] = "PASS"
+    value["findings"] = []
+    provenance["raw_output_sha256"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+    provenance["agent_message_sha256"] = hashlib.sha256(new_final.encode()).hexdigest()
+    provenance["final_message_sha256"] = hashlib.sha256(final_path.read_bytes()).hexdigest()
+    unsigned = dict(value)
+    unsigned.pop("integrity", None)
+    value["integrity"] = {
+        "receipt_payload_sha256": hashlib.sha256(
+            (
+                json.dumps(unsigned, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            ).encode()
+        ).hexdigest()
+    }
+    receipt.write_text(
+        json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ReviewReceiptError, match="persisted session final answer"):
         validate_receipt(
             receipt,
             repo_root=repo,

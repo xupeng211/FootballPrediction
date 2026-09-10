@@ -139,6 +139,12 @@ def write_valid_receipt(
     worktree = tmp_path / "review-worktree"
     worktree.mkdir(mode=0o700)
     prompt = _codex_prompt(mission_id=MISSION_ID, base_sha=base, head_sha=head)
+    final_document = {
+        "result": result,
+        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
+        "findings": [finding] if finding else [],
+    }
+    final_text = json.dumps(final_document)
     session_path = codex_home() / "sessions" / "2026" / "09" / "10" / f"rollout-{reviewer_id}.jsonl"
     session_path.parent.mkdir(parents=True, exist_ok=True)
     session_path.write_text(
@@ -166,6 +172,39 @@ def write_valid_receipt(
                         },
                     }
                 ),
+                json.dumps(
+                    {
+                        "type": "event_msg",
+                        "payload": {
+                            "type": "item_completed",
+                            "item": {
+                                "type": "AgentMessage",
+                                "phase": "final_answer",
+                                "content": [{"type": "Text", "text": final_text}],
+                            },
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {
+                            "type": "message",
+                            "role": "assistant",
+                            "phase": "final_answer",
+                            "content": [{"type": "output_text", "text": final_text}],
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "event_msg",
+                        "payload": {
+                            "type": "task_complete",
+                            "last_agent_message": final_text,
+                        },
+                    }
+                ),
             ]
         )
         + "\n",
@@ -178,12 +217,6 @@ def write_valid_receipt(
         encoding="utf-8",
     )
     session_index_path.chmod(0o600)
-    final_document = {
-        "result": result,
-        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
-        "findings": [finding] if finding else [],
-    }
-    final_text = json.dumps(final_document) + "\n"
     final.write_text(final_text, encoding="utf-8")
     raw.write_text(
         "\n".join(
@@ -281,6 +314,7 @@ def write_valid_receipt(
             "codex_binary_sha256": sha256_file(codex_binary),
             "codex_session_path": str(session_path),
             "codex_session_sha256": sha256_file(session_path),
+            "codex_session_final_message_sha256": hashlib.sha256(final_text.encode()).hexdigest(),
             "codex_session_thread_id": reviewer_id,
             "codex_session_index_path": str(session_index_path),
             "codex_session_index_entry_sha256": hashlib.sha256(

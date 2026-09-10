@@ -81,6 +81,7 @@
         "codex_binary_sha256",
         "codex_session_path",
         "codex_session_sha256",
+        "codex_session_final_message_sha256",
         "codex_session_thread_id",
         "codex_session_index_path",
         "codex_session_index_entry_sha256"
@@ -94,6 +95,7 @@
         "codex_binary_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
         "codex_session_path": {"type": "string", "minLength": 1},
         "codex_session_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "codex_session_final_message_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
         "codex_session_thread_id": {"type": "string", "minLength": 4},
         "codex_session_index_path": {"type": "string", "minLength": 1},
         "codex_session_index_entry_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}

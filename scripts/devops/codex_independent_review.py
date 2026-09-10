@@ -39,6 +39,7 @@ from scripts.devops.codex_review_output import (  # noqa: E402
 from scripts.devops.codex_review_provenance import (  # noqa: E402
     ReviewReceiptError,
     find_codex_session_artifact,
+    harden_codex_session_permissions,
     resolve_codex_binary,
     validate_codex_session_evidence,
 )
@@ -446,15 +447,19 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     _assert_contexts_separate(builder_context_id, reviewer_id)
     if _run_git(worktree, ["status", "--porcelain", "--untracked-files=all"]):
         raise ReviewReceiptError("reviewer 改动了 detached worktree；拒绝 receipt")
+    harden_codex_session_permissions(reviewer_id)
     session_path = find_codex_session_artifact(reviewer_id)
-    session_sha, session_index_entry_sha, session_index_path, _ = validate_codex_session_evidence(
-        session_path=session_path,
-        reviewer_id=reviewer_id,
-        worktree=worktree,
-        mission_id=args.mission_id,
-        base_sha=base_sha,
-        head_sha=expected_head,
-        challenge=challenge,
+    session_sha, session_index_entry_sha, session_index_path, _, session_final_sha = (
+        validate_codex_session_evidence(
+            session_path=session_path,
+            reviewer_id=reviewer_id,
+            worktree=worktree,
+            mission_id=args.mission_id,
+            base_sha=base_sha,
+            head_sha=expected_head,
+            challenge=challenge,
+            expected_final_text=final_text,
+        )
     )
 
     receipt: dict[str, Any] = {
@@ -494,6 +499,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "codex_binary_sha256": sha256_file(codex_binary),
             "codex_session_path": str(session_path),
             "codex_session_sha256": session_sha,
+            "codex_session_final_message_sha256": session_final_sha,
             "codex_session_thread_id": reviewer_id,
             "codex_session_index_path": str(session_index_path),
             "codex_session_index_entry_sha256": session_index_entry_sha,
@@ -668,20 +674,26 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     )
     if provenance.get("prompt_sha256") != expected_prompt_sha:
         raise ReviewReceiptError("reviewer prompt provenance 与当前 target 不匹配")
+    final_text = final_path.read_text(encoding="utf-8")
     session_path = _require_external_path(
         Path(str(provenance.get("codex_session_path") or "")), repo_root, must_exist=True
     )
-    session_sha, session_index_entry_sha, session_index_path, _ = validate_codex_session_evidence(
-        session_path=session_path,
-        reviewer_id=reviewer_id,
-        worktree=worktree_path,
-        mission_id=receipt["mission_id"],
-        base_sha=base_sha,
-        head_sha=reviewed_head,
-        challenge=expected_challenge,
+    session_sha, session_index_entry_sha, session_index_path, _, session_final_sha = (
+        validate_codex_session_evidence(
+            session_path=session_path,
+            reviewer_id=reviewer_id,
+            worktree=worktree_path,
+            mission_id=receipt["mission_id"],
+            base_sha=base_sha,
+            head_sha=reviewed_head,
+            challenge=expected_challenge,
+            expected_final_text=final_text,
+        )
     )
     if provenance.get("codex_session_sha256") != session_sha:
         raise ReviewReceiptError("Codex session evidence sha256 不匹配")
+    if provenance.get("codex_session_final_message_sha256") != session_final_sha:
+        raise ReviewReceiptError("Codex persisted final message sha256 不匹配")
     if provenance.get("codex_session_thread_id") != reviewer_id:
         raise ReviewReceiptError("Codex session evidence thread id 不匹配")
     if provenance.get("codex_session_index_path") != str(session_index_path):
@@ -691,7 +703,6 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     events = parse_json_lines(raw_path.read_bytes())
     if reviewer_invocation_id(events, THREAD_ID_RE) != reviewer_id:
         raise ReviewReceiptError("raw output invocation id 与 receipt 不一致")
-    final_text = final_path.read_text(encoding="utf-8")
     assert_successful_completion(events, final_text)
     if provenance.get("agent_message_sha256") != sha256_bytes(final_text.encode("utf-8")):
         raise ReviewReceiptError("agent_message_sha256 不匹配")

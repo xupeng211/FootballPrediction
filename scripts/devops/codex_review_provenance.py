@@ -52,17 +52,36 @@ def codex_session_index_path() -> Path:
 
 
 def resolve_codex_binary(value: str) -> Path:
-    """Resolve the installed Codex executable; arbitrary paths are rejected."""
+    """Resolve a non-user-writable installed Codex executable."""
 
     if value != "codex":
         raise ReviewReceiptError("reviewer executable 只允许使用 PATH 中的 codex CLI")
+    candidates: list[Path] = []
+    configured = os.environ.get("CODEX_CLI_PATH")
+    if configured:
+        candidates.append(Path(configured))
     resolved = shutil.which("codex")
-    if not resolved:
-        raise ReviewReceiptError("PATH 中找不到 Codex CLI executable")
-    executable = Path(resolved).resolve(strict=True)
-    if not executable.is_file() or not os.access(executable, os.X_OK):
-        raise ReviewReceiptError(f"Codex CLI executable 无效: {executable}")
-    return executable
+    if resolved:
+        candidates.append(Path(resolved))
+    candidates.append(Path("/usr/lib/chatgpt/resources/codex"))
+    for candidate in candidates:
+        try:
+            executable = candidate.resolve(strict=True)
+        except OSError:
+            continue
+        if (
+            executable.name != "codex"
+            or not executable.is_file()
+            or not os.access(executable, os.X_OK)
+        ):
+            continue
+        file_stat = executable.stat()
+        if stat.S_IMODE(file_stat.st_mode) & 0o022:
+            continue
+        if hasattr(os, "getuid") and file_stat.st_uid == os.getuid():
+            continue
+        return executable
+    raise ReviewReceiptError("没有找到由受信任 owner 持有且不可由当前用户改写的 Codex CLI")
 
 
 def find_codex_session_artifact(reviewer_id: str) -> Path:
@@ -82,6 +101,86 @@ def find_codex_session_artifact(reviewer_id: str) -> Path:
             f"Codex persisted session evidence 必须唯一: thread={reviewer_id}, count={len(candidates)}"
         )
     return candidates[0].resolve()
+
+
+def harden_codex_session_permissions(reviewer_id: str) -> None:
+    """Lock the just-completed Codex session and index before receipt creation."""
+
+    session = find_codex_session_artifact(reviewer_id)
+    index = codex_session_index_path().resolve(strict=True)
+    for path, field in ((session, "Codex session evidence"), (index, "Codex session index")):
+        if path.is_symlink() or not path.is_file():
+            raise ReviewReceiptError(f"{field} 必须是 regular file: {path}")
+        try:
+            path.chmod(0o600)
+        except OSError as exc:
+            raise ReviewReceiptError(f"无法锁定 {field}: {path}: {exc}") from exc
+
+
+def _message_text(content: object) -> str | None:
+    """Extract plain final-answer text from one persisted message content value."""
+
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return None
+    texts = [
+        item.get("text")
+        for item in content
+        if isinstance(item, dict)
+        and item.get("type") in {"Text", "text", "output_text"}
+        and isinstance(item.get("text"), str)
+    ]
+    return "".join(texts) if texts else None
+
+
+def _persisted_final_message(session_bytes: bytes) -> str:  # noqa: C901
+    """Extract and cross-check Codex's persisted final answer/completion event."""
+
+    event_answers: list[str] = []
+    response_answers: list[str] = []
+    task_answers: list[str] = []
+    for line in session_bytes.decode("utf-8", errors="replace").splitlines():
+        if not line.strip():
+            continue
+        envelope = json.loads(line)
+        if not isinstance(envelope, dict):
+            continue
+        payload = envelope.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        if (
+            payload.get("type") == "item_completed"
+            and isinstance(payload.get("item"), dict)
+            and payload["item"].get("phase") == "final_answer"
+            and payload["item"].get("type") in {"AgentMessage", "agent_message"}
+        ):
+            item = payload["item"]
+            text = _message_text(item.get("content"))
+            if text is None:
+                text = item.get("text") if isinstance(item.get("text"), str) else None
+            if text is not None:
+                event_answers.append(text)
+        if (
+            payload.get("type") == "message"
+            and payload.get("role") == "assistant"
+            and payload.get("phase") == "final_answer"
+        ):
+            text = _message_text(payload.get("content"))
+            if text is not None:
+                response_answers.append(text)
+        if payload.get("type") == "task_complete" and isinstance(
+            payload.get("last_agent_message"), str
+        ):
+            task_answers.append(payload["last_agent_message"])
+    if len(event_answers) != 1 or len(response_answers) != 1 or len(task_answers) != 1:
+        raise ReviewReceiptError(
+            "Codex persisted session 缺少唯一 final answer/completion evidence"
+        )
+    answers = {answer.strip() for answer in (*event_answers, *response_answers, *task_answers)}
+    if len(answers) != 1 or not next(iter(answers), ""):
+        raise ReviewReceiptError("Codex persisted session final answer evidence 不一致")
+    return event_answers[0].strip()
 
 
 def _validate_codex_session_file(path: Path, field: str) -> bytes:
@@ -109,7 +208,8 @@ def validate_codex_session_evidence(  # noqa: C901, PLR0912, PLR0915
     base_sha: str,
     head_sha: str,
     challenge: str,
-) -> tuple[str, str, Path, str]:
+    expected_final_text: str | None = None,
+) -> tuple[str, str, Path, str, str]:
     """Verify Codex-generated persisted session/index evidence for one target."""
 
     session_root = codex_sessions_root().resolve()
@@ -167,6 +267,9 @@ def validate_codex_session_evidence(  # noqa: C901, PLR0912, PLR0915
         raise ReviewReceiptError("Codex persisted session 未包含本次 exact target prompt")
     if not has_user_prompt:
         raise ReviewReceiptError("Codex persisted session 缺少 user prompt evidence")
+    persisted_final = _persisted_final_message(session_bytes)
+    if expected_final_text is not None and persisted_final != expected_final_text.strip():
+        raise ReviewReceiptError("Codex persisted session final answer 与外部 final message 不一致")
 
     index_path = codex_session_index_path().resolve(strict=True)
     index_bytes = _validate_codex_session_file(index_path, "Codex session index")
@@ -188,4 +291,5 @@ def validate_codex_session_evidence(  # noqa: C901, PLR0912, PLR0915
         _sha256_bytes(index_line.encode()),
         index_path,
         index_line,
+        _sha256_bytes(persisted_final.encode("utf-8")),
     )
