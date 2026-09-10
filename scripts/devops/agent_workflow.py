@@ -25,6 +25,8 @@ if str(ROOT) not in sys.path:
 
 from scripts.devops.codex_independent_review import (  # noqa: E402
     ReviewReceiptError,
+    git_blob_sha256,
+    sha256_file,
     validate_receipt,
 )
 from scripts.devops.exact_head import (  # noqa: E402
@@ -36,8 +38,13 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     CONTRACT_SCHEMA_VERSION,
     DECISION_AUTO_REMEDIATE,
     DECISION_ESCALATE,
+    MissionScope,
+    MissionScopeError,
     classify_failure,
+    load_mission_scope_file,
+    mission_scope_relative_path,
     validate_mission_scope,
+    validate_mission_scope_reference,
 )
 from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
 from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
@@ -79,6 +86,22 @@ def _status(value: str | None) -> str:
     return (value or "UNKNOWN").strip().upper()
 
 
+def _load_exact_mission_scope(
+    path: Path, *, repo_root: Path, expected_head: str, expected_mission_id: str
+) -> tuple[MissionScope, str, str]:
+    """Load the explicit scope and bind its bytes to the exact candidate HEAD."""
+
+    scope_path = path.absolute()
+    relative_path = mission_scope_relative_path(scope_path, repo_root)
+    scope = load_mission_scope_file(
+        scope_path, repo_root=repo_root, expected_mission_id=expected_mission_id
+    )
+    commit_hash = git_blob_sha256(repo_root, expected_head, relative_path)
+    if sha256_file(scope_path) != commit_hash:
+        raise MissionScopeError("mission scope file bytes differ from the exact candidate HEAD")
+    return scope, relative_path, commit_hash
+
+
 def classify_command(args: argparse.Namespace) -> int:
     """Classify one current-mission finding for Builder remediation."""
 
@@ -102,6 +125,7 @@ def _local_preflight_check(  # noqa: PLR0911
     head_sha: str,
     *,
     pr_body: str | None,
+    mission_scope_file: Path,
 ) -> GateCheck:
     try:
         value = _load_json(path)
@@ -125,6 +149,7 @@ def _local_preflight_check(  # noqa: PLR0911
             base_ref=base_sha,
             head_ref=head_sha,
             require_review=True,
+            mission_scope_file=mission_scope_file,
         )
         if canonical.get("verdict") != "PASS":
             return GateCheck(
@@ -145,7 +170,14 @@ def _local_preflight_check(  # noqa: PLR0911
                 "FAIL",
                 "local preflight artifact changed_paths differ from re-execution",
             )
-    except (RuntimeError, TypeError, ExactHeadError) as exc:
+        for field in ("mission_scope", "mission_scope_path", "mission_scope_sha256"):
+            if canonical.get(field) != value.get(field):
+                return GateCheck(
+                    "local-required-checks",
+                    "FAIL",
+                    f"local preflight artifact differs from re-executed {field}",
+                )
+    except (RuntimeError, TypeError, ExactHeadError, MissionScopeError, ReviewReceiptError) as exc:
         return GateCheck("local-required-checks", "FAIL", str(exc))
     return GateCheck("local-required-checks", "PASS", f"re-executed and verified {path}")
 
@@ -226,7 +258,7 @@ def _remote_pr_check(
     )
 
 
-def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
+def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
     """Evaluate merge readiness without performing any merge-side effect."""
 
     repo_root = Path(args.repo_root).resolve()
@@ -246,6 +278,24 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     else:
         checks.append(GateCheck("exact-head", "PASS", actual_head))
 
+    mission_scope: MissionScope | None = None
+    mission_scope_path: str | None = None
+    mission_scope_hash: str | None = None
+    if actual_head is None:
+        checks.append(
+            GateCheck("mission-scope-contract", "FAIL", "current exact HEAD is unavailable")
+        )
+    else:
+        try:
+            mission_scope, mission_scope_path, mission_scope_hash = _load_exact_mission_scope(
+                Path(args.mission_scope_file),
+                repo_root=repo_root,
+                expected_head=expected_head,
+                expected_mission_id=args.mission_id,
+            )
+        except (MissionScopeError, ReviewReceiptError, OSError) as exc:
+            checks.append(GateCheck("mission-scope-contract", "FAIL", str(exc)))
+
     try:
         changed = {
             line.strip()
@@ -257,17 +307,26 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     except RuntimeError as exc:
         changed = set()
         checks.append(GateCheck("mission-scope", "UNKNOWN", str(exc)))
-    scope_errors = validate_mission_scope(changed)
-    if scope_errors:
-        checks.append(GateCheck("mission-scope", "FAIL", "; ".join(scope_errors)))
-    else:
+    if mission_scope is None:
         checks.append(
             GateCheck(
                 "mission-scope",
-                "PASS",
-                "changed paths remain inside workflow infrastructure allowlist",
+                "FAIL",
+                "current mission scope contract is missing/invalid; scope is not allow-all",
             )
         )
+    else:
+        scope_errors = validate_mission_scope(changed, mission_scope)
+        if scope_errors:
+            checks.append(GateCheck("mission-scope", "FAIL", "; ".join(scope_errors)))
+        else:
+            checks.append(
+                GateCheck(
+                    "mission-scope",
+                    "PASS",
+                    f"changed paths authorized by mission '{mission_scope.mission_id}'",
+                )
+            )
 
     if args.pr is not None:
         remote_check, remote_evidence, pr_body = _remote_pr_check(
@@ -288,8 +347,26 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
         )
         pr_body = None
 
+    if mission_scope is not None and mission_scope_path is not None and pr_body is not None:
+        scope_reference_errors = validate_mission_scope_reference(
+            pr_body, mission_scope=mission_scope, scope_path=mission_scope_path
+        )
+        checks.append(
+            GateCheck(
+                "mission-scope-reference",
+                "FAIL" if scope_reference_errors else "PASS",
+                "; ".join(scope_reference_errors)
+                if scope_reference_errors
+                else f"PR body binds {mission_scope_path}",
+            )
+        )
+
     local_check = _local_preflight_check(
-        Path(args.local_preflight_json), base_sha, expected_head, pr_body=pr_body
+        Path(args.local_preflight_json),
+        base_sha,
+        expected_head,
+        pr_body=pr_body,
+        mission_scope_file=Path(args.mission_scope_file),
     )
     checks.append(local_check)
 
@@ -300,6 +377,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
             current_head=actual_head,
             expected_base=base_sha,
             expected_mission_id=args.mission_id,
+            expected_mission_scope_file=Path(args.mission_scope_file),
         )
     except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
         receipt = {}
@@ -316,11 +394,13 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     exact_check = next(
         (check for check in checks if check.name == "exact-head"), GateCheck("", "UNKNOWN", "")
     )
-    scope_check = next(
-        (check for check in checks if check.name == "mission-scope"), GateCheck("", "UNKNOWN", "")
-    )
+    scope_checks = [
+        check
+        for check in checks
+        if check.name in {"mission-scope-contract", "mission-scope", "mission-scope-reference"}
+    ]
     machine_safety_pass = all(
-        check.status == "PASS" for check in (exact_check, scope_check, local_check)
+        check.status == "PASS" for check in (exact_check, *scope_checks, local_check)
     )
     machine_protected = "PASS" if machine_safety_pass else "UNKNOWN"
     machine_forbidden = "NO" if machine_safety_pass else "UNKNOWN"
@@ -388,6 +468,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
         "independent_review_result": receipt.get("review_result", "UNKNOWN"),
         "reviewed_head_sha": receipt.get("reviewed_head_sha", "UNKNOWN"),
         "current_pr_head_sha": actual_head or "UNKNOWN",
+        "mission_scope_path": mission_scope_path or "UNKNOWN",
+        "mission_scope_sha256": mission_scope_hash or "UNKNOWN",
         "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
         "protected_invariants": machine_protected
         if declared_protected == "PASS" and machine_protected == "PASS"
@@ -432,6 +514,7 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--base-sha", required=True)
     gate.add_argument("--head-sha", required=True)
     gate.add_argument("--mission-id", required=True)
+    gate.add_argument("--mission-scope-file", required=True, type=Path)
     gate.add_argument("--local-preflight-json", required=True, type=Path)
     gate.add_argument("--receipt", required=True, type=Path)
     gate.add_argument("--pr", type=int, default=None)

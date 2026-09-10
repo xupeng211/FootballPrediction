@@ -18,9 +18,7 @@ process/context、clean exact-head worktree、只读执行和可重算的 eviden
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 from datetime import UTC, datetime
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -35,6 +33,16 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.devops.codex_review_contract import (  # noqa: E402
+    _canonical_json,
+    build_review_prompt,
+    build_reviewer_command,
+    parse_final_message,
+    parse_timestamp,
+    review_challenge,
+    sha256_bytes,
+    validate_review_result,
+)
 from scripts.devops.codex_review_output import (  # noqa: E402
     assert_successful_completion,
     parse_json_lines,
@@ -50,43 +58,26 @@ from scripts.devops.exact_head import (  # noqa: E402
     normalize_full_sha,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
-    ALL_REVIEW_SEVERITIES,
     ASSURANCE_MODEL_ENGINEERING_INDEPENDENT_REVIEW,
-    BLOCKING_REVIEW_SEVERITIES,
     CONTRACT_SCHEMA_VERSION,
     REVIEW_ENGINE_CODEX,
-    REVIEW_RESULT_FAIL,
-    REVIEW_RESULT_PASS,
     REVIEW_ROLE_INDEPENDENT,
-    is_blocking_severity,
+    MissionScope,
+    MissionScopeError,
+    load_mission_scope_file,
+    mission_scope_relative_path,
+)
+from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
+    mission_scope_sha256 as scope_file_sha256,
 )
 
 RECEIPT_SCHEMA_VERSION = "codex-independent-review-receipt/v1"
 REVIEW_OUTPUT_SCHEMA = ROOT / "schemas" / "agentic" / "codex_review_result.schema.json"
 WRAPPER_NAME = "scripts/devops/codex_independent_review.py"
 THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
-MIN_FENCED_JSON_LINES = 3
-REVIEW_CHALLENGE_VERSION = "codex-independent-review-challenge/v1"
-
-
-def _canonical_json(value: object) -> bytes:
-    return (
-        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
-    ).encode("utf-8")
-
-
-def sha256_bytes(value: bytes) -> str:
-    """Return SHA-256 for one in-memory evidence byte string."""
-
-    return hashlib.sha256(value).hexdigest()
-
-
-def review_challenge(*, mission_id: str, base_sha: str, head_sha: str) -> str:
-    """Derive a target-specific challenge that prevents receipt rebinding."""
-
-    return sha256_bytes(
-        f"{REVIEW_CHALLENGE_VERSION}\n{mission_id}\n{base_sha}\n{head_sha}\n".encode()
-    )
+_codex_prompt = build_review_prompt
+_parse_final_message = parse_final_message
+_parse_timestamp = parse_timestamp
 
 
 def sha256_file(path: Path) -> str:
@@ -100,18 +91,6 @@ def sha256_file(path: Path) -> str:
 
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
-def _parse_timestamp(value: object, field: str) -> datetime:
-    if not isinstance(value, str) or not value:
-        raise ReviewReceiptError(f"{field} 缺少 RFC3339 timestamp")
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ReviewReceiptError(f"{field} 不是有效 timestamp") from exc
-    if parsed.tzinfo is None:
-        raise ReviewReceiptError(f"{field} 必须包含 timezone")
-    return parsed
 
 
 def _run_git(repo_root: Path, args: list[str], *, check: bool = True) -> str:
@@ -164,6 +143,21 @@ def git_blob_sha256(repo_root: Path, commit_sha: str, relative_path: str) -> str
     return sha256_bytes(result.stdout)
 
 
+def _load_exact_review_scope(
+    *, repo_root: Path, scope_file: Path, expected_head: str, mission_id: str
+) -> tuple[MissionScope, str, str]:
+    """Load a mission scope and prove its bytes are present at reviewed HEAD."""
+
+    mission_scope_path = mission_scope_relative_path(scope_file, repo_root)
+    mission_scope = load_mission_scope_file(
+        scope_file, repo_root=repo_root, expected_mission_id=mission_id
+    )
+    mission_scope_hash = git_blob_sha256(repo_root, expected_head, mission_scope_path)
+    if scope_file_sha256(scope_file) != mission_scope_hash:
+        raise MissionScopeError("mission scope file bytes differ from the exact candidate HEAD")
+    return mission_scope, mission_scope_path, mission_scope_hash
+
+
 def _path_is_inside(path: Path, root: Path) -> bool:
     try:
         path.resolve(strict=False).relative_to(root.resolve(strict=False))
@@ -205,135 +199,6 @@ def _write_exclusive(path: Path, body: bytes) -> None:
         raise ReviewReceiptError(f"写入 evidence 失败: {path}: {exc}") from exc
 
 
-def _parse_final_message(text: str) -> dict[str, Any]:
-    stripped = text.strip()
-    if stripped.startswith("```") and stripped.endswith("```"):
-        lines = stripped.splitlines()
-        if len(lines) >= MIN_FENCED_JSON_LINES:
-            stripped = "\n".join(lines[1:-1]).strip()
-    try:
-        result = json.loads(stripped)
-    except json.JSONDecodeError as exc:
-        raise ReviewReceiptError("Codex final message 必须是 schema 约束的 JSON 对象") from exc
-    if not isinstance(result, dict):
-        raise ReviewReceiptError("Codex final message 必须是 JSON object")
-    return result
-
-
-def validate_review_result(
-    result: dict[str, Any],
-) -> tuple[dict[str, int], int, str, list[dict[str, Any]]]:
-    """Derive counts from reviewer findings; never trust caller-supplied counts."""
-
-    raw_findings = result.get("findings")
-    if not isinstance(raw_findings, list):
-        raise ReviewReceiptError("review result.findings 必须是数组")
-    normalized: list[dict[str, Any]] = []
-    counts = Counter(dict.fromkeys(ALL_REVIEW_SEVERITIES, 0))
-    for index, finding in enumerate(raw_findings):
-        if not isinstance(finding, dict):
-            raise ReviewReceiptError(f"finding[{index}] 必须是 object")
-        severity = str(finding.get("severity") or "").upper()
-        if severity not in ALL_REVIEW_SEVERITIES:
-            raise ReviewReceiptError(f"finding[{index}] severity 必须为 P0/P1/P2/P3")
-        title = str(finding.get("title") or "").strip()
-        summary = str(finding.get("summary") or "").strip()
-        if not title or not summary:
-            raise ReviewReceiptError(f"finding[{index}] 缺少 title/summary")
-        path = finding.get("path")
-        if path is not None and not isinstance(path, str):
-            raise ReviewReceiptError(f"finding[{index}].path 必须是字符串或 null")
-        line = finding.get("line")
-        if line is not None and (not isinstance(line, int) or line < 1):
-            raise ReviewReceiptError(f"finding[{index}].line 必须是正整数或 null")
-        counts[severity] += 1
-        normalized.append(
-            {
-                "severity": severity,
-                "title": title,
-                "path": path,
-                "line": line,
-                "summary": summary,
-                "blocking": is_blocking_severity(severity),
-            }
-        )
-    blocking = sum(counts[severity] for severity in BLOCKING_REVIEW_SEVERITIES)
-    review_result = str(result.get("result") or "").upper()
-    if review_result not in {REVIEW_RESULT_PASS, REVIEW_RESULT_FAIL}:
-        raise ReviewReceiptError("review result.result 必须是 PASS 或 FAIL")
-    if (review_result == REVIEW_RESULT_PASS) != (blocking == 0):
-        raise ReviewReceiptError("review result 与 P0/P1/P2 blocking finding 数量不一致")
-    return dict(counts), blocking, review_result, normalized
-
-
-def _codex_prompt(*, mission_id: str, base_sha: str, head_sha: str) -> str:
-    challenge = review_challenge(mission_id=mission_id, base_sha=base_sha, head_sha=head_sha)
-    return f"""你是 FOOTBALLPREDICTION 的 {REVIEW_ROLE_INDEPENDENT}。
-
-这是一次全新的 Codex reviewer invocation；你不能使用 Builder 的思路、私有草稿、自证或结论作为证据。
-只审查 detached read-only worktree 中的真实代码、完整 diff、测试与仓库治理合同。
-
-MISSION_ID={mission_id}
-BASE_SHA={base_sha}
-REVIEW_HEAD_SHA={head_sha}
-REVIEW_ENGINE=CODEX
-REVIEW_ROLE=INDEPENDENT_REVIEWER
-ASSURANCE_MODEL=ENGINEERING_INDEPENDENT_REVIEW
-REVIEW_CHALLENGE={challenge}
-
-这是工程独立性 review，不是 cryptographic attestation：同一 OS uid 的恶意
-Builder 理论上可能篡改本地 evidence，这个 residual risk 已由 Owner 接受。
-不要把这个已接受的 same-uid 风险本身报告为 blocker；仍必须严格执行 fresh
-context、exact HEAD、clean worktree、read-only 和 self-review 排除。
-
-审查目标：
-1. 先读取 AGENTS.md 的 Agentic Engineering Workflow V1 入口、docs/AGENT_WORKFLOW.md 的第 11 节，以及相关 governance source-of-truth；使用针对性 sed/rg，不要把整份长文档回显到上下文。
-2. 用 `git diff --stat`、`git diff --name-only {base_sha}...{head_sha}` 和针对性 diff 检查所有本 mission 的变更；优先审查实现、schema、CI、测试和与其直接相关的文档，不要输出完整 diff。
-3. 只审查本 mission 的 workflow-infrastructure 变更；Stage D、PR #1903、生产/provider/ledger 路径是保护边界。
-4. P0=security/destructive/authorization/production corruption；P1=correctness/invariant/data-loss/provider-request risk；
-   P2=significant robustness/recoverability/observability/governance defect；P3=non-blocking maintainability。
-5. P0/P1/P2 阻塞 merge，P3 不阻塞。只报告当前 mission 内可以清楚归因的 finding；需要新 scope、产品要求、架构决定、Chief Engineer Gate、
-   protected invariant 语义变化或授权边界变化时，按 blocking finding 报告。
-6. 不修改任何文件，不写 Builder worktree，不 commit、不 push、不 merge、不调用 network/provider/DB/生产命令。
-
-最终回复必须只包含下面 schema 形状的 JSON（不要 Markdown、不要隐藏推理、不要长篇过程日志）：
-{{
-  "result": "PASS" | "FAIL",
-  "review_challenge": "{challenge}",
-  "findings": [
-    {{"severity":"P0|P1|P2|P3","title":"简短标题","path":"repo/path 或 null","line":1,"summary":"适合普通 code review 的可审计说明"}}
-  ]
-}}
-没有 P0/P1/P2 时 result=PASS；存在任一 P0/P1/P2 时 result=FAIL。"""
-
-
-def build_reviewer_command(
-    *,
-    codex_binary: str,
-    base_sha: str,
-    output_schema: Path,
-    final_message_path: Path,
-) -> list[str]:
-    """Build the only supported isolated reviewer invocation."""
-
-    normalize_full_sha(base_sha, role="review base SHA")
-    return [
-        codex_binary,
-        "exec",
-        "-c",
-        'model_reasoning_effort="medium"',
-        "--sandbox",
-        "read-only",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--json",
-        "--output-schema",
-        str(output_schema),
-        "--output-last-message",
-        str(final_message_path),
-    ]
-
-
 def _assert_contexts_separate(builder_context_id: str, reviewer_context_id: str) -> None:
     if not builder_context_id.strip() or not reviewer_context_id.strip():
         raise ReviewReceiptError("Builder/reviewer context identity 不能为空")
@@ -346,9 +211,19 @@ def _assert_contexts_separate(builder_context_id: str, reviewer_context_id: str)
 
 
 def _assert_review_challenge(
-    result: dict[str, Any], *, mission_id: str, base_sha: str, head_sha: str
+    result: dict[str, Any],
+    *,
+    mission_id: str,
+    base_sha: str,
+    head_sha: str,
+    mission_scope_sha256: str,
 ) -> None:
-    expected = review_challenge(mission_id=mission_id, base_sha=base_sha, head_sha=head_sha)
+    expected = review_challenge(
+        mission_id=mission_id,
+        base_sha=base_sha,
+        head_sha=head_sha,
+        mission_scope_sha256=mission_scope_sha256,
+    )
     if result.get("review_challenge") != expected:
         raise ReviewReceiptError("review challenge 与当前 mission/base/HEAD 不匹配")
 
@@ -365,6 +240,17 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         raise ReviewReceiptError(f"不是 Git worktree: {repo_root}")
     if not REVIEW_OUTPUT_SCHEMA.is_file():
         raise ReviewReceiptError(f"review output schema 不存在: {REVIEW_OUTPUT_SCHEMA}")
+
+    try:
+        mission_scope_file = Path(args.mission_scope_file).absolute()
+        mission_scope, mission_scope_path, mission_scope_hash = _load_exact_review_scope(
+            repo_root=repo_root,
+            scope_file=mission_scope_file,
+            expected_head=expected_head,
+            mission_id=args.mission_id,
+        )
+    except (MissionScopeError, ReviewReceiptError, OSError) as exc:
+        raise ReviewReceiptError(f"invalid exact-head mission scope: {exc}") from exc
 
     evidence_dir = _require_external_path(Path(args.evidence_dir), repo_root)
     _ensure_private_directory(evidence_dir)
@@ -388,7 +274,10 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
 
     started_at = _now()
     challenge = review_challenge(
-        mission_id=args.mission_id, base_sha=base_sha, head_sha=expected_head
+        mission_id=args.mission_id,
+        base_sha=base_sha,
+        head_sha=expected_head,
+        mission_scope_sha256=mission_scope_hash,
     )
     codex_binary = resolve_codex_binary(args.codex_binary)
     command = build_reviewer_command(
@@ -397,7 +286,14 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         output_schema=review_output_schema,
         final_message_path=final_path,
     )
-    prompt = _codex_prompt(mission_id=args.mission_id, base_sha=base_sha, head_sha=expected_head)
+    prompt = _codex_prompt(
+        mission_id=args.mission_id,
+        base_sha=base_sha,
+        head_sha=expected_head,
+        mission_scope=mission_scope,
+        mission_scope_path=mission_scope_path,
+        mission_scope_sha256=mission_scope_hash,
+    )
     env = os.environ.copy()
     env["CODEX_AGENT_ROLE"] = REVIEW_ROLE_INDEPENDENT
     env["CODEX_REVIEW_HEAD_SHA"] = expected_head
@@ -441,6 +337,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         mission_id=args.mission_id,
         base_sha=base_sha,
         head_sha=expected_head,
+        mission_scope_sha256=mission_scope_hash,
     )
     counts, blocking, review_result, findings = validate_review_result(result_document)
     events = parse_json_lines(raw_bytes)
@@ -466,6 +363,8 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         "review_challenge": challenge,
         "diff_sha256": diff_sha256(repo_root, base_sha, expected_head),
         "mission_id": args.mission_id,
+        "mission_scope_path": mission_scope_path,
+        "mission_scope_sha256": mission_scope_hash,
         "review_started_at": started_at,
         "review_completed_at": completed_at,
         "finding_counts_by_severity": counts,
@@ -533,6 +432,39 @@ def _validate_regular_file(path: Path, field: str) -> None:
         raise ReviewReceiptError(f"{field} 必须是 regular file: {path}")
 
 
+def _load_receipt_scope(
+    *,
+    repo_root: Path,
+    receipt: dict[str, Any],
+    expected_mission_scope_file: Path | None,
+    reviewed_head: str,
+) -> tuple[MissionScope, str, str]:
+    """Load and exact-head-bind the scope named by a receipt."""
+
+    scope_path_value = receipt.get("mission_scope_path")
+    if not isinstance(scope_path_value, str) or not scope_path_value.strip():
+        raise ReviewReceiptError("receipt mission_scope_path 缺失")
+    scope_path = repo_root / scope_path_value
+    scope_relative_path = mission_scope_relative_path(scope_path, repo_root)
+    if scope_relative_path != scope_path_value:
+        raise MissionScopeError("receipt mission_scope_path 必须是规范 repository-relative path")
+    if expected_mission_scope_file is not None:
+        expected_scope_relative = mission_scope_relative_path(
+            expected_mission_scope_file, repo_root
+        )
+        if expected_scope_relative != scope_relative_path:
+            raise MissionScopeError("receipt mission scope path 与当前 mission scope 不匹配")
+    mission_scope = load_mission_scope_file(
+        scope_path,
+        repo_root=repo_root,
+        expected_mission_id=receipt["mission_id"],
+    )
+    scope_commit_hash = git_blob_sha256(repo_root, reviewed_head, scope_relative_path)
+    if scope_file_sha256(scope_path) != scope_commit_hash:
+        raise MissionScopeError("mission scope file bytes differ from reviewed exact HEAD")
+    return mission_scope, scope_relative_path, scope_commit_hash
+
+
 def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     receipt_path: Path,
     *,
@@ -540,6 +472,7 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     current_head: str | None = None,
     expected_base: str | None = None,
     expected_mission_id: str | None = None,
+    expected_mission_scope_file: Path | None = None,
 ) -> dict[str, Any]:
     """Fail-closed validation for one external, exact-head receipt."""
 
@@ -573,8 +506,22 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
         raise ReviewReceiptError("receipt mission_id 不匹配")
     if not isinstance(receipt.get("mission_id"), str) or not receipt["mission_id"].strip():
         raise ReviewReceiptError("receipt mission_id 缺失")
+    try:
+        mission_scope, scope_relative_path, scope_commit_hash = _load_receipt_scope(
+            repo_root=repo_root,
+            receipt=receipt,
+            expected_mission_scope_file=expected_mission_scope_file,
+            reviewed_head=reviewed_head,
+        )
+    except (MissionScopeError, ReviewReceiptError, OSError) as exc:
+        raise ReviewReceiptError(f"receipt mission scope invalid: {exc}") from exc
+    if receipt.get("mission_scope_sha256") != scope_commit_hash:
+        raise ReviewReceiptError("receipt mission_scope_sha256 与 reviewed exact HEAD 不匹配")
     expected_challenge = review_challenge(
-        mission_id=receipt["mission_id"], base_sha=base_sha, head_sha=reviewed_head
+        mission_id=receipt["mission_id"],
+        base_sha=base_sha,
+        head_sha=reviewed_head,
+        mission_scope_sha256=scope_commit_hash,
     )
     if receipt.get("review_challenge") != expected_challenge:
         raise ReviewReceiptError("receipt review_challenge 与当前 mission/base/HEAD 不匹配")
@@ -693,7 +640,12 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
         raise ReviewReceiptError("reviewer command provenance 不匹配")
     expected_prompt_sha = sha256_bytes(
         _codex_prompt(
-            mission_id=receipt["mission_id"], base_sha=base_sha, head_sha=reviewed_head
+            mission_id=receipt["mission_id"],
+            base_sha=base_sha,
+            head_sha=reviewed_head,
+            mission_scope=mission_scope,
+            mission_scope_path=scope_relative_path,
+            mission_scope_sha256=scope_commit_hash,
         ).encode("utf-8")
     )
     if provenance.get("prompt_sha256") != expected_prompt_sha:
@@ -713,6 +665,7 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
         mission_id=receipt["mission_id"],
         base_sha=base_sha,
         head_sha=reviewed_head,
+        mission_scope_sha256=scope_commit_hash,
     )
     counts, blocking, review_result, findings = validate_review_result(result_document)
     if receipt.get("finding_counts_by_severity") != counts:
@@ -744,6 +697,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--base-sha", required=True)
     run.add_argument("--head-sha", required=True)
     run.add_argument("--mission-id", required=True)
+    run.add_argument("--mission-scope-file", required=True, type=Path)
     run.add_argument("--evidence-dir", required=True, type=Path)
     run.add_argument("--receipt-path", type=Path, default=None)
     run.add_argument("--builder-context-id", default=None)
@@ -756,6 +710,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--current-head", default=None)
     check.add_argument("--base-sha", default=None)
     check.add_argument("--mission-id", default=None)
+    check.add_argument("--mission-scope-file", default=None, type=Path)
     check.add_argument("--json", action="store_true")
     return parser
 
@@ -776,6 +731,7 @@ def main(argv: list[str] | None = None) -> int:
                 current_head=args.current_head,
                 expected_base=args.base_sha,
                 expected_mission_id=args.mission_id,
+                expected_mission_scope_file=args.mission_scope_file,
             )
     except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
         print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)

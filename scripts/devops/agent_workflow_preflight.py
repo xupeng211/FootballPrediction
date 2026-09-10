@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -28,7 +29,13 @@ from scripts.devops.exact_head import is_full_sha  # noqa: E402
 from scripts.ops.ai_workflow_gate import validate as validate_ai_workflow_gate  # noqa: E402
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     CONTRACT_SCHEMA_VERSION,
+    MissionScope,
+    MissionScopeError,
     contract_summary,
+    load_mission_scope_file,
+    mission_scope_relative_path,
+    mission_scope_sha256,
+    validate_mission_scope_reference,
 )
 from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     changed_paths,
@@ -59,12 +66,73 @@ def _git(args: list[str]) -> str:
     return result.stdout.strip()
 
 
+def _git_blob_sha(commit_sha: str, relative_path: str) -> str:
+    """Hash one scope file as stored in the candidate commit."""
+
+    result = subprocess.run(
+        ["git", "show", f"{commit_sha}:{relative_path}"],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise MissionScopeError(
+            f"mission scope file is not tracked at exact head {commit_sha}: {relative_path}"
+        )
+    return hashlib.sha256(result.stdout).hexdigest()
+
+
+def _assert_scope_file_matches_head(
+    scope_hash: str, *, resolved_head: str, relative_path: str
+) -> None:
+    commit_hash = _git_blob_sha(resolved_head, relative_path)
+    if commit_hash != scope_hash:
+        raise MissionScopeError("mission scope file bytes differ from the exact candidate HEAD")
+
+
+def _load_current_mission_scope(
+    pr_body: str,
+    mission_scope_file: Path | None,
+    *,
+    resolved_head: str,
+    allow_uncommitted: bool,
+) -> tuple[MissionScope | None, str | None, str | None, list[str]]:
+    """Load and bind the explicit scope without ever falling back to allow-all."""
+
+    if mission_scope_file is None:
+        return (
+            None,
+            None,
+            None,
+            [
+                "AGENT_WORKFLOW_SCOPE_INVALID: --mission-scope-file is required; "
+                "missing scope never means allow-all."
+            ],
+        )
+    try:
+        scope_path = mission_scope_file.absolute()
+        relative_path = mission_scope_relative_path(scope_path, ROOT)
+        scope = load_mission_scope_file(scope_path, repo_root=ROOT)
+        scope_hash = mission_scope_sha256(scope_path)
+        if not allow_uncommitted:
+            _assert_scope_file_matches_head(
+                scope_hash, resolved_head=resolved_head, relative_path=relative_path
+            )
+        binding_errors = validate_mission_scope_reference(
+            pr_body, mission_scope=scope, scope_path=relative_path
+        )
+    except (MissionScopeError, OSError) as exc:
+        return None, None, None, [f"AGENT_WORKFLOW_SCOPE_INVALID: {exc}"]
+    return scope, relative_path, scope_hash, binding_errors
+
+
 def run_preflight(
     pr_body: str,
     *,
     base_ref: str | None = None,
     head_ref: str | None = None,
     require_review: bool = False,
+    mission_scope_file: Path | None = None,
 ) -> dict[str, Any]:
     """Run the V1 local checks and return a stable JSON-compatible result."""
 
@@ -80,7 +148,25 @@ def run_preflight(
         current_head = _git(["rev-parse", "HEAD"])
     except (RuntimeError, OSError) as exc:
         findings.append(PreflightFinding("git-topology", "FAIL", str(exc)))
-        return _result(findings, None, None, None, [], require_review)
+        return _result(findings, None, None, None, [], require_review, None, None, None)
+
+    scope, scope_path, scope_hash, scope_errors = _load_current_mission_scope(
+        pr_body,
+        mission_scope_file,
+        resolved_head=resolved_head,
+        allow_uncommitted=head_ref is None,
+    )
+    findings.extend(
+        PreflightFinding("mission-scope-contract", "FAIL", error) for error in scope_errors
+    )
+    if not scope_errors:
+        findings.append(
+            PreflightFinding(
+                "mission-scope-contract",
+                "PASS",
+                f"mission={scope.mission_id}; path={scope_path}; sha256={scope_hash}",
+            )
+        )
 
     if not branch or branch in {"main", "master"}:
         findings.append(
@@ -115,6 +201,7 @@ def run_preflight(
         enforce_strict_review=True,
         enforce_agent_workflow_contract=True,
         enforce_agent_workflow_scope=True,
+        mission_scope=scope,
         allow_review_pending=not require_review,
         base_ref=resolved_base,
         head_ref=resolved_head,
@@ -138,6 +225,9 @@ def run_preflight(
         branch,
         sorted(changed),
         require_review,
+        scope,
+        scope_path,
+        scope_hash,
         current_head=current_head,
     )
 
@@ -149,6 +239,9 @@ def _result(
     branch: str | None,
     changed_paths_value: list[str],
     require_review: bool,
+    mission_scope: MissionScope | None,
+    mission_scope_path: str | None,
+    mission_scope_hash: str | None,
     *,
     current_head: str | None = None,
 ) -> dict[str, Any]:
@@ -165,6 +258,9 @@ def _result(
         "changed_paths": changed_paths_value,
         "findings": [asdict(finding) for finding in findings],
         "contract": contract_summary(),
+        "mission_scope": mission_scope.to_dict() if mission_scope else None,
+        "mission_scope_path": mission_scope_path,
+        "mission_scope_sha256": mission_scope_hash,
     }
 
 
@@ -173,6 +269,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pr-body-file", required=True, type=Path)
+    parser.add_argument(
+        "--mission-scope-file",
+        required=True,
+        type=Path,
+        help="当前 mission 的 tracked JSON scope contract；缺失时 fail closed",
+    )
     parser.add_argument("--base-ref", default=None)
     parser.add_argument("--head-ref", default=None)
     parser.add_argument(
@@ -198,6 +300,9 @@ def main(argv: list[str] | None = None) -> int:
             None,
             [],
             args.require_review,
+            None,
+            None,
+            None,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 1
@@ -207,6 +312,7 @@ def main(argv: list[str] | None = None) -> int:
         base_ref=args.base_ref,
         head_ref=args.head_ref,
         require_review=args.require_review,
+        mission_scope_file=args.mission_scope_file,
     )
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))

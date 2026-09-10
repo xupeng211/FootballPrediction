@@ -218,21 +218,22 @@ verify-pr: ## 运行与 GitHub PR Production Gate 共享实现的验证
 verify-strict: ## 运行完整 push gate 验证（STRICT）
 	@$(VALIDATION_PROFILE_RUNNER) strict
 
-agent-preflight: ## Agentic Workflow V1 本地 governance preflight。Usage: make agent-preflight PR_BODY=<path> [BASE_REF=<sha>] [HEAD_REF=<sha>] [REQUIRE_REVIEW=1] [JSON=1]
-	@if [ -z "$(PR_BODY)" ]; then \
-		echo "ERROR: PR_BODY required. Usage: make agent-preflight PR_BODY=/tmp/pr_body.md"; \
+agent-preflight: ## Agentic Workflow V1 本地 governance preflight。Usage: make agent-preflight PR_BODY=<path> MISSION_SCOPE_FILE=<path> [BASE_REF=<sha>] [HEAD_REF=<sha>] [REQUIRE_REVIEW=1] [JSON=1]
+	@if [ -z "$(PR_BODY)" ] || [ -z "$(MISSION_SCOPE_FILE)" ]; then \
+		echo "ERROR: PR_BODY and MISSION_SCOPE_FILE are required."; \
 		exit 1; \
 	fi
 	@python3 scripts/devops/agent_workflow_preflight.py \
 		--pr-body-file "$(PR_BODY)" \
+		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		$(if $(BASE_REF),--base-ref $(BASE_REF),) \
 		$(if $(HEAD_REF),--head-ref $(HEAD_REF),) \
 		$(if $(REQUIRE_REVIEW),--require-review,) \
 		$(if $(JSON),--json,)
 
-agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-review BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> EVIDENCE_DIR=<external-dir>
-	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
-		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID EVIDENCE_DIR are required."; \
+agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-review BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external-dir>
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE EVIDENCE_DIR are required."; \
 		exit 1; \
 	fi
 	@python3 scripts/devops/codex_independent_review.py run \
@@ -240,12 +241,13 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		--base-sha "$(BASE_SHA)" \
 		--head-sha "$(HEAD_SHA)" \
 		--mission-id "$(MISSION_ID)" \
+		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		--evidence-dir "$(EVIDENCE_DIR)" \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
 
-agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]
-	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ] || [ -z "$(RECEIPT)" ]; then \
-		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID LOCAL_PREFLIGHT_JSON RECEIPT are required."; \
+agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ] || [ -z "$(RECEIPT)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE LOCAL_PREFLIGHT_JSON RECEIPT are required."; \
 		exit 1; \
 	fi
 	@python3 scripts/devops/agent_workflow.py merge-ready \
@@ -253,6 +255,7 @@ agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make a
 		--base-sha "$(BASE_SHA)" \
 		--head-sha "$(HEAD_SHA)" \
 		--mission-id "$(MISSION_ID)" \
+		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		--local-preflight-json "$(LOCAL_PREFLIGHT_JSON)" \
 		--receipt "$(RECEIPT)" \
 		$(if $(PR),--pr $(PR),) \

@@ -8,8 +8,11 @@
 | --- | --- |
 | Task type | `source-code`, `workflow-governance`, or another matrix task type |
 | Workflow class | `NORMAL` or `STRICT` |
+| Mission ID | Current bounded mission identifier |
+| Mission scope contract | `docs/agentic/missions/<mission-id>.json` (tracked exact-head contract) |
 | Changed paths | `path/to/file` |
-| Authorized paths | `path/to/file` or `none` |
+| Authorized paths | Summary only; canonical authorization is read from Mission scope contract |
+| Excluded paths | Summary only; exclusions always override authorization |
 | Runtime behavior changed | `yes` / `no` |
 | Business progress | one concise sentence |
 

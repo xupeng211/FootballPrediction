@@ -18,14 +18,38 @@ from scripts.devops.codex_independent_review import (
     review_challenge,
     sha256_file,
 )
+from scripts.ops.helpers.agent_workflow_contract import (
+    load_mission_scope_file,
+    mission_scope_sha256,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_SHA = "1" * 40
 MISSION_ID = "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1"
+MISSION_SCOPE_PATH = "docs/agentic/missions/current.json"
+
+
+def mission_scope_payload(*, mission_id: str = MISSION_ID) -> dict[str, object]:
+    """Return a minimal explicit scope for synthetic receipt tests."""
+
+    return {
+        "schema_version": "agentic-mission-scope/v1",
+        "mission_id": mission_id,
+        "task_type": "workflow-governance",
+        "workflow_class": "STRICT",
+        "authorized_paths": ["Makefile"],
+        "authorized_prefixes": [],
+        "excluded_paths": [],
+        "excluded_prefixes": [],
+        "excluded_tokens": [],
+        "protected_invariants": ["synthetic test repository only"],
+        "forbidden_side_effects": ["no external side effects"],
+    }
 
 
 def body(
     *,
+    mission_id: str = MISSION_ID,
     task_type: str = "workflow-governance",
     workflow_class: str = "STRICT",
     review_result: str = "PENDING",
@@ -42,6 +66,8 @@ This is a bounded workflow infrastructure test change with no business runtime m
 | --- | --- |
 | Task type | {task_type} |
 | Workflow class | {workflow_class} |
+| Mission ID | {mission_id} |
+| Mission scope contract | `{MISSION_SCOPE_PATH}` |
 | Changed paths | scripts/devops/agent_workflow.py; tests/unit/test_agentic_workflow_v1.py |
 | Runtime behavior changed | no |
 | Business progress | Durable workflow governance only. |
@@ -71,7 +97,7 @@ No live fetch, provider request, database write, raw write, training, prediction
 
 ## Rollback
 
-Revert this infrastructure change; business runtime files are outside the mission allowlist.
+Revert this infrastructure change; business runtime files are outside the explicit mission scope.
 
 ## Dangerous File Authorization
 
@@ -110,7 +136,19 @@ def make_repo(tmp_path: Path) -> tuple[Path, str, str]:
     schema_path = repo / "schemas" / "agentic" / "codex_review_result.schema.json"
     schema_path.parent.mkdir(parents=True)
     schema_path.write_text('{"type":"object"}\n', encoding="utf-8")
-    _git(repo, "add", "Makefile", "schemas/agentic/codex_review_result.schema.json")
+    scope_path = repo / MISSION_SCOPE_PATH
+    scope_path.parent.mkdir(parents=True)
+    scope_path.write_text(
+        json.dumps(mission_scope_payload(), ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _git(
+        repo,
+        "add",
+        "Makefile",
+        "schemas/agentic/codex_review_result.schema.json",
+        MISSION_SCOPE_PATH,
+    )
     _git(repo, "commit", "-qm", "base")
     base = _git(repo, "rev-parse", "HEAD")
     (repo / "Makefile").write_text("all:\n\t@echo workflow\n", encoding="utf-8")
@@ -126,6 +164,7 @@ def write_valid_receipt(
     base: str,
     head: str,
     *,
+    mission_id: str = MISSION_ID,
     result: str = "PASS",
     finding: dict[str, object] | None = None,
 ) -> Path:
@@ -137,10 +176,27 @@ def write_valid_receipt(
     reviewer_id = "reviewer-1234"
     worktree = tmp_path / "review-worktree"
     _git(repo, "worktree", "add", "--detach", str(worktree), head)
-    prompt = _codex_prompt(mission_id=MISSION_ID, base_sha=base, head_sha=head)
+    scope_path = repo / MISSION_SCOPE_PATH
+    mission_scope = load_mission_scope_file(
+        scope_path, repo_root=repo, expected_mission_id=mission_id
+    )
+    scope_hash = mission_scope_sha256(scope_path)
+    prompt = _codex_prompt(
+        mission_id=mission_id,
+        base_sha=base,
+        head_sha=head,
+        mission_scope=mission_scope,
+        mission_scope_path=MISSION_SCOPE_PATH,
+        mission_scope_sha256=scope_hash,
+    )
     final_document = {
         "result": result,
-        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
+        "review_challenge": review_challenge(
+            mission_id=mission_id,
+            base_sha=base,
+            head_sha=head,
+            mission_scope_sha256=scope_hash,
+        ),
         "findings": [finding] if finding else [],
     }
     final_text = json.dumps(final_document)
@@ -210,9 +266,16 @@ def write_valid_receipt(
         "review_role": "independent_reviewer",
         "base_sha": base,
         "reviewed_head_sha": head,
-        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
+        "review_challenge": review_challenge(
+            mission_id=mission_id,
+            base_sha=base,
+            head_sha=head,
+            mission_scope_sha256=scope_hash,
+        ),
         "diff_sha256": diff_sha256(repo, base, head),
-        "mission_id": MISSION_ID,
+        "mission_id": mission_id,
+        "mission_scope_path": MISSION_SCOPE_PATH,
+        "mission_scope_sha256": scope_hash,
         "review_started_at": "2026-09-10T00:00:00Z",
         "review_completed_at": "2026-09-10T00:01:00Z",
         "finding_counts_by_severity": counts,

@@ -1,5 +1,4 @@
 """Agentic Engineering Workflow V1 的机器合同和 merge gate 测试。
-
 lifecycle: test-fixture
 """
 
@@ -30,7 +29,6 @@ from scripts.ops.helpers.agent_workflow_contract import (
     DECISION_AUTO_REMEDIATE,
     DECISION_ESCALATE,
     classify_failure,
-    validate_mission_scope,
     validate_pr_metadata,
 )
 from scripts.ops.helpers.garbage_prevention_checks import check_report_lifecycle_required
@@ -39,7 +37,11 @@ from scripts.ops.helpers.governance_p1_checks import check_script_lifecycle_requ
 
 ROOT = Path(__file__).resolve().parents[2]
 
-from tests.helpers.agentic_workflow_fixtures import BASE_SHA, MISSION_ID  # noqa: E402
+from tests.helpers.agentic_workflow_fixtures import (  # noqa: E402
+    BASE_SHA,
+    MISSION_ID,
+    MISSION_SCOPE_PATH,
+)
 from tests.helpers.agentic_workflow_fixtures import body as _body  # noqa: E402
 from tests.helpers.agentic_workflow_fixtures import make_repo as _make_repo  # noqa: E402
 from tests.helpers.agentic_workflow_fixtures import (  # noqa: E402
@@ -50,6 +52,10 @@ from tests.helpers.agentic_workflow_fixtures import (  # noqa: E402
 def _git(repo: Path, *args: str) -> str:
     result = subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=True)
     return result.stdout.strip()
+
+
+def _scope_file(repo: Path) -> Path:
+    return repo / MISSION_SCOPE_PATH
 
 
 @pytest.fixture(autouse=True)
@@ -81,6 +87,8 @@ def test_receipt_schema_encodes_engineering_assurance_contract():
     )
     assert schema["properties"]["assurance_model"]["const"] == ("engineering_independent_review")
     assert schema["properties"]["hostile_same_uid_forge_resistance"]["const"] is False
+    assert "mission_scope_path" in schema["required"]
+    assert "mission_scope_sha256" in schema["required"]
     isolation = schema["properties"]["isolation"]
     assert "ephemeral_session" in isolation["required"]
     assert "worktree_clean_before" in isolation["required"]
@@ -254,6 +262,8 @@ def test_blocking_finding_rejects_merge_ready(tmp_path: Path):
             head,
             "--mission-id",
             "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--mission-scope-file",
+            str(_scope_file(repo)),
             "--local-preflight-json",
             str(local),
             "--receipt",
@@ -296,6 +306,8 @@ def test_missing_review_rejects_merge_ready(tmp_path: Path):
             head,
             "--mission-id",
             "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--mission-scope-file",
+            str(_scope_file(repo)),
             "--local-preflight-json",
             str(local),
             "--receipt",
@@ -341,6 +353,8 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
             head,
             "--mission-id",
             "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--mission-scope-file",
+            str(_scope_file(repo)),
             "--local-preflight-json",
             str(local),
             "--receipt",
@@ -404,6 +418,8 @@ def test_non_no_forbidden_side_effect_status_rejects_merge_ready(
             head,
             "--mission-id",
             "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--mission-scope-file",
+            str(_scope_file(repo)),
             "--local-preflight-json",
             str(local),
             "--receipt",
@@ -452,7 +468,7 @@ def test_invalid_documentation_impact_caught_locally():
     assert any("DOCUMENTATION_IMPACT_INVALID" in error for error in errors)
 
 
-def test_global_metadata_contract_does_not_apply_mission_scope_allowlist():
+def test_global_metadata_contract_does_not_apply_bootstrap_scope():
     assert validate_pr_metadata(_body(), ["src/application.js"]) == []
     assert validate_pr_metadata(_body(), ["src/application.js"], enforce_mission_scope=True)
 
@@ -478,6 +494,8 @@ def test_merge_ready_without_pr_context_fails_closed(tmp_path: Path):
             head,
             "--mission-id",
             "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--mission-scope-file",
+            str(_scope_file(repo)),
             "--local-preflight-json",
             str(local),
             "--receipt",
@@ -508,7 +526,13 @@ def test_local_preflight_rejects_pass_for_different_scanned_head(tmp_path: Path)
         ),
         encoding="utf-8",
     )
-    check = agent_workflow._local_preflight_check(local, "1" * 40, "3" * 40, pr_body=_body())
+    check = agent_workflow._local_preflight_check(
+        local,
+        "1" * 40,
+        "3" * 40,
+        pr_body=_body(),
+        mission_scope_file=tmp_path / MISSION_SCOPE_PATH,
+    )
     assert check.status == "FAIL"
     assert "scanned HEAD" in check.message
 
@@ -624,23 +648,3 @@ def test_merge_ready_command_has_no_merge_operation():
     source = inspect.getsource(agent_workflow)
     assert "gh pr merge" not in source
     assert "git merge" not in source
-
-
-def test_protected_stage_d_path_is_out_of_scope():
-    errors = validate_mission_scope(["scripts/ops/stage_d_cycle.js"])
-    assert errors
-    assert "SCOPE_ESCALATE" in errors[0]
-
-
-@pytest.mark.parametrize(
-    "path",
-    [
-        "scripts/ops/helpers/db_write_guard.js",
-        "scripts/ops/helpers/python_db_write_guard.py",
-        "scripts/ops/helpers/python_db_write_enforcement_check.py",
-    ],
-)
-def test_production_db_write_guard_paths_are_out_of_scope(path: str):
-    errors = validate_mission_scope([path])
-    assert errors
-    assert "SCOPE_ESCALATE" in errors[0]

@@ -119,27 +119,6 @@ AUTHORITATIVE_DOC_PATHS: frozenset[str] = frozenset(
     }
 )
 
-DB_TOUCH_PATHS: tuple[str, ...] = (
-    "src/db/",
-    "database/",
-    "src/data/db_",
-    "src/infrastructure/db_",
-    "scripts/ops/db_",
-)
-SCRAPER_TOUCH_PATHS: tuple[str, ...] = (
-    "src/scraper/",
-    "src/data/scraper/",
-    "scripts/scraper/",
-    "src/data/fotmob",
-    "scripts/ops/fotmob",
-)
-BROWSER_TOUCH_PATHS: tuple[str, ...] = (
-    "src/browser/",
-    "playwright",
-    "chromium",
-    "stealth",
-)
-
 DOC_SPRAWL_PREFIXES: tuple[str, ...] = (
     "docs/_reports/",
     "docs/_manifests/",
@@ -424,87 +403,21 @@ def check_dangerous_keywords_in_blind_spots(
     return list(result.errors)
 
 
-def _safety_declared_no(pr_body: str, label: str) -> bool:
-    """Check if the PR body declares a specific safety category as 'no'.
-
-    Looks inside the Safety Impact and Safety Status sections for patterns
-    like '| DB used | no' or '- no DB writes: yes'.
-    """
-    return bool(
-        re.search(rf"\|\s*{label}\s*\|\s*no\b", pr_body, re.IGNORECASE)
-        or re.search(rf"-\s*no\s+{label}\s*:\s*yes", pr_body, re.IGNORECASE)
-    )
-
-
-def _safety_status_no(pr_body: str, label: str) -> bool:
-    """Check the Safety Status section for a 'yes' on a no-* line."""
-
-    return bool(re.search(rf"-\s*no\s+{label}\s*:\s*yes", pr_body, re.IGNORECASE))
-
-
-def _risk_declared_no(pr_body: str, label: str) -> bool:
-    """Check the canonical Risk section for an explicit no declaration."""
-
-    risk = section_text_between(pr_body, "## Risk")
-    if not risk:
-        return False
-    label_pattern = label.replace(r"\s+", r"\s+")
-    return bool(
-        re.search(rf"\bno\s+(?:live\s+)?{label_pattern}\b", risk, re.IGNORECASE)
-        or re.search(rf"\b{label_pattern}\s*:\s*no\b", risk, re.IGNORECASE)
-    )
-
-
-def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
-    """Fail if safety declarations contradict the files actually changed."""
-
-    errors: list[str] = []
-
-    db_declared_no = (
-        _safety_declared_no(pr_body, r"DB\s+used")
-        or _safety_status_no(pr_body, r"DB\s+writes")
-        or _risk_declared_no(pr_body, r"(?:DB|database)\s+writes?")
-    )
-    if db_declared_no and _touches_any(changed, DB_TOUCH_PATHS):
-        touching = sorted(p for p in changed if any(p.startswith(px) for px in DB_TOUCH_PATHS))
-        errors.append(
-            "Safety declaration says no DB, but changed files touch DB paths: "
-            + ", ".join(touching)
-        )
-
-    scraper_declared_no = (
-        _safety_declared_no(pr_body, r"Scraper\s+run")
-        or _safety_status_no(pr_body, r"scraper")
-        or _risk_declared_no(pr_body, r"(?:live\s+)?fetch|scraper\s+run")
-    )
-    if scraper_declared_no and _touches_any(changed, SCRAPER_TOUCH_PATHS):
-        touching = sorted(p for p in changed if any(p.startswith(px) for px in SCRAPER_TOUCH_PATHS))
-        errors.append(
-            "Safety declaration says no scraper, but changed files touch scraper/data paths: "
-            + ", ".join(touching)
-        )
-
-    browser_declared_no = (
-        _safety_declared_no(pr_body, r"Browser\s+automation\s+used")
-        or _safety_status_no(pr_body, r"browser")
-        or _risk_declared_no(pr_body, r"browser(?:\s+automation)?")
-    )
-    if browser_declared_no and _touches_any(changed, BROWSER_TOUCH_PATHS):
-        touching = sorted(p for p in changed if any(p.startswith(px) for px in BROWSER_TOUCH_PATHS))
-        errors.append(
-            "Safety declaration says no browser, but changed files touch "
-            "browser/automation paths: " + ", ".join(touching)
-        )
-
-    return errors
-
-
 # Garbage prevention checks (G1 P0) — delegated to dedicated helper
-from scripts.ops.helpers.agent_workflow_contract import validate_pr_metadata  # noqa: E402
+from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
+    MissionScope,
+    MissionScopeError,
+    load_mission_scope_file,
+    validate_pr_metadata,
+)
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
     check_large_risky_change,
+)
+from scripts.ops.helpers.agent_workflow_safety_checks import check_safety_consistency  # noqa: E402
+from scripts.ops.helpers.agent_workflow_scope_context import (  # noqa: E402
+    validate_mission_scope_context,
 )
 from scripts.ops.helpers.dangerous_file_change_check import (  # noqa: E402
     check_dangerous_file_changes,
@@ -540,6 +453,26 @@ def _check_governance_growth(
         return [f"GOV-GROWTH-GATE: Governance growth freeze check failed: {exc}"]
 
 
+def _validate_mission_scope_context(
+    pr_body: str,
+    scope_file: Path,
+    scope: MissionScope,
+    *,
+    resolved_head: str,
+    skip_body_checks: bool,
+) -> list[str]:
+    """Keep the compatibility helper bound to this gate's repository root."""
+
+    return validate_mission_scope_context(
+        pr_body,
+        scope_file,
+        scope,
+        repo_root=ROOT,
+        resolved_head=resolved_head,
+        skip_body_checks=skip_body_checks,
+    )
+
+
 def validate(  # noqa: C901, PLR0912, PLR0915
     pr_body: str,
     changes: list[Change] | None = None,
@@ -549,6 +482,7 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     enforce_strict_review: bool = False,
     enforce_agent_workflow_contract: bool = False,
     enforce_agent_workflow_scope: bool = False,
+    mission_scope: MissionScope | None = None,
     allow_review_pending: bool = False,
     base_ref: str | None = None,
     head_ref: str | None = None,
@@ -583,6 +517,7 @@ def validate(  # noqa: C901, PLR0912, PLR0915
                     pr_body,
                     changed,
                     enforce_mission_scope=enforce_agent_workflow_scope,
+                    mission_scope=mission_scope,
                 )
             )
         # 2. Do not start automatically. Main-push calls may intentionally
@@ -716,11 +651,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--enforce-agent-workflow-contract", action="store_true")
     parser.add_argument("--enforce-agent-workflow-scope", action="store_true")
+    parser.add_argument(
+        "--mission-scope-file",
+        type=Path,
+        default=None,
+        help="显式 mission scope contract；只有启用 scope enforcement 时使用",
+    )
     parser.add_argument("--allow-review-pending", action="store_true")
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
+def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
     """Run AI workflow gate checks and exit 0 (pass) or 1 (fail)."""
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -741,6 +682,13 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         sys.stderr.write(f"[AI Workflow Gate] {exc}\n")
         return 1
     changed = changed_paths(changes)
+    mission_scope = None
+    if args.mission_scope_file is not None:
+        try:
+            mission_scope = load_mission_scope_file(args.mission_scope_file, repo_root=ROOT)
+        except MissionScopeError as exc:
+            sys.stderr.write(f"[AI Workflow Gate] invalid mission scope: {exc}\n")
+            return 1
     errors = validate(
         pr_body,
         changes,
@@ -749,10 +697,21 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         enforce_strict_review=args.block_matrix and not args.skip_body_checks,
         enforce_agent_workflow_contract=args.enforce_agent_workflow_contract,
         enforce_agent_workflow_scope=args.enforce_agent_workflow_scope,
+        mission_scope=mission_scope,
         allow_review_pending=args.allow_review_pending,
         base_ref=resolved_base,
         head_ref=resolved_head,
     )
+    if args.enforce_agent_workflow_scope and mission_scope is not None:
+        errors.extend(
+            _validate_mission_scope_context(
+                pr_body,
+                args.mission_scope_file,
+                mission_scope,
+                resolved_head=resolved_head,
+                skip_body_checks=args.skip_body_checks,
+            )
+        )
     # 8. DB write guard enforcement — phase2 hard fail on changed-files violations
     try:
         db_errors, db_warnings = check_db_write_guard_enforcement(changed)

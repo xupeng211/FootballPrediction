@@ -215,19 +215,25 @@ bounded mission
   → STOP AT MERGE GATE，交回 Execution Controller
 ```
 
-`make agent-preflight` 的静态结果与 CI 的 `AI Workflow Gate` 共用
-`validate_pr_metadata()`、现有 `pr_authorization_matrix.py`、
-`strict_review_evidence.py`、`governance_growth_gate.py` 和 lifecycle helpers；本地
-还会显式启用本 mission 的 changed-path allowlist 并检查 feature branch 与未提交
-changed paths 的 growth freeze。远端永久 PR gate 只启用可复用的 metadata/lifecycle
-合同，不把本 mission 的路径 allowlist误套到普通业务 PR；merge readiness 再次显式
-检查本 mission scope。PR context、GitHub ruleset 和 required check runs 仍只能由
-`make pr-ready PR=<number>` 读取。
+`make agent-preflight PR_BODY=<path> MISSION_SCOPE_FILE=<path>` 的静态结果与 CI 的
+`AI Workflow Gate` 共用 `validate_pr_metadata()`、现有 `pr_authorization_matrix.py`、
+`strict_review_evidence.py`、`governance_growth_gate.py` 和 lifecycle helpers。路径
+授权不属于永久 workflow policy；它来自当前 bounded mission 提供的、已纳入候选
+HEAD 的 `schemas/agentic/mission_scope.schema.json` 合同（通常放在
+`docs/agentic/missions/<mission-id>.json`）。合同必须明确 mission ID、task/workflow、
+authorized/excluded paths or prefixes、protected invariants 和 forbidden side effects；
+缺失、无效或空授权一律 fail-closed，exclude 优先且匹配按目录边界执行。当前 mission
+的 preflight 会验证这个文件的字节与待审 exact HEAD 一致；不会把另一个 mission 的
+路径列表当作默认值。远端永久 PR gate 只启用可复用的 metadata/lifecycle 合同，不
+自动启用任何 bootstrap mission scope；只有显式提供 scope context 的受控调用才做
+mission-scope check。merge readiness 和 reviewer 会再次读取同一 scope contract。
+PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready PR=<number>`
+读取。
 
 ### 11.3 Codex independent reviewer 与 receipt
 
 canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口为
-`make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> EVIDENCE_DIR=<external dir>`。
+`make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external dir>`。
 它必须：
 
 1. 在 exact reviewed commit 创建 detached worktree；
@@ -278,9 +284,11 @@ FORBIDDEN_SIDE_EFFECTS=NO
 REQUIRED_PR_GOVERNANCE=PASS
 ```
 
-`PROTECTED_INVARIANTS=PASS` 与 `FORBIDDEN_SIDE_EFFECTS=NO` 既是必需声明，也必须与
-当前 exact-head、mission-scope 和已验证 local preflight 推导出的机器状态一致；调用者
-单独自报 PASS/NO 不能覆盖缺失或失败的机器证据。任何 `UNKNOWN`、failed/stale receipt、
+`MISSION_SCOPE_VALID=YES` 只表示当前 changed paths 通过实际 mission contract；它不从
+mission ID、PR title 或 Builder prose 推断授权。`PROTECTED_INVARIANTS=PASS` 与
+`FORBIDDEN_SIDE_EFFECTS=NO` 既是必需声明，也必须与当前 exact-head、mission-scope 和
+已验证 local preflight 推导出的机器状态一致；调用者单独自报 PASS/NO 不能覆盖缺失或
+失败的机器证据。任何 `UNKNOWN`、failed/stale receipt、
 PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返回
 `MERGE_READY=NO`。命令没有 merge API、push、commit
 或 cleanup 分支；`MERGE_READY=YES` 只产生
@@ -290,9 +298,10 @@ PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返
 
 GitHub `Production Gate` 的 PR AI Workflow Gate 开启
 `--enforce-agent-workflow-contract`，所以 required remote CI 始终要求有效的最终
-STRICT review evidence，并验证 Task type / Workflow class / Documentation Impact / lifecycle；它不把
-本 mission 的 path allowlist当成所有 PR 的全局限制，也不能把 PENDING 当作 final
-approval。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
+STRICT review evidence，并验证 Task type / Workflow class / Documentation Impact / lifecycle；它不
+加载或执行某一个 PR 的 mission scope，因而不会把 #1904 的 bootstrap 路径列表当成
+所有 PR 的全局限制。需要 scope 的本地/受控 gate 必须显式提供当前合同；不能把
+mission ID、PR title 或 PENDING 当作授权。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
 和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
 PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
 required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。

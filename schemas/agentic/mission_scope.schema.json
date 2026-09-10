@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://footballprediction.local/schemas/agentic/mission-scope-v1.json",
+  "title": "Agentic Mission Scope Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mission_id",
+    "task_type",
+    "workflow_class",
+    "authorized_paths",
+    "authorized_prefixes",
+    "excluded_paths",
+    "excluded_prefixes",
+    "excluded_tokens",
+    "protected_invariants",
+    "forbidden_side_effects"
+  ],
+  "properties": {
+    "schema_version": {"const": "agentic-mission-scope/v1"},
+    "mission_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+    },
+    "task_type": {"type": "string", "minLength": 1},
+    "workflow_class": {"enum": ["NORMAL", "STRICT"]},
+    "authorized_paths": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "authorized_prefixes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "excluded_paths": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "excluded_prefixes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "excluded_tokens": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "protected_invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "forbidden_side_effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "anyOf": [
+    {"properties": {"authorized_paths": {"minItems": 1}}},
+    {"properties": {"authorized_prefixes": {"minItems": 1}}}
+  ]
+}
