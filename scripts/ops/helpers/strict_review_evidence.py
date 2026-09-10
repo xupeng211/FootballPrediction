@@ -41,6 +41,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (
 WORKFLOW_CLASS_NORMAL = "NORMAL"
 WORKFLOW_CLASS_STRICT = "STRICT"
 ACCEPTED_RESULTS: frozenset[str] = frozenset({"PASS", "FINDINGS_RESOLVED"})
+PENDING_RESULT = "PENDING"
 EVIDENCE_HEADING = "## Strict Review Evidence"
 MAX_PROVIDER_LENGTH = 128
 _TABLE_COLUMN_COUNT = 2
@@ -265,12 +266,15 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
     *,
     changed_paths: Iterable[str] | None = None,
     task_type: str | None = None,
+    allow_pending: bool = False,
 ) -> list[str]:
     """Validate the STRICT review contract against one current full SHA.
 
     NORMAL PRs intentionally return no evidence error.  STRICT PRs fail closed
     when the classification, evidence section, fields, result, timestamp, or
-    exact reviewed HEAD is absent or malformed.
+    exact reviewed HEAD is absent or malformed.  V1 local/remote preflight may
+    use ``allow_pending`` for the pre-review phase; merge-readiness still
+    requires an independently verified PASS receipt.
     """
 
     scope_sections = _section_matches(pr_body, "## Scope")
@@ -337,8 +341,12 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
         errors.append("STRICT_REVIEW_INVALID: evidence Task type must be STRICT.")
     if not values["provider"] or len(values["provider"]) > MAX_PROVIDER_LENGTH:
         errors.append("STRICT_REVIEW_INVALID: evidence Provider is required.")
-    if values["result"] not in ACCEPTED_RESULTS:
-        errors.append("STRICT_REVIEW_INVALID: evidence Result must be PASS or FINDINGS_RESOLVED.")
+    accepted_results = ACCEPTED_RESULTS | ({PENDING_RESULT} if allow_pending else set())
+    if values["result"] not in accepted_results:
+        allowed = "PASS or FINDINGS_RESOLVED"
+        if allow_pending:
+            allowed += " or PENDING"
+        errors.append(f"STRICT_REVIEW_INVALID: evidence Result must be {allowed}.")
     if not _valid_timestamp(values["timestamp"]):
         errors.append("STRICT_REVIEW_INVALID: evidence Timestamp must be ISO-8601 with timezone.")
 

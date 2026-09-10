@@ -500,6 +500,7 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
 
 
 # Garbage prevention checks (G1 P0) — delegated to dedicated helper
+from scripts.ops.helpers.agent_workflow_contract import validate_pr_metadata  # noqa: E402
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
@@ -546,6 +547,8 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     skip_body_checks: bool = False,
     block_matrix: bool = False,
     enforce_strict_review: bool = False,
+    enforce_agent_workflow_contract: bool = False,
+    allow_review_pending: bool = False,
     base_ref: str | None = None,
     head_ref: str | None = None,
 ) -> list[str]:
@@ -563,7 +566,6 @@ def validate(  # noqa: C901, PLR0912, PLR0915
 
     if changes is None:
         changes = collect_changes()
-
     added = added_paths(changes)
     changed = changed_paths(changes)
     has_pr_metadata = not skip_body_checks
@@ -577,19 +579,17 @@ def validate(  # noqa: C901, PLR0912, PLR0915
         missing = check_required_sections(pr_body)
         if missing:
             errors.append(f"Missing required PR body sections: {', '.join(missing)}")
-
+        if enforce_agent_workflow_contract:
+            errors.extend(validate_pr_metadata(pr_body, changed))
         # 2. Do not start automatically. Main-push calls may intentionally
         # omit PR metadata; an empty skipped body must not create a fake
         # missing-phrase failure.
         if not (skip_body_checks and not pr_body.strip()):
             errors.extend(check_next_task_stop_phrase(pr_body))
-
     # 3. Mixed governance + business code
     errors.extend(check_mixed_governance_business(changed))
-
     # 4. Document sprawl
     errors.extend(check_doc_sprawl(added))
-
     # 4b. Report artifacts require source-of-truth backflow or explicit reason
     if has_pr_metadata:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
@@ -603,7 +603,6 @@ def validate(  # noqa: C901, PLR0912, PLR0915
             check_report_lifecycle_required(added, pr_body, skip_body_checks=skip_body_checks)
         )
     errors.extend(check_no_generated_artifacts_wrapper(added))
-
     # 5. Dangerous keywords in docs/tests blind spots
     errors.extend(
         check_dangerous_keywords_in_blind_spots(
@@ -614,21 +613,17 @@ def validate(  # noqa: C901, PLR0912, PLR0915
             emit_summary=True,
         )
     )
-
     # 6. Safety declaration consistency (only when body is available)
     if has_pr_metadata:
         errors.extend(check_safety_consistency(pr_body, changed))
-
     # 6b. Dangerous file path guard
     if has_pr_metadata:
         errors.extend(check_dangerous_file_changes(changed, pr_body))
-
     # 6c. Forbidden rewrite file patterns (new files only)
     if has_pr_metadata:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
     if has_pr_metadata:
         errors.extend(check_large_risky_change(changes, pr_body))
-
     # 6e. Forbidden safety claims
     if has_pr_metadata:
         errors.extend(check_forbidden_safety_claims(pr_body))
@@ -647,6 +642,7 @@ def validate(  # noqa: C901, PLR0912, PLR0915
                     head_ref,
                     changed_paths=changed,
                     task_type=parse_task_type(pr_body),
+                    allow_pending=allow_review_pending,
                 )
             )
         with contextlib.suppress(Exception):
@@ -719,6 +715,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Enable narrow PR matrix blocking (default: report-only)",
     )
+    parser.add_argument("--enforce-agent-workflow-contract", action="store_true")
+    parser.add_argument("--allow-review-pending", action="store_true")
     return parser
 
 
@@ -750,6 +748,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         skip_body_checks=args.skip_body_checks,
         block_matrix=args.block_matrix,
         enforce_strict_review=args.block_matrix and not args.skip_body_checks,
+        enforce_agent_workflow_contract=args.enforce_agent_workflow_contract,
+        allow_review_pending=args.allow_review_pending,
         base_ref=resolved_base,
         head_ref=resolved_head,
     )

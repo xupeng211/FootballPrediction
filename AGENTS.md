@@ -178,3 +178,21 @@ Claude Code 只保留 Claude-specific 的权限/工具差异；其他 agent 应�
 - 最终报告区分 `CONFIRMED`、`INFERRED` 和 `UNKNOWN`，没有把文档声明冒充机器强制。
 
 若安全边界、授权或证据不足，停止在 `MERGE_READY`，明确 blocker，不用新的治理 artifact 掩盖它。
+
+## 10. Agentic Engineering Workflow V1
+
+每次进入仓库后，先读取本文件，再读取唯一详细合同
+[`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md) 的
+`Agentic Engineering Workflow V1` 部分，并明确当前角色：
+`EXECUTION_CONTROLLER`、`BUILDER`、`INDEPENDENT_REVIEWER` 或
+`CHIEF_ENGINEER`。机器合同与本地入口位于
+`scripts/ops/helpers/agent_workflow_contract.py`、
+`scripts/devops/agent_workflow_preflight.py`、
+`scripts/devops/codex_independent_review.py` 和
+`scripts/devops/agent_workflow.py`。
+
+Builder 在当前 bounded mission 内必须自主完成实现、验证和同一 PR 的窄修复；lint、格式、当前 patch 引起的测试/CI、PR metadata、Documentation Impact、report/script lifecycle 以及 independent reviewer 的窄 finding，都不能单独成为停止理由。使用 `make agent-preflight PR_BODY=<path>` 先跑本地 governance gate；reviewer finding 修复后必须重新验证、重新 review，旧 exact-head receipt 自动失效。
+
+Builder 必须在需要扩大 mission、改变产品/架构或 protected invariant、跨越 Chief Engineer Gate、触碰显式排除的 Stage D/PR #1903/blocker/provider/production 路径、执行 destructive/secret/真实 provider 动作、绕过失败 CI、削弱 STRICT review 或 merge 自己 PR 时升级。未知类别也按升级处理。
+
+Independent reviewer 必须是新的 Codex 子进程/会话，运行于 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。只接受 `make agent-review ...` 生成的外部 machine-readable receipt；receipt 必须绑定完整 base/head、diff hash、Codex invocation 和原始输出。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。

@@ -63,7 +63,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
-        verify-targeted verify-pr verify-strict \
+        verify-targeted verify-pr verify-strict agent-preflight agent-review agent-merge-ready \
         ci-local ci-local-pr pr-gate-local pr-ready pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
@@ -217,6 +217,50 @@ verify-pr: ## 运行与 GitHub PR Production Gate 共享实现的验证
 
 verify-strict: ## 运行完整 push gate 验证（STRICT）
 	@$(VALIDATION_PROFILE_RUNNER) strict
+
+agent-preflight: ## Agentic Workflow V1 本地 governance preflight。Usage: make agent-preflight PR_BODY=<path> [BASE_REF=<sha>] [HEAD_REF=<sha>] [REQUIRE_REVIEW=1] [JSON=1]
+	@if [ -z "$(PR_BODY)" ]; then \
+		echo "ERROR: PR_BODY required. Usage: make agent-preflight PR_BODY=/tmp/pr_body.md"; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/agent_workflow_preflight.py \
+		--pr-body-file "$(PR_BODY)" \
+		$(if $(BASE_REF),--base-ref $(BASE_REF),) \
+		$(if $(HEAD_REF),--head-ref $(HEAD_REF),) \
+		$(if $(REQUIRE_REVIEW),--require-review,) \
+		$(if $(JSON),--json,)
+
+agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-review BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> EVIDENCE_DIR=<external-dir>
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID EVIDENCE_DIR are required."; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/codex_independent_review.py run \
+		--repo-root "$(CURDIR)" \
+		--base-sha "$(BASE_SHA)" \
+		--head-sha "$(HEAD_SHA)" \
+		--mission-id "$(MISSION_ID)" \
+		--evidence-dir "$(EVIDENCE_DIR)" \
+		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
+
+agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ] || [ -z "$(RECEIPT)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID LOCAL_PREFLIGHT_JSON RECEIPT are required."; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/agent_workflow.py merge-ready \
+		--repo-root "$(CURDIR)" \
+		--base-sha "$(BASE_SHA)" \
+		--head-sha "$(HEAD_SHA)" \
+		--mission-id "$(MISSION_ID)" \
+		--local-preflight-json "$(LOCAL_PREFLIGHT_JSON)" \
+		--receipt "$(RECEIPT)" \
+		$(if $(PR),--pr $(PR),) \
+		$(if $(PROTECTED_INVARIANTS),--protected-invariants $(PROTECTED_INVARIANTS),) \
+		$(if $(FORBIDDEN_SIDE_EFFECTS),--forbidden-side-effects $(FORBIDDEN_SIDE_EFFECTS),) \
+		$(if $(REQUIRED_PR_GOVERNANCE),--required-pr-governance $(REQUIRED_PR_GOVERNANCE),) \
+		$(if $(REMOTE_CI_STATUS),--remote-ci-status $(REMOTE_CI_STATUS),) \
+		$(if $(JSON),--json,)
 
 # ============================================
 # 本地 CI 入口
