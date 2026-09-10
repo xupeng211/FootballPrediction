@@ -184,7 +184,7 @@ def _require_external_path(path: Path, repo_root: Path, *, must_exist: bool = Fa
 
 
 def _ensure_private_directory(path: Path) -> None:
-    path.mkdir(parents=True, exist_ok=True)
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
     current_mode = stat.S_IMODE(path.stat().st_mode)
     if current_mode & 0o077:
         raise ReviewReceiptError(f"evidence directory 必须是 owner-only (0700): {path}")

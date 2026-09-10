@@ -9,6 +9,7 @@ import inspect
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 from types import SimpleNamespace
 
@@ -84,6 +85,12 @@ def test_receipt_schema_encodes_engineering_assurance_contract():
     assert "ephemeral_session" in isolation["required"]
     assert "worktree_clean_before" in isolation["required"]
     assert "persisted_session_artifact" not in isolation["required"]
+
+
+def test_new_evidence_directory_is_created_owner_only(tmp_path: Path):
+    evidence = tmp_path / "new" / "evidence"
+    codex_independent_review._ensure_private_directory(evidence)
+    assert stat.S_IMODE(evidence.stat().st_mode) == stat.S_IRWXU
 
 
 def test_in_scope_ci_failure_is_auto_remediated():
