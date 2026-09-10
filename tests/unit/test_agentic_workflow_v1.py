@@ -157,6 +157,24 @@ def test_dirty_review_worktree_is_rejected(tmp_path: Path):
         validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
 
 
+def test_review_worktree_actual_head_is_rechecked(tmp_path: Path):
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    worktree = Path(json.loads(receipt.read_text(encoding="utf-8"))["isolation"]["worktree_path"])
+    _git(worktree, "checkout", "--detach", base)
+    with pytest.raises(ExactHeadError, match="actual review worktree HEAD"):
+        validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
+
+
+def test_attached_review_worktree_is_rejected(tmp_path: Path):
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    worktree = Path(json.loads(receipt.read_text(encoding="utf-8"))["isolation"]["worktree_path"])
+    _git(worktree, "checkout", "-b", "reviewer-attached-branch", head)
+    with pytest.raises(ReviewReceiptError, match="必须保持 detached HEAD"):
+        validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
+
+
 def test_wrong_diff_identity_is_rejected(tmp_path: Path):
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)

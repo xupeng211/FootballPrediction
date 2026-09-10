@@ -614,6 +614,13 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     )
     if not (worktree_path / ".git").exists():
         raise ReviewReceiptError("review worktree 必须是 Git worktree")
+    actual_worktree_head = exact_head(worktree_path, "HEAD")
+    assert_exact_head(reviewed_head, actual_worktree_head, role="actual review worktree HEAD")
+    attached_branch = _run_git(
+        worktree_path, ["symbolic-ref", "--quiet", "--short", "HEAD"], check=False
+    )
+    if attached_branch:
+        raise ReviewReceiptError("review worktree 必须保持 detached HEAD")
     if _run_git(worktree_path, ["status", "--porcelain", "--untracked-files=all"]):
         raise ReviewReceiptError("review worktree 当前不是 clean")
 
