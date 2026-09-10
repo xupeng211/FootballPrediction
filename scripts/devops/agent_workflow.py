@@ -154,6 +154,7 @@ def _remote_pr_check(
     pr_number: int,
     *,
     changed_paths: set[str],
+    expected_base: str,
     expected_head: str,
 ) -> tuple[GateCheck, dict[str, Any], str | None]:
     try:
@@ -171,8 +172,19 @@ def _remote_pr_check(
         "pr": pr_number,
         "verdict": result.verdict,
         "findings": [asdict(item) for item in result.findings],
+        "base_sha": result.pr.base_sha,
         "head_sha": result.pr.head_sha,
     }
+    if result.pr.base_sha != expected_base:
+        return (
+            GateCheck(
+                "remote-required-ci",
+                "FAIL",
+                f"PR base={result.pr.base_sha}; expected exact base={expected_base}",
+            ),
+            evidence,
+            result.pr.body,
+        )
     if result.pr.head_sha != expected_head:
         return (
             GateCheck(
@@ -261,6 +273,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
         remote_check, remote_evidence, pr_body = _remote_pr_check(
             args.pr,
             changed_paths=changed,
+            expected_base=base_sha,
             expected_head=expected_head,
         )
         checks.append(remote_check)

@@ -5,10 +5,10 @@ lifecycle: permanent
 owner: engineering workflow governance
 
 `run` 在 reviewed commit 的 detached worktree 中启动新的
-``codex exec`` 子进程，强制 ``--sandbox read-only``、``--ephemeral``
-和 JSON 输出；reviewer 不共享 Builder session，也不接收 Builder 的自证。
-`validate` 只接受由该过程生成、且能重新绑定 exact HEAD/diff/raw output 的
-外部 receipt。receipt 与原始 Codex 输出必须位于 reviewed source tree 之外。
+``codex exec`` 子进程，强制 ``--sandbox read-only`` 和 JSON 输出；reviewer
+不共享 Builder session，也不接收 Builder 的自证。Codex 的 persisted
+session/index 是独立于 receipt 的执行来源，`validate` 必须重新核对它们。
+receipt 与原始 Codex 输出必须位于 reviewed source tree 之外。
 """
 
 from __future__ import annotations
@@ -31,6 +31,17 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.devops.codex_review_output import (  # noqa: E402
+    assert_successful_completion,
+    parse_json_lines,
+    reviewer_invocation_id,
+)
+from scripts.devops.codex_review_provenance import (  # noqa: E402
+    ReviewReceiptError,
+    find_codex_session_artifact,
+    resolve_codex_binary,
+    validate_codex_session_evidence,
+)
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -53,10 +64,6 @@ WRAPPER_NAME = "scripts/devops/codex_independent_review.py"
 THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
 MIN_FENCED_JSON_LINES = 3
 REVIEW_CHALLENGE_VERSION = "codex-independent-review-challenge/v1"
-
-
-class ReviewReceiptError(ValueError):
-    """Raised when an independent-review receipt cannot be trusted."""
 
 
 def _canonical_json(value: object) -> bytes:
@@ -195,53 +202,6 @@ def _write_exclusive(path: Path, body: bytes) -> None:
         raise ReviewReceiptError(f"写入 evidence 失败: {path}: {exc}") from exc
 
 
-def _parse_json_lines(raw: bytes) -> list[dict[str, Any]]:
-    events: list[dict[str, Any]] = []
-    for line_no, line in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
-        if not line.strip():
-            continue
-        try:
-            value = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise ReviewReceiptError(f"Codex JSONL 第 {line_no} 行无效: {exc}") from exc
-        if isinstance(value, dict):
-            events.append(value)
-    return events
-
-
-def _reviewer_invocation_id(events: list[dict[str, Any]]) -> str:
-    for event in events:
-        if event.get("type") != "thread.started":
-            continue
-        candidate = event.get("thread_id") or event.get("threadId")
-        if isinstance(candidate, str) and THREAD_ID_RE.fullmatch(candidate):
-            return candidate
-    raise ReviewReceiptError("Codex JSONL 缺少独立 thread.started invocation id")
-
-
-def _assert_successful_codex_completion(events: list[dict[str, Any]], final_text: str) -> None:
-    """Bind the saved final message to a completed Codex turn in raw JSONL."""
-
-    if any(event.get("type") == "turn.failed" for event in events):
-        raise ReviewReceiptError("Codex JSONL 包含 turn.failed；拒绝 review receipt")
-    completed_turns = [
-        index for index, event in enumerate(events) if event.get("type") == "turn.completed"
-    ]
-    if len(completed_turns) != 1:
-        raise ReviewReceiptError("Codex JSONL 必须包含恰好一个 turn.completed")
-    messages = [
-        (index, event.get("item", {}).get("text"))
-        for index, event in enumerate(events)
-        if event.get("type") == "item.completed"
-        and event.get("item", {}).get("type") == "agent_message"
-    ]
-    if not messages or not isinstance(messages[-1][1], str):
-        raise ReviewReceiptError("Codex JSONL 必须包含 completed agent_message")
-    final_index, final_message = messages[-1]
-    if final_index > completed_turns[0] or final_message != final_text:
-        raise ReviewReceiptError("Codex raw completed agent_message 与 final message 不一致")
-
-
 def _parse_final_message(text: str) -> dict[str, Any]:
     stripped = text.strip()
     if stripped.startswith("```") and stripped.endswith("```"):
@@ -352,7 +312,6 @@ def build_reviewer_command(
         "exec",
         "--sandbox",
         "read-only",
-        "--ephemeral",
         "--ignore-user-config",
         "--json",
         "--output-schema",
@@ -422,8 +381,9 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     challenge = review_challenge(
         mission_id=args.mission_id, base_sha=base_sha, head_sha=expected_head
     )
+    codex_binary = resolve_codex_binary(args.codex_binary)
     command = build_reviewer_command(
-        codex_binary=args.codex_binary,
+        codex_binary=str(codex_binary),
         base_sha=base_sha,
         output_schema=review_output_schema,
         final_message_path=final_path,
@@ -474,15 +434,25 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         head_sha=expected_head,
     )
     counts, blocking, review_result, findings = validate_review_result(result_document)
-    events = _parse_json_lines(raw_bytes)
-    reviewer_invocation_id = _reviewer_invocation_id(events)
-    _assert_successful_codex_completion(events, final_text)
+    events = parse_json_lines(raw_bytes)
+    reviewer_id = reviewer_invocation_id(events, THREAD_ID_RE)
+    assert_successful_completion(events, final_text)
     builder_context_id = args.builder_context_id or os.environ.get(
         "BUILDER_CODEX_CONTEXT", f"builder-process:{os.getppid()}"
     )
-    _assert_contexts_separate(builder_context_id, reviewer_invocation_id)
+    _assert_contexts_separate(builder_context_id, reviewer_id)
     if _run_git(worktree, ["status", "--porcelain", "--untracked-files=all"]):
         raise ReviewReceiptError("reviewer 改动了 detached worktree；拒绝 receipt")
+    session_path = find_codex_session_artifact(reviewer_id)
+    session_sha, session_index_entry_sha, session_index_path, _ = validate_codex_session_evidence(
+        session_path=session_path,
+        reviewer_id=reviewer_id,
+        worktree=worktree,
+        mission_id=args.mission_id,
+        base_sha=base_sha,
+        head_sha=expected_head,
+        challenge=challenge,
+    )
 
     receipt: dict[str, Any] = {
         "schema_version": RECEIPT_SCHEMA_VERSION,
@@ -500,23 +470,30 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         "blocking_findings": blocking,
         "review_result": review_result,
         "findings": findings,
-        "reviewer_invocation_id": reviewer_invocation_id,
+        "reviewer_invocation_id": reviewer_id,
         "builder_context_id": builder_context_id,
-        "reviewer_context_id": reviewer_invocation_id,
+        "reviewer_context_id": reviewer_id,
         "reviewer_read_only": True,
         "isolation": {
             "fresh_process": True,
-            "ephemeral_session": True,
+            "persisted_session_artifact": True,
             "sandbox": "read-only",
             "detached_worktree": True,
             "worktree_head_sha": worktree_head,
+            "worktree_path": str(worktree),
         },
         "provenance": {
             "writer": WRAPPER_NAME,
             "wrapper_sha256": sha256_file(Path(__file__).resolve()),
             "command_sha256": sha256_bytes(_canonical_json(command)),
             "prompt_sha256": sha256_bytes(prompt.encode("utf-8")),
-            "codex_binary": args.codex_binary,
+            "codex_binary": str(codex_binary),
+            "codex_binary_sha256": sha256_file(codex_binary),
+            "codex_session_path": str(session_path),
+            "codex_session_sha256": session_sha,
+            "codex_session_thread_id": reviewer_id,
+            "codex_session_index_path": str(session_index_path),
+            "codex_session_index_entry_sha256": session_index_entry_sha,
             "output_schema_path": str(review_output_schema),
             "output_schema_sha256": sha256_file(review_output_schema),
             "raw_output_path": str(raw_path),
@@ -601,11 +578,16 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     isolation = receipt.get("isolation")
     if not isinstance(isolation, dict) or any(
         isolation.get(field) is not True
-        for field in ("fresh_process", "ephemeral_session", "detached_worktree")
+        for field in ("fresh_process", "persisted_session_artifact", "detached_worktree")
     ):
         raise ReviewReceiptError("reviewer isolation provenance 不完整")
     if isolation.get("sandbox") != "read-only":
         raise ReviewReceiptError("reviewer sandbox 必须为 read-only")
+    worktree_path = _require_external_path(
+        Path(str(isolation.get("worktree_path") or "")), repo_root
+    )
+    if not worktree_path.is_dir() or worktree_path.is_symlink():
+        raise ReviewReceiptError("review worktree path 必须是 external regular directory")
     assert_exact_head(
         reviewed_head, isolation.get("worktree_head_sha"), role="review worktree HEAD"
     )
@@ -653,6 +635,17 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     codex_binary = provenance.get("codex_binary")
     if not isinstance(codex_binary, str) or not codex_binary.strip():
         raise ReviewReceiptError("provenance codex_binary 缺失")
+    try:
+        codex_binary_path = Path(codex_binary).resolve(strict=True)
+    except OSError as exc:
+        raise ReviewReceiptError("provenance codex_binary path 无法解析") from exc
+    if codex_binary_path.name != "codex" or not codex_binary_path.is_file():
+        raise ReviewReceiptError("provenance codex_binary 不是 Codex CLI executable")
+    current_codex_path = resolve_codex_binary("codex")
+    if codex_binary_path != current_codex_path:
+        raise ReviewReceiptError("receipt Codex CLI path 不是当前 PATH 中的 codex")
+    if provenance.get("codex_binary_sha256") != sha256_file(codex_binary_path):
+        raise ReviewReceiptError("Codex CLI executable sha256 不匹配")
     expected_command_sha = sha256_bytes(
         _canonical_json(
             build_reviewer_command(
@@ -672,11 +665,31 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     )
     if provenance.get("prompt_sha256") != expected_prompt_sha:
         raise ReviewReceiptError("reviewer prompt provenance 与当前 target 不匹配")
-    events = _parse_json_lines(raw_path.read_bytes())
-    if _reviewer_invocation_id(events) != reviewer_id:
+    session_path = _require_external_path(
+        Path(str(provenance.get("codex_session_path") or "")), repo_root, must_exist=True
+    )
+    session_sha, session_index_entry_sha, session_index_path, _ = validate_codex_session_evidence(
+        session_path=session_path,
+        reviewer_id=reviewer_id,
+        worktree=worktree_path,
+        mission_id=receipt["mission_id"],
+        base_sha=base_sha,
+        head_sha=reviewed_head,
+        challenge=expected_challenge,
+    )
+    if provenance.get("codex_session_sha256") != session_sha:
+        raise ReviewReceiptError("Codex session evidence sha256 不匹配")
+    if provenance.get("codex_session_thread_id") != reviewer_id:
+        raise ReviewReceiptError("Codex session evidence thread id 不匹配")
+    if provenance.get("codex_session_index_path") != str(session_index_path):
+        raise ReviewReceiptError("Codex session index path 不匹配")
+    if provenance.get("codex_session_index_entry_sha256") != session_index_entry_sha:
+        raise ReviewReceiptError("Codex session index entry sha256 不匹配")
+    events = parse_json_lines(raw_path.read_bytes())
+    if reviewer_invocation_id(events, THREAD_ID_RE) != reviewer_id:
         raise ReviewReceiptError("raw output invocation id 与 receipt 不一致")
     final_text = final_path.read_text(encoding="utf-8")
-    _assert_successful_codex_completion(events, final_text)
+    assert_successful_completion(events, final_text)
     if provenance.get("agent_message_sha256") != sha256_bytes(final_text.encode("utf-8")):
         raise ReviewReceiptError("agent_message_sha256 不匹配")
     if provenance.get("codex_exit_code") != 0:

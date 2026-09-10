@@ -232,16 +232,18 @@ canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口�
 
 1. 在 exact reviewed commit 创建 detached worktree；
 2. 用新的通用 `codex exec` 子进程，通过 stdin 传入审查合同，带 `--sandbox read-only`、
-   `--ephemeral`、`--ignore-user-config`、`--json`、`--output-schema` 和独立
-   `--output-last-message`；review prompt 自带 exact base/head，不依赖 Builder 上下文；
+   `--ignore-user-config`、`--json`、`--output-schema` 和独立 `--output-last-message`；
+   保留 Codex 自己写入的 persisted session/index 作为执行来源；review prompt 自带 exact
+   base/head，不依赖 Builder 上下文；
 3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
 4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
    `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
-   completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0，
-   不接受 Builder 传入的 PASS/count/invocation 结论；
+   completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0；
+   同时必须重新核对 Codex-owned persisted session/index 的 thread、cwd、prompt target
+   和 hash，不接受 Builder 传入的 PASS/count/invocation 结论；
 5. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
 
-receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、Codex engine/role、base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、result、finding summaries、Builder/reviewer context IDs、read-only isolation、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact HEAD/diff、重新解析 raw/final output、检查 receipt 不在 source tree 且为 owner-only；因此任意手写 `{"review_result":"PASS"}` 不是有效 evidence。
+receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、Codex engine/role、base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、result、finding summaries、Builder/reviewer context IDs、read-only isolation、Codex CLI persisted session/index provenance、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact HEAD/diff、重新解析 raw/final output、核对 Codex-owned session/index、检查 receipt 不在 source tree 且为 owner-only；因此任意手写 `{"review_result":"PASS"}` 或不带 Codex session evidence 的 receipt 都不是有效 evidence。
 
 P0/P1/P2 均阻塞，P3 不阻塞；这比当前 STRICT provider-neutral evidence 更具体但不削弱 STRICT。reviewer 只写适合普通 code review 的 finding，不写隐藏推理。
 

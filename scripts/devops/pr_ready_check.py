@@ -60,6 +60,7 @@ class PrInfo:
     state: str
     is_draft: bool
     base_branch: str
+    base_sha: str
     head_branch: str
     head_sha: str
     mergeable: str
@@ -199,7 +200,7 @@ def fetch_pr(number: int) -> PrInfo:
                 "view",
                 str(number),
                 "--json",
-                "title,state,isDraft,baseRefName,headRefName,headRefOid,mergeable,body",
+                "title,state,isDraft,baseRefName,baseRefOid,headRefName,headRefOid,mergeable,body",
             ]
         ),
         "gh pr view",
@@ -210,6 +211,7 @@ def fetch_pr(number: int) -> PrInfo:
         state=str(data.get("state") or "UNKNOWN"),
         is_draft=bool(data.get("isDraft")),
         base_branch=str(data.get("baseRefName") or ""),
+        base_sha=str(data.get("baseRefOid") or "").lower(),
         head_branch=str(data.get("headRefName") or ""),
         head_sha=str(data.get("headRefOid") or "").lower(),
         mergeable=str(data.get("mergeable") or "UNKNOWN"),
@@ -338,6 +340,13 @@ def evaluate(pr_number: int) -> PreflightResult:
             f"base={pr.base_branch or 'MISSING'}; expected {repo.default_branch}",
         )
     )
+    findings.append(
+        _finding(
+            "base-is-full-sha",
+            _is_full_sha(pr.base_sha),
+            f"PR base={pr.base_sha or 'MISSING'}; full 40-character SHA required",
+        )
+    )
     findings.append(_finding("title-present", bool(pr.title.strip()), "PR title is present"))
     findings.append(_finding("body-present", pr.body_present, "PR body is present"))
     findings.append(
@@ -428,6 +437,7 @@ def format_json(result: PreflightResult) -> str:
                 "state": result.pr.state,
                 "draft": result.pr.is_draft,
                 "base_branch": result.pr.base_branch,
+                "base_sha": result.pr.base_sha,
                 "head_branch": result.pr.head_branch,
                 "head_sha": result.pr.head_sha,
                 "mergeable": result.pr.mergeable,

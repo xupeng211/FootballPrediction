@@ -21,6 +21,7 @@ import pr_ready_check as ready  # noqa: E402
 
 HEAD = "a" * 40
 OTHER_HEAD = "b" * 40
+BASE = "c" * 40
 REPO = "xupeng211/FootballPrediction"
 
 
@@ -50,6 +51,7 @@ def _fake_commands(  # noqa: C901
                     "state": "OPEN",
                     "isDraft": False,
                     "baseRefName": "main",
+                    "baseRefOid": BASE,
                     "headRefName": branch,
                     "headRefOid": HEAD,
                     "mergeable": "MERGEABLE",
@@ -190,6 +192,7 @@ def test_json_output_contains_exact_head_and_findings(monkeypatch: pytest.Monkey
     data = json.loads(ready.format_json(ready.evaluate(1866)))
 
     assert data["verdict"] == "PASS"
+    assert data["pr"]["base_sha"] == BASE
     assert data["pr"]["head_sha"] == HEAD
     assert data["local"]["head_sha"] == HEAD
     assert data["required_checks"]

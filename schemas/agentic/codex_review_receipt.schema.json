@@ -60,16 +60,45 @@
     "reviewer_read_only": {"const": true},
     "isolation": {
       "type": "object",
-      "required": ["fresh_process", "ephemeral_session", "sandbox", "detached_worktree", "worktree_head_sha"],
+      "required": ["fresh_process", "persisted_session_artifact", "sandbox", "detached_worktree", "worktree_head_sha", "worktree_path"],
       "properties": {
         "fresh_process": {"const": true},
-        "ephemeral_session": {"const": true},
+        "persisted_session_artifact": {"const": true},
         "sandbox": {"const": "read-only"},
         "detached_worktree": {"const": true},
-        "worktree_head_sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"}
+        "worktree_head_sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+        "worktree_path": {"type": "string", "minLength": 1}
       }
     },
-    "provenance": {"type": "object"},
+    "provenance": {
+      "type": "object",
+      "required": [
+        "writer",
+        "wrapper_sha256",
+        "command_sha256",
+        "prompt_sha256",
+        "codex_binary",
+        "codex_binary_sha256",
+        "codex_session_path",
+        "codex_session_sha256",
+        "codex_session_thread_id",
+        "codex_session_index_path",
+        "codex_session_index_entry_sha256"
+      ],
+      "properties": {
+        "writer": {"type": "string", "minLength": 1},
+        "wrapper_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "command_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "prompt_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "codex_binary": {"type": "string", "minLength": 1},
+        "codex_binary_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "codex_session_path": {"type": "string", "minLength": 1},
+        "codex_session_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "codex_session_thread_id": {"type": "string", "minLength": 4},
+        "codex_session_index_path": {"type": "string", "minLength": 1},
+        "codex_session_index_entry_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
+      }
+    },
     "integrity": {
       "type": "object",
       "required": ["receipt_payload_sha256"],
