@@ -408,6 +408,7 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     MissionScope,
     MissionScopeError,
     load_mission_scope_file,
+    validate_mission_scope,
     validate_pr_metadata,
 )
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
@@ -501,11 +502,18 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     added = added_paths(changes)
     changed = changed_paths(changes)
     has_pr_metadata = not skip_body_checks
+    # Scope authorization is independent of PR-body checks and must not
+    # disappear for a main-push or a narrow CI invocation.
+    errors = validate_mission_scope(changed, mission_scope) if enforce_agent_workflow_scope else []
     # Mandatory for every PR/main-push AI gate call; independent of changed-file classification.
-    errors = [
-        f"Claude config credential policy violation: {finding}"
-        for finding in _documentation_governance_check.scan_tracked_claude_config_credentials(ROOT)
-    ]
+    errors.extend(
+        [
+            f"Claude config credential policy violation: {finding}"
+            for finding in _documentation_governance_check.scan_tracked_claude_config_credentials(
+                ROOT
+            )
+        ]
+    )
     if has_pr_metadata:
         # 1. Required sections
         missing = check_required_sections(pr_body)
@@ -516,7 +524,7 @@ def validate(  # noqa: C901, PLR0912, PLR0915
                 validate_pr_metadata(
                     pr_body,
                     changed,
-                    enforce_mission_scope=enforce_agent_workflow_scope,
+                    enforce_mission_scope=False,
                     mission_scope=mission_scope,
                 )
             )

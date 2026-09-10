@@ -24,6 +24,7 @@ from scripts.ops.helpers.agent_workflow_contract import (
     validate_mission_scope_reference,
     validate_pr_metadata,
 )
+from scripts.ops.helpers.git_change_helpers import Change
 from tests.helpers.agentic_workflow_fixtures import (
     BASE_SHA,
     MISSION_ID,
@@ -260,6 +261,32 @@ def test_global_metadata_gate_does_not_apply_bootstrap_scope():
     source = (ROOT / "scripts/ops/ai_workflow_gate.py").read_text(encoding="utf-8")
     assert "enforce_agent_workflow_scope" in source
     assert "mission_scope=mission_scope" in source
+
+
+@pytest.mark.parametrize("skip_body_checks", [False, True])
+def test_explicit_scope_enforcement_cannot_be_skipped_by_metadata_mode(
+    skip_body_checks: bool,
+):
+    errors = ai_workflow_gate.validate(
+        _body(),
+        [Change("M", "src/not-authorized.py")],
+        skip_body_checks=skip_body_checks,
+        enforce_agent_workflow_scope=True,
+        mission_scope=None,
+    )
+    _assert_error(errors, "current mission scope contract is required")
+
+
+def test_explicit_scope_enforcement_checks_paths_when_body_checks_are_skipped():
+    errors = ai_workflow_gate.validate(
+        "",
+        [Change("M", "src/not-authorized.py")],
+        skip_body_checks=True,
+        enforce_agent_workflow_contract=False,
+        enforce_agent_workflow_scope=True,
+        mission_scope=_mission_scope(),
+    )
+    _assert_error(errors, "not authorized")
 
 
 def test_scope_reference_binds_mission_task_and_workflow():
