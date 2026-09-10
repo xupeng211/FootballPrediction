@@ -185,7 +185,7 @@ function makeContext(t, authorizationOverrides = {}) {
     return ctx;
 }
 
-function componentsFor(ctx, { error = null } = {}) {
+function componentsFor(ctx, { error = null, transmissionClock = null } = {}) {
     const response = {
         raw_text: ctx.rawText,
         http_status: 200,
@@ -197,7 +197,7 @@ function componentsFor(ctx, { error = null } = {}) {
         },
     };
     return {
-        transport: createStageDFakeTransport({ response: error ? null : JSON.stringify(response), error }),
+        transport: createStageDFakeTransport({ response: error ? null : JSON.stringify(response), error, transmissionClock }),
         evidencePersistence: createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot }),
         candidateBuilder: createStageDProspectiveCandidateBuilder({ universe: ctx.fixture.universe }),
         transactionPublisher: createStageDFakePublisher({
@@ -339,6 +339,21 @@ test('authorization expiry after request intent is terminalized before fake tran
     assert.equal(ledger.requests[0].terminal_state, 'CANCELLED_BEFORE_TRANSMISSION');
     assert.equal(ledger.requests[0].quota_units_charged_or_assumed, 0);
     assert.equal(ledger.requests[0].error_classification, 'STAGE_D_AUTHORIZATION_EXPIRED');
+});
+
+test('authorization expiry immediately before fake transport transmission is rejected without a fake call', async t => {
+    const ctx = makeContext(t, { expires_at: '2026-09-08T08:00:05Z' });
+    const components = componentsFor(ctx, { transmissionClock: () => '2026-09-08T08:00:05Z' });
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components, controlledClock())),
+        error => error.code === 'STAGE_D_AUTHORIZATION_EXPIRED',
+    );
+    assert.equal(components.transport.call_count, 0);
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    assert.equal(ledger.requests.length, 1);
+    assert.equal(ledger.requests[0].transmission_state, 'TRANSMISSION_STARTED_OR_MAY_HAVE_STARTED');
+    assert.equal(ledger.requests[0].terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+    assert.equal(ledger.requests[0].quota_units_charged_or_assumed, 1);
 });
 
 test('valid controlled authorization reaches the shared cycle path and sends at most once', async t => {

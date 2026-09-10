@@ -73,6 +73,7 @@ const approvedQuotaConfigs = new WeakSet();
 const STAGE_D_RUNTIME_AUTHORIZATION = Symbol('stage-d-runtime-authorization');
 const STAGE_D_TEST_RUNTIME_AUTHORIZATION = Symbol('stage-d-test-runtime-authorization');
 const STAGE_D_TRANSPORT_CALL_TOKEN = Object.freeze({ stage_d: 'transport-call' });
+const CONTROLLED_AUTHORIZATION_WINDOW = Symbol('controlled-authorization-window');
 const CONTROLLED_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v1';
 const CONTROLLED_AUTHORIZATION_STATUS = 'OWNER_AND_CHIEF_ENGINEER_AUTHORIZED';
 const CONTROLLED_AUTHORIZATION_MISSION = 'CONTROLLED_STAGE_D_SINGLE_CYCLE';
@@ -1932,9 +1933,10 @@ function assertTransportCallToken(token) {
     if (token !== STAGE_D_TRANSPORT_CALL_TOKEN) fail('TRANSPORT_CALL_FORBIDDEN', 'transport may only be called by the Stage D adapter');
 }
 
-function createStageDFakeTransport({ response = null, error = null } = {}) {
+function createStageDFakeTransport({ response = null, error = null, transmissionClock = null } = {}) {
     if (process.env.NODE_ENV !== 'test') fail('INVALID_TRANSPORT', 'fake transport is test-only');
     if ((response === null) === (error === null)) fail('INVALID_TRANSPORT', 'fake transport requires exactly one static response or error');
+    if (transmissionClock !== null && typeof transmissionClock !== 'function') fail('INVALID_TRANSPORT', 'fake transport transmissionClock must be callable');
     if (response !== null) {
         if (typeof response !== 'string') fail('INVALID_CONTRACT', 'fake transport response must be a serialized JSON fixture');
         let parsed;
@@ -1951,6 +1953,17 @@ function createStageDFakeTransport({ response = null, error = null } = {}) {
         network_capability: 'none',
         async send(request, token) {
             assertTransportCallToken(token);
+            if (transmissionClock !== null) {
+                const authorizationWindow = request?.[CONTROLLED_AUTHORIZATION_WINDOW];
+                if (authorizationWindow === undefined) fail('STAGE_D_CONTROL_BOUNDARY_INVALID', 'fake transport transmission guard requires a controlled authorization window');
+                assertPlainObject(authorizationWindow, 'controlled authorization window');
+                assertExactKeys(authorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
+                assertControlledAuthorizationWindow({
+                    issuedAt: authorizationWindow.issuedAt,
+                    expiresAt: authorizationWindow.expiresAt,
+                    now: transmissionClock(),
+                });
+            }
             callCount += 1;
             if (error !== null) throw error;
             return Object.freeze({
@@ -2010,6 +2023,23 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
                             .catch(() => undefined)
                             .finally(() => { void releaseLease(); reject(error); });
                     };
+                    const authorizationWindow = request?.[CONTROLLED_AUTHORIZATION_WINDOW];
+                    if (authorizationWindow === undefined) {
+                        void releaseLease();
+                        fail('STAGE_D_CONTROL_BOUNDARY_INVALID', 'provider transport requires a controlled authorization window');
+                    }
+                    try {
+                        assertPlainObject(authorizationWindow, 'controlled authorization window');
+                        assertExactKeys(authorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
+                        assertControlledAuthorizationWindow({
+                            issuedAt: authorizationWindow.issuedAt,
+                            expiresAt: authorizationWindow.expiresAt,
+                            now: systemClock(),
+                        });
+                    } catch (error) {
+                        void releaseLease();
+                        throw error;
+                    }
                     const req = https.request({
                         protocol: 'https:',
                         hostname: 'api.the-odds-api.com',
@@ -2506,7 +2536,22 @@ async function executeStageDOneCycle({
         }
         let response;
         try {
-            response = await transport.send(Object.freeze({ request_id: requestId, run_id: runId, provider: PROVIDER, market_scope: MARKET_SCOPE, transmission_started_at: transmissionStartedAt }), STAGE_D_TRANSPORT_CALL_TOKEN);
+            const transmissionRequest = {
+                request_id: requestId,
+                run_id: runId,
+                provider: PROVIDER,
+                market_scope: MARKET_SCOPE,
+                transmission_started_at: transmissionStartedAt,
+            };
+            if (controlledAuthorizationWindow !== null) {
+                Object.defineProperty(transmissionRequest, CONTROLLED_AUTHORIZATION_WINDOW, {
+                    value: Object.freeze({ ...controlledAuthorizationWindow }),
+                    enumerable: false,
+                    writable: false,
+                    configurable: false,
+                });
+            }
+            response = await transport.send(Object.freeze(transmissionRequest), STAGE_D_TRANSPORT_CALL_TOKEN);
         } catch (error) {
             try {
                 markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', at: trustedClock(), errorClassification: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION' });
