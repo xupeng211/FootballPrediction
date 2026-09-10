@@ -326,7 +326,6 @@ def build_reviewer_command(
         str(output_schema),
         "--output-last-message",
         str(final_message_path),
-        "-",
     ]
 
 
