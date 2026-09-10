@@ -52,6 +52,7 @@ REVIEW_OUTPUT_SCHEMA = ROOT / "schemas" / "agentic" / "codex_review_result.schem
 WRAPPER_NAME = "scripts/devops/codex_independent_review.py"
 THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
 MIN_FENCED_JSON_LINES = 3
+REVIEW_CHALLENGE_VERSION = "codex-independent-review-challenge/v1"
 
 
 class ReviewReceiptError(ValueError):
@@ -68,6 +69,14 @@ def sha256_bytes(value: bytes) -> str:
     """Return SHA-256 for one in-memory evidence byte string."""
 
     return hashlib.sha256(value).hexdigest()
+
+
+def review_challenge(*, mission_id: str, base_sha: str, head_sha: str) -> str:
+    """Derive a target-specific challenge that prevents receipt rebinding."""
+
+    return sha256_bytes(
+        f"{REVIEW_CHALLENGE_VERSION}\n{mission_id}\n{base_sha}\n{head_sha}\n".encode()
+    )
 
 
 def sha256_file(path: Path) -> str:
@@ -295,6 +304,7 @@ def validate_review_result(
 
 
 def _codex_prompt(*, mission_id: str, base_sha: str, head_sha: str) -> str:
+    challenge = review_challenge(mission_id=mission_id, base_sha=base_sha, head_sha=head_sha)
     return f"""你是 FOOTBALLPREDICTION 的 {REVIEW_ROLE_INDEPENDENT}。
 
 这是一次全新的 Codex reviewer invocation；你不能使用 Builder 的思路、私有草稿、自证或结论作为证据。
@@ -305,6 +315,7 @@ BASE_SHA={base_sha}
 REVIEW_HEAD_SHA={head_sha}
 REVIEW_ENGINE=CODEX
 REVIEW_ROLE=INDEPENDENT_REVIEWER
+REVIEW_CHALLENGE={challenge}
 
 审查目标：
 1. 先读取 AGENTS.md、docs/AGENT_WORKFLOW.md 和相关 governance source-of-truth。
@@ -318,6 +329,7 @@ REVIEW_ROLE=INDEPENDENT_REVIEWER
 最终回复必须只包含下面 schema 形状的 JSON（不要 Markdown、不要隐藏推理、不要长篇过程日志）：
 {{
   "result": "PASS" | "FAIL",
+  "review_challenge": "{challenge}",
   "findings": [
     {{"severity":"P0|P1|P2|P3","title":"简短标题","path":"repo/path 或 null","line":1,"summary":"适合普通 code review 的可审计说明"}}
   ]
@@ -361,6 +373,14 @@ def _assert_contexts_separate(builder_context_id: str, reviewer_context_id: str)
         raise ReviewReceiptError("reviewer context 使用了 Builder/self-review identity")
 
 
+def _assert_review_challenge(
+    result: dict[str, Any], *, mission_id: str, base_sha: str, head_sha: str
+) -> None:
+    expected = review_challenge(mission_id=mission_id, base_sha=base_sha, head_sha=head_sha)
+    if result.get("review_challenge") != expected:
+        raise ReviewReceiptError("review challenge 与当前 mission/base/HEAD 不匹配")
+
+
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     """Run a fresh read-only Codex review and emit one external receipt."""
 
@@ -399,6 +419,9 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         raise ReviewReceiptError(f"无法将 review output schema 设为 owner-only: {exc}") from exc
 
     started_at = _now()
+    challenge = review_challenge(
+        mission_id=args.mission_id, base_sha=base_sha, head_sha=expected_head
+    )
     command = build_reviewer_command(
         codex_binary=args.codex_binary,
         base_sha=base_sha,
@@ -444,6 +467,12 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     final_path.chmod(0o600)
     final_text = final_path.read_text(encoding="utf-8")
     result_document = _parse_final_message(final_text)
+    _assert_review_challenge(
+        result_document,
+        mission_id=args.mission_id,
+        base_sha=base_sha,
+        head_sha=expected_head,
+    )
     counts, blocking, review_result, findings = validate_review_result(result_document)
     events = _parse_json_lines(raw_bytes)
     reviewer_invocation_id = _reviewer_invocation_id(events)
@@ -462,6 +491,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         "review_role": REVIEW_ROLE_INDEPENDENT,
         "base_sha": base_sha,
         "reviewed_head_sha": expected_head,
+        "review_challenge": challenge,
         "diff_sha256": diff_sha256(repo_root, base_sha, expected_head),
         "mission_id": args.mission_id,
         "review_started_at": started_at,
@@ -485,6 +515,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "writer": WRAPPER_NAME,
             "wrapper_sha256": sha256_file(Path(__file__).resolve()),
             "command_sha256": sha256_bytes(_canonical_json(command)),
+            "prompt_sha256": sha256_bytes(prompt.encode("utf-8")),
             "codex_binary": args.codex_binary,
             "output_schema_path": str(review_output_schema),
             "output_schema_sha256": sha256_file(review_output_schema),
@@ -552,6 +583,11 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
         raise ReviewReceiptError("receipt mission_id 不匹配")
     if not isinstance(receipt.get("mission_id"), str) or not receipt["mission_id"].strip():
         raise ReviewReceiptError("receipt mission_id 缺失")
+    expected_challenge = review_challenge(
+        mission_id=receipt["mission_id"], base_sha=base_sha, head_sha=reviewed_head
+    )
+    if receipt.get("review_challenge") != expected_challenge:
+        raise ReviewReceiptError("receipt review_challenge 与当前 mission/base/HEAD 不匹配")
     if receipt.get("diff_sha256") != diff_sha256(repo_root, base_sha, reviewed_head):
         raise ReviewReceiptError("receipt diff_sha256 与当前 base...HEAD 不匹配")
 
@@ -629,6 +665,13 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     )
     if provenance.get("command_sha256") != expected_command_sha:
         raise ReviewReceiptError("reviewer command provenance 不匹配")
+    expected_prompt_sha = sha256_bytes(
+        _codex_prompt(
+            mission_id=receipt["mission_id"], base_sha=base_sha, head_sha=reviewed_head
+        ).encode("utf-8")
+    )
+    if provenance.get("prompt_sha256") != expected_prompt_sha:
+        raise ReviewReceiptError("reviewer prompt provenance 与当前 target 不匹配")
     events = _parse_json_lines(raw_path.read_bytes())
     if _reviewer_invocation_id(events) != reviewer_id:
         raise ReviewReceiptError("raw output invocation id 与 receipt 不一致")
@@ -639,6 +682,12 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     if provenance.get("codex_exit_code") != 0:
         raise ReviewReceiptError("Codex exit code 不是 0")
     result_document = _parse_final_message(final_text)
+    _assert_review_challenge(
+        result_document,
+        mission_id=receipt["mission_id"],
+        base_sha=base_sha,
+        head_sha=reviewed_head,
+    )
     counts, blocking, review_result, findings = validate_review_result(result_document)
     if receipt.get("finding_counts_by_severity") != counts:
         raise ReviewReceiptError("receipt finding counts 不是由 final message 派生的值")

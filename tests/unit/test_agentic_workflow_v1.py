@@ -20,8 +20,10 @@ from scripts.devops.codex_independent_review import (
     REVIEW_OUTPUT_SCHEMA,
     ReviewReceiptError,
     _assert_contexts_separate,
+    _codex_prompt,
     build_reviewer_command,
     diff_sha256,
+    review_challenge,
     sha256_file,
     validate_receipt,
     validate_review_result,
@@ -40,9 +42,17 @@ from scripts.ops.helpers.governance_p1_checks import check_script_lifecycle_requ
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_SHA = "1" * 40
+MISSION_ID = "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1"
 
 
-def _body(*, task_type: str = "workflow-governance", workflow_class: str = "STRICT") -> str:
+def _body(
+    *,
+    task_type: str = "workflow-governance",
+    workflow_class: str = "STRICT",
+    review_result: str = "PENDING",
+    reviewed_sha: str = BASE_SHA,
+    provider: str = "codex-independent-reviewer (pending)",
+) -> str:
     return f"""## Summary
 
 This is a bounded workflow infrastructure test change with no business runtime mutation.
@@ -99,9 +109,9 @@ The exact workflow files and tests listed in Scope are authorized for this gover
 | --- | --- |
 | Version | 1 |
 | Task type | STRICT |
-| Provider | codex-independent-reviewer (pending) |
-| Reviewed full SHA | {BASE_SHA} |
-| Result | PENDING |
+| Provider | {provider} |
+| Reviewed full SHA | {reviewed_sha} |
+| Result | {review_result} |
 | Timestamp | 2026-09-10T00:00:00Z |
 """
 
@@ -145,7 +155,11 @@ def _write_valid_receipt(
     raw = evidence / "raw.jsonl"
     final = evidence / "final.json"
     stderr = evidence / "stderr.log"
-    final_document = {"result": result, "findings": [finding] if finding else []}
+    final_document = {
+        "result": result,
+        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
+        "findings": [finding] if finding else [],
+    }
     final_text = json.dumps(final_document) + "\n"
     final.write_text(final_text, encoding="utf-8")
     raw.write_text(
@@ -216,8 +230,9 @@ def _write_valid_receipt(
         "review_role": "independent_reviewer",
         "base_sha": base,
         "reviewed_head_sha": head,
+        "review_challenge": review_challenge(mission_id=MISSION_ID, base_sha=base, head_sha=head),
         "diff_sha256": diff_sha256(repo, base, head),
-        "mission_id": "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+        "mission_id": MISSION_ID,
         "review_started_at": "2026-09-10T00:00:00Z",
         "review_completed_at": "2026-09-10T00:01:00Z",
         "finding_counts_by_severity": counts,
@@ -240,6 +255,9 @@ def _write_valid_receipt(
             "wrapper_sha256": sha256_file(ROOT / "scripts/devops/codex_independent_review.py"),
             "command_sha256": "0" * 64,
             "codex_binary": "codex",
+            "prompt_sha256": hashlib.sha256(
+                _codex_prompt(mission_id=MISSION_ID, base_sha=base, head_sha=head).encode()
+            ).hexdigest(),
             "output_schema_path": str(schema_path),
             "output_schema_sha256": sha256_file(schema_path),
             "raw_output_path": str(raw),
@@ -423,10 +441,17 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
+    preflight = {
+        "schema_version": "agentic-engineering-workflow/v1",
+        "workflow": "agentic_engineering_workflow_v1",
+        "verdict": "PASS",
+        "base_sha": base,
+        "head_sha": head,
+        "current_head_sha": head,
+        "changed_paths": ["Makefile"],
+    }
     local.write_text(
-        json.dumps(
-            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
-        ),
+        json.dumps(preflight),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -460,7 +485,12 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
         lambda pr_number, *, expected_head, **_kwargs: (
             agent_workflow.GateCheck("remote-required-ci", "PASS", "mock exact-head CI"),
             {"pr": pr_number, "verdict": "PASS", "head_sha": expected_head},
+            _body(review_result="PASS", reviewed_sha=expected_head, provider="codex"),
         ),
+    )
+    monkeypatch.setattr(
+        "scripts.devops.agent_workflow_preflight.run_preflight",
+        lambda *_args, **_kwargs: preflight,
     )
     assert agent_workflow.merge_ready_command(args) == 0
 
@@ -474,10 +504,17 @@ def test_non_no_forbidden_side_effect_status_rejects_merge_ready(
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
+    preflight = {
+        "schema_version": "agentic-engineering-workflow/v1",
+        "workflow": "agentic_engineering_workflow_v1",
+        "verdict": "PASS",
+        "base_sha": base,
+        "head_sha": head,
+        "current_head_sha": head,
+        "changed_paths": ["Makefile"],
+    }
     local.write_text(
-        json.dumps(
-            {"verdict": "PASS", "base_sha": base, "head_sha": head, "current_head_sha": head}
-        ),
+        json.dumps(preflight),
         encoding="utf-8",
     )
     args = agent_workflow.build_parser().parse_args(
@@ -509,7 +546,12 @@ def test_non_no_forbidden_side_effect_status_rejects_merge_ready(
         lambda _pr_number, *, expected_head, **_kwargs: (
             agent_workflow.GateCheck("remote-required-ci", "PASS", "mock exact-head CI"),
             {"verdict": "PASS", "head_sha": expected_head},
+            _body(review_result="PASS", reviewed_sha=expected_head, provider="codex"),
         ),
+    )
+    monkeypatch.setattr(
+        "scripts.devops.agent_workflow_preflight.run_preflight",
+        lambda *_args, **_kwargs: preflight,
     )
     assert agent_workflow.merge_ready_command(args) == 1
 
@@ -590,7 +632,7 @@ def test_local_preflight_rejects_pass_for_different_scanned_head(tmp_path: Path)
         ),
         encoding="utf-8",
     )
-    check = agent_workflow._local_preflight_check(local, "1" * 40, "3" * 40)
+    check = agent_workflow._local_preflight_check(local, "1" * 40, "3" * 40, pr_body=_body())
     assert check.status == "FAIL"
     assert "scanned HEAD" in check.message
 
@@ -605,7 +647,7 @@ def test_remote_merge_check_rejects_pending_pr_review_evidence(
         pr=SimpleNamespace(head_sha=head, body=_body()),
     )
     monkeypatch.setattr("scripts.devops.pr_ready_check.evaluate", lambda _pr_number: fake_result)
-    check, evidence = agent_workflow._remote_pr_check(
+    check, evidence, _pr_body = agent_workflow._remote_pr_check(
         1904,
         changed_paths={"scripts/devops/agent_workflow.py"},
         expected_head=head,

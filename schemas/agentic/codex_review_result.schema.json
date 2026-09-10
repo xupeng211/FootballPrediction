@@ -4,11 +4,15 @@
   "title": "Independent Codex Review Result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["result", "findings"],
+  "required": ["result", "review_challenge", "findings"],
   "properties": {
     "result": {
       "type": "string",
       "enum": ["PASS", "FAIL"]
+    },
+    "review_challenge": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
     },
     "findings": {
       "type": "array",

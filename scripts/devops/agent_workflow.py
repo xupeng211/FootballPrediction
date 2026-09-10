@@ -96,7 +96,13 @@ def classify_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _local_preflight_check(path: Path, base_sha: str, head_sha: str) -> GateCheck:
+def _local_preflight_check(  # noqa: PLR0911
+    path: Path,
+    base_sha: str,
+    head_sha: str,
+    *,
+    pr_body: str | None,
+) -> GateCheck:
     try:
         value = _load_json(path)
         if value.get("verdict") != "PASS":
@@ -106,9 +112,42 @@ def _local_preflight_check(path: Path, base_sha: str, head_sha: str) -> GateChec
         assert_exact_head(base_sha, value.get("base_sha"), role="local preflight base")
         assert_exact_head(head_sha, value.get("head_sha"), role="local preflight scanned HEAD")
         assert_exact_head(head_sha, value.get("current_head_sha"), role="local preflight HEAD")
+        if not pr_body:
+            return GateCheck(
+                "local-required-checks",
+                "UNKNOWN",
+                "PR body is required to re-execute canonical local preflight",
+            )
+        from scripts.devops.agent_workflow_preflight import run_preflight  # noqa: PLC0415
+
+        canonical = run_preflight(
+            pr_body,
+            base_ref=base_sha,
+            head_ref=head_sha,
+            require_review=True,
+        )
+        if canonical.get("verdict") != "PASS":
+            return GateCheck(
+                "local-required-checks",
+                "FAIL",
+                f"re-executed canonical preflight verdict={canonical.get('verdict')}",
+            )
+        for field in ("schema_version", "workflow", "base_sha", "head_sha", "current_head_sha"):
+            if canonical.get(field) != value.get(field):
+                return GateCheck(
+                    "local-required-checks",
+                    "FAIL",
+                    f"local preflight artifact differs from re-executed {field}",
+                )
+        if set(canonical.get("changed_paths") or ()) != set(value.get("changed_paths") or ()):
+            return GateCheck(
+                "local-required-checks",
+                "FAIL",
+                "local preflight artifact changed_paths differ from re-execution",
+            )
     except (RuntimeError, TypeError, ExactHeadError) as exc:
         return GateCheck("local-required-checks", "FAIL", str(exc))
-    return GateCheck("local-required-checks", "PASS", f"verified {path}")
+    return GateCheck("local-required-checks", "PASS", f"re-executed and verified {path}")
 
 
 def _remote_pr_check(
@@ -116,15 +155,17 @@ def _remote_pr_check(
     *,
     changed_paths: set[str],
     expected_head: str,
-) -> tuple[GateCheck, dict[str, Any]]:
+) -> tuple[GateCheck, dict[str, Any], str | None]:
     try:
         from scripts.devops import pr_ready_check  # noqa: PLC0415
 
         result = pr_ready_check.evaluate(pr_number)
     except Exception as exc:  # unknown GitHub state must fail closed
-        return GateCheck(
-            "remote-required-ci", "UNKNOWN", f"pr-ready evidence unavailable: {exc}"
-        ), {}
+        return (
+            GateCheck("remote-required-ci", "UNKNOWN", f"pr-ready evidence unavailable: {exc}"),
+            {},
+            None,
+        )
     failed = [finding for finding in result.findings if not finding.passed]
     evidence: dict[str, Any] = {
         "pr": pr_number,
@@ -133,14 +174,18 @@ def _remote_pr_check(
         "head_sha": result.pr.head_sha,
     }
     if result.pr.head_sha != expected_head:
-        return GateCheck(
-            "remote-required-ci",
-            "FAIL",
-            f"PR head={result.pr.head_sha}; expected exact HEAD={expected_head}",
-        ), evidence
+        return (
+            GateCheck(
+                "remote-required-ci",
+                "FAIL",
+                f"PR head={result.pr.head_sha}; expected exact HEAD={expected_head}",
+            ),
+            evidence,
+            result.pr.body,
+        )
     if failed:
         detail = "; ".join(f"{item.name}: {item.message}" for item in failed)
-        return GateCheck("remote-required-ci", "FAIL", detail), evidence
+        return GateCheck("remote-required-ci", "FAIL", detail), evidence, result.pr.body
     strict_errors = validate_strict_review_evidence(
         result.pr.body,
         result.pr.head_sha,
@@ -151,14 +196,22 @@ def _remote_pr_check(
     if strict_errors:
         evidence["verdict"] = "FAIL"
         evidence["strict_review_errors"] = strict_errors
-        return GateCheck(
-            "remote-required-ci",
-            "FAIL",
-            "final PR body review evidence invalid: " + "; ".join(strict_errors),
-        ), evidence
-    return GateCheck(
-        "remote-required-ci", "PASS", f"PR #{pr_number} exact-head required checks green"
-    ), evidence
+        return (
+            GateCheck(
+                "remote-required-ci",
+                "FAIL",
+                "final PR body review evidence invalid: " + "; ".join(strict_errors),
+            ),
+            evidence,
+            result.pr.body,
+        )
+    return (
+        GateCheck(
+            "remote-required-ci", "PASS", f"PR #{pr_number} exact-head required checks green"
+        ),
+        evidence,
+        result.pr.body,
+    )
 
 
 def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
@@ -204,11 +257,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
             )
         )
 
-    local_check = _local_preflight_check(Path(args.local_preflight_json), base_sha, expected_head)
-    checks.append(local_check)
-
     if args.pr is not None:
-        remote_check, remote_evidence = _remote_pr_check(
+        remote_check, remote_evidence, pr_body = _remote_pr_check(
             args.pr,
             changed_paths=changed,
             expected_head=expected_head,
@@ -223,6 +273,12 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
                 "PR context is required; caller-supplied CI status is ignored",
             )
         )
+        pr_body = None
+
+    local_check = _local_preflight_check(
+        Path(args.local_preflight_json), base_sha, expected_head, pr_body=pr_body
+    )
+    checks.append(local_check)
 
     try:
         receipt = validate_receipt(
