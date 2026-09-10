@@ -16,7 +16,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.ci.governance_growth_gate import check_local_worktree_growth
-from scripts.devops import agent_workflow
+from scripts.devops import agent_workflow, codex_independent_review
 from scripts.devops.codex_independent_review import (
     REVIEW_OUTPUT_SCHEMA,
     ReviewReceiptError,
@@ -54,15 +54,18 @@ def _git(repo: Path, *args: str) -> str:
 
 @pytest.fixture(autouse=True)
 def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Give structural receipt tests an explicit non-production Codex root."""
+    """Give structural receipt tests explicit non-production Codex fixtures."""
 
     codex_root = tmp_path / "codex-home"
     codex_root.mkdir(mode=0o700)
-    trusted_codex_root = Path("/usr/lib/chatgpt/resources")
-    if not (trusted_codex_root / "codex").is_file():
-        pytest.skip("structural receipt tests require the installed trusted Codex CLI")
+    bin_root = tmp_path / "bin"
+    bin_root.mkdir(mode=0o700)
+    codex_binary = bin_root / "codex"
+    codex_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
-    monkeypatch.setenv("PATH", f"{trusted_codex_root}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setattr(codex_independent_review, "resolve_codex_binary", lambda _: codex_binary)
 
 
 def test_agent_entry_points_to_canonical_workflow():
