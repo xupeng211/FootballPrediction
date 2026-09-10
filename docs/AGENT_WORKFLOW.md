@@ -232,19 +232,25 @@ canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口�
 
 1. 在 exact reviewed commit 创建 detached worktree；
 2. 用新的通用 `codex exec` 子进程，通过 stdin 传入审查合同，带 `--sandbox read-only`、
-   `--ignore-user-config`、受控 `model_reasoning_effort`、`--json`、`--output-schema` 和独立
-   `--output-last-message`；只接受由受信任 owner 持有且不可由当前用户改写的 Codex CLI，
-   并把 Codex 自己写入的 persisted session/index 在 receipt 前锁定为 owner-only；review
-   prompt 自带 exact base/head，不依赖 Builder 上下文；
+   `--ignore-user-config`、`--ephemeral`、受控 `model_reasoning_effort`、`--json`、
+   `--output-schema` 和独立 `--output-last-message`；review prompt 自带 exact base/head，
+   不依赖 Builder 上下文，也不复用 persisted Builder session；
 3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
 4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
    `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
    completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0；
-   同时必须重新核对 Codex-owned persisted session/index 的 thread、cwd、prompt target、
-   final-answer/completion 事件和 hash，不接受 Builder 传入的 PASS/count/invocation 结论；
+   不接受 Builder 传入的 PASS/count/invocation 结论；
 5. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
 
-receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、Codex engine/role、base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、result、finding summaries、Builder/reviewer context IDs、read-only isolation、Codex CLI persisted session/index provenance、persisted final-answer SHA、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact HEAD/diff、重新解析 raw/final output、将它们与 Codex-owned session 的 final-answer/completion 事件交叉核对、核对 session/index、检查 receipt 不在 source tree 且为 owner-only；因此任意手写 `{"review_result":"PASS"}`、重算外部 evidence 或不带 Codex session evidence 的 receipt 都不是有效 evidence。
+receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、
+`assurance_model=engineering_independent_review`、明确的 same-uid residual-risk 标记、Codex engine/role、
+base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、
+result、finding summaries、Builder/reviewer context IDs、fresh/separate context、read-only isolation、
+clean-before/after、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact
+HEAD/diff、重新解析 raw/final output、核对 invocation/completion 事件、确认 review worktree 仍是 exact-head
+且 clean，并检查 receipt/evidence 不在 source tree 且为 owner-only。这里的 hash 是可审计的 integrity check，
+不是 cryptographic reviewer provenance；同一 OS uid 的恶意 Builder 理论上仍可能改写本地 evidence，这是 Owner
+选择的 residual risk。简单缺失/错误/自相矛盾的 PASS JSON 仍会 fail-closed，但本工作流不声称抵抗恶意同 UID 伪造。
 
 P0/P1/P2 均阻塞，P3 不阻塞；这比当前 STRICT provider-neutral evidence 更具体但不削弱 STRICT。reviewer 只写适合普通 code review 的 finding，不写隐藏推理。
 

@@ -71,6 +71,11 @@ has run, local preflight may temporarily use Result=PENDING with the exact
 current PR HEAD as the review target; after review, replace it with
 PASS/FINDINGS_RESOLVED before relying on required remote governance CI.
 PENDING can never make the PR merge-ready.
+
+For Agentic Workflow V1, the review assurance model is engineering independence:
+fresh separate Codex context, exact-head clean read-only worktree and stale-review
+rejection. It is not cryptographic reviewer attestation; same-UID local evidence
+tampering remains an explicitly accepted residual risk.
 -->
 
 | Field | Value |

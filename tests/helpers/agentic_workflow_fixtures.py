@@ -18,7 +18,6 @@ from scripts.devops.codex_independent_review import (
     review_challenge,
     sha256_file,
 )
-from scripts.devops.codex_review_provenance import codex_home
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_SHA = "1" * 40
@@ -137,7 +136,7 @@ def write_valid_receipt(
     stderr = evidence / "stderr.log"
     reviewer_id = "reviewer-1234"
     worktree = tmp_path / "review-worktree"
-    worktree.mkdir(mode=0o700)
+    _git(repo, "worktree", "add", "--detach", str(worktree), head)
     prompt = _codex_prompt(mission_id=MISSION_ID, base_sha=base, head_sha=head)
     final_document = {
         "result": result,
@@ -145,78 +144,6 @@ def write_valid_receipt(
         "findings": [finding] if finding else [],
     }
     final_text = json.dumps(final_document)
-    session_path = codex_home() / "sessions" / "2026" / "09" / "10" / f"rollout-{reviewer_id}.jsonl"
-    session_path.parent.mkdir(parents=True, exist_ok=True)
-    session_path.write_text(
-        "\n".join(
-            [
-                json.dumps(
-                    {
-                        "type": "session_meta",
-                        "payload": {
-                            "id": reviewer_id,
-                            "session_id": reviewer_id,
-                            "cwd": str(worktree),
-                            "source": "cli",
-                            "cli_version": "0.153.4",
-                        },
-                    }
-                ),
-                json.dumps(
-                    {
-                        "type": "response_item",
-                        "payload": {
-                            "type": "message",
-                            "role": "user",
-                            "content": [{"type": "input_text", "text": prompt}],
-                        },
-                    }
-                ),
-                json.dumps(
-                    {
-                        "type": "event_msg",
-                        "payload": {
-                            "type": "item_completed",
-                            "item": {
-                                "type": "AgentMessage",
-                                "phase": "final_answer",
-                                "content": [{"type": "Text", "text": final_text}],
-                            },
-                        },
-                    }
-                ),
-                json.dumps(
-                    {
-                        "type": "response_item",
-                        "payload": {
-                            "type": "message",
-                            "role": "assistant",
-                            "phase": "final_answer",
-                            "content": [{"type": "output_text", "text": final_text}],
-                        },
-                    }
-                ),
-                json.dumps(
-                    {
-                        "type": "event_msg",
-                        "payload": {
-                            "type": "task_complete",
-                            "last_agent_message": final_text,
-                        },
-                    }
-                ),
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    session_path.chmod(0o600)
-    session_index_path = codex_home() / "session_index.jsonl"
-    session_index_path.write_text(
-        json.dumps({"id": reviewer_id, "thread_name": "synthetic structural test"}) + "\n",
-        encoding="utf-8",
-    )
-    session_index_path.chmod(0o600)
     final.write_text(final_text, encoding="utf-8")
     raw.write_text(
         "\n".join(
@@ -258,10 +185,6 @@ def write_valid_receipt(
     for path in (raw, final, stderr):
         path.chmod(0o600)
     schema_path = worktree / "schemas" / "agentic" / "codex_review_result.schema.json"
-    schema_path.parent.mkdir(parents=True)
-    schema_source = repo / "schemas" / "agentic" / "codex_review_result.schema.json"
-    schema_path.write_bytes(schema_source.read_bytes())
-    schema_path.chmod(0o600)
     counts = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
     normalized_findings: list[dict[str, object]] = []
     if finding:
@@ -281,6 +204,8 @@ def write_valid_receipt(
     receipt: dict[str, object] = {
         "schema_version": "codex-independent-review-receipt/v1",
         "contract_schema_version": "agentic-engineering-workflow/v1",
+        "assurance_model": "engineering_independent_review",
+        "hostile_same_uid_forge_resistance": False,
         "review_engine": "codex",
         "review_role": "independent_reviewer",
         "base_sha": base,
@@ -297,29 +222,26 @@ def write_valid_receipt(
         "reviewer_invocation_id": reviewer_id,
         "builder_context_id": "builder-5678",
         "reviewer_context_id": reviewer_id,
+        "reviewer_context_separate_from_builder": True,
         "reviewer_read_only": True,
         "isolation": {
             "fresh_process": True,
-            "persisted_session_artifact": True,
+            "ephemeral_session": True,
             "sandbox": "read-only",
             "detached_worktree": True,
             "worktree_head_sha": head,
             "worktree_path": str(worktree),
+            "worktree_clean_before": True,
+            "worktree_clean_after": True,
+            "source_mutation_detected": False,
         },
         "provenance": {
             "writer": "scripts/devops/codex_independent_review.py",
+            "integrity_only": True,
             "wrapper_sha256": sha256_file(ROOT / "scripts/devops/codex_independent_review.py"),
             "command_sha256": "0" * 64,
             "codex_binary": str(codex_binary),
             "codex_binary_sha256": sha256_file(codex_binary),
-            "codex_session_path": str(session_path),
-            "codex_session_sha256": sha256_file(session_path),
-            "codex_session_final_message_sha256": hashlib.sha256(final_text.encode()).hexdigest(),
-            "codex_session_thread_id": reviewer_id,
-            "codex_session_index_path": str(session_index_path),
-            "codex_session_index_entry_sha256": hashlib.sha256(
-                session_index_path.read_bytes().splitlines()[0]
-            ).hexdigest(),
             "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
             "output_schema_path": str(schema_path),
             "output_schema_sha256": sha256_file(schema_path),

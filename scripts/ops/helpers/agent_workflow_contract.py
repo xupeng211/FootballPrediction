@@ -34,6 +34,12 @@ REVIEW_ENGINE_CODEX = "codex"
 REVIEW_ROLE_INDEPENDENT = "independent_reviewer"
 REVIEW_RESULT_PASS = "PASS"
 REVIEW_RESULT_FAIL = "FAIL"
+ASSURANCE_MODEL_ENGINEERING_INDEPENDENT_REVIEW = "engineering_independent_review"
+# This workflow deliberately provides engineering/context separation, not a
+# cryptographic or hostile-builder-resistant attestation system.  The values
+# are exported so local tooling, receipts and tests cannot silently drift.
+CRYPTOGRAPHIC_REVIEWER_PROVENANCE_REQUIRED = False
+HOSTILE_SAME_UID_FORGE_RESISTANCE = False
 BLOCKING_REVIEW_SEVERITIES: tuple[str, ...] = ("P0", "P1", "P2")
 ALL_REVIEW_SEVERITIES: tuple[str, ...] = (*BLOCKING_REVIEW_SEVERITIES, "P3")
 
@@ -355,6 +361,9 @@ def contract_summary() -> dict[str, object]:
         "schema_version": CONTRACT_SCHEMA_VERSION,
         "review_engine": REVIEW_ENGINE_CODEX,
         "review_role": REVIEW_ROLE_INDEPENDENT,
+        "assurance_model": ASSURANCE_MODEL_ENGINEERING_INDEPENDENT_REVIEW,
+        "cryptographic_reviewer_provenance_required": CRYPTOGRAPHIC_REVIEWER_PROVENANCE_REQUIRED,
+        "hostile_same_uid_forge_resistance": HOSTILE_SAME_UID_FORGE_RESISTANCE,
         "blocking_review_severities": list(BLOCKING_REVIEW_SEVERITIES),
         "auto_remediate_categories": sorted(AUTO_REMEDIATE_CATEGORIES),
         "escalate_categories": sorted(ESCALATE_CATEGORIES),
