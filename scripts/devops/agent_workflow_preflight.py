@@ -12,6 +12,7 @@ metadata、authorization、lifecycle、growth-freeze 和 STRICT 分类合同串�
 from __future__ import annotations
 
 import argparse
+import contextlib
 from dataclasses import asdict, dataclass
 import hashlib
 import json
@@ -194,18 +195,21 @@ def run_preflight(
             PreflightFinding("governance-growth-freeze", "PASS", "未发现新增冻结治理资产。")
         )
 
-    gate_errors = validate_ai_workflow_gate(
-        pr_body,
-        changes,
-        block_matrix=True,
-        enforce_strict_review=True,
-        enforce_agent_workflow_contract=True,
-        enforce_agent_workflow_scope=True,
-        mission_scope=scope,
-        allow_review_pending=not require_review,
-        base_ref=resolved_base,
-        head_ref=resolved_head,
-    )
+    # The shared gate has human-readable progress output.  Keep that output
+    # visible on stderr so --json remains a parseable machine interface.
+    with contextlib.redirect_stdout(sys.stderr):
+        gate_errors = validate_ai_workflow_gate(
+            pr_body,
+            changes,
+            block_matrix=True,
+            enforce_strict_review=True,
+            enforce_agent_workflow_contract=True,
+            enforce_agent_workflow_scope=True,
+            mission_scope=scope,
+            allow_review_pending=not require_review,
+            base_ref=resolved_base,
+            head_ref=resolved_head,
+        )
     findings.extend(
         PreflightFinding("shared-ai-workflow-gate", "FAIL", error) for error in gate_errors
     )

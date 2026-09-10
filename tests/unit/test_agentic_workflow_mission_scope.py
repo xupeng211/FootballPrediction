@@ -350,6 +350,44 @@ def test_local_preflight_uses_explicit_current_mission_scope(
     assert result["mission_scope_path"] == MISSION_SCOPE_PATH
 
 
+def test_preflight_json_stdout_is_parseable_with_real_shared_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    repo, base, head = _make_repo(tmp_path)
+    _git(repo, "checkout", "-qb", "feature")
+    body_path = tmp_path / "pr-body.md"
+    body_path.write_text(_body(reviewed_sha=head), encoding="utf-8")
+    monkeypatch.setattr(agent_workflow_preflight, "ROOT", repo)
+    monkeypatch.setattr("scripts.ops.helpers.git_change_helpers.ROOT_HELPER", repo)
+    monkeypatch.setattr("scripts.ops.ai_workflow_gate.ROOT", repo)
+    monkeypatch.setattr(
+        "scripts.ops.ai_workflow_gate.run_governance_growth_gate",
+        lambda *_args, **_kwargs: [],
+    )
+
+    assert (
+        agent_workflow_preflight.main(
+            [
+                "--pr-body-file",
+                str(body_path),
+                "--mission-scope-file",
+                str(_scope_file(repo)),
+                "--base-ref",
+                base,
+                "--head-ref",
+                head,
+                "--json",
+            ]
+        )
+        == 0
+    )
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+    assert result["verdict"] == "PASS"
+    assert "[PR Authorization Matrix]" not in captured.out
+    assert "[PR Authorization Matrix]" in captured.err
+
+
 def test_preflight_cli_forwards_current_mission_scope_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
