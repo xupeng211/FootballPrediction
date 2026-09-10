@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://footballprediction.local/schemas/agentic/codex-review-result-v1.json",
+  "title": "Independent Codex Review Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result", "review_challenge", "findings"],
+  "properties": {
+    "result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL"]
+    },
+    "review_challenge": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "title", "path", "line", "summary"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"]
+          },
+          "title": {"type": "string", "minLength": 1},
+          "path": {"type": ["string", "null"]},
+          "line": {"type": ["integer", "null"], "minimum": 1},
+          "summary": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

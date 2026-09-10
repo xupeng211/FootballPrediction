@@ -31,13 +31,14 @@ STRICT：
 
 ```text
 branch/worktree → base/head snapshot → implementation
-→ make verify-strict → one exact-head independent adversarial review
-→ fix findings and revalidate current HEAD → PR → required CI
+→ make verify-strict → PR → required CI
+→ one exact-head independent adversarial review
+→ fix findings and revalidate current HEAD (CI + new review)
 → owner decision → main Production Gate exact merge SHA → DONE
 ```
 
 NORMAL 不默认运行本地 Codex review、DeepSeek、codex-loop、manifest/audit package 或 GitHub Codex Review。STRICT 只要求一个 primary independent reviewer；额外意见只能是 advisory，并且不能改变 owner 的 merge authority。
-STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定该 reviewer 与当前完整 PR HEAD。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
+STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定 review target 与当前完整 PR HEAD。V1 的本地 pre-review 阶段可暂时声明 `Result=PENDING`；它永远不能让 PR merge-ready，也不能通过最终 required remote governance CI。真正的独立 Codex receipt 产生后，Builder 将其更新为 `PASS` 或 `FINDINGS_RESOLVED`。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
 
 ## 3. 验证 profile
 
@@ -170,3 +171,137 @@ make pr-ready PR=<number> JSON=1
 ## 10. 变更与回滚
 
 workflow 收敛按 WF01–WF06 分阶段完成。每阶段独立 branch/commit/PR，先通过本阶段 acceptance 再进入下一阶段；前四阶段不大规模重写 `scripts/devops/gatekeeper.sh`。任何阶段发现真实 caller、远端规则或生产风险与旧假设不符，应记录 `AUDIT_ASSUMPTION_CHANGED`，停止危险 cleanup，保留 UNKNOWN 项。
+
+## 11. Agentic Engineering Workflow V1（当前 canonical contract）
+
+本节把 Builder、reviewer 和 controller 的职责固化为可执行合同。它服务于
+“一次 bounded mission 内自主闭环，merge 前停止”的工程目标；不改变 Stage D
+业务合同、provider 配额、request accounting、identity、transaction authority 或生产授权。
+
+### 11.1 角色与权限边界
+
+| Role | 必须做 | 明确不能做 |
+| --- | --- | --- |
+| `EXECUTION_CONTROLLER` | 定义 bounded mission、protected invariants、审阅 `MERGE_READY` 证据并作最终 merge/gate 判断 | 不把 Builder 的自证当作 Chief Engineer Gate；不要求每个窄修复逐步确认 |
+| `BUILDER` | 实现、测试、维护同一 PR；自主修复当前 mission 内 CI/preflight/reviewer finding；在每次 HEAD 变化后重跑验证 | 不自授予 independent review；不 merge；不跨 mission/gate/provider/production 边界 |
+| `INDEPENDENT_REVIEWER` | 新 Codex process/session/context，在 exact HEAD 的 detached read-only worktree 做 adversarial review，输出 receipt | 不修改 Builder tree、commit、push、merge 或静默修复 finding；不把 Builder reasoning 当证据 |
+| `CHIEF_ENGINEER` | 独立接受/拒绝重大项目 Gate | 不被 merge-level code review 或 PR green 替代 |
+
+### 11.2 Builder 自主修复决策模型
+
+共享机器合同是 `scripts/ops/helpers/agent_workflow_contract.py`；未知类别默认
+`ESCALATE`。以下类别在当前 mission 内可以 `AUTO_REMEDIATE`：
+
+- compile/syntax、lint、format、当前 patch 引起的 test/integration failure 和 CI failure；
+- Task type、Workflow class、Documentation Impact、PR body schema；
+- report/script lifecycle、governance preflight、growth-freeze 触发的窄修复；
+- 当前 mission 直接归因的 reviewer 窄 defect、缺失 negative test、准确描述当前变更所需的文档修正。
+
+以下类别必须 `ESCALATE`：scope expansion、新产品要求或架构决定、Chief Engineer Gate、protected invariant 语义、显式排除 blocker、quota/request-accounting/identity/transaction-authority 语义、provider/production mutation、真实请求、destructive action、secret、security broad design、CI bypass、STRICT weakening 或 self-merge。
+
+Builder 的动作循环为：
+
+```text
+bounded mission
+  → local preflight (`make agent-preflight`)
+  → target validation (`make verify-targeted` / `make verify-pr` / `make verify-strict`)
+  → commit/push/update PR
+  → current-head required CI
+  → fresh independent Codex review
+  → blocking in-scope finding? Builder 修复并使旧 receipt/CI freshness 失效
+  → new exact HEAD: local validation + CI + fresh review
+  → CI terminal green AND clean exact-head review
+  → `make agent-merge-ready`
+  → STOP AT MERGE GATE，交回 Execution Controller
+```
+
+`make agent-preflight PR_BODY=<path> MISSION_SCOPE_FILE=<path>` 的静态结果与 CI 的
+`AI Workflow Gate` 共用 `validate_pr_metadata()`、现有 `pr_authorization_matrix.py`、
+`strict_review_evidence.py`、`governance_growth_gate.py` 和 lifecycle helpers。路径
+授权不属于永久 workflow policy；它来自当前 bounded mission 提供的、已纳入候选
+HEAD 的 `schemas/agentic/mission_scope.schema.json` 合同（通常放在
+`docs/agentic/missions/<mission-id>.json`）。合同必须明确 mission ID、task/workflow、
+authorized/excluded paths or prefixes、protected invariants 和 forbidden side effects；
+缺失、无效或空授权一律 fail-closed，exclude 优先且匹配按目录边界执行。当前 mission
+的 preflight 会验证这个文件的字节与待审 exact HEAD 一致；不会把另一个 mission 的
+路径列表当作默认值。远端永久 PR gate 只启用可复用的 metadata/lifecycle 合同，不
+自动启用任何 bootstrap mission scope；只有显式提供 scope context 的受控调用才做
+mission-scope check。merge readiness 和 reviewer 会再次读取同一 scope contract。
+PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready PR=<number>`
+读取。
+
+### 11.3 Codex independent reviewer 与 receipt
+
+canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口为
+`make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external dir>`。
+它必须：
+
+1. 在 exact reviewed commit 创建 detached worktree；
+2. 用新的通用 `codex exec` 子进程，通过 stdin 传入审查合同，带 `--sandbox read-only`、
+   `--ignore-user-config`、`--ephemeral`、受控 `model_reasoning_effort`、`--json`、
+   `--output-schema` 和独立 `--output-last-message`；review prompt 自带 exact base/head，
+   不依赖 Builder 上下文，也不复用 persisted Builder session；
+3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
+4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
+   `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
+   completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0；
+   不接受 Builder 传入的 PASS/count/invocation 结论；
+5. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
+
+receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、
+`assurance_model=engineering_independent_review`、明确的 same-uid residual-risk 标记、Codex engine/role、
+base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、
+result、finding summaries、Builder/reviewer context IDs、fresh/separate context、read-only isolation、
+clean-before/after、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact
+HEAD/diff、重新解析 raw/final output、核对 invocation/completion 事件、确认 review worktree 仍是 exact-head
+且 clean，并检查 receipt/evidence 不在 source tree 且为 owner-only。这里的 hash 是可审计的 integrity check，
+不是 cryptographic reviewer provenance；同一 OS uid 的恶意 Builder 理论上仍可能改写本地 evidence，这是 Owner
+选择的 residual risk。简单缺失/错误/自相矛盾的 PASS JSON 仍会 fail-closed，但本工作流不声称抵抗恶意同 UID 伪造。
+
+P0/P1/P2 均阻塞，P3 不阻塞；这比当前 STRICT provider-neutral evidence 更具体但不削弱 STRICT。reviewer 只写适合普通 code review 的 finding，不写隐藏推理。
+
+### 11.4 Exact-head 与 merge readiness
+
+所有 freshness 使用 `scripts/devops/exact_head.py` 的完整 40 位 SHA primitive：
+
+```text
+CURRENT_PR_HEAD != REVIEWED_HEAD_SHA  →  REVIEW_VALID=NO
+CURRENT_PR_HEAD != CI_HEAD_SHA        →  CI_VALID=NO
+```
+
+`scripts/devops/agent_workflow.py merge-ready` / `make agent-merge-ready` 只读地要求：
+
+```text
+MISSION_SCOPE_VALID=YES
+LOCAL_REQUIRED_CHECKS=PASS
+REMOTE_REQUIRED_CI_TERMINAL_GREEN=YES（有 PR context 时）
+INDEPENDENT_REVIEW_PRESENT=YES
+INDEPENDENT_REVIEW_RESULT=PASS
+BLOCKING_FINDINGS=0
+REVIEWED_HEAD_SHA=CURRENT_PR_HEAD_SHA
+PROTECTED_INVARIANTS=PASS
+FORBIDDEN_SIDE_EFFECTS=NO
+REQUIRED_PR_GOVERNANCE=PASS
+```
+
+`MISSION_SCOPE_VALID=YES` 只表示当前 changed paths 通过实际 mission contract；它不从
+mission ID、PR title 或 Builder prose 推断授权。`PROTECTED_INVARIANTS=PASS` 与
+`FORBIDDEN_SIDE_EFFECTS=NO` 既是必需声明，也必须与当前 exact-head、mission-scope 和
+已验证 local preflight 推导出的机器状态一致；调用者单独自报 PASS/NO 不能覆盖缺失或
+失败的机器证据。任何 `UNKNOWN`、failed/stale receipt、
+PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返回
+`MERGE_READY=NO`。命令没有 merge API、push、commit
+或 cleanup 分支；`MERGE_READY=YES` 只产生
+`READY_FOR_EXECUTION_CONTROLLER_MERGE_REVIEW=YES`，随后必须停止。
+
+### 11.5 CI enforcement 与 staged review
+
+GitHub `Production Gate` 的 PR AI Workflow Gate 开启
+`--enforce-agent-workflow-contract`，所以 required remote CI 始终要求有效的最终
+STRICT review evidence，并验证 Task type / Workflow class / Documentation Impact / lifecycle；它不
+加载或执行某一个 PR 的 mission scope，因而不会把 #1904 的 bootstrap 路径列表当成
+所有 PR 的全局限制。需要 scope 的本地/受控 gate 必须显式提供当前合同；不能把
+mission ID、PR title 或 PENDING 当作授权。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
+和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
+PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
+required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。

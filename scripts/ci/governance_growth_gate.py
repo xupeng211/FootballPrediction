@@ -16,8 +16,12 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import subprocess
+from typing import TYPE_CHECKING
 
 from scripts.ci.governance_reverse_dependency import check_new_reverse_dependencies
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # ---------------------------------------------------------------------------
 AUTHORIZED_GOVERNANCE_ADDITIONS: frozenset[str] = frozenset()
@@ -150,6 +154,32 @@ def check_new_numbered_governance_scripts(
                 f"{path}. Governance script number growth is frozen."
             )
     return errors
+
+
+def check_local_worktree_growth(changes: Iterable[object]) -> list[str]:
+    """Apply the same growth-freeze categories to uncommitted local changes.
+
+    The revision-based gate above cannot see an untracked report or manifest
+    before commit.  Agent preflight uses this small adapter so a Builder gets
+    the same fail-closed answer before opening or updating a PR.
+    """
+
+    errors: list[str] = []
+    for change in changes:
+        status = str(getattr(change, "status", ""))
+        path = str(getattr(change, "path", ""))
+        if status not in {"A", "R"}:
+            continue
+        if path.startswith(REPORT_PREFIX):
+            errors.append(_format_report_error(path))
+        elif path.startswith(MANIFEST_PREFIX):
+            errors.append(_format_manifest_error(path))
+        elif path.startswith("scripts/") and _is_numbered_governance_basename(Path(path).name):
+            errors.append(
+                f"{ERR_PHASE}: Unauthorized new numbered governance script: {path}. "
+                "Governance script number growth is frozen."
+            )
+    return sorted(set(errors))
 
 
 # ---------------------------------------------------------------------------

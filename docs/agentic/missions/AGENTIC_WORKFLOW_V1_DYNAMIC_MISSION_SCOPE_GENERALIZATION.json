@@ -1,0 +1,58 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "AGENTIC_WORKFLOW_V1_DYNAMIC_MISSION_SCOPE_GENERALIZATION",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "scripts/ops/ai_workflow_gate.py"
+  ],
+  "authorized_prefixes": [
+    ".github/",
+    "docs/",
+    "schemas/agentic/",
+    "scripts/ci/",
+    "scripts/devops/",
+    "scripts/ops/helpers/",
+    "tests/"
+  ],
+  "excluded_paths": [
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "scripts/ops/helpers/dbBlueprint.js",
+    "scripts/ops/helpers/db_write_guard.js",
+    "scripts/ops/helpers/python_db_write_guard.py",
+    "scripts/ops/helpers/python_db_write_enforcement_check.py",
+    "scripts/ops/helpers/sql_migration_policy_enforcement_check.py"
+  ],
+  "excluded_prefixes": [
+    "database/",
+    "src/",
+    "models/",
+    "training/",
+    "data/",
+    "scripts/ops/stage_d/",
+    "scripts/ops/the_odds_api/",
+    "scripts/ops/odds_api/",
+    "docs/data/",
+    "tests/unit/market_evidence/"
+  ],
+  "excluded_tokens": [
+    "blocker_1",
+    "blocker_2",
+    "blocker_3",
+    "pr1903",
+    "stage-d-business"
+  ],
+  "protected_invariants": [
+    "PR #1903 and its implementation remain untouched.",
+    "Stage D runtime, quota, request-accounting, identity, and transaction-authority semantics remain untouched.",
+    "Production authority, provider state, ledger state, scheduler, and data stores remain untouched.",
+    "Existing STRICT review, exact-head, and fail-closed governance semantics are not weakened."
+  ],
+  "forbidden_side_effects": [
+    "No provider or The Odds API request.",
+    "No production, database, raw-data, ledger, scheduler, training, prediction, or model-activation mutation.",
+    "No destructive Git operation, force push, history rewrite, CI bypass, or self-merge."
+  ]
+}

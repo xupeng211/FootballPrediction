@@ -207,7 +207,8 @@ jobs:
               --pr-body-file "${PR_BODY_FILE}" \
               --base-ref "${AI_GATE_BASE_REF}" \
               --head-ref "${AI_GATE_HEAD_REF}" \
-              --block-matrix
+              --block-matrix \
+              --enforce-agent-workflow-contract
           elif [ "${GATE_EVENT_NAME}" = "workflow_dispatch" ]; then
             # Manual dispatch — explicit base_sha input is required and must
             # be a full 40-hex ancestor of the dispatched commit.  The head
