@@ -39,6 +39,8 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     classify_failure,
     validate_mission_scope,
 )
+from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
+from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -108,7 +110,12 @@ def _local_preflight_check(path: Path, base_sha: str, head_sha: str) -> GateChec
     return GateCheck("local-required-checks", "PASS", f"verified {path}")
 
 
-def _remote_pr_check(pr_number: int) -> tuple[GateCheck, dict[str, Any]]:
+def _remote_pr_check(
+    pr_number: int,
+    *,
+    changed_paths: set[str],
+    expected_head: str,
+) -> tuple[GateCheck, dict[str, Any]]:
     try:
         from scripts.devops import pr_ready_check  # noqa: PLC0415
 
@@ -118,25 +125,42 @@ def _remote_pr_check(pr_number: int) -> tuple[GateCheck, dict[str, Any]]:
             "remote-required-ci", "UNKNOWN", f"pr-ready evidence unavailable: {exc}"
         ), {}
     failed = [finding for finding in result.findings if not finding.passed]
-    if failed:
-        detail = "; ".join(f"{item.name}: {item.message}" for item in failed)
-        return GateCheck("remote-required-ci", "FAIL", detail), {
-            "pr": pr_number,
-            "verdict": result.verdict,
-            "findings": [asdict(item) for item in result.findings],
-            "head_sha": result.pr.head_sha,
-        }
-    return GateCheck(
-        "remote-required-ci", "PASS", f"PR #{pr_number} exact-head required checks green"
-    ), {
+    evidence: dict[str, Any] = {
         "pr": pr_number,
         "verdict": result.verdict,
         "findings": [asdict(item) for item in result.findings],
         "head_sha": result.pr.head_sha,
     }
+    if result.pr.head_sha != expected_head:
+        return GateCheck(
+            "remote-required-ci",
+            "FAIL",
+            f"PR head={result.pr.head_sha}; expected exact HEAD={expected_head}",
+        ), evidence
+    if failed:
+        detail = "; ".join(f"{item.name}: {item.message}" for item in failed)
+        return GateCheck("remote-required-ci", "FAIL", detail), evidence
+    strict_errors = validate_strict_review_evidence(
+        result.pr.body,
+        result.pr.head_sha,
+        changed_paths=changed_paths,
+        task_type=parse_task_type(result.pr.body),
+        allow_pending=False,
+    )
+    if strict_errors:
+        evidence["verdict"] = "FAIL"
+        evidence["strict_review_errors"] = strict_errors
+        return GateCheck(
+            "remote-required-ci",
+            "FAIL",
+            "final PR body review evidence invalid: " + "; ".join(strict_errors),
+        ), evidence
+    return GateCheck(
+        "remote-required-ci", "PASS", f"PR #{pr_number} exact-head required checks green"
+    ), evidence
 
 
-def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
+def merge_ready_command(args: argparse.Namespace) -> int:
     """Evaluate merge readiness without performing any merge-side effect."""
 
     repo_root = Path(args.repo_root).resolve()
@@ -182,18 +206,19 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     checks.append(_local_preflight_check(Path(args.local_preflight_json), base_sha, expected_head))
 
     if args.pr is not None:
-        remote_check, remote_evidence = _remote_pr_check(args.pr)
+        remote_check, remote_evidence = _remote_pr_check(
+            args.pr,
+            changed_paths=changed,
+            expected_head=expected_head,
+        )
         checks.append(remote_check)
     else:
         remote_evidence = {}
-        remote_status = _status(args.remote_ci_status)
         checks.append(
             GateCheck(
                 "remote-required-ci",
-                "PASS" if remote_status == "GREEN" else remote_status,
-                "explicit remote CI status"
-                if remote_status != "UNKNOWN"
-                else "PR context is required; remote CI is UNKNOWN",
+                "UNKNOWN",
+                "PR context is required; caller-supplied CI status is ignored",
             )
         )
 
@@ -219,7 +244,6 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
 
     protected = _status(args.protected_invariants)
     forbidden = _status(args.forbidden_side_effects)
-    governance = _status(args.required_pr_governance)
     checks.append(
         GateCheck("protected-invariants", "PASS" if protected == "PASS" else protected, protected)
     )
@@ -237,7 +261,9 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: PLR0915
     else:
         checks.append(
             GateCheck(
-                "required-pr-governance", "PASS" if governance == "PASS" else governance, governance
+                "required-pr-governance",
+                "UNKNOWN",
+                "PR context is required; caller-supplied governance status is ignored",
             )
         )
 

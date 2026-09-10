@@ -114,6 +114,7 @@ def run_preflight(
         block_matrix=True,
         enforce_strict_review=True,
         enforce_agent_workflow_contract=True,
+        enforce_agent_workflow_scope=True,
         allow_review_pending=not require_review,
         base_ref=resolved_base,
         head_ref=resolved_head,

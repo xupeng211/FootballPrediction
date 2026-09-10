@@ -5,7 +5,7 @@ lifecycle: permanent
 owner: engineering workflow governance
 
 `run` 在 reviewed commit 的 detached worktree 中启动新的
-``codex exec review`` 子进程，强制 ``--sandbox read-only``、``--ephemeral``
+``codex exec`` 子进程，强制 ``--sandbox read-only``、``--ephemeral``
 和 JSON 输出；reviewer 不共享 Builder session，也不接收 Builder 的自证。
 `validate` 只接受由该过程生成、且能重新绑定 exact HEAD/diff/raw output 的
 外部 receipt。receipt 与原始 Codex 输出必须位于 reviewed source tree 之外。
@@ -210,6 +210,28 @@ def _reviewer_invocation_id(events: list[dict[str, Any]]) -> str:
     raise ReviewReceiptError("Codex JSONL 缺少独立 thread.started invocation id")
 
 
+def _assert_successful_codex_completion(events: list[dict[str, Any]], final_text: str) -> None:
+    """Bind the saved final message to a completed Codex turn in raw JSONL."""
+
+    if any(event.get("type") == "turn.failed" for event in events):
+        raise ReviewReceiptError("Codex JSONL 包含 turn.failed；拒绝 review receipt")
+    completed_turns = [
+        index for index, event in enumerate(events) if event.get("type") == "turn.completed"
+    ]
+    if len(completed_turns) != 1:
+        raise ReviewReceiptError("Codex JSONL 必须包含恰好一个 turn.completed")
+    messages = [
+        (index, event.get("item", {}).get("text"))
+        for index, event in enumerate(events)
+        if event.get("type") == "item.completed"
+        and event.get("item", {}).get("type") == "agent_message"
+    ]
+    if len(messages) != 1 or not isinstance(messages[0][1], str):
+        raise ReviewReceiptError("Codex JSONL 必须包含恰好一个 completed agent_message")
+    if messages[0][0] > completed_turns[0] or messages[0][1] != final_text:
+        raise ReviewReceiptError("Codex raw completed agent_message 与 final message 不一致")
+
+
 def _parse_final_message(text: str) -> dict[str, Any]:
     stripped = text.strip()
     if stripped.startswith("```") and stripped.endswith("```"):
@@ -311,6 +333,7 @@ def build_reviewer_command(
 ) -> list[str]:
     """Build the only supported isolated reviewer invocation."""
 
+    normalize_full_sha(base_sha, role="review base SHA")
     return [
         codex_binary,
         "exec",
@@ -318,10 +341,7 @@ def build_reviewer_command(
         "read-only",
         "--ephemeral",
         "--ignore-user-config",
-        "review",
         "--json",
-        "--base",
-        base_sha,
         "--output-schema",
         str(output_schema),
         "--output-last-message",
@@ -372,6 +392,10 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     review_output_schema = worktree / schema_relative_path
     if not review_output_schema.is_file():
         raise ReviewReceiptError(f"review commit 中缺少 output schema: {review_output_schema}")
+    try:
+        review_output_schema.chmod(0o600)
+    except OSError as exc:
+        raise ReviewReceiptError(f"无法将 review output schema 设为 owner-only: {exc}") from exc
 
     started_at = _now()
     command = build_reviewer_command(
@@ -422,6 +446,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     counts, blocking, review_result, findings = validate_review_result(result_document)
     events = _parse_json_lines(raw_bytes)
     reviewer_invocation_id = _reviewer_invocation_id(events)
+    _assert_successful_codex_completion(events, final_text)
     builder_context_id = args.builder_context_id or os.environ.get(
         "BUILDER_CODEX_CONTEXT", f"builder-process:{os.getppid()}"
     )
@@ -464,6 +489,8 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "output_schema_sha256": sha256_file(review_output_schema),
             "raw_output_path": str(raw_path),
             "raw_output_sha256": sha256_bytes(raw_bytes),
+            "agent_message_sha256": sha256_bytes(final_text.encode("utf-8")),
+            "codex_exit_code": process.returncode,
             "stderr_path": str(stderr_path),
             "final_message_path": str(final_path),
             "final_message_sha256": sha256_file(final_path),
@@ -604,7 +631,13 @@ def validate_receipt(  # noqa: C901, PLR0912, PLR0915
     events = _parse_json_lines(raw_path.read_bytes())
     if _reviewer_invocation_id(events) != reviewer_id:
         raise ReviewReceiptError("raw output invocation id 与 receipt 不一致")
-    result_document = _parse_final_message(final_path.read_text(encoding="utf-8"))
+    final_text = final_path.read_text(encoding="utf-8")
+    _assert_successful_codex_completion(events, final_text)
+    if provenance.get("agent_message_sha256") != sha256_bytes(final_text.encode("utf-8")):
+        raise ReviewReceiptError("agent_message_sha256 不匹配")
+    if provenance.get("codex_exit_code") != 0:
+        raise ReviewReceiptError("Codex exit code 不是 0")
+    result_document = _parse_final_message(final_text)
     counts, blocking, review_result, findings = validate_review_result(result_document)
     if receipt.get("finding_counts_by_severity") != counts:
         raise ReviewReceiptError("receipt finding counts 不是由 final message 派生的值")

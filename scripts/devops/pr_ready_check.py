@@ -63,6 +63,7 @@ class PrInfo:
     head_branch: str
     head_sha: str
     mergeable: str
+    body: str
     body_present: bool
 
 
@@ -212,6 +213,7 @@ def fetch_pr(number: int) -> PrInfo:
         head_branch=str(data.get("headRefName") or ""),
         head_sha=str(data.get("headRefOid") or "").lower(),
         mergeable=str(data.get("mergeable") or "UNKNOWN"),
+        body=str(data.get("body") or ""),
         body_present=bool(str(data.get("body") or "").strip()),
     )
 

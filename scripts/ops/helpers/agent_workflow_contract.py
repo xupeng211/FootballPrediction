@@ -237,13 +237,18 @@ def _substantive_reason(value: str) -> bool:
 
 
 def validate_pr_metadata(  # noqa: C901, PLR0912
-    pr_body: str, changed_paths: Iterable[str]
+    pr_body: str,
+    changed_paths: Iterable[str] | None = None,
+    *,
+    enforce_mission_scope: bool = False,
 ) -> list[str]:
     """Validate V1 Task type, Workflow class, and Documentation Impact.
 
     Existing `ai_workflow_gate` remains the authority for the broader PR
-    checks. This function only owns the V1 metadata contract and is called by
-    both local preflight and the PR AI Workflow Gate when V1 enforcement is on.
+    checks. This function owns only the reusable V1 metadata contract. The
+    mission-specific path allowlist is opt-in so the permanent remote PR gate
+    cannot accidentally block unrelated business PRs; local mission preflight
+    and merge-readiness explicitly enable it.
     """
 
     errors: list[str] = []
@@ -306,9 +311,8 @@ def validate_pr_metadata(  # noqa: C901, PLR0912
                 "AGENT_WORKFLOW_DOCUMENTATION_IMPACT_INVALID: no requires a concrete no-update reason."
             )
 
-    # Keep the parameter meaningful and make scope review a machine-visible
-    # contract without duplicating the complete path classifier here.
-    errors.extend(validate_mission_scope(changed_paths))
+    if enforce_mission_scope:
+        errors.extend(validate_mission_scope(changed_paths or ()))
     return errors
 
 

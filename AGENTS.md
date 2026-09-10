@@ -195,4 +195,4 @@ Builder 在当前 bounded mission 内必须自主完成实现、验证和同一 
 
 Builder 必须在需要扩大 mission、改变产品/架构或 protected invariant、跨越 Chief Engineer Gate、触碰显式排除的 Stage D/PR #1903/blocker/provider/production 路径、执行 destructive/secret/真实 provider 动作、绕过失败 CI、削弱 STRICT review 或 merge 自己 PR 时升级。未知类别也按升级处理。
 
-Independent reviewer 必须是新的 Codex 子进程/会话，运行于 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。只接受 `make agent-review ...` 生成的外部 machine-readable receipt；receipt 必须绑定完整 base/head、diff hash、Codex invocation 和原始输出。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。
+Independent reviewer 必须是新的 Codex 子进程/会话，运行于 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。`make agent-review ...` 使用通用 `codex exec` 的 stdin prompt、独立 schema 和 final-message 输出生成外部 machine-readable receipt；receipt 必须绑定完整 base/head、diff hash、Codex invocation、成功完成事件和原始输出。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。

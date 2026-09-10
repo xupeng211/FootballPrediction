@@ -548,6 +548,7 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     block_matrix: bool = False,
     enforce_strict_review: bool = False,
     enforce_agent_workflow_contract: bool = False,
+    enforce_agent_workflow_scope: bool = False,
     allow_review_pending: bool = False,
     base_ref: str | None = None,
     head_ref: str | None = None,
@@ -557,13 +558,10 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     When *skip_body_checks* is True, run only checks that can be decided from
     the Git diff. PR metadata declarations remain blocking only when a body
     is available.
-
     When *block_matrix* is True, the narrow A-L PR authorization matrix subset
     is added to errors (G1 expanded from original A-D).  Default False
     (report-only, #1651 Phase 5R8-D/G).
-
     """
-
     if changes is None:
         changes = collect_changes()
     added = added_paths(changes)
@@ -580,7 +578,13 @@ def validate(  # noqa: C901, PLR0912, PLR0915
         if missing:
             errors.append(f"Missing required PR body sections: {', '.join(missing)}")
         if enforce_agent_workflow_contract:
-            errors.extend(validate_pr_metadata(pr_body, changed))
+            errors.extend(
+                validate_pr_metadata(
+                    pr_body,
+                    changed,
+                    enforce_mission_scope=enforce_agent_workflow_scope,
+                )
+            )
         # 2. Do not start automatically. Main-push calls may intentionally
         # omit PR metadata; an empty skipped body must not create a fake
         # missing-phrase failure.
@@ -654,23 +658,18 @@ def validate(  # noqa: C901, PLR0912, PLR0915
                 errors.extend(narrow_blocking_errors(result))
             except Exception as exc:
                 errors.append(f"PR authorization matrix blocking check failed: {exc}")
-
     # 9. P1-1: no-archive-runtime-import (runs regardless of body checks)
     errors.extend(check_no_archive_runtime_import(changed))
-
     # 10. P1-2: dangerous-auth path cross-validation (requires body)
     if has_pr_metadata:
         errors.extend(check_dangerous_auth_path_cross_validation(changed, pr_body))
-
     # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
     if has_pr_metadata:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
-
     # 12. M2 Governance growth freeze gate — blocks new governance artifact growth.
     # Delegates to _check_governance_growth → run_governance_growth_gate (orchestration)
     # → governance_reverse_dependency.py for Python AST + JS bounded scanning.
     errors.extend(_check_governance_growth(base_ref, head_ref))
-
     return errors
 
 
@@ -716,6 +715,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable narrow PR matrix blocking (default: report-only)",
     )
     parser.add_argument("--enforce-agent-workflow-contract", action="store_true")
+    parser.add_argument("--enforce-agent-workflow-scope", action="store_true")
     parser.add_argument("--allow-review-pending", action="store_true")
     return parser
 
@@ -724,7 +724,6 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
     """Run AI workflow gate checks and exit 0 (pass) or 1 (fail)."""
     parser = build_parser()
     args = parser.parse_args(argv)
-
     pr_body = read_pr_body(args.pr_body_file, from_stdin=args.pr_body_stdin)
     if not pr_body.strip():
         if args.skip_body_checks:
@@ -749,6 +748,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         block_matrix=args.block_matrix,
         enforce_strict_review=args.block_matrix and not args.skip_body_checks,
         enforce_agent_workflow_contract=args.enforce_agent_workflow_contract,
+        enforce_agent_workflow_scope=args.enforce_agent_workflow_scope,
         allow_review_pending=args.allow_review_pending,
         base_ref=resolved_base,
         head_ref=resolved_head,

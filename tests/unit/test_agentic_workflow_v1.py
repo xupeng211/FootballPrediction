@@ -10,6 +10,7 @@ import inspect
 import json
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
@@ -144,9 +145,25 @@ def _write_valid_receipt(
     raw = evidence / "raw.jsonl"
     final = evidence / "final.json"
     stderr = evidence / "stderr.log"
-    raw.write_text('{"type":"thread.started","thread_id":"reviewer-1234"}\n', encoding="utf-8")
     final_document = {"result": result, "findings": [finding] if finding else []}
-    final.write_text(json.dumps(final_document) + "\n", encoding="utf-8")
+    final_text = json.dumps(final_document) + "\n"
+    final.write_text(final_text, encoding="utf-8")
+    raw.write_text(
+        "\n".join(
+            [
+                json.dumps({"type": "thread.started", "thread_id": "reviewer-1234"}),
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {"id": "item-1", "type": "agent_message", "text": final_text},
+                    }
+                ),
+                json.dumps({"type": "turn.completed"}),
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     stderr.write_text("", encoding="utf-8")
     for path in (raw, final, stderr):
         path.chmod(0o600)
@@ -207,6 +224,8 @@ def _write_valid_receipt(
             "output_schema_sha256": sha256_file(schema_path),
             "raw_output_path": str(raw),
             "raw_output_sha256": sha256_file(raw),
+            "agent_message_sha256": sha256_file(final),
+            "codex_exit_code": 0,
             "stderr_path": str(stderr),
             "final_message_path": str(final),
             "final_message_sha256": sha256_file(final),
@@ -376,7 +395,76 @@ def test_missing_review_rejects_merge_ready(tmp_path: Path):
     assert agent_workflow.merge_ready_command(args) == 1
 
 
-def test_final_clean_review_can_reach_merge_ready(tmp_path: Path):
+def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    local = tmp_path / "local.json"
+    local.write_text(
+        json.dumps({"verdict": "PASS", "base_sha": base, "current_head_sha": head}),
+        encoding="utf-8",
+    )
+    args = agent_workflow.build_parser().parse_args(
+        [
+            "merge-ready",
+            "--repo-root",
+            str(repo),
+            "--base-sha",
+            base,
+            "--head-sha",
+            head,
+            "--mission-id",
+            "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1",
+            "--local-preflight-json",
+            str(local),
+            "--receipt",
+            str(receipt),
+            "--pr",
+            "1",
+            "--protected-invariants",
+            "PASS",
+            "--forbidden-side-effects",
+            "NO",
+            "--required-pr-governance",
+            "PASS",
+        ]
+    )
+    monkeypatch.setattr(
+        agent_workflow,
+        "_remote_pr_check",
+        lambda pr_number, *, expected_head, **_kwargs: (
+            agent_workflow.GateCheck("remote-required-ci", "PASS", "mock exact-head CI"),
+            {"pr": pr_number, "verdict": "PASS", "head_sha": expected_head},
+        ),
+    )
+    assert agent_workflow.merge_ready_command(args) == 0
+
+
+def test_invalid_task_type_caught_locally():
+    errors = validate_pr_metadata(
+        _body(task_type="not-a-task"), ["scripts/devops/agent_workflow.py"]
+    )
+    assert any("TASK_TYPE_INVALID" in error for error in errors)
+
+
+def test_invalid_workflow_class_caught_locally():
+    errors = validate_pr_metadata(
+        _body(workflow_class="MAYBE"), ["scripts/devops/agent_workflow.py"]
+    )
+    assert any("CLASS_INVALID" in error for error in errors)
+
+
+def test_invalid_documentation_impact_caught_locally():
+    body = _body().replace("| Capability changed? | yes |", "| Capability changed? | maybe |")
+    errors = validate_pr_metadata(body, ["scripts/devops/agent_workflow.py"])
+    assert any("DOCUMENTATION_IMPACT_INVALID" in error for error in errors)
+
+
+def test_global_metadata_contract_does_not_apply_mission_scope_allowlist():
+    assert validate_pr_metadata(_body(), ["src/application.js"]) == []
+    assert validate_pr_metadata(_body(), ["src/application.js"], enforce_mission_scope=True)
+
+
+def test_merge_ready_without_pr_context_fails_closed(tmp_path: Path):
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     local = tmp_path / "local.json"
@@ -409,27 +497,27 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path):
             "PASS",
         ]
     )
-    assert agent_workflow.merge_ready_command(args) == 0
+    assert agent_workflow.merge_ready_command(args) == 1
 
 
-def test_invalid_task_type_caught_locally():
-    errors = validate_pr_metadata(
-        _body(task_type="not-a-task"), ["scripts/devops/agent_workflow.py"]
+def test_remote_merge_check_rejects_pending_pr_review_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    head = "2" * 40
+    fake_result = SimpleNamespace(
+        findings=[],
+        verdict="PASS",
+        pr=SimpleNamespace(head_sha=head, body=_body()),
     )
-    assert any("TASK_TYPE_INVALID" in error for error in errors)
-
-
-def test_invalid_workflow_class_caught_locally():
-    errors = validate_pr_metadata(
-        _body(workflow_class="MAYBE"), ["scripts/devops/agent_workflow.py"]
+    monkeypatch.setattr("scripts.devops.pr_ready_check.evaluate", lambda _pr_number: fake_result)
+    check, evidence = agent_workflow._remote_pr_check(
+        1904,
+        changed_paths={"scripts/devops/agent_workflow.py"},
+        expected_head=head,
     )
-    assert any("CLASS_INVALID" in error for error in errors)
-
-
-def test_invalid_documentation_impact_caught_locally():
-    body = _body().replace("| Capability changed? | yes |", "| Capability changed? | maybe |")
-    errors = validate_pr_metadata(body, ["scripts/devops/agent_workflow.py"])
-    assert any("DOCUMENTATION_IMPACT_INVALID" in error for error in errors)
+    assert check.status == "FAIL"
+    assert "final PR body review evidence invalid" in check.message
+    assert evidence["verdict"] == "FAIL"
 
 
 def test_missing_report_lifecycle_caught_locally():
@@ -469,6 +557,7 @@ def test_reviewer_invocation_is_read_only():
     assert "--sandbox" in command
     assert command[command.index("--sandbox") + 1] == "read-only"
     assert "--ephemeral" in command
+    assert "--output-schema" in command
     assert "--dangerously-bypass-approvals-and-sandbox" not in command
 
 
@@ -480,8 +569,7 @@ def test_reviewer_run_uses_separate_codex_context():
         final_message_path=Path("/tmp/final.json"),
     )
     assert command[:2] == ["codex", "exec"]
-    assert command.index("review") > command.index("--ignore-user-config")
-    assert "review" in command
+    assert "review" not in command
     assert "-" not in command
     with pytest.raises(ReviewReceiptError):
         _assert_contexts_separate("reviewer-1234", "reviewer-1234")

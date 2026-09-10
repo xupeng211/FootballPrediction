@@ -218,8 +218,11 @@ bounded mission
 `make agent-preflight` 的静态结果与 CI 的 `AI Workflow Gate` 共用
 `validate_pr_metadata()`、现有 `pr_authorization_matrix.py`、
 `strict_review_evidence.py`、`governance_growth_gate.py` 和 lifecycle helpers；本地
-还会检查 feature branch 与未提交 changed paths 的 growth freeze。PR context、GitHub
-ruleset 和 required check runs 仍只能由 `make pr-ready PR=<number>` 读取。
+还会显式启用本 mission 的 changed-path allowlist 并检查 feature branch 与未提交
+changed paths 的 growth freeze。远端永久 PR gate 只启用可复用的 metadata/lifecycle
+合同，不把本 mission 的路径 allowlist误套到普通业务 PR；merge readiness 再次显式
+检查本 mission scope。PR context、GitHub ruleset 和 required check runs 仍只能由
+`make pr-ready PR=<number>` 读取。
 
 ### 11.3 Codex independent reviewer 与 receipt
 
@@ -228,9 +231,14 @@ canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口�
 它必须：
 
 1. 在 exact reviewed commit 创建 detached worktree；
-2. 用新的 `codex exec review` 子进程，带 `--sandbox read-only`、`--ephemeral`、`--json` 和独立 output schema；
+2. 用新的通用 `codex exec` 子进程，通过 stdin 传入审查合同，带 `--sandbox read-only`、
+   `--ephemeral`、`--ignore-user-config`、`--json`、`--output-schema` 和独立
+   `--output-last-message`；review prompt 自带 exact base/head，不依赖 Builder 上下文；
 3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
-4. 只从 Codex `thread.started`、final schema、当前 Git diff 和文件 hash 派生 receipt，不接受 Builder 传入的 PASS/count/invocation 结论；
+4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
+   `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
+   completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0，
+   不接受 Builder 传入的 PASS/count/invocation 结论；
 5. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
 
 receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、Codex engine/role、base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、result、finding summaries、Builder/reviewer context IDs、read-only isolation、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact HEAD/diff、重新解析 raw/final output、检查 receipt 不在 source tree 且为 owner-only；因此任意手写 `{"review_result":"PASS"}` 不是有效 evidence。
@@ -270,8 +278,9 @@ protected-invariant evidence 都返回 `MERGE_READY=NO`。命令没有 merge API
 
 GitHub `Production Gate` 的 PR AI Workflow Gate 开启
 `--enforce-agent-workflow-contract --allow-review-pending`，所以 CI 在 reviewer 尚未
-运行时可以验证 Task type / Workflow class / Documentation Impact / lifecycle / scope，
-但不能把 PENDING 当作 final approval。review 完成后 PR body 的 strict evidence 必须改为
-Codex、PASS/FINDINGS_RESOLVED 和当前 exact HEAD；source change 自动使旧 evidence stale，
-新 HEAD 必须重新 CI + review。远端 required checks 仍由 GitHub ruleset/API 产生，
-`pr-ready` 不替代 TEST、CI 或 REVIEW。
+运行时可以验证 Task type / Workflow class / Documentation Impact / lifecycle；它不把
+本 mission 的 path allowlist当成所有 PR 的全局限制，也不能把 PENDING 当作 final
+approval。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
+和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
+PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
+required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。
