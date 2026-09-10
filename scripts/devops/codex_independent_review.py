@@ -278,13 +278,14 @@ REVIEW_ROLE=INDEPENDENT_REVIEWER
 REVIEW_CHALLENGE={challenge}
 
 审查目标：
-1. 先读取 AGENTS.md、docs/AGENT_WORKFLOW.md 和相关 governance source-of-truth。
-2. 只审查本 mission 的 workflow-infrastructure 变更；Stage D、PR #1903、生产/provider/ledger 路径是保护边界。
-3. P0=security/destructive/authorization/production corruption；P1=correctness/invariant/data-loss/provider-request risk；
+1. 先读取 AGENTS.md 的 Agentic Engineering Workflow V1 入口、docs/AGENT_WORKFLOW.md 的第 11 节，以及相关 governance source-of-truth；使用针对性 sed/rg，不要把整份长文档回显到上下文。
+2. 用 `git diff --stat`、`git diff --name-only {base_sha}...{head_sha}` 和针对性 diff 检查所有本 mission 的变更；优先审查实现、schema、CI、测试和与其直接相关的文档，不要输出完整 diff。
+3. 只审查本 mission 的 workflow-infrastructure 变更；Stage D、PR #1903、生产/provider/ledger 路径是保护边界。
+4. P0=security/destructive/authorization/production corruption；P1=correctness/invariant/data-loss/provider-request risk；
    P2=significant robustness/recoverability/observability/governance defect；P3=non-blocking maintainability。
-4. P0/P1/P2 阻塞 merge，P3 不阻塞。只报告当前 mission 内可以清楚归因的 finding；需要新 scope、产品要求、架构决定、Chief Engineer Gate、
+5. P0/P1/P2 阻塞 merge，P3 不阻塞。只报告当前 mission 内可以清楚归因的 finding；需要新 scope、产品要求、架构决定、Chief Engineer Gate、
    protected invariant 语义变化或授权边界变化时，按 blocking finding 报告。
-5. 不修改任何文件，不写 Builder worktree，不 commit、不 push、不 merge、不调用 network/provider/DB/生产命令。
+6. 不修改任何文件，不写 Builder worktree，不 commit、不 push、不 merge、不调用 network/provider/DB/生产命令。
 
 最终回复必须只包含下面 schema 形状的 JSON（不要 Markdown、不要隐藏推理、不要长篇过程日志）：
 {{
@@ -310,6 +311,8 @@ def build_reviewer_command(
     return [
         codex_binary,
         "exec",
+        "-c",
+        'model_reasoning_effort="medium"',
         "--sandbox",
         "read-only",
         "--ignore-user-config",
