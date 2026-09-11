@@ -16,14 +16,10 @@ import pytest
 
 from scripts.ci.governance_growth_gate import check_local_worktree_growth
 from scripts.devops import agent_workflow, codex_independent_review
-from scripts.devops.codex_independent_review import (
-    REVIEW_OUTPUT_SCHEMA,
-    ReviewReceiptError,
-    _assert_contexts_separate,
-    build_reviewer_command,
-    validate_receipt,
-    validate_review_result,
-)
+from scripts.devops.codex_review_classification import validate_receipt
+from scripts.devops.codex_review_contract import build_reviewer_command, validate_review_result
+from scripts.devops.codex_review_provenance import ReviewReceiptError
+from scripts.devops.codex_review_receipt import REVIEW_OUTPUT_SCHEMA, _assert_contexts_separate
 from scripts.devops.exact_head import ExactHeadError
 from scripts.ops.helpers.agent_workflow_contract import (
     DECISION_AUTO_REMEDIATE,
@@ -67,7 +63,10 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     bin_root = tmp_path / "bin"
     bin_root.mkdir(mode=0o700)
     codex_binary = bin_root / "codex"
-    codex_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    codex_binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 0.153.4"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
@@ -648,3 +647,8 @@ def test_merge_ready_command_has_no_merge_operation():
     source = inspect.getsource(agent_workflow)
     assert "gh pr merge" not in source
     assert "git merge" not in source
+
+
+# --------------------------------------------------------------------------
+# V1.1A reviewer provenance and receipt classification contract
+# --------------------------------------------------------------------------

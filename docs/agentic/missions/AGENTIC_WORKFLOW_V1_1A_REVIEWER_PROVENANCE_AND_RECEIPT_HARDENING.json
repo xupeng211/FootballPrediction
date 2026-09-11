@@ -1,0 +1,83 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "AGENTIC_WORKFLOW_V1_1A_REVIEWER_PROVENANCE_AND_RECEIPT_HARDENING",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/AGENTIC_WORKFLOW_V1_1A_REVIEWER_PROVENANCE_AND_RECEIPT_HARDENING.json",
+    "schemas/agentic/codex_review_receipt.schema.json",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/codex_independent_review.py",
+    "scripts/devops/codex_review_classification.py",
+    "scripts/devops/codex_review_contract.py",
+    "scripts/devops/codex_review_provenance.py",
+    "scripts/devops/codex_review_receipt.py",
+    "tests/helpers/agentic_workflow_fixtures.py",
+    "tests/unit/test_agent_workflow_hardening_phase1_ci_rules.py",
+    "tests/unit/test_agentic_workflow_mission_scope.py",
+    "tests/unit/test_agentic_workflow_receipt_classification.py",
+    "tests/unit/test_agentic_workflow_v1.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/PROJECT_VISION.md",
+    "scripts/devops/codex_review_output.py",
+    "scripts/devops/pr_ready_check.py",
+    "scripts/ops/ai_workflow_gate.py"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "database/",
+    "deploy/",
+    "docs/_reports/",
+    "docs/data/",
+    "scripts/ops/",
+    "src/",
+    "tests/unit/market_evidence/"
+  ],
+  "excluded_tokens": [
+    "backup",
+    "backtest",
+    "bankroll",
+    "betfair",
+    "blocker-2",
+    "blocker-3",
+    "blocker_2",
+    "blocker_3",
+    "de-vig",
+    "model-activation",
+    "oddsportal",
+    "roi",
+    "scheduler",
+    "sportmonks",
+    "staking",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "the independent reviewer model is pinned explicitly and never inherited from user config, account default, catalog priority or environment",
+    "review reasoning effort remains explicitly pinned to medium",
+    "receipt v2 records review_model, review_reasoning_effort and codex_cli_version derived from the executed invocation, not from a Builder-supplied declaration",
+    "STALE_TOOLING never satisfies merge readiness, current STRICT approval, or the current exact-head review requirement",
+    "v1 receipts remain classifiable as historical evidence with internal consistency checked, and can never become current approval",
+    "exact-head, base, diff, mission-scope and reviewer-isolation semantics are unchanged by this mission",
+    "remote required CI continues to not load or enforce a per-mission scope; F-03 remains unimplemented"
+  ],
+  "forbidden_side_effects": [
+    "Stage D or Blocker 1/2/3 changes",
+    "provider/The Odds API request or quota consumption",
+    "production, transaction, RAW, ledger, quota or canonical identity mutation",
+    "scheduler, training, prediction, backtest or model activation",
+    "database schema or migration writes",
+    "GitHub production-gate.yml, remote scope loading, or CI receipt transport changes",
+    "force push, direct main push, self-review or self-merge"
+  ]
+}

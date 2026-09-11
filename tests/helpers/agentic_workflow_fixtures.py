@@ -11,11 +11,21 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from scripts.devops.codex_independent_review import (
-    _codex_prompt,
+from scripts.devops.codex_review_contract import (
+    REVIEW_MODEL_FLAG,
+    _canonical_json,
     build_reviewer_command,
-    diff_sha256,
     review_challenge,
+    reviewer_selectors_from_command,
+)
+from scripts.devops.codex_review_provenance import observe_codex_cli_version
+from scripts.devops.codex_review_receipt import (
+    RECEIPT_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION_V1,
+    WRAPPER_NAME,
+    _codex_prompt,
+    diff_sha256,
+    git_blob_sha256,
     sha256_file,
 )
 from scripts.ops.helpers.agent_workflow_contract import (
@@ -24,6 +34,14 @@ from scripts.ops.helpers.agent_workflow_contract import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _canonical_sha256(value: object) -> str:
+    """Hash one canonical JSON document exactly like the receipt writer does."""
+
+    return hashlib.sha256(_canonical_json(value)).hexdigest()
+
+
 BASE_SHA = "1" * 40
 MISSION_ID = "FOOTBALLPREDICTION_AGENTIC_ENGINEERING_WORKFLOW_V1"
 MISSION_SCOPE_PATH = "docs/agentic/missions/current.json"
@@ -126,7 +144,15 @@ def _git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def make_repo(tmp_path: Path) -> tuple[Path, str, str]:
+def make_repo(tmp_path: Path, *, wrapper_content: str | None = None) -> tuple[Path, str, str]:
+    """Build a synthetic repo that also carries the real reviewer wrapper.
+
+    The wrapper is committed at base and left untouched at head, so the exact
+    `base...head` diff stays limited to `Makefile` while the receipt can still
+    be git-anchored to a real wrapper blob.  ``wrapper_content`` substitutes an
+    older wrapper, which models a legitimate later tooling upgrade.
+    """
+
     repo = tmp_path / "review-repo"
     repo.mkdir()
     _git(repo, "init", "-q")
@@ -142,12 +168,21 @@ def make_repo(tmp_path: Path) -> tuple[Path, str, str]:
         json.dumps(mission_scope_payload(), ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    wrapper_path = repo / WRAPPER_NAME
+    wrapper_path.parent.mkdir(parents=True)
+    wrapper_path.write_text(
+        wrapper_content
+        if wrapper_content is not None
+        else (ROOT / WRAPPER_NAME).read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     _git(
         repo,
         "add",
         "Makefile",
         "schemas/agentic/codex_review_result.schema.json",
         MISSION_SCOPE_PATH,
+        WRAPPER_NAME,
     )
     _git(repo, "commit", "-qm", "base")
     base = _git(repo, "rev-parse", "HEAD")
@@ -156,6 +191,17 @@ def make_repo(tmp_path: Path) -> tuple[Path, str, str]:
     _git(repo, "commit", "-qm", "head")
     head = _git(repo, "rev-parse", "HEAD")
     return repo, base, head
+
+
+def _apply_overrides(document: dict[str, object], overrides: dict[str, object]) -> None:
+    """Merge one level of test overrides into a receipt before it is sealed."""
+
+    for key, value in overrides.items():
+        current = document.get(key)
+        if isinstance(value, dict) and isinstance(current, dict):
+            current.update(value)
+        else:
+            document[key] = value
 
 
 def write_valid_receipt(
@@ -167,6 +213,8 @@ def write_valid_receipt(
     mission_id: str = MISSION_ID,
     result: str = "PASS",
     finding: dict[str, object] | None = None,
+    legacy_schema: bool = False,
+    overrides: dict[str, object] | None = None,
 ) -> Path:
     evidence = tmp_path / "evidence"
     evidence.mkdir(mode=0o700)
@@ -258,7 +306,7 @@ def write_valid_receipt(
         )
     codex_binary = Path(shutil.which("codex")).resolve()
     receipt: dict[str, object] = {
-        "schema_version": "codex-independent-review-receipt/v1",
+        "schema_version": RECEIPT_SCHEMA_VERSION_V1 if legacy_schema else RECEIPT_SCHEMA_VERSION,
         "contract_schema_version": "agentic-engineering-workflow/v1",
         "assurance_model": "engineering_independent_review",
         "hostile_same_uid_forge_resistance": False,
@@ -299,9 +347,9 @@ def write_valid_receipt(
             "source_mutation_detected": False,
         },
         "provenance": {
-            "writer": "scripts/devops/codex_independent_review.py",
+            "writer": WRAPPER_NAME,
             "integrity_only": True,
-            "wrapper_sha256": sha256_file(ROOT / "scripts/devops/codex_independent_review.py"),
+            "wrapper_sha256": git_blob_sha256(repo, head, WRAPPER_NAME),
             "command_sha256": "0" * 64,
             "codex_binary": str(codex_binary),
             "codex_binary_sha256": sha256_file(codex_binary),
@@ -323,11 +371,28 @@ def write_valid_receipt(
         output_schema=schema_path,
         final_message_path=final,
     )
-    receipt["provenance"]["command_sha256"] = hashlib.sha256(
-        (
-            json.dumps(command, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
-        ).encode()
-    ).hexdigest()
+    if legacy_schema:
+        # Historical v1 receipts predate explicit model pinning: their recorded
+        # command carried no model selector and no model_provenance block.
+        legacy_command = list(command)
+        model_index = legacy_command.index(REVIEW_MODEL_FLAG)
+        del legacy_command[model_index : model_index + 2]
+        receipt["provenance"]["command_sha256"] = _canonical_sha256(legacy_command)
+    else:
+        receipt["provenance"]["reviewer_command"] = list(command)
+        receipt["provenance"]["command_sha256"] = _canonical_sha256(command)
+        review_model, review_effort = reviewer_selectors_from_command(command)
+        receipt["model_provenance"] = {
+            "review_model": review_model,
+            "review_reasoning_effort": review_effort,
+            "codex_cli_version": observe_codex_cli_version(codex_binary),
+            "model_source": "codex_exec_model_flag",
+            "reasoning_effort_source": "codex_config_override",
+            "cli_version_source": "observed_codex_version_stdout",
+            "derived_from_recorded_command": True,
+        }
+    if overrides:
+        _apply_overrides(receipt, overrides)
     receipt["integrity"] = {
         "receipt_payload_sha256": hashlib.sha256(
             (

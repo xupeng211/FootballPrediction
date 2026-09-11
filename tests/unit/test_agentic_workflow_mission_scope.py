@@ -10,7 +10,7 @@ import subprocess
 import pytest
 
 from scripts.devops import agent_workflow, agent_workflow_preflight, codex_independent_review
-from scripts.devops.codex_independent_review import _codex_prompt
+from scripts.devops.codex_review_receipt import _codex_prompt
 from scripts.ops import ai_workflow_gate
 from scripts.ops.helpers.agent_workflow_contract import (
     DECISION_ESCALATE,
@@ -86,7 +86,12 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     bin_root = tmp_path / "bin"
     bin_root.mkdir(mode=0o700)
     codex_binary = bin_root / "codex"
-    codex_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    # The runner observes the CLI version from the resolved binary, so the
+    # disposable executable must answer --version like a real Codex CLI.
+    codex_binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 0.153.4"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")

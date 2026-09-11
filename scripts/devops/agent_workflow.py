@@ -23,12 +23,17 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.devops.codex_independent_review import (  # noqa: E402
-    ReviewReceiptError,
-    git_blob_sha256,
-    sha256_file,
-    validate_receipt,
+# `classify_receipt` is the three-state provenance classifier;
+# `validate_receipt` is exactly `classify_receipt(...) == VALID_CURRENT` expressed
+# as a fail-closed raise.  The merge gate below uses the classifier directly so
+# that STALE_TOOLING and INVALID are both reported with machine-readable reasons
+# while remaining equally non-approving.
+from scripts.devops.codex_review_classification import (  # noqa: E402
+    CLASSIFICATION_VALID_CURRENT,
+    classify_receipt,
 )
+from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
+from scripts.devops.codex_review_receipt import git_blob_sha256, sha256_file  # noqa: E402
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -370,8 +375,9 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     )
     checks.append(local_check)
 
+    classification: dict[str, Any] = {}
     try:
-        receipt = validate_receipt(
+        result = classify_receipt(
             Path(args.receipt),
             repo_root=repo_root,
             current_head=actual_head,
@@ -382,12 +388,32 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
         receipt = {}
         checks.append(GateCheck("independent-review", "FAIL", str(exc)))
+        checks.append(GateCheck("review-model-provenance", "FAIL", str(exc)))
     else:
+        receipt = result.receipt or {}
+        classification = result.to_dict()
+        # Only VALID_CURRENT may satisfy the current exact-head review
+        # requirement.  STALE_TOOLING preserves historical meaning but is never
+        # converted into a current approval; INVALID never holds at all.
+        approved = result.classification == CLASSIFICATION_VALID_CURRENT
         checks.append(
             GateCheck(
                 "independent-review",
-                "PASS" if receipt.get("review_result") == "PASS" else "FAIL",
-                f"engine=codex head={receipt.get('reviewed_head_sha')} blocking={receipt.get('blocking_findings')}",
+                "PASS" if approved and receipt.get("review_result") == "PASS" else "FAIL",
+                f"engine=codex classification={result.classification} "
+                f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
+                f"blocking={receipt.get('blocking_findings')} "
+                f"reasons={'/'.join(result.reason_codes) or 'NONE'}",
+            )
+        )
+        checks.append(
+            GateCheck(
+                "review-model-provenance",
+                "PASS" if approved else "FAIL",
+                f"model={result.review_model} effort={result.review_reasoning_effort} "
+                f"codex_cli_version={result.codex_cli_version} "
+                f"approved_model={result.approved_review_model} "
+                f"approved_effort={result.approved_review_reasoning_effort}",
             )
         )
 
@@ -466,6 +492,20 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
         else "NO",
         "independent_review_present": "YES" if receipt else "NO",
         "independent_review_result": receipt.get("review_result", "UNKNOWN"),
+        "receipt_classification": classification.get("classification", "UNKNOWN"),
+        "receipt_integrity": classification.get("integrity", "UNKNOWN"),
+        "receipt_reason_codes": classification.get("reason_codes", []),
+        "review_model": classification.get("review_model") or "UNKNOWN",
+        "review_reasoning_effort": classification.get("review_reasoning_effort") or "UNKNOWN",
+        "approved_review_model": classification.get("approved_review_model", "UNKNOWN"),
+        "approved_review_reasoning_effort": classification.get(
+            "approved_review_reasoning_effort", "UNKNOWN"
+        ),
+        "observed_codex_cli_version": classification.get("observed_codex_cli_version", "UNKNOWN"),
+        "codex_cli_version": classification.get("codex_cli_version") or "UNKNOWN",
+        "model_provenance_valid": "YES"
+        if classification.get("classification") == CLASSIFICATION_VALID_CURRENT
+        else "NO",
         "reviewed_head_sha": receipt.get("reviewed_head_sha", "UNKNOWN"),
         "current_pr_head_sha": actual_head or "UNKNOWN",
         "mission_scope_path": mission_scope_path or "UNKNOWN",
@@ -493,6 +533,11 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             [
                 f"MERGE_READY={output['merge_ready']}",
                 f"READY_FOR_EXECUTION_CONTROLLER_MERGE_REVIEW={output['ready_for_execution_controller_merge_review']}",
+                f"RECEIPT_CLASSIFICATION={output['receipt_classification']}",
+                f"MODEL_PROVENANCE_VALID={output['model_provenance_valid']}",
+                f"REVIEW_MODEL={output['review_model']}",
+                f"REVIEW_REASONING_EFFORT={output['review_reasoning_effort']}",
+                f"CODEX_CLI_VERSION={output['codex_cli_version']}",
                 *(f"[{check.status}] {check.name}: {check.message}" for check in checks),
             ]
         )

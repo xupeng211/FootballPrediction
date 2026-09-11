@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://footballprediction.local/schemas/agentic/codex-independent-review-receipt-v1.json",
+  "$id": "https://footballprediction.local/schemas/agentic/codex-independent-review-receipt.json",
   "title": "Independent Codex Review Receipt",
   "type": "object",
   "additionalProperties": false,
@@ -34,7 +34,13 @@
     "integrity"
   ],
   "properties": {
-    "schema_version": {"const": "codex-independent-review-receipt/v1"},
+    "schema_version": {
+      "description": "v1 receipts stay classifiable as historical evidence; only v2 records pinned model provenance.",
+      "enum": [
+        "codex-independent-review-receipt/v1",
+        "codex-independent-review-receipt/v2"
+      ]
+    },
     "contract_schema_version": {"const": "agentic-engineering-workflow/v1"},
     "assurance_model": {"const": "engineering_independent_review"},
     "hostile_same_uid_forge_resistance": {"const": false},
@@ -84,6 +90,31 @@
         "source_mutation_detected": {"const": false}
       }
     },
+    "model_provenance": {
+      "description": "Required for v2 receipts. Every value is derived from the executed reviewer command or observed from the resolved Codex binary, never from a Builder declaration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_model",
+        "review_reasoning_effort",
+        "codex_cli_version",
+        "model_source",
+        "reasoning_effort_source",
+        "cli_version_source",
+        "derived_from_recorded_command"
+      ],
+      "properties": {
+        "review_model": {"type": "string", "minLength": 1},
+        "review_reasoning_effort": {
+          "enum": ["minimal", "low", "medium", "high"]
+        },
+        "codex_cli_version": {"type": "string", "minLength": 1},
+        "model_source": {"const": "codex_exec_model_flag"},
+        "reasoning_effort_source": {"const": "codex_config_override"},
+        "cli_version_source": {"const": "observed_codex_version_stdout"},
+        "derived_from_recorded_command": {"const": true}
+      }
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
@@ -110,6 +141,12 @@
         "integrity_only": {"const": true},
         "wrapper_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
         "command_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "reviewer_command": {
+          "description": "Exact argv of the executed reviewer; required for v2 and hash-bound by command_sha256.",
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 1}
+        },
         "prompt_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
         "codex_binary": {"type": "string", "minLength": 1},
         "codex_binary_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
@@ -132,5 +169,17 @@
         "receipt_payload_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"schema_version": {"const": "codex-independent-review-receipt/v2"}},
+        "required": ["schema_version"]
+      },
+      "then": {
+        "required": ["model_provenance"],
+        "properties": {"provenance": {"required": ["reviewer_command"]}}
+      }
+    }
+  ]
 }

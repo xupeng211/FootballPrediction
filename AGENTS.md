@@ -188,11 +188,15 @@ Claude Code 只保留 Claude-specific 的权限/工具差异；其他 agent 应�
 `CHIEF_ENGINEER`。机器合同与本地入口位于
 `scripts/ops/helpers/agent_workflow_contract.py`、
 `scripts/devops/agent_workflow_preflight.py`、
-`scripts/devops/codex_independent_review.py` 和
+`scripts/devops/codex_independent_review.py`、
+`scripts/devops/codex_review_receipt.py`、
+`scripts/devops/codex_review_classification.py` 和
 `scripts/devops/agent_workflow.py`。
 
 Builder 在当前 bounded mission 内必须自主完成实现、验证和同一 PR 的窄修复；lint、格式、当前 patch 引起的测试/CI、PR metadata、Documentation Impact、report/script lifecycle 以及 independent reviewer 的窄 finding，都不能单独成为停止理由。使用 `make agent-preflight PR_BODY=<path> MISSION_SCOPE_FILE=<path>` 先跑本地 governance gate；mission scope 必须是当前 mission 明确提供且纳入候选 HEAD 的 JSON 合同，缺失或 UNKNOWN 不得扩大为 allow-all。reviewer finding 修复后必须重新验证、重新 review，旧 exact-head receipt 自动失效。
 
 Builder 必须在需要扩大 mission scope、改变产品/架构或 protected invariant、跨越 Chief Engineer Gate、触碰当前合同显式排除的 Stage D/PR #1903/blocker/provider/production 路径、执行 destructive/secret/真实 provider 动作、绕过失败 CI、削弱 STRICT review 或 merge 自己 PR 时升级。Builder 可以提出 scope 变更，但不能静默把自己的 runtime override 当作授权；scope 变更必须作为当前 mission 的可审计合同变更并重新经过 exact-head validation。未知类别也按升级处理。
+
+Independent reviewer 的 model 和 reasoning effort 必须在 canonical invocation 中显式 pin（当前 `REVIEW_MODEL=gpt-6-astra`、`REVIEW_REASONING_EFFORT=medium`），不得来自 user config、account default、catalog priority 或 environment；`--ignore-user-config` 必须保持有效。receipt v2 记录从实际 executed argv 派生、并由 `command_sha256` 绑定的 `review_model`、`review_reasoning_effort`，以及从同一 resolved Codex binary 观察到的 `codex_cli_version`。receipt classification 只有三种：`VALID_CURRENT` 是唯一可作为当前 exact-head approval 的状态；`STALE_TOOLING` 表示内部一致的合法历史证据（wrapper、Codex CLI 或已审批 policy 之后合法升级，或 v1 legacy receipt），只能用于历史审计，**绝不能满足** `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization；`INVALID` 表示证据本身不成立。`make agent-merge-ready` 只接受 `VALID_CURRENT`。
 
 Independent reviewer 必须是新的 Codex 子进程/会话，运行于 exact-head 的 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。`make agent-review ...` 使用现有 Codex CLI 的 `codex exec --ephemeral --sandbox read-only`、stdin prompt、独立 schema 和 final-message 输出，并在 source tree 外生成 machine-readable receipt。receipt 必须绑定完整 base/head、diff hash、Codex invocation、fresh context、worktree clean-before/after、read-only sandbox、成功完成事件和原始输出；其中本地 hash/provenance 只是 integrity evidence，不是 cryptographic reviewer identity。项目 assurance model 是 `ENGINEERING_INDEPENDENT_REVIEW`，明确接受同一 OS uid 的恶意 Builder 理论上篡改本地 evidence 的 residual risk，不声称 hostile-builder resistance。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。
