@@ -42,10 +42,13 @@ architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据�
 **`STAGE_D_STARTED=NO`**。GO_WITH_CONDITIONS 是有条件 readiness 结论，不是执行授权。
 
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
-immutable hash-chained prospective ledger、factory-bound live adapter 和 quota governance 已在
-受控 source change 中建立；旧 Stage C live route 已退役。live executor 默认禁用，只有显式
-runtime authorization、reviewed transport/publisher factories 和 verified quota 才能进入
-transmission boundary。当前配置固化 `STARTER_FREE / 500`、`50` safety reserve、`450`
+immutable hash-chained prospective ledger、唯一的
+`scripts/ops/stage_d_controlled_initialization.js` single-cycle binder 和 quota governance 已在
+受控 remediation source change 中建立；旧 Stage C live route 已退役。binder 只接受
+owner-controlled bounded authorization artifact，在模块内部创建 private runtime capability，
+并把 `the_odds_api / h2h / uk / max=1 / cost=1` 绑定到 shared cycle path；live executor 默认
+禁用，只有未来独立 Owner/Chief Engineer 授权且 verified quota 才能进入 transmission boundary。
+当前配置固化 `STARTER_FREE / 500`、`50` safety reserve、`450`
 automated ceiling、`h2h × uk = 1` credit、header reconciliation 和 no-unverified-reset；
 provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epoch 保存
 `AT_LEAST_2_CONFIRMED` historical lower bound 与 exact `UNKNOWN`，不伪造 lifetime total；
@@ -54,7 +57,8 @@ provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epo
 
 下一步尚待 Owner/independent infrastructure：指定独立物理故障域的 backup target；批准或修订
 retention/RPO/RTO；轮换已暴露 credential；在这些证据与 isolated restore proof 完整后，才可
-另行考虑 bounded live preflight。不得使用旧凭据、消耗 quota 或启动 continuous scheduler。
+另行考虑 bounded live preflight；Blocker #2 的 runtime filesystem permission 与 Blocker #3
+的 independent backup fault-domain 仍未解决。不得使用旧凭据、消耗 quota 或启动 continuous scheduler。
 Stage C 细节见 [`Stage C pilot`](data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md)，
 Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
 

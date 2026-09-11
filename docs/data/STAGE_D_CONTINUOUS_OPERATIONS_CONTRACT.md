@@ -12,12 +12,17 @@ STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 TARGET_COMPETITION=EPL
 MARKET_SCOPE=1X2 / The Odds API h2h decimal response
 PROVIDER_SCOPE=The Odds API only
-STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run (public offline); executeStageDOneCycle (internal live adapter)
+STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run (public offline); scripts/ops/stage_d_controlled_initialization.js (future separately authorized live binder)
 STAGE_D_SINGLE_CYCLE_ENGINE=executeStageDOneCycle factory-bound controlled adapter
 LIVE_EXECUTOR_IMPLEMENTED=YES
 LIVE_EXECUTOR_DEFAULT_STATE=DISABLED
-LIVE_EXECUTOR_REQUIRES_EXPLICIT_RUNTIME_AUTHORIZATION=YES
+LIVE_EXECUTOR_REQUIRES_BOUNDED_AUTHORIZATION_ARTIFACT=YES
 LIVE_EXECUTOR_CAN_RUN_WITH_UNKNOWN_QUOTA=NO
+LIVE_BINDER_PRIVATE_CAPABILITY=MODULE_PRIVATE_SYMBOL_CREATED_ONLY_AFTER_VALIDATION
+LIVE_BINDER_MAX_PROVIDER_REQUESTS=1
+LIVE_BINDER_EXPECTED_REQUEST_COST_CREDITS=1
+LIVE_BINDER_SCOPE=the_odds_api / h2h / uk
+LIVE_BINDER_REPLAY_POLICY=IMMUTABLE_CONSUMPTION_MARKER__FAIL_CLOSED
 STAGE_D_SCHEDULER_MODEL=external scheduler invokes one bounded cycle only
 SCHEDULER_ENABLED=NO
 CANONICAL_OUTPUT_AUTHORITY=transaction-v1 only
@@ -26,11 +31,38 @@ CANONICAL_OUTPUT_AUTHORITY=transaction-v1 only
 The public entrypoint is deliberately offline-only while Stage D remains
 unauthorized. It cold-loads the Stage C transaction authority and plans one
 cycle, but does not import a provider client, transmit, persist RAW, or publish.
-The module-level `executeStageDOneCycle` adapter is production-capable only
-when all reviewed factories, the exact runtime authorization token, and a
-verified quota configuration are supplied. Its default call path is a hard
-authorization failure; tests bind only the local fake transport. The adapter
-must not revive the retired Stage C live route or introduce another writer.
+The production-facing live entrypoint is exclusively
+`scripts/ops/stage_d_controlled_initialization.js`; it accepts only bounded
+artifact paths and never accepts a shell-supplied authorization token,
+boolean, retry count, provider override or scheduler mode. It reads a
+canonical, read-only authorization artifact that must be a direct child of an
+explicit external runtime trust root, checks the immutable mission/provider/
+market/region/max-cost/epoch/authority/quota/fixture scope, writes a durable
+single-use consumption marker, and only then creates the module-private
+runtime capability before calling `executeStageDOneCycle`. The capability is
+not exported, logged, serialized, or returned. In production the binder fixes
+the transport, evidence persistence, prospective candidate builder and
+transaction-v1 publisher to reviewed factories; in `NODE_ENV=test` every
+component must be supplied explicitly and the provider transport is rejected.
+This implementation closes the caller-binding gap only; it does not authorize
+Stage D, provider access, scheduler start, blocker #2 filesystem permission
+repair, or blocker #3 independent backup/restore.
+
+The authorization artifact schema is
+`footballprediction-stage-d-controlled-initialization-authorization/v1` and
+its approval status must be `OWNER_AND_CHIEF_ENGINEER_AUTHORIZED`. Its exact
+scope includes `mission=CONTROLLED_STAGE_D_SINGLE_CYCLE`,
+`provider=the-odds-api`, `configured_markets=[h2h]`,
+`configured_regions=[uk]`, `max_provider_requests=1`,
+`expected_request_cost_credits=1`, the exact `accounting_epoch_id`,
+`authority_pre_head`, `authority_pre_state_hash`, pre-observation count,
+pre-`STORE.json` hash, allocation-authority hash, quota-config hash,
+fixture-universe RAW hash, `run_id`, `request_id`, `issued_at` and
+`expires_at`. The binder rejects missing, malformed, expired, replayed,
+wrong-scope, wrong-epoch, wrong-authority, untrusted, writable or
+non-canonical artifacts before transport construction/use. `max_provider_requests`
+greater than one is not representable in this entry path. A calendar date
+never resets quota or accounting.
 
 ## Run, lock, and scheduler contract
 

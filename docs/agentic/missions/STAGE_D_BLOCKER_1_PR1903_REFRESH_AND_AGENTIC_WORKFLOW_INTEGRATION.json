@@ -1,0 +1,78 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_BLOCKER_1_PR1903_REFRESH_AND_AGENTIC_WORKFLOW_INTEGRATION",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/STAGE_D_BLOCKER_1_PR1903_REFRESH_AND_AGENTIC_WORKFLOW_INTEGRATION.json",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "config/stage_d_quota_budget.json",
+    "docs/PROJECT_VISION.md",
+    "docs/PROJECT_MAP.md",
+    "scripts/ops/stage_d_cycle.js",
+    "src/infrastructure/market_evidence/authorityReader.js",
+    "src/infrastructure/market_evidence/atomicPublisher.js",
+    "src/infrastructure/market_evidence/transactionStore.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "database/",
+    "deploy/",
+    "docs/_reports/",
+    "schemas/",
+    "scripts/devops/",
+    "scripts/ops/helpers/"
+  ],
+  "excluded_tokens": [
+    "backup",
+    "backtest",
+    "bankroll",
+    "betfair",
+    "blocker-2",
+    "blocker-3",
+    "blocker_2",
+    "blocker_3",
+    "de-vig",
+    "identity",
+    "model-activation",
+    "oddsportal",
+    "roi",
+    "scheduler",
+    "sportmonks",
+    "staking",
+    "training",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "controlled initialization has MAX_PROVIDER_REQUESTS_PER_CONTROLLED_INITIALIZATION=1",
+    "the operator cannot construct or pass the private runtime authorization capability",
+    "authorization validation and single-use consumption precede provider transmission",
+    "unknown quota fails closed and automatic calendar reset without verification remains forbidden",
+    "provider scope remains the_odds_api / h2h / uk with expected request cost 1",
+    "request-accounting epoch remains sde_b10b6bd109a6c60498fbd9e8c9ec87894e79ca1091aedbdb229083199cd00406",
+    "historical request accounting remains AT_LEAST_2_CONFIRMED with exact total UNKNOWN",
+    "canonical identity, transaction authority, RAW evidence, and publication semantics remain unchanged",
+    "Stage D remains unauthorized and Blocker 2 and Blocker 3 remain unresolved"
+  ],
+  "forbidden_side_effects": [
+    "real The Odds API or any external provider request",
+    "provider quota consumption",
+    "production authority, transaction, RAW, or request-ledger mutation",
+    "scheduler activation or Stage D live execution",
+    "quota, request-accounting, identity, or transaction-authority semantic changes",
+    "Blocker 2 filesystem-permission remediation",
+    "Blocker 3 backup and independent fault-domain remediation",
+    "value engine, de-vig, BET/NO BET, staking, bankroll, ROI, backtesting, training, or model activation",
+    "force push, direct main push, branch protection bypass, self-review, or self-merge"
+  ]
+}
