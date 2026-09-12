@@ -156,6 +156,12 @@ def _toolchain_reason_codes(facts: dict[str, Any]) -> tuple[list[str], str | Non
         stale.append("RECEIPT_LEGACY_SCHEMA_V1")
     if facts["worktree_available"] is False:
         stale.append("REVIEW_WORKTREE_UNAVAILABLE")
+    if facts["schema_file_available"] is False:
+        # The historical schema only survived inside the transient worktree, so
+        # it is verified against the reviewed commit instead of the vanished
+        # file.  That keeps the receipt auditable as history while guaranteeing
+        # it can never satisfy a current approval.
+        stale.append("REVIEW_OUTPUT_SCHEMA_UNAVAILABLE")
 
     observed_cli_version = _observed_cli_version(facts["codex_binary_path"])
     fault = _cli_version_fault(facts, observed_cli_version)

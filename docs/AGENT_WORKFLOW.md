@@ -269,7 +269,9 @@ argv 或从同一 resolved Codex binary 的 `--version` 观察派生（`model_so
 `reasoning_effort_source=codex_config_override`、`cli_version_source=observed_codex_version_stdout`、
 `derived_from_recorded_command=true`）。Builder 自报的 JSON 字段不构成证据：validation 重新解析 command、
 重新观察 CLI version，并要求 `command_sha256` 与记录 argv 重算一致——model 或 effort 一旦被改写，
-command hash 必然改变，receipt 立刻失效。
+command hash 必然改变，receipt 立刻失效。v1 legacy receipt 无法记录 argv，因此它的 `command_sha256`
+仍会按冻结的 v1 invocation 形状（不含 model selector 的旧 argv）从 receipt 自己记录的执行路径重算：
+旧证据的内部一致性检查不因 model pinning 而消失，伪造的 64 位十六进制 hash 仍算 tamper，而非历史漂移。
 
 **三态 classification。** `validate` / `classify` 输出正交的两个轴：`classification` 与 `integrity`。
 
@@ -278,8 +280,10 @@ command hash 必然改变，receipt 立刻失效。
   可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。
 - `STALE_TOOLING`：receipt 内部一致且 `INTEGRITY=INTACT`，但被记录的工具链或 policy 之后发生了合法变化
   （wrapper 升级、Codex CLI/binary 升级，或 v1 legacy receipt 早于 model pinning），或者 review worktree
-  已不可用。它只保留历史审计含义：可以被识别为合法的旧证据、不会被误标为 TAMPERED，但**绝不能**
-  满足 `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization。
+  已不可用。canonical invocation 的 `--output-schema` 指向该临时 worktree，因此 worktree 被正常清理后，
+  历史 schema 改为核对 reviewed exact commit 中的 blob，而不是已消失的文件；receipt 仍是合法历史证据，
+  但**绝不能**满足 `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization。schema 因
+  其他原因缺失、或存在但与 reviewed commit 不一致，仍然是 `INVALID` / `TAMPERED`。
 - `INVALID`：证据对它自称的 target 不成立——文件或 hash 被改动、base/head/diff/scope/mission 不匹配、
   receipt 声称的 model 或 effort 与 command 矛盾、记录的 CLI version 与 invocation 证据不同。
 

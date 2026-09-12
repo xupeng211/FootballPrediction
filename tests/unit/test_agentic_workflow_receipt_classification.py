@@ -15,6 +15,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -419,6 +420,73 @@ def test_old_v1_receipt_is_legacy_not_current_approval(tmp_path: Path):
     assert historical.review_model is None
     with pytest.raises(ReviewReceiptError, match="RECEIPT_LEGACY_SCHEMA_V1"):
         validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
+
+
+def test_v1_command_hash_tamper_is_invalid(tmp_path: Path):
+    """A v1 receipt must still prove its command hash, not just its shape."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(
+        tmp_path,
+        repo,
+        base,
+        head,
+        legacy_schema=True,
+        overrides={"provenance": {"command_sha256": "a" * 64}},
+    )
+    assert (
+        json.loads(receipt.read_text(encoding="utf-8"))["provenance"]["command_sha256"] == "a" * 64
+    )
+    result = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
+    assert "COMMAND_EVIDENCE_TAMPER" in result.reason_codes
+    assert result.current_approval_eligible is False
+
+
+def test_removed_review_worktree_keeps_receipt_historical_evidence(tmp_path: Path):
+    """The runner puts --output-schema in a worktree that is later cleaned up."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    worktree = Path(json.loads(receipt.read_text(encoding="utf-8"))["isolation"]["worktree_path"])
+    assert (worktree / "schemas" / "agentic" / "codex_review_result.schema.json").is_file()
+    subprocess.run(
+        ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
+        check=True,
+        capture_output=True,
+    )
+    assert not worktree.exists()
+    result = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert result.classification == CLASSIFICATION_STALE_TOOLING
+    assert result.integrity == INTEGRITY_INTACT
+    assert "REVIEW_WORKTREE_UNAVAILABLE" in result.reason_codes
+    assert "REVIEW_OUTPUT_SCHEMA_UNAVAILABLE" in result.reason_codes
+    assert result.current_approval_eligible is False
+    assert not any("TAMPER" in code for code in result.reason_codes)
+
+
+def test_removed_worktree_schema_hash_mismatch_is_still_invalid(tmp_path: Path):
+    """A vanished schema file must not excuse a schema that contradicts HEAD."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(
+        tmp_path,
+        repo,
+        base,
+        head,
+        overrides={"provenance": {"output_schema_sha256": "b" * 64}},
+    )
+    worktree = Path(json.loads(receipt.read_text(encoding="utf-8"))["isolation"]["worktree_path"])
+    subprocess.run(
+        ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
+        check=True,
+        capture_output=True,
+    )
+    result = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
+    assert "OUTPUT_SCHEMA_INVALID" in result.reason_codes
 
 
 def test_old_v1_receipt_cannot_satisfy_merge_ready(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

@@ -223,13 +223,6 @@ def _validate_private_file(path: Path, field: str) -> None:
         raise ReviewReceiptError(f"{field} 必须是 owner-only 文件: {path}")
 
 
-def _validate_regular_file(path: Path, field: str) -> None:
-    """Validate an auditable file without treating mode as trust authority."""
-
-    if not path.is_file() or path.is_symlink():
-        raise ReviewReceiptError(f"{field} 必须是 regular file: {path}")
-
-
 def _load_receipt_scope(
     *,
     repo_root: Path,
@@ -279,6 +272,36 @@ REQUIRED_REVIEWER_COMMAND_FLAGS = (
     "--output-schema",
     "--output-last-message",
 )
+
+# Frozen v1 reviewer argv.  A v1 receipt never recorded the executed argv, so
+# its ``command_sha256`` can only be re-verified against the exact invocation
+# shape that v1 wrapper versions executed.  The literal effort argument is
+# deliberately not built from the currently pinned policy: rebuilding it from
+# today's selectors would make every genuine v1 receipt look tampered as soon as
+# the pinned model or effort changes.
+LEGACY_V1_EFFORT_ARGUMENT = 'model_reasoning_effort="medium"'
+
+
+def build_legacy_v1_reviewer_command(
+    *, codex_binary: str, output_schema: Path, final_message_path: Path
+) -> list[str]:
+    """Rebuild the frozen v1 reviewer invocation recorded by v1 receipts."""
+
+    return [
+        codex_binary,
+        "exec",
+        "-c",
+        LEGACY_V1_EFFORT_ARGUMENT,
+        "--sandbox",
+        "read-only",
+        "--ignore-user-config",
+        "--ephemeral",
+        "--json",
+        "--output-schema",
+        str(output_schema),
+        "--output-last-message",
+        str(final_message_path),
+    ]
 
 
 def _load_receipt_document(receipt_path: Path, repo_root: Path) -> tuple[dict[str, Any], list[str]]:
@@ -417,6 +440,8 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
     # A transient detached worktree may legitimately no longer exist when older
     # evidence is re-audited.  That is unverifiable history, not tampering: it
     # downgrades the receipt to STALE_TOOLING and can never reach VALID_CURRENT.
+    # The canonical invocation also keeps ``--output-schema`` inside that
+    # worktree, so the schema check below depends on this fact as well.
     worktree_available = worktree_path.is_dir() and not worktree_path.is_symlink()
     if worktree_available:
         with _fault("WORKTREE_HEAD_MISMATCH", head_error=True):
@@ -500,12 +525,27 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         schema_path = _require_external_path(
             Path(str(provenance.get("output_schema_path") or "")), repo_root
         )
-        _validate_regular_file(schema_path, "review output schema")
     schema_relative_path = REVIEW_OUTPUT_SCHEMA.relative_to(ROOT).as_posix()
     with _fault("OUTPUT_SCHEMA_INVALID"):
         expected_schema_sha = git_blob_sha256(repo_root, reviewed_head, schema_relative_path)
-    if provenance.get("output_schema_sha256") != sha256_file(schema_path):
-        raise _EvidenceError("OUTPUT_SCHEMA_INVALID", "output schema sha256 不匹配")
+    # The canonical invocation keeps ``--output-schema`` inside the transient
+    # review worktree.  Removing that worktree is a legitimate cleanup, so the
+    # historical schema is then verified against the blob stored in the reviewed
+    # commit instead of the vanished file.  That is unverifiable local history,
+    # not tampering: it forces STALE_TOOLING and can never reach VALID_CURRENT.
+    # A schema that is missing for any other reason, or present but wrong, stays
+    # a tamper fault.
+    schema_file_available = schema_path.is_file() and not schema_path.is_symlink()
+    schema_inside_removed_worktree = (
+        not schema_file_available
+        and not worktree_available
+        and _path_is_inside(schema_path, worktree_path)
+    )
+    if schema_file_available:
+        if provenance.get("output_schema_sha256") != sha256_file(schema_path):
+            raise _EvidenceError("OUTPUT_SCHEMA_INVALID", "output schema sha256 不匹配")
+    elif not schema_inside_removed_worktree:
+        raise _EvidenceError("OUTPUT_SCHEMA_INVALID", "review output schema 不存在")
     if provenance.get("output_schema_sha256") != expected_schema_sha:
         raise _EvidenceError(
             "OUTPUT_SCHEMA_INVALID", "output schema 不是 reviewed exact HEAD 中的版本"
@@ -558,6 +598,25 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         if "reviewer_command" in provenance or "model_provenance" in receipt:
             raise _EvidenceError(
                 "MODEL_PROVENANCE_INVALID", "v1 receipt 不得包含 v2 model provenance 字段"
+            )
+        # v1 receipts cannot record the executed argv, so their command hash is
+        # re-derived from the frozen v1 invocation rebuilt out of the receipt's
+        # own recorded paths.  The legacy internal-consistency check therefore
+        # still holds: an arbitrary 64-hex command_sha256 is a tamper fault, not
+        # legitimate historical drift.  It never makes a v1 receipt current.
+        expected_legacy_command_sha = sha256_bytes(
+            _canonical_json(
+                build_legacy_v1_reviewer_command(
+                    codex_binary=codex_binary,
+                    output_schema=schema_path,
+                    final_message_path=final_path,
+                )
+            )
+        )
+        if provenance.get("command_sha256") != expected_legacy_command_sha:
+            raise _EvidenceError(
+                "COMMAND_EVIDENCE_TAMPER",
+                "command_sha256 与 v1 canonical reviewer invocation 不一致",
             )
     else:
         recorded_command = provenance.get("reviewer_command")
@@ -701,4 +760,5 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         "review_model": review_model,
         "review_effort": review_effort,
         "worktree_available": worktree_available,
+        "schema_file_available": schema_file_available,
     }
