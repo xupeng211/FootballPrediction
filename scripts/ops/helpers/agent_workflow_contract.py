@@ -50,6 +50,10 @@ ALL_REVIEW_SEVERITIES: tuple[str, ...] = (*BLOCKING_REVIEW_SEVERITIES, "P3")
 MISSION_SCOPE_SCHEMA_VERSION = "agentic-mission-scope/v1"
 MISSION_SCOPE_REFERENCE_FIELD = "Mission scope contract"
 MISSION_ID_REFERENCE_FIELD = "Mission ID"
+# The only root a PR-metadata-supplied scope reference may resolve to.  PR text
+# selects a contract; it never supplies content and never names an arbitrary
+# filesystem path, so this root stays deliberately narrow.
+MISSION_SCOPE_ALLOWED_ROOT = "docs/agentic/missions/"
 MISSION_SCOPE_FIELDS: tuple[str, ...] = (
     "schema_version",
     "mission_id",
@@ -147,6 +151,36 @@ MIN_REASON_CHARS = 12
 
 class MissionScopeError(ValueError):
     """Raised when an explicit mission scope contract is invalid."""
+
+
+# Fail-closed codes for the PR-metadata → tracked-contract → exact-HEAD chain.
+# They are stable machine identifiers: the remote gate reports them verbatim so
+# a failure names the precise control that refused, never a generic error.
+MISSION_SCOPE_REFERENCE_MISSING = "MISSION_SCOPE_REFERENCE_MISSING"
+MISSION_SCOPE_REFERENCE_EMPTY = "MISSION_SCOPE_REFERENCE_EMPTY"
+MISSION_SCOPE_REFERENCE_MULTIPLE = "MISSION_SCOPE_REFERENCE_MULTIPLE"
+MISSION_SCOPE_REFERENCE_CONFLICTING = "MISSION_SCOPE_REFERENCE_CONFLICTING"
+MISSION_SCOPE_REFERENCE_ABSOLUTE_PATH = "MISSION_SCOPE_REFERENCE_ABSOLUTE_PATH"
+MISSION_SCOPE_REFERENCE_TRAVERSAL = "MISSION_SCOPE_REFERENCE_TRAVERSAL"
+MISSION_SCOPE_REFERENCE_OUTSIDE_ALLOWED_ROOT = "MISSION_SCOPE_REFERENCE_OUTSIDE_ALLOWED_ROOT"
+MISSION_SCOPE_REFERENCE_SYNTAX_INVALID = "MISSION_SCOPE_REFERENCE_SYNTAX_INVALID"
+MISSION_SCOPE_REFERENCE_UNTRUSTED_TABLE = "MISSION_SCOPE_REFERENCE_UNTRUSTED_TABLE"
+MISSION_SCOPE_REFERENCE_NOT_TRACKED_AT_HEAD = "MISSION_SCOPE_REFERENCE_NOT_TRACKED_AT_HEAD"
+MISSION_SCOPE_REFERENCE_FILE_MISSING_AT_HEAD = "MISSION_SCOPE_REFERENCE_FILE_MISSING_AT_HEAD"
+MISSION_SCOPE_SCHEMA_INVALID = "MISSION_SCOPE_SCHEMA_INVALID"
+MISSION_SCOPE_MISSION_ID_MISMATCH = "MISSION_SCOPE_MISSION_ID_MISMATCH"
+MISSION_SCOPE_TASK_TYPE_MISMATCH = "MISSION_SCOPE_TASK_TYPE_MISMATCH"
+MISSION_SCOPE_WORKFLOW_CLASS_MISMATCH = "MISSION_SCOPE_WORKFLOW_CLASS_MISMATCH"
+MISSION_SCOPE_PR_METADATA_MISMATCH = "MISSION_SCOPE_PR_METADATA_MISMATCH"
+
+
+class MissionScopeReferenceError(MissionScopeError):
+    """One fail-closed mission-scope reference violation, with a stable code."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(f"{code}: {message}")
+        self.code = code
+        self.detail = message
 
 
 def _normalize_repo_path(value: object, *, field: str) -> str:
@@ -448,45 +482,84 @@ def _scope_reference_rows(pr_body: str) -> tuple[dict[str, list[str]], list[str]
     return rows, [*errors, *row_errors]
 
 
-def validate_mission_scope_reference(
+def mission_scope_reference_findings(
     pr_body: str, *, mission_scope: MissionScope, scope_path: str
-) -> list[str]:
-    """Require PR metadata to name the exact mission-scope contract file."""
+) -> list[tuple[str, str]]:
+    """Return (code, message) pairs binding PR metadata to one scope contract.
+
+    This is the single canonical implementation of the PR-metadata ↔ scope
+    binding.  Local preflight and the remote PR gate both consume it, so the
+    two paths cannot drift into different notions of "the PR names this
+    mission".
+    """
 
     rows, errors = _scope_reference_rows(pr_body)
-    errors = list(errors)
+    findings: list[tuple[str, str]] = [
+        (MISSION_SCOPE_PR_METADATA_MISMATCH, error) for error in errors
+    ]
     path_values = rows.get(MISSION_SCOPE_REFERENCE_FIELD.casefold(), [])
     if len(path_values) != 1:
-        errors.append(
-            f"AGENT_WORKFLOW_SCOPE_INVALID: Scope must contain exactly one '{MISSION_SCOPE_REFERENCE_FIELD}' row."
+        findings.append(
+            (
+                MISSION_SCOPE_PR_METADATA_MISMATCH,
+                f"AGENT_WORKFLOW_SCOPE_INVALID: Scope must contain exactly one '{MISSION_SCOPE_REFERENCE_FIELD}' row.",
+            )
         )
     elif path_values[0] != scope_path:
-        errors.append(
-            f"AGENT_WORKFLOW_SCOPE_INVALID: PR scope reference {path_values[0]!r} does not match {scope_path!r}."
+        findings.append(
+            (
+                MISSION_SCOPE_PR_METADATA_MISMATCH,
+                f"AGENT_WORKFLOW_SCOPE_INVALID: PR scope reference {path_values[0]!r} does not match {scope_path!r}.",
+            )
         )
     mission_values = rows.get(MISSION_ID_REFERENCE_FIELD.casefold(), [])
     if len(mission_values) != 1:
-        errors.append(
-            f"AGENT_WORKFLOW_SCOPE_INVALID: Scope must contain exactly one '{MISSION_ID_REFERENCE_FIELD}' row."
+        findings.append(
+            (
+                MISSION_SCOPE_PR_METADATA_MISMATCH,
+                f"AGENT_WORKFLOW_SCOPE_INVALID: Scope must contain exactly one '{MISSION_ID_REFERENCE_FIELD}' row.",
+            )
         )
     elif mission_values[0] != mission_scope.mission_id:
-        errors.append(
-            f"AGENT_WORKFLOW_SCOPE_INVALID: PR Mission ID {mission_values[0]!r} does not match the scope contract."
+        findings.append(
+            (
+                MISSION_SCOPE_MISSION_ID_MISMATCH,
+                f"AGENT_WORKFLOW_SCOPE_INVALID: PR Mission ID {mission_values[0]!r} does not match the scope contract.",
+            )
         )
     task_values = rows.get("task type", [])
     if len(task_values) == 1 and task_values[0].strip().lower() != mission_scope.task_type:
-        errors.append(
-            "AGENT_WORKFLOW_SCOPE_INVALID: PR Task type does not match the mission scope contract."
+        findings.append(
+            (
+                MISSION_SCOPE_TASK_TYPE_MISMATCH,
+                "AGENT_WORKFLOW_SCOPE_INVALID: PR Task type does not match the mission scope contract.",
+            )
         )
     workflow_values = rows.get("workflow class", [])
     if (
         len(workflow_values) == 1
         and workflow_values[0].strip().upper() != mission_scope.workflow_class
     ):
-        errors.append(
-            "AGENT_WORKFLOW_SCOPE_INVALID: PR Workflow class does not match the mission scope contract."
+        findings.append(
+            (
+                MISSION_SCOPE_WORKFLOW_CLASS_MISMATCH,
+                "AGENT_WORKFLOW_SCOPE_INVALID: PR Workflow class does not match the mission scope contract.",
+            )
         )
-    return errors
+    return findings
+
+
+def validate_mission_scope_reference(
+    pr_body: str, *, mission_scope: MissionScope, scope_path: str
+) -> list[str]:
+    """Require PR metadata to name the exact mission-scope contract file."""
+
+    return [
+        message
+        for _code, message in mission_scope_reference_findings(
+            pr_body, mission_scope=mission_scope, scope_path=scope_path
+        )
+    ]
 
 
 def _one_section(text: str, heading: str) -> tuple[str | None, list[str]]:
@@ -648,4 +721,6 @@ def contract_summary() -> dict[str, object]:
         "mission_scope_schema_version": MISSION_SCOPE_SCHEMA_VERSION,
         "mission_scope_fields": list(MISSION_SCOPE_FIELDS),
         "mission_scope_required_for_scoped_checks": True,
+        "mission_scope_allowed_root": MISSION_SCOPE_ALLOWED_ROOT,
+        "mission_scope_reference_field": MISSION_SCOPE_REFERENCE_FIELD,
     }

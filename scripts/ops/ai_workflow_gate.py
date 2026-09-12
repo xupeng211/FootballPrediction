@@ -418,6 +418,9 @@ from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
 )
 from scripts.ops.helpers.agent_workflow_safety_checks import check_safety_consistency  # noqa: E402
 from scripts.ops.helpers.agent_workflow_scope_context import (  # noqa: E402
+    emit_remote_scope_authorization,
+    emit_remote_scope_refusal,
+    resolve_remote_mission_scope,
     validate_mission_scope_context,
 )
 from scripts.ops.helpers.dangerous_file_change_check import (  # noqa: E402
@@ -691,12 +694,25 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
         return 1
     changed = changed_paths(changes)
     mission_scope = None
+    resolved_scope = None
     if args.mission_scope_file is not None:
         try:
             mission_scope = load_mission_scope_file(args.mission_scope_file, repo_root=ROOT)
         except MissionScopeError as exc:
             sys.stderr.write(f"[AI Workflow Gate] invalid mission scope: {exc}\n")
             return 1
+    elif args.enforce_agent_workflow_scope and not args.skip_body_checks:
+        # Remote required-PR-CI path: no scope file is supplied, so the PR body
+        # selects exactly one tracked contract whose bytes are read from the
+        # exact PR HEAD commit being evaluated.
+        try:
+            resolved_scope = resolve_remote_mission_scope(
+                pr_body, repo_root=ROOT, head_sha=resolved_head, write=sys.stdout.write
+            )
+        except MissionScopeError as exc:
+            emit_remote_scope_refusal(sys.stdout.write, exc)
+            return 1
+        mission_scope = resolved_scope.scope
     errors = validate(
         pr_body,
         changes,
@@ -710,7 +726,13 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
         base_ref=resolved_base,
         head_ref=resolved_head,
     )
-    if args.enforce_agent_workflow_scope and mission_scope is not None:
+    if (
+        args.enforce_agent_workflow_scope
+        and mission_scope is not None
+        and args.mission_scope_file is not None
+    ):
+        # Explicit-file callers additionally prove the worktree copy equals the
+        # exact-head blob; the PR-metadata path already read the head object.
         errors.extend(
             _validate_mission_scope_context(
                 pr_body,
@@ -754,6 +776,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
             sys.stdout.write(f"[{_label} ENFORCEMENT] scanner error: {exc}\n")
             if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
                 errors.append(f"[{_label} ENFORCEMENT] fail-closed in CI: {exc}")
+    if resolved_scope is not None:
+        emit_remote_scope_authorization(sys.stdout.write, errors)
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")
         for error in errors:
