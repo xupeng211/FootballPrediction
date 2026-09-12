@@ -232,13 +232,16 @@ PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready 
 
 ### 11.3 Codex independent reviewer 与 receipt
 
-canonical runner 是 `scripts/devops/codex_independent_review.py run`，入口为
+canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 证据读取与内部
+一致性证明在 `scripts/devops/codex_review_receipt.py`，三态分类在
+`scripts/devops/codex_review_classification.py`），入口为
 `make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external dir>`。
 它必须：
 
 1. 在 exact reviewed commit 创建 detached worktree；
 2. 用新的通用 `codex exec` 子进程，通过 stdin 传入审查合同，带 `--sandbox read-only`、
-   `--ignore-user-config`、`--ephemeral`、受控 `model_reasoning_effort`、`--json`、
+   `--ignore-user-config`、`--ephemeral`、显式 pinned `-m <REVIEW_MODEL>`、显式
+   `-c model_reasoning_effort="<REVIEW_REASONING_EFFORT>"`、`--json`、
    `--output-schema` 和独立 `--output-last-message`；review prompt 自带 exact base/head，
    不依赖 Builder 上下文，也不复用 persisted Builder session；
 3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
@@ -252,11 +255,59 @@ receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少�
 `assurance_model=engineering_independent_review`、明确的 same-uid residual-risk 标记、Codex engine/role、
 base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时间、P0–P3 counts、blocking count、
 result、finding summaries、Builder/reviewer context IDs、fresh/separate context、read-only isolation、
-clean-before/after、raw/final output hashes 和 receipt payload integrity hash。`validate` 会重新计算 exact
-HEAD/diff、重新解析 raw/final output、核对 invocation/completion 事件、确认 review worktree 仍是 exact-head
-且 clean，并检查 receipt/evidence 不在 source tree 且为 owner-only。这里的 hash 是可审计的 integrity check，
-不是 cryptographic reviewer provenance；同一 OS uid 的恶意 Builder 理论上仍可能改写本地 evidence，这是 Owner
-选择的 residual risk。简单缺失/错误/自相矛盾的 PASS JSON 仍会 fail-closed，但本工作流不声称抵抗恶意同 UID 伪造。
+clean-before/after、raw/final output hashes 和 receipt payload integrity hash。
+
+**Reviewer model provenance（v1.1）。** 当前审批 policy 是 `REVIEW_MODEL=gpt-6-astra`、
+`REVIEW_REASONING_EFFORT=medium`。两者必须出现在 canonical invocation 的 argv 中：`-m gpt-6-astra` 和
+`-c model_reasoning_effort="medium"`。不允许依赖 user config default、account default、catalog priority、
+implicit CLI default 或 environment-selected default；`--ignore-user-config` 必须保持有效。builder 若无法从
+command 中解析出这两个 selector，runner 直接 fail-closed，不做任何 fallback。
+
+receipt v2 因此在 `provenance.reviewer_command` 记录完整 executed argv（由 `command_sha256` 绑定），并新增
+`model_provenance` 块：`review_model`、`review_reasoning_effort`、`codex_cli_version`，三者都从实际执行的
+argv 或从同一 resolved Codex binary 的 `--version` 观察派生（`model_source=codex_exec_model_flag`、
+`reasoning_effort_source=codex_config_override`、`cli_version_source=observed_codex_version_stdout`、
+`derived_from_recorded_command=true`）。Builder 自报的 JSON 字段不构成证据：validation 重新解析 command、
+重新观察 CLI version，并要求 `command_sha256` 与记录 argv 重算一致——model 或 effort 一旦被改写，
+command hash 必然改变，receipt 立刻失效。v1 legacy receipt 无法记录 argv，因此它的 `command_sha256`
+仍会按冻结的 v1 invocation 形状（不含 model selector 的旧 argv）从 receipt 自己记录的执行路径重算：
+旧证据的内部一致性检查不因 model pinning 而消失，伪造的 64 位十六进制 hash 仍算 tamper，而非历史漂移。
+v2 还会把记录 argv 与 receipt 其余 evidence 绑定：`--output-schema`、`--output-last-message` 的取值必须等于
+receipt 记录的对应路径，argv[0] 必须等于 `codex_binary`。一个自身 hash 自洽、却指向别处的 argv 是与
+evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉的合法 policy 变化。
+
+**三态 classification。** `validate` / `classify` 输出正交的两个轴：`classification` 与 `integrity`。
+
+- `VALID_CURRENT`：receipt 内部一致、绑定当前 exact base/head/diff/scope/challenge，且当前 toolchain
+  （wrapper blob、Codex binary、CLI version、pinned model/effort、canonical command）与实际一致。这是唯一
+  可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。当前 Codex binary 由 runner
+  使用的同一个 `resolve_codex_binary`（PATH / `CODEX_CLI_PATH` / 系统 fallback）独立解析，而不是回读
+  receipt 记录的执行路径：升级后 PATH 指向新 executable、旧文件仍在原处时，旧 receipt 立刻降级为
+  `STALE_TOOLING`（`CODEX_BINARY_DRIFT`），不会因为旧路径的 hash/version 仍自洽而继续冒充当前 review。
+- `STALE_TOOLING`：receipt 内部一致且 `INTEGRITY=INTACT`，但被记录的工具链或 policy 之后发生了合法变化
+  （wrapper 升级、Codex CLI/binary 升级，或 v1 legacy receipt 早于 model pinning），或者 review worktree
+  已不可用。合法升级也可能把 Codex CLI 装到新路径并删除旧 executable：receipt 记录的 executable 不再
+  可用时用 `CODEX_BINARY_UNAVAILABLE`、当前 Codex CLI 完全无法解析时用 `CODEX_BINARY_UNRESOLVED`，
+  两者都表示“记录的工具链无法被证明仍是当前 toolchain”，都只降级为 `STALE_TOOLING`，不构成 tamper。
+  receipt 缺少 `codex_binary` 字段或该字段不是有效 SHA-256 evidence 属于自相矛盾，仍是 `INVALID`。canonical invocation 的 `--output-schema` 指向该临时 worktree，因此 worktree 被正常清理后，
+  历史 schema 改为核对 reviewed exact commit 中的 blob，而不是已消失的文件；receipt 仍是合法历史证据，
+  但**绝不能**满足 `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization。schema 因
+  其他原因缺失、或存在但与 reviewed commit 不一致，仍然是 `INVALID` / `TAMPERED`。worktree 不可用只
+  免除对实际 Git HEAD 的现场核对：receipt 自己记录的 `worktree_head_sha` 与 `reviewed_head_sha` 必须
+  始终一致，与 worktree 是否存在无关，两者矛盾仍是 `INVALID` / `TAMPERED`。
+- `INVALID`：证据对它自称的 target 不成立——文件或 hash 被改动、base/head/diff/scope/mission 不匹配、
+  receipt 声称的 model 或 effort 与 command 矛盾、记录的 CLI version 与 invocation 证据不同。
+
+`validate` 仍会重新计算 exact HEAD/diff、重新解析 raw/final output、核对 invocation/completion 事件、确认
+review worktree 仍是 exact-head 且 clean，并检查 receipt/evidence 不在 source tree 且为 owner-only。
+`classify --historical-audit` 只做只读分类并总是 exit 0，用于回看旧 receipt，不产生 approval：它有意跳过
+current-HEAD freshness 比较，因此即使 receipt 的每个字段仍与已安装 toolchain 一致，也只会得到
+`STALE_TOOLING` 与 `HISTORICAL_AUDIT_NO_CURRENT_APPROVAL`，`current_approval_eligible` 恒为 false。
+`VALID_CURRENT` 只能由真正执行过 exact-head 比较的路径产生。
+
+这里的 hash 是可审计的 integrity check，不是 cryptographic reviewer identity；同一 OS uid 的恶意 Builder
+理论上仍可能改写本地 evidence，这是 Owner 选择的 residual risk。简单缺失/错误/自相矛盾的 PASS JSON 仍会
+fail-closed，但本工作流不声称抵抗恶意同 UID 伪造。
 
 P0/P1/P2 均阻塞，P3 不阻塞；这比当前 STRICT provider-neutral evidence 更具体但不削弱 STRICT。reviewer 只写适合普通 code review 的 finding，不写隐藏推理。
 
@@ -277,6 +328,9 @@ LOCAL_REQUIRED_CHECKS=PASS
 REMOTE_REQUIRED_CI_TERMINAL_GREEN=YES（有 PR context 时）
 INDEPENDENT_REVIEW_PRESENT=YES
 INDEPENDENT_REVIEW_RESULT=PASS
+RECEIPT_CLASSIFICATION=VALID_CURRENT
+RECEIPT_INTEGRITY=INTACT
+MODEL_PROVENANCE_VALID=YES
 BLOCKING_FINDINGS=0
 REVIEWED_HEAD_SHA=CURRENT_PR_HEAD_SHA
 PROTECTED_INVARIANTS=PASS
@@ -290,7 +344,8 @@ mission ID、PR title 或 Builder prose 推断授权。`PROTECTED_INVARIANTS=PAS
 已验证 local preflight 推导出的机器状态一致；调用者单独自报 PASS/NO 不能覆盖缺失或
 失败的机器证据。任何 `UNKNOWN`、failed/stale receipt、
 PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返回
-`MERGE_READY=NO`。命令没有 merge API、push、commit
+`MERGE_READY=NO`。review receipt 必须被分类为 `VALID_CURRENT`：`STALE_TOOLING` 只在历史审计中
+有意义，`CURRENT_PR_REVIEW + STALE_TOOLING` 永远得到 `MERGE_READY=NO`，不得把旧证据转换成当前 PASS。命令没有 merge API、push、commit
 或 cleanup 分支；`MERGE_READY=YES` 只产生
 `READY_FOR_EXECUTION_CONTROLLER_MERGE_REVIEW=YES`，随后必须停止。
 

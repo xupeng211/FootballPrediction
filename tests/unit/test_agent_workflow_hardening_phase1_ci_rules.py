@@ -98,12 +98,27 @@ def test_pr_template_has_only_canonical_default_sections():
     for heading in ("## Summary", "## Scope", "## Tests", "## Risk", "## Rollback"):
         assert heading in body
     for retired in (
-        "## Documentation Impact",
         "## Safety Impact",
         "## Next Recommended Task",
         "Agent Workflow Hardening Checklist",
     ):
         assert retired not in body
+
+
+def test_pr_template_keeps_required_documentation_impact_section():
+    """`## Documentation Impact` is a required canonical section, not retired.
+
+    `validate_pr_metadata` derives DOCUMENTATION_IMPACT_* findings from this
+    section, so the PR template must keep it.  This test pins the template and
+    the machine contract together.
+    """
+
+    body = _read(".github/pull_request_template.md")
+    assert "## Documentation Impact" in body
+    assert body.index("## Documentation Impact") < body.index("## Tests")
+    # The canonical template must keep satisfying the machine gate that derives
+    # Documentation Impact findings from the final PR body.
+    assert gate.check_required_sections(body) == []
 
 
 def test_duplicate_pr_template_is_removed():

@@ -9,6 +9,9 @@ owner: engineering workflow governance
 不共享 Builder session，也不接收 Builder 的自证。receipt 与原始 Codex
 输出必须位于 reviewed source tree 之外。
 
+本模块只负责执行与 CLI：receipt 的证据读取与内部一致性证明在
+``codex_review_receipt``，三态分类在 ``codex_review_classification``。
+
 本模块实现的是 `ENGINEERING_INDEPENDENT_REVIEW`：fresh Codex
 process/context、clean exact-head worktree、只读执行和可重算的 evidence
 完整性检查。它不声称提供密码学 reviewer identity，也不抵抗同一 OS uid
@@ -22,7 +25,6 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
-import re
 import stat
 import subprocess
 import sys
@@ -33,13 +35,16 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.devops.codex_review_classification import (  # noqa: E402
+    ReceiptClassification,
+    classify_receipt,
+    validate_receipt,
+)
 from scripts.devops.codex_review_contract import (  # noqa: E402
     _canonical_json,
-    build_review_prompt,
     build_reviewer_command,
-    parse_final_message,
-    parse_timestamp,
     review_challenge,
+    reviewer_selectors_from_command,
     sha256_bytes,
     validate_review_result,
 )
@@ -50,7 +55,27 @@ from scripts.devops.codex_review_output import (  # noqa: E402
 )
 from scripts.devops.codex_review_provenance import (  # noqa: E402
     ReviewReceiptError,
+    observe_codex_cli_version,
     resolve_codex_binary,
+)
+from scripts.devops.codex_review_receipt import (  # noqa: E402
+    CLI_VERSION_SOURCE_OBSERVED_STDOUT,
+    EFFORT_SOURCE_CODEX_CONFIG_OVERRIDE,
+    MODEL_SOURCE_CODEX_EXEC_FLAG,
+    RECEIPT_SCHEMA_VERSION,
+    REVIEW_OUTPUT_SCHEMA,
+    THREAD_ID_RE,
+    WRAPPER_NAME,
+    _assert_contexts_separate,
+    _assert_review_challenge,
+    _codex_prompt,
+    _parse_final_message,
+    _require_external_path,
+    _run_git,
+    diff_sha256,
+    exact_head,
+    git_blob_sha256,
+    sha256_file,
 )
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
@@ -71,76 +96,9 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     mission_scope_sha256 as scope_file_sha256,
 )
 
-RECEIPT_SCHEMA_VERSION = "codex-independent-review-receipt/v1"
-REVIEW_OUTPUT_SCHEMA = ROOT / "schemas" / "agentic" / "codex_review_result.schema.json"
-WRAPPER_NAME = "scripts/devops/codex_independent_review.py"
-THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
-_codex_prompt = build_review_prompt
-_parse_final_message = parse_final_message
-_parse_timestamp = parse_timestamp
-
-
-def sha256_file(path: Path) -> str:
-    """Return SHA-256 for one evidence file without exposing its content."""
-
-    try:
-        return sha256_bytes(path.read_bytes())
-    except OSError as exc:
-        raise ReviewReceiptError(f"无法读取 evidence 文件 {path}: {exc}") from exc
-
 
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
-def _run_git(repo_root: Path, args: list[str], *, check: bool = True) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if check and result.returncode != 0:
-        raise ReviewReceiptError(result.stderr.strip() or f"git {' '.join(args)} failed")
-    return result.stdout.strip()
-
-
-def exact_head(repo_root: Path, ref: str) -> str:
-    """Resolve one repository ref and require its complete 40-hex SHA."""
-
-    return normalize_full_sha(_run_git(repo_root, ["rev-parse", f"{ref}^{{commit}}"]), role=ref)
-
-
-def diff_sha256(repo_root: Path, base_sha: str, head_sha: str) -> str:
-    """Hash the complete binary-safe base...head diff without persisting it."""
-
-    result = subprocess.run(
-        ["git", "diff", "--binary", "--no-ext-diff", f"{base_sha}...{head_sha}"],
-        cwd=repo_root,
-        capture_output=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise ReviewReceiptError(result.stderr.decode("utf-8", errors="replace").strip())
-    return sha256_bytes(result.stdout)
-
-
-def git_blob_sha256(repo_root: Path, commit_sha: str, relative_path: str) -> str:
-    """Hash one file as stored in an exact commit, not from a dirty worktree."""
-
-    result = subprocess.run(
-        ["git", "show", f"{commit_sha}:{relative_path}"],
-        cwd=repo_root,
-        capture_output=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise ReviewReceiptError(
-            result.stderr.decode("utf-8", errors="replace").strip()
-            or f"review commit 中缺少 output schema: {relative_path}"
-        )
-    return sha256_bytes(result.stdout)
 
 
 def _load_exact_review_scope(
@@ -156,25 +114,6 @@ def _load_exact_review_scope(
     if scope_file_sha256(scope_file) != mission_scope_hash:
         raise MissionScopeError("mission scope file bytes differ from the exact candidate HEAD")
     return mission_scope, mission_scope_path, mission_scope_hash
-
-
-def _path_is_inside(path: Path, root: Path) -> bool:
-    try:
-        path.resolve(strict=False).relative_to(root.resolve(strict=False))
-    except ValueError:
-        return False
-    return True
-
-
-def _require_external_path(path: Path, repo_root: Path, *, must_exist: bool = False) -> Path:
-    if not path.is_absolute():
-        raise ReviewReceiptError(f"evidence path 必须是绝对路径: {path}")
-    resolved = path.resolve(strict=False)
-    if _path_is_inside(resolved, repo_root):
-        raise ReviewReceiptError(f"evidence path 不得位于 reviewed source tree: {resolved}")
-    if must_exist and not resolved.is_file():
-        raise ReviewReceiptError(f"evidence 文件不存在: {resolved}")
-    return resolved
 
 
 def _ensure_private_directory(path: Path) -> None:
@@ -197,35 +136,6 @@ def _write_exclusive(path: Path, body: bytes) -> None:
             os.fsync(stream.fileno())
     except OSError as exc:
         raise ReviewReceiptError(f"写入 evidence 失败: {path}: {exc}") from exc
-
-
-def _assert_contexts_separate(builder_context_id: str, reviewer_context_id: str) -> None:
-    if not builder_context_id.strip() or not reviewer_context_id.strip():
-        raise ReviewReceiptError("Builder/reviewer context identity 不能为空")
-    if builder_context_id == reviewer_context_id:
-        raise ReviewReceiptError(
-            "Builder 与 reviewer context 相同，拒绝把 self-review 算作 independent"
-        )
-    if reviewer_context_id.casefold() in {"builder", "builder-codex", "same-session"}:
-        raise ReviewReceiptError("reviewer context 使用了 Builder/self-review identity")
-
-
-def _assert_review_challenge(
-    result: dict[str, Any],
-    *,
-    mission_id: str,
-    base_sha: str,
-    head_sha: str,
-    mission_scope_sha256: str,
-) -> None:
-    expected = review_challenge(
-        mission_id=mission_id,
-        base_sha=base_sha,
-        head_sha=head_sha,
-        mission_scope_sha256=mission_scope_sha256,
-    )
-    if result.get("review_challenge") != expected:
-        raise ReviewReceiptError("review challenge 与当前 mission/base/HEAD 不匹配")
 
 
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
@@ -286,6 +196,11 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         output_schema=review_output_schema,
         final_message_path=final_path,
     )
+    # Model identity and reasoning effort are read back out of the argv that is
+    # actually executed, and the CLI version is observed from the same resolved
+    # executable: the receipt records the invocation, not a Builder declaration.
+    review_model, review_reasoning_effort = reviewer_selectors_from_command(command)
+    codex_cli_version = observe_codex_cli_version(codex_binary)
     prompt = _codex_prompt(
         mission_id=args.mission_id,
         base_sha=base_sha,
@@ -387,11 +302,21 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "worktree_clean_after": not bool(worktree_status),
             "source_mutation_detected": bool(worktree_status),
         },
+        "model_provenance": {
+            "review_model": review_model,
+            "review_reasoning_effort": review_reasoning_effort,
+            "codex_cli_version": codex_cli_version,
+            "model_source": MODEL_SOURCE_CODEX_EXEC_FLAG,
+            "reasoning_effort_source": EFFORT_SOURCE_CODEX_CONFIG_OVERRIDE,
+            "cli_version_source": CLI_VERSION_SOURCE_OBSERVED_STDOUT,
+            "derived_from_recorded_command": True,
+        },
         "provenance": {
             "writer": WRAPPER_NAME,
             "integrity_only": True,
             "wrapper_sha256": sha256_file(Path(__file__).resolve()),
             "command_sha256": sha256_bytes(_canonical_json(command)),
+            "reviewer_command": list(command),
             "prompt_sha256": sha256_bytes(prompt.encode("utf-8")),
             "codex_binary": str(codex_binary),
             "codex_binary_sha256": sha256_file(codex_binary),
@@ -416,275 +341,6 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     )
     _write_exclusive(receipt_path, _canonical_json(receipt))
     return receipt_path
-
-
-def _validate_private_file(path: Path, field: str) -> None:
-    if not path.is_file():
-        raise ReviewReceiptError(f"{field} 不存在: {path}")
-    if stat.S_IMODE(path.stat().st_mode) & 0o077:
-        raise ReviewReceiptError(f"{field} 必须是 owner-only 文件: {path}")
-
-
-def _validate_regular_file(path: Path, field: str) -> None:
-    """Validate an auditable file without treating mode as trust authority."""
-
-    if not path.is_file() or path.is_symlink():
-        raise ReviewReceiptError(f"{field} 必须是 regular file: {path}")
-
-
-def _load_receipt_scope(
-    *,
-    repo_root: Path,
-    receipt: dict[str, Any],
-    expected_mission_scope_file: Path | None,
-    reviewed_head: str,
-) -> tuple[MissionScope, str, str]:
-    """Load and exact-head-bind the scope named by a receipt."""
-
-    scope_path_value = receipt.get("mission_scope_path")
-    if not isinstance(scope_path_value, str) or not scope_path_value.strip():
-        raise ReviewReceiptError("receipt mission_scope_path 缺失")
-    scope_path = repo_root / scope_path_value
-    scope_relative_path = mission_scope_relative_path(scope_path, repo_root)
-    if scope_relative_path != scope_path_value:
-        raise MissionScopeError("receipt mission_scope_path 必须是规范 repository-relative path")
-    if expected_mission_scope_file is not None:
-        expected_scope_relative = mission_scope_relative_path(
-            expected_mission_scope_file, repo_root
-        )
-        if expected_scope_relative != scope_relative_path:
-            raise MissionScopeError("receipt mission scope path 与当前 mission scope 不匹配")
-    mission_scope = load_mission_scope_file(
-        scope_path,
-        repo_root=repo_root,
-        expected_mission_id=receipt["mission_id"],
-    )
-    scope_commit_hash = git_blob_sha256(repo_root, reviewed_head, scope_relative_path)
-    if scope_file_sha256(scope_path) != scope_commit_hash:
-        raise MissionScopeError("mission scope file bytes differ from reviewed exact HEAD")
-    return mission_scope, scope_relative_path, scope_commit_hash
-
-
-def validate_receipt(  # noqa: C901, PLR0912, PLR0915
-    receipt_path: Path,
-    *,
-    repo_root: Path,
-    current_head: str | None = None,
-    expected_base: str | None = None,
-    expected_mission_id: str | None = None,
-    expected_mission_scope_file: Path | None = None,
-) -> dict[str, Any]:
-    """Fail-closed validation for one external, exact-head receipt."""
-
-    receipt_path = _require_external_path(receipt_path, repo_root, must_exist=True)
-    _validate_private_file(receipt_path, "receipt")
-    try:
-        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ReviewReceiptError(f"receipt JSON 无效: {receipt_path}") from exc
-    if not isinstance(receipt, dict):
-        raise ReviewReceiptError("receipt 必须是 JSON object")
-    if receipt.get("schema_version") != RECEIPT_SCHEMA_VERSION:
-        raise ReviewReceiptError("receipt schema_version 不匹配")
-    if receipt.get("assurance_model") != ASSURANCE_MODEL_ENGINEERING_INDEPENDENT_REVIEW:
-        raise ReviewReceiptError("receipt assurance_model 必须为 engineering_independent_review")
-    if receipt.get("hostile_same_uid_forge_resistance") is not False:
-        raise ReviewReceiptError("receipt 必须明确记录 hostile same-uid forge resistance=NO")
-    if receipt.get("review_engine") != REVIEW_ENGINE_CODEX:
-        raise ReviewReceiptError("receipt review_engine 必须为 codex")
-    if receipt.get("review_role") != REVIEW_ROLE_INDEPENDENT:
-        raise ReviewReceiptError("receipt review_role 必须为 independent_reviewer")
-    base_sha = normalize_full_sha(receipt.get("base_sha"), role="receipt base SHA")
-    reviewed_head = normalize_full_sha(
-        receipt.get("reviewed_head_sha"), role="receipt reviewed HEAD"
-    )
-    observed_head = current_head or exact_head(repo_root, "HEAD")
-    assert_exact_head(observed_head, reviewed_head, role="review HEAD")
-    if expected_base is not None:
-        assert_exact_head(expected_base, base_sha, role="review base")
-    if expected_mission_id is not None and receipt.get("mission_id") != expected_mission_id:
-        raise ReviewReceiptError("receipt mission_id 不匹配")
-    if not isinstance(receipt.get("mission_id"), str) or not receipt["mission_id"].strip():
-        raise ReviewReceiptError("receipt mission_id 缺失")
-    try:
-        mission_scope, scope_relative_path, scope_commit_hash = _load_receipt_scope(
-            repo_root=repo_root,
-            receipt=receipt,
-            expected_mission_scope_file=expected_mission_scope_file,
-            reviewed_head=reviewed_head,
-        )
-    except (MissionScopeError, ReviewReceiptError, OSError) as exc:
-        raise ReviewReceiptError(f"receipt mission scope invalid: {exc}") from exc
-    if receipt.get("mission_scope_sha256") != scope_commit_hash:
-        raise ReviewReceiptError("receipt mission_scope_sha256 与 reviewed exact HEAD 不匹配")
-    expected_challenge = review_challenge(
-        mission_id=receipt["mission_id"],
-        base_sha=base_sha,
-        head_sha=reviewed_head,
-        mission_scope_sha256=scope_commit_hash,
-    )
-    if receipt.get("review_challenge") != expected_challenge:
-        raise ReviewReceiptError("receipt review_challenge 与当前 mission/base/HEAD 不匹配")
-    if receipt.get("diff_sha256") != diff_sha256(repo_root, base_sha, reviewed_head):
-        raise ReviewReceiptError("receipt diff_sha256 与当前 base...HEAD 不匹配")
-
-    started = _parse_timestamp(receipt.get("review_started_at"), "review_started_at")
-    completed = _parse_timestamp(receipt.get("review_completed_at"), "review_completed_at")
-    if completed < started:
-        raise ReviewReceiptError("review_completed_at 早于 review_started_at")
-
-    if receipt.get("reviewer_read_only") is not True:
-        raise ReviewReceiptError("reviewer_read_only 必须为 true")
-    isolation = receipt.get("isolation")
-    if not isinstance(isolation, dict) or any(
-        isolation.get(field) is not True
-        for field in (
-            "fresh_process",
-            "ephemeral_session",
-            "detached_worktree",
-            "worktree_clean_before",
-            "worktree_clean_after",
-        )
-    ):
-        raise ReviewReceiptError("reviewer isolation provenance 不完整")
-    if isolation.get("source_mutation_detected") is not False:
-        raise ReviewReceiptError("reviewer source mutation evidence 不是 false")
-    if isolation.get("sandbox") != "read-only":
-        raise ReviewReceiptError("reviewer sandbox 必须为 read-only")
-    worktree_path = _require_external_path(
-        Path(str(isolation.get("worktree_path") or "")), repo_root
-    )
-    if not worktree_path.is_dir() or worktree_path.is_symlink():
-        raise ReviewReceiptError("review worktree path 必须是 external regular directory")
-    assert_exact_head(
-        reviewed_head, isolation.get("worktree_head_sha"), role="review worktree HEAD"
-    )
-    if not (worktree_path / ".git").exists():
-        raise ReviewReceiptError("review worktree 必须是 Git worktree")
-    actual_worktree_head = exact_head(worktree_path, "HEAD")
-    assert_exact_head(reviewed_head, actual_worktree_head, role="actual review worktree HEAD")
-    attached_branch = _run_git(
-        worktree_path, ["symbolic-ref", "--quiet", "--short", "HEAD"], check=False
-    )
-    if attached_branch:
-        raise ReviewReceiptError("review worktree 必须保持 detached HEAD")
-    if _run_git(worktree_path, ["status", "--porcelain", "--untracked-files=all"]):
-        raise ReviewReceiptError("review worktree 当前不是 clean")
-
-    reviewer_id = receipt.get("reviewer_invocation_id")
-    builder_id = receipt.get("builder_context_id")
-    if not isinstance(reviewer_id, str) or not THREAD_ID_RE.fullmatch(reviewer_id):
-        raise ReviewReceiptError("reviewer_invocation_id 无效")
-    if not isinstance(builder_id, str):
-        raise ReviewReceiptError("builder_context_id 缺失")
-    if receipt.get("reviewer_context_separate_from_builder") is not True:
-        raise ReviewReceiptError("reviewer_context_separate_from_builder 必须为 true")
-    _assert_contexts_separate(builder_id, str(receipt.get("reviewer_context_id") or ""))
-    if receipt.get("reviewer_context_id") != reviewer_id:
-        raise ReviewReceiptError("reviewer_context_id 与 invocation id 不一致")
-
-    provenance = receipt.get("provenance")
-    if not isinstance(provenance, dict) or provenance.get("writer") != WRAPPER_NAME:
-        raise ReviewReceiptError("receipt provenance writer 缺失或不匹配")
-    if provenance.get("integrity_only") is not True:
-        raise ReviewReceiptError("receipt 必须明确将本地 provenance 标记为 integrity_only")
-    if provenance.get("wrapper_sha256") != sha256_file(Path(__file__).resolve()):
-        raise ReviewReceiptError("receipt wrapper_sha256 与当前 reviewer wrapper 不匹配")
-    schema_path = _require_external_path(
-        Path(str(provenance.get("output_schema_path") or "")), repo_root
-    )
-    _validate_regular_file(schema_path, "review output schema")
-    schema_relative_path = REVIEW_OUTPUT_SCHEMA.relative_to(ROOT).as_posix()
-    expected_schema_sha = git_blob_sha256(repo_root, reviewed_head, schema_relative_path)
-    if provenance.get("output_schema_sha256") != sha256_file(schema_path):
-        raise ReviewReceiptError("output schema sha256 不匹配")
-    if provenance.get("output_schema_sha256") != expected_schema_sha:
-        raise ReviewReceiptError("output schema 不是 reviewed exact HEAD 中的版本")
-    raw_path = _require_external_path(Path(str(provenance.get("raw_output_path") or "")), repo_root)
-    stderr_path = _require_external_path(Path(str(provenance.get("stderr_path") or "")), repo_root)
-    final_path = _require_external_path(
-        Path(str(provenance.get("final_message_path") or "")), repo_root
-    )
-    for path, field in (
-        (raw_path, "raw output"),
-        (stderr_path, "stderr"),
-        (final_path, "final message"),
-    ):
-        _validate_private_file(path, field)
-    if provenance.get("raw_output_sha256") != sha256_file(raw_path):
-        raise ReviewReceiptError("raw output sha256 不匹配")
-    if provenance.get("final_message_sha256") != sha256_file(final_path):
-        raise ReviewReceiptError("final message sha256 不匹配")
-    codex_binary = provenance.get("codex_binary")
-    if not isinstance(codex_binary, str) or not codex_binary.strip():
-        raise ReviewReceiptError("provenance codex_binary 缺失")
-    try:
-        codex_binary_path = Path(codex_binary).resolve(strict=True)
-    except OSError as exc:
-        raise ReviewReceiptError("provenance codex_binary path 无法解析") from exc
-    if not codex_binary_path.is_file() or not os.access(codex_binary_path, os.X_OK):
-        raise ReviewReceiptError("provenance codex_binary 不是 Codex CLI executable")
-    if provenance.get("codex_binary_sha256") != sha256_file(codex_binary_path):
-        raise ReviewReceiptError("Codex CLI executable sha256 不匹配")
-    expected_command_sha = sha256_bytes(
-        _canonical_json(
-            build_reviewer_command(
-                codex_binary=codex_binary,
-                base_sha=base_sha,
-                output_schema=schema_path,
-                final_message_path=final_path,
-            )
-        )
-    )
-    if provenance.get("command_sha256") != expected_command_sha:
-        raise ReviewReceiptError("reviewer command provenance 不匹配")
-    expected_prompt_sha = sha256_bytes(
-        _codex_prompt(
-            mission_id=receipt["mission_id"],
-            base_sha=base_sha,
-            head_sha=reviewed_head,
-            mission_scope=mission_scope,
-            mission_scope_path=scope_relative_path,
-            mission_scope_sha256=scope_commit_hash,
-        ).encode("utf-8")
-    )
-    if provenance.get("prompt_sha256") != expected_prompt_sha:
-        raise ReviewReceiptError("reviewer prompt provenance 与当前 target 不匹配")
-    final_text = final_path.read_text(encoding="utf-8")
-    events = parse_json_lines(raw_path.read_bytes())
-    if reviewer_invocation_id(events, THREAD_ID_RE) != reviewer_id:
-        raise ReviewReceiptError("raw output invocation id 与 receipt 不一致")
-    assert_successful_completion(events, final_text)
-    if provenance.get("agent_message_sha256") != sha256_bytes(final_text.encode("utf-8")):
-        raise ReviewReceiptError("agent_message_sha256 不匹配")
-    if provenance.get("codex_exit_code") != 0:
-        raise ReviewReceiptError("Codex exit code 不是 0")
-    result_document = _parse_final_message(final_text)
-    _assert_review_challenge(
-        result_document,
-        mission_id=receipt["mission_id"],
-        base_sha=base_sha,
-        head_sha=reviewed_head,
-        mission_scope_sha256=scope_commit_hash,
-    )
-    counts, blocking, review_result, findings = validate_review_result(result_document)
-    if receipt.get("finding_counts_by_severity") != counts:
-        raise ReviewReceiptError("receipt finding counts 不是由 final message 派生的值")
-    if (
-        receipt.get("blocking_findings") != blocking
-        or receipt.get("review_result") != review_result
-    ):
-        raise ReviewReceiptError("receipt result/blocking findings 不一致")
-    if receipt.get("findings") != findings:
-        raise ReviewReceiptError("receipt findings 与 final message 不一致")
-
-    unsigned = dict(receipt)
-    integrity = unsigned.pop("integrity", None)
-    if not isinstance(integrity, dict):
-        raise ReviewReceiptError("receipt integrity 缺失")
-    if integrity.get("receipt_payload_sha256") != sha256_bytes(_canonical_json(unsigned)):
-        raise ReviewReceiptError("receipt payload integrity 不匹配")
-    return receipt
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -712,7 +368,33 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--mission-id", default=None)
     check.add_argument("--mission-scope-file", default=None, type=Path)
     check.add_argument("--json", action="store_true")
+    classify = sub.add_parser(
+        "classify", help="把 receipt 分类为 VALID_CURRENT / STALE_TOOLING / INVALID"
+    )
+    classify.add_argument("--repo-root", type=Path, default=ROOT)
+    classify.add_argument("--receipt", required=True, type=Path)
+    classify.add_argument("--current-head", default=None)
+    classify.add_argument("--base-sha", default=None)
+    classify.add_argument("--mission-id", default=None)
+    classify.add_argument("--mission-scope-file", default=None, type=Path)
+    classify.add_argument(
+        "--historical-audit",
+        action="store_true",
+        help="把 receipt 当作历史证据解释，忽略 current-HEAD freshness 比较",
+    )
+    classify.add_argument("--json", action="store_true")
     return parser
+
+
+def _print_classification(classification: ReceiptClassification) -> None:
+    print(f"RECEIPT_CLASSIFICATION={classification.classification}")
+    print(f"RECEIPT_INTEGRITY={classification.integrity}")
+    print(f"REASON_CODES={','.join(classification.reason_codes) or 'NONE'}")
+    print(
+        f"CURRENT_APPROVAL_ELIGIBLE={'YES' if classification.current_approval_eligible else 'NO'}"
+    )
+
+    print(f"DETAIL={classification.detail}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -723,6 +405,32 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "run":
             receipt_path = run_review(args)
             receipt = None
+        elif args.command == "classify":
+            classification = classify_receipt(
+                args.receipt,
+                repo_root=Path(args.repo_root).resolve(),
+                current_head=args.current_head,
+                expected_base=args.base_sha,
+                expected_mission_id=args.mission_id,
+                expected_mission_scope_file=args.mission_scope_file,
+                historical_audit=args.historical_audit,
+            )
+            receipt_path = args.receipt
+            receipt = classification.receipt
+            _print_classification(classification)
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "review_receipt": str(receipt_path),
+                            "classification": classification.to_dict(),
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+            # A classification query is informational: STALE_TOOLING and
+            # INVALID are reported, never converted into a passing exit status.
+            return 0
         else:
             receipt_path = args.receipt
             receipt = validate_receipt(

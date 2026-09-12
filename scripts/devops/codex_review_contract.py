@@ -27,6 +27,16 @@ from scripts.ops.helpers.agent_workflow_contract import (
 MIN_FENCED_JSON_LINES = 3
 REVIEW_CHALLENGE_VERSION = "codex-independent-review-challenge/v2"
 
+# Pinned review policy.  The independent reviewer must never inherit its model
+# from user config, account default, catalog priority or environment: the exact
+# model and reasoning effort are part of the review contract, and changing
+# either is an explicit, reviewable workflow change.
+REVIEW_MODEL_PINNED = "gpt-6-astra"
+REVIEW_REASONING_EFFORT_PINNED = "medium"
+REVIEW_MODEL_FLAG = "-m"
+REVIEW_EFFORT_CONFIG_KEY = "model_reasoning_effort"
+REVIEW_EFFORT_CONFIG_FLAG = "-c"
+
 
 def _canonical_json(value: object) -> bytes:
     return (
@@ -198,14 +208,24 @@ def build_reviewer_command(
     output_schema: Path,
     final_message_path: Path,
 ) -> list[str]:
-    """Build the only supported isolated reviewer invocation."""
+    """Build the only supported isolated reviewer invocation.
+
+    The model and the reasoning effort are pinned here, on the command line, so
+    that the executed model identity is bound to ``command_sha256`` instead of
+    being derived from user config, account default or catalog priority.
+    ``--ignore-user-config`` stays effective: the explicit flag is what
+    determines the model (an explicit ``-m`` outranks both ``-c model=...`` and
+    the environment).
+    """
 
     normalize_full_sha(base_sha, role="review base SHA")
     return [
         codex_binary,
         "exec",
-        "-c",
-        'model_reasoning_effort="medium"',
+        REVIEW_MODEL_FLAG,
+        REVIEW_MODEL_PINNED,
+        REVIEW_EFFORT_CONFIG_FLAG,
+        f'{REVIEW_EFFORT_CONFIG_KEY}="{REVIEW_REASONING_EFFORT_PINNED}"',
         "--sandbox",
         "read-only",
         "--ignore-user-config",
@@ -216,3 +236,35 @@ def build_reviewer_command(
         "--output-last-message",
         str(final_message_path),
     ]
+
+
+def reviewer_selectors_from_command(command: list[str]) -> tuple[str, str]:
+    """Derive (model, reasoning effort) from an executed reviewer command.
+
+    Receipt model provenance is derived from the invocation itself rather than
+    from a caller-supplied field, so a receipt cannot claim a model that its own
+    recorded command does not contain.
+    """
+
+    model: str | None = None
+    effort: str | None = None
+    index = 0
+    while index < len(command):
+        argument = command[index]
+        if argument in {REVIEW_MODEL_FLAG, "--model"} and index + 1 < len(command):
+            model = command[index + 1].strip()
+            index += 2
+            continue
+        if argument in {REVIEW_EFFORT_CONFIG_FLAG, "--config"} and index + 1 < len(command):
+            raw = command[index + 1].strip()
+            key, separator, value = raw.partition("=")
+            if separator and key.strip() == REVIEW_EFFORT_CONFIG_KEY:
+                effort = value.strip().strip('"').strip("'")
+            index += 2
+            continue
+        index += 1
+    if not model:
+        raise ReviewReceiptError("reviewer command 缺少显式 --model；拒绝隐式 reviewer model")
+    if not effort:
+        raise ReviewReceiptError("reviewer command 缺少显式 reasoning effort")
+    return model, effort
