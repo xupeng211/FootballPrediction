@@ -17,8 +17,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import (
@@ -263,17 +267,36 @@ def test_argv_evidence_mismatch_is_tamper_not_drift(tmp_path: Path, mutation: st
     assert result.current_approval_eligible is False
 
 
-def test_argv_flag_without_value_is_tamper_not_crash(tmp_path: Path):
-    """A truncated argv fails closed as evidence tamper, never as a traceback."""
+def _valueless_flag_at_end(command: list[str], flag: str) -> list[str]:
+    """Drop ``flag``'s value and move the flag to the end of the argv."""
+
+    index = command.index(flag)
+    return command[:index] + command[index + 2 :] + [flag]
+
+
+@pytest.mark.parametrize(
+    ("transform", "reason_code"),
+    [
+        (lambda command: command[:-1], "COMMAND_EVIDENCE_TAMPER"),
+        (
+            lambda command: _valueless_flag_at_end(command, "--sandbox"),
+            "REVIEWER_ISOLATION_MISSING",
+        ),
+    ],
+    ids=["trailing-flag-without-value", "trailing-sandbox-without-value"],
+)
+def test_argv_flag_without_value_is_tamper_not_crash(
+    tmp_path: Path, transform: Callable[[list[str]], list[str]], reason_code: str
+):
+    """A truncated argv fails closed as a reported fault, never as a traceback."""
 
     repo, base, head = _make_repo(tmp_path)
-    receipt = _write_valid_receipt(
-        tmp_path, repo, base, head, command_transform=lambda command: command[:-1]
-    )
+    receipt = _write_valid_receipt(tmp_path, repo, base, head, command_transform=transform)
     result = _classification(receipt, repo, current_head=head)
     assert result.classification == CLASSIFICATION_INVALID
     assert result.integrity == INTEGRITY_TAMPERED
-    assert "COMMAND_EVIDENCE_TAMPER" in result.reason_codes
+    assert reason_code in result.reason_codes
+    assert result.current_approval_eligible is False
 
 
 def test_model_field_command_mismatch_is_invalid(tmp_path: Path):

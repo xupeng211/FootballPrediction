@@ -643,7 +643,11 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
                     "REVIEWER_ISOLATION_MISSING",
                     f"recorded reviewer command 缺少 {required_flag}",
                 )
-        if recorded_command[recorded_command.index("--sandbox") + 1] != "read-only":
+        # Slicing rather than indexing: an argv that ends on ``--sandbox`` has no
+        # value to compare, and that must be a reported isolation fault instead
+        # of an IndexError escaping the classifier as a crash.
+        sandbox_index = recorded_command.index("--sandbox") + 1
+        if recorded_command[sandbox_index : sandbox_index + 1] != ["read-only"]:
             raise _EvidenceError(
                 "REVIEWER_ISOLATION_MISSING", "recorded reviewer command sandbox 不是 read-only"
             )
