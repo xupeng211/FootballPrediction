@@ -443,11 +443,15 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
     # The canonical invocation also keeps ``--output-schema`` inside that
     # worktree, so the schema check below depends on this fact as well.
     worktree_available = worktree_path.is_dir() and not worktree_path.is_symlink()
+    # The two SHAs the receipt itself records must agree whether or not the
+    # worktree still exists.  That comparison is internal to the receipt, so
+    # cleanup cannot excuse a self-contradicting one; only the live Git HEAD
+    # comparison below needs the worktree to be present.
+    with _fault("WORKTREE_HEAD_MISMATCH", head_error=True):
+        assert_exact_head(
+            reviewed_head, isolation.get("worktree_head_sha"), role="review worktree HEAD"
+        )
     if worktree_available:
-        with _fault("WORKTREE_HEAD_MISMATCH", head_error=True):
-            assert_exact_head(
-                reviewed_head, isolation.get("worktree_head_sha"), role="review worktree HEAD"
-            )
         if not (worktree_path / ".git").exists():
             raise _EvidenceError("REVIEW_WORKTREE_INVALID", "review worktree 必须是 Git worktree")
         with _fault("WORKTREE_HEAD_MISMATCH", head_error=True):

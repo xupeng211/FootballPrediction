@@ -286,7 +286,9 @@ evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉�
   已不可用。canonical invocation 的 `--output-schema` 指向该临时 worktree，因此 worktree 被正常清理后，
   历史 schema 改为核对 reviewed exact commit 中的 blob，而不是已消失的文件；receipt 仍是合法历史证据，
   但**绝不能**满足 `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization。schema 因
-  其他原因缺失、或存在但与 reviewed commit 不一致，仍然是 `INVALID` / `TAMPERED`。
+  其他原因缺失、或存在但与 reviewed commit 不一致，仍然是 `INVALID` / `TAMPERED`。worktree 不可用只
+  免除对实际 Git HEAD 的现场核对：receipt 自己记录的 `worktree_head_sha` 与 `reviewed_head_sha` 必须
+  始终一致，与 worktree 是否存在无关，两者矛盾仍是 `INVALID` / `TAMPERED`。
 - `INVALID`：证据对它自称的 target 不成立——文件或 hash 被改动、base/head/diff/scope/mission 不匹配、
   receipt 声称的 model 或 effort 与 command 矛盾、记录的 CLI version 与 invocation 证据不同。
 

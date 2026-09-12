@@ -525,6 +525,30 @@ def test_removed_review_worktree_keeps_receipt_historical_evidence(tmp_path: Pat
     assert not any("TAMPER" in code for code in result.reason_codes)
 
 
+def test_removed_worktree_head_contradiction_is_still_invalid(tmp_path: Path):
+    """Cleaning up the worktree must not excuse a self-contradicting receipt."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(
+        tmp_path,
+        repo,
+        base,
+        head,
+        overrides={"isolation": {"worktree_head_sha": "4" * 40}},
+    )
+    worktree = Path(json.loads(receipt.read_text(encoding="utf-8"))["isolation"]["worktree_path"])
+    subprocess.run(
+        ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
+        check=True,
+        capture_output=True,
+    )
+    assert not worktree.exists()
+    result = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
+    assert "WORKTREE_HEAD_MISMATCH" in result.reason_codes
+
+
 def test_removed_worktree_schema_hash_mismatch_is_still_invalid(tmp_path: Path):
     """A vanished schema file must not excuse a schema that contradicts HEAD."""
 
