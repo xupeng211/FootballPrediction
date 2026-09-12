@@ -641,6 +641,29 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
             raise _EvidenceError(
                 "REVIEWER_ISOLATION_MISSING", "recorded reviewer command sandbox 不是 read-only"
             )
+        # Bind the executed argv to the evidence the receipt itself describes.
+        # Without this an argv that names a different executable, schema or
+        # final-message file would stay internally hash-consistent and be
+        # explained away as policy drift, even though it contradicts the rest of
+        # the receipt.  That is a tamper fault, not a legitimate upgrade.
+        for argv_flag, recorded_evidence_path in (
+            ("--output-schema", provenance.get("output_schema_path")),
+            ("--output-last-message", provenance.get("final_message_path")),
+        ):
+            argv_index = recorded_command.index(argv_flag)
+            recorded_argv_path = (
+                recorded_command[argv_index + 1] if argv_index + 1 < len(recorded_command) else None
+            )
+            if recorded_argv_path != str(recorded_evidence_path):
+                raise _EvidenceError(
+                    "COMMAND_EVIDENCE_TAMPER",
+                    f"recorded reviewer command 的 {argv_flag} 与 receipt evidence 不一致",
+                )
+        if recorded_command[0] != codex_binary:
+            raise _EvidenceError(
+                "COMMAND_EVIDENCE_TAMPER",
+                "recorded reviewer command 的 executable 与 receipt codex_binary 不一致",
+            )
         try:
             review_model, review_effort = reviewer_selectors_from_command(recorded_command)
         except ReviewReceiptError as exc:

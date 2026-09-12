@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+from typing import TYPE_CHECKING
 
 from scripts.devops.codex_review_contract import (
     REVIEW_MODEL_FLAG,
@@ -32,6 +33,9 @@ from scripts.ops.helpers.agent_workflow_contract import (
     load_mission_scope_file,
     mission_scope_sha256,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -215,7 +219,14 @@ def write_valid_receipt(
     finding: dict[str, object] | None = None,
     legacy_schema: bool = False,
     overrides: dict[str, object] | None = None,
+    command_transform: Callable[[list[str]], list[str]] | None = None,
 ) -> Path:
+    """Write one sealed receipt.
+
+    ``command_transform`` rewrites the recorded reviewer argv before it is
+    hashed and sealed, so a test can build a receipt whose argv stays
+    hash-consistent with itself while contradicting the rest of the evidence.
+    """
     evidence = tmp_path / "evidence"
     evidence.mkdir(mode=0o700)
     raw = evidence / "raw.jsonl"
@@ -371,6 +382,8 @@ def write_valid_receipt(
         output_schema=schema_path,
         final_message_path=final,
     )
+    if command_transform is not None:
+        command = command_transform(list(command))
     if legacy_schema:
         # Historical v1 receipts predate explicit model pinning: their recorded
         # command carried no model selector and no model_provenance block.

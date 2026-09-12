@@ -11,6 +11,7 @@ a legitimate tooling upgrade must stay distinguishable from tampered evidence.
 from __future__ import annotations
 
 from contextlib import redirect_stdout
+import hashlib
 import io
 import json
 import os
@@ -32,6 +33,7 @@ from scripts.devops.codex_review_classification import (
 from scripts.devops.codex_review_contract import (
     REVIEW_MODEL_PINNED,
     REVIEW_REASONING_EFFORT_PINNED,
+    _canonical_json,
     build_reviewer_command,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
@@ -215,6 +217,63 @@ def test_current_receipt_matching_policy_is_valid_current(tmp_path: Path):
     assert result.current_approval_eligible is True
     assert result.review_model == REVIEW_MODEL_PINNED
     assert result.review_reasoning_effort == REVIEW_REASONING_EFFORT_PINNED
+
+
+def test_historical_audit_never_produces_current_approval(tmp_path: Path):
+    """A historical query skips the exact-head check, so it cannot approve."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    current = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert current.classification == CLASSIFICATION_VALID_CURRENT
+    historical = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert historical.classification == CLASSIFICATION_STALE_TOOLING
+    assert historical.integrity == INTEGRITY_INTACT
+    assert "HISTORICAL_AUDIT_NO_CURRENT_APPROVAL" in historical.reason_codes
+    assert historical.current_approval_eligible is False
+
+
+@pytest.mark.parametrize("mutation", ["output-last-message", "output-schema", "executable"])
+def test_argv_evidence_mismatch_is_tamper_not_drift(tmp_path: Path, mutation: str):
+    """A hash-consistent argv that points elsewhere is tamper, not policy drift."""
+
+    repo, base, head = _make_repo(tmp_path)
+
+    def transform(command: list[str]) -> list[str]:
+        mutated = list(command)
+        if mutation == "executable":
+            mutated[0] = str(tmp_path / "other-codex")
+        else:
+            flag = f"--{mutation}"
+            mutated[mutated.index(flag) + 1] = str(tmp_path / f"other-{mutation}")
+        return mutated
+
+    receipt = _write_valid_receipt(tmp_path, repo, base, head, command_transform=transform)
+    provenance = json.loads(receipt.read_text(encoding="utf-8"))["provenance"]
+    # The receipt is internally hash-consistent: only the cross-field binding
+    # between the recorded argv and the described evidence is broken.
+    assert (
+        provenance["command_sha256"]
+        == hashlib.sha256(_canonical_json(provenance["reviewer_command"])).hexdigest()
+    )
+    result = _classification(receipt, repo, current_head=head)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
+    assert "COMMAND_EVIDENCE_TAMPER" in result.reason_codes
+    assert result.current_approval_eligible is False
+
+
+def test_argv_flag_without_value_is_tamper_not_crash(tmp_path: Path):
+    """A truncated argv fails closed as evidence tamper, never as a traceback."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(
+        tmp_path, repo, base, head, command_transform=lambda command: command[:-1]
+    )
+    result = _classification(receipt, repo, current_head=head)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
+    assert "COMMAND_EVIDENCE_TAMPER" in result.reason_codes
 
 
 def test_model_field_command_mismatch_is_invalid(tmp_path: Path):

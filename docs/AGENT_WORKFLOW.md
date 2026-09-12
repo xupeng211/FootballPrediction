@@ -272,6 +272,9 @@ argv 或从同一 resolved Codex binary 的 `--version` 观察派生（`model_so
 command hash 必然改变，receipt 立刻失效。v1 legacy receipt 无法记录 argv，因此它的 `command_sha256`
 仍会按冻结的 v1 invocation 形状（不含 model selector 的旧 argv）从 receipt 自己记录的执行路径重算：
 旧证据的内部一致性检查不因 model pinning 而消失，伪造的 64 位十六进制 hash 仍算 tamper，而非历史漂移。
+v2 还会把记录 argv 与 receipt 其余 evidence 绑定：`--output-schema`、`--output-last-message` 的取值必须等于
+receipt 记录的对应路径，argv[0] 必须等于 `codex_binary`。一个自身 hash 自洽、却指向别处的 argv 是与
+evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉的合法 policy 变化。
 
 **三态 classification。** `validate` / `classify` 输出正交的两个轴：`classification` 与 `integrity`。
 
@@ -289,7 +292,10 @@ command hash 必然改变，receipt 立刻失效。v1 legacy receipt 无法记�
 
 `validate` 仍会重新计算 exact HEAD/diff、重新解析 raw/final output、核对 invocation/completion 事件、确认
 review worktree 仍是 exact-head 且 clean，并检查 receipt/evidence 不在 source tree 且为 owner-only。
-`classify --historical-audit` 只做只读分类并总是 exit 0，用于回看旧 receipt，不产生 approval。
+`classify --historical-audit` 只做只读分类并总是 exit 0，用于回看旧 receipt，不产生 approval：它有意跳过
+current-HEAD freshness 比较，因此即使 receipt 的每个字段仍与已安装 toolchain 一致，也只会得到
+`STALE_TOOLING` 与 `HISTORICAL_AUDIT_NO_CURRENT_APPROVAL`，`current_approval_eligible` 恒为 false。
+`VALID_CURRENT` 只能由真正执行过 exact-head 比较的路径产生。
 
 这里的 hash 是可审计的 integrity check，不是 cryptographic reviewer identity；同一 OS uid 的恶意 Builder
 理论上仍可能改写本地 evidence，这是 Owner 选择的 residual risk。简单缺失/错误/自相矛盾的 PASS JSON 仍会

@@ -293,6 +293,14 @@ def classify_receipt(
             effort=facts["review_effort"],
             cli_version=facts["recorded_cli_version"],
         )
+    if historical_audit:
+        # A historical query deliberately skipped the current-HEAD freshness
+        # comparison, so it can never produce a current approval: the receipt is
+        # reported as genuine history and ``current_approval_eligible`` stays
+        # false even when every recorded fact still matches the installed
+        # toolchain.  VALID_CURRENT is only reachable after a real exact-head
+        # comparison has been performed.
+        stale_codes.append("HISTORICAL_AUDIT_NO_CURRENT_APPROVAL")
     if stale_codes:
         return _result(
             CLASSIFICATION_STALE_TOOLING,
