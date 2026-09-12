@@ -399,17 +399,50 @@ def test_wrapper_evidence_tamper_is_invalid(tmp_path: Path):
     assert "WRAPPER_EVIDENCE_TAMPER" in result.reason_codes
 
 
-def test_unresolvable_binary_evidence_is_invalid(tmp_path: Path):
+def test_retired_recorded_binary_keeps_historical_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """A legitimate upgrade may move the Codex CLI and delete the old binary."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    retired = Path(json.loads(receipt.read_text(encoding="utf-8"))["provenance"]["codex_binary"])
+    assert retired.is_file()
+    upgraded = tmp_path / "upgraded-bin"
+    upgraded.mkdir(mode=0o700)
+    binary = upgraded / "codex"
+    binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 0.154.0"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
+    binary.chmod(0o700)
+    monkeypatch.delenv("CODEX_CLI_PATH", raising=False)
+    monkeypatch.setenv("PATH", f"{upgraded}{os.pathsep}{os.environ['PATH']}")
+    retired.unlink()
+    result = _classification(receipt, repo, current_head=head, historical_audit=True)
+    assert result.classification == CLASSIFICATION_STALE_TOOLING
+    assert result.integrity == INTEGRITY_INTACT
+    assert "CODEX_BINARY_UNAVAILABLE" in result.reason_codes
+    assert not any("TAMPER" in code for code in result.reason_codes)
+    assert result.current_approval_eligible is False
+    with pytest.raises(ReviewReceiptError, match="CODEX_BINARY_UNAVAILABLE"):
+        validate_receipt(receipt, repo_root=repo, current_head=head)
+
+
+def test_missing_binary_evidence_field_is_still_invalid(tmp_path: Path):
+    """A receipt that names no executable at all stays malformed evidence."""
+
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(
         tmp_path,
         repo,
         base,
         head,
-        overrides={"provenance": {"codex_binary": str(tmp_path / "absent-codex")}},
+        overrides={"provenance": {"codex_binary": ""}},
     )
     result = _classification(receipt, repo, current_head=head)
     assert result.classification == CLASSIFICATION_INVALID
+    assert result.integrity == INTEGRITY_TAMPERED
     assert "BINARY_EVIDENCE_UNRESOLVABLE" in result.reason_codes
 
 

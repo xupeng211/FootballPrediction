@@ -192,6 +192,8 @@ def _toolchain_reason_codes(facts: dict[str, Any]) -> tuple[list[str], str | Non
     fault = _cli_version_fault(facts, observed_cli_version)
     if fault is not None:
         return stale, fault[0], fault[1]
+    if facts["recorded_binary_available"] is False:
+        stale.append("CODEX_BINARY_UNAVAILABLE")
     if facts["current_binary_sha256"] is None:
         stale.append("CODEX_BINARY_UNRESOLVED")
     elif facts["recorded_binary_sha256"] != facts["current_binary_sha256"]:

@@ -578,22 +578,24 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
     codex_binary = provenance.get("codex_binary")
     if not isinstance(codex_binary, str) or not codex_binary.strip():
         raise _EvidenceError("BINARY_EVIDENCE_UNRESOLVABLE", "provenance codex_binary 缺失")
-    try:
-        codex_binary_path = Path(codex_binary).resolve(strict=True)
-    except OSError as exc:
-        raise _EvidenceError(
-            "BINARY_EVIDENCE_UNRESOLVABLE", "provenance codex_binary path 无法解析"
-        ) from exc
-    if not codex_binary_path.is_file() or not os.access(codex_binary_path, os.X_OK):
-        raise _EvidenceError(
-            "BINARY_EVIDENCE_UNRESOLVABLE", "provenance codex_binary 不是 Codex CLI executable"
-        )
     recorded_binary_sha = provenance.get("codex_binary_sha256")
     if not isinstance(recorded_binary_sha, str) or not SHA256_HEX_RE.fullmatch(recorded_binary_sha):
         raise _EvidenceError(
             "BINARY_EVIDENCE_UNRESOLVABLE",
             "receipt codex_binary_sha256 不是有效的 SHA-256 evidence",
         )
+    # A legitimate upgrade may install the Codex CLI at a new path and remove the
+    # retired executable, so the recorded path no longer resolving is
+    # unverifiable history rather than a self-contradicting receipt.  The stored
+    # evidence is still checked; the classification layer downgrades this to
+    # STALE_TOOLING, where it can never satisfy a current approval.
+    try:
+        recorded_binary_path = Path(codex_binary).resolve(strict=True)
+        recorded_binary_available = recorded_binary_path.is_file() and os.access(
+            recorded_binary_path, os.X_OK
+        )
+    except OSError:
+        recorded_binary_available = False
 
     recorded_command: list[str] | None = None
     review_model: str | None = None
@@ -779,6 +781,7 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         "final_argument": str(provenance.get("final_message_path")),
         "codex_binary_argument": codex_binary,
         "recorded_binary_sha256": recorded_binary_sha,
+        "recorded_binary_available": recorded_binary_available,
         "recorded_wrapper_sha256": recorded_wrapper_sha,
         "wrapper_anchored": anchored_wrapper_sha is not None,
         "recorded_command": recorded_command,
