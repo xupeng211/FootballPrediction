@@ -280,10 +280,14 @@ evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉�
 
 - `VALID_CURRENT`：receipt 内部一致、绑定当前 exact base/head/diff/scope/challenge，且当前 toolchain
   （wrapper blob、Codex binary、CLI version、pinned model/effort、canonical command）与实际一致。这是唯一
-  可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。
+  可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。当前 Codex binary 由 runner
+  使用的同一个 `resolve_codex_binary`（PATH / `CODEX_CLI_PATH` / 系统 fallback）独立解析，而不是回读
+  receipt 记录的执行路径：升级后 PATH 指向新 executable、旧文件仍在原处时，旧 receipt 立刻降级为
+  `STALE_TOOLING`（`CODEX_BINARY_DRIFT`），不会因为旧路径的 hash/version 仍自洽而继续冒充当前 review。
 - `STALE_TOOLING`：receipt 内部一致且 `INTEGRITY=INTACT`，但被记录的工具链或 policy 之后发生了合法变化
   （wrapper 升级、Codex CLI/binary 升级，或 v1 legacy receipt 早于 model pinning），或者 review worktree
-  已不可用。canonical invocation 的 `--output-schema` 指向该临时 worktree，因此 worktree 被正常清理后，
+  已不可用。当前 Codex CLI 完全无法解析时用 `CODEX_BINARY_UNRESOLVED` 记录同一结论：记录的工具链无法
+  被证明仍是当前 toolchain。canonical invocation 的 `--output-schema` 指向该临时 worktree，因此 worktree 被正常清理后，
   历史 schema 改为核对 reviewed exact commit 中的 blob，而不是已消失的文件；receipt 仍是合法历史证据，
   但**绝不能**满足 `MERGE_READY=YES`、当前 STRICT approval 或当前 PR merge authorization。schema 因
   其他原因缺失、或存在但与 reviewed commit 不一致，仍然是 `INVALID` / `TAMPERED`。worktree 不可用只

@@ -24,7 +24,11 @@ from scripts.devops.codex_review_contract import (
     REVIEW_REASONING_EFFORT_PINNED,
     build_reviewer_command,
 )
-from scripts.devops.codex_review_provenance import ReviewReceiptError, observe_codex_cli_version
+from scripts.devops.codex_review_provenance import (
+    ReviewReceiptError,
+    observe_codex_cli_version,
+    resolve_codex_binary,
+)
 from scripts.devops.codex_review_receipt import (
     ROOT,
     TARGET_BINDING_CODES,
@@ -83,6 +87,24 @@ def _observed_cli_version(codex_binary: Path) -> str | None:
         return observe_codex_cli_version(codex_binary)
     except (ReviewReceiptError, OSError, ValueError):
         return None
+
+
+def _current_codex_binary() -> tuple[Path | None, str | None]:
+    """Resolve the Codex CLI installed right now, independently of the receipt.
+
+    Reading the "current" toolchain back from the path a receipt recorded would
+    let a legitimate upgrade that switches PATH, ``CODEX_CLI_PATH`` or a symlink
+    to a new CLI keep matching the retired executable, and old evidence would
+    stay ``VALID_CURRENT``.  Resolution failure yields ``(None, None)``, which
+    forces ``STALE_TOOLING``: the recorded toolchain then cannot be shown to
+    still be the installed one.
+    """
+
+    try:
+        binary = resolve_codex_binary("codex")
+        return binary, sha256_file(binary)
+    except (ReviewReceiptError, OSError, ValueError):
+        return None, None
 
 
 def _cli_version_fault(
@@ -163,11 +185,16 @@ def _toolchain_reason_codes(facts: dict[str, Any]) -> tuple[list[str], str | Non
         # it can never satisfy a current approval.
         stale.append("REVIEW_OUTPUT_SCHEMA_UNAVAILABLE")
 
-    observed_cli_version = _observed_cli_version(facts["codex_binary_path"])
+    current_binary_path = facts["current_binary_path"]
+    observed_cli_version = (
+        _observed_cli_version(current_binary_path) if current_binary_path is not None else None
+    )
     fault = _cli_version_fault(facts, observed_cli_version)
     if fault is not None:
         return stale, fault[0], fault[1]
-    if facts["recorded_binary_sha256"] != facts["current_binary_sha256"]:
+    if facts["current_binary_sha256"] is None:
+        stale.append("CODEX_BINARY_UNRESOLVED")
+    elif facts["recorded_binary_sha256"] != facts["current_binary_sha256"]:
         stale.append("CODEX_BINARY_DRIFT")
         if (
             facts["recorded_cli_version"] is not None
@@ -271,6 +298,10 @@ def classify_receipt(
         facts["recorded_cli_version"] = receipt["model_provenance"].get("codex_cli_version")
     else:
         facts["recorded_cli_version"] = None
+    # The currently installed Codex CLI is resolved here rather than read back
+    # from the path the receipt recorded, so a swap of the installed executable
+    # cannot leave retired evidence looking current.
+    facts["current_binary_path"], facts["current_binary_sha256"] = _current_codex_binary()
 
     stale_codes, invalid_code, invalid_detail = _toolchain_reason_codes(facts)
     if invalid_code is not None:

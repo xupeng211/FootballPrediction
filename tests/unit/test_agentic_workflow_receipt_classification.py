@@ -20,7 +20,7 @@ import subprocess
 
 import pytest
 
-from scripts.devops import agent_workflow, codex_independent_review
+from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import (
     CLASSIFICATION_INVALID,
     CLASSIFICATION_STALE_TOOLING,
@@ -425,6 +425,54 @@ def test_command_evidence_tamper_is_invalid(tmp_path: Path):
     result = _classification(receipt, repo, current_head=head)
     assert result.classification == CLASSIFICATION_INVALID
     assert "COMMAND_EVIDENCE_TAMPER" in result.reason_codes
+
+
+def test_swapped_cli_install_path_downgrades_old_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """A newer Codex CLI installed elsewhere must retire old evidence."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    current = _classification(receipt, repo, current_head=head)
+    assert current.classification == CLASSIFICATION_VALID_CURRENT
+    # A legitimate upgrade installs a newer Codex CLI and points PATH at it while
+    # the retired executable stays untouched in its original location.
+    upgraded = tmp_path / "upgraded-bin"
+    upgraded.mkdir(mode=0o700)
+    binary = upgraded / "codex"
+    binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 0.154.0"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
+    binary.chmod(0o700)
+    monkeypatch.delenv("CODEX_CLI_PATH", raising=False)
+    monkeypatch.setenv("PATH", f"{upgraded}{os.pathsep}{os.environ['PATH']}")
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_STALE_TOOLING
+    assert result.integrity == INTEGRITY_INTACT
+    assert "CODEX_BINARY_DRIFT" in result.reason_codes
+    assert "CODEX_CLI_VERSION_DRIFT" in result.reason_codes
+    assert result.current_approval_eligible is False
+
+
+def test_unresolvable_current_cli_cannot_stay_current(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """An unobservable installed toolchain must not keep evidence current."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+
+    def _fail(_value: str) -> Path:
+        raise ReviewReceiptError("没有找到可执行的 Codex CLI")
+
+    monkeypatch.setattr(codex_review_classification, "resolve_codex_binary", _fail)
+    result = _classification(receipt, repo, current_head=head)
+    assert result.classification == CLASSIFICATION_STALE_TOOLING
+    assert result.integrity == INTEGRITY_INTACT
+    assert "CODEX_BINARY_UNRESOLVED" in result.reason_codes
+    assert result.current_approval_eligible is False
 
 
 def test_wrong_head_is_invalid(tmp_path: Path):
