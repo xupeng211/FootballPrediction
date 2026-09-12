@@ -60,8 +60,6 @@ from tests.helpers.agent_workflow_remote_scope_fixtures import (
     UNTRACKED_SCOPE,
     WORKFLOW_FILE,
     Repo,
-    _assert_error,
-    _code,
     _minimal_body,
     _resolve,
     _scope,
@@ -86,6 +84,20 @@ def gate_repo(tmp_path: Path) -> Repo:
 @pytest.fixture
 def scope_repo(tmp_path: Path) -> Repo:
     return make_scope_repo(tmp_path)
+
+
+def _code(exc_info: pytest.ExceptionInfo[MissionScopeError]) -> str:
+    """Return the coded reason a scope reference was refused."""
+
+    assert isinstance(exc_info.value, MissionScopeReferenceError), exc_info.value
+    return exc_info.value.code
+
+
+def _assert_error(errors: list[str], fragment: str) -> None:
+    """Assert the first gate error carries *fragment* (repository convention)."""
+
+    assert errors
+    assert fragment in errors[0]
 
 
 # ---------------------------------------------------------------------------

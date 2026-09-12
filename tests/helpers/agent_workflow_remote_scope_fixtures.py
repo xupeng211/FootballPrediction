@@ -15,14 +15,8 @@ import json
 from pathlib import Path
 import subprocess
 
-import pytest
-
 from scripts.ops.helpers import agent_workflow_scope_context as scope_context
-from scripts.ops.helpers.agent_workflow_contract import (
-    MissionScope,
-    MissionScopeError,
-    MissionScopeReferenceError,
-)
+from scripts.ops.helpers.agent_workflow_contract import MissionScope
 from tests.helpers.agentic_workflow_fixtures import (
     MISSION_ID,
     MISSION_SCOPE_PATH,
@@ -213,15 +207,3 @@ def _resolve(repo: Repo, body: str, *, head_sha: object = _USE_HEAD):
         repo_root=repo.path,
         head_sha=repo.head if head_sha is _USE_HEAD else head_sha,  # type: ignore[arg-type]
     )
-
-
-def _code(exc_info: pytest.ExceptionInfo[MissionScopeError]) -> str:
-    assert isinstance(exc_info.value, MissionScopeReferenceError), exc_info.value
-    return exc_info.value.code
-
-
-def _assert_error(errors: list[str], fragment: str) -> None:
-    """Assert the first gate error carries *fragment* (repository convention)."""
-
-    assert errors
-    assert fragment in errors[0]
