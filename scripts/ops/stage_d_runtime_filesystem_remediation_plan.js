@@ -385,14 +385,19 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
             'an ordinary cold-load by the runtime identity reproduces the accepted head transaction, authority state hash, observation count, STORE SHA256 and allocation authority SHA256 exactly',
             'a fresh process boundary reproduces the same cold-load result',
         ]),
-        // Rollback is the exact inverse of the apply order, so it is emitted in
-        // reverse: the mode is restored first, the ACL second, and the owner
-        // last, since chown can clear set-user/set-group bits.  Restoring the
-        // ACL through `setfacl --set` rewrites the mask, and the recorded mask is
-        // exactly the mode's group bits, so the mode is still the original one
-        // once the ACL is back.  `sequence` still names the apply step each entry
-        // undoes.
-        rollback: Object.freeze(operations.slice().reverse().map(operation => Object.freeze({
+        // Rollback is emitted in the SAME order as apply, not in reverse, and
+        // that is deliberate.  The constraints that fix the apply order fix the
+        // rollback order identically: a chown clears the set-user/set-group bits
+        // of a non-directory on this kernel even when the caller is privileged,
+        // so ownership has to be restored *before* the mode is written or the
+        // restored mode loses exactly the bits the pre-repair observation
+        // recorded; and restoring the ACL through `setfacl --set` rewrites the
+        // mask, so the mode has to be written after it.  Reversing the apply
+        // order put the chown last and silently produced a mode that was not
+        // `pre.mode` for any path whose ownership and special bits both moved.
+        // `sequence` still names the apply step each entry undoes; the array
+        // order is the order the entries are to be applied in.
+        rollback: Object.freeze(operations.slice().map(operation => Object.freeze({
             sequence: operation.sequence, path: operation.path, operation: operation.operation, content_impact: 'NONE',
             restore: Object.freeze({
                 uid: operation.pre.uid, gid: operation.pre.gid, mode: operation.pre.mode, dev: operation.pre.dev, ino: operation.pre.ino,

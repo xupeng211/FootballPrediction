@@ -499,9 +499,13 @@ test('16. a removable extended ACL requires complete, restorable evidence', t =>
     const rollback = plan.rollback.find(entry => entry.operation === 'REMOVE_EXTENDED_ACL');
     assert.deepEqual(rollback.restore.acl.named_user_perms, { [String(RUNTIME.uid)]: 'r-x' });
     assert.equal(rollback.restore.acl.mask, 'r-x');
-    // Rollback undoes the apply order, so the mode is put back first, then the
-    // ACL whose setfacl --set rewrites the mask, then the owner.
-    assert.deepEqual(plan.rollback.map(entry => entry.sequence), [...plan.rollback.map(entry => entry.sequence)].sort((left, right) => right - left));
+    // Rollback follows the apply order rather than reversing it, and on this
+    // path that means the ACL comes back before the mode that closes over it:
+    // `setfacl --set` rewrites the mask, so a mode written first would not
+    // survive it.  19b proves the other half of the same order — the owner
+    // before the mode — on a path whose special bits make it observable.
+    assert.deepEqual(plan.rollback.filter(entry => entry.path === target).map(entry => entry.operation), ['REMOVE_EXTENDED_ACL', 'CHMOD']);
+    assert.deepEqual(plan.rollback.map(entry => entry.sequence), plan.operations.map(operation => operation.sequence));
     // Only the operation that takes the ACL away carries the payload to put it
     // back; a CHMOD no longer touches ACL state, so it carries none.
     assert.equal(removal.restore_acl.entries.length > 0, true);
@@ -1641,6 +1645,77 @@ test('19. applying the plan in its emitted order lands exactly on the postcondit
     // plan is emitted again: an idempotent round trip, not a one-way door.
     assert.deepEqual(planner.buildRemediationPlan(evaluate(root, { aclObservations: { [store]: { available: true, ...structuredAcl(store) } } }))
         .operations.filter(item => item.path === store).map(item => item.operation), ['REMOVE_EXTENDED_ACL', 'CHMOD']);
+});
+
+test('19b. rollback restores ownership before the mode, so special bits survive it', t => {
+    const root = tempRoot('plan-rollback-special-bits');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'registry_delta.json');
+    // A path whose ownership AND special bits both move is the case a reversed
+    // rollback gets wrong: the chown runs last, clears the set-user bit the
+    // chmod just restored, and leaves a mode that is not the recorded one.  This
+    // kernel clears those bits on a chown of a non-directory even when the
+    // caller is privileged, so the order is not a privilege-dependent nicety.
+    //
+    // Group ownership is varied with real chgrp metadata where a second group
+    // exists and declared through the runtime identity where it does not, the
+    // same way test 6 does.  What the branches differ on is only whether the
+    // *forward* ownership step can be performed here; the order under test is
+    // the planner's in both, and both restore off the real filesystem.
+    const alternate = RUNTIME.groups.find(group => group !== RUNTIME.gid);
+    const identity = alternate === undefined ? Object.freeze({ ...RUNTIME, gid: RUNTIME.gid + 1 }) : RUNTIME;
+    if (alternate !== undefined) fs.chownSync(target, RUNTIME.uid, alternate); // real metadata change, unprivileged
+    fs.chmodSync(target, 0o4600); // set-user-ID plus the ordinary read/write triad
+    const before = contract.observeObject(target);
+    const beforeBytes = fs.readFileSync(target);
+    assert.equal(before.mode, 0o4600, 'the fixture must really carry a special bit, or this proves nothing');
+    assert.notEqual(before.gid, identity.gid, 'the fixture must really disagree about ownership');
+
+    const report = evaluate(root, { runtimeIdentity: identity });
+    assert.ok(codes(report).includes('UNEXPECTED_IDENTITY_RELATION'));
+    assert.ok(codes(report).includes('MODE_MISMATCH'));
+    const plan = planner.buildRemediationPlan(report);
+    const onTarget = plan.operations.filter(operation => operation.path === target);
+    assert.deepEqual(onTarget.map(operation => operation.operation), ['CHOWN', 'CHMOD'],
+        'the identity repair and the mode repair have to both be planned, or there is no rollback to test');
+    assert.equal(onTarget[0].post.uid, identity.uid, 'the ownership repair has to aim at the declared identity');
+    assert.equal(onTarget[0].post.gid, identity.gid, 'the ownership repair has to aim at the declared identity');
+
+    if (alternate === undefined) {
+        // This process belongs to exactly one group, so the planned chgrp - to a
+        // group the declared identity names and this process is not in - is
+        // EPERM and the pair cannot be applied as written.  Both steps are still
+        // performed, with the ownership step naming the identity the file really
+        // carries.  That is a real chown of a non-directory, and its consequence
+        // is asserted rather than assumed, because the rollback assertion below
+        // would otherwise pass vacuously on a kernel that left the special bits
+        // alone: with the bits intact, reversing the rollback changes nothing.
+        fs.chownSync(target, before.uid, before.gid);
+        assert.equal(fs.statSync(target).mode & 0o7777, 0o600,
+            'the chown must clear the set-user bit, or the rollback order this test falsifies would be unobservable here');
+        fs.chmodSync(target, 0o400);
+    } else {
+        for (const operation of onTarget) applyOperation(operation);
+    }
+    assert.equal(fs.statSync(target).mode & 0o7777, 0o400, 'apply lands on the contract postcondition');
+
+    // The rollback is applied in the order the manifest emits, never re-sorted
+    // here, because the emitted order is the property under test.
+    const rollback = plan.rollback.filter(entry => entry.path === target);
+    assert.deepEqual(rollback.map(entry => entry.operation), ['CHOWN', 'CHMOD'],
+        'ownership has to be restored before the mode, or the restored special bits are cleared again');
+    for (const entry of rollback) {
+        if (entry.operation === 'CHOWN') fs.chownSync(entry.path, entry.restore.uid, entry.restore.gid);
+        else if (entry.operation === 'REMOVE_EXTENDED_ACL') setAcl(['--set', entry.restore.acl.entries], entry.path);
+        else fs.chmodSync(entry.path, entry.restore.mode);
+    }
+    // Read back off the filesystem: the recorded mode is restored whole, not
+    // minus the bits the chown would have cleared.
+    assert.equal(fs.statSync(target).mode & 0o7777, before.mode, 'rollback must restore the exact pre-repair mode, special bits included');
+    assert.equal(fs.statSync(target).uid, before.uid);
+    assert.equal(fs.statSync(target).gid, before.gid);
+    assert.deepEqual(fs.readFileSync(target), beforeBytes, 'rollback must not touch content');
 });
 
 // ---------------------------------------------------------------------------

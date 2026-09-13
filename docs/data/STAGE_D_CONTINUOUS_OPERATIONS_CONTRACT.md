@@ -442,9 +442,14 @@ state hash, `OBSERVATION_COUNT=903`, `STORE_SHA256` and
 `ALLOCATION_AUTHORITY_SHA256`, repeated across a fresh process boundary.
 
 **Rollback.** The planner pairs every operation with a metadata-only rollback
-entry carrying the original uid/gid/mode/device/inode, and rollback is emitted
-in the exact reverse of the apply order — the ACL first, the mode second and the
-owner last, because `chown` can clear set-user/set-group bits. Restoring
+entry carrying the original uid/gid/mode/device/inode. Rollback is emitted in
+the **same** order as apply rather than in reverse, because the constraints are
+the same in both directions: `chown` clears the set-user/set-group bits of a
+non-directory on this kernel even for a privileged caller, so ownership must be
+restored before the mode is written, and `setfacl --set` rewrites the mask, so
+the mode must be written after the ACL is back. Rolling back in reverse would put
+the `chown` last and leave a path whose mode is not the recorded one whenever its
+ownership and its special bits have both moved. Restoring
 uid/gid/mode does fully undo a `CHOWN` or `CHMOD`, including the ACL mask: for a
 file carrying an extended ACL the group bits *are* the mask. It does **not**
 undo `REMOVE_EXTENDED_ACL`, which deletes named entries no mode change can bring
