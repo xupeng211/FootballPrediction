@@ -79,6 +79,31 @@ const RUNTIME = Object.freeze({ uid: process.getuid(), gid: process.getgid(), gr
 const FOREIGN = Object.freeze({ uid: RUNTIME.uid + 1, gid: RUNTIME.gid + 1, groups: Object.freeze([]), source: 'DECLARED' });
 const PACKAGE_FILES = contract.describeContract().immutable_package_file_set;
 
+// Whether the extended-ACL probe can run at all on this host, asked of the
+// CLI's own probe rather than re-derived here.  `getfacl` ships with the `acl`
+// package and the documented dev container does not have it (see
+// docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md), and the contract treats
+// an unobservable ACL as an evidence gap rather than a clean surface.  On such
+// a host a metadata-compliant tree is therefore still a violation and exits
+// BLOCKED, so every "a compliant tree exits 0 / plans NOT_REQUIRED" expectation
+// below is derived from this fact instead of hard-coded.  Only the verdict the
+// assertion demands moves; the fail-closed behaviour itself is never relaxed,
+// and every no-mutation assertion stays unconditional.
+const ACL_PROBE_AVAILABLE = inspectCli.probeAcl(__dirname).available === true;
+
+// The verdict a metadata-compliant tree produces on this host, in all three
+// places it is observed: the CLI's exit code, the report status and the plan.
+const COMPLIANT_EXIT = ACL_PROBE_AVAILABLE ? 0 : 2;
+const COMPLIANT_STATUS = ACL_PROBE_AVAILABLE ? 'COMPLIANT' : 'NONCOMPLIANT_BLOCKED';
+const COMPLIANT_PLAN_STATUS = ACL_PROBE_AVAILABLE ? 'NOT_REQUIRED' : 'BLOCKED';
+
+// The exit code a tree whose only violations are unrepairable ACL evidence
+// produces on this host: VIOLATION when the ACL dimension was observable,
+// BLOCKED when the gap itself is the ambiguous finding.
+function assertViolationExit(code, message) {
+    assert.equal(code, ACL_PROBE_AVAILABLE ? 3 : 2, message);
+}
+
 function tempRoot(label) {
     // The tree must not sit directly under a world-writable non-sticky parent,
     // so it is created inside a private container directory.
@@ -923,7 +948,7 @@ test('15c. the inspect CLI collects ACLs for a standalone allocation authority c
     makeFile(allocation, '{}', 0o444);
     const argv = [AUDIT_CLI, '--authority-root', root, '--allocation-authority', allocation, '--mode', 'audit', '--json'];
     const result = spawnSync(process.execPath, argv, { encoding: 'utf8' });
-    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.status, ACL_PROBE_AVAILABLE ? 0 : 2, result.stderr);
     const report = JSON.parse(result.stdout);
     // The artifact and every one of its ancestors must have been probed, or the
     // planner downstream has no restorable ACL for a path it may repair.
@@ -1171,7 +1196,7 @@ function runAuditCli(root, extra = []) {
         '--allocation-authority', path.join(root, 'allocation.authority.json'),
         '--ledger-root', path.join(root, '..', 'ledger'),
         ...extra], { encoding: 'utf8' });
-    assert.equal(result.status === 0 || result.status === 3, true, `unexpected CLI exit ${result.status}: ${result.stderr}`);
+    assert.equal(result.status === COMPLIANT_EXIT || result.status === 3 || result.status === 2, true, `unexpected CLI exit ${result.status}: ${result.stderr}`);
     return JSON.parse(result.stdout);
 }
 
@@ -1251,8 +1276,8 @@ test('18. a cold-load is only evidence for the identity it actually ran under', 
     assert.equal(foreign.evidence_for_declared_runtime_identity, false);
     assert.equal(foreign.status, 'COLD_LOAD_SUCCEEDED_UNDER_OTHER_IDENTITY');
     assert.notEqual(foreign.status, 'COLD_LOAD_SUCCEEDED');
-    assert.deepEqual(foreign.observed_identity, { uid: RUNTIME.uid, gid: RUNTIME.gid });
-    assert.deepEqual(foreign.declared_runtime_identity, { uid: FOREIGN.uid, gid: FOREIGN.gid });
+    assert.deepEqual(foreign.observed_identity, { uid: RUNTIME.uid, gid: RUNTIME.gid, groups: [...new Set(RUNTIME.groups)].sort((left, right) => left - right) });
+    assert.deepEqual(foreign.declared_runtime_identity, { uid: FOREIGN.uid, gid: FOREIGN.gid, groups: [] });
     assert.match(foreign.identity_note, /never to escalate/);
 
     // Run as the declared identity and the same call is real evidence.
@@ -1457,14 +1482,21 @@ test('20c. the CLI probes every surface the contract evaluates', t => {
     // is not a probed surface — the contract never reaches its ACL dimension —
     // so only the objects actually on disk are compared.
     const probed = inspectCli.collectTargetPaths(targets).filter(entry => fs.existsSync(entry));
-    const aclObservations = Object.fromEntries(probed.map(entry => [entry, { available: true, ...structuredAcl(entry) }]));
+    // A real getfacl read is not needed for the invariant being proved — that
+    // every evaluated surface was probed at all — and on a host without the
+    // tools the unavailability record is what the CLI's own probe produces.
+    // Either way the surface must come back something other than NOT_RUN, which
+    // is what "the probe set covers the evaluated set" means.
+    const aclObservations = Object.fromEntries(probed.map(entry => [entry, ACL_PROBE_AVAILABLE
+        ? { available: true, ...structuredAcl(entry) }
+        : { available: false, reason: 'getfacl-not-installed' }]));
     const report = contract.evaluateRuntimeFilesystemContract({ runtimeIdentity: RUNTIME, ...targets, aclObservations });
     const observable = report.surfaces.filter(entry => entry.observation.observable);
     assert.ok(observable.length > 0, 'the fixture must expose surfaces for this comparison to prove anything');
     for (const evaluation of observable) {
         assert.notEqual(evaluation.acl, 'NOT_RUN', `${evaluation.spec.path} is evaluated but never probed`);
     }
-    assert.equal(report.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'), false);
+    assert.equal(report.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'), !ACL_PROBE_AVAILABLE);
 });
 
 // ---------------------------------------------------------------------------
@@ -1553,6 +1585,88 @@ test('22. the planner refuses a path replaced since the report observed it', t =
 });
 
 // ---------------------------------------------------------------------------
+// 23. the cold-load is bound to the pinned generation
+// ---------------------------------------------------------------------------
+//
+// A pin is only worth taking if the reads are made against it.  The transaction
+// reader already accepts an expected root identity; leaving it unset meant a
+// root that replaced the pinned one between the pin and the cold-load was read
+// happily, and the resulting success was then reported as evidence about the
+// tree that had been pinned.
+
+test('23. the cold-load refuses a root that replaced the pinned generation', t => {
+    const root = tempRoot('cold-load-pinned');
+    t.after(() => cleanup(root));
+    const targets = buildReadableAuthority(path.dirname(root));
+    const generation = contract.openGovernedRoot(targets.authorityRoot, 'authority root');
+    try {
+        // The pinned generation is the one at the path, so the bound read works.
+        // Without this the negative case below would prove nothing.
+        assert.equal(inspectCli.coldLoadAuthority(targets, RUNTIME, generation).read_status, 'SUCCEEDED');
+        const stale = `${targets.authorityRoot}.stale`;
+        fs.renameSync(targets.authorityRoot, stale);
+        fs.cpSync(stale, targets.authorityRoot, { recursive: true });
+        assert.notEqual(fs.lstatSync(targets.authorityRoot).ino, generation.identity.ino, 'the fixture must really be a different object');
+        const bound = inspectCli.coldLoadAuthority(targets, RUNTIME, generation);
+        assert.equal(bound.read_status, 'FAILED', 'a bound read must not follow the path to a different object');
+        assert.match(bound.message, /expected authority generation/);
+        // The same tree read without a pin succeeds — the replacement is
+        // readable, so it is the binding, not an access failure, doing the work.
+        assert.equal(inspectCli.coldLoadAuthority(targets, RUNTIME).read_status, 'SUCCEEDED');
+    } finally {
+        contract.closeGovernedRoot(generation);
+    }
+});
+
+// ---------------------------------------------------------------------------
+// 24. cold-load evidence binds the effective group set
+// ---------------------------------------------------------------------------
+//
+// A governed ancestor can be traversable through a supplementary group.  A
+// process that reached the authority that way did perform a real read, but not
+// one the declared runtime could repeat: uid/gid equality alone would report it
+// as evidence about an identity that never demonstrated anything.
+
+test('24. cold-load evidence binds the effective group set, not just uid/gid', t => {
+    const root = tempRoot('cold-load-groups');
+    t.after(() => cleanup(root));
+    const targets = buildReadableAuthority(path.dirname(root));
+    const extraGroup = RUNTIME.gid + 4321;
+    const widened = Object.freeze({ uid: RUNTIME.uid, gid: RUNTIME.gid, groups: Object.freeze([...RUNTIME.groups, extraGroup]), source: 'DECLARED' });
+    const result = inspectCli.coldLoadAuthority(targets, widened);
+    // The read itself still succeeds; it is the evidence claim that must not.
+    assert.equal(result.read_status, 'SUCCEEDED');
+    assert.equal(result.binds_declared_runtime_groups, false);
+    assert.equal(result.binds_declared_runtime_identity, false);
+    assert.equal(result.evidence_for_declared_runtime_identity, false);
+    assert.ok(result.declared_runtime_identity.groups.includes(extraGroup), 'the group set that broke the binding must be recorded');
+    // Duplicates are the same set, so normalising must not break a valid claim.
+    const duplicated = Object.freeze({ uid: RUNTIME.uid, gid: RUNTIME.gid, groups: Object.freeze([...RUNTIME.groups, ...RUNTIME.groups]), source: 'DECLARED' });
+    assert.equal(inspectCli.coldLoadAuthority(targets, duplicated).binds_declared_runtime_identity, true);
+    assert.equal(inspectCli.coldLoadAuthority(targets, RUNTIME).evidence_for_declared_runtime_identity, true);
+});
+
+test('24b. the CLI report carries the group difference that broke the binding', t => {
+    const root = tempRoot('cold-load-groups-cli');
+    t.after(() => cleanup(root));
+    const targets = buildReadableAuthority(path.dirname(root));
+    const extraGroup = RUNTIME.gid + 4321;
+    const result = spawnSync(process.execPath, [AUDIT_CLI,
+        '--authority-root', targets.authorityRoot,
+        '--allocation-authority', targets.allocationArtifactPath,
+        '--runtime-groups', [...RUNTIME.groups, extraGroup].join(','),
+        '--cold-load'], { encoding: 'utf8' });
+    assert.notEqual(result.status, 1, result.stderr);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.cold_load.read_status, 'SUCCEEDED');
+    assert.equal(payload.cold_load.binds_declared_runtime_groups, false);
+    assert.equal(payload.cold_load.binds_declared_runtime_identity, false);
+    assert.equal(payload.cold_load.evidence_for_declared_runtime_identity, false);
+    assert.ok(payload.cold_load.declared_runtime_identity.groups.includes(extraGroup));
+    assert.deepEqual(payload.cold_load.observed_identity.groups, [...new Set(RUNTIME.groups)].sort((left, right) => left - right));
+});
+
+// ---------------------------------------------------------------------------
 // 13. ordinary cold-load succeeds in a fresh process/identity boundary
 // ---------------------------------------------------------------------------
 
@@ -1571,6 +1685,8 @@ function probe(reportExpression, root) {
         }));
     `;
     const result = spawnSync(process.execPath, ['-e', script, root], { encoding: 'utf8' });
+    // The script writes a report and never sets an exit code; only a throw can
+    // change it.
     assert.equal(result.status, 0, result.stderr);
     return JSON.parse(result.stdout);
 }
@@ -1708,7 +1824,7 @@ test('14b. running the real CLI attempts no mutation and no privileged command',
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.error, undefined, `the CLI attempted a forbidden operation: ${payload.error}`);
     assert.deepEqual(payload.calls, [], 'the CLI must attempt no mutation and no privileged command');
-    assert.equal(payload.exitCode, 0, 'a compliant tree must exit COMPLIANT');
+    assert.equal(payload.exitCode, COMPLIANT_EXIT, `a compliant tree must exit ${COMPLIANT_EXIT} on this host`);
 });
 
 test('14c. the audit CLI mutates neither metadata nor content', t => {
@@ -1734,14 +1850,14 @@ test('14c. the audit CLI mutates neither metadata nor content', t => {
         AUDIT_CLI, '--authority-root', root, '--allocation-authority', path.join(root, 'allocation.authority.json'),
         '--ledger-root', ledger, '--mode=plan', '--cold-load', '--json',
     ], { encoding: 'utf8' });
-    assert.equal(result.status, 0, result.stderr); // compliant tree
+    assert.equal(result.status, COMPLIANT_EXIT, result.stderr); // compliant tree, as far as this host can observe
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.production_mutation_performed, false);
     assert.equal(payload.mutating_capability_present, false);
     assert.equal(payload.production_permission_mutated, false);
     assert.equal(payload.stage_d_started, false);
     assert.equal(payload.provider_request_made, false);
-    assert.equal(payload.plan.status, 'NOT_REQUIRED');
+    assert.equal(payload.plan.status, COMPLIANT_PLAN_STATUS);
     assert.equal(payload.plan.execution_authorized, false);
     assert.deepEqual(snapshot(), before);
 });
@@ -1762,8 +1878,8 @@ test('14d. the audit CLI rejects unknown flags, refuses an apply mode, and never
     // A damaged tree exits with the violation code and reports it, rather than repairing it.
     fs.chmodSync(path.join(root, 'STORE.json'), 0o600);
     const damaged = run(['--authority-root', root, '--json']);
-    assert.equal(damaged.status, 3);
-    assert.equal(JSON.parse(damaged.stdout).status, 'NONCOMPLIANT_REPAIRABLE');
+    assertViolationExit(damaged.status, 'a damaged tree exits with the violation code');
+    assert.equal(JSON.parse(damaged.stdout).status, ACL_PROBE_AVAILABLE ? 'NONCOMPLIANT_REPAIRABLE' : 'NONCOMPLIANT_BLOCKED');
     assert.equal(fs.lstatSync(path.join(root, 'STORE.json')).mode & 0o7777, 0o600);
 });
 

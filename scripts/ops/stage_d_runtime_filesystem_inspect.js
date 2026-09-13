@@ -271,16 +271,47 @@ function collectContentHashes(targets) {
 // failure this contract exists to detect pass as a success.  The result is
 // therefore bound to the identity it was actually observed under, and a
 // mismatch is reported as such rather than compensated for by privilege.
-function coldLoadAuthority(targets, declaredRuntimeIdentity) {
+//
+// Equality of uid/gid is not the whole identity.  A governed ancestor can be
+// traversable through a supplementary group, and a process that reached the
+// authority that way did so with a capability the declared runtime does not
+// have: the read is real, but it is not evidence about the declared identity.
+// The effective group set is therefore compared as well, and both sets are
+// recorded in the result so the claim can be checked rather than trusted.
+function effectiveGroups(groups) {
+    return Object.freeze([...new Set((groups || []).filter(Number.isInteger))].sort((left, right) => left - right));
+}
+
+function sameGroups(observed, declared) {
+    const left = effectiveGroups(observed);
+    const right = effectiveGroups(declared);
+    return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+// Whether the read about to be performed is evidence about the declared
+// identity or merely a read that happened under a different one.  Both halves
+// are reported separately so the output says which one failed.
+function identityBinding(observed, declared) {
+    if (declared === null) return Object.freeze({ binds: false, groups: false });
+    const groups = sameGroups(observed.groups, declared.groups);
+    const binds = observed.uid === declared.uid && observed.gid === declared.gid && groups;
+    return Object.freeze({ binds, groups });
+}
+
+function coldLoadAuthority(targets, declaredRuntimeIdentity, generation = null) {
     const { openMarketEvidenceAuthoritySnapshot } = require('../../src/infrastructure/market_evidence/authorityReader');
     const observed = contract.processIdentity({ source: 'PROCESS' });
     const declared = declaredRuntimeIdentity || null;
-    const binds = declared !== null && observed.uid === declared.uid && observed.gid === declared.gid;
+    const binding = identityBinding(observed, declared);
     let read;
     try {
         const snapshot = openMarketEvidenceAuthoritySnapshot({
             storeRoot: targets.authorityRoot,
             allocationArtifactPath: targets.allocationArtifactPath,
+            // Bound to the pinned generation when the caller has one, so the
+            // bytes this evidence is drawn from cannot come from a root that
+            // replaced the pinned one after it was opened.
+            ...(generation ? { expectedRootIdentity: generation.identity } : {}),
         });
         read = Object.freeze({
             read_status: 'SUCCEEDED',
@@ -294,22 +325,32 @@ function coldLoadAuthority(targets, declaredRuntimeIdentity) {
     const succeeded = read.read_status === 'SUCCEEDED';
     return Object.freeze({
         ...read,
-        status: succeeded ? (binds ? 'COLD_LOAD_SUCCEEDED' : 'COLD_LOAD_SUCCEEDED_UNDER_OTHER_IDENTITY') : 'COLD_LOAD_FAILED',
-        observed_identity: Object.freeze({ uid: observed.uid, gid: observed.gid }),
-        declared_runtime_identity: declared === null ? null : Object.freeze({ uid: declared.uid, gid: declared.gid }),
-        binds_declared_runtime_identity: binds,
+        status: succeeded ? (binding.binds ? 'COLD_LOAD_SUCCEEDED' : 'COLD_LOAD_SUCCEEDED_UNDER_OTHER_IDENTITY') : 'COLD_LOAD_FAILED',
+        observed_identity: Object.freeze({ uid: observed.uid, gid: observed.gid, groups: effectiveGroups(observed.groups) }),
+        declared_runtime_identity: declared === null ? null : Object.freeze({ uid: declared.uid, gid: declared.gid, groups: effectiveGroups(declared.groups) }),
+        binds_declared_runtime_identity: binding.binds,
+        binds_declared_runtime_groups: binding.groups,
         // The single field a Phase B post-repair proof may rely on: the read
         // both succeeded and was performed as the identity that must cold-load
         // the authority in production.
-        evidence_for_declared_runtime_identity: succeeded && binds,
-        identity_note: binds
-            ? 'the cold-load ran as the declared runtime identity'
-            : `the cold-load ran as ${observed.uid}:${observed.gid}, which is not the declared runtime identity ${declared === null ? 'unknown' : `${declared.uid}:${declared.gid}`}; this result must not be used as proof that the declared identity can cold-load, and the fix is to run the audit as that identity, never to escalate`,
+        evidence_for_declared_runtime_identity: succeeded && binding.binds,
+        identity_note: binding.binds
+            ? 'the cold-load ran as the declared runtime identity, supplementary groups included'
+            : `the cold-load ran as ${observed.uid}:${observed.gid} with supplementary groups [${effectiveGroups(observed.groups).join(', ')}], which is not the declared runtime identity ${declared === null ? 'unknown' : `${declared.uid}:${declared.gid} with groups [${effectiveGroups(declared.groups).join(', ')}]`}; this result must not be used as proof that the declared identity can cold-load, and the fix is to run the audit as that identity, never to escalate`,
     });
 }
 
-function readStoreAndAllocationHashes(targets) {
-    const store = contract.sha256OfReadableFile(path.join(targets.authorityRoot, 'STORE.json'));
+// STORE.json is read through the pinned descriptor rather than by re-resolving
+// the path, and that is not a detail: `/proc/self/fd/<fd>` keeps resolving to
+// the directory that was opened even after the path has been re-pointed at a
+// replacement, so the hash belongs to the generation the report describes
+// instead of to whatever now sits at the path.  The allocation authority may
+// live outside the authority root and has no pinned descriptor of its own, so
+// it is hashed by path — the generation re-check taken after every read is what
+// covers that one.
+function readStoreAndAllocationHashes(targets, generation = null) {
+    const storeRoot = generation ? `/proc/self/fd/${generation.fd}` : targets.authorityRoot;
+    const store = contract.sha256OfReadableFile(path.join(storeRoot, 'STORE.json'));
     const allocation = targets.allocationArtifactPath ? contract.sha256OfReadableFile(targets.allocationArtifactPath) : Object.freeze({ status: 'NOT_PROVIDED' });
     return Object.freeze({ store_sha256: store, allocation_authority_sha256: allocation });
 }
@@ -420,6 +461,18 @@ function main(argv = process.argv.slice(2), { stdout = process.stdout } = {}) {
             contentHashes: collectContentHashes(targets),
         });
         const plan = args['--mode'] === 'plan' ? planner.buildRemediationPlan(report) : null;
+        // The cold-load and the headline hashes are reads too, so they happen
+        // before the generation is re-verified, not after: taking them in the
+        // check's arguments would leave them running after the check had
+        // already passed, and a root replaced in that window would contribute
+        // to the output while `generation_recheck` still reported "not
+        // replaced".  Both are additionally bound to the pinned generation —
+        // the reader rejects a root whose device/inode is not the pinned one,
+        // and STORE.json is hashed through the pinned descriptor — so a
+        // replacement produces a read of the pinned tree rather than a mix of
+        // two trees.
+        const coldLoad = args['--cold-load'] ? coldLoadAuthority(targets, runtimeIdentity, generation) : null;
+        const artifactHashes = readStoreAndAllocationHashes(targets, generation);
         // Re-verify the pinned generation after the last read and before anything
         // is emitted.  A replacement here invalidates the whole result, so the
         // audit fails closed instead of printing a plan built from a tree that is
@@ -428,8 +481,8 @@ function main(argv = process.argv.slice(2), { stdout = process.stdout } = {}) {
         if (drift) throw Object.assign(new Error(drift.message), { code: drift.code });
         // The plan is the point of plan mode, so it is always emitted there;
         // --json additionally returns the full per-surface observation detail.
-        const result = summarize(report, plan, args['--cold-load'] ? coldLoadAuthority(targets, runtimeIdentity) : null,
-            readStoreAndAllocationHashes(targets), Object.freeze({ replaced: false, pinned: report.authority_generation }));
+        const result = summarize(report, plan, coldLoad, artifactHashes,
+            Object.freeze({ replaced: false, pinned: report.authority_generation, checked_after_all_reads: true }));
         const detail = args['--json'] ? { surfaces: report.surfaces, authority_generation: report.authority_generation } : {};
         stdout.write(`${JSON.stringify({ ...result, ...detail, plan }, null, 2)}\n`);
         return exitCodeFor(report);
