@@ -15,6 +15,7 @@ const {
     assertNameIsNotSecret,
 } = require('../../../../src/infrastructure/market_evidence/backup/snapshotInputs');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
+const { isGovernedProductionPath } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 
 // Enumerating the governed inputs walks a real authority tree, and the whole
 // file is offline by construction.  Sealing the file rather than one chosen
@@ -223,4 +224,42 @@ test('no snapshot input root may point into the governed production area', t => 
     const neighbour = path.join(tempDir(t, 'stage-d-backup-neighbour-'), 'data', 'market_evidence', 'live-2');
     fs.mkdirSync(neighbour, { recursive: true });
     assert.throws(() => enumerate({ authorityRoot: neighbour }), error => error instanceof SnapshotIntegrityError && /STORE\.json is missing/.test(error.message));
+});
+
+// The refusal above answers "does this path spell the governed area", which
+// `path.resolve` answers without touching the filesystem -- and that is exactly
+// why it cannot see a symlinked ancestor.  A root reached through one spells
+// the governed area nowhere while every read through it lands inside, so the
+// real location has to be refused as well.  Each input kind is exercised here
+// for the same reason each one is exercised above: a guard that covered only
+// --authority-root would leave the hole open through the ledger, the allocation
+// artifact, the quota configuration or run state.
+test('no snapshot input root may reach the governed production area through a symlinked ancestor', t => {
+    const base = tempDir(t, 'stage-d-backup-prod-link-');
+    const production = path.join(base, 'elsewhere', 'data', 'market_evidence', 'live');
+    fs.mkdirSync(production, { recursive: true });
+    fs.writeFileSync(path.join(production, 'STORE.json'), '{}');
+    const link = path.join(base, 'link');
+    fs.symlinkSync(production, link);
+
+    assert.equal(isGovernedProductionPath(link), false, 'the lexical check must not be what refuses these paths');
+    assert.equal(fs.realpathSync(link), fs.realpathSync(production), 'these paths must really land in the governed area');
+
+    const attempts = [
+        ['the authority root', { authorityRoot: link }],
+        ['a directory below the authority root', { authorityRoot: path.join(link, 'committed') }],
+        ['the ledger root', { ledgerRoot: link }],
+        ['the allocation artifact', { allocationArtifactPath: path.join(link, 'STORE.json') }],
+        ['the quota configuration', { quotaConfigPath: path.join(link, 'STORE.json') }],
+        ['a run state file', { runStateInputs: [path.join(link, 'STORE.json')] }],
+        ['a run state directory', { runStateInputs: [link] }],
+    ];
+
+    for (const [label, overrides] of attempts) {
+        assert.throws(
+            () => enumerate(overrides),
+            error => error instanceof SnapshotIntegrityError && /resolve into the governed production area|must never be the governed production area/.test(error.message),
+            `${label} must be refused when it is reached through a symlinked ancestor`,
+        );
+    }
 });

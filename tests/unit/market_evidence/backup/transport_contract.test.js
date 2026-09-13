@@ -11,7 +11,7 @@ const R2_TRANSPORT_PATH = require.resolve('../../../../src/infrastructure/market
 
 const backup = require('../../../../src/infrastructure/market_evidence/backup');
 const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
-const { createLocalTransport, canonicalizeKey } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
+const { createLocalTransport, canonicalizeKey, isGovernedProductionPath } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const {
     REQUIRED_TRANSPORT_METHODS,
     FORBIDDEN_TRANSPORT_METHODS,
@@ -107,6 +107,39 @@ test('the local transport refuses to target the governed production area', t => 
         () => createLocalTransport({ root: forbidden }),
         error => error instanceof SnapshotIntegrityError && /governed production area/.test(error.message)
     );
+});
+
+// `path.resolve` never asks the filesystem, so a root reached through a
+// symlinked ancestor spells none of the governed area while every read and
+// write through it lands inside it.  The lexical denylist is real but is not
+// the whole question, and the lstat of the final component cannot answer it
+// either: the link is higher up, so the final component is an ordinary
+// directory.  The assertion that the literal check does *not* refuse this path
+// is what makes the test fail if the physical arm is ever removed, rather than
+// passing for the reason the bug already satisfied.
+test('a root reached through a symlinked ancestor is refused', t => {
+    const base = tempRoot(t);
+    const production = path.join(base, 'elsewhere', 'data', 'market_evidence', 'live', 'nested');
+    fs.mkdirSync(production, { recursive: true });
+    const link = path.join(base, 'link');
+    fs.symlinkSync(path.dirname(production), link);
+    const throughLink = path.join(link, 'nested');
+
+    assert.equal(isGovernedProductionPath(throughLink), false, 'the lexical check must not be what refuses this path');
+    assert.equal(fs.realpathSync(throughLink), fs.realpathSync(production), 'the path must really land in the governed area');
+    assert.throws(
+        () => createLocalTransport({ root: throughLink }),
+        error => error instanceof SnapshotIntegrityError && /resolve into the governed production area/.test(error.message)
+    );
+});
+
+test('a root whose own real location is benign is still accepted', t => {
+    const real = tempRoot(t);
+    fs.mkdirSync(path.join(real, 'generation'));
+    const link = path.join(tempRoot(t), 'link');
+    fs.symlinkSync(real, link);
+    const transport = createLocalTransport({ root: path.join(link, 'generation') });
+    assert.equal(assertTransportContract(transport), transport, 'the physical arm must refuse the governed area, not symlinks in general');
 });
 
 test('the local transport has no default root', () => {

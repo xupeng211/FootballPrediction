@@ -399,6 +399,32 @@ substring, so `.../live-2` is not condemned by a proximity to `.../live`. A test
 asserts that the production area is named exactly once in executable code, that
 the single mention is inside that denylist, and that no ops CLI names it at all.
 
+The refusal is decided by **where a path lands**, not only by what it spells. The
+lexical match is necessary but not sufficient, because `path.resolve` never asks
+the filesystem: a path reached through a symlinked ancestor spells the governed
+area nowhere, and its final component is an ordinary directory, while every read
+and write through it lands inside. A guard built on the lexical match alone would
+accept such a root and then write a snapshot into the authority it exists to
+protect — which is precisely the accident, not an exotic attack, the guard is
+there to prevent. Every accepted root, input and destination is therefore also
+resolved through its longest existing prefix and the whole-segment match is run
+against that real location; the not-yet-existing tail is appended unchanged, so a
+destination that is safe to create is still accepted, and one that would land in
+the governed area is refused before anything is created. Both arms are asserted,
+and each site that accepts a path has a test that fails if the second arm is
+removed.
+
+This is a check on **acceptance**, and it is honest about that. A root is
+resolved when it is accepted; the transport refuses symbolic links anywhere
+inside its root on every access, but the ancestor chain above the root is not
+re-resolved per operation. Moving a symlink into that chain *after* a transport
+has been constructed is outside what this guard covers — the tooling is
+explicit-invocation, single-process and names its roots once, so the window this
+leaves is one an operator would have to open deliberately against themselves,
+and closing it would mean re-resolving the caller's own parent directories on
+every write, which no check of this kind can do meaningfully while the same
+actor can also write the files directly.
+
 **Explicit is not the same as safe**, so the refusal is applied on the read side
 as well as the write side:
 

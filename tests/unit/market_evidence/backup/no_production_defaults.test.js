@@ -33,7 +33,7 @@ test.after(() => {
     tripwire.restore();
 });
 const backup = require('../../../../src/infrastructure/market_evidence/backup');
-const { createLocalTransport, isGovernedProductionPath, PRODUCTION_MARKERS } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
+const { createLocalTransport, isGovernedProductionPath, assertNotGovernedProductionPath, PRODUCTION_MARKERS } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { FORBIDDEN_TRANSPORT_METHODS, SnapshotIntegrityError, TransportContractError, assertTransportContract } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { executeRestore } = require('../../../../src/infrastructure/market_evidence/backup/restoreExecutor');
 
@@ -144,6 +144,37 @@ test('the governed production area is recognised and refused', async t => {
         executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: path.join(PRODUCTION_AREA, 'restored') }),
         error => error instanceof SnapshotIntegrityError && /governed production area/.test(error.message)
     );
+});
+
+// The predicate stays a pure function of the path's text, which is what makes
+// the denylist readable and what several assertions above depend on.  The guard
+// that actually protects the tooling has to answer a strictly larger question:
+// a path can spell the governed area nowhere and still land inside it, because
+// `path.resolve` never asks the filesystem.  Both arms are asserted here so
+// neither can be dropped without a failure, and the acceptance case is asserted
+// so the physical arm cannot pass by refusing paths in general.
+test('the refusal answers where a path lands, not only what it spells', t => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-resolve-'));
+    t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+    const production = path.join(base, 'elsewhere', 'data', 'market_evidence', 'live');
+    fs.mkdirSync(path.join(production, 'nested'), { recursive: true });
+    const link = path.join(base, 'link');
+    fs.symlinkSync(production, link);
+
+    const throughLink = path.join(link, 'nested');
+    assert.equal(isGovernedProductionPath(throughLink), false, 'the lexical arm alone cannot see this path');
+    assert.throws(
+        () => assertNotGovernedProductionPath(throughLink, 'a root'),
+        error => error instanceof SnapshotIntegrityError && /resolve into the governed production area/.test(error.message)
+    );
+
+    assert.throws(
+        () => assertNotGovernedProductionPath(path.join(PRODUCTION_AREA, 'nested'), 'a root'),
+        error => error instanceof SnapshotIntegrityError && /must never be the governed production area/.test(error.message)
+    );
+
+    const benign = path.join(base, 'benign');
+    assert.equal(assertNotGovernedProductionPath(benign, 'a root'), benign, 'a path that neither spells nor lands in the area is accepted');
 });
 
 test('every entry point that needs a root refuses to invent one', async t => {

@@ -61,9 +61,52 @@ function isGovernedProductionPath(target) {
     });
 }
 
+// `path.resolve` is lexical: it never asks the filesystem, so a path reached
+// through a symlinked ancestor resolves to something that names none of the
+// governed area while every read and write through it lands inside it.  A root
+// such as `<scratch>/link/nested`, where `link` points at the governed area, is
+// refused by neither the literal check above -- its text contains no
+// `data/market_evidence/live` -- nor by the callers' own `lstat` of the final
+// component, which sees an ordinary directory because the link is higher up.
+// The real location therefore has to be checked as well, and it is the only
+// thing that can answer the question the check is actually asking.
+//
+// Only the longest *existing* prefix can be resolved: a path that does not
+// exist yet has no real location, and a non-existent tail names nothing on
+// disk.  Resolving the prefix and appending the tail unchanged gives the path
+// the target will have once those directories are created, so a destination
+// that is safe to create is still accepted and one that would land in the
+// governed area is refused before anything is created.
+//
+// A path that cannot be resolved for any reason other than a missing prefix --
+// a component that is not a directory, or a permission refusal -- yields null
+// and only the lexical arm applies.  That is not a way in: the callers' own
+// existence and type checks refuse those paths, and so does the operating
+// system, so the unresolvable set is disjoint from the set that can be read.
+function realLocationOf(target) {
+    let prefix = path.resolve(target);
+    const tail = [];
+    for (;;) {
+        try {
+            const real = fs.realpathSync(prefix);
+            return tail.length === 0 ? real : path.join(real, ...tail);
+        } catch (error) {
+            if (error.code !== 'ENOENT') return null;
+            const parent = path.dirname(prefix);
+            if (parent === prefix) return null;
+            tail.unshift(path.basename(prefix));
+            prefix = parent;
+        }
+    }
+}
+
 function assertNotGovernedProductionPath(target, label, ErrorType = SnapshotIntegrityError) {
     if (isGovernedProductionPath(target)) {
         throw new ErrorType(`${label} must never be the governed production area: ${path.resolve(target)}`);
+    }
+    const real = realLocationOf(target);
+    if (real !== null && isGovernedProductionPath(real)) {
+        throw new ErrorType(`${label} must never resolve into the governed production area: ${real}`);
     }
     return path.resolve(target);
 }

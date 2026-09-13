@@ -177,6 +177,31 @@ test('a restore destination in the governed production area is refused before an
     assert.equal(fs.existsSync(tainted), false);
 });
 
+// A destination is free to not exist yet, so the refusal cannot depend on the
+// destination's own real path -- there is none.  What it depends on is where
+// the destination would land, which is the real location of its parent plus the
+// final segment.  A symlinked ancestor is the case that separates the two: the
+// path spells the governed area nowhere, and its parent is a real directory.
+test('a restore destination reached through a symlinked ancestor is refused before anything is created', async t => {
+    const { transport, report } = await sealed(t, 'productionlink');
+    const production = path.join(temporary(t, 'stage-d-elsewhere-'), 'data', 'market_evidence', 'live');
+    // The destination's parent is an ordinary directory *inside* the governed
+    // area, not the link itself.  A check that stopped at "the parent must not
+    // be a symbolic link" passes here, so this shape is the one that isolates
+    // the question the refusal is supposed to answer: where does it land.
+    fs.mkdirSync(path.join(production, 'nested'), { recursive: true });
+    const link = path.join(temporary(t, 'stage-d-link-'), 'link');
+    fs.symlinkSync(production, link);
+    const destination = path.join(link, 'nested', 'restored');
+    assert.equal(fs.lstatSync(path.dirname(destination)).isSymbolicLink(), false, 'the parent must be an ordinary directory for this test to assert what it claims');
+
+    await assert.rejects(
+        executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: destination }),
+        error => error instanceof SnapshotIntegrityError && /resolve into the governed production area/.test(error.message)
+    );
+    assert.equal(fs.existsSync(path.join(production, 'nested', 'restored')), false, 'nothing may be created inside the governed area');
+});
+
 test('a destination nested in a source root, or equal to one, is refused', async t => {
     const authorityRoot = temporary(t, 'stage-d-source-');
     const beside = path.join(temporary(t, 'stage-d-elsewhere-'), 'restored');
