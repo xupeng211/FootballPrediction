@@ -203,12 +203,20 @@ jobs:
               "${GATE_PR_BASE_SHA}" \
               "${GATE_PR_HEAD_SHA}")" || exit $?
             read -r AI_GATE_BASE_REF AI_GATE_HEAD_REF <<< "${AI_GATE_REFS}"
+            # Scope enforcement is enabled WITHOUT any scope-file argument, so
+            # ai_workflow_gate.py resolves THIS PR's mission scope itself: the
+            # PR body may only name a tracked contract under
+            # docs/agentic/missions/, and the contract bytes are read from the
+            # exact PR HEAD commit (--head-ref) — never from the checkout, which
+            # GitHub builds from the pull-request merge ref.  The Python gate
+            # owns all validation; this YAML only orchestrates.
             python3 scripts/ops/ai_workflow_gate.py \
               --pr-body-file "${PR_BODY_FILE}" \
               --base-ref "${AI_GATE_BASE_REF}" \
               --head-ref "${AI_GATE_HEAD_REF}" \
               --block-matrix \
-              --enforce-agent-workflow-contract
+              --enforce-agent-workflow-contract \
+              --enforce-agent-workflow-scope
           elif [ "${GATE_EVENT_NAME}" = "workflow_dispatch" ]; then
             # Manual dispatch — explicit base_sha input is required and must
             # be a full 40-hex ancestor of the dispatched commit.  The head

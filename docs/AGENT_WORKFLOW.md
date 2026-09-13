@@ -224,9 +224,8 @@ HEAD 的 `schemas/agentic/mission_scope.schema.json` 合同（通常放在
 authorized/excluded paths or prefixes、protected invariants 和 forbidden side effects；
 缺失、无效或空授权一律 fail-closed，exclude 优先且匹配按目录边界执行。当前 mission
 的 preflight 会验证这个文件的字节与待审 exact HEAD 一致；不会把另一个 mission 的
-路径列表当作默认值。远端永久 PR gate 只启用可复用的 metadata/lifecycle 合同，不
-自动启用任何 bootstrap mission scope；只有显式提供 scope context 的受控调用才做
-mission-scope check。merge readiness 和 reviewer 会再次读取同一 scope contract。
+路径列表当作默认值。远端 required PR gate 同样对每个 PR 强制该 PR 自己的 mission
+scope（见 §11.5）；merge readiness 和 reviewer 会再次读取同一 scope contract。
 PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready PR=<number>`
 读取。
 
@@ -352,11 +351,37 @@ PENDING review、缺少 PR context 或缺少 protected-invariant evidence 都返
 ### 11.5 CI enforcement 与 staged review
 
 GitHub `Production Gate` 的 PR AI Workflow Gate 开启
-`--enforce-agent-workflow-contract`，所以 required remote CI 始终要求有效的最终
-STRICT review evidence，并验证 Task type / Workflow class / Documentation Impact / lifecycle；它不
-加载或执行某一个 PR 的 mission scope，因而不会把 #1904 的 bootstrap 路径列表当成
-所有 PR 的全局限制。需要 scope 的本地/受控 gate 必须显式提供当前合同；不能把
-mission ID、PR title 或 PENDING 当作授权。review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
+`--enforce-agent-workflow-contract` 与 `--enforce-agent-workflow-scope`，所以 required
+remote CI 始终要求有效的最终 STRICT review evidence，并验证 Task type / Workflow
+class / Documentation Impact / lifecycle，同时对每个 STRICT/agentic PR 强制该 PR 自己的
+mission scope。
+
+**Per-mission scope enforcement（F-03-A）。** PR path 不传 `--mission-scope-file`；gate
+自己解析出唯一的 tracked 合同：
+
+```
+PR body 的 `## Scope` 表 → 唯一 `Mission scope contract` 引用
+  → 引用必须是 docs/agentic/missions/<mission-id>.json（唯一允许的根）
+  → 从 exact `GATE_PR_HEAD_SHA` 的 commit object 读取合同字节
+  → 合同 schema / mission ID / task type / workflow class 与 PR 元数据绑定
+  → 用 canonical 的 validate_mission_scope() 校验全部 changed paths
+```
+
+PR body 只能“选择”哪一份 tracked 合同；它绝不能提供授权内容，也不是文件系统路径。
+因此 `actions/checkout` 检出的 `refs/pull/N/merge` 不会被当成授权来源：合同字节来自
+`GATE_PR_HEAD_SHA` 这个 commit 本身，而不是 checkout、base SHA、local main、其他 PR
+或旧 artifact。引用缺失/空/多个/冲突、绝对路径、`..`、越出允许根、非普通跟踪文件、
+HEAD 上不存在、JSON/合同无效、mission/task/workflow 不匹配一律 fail-closed；
+`excluded_*` 仍然优先于授权，前缀匹配仍按目录边界，空授权仍然 fail-closed。gate 会在
+stdout 打印 `REMOTE_SCOPE_*` 机器证据行（reference、exact head SHA、合同 sha256、
+schema/mission match、`REMOTE_SCOPE_CHANGED_PATH_AUTHORIZATION`），使绿色 run 可以被
+证明真的执行了新行为，而不是碰巧通过。
+
+`push` 与 `workflow_dispatch` 事件保持各自的 diff-only / 显式 `base_sha` 语义，不开启
+scope enforcement，也不会伪造 PR mission context；所有 PR 正文只能作为不可信输入
+解析，绝不执行、绝不传给 shell，Git 只以 argv 形式调用。
+
+review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_RESOLVED
 和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
 PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
 required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。
