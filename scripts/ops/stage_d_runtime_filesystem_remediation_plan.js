@@ -31,6 +31,9 @@ const MODE_FINDING_CODES = Object.freeze(new Set(['MODE_MISMATCH', 'CONTENT_WRIT
 const IDENTITY_FINDING_CODES = Object.freeze(new Set(['UNEXPECTED_IDENTITY_RELATION']));
 // An extended ACL exists; the exact mode is meant to be the whole policy.
 const ACL_FINDING_CODES = Object.freeze(new Set(['EXTENDED_ACL_PRESENT']));
+// Both causes converge on the same missing postcondition: without an exact mode
+// to aim at, neither a chmod nor an ACL removal is a bounded operation.
+const MODE_OR_ACL_FINDING_CODES = Object.freeze(new Set([...MODE_FINDING_CODES, ...ACL_FINDING_CODES]));
 
 // A default ACL governs objects that do not exist yet.  It is not a defect of
 // any current object, so no bounded metadata operation on the governed tree can
@@ -74,9 +77,14 @@ const BLOCKING_FINDING_CODES = Object.freeze(new Set([
 ]));
 
 // chown is applied first because changing ownership can clear set-user/set-group
-// bits, chmod second because it re-derives the ACL mask from the group bits, and
-// ACL removal last so the surviving group bits stay exactly as chmod set them.
-const OPERATION_RANK = Object.freeze({ CHOWN: 0, CHMOD: 1, REMOVE_EXTENDED_ACL: 2 });
+// bits.  The ACL is removed second and the mode set last, and that order is not
+// interchangeable: while an extended ACL exists the group permission bits in
+// st_mode ARE the mask, so a chmod before the removal writes the mask and leaves
+// `group::` untouched — and `setfacl -b` then re-normalises `group::` from the
+// mask it deletes, so the mode chmod wrote does not survive the removal.  With
+// the ACL gone there is no mask left, the closing chmod sets all three triads
+// directly, and the postcondition is exact by construction.
+const OPERATION_RANK = Object.freeze({ CHOWN: 0, REMOVE_EXTENDED_ACL: 1, CHMOD: 2 });
 
 function planError(code, message) {
     const error = new Error(message);
@@ -96,13 +104,22 @@ function hasAny(codesOnPath, group) {
     return false;
 }
 
-// Which of the three bounded causes, plus the access consequences, are present
-// on this path.
-function classifyPathDefects(codesOnPath, identityMismatch) {
+// Which of the bounded causes, plus the access consequences, are present on
+// this path.  `removesAcl` is an input rather than a derivation because whether
+// an ACL is removed at all also depends on the rollback evidence, and it forces
+// the CHMOD: removing the ACL can move the mode even on a path whose observed
+// mode already matched the contract, so every removal is paired with an explicit
+// chmod to the postcondition.  `mode` keeps the narrower meaning — the observed
+// mode itself disagreed — for the rule that decides whether an access defect has
+// any metadata repair behind it.
+function classifyPathDefects(codesOnPath, identityMismatch, removesAcl) {
+    const modeMismatch = hasAny(codesOnPath, MODE_FINDING_CODES);
     return Object.freeze({
         chown: identityMismatch && hasAny(codesOnPath, IDENTITY_FINDING_CODES),
-        chmod: hasAny(codesOnPath, MODE_FINDING_CODES),
+        chmod: modeMismatch || removesAcl,
+        mode: modeMismatch,
         acl: hasAny(codesOnPath, ACL_FINDING_CODES),
+        removesAcl,
         access: hasAny(codesOnPath, ACCESS_FINDING_CODES),
     });
 }
@@ -110,9 +127,12 @@ function classifyPathDefects(codesOnPath, identityMismatch) {
 function blockedForPath(defects, findings, targetMode) {
     const blocked = [];
     // A mode repair with no contract postcondition to aim at is not a bounded
-    // operation, so it is escalated instead of guessed.
+    // operation, so it is escalated instead of guessed.  When the chmod exists
+    // only because an ACL is being removed, the ACL finding is the one that
+    // carries the missing postcondition.
     if (defects.chmod && targetMode === null) {
-        blocked.push(...findings.filter(item => MODE_FINDING_CODES.has(item.code)).map(item => blockedEntry(item, 'CONTRACT_HAS_NO_EXACT_MODE_FOR_THIS_SURFACE')));
+        const codes = defects.removesAcl ? MODE_OR_ACL_FINDING_CODES : MODE_FINDING_CODES;
+        blocked.push(...findings.filter(item => codes.has(item.code)).map(item => blockedEntry(item, 'CONTRACT_HAS_NO_EXACT_MODE_FOR_THIS_SURFACE')));
     }
     // An access defect with no identity or mode cause left to repair cannot be
     // fixed by metadata at all.
@@ -128,8 +148,8 @@ function blockedForPath(defects, findings, targetMode) {
 // operation is therefore only plannable when the exact current ACL was observed
 // and can be replayed with `setfacl --set`; without that evidence it is blocked
 // rather than planned with an unrecoverable rollback.
-function aclRemovalBlocked(defects, findings, acl) {
-    if (!defects.acl) return [];
+function aclRemovalBlocked(present, findings, acl) {
+    if (!present) return [];
     const blockedFor = reason => findings
         .filter(item => ACL_FINDING_CODES.has(item.code))
         .map(item => blockedOperationEntry(item, 'REMOVE_EXTENDED_ACL', reason));
@@ -191,19 +211,21 @@ function planPath(entry, runtimeIdentity) {
     const codesOnPath = new Set(findings.map(item => item.code));
     const targetMode = exactModeFor(entry.spec);
     const identityMismatch = observation.uid !== runtimeIdentity.uid || observation.gid !== runtimeIdentity.gid;
-    const defects = classifyPathDefects(codesOnPath, identityMismatch);
-    const blocked = blockedForPath(defects, findings, targetMode);
-    if (blocked.length > 0) return { operations: [], blocked, blockedOperations: [] };
     // An ACL removal without rollback evidence blocks that one operation only:
     // the identity and mode repairs on the same path stay plannable, because
-    // restoring uid/gid/mode does fully undo them.
-    const blockedOperations = aclRemovalBlocked(defects, findings, entry.acl);
+    // restoring uid/gid/mode does fully undo them.  It also decides whether this
+    // path is planned as removing an ACL at all, which is what forces the CHMOD.
+    const blockedOperations = aclRemovalBlocked(hasAny(codesOnPath, ACL_FINDING_CODES), findings, entry.acl);
+    const defects = classifyPathDefects(codesOnPath, identityMismatch, hasAny(codesOnPath, ACL_FINDING_CODES) && blockedOperations.length === 0);
+    const blocked = blockedForPath(defects, findings, targetMode);
+    if (blocked.length > 0) return { operations: [], blocked, blockedOperations: [] };
 
     const post = Object.freeze({
         uid: defects.chown ? runtimeIdentity.uid : observation.uid,
         gid: defects.chown ? runtimeIdentity.gid : observation.gid,
         mode: defects.chmod ? targetMode : observation.mode,
         mode_source: defects.chmod ? 'CONTRACT_POSTCONDITION' : 'PRESERVED',
+        mode_applied_last: true,
         unchanged_content: true,
     });
     const common = Object.freeze({
@@ -216,23 +238,26 @@ function planPath(entry, runtimeIdentity) {
         content_impact: 'NONE',
         content_bytes_must_be_identical: true,
         path_resolution_rule: 're-open with O_NOFOLLOW and verify dev/ino match `pre` before applying; abort on mismatch',
-        acl_mask_caveat: 'chmod re-derives the ACL mask from the group bits, so CHOWN and CHMOD must be applied before REMOVE_EXTENDED_ACL',
+        acl_mask_caveat: 'while an extended ACL exists the mode group bits ARE the mask, and setfacl -b re-normalises `group::` from the mask it deletes; the ACL removal therefore runs before the closing CHMOD, which is what makes `post.mode` exact',
         elevated_privilege_required: observation.uid !== process.getuid() || observation.gid !== process.getgid(),
         owner_authorization_required: true,
     });
     const planned = [{ operation: 'CHOWN', rank: OPERATION_RANK.CHOWN, applies: defects.chown },
-        { operation: 'CHMOD', rank: OPERATION_RANK.CHMOD, applies: defects.chmod },
-        // Removing an extended ACL can only ever take access away, which is the
-        // safe direction: the exact mode is meant to be the whole policy.
-        { operation: 'REMOVE_EXTENDED_ACL', rank: OPERATION_RANK.REMOVE_EXTENDED_ACL, applies: defects.acl && blockedOperations.length === 0 }];
+        // Removing an extended ACL can only ever take access away from the named
+        // entries, which is the safe direction: the exact mode is meant to be the
+        // whole policy.  The base `group::` entry is re-normalised by the removal
+        // itself, which is why the mode is set afterwards.
+        { operation: 'REMOVE_EXTENDED_ACL', rank: OPERATION_RANK.REMOVE_EXTENDED_ACL, applies: defects.removesAcl },
+        { operation: 'CHMOD', rank: OPERATION_RANK.CHMOD, applies: defects.chmod }];
     const aclPayload = restorableAclPayload(entry.acl);
     const operations = planned.filter(item => item.applies).map(item => Object.freeze({
         ...common,
         operation: item.operation,
         rank: item.rank,
-        // Every operation that can change ACL state carries the exact ACL to
-        // put back.  CHMOD is included because chmod re-derives the mask.
-        restore_acl: item.operation === 'REMOVE_EXTENDED_ACL' || item.operation === 'CHMOD' ? aclPayload : null,
+        // The ACL to put back travels with the operation that takes it away.
+        // CHMOD does not carry it: in the apply direction there is no ACL left
+        // by then, and in rollback the ACL is restored after the mode.
+        restore_acl: item.operation === 'REMOVE_EXTENDED_ACL' ? aclPayload : null,
     }));
     return { operations, blocked: [], blockedOperations };
 }
@@ -322,10 +347,12 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
             'a fresh process boundary reproduces the same cold-load result',
         ]),
         // Rollback is the exact inverse of the apply order, so it is emitted in
-        // reverse: the ACL (which setfacl --set would re-derive the mask from)
-        // is restored first, the mode second and the owner last, since chown can
-        // clear set-user/set-group bits.  `sequence` still names the apply step
-        // each entry undoes.
+        // reverse: the mode is restored first, the ACL second, and the owner
+        // last, since chown can clear set-user/set-group bits.  Restoring the
+        // ACL through `setfacl --set` rewrites the mask, and the recorded mask is
+        // exactly the mode's group bits, so the mode is still the original one
+        // once the ACL is back.  `sequence` still names the apply step each entry
+        // undoes.
         rollback: Object.freeze(operations.slice().reverse().map(operation => Object.freeze({
             sequence: operation.sequence, path: operation.path, operation: operation.operation, content_impact: 'NONE',
             restore: Object.freeze({

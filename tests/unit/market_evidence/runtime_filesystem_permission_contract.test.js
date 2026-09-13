@@ -351,8 +351,10 @@ test('10b. the emitted plan is inert, forbids content writes and carries a rollb
     }
     assert.equal(plan.rollback.length, plan.operations.length);
     assert.ok(plan.rollback.every(entry => entry.content_impact === 'NONE'));
-    // chown must precede chmod, and extended-ACL removal must come last.
-    const ranks = plan.operations.map(operation => ({ CHOWN: 0, CHMOD: 1, REMOVE_EXTENDED_ACL: 2 }[operation.operation]));
+    // chown first, then the ACL removal, and the mode last: while the ACL is
+    // still there the mode's group bits ARE the mask, so a chmod applied before
+    // the removal writes the mask and does not survive it.
+    const ranks = plan.operations.map(operation => ({ CHOWN: 0, REMOVE_EXTENDED_ACL: 1, CHMOD: 2 }[operation.operation]));
     assert.deepEqual(ranks, [...ranks].sort((left, right) => left - right));
 });
 
@@ -424,9 +426,15 @@ test('16. a removable extended ACL requires complete, restorable evidence', t =>
     const rollback = plan.rollback.find(entry => entry.operation === 'REMOVE_EXTENDED_ACL');
     assert.deepEqual(rollback.restore.acl.named_user_perms, { [String(RUNTIME.uid)]: 'r-x' });
     assert.equal(rollback.restore.acl.mask, 'r-x');
-    // Rollback undoes the apply order, so the ACL is restored before the mode
-    // that setfacl --set would otherwise re-derive.
+    // Rollback undoes the apply order, so the mode is put back first, then the
+    // ACL whose setfacl --set rewrites the mask, then the owner.
     assert.deepEqual(plan.rollback.map(entry => entry.sequence), [...plan.rollback.map(entry => entry.sequence)].sort((left, right) => right - left));
+    // Only the operation that takes the ACL away carries the payload to put it
+    // back; a CHMOD no longer touches ACL state, so it carries none.
+    assert.equal(removal.restore_acl.entries.length > 0, true);
+    for (const operation of plan.operations.filter(item => item.operation === 'CHMOD')) {
+        assert.equal(operation.restore_acl, null);
+    }
 });
 
 test('16b. the recorded ACL reproduces the original access ACL through setfacl', t => {
@@ -1285,6 +1293,104 @@ test('18b. the CLI report carries the declared/observed identity distinction', t
     const bound = run([]);
     assert.equal(bound.cold_load.binds_declared_runtime_identity, true);
     assert.equal(bound.cold_load.evidence_for_declared_runtime_identity, true);
+});
+
+// ---------------------------------------------------------------------------
+// 19. the plan's own operation order reaches its own postcondition
+// ---------------------------------------------------------------------------
+//
+// A plan that names a postcondition its operation sequence cannot reach is not
+// a repair procedure, it is a claim.  `setfacl -b` deletes the mask and
+// re-normalises the base `group::` entry from it, so removing an extended ACL
+// can move the mode on its own — including on a path whose observed mode already
+// matched the contract, which is why an ACL removal always carries a closing
+// CHMOD.  These assertions apply the emitted operations in the order the plan
+// emits them and read the result back off the filesystem.
+
+// Apply one emitted metadata operation with the real syscall it names.  This is
+// the only place in the suite that replays an emitted plan against a tree, and
+// it only ever touches the temporary fixture.
+function applyOperation(operation) {
+    if (operation.operation === 'CHOWN') fs.chownSync(operation.path, operation.post.uid, operation.post.gid);
+    else if (operation.operation === 'CHMOD') fs.chmodSync(operation.path, operation.post.mode);
+    else if (operation.operation === 'REMOVE_EXTENDED_ACL') setAcl(['-b'], operation.path);
+    else assert.fail(`the plan emitted an operation this test cannot apply: ${operation.operation}`);
+}
+
+test('19. applying the plan in its emitted order lands exactly on the postcondition', t => {
+    const root = tempRoot('plan-execution');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    assert.ok(fs.statSync(txPath).isDirectory(), 'the fixture must be the real publisher-shaped tree');
+    const store = path.join(root, 'STORE.json');
+    // The acl package is not installed everywhere, so the canonical container
+    // profile lands in the first branch.  Neither branch is a skip: where the
+    // tools are missing the contract has to refuse to plan the removal at all,
+    // which is the same property proved the long way round below.
+    if (spawnSync('getfacl', ['--version']).error) {
+        const unavailable = { available: false, reason: 'getfacl-not-installed' };
+        const report = evaluate(root, { aclObservations: { [store]: unavailable } });
+        assert.equal(planner.buildRemediationPlan(report).operations.some(item => item.operation === 'REMOVE_EXTENDED_ACL'), false);
+        return;
+    }
+    // STORE.json is the 0o444 immutable read surface, so 0o444 is the mode the
+    // plan must land on — and the mode that the removal alone would drift off.
+    // The fixture ACL stores `group::---` under a `r--` mask, which is exactly
+    // the shape a mask-limits-the-group publisher produces: st_mode reports the
+    // mask, so the observed mode already matches the contract and NO
+    // MODE_MISMATCH is raised.
+    setAcl(['-m', 'u::r--', '-m', 'g::---', '-m', 'o::r--', '-m', `u:${RUNTIME.uid}:r--`, '-m', 'm::r--'], store);
+    fs.chmodSync(store, 0o444);
+    assert.equal(fs.statSync(store).mode & 0o7777, 0o444);
+
+    const report = evaluate(root, { aclObservations: { [store]: { available: true, ...structuredAcl(store) } } });
+    assert.equal(report.status, 'NONCOMPLIANT_REPAIRABLE');
+    assert.deepEqual(codes(report).filter(code => code === 'EXTENDED_ACL_PRESENT').length, 1, 'the fixture must raise exactly the ACL finding');
+    assert.equal(codes(report).includes('MODE_MISMATCH'), false, 'the observed mode already matches, so the drift must not be attributed to a mode finding');
+
+    const plan = planner.buildRemediationPlan(report);
+    const onStore = plan.operations.filter(operation => operation.path === store);
+    // The removal is planned, and the CHMOD exists only because the removal can
+    // move the mode — there is no mode finding on this path to justify it.
+    assert.deepEqual(onStore.map(operation => operation.operation), ['REMOVE_EXTENDED_ACL', 'CHMOD']);
+    assert.equal(onStore[1].post.mode, 0o444, 'the postcondition is the contract mode, not the observed one');
+    assert.equal(onStore[1].post.mode_source, 'CONTRACT_POSTCONDITION');
+    assert.equal(onStore[1].post.mode_applied_last, true);
+    // The removal carries the exact inverse; the CHMOD must not pretend to.
+    assert.equal(onStore[0].restore_acl.entries, `u::r--,g::---,o::r--,m::r--,u:${RUNTIME.uid}:r--`);
+    assert.equal(onStore[1].restore_acl, null);
+
+    // Capture the pre-repair state, then apply the plan exactly as emitted.
+    const before = { bytes: fs.readFileSync(store), acl: aclLines(store), mode: fs.statSync(store).mode & 0o7777,
+        ops: plan.operations.map(operation => ({ operation: operation.operation, path: operation.path })) };
+    for (const operation of plan.operations.filter(item => item.path === store)) applyOperation(operation);
+
+    // The postcondition is a claim about the filesystem, so it is read back off
+    // the filesystem: exact mode, no group or world write bit, ACL gone.
+    assert.equal(fs.statSync(store).mode & 0o7777, 0o444, 'the plan must land exactly on the contract postcondition');
+    assert.equal(fs.statSync(store).mode & 0o022, 0, 'a repaired immutable artifact must not be group or world writable');
+    assert.deepEqual(aclLines(store), ['group::r--', 'other::r--', 'user::r--']);
+    assert.deepEqual(fs.readFileSync(store), before.bytes, 'CONTENT_BYTES_AFTER must equal CONTENT_BYTES_BEFORE');
+    // The removal alone would not have got there — the drift is real, and the
+    // CHMOD is what closes it.  Proved last so the assertion above is the one
+    // that fails if the ordering regresses.
+    assert.equal(plan.operations.filter(item => item.path === store).map(item => item.operation).indexOf('CHMOD'),
+        plan.operations.filter(item => item.path === store).length - 1, 'the CHMOD has to be the closing operation on the path');
+
+    // Rollback is the exact inverse and has to restore the pre-repair state,
+    // mode and ACL both.
+    for (const entry of plan.rollback.filter(item => item.path === store)) {
+        fs.chmodSync(entry.path, entry.restore.mode);
+        if (entry.restore.acl) setAcl(['--set', entry.restore.acl.entries], entry.path);
+        fs.chownSync(entry.path, entry.restore.uid, entry.restore.gid);
+    }
+    assert.equal(fs.statSync(store).mode & 0o7777, before.mode, 'rollback must restore the exact pre-repair mode');
+    assert.deepEqual(aclLines(store), before.acl, 'rollback must restore the exact pre-repair ACL');
+    assert.deepEqual(fs.readFileSync(store), before.bytes, 'rollback must not touch content');
+    // And the tree is back to the state the plan was built from, so the same
+    // plan is emitted again: an idempotent round trip, not a one-way door.
+    assert.deepEqual(planner.buildRemediationPlan(evaluate(root, { aclObservations: { [store]: { available: true, ...structuredAcl(store) } } }))
+        .operations.filter(item => item.path === store).map(item => item.operation), ['REMOVE_EXTENDED_ACL', 'CHMOD']);
 });
 
 // ---------------------------------------------------------------------------
