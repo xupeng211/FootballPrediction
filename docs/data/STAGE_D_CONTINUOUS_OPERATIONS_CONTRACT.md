@@ -508,6 +508,19 @@ POST_SHA256` per artifact, with the post-repair hash taken by the target runtime
 identity through an ordinary read, so `POST == manifest commitment` is only ever
 a second, independent check.
 
+*The set is the plan's, not the manifest's.* The artifacts the proof ranges over
+are enumerated by the plan — the governed surfaces that are regular files with
+immutable content — and the manifest has to cover exactly that set. A manifest
+that omits a governed artifact, names one twice, or carries a path the plan does
+not govern is a blocking finding for that reason alone, and the verdict reports
+which paths were missing, duplicated or ungoverned. Coverage is deliberately not
+taken from the manifest's own length: that would make it a property of whoever
+assembled the manifest, and the artifact easiest to leave out — the `EACCES` one
+that the privileged reader exists for — would be exactly the one whose absence
+shrank the proof instead of blocking it. A directory is governed but is not
+content: it has no bytes, so no read of it, ordinary or privileged, is content
+evidence.
+
 Every artifact the target runtime identity can read is hashed by it, and that
 hash's evidence source is `ORDINARY_RUNTIME_READ`. Only an artifact whose read
 fails with `EACCES` *because of the permission defect this plan repairs* — the

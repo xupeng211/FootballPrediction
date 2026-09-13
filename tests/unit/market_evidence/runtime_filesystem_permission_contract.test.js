@@ -2370,18 +2370,37 @@ function planWithDefect(t, label, mutate, evaluateOptions = {}) {
     return { plan: planner.buildRemediationPlan(report), report, root, txPath };
 }
 
-// One entry of the evidence manifest, read out of the real audit CLI rather than
+// The audit CLI's content-hash manifest, read out of the real CLI rather than
 // synthesised — so a test about PRE content evidence is a test about the
-// vocabulary the repository actually emits.
-function planManifestEntry(root, target) {
+// vocabulary the repository actually emits.  It is a map keyed by path.
+function planContentHashes(root) {
     const result = spawnSync(process.execPath, [
         AUDIT_CLI, '--authority-root', root, '--mode', 'audit', '--json',
         '--allocation-authority', path.join(root, 'allocation.authority.json'),
     ], { encoding: 'utf8' });
-    const parsed = JSON.parse(result.stdout);
-    const entry = (parsed.content_hashes || {})[target];
+    return JSON.parse(result.stdout).content_hashes || {};
+}
+
+function planManifestEntry(root, target) {
+    const entry = planContentHashes(root)[target];
     assert.ok(entry, `${target} must appear in the audit's content-hash manifest`);
     return entry;
+}
+
+// The complete PRE content-evidence manifest a plan requires: one record per
+// governed content-bearing artifact, each naming its own path.  The verdict
+// certifies the plan's artifact set, so a test about coverage has to start from
+// a manifest that really covers it and then subtract from, duplicate or add to
+// it — rather than from a shorter list that would only ever prove itself.
+function planEvidenceManifest(root, plan, { override = null } = {}) {
+    const hashes = planContentHashes(root);
+    return plan.governed_artifacts
+        .filter(entry => entry.content_bearing === true)
+        .map(entry => {
+            const record = { path: entry.path, ...hashes[entry.path] };
+            const patch = override === null ? null : override(entry, record);
+            return patch ? { ...record, ...patch } : record;
+        });
 }
 
 test('17. the planner no longer requires the repair executor to be the runtime identity', t => {
@@ -2602,6 +2621,16 @@ test('25. an ordinarily readable artifact takes its PRE hash from the ordinary r
     // does not govern is not evidence about this authority at all.
     assert.equal(planner.preContentEvidenceSourceFor({ ...observed, path: '/not/governed' }, plan), null);
     assert.equal(planner.preContentEvidenceSourceFor(observed, null), null);
+
+    // And the plan says which of its governed surfaces have bytes at all.  The
+    // PRE/POST invariant is a statement about content, so it is exactly the
+    // regular immutable files, and the directories the plan also governs are
+    // marked as such rather than left for a caller to infer from the path.
+    const carrying = plan.governed_artifacts.filter(entry => entry.content_bearing === true);
+    assert.equal(carrying.length, PACKAGE_FILES.length + 2, 'the six package files, STORE.json and the allocation authority');
+    assert.ok(plan.governed_artifacts.some(entry => entry.object_type === 'directory' && entry.content_bearing === false));
+    assert.equal(governedEntry.content_bearing, true);
+    assert.equal(governedEntry.object_type, 'regular_file');
 });
 
 test('26. an EACCES artifact this plan repairs may fall back to a privileged read-only read', t => {
@@ -2647,6 +2676,27 @@ test('26. an EACCES artifact this plan repairs may fall back to a privileged rea
     for (const forged of [{ dev: entry.dev + 1 }, { ino: entry.ino + 1 }, { dev: null }, { ino: null }]) {
         assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, ...forged }, plan), null);
     }
+    // A governed directory is not an artifact with content, so neither reading
+    // it nor repairing it produces a PRE hash.  The planner does emit a repair
+    // for a directory whose mode is wrong, so the bound has to be the object's
+    // kind rather than the presence of an operation: otherwise the fallback
+    // widens from "the unreadable artifact" to "any governed object this plan
+    // repairs", which is the same escape by a different route.  A directory is
+    // read separately here because a repaired one is the case that discriminates.
+    const directory = planWithDefect(t, 'phaseb-eacces-fallback-directory', txPath => {
+        fs.chmodSync(path.join(path.dirname(path.dirname(txPath)), '.staging'), 0o755);
+    });
+    const directoryEntry = directory.plan.governed_artifacts.find(item => item.object_type === 'directory' && item.repaired_by.length > 0);
+    assert.ok(directoryEntry, 'the planner repairs a directory whose mode is wrong');
+    assert.equal(directoryEntry.content_bearing, false);
+    assert.equal(
+        planner.preContentEvidenceSourceFor(
+            { path: directoryEntry.path, status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256, dev: directoryEntry.dev, ino: directoryEntry.ino },
+            directory.plan,
+        ),
+        null,
+        'a directory has no bytes for a PRE hash to be about, even when this plan repairs it',
+    );
 
     // The digest is a precondition like the others, and the one the fallback
     // cannot do without: an escalation permitted by the plan but carrying no
@@ -2711,68 +2761,98 @@ test('27. a privileged read cannot stand in for any ordinary-runtime proof', t =
 });
 
 test('28. every governed artifact requires a PRE hash and a missing one fails closed', t => {
-    const { plan, txPath } = planWithDefect(t, 'phaseb-pre-hash-required', target => fs.chmodSync(path.join(target, 'COMMITTED'), 0o000));
+    const { plan, root, txPath } = planWithDefect(t, 'phaseb-pre-hash-required', target => fs.chmodSync(path.join(target, 'COMMITTED'), 0o000));
     const blockedPath = path.join(txPath, 'COMMITTED');
     const cleanPath = path.join(txPath, 'manifest.json');
     const blocked = plan.governed_artifacts.find(entry => entry.path === blockedPath);
-    const artifacts = [
-        { path: cleanPath, status: 'HASHED', sha256: PRE_SHA256 },
-        { path: blockedPath, status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256, dev: blocked.dev, ino: blocked.ino },
-    ];
+    const carrying = plan.governed_artifacts.filter(entry => entry.content_bearing === true);
+    // The privileged reader supplies the hash the runtime cannot read, for the
+    // one governed artifact this plan repairs.
+    const privileged = entry => (entry.repaired_by.length > 0
+        ? { status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256, dev: entry.dev, ino: entry.ino }
+        : null);
+    const artifacts = planEvidenceManifest(root, plan, { override: privileged });
     const complete = planner.preContentEvidenceVerdict(artifacts, plan);
     assert.equal(complete.status, 'READY');
-    assert.equal(complete.governed_artifacts_required, 2);
-    assert.equal(complete.permitted, 2);
+    assert.equal(complete.governed_artifacts_required, carrying.length);
+    assert.equal(complete.permitted, carrying.length);
     assert.equal(complete.blocked.length, 0);
+    assert.equal(complete.missing.length, 0);
+    assert.equal(complete.duplicates.length, 0);
+    assert.equal(complete.extra.length, 0);
     assert.equal(complete.missing_pre_evidence_result, 'BLOCKED');
 
     // The verdict reports the digest it accepted for every artifact, so READY is
     // a statement about values that exist rather than about sources that were
-    // merely permitted.
-    assert.deepEqual(
-        complete.classified.map(entry => entry.pre_content_sha256),
-        [PRE_SHA256, PRE_SHA256],
-    );
+    // merely permitted, and it reports them per governed artifact rather than
+    // per supplied record.
+    assert.deepEqual(complete.classified.map(entry => entry.path), carrying.map(entry => entry.path));
+    assert.deepEqual(complete.classified.map(entry => entry.pre_content_sha256), artifacts.map(record => record.sha256));
+    assert.equal(new Set(complete.classified.map(entry => entry.pre_content_sha256)).size > 1, true, 'the ordinary reads carry real, distinct digests');
     assert.deepEqual(
         complete.classified.map(entry => entry.evidence_source),
-        [PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY, PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED],
+        carrying.map(entry => (entry.repaired_by.length > 0
+            ? PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED
+            : PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY)),
     );
+
+    // The certified set is the plan's, not the manifest's.  Omitting a governed
+    // artifact used to leave a smaller set that still reported READY, which made
+    // coverage a property of whoever assembled the manifest — and the artifact
+    // easiest to omit is the unreadable one, which is the artifact this whole
+    // fallback exists for.  A manifest that misses one is BLOCKED, and names the
+    // one it missed.
+    const omitted = planner.preContentEvidenceVerdict(artifacts.filter(record => record.path !== blockedPath), plan);
+    assert.equal(omitted.status, 'BLOCKED');
+    assert.deepEqual(omitted.missing.map(entry => entry.path), [blockedPath]);
+    assert.equal(omitted.permitted, carrying.length - 1);
+    assert.equal(omitted.permitted < omitted.governed_artifacts_required, true);
+
+    // The two other ways a manifest can fail to be the plan's artifact set.  A
+    // repeated path is not more evidence, and a path the plan does not govern is
+    // not evidence about this authority — neither may be absorbed silently into
+    // a set that is then reported READY.
+    const duplicated = planner.preContentEvidenceVerdict([...artifacts, artifacts[0]], plan);
+    assert.equal(duplicated.status, 'BLOCKED');
+    assert.deepEqual(duplicated.duplicates.map(entry => entry.path), [artifacts[0].path]);
+    const ungoverned = planner.preContentEvidenceVerdict([...artifacts, { path: '/not/governed/c' }], plan);
+    assert.equal(ungoverned.status, 'BLOCKED');
+    assert.equal(ungoverned.governed_artifacts_required, carrying.length);
+    assert.deepEqual(ungoverned.extra.map(entry => entry.path), ['/not/governed/c']);
+    assert.deepEqual(ungoverned.missing, []);
+    // A record with no path at all names nothing, so it is not a governed
+    // artifact and cannot count towards coverage either.
+    assert.equal(planner.preContentEvidenceVerdict([...artifacts, { status: 'HASHED', sha256: PRE_SHA256 }], plan).status, 'BLOCKED');
 
     // A permitted evidence source is not by itself content evidence.  These are
     // the shapes that classify as a usable source while carrying no PRE hash at
-    // all, and every one of them must block: the first is the repro for the
+    // all, and every one of them must block: the fourth is the repro for the
     // P1 an independent review raised against the first revision of this
     // contract, where a HASHED status with no digest was accepted as READY, and
-    // the second is its privileged twin — the EACCES artifact whose conditions
+    // the fifth is its privileged twin — the EACCES artifact whose conditions
     // all hold and which still proves nothing about its bytes.
     for (const unproven of [
         { path: cleanPath, status: 'HASHED' },
         { path: cleanPath, status: 'HASHED', sha256: null },
         { path: blockedPath, status: 'NOT_READABLE', code: 'EACCES', dev: blocked.dev, ino: blocked.ino },
     ]) {
-        const verdict = planner.preContentEvidenceVerdict([...artifacts, unproven], plan);
+        const records = artifacts.map(record => (record.path === unproven.path ? { path: record.path, ...unproven } : record));
+        const verdict = planner.preContentEvidenceVerdict(records, plan);
         assert.equal(verdict.status, 'BLOCKED', `${JSON.stringify(unproven)} must not pass as content evidence`);
-        assert.equal(verdict.permitted, 2);
-        assert.equal(verdict.blocked.length, 1);
+        assert.equal(verdict.permitted, carrying.length - 1);
+        assert.equal(verdict.missing.length, 0, 'the artifact is present; it is the digest that is absent');
+        assert.deepEqual(verdict.blocked.map(entry => entry.path), [unproven.path]);
         assert.equal(verdict.blocked[0].evidence_source, null);
         assert.equal(verdict.blocked[0].pre_content_sha256, null);
     }
 
-    // One unprovable artifact blocks the set: the content proof is universal, so
-    // a partial manifest is not a weaker proof, it is no proof.
-    const incomplete = planner.preContentEvidenceVerdict([...artifacts, { path: '/not/governed/c' }], plan);
-    assert.equal(incomplete.status, 'BLOCKED');
-    assert.equal(incomplete.governed_artifacts_required, 3);
-    assert.equal(incomplete.permitted, 2);
-    assert.deepEqual(incomplete.blocked.map(entry => entry.path), ['/not/governed/c']);
-    assert.equal(incomplete.blocked[0].evidence_source, null);
-
-    // An empty set is vacuously complete, which is exactly why the governed
-    // artifact set is enumerated by the audit rather than by this function's
-    // caller — the verdict classifies a set, it does not discover one.  Without
-    // a plan there is nothing to enumerate against, so even the empty set is
-    // BLOCKED rather than trivially READY.
-    assert.equal(planner.preContentEvidenceVerdict([], plan).status, 'READY');
+    // The empty set is the coverage failure in its purest form, which is exactly
+    // why the governed artifact set is enumerated by the plan rather than by this
+    // function's caller — the verdict classifies a set, it does not discover one.
+    // Without a plan there is nothing to enumerate against, so even the empty set
+    // is BLOCKED rather than trivially READY.
+    assert.equal(planner.preContentEvidenceVerdict([], plan).status, 'BLOCKED');
+    assert.equal(planner.preContentEvidenceVerdict([], plan).missing.length, carrying.length);
     const planless = planner.preContentEvidenceVerdict([]);
     assert.equal(planless.status, 'BLOCKED');
     assert.ok(planless.reason.includes('a plan is required'));
@@ -2796,7 +2876,13 @@ test('29. PRE content evidence binds the path to the observed device and inode',
         assert.ok(Number.isInteger(entry.ino), `${entry.path} must bind an inode`);
         assert.equal(entry.symlink_free, true, 'a governed path the planner still plans is not a symlink');
     }
-    const blockedEntry = plan.governed_artifacts.find(entry => entry.repaired_by.length > 0);
+    // The binding is to the objects the verdict certifies: the governed surfaces
+    // that have bytes.  The plan governs directories too, and they carry a
+    // device and inode like everything else, but they are not part of the set a
+    // PRE hash is required for.
+    const carrying = plan.governed_artifacts.filter(entry => entry.content_bearing === true);
+    assert.ok(carrying.length > 0 && carrying.length < plan.governed_artifacts.length);
+    const blockedEntry = carrying.find(entry => entry.repaired_by.length > 0);
     assert.ok(blockedEntry);
     const base = {
         path: blockedEntry.path, status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256,

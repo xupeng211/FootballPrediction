@@ -470,6 +470,12 @@ function preContentEvidenceSourceFor(artifact = {}, plan = null) {
     if (governed === null) return null;
     const entry = governed.get(artifact.path);
     if (entry === undefined || entry.symlink_free !== true) return null;
+    // A directory is governed but has no bytes, so no read of it — ordinary or
+    // privileged — is content evidence.  Nothing is being read here, so a
+    // record claiming otherwise is describing an object the contract never
+    // described, and the privileged fallback especially must not be widened to
+    // "open whatever the plan touches".
+    if (entry.content_bearing !== true) return null;
     if (artifact.status === 'HASHED') return PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY;
     if (artifact.status !== 'NOT_READABLE') return null;
     if (artifact.code !== 'EACCES') return null;
@@ -493,10 +499,12 @@ function preContentEvidenceSourceFor(artifact = {}, plan = null) {
 // path or mutates anything, and a manifest entry without a well-formed digest is
 // blocked rather than treated as evidence with an unstated value.
 //
-// The plan is a required argument for the same reason: the evidence manifest is
-// checked against the plan that repairs it, so a manifest offered without one
-// has nothing to be authorized against and is BLOCKED rather than vacuously
-// READY.
+// The plan is the required argument for the same reason, and it fixes the set as
+// well as the standard: the manifest is checked against the plan that repairs it,
+// so the plan both says which artifacts have to appear in it and decides whether
+// each is proven.  A manifest offered without a plan has nothing to be authorized
+// against and is BLOCKED rather than vacuously READY, and one that omits a
+// governed artifact is BLOCKED rather than READY over the remainder.
 function preContentEvidenceVerdict(artifacts = [], plan = null) {
     if (!Array.isArray(artifacts)) throw planError('INVALID_PRE_CONTENT_EVIDENCE_INPUT', 'governed artifacts must be an array');
     const governed = governedArtifactIndex(plan);
@@ -507,28 +515,68 @@ function preContentEvidenceVerdict(artifacts = [], plan = null) {
             governed_artifacts_required: 0,
             permitted: 0,
             classified: Object.freeze([]),
+            missing: Object.freeze([]),
+            duplicates: Object.freeze([]),
+            extra: Object.freeze([]),
             blocked: Object.freeze([]),
             missing_pre_evidence_result: 'BLOCKED',
         });
     }
-    const required = artifacts.length;
-    const classified = artifacts.map(artifact => Object.freeze({
-        path: artifact && artifact.path ? artifact.path : null,
-        evidence_source: preContentEvidenceSourceFor(artifact || {}, plan),
-        pre_content_sha256: PRE_CONTENT_SHA256_RE.test((artifact || {}).sha256 || '') ? artifact.sha256 : null,
-    }));
+    // The certified set is the plan's, not the manifest's.  Taking
+    // `artifacts.length` as the requirement made completeness a property of
+    // whoever assembled the manifest: omitting the artifact the privileged read
+    // exists for — the one that is EACCES to the runtime, and so the easiest to
+    // leave out — would leave a smaller set that still reported READY, and the
+    // universal PRE/POST invariant would hold over a subset chosen by the
+    // caller.  Coverage is therefore enumerated from the plan, and a manifest
+    // that misses a governed artifact, names one twice, or carries a path the
+    // plan does not govern is BLOCKED for that reason alone.
+    const required = [...governed.values()].filter(entry => entry.content_bearing === true);
+    const supplied = new Map();
+    const duplicates = [];
+    const extra = [];
+    for (const artifact of artifacts) {
+        const artifactPath = artifact && typeof artifact.path === 'string' ? artifact.path : null;
+        if (artifactPath === null || !governed.has(artifactPath)) {
+            extra.push(Object.freeze({ path: artifactPath }));
+            continue;
+        }
+        if (supplied.has(artifactPath)) {
+            duplicates.push(Object.freeze({ path: artifactPath }));
+            continue;
+        }
+        supplied.set(artifactPath, artifact);
+    }
+    const missing = required.filter(entry => !supplied.has(entry.path)).map(entry => Object.freeze({ path: entry.path }));
+    const classified = required.map(entry => {
+        const artifact = supplied.get(entry.path);
+        return Object.freeze({
+            path: entry.path,
+            evidence_source: artifact === undefined ? null : preContentEvidenceSourceFor(artifact, plan),
+            pre_content_sha256: artifact !== undefined && PRE_CONTENT_SHA256_RE.test(artifact.sha256 || '') ? artifact.sha256 : null,
+        });
+    });
     const blocked = classified.filter(entry => entry.evidence_source === null);
     return Object.freeze({
-        status: blocked.length > 0 ? 'BLOCKED' : 'READY',
+        status: blocked.length > 0 || missing.length > 0 || duplicates.length > 0 || extra.length > 0 ? 'BLOCKED' : 'READY',
         reason: null,
-        governed_artifacts_required: required,
-        permitted: required - blocked.length,
-        // Every artifact is reported, not only the refused ones, so a READY
-        // verdict can be read as the per-artifact statement it is: each entry
-        // names the source that was accepted and the PRE_CONTENT_SHA256 it was
-        // accepted for.  A READY with an unreported digest would put the
+        governed_artifacts_required: required.length,
+        permitted: classified.length - blocked.length,
+        // Every governed artifact is reported, not only the refused ones, so a
+        // READY verdict can be read as the per-artifact statement it is: each
+        // entry names the source that was accepted and the PRE_CONTENT_SHA256
+        // it was accepted for.  A READY with an unreported digest would put the
         // invariant out of reach of the caller checking it.
         classified: Object.freeze(classified),
+        // The three ways a manifest can fail to be the plan's artifact set,
+        // reported separately from the artifacts that were present but unproven
+        // — they are different repairs for whoever assembles the manifest.  A
+        // missing artifact is also an unproven one, so it already blocks through
+        // `classified`; naming it separately is what makes the verdict say which
+        // artifact is absent instead of only that the set is short.
+        missing: Object.freeze(missing),
+        duplicates: Object.freeze(duplicates),
+        extra: Object.freeze(extra),
         blocked: Object.freeze(blocked),
         missing_pre_evidence_result: 'BLOCKED',
     });
@@ -561,6 +609,16 @@ function governedArtifactEntries(report, operations) {
             return Object.freeze({
                 path: evaluation.spec.path,
                 surface_id: evaluation.spec.surface_id,
+                object_type: evaluation.spec.object_type,
+                // Whether this surface has bytes at all, and whether those bytes
+                // are immutable.  The PRE/POST invariant is a statement about
+                // content, so it is about exactly these surfaces: a directory
+                // has no bytes to hash, and a mutable file's bytes are allowed
+                // to differ — requiring a byte-identical PRE and POST for
+                // either would demand a proof that cannot exist rather than one
+                // that must.
+                content_bearing: evaluation.spec.object_type === 'regular_file'
+                    && evaluation.spec.immutable_content === true,
                 // The object the report observed at this path.  A privileged
                 // read is authorized for this dev/inode or for nothing.
                 dev: Number.isInteger(observation.dev) ? observation.dev : null,
