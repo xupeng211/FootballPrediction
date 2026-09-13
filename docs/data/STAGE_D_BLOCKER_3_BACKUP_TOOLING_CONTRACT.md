@@ -20,12 +20,19 @@ This document specifies the repository-side half of that work. Provisioning the
 off-host target is an Owner action under a separate authorization. The read-only
 preflight that established the target class and the Owner handoff was delivered
 as external evidence rather than as a repository document, so it is not linked
-from here: its conclusions are that the target must be a **dedicated bucket in a
-different physical fault domain** (not a second partition, a second internal
-SSD, or a same-host USB device), that R2 offers no prefix-scoped credential, and
-that an Object-scoped token cannot reach the REST-API lock endpoint — which is
-why the backup writer requires no delete permission and why bucket locks are out
-of scope below.
+from here. What it establishes, and all this contract relies on, is that the
+target must be a **dedicated bucket in a different physical fault domain** (not a
+second partition, a second internal SSD, or a same-host USB device).
+
+This contract makes **no claim about how far an R2 credential can be scoped**,
+and no part of the design depends on such a claim. R2's credential-scoping and
+lock behaviour is a provider capability that cannot be established offline, so it
+is not asserted here. The tooling instead relies on two properties it states and
+tests for itself, both of which hold for every target regardless of how that
+target's credentials happen to be scoped: the transport contract below admits no
+delete verb, so the writer needs no delete permission anywhere; and
+`BUCKET_LOCK_CONFIGURATION` is out of scope for this mission outright, so no
+Cloudflare REST API is called to configure a lock.
 
 ## Scope and authority
 
