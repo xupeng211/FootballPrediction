@@ -599,6 +599,22 @@ function classifyAncestor(ancestor, { surfaceId, failClosedOnGroupWritable }, ru
     }
     classifyAncestorWriteBits(ancestor, surfaceId, failClosedOnGroupWritable, findings);
     const acl = aclObservations ? aclObservations[ancestor.path] : null;
+    if (aclObservations && (!acl || !acl.available)) {
+        // The round-6 fix made an unprobed ACL blocking for governed surfaces
+        // but left the ancestor chain on the mode-bit path.  That is the more
+        // dangerous half: an ancestor is what grants traversal to everything
+        // below it, and a named-user entry that denies the runtime identity is
+        // invisible in the mode — under an extended ACL the group bits are the
+        // mask, not the group policy.  Falling back to bits here would let an
+        // ancestor whose ACL could not be read be reported as a verified
+        // traverse, so the audit stops rather than infer.
+        findings.push(finding({
+            code: 'ANCESTOR_ACL_PROBE_UNAVAILABLE', severity: SEVERITY.VIOLATION, surfaceId, target: ancestor.path,
+            message: `ancestor extended ACL could not be probed (${(acl && acl.reason) || 'not observed'}), so traversal by the cold-loading runtime identity cannot be established from the mode bits alone`,
+            autoRepairable: false, elevatedPrivilegeRequired: false,
+        }));
+        return;
+    }
     if (acl && acl.available && acl.named_entries && acl.named_entries.length > 0) {
         findings.push(finding({
             code: 'EXTENDED_ACL_PRESENT', severity: SEVERITY.ADVISORY, surfaceId, target: ancestor.path,
@@ -912,77 +928,9 @@ function evaluateRuntimeFilesystemContract({
     });
 }
 
-// ---------------------------------------------------------------------------
-// Publication identity guard.  This is the recurrence-prevention primitive:
-// it fails closed whenever the identity about to publish is not the identity
-// that owns — and will cold-load — the accepted authority.
-// ---------------------------------------------------------------------------
-
-function nearestExistingAncestor(target) {
-    let current = path.resolve(target);
-    for (;;) {
-        const observation = observeObject(current);
-        if (observation.observable) return Object.freeze({ path: current, observation });
-        if (current === path.dirname(current)) throw contractError('PUBLICATION_IDENTITY_UNRESOLVABLE', 'no existing ancestor could be observed for the authority root');
-        current = path.dirname(current);
-    }
-}
-
-function assertPublicationIdentity({ publisherIdentity, runtimeIdentity, authorityRoot } = {}) {
-    const publisher = assertRuntimeIdentity(publisherIdentity);
-    const runtime = runtimeIdentity ? assertRuntimeIdentity(runtimeIdentity) : null;
-    if (!runtime) throw contractError('PUBLICATION_IDENTITY_UNSPECIFIED', 'the expected cold-loading runtime identity must be declared explicitly');
-    // A privileged process is refused on either side of the check, not only on
-    // the mixed one.  The both-root case is the one that matters most here:
-    // the binder derives the runtime identity from the authority anchor's
-    // owner, so a root process facing a root-owned authority gets uid 0 on both
-    // sides and would otherwise verify itself — keep publishing owner-only
-    // packages that the ordinary runtime user cannot read, which is exactly
-    // how Blocker #2 arose.  classifyAccess already treats a uid 0 runtime
-    // identity as a violation, so the guard must refuse it too.
-    if (publisher.uid === 0) {
-        throw contractError('PUBLICATION_AS_PRIVILEGED_IDENTITY', `publishing as uid 0 would create artifacts unreadable by runtime uid ${runtime.uid}; a privileged publisher is never accepted`);
-    }
-    if (runtime.uid === 0) {
-        throw contractError('PUBLICATION_AS_PRIVILEGED_IDENTITY', 'a privileged cold-loading runtime identity (uid 0) can never be contract-verified, so it is never accepted as the publication target');
-    }
-    if (publisher.uid !== runtime.uid || publisher.gid !== runtime.gid) {
-        throw contractError('PUBLICATION_IDENTITY_MISMATCH', `publisher ${publisher.uid}:${publisher.gid} is not the declared runtime identity ${runtime.uid}:${runtime.gid}`);
-    }
-    const anchored = nearestExistingAncestor(authorityRoot);
-    const { observation } = anchored;
-    if (observation.is_symbolic_link || !observation.is_directory) {
-        throw contractError('PUBLICATION_IDENTITY_UNSAFE_ROOT', 'the authority root anchor must be a non-symlink directory');
-    }
-    if ((observation.mode & 0o022) !== 0) {
-        throw contractError('PUBLICATION_IDENTITY_UNSAFE_ROOT', 'the authority root anchor must not be group or world writable');
-    }
-    if (observation.uid !== runtime.uid) {
-        throw contractError('PUBLICATION_IDENTITY_UNRESOLVABLE', `the authority root anchor ${anchored.path} is owned by ${observation.uid}:${observation.gid}, not by the declared runtime identity ${runtime.uid}:${runtime.gid}`);
-    }
-    return Object.freeze({
-        status: 'PUBLICATION_IDENTITY_VERIFIED',
-        publisher_identity: publisher,
-        runtime_identity: runtime,
-        anchor: anchored.path,
-        anchor_identity: Object.freeze({ uid: observation.uid, gid: observation.gid, mode: observation.mode, dev: observation.dev, ino: observation.ino }),
-    });
-}
-
-function deriveRuntimeIdentityFromAuthority(authorityRoot, { source = 'AUTHORITY_ANCHOR_OWNER' } = {}) {
-    const anchored = nearestExistingAncestor(authorityRoot);
-    if (!anchored.observation.observable || anchored.observation.is_symbolic_link || !anchored.observation.is_directory) {
-        throw contractError('PUBLICATION_IDENTITY_UNRESOLVABLE', 'the authority anchor could not be resolved to a real directory');
-    }
-    return Object.freeze({
-        uid: anchored.observation.uid,
-        gid: anchored.observation.gid,
-        groups: Object.freeze([]),
-        source,
-        anchor: anchored.path,
-    });
-}
-
+// The identity of the process reading this contract.  It is a primitive rather
+// than part of the publication audit because the audit CLI records it as the
+// subject of its own report, whether or not anything is about to be published.
 function processIdentity({ source = 'PROCESS' } = {}) {
     const uid = typeof process.getuid === 'function' ? process.getuid() : null;
     const gid = typeof process.getgid === 'function' ? process.getgid() : null;
@@ -996,6 +944,11 @@ module.exports = {
     STAGING_DIRECTORY, COMMITTED_DIRECTORY,
     describeContract, observeObject, walkAncestry, sha256OfReadableFile, predictRuntimeAccess,
     openGovernedRoot, closeGovernedRoot, generationDrift, evaluateRuntimeFilesystemContract, restorableAclState,
-    collectLedgerSurfaces, LEDGER_ENTRY_FILE,
-    assertPublicationIdentity, deriveRuntimeIdentityFromAuthority, processIdentity,
+    collectLedgerSurfaces, LEDGER_ENTRY_FILE, processIdentity,
+    // The contract's error vocabulary and the shape it requires of a declared
+    // identity are part of the contract, not of any one consumer: the
+    // publication audit refuses a publication with the same codes and the same
+    // identity validation the classifier uses, so a caller cannot meet two
+    // different notions of "a runtime identity" on the way to a package.
+    contractError, assertRuntimeIdentity,
 };

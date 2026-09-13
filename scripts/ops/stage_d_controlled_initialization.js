@@ -12,11 +12,16 @@ const { sha256Text } = require('../../src/infrastructure/market_evidence/contrac
 const {
     executeStageDControlledInitialization,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
+const { processIdentity } = require('./stage_d_runtime_filesystem_permission_contract');
 const {
-    assertPublicationIdentity,
+    auditPublicationAnchor,
     deriveRuntimeIdentityFromAuthority,
-    processIdentity,
-} = require('./stage_d_runtime_filesystem_permission_contract');
+} = require('./stage_d_runtime_filesystem_audit');
+// The ACL observation the publication audit consumes is the same read-only
+// `getfacl` probe the CLI audit uses, so there is one definition of what a
+// governed ACL observation is rather than a second, laxer one at the binder
+// boundary.
+const { probeAcl } = require('./stage_d_runtime_filesystem_inspect');
 
 const REQUIRED_FLAGS = Object.freeze([
     '--authorization',
@@ -106,15 +111,20 @@ function summarizeResult(result, publicationIdentity) {
 // published by a root-running container process into a runtime-user-owned
 // tree, which produced owner-only committed artifacts the runtime user can
 // never cold-load.  A transaction package is immutable once renamed into
-// committed/, so the defect is permanent at publication time.  This guard
-// fails closed before any publication work begins whenever the identity about
-// to publish is not the identity that owns — and will cold-load — the
-// accepted authority.  There is deliberately no override flag.
+// committed/, so the defect is permanent at publication time.  This audit runs
+// before any publication work begins and fails closed whenever the identity
+// about to publish is not the identity that owns — and will cold-load — the
+// accepted authority, whenever the anchor carries a default ACL the next
+// package would inherit, and whenever the effective umask would strip the mode
+// the publisher asks for.  There is deliberately no override flag, and the
+// anchor's ACLs are read with the CLI audit's own probe so the binder cannot be
+// satisfied by weaker evidence than an audit would accept.
 function verifyPublicationIdentity(args) {
-    return assertPublicationIdentity({
+    return auditPublicationAnchor({
         publisherIdentity: processIdentity(),
         runtimeIdentity: deriveRuntimeIdentityFromAuthority(args['--authority-root']),
         authorityRoot: args['--authority-root'],
+        aclProbe: probeAcl,
     });
 }
 

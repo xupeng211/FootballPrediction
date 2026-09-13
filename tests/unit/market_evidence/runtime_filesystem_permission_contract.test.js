@@ -74,6 +74,8 @@ const AUDIT_CLI = path.join(OPS, 'stage_d_runtime_filesystem_inspect.js');
 const inspectCli = require(AUDIT_CLI);
 const CONTRACT_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_permission_contract.js');
 const PLAN_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_remediation_plan.js');
+const AUDIT_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_audit.js');
+const audit = require(AUDIT_MODULE);
 
 const RUNTIME = Object.freeze({ uid: process.getuid(), gid: process.getgid(), groups: Object.freeze([...process.getgroups()]), source: 'TEST' });
 const FOREIGN = Object.freeze({ uid: RUNTIME.uid + 1, gid: RUNTIME.gid + 1, groups: Object.freeze([]), source: 'DECLARED' });
@@ -240,6 +242,52 @@ function evaluate(root, overrides = {}) {
 
 function codes(report) {
     return report.findings.filter(item => item.severity === 'VIOLATION').map(item => item.code);
+}
+
+// A declared ACL evidence set has to cover the governed ancestry, because that
+// is where the traverse verdict for every surface beneath it is decided: under
+// an extended ACL the group bits in st_mode ARE the mask, not the group policy,
+// so an ancestor whose ACL was never read cannot be reported as a verified
+// traverse.  The CLI builds its set from collectTargetPaths, which includes the
+// ancestry; this mirrors that shape for the synthetic observations the planner
+// tests hand in.  An empty ACL is not the same statement as missing evidence:
+// it says the object really was probed and really carries no named entries.
+const CLEAN_ACL = Object.freeze({
+    available: true, named_entries: Object.freeze([]),
+    named_user_perms: Object.freeze({}), named_group_perms: Object.freeze({}),
+});
+
+function withAncestorEvidence(observations, ...targets) {
+    const evidence = { ...observations };
+    for (const target of targets) {
+        for (const candidate of [target, ...contract.walkAncestry(target).map(entry => entry.path)]) {
+            if (!Object.prototype.hasOwnProperty.call(evidence, candidate)) evidence[candidate] = CLEAN_ACL;
+        }
+    }
+    return evidence;
+}
+
+// The publication audit's ACL dimension is observable only where `getfacl`
+// exists, exactly like the CLI audit's, so its success expectation follows the
+// host's real capability instead of being hard-coded.  Where the probe is
+// missing the audit has to refuse rather than verify, and that refusal is what
+// is asserted instead — the branch moves the expected verdict, never the
+// fail-closed behaviour.  The probe handed in is the CLI audit's own, so the
+// binder boundary is proved against the evidence an audit would accept rather
+// than against a stub that cannot fail.
+function auditAnchor(root, overrides = {}) {
+    return audit.auditPublicationAnchor({
+        publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: root,
+        aclProbe: inspectCli.probeAcl, ...overrides,
+    });
+}
+
+function assertAuditVerifies(root) {
+    if (!ACL_PROBE_AVAILABLE) {
+        assert.throws(() => auditAnchor(root), error => error.code === 'PUBLICATION_ACL_EVIDENCE_MISSING');
+        return;
+    }
+    assert.equal(auditAnchor(root).status, 'PUBLICATION_IDENTITY_VERIFIED');
 }
 
 // ---------------------------------------------------------------------------
@@ -502,7 +550,7 @@ test('12e. the publisher guard refuses a privileged identity on both sides, not 
     // The mixed case is the obvious one: a root container publishing into a
     // runtime-user-owned tree.
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: RUNTIME, authorityRoot: root }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: RUNTIME, authorityRoot: root }),
         error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
     );
     // The dangerous one is the both-root case, and it is reachable through the
@@ -511,21 +559,21 @@ test('12e. the publisher guard refuses a privileged identity on both sides, not 
     // facing a root-owned anchor gets uid 0 on both sides and used to verify
     // itself.  `/` is a genuine root-owned, non-group-writable directory, so the
     // derivation is exercised on real metadata instead of a declared value.
-    const derived = contract.deriveRuntimeIdentityFromAuthority('/');
+    const derived = audit.deriveRuntimeIdentityFromAuthority('/');
     assert.equal(derived.uid, 0, 'the filesystem root must be owned by uid 0 for this assertion to mean anything');
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: derived, authorityRoot: '/' }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: derived, authorityRoot: '/' }),
         error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
     );
     // Declaring the privileged runtime identity by hand is refused the same way,
     // so the guard cannot be walked around by passing it in explicitly.
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: ROOT_IDENTITY, authorityRoot: root }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: ROOT_IDENTITY, authorityRoot: root }),
         error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
     );
     // The legitimate shape still verifies, so the new checks did not simply turn
-    // the guard permanently red.
-    assert.equal(contract.assertPublicationIdentity({ publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: root }).status, 'PUBLICATION_IDENTITY_VERIFIED');
+    // the audit permanently red.
+    assertAuditVerifies(root);
 });
 
 test('16c. a blocked ACL removal is counted in the plan status, not hidden behind READY', t => {
@@ -537,7 +585,7 @@ test('16c. a blocked ACL removal is counted in the plan status, not hidden behin
     // ONLY thing this tree needs — a status of NOT_REQUIRED would tell a caller
     // the authority is fully repairable when it is not.
     const incompleteEvidence = { [target]: { available: true, named_entries: [`user:${RUNTIME.uid}`] } };
-    const aclOnly = planner.buildRemediationPlan(evaluate(root, { aclObservations: incompleteEvidence }));
+    const aclOnly = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence(incompleteEvidence, root) }));
     assert.equal(aclOnly.operations.length, 0);
     assert.ok(aclOnly.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
     assert.equal(aclOnly.status, 'BLOCKED');
@@ -545,14 +593,14 @@ test('16c. a blocked ACL removal is counted in the plan status, not hidden behin
     // With a mode defect as well, part of the path is repairable and the ACL
     // removal is not: READY would hide the half that needs an Owner decision.
     fs.chmodSync(target, 0o710);
-    const mixed = planner.buildRemediationPlan(evaluate(root, { aclObservations: incompleteEvidence }));
+    const mixed = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence(incompleteEvidence, root) }));
     assert.ok(mixed.operations.some(operation => operation.operation === 'CHMOD'));
     assert.ok(mixed.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
     assert.equal(mixed.status, 'PARTIAL_BLOCKED');
 
     // Complete evidence unblocks the removal, and the same tree then reads READY,
     // so the status is still driven by what the plan can actually do.
-    const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: { [target]: { available: true, ...EXTENDED_ACL } } }));
+    const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence({ [target]: { available: true, ...EXTENDED_ACL } }, root) }));
     assert.equal(restorable.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'), false);
     assert.equal(restorable.status, 'READY');
 });
@@ -686,12 +734,12 @@ test('12b. the publisher guard refuses a privileged publisher for an unprivilege
     const root = tempRoot('guard');
     t.after(() => cleanup(root));
     buildCompliantAuthority(root);
-    const runtime = contract.deriveRuntimeIdentityFromAuthority(root);
+    const runtime = audit.deriveRuntimeIdentityFromAuthority(root);
     assert.equal(runtime.uid, RUNTIME.uid);
     // The exact real-world recurrence: a root-running container process
     // publishing into a runtime-user-owned tree.
     assert.throws(
-        () => contract.assertPublicationIdentity({
+        () => audit.auditPublicationAnchor({
             publisherIdentity: Object.freeze({ uid: 0, gid: 0, groups: Object.freeze([]) }),
             runtimeIdentity: runtime,
             authorityRoot: root,
@@ -699,16 +747,15 @@ test('12b. the publisher guard refuses a privileged publisher for an unprivilege
         error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
     );
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: FOREIGN, runtimeIdentity: runtime, authorityRoot: root }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: FOREIGN, runtimeIdentity: runtime, authorityRoot: root }),
         error => error.code === 'PUBLICATION_IDENTITY_MISMATCH',
     );
     // An unresolvable runtime identity fails closed rather than guessing.
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: RUNTIME, authorityRoot: root }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: RUNTIME, authorityRoot: root }),
         error => error.code === 'PUBLICATION_IDENTITY_UNSPECIFIED',
     );
-    const verified = contract.assertPublicationIdentity({ publisherIdentity: RUNTIME, runtimeIdentity: runtime, authorityRoot: root });
-    assert.equal(verified.status, 'PUBLICATION_IDENTITY_VERIFIED');
+    assertAuditVerifies(root);
 });
 
 test('12c. the publisher guard rejects an unsafe authority anchor', t => {
@@ -717,7 +764,7 @@ test('12c. the publisher guard rejects an unsafe authority anchor', t => {
     const shared = path.join(root, 'shared');
     makeDirectory(shared, 0o770); // group-writable anchor: another identity could swap the tree
     assert.throws(
-        () => contract.assertPublicationIdentity({ publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: shared }),
+        () => audit.auditPublicationAnchor({ publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: shared }),
         error => error.code === 'PUBLICATION_IDENTITY_UNSAFE_ROOT',
     );
 });
@@ -727,16 +774,142 @@ test('12d. the Stage D binder verifies publication identity before doing any wor
     t.after(() => cleanup(root));
     buildCompliantAuthority(root);
     const binder = require('../../../scripts/ops/stage_d_controlled_initialization');
-    const verified = binder.verifyPublicationIdentity({ '--authority-root': root });
-    assert.equal(verified.status, 'PUBLICATION_IDENTITY_VERIFIED');
-    assert.equal(verified.runtime_identity.uid, RUNTIME.uid);
+    assert.equal(audit.deriveRuntimeIdentityFromAuthority(root).uid, RUNTIME.uid, 'the binder derives the runtime identity from the anchor owner, not from a caller argument');
+    // The binder supplies the CLI audit's own ACL probe, so this host produces
+    // the audit's own verdict: verified where getfacl exists, and an evidence-gap
+    // refusal where it does not.  Both branches assert the same property — that
+    // the binder's call reached the audit's LAST dimension, which is only
+    // reachable after the publisher identity, the runtime identity and the
+    // anchor metadata have all been accepted — so neither branch is a skip.
+    const bindOrRefuse = authorityRoot => {
+        try {
+            return { status: binder.verifyPublicationIdentity({ '--authority-root': authorityRoot }).status };
+        } catch (error) {
+            return { code: error.code };
+        }
+    };
+    const expected = ACL_PROBE_AVAILABLE
+        ? { status: 'PUBLICATION_IDENTITY_VERIFIED' }
+        : { code: 'PUBLICATION_ACL_EVIDENCE_MISSING' };
+    assert.deepEqual(bindOrRefuse(root), expected);
     // An authority root that does not exist yet still resolves to the nearest
-    // runtime-owned ancestor, so the guard cannot be skipped by bootstrapping.
-    const notYetCreated = path.join(root, 'committed', `tx_${'d'.repeat(64)}`);
-    assert.equal(binder.verifyPublicationIdentity({ '--authority-root': notYetCreated }).status, 'PUBLICATION_IDENTITY_VERIFIED');
+    // runtime-owned ancestor, so the binder cannot be skipped by bootstrapping:
+    // a package directory that is not there yet reaches the same dimension.
+    assert.deepEqual(bindOrRefuse(path.join(root, 'committed', `tx_${'d'.repeat(64)}`)), expected);
     const shared = path.join(root, 'shared');
     makeDirectory(shared, 0o770);
     assert.throws(() => binder.verifyPublicationIdentity({ '--authority-root': shared }), error => error.code === 'PUBLICATION_IDENTITY_UNSAFE_ROOT');
+});
+
+// The publication audit is only worth calling if it constrains what the
+// publisher will CREATE, not merely who the publisher is.  Both conditions
+// below reproduce Blocker #2 from an anchor whose mode, owner and group bits are
+// already exactly right, and neither leaves a trace in that mode — so an audit
+// that stopped at identity would pass them.
+test('12f. the binder refuses an anchor that would hand a default ACL to the next published package', t => {
+    const root = tempRoot('binder-default-acl');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const binder = require('../../../scripts/ops/stage_d_controlled_initialization');
+    // Evidence is required, not optional: an audit that cannot read the anchor's
+    // ACL cannot rule an inheritable default ACL out, so it refuses instead of
+    // verifying the identity and hoping.
+    assert.throws(
+        () => audit.auditPublicationAnchor({ publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: root }),
+        error => error.code === 'PUBLICATION_ACL_EVIDENCE_MISSING',
+    );
+    if (!ACL_PROBE_AVAILABLE) {
+        // The refusal above is the whole verdict on this host, and it is also
+        // what the binder itself must produce: fail closed, never verify.
+        assert.throws(() => binder.verifyPublicationIdentity({ '--authority-root': root }), error => error.code === 'PUBLICATION_ACL_EVIDENCE_MISSING');
+        return;
+    }
+    assert.equal(binder.verifyPublicationIdentity({ '--authority-root': root }).status, 'PUBLICATION_IDENTITY_VERIFIED');
+    setAcl(['-d', '-m', `u:${RUNTIME.uid}:rwx`, '-m', 'g::---', '-m', 'o::---', '-m', 'm::rwx'], root);
+    assert.equal(fs.statSync(root).mode & 0o7777, 0o700, 'the anchor mode has to stay clean, or this would only re-prove the mode check');
+    assert.equal(inspectCli.probeAcl(root).default_present, true, 'the fixture has to really carry a default ACL');
+    assert.throws(
+        () => binder.verifyPublicationIdentity({ '--authority-root': root }),
+        error => error.code === 'PUBLICATION_DEFAULT_ACL_INHERITANCE',
+    );
+    // `.staging` is the directory the publisher actually materialises a package
+    // in, so a default ACL there is refused for the same reason.
+    setAcl(['-b'], root);
+    assert.equal(inspectCli.probeAcl(root).default_present, false, 'the removal must really clear the default ACL, or the next assertion would pass for the wrong reason');
+    setAcl(['-d', '-m', `u:${RUNTIME.uid}:rwx`, '-m', 'g::---', '-m', 'o::---', '-m', 'm::rwx'], path.join(root, '.staging'));
+    assert.throws(
+        () => binder.verifyPublicationIdentity({ '--authority-root': root }),
+        error => error.code === 'PUBLICATION_DEFAULT_ACL_INHERITANCE',
+    );
+});
+
+test('12g. the binder refuses a umask that would strip the mode the publisher asks for', t => {
+    const root = tempRoot('binder-umask');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    // The umask is read from the process, so the production path needs no
+    // argument at all; it is overridden below only to state the boundary
+    // exactly.  The boundary is the OWNER triad: the postcondition this contract
+    // requires is written in owner bits, so only a umask that intersects 0o700
+    // can silently reduce a published directory.  A umask that clears group and
+    // other bits — the ordinary 0o077 — cannot, and must not become a new way to
+    // fail closed on a host that is configured well.
+    assert.ok((process.umask() & 0o700) === 0, 'this host must run with a umask that does not strip owner bits, or the assertions below would be describing the ambient state instead of the contract');
+    for (const umask of [0o700, 0o500, 0o400, 0o200, 0o100]) {
+        assert.throws(() => auditAnchor(root, { umask }), error => error.code === 'PUBLICATION_UMASK_UNSAFE', `0o${umask.toString(8)} clears owner bits the publisher's postcondition is written in`);
+    }
+    for (const umask of [0o022, 0o077, 0o027]) {
+        // The probe is declared clean for these three so the ACL dimension
+        // cannot mask the verdict under test; 12f proves the same call against
+        // the host's real getfacl, including its refusal where the probe is
+        // missing, so nothing here depends on a stub in place of evidence.
+        assert.equal(auditAnchor(root, { umask, aclProbe: () => CLEAN_ACL }).publication_umask, umask, `0o${umask.toString(8)} cannot damage an owner-only postcondition`);
+    }
+});
+
+test('20d. an unprobed ancestor ACL is a blocking finding, not a verified traverse', t => {
+    const root = tempRoot('ancestor-acl-gap');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const targets = { authorityRoot: root, allocationArtifactPath: path.join(root, 'allocation.authority.json') };
+    // Every governed surface is declared probed and clean, so the ONLY gap in
+    // the evidence set is the ancestor.  That is the shape that reads COMPLIANT:
+    // modes are the contract's own and no surface has anything to report.
+    const clean = Object.fromEntries(inspectCli.collectTargetPaths(targets).map(target => [target, CLEAN_ACL]));
+    const ancestor = contract.walkAncestry(root)[0].path;
+    assert.equal(Object.prototype.hasOwnProperty.call(clean, ancestor), true, 'the CLI probe set must cover the governed ancestry, or this test would be describing a smaller set than production audits');
+    const report = evaluate(root, { aclObservations: { ...clean, [ancestor]: { available: false, reason: 'getfacl-failed' } } });
+    // An ancestor is what grants traversal to everything below it, and under an
+    // extended ACL the group bits in st_mode ARE the mask rather than the group
+    // policy — so a named-user entry that denies the runtime identity is
+    // invisible in the mode.  The gap has to block instead of falling back to
+    // bits, and it is the ONLY finding the tree produces.
+    assert.deepEqual(codes(report), ['ANCESTOR_ACL_PROBE_UNAVAILABLE']);
+    assert.equal(report.status, 'NONCOMPLIANT_BLOCKED');
+    // And it is not merely reported: nothing in Phase A can repair an evidence
+    // gap, so the plan is empty and blocked rather than offering a mutation.
+    const plan = planner.buildRemediationPlan(report);
+    assert.equal(plan.operations.length, 0);
+    assert.equal(plan.status, 'BLOCKED');
+});
+
+test('20e. a declared ACL evidence set that omits the ancestry is refused rather than inferred', t => {
+    const root = tempRoot('ancestor-acl-omitted');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    // Declaring ACL evidence is a claim about the governed tree.  A map that
+    // silently covers only the path being asked about would let that path's
+    // traverse verdict be inferred from mode bits on a chain nobody read — the
+    // same defect as an ancestor whose probe failed.  "Absent from the map" and
+    // "probed, and carries no named entries" are therefore different statements.
+    const report = evaluate(root, { aclObservations: { [root]: CLEAN_ACL, [txPath]: CLEAN_ACL } });
+    assert.equal(codes(report).includes('ANCESTOR_ACL_PROBE_UNAVAILABLE'), true);
+    assert.equal(report.status, 'NONCOMPLIANT_BLOCKED');
+    assert.equal(planner.buildRemediationPlan(report).status, 'BLOCKED');
+    // Not declaring the ACL dimension at all is the documented "ACL dimension
+    // not run" mode and is unchanged: declaring nothing is not the same as
+    // declaring a set and leaving a hole in it.
+    assert.equal(evaluate(root).status, 'COMPLIANT');
 });
 
 // ---------------------------------------------------------------------------
@@ -1368,7 +1541,7 @@ test('19. applying the plan in its emitted order lands exactly on the postcondit
     fs.chmodSync(store, 0o444);
     assert.equal(fs.statSync(store).mode & 0o7777, 0o444);
 
-    const report = evaluate(root, { aclObservations: { [store]: { available: true, ...structuredAcl(store) } } });
+    const report = evaluate(root, { aclObservations: withAncestorEvidence({ [store]: { available: true, ...structuredAcl(store) } }, root, store) });
     assert.equal(report.status, 'NONCOMPLIANT_REPAIRABLE');
     assert.deepEqual(codes(report).filter(code => code === 'EXTENDED_ACL_PRESENT').length, 1, 'the fixture must raise exactly the ACL finding');
     assert.equal(codes(report).includes('MODE_MISMATCH'), false, 'the observed mode already matches, so the drift must not be attributed to a mode finding');
@@ -1755,7 +1928,7 @@ const MUTATING_CALLS = [
 ];
 
 test('14. the Phase A implementation contains no mutating or privileged call', () => {
-    for (const target of [CONTRACT_MODULE, PLAN_MODULE, AUDIT_CLI]) {
+    for (const target of [CONTRACT_MODULE, PLAN_MODULE, AUDIT_CLI, AUDIT_MODULE]) {
         const code = codeOf(target);
         const label = path.basename(target);
         for (const forbidden of MUTATING_CALLS) assert.ok(!code.includes(forbidden), `${label} must not call ${forbidden}`);
@@ -1764,9 +1937,12 @@ test('14. the Phase A implementation contains no mutating or privileged call', (
         // No computed member access: it would let a call evade the patterns above.
         assert.ok(!code.includes('fs['), `${label} must not use computed filesystem member access`);
     }
-    // Neither the contract nor the planner may be able to spawn anything at all,
-    // not even by loading the module (a require is a literal, so this reads raw).
-    for (const target of [CONTRACT_MODULE, PLAN_MODULE]) {
+    // The contract, the planner and the publication audit may not be able to
+    // spawn anything at all, not even by loading the module (a require is a
+    // literal, so this reads raw).  The audit observes ACLs only through the
+    // probe it is handed, which is what keeps it provably unable to run a
+    // command of its own on the way to a publication decision.
+    for (const target of [CONTRACT_MODULE, PLAN_MODULE, AUDIT_MODULE]) {
         const raw = fs.readFileSync(target, 'utf8');
         assert.ok(!raw.includes('child_process'), `${path.basename(target)} must not load child_process`);
         assert.ok(!raw.includes('execFile'), `${path.basename(target)} must not exec`);

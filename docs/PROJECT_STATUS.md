@@ -65,8 +65,11 @@ Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CON
 Blocker #2（ordinary runtime user 无法可靠 cold-load committed transaction authority）的
 Phase A 已实现：机器可读的 runtime filesystem permission contract、只读 audit、以及 inert
 remediation plan（`scripts/ops/stage_d_runtime_filesystem_inspect.js`，只有 `audit` / `plan`
-两个 mode，没有 apply path），并在 Stage D binder 边界加入 fail-closed publication identity
-guard。该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
+两个 mode，没有 apply path），并在 Stage D binder 边界加入只读的 fail-closed publication
+audit（`scripts/ops/stage_d_runtime_filesystem_audit.js`）：它除了 publisher identity 之外，
+还拒绝 anchor 或 `.staging` 上的 default ACL（会被下一个 package 继承）以及会清除 owner
+bits 的 effective umask；ancestor 的 ACL 证据缺失同样是阻塞 finding，不退回 mode bits 推断。
+该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
 `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`、`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
 `BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`。
 修复 production authority metadata 是另一个必须单独授权的 Phase B host procedure。

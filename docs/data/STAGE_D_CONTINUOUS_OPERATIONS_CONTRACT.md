@@ -287,8 +287,10 @@ process that cold-loads must be able to reach and read every governed artifact
 through ordinary POSIX permission checks. The machine-readable contract is
 `stage-d-runtime-filesystem-permission/v1`, implemented by
 `scripts/ops/stage_d_runtime_filesystem_permission_contract.js` (inspect and
-classify) and `scripts/ops/stage_d_runtime_filesystem_remediation_plan.js`
-(plan only). `scripts/ops/stage_d_runtime_filesystem_inspect.js` exposes exactly
+classify), `scripts/ops/stage_d_runtime_filesystem_remediation_plan.js`
+(plan only) and `scripts/ops/stage_d_runtime_filesystem_audit.js` — the
+read-only publication audit the binder runs before it publishes anything.
+`scripts/ops/stage_d_runtime_filesystem_inspect.js` exposes exactly
 two modes, `audit` and `plan`; it has no apply mode, executes no privileged
 command other than a read-only `getfacl` probe, and never escalates privilege.
 With `--cold-load` it delegates content authority to the existing
@@ -320,6 +322,18 @@ with a trailing `#effective:` comment — precisely the state the publisher's ow
 `[r-][w-][x-]` permission triad, so an annotated value can never be recorded as
 restorable and emitted as an invalid `setfacl` argument.
 
+A declared ACL evidence set has to cover the governed **ancestry**, not only the
+surfaces. An ancestor is what grants traversal to everything beneath it, and
+under an extended ACL the group bits in `st_mode` are the mask rather than the
+group policy, so a named-user entry that denies the runtime identity is
+invisible in the mode. An ancestor whose `getfacl` probe fails — or that a
+declared evidence set simply omits — is therefore a blocking
+`ANCESTOR_ACL_PROBE_UNAVAILABLE` finding rather than a traverse inferred from
+bits, and the audit CLI builds its probe set from the ancestry for exactly this
+reason. "Absent from the evidence set" and "probed, and carries no named
+entries" are different statements, and only declaring no ACL dimension at all
+leaves the dimension unrun.
+
 The required mechanism is **identity equality**: the uid that publishes the
 authority, the uid that owns the governed tree, and the uid that cold-loads it
 must be the same. Group access and named POSIX ACL entries are explicitly
@@ -333,19 +347,40 @@ that relied on an ACL or on group bits would therefore be silently invalidated
 by the ordinary publication path.
 
 Recurrence prevention is enforced at the Stage D binder boundary:
-`scripts/ops/stage_d_controlled_initialization.js` resolves the runtime
-identity from the authority root's owning uid and fails closed — with no
-override flag — when the identity about to publish is not that identity. A
-privileged identity is refused on **both** sides of that comparison, not only
-when a uid 0 publisher meets a non-root runtime. Because the binder derives the
-runtime identity from the authority anchor's owner, a root process facing a
-root-owned anchor would otherwise produce uid 0 on both sides and verify
-itself, which is precisely how owner-only packages kept being published; the
-guard therefore rejects a uid 0 publisher and a uid 0 runtime independently,
-and the contract already classifies a uid 0 runtime as a violation. This
-matters because a transaction package is immutable once renamed into
-`committed/`, so an inaccessible package is a permanent defect at publication
-time, not a repairable inconvenience.
+`scripts/ops/stage_d_controlled_initialization.js` runs
+`scripts/ops/stage_d_runtime_filesystem_audit.js` before any publication work
+begins. The audit resolves the runtime identity from the authority root's
+owning uid and fails closed — with no override flag — when the identity about to
+publish is not that identity. A privileged identity is refused on **both** sides
+of that comparison, not only when a uid 0 publisher meets a non-root runtime.
+Because the binder derives the runtime identity from the authority anchor's
+owner, a root process facing a root-owned anchor would otherwise produce uid 0
+on both sides and verify itself, which is precisely how owner-only packages kept
+being published; the audit therefore rejects a uid 0 publisher and a uid 0
+runtime independently, and the contract already classifies a uid 0 runtime as a
+violation. This matters because a transaction package is immutable once renamed
+into `committed/`, so an inaccessible package is a permanent defect at
+publication time, not a repairable inconvenience.
+
+Identity is necessary but not sufficient, because it constrains *who* publishes
+and not what that publisher will create. The audit therefore also refuses two
+conditions that reproduce Blocker #2 from an anchor whose owner, group and mode
+are already exactly right, and that leave no trace in that mode:
+
+- a **default ACL** on the anchor or on `.staging`, which every directory
+  `atomicPublisher.mkdirSync` creates below it inherits — an inherited mask caps
+  the mode the publisher's own `fchmod` can produce, so the next package is
+  already damaged when it is written; and
+- an effective **umask that intersects `0o700`**, which silently reduces the
+  directories the publisher asks `mkdir` for. Only the owner triad is
+  load-bearing here: a umask that clears group and other bits (`0o077`) cannot
+  damage an owner-only postcondition and is not treated as a hazard.
+
+Both are read-only observations, neither is repairable by the repository, and
+both are refused before the execution chain is entered. The anchor's ACLs are
+read with the audit CLI's own `getfacl` probe, so the binder can never be
+satisfied by weaker evidence than a full audit would accept — and where that
+probe is unavailable the binder refuses rather than verifying on identity alone.
 
 Status after this contract was added: `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`,
 `BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`, `BLOCKER_2=OPEN`,
