@@ -100,7 +100,10 @@ ledger/verified-quota fail-close 实现，以及唯一的
 - 指定不同物理故障域的 independent backup target。
 - 批准 retention / RPO / RTO（当前仅有 proposal）。
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
-- 完成普通 runtime user 对 committed transaction package 的 cold-load 权限合同（Blocker #2）。
+- 将已实现的 Blocker #2 runtime filesystem permission contract 应用到 production authority：
+  Phase A（contract + 只读 audit + inert remediation plan + binder identity guard）已完成且未改动
+  任何 production ownership/mode，但把 plan 变成实际 metadata 修复是必须单独授权的 Phase B
+  host procedure；`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`。
 - 指定不同物理故障域并完成 isolated restore proof（Blocker #3）。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
