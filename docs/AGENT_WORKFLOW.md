@@ -256,11 +256,16 @@ base SHA、reviewed full HEAD、完整 diff SHA-256、mission、开始/结束时
 result、finding summaries、Builder/reviewer context IDs、fresh/separate context、read-only isolation、
 clean-before/after、raw/final output hashes 和 receipt payload integrity hash。
 
-**Reviewer model provenance（v1.1）。** 当前审批 policy 是 `REVIEW_MODEL=gpt-6-astra`、
-`REVIEW_REASONING_EFFORT=medium`。两者必须出现在 canonical invocation 的 argv 中：`-m gpt-6-astra` 和
+**Reviewer model provenance（v1.1）。** 当前审批 policy 是 `REVIEW_MODEL=gpt-5.6-terra`、
+`REVIEW_REASONING_EFFORT=medium`。两者必须出现在 canonical invocation 的 argv 中：`-m gpt-5.6-terra` 和
 `-c model_reasoning_effort="medium"`。不允许依赖 user config default、account default、catalog priority、
 implicit CLI default 或 environment-selected default；`--ignore-user-config` 必须保持有效。builder 若无法从
 command 中解析出这两个 selector，runner 直接 fail-closed，不做任何 fallback。
+
+pin 是唯一的 reviewer identity，不存在把退役模型当作自动 fallback 的机制：fallback 会让实际执行的 model 取决于
+runtime availability，并让 receipt 记录一个并非已审批 policy 的 provenance。按旧 pin 产生的 receipt 仍是真实
+历史证据，但分类为 `STALE_TOOLING`，永远不能满足当前 exact-head approval；它的 bytes 不被改写。更换 model 是
+Controller / Owner 的显式 policy 决定，并作为一个 bounded mission 走同一套 exact-head review 与 merge gate。
 
 receipt v2 因此在 `provenance.reviewer_command` 记录完整 executed argv（由 `command_sha256` 绑定），并新增
 `model_provenance` 块：`review_model`、`review_reasoning_effort`、`codex_cli_version`，三者都从实际执行的

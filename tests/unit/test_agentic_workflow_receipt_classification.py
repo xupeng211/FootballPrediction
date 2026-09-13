@@ -168,7 +168,7 @@ def _merge_ready(
 def test_model_pin_present_in_reviewer_command():
     command = _pinned_command()
     assert "-m" in command
-    assert command[command.index("-m") + 1] == REVIEW_MODEL_PINNED == "gpt-6-astra"
+    assert command[command.index("-m") + 1] == REVIEW_MODEL_PINNED == "gpt-5.6-terra"
 
 
 def test_reasoning_effort_pin_present_in_reviewer_command():
