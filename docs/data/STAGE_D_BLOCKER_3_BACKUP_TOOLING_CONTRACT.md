@@ -265,14 +265,27 @@ still refuses when `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
 `AWS_PROFILE` are all set in the environment.
 
 That refusal is unconditional, and it holds on **every** construction path. The
-transport accepts an injected client as a seam for the command mechanics (the
-tests drive the S3 verbs through one, with no network), and an injected client
-is not a way to bring a different credential source: credentials are validated
-before the client is chosen, so a caller cannot hand in a client backed by the
-SDK's default provider chain and leave the transport with no explicit-credential
-claim to make. A refusal that only applies on one branch is a conditional
-guarantee, which is not a guarantee. A test constructs the transport with a
-stub client and no credentials and asserts it is refused.
+transport builds its own client, always, from the credentials it has just
+validated, and passes them explicitly, so there is nothing left for the SDK's
+provider chain to discover. The seam a test uses is the SDK *surface* — the
+five classes, supplied as `sdk` — never a client instance: a caller-supplied
+client could be backed by the default provider chain, and validating the
+`credentials` argument would prove nothing about it, leaving the transport
+sending through a credential source it cannot name while reporting
+`credential_source: INJECTED_EXPLICIT`. A refusal that only applies on one
+branch is a conditional guarantee, which is not a guarantee.
+
+A client *instance* is therefore refused outright rather than ignored, because a
+caller whose client was silently dropped would believe it was in use. Because
+the transport now constructs the client itself, the invariant is something a
+test can check rather than something the document asserts: one test reads the
+configuration the transport handed its client and requires it to be exactly
+`endpoint`, `region`, `forcePathStyle` and the validated `credentials` — nothing
+that could resolve a credential from anywhere else. Another asserts that
+constructing the transport without credentials is refused even when
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_PROFILE` are all set in
+the environment, and that an SDK surface missing any of the five verbs is
+refused at construction rather than at first use.
 
 Errors are rebuilt from provider-supplied identifiers only (error name and HTTP
 status). Nothing from the client configuration is interpolated, so a secret
@@ -338,21 +351,40 @@ would be a catastrophe. The destination must therefore be:
   than merging into an existing tree;
 - outside the governed production area, by the same whole-segment match the
   local transport uses;
-- outside every source root the caller names, and not containing one;
+- outside every source root the caller names, and not containing one — compared
+  **physically as well as lexically**, because `path.resolve` never asks the
+  filesystem: a destination reached through a symlinked ancestor names none of
+  the source roots while every write through it lands inside one, and the
+  immediate parent's own `lstat` cannot see it either when the link sits higher
+  up. Both views of both sides are compared, so a destination that is disjoint
+  from the source in name only is refused;
 - free of symbolic-link ancestors, and created with `0700`.
 
 A failed restore leaves the destination **exactly as it was found** — that is,
 still non-existent. It is built at a staging path beside the destination and
-moved into place with a single `rename` only after every artifact has been
-written and the proof has come back `PASS`, so the destination cannot be
-observed in a partial state: it either does not exist, or it exists complete
-and proven. Building it at its final path instead would have made every later
-failure — a missing object, a hash the manifest does not bind, or a proof that
-returns `FAIL` — leave behind a partial tree at a path that had not existed
-before, and because a restore refuses a destination that already exists, that
-tree could never have been restored into again.
+committed only after every artifact has been written and the proof has come back
+`PASS`, so the destination cannot be observed holding unproven content. Building
+it at its final path instead would have made every later failure — a missing
+object, a hash the manifest does not bind, or a proof that returns `FAIL` —
+leave behind a partial tree at a path that had not existed before, and because a
+restore refuses a destination that already exists, that tree could never have
+been restored into again.
 
-Nothing is ever removed, so a failure leaves the staging directory in place as
+The **commit itself is create-only**, because that is the point at which "a
+restore never overwrites" has to be decided, and a check made earlier cannot
+decide it: another process can create the destination in between. The commit
+therefore creates the destination with `mkdir`, which creates or fails with
+`EEXIST` and can never replace. A plain `rename` is atomic but is not usable
+here — POSIX rename onto an existing **empty** directory succeeds, so a
+destination that appeared after the freshness check would be silently adopted
+and overwritten, which is the one outcome a restore must never produce. The
+staged entries are moved in one by one, and any failure moves every one of them
+back and removes the directory again: the destination is either absent, or the
+complete proven tree. Entries are only ever moved, never deleted, and a
+directory that is no longer empty refuses to be removed, so the rollback stops
+rather than deletes anything it did not put there.
+
+Nothing here removes anything, so a failure leaves the staging directory in place as
 visible evidence of the attempt while the destination stays untouched. The
 report names the destination, not the staging path: the layout fields are
 recomputed from the final destination — they are a pure function of the

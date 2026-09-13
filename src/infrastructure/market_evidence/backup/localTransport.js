@@ -248,6 +248,7 @@ module.exports = {
     sha256OfBytes,
     isGovernedProductionPath,
     assertNotGovernedProductionPath,
+    realLocationOf,
     PRODUCTION_MARKERS,
     KEY_PATTERN,
 };

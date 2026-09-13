@@ -309,6 +309,71 @@ test('a restore whose proof fails leaves the destination exactly as it was', asy
     assert.equal(fs.existsSync(target), false, 'a destination whose proof failed must not exist');
 });
 
+// The gap between "the destination did not exist" and "the destination was
+// committed" is where another process can act, so the freshness check cannot be
+// what decides it.  The commit itself has to be create-only, or a destination
+// that appeared in the meantime is silently adopted: POSIX rename replaces an
+// existing *empty* directory, so a plain rename would put the restored tree
+// exactly where a restore is supposed to refuse to write.
+test('a destination created by another process mid-restore is refused, not replaced', async t => {
+    const { transport, report } = await sealed(t, 'race');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'race');
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    let placed = null;
+
+    // The competitor acts once the last artifact has been read: after the
+    // freshness check, before the commit -- the whole window the finding is
+    // about, and the one place a plain rename would silently adopt the
+    // competitor's directory because POSIX rename replaces an empty one.
+    const competing = {
+        ...transport,
+        async getObject(args) {
+            const bytes = await transport.getObject(args);
+            if (args.key === lastArtifact && placed === null) {
+                fs.mkdirSync(target, { mode: 0o755 });
+                placed = 'the destination existed before the commit';
+            }
+            return bytes;
+        },
+    };
+
+    await assert.rejects(executeRestore({ transport: competing, snapshotId: report.snapshot_id, destinationRoot: target }));
+
+    assert.equal(placed, 'the destination existed before the commit', 'the competitor must actually have run before the commit');
+    assert.equal(fs.existsSync(target), true, 'the competing destination must still be there');
+    assert.deepEqual(fs.readdirSync(target), [], 'it must be untouched -- a restore never fills a destination it did not create');
+});
+
+// Isolation is a property of where the destination *is*, not of how it is
+// spelled.  `path.resolve` never asks the filesystem, so a destination reached
+// through a symlinked ancestor names nothing while every write through it lands
+// inside the source root; the immediate parent's own lstat cannot see it either,
+// because the link sits higher up and the directory it reaches is ordinary.
+test('a destination reached through an ancestor symlink into the source root is refused', t => {
+    const sourceRoot = temporary(t, 'stage-d-source-');
+    fs.mkdirSync(path.join(sourceRoot, 'nested'), { mode: 0o700 });
+    const scratch = temporary(t, 'stage-d-scratch-');
+    fs.mkdirSync(path.join(scratch, 'nested'), { mode: 0o700 });
+    const link = path.join(scratch, 'link');
+    fs.symlinkSync(sourceRoot, link);
+
+    const target = path.join(link, 'nested', 'restored');
+    assert.equal(fs.existsSync(target), false, 'the destination itself must not exist yet');
+    assert.equal(fs.realpathSync(path.dirname(target)), path.join(sourceRoot, 'nested'), 'the link must be the only thing making this destination what it is');
+
+    assert.throws(
+        () => assertFreshDestination(target, { sourceRoots: [sourceRoot] }),
+        error => error instanceof SnapshotIntegrityError && /must not be inside the source root/.test(error.message)
+    );
+    // The same destination without the link is accepted, so the refusal is the
+    // link and not an over-eager denylist.
+    assert.equal(
+        assertFreshDestination(path.join(scratch, 'nested', 'restored'), { sourceRoots: [sourceRoot] }),
+        path.join(scratch, 'nested', 'restored')
+    );
+});
+
 test('an unsealed generation cannot be restored', async t => {
     const { root, transport, report } = await sealed(t, 'unsealed');
     fs.rmSync(path.join(root, ...report.completeness_object_key.split('/')));

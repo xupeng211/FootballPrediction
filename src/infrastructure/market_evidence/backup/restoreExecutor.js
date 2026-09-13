@@ -29,7 +29,7 @@ const { openMarketEvidenceAuthoritySnapshot } = require('../authorityReader');
 const { readRequestLedger } = require('../stageDOperations');
 const { ALLOCATION_FILE } = require('./snapshotInputs');
 const { assertTransportContract, SnapshotIntegrityError } = require('./transport');
-const { assertNotGovernedProductionPath, isGovernedProductionPath } = require('./localTransport');
+const { assertNotGovernedProductionPath, isGovernedProductionPath, realLocationOf } = require('./localTransport');
 const { assertGenerationId, sha256Hex } = require('./snapshotManifest');
 const { loadAcceptedManifest } = require('./snapshotVerifier');
 
@@ -72,13 +72,37 @@ function pathContains(outer, inner) {
 // Isolated means isolated from the source, not merely outside the production
 // marker.  A destination nested inside the source root, or a source root nested
 // inside the destination, would make the "restore" a copy of itself.
+//
+// The comparison has to be physical as well as lexical.  `path.resolve` never
+// asks the filesystem, so a destination reached through a symlinked ancestor
+// names none of the source roots while every write through it lands inside one:
+// `<scratch>/link/restored`, where `link` points at the source root, is
+// textually unrelated to that root and physically inside it.  The immediate
+// parent's own `lstat` cannot see it either, because the link sits higher up
+// and the parent it reaches is an ordinary directory.  Both views of both sides
+// are therefore compared, and an ancestor link that makes the destination
+// disjoint in name only is refused.
+//
+// `realLocationOf` resolves the longest *existing* prefix, so a destination
+// that does not exist yet still has a physical location: the one it will have
+// once those directories are created.  That is exactly the question worth
+// asking, because it is asked before anything is created.
+function physicalAncestryOf(target) {
+    const real = realLocationOf(target);
+    return typeof real === 'string' ? [target, real] : [target];
+}
+
 function assertDestinationDisjointFromSources(resolved, sourceRoots) {
+    const destinations = physicalAncestryOf(resolved);
     for (const sourceRoot of sourceRoots) {
         if (typeof sourceRoot !== 'string' || !sourceRoot.trim()) continue;
-        const source = path.resolve(sourceRoot);
-        if (resolved === source) throw new SnapshotIntegrityError(`restore destination must not be the source root: ${resolved}`);
-        if (pathContains(source, resolved)) throw new SnapshotIntegrityError(`restore destination must not be inside the source root: ${resolved}`);
-        if (pathContains(resolved, source)) throw new SnapshotIntegrityError(`restore destination must not contain the source root: ${resolved}`);
+        for (const source of physicalAncestryOf(path.resolve(sourceRoot))) {
+            for (const destination of destinations) {
+                if (destination === source) throw new SnapshotIntegrityError(`restore destination must not be the source root: ${destination}`);
+                if (pathContains(source, destination)) throw new SnapshotIntegrityError(`restore destination must not be inside the source root: ${destination}`);
+                if (pathContains(destination, source)) throw new SnapshotIntegrityError(`restore destination must not contain the source root: ${destination}`);
+            }
+        }
     }
 }
 
@@ -320,15 +344,69 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
 // tree could never be restored into again.  It was also the one case where a
 // failed restore did not leave the destination as it was found.
 //
-// Nothing here removes anything, so a failure leaves the staging directory
-// behind as visible evidence of the attempt while the destination itself stays
-// exactly as it was.
+// Nothing here removes anything, so a failure before the commit leaves the
+// staging directory behind as visible evidence of the attempt while the
+// destination itself stays exactly as it was.
 function createStagingRoot(destination) {
     const staging = path.join(path.dirname(destination), `.${path.basename(destination)}.restore-staging-${crypto.randomBytes(8).toString('hex')}`);
     if (isGovernedProductionPath(staging)) throw new SnapshotIntegrityError(`restore staging root must never be the governed production area: ${staging}`);
     fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
     fs.chmodSync(staging, DIRECTORY_MODE);
     return staging;
+}
+
+// The commit is the point at which the destination starts to exist, so it is
+// the point at which "a restore never overwrites" has to be decided, and it has
+// to be decided by the filesystem rather than by a prior existence check.
+//
+// `mkdirSync` is that decision: it creates or fails with EEXIST, and it can
+// never replace.  `fs.renameSync` cannot be used here even though it is atomic,
+// because POSIX rename onto an existing *empty* directory succeeds -- a
+// destination another process created after the freshness check would be
+// silently adopted and overwritten, which is the one outcome a restore must
+// never produce.
+//
+// The staged entries are therefore moved in one by one.  That is not atomic as
+// a whole, so any failure moves every entry back where it came from and removes
+// the directory again: the destination is either absent, or the complete proven
+// tree.  Entries are only ever moved, never deleted, so nothing of anyone
+// else's can be destroyed by the rollback -- and a directory that is no longer
+// empty refuses to be removed, so the rollback stops rather than deletes.
+function commitStagedRoot(staging, destination) {
+    fs.mkdirSync(destination, { mode: DIRECTORY_MODE });
+    fs.chmodSync(destination, DIRECTORY_MODE);
+    const moved = [];
+    try {
+        for (const entry of fs.readdirSync(staging)) {
+            fs.renameSync(path.join(staging, entry), path.join(destination, entry));
+            moved.push(entry);
+        }
+    } catch (error) {
+        rollbackCommittedEntries(error, moved, staging, destination);
+        throw error;
+    }
+    try {
+        fs.rmdirSync(staging);
+    } catch {
+        // An empty staging directory that will not go away is untidy, not
+        // unsafe, and the restored root is already complete and proven.
+    }
+    return moved.length;
+}
+
+function rollbackCommittedEntries(error, moved, staging, destination) {
+    for (const entry of moved.reverse()) {
+        try {
+            fs.renameSync(path.join(destination, entry), path.join(staging, entry));
+        } catch (rollbackError) {
+            error.message = `${error.message} (rollback could not return ${entry}: ${rollbackError.code || rollbackError.message})`;
+        }
+    }
+    try {
+        fs.rmdirSync(destination);
+    } catch (rollbackError) {
+        error.message = `${error.message} (the destination could not be removed again: ${rollbackError.code || rollbackError.message})`;
+    }
 }
 
 // The proof reports the paths it ran against, which are the staging paths the
@@ -386,9 +464,10 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
     });
     if (full.result !== 'PASS') throw new RestoreProofError(`restored root failed proof: ${full.failures.join('; ')}`, full);
 
-    // A rename within one directory is atomic, so the destination comes into
-    // existence either not at all or already complete and already proven.
-    fs.renameSync(staging, resolvedDestination);
+    // The commit: the destination is created create-only and the proven tree is
+    // moved into it.  An interruption returns it to non-existent rather than
+    // leaving a partial authority behind.
+    commitStagedRoot(staging, resolvedDestination);
     return relocateRestoredReport(full, resolvedDestination, manifest);
 }
 

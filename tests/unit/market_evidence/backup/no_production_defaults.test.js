@@ -46,6 +46,41 @@ const CLI_PATHS = Object.freeze([
 
 const PRODUCTION_AREA = path.join(REPOSITORY_ROOT, 'data', 'market_evidence', 'live');
 
+// A stand-in for the SDK *surface*: the five classes the transport constructs,
+// and nothing else.  The transport builds its own client, so a test that wants
+// to drive a verb offline supplies the classes rather than an instance, and the
+// configuration the transport hands its client stays observable -- which is how
+// the no-provider-chain claim becomes something that can be checked instead of
+// something that is asserted.
+function fakeS3Surface(onSend) {
+    const sent = [];
+    const configs = [];
+    class FakeS3Client {
+        constructor(config) {
+            configs.push(config);
+            this.send = command => {
+                sent.push(command.input);
+                return Promise.resolve(onSend(command)).then(result => (result === undefined ? {} : result));
+            };
+        }
+    }
+    const define = name => class FakeCommand {
+        constructor(input) {
+            this.input = input;
+            this.commandName = name;
+        }
+    };
+    return {
+        S3Client: FakeS3Client,
+        PutObjectCommand: define('PutObjectCommand'),
+        GetObjectCommand: define('GetObjectCommand'),
+        HeadObjectCommand: define('HeadObjectCommand'),
+        ListObjectsV2Command: define('ListObjectsV2Command'),
+        sent,
+        configs,
+    };
+}
+
 let shared = null;
 function fixture() {
     if (shared === null) shared = buildBackupFixture({ transactionCount: 1, includeLedgerEntries: 1 });
@@ -279,11 +314,13 @@ test('the R2 transport refuses to construct without injected credentials, even w
                 error => error instanceof TransportContractError && new RegExp(field).test(error.message)
             );
         }
-        // The injected-client seam is a seam for the command mechanics, not a
-        // way around the credential rule.  If supplying a client were enough to
-        // construct, a caller could hand in one backed by the SDK's default
-        // provider chain and the refusal above would be conditional rather than
-        // a guarantee.
+        // A client instance is not a seam at all.  Accepting one is what made
+        // the credential rule conditional: a caller could hand in a client
+        // backed by the SDK's default provider chain and every request would
+        // then go out through a credential source the transport cannot name,
+        // while `credentials` was validated and reported as INJECTED_EXPLICIT.
+        // It is refused outright rather than ignored, because a caller whose
+        // client was silently dropped would believe it was in use.
         const stubClient = { send: () => Promise.resolve({}) };
         assert.throws(
             () => createR2Transport({ endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', client: stubClient }),
@@ -292,6 +329,10 @@ test('the R2 transport refuses to construct without injected credentials, even w
         assert.throws(
             () => createR2Transport({ endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', credentials: {}, client: stubClient }),
             error => error instanceof TransportContractError && /accessKeyId/.test(error.message)
+        );
+        assert.throws(
+            () => createR2Transport({ endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', credentials: { accessKeyId: 'k', secretAccessKey: 's' }, client: stubClient }),
+            error => error instanceof TransportContractError && /a client instance is not accepted/.test(error.message)
         );
     } finally {
         for (const [name, value] of Object.entries(saved)) {
@@ -304,22 +345,18 @@ test('the R2 transport refuses to construct without injected credentials, even w
 test('the R2 transport reports only provider identifiers, never client configuration', () => {
     const { createR2Transport } = backup.loadR2Transport();
     const secret = 'SUPERSECRETACCESSKEYMATERIAL';
-    const sent = [];
-    const client = {
-        send(command) {
-            sent.push(command.input);
-            const error = new Error(`failed with ${secret}`);
-            error.name = 'AccessDenied';
-            error.$metadata = { httpStatusCode: 403 };
-            return Promise.reject(error);
-        },
-    };
+    const sdk = fakeS3Surface(() => {
+        const error = new Error(`failed with ${secret}`);
+        error.name = 'AccessDenied';
+        error.$metadata = { httpStatusCode: 403 };
+        return Promise.reject(error);
+    });
     const transport = createR2Transport({
         endpoint: 'https://example.invalid',
         bucket: 'bucket',
         region: 'auto',
         credentials: { accessKeyId: 'AKIASTUB', secretAccessKey: 'stub-secret' },
-        client,
+        sdk,
     });
     return transport.putObjectCreateOnly({ key: 'a/b.json', bytes: Buffer.from('{}') }).then(
         () => assert.fail('the write should have failed'),
@@ -327,8 +364,50 @@ test('the R2 transport reports only provider identifiers, never client configura
             assert.equal(error.name, 'SnapshotIntegrityError');
             assert.equal(error.message, 'putObjectCreateOnly failed: AccessDenied status=403');
             assert.equal(error.message.includes(secret), false, 'a provider message must not be able to carry a secret into a report');
-            assert.equal(sent[0].IfNoneMatch, '*', 'create-only must be a server-side condition, never a HEAD-then-PUT');
+            assert.equal(sdk.sent[0].IfNoneMatch, '*', 'create-only must be a server-side condition, never a HEAD-then-PUT');
         }
+    );
+});
+
+test('the R2 transport builds its own client, from exactly the credentials it validated', () => {
+    const { createR2Transport } = backup.loadR2Transport();
+    const sdk = fakeS3Surface(() => Promise.resolve({}));
+    const credentials = { accessKeyId: 'AKIAEXPLICITINJECTED', secretAccessKey: 'explicit-injected-secret' };
+    createR2Transport({ endpoint: 'https://example.invalid', bucket: 'stage-d-backup', region: 'auto', sdk, credentials });
+
+    // This is the claim the protected invariant actually makes -- no default
+    // provider chain, no ambient credential source -- stated where it can be
+    // checked.  The client is built here, from this object, and the credential
+    // the SDK receives is the one that was validated rather than a reference to
+    // the chain.
+    assert.equal(sdk.configs.length, 1, 'the transport must build exactly one client');
+    assert.deepStrictEqual(sdk.configs[0].credentials, credentials);
+    assert.deepStrictEqual(
+        Object.keys(sdk.configs[0]).sort(),
+        ['credentials', 'endpoint', 'forcePathStyle', 'region'],
+        'the client must be configured with explicit credentials and nothing that could resolve them from elsewhere'
+    );
+    assert.equal(sdk.configs[0].endpoint, 'https://example.invalid');
+    assert.equal(sdk.configs[0].region, 'auto');
+});
+
+test('an injected SDK surface that cannot supply the verbs is refused', () => {
+    const { createR2Transport } = backup.loadR2Transport();
+    const complete = fakeS3Surface(() => Promise.resolve({}));
+    const settings = { endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', credentials: { accessKeyId: 'k', secretAccessKey: 's' } };
+    for (const member of ['S3Client', 'PutObjectCommand', 'GetObjectCommand', 'HeadObjectCommand', 'ListObjectsV2Command']) {
+        const broken = { ...complete, [member]: undefined };
+        assert.throws(
+            () => createR2Transport({ ...settings, sdk: broken }),
+            error => error instanceof TransportContractError && new RegExp(member).test(error.message),
+            `an SDK surface without ${member} must be refused rather than fail later`
+        );
+    }
+    // A surface whose client cannot send is refused at construction too: the
+    // alternative is a transport that looks constructed and fails on first use.
+    assert.throws(
+        () => createR2Transport({ ...settings, sdk: { ...complete, S3Client: class NotAClient {} } }),
+        error => error instanceof TransportContractError && /must produce a client exposing send/.test(error.message)
     );
 });
 

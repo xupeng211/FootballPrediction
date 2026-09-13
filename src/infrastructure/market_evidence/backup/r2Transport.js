@@ -81,7 +81,31 @@ function assertExplicitCredentials(credentials) {
     return frozen;
 }
 
-function createR2Transport({ endpoint, bucket, region, credentials = null, prefix = '', client = null, forcePathStyle = true } = {}) {
+const REQUIRED_SDK_MEMBERS = Object.freeze([
+    'S3Client',
+    'PutObjectCommand',
+    'GetObjectCommand',
+    'HeadObjectCommand',
+    'ListObjectsV2Command',
+]);
+
+// The seam is the SDK *surface*, never a client instance.  A caller-supplied
+// client could be backed by the SDK's default provider chain, and validating
+// the `credentials` argument would prove nothing about it: the transport would
+// be sending through a credential source it cannot name while reporting
+// `credential_source: INJECTED_EXPLICIT`.  Handing over the classes instead
+// keeps the client construction where it can be reasoned about -- this module
+// always builds its own client from the credentials it has already validated,
+// and there is no path that reaches a client it did not build.
+function assertInjectedSdk(sdk) {
+    if (sdk === null || typeof sdk !== 'object') throw new TransportContractError('an injected SDK surface must be an object');
+    for (const member of REQUIRED_SDK_MEMBERS) {
+        if (typeof sdk[member] !== 'function') throw new TransportContractError(`an injected SDK surface must provide ${member}`);
+    }
+    return sdk;
+}
+
+function createR2Transport({ endpoint, bucket, region, credentials = null, prefix = '', sdk = null, client = null, forcePathStyle = true } = {}) {
     const resolvedEndpoint = assertNonEmptyString(endpoint, 'endpoint');
     const resolvedBucket = assertNonEmptyString(bucket, 'bucket');
     const resolvedRegion = assertNonEmptyString(region, 'region');
@@ -89,36 +113,42 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
     const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, '');
 
     // Credentials are validated unconditionally, before any client exists.
-    //
-    // An injected client is a seam for the command mechanics, never a way to
-    // bring a different credential source.  Validating only on the branch that
-    // builds its own client would leave the guarantee conditional: a caller
-    // could hand in a client backed by the SDK's default provider chain, and
-    // the transport would then have no explicit-credential claim left to make.
     // "Refuses to construct without injected credentials" has to hold on every
-    // path or it does not hold.
+    // path or it does not hold, so this runs before anything else can decide
+    // what to build.
     const resolvedCredentials = assertExplicitCredentials(credentials);
 
-    // Linked here rather than at import time, and after the credential check
-    // above, so a construction that is refused never links the network client.
+    // A client instance is refused outright rather than ignored.  Accepting one
+    // is what made the credential guarantee unprovable; ignoring one silently
+    // would be worse still, because the caller would believe their client was
+    // in use.  Constructing the transport is the only supported way.
+    if (client !== null && client !== undefined) {
+        throw new TransportContractError('a client instance is not accepted; this transport builds its own client from the injected credentials');
+    }
+
+    // Linked here rather than at import time.  Requiring this module must not
+    // pull the network client into the process, and a test may supply the
+    // surface directly.
     const {
         S3Client,
         PutObjectCommand,
         GetObjectCommand,
         HeadObjectCommand,
         ListObjectsV2Command,
-    } = loadS3Sdk();
+    } = sdk === null ? loadS3Sdk() : assertInjectedSdk(sdk);
 
-    let resolvedClient = client;
-    if (resolvedClient === null) {
-        resolvedClient = new S3Client({
-            endpoint: resolvedEndpoint,
-            region: resolvedRegion,
-            forcePathStyle,
-            credentials: resolvedCredentials,
-        });
-    } else if (typeof resolvedClient.send !== 'function') {
-        throw new TransportContractError('an injected client must expose send()');
+    // The one client this transport will ever send through, built here from the
+    // credentials validated above.  `credentials` is passed explicitly, so the
+    // SDK's provider chain is never consulted -- there is nothing left for it
+    // to discover.
+    const resolvedClient = new S3Client({
+        endpoint: resolvedEndpoint,
+        region: resolvedRegion,
+        forcePathStyle,
+        credentials: resolvedCredentials,
+    });
+    if (resolvedClient === null || typeof resolvedClient !== 'object' || typeof resolvedClient.send !== 'function') {
+        throw new TransportContractError('the SDK surface must produce a client exposing send()');
     }
 
     const objectKey = key => (normalizedPrefix ? `${normalizedPrefix}/${canonicalizeKey(key)}` : canonicalizeKey(key));

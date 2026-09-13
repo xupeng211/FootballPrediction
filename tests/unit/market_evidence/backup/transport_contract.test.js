@@ -223,20 +223,34 @@ test('a prefixed R2 transport lists logical keys while asking the provider in ph
     // barrel exists to hold, and would link the network client at file load.
     const { createR2Transport } = backup.loadR2Transport();
     const asked = [];
-    const client = {
-        send(command) {
-            asked.push(command.input);
-            return Promise.resolve({
-                Contents: [
-                    { Key: 'snapshots/snap-1/manifest.json', Size: 10 },
-                    { Key: 'snapshots/snap-1/payload/aa.json', Size: 20 },
-                    // Outside the configured scope: not evidence about this
-                    // generation, so it must not appear as one of its objects.
-                    { Key: 'somewhere-else/manifest.json', Size: 30 },
-                ],
-                IsTruncated: false,
-            });
+    // The seam is the SDK surface, not a client: the transport builds its own
+    // client from the credentials it validated, so a test supplies the classes
+    // and never an instance.
+    const command = () => class FakeCommand {
+        constructor(input) {
+            this.input = input;
+        }
+    };
+    const sdk = {
+        S3Client: class {
+            send(request) {
+                asked.push(request.input);
+                return Promise.resolve({
+                    Contents: [
+                        { Key: 'snapshots/snap-1/manifest.json', Size: 10 },
+                        { Key: 'snapshots/snap-1/payload/aa.json', Size: 20 },
+                        // Outside the configured scope: not evidence about this
+                        // generation, so it must not appear as one of its objects.
+                        { Key: 'somewhere-else/manifest.json', Size: 30 },
+                    ],
+                    IsTruncated: false,
+                });
+            }
         },
+        PutObjectCommand: command(),
+        GetObjectCommand: command(),
+        HeadObjectCommand: command(),
+        ListObjectsV2Command: command(),
     };
     const transport = createR2Transport({
         endpoint: 'https://example.invalid',
@@ -244,7 +258,7 @@ test('a prefixed R2 transport lists logical keys while asking the provider in ph
         region: 'auto',
         prefix: '/snapshots/',
         credentials: { accessKeyId: 'AKIASTUB', secretAccessKey: 'stub-secret' },
-        client,
+        sdk,
     });
 
     const objects = await transport.listObjects({ prefix: 'snap-1/' });
