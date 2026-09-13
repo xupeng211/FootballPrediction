@@ -251,6 +251,64 @@ test('a restore of a generation whose artifact was tampered with fails closed', 
     );
 });
 
+// A restore that fails must not have created anything.  Creating the
+// destination first and filling it in meant that a generation which turned out
+// to be missing an object, or carrying a hash the manifest does not bind, left
+// the destination as a partial tree -- at a path that had not existed before --
+// and because a restore refuses a destination that already exists, that tree
+// could never be restored into again.  The tests above already assert that the
+// restore is refused; what they never asserted is the state it left behind, and
+// the retry is what makes that observable: a retry that reaches the real
+// problem is only possible if nothing was left in the way.
+for (const [label, sabotage] of [
+    ['a missing object', ({ root, manifest }) => {
+        fs.rmSync(path.join(root, ...manifest.artifacts[manifest.artifacts.length - 1].object_key.split('/')));
+    }],
+    ['an object whose content the manifest does not bind', ({ root, manifest }) => {
+        const victim = path.join(root, ...manifest.artifacts[manifest.artifacts.length - 1].object_key.split('/'));
+        const bytes = Buffer.from(fs.readFileSync(victim));
+        bytes[1] ^= 0x01;
+        fs.writeFileSync(victim, bytes);
+    }],
+]) {
+    test(`a restore that fails on ${label} leaves the destination exactly as it was`, async t => {
+        const { root, transport, report } = await sealed(t, 'abandon');
+        const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+        sabotage({ root, manifest });
+        const target = destination(t, 'abandon');
+
+        await assert.rejects(executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }));
+        assert.equal(fs.existsSync(target), false, `a failed restore must leave no destination behind: ${target}`);
+
+        await assert.rejects(
+            executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }),
+            error => !/already exists/.test(error.message),
+            'the retry must reach the real problem, which it only can if nothing was left in the way'
+        );
+        assert.equal(fs.existsSync(target), false);
+    });
+}
+
+// The third failure mode is the one that happens after every artifact has been
+// written and every hash checked: the proof itself comes back FAIL.  It is the
+// case a fix that only verified the artifacts up front would still get wrong,
+// because by the time the proof runs the tree already exists.
+test('a restore whose proof fails leaves the destination exactly as it was', async t => {
+    const { transport, report } = await sealed(t, 'prooffail');
+    const target = destination(t, 'prooffail');
+    const refusing = () => ({ status: 0, stdout: `${JSON.stringify({ ok: false, error: 'the restored root could not be loaded' })}\n` });
+
+    let caught = null;
+    try {
+        await executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target, includeFreshProcess: true, spawn: refusing });
+    } catch (error) {
+        caught = error;
+    }
+    assert.ok(caught instanceof RestoreProofError, `expected a proof failure, received ${caught && caught.name}: ${caught && caught.message}`);
+    assert.ok(caught.report.failures.some(failure => /could not be loaded by a fresh process/.test(failure)), 'the report must carry the proof failure');
+    assert.equal(fs.existsSync(target), false, 'a destination whose proof failed must not exist');
+});
+
 test('an unsealed generation cannot be restored', async t => {
     const { root, transport, report } = await sealed(t, 'unsealed');
     fs.rmSync(path.join(root, ...report.completeness_object_key.split('/')));
@@ -313,8 +371,19 @@ test('a fresh process is asked to load the restored root and inherits no environ
     for (const name of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_PROFILE', 'R2_ACCESS_KEY_ID', 'CLOUDFLARE_API_TOKEN', 'HOME']) {
         assert.equal(name in capture.options.env, false, `${name} must never reach the probe`);
     }
-    assert.ok(capture.args[1].includes(target), 'the probe is pointed at the restored root');
     assert.equal(capture.args[1].includes(fixture().authorityRoot), false, 'the probe is never pointed at the source');
+    // The tree is proven where it was staged and only then moved into place, so
+    // the probe names the staging path rather than the destination.  The bytes
+    // it loaded are the ones that became the destination, so the property that
+    // matters is that it was pointed at that tree and not at the source -- and
+    // that the report names where the tree actually ended up rather than the
+    // staging path the proof ran against.
+    const probed = /storeRoot:\s*"([^"]+)"/.exec(capture.args[1]);
+    assert.ok(probed, 'the probe must name the authority root it was pointed at');
+    assert.equal(path.dirname(path.dirname(probed[1])), path.dirname(target), 'the probe must be pointed at the tree staged beside the destination');
+    assert.equal(restored.destination_root, target);
+    assert.equal(restored.authority_root, path.join(target, 'transactions'), 'the report must name the final destination, not the staging path');
+    assert.equal(restored.proof.head_transaction_id, report.source_head_transaction_id);
 });
 
 test('the restored root is loadable by a genuinely fresh process', async t => {

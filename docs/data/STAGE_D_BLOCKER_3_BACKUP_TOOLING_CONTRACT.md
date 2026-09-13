@@ -341,9 +341,26 @@ would be a catastrophe. The destination must therefore be:
 - outside every source root the caller names, and not containing one;
 - free of symbolic-link ancestors, and created with `0700`.
 
-The executor creates the destination and owns it; it then restores every
-artifact from the generation, byte for byte, at the production permission
-contract's modes:
+A failed restore leaves the destination **exactly as it was found** — that is,
+still non-existent. It is built at a staging path beside the destination and
+moved into place with a single `rename` only after every artifact has been
+written and the proof has come back `PASS`, so the destination cannot be
+observed in a partial state: it either does not exist, or it exists complete
+and proven. Building it at its final path instead would have made every later
+failure — a missing object, a hash the manifest does not bind, or a proof that
+returns `FAIL` — leave behind a partial tree at a path that had not existed
+before, and because a restore refuses a destination that already exists, that
+tree could never have been restored into again.
+
+Nothing is ever removed, so a failure leaves the staging directory in place as
+visible evidence of the attempt while the destination stays untouched. The
+report names the destination, not the staging path: the layout fields are
+recomputed from the final destination — they are a pure function of the
+destination and the manifest — while the bytes, hashes, modes and identity in
+the report are the proof's own, carried through unaltered.
+
+The executor then restores every artifact from the generation, byte for byte,
+at the production permission contract's modes:
 
 ```text
 DIRECTORY_MODE=0700
@@ -456,6 +473,28 @@ so echoing it would turn a refusal into a leak. A test drives every flag in both
 spellings at both CLIs and asserts each is refused by name, with the value
 appearing in neither stdout nor stderr. Live R2 wiring is a separate, explicitly
 authorized change.
+
+That named list is a denylist, and a denylist can only refuse the names someone
+thought to write down. The names that matter most here are exactly the ones that
+keep being invented, and the near-misses slip past it: `--r2-access-key-id=…`
+contains no `--r2=` (the character after `--r2` is `-`, not `=`), and
+`--storage-endpoint=…` contains no `--endpoint`. Both were parsed by nothing,
+ignored, and the command ran to completion and exited `0` while carrying an
+access key or an API token in its own argv. Each CLI therefore **accepts only
+the flags it implements**: every argument must be one of that CLI's own flags
+(beyond the named refusals above), a flag it does not implement is refused by
+name, a value never begins with `--` so a flag in a value position is reported
+as the missing value it is rather than consumed, and a bare positional argument
+is refused without being echoed — a stray token is as likely to be a pasted
+secret as a mistyped path. The `--flag=value` form is refused explicitly for
+implemented flags rather than silently failing as a missing value, since these
+CLIs read values from the following argument.
+
+The distinction the contract draws is between **refusing** an argument and
+**ignoring** it. Ignoring is the dangerous outcome: the operator believes the
+command went somewhere it did not, and a credential that was silently swallowed
+is one nobody knows is compromised. Refusing is always safe, so where the two
+are in tension the tooling refuses.
 
 ## Offline proof
 

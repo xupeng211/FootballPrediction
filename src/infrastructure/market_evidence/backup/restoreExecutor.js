@@ -21,6 +21,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const { canonicalJson } = require('../transactionContract');
@@ -310,6 +311,45 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
     });
 }
 
+// The tree is built somewhere else and moved into place only once it has been
+// proven, because the destination must not exist at all unless the restore
+// succeeded.  Creating it first and filling it in is what left a destination
+// that had not existed become a partial tree on any later failure -- a missing
+// object, a hash the manifest does not bind, or a proof that came back FAIL --
+// and because a restore refuses a destination that already exists, that partial
+// tree could never be restored into again.  It was also the one case where a
+// failed restore did not leave the destination as it was found.
+//
+// Nothing here removes anything, so a failure leaves the staging directory
+// behind as visible evidence of the attempt while the destination itself stays
+// exactly as it was.
+function createStagingRoot(destination) {
+    const staging = path.join(path.dirname(destination), `.${path.basename(destination)}.restore-staging-${crypto.randomBytes(8).toString('hex')}`);
+    if (isGovernedProductionPath(staging)) throw new SnapshotIntegrityError(`restore staging root must never be the governed production area: ${staging}`);
+    fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
+    fs.chmodSync(staging, DIRECTORY_MODE);
+    return staging;
+}
+
+// The proof reports the paths it ran against, which are the staging paths the
+// tree had before it moved.  Handing those back would name locations that no
+// longer exist, so the layout is recomputed from the final destination -- it is
+// a pure function of the destination and the manifest, so this is a
+// recalculation rather than a rewrite of what the proof found.  The bytes,
+// hashes, modes and identity in the report are the proof's own and are carried
+// through untouched.
+function relocateRestoredReport(report, destinationRoot, manifest) {
+    const layout = restoredLayout(destinationRoot, manifest);
+    return Object.freeze({
+        ...report,
+        destination_root: destinationRoot,
+        authority_root: layout.authority_root,
+        ledger_root: layout.ledger_root,
+        allocation_artifact_path: layout.allocation_artifact_path,
+        quota_config_path: layout.quota_config_path,
+    });
+}
+
 // `sourceRoots` is how a caller that knows where the source lives states it.  A
 // restore into a directory that contains, or is contained by, the very root it
 // was taken from would prove nothing about isolating a failure domain, so the
@@ -321,9 +361,8 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
     const { manifest, manifest_sha256: manifestSha256 } = await loadAcceptedManifest({ transport, snapshotId });
 
     const resolvedDestination = assertFreshDestination(destinationRoot, { sourceRoots });
-    fs.mkdirSync(resolvedDestination, { mode: DIRECTORY_MODE });
-    fs.chmodSync(resolvedDestination, DIRECTORY_MODE);
-    const layout = restoredLayout(resolvedDestination, manifest);
+    const staging = createStagingRoot(resolvedDestination);
+    const layout = restoredLayout(staging, manifest);
 
     const written = [];
     for (const artifact of manifest.artifacts) {
@@ -333,11 +372,11 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
         if (sha256Hex(bytes) !== artifact.sha256) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} with content the manifest does not bind`);
         const mode = FILE_MODES[artifact.category];
         if (mode === undefined) throw new SnapshotIntegrityError(`no restored file mode is defined for category ${artifact.category}`);
-        const absolute = writeRestoredFile(resolvedDestination, artifact.logical_path, bytes, mode);
+        const absolute = writeRestoredFile(staging, artifact.logical_path, bytes, mode);
         written.push(Object.freeze({ logical_path: artifact.logical_path, absolute_path: absolute, mode }));
     }
 
-    const report = await proveRestoredRoot({ destinationRoot: resolvedDestination, manifest, layout, includeFreshProcess, spawn, execPath });
+    const report = await proveRestoredRoot({ destinationRoot: staging, manifest, layout, includeFreshProcess, spawn, execPath });
     const full = Object.freeze({
         ...report,
         snapshot_id: snapshotId,
@@ -345,8 +384,12 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
         restored_object_count: written.length,
         transport: transport.describe(),
     });
-    if (full.result !== 'PASS') throw new RestoreProofError(`restored root at ${resolvedDestination} failed proof: ${full.failures.join('; ')}`, full);
-    return full;
+    if (full.result !== 'PASS') throw new RestoreProofError(`restored root failed proof: ${full.failures.join('; ')}`, full);
+
+    // A rename within one directory is atomic, so the destination comes into
+    // existence either not at all or already complete and already proven.
+    fs.renameSync(staging, resolvedDestination);
+    return relocateRestoredReport(full, resolvedDestination, manifest);
 }
 
 module.exports = {

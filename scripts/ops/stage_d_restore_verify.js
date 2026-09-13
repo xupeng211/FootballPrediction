@@ -63,8 +63,49 @@ function assertNoLiveTargetFlags() {
     }
 }
 
+// The denylist above can only refuse the names someone thought to write down,
+// and the names that matter most here -- credentials and remote targets -- are
+// exactly the ones that keep being invented: `--r2-access-key-id=…` matches
+// none of them (`--r2=` needs the `=` where this has a `-`) and `--endpoint`
+// with any prefix does the same, so a restore carrying an access key or an API
+// token ran to completion and exited 0.  Silently ignoring an argument is worse
+// than refusing it, because the operator believes they aimed the command
+// somewhere it never went.  So the CLI accepts only what it implements, and the
+// refusal names the flag rather than its value -- a value here may be a secret.
+const ACCEPTED_FLAGS = Object.freeze({
+    '--transport-root': 1,
+    '--snapshot-id': 1,
+    '--destination-root': 1,
+    '--verify-only': 0,
+    '--fresh-process': 0,
+});
+
+function assertOnlyAcceptedFlags() {
+    const argv = process.argv.slice(2);
+    for (let index = 0; index < argv.length; index += 1) {
+        const argument = argv[index];
+        // A positional argument is not echoed, because a stray token is as
+        // likely to be a pasted secret as a mistyped path.
+        if (!argument.startsWith('--')) throw new Error('this CLI accepts only named flags; an unexpected positional argument was given');
+        const equals = argument.indexOf('=');
+        const name = equals === -1 ? argument : argument.slice(0, equals);
+        let arity = ACCEPTED_FLAGS[name];
+        if (arity === undefined) throw new Error(`unknown flag is refused rather than ignored (this CLI implements no credential, endpoint, bucket, region or live-target option): ${name}`);
+        if (equals !== -1) throw new Error(`${name} must be given as a separate argument; this CLI does not accept the --flag=value form`);
+        // A value never begins with `--`, so a flag sitting in a value position
+        // is a missing value rather than a value.  Consuming it would turn the
+        // flag that follows into a stray positional and report the wrong
+        // problem; leaving it lets the reader that needs the value name it.
+        while (arity > 0 && typeof argv[index + 1] === 'string' && !argv[index + 1].startsWith('--')) {
+            arity -= 1;
+            index += 1;
+        }
+    }
+}
+
 async function main() {
     assertNoLiveTargetFlags();
+    assertOnlyAcceptedFlags();
     const transportRoot = valueAfter('--transport-root');
     const snapshotId = valueAfter('--snapshot-id');
     if (!transportRoot) throw new Error('--transport-root is required; this command has no production default');

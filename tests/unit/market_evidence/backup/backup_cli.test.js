@@ -230,6 +230,60 @@ test('both CLIs reject every live-target flag in both spellings without echoing 
     }
 });
 
+// A denylist can only refuse the names someone thought to write down, and the
+// names that matter most here are the ones that keep being invented.  Each of
+// these matched no entry on the list, was ignored by the argument reader, and
+// let the command run to completion -- a snapshot carrying an access key or an
+// API token exited 0 and reported success.  The refusal must also never echo
+// the value: a value in this position may be a secret.
+for (const [name, cli, extra] of [
+    ['the snapshot CLI', SNAPSHOT_CLI, []],
+    ['the restore CLI', RESTORE_CLI, []],
+]) {
+    test(`${name} refuses a credential or remote flag it does not implement instead of ignoring it`, t => {
+        const transportRoot = temporary(t, 'stage-d-cli-unknown-');
+        const args = cli === SNAPSHOT_CLI
+            ? ['--transport-root', transportRoot, ...extra]
+            : ['--transport-root', transportRoot, '--snapshot-id', 'snap_20260913T000000000Z_0011223344556677', ...extra];
+
+        for (const flag of [
+            '--r2-access-key-id=AKIAIOSFODNN7EXAMPLE',
+            '--r2-secret-access-key=SECRETVALUE',
+            '--cloudflare-api-token=TOKENVALUE',
+            '--storage-endpoint=https://example.invalid',
+            '--region=auto',
+        ]) {
+            const result = runCli(cli, [...args, flag]);
+            assert.equal(result.status, 1, `${flag} must not be accepted`);
+            const payload = payloadOf(result);
+            // Which of the two refusals catches it is not the property under
+            // test -- `--region` is on the named list and the rest are not, and
+            // both are correct.  The property is that it is refused rather than
+            // ignored, that the refusal names the flag, and that the value never
+            // appears: a value in this position may be a secret.
+            assert.ok(
+                /unknown flag is refused rather than ignored|live off-host target flags are rejected/.test(payload.error),
+                `${flag}: ${payload.error}`
+            );
+            const reported = flag.slice(0, flag.indexOf('='));
+            assert.ok(payload.error.includes(reported), `the refusal must name the flag: ${payload.error}`);
+            const value = flag.slice(flag.indexOf('=') + 1);
+            assert.equal(payload.error.includes(value), false, `the refusal must never echo the value: ${payload.error}`);
+            assert.equal(result.stdout.includes(value), false, `the value must not reach stdout at all: ${result.stdout.slice(0, 200)}`);
+            assert.equal(result.stderr.includes(value), false, `the value must not reach stderr at all`);
+        }
+    });
+}
+
+test('a bare positional argument is refused and never echoed', t => {
+    const transportRoot = temporary(t, 'stage-d-cli-positional-');
+    const result = runCli(SNAPSHOT_CLI, ['--transport-root', transportRoot, 'AKIAIOSFODNN7EXAMPLE']);
+    assert.equal(result.status, 1);
+    const payload = payloadOf(result);
+    assert.ok(/unexpected positional argument/.test(payload.error), payload.error);
+    assert.equal(result.stdout.includes('AKIAIOSFODNN7EXAMPLE'), false, 'a stray token may be a secret and must never be echoed');
+});
+
 test('the CLI refuses a flag whose value is missing rather than consuming the next flag', t => {
     const transportRoot = temporary(t, 'stage-d-cli-novalue-');
     const result = runCli(SNAPSHOT_CLI, ['--transport-root', '--authority-root', transportRoot]);
