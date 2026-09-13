@@ -2352,6 +2352,11 @@ test('contract. an unrecognised violation is blocked rather than silently droppe
 // runtime is supposed to produce for itself.
 const PRE_CONTENT_EVIDENCE_SOURCE = planner.PRE_CONTENT_EVIDENCE_SOURCE;
 
+// A PRE_CONTENT_SHA256 has to be present for every governed artifact, so a case
+// about a permitted evidence source needs one to be about anything at all.  It
+// is a digest of the documented shape, never a value the planner derives.
+const PRE_SHA256 = 'c'.repeat(64);
+
 // A plan for a real tree with one real metadata defect, built the same way every
 // other test in this file builds one: real modes on a real filesystem, judged by
 // the real audit.  The root is returned with the plan so a case can assert the
@@ -2576,7 +2581,7 @@ test('25. an ordinarily readable artifact takes its PRE hash from the ordinary r
     // classifier is asked about here — not a shape written to match it.
     const observed = planManifestEntry(root, target);
     assert.equal(observed.status, 'HASHED');
-    assert.ok(observed.sha256);
+    assert.match(observed.sha256, /^[0-9a-f]{64}$/, 'the CLI must publish a real PRE_CONTENT_SHA256');
     assert.equal(planner.preContentEvidenceSourceFor(observed), PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY);
     assert.equal(PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY, 'ORDINARY_RUNTIME_READ');
 
@@ -2590,7 +2595,7 @@ test('25. an ordinarily readable artifact takes its PRE hash from the ordinary r
 
 test('26. an EACCES artifact this plan repairs may fall back to a privileged read-only read', () => {
     const eacces = {
-        status: 'NOT_READABLE', read_error_code: 'EACCES',
+        status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256,
         permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
         symlink_free: true, ancestry_real_directories: true,
     };
@@ -2607,13 +2612,32 @@ test('26. an EACCES artifact this plan repairs may fall back to a privileged rea
             `${missing} must be required before a privileged read is permitted`,
         );
     }
+    // The digest is a precondition like the others, and the one the fallback
+    // cannot do without: an escalation permitted by four booleans but carrying
+    // no PRE_CONTENT_SHA256 would put an unproven artifact into a set whose
+    // PRE/POST invariant is universal.  The two failure shapes are the same
+    // defect — a supposedly-read artifact with nothing to show for it — so both
+    // are exercised, because a digest check placed after the status branch would
+    // leave the HASHED route open while closing the EACCES one.
+    for (const status of ['HASHED', 'NOT_READABLE']) {
+        for (const sha256 of [undefined, null, '', 'not-a-digest', 'A'.repeat(64), 'c'.repeat(63), 'c'.repeat(65)]) {
+            assert.equal(
+                planner.preContentEvidenceSourceFor({ ...eacces, status, sha256 }),
+                null,
+                `a ${status} artifact with sha256=${JSON.stringify(sha256)} has no permitted evidence source`,
+            );
+        }
+    }
     // A different errno is a different problem, and none of them is repaired by
     // a metadata plan, so none of them has a permitted evidence source at all.
     for (const code of ['EIO', 'ENOENT', 'ELOOP', 'EPERM', null, undefined]) {
-        assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, read_error_code: code }), null);
+        assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, code }), null);
     }
+    // Nor does the invented field name: the failure reason is the CLI's `code`,
+    // so a record spelling it another way is unproven rather than accepted.
+    assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, code: undefined, read_error_code: 'EACCES' }), null);
     // An artifact never observed as unreadable is not a fallback case either.
-    assert.equal(planner.preContentEvidenceSourceFor({ status: 'ABSENT', read_error_code: 'EACCES' }), null);
+    assert.equal(planner.preContentEvidenceSourceFor({ status: 'ABSENT', code: 'EACCES', sha256: PRE_SHA256 }), null);
     assert.equal(planner.preContentEvidenceSourceFor({}), null);
     assert.equal(planner.preContentEvidenceSourceFor(), null);
 });
@@ -2651,9 +2675,9 @@ test('27. a privileged read cannot stand in for any ordinary-runtime proof', t =
 
 test('28. every governed artifact requires a PRE hash and a missing one fails closed', () => {
     const artifacts = [
-        { path: '/governed/a', status: 'HASHED' },
+        { path: '/governed/a', status: 'HASHED', sha256: PRE_SHA256 },
         {
-            path: '/governed/b', status: 'NOT_READABLE', read_error_code: 'EACCES',
+            path: '/governed/b', status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256,
             permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
             symlink_free: true, ancestry_real_directories: true,
         },
@@ -2670,6 +2694,42 @@ test('28. every governed artifact requires a PRE hash and a missing one fails cl
         [],
     );
     assert.equal(complete.missing_pre_evidence_result, 'BLOCKED');
+
+    // The verdict reports the digest it accepted for every artifact, so READY is
+    // a statement about values that exist rather than about sources that were
+    // merely permitted.
+    assert.deepEqual(
+        complete.classified.map(entry => entry.pre_content_sha256),
+        [PRE_SHA256, PRE_SHA256],
+    );
+    assert.deepEqual(
+        complete.classified.map(entry => entry.evidence_source),
+        [PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY, PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED],
+    );
+
+    // A permitted evidence source is not by itself content evidence.  These are
+    // the shapes that classify as a usable source while carrying no PRE hash at
+    // all, and every one of them must block: the first is the repro for the
+    // P1 an independent review raised against the first revision of this
+    // contract, where a HASHED status with no digest was accepted as READY, and
+    // the second is its privileged twin — the EACCES artifact whose four
+    // booleans all hold and which still proves nothing about its bytes.
+    for (const unproven of [
+        { path: '/governed/x', status: 'HASHED' },
+        { path: '/governed/x', status: 'HASHED', sha256: null },
+        {
+            path: '/governed/x', status: 'NOT_READABLE', code: 'EACCES',
+            permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
+            symlink_free: true, ancestry_real_directories: true,
+        },
+    ]) {
+        const verdict = planner.preContentEvidenceVerdict([...artifacts, unproven]);
+        assert.equal(verdict.status, 'BLOCKED', `${JSON.stringify(unproven)} must not pass as content evidence`);
+        assert.equal(verdict.permitted, 2);
+        assert.deepEqual(verdict.blocked.map(entry => entry.path), ['/governed/x']);
+        assert.equal(verdict.blocked[0].evidence_source, null);
+        assert.equal(verdict.blocked[0].pre_content_sha256, null);
+    }
 
     // One unprovable artifact blocks the set: the content proof is universal, so
     // a partial manifest is not a weaker proof, it is no proof.
@@ -2696,7 +2756,7 @@ test('29. PRE content evidence binds the path to the observed device and inode',
     // than about a name: an artifact whose dev/inode was not confirmed has no
     // permitted evidence source, so a swapped object cannot inherit a hash.
     const base = {
-        status: 'NOT_READABLE', read_error_code: 'EACCES',
+        status: 'NOT_READABLE', code: 'EACCES', sha256: PRE_SHA256,
         permission_defect_repaired_by_this_plan: true, symlink_free: true,
         ancestry_real_directories: true,
     };

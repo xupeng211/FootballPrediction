@@ -127,6 +127,12 @@ const PRE_CONTENT_EVIDENCE_SOURCE = Object.freeze({
     PRIVILEGED: 'PRIVILEGED_READ_ONLY_EVIDENCE',
 });
 
+// A PRE_CONTENT_SHA256 is a lowercase hex SHA-256 digest — the same shape the
+// audit CLI publishes in its `content_hashes` manifest.  It is required: an
+// evidence record without one is not content evidence, and a source without a
+// digest would let the set pass as READY while proving nothing per artifact.
+const PRE_CONTENT_SHA256_RE = /^[0-9a-f]{64}$/;
+
 function planError(code, message) {
     const error = new Error(message);
     error.code = code;
@@ -398,11 +404,21 @@ function surfaceObservationIndex(report) {
 // and it reuses the vocabulary the audit CLI already emits rather than inventing
 // a parallel one:
 //
-//   `status` and `read_error_code`
+//   `sha256`
+//        the PRE_CONTENT_SHA256 itself, and the reason this function exists: it
+//        is required for EVERY artifact and for BOTH evidence sources.  A
+//        permitted reader with no digest to show for it is not content evidence
+//        at all, and accepting one — a `HASHED` status, or an EACCES artifact
+//        whose preconditions hold — would leave the set READY while carrying no
+//        per-artifact byte proof, which is precisely the hole the PRE/POST
+//        invariant exists to close.
+//   `status` and `code`
 //        the same pair the CLI's `content_hashes` manifest carries for every
-//        governed artifact (`HASHED`, `NOT_READABLE`, or a reason it could not
-//        be hashed at all), so an artifact the audit could not read keeps its
-//        place in the manifest instead of dropping out of it.
+//        governed artifact: `{status: 'HASHED', sha256, size}` when the read
+//        succeeded, and `{status: 'NOT_READABLE', code}` — plus `ABSENT`,
+//        `NOT_OBSERVABLE` and `NOT_REGULAR_FILE` — when it did not, so an
+//        artifact the audit could not read keeps its place in the manifest
+//        instead of dropping out of it.
 //   `permission_defect_repaired_by_this_plan`
 //        whether an operation in THIS plan repairs the very permission finding
 //        that made the read fail.  It is the plan's own linkage between the
@@ -423,9 +439,12 @@ function surfaceObservationIndex(report) {
 // object, a non-regular file, a symlink, an unbound dev/inode, a broken ancestry
 // — is blocked rather than escalated.
 function preContentEvidenceSourceFor(artifact = {}) {
+    // The digest gates every artifact and both sources: without it there is no
+    // PRE_CONTENT_SHA256 to compare against POST, so no source may be accepted.
+    if (!PRE_CONTENT_SHA256_RE.test(artifact.sha256 || '')) return null;
     if (artifact.status === 'HASHED') return PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY;
     if (artifact.status !== 'NOT_READABLE') return null;
-    if (artifact.read_error_code !== 'EACCES') return null;
+    if (artifact.code !== 'EACCES') return null;
     if (artifact.permission_defect_repaired_by_this_plan !== true) return null;
     if (artifact.dev_inode_bound !== true) return null;
     if (artifact.symlink_free !== true) return null;
@@ -437,21 +456,30 @@ function preContentEvidenceSourceFor(artifact = {}) {
 // content proof is per artifact and universal — PRE_SHA256 == POST_SHA256 for
 // every governed artifact — so one artifact with no permitted evidence source
 // makes the set unproven rather than partially proven, and the verdict is
-// BLOCKED.  Classification only: this function decides whether the pre-repair
-// manifest is complete enough to authorize a repair, and never collects the
-// hash, opens the file or mutates anything.
+// BLOCKED.  Classification only: this function validates the digests a
+// pre-repair manifest already carries and decides whether it is complete enough
+// to authorize a repair.  It never reads a hash out of a file, opens a governed
+// path or mutates anything, and a manifest entry without a well-formed digest is
+// blocked rather than treated as evidence with an unstated value.
 function preContentEvidenceVerdict(artifacts = []) {
     if (!Array.isArray(artifacts)) throw planError('INVALID_PRE_CONTENT_EVIDENCE_INPUT', 'governed artifacts must be an array');
     const required = artifacts.length;
     const classified = artifacts.map(artifact => Object.freeze({
         path: artifact && artifact.path ? artifact.path : null,
         evidence_source: preContentEvidenceSourceFor(artifact || {}),
+        pre_content_sha256: PRE_CONTENT_SHA256_RE.test((artifact || {}).sha256 || '') ? artifact.sha256 : null,
     }));
     const blocked = classified.filter(entry => entry.evidence_source === null);
     return Object.freeze({
         status: blocked.length > 0 ? 'BLOCKED' : 'READY',
         governed_artifacts_required: required,
         permitted: required - blocked.length,
+        // Every artifact is reported, not only the refused ones, so a READY
+        // verdict can be read as the per-artifact statement it is: each entry
+        // names the source that was accepted and the PRE_CONTENT_SHA256 it was
+        // accepted for.  A READY with an unreported digest would put the
+        // invariant out of reach of the caller checking it.
+        classified: Object.freeze(classified),
         blocked: Object.freeze(blocked),
         missing_pre_evidence_result: 'BLOCKED',
     });

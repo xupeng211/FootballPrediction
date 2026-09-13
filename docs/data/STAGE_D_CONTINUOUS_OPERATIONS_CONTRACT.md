@@ -495,8 +495,13 @@ identity, and the `STORE.json` and allocation-authority hashes.
 `PRE_CONTENT_SHA256`, and the manifest records for each one which role produced
 it — `ORDINARY_RUNTIME_READ` or `PRIVILEGED_READ_ONLY_EVIDENCE`. An artifact whose
 pre-repair hash is missing is a blocking finding; the repair does not proceed and
-no operation is applied against it. The weaker invariant "the post-repair content
-manifest matches the manifest commitment" is **not** accepted as a substitute:
+no operation is applied against it. The digest is a precondition of both roles,
+not a consequence of either: a manifest entry that names a permitted role but
+carries no well-formed 64-hex digest is itself a blocking finding, because a
+permitted reader that produced no hash is not content evidence and a set that
+admitted one would be `READY` while proving nothing per artifact. The weaker
+invariant "the post-repair content manifest matches the manifest commitment" is
+**not** accepted as a substitute:
 a commitment cannot prove that the bytes a privileged reader saw are the bytes
 the ordinary runtime identity will later read. The proof is `PRE_SHA256 ==
 POST_SHA256` per artifact, with the post-repair hash taken by the target runtime
