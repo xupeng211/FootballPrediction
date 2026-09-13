@@ -709,16 +709,74 @@ function classifyGeneration(generation, findings) {
 function evaluateAncestry(targets, runtimeIdentity, aclObservations, findings) {
     const configs = [
         { target: targets.authorityRoot, surfaceId: SURFACE.TRANSACTION_AUTHORITY_ROOT, failClosedOnGroupWritable: false },
+        // The allocation authority may live outside the authority root.  Its
+        // ancestry is part of the governed path: a symlinked or world-writable
+        // ancestor lets the artifact be replaced wholesale, which no content
+        // hash computed after the fact can detect.
+        { target: targets.allocationArtifactPath, surfaceId: SURFACE.ALLOCATION_AUTHORITY_ARTIFACT, failClosedOnGroupWritable: false },
         { target: targets.ledgerRoot, surfaceId: SURFACE.REQUEST_ACCOUNTING_ROOT, failClosedOnGroupWritable: false },
         { target: targets.runLockTrustRoot, surfaceId: SURFACE.RUN_LOCK_TRUST_ROOT, failClosedOnGroupWritable: true },
     ];
+    // One path can be an ancestor of several targets: the allocation artifact
+    // normally sits inside the authority root, and a ledger root can share a
+    // parent with either.  Each distinct ancestor is classified exactly once —
+    // a shared directory must not be reported twice — but a path reached by any
+    // target that demands a non-group-writable chain is classified under that
+    // strictest policy, so a laxer target can never downgrade it.
+    const reached = new Map();
     for (const config of configs) {
         if (!config.target) continue;
-        findings.push(...classifyAncestry(config.target, { ...config, runtimeIdentity, aclObservations }));
+        for (const ancestor of walkAncestry(config.target)) {
+            const prior = reached.get(ancestor.path);
+            if (prior === undefined) {
+                reached.set(ancestor.path, {
+                    ancestor, surfaceId: config.surfaceId, failClosedOnGroupWritable: config.failClosedOnGroupWritable,
+                });
+                continue;
+            }
+            if (config.failClosedOnGroupWritable) prior.failClosedOnGroupWritable = true;
+        }
+    }
+    for (const entry of reached.values()) {
+        classifyAncestor(entry.ancestor, entry, runtimeIdentity, aclObservations, findings);
     }
 }
 
-function buildReport({ runtimeIdentity, targets, evaluations, findings, generation, contentHashes }) {
+// The ACL state a governed path is currently in, in a form a Phase B repair can
+// put back with `setfacl --set`.  `restorable` is the only field the planner is
+// allowed to act on: an unobservable or incomplete ACL is not evidence that no
+// ACL exists, so it can never authorise deleting one.
+function restorableAclState(acl) {
+    if (!acl || acl.available !== true) {
+        return Object.freeze({ available: false, restorable: false, reason: acl ? acl.reason : 'acl-not-observed' });
+    }
+    const namedUsers = acl.named_user_perms || {};
+    const namedGroups = acl.named_group_perms || {};
+    const complete = [acl.owner, acl.group, acl.other, acl.mask].every(value => typeof value === 'string')
+        && Object.values(namedUsers).every(value => typeof value === 'string')
+        && Object.values(namedGroups).every(value => typeof value === 'string');
+    return Object.freeze({
+        available: true,
+        restorable: complete,
+        reason: complete ? null : 'acl-observation-incomplete',
+        named_entries: Object.freeze([...(acl.named_entries || [])]),
+        named_user_perms: Object.freeze({ ...namedUsers }),
+        named_group_perms: Object.freeze({ ...namedGroups }),
+        user: acl.owner === undefined ? null : acl.owner,
+        group: acl.group === undefined ? null : acl.group,
+        other: acl.other === undefined ? null : acl.other,
+        mask: acl.mask === undefined ? null : acl.mask,
+    });
+}
+
+function buildAclState(aclObservations) {
+    if (!aclObservations || typeof aclObservations !== 'object') return Object.freeze({});
+    const state = {};
+    for (const target of Object.keys(aclObservations).sort()) state[target] = restorableAclState(aclObservations[target]);
+    return Object.freeze(state);
+}
+
+function buildReport({ runtimeIdentity, targets, evaluations, findings, generation, contentHashes, aclState }) {
     const violations = findings.filter(item => item.severity === SEVERITY.VIOLATION);
     const ambiguous = violations.filter(item => !item.auto_repairable);
     let status = 'COMPLIANT';
@@ -730,6 +788,7 @@ function buildReport({ runtimeIdentity, targets, evaluations, findings, generati
         runtime_identity: runtimeIdentity,
         targets: Object.freeze({ ...targets }),
         authority_generation: generation ? generation.identity : null,
+        acl_state: aclState || Object.freeze({}),
         surfaces: Object.freeze(evaluations),
         findings: Object.freeze(findings),
         violation_count: violations.length,
@@ -771,7 +830,10 @@ function evaluateRuntimeFilesystemContract({
         evaluations.push(evaluateSurface(planned.spec, planned.target, { runtimeIdentity: identity, aclObservations }));
     }
     for (const evaluation of evaluations) findings.push(...evaluation.findings);
-    return buildReport({ runtimeIdentity: identity, targets, evaluations, findings, generation, contentHashes });
+    return buildReport({
+        runtimeIdentity: identity, targets, evaluations, findings, generation, contentHashes,
+        aclState: buildAclState(aclObservations),
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -846,6 +908,6 @@ module.exports = {
     ACCESS, SEVERITY, SURFACE, RESERVED_NAMES, STORE_FILE, EPOCH_FILE, ENTRY_DIRECTORY,
     STAGING_DIRECTORY, COMMITTED_DIRECTORY,
     describeContract, observeObject, walkAncestry, sha256OfReadableFile, predictRuntimeAccess,
-    openGovernedRoot, closeGovernedRoot, evaluateRuntimeFilesystemContract,
+    openGovernedRoot, closeGovernedRoot, evaluateRuntimeFilesystemContract, restorableAclState,
     assertPublicationIdentity, deriveRuntimeIdentityFromAuthority, processIdentity,
 };

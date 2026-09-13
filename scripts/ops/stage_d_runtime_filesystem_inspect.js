@@ -161,7 +161,11 @@ function collectTargetPaths(targets) {
             paths.push(txPath, ...safeReaddir(txPath).map(file => path.join(txPath, file)));
         }
     }
-    if (targets.allocationArtifactPath) paths.push(targets.allocationArtifactPath);
+    // The allocation authority can sit outside the authority root, so its own
+    // ancestry is governed too and its ACLs have to be observed to be classified.
+    if (targets.allocationArtifactPath) {
+        paths.push(targets.allocationArtifactPath, ...contract.walkAncestry(targets.allocationArtifactPath).map(entry => entry.path));
+    }
     return Object.freeze([...new Set(paths)]);
 }
 
@@ -237,6 +241,11 @@ function summarize(report, plan, coldLoad, artifactHashes) {
         blocked_operation_count: plan ? plan.blocked_operations.length : 0,
         artifact_hashes: artifactHashes,
         cold_load: coldLoad,
+        // The observed ACL of every probed path, in the exact form a Phase B
+        // rollback has to replay.  Without it the report would record that an
+        // extended ACL exists but not what it was, and a removal could never be
+        // undone.
+        acl_state: report.acl_state,
         read_write_separation: report.read_write_separation,
         production_mutation_performed: report.production_mutation_performed,
         mutating_capability_present: report.mutating_capability_present,
@@ -249,7 +258,7 @@ function summarize(report, plan, coldLoad, artifactHashes) {
 function helpText() {
     return [
         'Stage D runtime filesystem permission audit / remediation planner (read-only).',
-        'node scripts/ops/stage_d_runtime_filesystem_audit.js --authority-root <path> [options]',
+        'node scripts/ops/stage_d_runtime_filesystem_inspect.js --authority-root <path> [options]',
         '',
         '  --authority-root <path>         transaction authority root (required)',
         '  --allocation-authority <path>   allocation authority artifact',

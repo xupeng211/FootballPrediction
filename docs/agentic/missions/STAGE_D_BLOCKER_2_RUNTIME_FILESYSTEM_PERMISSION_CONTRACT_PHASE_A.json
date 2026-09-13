@@ -11,6 +11,7 @@
     "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
     "scripts/ops/stage_d_controlled_initialization.js",
     "scripts/ops/stage_d_runtime_filesystem_audit.js",
+    "scripts/ops/stage_d_runtime_filesystem_inspect.js",
     "scripts/ops/stage_d_runtime_filesystem_permission_contract.js",
     "scripts/ops/stage_d_runtime_filesystem_remediation_plan.js",
     "tests/unit/market_evidence/runtime_filesystem_permission_contract.test.js"

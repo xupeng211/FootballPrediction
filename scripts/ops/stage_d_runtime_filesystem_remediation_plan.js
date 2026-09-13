@@ -107,6 +107,47 @@ function blockedForPath(defects, findings, targetMode) {
     return blocked;
 }
 
+// Removing an extended ACL deletes named entries that no mode change can bring
+// back: a chmod only ever re-derives the mask from the group bits, so restoring
+// uid/gid/mode afterwards would leave the named entries gone for good.  The
+// operation is therefore only plannable when the exact current ACL was observed
+// and can be replayed with `setfacl --set`; without that evidence it is blocked
+// rather than planned with an unrecoverable rollback.
+function aclRemovalBlocked(defects, findings, acl) {
+    if (!defects.acl) return [];
+    if (acl && acl.restorable === true) return [];
+    const reason = !acl || acl.available === false
+        ? 'ACL_ROLLBACK_EVIDENCE_MISSING'
+        : 'ACL_ROLLBACK_EVIDENCE_INCOMPLETE';
+    return findings
+        .filter(item => ACL_FINDING_CODES.has(item.code))
+        .map(item => blockedOperationEntry(item, 'REMOVE_EXTENDED_ACL', reason));
+}
+
+function blockedOperationEntry(item, operation, reasonCode) {
+    return Object.freeze({
+        surface_id: item.surface_id, path: item.path, operation, reason_code: reasonCode, message: item.message,
+        auto_repairable: false, required_action: 'OWNER_DECISION_AND_MANUAL_EVIDENCE_REVIEW',
+    });
+}
+
+// The rollback payload for one path.  `acl` is only attached when the observed
+// ACL is complete, and its `entries` string is the exact `setfacl --set` form
+// that reproduces the pre-repair access ACL byte for byte.
+function restorableAclPayload(acl) {
+    if (!acl || acl.restorable !== true) return null;
+    const parts = [`u::${acl.user}`, `g::${acl.group}`, `o::${acl.other}`, `m::${acl.mask}`];
+    for (const qualifier of Object.keys(acl.named_user_perms).sort()) parts.push(`u:${qualifier}:${acl.named_user_perms[qualifier]}`);
+    for (const qualifier of Object.keys(acl.named_group_perms).sort()) parts.push(`g:${qualifier}:${acl.named_group_perms[qualifier]}`);
+    return Object.freeze({
+        entries: parts.join(','),
+        user: acl.user, group: acl.group, other: acl.other, mask: acl.mask,
+        named_user_perms: acl.named_user_perms, named_group_perms: acl.named_group_perms,
+        restore_command: `setfacl --set '${parts.join(',')}' -- <path>`,
+        mask_note: 'setfacl --set rewrites the mask, so the mode must be re-applied after the ACL is restored',
+    });
+}
+
 function blockedEntry(item, requiredAction = 'OWNER_DECISION_AND_MANUAL_EVIDENCE_REVIEW') {
     return Object.freeze({
         surface_id: item.surface_id, path: item.path, reason_code: item.code, message: item.message,
@@ -132,7 +173,11 @@ function planPath(entry, runtimeIdentity) {
     const identityMismatch = observation.uid !== runtimeIdentity.uid || observation.gid !== runtimeIdentity.gid;
     const defects = classifyPathDefects(codesOnPath, identityMismatch);
     const blocked = blockedForPath(defects, findings, targetMode);
-    if (blocked.length > 0) return { operations: [], blocked };
+    if (blocked.length > 0) return { operations: [], blocked, blockedOperations: [] };
+    // An ACL removal without rollback evidence blocks that one operation only:
+    // the identity and mode repairs on the same path stay plannable, because
+    // restoring uid/gid/mode does fully undo them.
+    const blockedOperations = aclRemovalBlocked(defects, findings, entry.acl);
 
     const post = Object.freeze({
         uid: defects.chown ? runtimeIdentity.uid : observation.uid,
@@ -159,8 +204,17 @@ function planPath(entry, runtimeIdentity) {
         { operation: 'CHMOD', rank: OPERATION_RANK.CHMOD, applies: defects.chmod },
         // Removing an extended ACL can only ever take access away, which is the
         // safe direction: the exact mode is meant to be the whole policy.
-        { operation: 'REMOVE_EXTENDED_ACL', rank: OPERATION_RANK.REMOVE_EXTENDED_ACL, applies: defects.acl }];
-    return { operations: planned.filter(item => item.applies).map(item => Object.freeze({ ...common, operation: item.operation, rank: item.rank })), blocked: [] };
+        { operation: 'REMOVE_EXTENDED_ACL', rank: OPERATION_RANK.REMOVE_EXTENDED_ACL, applies: defects.acl && blockedOperations.length === 0 }];
+    const aclPayload = restorableAclPayload(entry.acl);
+    const operations = planned.filter(item => item.applies).map(item => Object.freeze({
+        ...common,
+        operation: item.operation,
+        rank: item.rank,
+        // Every operation that can change ACL state carries the exact ACL to
+        // put back.  CHMOD is included because chmod re-derives the mask.
+        restore_acl: item.operation === 'REMOVE_EXTENDED_ACL' || item.operation === 'CHMOD' ? aclPayload : null,
+    }));
+    return { operations, blocked: [], blockedOperations };
 }
 
 function orderOperations(entries) {
@@ -204,10 +258,13 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
         .filter(item => BLOCKING_FINDING_CODES.has(item.code) || !METADATA_REPAIR_CODES.has(item.code))
         .map(item => blockedEntry(item));
     const specs = surfaceSpecIndex(report);
+    const aclState = report.acl_state || {};
+    const blockedOperations = [];
     const candidates = [];
     for (const group of groupByPath(violations.filter(item => METADATA_REPAIR_CODES.has(item.code) && !BLOCKING_FINDING_CODES.has(item.code))).values()) {
-        const planned = planPath({ ...group, spec: specs.get(group.path) }, report.runtime_identity);
+        const planned = planPath({ ...group, spec: specs.get(group.path), acl: aclState[group.path] || null }, report.runtime_identity);
         blocked.push(...planned.blocked);
+        blockedOperations.push(...(planned.blockedOperations || []));
         candidates.push(...planned.operations);
     }
     const operations = orderOperations(candidates).map((operation, index) => Object.freeze({ ...operation, sequence: index + 1 }));
@@ -225,7 +282,7 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
         execution_requires: 'SEPARATE_OWNER_AUTHORIZED_PHASE_B',
         elevated_privilege_required: operations.some(operation => operation.elevated_privilege_required),
         operations: Object.freeze(operations),
-        blocked_operations: Object.freeze(blocked),
+        blocked_operations: Object.freeze([...blocked, ...blockedOperations]),
         preconditions: Object.freeze([
             'the accepted authority identity is unchanged and the exact main revision matches the authorization',
             'the runtime uid/gid executing the repair equals the uid/gid that will cold-load the authority',
@@ -239,9 +296,20 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
             'an ordinary cold-load by the runtime identity reproduces the accepted head transaction, authority state hash, observation count, STORE SHA256 and allocation authority SHA256 exactly',
             'a fresh process boundary reproduces the same cold-load result',
         ]),
-        rollback: Object.freeze(operations.map(operation => Object.freeze({
+        // Rollback is the exact inverse of the apply order, so it is emitted in
+        // reverse: the ACL (which setfacl --set would re-derive the mask from)
+        // is restored first, the mode second and the owner last, since chown can
+        // clear set-user/set-group bits.  `sequence` still names the apply step
+        // each entry undoes.
+        rollback: Object.freeze(operations.slice().reverse().map(operation => Object.freeze({
             sequence: operation.sequence, path: operation.path, operation: operation.operation, content_impact: 'NONE',
-            restore: Object.freeze({ uid: operation.pre.uid, gid: operation.pre.gid, mode: operation.pre.mode, dev: operation.pre.dev, ino: operation.pre.ino }),
+            restore: Object.freeze({
+                uid: operation.pre.uid, gid: operation.pre.gid, mode: operation.pre.mode, dev: operation.pre.dev, ino: operation.pre.ino,
+                acl: operation.restore_acl || null,
+                acl_note: operation.restore_acl
+                    ? 'the recorded ACL is the exact pre-repair access ACL; a mode-only restore would leave removed named entries gone'
+                    : 'no extended ACL was present on this path, so the mode and identity restore is complete',
+            }),
         }))),
         forbidden_operations: Object.freeze([
             'any content write, rewrite, truncation or re-publication of a governed artifact',

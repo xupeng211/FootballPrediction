@@ -64,7 +64,7 @@ const contract = require('../../../scripts/ops/stage_d_runtime_filesystem_permis
 const planner = require('../../../scripts/ops/stage_d_runtime_filesystem_remediation_plan');
 
 const OPS = path.join(__dirname, '..', '..', '..', 'scripts', 'ops');
-const AUDIT_CLI = path.join(OPS, 'stage_d_runtime_filesystem_audit.js');
+const AUDIT_CLI = path.join(OPS, 'stage_d_runtime_filesystem_inspect.js');
 const CONTRACT_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_permission_contract.js');
 const PLAN_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_remediation_plan.js');
 
@@ -124,6 +124,38 @@ function makeDirectory(target, mode) {
 function makeFile(target, content, mode) {
     fs.writeFileSync(target, content);
     fs.chmodSync(target, mode);
+}
+
+// Access-ACL round-trip helpers.  These drive the real getfacl/setfacl: an ACL
+// synthesised in memory would prove nothing about what setfacl actually
+// restores, which is the only claim a rollback manifest is allowed to make.
+function aclLines(target) {
+    const result = spawnSync('getfacl', ['-n', '-p', '--absolute-names', target], { encoding: 'utf8' });
+    assert.equal(result.status, 0, `getfacl failed: ${result.stderr}`);
+    return result.stdout.split('\n').filter(line => line && !line.startsWith('#')).map(line => line.trim()).sort();
+}
+
+function setAcl(args, target) {
+    const result = spawnSync('setfacl', [...args, target], { encoding: 'utf8' });
+    assert.equal(result.status, 0, `setfacl ${args.join(' ')} failed: ${result.stderr}`);
+}
+
+// The same ACL as a structured record, shape-compatible with what the contract
+// observes and what the plan has to replay.
+function structuredAcl(target) {
+    const parsed = { named_user_perms: {}, named_group_perms: {} };
+    for (const line of aclLines(target)) {
+        const [field, qualifier, permission] = line.split(':');
+        if (permission === undefined) continue;
+        if (field === 'mask') parsed.mask = permission;
+        else if (field === 'other') parsed.other = permission;
+        else if (field === 'user' && qualifier) parsed.named_user_perms[qualifier] = permission;
+        else if (field === 'user') parsed.owner = permission;
+        else if (field === 'group' && qualifier) parsed.named_group_perms[qualifier] = permission;
+        else if (field === 'group') parsed.group = permission;
+    }
+    parsed.named_entries = Object.keys(parsed.named_user_perms).map(key => `user:${key}`);
+    return parsed;
 }
 
 // A contract-compliant authority tree mirroring the real publisher's
@@ -303,6 +335,95 @@ test('10c. several findings on one path collapse into one operation each', t => 
     assert.equal(onTarget.filter(operation => operation.operation === 'CHOWN').length, 1);
     assert.equal(onTarget.filter(operation => operation.operation === 'CHMOD').length, 1);
     assert.equal(onTarget.length, 2);
+});
+
+// ---------------------------------------------------------------------------
+// 16. an extended ACL is only removed when it can be put back exactly
+// ---------------------------------------------------------------------------
+//
+// REMOVE_EXTENDED_ACL deletes named entries that no chmod can restore: chmod
+// only ever re-derives the mask from the group bits.  So the operation is only
+// plannable when the current ACL was observed completely, and the plan has to
+// carry it — otherwise the "rollback" would silently restore a tree with the
+// named entries gone.
+
+// The ACL the production authority actually carries: owner rwx, a named user
+// with r-x, no group or other access, mask r-x.
+const EXTENDED_ACL = Object.freeze({
+    named_entries: Object.freeze([`user:${RUNTIME.uid}`]), named_user_perms: Object.freeze({ [String(RUNTIME.uid)]: 'r-x' }),
+    named_group_perms: Object.freeze({}), owner: 'rwx', group: '---', other: '---', mask: 'r-x',
+});
+
+test('16. a removable extended ACL requires complete, restorable evidence', t => {
+    const root = tempRoot('acl-evidence');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    fs.chmodSync(target, 0o710); // the group bits are the mask, and the mask is wrong
+    const finding = 'EXTENDED_ACL_PRESENT';
+
+    // Nothing observed and nothing claimed: no ACL finding, so no removal.
+    assert.equal(codes(evaluate(root)).includes(finding), false);
+    assert.equal(planner.buildRemediationPlan(evaluate(root)).operations.some(operation => operation.operation === 'REMOVE_EXTENDED_ACL'), false);
+
+    // An observation that names entries but cannot be replayed in full is
+    // refused: a chmod-only rollback would leave those entries gone for good.
+    const partial = evaluate(root, { aclObservations: { [target]: { available: true, named_entries: [`user:${RUNTIME.uid}`] } } });
+    assert.ok(codes(partial).includes(finding));
+    assert.equal(partial.acl_state[target].restorable, false);
+    const incomplete = planner.buildRemediationPlan(partial);
+    assert.equal(incomplete.operations.some(operation => operation.operation === 'REMOVE_EXTENDED_ACL'), false);
+    const block = incomplete.blocked_operations.find(entry => entry.reason_code === 'ACL_ROLLBACK_EVIDENCE_INCOMPLETE');
+    assert.equal(block.operation, 'REMOVE_EXTENDED_ACL');
+    assert.equal(block.path, target);
+    // The repairs a mode restore does undo stay plannable on the same path.
+    assert.ok(incomplete.operations.some(operation => operation.path === target && operation.operation === 'CHMOD'));
+
+    // With complete evidence the removal is planned and carries its exact inverse.
+    const report = evaluate(root, { aclObservations: { [target]: { available: true, ...EXTENDED_ACL } } });
+    assert.equal(report.acl_state[target].restorable, true);
+    const plan = planner.buildRemediationPlan(report);
+    const removal = plan.operations.find(operation => operation.operation === 'REMOVE_EXTENDED_ACL');
+    assert.equal(removal.path, target);
+    assert.equal(plan.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'), false);
+    assert.equal(removal.restore_acl.entries, `u::rwx,g::---,o::---,m::r-x,u:${RUNTIME.uid}:r-x`);
+    const rollback = plan.rollback.find(entry => entry.operation === 'REMOVE_EXTENDED_ACL');
+    assert.deepEqual(rollback.restore.acl.named_user_perms, { [String(RUNTIME.uid)]: 'r-x' });
+    assert.equal(rollback.restore.acl.mask, 'r-x');
+    // Rollback undoes the apply order, so the ACL is restored before the mode
+    // that setfacl --set would otherwise re-derive.
+    assert.deepEqual(plan.rollback.map(entry => entry.sequence), [...plan.rollback.map(entry => entry.sequence)].sort((left, right) => right - left));
+});
+
+test('16b. the recorded ACL reproduces the original access ACL through setfacl', t => {
+    const root = tempRoot('acl-roundtrip');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    // The acl package is not installed everywhere — the dev container omits it,
+    // so the canonical container profile lands here.  Neither branch is a skip:
+    // where the tools exist the recorded payload has to reproduce the ACL
+    // through the real setfacl, and where they do not the contract has to say so
+    // and refuse to plan a deletion it cannot undo.
+    if (spawnSync('getfacl', ['--version']).error) {
+        const unavailable = { available: false, reason: 'getfacl-not-installed' };
+        const report = evaluate(root, { aclObservations: { [target]: unavailable } });
+        assert.ok(report.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'));
+        assert.equal(report.acl_state[target].restorable, false);
+        assert.equal(planner.buildRemediationPlan(report).operations.some(operation => operation.operation === 'REMOVE_EXTENDED_ACL'), false);
+        return;
+    }
+    const before = aclLines(target);
+    setAcl(['-m', `u:${RUNTIME.uid}:r-x`], target); // a real named entry, applied by setfacl
+    const expected = [...before, `user:${RUNTIME.uid}:r-x`, 'mask::r-x'].sort();
+    assert.deepEqual(aclLines(target), expected);
+    const report = evaluate(root, { aclObservations: { [target]: { available: true, ...structuredAcl(target) } } });
+    const payload = planner.buildRemediationPlan(report).rollback.map(entry => entry.restore.acl).find(entry => entry !== null);
+    assert.ok(payload, 'the plan must carry the observed ACL');
+    // Delete the ACL, then replay the recorded payload: the access ACL has to
+    // come back exactly, which is the only claim a rollback manifest may make.
+    setAcl(['-b'], target);
+    assert.notDeepEqual(aclLines(target), expected);
+    setAcl(['--set', payload.entries], target);
+    assert.deepEqual(aclLines(target), expected);
 });
 
 // ---------------------------------------------------------------------------
@@ -563,6 +684,96 @@ test('9c. a non-regular package artifact is rejected', t => {
     const report = evaluate(root);
     assert.ok(codes(report).includes('NON_REGULAR_ARTIFACT'));
     assert.ok(planner.buildRemediationPlan(report).blocked_operations.some(entry => entry.reason_code === 'NON_REGULAR_ARTIFACT'));
+});
+
+// ---------------------------------------------------------------------------
+// 15. an allocation authority outside the authority root is still governed
+// ---------------------------------------------------------------------------
+
+// The allocation authority is addressed by its own path and is allowed to live
+// outside the authority root.  When it does, its parent chain is part of the
+// governed path: a world-writable or symlinked ancestor lets the artifact be
+// swapped wholesale, and no content hash computed afterwards can detect it.
+// Each case below is a negative one — the tree is otherwise fully compliant, so
+// a COMPLIANT verdict would mean the allocation path was never examined.
+test('15. a standalone allocation authority outside the authority root is still ancestry-checked', t => {
+    const root = tempRoot('standalone-allocation');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    // A second, private container — so the only offending ancestor is the one
+    // this test creates, never the shared /tmp sticky directory.
+    const elsewhere = tempRoot('allocation-home');
+    t.after(() => cleanup(elsewhere));
+    const allocation = path.join(elsewhere, 'allocation.authority.json');
+    makeFile(allocation, '{}', 0o444);
+
+    // Control: a private chain is compliant, so the cases below isolate ancestry.
+    const control = evaluate(root, { allocationArtifactPath: allocation });
+    assert.equal(codes(control).filter(code => code.endsWith('_ANCESTOR')).length, 0);
+    assert.equal(control.status, 'COMPLIANT');
+
+    // A non-sticky world-writable parent is a violation, not an advisory.
+    fs.chmodSync(elsewhere, 0o777);
+    const worldWritable = evaluate(root, { allocationArtifactPath: allocation });
+    assert.ok(codes(worldWritable).includes('WORLD_WRITABLE_ANCESTOR'));
+    assert.notEqual(worldWritable.status, 'COMPLIANT');
+
+    // A symlinked ancestor is rejected outright and never followed.
+    fs.chmodSync(elsewhere, 0o700);
+    const realParent = path.join(elsewhere, 'real');
+    makeDirectory(realParent, 0o700);
+    makeFile(path.join(realParent, 'allocation.authority.json'), '{}', 0o444);
+    fs.symlinkSync(realParent, path.join(elsewhere, 'linked'));
+    const viaSymlink = evaluate(root, { allocationArtifactPath: path.join(elsewhere, 'linked', 'allocation.authority.json') });
+    assert.ok(codes(viaSymlink).includes('SYMLINK_IN_GOVERNED_PATH'));
+    assert.notEqual(viaSymlink.status, 'COMPLIANT');
+});
+
+test('15b. a shared ancestor is classified once and never downgraded by a laxer target', t => {
+    const root = tempRoot('shared-ancestor');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    // The allocation artifact sits inside the authority root, so both targets
+    // reach the same ancestors.  tempRoot's container is one of them: making it
+    // group writable exercises the dedup and the strictest-policy rule on a real
+    // directory instead of on an empty finding set.
+    const container = path.dirname(root);
+    fs.chmodSync(container, 0o770);
+    const allocation = path.join(root, 'allocation.authority.json');
+    const hit = (report, severity) => report.findings.filter(item => item.code === 'GROUP_WRITABLE_ANCESTOR' && item.path === container && item.severity === severity);
+    // Reporting it twice would be noise; reporting it only as an advisory,
+    // because the laxer authority-root policy reached it first, would be a
+    // downgrade — the allocation artifact and the root reach it equally.
+    const lax = evaluate(root, { allocationArtifactPath: allocation });
+    assert.equal(hit(lax, 'ADVISORY').length, 1, 'a shared ancestor must be classified exactly once');
+    assert.equal(hit(lax, 'VIOLATION').length, 0);
+    // The run-lock trust root demands a non-group-writable chain, so the same
+    // directory has to escalate to a violation rather than stay an advisory.
+    const runLockRoot = path.join(root, 'run-lock');
+    makeDirectory(runLockRoot, 0o700);
+    const strict = evaluate(root, { allocationArtifactPath: allocation, runLockTrustRoot: runLockRoot });
+    assert.equal(hit(strict, 'VIOLATION').length, 1, 'the strictest policy must win for a shared ancestor');
+    assert.equal(hit(strict, 'ADVISORY').length, 0, 'a path must never be both an advisory and a violation');
+});
+
+test('15c. the inspect CLI collects ACLs for a standalone allocation authority chain', t => {
+    const root = tempRoot('allocation-acl');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const elsewhere = tempRoot('allocation-acl-home');
+    t.after(() => cleanup(elsewhere));
+    const allocation = path.join(elsewhere, 'allocation.authority.json');
+    makeFile(allocation, '{}', 0o444);
+    const argv = [AUDIT_CLI, '--authority-root', root, '--allocation-authority', allocation, '--mode', 'audit', '--json'];
+    const result = spawnSync(process.execPath, argv, { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(result.stdout);
+    // The artifact and every one of its ancestors must have been probed, or the
+    // planner downstream has no restorable ACL for a path it may repair.
+    assert.ok(Object.prototype.hasOwnProperty.call(report.acl_state, allocation));
+    for (const ancestor of contract.walkAncestry(allocation)) {
+        assert.ok(Object.prototype.hasOwnProperty.call(report.acl_state, ancestor.path), `${ancestor.path} was never probed`);
+    }
 });
 
 // ---------------------------------------------------------------------------

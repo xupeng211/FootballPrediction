@@ -64,7 +64,7 @@ Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CON
 
 Blocker #2（ordinary runtime user 无法可靠 cold-load committed transaction authority）的
 Phase A 已实现：机器可读的 runtime filesystem permission contract、只读 audit、以及 inert
-remediation plan（`scripts/ops/stage_d_runtime_filesystem_audit.js`，只有 `audit` / `plan`
+remediation plan（`scripts/ops/stage_d_runtime_filesystem_inspect.js`，只有 `audit` / `plan`
 两个 mode，没有 apply path），并在 Stage D binder 边界加入 fail-closed publication identity
 guard。该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
 `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`、`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、

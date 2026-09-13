@@ -29,7 +29,7 @@ CANONICAL_OUTPUT_AUTHORITY=transaction-v1 only
 RUNTIME_FILESYSTEM_PERMISSION_CONTRACT=stage-d-runtime-filesystem-permission/v1
 RUNTIME_FILESYSTEM_IDENTITY_RULE=COLD_LOAD_UID_EQUALS_AUTHORITY_OWNER_UID
 RUNTIME_FILESYSTEM_APPLY_PATH=NONE__PHASE_B_IS_A_SEPARATE_OWNER_AUTHORIZED_PROCEDURE
-RUNTIME_FILESYSTEM_AUDIT_ENTRYPOINT=scripts/ops/stage_d_runtime_filesystem_audit.js (read-only; no apply mode)
+RUNTIME_FILESYSTEM_AUDIT_ENTRYPOINT=scripts/ops/stage_d_runtime_filesystem_inspect.js (read-only; no apply mode)
 ```
 
 The public entrypoint is deliberately offline-only while Stage D remains
@@ -288,7 +288,7 @@ through ordinary POSIX permission checks. The machine-readable contract is
 `stage-d-runtime-filesystem-permission/v1`, implemented by
 `scripts/ops/stage_d_runtime_filesystem_permission_contract.js` (inspect and
 classify) and `scripts/ops/stage_d_runtime_filesystem_remediation_plan.js`
-(plan only). `scripts/ops/stage_d_runtime_filesystem_audit.js` exposes exactly
+(plan only). `scripts/ops/stage_d_runtime_filesystem_inspect.js` exposes exactly
 two modes, `audit` and `plan`; it has no apply mode, executes no privileged
 command other than a read-only `getfacl` probe, and never escalates privilege.
 With `--cold-load` it delegates content authority to the existing
@@ -360,6 +360,13 @@ identity, and the `STORE.json` and allocation-authority hashes. The authority
 head/state hash is recorded only if it is readable through an already privileged
 evidence source; it is never obtained by escalating.
 
+The evidence capture must run where extended ACLs are observable. `getfacl` is
+part of the `acl` package and is absent from the dev container, so a run inside
+it records `ACL_PROBE_UNAVAILABLE` and the planner refuses any
+`REMOVE_EXTENDED_ACL` operation (`ACL_ROLLBACK_EVIDENCE_MISSING`) rather than
+deleting named entries it cannot restore. Phase B is therefore a host procedure
+by construction, not a container one.
+
 **Mutation.** Only the operations the planner emitted for the enumerated
 allow-list, each applied per object after re-opening it with `O_NOFOLLOW` and
 re-verifying that device/inode still match the plan's `pre` state. Ownership and
@@ -377,8 +384,16 @@ state hash, `OBSERVATION_COUNT=903`, `STORE_SHA256` and
 `ALLOCATION_AUTHORITY_SHA256`, repeated across a fresh process boundary.
 
 **Rollback.** The planner pairs every operation with a metadata-only rollback
-entry carrying the original uid/gid/mode/device/inode. Rollback restores
-metadata only and is subject to the same post-repair content-hash proof.
+entry carrying the original uid/gid/mode/device/inode, and rollback is emitted
+in the exact reverse of the apply order — the ACL first, the mode second and the
+owner last, because `chown` can clear set-user/set-group bits. Restoring
+uid/gid/mode does fully undo a `CHOWN` or `CHMOD`, including the ACL mask: for a
+file carrying an extended ACL the group bits *are* the mask. It does **not**
+undo `REMOVE_EXTENDED_ACL`, which deletes named entries no mode change can bring
+back, so that operation carries the exact observed ACL as a replayable
+`setfacl --set` payload and is blocked outright when the ACL was not observed
+completely. Rollback restores metadata only and is subject to the same
+post-repair content-hash proof.
 
 ## Failure matrix
 
