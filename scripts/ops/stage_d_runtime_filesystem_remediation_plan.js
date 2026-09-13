@@ -17,7 +17,7 @@
 // Phase B host procedure.  Every operation it can emit is metadata-only and
 // must leave the governed bytes byte-identical.
 
-const { SEVERITY, observeObject } = require('./stage_d_runtime_filesystem_permission_contract');
+const { SEVERITY, observeObject, walkAncestry } = require('./stage_d_runtime_filesystem_permission_contract');
 
 const PLAN_SCHEMA_VERSION = 'footballprediction-stage-d-runtime-filesystem-remediation-plan/v1';
 
@@ -228,6 +228,22 @@ function pathGuard(entry, observation) {
     // the contract's own: a *file* with a link count other than one.  For a
     // directory a count above one is ordinary, not a hardlink.
     if (observation.is_file && observation.nlink !== 1) return 'HARDLINK_IN_GOVERNED_PATH_UNPLANNABLE';
+    // A path is only as safe as the directories it is reached through.  The
+    // contract reports an ancestor that is not a real directory as
+    // SYMLINK_IN_GOVERNED_PATH, but that finding is a blocking code and is
+    // filtered out of the group reaching this function, so a package file
+    // *below* such an ancestor arrives here carrying nothing but a
+    // MODE_MISMATCH — while its path actually resolves to an object outside the
+    // governed tree.  Nothing else on this path can see that: the re-observation
+    // above is an lstat of the leaf, the emitted `path_resolution_rule` opens
+    // with O_NOFOLLOW, which protects the last component only, and the apply-time
+    // `pre` dev/ino check would compare the external object against itself and
+    // pass.  The ancestry is therefore re-walked from fresh observations, the
+    // same walk the contract's own ancestor rule refuses on, and a component
+    // that is not a real directory refuses every path beneath it.
+    for (const ancestor of walkAncestry(observation.path)) {
+        if (!ancestor.observable || ancestor.is_symbolic_link || !ancestor.is_directory) return 'SYMLINK_IN_GOVERNED_PATH_UNPLANNABLE';
+    }
     return null;
 }
 

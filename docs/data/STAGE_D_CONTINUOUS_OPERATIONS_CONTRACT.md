@@ -322,17 +322,24 @@ with a trailing `#effective:` comment — precisely the state the publisher's ow
 `[r-][w-][x-]` permission triad, so an annotated value can never be recorded as
 restorable and emitted as an invalid `setfacl` argument.
 
-A declared ACL evidence set has to cover the governed **ancestry**, not only the
-surfaces. An ancestor is what grants traversal to everything beneath it, and
-under an extended ACL the group bits in `st_mode` are the mask rather than the
-group policy, so a named-user entry that denies the runtime identity is
-invisible in the mode. An ancestor whose `getfacl` probe fails — or that a
-declared evidence set simply omits — is therefore a blocking
+A declared ACL evidence set has to cover the whole governed tree, ancestry and
+governed surfaces alike. An **ancestor** is what grants traversal to everything
+beneath it, and under an extended ACL the group bits in `st_mode` are the mask
+rather than the group policy, so a named-user entry that denies the runtime
+identity is invisible in the mode. An ancestor whose `getfacl` probe fails — or
+that a declared evidence set simply omits — is therefore a blocking
 `ANCESTOR_ACL_PROBE_UNAVAILABLE` finding rather than a traverse inferred from
-bits, and the audit CLI builds its probe set from the ancestry for exactly this
-reason. "Absent from the evidence set" and "probed, and carries no named
-entries" are different statements, and only declaring no ACL dimension at all
-leaves the dimension unrun.
+bits. A governed **surface** that the declared set omits is the same defect one
+level down and is a blocking `ACL_EVIDENCE_MISSING` finding rather than a
+verdict taken from its mode bits: the surface may carry a named entry that
+denies the runtime, so a mode-only reading would report a surface nobody read as
+clean. The gap is reachable in production rather than theoretical, because the
+audit CLI probes the evidence set and enumerates the governed surfaces in two
+separate passes, and a transaction package published between them arrives with
+no entry. The audit CLI builds its probe set from the ancestry and the surfaces
+for exactly this reason. "Absent from the evidence set" and "probed, and carries
+no named entries" are different statements, and only declaring no ACL dimension
+at all leaves the dimension unrun.
 
 The required mechanism is **identity equality**: the uid that publishes the
 authority, the uid that owns the governed tree, and the uid that cold-loads it
@@ -427,8 +434,17 @@ by construction, not a container one.
 
 **Mutation.** Only the operations the planner emitted for the enumerated
 allow-list, each applied per object after re-opening it with `O_NOFOLLOW` and
-re-verifying that device/inode still match the plan's `pre` state. Ownership and
-mode changes are metadata-only; no content is written and no artifact is
+re-verifying that device/inode still match the plan's `pre` state. Path
+resolution is validated above the leaf as well as at it: `O_NOFOLLOW` protects
+only the last component, and a governed name whose parent directory is a symlink
+resolves to an object outside the governed tree while still presenting an
+ordinary regular file to every check made on the path itself — the `pre`
+device/inode comparison would compare that external object against itself and
+pass. The planner therefore re-walks each path's ancestry from fresh
+observations and refuses every path beneath a component that is not a real
+directory, so no operation is emitted for an object this contract has no
+authority over. Ownership and mode changes are metadata-only; no content is
+written and no artifact is
 recreated, truncated or re-published. Recursive `chmod -R` and `chown -R` are
 forbidden: an exact validated allow-list is enumerated first and every object is
 verified individually. An operation whose `pre` observation no longer matches at

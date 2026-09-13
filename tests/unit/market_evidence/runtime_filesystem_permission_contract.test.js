@@ -244,27 +244,30 @@ function codes(report) {
     return report.findings.filter(item => item.severity === 'VIOLATION').map(item => item.code);
 }
 
-// A declared ACL evidence set has to cover the governed ancestry, because that
-// is where the traverse verdict for every surface beneath it is decided: under
-// an extended ACL the group bits in st_mode ARE the mask, not the group policy,
-// so an ancestor whose ACL was never read cannot be reported as a verified
-// traverse.  The CLI builds its set from collectTargetPaths, which includes the
-// ancestry; this mirrors that shape for the synthetic observations the planner
-// tests hand in.  An empty ACL is not the same statement as missing evidence:
-// it says the object really was probed and really carries no named entries.
+// A declared ACL evidence set has to cover the whole governed tree, ancestry
+// included, and for one reason on each side of it.  The ancestry is where the
+// traverse verdict for every surface beneath it is decided: under an extended
+// ACL the group bits in st_mode ARE the mask, not the group policy, so an
+// ancestor whose ACL was never read cannot be reported as a verified traverse.
+// A governed surface is where a missing entry is worse than useless: "absent
+// from the map" and "probed, and carries no named entries" are different
+// statements, and a set that leaves a surface out used to describe that surface
+// from its mode bits alone.  The CLI builds its single set from
+// collectTargetPaths, which covers both; this mirrors that shape for the
+// synthetic observations the planner tests hand in, so a case that is about one
+// path is not quietly also a case about an under-declared tree.  An empty ACL is
+// not the same statement as missing evidence: it says the object really was
+// probed and really carries no named entries, which for this fixture is the
+// truth — nothing in it sets an ACL.
 const CLEAN_ACL = Object.freeze({
     available: true, named_entries: Object.freeze([]),
     named_user_perms: Object.freeze({}), named_group_perms: Object.freeze({}),
 });
 
-function withAncestorEvidence(observations, ...targets) {
-    const evidence = { ...observations };
-    for (const target of targets) {
-        for (const candidate of [target, ...contract.walkAncestry(target).map(entry => entry.path)]) {
-            if (!Object.prototype.hasOwnProperty.call(evidence, candidate)) evidence[candidate] = CLEAN_ACL;
-        }
-    }
-    return evidence;
+function withFullEvidence(root, observations) {
+    const targets = { authorityRoot: root, allocationArtifactPath: path.join(root, 'allocation.authority.json') };
+    const evidence = Object.fromEntries(inspectCli.collectTargetPaths(targets).map(target => [target, CLEAN_ACL]));
+    return { ...evidence, ...observations };
 }
 
 // The publication audit's ACL dimension is observable only where `getfacl`
@@ -589,7 +592,7 @@ test('16c. a blocked ACL removal is counted in the plan status, not hidden behin
     // ONLY thing this tree needs — a status of NOT_REQUIRED would tell a caller
     // the authority is fully repairable when it is not.
     const incompleteEvidence = { [target]: { available: true, named_entries: [`user:${RUNTIME.uid}`] } };
-    const aclOnly = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence(incompleteEvidence, root) }));
+    const aclOnly = planner.buildRemediationPlan(evaluate(root, { aclObservations: withFullEvidence(root, incompleteEvidence) }));
     assert.equal(aclOnly.operations.length, 0);
     assert.ok(aclOnly.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
     assert.equal(aclOnly.status, 'BLOCKED');
@@ -597,14 +600,14 @@ test('16c. a blocked ACL removal is counted in the plan status, not hidden behin
     // With a mode defect as well, part of the path is repairable and the ACL
     // removal is not: READY would hide the half that needs an Owner decision.
     fs.chmodSync(target, 0o710);
-    const mixed = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence(incompleteEvidence, root) }));
+    const mixed = planner.buildRemediationPlan(evaluate(root, { aclObservations: withFullEvidence(root, incompleteEvidence) }));
     assert.ok(mixed.operations.some(operation => operation.operation === 'CHMOD'));
     assert.ok(mixed.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
     assert.equal(mixed.status, 'PARTIAL_BLOCKED');
 
     // Complete evidence unblocks the removal, and the same tree then reads READY,
     // so the status is still driven by what the plan can actually do.
-    const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: withAncestorEvidence({ [target]: { available: true, ...EXTENDED_ACL } }, root) }));
+    const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: withFullEvidence(root, { [target]: { available: true, ...EXTENDED_ACL } }) }));
     assert.equal(restorable.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'), false);
     assert.equal(restorable.status, 'READY');
 });
@@ -966,6 +969,37 @@ test('20e. a declared ACL evidence set that omits the ancestry is refused rather
     // not run" mode and is unchanged: declaring nothing is not the same as
     // declaring a set and leaving a hole in it.
     assert.equal(evaluate(root).status, 'COMPLIANT');
+});
+
+test('20f. a declared ACL evidence set that omits a governed surface is refused rather than inferred', t => {
+    const root = tempRoot('surface-acl-omitted');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'registry_delta.json');
+    // 20e's rule, one level down.  The CLI probes the ACL evidence set and
+    // enumerates the governed surfaces in two separate passes, so a transaction
+    // package published between them arrives here with no entry: the set covers
+    // the ancestry and every surface that existed when it was built, and this one
+    // is simply absent.  The surface is otherwise perfect — the contract's own
+    // mode, the runtime's own identity — so "absent from the map" and "probed
+    // and carries nothing" have to be told apart, or the surface is reported
+    // clean from the mode bits of an object nobody read.
+    const targets = { authorityRoot: root, allocationArtifactPath: path.join(root, 'allocation.authority.json') };
+    const complete = Object.fromEntries(inspectCli.collectTargetPaths(targets).map(candidate => [candidate, CLEAN_ACL]));
+    assert.equal(Object.prototype.hasOwnProperty.call(complete, target), true,
+        'the CLI probe set must cover the package artifacts, or this test would be describing a smaller set than production audits');
+    delete complete[target];
+    const report = evaluate(root, { aclObservations: complete });
+    assert.deepEqual(codes(report), ['ACL_EVIDENCE_MISSING'], 'the hole is the only defect in the tree, and it is a finding');
+    assert.equal(report.status, 'NONCOMPLIANT_BLOCKED');
+    const surface = report.surfaces.find(entry => entry.spec.path === target);
+    assert.equal(surface.acl, 'EVIDENCE_MISSING');
+    assert.equal(surface.compliant, false, 'a surface nobody read must never be reported compliant');
+    // The gap is not repairable in Phase A — no metadata operation produces the
+    // missing evidence — so the plan offers no mutation rather than a partial one.
+    const plan = planner.buildRemediationPlan(report);
+    assert.equal(plan.operations.length, 0);
+    assert.equal(plan.status, 'BLOCKED');
 });
 
 // ---------------------------------------------------------------------------
@@ -1597,7 +1631,7 @@ test('19. applying the plan in its emitted order lands exactly on the postcondit
     fs.chmodSync(store, 0o444);
     assert.equal(fs.statSync(store).mode & 0o7777, 0o444);
 
-    const report = evaluate(root, { aclObservations: withAncestorEvidence({ [store]: { available: true, ...structuredAcl(store) } }, root, store) });
+    const report = evaluate(root, { aclObservations: withFullEvidence(root, { [store]: { available: true, ...structuredAcl(store) } }) });
     assert.equal(report.status, 'NONCOMPLIANT_REPAIRABLE');
     assert.deepEqual(codes(report).filter(code => code === 'EXTENDED_ACL_PRESENT').length, 1, 'the fixture must raise exactly the ACL finding');
     assert.equal(codes(report).includes('MODE_MISMATCH'), false, 'the observed mode already matches, so the drift must not be attributed to a mode finding');
@@ -1913,6 +1947,46 @@ test('22b. a hardlinked object is refused as a path, so its mode defect plans no
     // a change to the object every one of those names shares.
     assert.ok(after.blocked_operations.some(entry => entry.path === target && entry.reason_code === 'MODE_MISMATCH'
         && entry.required_action === 'HARDLINK_IN_GOVERNED_PATH_UNPLANNABLE'));
+});
+
+test('22c. a symlinked package directory refuses every path beneath it', t => {
+    const root = tempRoot('plan-symlink-ancestor');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'metadata.json');
+    fs.chmodSync(target, 0o600); // a real, plannable MODE_MISMATCH
+    const before = planner.buildRemediationPlan(evaluate(root));
+    assert.ok(before.operations.some(operation => operation.path === target && operation.operation === 'CHMOD'),
+        'the fixture must be plannable before the move, or this proves nothing');
+    // A relocation that left a symlink behind: the package now lives outside the
+    // governed tree and the governed name resolves to it.  Every check on the
+    // path itself is blind to this — the governed name is still an ordinary
+    // regular file, so the fresh lstat sees a file, the emitted
+    // `path_resolution_rule` opens with O_NOFOLLOW, which protects only the last
+    // component, and the apply-time `pre` dev/ino check would compare the
+    // external object against itself and pass.  The report carries the symlink as
+    // SYMLINK_IN_GOVERNED_PATH on the directory, but that is a blocking code and
+    // is filtered out of the group reaching the planner, so the refusal has to be
+    // read from the re-walked ancestry instead — and it has to cover the leaf, or
+    // a CHMOD lands on an object this contract has no authority over.
+    const outside = path.join(path.dirname(root), 'relocated');
+    fs.renameSync(txPath, outside);
+    fs.symlinkSync(outside, txPath);
+    const external = path.join(outside, 'metadata.json');
+    const observed = contract.observeObject(target);
+    assert.equal(observed.is_file, true, 'the governed name must still resolve to a regular file, or the leaf check would already refuse it');
+    assert.equal(observed.is_symbolic_link, false);
+    const externalBytes = fs.readFileSync(external);
+    const report = evaluate(root);
+    assert.ok(codes(report).includes('SYMLINK_IN_GOVERNED_PATH'));
+    assert.ok(codes(report).includes('MODE_MISMATCH'));
+    const after = planner.buildRemediationPlan(report);
+    assert.equal(after.operations.length, 0, 'no operation may be planned through a directory that is not a real directory');
+    assert.ok(after.blocked_operations.some(entry => entry.path === target && entry.reason_code === 'MODE_MISMATCH'
+        && entry.required_action === 'SYMLINK_IN_GOVERNED_PATH_UNPLANNABLE'));
+    // And the object outside the governed tree is left exactly as it was found.
+    assert.equal(fs.statSync(external).mode & 0o7777, 0o600);
+    assert.deepEqual(fs.readFileSync(external), externalBytes);
 });
 
 // ---------------------------------------------------------------------------

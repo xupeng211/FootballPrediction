@@ -476,7 +476,27 @@ function classifyAccess(spec, observation, runtimeIdentity, acl, findings) {
 }
 
 function classifyAcl(spec, observation, aclObservations, findings) {
-    if (!aclObservations || !Object.prototype.hasOwnProperty.call(aclObservations, observation.path)) return 'NOT_RUN';
+    if (!aclObservations) return 'NOT_RUN';
+    if (!Object.prototype.hasOwnProperty.call(aclObservations, observation.path)) {
+        // Declaring nothing is the documented "ACL dimension not run" mode and
+        // stays NOT_RUN.  Declaring a set and leaving a hole in it is a
+        // different statement, and it is the dangerous one: "absent from the
+        // map" used to fall through to the same silent NOT_RUN as "not run",
+        // and classifyAccess then fell back to mode bits, so an incomplete
+        // evidence set could report the very surface it did not cover as
+        // clean.  The gap is reachable in production rather than theoretical —
+        // the CLI enumerates the ACL evidence set and the governed surfaces in
+        // two separate passes, so a transaction package published between them
+        // arrives here with no entry — and an ancestor missing from the same
+        // set is already refused as ANCESTOR_ACL_PROBE_UNAVAILABLE.  A governed
+        // surface gets the identical rule.
+        findings.push(finding({
+            code: 'ACL_EVIDENCE_MISSING', severity: SEVERITY.VIOLATION, surfaceId: spec.surface_id, target: observation.path,
+            message: `${spec.label} is absent from the declared ACL evidence set, so neither an access ACL nor an inherited default ACL can be ruled out for it and a verdict taken from its mode bits would report a surface nobody read as clean`,
+            autoRepairable: false, elevatedPrivilegeRequired: false,
+        }));
+        return 'EVIDENCE_MISSING';
+    }
     const acl = aclObservations[observation.path];
     if (!acl.available) {
         // An unobservable ACL is not the same thing as no ACL.  A default ACL
