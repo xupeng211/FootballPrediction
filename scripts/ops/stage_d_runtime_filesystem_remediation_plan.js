@@ -86,6 +86,53 @@ const BLOCKING_FINDING_CODES = Object.freeze(new Set([
 // directly, and the postcondition is exact by construction.
 const OPERATION_RANK = Object.freeze({ CHOWN: 0, REMOVE_EXTENDED_ACL: 1, CHMOD: 2 });
 
+// ---------------------------------------------------------------------------
+// Phase B identity model.  Three roles, deliberately separated, because the
+// first authorized Phase B preflight proved that collapsing them into one
+// identity produces a contract that cannot be executed at all.
+//
+//   TARGET_RUNTIME_IDENTITY      the ordinary identity that must own the
+//                                repaired surfaces and cold-load the authority.
+//                                It never gains a capability, and it is the
+//                                ONLY identity whose cold-load counts as proof.
+//   REPAIR_EXECUTOR_IDENTITY     a temporary bounded privileged host principal
+//                                that applies exactly the emitted operations and
+//                                then loses its privilege.  It is never the
+//                                proof identity.
+//   PRE_REPAIR_CONTENT_EVIDENCE_READER
+//                                the identity allowed to collect the PRE
+//                                content hash.  It prefers the ordinary runtime
+//                                read and falls back to a privileged READ-ONLY
+//                                read only for an artifact the target runtime
+//                                genuinely cannot read.
+//
+// The canonical policy is an explicit bounded privileged executor, NOT a
+// capability injected into the Stage D runtime identity.  Adding CAP_CHOWN or
+// CAP_FOWNER to the identity that runs Stage D would make every future
+// publication and cold-load run with a permanent capability the contract never
+// described, which is a strictly worse defect than the one Phase B repairs.
+const REPAIR_EXECUTOR_POLICY = 'BOUNDED_PRIVILEGED_HOST_EXECUTOR';
+const RUNTIME_CAPABILITY_INJECTION_POLICY = 'FORBIDDEN';
+
+// The only mutation classes a privileged executor may be handed.  This is the
+// planner's own operation set, restated as policy so a reader does not have to
+// infer the bound from the operations array.
+const ALLOWED_PRIVILEGED_OPERATION_CLASSES = Object.freeze(['CHOWN', 'REMOVE_EXTENDED_ACL', 'CHMOD']);
+
+// PRE content evidence provenance.  Every governed artifact needs a PRE hash,
+// and the source of that hash is recorded so a privileged pre-read can never be
+// mistaken for evidence that the ordinary runtime could read the artifact.
+const PRE_CONTENT_EVIDENCE_SOURCE = Object.freeze({
+    ORDINARY: 'ORDINARY_RUNTIME_READ',
+    PRIVILEGED: 'PRIVILEGED_READ_ONLY_EVIDENCE',
+});
+
+// A PRE_CONTENT_SHA256 is a lowercase hex SHA-256 digest — the same shape the
+// audit CLI publishes in its `content_hashes` manifest.  It is required: an
+// evidence record without one is not content evidence, and a source without a
+// digest would let the set pass as READY while proving nothing per artifact.
+const PRE_CONTENT_SHA256_RE = /^[0-9a-f]{64}$/;
+
 function planError(code, message) {
     const error = new Error(message);
     error.code = code;
@@ -287,7 +334,16 @@ function planPath(entry, runtimeIdentity) {
         content_bytes_must_be_identical: true,
         path_resolution_rule: 're-open with O_NOFOLLOW and verify dev/ino match `pre` before applying; abort on mismatch',
         acl_mask_caveat: 'while an extended ACL exists the mode group bits ARE the mask, and setfacl -b re-normalises `group::` from the mask it deletes; the ACL removal therefore runs before the closing CHMOD, which is what makes `post.mode` exact',
-        elevated_privilege_required: observation.uid !== process.getuid() || observation.gid !== process.getgid(),
+        // Measured against the TARGET runtime identity, never against whoever
+        // happened to run the planner.  The gate this flag feeds — privileged
+        // mutation is permitted only for an operation carrying it — is sound
+        // only if the flag answers "can the identity that must own and
+        // cold-load this object perform this operation itself?".  Comparing
+        // against process.getuid() answers a different question: an operator who
+        // ran the planner as root would see the flag cleared on every root-owned
+        // object, and the plan would read as self-repairable precisely in the
+        // state that must never be silently repairable.
+        elevated_privilege_required: observation.uid !== runtimeIdentity.uid || observation.gid !== runtimeIdentity.gid,
         owner_authorization_required: true,
     });
     const planned = [{ operation: 'CHOWN', rank: OPERATION_RANK.CHOWN, applies: defects.chown },
@@ -340,12 +396,240 @@ function surfaceObservationIndex(report) {
     return index;
 }
 
+// Which evidence source the PRE content hash for one governed artifact is
+// allowed to come from.  Returns the source, or null to mean BLOCKED — never a
+// silent omission and never a guess.
+//
+// The input is one entry of the evidence manifest a Phase B execution collects,
+// and it reuses the vocabulary the audit CLI already emits rather than inventing
+// a parallel one:
+//
+//   `sha256`
+//        the PRE_CONTENT_SHA256 itself, and the reason this function exists: it
+//        is required for EVERY artifact and for BOTH evidence sources.  A
+//        permitted reader with no digest to show for it is not content evidence
+//        at all, and accepting one — a `HASHED` status, or an EACCES artifact
+//        whose preconditions hold — would leave the set READY while carrying no
+//        per-artifact byte proof, which is precisely the hole the PRE/POST
+//        invariant exists to close.
+//   `status` and `code`
+//        the same pair the CLI's `content_hashes` manifest carries for every
+//        governed artifact: `{status: 'HASHED', sha256, size}` when the read
+//        succeeded, and `{status: 'NOT_READABLE', code}` — plus `ABSENT`,
+//        `NOT_OBSERVABLE` and `NOT_REGULAR_FILE` — when it did not, so an
+//        artifact the audit could not read keeps its place in the manifest
+//        instead of dropping out of it.
+//   `path`, `dev`, `ino`
+//        which artifact the record is about, and which object.  These are the
+//        only artifact-side fields the privileged fallback trusts, and only to
+//        look the artifact up in the plan: the authorization itself is the
+//        plan's, never the record's.
+//
+// What is NOT an input is any assertion about the plan.  Whether the path is
+// governed, whether this plan repairs it, whether it is symlink-free, whether
+// its ancestors are real directories, and which object sits there are all read
+// from `plan.governed_artifacts` — the planner's own statement, derived from the
+// report's observations and the operations it emitted.  A caller-supplied
+// `permission_defect_repaired_by_this_plan: true` would make the confinement a
+// claim about the caller: the same record for an arbitrary path, with the same
+// invented fields, would classify identically, and the fallback would authorize
+// a privileged read of anything at all.
+//
+// The ordinary runtime read is tried first and is the only source that also
+// demonstrates the runtime could read the artifact.  The privileged fallback
+// exists because the artifact Phase B repairs is precisely the one the ordinary
+// runtime cannot read: without it, an EACCES artifact could carry no PRE hash at
+// all, and the contract's PRE/POST byte-equality proof would have a hole exactly
+// where the defect is.  Every bound is therefore required before the fallback is
+// allowed, and a failure this plan does not repair — a path outside the plan, a
+// surface with no operation, a missing object, a symlink, a different dev/inode
+// — is blocked rather than escalated.
+function governedArtifactIndex(plan) {
+    if (!plan || typeof plan !== 'object' || !Array.isArray(plan.governed_artifacts)) return null;
+    const index = new Map();
+    for (const entry of plan.governed_artifacts) {
+        if (entry && typeof entry.path === 'string') index.set(entry.path, entry);
+    }
+    return index;
+}
+
+function preContentEvidenceSourceFor(artifact = {}, plan = null) {
+    // The digest gates every artifact and both sources: without it there is no
+    // PRE_CONTENT_SHA256 to compare against POST, so no source may be accepted.
+    if (!PRE_CONTENT_SHA256_RE.test(artifact.sha256 || '')) return null;
+    // And the plan gates every artifact too.  Everything the privileged fallback
+    // is confined by — that the path is governed, that this plan repairs it, that
+    // the object is the one the report observed and is not a symlink — is read
+    // out of the plan, never out of the evidence record's own account of itself.
+    // A record that asserted those facts about a path the plan never mentioned,
+    // or about an object the plan did not observe, would otherwise be
+    // indistinguishable from a real one, and "the privileged pre-read is
+    // confined to the artifacts this plan repairs" would be a claim about the
+    // caller rather than a property of the contract.
+    const governed = governedArtifactIndex(plan);
+    if (governed === null) return null;
+    const entry = governed.get(artifact.path);
+    if (entry === undefined || entry.symlink_free !== true) return null;
+    // A directory is governed but has no bytes, so no read of it — ordinary or
+    // privileged — is content evidence.  Nothing is being read here, so a
+    // record claiming otherwise is describing an object the contract never
+    // described, and the privileged fallback especially must not be widened to
+    // "open whatever the plan touches".
+    if (entry.content_bearing !== true) return null;
+    if (artifact.status === 'HASHED') return PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY;
+    if (artifact.status !== 'NOT_READABLE') return null;
+    if (artifact.code !== 'EACCES') return null;
+    // Only a path this plan actually repairs may be read with elevated
+    // privilege, and only for the object the plan observed: the record has to
+    // name the same device and inode, so one about a different object at the
+    // same path cannot inherit the authorization by landing on the name.
+    if (entry.repaired_by.length === 0) return null;
+    if (!Number.isInteger(entry.dev) || !Number.isInteger(entry.ino)) return null;
+    if (artifact.dev !== entry.dev || artifact.ino !== entry.ino) return null;
+    return PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED;
+}
+
+// The whole-artifact-set verdict for PRE content evidence.  The contract's
+// content proof is per artifact and universal — PRE_SHA256 == POST_SHA256 for
+// every governed artifact — so one artifact with no permitted evidence source
+// makes the set unproven rather than partially proven, and the verdict is
+// BLOCKED.  Classification only: this function validates the digests a
+// pre-repair manifest already carries and decides whether it is complete enough
+// to authorize a repair.  It never reads a hash out of a file, opens a governed
+// path or mutates anything, and a manifest entry without a well-formed digest is
+// blocked rather than treated as evidence with an unstated value.
+//
+// The plan is the required argument for the same reason, and it fixes the set as
+// well as the standard: the manifest is checked against the plan that repairs it,
+// so the plan both says which artifacts have to appear in it and decides whether
+// each is proven.  A manifest offered without a plan has nothing to be authorized
+// against and is BLOCKED rather than vacuously READY, and one that omits a
+// governed artifact is BLOCKED rather than READY over the remainder.
+function preContentEvidenceVerdict(artifacts = [], plan = null) {
+    if (!Array.isArray(artifacts)) throw planError('INVALID_PRE_CONTENT_EVIDENCE_INPUT', 'governed artifacts must be an array');
+    const governed = governedArtifactIndex(plan);
+    if (governed === null) {
+        return Object.freeze({
+            status: 'BLOCKED',
+            reason: 'a plan is required: an artifact is authorized by the plan that repairs it, never by the evidence record alone',
+            governed_artifacts_required: 0,
+            permitted: 0,
+            classified: Object.freeze([]),
+            missing: Object.freeze([]),
+            duplicates: Object.freeze([]),
+            extra: Object.freeze([]),
+            blocked: Object.freeze([]),
+            missing_pre_evidence_result: 'BLOCKED',
+        });
+    }
+    // The certified set is the plan's, not the manifest's.  Taking
+    // `artifacts.length` as the requirement made completeness a property of
+    // whoever assembled the manifest: omitting the artifact the privileged read
+    // exists for — the one that is EACCES to the runtime, and so the easiest to
+    // leave out — would leave a smaller set that still reported READY, and the
+    // universal PRE/POST invariant would hold over a subset chosen by the
+    // caller.  Coverage is therefore enumerated from the plan, and a manifest
+    // that misses a governed artifact, names one twice, or carries a path the
+    // plan does not govern is BLOCKED for that reason alone.
+    const required = [...governed.values()].filter(entry => entry.content_bearing === true);
+    const supplied = new Map();
+    const duplicates = [];
+    const extra = [];
+    for (const artifact of artifacts) {
+        const artifactPath = artifact && typeof artifact.path === 'string' ? artifact.path : null;
+        if (artifactPath === null || !governed.has(artifactPath)) {
+            extra.push(Object.freeze({ path: artifactPath }));
+            continue;
+        }
+        if (supplied.has(artifactPath)) {
+            duplicates.push(Object.freeze({ path: artifactPath }));
+            continue;
+        }
+        supplied.set(artifactPath, artifact);
+    }
+    const missing = required.filter(entry => !supplied.has(entry.path)).map(entry => Object.freeze({ path: entry.path }));
+    const classified = required.map(entry => {
+        const artifact = supplied.get(entry.path);
+        return Object.freeze({
+            path: entry.path,
+            evidence_source: artifact === undefined ? null : preContentEvidenceSourceFor(artifact, plan),
+            pre_content_sha256: artifact !== undefined && PRE_CONTENT_SHA256_RE.test(artifact.sha256 || '') ? artifact.sha256 : null,
+        });
+    });
+    const blocked = classified.filter(entry => entry.evidence_source === null);
+    return Object.freeze({
+        status: blocked.length > 0 || missing.length > 0 || duplicates.length > 0 || extra.length > 0 ? 'BLOCKED' : 'READY',
+        reason: null,
+        governed_artifacts_required: required.length,
+        permitted: classified.length - blocked.length,
+        // Every governed artifact is reported, not only the refused ones, so a
+        // READY verdict can be read as the per-artifact statement it is: each
+        // entry names the source that was accepted and the PRE_CONTENT_SHA256
+        // it was accepted for.  A READY with an unreported digest would put the
+        // invariant out of reach of the caller checking it.
+        classified: Object.freeze(classified),
+        // The three ways a manifest can fail to be the plan's artifact set,
+        // reported separately from the artifacts that were present but unproven
+        // — they are different repairs for whoever assembles the manifest.  A
+        // missing artifact is also an unproven one, so it already blocks through
+        // `classified`; naming it separately is what makes the verdict say which
+        // artifact is absent instead of only that the set is short.
+        missing: Object.freeze(missing),
+        duplicates: Object.freeze(duplicates),
+        extra: Object.freeze(extra),
+        blocked: Object.freeze(blocked),
+        missing_pre_evidence_result: 'BLOCKED',
+    });
+}
+
 function planStatus(operations, blocked) {
     if (operations.length === 0 && blocked.length === 0) return 'NOT_REQUIRED';
     if (operations.length === 0) return 'BLOCKED';
     if (blocked.length > 0) return 'PARTIAL_BLOCKED';
     if (operations.some(operation => operation.elevated_privilege_required)) return 'READY_WITH_ELEVATED_PRIVILEGE';
     return 'READY';
+}
+
+// The plan's own statement of what is governed, and what it repairs.  This is
+// the authority the PRE content evidence is checked against: the evidence check
+// must not be able to authorize itself, so every fact that confines the
+// privileged fallback is derived here — from the report's per-surface
+// observations and from the operations this plan actually emitted — rather than
+// accepted from the evidence record.
+function governedArtifactEntries(report, operations) {
+    const repaired = new Map();
+    for (const operation of operations) {
+        if (!repaired.has(operation.path)) repaired.set(operation.path, new Set());
+        repaired.get(operation.path).add(operation.operation);
+    }
+    return (report.surfaces || [])
+        .filter(evaluation => evaluation && evaluation.spec && typeof evaluation.spec.path === 'string')
+        .map(evaluation => {
+            const observation = evaluation.observation || {};
+            return Object.freeze({
+                path: evaluation.spec.path,
+                surface_id: evaluation.spec.surface_id,
+                object_type: evaluation.spec.object_type,
+                // Whether this surface has bytes at all, and whether those bytes
+                // are immutable.  The PRE/POST invariant is a statement about
+                // content, so it is about exactly these surfaces: a directory
+                // has no bytes to hash, and a mutable file's bytes are allowed
+                // to differ — requiring a byte-identical PRE and POST for
+                // either would demand a proof that cannot exist rather than one
+                // that must.
+                content_bearing: evaluation.spec.object_type === 'regular_file'
+                    && evaluation.spec.immutable_content === true,
+                // The object the report observed at this path.  A privileged
+                // read is authorized for this dev/inode or for nothing.
+                dev: Number.isInteger(observation.dev) ? observation.dev : null,
+                ino: Number.isInteger(observation.ino) ? observation.ino : null,
+                // The planner refuses a symlinked governed path outright, so a
+                // surface still listed here is one it re-observed as a real
+                // object; the flag is restated for the evidence check to read.
+                symlink_free: observation.observable === true && observation.is_symbolic_link !== true,
+                repaired_by: Object.freeze([...repaired.get(evaluation.spec.path) || []].sort()),
+            });
+        });
 }
 
 function buildRemediationPlan(report, { generatedAt = null } = {}) {
@@ -380,7 +664,51 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
         // repairable when part of it needs an Owner decision.
         status: planStatus(operations, [...blocked, ...blockedOperations]),
         runtime_identity: report.runtime_identity,
+        // The ordinary identity that must own the repaired surfaces and perform
+        // the cold-load proof.  Named separately from the executor so no caller
+        // can read the plan as "the repair runs as this identity".
+        target_runtime_identity: report.runtime_identity,
         targets: report.targets,
+        // Which artifacts this plan can speak for, and what it does to each.
+        // The PRE content evidence is validated against this list, so the bound
+        // on the privileged pre-read is a property of the plan rather than a
+        // promise made by whoever assembled the evidence manifest.
+        governed_artifacts: Object.freeze(governedArtifactEntries(report, operations)),
+        // Which identity may apply this plan, and what it may not do with it.
+        // `elevated_privilege_required` on an operation is the ONLY thing that
+        // authorizes privilege for that operation; a caller may not widen this
+        // to the whole plan.
+        repair_executor_policy: Object.freeze({
+            policy: REPAIR_EXECUTOR_POLICY,
+            owner_authorization_required: true,
+            exact_plan_only: true,
+            elevated_privilege_authorized_by: 'SEPARATE_OWNER_AUTHORIZED_PHASE_B',
+            allowed_operation_classes: ALLOWED_PRIVILEGED_OPERATION_CLASSES,
+            privileged_permitted_only_for: 'operations carrying elevated_privilege_required=true',
+            recursive_mutation_allowed: false,
+            arbitrary_path_allowed: false,
+            unrestricted_root_shell_allowed: false,
+            privilege_persistence_allowed: false,
+            runtime_capability_injection: RUNTIME_CAPABILITY_INJECTION_POLICY,
+            executor_may_become_proof_identity: false,
+        }),
+        // How the PRE content hash for each governed artifact is allowed to be
+        // obtained.  A privileged read is evidence about the bytes only; it is
+        // never evidence about the ordinary runtime's access.
+        pre_content_evidence_policy: Object.freeze({
+            preferred_reader: 'TARGET_RUNTIME_IDENTITY',
+            fallback_evidence_source: PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED,
+            ordinary_evidence_source: PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY,
+            eacces_fallback: PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED,
+            fallback_permitted_only_for: 'a governed artifact the target runtime identity cannot read, whose read failure is the permission defect this plan repairs',
+            privileged_reader_may_mutate: false,
+            privileged_read_may_satisfy_runtime_access_proof: false,
+            every_governed_artifact_requires_pre_sha256: true,
+            require_dev_inode_binding: true,
+            missing_pre_evidence_result: 'BLOCKED',
+            post_repair_hasher: 'TARGET_RUNTIME_IDENTITY',
+            invariant: 'PRE_SHA256 == POST_SHA256 for every governed artifact',
+        }),
         applies_content_writes: false,
         mutating: false,
         execution_authorized: false,
@@ -390,15 +718,25 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
         blocked_operations: Object.freeze([...blocked, ...blockedOperations]),
         preconditions: Object.freeze([
             'the accepted authority identity is unchanged and the exact main revision matches the authorization',
-            'the runtime uid/gid executing the repair equals the uid/gid that will cold-load the authority',
+            // The TARGET runtime identity is the ordinary uid/gid that must
+            // cold-load the authority AFTER repair.  It is not required to be
+            // the identity that executes the mutation: a root-owned governed
+            // object cannot be repaired by the identity that cannot read it, so
+            // requiring the two to be equal would forbid every operation this
+            // planner emits and leave the defect unrepairable by construction.
+            'the target runtime identity is the ordinary uid/gid that must cold-load the authority after repair, and it must not acquire a persistent capability in order to do so',
+            'metadata mutation is performed by a separately bounded privileged host executor, only when the operation it is applying carries elevated_privilege_required=true, and only under a separate Owner-authorized Phase B authorization',
+            'the repair executor does not become the proof identity: privileged success is never accepted as evidence that the target runtime identity can cold-load the authority',
             'the governed roots are on the expected filesystem device',
             'no Stage D run is active (run lock absent or already reconciled) and no scheduler or provider request is enabled',
-            'the pre-repair content SHA256 manifest and the full governed path metadata manifest have been captured outside the mutated tree',
+            'the pre-repair content SHA256 manifest and the full governed path metadata manifest have been captured outside the mutated tree, with every governed artifact carrying a PRE hash whose evidence source is recorded',
+            'the final operational access is proved only by the target runtime identity, by an ordinary cold-load and by a fresh-process cold-load',
         ]),
         postconditions: Object.freeze([
             'every governed surface satisfies its exact mode and identity postcondition',
-            'CONTENT_BYTES_AFTER equals CONTENT_BYTES_BEFORE for every governed artifact',
-            'an ordinary cold-load by the runtime identity reproduces the accepted head transaction, authority state hash, observation count, STORE SHA256 and allocation authority SHA256 exactly',
+            'PRE_SHA256 equals POST_SHA256 for every governed artifact, so CONTENT_BYTES_AFTER equals CONTENT_BYTES_BEFORE',
+            'the POST manifest requires no privileged read: the target runtime identity can hash every governed artifact unaided after the repair',
+            'an ordinary cold-load by the target runtime identity reproduces the accepted head transaction, authority state hash, observation count, STORE SHA256 and allocation authority SHA256 exactly',
             'a fresh process boundary reproduces the same cold-load result',
         ]),
         // Rollback is emitted in the SAME order as apply, not in reverse, and
@@ -436,4 +774,7 @@ module.exports = {
     PLAN_SCHEMA_VERSION, BLOCKING_FINDING_CODES, METADATA_REPAIR_CODES,
     MODE_FINDING_CODES, IDENTITY_FINDING_CODES, ACL_FINDING_CODES, DEFAULT_ACL_FINDING_CODES,
     ACCESS_FINDING_CODES, buildRemediationPlan, planStatus,
+    REPAIR_EXECUTOR_POLICY, RUNTIME_CAPABILITY_INJECTION_POLICY,
+    ALLOWED_PRIVILEGED_OPERATION_CLASSES, PRE_CONTENT_EVIDENCE_SOURCE,
+    preContentEvidenceSourceFor, preContentEvidenceVerdict,
 };

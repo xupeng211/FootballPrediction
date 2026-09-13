@@ -72,7 +72,20 @@ bits 的 effective umask；ancestor 的 ACL 证据缺失同样是阻塞 finding�
 该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
 `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`、`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
 `BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`。
-修复 production authority metadata 是另一个必须单独授权的 Phase B host procedure。
+
+第一次经 Owner 授权的 Phase B preflight 只读执行到 mutation 之前，即在 design gate 停止：原 contract
+的 precondition 要求 repair 以将 cold-load 的 runtime uid/gid 运行，而 planner 对 production plan
+发出的每个 operation 都带 `elevated_privilege_required=true`，因此该 precondition 在真实 plan 上不可满足。
+停止时**没有**做任何 mutation，production ownership/mode 与内容均未被触碰
+（`PRODUCTION_PERMISSION_MUTATED=NO`、`PRODUCTION_CONTENT_MUTATED=NO`）。随后在仓库内完成了
+privilege 与 content-proof contract remediation：Phase B identity 拆成
+`TARGET_RUNTIME_IDENTITY`、`REPAIR_EXECUTOR_IDENTITY`（policy 固定为
+`BOUNDED_PRIVILEGED_HOST_EXECUTOR`）和 `PRE_REPAIR_CONTENT_EVIDENCE_READER` 三个角色，禁止把
+`CAP_CHOWN`/`CAP_FOWNER` 注入 runtime identity，并规定 EACCES governed artifact 的 PRE hash 可由
+bounded privileged read-only reader 采集、而 transaction head / state hash / 903 / cold-load /
+fresh-process 证明仍必须由 ordinary runtime identity 独立产生。修复 production authority metadata
+仍是另一个必须**单独重新授权**的 Phase B host procedure：`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
+`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`、`PHASE_B_COMPLETE=NO`。
 
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、

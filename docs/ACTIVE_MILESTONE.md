@@ -102,8 +102,16 @@ ledger/verified-quota fail-close 实现，以及唯一的
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
 - 将已实现的 Blocker #2 runtime filesystem permission contract 应用到 production authority：
   Phase A（contract + 只读 audit + inert remediation plan + binder publication audit）已完成且未改动
-  任何 production ownership/mode，但把 plan 变成实际 metadata 修复是必须单独授权的 Phase B
-  host procedure；`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`。
+  任何 production ownership/mode。第一次经 Owner 授权的 Phase B preflight 只读执行到 mutation 之前
+  即停在 design gate：原 contract 要求 repair 以 runtime uid/gid 运行，而 planner 对该 production
+  plan 发出的每个 operation 都要求 elevated privilege，两者无法同时满足；因此在**未做任何 mutation**
+  的情况下停止（`PRODUCTION_PERMISSION_MUTATED=NO`、`PRODUCTION_CONTENT_MUTATED=NO`）。该 precondition
+  已改为显式的三身份模型（`TARGET_RUNTIME_IDENTITY` / `REPAIR_EXECUTOR_IDENTITY` /
+  `PRE_REPAIR_CONTENT_EVIDENCE_READER`，其中 repair executor policy 为
+  `BOUNDED_PRIVILEGED_HOST_EXECUTOR`），pre-repair content proof 也补齐了 EACCES artifact 的
+  privileged read-only 证据来源；contract remediation 已在仓库内实现。把 plan 变成实际 metadata
+  修复仍是必须**单独重新授权**的 Phase B host procedure：`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
+  `BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`PHASE_B_COMPLETE=NO`。
 - 指定不同物理故障域并完成 isolated restore proof（Blocker #3）。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
