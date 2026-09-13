@@ -8,6 +8,15 @@ const test = require('node:test');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
 const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
+
+// Verification is the read half of the offline claim and it walks every object
+// in a generation; the whole file is sealed so that claim covers every test in
+// it rather than the one that was written with the tripwire in mind.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 const { canonicalJson } = require('../../../../src/infrastructure/market_evidence/transactionContract');
 const { createLocalTransport } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
@@ -257,8 +266,6 @@ test('the manifest source tuple can be compared against a freshly captured ident
 });
 
 test('verification performs no outbound network access', async t => {
-    const tripwire = installNetworkTripwire();
-    t.after(() => tripwire.restore());
     const { transport, report } = await sealedGeneration(t, 'offline');
     assert.deepEqual(tripwire.attempts, []);
     await verifySnapshot({ transport, snapshotId: report.snapshot_id });

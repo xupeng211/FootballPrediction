@@ -7,6 +7,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
+const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
 const {
     CATEGORY,
     REQUIRED_CATEGORIES,
@@ -14,6 +15,16 @@ const {
     assertNameIsNotSecret,
 } = require('../../../../src/infrastructure/market_evidence/backup/snapshotInputs');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
+
+// Enumerating the governed inputs walks a real authority tree, and the whole
+// file is offline by construction.  Sealing the file rather than one chosen
+// test is what makes "no test here reaches the network" a property of the file
+// instead of a property of the test someone remembered to wrap.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 
 let shared = null;
 function fixture() {

@@ -18,6 +18,10 @@ const https = require('node:https');
 const net = require('node:net');
 const tls = require('node:tls');
 
+// Set by a parent test that spawns a child process (the ops CLIs are exercised
+// as real child processes); a plain import by a test file never sets it.
+const PRELOAD_ENV = 'STAGE_D_NETWORK_TRIPWIRE_PRELOAD';
+
 const ATTEMPTS = [];
 
 class NetworkAccessError extends Error {
@@ -81,4 +85,24 @@ function installNetworkTripwire() {
     });
 }
 
-module.exports = { installNetworkTripwire, NetworkAccessError, ATTEMPTS, SEALED_ENTRY_POINTS };
+// A child process has no test file to install the tripwire, so when this module
+// is loaded as a `--require` preload it installs itself.  The sentinel is what
+// distinguishes that case from an ordinary import by a test file, which
+// installs the tripwire itself and owns its lifetime.
+//
+// The exit check is what makes the child's guarantee non-bypassable.  An
+// attempt already throws, but the ops CLIs catch errors and report them as
+// structured JSON with exit code 1, so a sealed child that swallowed the throw
+// would still look like an ordinary failure rather than a network breach.
+// Re-checking at exit turns any recorded attempt into a distinguishable,
+// non-zero result either way.
+if (process.env[PRELOAD_ENV] === '1') {
+    const preloaded = installNetworkTripwire();
+    process.on('exit', () => {
+        if (preloaded.attempts.length === 0) return;
+        process.exitCode = 1;
+        console.error(`NETWORK_TRIPWIRE_TRIPPED: ${preloaded.attempts.join(', ')}`);
+    });
+}
+
+module.exports = { installNetworkTripwire, NetworkAccessError, ATTEMPTS, SEALED_ENTRY_POINTS, PRELOAD_ENV };

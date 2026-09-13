@@ -8,6 +8,14 @@ const test = require('node:test');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
 const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
+
+// The writer is the half that would reach a provider if anything ever did, so
+// the whole file is sealed rather than only the test that performs a write.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 const { createLocalTransport } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { ObjectAlreadyExistsError, SnapshotIntegrityError, TransportContractError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { writeSnapshot, SourceChangedDuringSnapshotError } = require('../../../../src/infrastructure/market_evidence/backup/snapshotWriter');
@@ -198,8 +206,6 @@ test('the writer refuses a malformed generation id and honours a well formed one
 });
 
 test('the writer performs no outbound network access', async t => {
-    const tripwire = installNetworkTripwire();
-    t.after(() => tripwire.restore());
     const transport = createLocalTransport({ root: storeRoot(t) });
     await writeSnapshot({ transport, ...writeOptions() });
     assert.deepEqual(tripwire.attempts, []);

@@ -19,6 +19,19 @@ const { spawnSync } = require('node:child_process');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
 const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
+
+// Sealed for the whole file.  The per-test seals below stay where they assert
+// something immediately after an operation; this one is what makes every other
+// test in the file covered too.
+//
+// The tripwire self-test deliberately trips every entry point and then empties
+// the module-level recorder, so this file-level check runs against a recorder
+// the self-test has already put back the way it found it.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 const backup = require('../../../../src/infrastructure/market_evidence/backup');
 const { createLocalTransport, isGovernedProductionPath, PRODUCTION_MARKERS } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { FORBIDDEN_TRANSPORT_METHODS, SnapshotIntegrityError, TransportContractError, assertTransportContract } = require('../../../../src/infrastructure/market_evidence/backup/transport');

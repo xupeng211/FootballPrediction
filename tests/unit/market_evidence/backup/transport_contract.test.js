@@ -5,9 +5,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const { spawnSync } = require('node:child_process');
 
+const R2_TRANSPORT_PATH = require.resolve('../../../../src/infrastructure/market_evidence/backup/r2Transport');
+
+const backup = require('../../../../src/infrastructure/market_evidence/backup');
+const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
 const { createLocalTransport, canonicalizeKey } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
-const { createR2Transport } = require('../../../../src/infrastructure/market_evidence/backup/r2Transport');
 const {
     REQUIRED_TRANSPORT_METHODS,
     FORBIDDEN_TRANSPORT_METHODS,
@@ -16,6 +20,17 @@ const {
     SnapshotIntegrityError,
     assertTransportContract,
 } = require('../../../../src/infrastructure/market_evidence/backup/transport');
+
+// The whole file runs behind the tripwire, not just the one test that touches
+// the R2 transport.  Every test here is offline by construction, and a file
+// that seals only its most obviously networked test would leave the rest
+// unproven -- an outbound attempt from anywhere else in the file is the same
+// breach whether or not the test looks like it could make one.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 
 function tempRoot(t) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-transport-'));
@@ -133,7 +148,47 @@ test('listObjects walks the whole root and filters by prefix', t => {
 // exact equality, so a leak would report every object as unexpected *and* every
 // expected object as missing.  A prefixed transport would then be unable to
 // verify a generation it had just written.
+// The on-demand boundary has to hold at the module, not only at the barrel.
+// `require` is the thing that links a dependency, so a module that links the
+// network client while being required has already broken the boundary no matter
+// what the barrel around it does -- and a test file that requires it to reach
+// the transport would be the first place that shows up.
+//
+// Both halves are asserted in fresh child processes: the second exists so the
+// first cannot pass for a probe that observes nothing.
+test('requiring the R2 transport does not link the network client', () => {
+    const probe = action => [
+        `const api = require(${JSON.stringify(R2_TRANSPORT_PATH)});`,
+        `const linked = () => Object.keys(require.cache).filter(id => id.includes('@aws-sdk'));`,
+        'const before = linked();',
+        action,
+        'console.log(JSON.stringify({ before, after: linked() }));',
+    ].join('\n');
+
+    const required = spawnSync(process.execPath, ['-e', probe('')], { encoding: 'utf8', env: { PATH: process.env.PATH || '' } });
+    assert.equal(required.status, 0, required.stderr);
+    const observed = JSON.parse(required.stdout.trim());
+    assert.deepEqual(observed.before, [], 'the probe must start with no AWS SDK loaded');
+    assert.deepEqual(observed.after, [], 'requiring the transport must not link @aws-sdk/client-s3');
+
+    const constructed = spawnSync(process.execPath, ['-e', probe([
+        'api.createR2Transport({',
+        "    endpoint: 'https://example.invalid', bucket: 'stage-d-backup', region: 'auto',",
+        "    credentials: { accessKeyId: 'AKIASTUB', secretAccessKey: 'stub-secret' },",
+        '});',
+    ].join('\n'))], { encoding: 'utf8', env: { PATH: process.env.PATH || '' } });
+    const constructedObserved = JSON.parse(constructed.stdout.trim());
+    assert.ok(
+        constructedObserved.after.some(id => id.includes('@aws-sdk')),
+        'constructing a transport must be what links the client, or the assertion above proves nothing',
+    );
+});
+
 test('a prefixed R2 transport lists logical keys while asking the provider in physical ones', async () => {
+    // Reached through the barrel's on-demand seam, which is the only sanctioned
+    // way to it: requiring r2Transport directly would bypass the boundary the
+    // barrel exists to hold, and would link the network client at file load.
+    const { createR2Transport } = backup.loadR2Transport();
     const asked = [];
     const client = {
         send(command) {

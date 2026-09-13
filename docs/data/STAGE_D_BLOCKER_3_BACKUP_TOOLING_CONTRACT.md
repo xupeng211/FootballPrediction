@@ -231,9 +231,20 @@ test asserts that no `AWS4-HMAC-SHA256`, `StringToSign`, `X-Amz-`,
 `@aws-sdk/client-s3` is the only new runtime dependency this work adds. It is an
 approved exception to the zero-new-dependency rule for exactly one reason: an
 otherwise correct hand-written signer is a far larger and less reviewable
-surface than a mature SDK. The barrel deliberately does **not** re-export it
-eagerly — `loadR2Transport()` loads it on demand, so the offline CLIs and the
-unit tests never link the network client. This is asserted by test.
+surface than a mature SDK. It is linked on demand at both levels — the barrel
+does **not** re-export it eagerly, and the transport module links it when a
+transport is constructed rather than when the module is required. `require` is
+what links a dependency, so a barrel that deferred while the module it defers to
+linked eagerly would have moved the boundary without holding it: requiring
+either one must leave the network client unlinked, and only constructing a
+transport may link it.
+
+That is what the offline CLIs rely on — they reach the backup tooling through
+the barrel and never construct an R2 transport, so they never link the client.
+The one test that links it is the one that constructs an R2 transport. Both
+halves are asserted by test in fresh child processes, and the second half is
+asserted because a probe that observed nothing would make the first half pass
+for the wrong reason.
 
 ### Credential model
 
@@ -425,10 +436,24 @@ authorized change.
 Every test in this work runs with no network. A tripwire helper replaces
 `http.request`, `http.get`, `https.request`, `https.get`, `net.connect`,
 `net.createConnection`, `net.Socket.prototype.connect`, `tls.connect`,
-`dns.lookup` and `globalThis.fetch` with throwers for the lifetime of a test
-file, and asserts zero attempts across a full write, verify and restore. A test
-that silently reached a provider endpoint would pass for the wrong reason and
-would consume someone's quota while doing it.
+`dns.lookup` and `globalThis.fetch` with throwers, and asserts zero attempts
+across a full write, verify and restore. A test that silently reached a provider
+endpoint would pass for the wrong reason and would consume someone's quota while
+doing it.
+
+The seal covers every backup test file, not only the test in each that was
+written with the tripwire in mind — an outbound attempt is the same breach
+wherever in the file it comes from, and a file that sealed one test would leave
+the rest unproven. It also covers the **child processes**: the ops CLIs are
+exercised as real child processes, so a seal that lived only in the test's own
+process would leave the code under test free to reach the network. Each file
+installs the tripwire for its whole duration and asserts zero attempts at the
+end, and the CLI harness loads the tripwire into the child through
+`NODE_OPTIONS=--require`, where an attempt sets a non-zero exit and reports
+itself on stderr rather than passing unnoticed. The preload is armed by an
+environment variable the harness sets, so importing the helper ordinarily never
+changes a process's behaviour. A test asserts the child seal itself, because a
+seal nobody can show working is not evidence.
 
 **Fixtures are synthetic.** The accepted authority baseline — head
 `tx_0ba8d4ad…`, state hash `df5084b6…`, `OBSERVATION_COUNT=903` — is *not*

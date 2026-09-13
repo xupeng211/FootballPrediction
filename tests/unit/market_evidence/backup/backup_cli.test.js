@@ -15,8 +15,20 @@ const test = require('node:test');
 const { spawnSync } = require('node:child_process');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
+const { installNetworkTripwire, PRELOAD_ENV } = require('../../../helpers/network_tripwire');
 const { createLocalTransport } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { payloadObjectKey } = require('../../../../src/infrastructure/market_evidence/backup/snapshotManifest');
+
+// The file runs behind the tripwire, and so does every child process it spawns.
+// Sealing only the parent would leave the end-to-end path -- which is the whole
+// point of this file -- unproven: the CLI does its work in a child, so a child
+// that reached an endpoint would never touch the parent's seals.
+const TRIPWIRE_PRELOAD = require.resolve('../../../helpers/network_tripwire');
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 
 const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const SNAPSHOT_CLI = path.join(REPOSITORY_ROOT, 'scripts', 'ops', 'stage_d_backup_snapshot.js');
@@ -39,7 +51,15 @@ function runCli(scriptPath, args, options = {}) {
     const result = spawnSync(process.execPath, [scriptPath, ...args], {
         cwd: options.cwd || REPOSITORY_ROOT,
         encoding: 'utf8',
-        env: { PATH: process.env.PATH || '' },
+        // The child gets the tripwire as a preload, so the CLI's own process is
+        // sealed too.  The sentinel is what makes the helper install itself on
+        // load; a plain `--require` would be indistinguishable from an import
+        // and would leave the preloaded copy inert.
+        env: {
+            PATH: process.env.PATH || '',
+            [PRELOAD_ENV]: '1',
+            NODE_OPTIONS: `--require ${TRIPWIRE_PRELOAD}`,
+        },
     });
     return { status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' };
 }
@@ -295,6 +315,33 @@ test('both CLIs run from any working directory', async t => {
     const written = runCli(SNAPSHOT_CLI, snapshotArguments(anotherRoot), { cwd: '/' });
     assert.equal(written.status, 0, written.stdout);
     assert.equal(payloadOf(written).action, 'SNAPSHOT_WRITTEN');
+});
+
+// The preload is a mechanism, and a mechanism that silently failed to install
+// would make every child process in this file pass for the wrong reason -- they
+// would look sealed while running wide open.  This drives the child-side seal
+// directly: the probe asks the tripwire's own exported list for an entry point
+// and calls it, so the test names no network verb itself.  It catches the
+// refusal and clears its exit code on purpose, because that is exactly the case
+// the exit check exists for: a child that swallows the throw must still fail.
+test('a spawned child process is sealed by the tripwire preload', () => {
+    const probe = [
+        `const { SEALED_ENTRY_POINTS } = require(${JSON.stringify(TRIPWIRE_PRELOAD)});`,
+        'const entry = SEALED_ENTRY_POINTS[0];',
+        'try {',
+        '    entry.target[entry.methods[0]]("127.0.0.1");',
+        '} catch (error) {',
+        '    console.error(`PROBE_REFUSED:${error.name}`);',
+        '    process.exitCode = 0;',
+        '}',
+    ].join('\n');
+    const result = spawnSync(process.execPath, ['-e', probe], {
+        encoding: 'utf8',
+        env: { PATH: process.env.PATH || '', [PRELOAD_ENV]: '1', NODE_OPTIONS: `--require ${TRIPWIRE_PRELOAD}` },
+    });
+    assert.equal(result.status, 1, 'a sealed child must exit non-zero even when it swallows the refusal');
+    assert.ok(/NETWORK_TRIPWIRE_TRIPPED/.test(result.stderr), `the child must report the tripwire (stderr: ${result.stderr})`);
+    assert.deepEqual(tripwire.attempts, [], 'the attempt happened in the child, so this process must have recorded none');
 });
 
 test('the CLI produces a generation a library call can then verify', async t => {

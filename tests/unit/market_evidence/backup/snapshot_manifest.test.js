@@ -3,8 +3,18 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
+const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
 const { canonicalJson } = require('../../../../src/infrastructure/market_evidence/transactionContract');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
+
+// The manifest and marker builders are pure, but "pure enough that it cannot
+// reach the network" is a claim about the code, not a guarantee about the test
+// run.  Sealing the whole file is what turns it into an enforced property.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 const {
     SNAPSHOT_MANIFEST_SCHEMA_VERSION,
     SNAPSHOT_COMPLETENESS_SCHEMA_VERSION,

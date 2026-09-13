@@ -22,18 +22,22 @@
 //   - run at import time.  Constructing the module performs no I/O and no
 //     network access; a client is built only when the caller asks for one.
 
-const {
-    S3Client,
-    PutObjectCommand,
-    GetObjectCommand,
-    HeadObjectCommand,
-    ListObjectsV2Command,
-} = require('@aws-sdk/client-s3');
-
 const { ObjectAlreadyExistsError, SnapshotIntegrityError, TransportContractError } = require('./transport');
 const { canonicalizeKey } = require('./localTransport');
 
 const R2_TRANSPORT_VERSION = 'stage-d-r2-s3-transport/v1';
+
+// @aws-sdk/client-s3 is linked on demand, not at import time.  Requiring this
+// module must not pull the network client into the process: a caller that only
+// wants to inspect the transport's surface, or a test that asserts the SDK is
+// absent, would otherwise link the very dependency the on-demand boundary
+// exists to keep out.  Only constructing a transport -- the one thing a caller
+// has to ask for by name -- links it.
+let s3Sdk = null;
+function loadS3Sdk() {
+    if (s3Sdk === null) s3Sdk = require('@aws-sdk/client-s3');
+    return s3Sdk;
+}
 
 function assertNonEmptyString(value, label) {
     if (typeof value !== 'string' || !value.trim()) throw new TransportContractError(`${label} is required and must be supplied explicitly`);
@@ -94,6 +98,16 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
     // "Refuses to construct without injected credentials" has to hold on every
     // path or it does not hold.
     const resolvedCredentials = assertExplicitCredentials(credentials);
+
+    // Linked here rather than at import time, and after the credential check
+    // above, so a construction that is refused never links the network client.
+    const {
+        S3Client,
+        PutObjectCommand,
+        GetObjectCommand,
+        HeadObjectCommand,
+        ListObjectsV2Command,
+    } = loadS3Sdk();
 
     let resolvedClient = client;
     if (resolvedClient === null) {

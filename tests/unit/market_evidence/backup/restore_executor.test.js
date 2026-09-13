@@ -8,6 +8,15 @@ const test = require('node:test');
 
 const { buildBackupFixture } = require('../../../helpers/backup_authority_fixture');
 const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
+
+// The whole file is sealed, not just the test that restores a generation.  A
+// restore reads a snapshot and writes a tree, and the isolated-restore claim is
+// only as strong as the weakest test in the file that could reach the network.
+const tripwire = installNetworkTripwire();
+test.after(() => {
+    assert.deepEqual(tripwire.attempts, [], 'no test in this file may attempt outbound network access');
+    tripwire.restore();
+});
 const { createLocalTransport } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { writeSnapshot } = require('../../../../src/infrastructure/market_evidence/backup/snapshotWriter');
@@ -359,8 +368,6 @@ test('a layout that cannot be restored is refused', async t => {
 });
 
 test('the restore performs no outbound network access', async t => {
-    const tripwire = installNetworkTripwire();
-    t.after(() => tripwire.restore());
     const { transport, report } = await sealed(t, 'offline');
     const restored = await executeRestore({
         transport,
