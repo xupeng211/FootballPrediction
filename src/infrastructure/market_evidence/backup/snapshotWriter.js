@@ -80,8 +80,25 @@ function hashGovernedFile(sourcePath) {
     return Object.freeze({ sha256: sha256Hex(bytes), size: bytes.length });
 }
 
+// The digest binds content, not the shape of the set.  A digest over
+// logical_path and size is a digest over a stat: a file replaced by different
+// content of the same length leaves it untouched, so a copy that read one
+// version while the source moved on to another compares equal and the
+// generation is sealed COMPLETE holding a mixture of the two.  Hashing the
+// bytes makes the comparison answer what the invariant actually asks -- is what
+// we wrote still what the source holds -- and it answers it for every input,
+// including the committed packages and the run-state files that the identity
+// tuple does not cover.
+//
+// The order is by logical path rather than by enumeration order so that the two
+// sides of the comparison cannot agree or disagree because of how they were
+// built.
 function inputSetDigest(entries) {
-    return sha256Hex(Buffer.from(canonicalJson(entries.map(entry => ({ logical_path: entry.logical_path, size: entry.size }))), 'utf8'));
+    return sha256Hex(Buffer.from(canonicalJson(
+        [...entries]
+            .map(entry => ({ logical_path: entry.logical_path, size: entry.size, sha256: entry.sha256 }))
+            .sort((left, right) => (left.logical_path < right.logical_path ? -1 : left.logical_path > right.logical_path ? 1 : 0)),
+    ), 'utf8'));
 }
 
 // The identity tuple is deliberately serializable.  The authority snapshot
@@ -170,7 +187,6 @@ async function writeSnapshot({
 
     const inputsBefore = enumerateSnapshotInputs({ authorityRoot, allocationArtifactPath, ledgerRoot, quotaConfigPath, runStateInputs });
     const identityBefore = captureSourceIdentity({ authorityRoot, allocationArtifactPath, ledgerRoot, quotaConfigPath });
-    const inputSetBefore = inputSetDigest(inputsBefore.entries);
 
     const artifacts = [];
     for (const entry of inputsBefore.entries) {
@@ -187,6 +203,10 @@ async function writeSnapshot({
         }));
     }
 
+    // What the generation holds, taken from the bytes that were actually
+    // written rather than from a second stat of the source.
+    const inputSetBefore = inputSetDigest(artifacts);
+
     const identityAfter = captureSourceIdentity({ authorityRoot, allocationArtifactPath, ledgerRoot, quotaConfigPath });
     if (canonicalJson(identityBefore) !== canonicalJson(identityAfter)) {
         // The generation is left in place, unmarked and unverifiable.  It is
@@ -195,8 +215,17 @@ async function writeSnapshot({
         throw new SourceChangedDuringSnapshotError(`the authority changed while snapshot ${resolvedSnapshotId} was being written; the generation is partial and carries no completeness marker`);
     }
 
+    // Every governed input is read back from the source and hashed, not merely
+    // re-enumerated.  Re-enumerating is a stat: it notices a file that appeared,
+    // disappeared or changed length, and it cannot notice one whose content was
+    // replaced in place at the same length -- which is exactly the case that
+    // leaves the generation holding a coherent-looking mixture of two moments.
     const inputsAfter = enumerateSnapshotInputs({ authorityRoot, allocationArtifactPath, ledgerRoot, quotaConfigPath, runStateInputs });
-    if (inputSetDigest(inputsAfter.entries) !== inputSetBefore) {
+    const survived = inputsAfter.entries.map(entry => {
+        const bytes = readGovernedBytes(entry.source_path);
+        return { logical_path: entry.logical_path, size: bytes.length, sha256: sha256Hex(bytes) };
+    });
+    if (inputSetDigest(survived) !== inputSetBefore) {
         throw new SourceChangedDuringSnapshotError(`the governed input set changed while snapshot ${resolvedSnapshotId} was being written; the generation is partial and carries no completeness marker`);
     }
 

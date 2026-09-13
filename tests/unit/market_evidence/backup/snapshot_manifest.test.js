@@ -171,6 +171,71 @@ test('a manifest whose source identity moved is refused', () => {
     assert.throws(() => validateSnapshotManifest(moved), error => error instanceof SnapshotIntegrityError && /source_before and source_after must be identical/.test(error.message));
 });
 
+// `undefined === undefined`.  A validator that checks only that the two tuples
+// agree, and never that they are there, accepts every manifest below: the
+// absent ones agree with each other, the null ones agree with each other, and
+// the empty ones agree with each other.  Such a generation carries no head
+// transaction, no state hash and no request-accounting epoch, so a verifier
+// built on it reports PASS for evidence that proves nothing at all -- and it is
+// precisely the manifest a tamperer would produce, since dropping a field is
+// easier than forging one that has to hash correctly.
+test('a manifest carrying no source identity is refused however it is absent', () => {
+    const { manifest } = buildSnapshotManifest(manifestFields());
+    for (const field of ['source_before', 'source_after', 'request_accounting', 'quota_config']) {
+        const missing = { ...manifest };
+        delete missing[field];
+        assert.throws(() => validateSnapshotManifest(missing), error => error instanceof SnapshotIntegrityError, `a manifest with no ${field} must be refused`);
+    }
+
+    const shapes = [
+        ['both tuples absent', (() => { const m = { ...manifest }; delete m.source_before; delete m.source_after; return m; })()],
+        ['both tuples null', { ...manifest, source_before: null, source_after: null }],
+        ['both tuples empty', { ...manifest, source_before: {}, source_after: {} }],
+        ['an empty authority with no request accounting', { ...manifest, source_before: { authority: {}, quota_config: manifest.quota_config }, source_after: { authority: {}, quota_config: manifest.quota_config }, request_accounting: {} }],
+    ];
+    for (const [label, tampered] of shapes) {
+        assert.throws(() => validateSnapshotManifest(tampered), error => error instanceof SnapshotIntegrityError, `${label} must be refused`);
+    }
+
+    // A tuple that agrees with itself but disagrees with the top-level copy is
+    // the other half of the same hole: the fields are present and well shaped,
+    // so only the cross-check catches it.
+    const drifted = { ...manifest, request_accounting: { ...manifest.request_accounting, request_count: 99 } };
+    assert.throws(() => validateSnapshotManifest(drifted), error => error instanceof SnapshotIntegrityError && /request accounting/.test(error.message));
+    const driftedQuota = { ...manifest, quota_config: { ...manifest.quota_config, size: 999 } };
+    assert.throws(() => validateSnapshotManifest(driftedQuota), error => error instanceof SnapshotIntegrityError && /quota configuration/.test(error.message));
+
+    // Every field the tuple is defined to carry is required to have the shape
+    // the writer produces.  A tuple of the right *type* but the wrong shape is
+    // the failure mode a presence-only check would let through.
+    const weakened = [
+        ['a head transaction id that is not one', { authority: { ...manifest.source_before.authority, head_transaction_id: 'not-a-transaction' } }],
+        ['a state hash that is not a hash', { authority: { ...manifest.source_before.authority, state_hash: 'short' } }],
+        ['a knowledge time that is not UTC', { authority: { ...manifest.source_before.authority, head_knowledge_time: '2026-09-13 00:00:00' } }],
+        ['a negative observation count', { authority: { ...manifest.source_before.authority, observation_count: -1 } }],
+        ['an epoch with no id', { request_accounting: { ...manifest.source_before.request_accounting, epoch_id: '' } }],
+        ['an entry hash that is not a hash', { request_accounting: { ...manifest.source_before.request_accounting, last_entry_hash: 'nope' } }],
+    ];
+    for (const [label, patch] of weakened) {
+        const tampered = { ...manifest, source_before: { ...manifest.source_before, ...patch }, source_after: { ...manifest.source_before, ...patch } };
+        assert.throws(() => validateSnapshotManifest(tampered), error => error instanceof SnapshotIntegrityError, `${label} must be refused`);
+    }
+
+    // The pre-epoch accounting fields must be *carried*, because their recorded
+    // value is the literal `UNKNOWN` and reading that as anything else is the
+    // reinterpretation the mission forbids.  Presence is therefore the whole of
+    // what is checkable, and dropping the field is what has to be refused.
+    for (const field of ['historical_pre_epoch_request_total', 'historical_pre_epoch_exact_total']) {
+        const accounting = { ...manifest.source_before.request_accounting };
+        delete accounting[field];
+        const tampered = { ...manifest, source_before: { ...manifest.source_before, request_accounting: accounting }, source_after: { ...manifest.source_after, request_accounting: accounting } };
+        assert.throws(() => validateSnapshotManifest(tampered), error => error instanceof SnapshotIntegrityError && /must be carried/.test(error.message), `a manifest with no ${field} must be refused`);
+    }
+    // ...and the recorded value itself is never reinterpreted: an unknown total
+    // stays unknown and still validates.
+    assert.equal(validateSnapshotManifest(manifest), true);
+});
+
 test('duplicate logical paths and duplicate object keys are refused', () => {
     const { manifest } = buildSnapshotManifest(manifestFields());
     const duplicatedPath = { ...manifest, artifacts: [manifest.artifacts[0], { ...manifest.artifacts[0], object_key: `${SNAPSHOT_ID}/payload/other.json` }], artifact_count: 2, total_bytes: 24 };

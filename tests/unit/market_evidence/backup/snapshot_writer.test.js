@@ -55,6 +55,30 @@ function assertStoredMatchesSource(transport, manifest, logicalPath, sourcePath)
     assert.deepEqual(stored, fs.readFileSync(sourcePath), `${logicalPath} must be byte-identical to its governed source`);
 }
 
+// `wrapTransport` fires on the first write, which happens before most of the
+// payload has been read.  The content check exists for a window that opens
+// later than that: after a governed file has been read and written, while the
+// copy is still running.  This fires on the write whose key matches instead, so
+// the source moves after the copy has taken its version of it and before the
+// post-copy re-read that is meant to notice.
+function wrapTransportAfterPut(inner, matches, onMatch) {
+    let fired = false;
+    return {
+        putObjectCreateOnly(params) {
+            const written = inner.putObjectCreateOnly(params);
+            if (!fired && matches(params.key)) {
+                fired = true;
+                onMatch();
+            }
+            return written;
+        },
+        getObject: params => inner.getObject(params),
+        headObject: params => inner.headObject(params),
+        listObjects: params => inner.listObjects(params),
+        describe: () => inner.describe(),
+    };
+}
+
 function wrapTransport(inner, onFirstPut) {
     let fired = false;
     return {
@@ -190,6 +214,43 @@ test('a governed input set that grows during the copy aborts the generation', as
         error => error instanceof SourceChangedDuringSnapshotError && /input set changed/.test(error.message)
     );
     assert.equal(transport.getObject({ key: completenessObjectKey('snap_20260913T000000000Z_8899aabbccddeeff') }), null);
+});
+
+// The input set that grows is caught by re-enumerating it: the file is new, so
+// it is visible as a new entry.  A file replaced in place at the same length is
+// not.  Nothing about the set's shape changes -- the same path, the same size,
+// the same count -- so re-enumerating it sees a set identical to the one before
+// and the generation is sealed COMPLETE holding the old bytes of a file the
+// source has since moved on from.  Only the content distinguishes the two, so
+// the digest has to be over content for this case to be refused at all.
+test('a governed input replaced at the same length during the copy aborts the generation', async t => {
+    const runStateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-writer-swap-'));
+    t.after(() => fs.rmSync(runStateRoot, { recursive: true, force: true }));
+    const turnPath = path.join(runStateRoot, 'turn.json');
+    const before = '{"turn":1}';
+    const after = '{"turn":2}';
+    assert.equal(before.length, after.length, 'the replacement must be the same length for this case to mean anything');
+    fs.writeFileSync(turnPath, before);
+
+    const snapshotId = 'snap_20260913T000000000Z_ffeeddccbbaa9988';
+    const transport = wrapTransportAfterPut(
+        createLocalTransport({ root: storeRoot(t) }),
+        key => key === `${snapshotId}/payload/run-state/turn.json`,
+        () => fs.writeFileSync(turnPath, after),
+    );
+
+    await assert.rejects(
+        writeSnapshot({ transport, ...writeOptions(), runStateInputs: [runStateRoot], snapshotId }),
+        error => error instanceof SourceChangedDuringSnapshotError && /input set changed/.test(error.message)
+    );
+
+    assert.equal(fs.readFileSync(turnPath, 'utf8'), after, 'the source must really have moved');
+    assert.equal(transport.getObject({ key: completenessObjectKey(snapshotId) }), null, 'a generation holding a mixture of two moments must carry no completeness marker');
+    assert.equal(transport.getObject({ key: manifestObjectKey(snapshotId) }), null, 'a generation holding a mixture of two moments must carry no manifest');
+    // The bytes that were copied are the ones the source no longer holds -- which
+    // is exactly why the marker above must be absent rather than merely unread.
+    const stored = transport.getObject({ key: `${snapshotId}/payload/run-state/turn.json` });
+    assert.equal(stored.toString('utf8'), before);
 });
 
 test('the writer refuses a transport that violates the contract', async () => {

@@ -148,13 +148,118 @@ function validateManifestArtifact(artifact, seen) {
     seen.object_keys.add(artifact.object_key);
 }
 
-function validateManifestSource(source) {
-    if (source === null || typeof source !== 'object') throw new SnapshotIntegrityError('snapshot manifest source must be an object');
-    for (const field of ['observation_count', 'decision_count', 'registry_state_count', 'capture_binding_count', 'head_sequence']) {
-        if (!Number.isInteger(source[field]) || source[field] < 0) throw new SnapshotIntegrityError(`snapshot manifest source.${field} is invalid`);
+// The small assertions below exist so each validator reads as the list of
+// properties it requires.  Inlined, the tuple check is one long run of branches
+// and the structure it is asserting -- which field belongs to which part of the
+// identity -- stops being visible in the code that enforces it.
+function assertPlainObject(value, label) {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new SnapshotIntegrityError(`${label} must be an object`);
+    return value;
+}
+
+function assertNonEmptyString(value, label) {
+    if (typeof value !== 'string' || !value) throw new SnapshotIntegrityError(`${label} is required`);
+    return value;
+}
+
+function assertTransactionId(value, label) {
+    if (typeof value !== 'string' || !/^tx_[a-f0-9]{64}$/.test(value)) throw new SnapshotIntegrityError(`${label} is invalid`);
+    return value;
+}
+
+function assertCount(value, label) {
+    if (!Number.isInteger(value) || value < 0) throw new SnapshotIntegrityError(`${label} is invalid`);
+    return value;
+}
+
+// A pre-epoch accounting total is allowed to be the literal `UNKNOWN` string,
+// because that is what the accepted authority baseline records and reading it
+// as anything else is the reinterpretation the mission forbids.  Only the value
+// *shape* is checkable here; which strings are meaningful belongs to the
+// accounting contract, not to a manifest validator.
+function isCarriedAccountingValue(value) {
+    return value === null || typeof value === 'string' || Number.isInteger(value);
+}
+
+function validateIdentityAuthority(authority, label) {
+    assertPlainObject(authority, label);
+    assertTransactionId(authority.head_transaction_id, `${label}.head_transaction_id`);
+    for (const field of ['head_transaction_content_hash', 'state_hash', 'allocation_authority_content_hash', 'store_sha256']) {
+        assertManifestHash(authority[field], `${label}.${field}`);
     }
-    for (const field of ['state_hash', 'allocation_authority_content_hash']) {
-        if (source[field] !== undefined) assertManifestHash(source[field], `source.${field}`);
+    assertManifestTimestamp(authority.head_knowledge_time, `${label}.head_knowledge_time`);
+    for (const field of ['head_sequence', 'decision_count', 'observation_count', 'registry_state_count', 'capture_binding_count']) {
+        assertCount(authority[field], `${label}.${field}`);
+    }
+}
+
+// The two pre-epoch accounting fields are required to be *present* and are not
+// required to have a particular value: the contract records one of them as the
+// literal `UNKNOWN`, and reading that as anything else is the reinterpretation
+// the mission forbids.  Presence is the part that is checkable.
+function validateIdentityAccounting(accounting, label) {
+    assertPlainObject(accounting, label);
+    assertNonEmptyString(accounting.epoch_id, `${label}.epoch_id`);
+    assertManifestTimestamp(accounting.started_at, `${label}.started_at`);
+    assertTransactionId(accounting.start_authority_head, `${label}.start_authority_head`);
+    for (const field of ['start_authority_state_hash', 'genesis_entry_hash', 'last_entry_hash']) {
+        assertManifestHash(accounting[field], `${label}.${field}`);
+    }
+    for (const field of ['entry_count', 'request_count']) {
+        assertCount(accounting[field], `${label}.${field}`);
+    }
+    for (const field of ['historical_pre_epoch_request_total', 'historical_pre_epoch_exact_total']) {
+        if (!Object.hasOwn(accounting, field)) throw new SnapshotIntegrityError(`${label}.${field} must be carried, even when its value is unknown`);
+        if (!isCarriedAccountingValue(accounting[field])) throw new SnapshotIntegrityError(`${label}.${field} is invalid`);
+    }
+}
+
+function validateIdentityQuota(quota, label) {
+    assertPlainObject(quota, label);
+    assertManifestHash(quota.sha256, `${label}.sha256`);
+    assertCount(quota.size, `${label}.size`);
+}
+
+// The identity tuple is what makes an accepted generation evidence: it is the
+// claim that this generation is a snapshot of *that* authority at *that*
+// request-accounting epoch.  A validator that tolerates the fields being absent
+// accepts a manifest that binds nothing, and a verifier built on it would then
+// report PASS for a generation that proves no such thing -- so every field the
+// tuple is defined to carry is required, and required to have the shape the
+// writer produces.
+function validateIdentityTuple(tuple, label) {
+    assertPlainObject(tuple, label);
+    validateIdentityAuthority(tuple.authority, `${label}.authority`);
+    validateIdentityAccounting(tuple.request_accounting, `${label}.request_accounting`);
+    validateIdentityQuota(tuple.quota_config, `${label}.quota_config`);
+}
+
+// Both tuples are validated before they are compared.  Comparing them first
+// would let two absent tuples agree -- `undefined` equals `undefined` -- and
+// the manifest would pass on the strength of carrying no identity at all.
+function assertManifestIdentity(value) {
+    validateIdentityTuple(value.source_before, 'snapshot manifest source_before');
+    validateIdentityTuple(value.source_after, 'snapshot manifest source_after');
+    if (canonicalJson(value.source_before) !== canonicalJson(value.source_after)) throw new SnapshotIntegrityError('snapshot manifest source_before and source_after must be identical');
+    if (canonicalJson(value.request_accounting) !== canonicalJson(value.source_before.request_accounting)) throw new SnapshotIntegrityError('snapshot manifest request_accounting must be the captured identity\'s request accounting');
+    if (canonicalJson(value.quota_config) !== canonicalJson(value.source_before.quota_config)) throw new SnapshotIntegrityError('snapshot manifest quota_config must be the captured identity\'s quota configuration');
+}
+
+// `source` is the same identity projected flat for readers that want the
+// authority fields without the rest.  This validates the summary's *shape* and
+// nothing more.  Whether it agrees with the identity it summarises is a
+// different question, and it belongs to the verifier, which answers it with a
+// code of its own; deciding it here would replace that code with a generic one
+// and make the summary-drift failure unreachable.
+function validateManifestSource(source) {
+    assertPlainObject(source, 'snapshot manifest source');
+    assertTransactionId(source.head_transaction_id, 'snapshot manifest source.head_transaction_id');
+    for (const field of ['head_transaction_content_hash', 'state_hash', 'allocation_authority_content_hash', 'input_set_sha256']) {
+        assertManifestHash(source[field], `snapshot manifest source.${field}`);
+    }
+    assertManifestTimestamp(source.head_knowledge_time, 'snapshot manifest source.head_knowledge_time');
+    for (const field of ['observation_count', 'decision_count', 'registry_state_count', 'capture_binding_count', 'head_sequence']) {
+        assertCount(source[field], `snapshot manifest source.${field}`);
     }
 }
 
@@ -174,7 +279,7 @@ function validateSnapshotManifest(value) {
     const expectedTotal = value.artifacts.reduce((sum, artifact) => sum + artifact.size, 0);
     if (value.total_bytes !== expectedTotal) throw new SnapshotIntegrityError('snapshot manifest total_bytes does not match the artifact list');
     if (value.source_identity_equal !== true) throw new SnapshotIntegrityError('snapshot manifest must record that the source identity was unchanged');
-    if (canonicalJson(value.source_before) !== canonicalJson(value.source_after)) throw new SnapshotIntegrityError('snapshot manifest source_before and source_after must be identical');
+    assertManifestIdentity(value);
     validateManifestSource(value.source);
     return true;
 }
