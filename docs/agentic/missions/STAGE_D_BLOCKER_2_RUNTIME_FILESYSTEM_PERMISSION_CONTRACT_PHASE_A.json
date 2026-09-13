@@ -1,0 +1,83 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_BLOCKER_2_RUNTIME_FILESYSTEM_PERMISSION_CONTRACT_PHASE_A",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/STAGE_D_BLOCKER_2_RUNTIME_FILESYSTEM_PERMISSION_CONTRACT_PHASE_A.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "scripts/ops/stage_d_runtime_filesystem_audit.js",
+    "scripts/ops/stage_d_runtime_filesystem_inspect.js",
+    "scripts/ops/stage_d_runtime_filesystem_permission_contract.js",
+    "scripts/ops/stage_d_runtime_filesystem_remediation_plan.js",
+    "tests/unit/market_evidence/runtime_filesystem_permission_contract.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "README.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/DOCUMENTATION_GOVERNANCE.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_VISION.md",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "docker/",
+    "docs/_reports/",
+    "schemas/",
+    "scripts/devops/",
+    "scripts/ops/helpers/",
+    "src/",
+    "tests/helpers/",
+    "tests/integration/",
+    "tests/unit/agentic/"
+  ],
+  "excluded_tokens": [
+    "atomicpublisher",
+    "backtest",
+    "betfair",
+    "docker-compose",
+    "migration",
+    "model-activation",
+    "oddsportal",
+    "scheduler",
+    "sportmonks",
+    "stage_d_cycle",
+    "staking",
+    "theoddsapi",
+    "transactionstore",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "filesystem permission remediation never modifies canonical transaction bytes, manifest hashes, transaction IDs, content hashes, STORE binding, allocation binding or the authority state hash",
+    "CONTENT_BYTES_BEFORE == CONTENT_BYTES_AFTER for every governed artifact across any metadata-only repair",
+    "the runtime filesystem permission contract never substitutes for authority verification; content authority remains with transactionStore.js and authorityReader.js",
+    "the accepted authority is not rewritten or regenerated: OBSERVATION_COUNT=903, STORE_SHA256=ed014a6f151143aa30cefcebc47374059aa18c38a83560610571331a665199e4, ALLOCATION_AUTHORITY_SHA256=89e4276c8fe637318339821fe40d783d2f7fd8de65f6fc593b2035bd9445dad3",
+    "the historical pre-epoch request accounting uncertainty is preserved verbatim: AT_LEAST_2_CONFIRMED and UNKNOWN are not reinterpreted",
+    "no mutating apply path is reachable from an ordinary CLI invocation; Phase A ships inspect, classify and remediation-plan only",
+    "read-only immutable historical surfaces are never made group or world writable in order to make cold-load succeed",
+    "the publisher (src/infrastructure/market_evidence/atomicPublisher.js) and the store bootstrap (src/infrastructure/market_evidence/transactionStore.js) are unchanged; recurrence prevention is enforced at the Stage D binder boundary",
+    "Blocker #2 remains OPEN, GATE_2 remains NOT_ACCEPTED and GATE_3 remains NOT_AUTHORIZED; this contract does not mark Blocker #2 complete"
+  ],
+  "forbidden_side_effects": [
+    "production filesystem ownership or mode mutation, including chown, chmod and setfacl on any governed production path",
+    "privilege escalation of any kind, including sudo, for inspection or repair",
+    "Stage D live execution, scheduler enablement, provider or The Odds API request, credential use or quota consumption",
+    "canonical transaction creation, STORE.json rewrite, allocation authority rewrite, transaction package rewrite, transaction deletion or authority relocation",
+    "backup or restore work (Blocker #3) and F-03B scope-loading work",
+    "database schema or migration writes, RAW writes, training, prediction, backtest or model activation",
+    "force push, direct main push, self-review or self-merge, and merging this pull request"
+  ]
+}

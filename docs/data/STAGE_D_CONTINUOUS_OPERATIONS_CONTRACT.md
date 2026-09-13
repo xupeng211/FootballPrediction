@@ -26,6 +26,10 @@ LIVE_BINDER_REPLAY_POLICY=IMMUTABLE_CONSUMPTION_MARKER__FAIL_CLOSED
 STAGE_D_SCHEDULER_MODEL=external scheduler invokes one bounded cycle only
 SCHEDULER_ENABLED=NO
 CANONICAL_OUTPUT_AUTHORITY=transaction-v1 only
+RUNTIME_FILESYSTEM_PERMISSION_CONTRACT=stage-d-runtime-filesystem-permission/v1
+RUNTIME_FILESYSTEM_IDENTITY_RULE=COLD_LOAD_UID_EQUALS_AUTHORITY_OWNER_UID
+RUNTIME_FILESYSTEM_APPLY_PATH=NONE__PHASE_B_IS_A_SEPARATE_OWNER_AUTHORIZED_PROCEDURE
+RUNTIME_FILESYSTEM_AUDIT_ENTRYPOINT=scripts/ops/stage_d_runtime_filesystem_inspect.js (read-only; no apply mode)
 ```
 
 The public entrypoint is deliberately offline-only while Stage D remains
@@ -276,6 +280,200 @@ Proposed but unapproved service policy is: irrecoverable evidence retained
 indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.
 `OWNER_APPROVAL_REQUIRED=YES`.
 
+## Runtime filesystem permission contract (Blocker #2)
+
+Cold-loading the canonical authority requires more than content validity: the
+process that cold-loads must be able to reach and read every governed artifact
+through ordinary POSIX permission checks. The machine-readable contract is
+`stage-d-runtime-filesystem-permission/v1`, implemented by
+`scripts/ops/stage_d_runtime_filesystem_permission_contract.js` (inspect and
+classify), `scripts/ops/stage_d_runtime_filesystem_remediation_plan.js`
+(plan only) and `scripts/ops/stage_d_runtime_filesystem_audit.js` — the
+read-only publication audit the binder runs before it publishes anything.
+`scripts/ops/stage_d_runtime_filesystem_inspect.js` exposes exactly
+two modes, `audit` and `plan`; it has no apply mode, executes no privileged
+command other than a read-only `getfacl` probe, and never escalates privilege.
+With `--cold-load` it delegates content authority to the existing
+transaction-v1 reader rather than re-implementing it.
+
+The governed tree is **not** one permission domain. The contract separates an
+`IMMUTABLE_HISTORICAL_READ_SURFACE` (transaction authority root, `STORE.json`,
+the `committed/` root, each `tx_<sha>` package directory, the immutable package
+files, the allocation authority artifact, the request-accounting epoch anchor
+and ledger entries) from an `ACTIVE_RUNTIME_WRITE_SURFACE` (the `.staging`
+root, the request-accounting root and its `entries/` directory, the run-lock
+runtime trust root). Only the write surfaces are writable by the runtime; the
+immutable read surfaces are never made group- or world-writable in order to
+make cold-load succeed.
+
+Observation is fail-closed about its own completeness. A directory that cannot
+be listed is recorded as an `UNOBSERVABLE_DIRECTORY_LISTING` gap — an
+unrepairable finding that blocks the plan outright — rather than being read as
+an empty listing: otherwise a package directory that had lost its read bit
+would silently drop all six governed package artifacts from the audit while the
+plan still reported the tree as repairable. A directory that is simply absent
+is a different case and is reported once, as `MISSING_REQUIRED_PATH`. The plan
+is generated only from objects that were actually observed, so a repair plan can
+never claim coverage of a file it never saw; the directory must be made readable
+and the tree re-audited before a file-level plan is produced. Extended ACLs are
+parsed with the same discipline: `getfacl` annotates every entry the mask limits
+with a trailing `#effective:` comment — precisely the state the publisher's own
+`fchmod` produces — and the parser strips it and accepts only a strict
+`[r-][w-][x-]` permission triad, so an annotated value can never be recorded as
+restorable and emitted as an invalid `setfacl` argument.
+
+A declared ACL evidence set has to cover the whole governed tree, ancestry and
+governed surfaces alike. An **ancestor** is what grants traversal to everything
+beneath it, and under an extended ACL the group bits in `st_mode` are the mask
+rather than the group policy, so a named-user entry that denies the runtime
+identity is invisible in the mode. An ancestor whose `getfacl` probe fails — or
+that a declared evidence set simply omits — is therefore a blocking
+`ANCESTOR_ACL_PROBE_UNAVAILABLE` finding rather than a traverse inferred from
+bits. A governed **surface** that the declared set omits is the same defect one
+level down and is a blocking `ACL_EVIDENCE_MISSING` finding rather than a
+verdict taken from its mode bits: the surface may carry a named entry that
+denies the runtime, so a mode-only reading would report a surface nobody read as
+clean. The gap is reachable in production rather than theoretical, because the
+audit CLI probes the evidence set and enumerates the governed surfaces in two
+separate passes, and a transaction package published between them arrives with
+no entry. The audit CLI builds its probe set from the ancestry and the surfaces
+for exactly this reason. "Absent from the evidence set" and "probed, and carries
+no named entries" are different statements, and only declaring no ACL dimension
+at all leaves the dimension unrun.
+
+The required mechanism is **identity equality**: the uid that publishes the
+authority, the uid that owns the governed tree, and the uid that cold-loads it
+must be the same. Group access and named POSIX ACL entries are explicitly
+rejected, because the existing publisher
+(`src/infrastructure/market_evidence/atomicPublisher.js`) calls `fchmod(0o400)`
+on every package artifact and `transactionStore` calls `chmod(0o444)` on
+`STORE.json`; on POSIX a `chmod` re-derives the ACL mask from the group bits,
+so a named-entry ACL is collapsed to `---` the moment the artifact is written.
+The publisher's directory modes (`0o700`) are likewise owner-only. A contract
+that relied on an ACL or on group bits would therefore be silently invalidated
+by the ordinary publication path.
+
+Recurrence prevention is enforced at the Stage D binder boundary:
+`scripts/ops/stage_d_controlled_initialization.js` runs
+`scripts/ops/stage_d_runtime_filesystem_audit.js` before any publication work
+begins. The audit resolves the runtime identity from the authority root's
+owning uid and fails closed — with no override flag — when the identity about to
+publish is not that identity. A privileged identity is refused on **both** sides
+of that comparison, not only when a uid 0 publisher meets a non-root runtime.
+Because the binder derives the runtime identity from the authority anchor's
+owner, a root process facing a root-owned anchor would otherwise produce uid 0
+on both sides and verify itself, which is precisely how owner-only packages kept
+being published; the audit therefore rejects a uid 0 publisher and a uid 0
+runtime independently, and the contract already classifies a uid 0 runtime as a
+violation. This matters because a transaction package is immutable once renamed
+into `committed/`, so an inaccessible package is a permanent defect at
+publication time, not a repairable inconvenience.
+
+Identity is necessary but not sufficient, because it constrains *who* publishes
+and not what that publisher will create. The audit therefore also refuses two
+conditions that reproduce Blocker #2 from an anchor whose owner, group and mode
+are already exactly right, and that leave no trace in that mode:
+
+- a **default ACL** on the anchor or on `.staging`, which every directory
+  `atomicPublisher.mkdirSync` creates below it inherits — an inherited mask caps
+  the mode the publisher's own `fchmod` can produce, so the next package is
+  already damaged when it is written; and
+- an effective **umask that intersects `0o700`**, which silently reduces the
+  directories the publisher asks `mkdir` for. Only the owner triad is
+  load-bearing here: a umask that clears group and other bits (`0o077`) cannot
+  damage an owner-only postcondition and is not treated as a hazard.
+
+Both are read-only observations, neither is repairable by the repository, and
+both are refused before the execution chain is entered. The anchor's ACLs are
+read with the audit CLI's own `getfacl` probe, so the binder can never be
+satisfied by weaker evidence than a full audit would accept — and where that
+probe is unavailable the binder refuses rather than verifying on identity alone.
+
+Status after this contract was added: `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`,
+`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`, `BLOCKER_2=OPEN`,
+`GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED`. Applying any metadata repair to
+the production authority remains a separate, separately authorized Phase B host
+procedure.
+
+### Phase B host remediation procedure (specified here, not executed, not authorized)
+
+Phase A emits a plan and cannot apply one. Applying it is a separate
+Owner-authorized host procedure, specified here so that it is bounded by the
+same contract. No repository entrypoint can execute it: the audit CLI has no
+apply mode and the planner is inert.
+
+```text
+PHASE_B_MUTATION_CLASS=OWNER_GROUP_MODE_METADATA_ONLY
+PHASE_B_CONTENT_WRITE=FORBIDDEN
+PHASE_B_RECURSIVE_CHMOD_CHOWN=FORBIDDEN
+PHASE_B_EXECUTION_AUTHORIZED=NO
+PHASE_B_REQUIRES=OWNER_AUTHORIZATION_AND_EXACT_PRECHECK_EVIDENCE
+```
+
+**Preconditions.** The accepted authority identity is unchanged and the exact
+main revision equals the authorizing revision; the repair process runs as the
+runtime uid/gid that will cold-load the authority; the governed roots are on the
+expected filesystem device; no Stage D run is active (the run lock is absent or
+already reconciled), the scheduler is disabled and no provider request is
+authorized; and the pre-repair evidence below has already been captured outside
+the tree that will be mutated.
+
+**Pre-repair evidence.** A full governed-path metadata manifest (path, object
+type, uid, gid, mode, device, inode, link count), a content SHA-256 manifest for
+every governed artifact, the cold-load status of the authority as the runtime
+identity, and the `STORE.json` and allocation-authority hashes. The authority
+head/state hash is recorded only if it is readable through an already privileged
+evidence source; it is never obtained by escalating.
+
+The evidence capture must run where extended ACLs are observable. `getfacl` is
+part of the `acl` package and is absent from the dev container, so a run inside
+it records `ACL_PROBE_UNAVAILABLE` and the planner refuses any
+`REMOVE_EXTENDED_ACL` operation (`ACL_ROLLBACK_EVIDENCE_MISSING`) rather than
+deleting named entries it cannot restore. Phase B is therefore a host procedure
+by construction, not a container one.
+
+**Mutation.** Only the operations the planner emitted for the enumerated
+allow-list, each applied per object after re-opening it with `O_NOFOLLOW` and
+re-verifying that device/inode still match the plan's `pre` state. Path
+resolution is validated above the leaf as well as at it: `O_NOFOLLOW` protects
+only the last component, and a governed name whose parent directory is a symlink
+resolves to an object outside the governed tree while still presenting an
+ordinary regular file to every check made on the path itself — the `pre`
+device/inode comparison would compare that external object against itself and
+pass. The planner therefore re-walks each path's ancestry from fresh
+observations and refuses every path beneath a component that is not a real
+directory, so no operation is emitted for an object this contract has no
+authority over. Ownership and mode changes are metadata-only; no content is
+written and no artifact is
+recreated, truncated or re-published. Recursive `chmod -R` and `chown -R` are
+forbidden: an exact validated allow-list is enumerated first and every object is
+verified individually. An operation whose `pre` observation no longer matches at
+apply time aborts the procedure rather than being forced.
+
+**Post-repair proof.** A metadata manifest matching the contract's
+postconditions; a content SHA-256 manifest byte-identical to the pre-repair one
+(`CONTENT_BYTES_BEFORE == CONTENT_BYTES_AFTER`); a successful ordinary cold-load
+by the runtime identity; and exact reproduction of the accepted authority head,
+state hash, `OBSERVATION_COUNT=903`, `STORE_SHA256` and
+`ALLOCATION_AUTHORITY_SHA256`, repeated across a fresh process boundary.
+
+**Rollback.** The planner pairs every operation with a metadata-only rollback
+entry carrying the original uid/gid/mode/device/inode. Rollback is emitted in
+the **same** order as apply rather than in reverse, because the constraints are
+the same in both directions: `chown` clears the set-user/set-group bits of a
+non-directory on this kernel even for a privileged caller, so ownership must be
+restored before the mode is written, and `setfacl --set` rewrites the mask, so
+the mode must be written after the ACL is back. Rolling back in reverse would put
+the `chown` last and leave a path whose mode is not the recorded one whenever its
+ownership and its special bits have both moved. Restoring
+uid/gid/mode does fully undo a `CHOWN` or `CHMOD`, including the ACL mask: for a
+file carrying an extended ACL the group bits *are* the mask. It does **not**
+undo `REMOVE_EXTENDED_ACL`, which deletes named entries no mode change can bring
+back, so that operation carries the exact observed ACL as a replayable
+`setfacl --set` payload and is blocked outright when the ACL was not observed
+completely. Rollback restores metadata only and is subject to the same
+post-repair content-hash proof.
+
 ## Failure matrix
 
 | Failure | Request consumed? | Retry allowed? | Canonical mutation? | Next run? | Manual review? |
@@ -288,6 +486,7 @@ indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.
 | RAW or receipt persistence failure after possible transmission | yes | only new request + budget | no | after terminal ledger | yes |
 | Parser, identity, registry failure | yes | only new request + budget | no | after terminal ledger | yes |
 | Transaction publication failure / authority reopen failure | yes | no while lock remains | no or unknown | no | yes |
+| Governed authority unreadable by the cold-loading runtime identity (permission defect) | no | no until the authority is readable | no | no | yes — separate owner-authorized Phase B metadata repair; never a content rewrite |
 | Backup failure / disk full | request state unchanged unless transmission already occurred | no automatic retry | no | no if authority state is ambiguous | yes |
 | Crash before transmission | no | no until lock reconciliation | no | no | yes |
 | Crash after transmission boundary | yes / ambiguous-consumed | no until lock reconciliation | no | no | yes |

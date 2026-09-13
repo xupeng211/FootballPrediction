@@ -12,6 +12,16 @@ const { sha256Text } = require('../../src/infrastructure/market_evidence/contrac
 const {
     executeStageDControlledInitialization,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
+const { processIdentity } = require('./stage_d_runtime_filesystem_permission_contract');
+const {
+    auditPublicationAnchor,
+    deriveRuntimeIdentityFromAuthority,
+} = require('./stage_d_runtime_filesystem_audit');
+// The ACL observation the publication audit consumes is the same read-only
+// `getfacl` probe the CLI audit uses, so there is one definition of what a
+// governed ACL observation is rather than a second, laxer one at the binder
+// boundary.
+const { probeAcl } = require('./stage_d_runtime_filesystem_inspect');
 
 const REQUIRED_FLAGS = Object.freeze([
     '--authorization',
@@ -86,13 +96,35 @@ function helpText() {
     ].join('\n');
 }
 
-function summarizeResult(result) {
+function summarizeResult(result, publicationIdentity) {
     return Object.freeze({
         schema_version: 'footballprediction-stage-d-controlled-initialization-result/v1',
         status: result.status,
         run_id: result.run_id,
         request_id: result.request_id,
         authorization_audit: result.authorization_audit,
+        publication_identity: publicationIdentity,
+    });
+}
+
+// Blocker #2 recurrence prevention.  The canonical Stage C authority was
+// published by a root-running container process into a runtime-user-owned
+// tree, which produced owner-only committed artifacts the runtime user can
+// never cold-load.  A transaction package is immutable once renamed into
+// committed/, so the defect is permanent at publication time.  This audit runs
+// before any publication work begins and fails closed whenever the identity
+// about to publish is not the identity that owns — and will cold-load — the
+// accepted authority, whenever the anchor carries a default ACL the next
+// package would inherit, and whenever the effective umask would strip the mode
+// the publisher asks for.  There is deliberately no override flag, and the
+// anchor's ACLs are read with the CLI audit's own probe so the binder cannot be
+// satisfied by weaker evidence than an audit would accept.
+function verifyPublicationIdentity(args) {
+    return auditPublicationAnchor({
+        publisherIdentity: processIdentity(),
+        runtimeIdentity: deriveRuntimeIdentityFromAuthority(args['--authority-root']),
+        authorityRoot: args['--authority-root'],
+        aclProbe: probeAcl,
     });
 }
 
@@ -102,6 +134,7 @@ async function main(argv = process.argv.slice(2)) {
         process.stdout.write(`${helpText()}\n`);
         return;
     }
+    const publicationIdentity = verifyPublicationIdentity(args);
     const result = await executeStageDControlledInitialization({
         authorizationArtifactPath: args['--authorization'],
         authorityRoot: args['--authority-root'],
@@ -112,7 +145,7 @@ async function main(argv = process.argv.slice(2)) {
         evidenceRoot: args['--evidence-root'],
         runLockTrustRoot: args['--run-lock-trust-root'],
     });
-    process.stdout.write(`${JSON.stringify(summarizeResult(result), null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(summarizeResult(result, publicationIdentity), null, 2)}\n`);
 }
 
 if (require.main === module) {
@@ -122,4 +155,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { REQUIRED_FLAGS, readRegularFile, readJsonFile, loadReplayUniverse, parseArgs, helpText, summarizeResult, main };
+module.exports = { REQUIRED_FLAGS, readRegularFile, readJsonFile, loadReplayUniverse, parseArgs, helpText, summarizeResult, verifyPublicationIdentity, main };
