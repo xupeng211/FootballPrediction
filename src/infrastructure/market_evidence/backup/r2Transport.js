@@ -158,13 +158,30 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
 
         async listObjects({ prefix: listPrefix = '' } = {}) {
             const results = [];
+            // Every other method on this transport speaks logical keys, and so
+            // do the manifest and the verifier: putObjectCreateOnly maps a
+            // logical key onto `<prefix>/<key>`, getObject and headObject map
+            // it back, and the manifest records the logical one.  Listing is
+            // the one place the provider forces a physical key on us, so the
+            // configured prefix is stripped here rather than leaked outward.
+            // Leaking it would make the verifier's exact set comparison report
+            // every object as unexpected *and* every expected object as
+            // missing, so a prefixed transport could never verify a generation
+            // it had just written itself.
+            const scope = normalizedPrefix ? `${normalizedPrefix}/` : '';
             let continuationToken;
             do {
-                const target = normalizedPrefix ? `${normalizedPrefix}/${listPrefix}` : listPrefix;
+                const target = `${scope}${listPrefix}`;
                 const response = await resolvedClient
                     .send(new ListObjectsV2Command({ Bucket: resolvedBucket, Prefix: target, ContinuationToken: continuationToken }))
                     .catch(error => { throw classify('listObjects', error); });
-                for (const item of response.Contents || []) results.push(Object.freeze({ key: item.Key, size: item.Size }));
+                for (const item of response.Contents || []) {
+                    if (typeof item.Key !== 'string') continue;
+                    // Defensive: a provider that returns something outside the
+                    // scope we asked for is not evidence about this generation.
+                    if (scope && !item.Key.startsWith(scope)) continue;
+                    results.push(Object.freeze({ key: scope ? item.Key.slice(scope.length) : item.Key, size: item.Size }));
+                }
                 continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
             } while (continuationToken);
             return Object.freeze(results);

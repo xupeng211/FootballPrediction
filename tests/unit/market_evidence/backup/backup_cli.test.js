@@ -164,6 +164,52 @@ test('the CLI fails closed and exits non-zero when a root does not exist', t => 
     assert.deepEqual(fs.readdirSync(transportRoot), []);
 });
 
+// Every live-target flag is refused in both spellings, and the refused value
+// never reaches stdout or stderr.
+//
+// `--endpoint https://…` and `--endpoint=…` mean the same thing to whoever
+// types them, so a check that only matched the first would silently ignore the
+// second -- the operator would believe the command was aimed at R2 and get a
+// local run instead.  And a value passed to one of these flags may be a
+// credential, so echoing it back would turn a refusal into a leak.
+test('both CLIs reject every live-target flag in both spellings without echoing the value', t => {
+    const transportRoot = temporary(t, 'stage-d-backup-cli-live-');
+    const secret = 'AKIALIVETARGETSECRETVALUE';
+    const flags = [
+        ['--endpoint', 'https://example.invalid'],
+        ['--bucket', 'stage-d-backup'],
+        ['--region', 'auto'],
+        ['--access-key-id', secret],
+        ['--secret-access-key', secret],
+        ['--session-token', secret],
+        ['--credentials', secret],
+        ['--profile', 'default'],
+        ['--r2', 'yes'],
+        ['--s3', 'yes'],
+        ['--live', 'yes'],
+        ['--remote', 'yes'],
+    ];
+
+    for (const scriptPath of [SNAPSHOT_CLI, RESTORE_CLI]) {
+        const name = path.basename(scriptPath);
+        for (const [flag, value] of flags) {
+            for (const args of [[flag, value], [`${flag}=${value}`]]) {
+                const result = runCli(scriptPath, [...args, '--transport-root', transportRoot]);
+                assert.notEqual(result.status, 0, `${name} ${args[0]} must fail rather than run`);
+                assert.ok(
+                    /LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED/.test(result.stdout + result.stderr),
+                    `${name} ${args[0]} must be refused by the live-target check, not by something downstream`,
+                );
+                assert.equal(
+                    (result.stdout + result.stderr).includes(secret),
+                    false,
+                    `${name} ${args[0]} must not echo the value it refused`,
+                );
+            }
+        }
+    }
+});
+
 test('the CLI refuses a flag whose value is missing rather than consuming the next flag', t => {
     const transportRoot = temporary(t, 'stage-d-cli-novalue-');
     const result = runCli(SNAPSHOT_CLI, ['--transport-root', '--authority-root', transportRoot]);

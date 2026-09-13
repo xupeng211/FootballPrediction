@@ -192,6 +192,18 @@ protect. `describe()` must declare `create_only: true` and
 `delete_exposed: false`, and the writer and verifier both assert the whole
 contract before touching a byte.
 
+**A transport speaks logical keys on both sides of its boundary.** A configured
+prefix is an addressing detail of the off-host target, not part of a generation:
+the manifest records logical keys, the verifier compares the listed set against
+them for exact equality, and `putObjectCreateOnly`, `getObject` and `headObject`
+all map between the two. `listObjects` is the one method where the provider
+hands back a physical key, so it is the one place the prefix could leak — and a
+leak is not cosmetic: the exact set comparison would report every object as
+unexpected *and* every expected object as missing, leaving a prefixed transport
+unable to verify a generation it had just written. The prefix is stripped on the
+way out, the provider is addressed in physical keys on the way in, and a test
+pins both halves.
+
 **Create-only is atomic, and it is never emulated.** The filesystem transport
 uses `open(..., O_CREAT|O_EXCL)`, where the create and the existence check are
 one syscall. The S3-compatible transport uses `If-None-Match: *`, which
@@ -391,10 +403,15 @@ command-line argument can turn on. Until then a snapshot cannot be pointed at
 production even by an operator who means to.
 
 Neither CLI accepts an endpoint, bucket, region, credential or profile flag.
-Those flags are **rejected rather than ignored**, and the rejected value is never
-echoed back — asserted by a test that passes a secret on the command line and
-asserts it appears in neither stdout nor stderr. Live R2 wiring is a separate,
-explicitly authorized change.
+Those flags are **rejected rather than ignored**, in both spellings: `--endpoint
+https://…` and `--endpoint=…` mean the same thing to whoever types them, so a
+check that matched only the first would silently ignore the second and let an
+operator believe the command was aimed at R2 when it was not. The rejected value
+is never echoed back — a value passed to one of these flags may be a credential,
+so echoing it would turn a refusal into a leak. A test drives every flag in both
+spellings at both CLIs and asserts each is refused by name, with the value
+appearing in neither stdout nor stderr. Live R2 wiring is a separate, explicitly
+authorized change.
 
 ## Offline proof
 

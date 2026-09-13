@@ -57,8 +57,15 @@ function valuesAfter(flag) {
     return collected;
 }
 
+// Both spellings are rejected: `--endpoint https://…` and `--endpoint=…` mean
+// the same thing to an operator, so a check that only matched the first would
+// silently ignore the second.  Silently ignoring a live-target flag is worse
+// than refusing it -- the operator believes they aimed the command at R2 and
+// gets a local run instead.  Only the flag name is reported; the value is never
+// echoed, because a value here may be a secret.
 function assertNoLiveTargetFlags() {
-    const offending = LIVE_TARGET_FLAGS.filter(flag => process.argv.includes(flag));
+    const offending = LIVE_TARGET_FLAGS.filter(flag =>
+        process.argv.some(argument => argument === flag || argument.startsWith(`${flag}=`)));
     if (offending.length) {
         throw new Error(`live off-host target flags are rejected by this CLI (LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED): ${offending.join(', ')}`);
     }
