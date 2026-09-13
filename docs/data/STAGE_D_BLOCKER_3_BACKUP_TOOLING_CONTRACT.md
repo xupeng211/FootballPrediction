@@ -234,6 +234,16 @@ credentials cannot be reasoned about. A test asserts that the transport
 still refuses when `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
 `AWS_PROFILE` are all set in the environment.
 
+That refusal is unconditional, and it holds on **every** construction path. The
+transport accepts an injected client as a seam for the command mechanics (the
+tests drive the S3 verbs through one, with no network), and an injected client
+is not a way to bring a different credential source: credentials are validated
+before the client is chosen, so a caller cannot hand in a client backed by the
+SDK's default provider chain and leave the transport with no explicit-credential
+claim to make. A refusal that only applies on one branch is a conditional
+guarantee, which is not a guarantee. A test constructs the transport with a
+stub client and no credentials and asserts it is refused.
+
 Errors are rebuilt from provider-supplied identifiers only (error name and HTTP
 status). Nothing from the client configuration is interpolated, so a secret
 cannot reach a message, a stack trace assembled here, or a report — asserted by
@@ -358,6 +368,27 @@ so it can be **refused**. The match is on whole path segments, not on a
 substring, so `.../live-2` is not condemned by a proximity to `.../live`. A test
 asserts that the production area is named exactly once in executable code, that
 the single mention is inside that denylist, and that no ops CLI names it at all.
+
+**Explicit is not the same as safe**, so the refusal is applied on the read side
+as well as the write side:
+
+```text
+SNAPSHOT_AUTHORITY_ROOT_GOVERNED_PRODUCTION=REFUSED
+SNAPSHOT_LEDGER_ROOT_GOVERNED_PRODUCTION=REFUSED
+SNAPSHOT_ALLOCATION_ARTIFACT_GOVERNED_PRODUCTION=REFUSED
+SNAPSHOT_QUOTA_CONFIG_GOVERNED_PRODUCTION=REFUSED
+SNAPSHOT_RUN_STATE_INPUT_GOVERNED_PRODUCTION=REFUSED
+TRANSPORT_ROOT_GOVERNED_PRODUCTION=REFUSED
+RESTORE_DESTINATION_GOVERNED_PRODUCTION=REFUSED
+```
+
+Every input root is checked, not only the authority root, because a guard on one
+argument would leave the same hole reachable through the ledger, the allocation
+artifact, the quota configuration or run state. This is deliberately fail-closed:
+reading the governed authority in order to snapshot it is a decision a future,
+explicitly authorized mission makes by changing this refusal, not something a
+command-line argument can turn on. Until then a snapshot cannot be pointed at
+production even by an operator who means to.
 
 Neither CLI accepts an endpoint, bucket, region, credential or profile flag.
 Those flags are **rejected rather than ignored**, and the rejected value is never

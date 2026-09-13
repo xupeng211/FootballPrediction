@@ -84,9 +84,19 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
     if (prefix !== '' && typeof prefix !== 'string') throw new TransportContractError('prefix must be a string when supplied');
     const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, '');
 
+    // Credentials are validated unconditionally, before any client exists.
+    //
+    // An injected client is a seam for the command mechanics, never a way to
+    // bring a different credential source.  Validating only on the branch that
+    // builds its own client would leave the guarantee conditional: a caller
+    // could hand in a client backed by the SDK's default provider chain, and
+    // the transport would then have no explicit-credential claim left to make.
+    // "Refuses to construct without injected credentials" has to hold on every
+    // path or it does not hold.
+    const resolvedCredentials = assertExplicitCredentials(credentials);
+
     let resolvedClient = client;
     if (resolvedClient === null) {
-        const resolvedCredentials = assertExplicitCredentials(credentials);
         resolvedClient = new S3Client({
             endpoint: resolvedEndpoint,
             region: resolvedRegion,

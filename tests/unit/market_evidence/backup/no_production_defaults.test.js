@@ -235,6 +235,20 @@ test('the R2 transport refuses to construct without injected credentials, even w
                 error => error instanceof TransportContractError && new RegExp(field).test(error.message)
             );
         }
+        // The injected-client seam is a seam for the command mechanics, not a
+        // way around the credential rule.  If supplying a client were enough to
+        // construct, a caller could hand in one backed by the SDK's default
+        // provider chain and the refusal above would be conditional rather than
+        // a guarantee.
+        const stubClient = { send: () => Promise.resolve({}) };
+        assert.throws(
+            () => createR2Transport({ endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', client: stubClient }),
+            error => error instanceof TransportContractError && /injected explicitly/.test(error.message)
+        );
+        assert.throws(
+            () => createR2Transport({ endpoint: 'https://example.invalid', bucket: 'b', region: 'auto', credentials: {}, client: stubClient }),
+            error => error instanceof TransportContractError && /accessKeyId/.test(error.message)
+        );
     } finally {
         for (const [name, value] of Object.entries(saved)) {
             if (value === undefined) delete process.env[name];
@@ -256,7 +270,13 @@ test('the R2 transport reports only provider identifiers, never client configura
             return Promise.reject(error);
         },
     };
-    const transport = createR2Transport({ endpoint: 'https://example.invalid', bucket: 'bucket', region: 'auto', client });
+    const transport = createR2Transport({
+        endpoint: 'https://example.invalid',
+        bucket: 'bucket',
+        region: 'auto',
+        credentials: { accessKeyId: 'AKIASTUB', secretAccessKey: 'stub-secret' },
+        client,
+    });
     return transport.putObjectCreateOnly({ key: 'a/b.json', bytes: Buffer.from('{}') }).then(
         () => assert.fail('the write should have failed'),
         error => {

@@ -15,6 +15,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { SnapshotIntegrityError } = require('./transport');
+const { assertNotGovernedProductionPath } = require('./localTransport');
 
 const SNAPSHOT_INPUTS_SCHEMA_VERSION = 'stage-d-independent-backup-snapshot-inputs/v1';
 
@@ -62,9 +63,19 @@ const FORBIDDEN_NAME_PATTERNS = Object.freeze([
     /password/i,
 ]);
 
+// Every input root is refused if it denotes the governed production area.
+//
+// "Explicit" is not the same as "safe".  The restore side already refuses to
+// write anywhere near production, and the local transport already refuses to
+// stage onto it; without the same refusal here, an operator could point
+// --authority-root straight at the governed authority and the tooling would
+// read and copy it, which is the one thing a snapshot tool must not be able to
+// do by accident today.  The refusal is deliberately fail-closed: reading
+// production for a snapshot is a decision a future, explicitly authorized
+// mission makes by changing this line, not something an argument can turn on.
 function assertExplicitDirectory(target, label) {
     if (typeof target !== 'string' || !target.trim()) throw new SnapshotIntegrityError(`${label} must be supplied explicitly; there is no default and no production fallback`);
-    const resolved = path.resolve(target);
+    const resolved = assertNotGovernedProductionPath(target, label);
     let stat;
     try {
         stat = fs.lstatSync(resolved);
@@ -79,7 +90,7 @@ function assertExplicitDirectory(target, label) {
 
 function assertExplicitRegularFile(target, label) {
     if (typeof target !== 'string' || !target.trim()) throw new SnapshotIntegrityError(`${label} must be supplied explicitly; there is no default and no production fallback`);
-    const resolved = path.resolve(target);
+    const resolved = assertNotGovernedProductionPath(target, label);
     let stat;
     try {
         stat = fs.lstatSync(resolved);
@@ -166,7 +177,7 @@ function enumerateRunState(runStateInputs) {
     const entries = [];
     for (const input of runStateInputs) {
         if (typeof input !== 'string' || !input.trim()) throw new SnapshotIntegrityError('run state inputs must be explicit paths');
-        const resolved = path.resolve(input);
+        const resolved = assertNotGovernedProductionPath(input, 'run state input');
         const stat = fs.lstatSync(resolved);
         if (stat.isSymbolicLink()) throw new SnapshotIntegrityError(`run state input must not be a symbolic link: ${resolved}`);
         const name = path.basename(resolved);

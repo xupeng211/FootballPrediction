@@ -174,3 +174,42 @@ test('the enumerated set is frozen and never carries a resolved credential path'
         assert.equal(path.isAbsolute(entry.source_path), true);
     }
 });
+
+// "Explicit" is not the same as "safe".  A root that the caller names and that
+// exists is still the wrong root when it is the governed production area, and
+// without this refusal the tooling would read and copy the very authority it
+// exists to protect.  Every input root is exercised, because a guard that only
+// covers --authority-root would leave the same hole reachable through the
+// ledger, the allocation artifact, the quota configuration or run state.
+test('no snapshot input root may point into the governed production area', t => {
+    const fx = fixture();
+    const productionRoot = path.join(tempDir(t, 'stage-d-backup-prod-'), 'data', 'market_evidence', 'live');
+    fs.mkdirSync(productionRoot, { recursive: true });
+    const productionFile = path.join(productionRoot, 'STORE.json');
+    fs.writeFileSync(productionFile, '{}');
+
+    const attempts = [
+        ['the authority root itself', { authorityRoot: productionRoot }],
+        ['a directory below the authority root', { authorityRoot: path.join(productionRoot, 'committed') }],
+        ['the ledger root', { ledgerRoot: productionRoot }],
+        ['the allocation artifact', { allocationArtifactPath: productionFile }],
+        ['the quota configuration', { quotaConfigPath: productionFile }],
+        ['a run state file', { runStateInputs: [productionFile] }],
+        ['a run state directory', { runStateInputs: [productionRoot] }],
+    ];
+
+    for (const [label, overrides] of attempts) {
+        assert.throws(
+            () => enumerate(overrides),
+            error => error instanceof SnapshotIntegrityError && /governed production area/.test(error.message),
+            `${label} must be refused`,
+        );
+    }
+
+    // The refusal is by whole path segment, so a neighbour is not condemned by
+    // a substring match and the denylist stays something a reader can reason
+    // about.
+    const neighbour = path.join(tempDir(t, 'stage-d-backup-neighbour-'), 'data', 'market_evidence', 'live-2');
+    fs.mkdirSync(neighbour, { recursive: true });
+    assert.throws(() => enumerate({ authorityRoot: neighbour }), error => error instanceof SnapshotIntegrityError && /STORE\.json is missing/.test(error.message));
+});
