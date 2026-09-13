@@ -64,6 +64,10 @@ if (process.getuid() === 0 && process.env[IDENTITY_ENV] !== 'unprivileged') {
 
 const contract = require('../../../scripts/ops/stage_d_runtime_filesystem_permission_contract');
 const planner = require('../../../scripts/ops/stage_d_runtime_filesystem_remediation_plan');
+const { seedFotMobFixtureUniverse } = require('../../../src/infrastructure/fixture_universe/FixtureUniverse');
+const { persistVerifiedAllocationAuthority } = require('../../../src/infrastructure/fixture_universe/AllocationAuthorityArtifact');
+const { sha256Text } = require('../../../src/infrastructure/market_evidence/contracts');
+const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infrastructure/market_evidence/transactionStore');
 
 const OPS = path.join(__dirname, '..', '..', '..', 'scripts', 'ops');
 const AUDIT_CLI = path.join(OPS, 'stage_d_runtime_filesystem_inspect.js');
@@ -148,20 +152,42 @@ function setAcl(args, target) {
 
 // The same ACL as a structured record, shape-compatible with what the contract
 // observes and what the plan has to replay.
-function structuredAcl(target) {
-    const parsed = { named_user_perms: {}, named_group_perms: {} };
-    for (const line of aclLines(target)) {
-        const [field, qualifier, permission] = line.split(':');
-        if (permission === undefined) continue;
-        if (field === 'mask') parsed.mask = permission;
-        else if (field === 'other') parsed.other = permission;
-        else if (field === 'user' && qualifier) parsed.named_user_perms[qualifier] = permission;
-        else if (field === 'user') parsed.owner = permission;
-        else if (field === 'group' && qualifier) parsed.named_group_perms[qualifier] = permission;
-        else if (field === 'group') parsed.group = permission;
+// Mirrors the CLI's getfacl probe for environments without the `acl` package.
+// It has to produce every field the real probe produces — including the
+// default-scope fields — or a path the real audit would call non-restorable
+// would look restorable here, and these tests would be proving nothing.
+function recordAclEntry(scope, field, qualifier, permission, defaultNamed) {
+    if (qualifier) {
+        (field === 'user' ? scope.named_user_perms : scope.named_group_perms)[qualifier] = permission;
+        if (defaultNamed !== null) defaultNamed.push(`${field}:${qualifier}`);
+        return;
     }
-    parsed.named_entries = Object.keys(parsed.named_user_perms).map(key => `user:${key}`);
-    return parsed;
+    // Both scopes keep getfacl's own field names here; the access scope is
+    // renamed to the contract's record shape on the way out.
+    scope.base[field] = permission;
+}
+
+function structuredAcl(target) {
+    const access = { named_user_perms: {}, named_group_perms: {}, base: {} };
+    const defaults = { named_user_perms: {}, named_group_perms: {}, base: {} };
+    const defaultNamed = [];
+    for (const line of aclLines(target)) {
+        const fields = line.split(':');
+        // `default:user::rwx` carries one field more than `user::rwx`.
+        const scoped = fields[0] === 'default';
+        const [field, qualifier, permission] = scoped ? fields.slice(1) : fields;
+        if (permission !== undefined) recordAclEntry(scoped ? defaults : access, field, qualifier, permission, scoped ? defaultNamed : null);
+    }
+    return {
+        named_entries: Object.keys(access.named_user_perms).map(key => `user:${key}`),
+        named_user_perms: access.named_user_perms, named_group_perms: access.named_group_perms,
+        owner: access.base.user ?? null, group: access.base.group ?? null,
+        other: access.base.other ?? null, mask: access.base.mask ?? null,
+        default_present: defaultNamed.length > 0 || Object.keys(defaults.base).length > 0,
+        default_entries: defaultNamed,
+        default_user_perms: defaults.named_user_perms, default_group_perms: defaults.named_group_perms,
+        default_base: defaults.base,
+    };
 }
 
 // A contract-compliant authority tree mirroring the real publisher's
@@ -354,10 +380,13 @@ test('10c. several findings on one path collapse into one operation each', t => 
 // named entries gone.
 
 // The ACL the production authority actually carries: owner rwx, a named user
-// with r-x, no group or other access, mask r-x.
+// with r-x, no group or other access, mask r-x — and no default ACL, which the
+// observation has to state rather than leave unmentioned.
 const EXTENDED_ACL = Object.freeze({
     named_entries: Object.freeze([`user:${RUNTIME.uid}`]), named_user_perms: Object.freeze({ [String(RUNTIME.uid)]: 'r-x' }),
     named_group_perms: Object.freeze({}), owner: 'rwx', group: '---', other: '---', mask: 'r-x',
+    default_present: false, default_entries: Object.freeze([]), default_user_perms: Object.freeze({}),
+    default_group_perms: Object.freeze({}), default_base: Object.freeze({}),
 });
 
 test('16. a removable extended ACL requires complete, restorable evidence', t => {
@@ -1016,6 +1045,246 @@ test('11c. a directory that cannot be listed is an observation gap, never an emp
     const absentReport = evaluate(ledgerRoot, { ledgerRoot: absent });
     assert.equal(absentReport.findings.some(item => item.code === 'UNOBSERVABLE_DIRECTORY_LISTING' && item.path === path.join(absent, 'entries')), false);
     assert.ok(codes(absentReport).includes('MISSING_REQUIRED_PATH'));
+});
+
+// ---------------------------------------------------------------------------
+// 16e. a default ACL governs objects that do not exist yet
+// ---------------------------------------------------------------------------
+//
+// A default ACL is invisible to every other check in this contract: the
+// directory's own mode and owner can be perfectly compliant while everything
+// the publisher creates below it inherits entries the contract never
+// authorised.  That is a future-publication hazard, which is the exact class of
+// failure Blocker #2 belongs to, so it is reported rather than folded into the
+// access-ACL verdict.
+
+test('16e. a default ACL is recorded, classified, and escalated instead of passed', t => {
+    const root = tempRoot('acl-default');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    // getfacl writes `default:user::rwx` — one field more than `user::rwx`.  A
+    // parser that splits to exactly three fields reads `default` as an unknown
+    // field name and DROPS the entry, so the directory is reported CLEAN while
+    // every future child inherits the entries.
+    const synthetic = {
+        available: true, named_entries: [], named_user_perms: {}, named_group_perms: {},
+        owner: 'rwx', group: '---', other: '---', mask: '---',
+        default_present: true, default_entries: [`user:${RUNTIME.uid}`],
+        default_user_perms: { [String(RUNTIME.uid)]: 'rwx' }, default_group_perms: {},
+        default_base: { user: 'rwx', group: '---', other: '---', mask: 'rwx' },
+    };
+    const report = evaluate(root, { aclObservations: { [target]: synthetic } });
+    assert.ok(codes(report).includes('DEFAULT_ACL_PRESENT'), 'an inherited default ACL is a violation, not an advisory');
+    const finding = report.findings.find(item => item.code === 'DEFAULT_ACL_PRESENT');
+    assert.equal(finding.severity, 'VIOLATION');
+    assert.equal(finding.auto_repairable, false, 'no bounded metadata operation on the existing objects resolves a default ACL');
+    // The plan must not claim the tree is repairable: it needs an Owner decision.
+    const plan = planner.buildRemediationPlan(report);
+    assert.notEqual(plan.status, 'READY');
+    assert.ok(plan.blocked_operations.some(entry => entry.reason_code === 'DEFAULT_ACL_PRESENT'));
+
+    // A default ACL alongside an access ACL also blocks the ACL *removal*: the
+    // rollback payload can only replay access entries, so removing them under a
+    // default ACL is not bounded by the evidence the plan can carry.
+    const both = evaluate(root, {
+        aclObservations: {
+            [target]: {
+                available: true, ...EXTENDED_ACL,
+                default_present: true, default_base: { user: 'rwx', group: '---', other: '---', mask: 'rwx' },
+            },
+        },
+    });
+    const blocked = planner.buildRemediationPlan(both).blocked_operations
+        .find(entry => entry.operation === 'REMOVE_EXTENDED_ACL');
+    assert.equal(blocked.reason_code, 'DEFAULT_ACL_GOVERNS_CHILDREN');
+
+    // Whether a default ACL exists has to have been observed, never assumed: an
+    // observation that does not report one is incomplete, because a replay
+    // covering only the access entries would silently drop the inherited ones.
+    const unobserved = contract.restorableAclState({ available: true, ...EXTENDED_ACL, default_present: undefined });
+    assert.equal(unobserved.restorable, false);
+    assert.equal(unobserved.reason, 'acl-observation-incomplete');
+});
+
+test('16f. the CLI records a real default ACL instead of silently dropping it', t => {
+    const root = tempRoot('acl-default-real');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    // The acl package is absent from the dev container, so the canonical
+    // container profile lands in the first branch.  Neither branch is a skip.
+    if (spawnSync('getfacl', ['--version']).error) {
+        assert.equal(spawnSync('getfacl', ['-n', target]).error.code, 'ENOENT');
+        return;
+    }
+    setAcl(['-d', '-m', `u:${RUNTIME.uid}:rwx`, '-m', 'u::rwx', '-m', 'g::---', '-m', 'o::---'], target);
+    // A removable ACL always carries a mask — POSIX requires one as soon as a
+    // named entry exists — so the fixture has one too; without it the access
+    // scope is not fully described and the state is refused as incomplete,
+    // which is the correct answer for an ACL the plan cannot replay.
+    setAcl(['-m', `u:${RUNTIME.uid}:r-x`, '-m', 'm::r-x'], target);
+    const raw = spawnSync('getfacl', ['-n', '-p', '--absolute-names', target], { encoding: 'utf8' }).stdout;
+    assert.ok(raw.includes('default:user::'), 'the fixture must really produce default-scope output');
+    assert.ok(raw.includes('mask::r-x'), 'the fixture must carry an access mask');
+    const probe = inspectCli.probeAcl(target);
+    assert.equal(probe.available, true);
+    assert.equal(probe.default_present, true, 'the default scope must be observed, not dropped');
+    assert.equal(probe.default_base.user, 'rwx');
+    assert.equal(probe.default_base.mask, 'rwx');
+    assert.deepEqual(probe.default_entries, [`user:${RUNTIME.uid}`]);
+    // Recording the inherited scope must not make the object's own ACL
+    // unreplayable: the two scopes are evidence about different objects.
+    assert.equal(probe.mask, 'r-x');
+    assert.ok(contract.restorableAclState(probe).restorable, 'a fully observed default ACL is still replayable evidence');
+    // And the classification the CLI's own report carries must escalate it.
+    const result = spawnSync(process.execPath, [AUDIT_CLI, '--authority-root', root, '--allocation-authority', path.join(root, 'allocation.authority.json'), '--mode', 'plan'], { encoding: 'utf8' });
+    const payload = JSON.parse(result.stdout);
+    assert.ok(payload.findings.some(item => item.code === 'DEFAULT_ACL_PRESENT'), 'the CLI report must carry the default-ACL finding');
+    assert.ok(payload.plan.blocked_operations.some(entry => entry.reason_code === 'DEFAULT_ACL_PRESENT'));
+    // The finding has to be tied to the object that actually carries it.
+    assert.equal(payload.findings.find(item => item.code === 'DEFAULT_ACL_PRESENT').path, target);
+    // The access ACL is still removable on a path with no inherited scope:
+    // removing it is blocked here only because this path has a default ACL.
+    assert.equal(payload.acl_state[target].default_present, true);
+});
+
+// ---------------------------------------------------------------------------
+// 17. the audit emits the evidence a Phase B repair is judged against
+// ---------------------------------------------------------------------------
+//
+// A metadata-only repair is only allowed to leave CONTENT_BYTES_BEFORE equal to
+// CONTENT_BYTES_AFTER.  That claim cannot be checked from two headline hashes:
+// it has to be checkable for EVERY governed artifact, which means the audit has
+// to publish the per-artifact manifest it observed — and keep an artifact it
+// could not read in the manifest as unreadable rather than omit it.
+
+function runAuditCli(root, extra = []) {
+    const result = spawnSync(process.execPath, [AUDIT_CLI,
+        '--authority-root', root,
+        '--allocation-authority', path.join(root, 'allocation.authority.json'),
+        '--ledger-root', path.join(root, '..', 'ledger'),
+        ...extra], { encoding: 'utf8' });
+    assert.equal(result.status === 0 || result.status === 3, true, `unexpected CLI exit ${result.status}: ${result.stderr}`);
+    return JSON.parse(result.stdout);
+}
+
+test('17. the reported content manifest covers every governed artifact', t => {
+    const root = tempRoot('content-manifest');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const ledger = buildLedger(path.dirname(root));
+    const payload = runAuditCli(root);
+    const manifest = payload.content_hashes;
+    assert.ok(manifest && typeof manifest === 'object', 'the audit must publish the manifest, not just the two headline hashes');
+    // Every immutable artifact, enumerated by requiring its path to be a key.
+    const required = [path.join(root, 'STORE.json'), path.join(root, 'allocation.authority.json'),
+        ...PACKAGE_FILES.map(name => path.join(txPath, name)),
+        path.join(ledger, 'REQUEST_ACCOUNTING_EPOCH.json'), path.join(ledger, 'entries', '000000000001.json')];
+    for (const target of required) {
+        assert.ok(Object.prototype.hasOwnProperty.call(manifest, target), `${target} must appear in the content manifest`);
+        assert.equal(manifest[target].status, 'HASHED', `${target} must be hashed`);
+        assert.match(manifest[target].sha256, /^[a-f0-9]{64}$/);
+    }
+    // The two headline hashes are a summary of the same observation, not a
+    // replacement for it.
+    assert.equal(payload.artifact_hashes.store_sha256.sha256, manifest[path.join(root, 'STORE.json')].sha256);
+    // Transient runtime state is deliberately out of scope: hashing it would
+    // make a before/after comparison meaningless rather than stronger.
+    assert.equal(Object.keys(manifest).some(entry => entry.includes('.staging')), false);
+});
+
+test('17b. an artifact the runtime cannot read stays in the manifest as unreadable', t => {
+    const root = tempRoot('content-manifest-unreadable');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    buildLedger(path.dirname(root));
+    const sealed = path.join(txPath, PACKAGE_FILES[0]);
+    fs.chmodSync(sealed, 0o000);
+    const manifest = runAuditCli(root).content_hashes;
+    // Omitting it would let a repair "preserve" bytes it never observed.
+    assert.ok(Object.prototype.hasOwnProperty.call(manifest, sealed), 'an unreadable artifact must not vanish from the manifest');
+    assert.equal(manifest[sealed].status, 'NOT_READABLE');
+    assert.equal(manifest[sealed].sha256, undefined);
+    // And the governed content the runtime CAN read is still recorded in full.
+    assert.equal(manifest[path.join(root, 'STORE.json')].status, 'HASHED');
+});
+
+// A real, readable transaction authority built through the production
+// bootstrap path.  The identity binding has to be proved against a cold-load
+// that genuinely SUCCEEDS — a stub that always throws would make every
+// assertion about "evidence for the declared identity" vacuously true.
+function buildReadableAuthority(parent) {
+    const allMatches = Array.from({ length: 380 }, (_, index) => ({
+        id: String(800000 + index),
+        home: { name: index === 0 ? 'Arsenal' : `Home ${index}` },
+        away: { name: index === 0 ? 'Chelsea' : `Away ${index}` },
+        status: { utcTime: index === 0 ? '2026-09-12T15:00:00Z' : `2026-10-${String((index % 28) + 1).padStart(2, '0')}T15:00:00Z` },
+    }));
+    const rawHtml = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ query: { season: '2026/2027' }, props: { pageProps: { details: { id: 47 }, fixtures: { allMatches } } } })}</script>`;
+    const initial = seedFotMobFixtureUniverse({ rawHtml, rawSha256: sha256Text(rawHtml), mode: 'INITIAL_SEED' });
+    const allocationArtifactPath = path.join(parent, 'allocation.authority.json');
+    persistVerifiedAllocationAuthority({ artifactPath: allocationArtifactPath, allocationAuthority: initial.allocationAuthority });
+    const storeRoot = path.join(parent, 'transactions');
+    bootstrapMarketEvidenceTransactionStore({ storeRoot, allocationArtifactPath, bootstrapMetadata: { test: 'permission-contract' } });
+    return { authorityRoot: storeRoot, allocationArtifactPath, ledgerRoot: null, runLockTrustRoot: null };
+}
+
+test('18. a cold-load is only evidence for the identity it actually ran under', t => {
+    const root = tempRoot('cold-load-identity');
+    t.after(() => cleanup(root));
+    const targets = buildReadableAuthority(path.dirname(root));
+    // The reader runs inside this process, so only a run AS the declared
+    // identity proves the declared identity can cold-load.  Reporting a success
+    // observed as some other identity — an operator auditing as root — beside
+    // the declared identity is precisely how the failure this contract exists
+    // to detect would pass as a success.
+    const foreign = inspectCli.coldLoadAuthority(targets, FOREIGN);
+    assert.equal(foreign.read_status, 'SUCCEEDED', 'the fixture must cold-load for real, or this assertion proves nothing');
+    assert.equal(foreign.binds_declared_runtime_identity, false);
+    assert.equal(foreign.evidence_for_declared_runtime_identity, false);
+    assert.equal(foreign.status, 'COLD_LOAD_SUCCEEDED_UNDER_OTHER_IDENTITY');
+    assert.notEqual(foreign.status, 'COLD_LOAD_SUCCEEDED');
+    assert.deepEqual(foreign.observed_identity, { uid: RUNTIME.uid, gid: RUNTIME.gid });
+    assert.deepEqual(foreign.declared_runtime_identity, { uid: FOREIGN.uid, gid: FOREIGN.gid });
+    assert.match(foreign.identity_note, /never to escalate/);
+
+    // Run as the declared identity and the same call is real evidence.
+    const bound = inspectCli.coldLoadAuthority(targets, RUNTIME);
+    assert.equal(bound.binds_declared_runtime_identity, true);
+    assert.equal(bound.status, 'COLD_LOAD_SUCCEEDED');
+    assert.equal(bound.evidence_for_declared_runtime_identity, true);
+    // Both runs observed exactly the same authority; only the identity differs.
+    assert.equal(bound.authority_state_hash, foreign.authority_state_hash);
+
+    // With no declared identity at all there is nothing the result can be
+    // evidence for, so it is never bound.
+    const undeclared = inspectCli.coldLoadAuthority(targets, null);
+    assert.equal(undeclared.binds_declared_runtime_identity, false);
+    assert.equal(undeclared.evidence_for_declared_runtime_identity, false);
+});
+
+test('18b. the CLI report carries the declared/observed identity distinction', t => {
+    const root = tempRoot('cold-load-cli');
+    t.after(() => cleanup(root));
+    const targets = buildReadableAuthority(path.dirname(root));
+    const run = (extra) => {
+        const result = spawnSync(process.execPath, [AUDIT_CLI,
+            '--authority-root', targets.authorityRoot,
+            '--allocation-authority', targets.allocationArtifactPath,
+            '--cold-load', ...extra], { encoding: 'utf8' });
+        assert.notEqual(result.status, 1, result.stderr);
+        return JSON.parse(result.stdout);
+    };
+    // Declared identity differs from the process identity: the report must not
+    // present the read as proof about the declared identity.
+    const payload = run(['--runtime-uid', String(FOREIGN.uid), '--runtime-gid', String(FOREIGN.gid)]);
+    assert.equal(payload.cold_load.binds_declared_runtime_identity, false);
+    assert.equal(payload.cold_load.evidence_for_declared_runtime_identity, false);
+    assert.equal(payload.cold_load.observed_identity.uid, RUNTIME.uid);
+    assert.equal(payload.cold_load.declared_runtime_identity.uid, FOREIGN.uid);
+    // And with no override the two agree, which is the only case that is proof.
+    const bound = run([]);
+    assert.equal(bound.cold_load.binds_declared_runtime_identity, true);
+    assert.equal(bound.cold_load.evidence_for_declared_runtime_identity, true);
 });
 
 // ---------------------------------------------------------------------------

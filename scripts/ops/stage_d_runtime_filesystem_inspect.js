@@ -118,11 +118,27 @@ function probeAcl(target) {
     const named = [];
     const namedUserPerms = {};
     const namedGroupPerms = {};
+    const defaultNamed = [];
+    const defaultUserPerms = {};
+    const defaultGroupPerms = {};
     const base = {};
-    const record = (field, qualifier, permission) => {
+    const defaultBase = {};
+    // The access ACL describes this object; the default ACL describes every
+    // object created below it.  They are recorded separately because they are
+    // evidence about different things and only one of them can be replayed by
+    // an access-ACL restore.
+    const recordAccess = (field, qualifier, permission) => {
         if (qualifier && field === 'user') { named.push(`user:${qualifier}`); namedUserPerms[qualifier] = permission; return; }
         if (qualifier && field === 'group') { named.push(`group:${qualifier}`); namedGroupPerms[qualifier] = permission; return; }
         if (!qualifier) base[field] = permission;
+    };
+    const recordDefault = (field, qualifier, permission) => {
+        if (qualifier) {
+            defaultNamed.push(`${field}:${qualifier}`);
+            (field === 'user' ? defaultUserPerms : defaultGroupPerms)[qualifier] = permission;
+            return;
+        }
+        defaultBase[field] = permission;
     };
     for (const line of output.split('\n')) {
         // Anything from `#` on is annotation, not policy.  getfacl appends a
@@ -134,8 +150,16 @@ function probeAcl(target) {
         // way.  Leading `# file:`/`# owner:` lines fall out for free.
         const trimmed = line.split('#')[0].trim();
         if (!trimmed || !trimmed.includes(':')) continue;
-        const [field, qualifier, permission] = trimmed.split(':');
-        if (permission !== undefined) record(field, qualifier, permission);
+        const fields = trimmed.split(':');
+        // `default:user::rwx` carries one field more than `user::rwx`: the
+        // leading `default` is a scope, not a field.  Splitting to exactly three
+        // and indexing [2] would read the default scope as an unknown field name
+        // and drop the entry entirely — silently, and in the one direction that
+        // matters, because an inherited default ACL is what governs the
+        // permissions of packages that have not been published yet.
+        const scoped = fields[0] === 'default';
+        const [field, qualifier, permission] = scoped ? fields.slice(1) : fields;
+        if (permission !== undefined) (scoped ? recordDefault : recordAccess)(field, qualifier, permission);
     }
     return Object.freeze({
         available: true,
@@ -146,6 +170,11 @@ function probeAcl(target) {
         group: base.group === undefined ? null : base.group,
         other: base.other === undefined ? null : base.other,
         mask: base.mask === undefined ? null : base.mask,
+        default_present: defaultNamed.length > 0 || Object.keys(defaultBase).length > 0,
+        default_entries: Object.freeze(defaultNamed.sort()),
+        default_user_perms: Object.freeze(defaultUserPerms),
+        default_group_perms: Object.freeze(defaultGroupPerms),
+        default_base: Object.freeze(defaultBase),
     });
 }
 
@@ -196,10 +225,21 @@ function safeReaddir(target) {
 
 // ---------------------------------------------------------------------------
 // Observed content manifest.  This records bytes; it never writes them.
+//
+// Coverage is exactly the immutable content the contract governs, so the
+// manifest can be compared before and after a Phase B repair: STORE.json, the
+// allocation authority, every committed package file, and the request
+// accounting epoch anchor and entries.  Transient runtime state is deliberately
+// excluded — `.staging` contents and the run-lock trust root change on their
+// own, so hashing them would make the before/after comparison meaningless
+// rather than stronger.
 // ---------------------------------------------------------------------------
 
 function collectContentHashes(targets) {
     const hashes = {};
+    // sha256OfReadableFile preserves the unreadable state as a status rather
+    // than dropping the entry, so an artifact the runtime cannot read is
+    // visible in the manifest instead of absent from it.
     const record = target => { hashes[target] = contract.sha256OfReadableFile(target); };
     record(path.join(targets.authorityRoot, 'STORE.json'));
     if (targets.allocationArtifactPath) record(targets.allocationArtifactPath);
@@ -208,6 +248,14 @@ function collectContentHashes(targets) {
         const txPath = path.join(committed, name);
         for (const file of safeReaddir(txPath)) record(path.join(txPath, file));
     }
+    // The ledger holds immutable content too, and enumerating it through the
+    // contract's own surface collection keeps the manifest's coverage equal to
+    // the evaluated surface set instead of drifting from it.
+    if (targets.ledgerRoot) {
+        for (const entry of contract.collectLedgerSurfaces(targets.ledgerRoot)) {
+            if (entry.spec.object_type === 'regular_file') record(entry.target);
+        }
+    }
     return Object.freeze(hashes);
 }
 
@@ -215,22 +263,49 @@ function collectContentHashes(targets) {
 // Delegated content authority verification.
 // ---------------------------------------------------------------------------
 
-function coldLoadAuthority(targets) {
+// The transaction reader runs inside this process, so the identity that
+// actually performs the cold-load is this process's identity, not the declared
+// runtime identity.  A success observed under some other identity — an operator
+// running the audit as root, say — is not evidence that the runtime identity
+// can cold-load, and reporting the two side by side would let exactly the
+// failure this contract exists to detect pass as a success.  The result is
+// therefore bound to the identity it was actually observed under, and a
+// mismatch is reported as such rather than compensated for by privilege.
+function coldLoadAuthority(targets, declaredRuntimeIdentity) {
     const { openMarketEvidenceAuthoritySnapshot } = require('../../src/infrastructure/market_evidence/authorityReader');
+    const observed = contract.processIdentity({ source: 'PROCESS' });
+    const declared = declaredRuntimeIdentity || null;
+    const binds = declared !== null && observed.uid === declared.uid && observed.gid === declared.gid;
+    let read;
     try {
         const snapshot = openMarketEvidenceAuthoritySnapshot({
             storeRoot: targets.authorityRoot,
             allocationArtifactPath: targets.allocationArtifactPath,
         });
-        return Object.freeze({
-            status: 'COLD_LOAD_SUCCEEDED',
+        read = Object.freeze({
+            read_status: 'SUCCEEDED',
             head_transaction_id: snapshot.head_transaction_id || null,
             authority_state_hash: snapshot.state_hash || null,
             observation_count: Array.isArray(snapshot.observations) ? snapshot.observations.length : null,
         });
     } catch (error) {
-        return Object.freeze({ status: 'COLD_LOAD_FAILED', error_code: error.code || 'AUTHORITY_READ_FAILED', message: error.message });
+        read = Object.freeze({ read_status: 'FAILED', error_code: error.code || 'AUTHORITY_READ_FAILED', message: error.message });
     }
+    const succeeded = read.read_status === 'SUCCEEDED';
+    return Object.freeze({
+        ...read,
+        status: succeeded ? (binds ? 'COLD_LOAD_SUCCEEDED' : 'COLD_LOAD_SUCCEEDED_UNDER_OTHER_IDENTITY') : 'COLD_LOAD_FAILED',
+        observed_identity: Object.freeze({ uid: observed.uid, gid: observed.gid }),
+        declared_runtime_identity: declared === null ? null : Object.freeze({ uid: declared.uid, gid: declared.gid }),
+        binds_declared_runtime_identity: binds,
+        // The single field a Phase B post-repair proof may rely on: the read
+        // both succeeded and was performed as the identity that must cold-load
+        // the authority in production.
+        evidence_for_declared_runtime_identity: succeeded && binds,
+        identity_note: binds
+            ? 'the cold-load ran as the declared runtime identity'
+            : `the cold-load ran as ${observed.uid}:${observed.gid}, which is not the declared runtime identity ${declared === null ? 'unknown' : `${declared.uid}:${declared.gid}`}; this result must not be used as proof that the declared identity can cold-load, and the fix is to run the audit as that identity, never to escalate`,
+    });
 }
 
 function readStoreAndAllocationHashes(targets) {
@@ -257,6 +332,12 @@ function summarize(report, plan, coldLoad, artifactHashes) {
         planned_operation_count: plan ? plan.operations.length : 0,
         blocked_operation_count: plan ? plan.blocked_operations.length : 0,
         artifact_hashes: artifactHashes,
+        // The full governed content manifest, not just the two headline hashes:
+        // a Phase B repair is only allowed to change metadata, and comparing
+        // this manifest before and after is how CONTENT_BYTES_BEFORE ==
+        // CONTENT_BYTES_AFTER is actually checked for every artifact rather
+        // than asserted for the authority as a whole.
+        content_hashes: report.content_hashes,
         cold_load: coldLoad,
         // The observed ACL of every probed path, in the exact form a Phase B
         // rollback has to replay.  Without it the report would record that an
@@ -288,6 +369,10 @@ function helpText() {
         '  --cold-load                     delegate content authority to the transaction-v1 reader',
         '  --json                          emit the machine-readable report',
         '',
+        '--cold-load records the identity the read actually ran under and only',
+        'asserts evidence for the declared runtime identity when the two are equal,',
+        'so run the audit as the runtime identity; privilege is never escalated.',
+        '',
         'There is no apply mode.  This entrypoint never mutates ownership, mode, ACLs or content.',
     ].join('\n');
 }
@@ -311,8 +396,9 @@ function main(argv = process.argv.slice(2), { stdout = process.stdout } = {}) {
         runLockTrustRoot: args['--run-lock-trust-root'] ? path.resolve(args['--run-lock-trust-root']) : null,
     });
     const aclObservations = collectAclObservations(collectTargetPaths(targets));
+    const runtimeIdentity = resolveRuntimeIdentity(args);
     const report = contract.evaluateRuntimeFilesystemContract({
-        runtimeIdentity: resolveRuntimeIdentity(args),
+        runtimeIdentity,
         authorityRoot: targets.authorityRoot,
         allocationArtifactPath: targets.allocationArtifactPath,
         ledgerRoot: targets.ledgerRoot,
@@ -323,7 +409,7 @@ function main(argv = process.argv.slice(2), { stdout = process.stdout } = {}) {
     const plan = args['--mode'] === 'plan' ? planner.buildRemediationPlan(report) : null;
     // The plan is the point of plan mode, so it is always emitted there;
     // --json additionally returns the full per-surface observation detail.
-    const result = summarize(report, plan, args['--cold-load'] ? coldLoadAuthority(targets) : null, readStoreAndAllocationHashes(targets));
+    const result = summarize(report, plan, args['--cold-load'] ? coldLoadAuthority(targets, runtimeIdentity) : null, readStoreAndAllocationHashes(targets));
     const detail = args['--json'] ? { surfaces: report.surfaces, authority_generation: report.authority_generation } : {};
     stdout.write(`${JSON.stringify({ ...result, ...detail, plan }, null, 2)}\n`);
     return exitCodeFor(report);

@@ -31,6 +31,11 @@ const MODE_FINDING_CODES = Object.freeze(new Set(['MODE_MISMATCH', 'CONTENT_WRIT
 const IDENTITY_FINDING_CODES = Object.freeze(new Set(['UNEXPECTED_IDENTITY_RELATION']));
 // An extended ACL exists; the exact mode is meant to be the whole policy.
 const ACL_FINDING_CODES = Object.freeze(new Set(['EXTENDED_ACL_PRESENT']));
+
+// A default ACL governs objects that do not exist yet.  It is not a defect of
+// any current object, so no bounded metadata operation on the governed tree can
+// resolve it: removing it is an Owner decision about future publication.
+const DEFAULT_ACL_FINDING_CODES = Object.freeze(new Set(['DEFAULT_ACL_PRESENT']));
 // The runtime cannot perform an operation it needs.  These are consequences of
 // one of the three causes above, never a cause in their own right.
 const ACCESS_FINDING_CODES = Object.freeze(new Set([
@@ -60,6 +65,12 @@ const BLOCKING_FINDING_CODES = Object.freeze(new Set([
     // objects.  Repairing the directory's own metadata would not produce a
     // complete plan, so the whole plan is blocked until the tree is re-audited.
     'UNOBSERVABLE_DIRECTORY_LISTING',
+    // A default ACL is invisible to every other check: the directory's own mode
+    // and owner can be perfectly compliant while everything the publisher
+    // creates below it inherits entries this contract never authorised.  The
+    // path's other metadata repairs stay plannable — they are per-finding — but
+    // this hazard is escalated instead of guessed away.
+    ...DEFAULT_ACL_FINDING_CODES,
 ]));
 
 // chown is applied first because changing ownership can clear set-user/set-group
@@ -119,13 +130,18 @@ function blockedForPath(defects, findings, targetMode) {
 // rather than planned with an unrecoverable rollback.
 function aclRemovalBlocked(defects, findings, acl) {
     if (!defects.acl) return [];
+    const blockedFor = reason => findings
+        .filter(item => ACL_FINDING_CODES.has(item.code))
+        .map(item => blockedOperationEntry(item, 'REMOVE_EXTENDED_ACL', reason));
+    // A default ACL on the same directory cannot be captured by an access-ACL
+    // replay, and setfacl's treatment of default entries varies by version, so
+    // the removal is not bounded by the evidence the rollback would carry.
+    if (acl && acl.default_present === true) return blockedFor('DEFAULT_ACL_GOVERNS_CHILDREN');
     if (acl && acl.restorable === true) return [];
     const reason = !acl || acl.available === false
         ? 'ACL_ROLLBACK_EVIDENCE_MISSING'
         : 'ACL_ROLLBACK_EVIDENCE_INCOMPLETE';
-    return findings
-        .filter(item => ACL_FINDING_CODES.has(item.code))
-        .map(item => blockedOperationEntry(item, 'REMOVE_EXTENDED_ACL', reason));
+    return blockedFor(reason);
 }
 
 function blockedOperationEntry(item, operation, reasonCode) {
@@ -331,6 +347,6 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
 
 module.exports = {
     PLAN_SCHEMA_VERSION, BLOCKING_FINDING_CODES, METADATA_REPAIR_CODES,
-    MODE_FINDING_CODES, IDENTITY_FINDING_CODES, ACL_FINDING_CODES, ACCESS_FINDING_CODES,
-    buildRemediationPlan, planStatus,
+    MODE_FINDING_CODES, IDENTITY_FINDING_CODES, ACL_FINDING_CODES, DEFAULT_ACL_FINDING_CODES,
+    ACCESS_FINDING_CODES, buildRemediationPlan, planStatus,
 };

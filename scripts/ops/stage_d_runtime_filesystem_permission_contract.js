@@ -69,6 +69,16 @@ const LEDGER_ENTRY_FILE = /^\d{12}\.json$/;
 // shape that may be emitted as a `setfacl --set` argument.
 const ACL_PERMISSION = /^[r-][w-][x-]$/;
 
+const orNull = value => (value === undefined ? null : value);
+
+// One ACL scope is replayable only when every triad in it is exact.  The access
+// scope and the default scope are checked by the same rule because a malformed
+// `setfacl --set` argument is malformed the same way in both.
+function aclScopeReplayable(base, named) {
+    const exact = value => typeof value === 'string' && ACL_PERMISSION.test(value);
+    return Object.values(base).every(exact) && Object.values(named).every(exact);
+}
+
 const RESERVED_NAMES = Object.freeze([STORE_FILE, STAGING_DIRECTORY, COMMITTED_DIRECTORY]);
 
 function contractError(code, message) {
@@ -261,13 +271,12 @@ function sha256OfReadableFile(target) {
     const observation = observeObject(target);
     if (!observation.observable) return Object.freeze({ status: observation.absent ? 'ABSENT' : 'NOT_OBSERVABLE', code: observation.code });
     if (!observation.is_file) return Object.freeze({ status: 'NOT_REGULAR_FILE' });
-    let bytes;
     try {
-        bytes = fs.readFileSync(target);
+        const bytes = fs.readFileSync(target);
+        return Object.freeze({ status: 'HASHED', sha256: crypto.createHash('sha256').update(bytes).digest('hex'), size: bytes.length });
     } catch (error) {
         return Object.freeze({ status: 'NOT_READABLE', code: error.code || 'UNKNOWN' });
     }
-    return Object.freeze({ status: 'HASHED', sha256: crypto.createHash('sha256').update(bytes).digest('hex'), size: bytes.length });
 }
 
 // ---------------------------------------------------------------------------
@@ -477,6 +486,21 @@ function classifyAcl(spec, observation, aclObservations, findings) {
         }));
         return 'UNAVAILABLE';
     }
+    // A default ACL governs objects that do not exist yet.  Every directory the
+    // publisher creates below this path inherits it, and an inherited mask caps
+    // the mode its own fchmod can produce, so a clean mode on this directory no
+    // longer means the next published package will be clean.  It is therefore
+    // reported as an unrecognised future-publication hazard rather than folded
+    // into the access-ACL verdict, and no bounded metadata operation on the
+    // existing objects can resolve it.
+    if (acl.default_present === true) {
+        const inherited = acl.default_entries.length > 0 ? `named default entries: ${acl.default_entries.join(', ')}` : 'base default entries only';
+        findings.push(finding({
+            code: 'DEFAULT_ACL_PRESENT', severity: SEVERITY.VIOLATION, surfaceId: spec.surface_id, target: observation.path,
+            message: `${spec.label} carries a default ACL (${inherited}), so every object created below it inherits those entries and an exact mode is no longer the whole policy for the next publication`,
+            autoRepairable: false, elevatedPrivilegeRequired: true,
+        }));
+    }
     if (acl.named_entries && acl.named_entries.length > 0) {
         findings.push(finding({
             code: 'EXTENDED_ACL_PRESENT', severity: SEVERITY.VIOLATION, surfaceId: spec.surface_id, target: observation.path,
@@ -485,7 +509,7 @@ function classifyAcl(spec, observation, aclObservations, findings) {
         }));
         return 'EXTENDED_ACL_PRESENT';
     }
-    return 'CLEAN';
+    return acl.default_present === true ? 'DEFAULT_ACL_PRESENT' : 'CLEAN';
 }
 
 function evaluateSurface(spec, target, context) {
@@ -776,27 +800,34 @@ function restorableAclState(acl) {
     }
     const namedUsers = acl.named_user_perms || {};
     const namedGroups = acl.named_group_perms || {};
+    const defaultBase = acl.default_base || {};
+    const defaultUsers = acl.default_user_perms || {};
+    const defaultGroups = acl.default_group_perms || {};
     // A value is only replayable if it is exactly a POSIX permission triad.  A
     // type check is not enough: getfacl appends a `#effective:` annotation to
     // any entry the mask limits, and a parser that keeps it would record
     // "r-x  #effective:---" as the permission, mark the ACL restorable and hand
     // setfacl an argument it rejects — losing the very entries the rollback
     // exists to protect.
-    const valid = value => typeof value === 'string' && ACL_PERMISSION.test(value);
-    const complete = [acl.owner, acl.group, acl.other, acl.mask].every(valid)
-        && Object.values(namedUsers).every(valid)
-        && Object.values(namedGroups).every(valid);
+    //
+    // Whether a default ACL exists has to have been *observed*, never inferred:
+    // a `setfacl --set` replay covering only the access entries would silently
+    // drop the entries every future child of this directory inherits, so an
+    // observation that does not report one is incomplete rather than clean.
+    const complete = typeof acl.default_present === 'boolean'
+        && aclScopeReplayable({ user: acl.owner, group: acl.group, other: acl.other, mask: acl.mask }, { ...namedUsers, ...namedGroups })
+        && (acl.default_present !== true || aclScopeReplayable(defaultBase, { ...defaultUsers, ...defaultGroups }));
     return Object.freeze({
         available: true,
         restorable: complete,
         reason: complete ? null : 'acl-observation-incomplete',
-        named_entries: Object.freeze([...(acl.named_entries || [])]),
-        named_user_perms: Object.freeze({ ...namedUsers }),
-        named_group_perms: Object.freeze({ ...namedGroups }),
-        user: acl.owner === undefined ? null : acl.owner,
-        group: acl.group === undefined ? null : acl.group,
-        other: acl.other === undefined ? null : acl.other,
-        mask: acl.mask === undefined ? null : acl.mask,
+        named_entries: Object.freeze([...(acl.named_entries || [])]), default_entries: Object.freeze([...(acl.default_entries || [])]),
+        named_user_perms: Object.freeze({ ...namedUsers }), named_group_perms: Object.freeze({ ...namedGroups }),
+        default_user_perms: Object.freeze({ ...defaultUsers }), default_group_perms: Object.freeze({ ...defaultGroups }),
+        user: orNull(acl.owner), group: orNull(acl.group), other: orNull(acl.other), mask: orNull(acl.mask),
+        default_present: acl.default_present === true,
+        default_user: orNull(defaultBase.user), default_group: orNull(defaultBase.group),
+        default_other: orNull(defaultBase.other), default_mask: orNull(defaultBase.mask),
     });
 }
 
