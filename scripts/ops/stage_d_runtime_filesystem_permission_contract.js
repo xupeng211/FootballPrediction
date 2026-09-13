@@ -3,6 +3,9 @@
 
 // Stage D runtime filesystem permission contract (Blocker #2, Phase A).
 //
+// Lifecycle: permanent
+// Owner: @xupeng211 (scripts/ops per .github/CODEOWNERS)
+//
 // This module is INSPECT / CLASSIFY / PLAN only.  It never mutates the
 // filesystem, never shells out, never escalates privilege and never starts
 // Stage D.  Every classification is derived from real lstat/readdir

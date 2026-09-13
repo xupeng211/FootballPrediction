@@ -3,6 +3,9 @@
 
 // Stage D runtime filesystem permission audit / remediation planner (Blocker #2, Phase A).
 //
+// Lifecycle: permanent
+// Owner: @xupeng211 (scripts/ops per .github/CODEOWNERS)
+//
 // READ-ONLY BY CONSTRUCTION.  This CLI has exactly two modes, `audit` and
 // `plan`, and neither of them writes to the filesystem it inspects.  There is
 // deliberately NO apply mode: the mutating half of Blocker #2 is a separate,

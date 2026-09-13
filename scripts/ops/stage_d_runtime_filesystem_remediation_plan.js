@@ -3,6 +3,9 @@
 
 // Stage D runtime filesystem remediation PLANNER (Blocker #2, Phase A).
 //
+// Lifecycle: permanent
+// Owner: @xupeng211 (scripts/ops per .github/CODEOWNERS)
+//
 // This module reasons about metadata change and therefore lives in its own
 // file: the audit/classify half of the contract must never be able to mutate
 // anything, and keeping the only change-shaped code separate makes that
