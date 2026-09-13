@@ -62,6 +62,15 @@ retention/RPO/RTO；轮换已暴露 credential；在这些证据与 isolated res
 Stage C 细节见 [`Stage C pilot`](data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md)，
 Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
 
+Blocker #2（ordinary runtime user 无法可靠 cold-load committed transaction authority）的
+Phase A 已实现：机器可读的 runtime filesystem permission contract、只读 audit、以及 inert
+remediation plan（`scripts/ops/stage_d_runtime_filesystem_inspect.js`，只有 `audit` / `plan`
+两个 mode，没有 apply path），并在 Stage D binder 边界加入 fail-closed publication identity
+guard。该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
+`BLOCKER_2_PHASE_A_IMPLEMENTED=YES`、`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
+`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`。
+修复 production authority metadata 是另一个必须单独授权的 Phase B host procedure。
+
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
 `docs/MODEL_ARTIFACTS.md` 和 `docs/data/FOTMOB_CURRENT_STATE.md`。代码合同与
