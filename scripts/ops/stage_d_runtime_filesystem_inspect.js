@@ -314,7 +314,7 @@ function readStoreAndAllocationHashes(targets) {
     return Object.freeze({ store_sha256: store, allocation_authority_sha256: allocation });
 }
 
-function summarize(report, plan, coldLoad, artifactHashes) {
+function summarize(report, plan, coldLoad, artifactHashes, generationRecheck = null) {
     return Object.freeze({
         schema_version: 'footballprediction-stage-d-runtime-filesystem-audit-result/v1',
         mode: plan ? 'plan' : 'audit',
@@ -347,6 +347,12 @@ function summarize(report, plan, coldLoad, artifactHashes) {
         read_write_separation: report.read_write_separation,
         production_mutation_performed: report.production_mutation_performed,
         mutating_capability_present: report.mutating_capability_present,
+        // The pinned authority generation and the re-observation taken after the
+        // plan was built.  A replacement detected here is reported instead of a
+        // plan, because every conclusion in the report describes the object that
+        // was pinned, not the one now sitting at the path.
+        authority_generation: report.authority_generation,
+        generation_recheck: generationRecheck,
         production_permission_mutated: false,
         stage_d_started: false,
         provider_request_made: false,
@@ -395,24 +401,41 @@ function main(argv = process.argv.slice(2), { stdout = process.stdout } = {}) {
         ledgerRoot: args['--ledger-root'] ? path.resolve(args['--ledger-root']) : null,
         runLockTrustRoot: args['--run-lock-trust-root'] ? path.resolve(args['--run-lock-trust-root']) : null,
     });
-    const aclObservations = collectAclObservations(collectTargetPaths(targets));
-    const runtimeIdentity = resolveRuntimeIdentity(args);
-    const report = contract.evaluateRuntimeFilesystemContract({
-        runtimeIdentity,
-        authorityRoot: targets.authorityRoot,
-        allocationArtifactPath: targets.allocationArtifactPath,
-        ledgerRoot: targets.ledgerRoot,
-        runLockTrustRoot: targets.runLockTrustRoot,
-        aclObservations,
-        contentHashes: collectContentHashes(targets),
-    });
-    const plan = args['--mode'] === 'plan' ? planner.buildRemediationPlan(report) : null;
-    // The plan is the point of plan mode, so it is always emitted there;
-    // --json additionally returns the full per-surface observation detail.
-    const result = summarize(report, plan, args['--cold-load'] ? coldLoadAuthority(targets, runtimeIdentity) : null, readStoreAndAllocationHashes(targets));
-    const detail = args['--json'] ? { surfaces: report.surfaces, authority_generation: report.authority_generation } : {};
-    stdout.write(`${JSON.stringify({ ...result, ...detail, plan }, null, 2)}\n`);
-    return exitCodeFor(report);
+    // Pin the authority generation before anything is read.  The audit reads
+    // ACLs, content hashes, metadata and the plan in separate phases, so without
+    // a pinned identity a root replaced partway through would yield a report and
+    // a plan that describe two different objects.
+    const generation = contract.openGovernedRoot(targets.authorityRoot, 'the transaction authority root');
+    try {
+        const aclObservations = collectAclObservations(collectTargetPaths(targets));
+        const runtimeIdentity = resolveRuntimeIdentity(args);
+        const report = contract.evaluateRuntimeFilesystemContract({
+            runtimeIdentity,
+            authorityRoot: targets.authorityRoot,
+            allocationArtifactPath: targets.allocationArtifactPath,
+            ledgerRoot: targets.ledgerRoot,
+            runLockTrustRoot: targets.runLockTrustRoot,
+            generation,
+            aclObservations,
+            contentHashes: collectContentHashes(targets),
+        });
+        const plan = args['--mode'] === 'plan' ? planner.buildRemediationPlan(report) : null;
+        // Re-verify the pinned generation after the last read and before anything
+        // is emitted.  A replacement here invalidates the whole result, so the
+        // audit fails closed instead of printing a plan built from a tree that is
+        // no longer the one it inspected.
+        const drift = contract.generationDrift(generation);
+        if (drift) throw Object.assign(new Error(drift.message), { code: drift.code });
+        // The plan is the point of plan mode, so it is always emitted there;
+        // --json additionally returns the full per-surface observation detail.
+        const result = summarize(report, plan, args['--cold-load'] ? coldLoadAuthority(targets, runtimeIdentity) : null,
+            readStoreAndAllocationHashes(targets), Object.freeze({ replaced: false, pinned: report.authority_generation }));
+        const detail = args['--json'] ? { surfaces: report.surfaces, authority_generation: report.authority_generation } : {};
+        stdout.write(`${JSON.stringify({ ...result, ...detail, plan }, null, 2)}\n`);
+        return exitCodeFor(report);
+    } finally {
+        contract.closeGovernedRoot(generation);
+    }
 }
 
 if (require.main === module) {

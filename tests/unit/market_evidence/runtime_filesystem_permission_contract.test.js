@@ -1394,6 +1394,165 @@ test('19. applying the plan in its emitted order lands exactly on the postcondit
 });
 
 // ---------------------------------------------------------------------------
+// 20. an unobservable ACL is an evidence gap, never a clean surface
+// ---------------------------------------------------------------------------
+//
+// A default ACL leaves no trace in the directory's own mode — that is exactly
+// why it had to be probed rather than inferred.  So "the mode is right and the
+// owner is right" is not evidence that no ACL is there, and a probe that could
+// not run at all leaves the contract with nothing to certify.  Reporting that as
+// an advisory let the CLI exit 0 on a tree whose ACL state it never saw.
+
+test('20. an unobservable ACL is an evidence gap, not a clean surface', t => {
+    const root = tempRoot('acl-unobservable');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'metadata.json');
+    // The contrast that makes the gap dangerous: without the ACL dimension this
+    // tree passes every other check, so the gap is the only thing standing
+    // between it and a COMPLIANT verdict.
+    assert.equal(evaluate(root).status, 'COMPLIANT');
+    const report = evaluate(root, { aclObservations: { [target]: { available: false, reason: 'getfacl-not-installed' } } });
+    assert.ok(codes(report).includes('ACL_PROBE_UNAVAILABLE'), 'an unobserved ACL must be a violation, not an advisory');
+    assert.notEqual(report.status, 'COMPLIANT');
+    assert.equal(report.ambiguous_finding_count > 0, true, 'no bounded metadata repair resolves an unobserved ACL');
+    // And it is not planned away either.
+    const plan = planner.buildRemediationPlan(report);
+    assert.equal(plan.operations.some(operation => operation.path === target), false);
+    assert.ok(plan.blocked_operations.some(entry => entry.path === target && entry.reason_code === 'ACL_PROBE_UNAVAILABLE'));
+    assert.equal(plan.status, 'BLOCKED');
+});
+
+test('20b. the audit CLI fails closed when the ACL probe cannot run at all', t => {
+    const root = tempRoot('acl-unobservable-cli');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    // No `getfacl` on PATH — the dev-container condition.  Every governed surface
+    // loses its probe, so nothing about ACL state was observed, and the CLI must
+    // not report the tree as compliant or exit 0.
+    const result = spawnSync(process.execPath, [AUDIT_CLI,
+        '--authority-root', root,
+        '--allocation-authority', path.join(root, 'allocation.authority.json'),
+        '--mode', 'plan', '--json'], { encoding: 'utf8', env: { ...process.env, PATH: '/nonexistent' } });
+    const payload = JSON.parse(result.stdout);
+    assert.ok(payload.surfaces.some(entry => entry.acl === 'UNAVAILABLE'), 'the fixture must really lose its ACL probe');
+    assert.ok(payload.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'));
+    assert.notEqual(payload.status, 'COMPLIANT');
+    assert.equal(payload.plan.status, 'BLOCKED');
+    assert.equal(result.status, 2, 'an audit that observed no ACL state must exit BLOCKED, never 0');
+});
+
+test('20c. the CLI probes every surface the contract evaluates', t => {
+    const root = tempRoot('probe-coverage');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const ledger = buildLedger(path.dirname(root));
+    const targets = Object.freeze({
+        authorityRoot: root, allocationArtifactPath: path.join(root, 'allocation.authority.json'),
+        ledgerRoot: ledger, runLockTrustRoot: null,
+    });
+    // The probe set is the CLI's, the evaluated set is the contract's.  If they
+    // ever drift, a surface is evaluated with `NOT_RUN` for its ACL and the
+    // unobserved-gap rule above never fires for it.  A path that does not exist
+    // is not a probed surface — the contract never reaches its ACL dimension —
+    // so only the objects actually on disk are compared.
+    const probed = inspectCli.collectTargetPaths(targets).filter(entry => fs.existsSync(entry));
+    const aclObservations = Object.fromEntries(probed.map(entry => [entry, { available: true, ...structuredAcl(entry) }]));
+    const report = contract.evaluateRuntimeFilesystemContract({ runtimeIdentity: RUNTIME, ...targets, aclObservations });
+    const observable = report.surfaces.filter(entry => entry.observation.observable);
+    assert.ok(observable.length > 0, 'the fixture must expose surfaces for this comparison to prove anything');
+    for (const evaluation of observable) {
+        assert.notEqual(evaluation.acl, 'NOT_RUN', `${evaluation.spec.path} is evaluated but never probed`);
+    }
+    assert.equal(report.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'), false);
+});
+
+// ---------------------------------------------------------------------------
+// 21. the CLI pins the authority generation and re-verifies it
+// ---------------------------------------------------------------------------
+//
+// ACLs, content hashes, metadata and the plan are read in separate phases.  A
+// root replaced partway through would otherwise yield a report describing one
+// object and a plan binding another, and the apply-time `pre` check would not
+// notice it had been handed the wrong pair.
+
+test('21. a root that moved, vanished or was rebuilt under the pin counts as drift', t => {
+    const root = tempRoot('generation-drift');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const generation = contract.openGovernedRoot(root, 'authority root');
+    try {
+        const pinned = contract.observeObject(root);
+        assert.equal(contract.generationDrift(generation), null, 'an unchanged root is not drift');
+        fs.renameSync(root, `${root}.moved`);
+        buildCompliantAuthority(root);
+        const rebuilt = contract.generationDrift(generation);
+        assert.equal(rebuilt.code, 'AUTHORITY_GENERATION_REPLACED');
+        assert.equal(rebuilt.pinned.ino, pinned.ino);
+        assert.notEqual(rebuilt.observed.ino, pinned.ino);
+        // A root that cannot be observed at all is never "unchanged".
+        fs.rmSync(root, { recursive: true, force: true });
+        assert.equal(contract.generationDrift(generation).code, 'AUTHORITY_GENERATION_REPLACED');
+    } finally {
+        contract.closeGovernedRoot(generation);
+    }
+});
+
+test('21b. the CLI reports the pin it used and the recheck it took', t => {
+    const root = tempRoot('generation-cli');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const result = spawnSync(process.execPath, [AUDIT_CLI,
+        '--authority-root', root,
+        '--allocation-authority', path.join(root, 'allocation.authority.json'),
+        '--mode', 'plan'], { encoding: 'utf8' });
+    const payload = JSON.parse(result.stdout);
+    const pinned = contract.observeObject(root);
+    // A non-null generation is the evidence the pin was actually taken: with no
+    // pin the replacement check is inert and every phase reads whatever is at
+    // the path when it happens to run.
+    assert.ok(payload.authority_generation, 'the CLI must pin the authority generation, not leave the check inert');
+    assert.equal(payload.authority_generation.dev, pinned.dev);
+    assert.equal(payload.authority_generation.ino, pinned.ino);
+    assert.equal(payload.generation_recheck.replaced, false);
+    assert.deepEqual(payload.generation_recheck.pinned, payload.authority_generation);
+});
+
+// ---------------------------------------------------------------------------
+// 22. the planner refuses an object the report never observed
+// ---------------------------------------------------------------------------
+
+test('22. the planner refuses a path replaced since the report observed it', t => {
+    const root = tempRoot('plan-replaced');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'metadata.json');
+    fs.chmodSync(target, 0o600); // a real, plannable MODE_MISMATCH
+    const report = evaluate(root);
+    assert.ok(codes(report).includes('MODE_MISMATCH'));
+    assert.ok(planner.buildRemediationPlan(report).operations.some(operation => operation.path === target),
+        'the fixture must be plannable before the replacement, or this proves nothing');
+    // Replace the object under the same path: a new inode carrying the same
+    // defect.  The path still looks wrong, so a path-keyed plan would happily
+    // pair the report's ACL and hashes with an object it never saw.
+    const observed = report.surfaces.find(item => item.spec.path === target).observation;
+    const replacement = `${target}.replacement`;
+    fs.writeFileSync(replacement, fs.readFileSync(target));
+    fs.chmodSync(replacement, 0o600);
+    fs.renameSync(replacement, target);
+    assert.notEqual(contract.observeObject(target).ino, observed.ino, 'the fixture must really be a different object');
+    const after = planner.buildRemediationPlan(report);
+    assert.equal(after.operations.some(operation => operation.path === target), false);
+    // The reason is carried where every other plan-level blockage carries it.
+    // The point is that the path is refused rather than planned: a CHOWN or
+    // CHMOD there would apply the report's conclusions to an object the report
+    // never saw, and the apply-time `pre` check would match the fresh
+    // observation it just took, so nothing downstream would catch it.
+    assert.ok(after.blocked_operations.some(entry => entry.path === target && entry.required_action === 'OBJECT_REPLACED_SINCE_OBSERVATION'));
+    assert.equal(after.status, 'BLOCKED');
+});
+
+// ---------------------------------------------------------------------------
 // 13. ordinary cold-load succeeds in a fresh process/identity boundary
 // ---------------------------------------------------------------------------
 

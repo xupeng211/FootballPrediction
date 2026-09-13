@@ -479,9 +479,16 @@ function classifyAcl(spec, observation, aclObservations, findings) {
     if (!aclObservations || !Object.prototype.hasOwnProperty.call(aclObservations, observation.path)) return 'NOT_RUN';
     const acl = aclObservations[observation.path];
     if (!acl.available) {
+        // An unobservable ACL is not the same thing as no ACL.  A default ACL
+        // leaves no trace in the directory's own mode — that is the whole point
+        // of the round-4 fix — so a mode-and-identity-clean directory whose ACL
+        // could not be read is an evidence gap, not a clean surface.  Reporting
+        // it as an advisory would let the CLI exit 0 and the plan report
+        // NOT_REQUIRED for a tree whose future published packages may inherit
+        // entries this contract never authorised.
         findings.push(finding({
-            code: 'ACL_PROBE_UNAVAILABLE', severity: SEVERITY.ADVISORY, surfaceId: spec.surface_id, target: observation.path,
-            message: `${spec.label} extended ACL could not be probed (${acl.reason || 'unavailable'})`,
+            code: 'ACL_PROBE_UNAVAILABLE', severity: SEVERITY.VIOLATION, surfaceId: spec.surface_id, target: observation.path,
+            message: `${spec.label} extended ACL could not be probed (${acl.reason || 'unavailable'}), so neither an access ACL nor an inherited default ACL can be ruled out from the mode alone`,
             autoRepairable: false, elevatedPrivilegeRequired: false,
         }));
         return 'UNAVAILABLE';
@@ -738,16 +745,26 @@ function closeGovernedRoot(generation) {
     if (generation && Number.isInteger(generation.fd)) fs.closeSync(generation.fd);
 }
 
-function classifyGeneration(generation, findings) {
-    if (!generation) return;
+// Re-observe the pinned root and decide whether it is still the same object.
+// The audit reads ACLs, content hashes, metadata and the plan in separate
+// phases; without this, a root replaced while those phases ran would produce a
+// report whose findings describe one object and whose plan binds another.
+function generationDrift(generation) {
+    if (!generation) return null;
     const observed = observeObject(generation.path);
-    if (!observed.observable || observed.dev !== generation.identity.dev || observed.ino !== generation.identity.ino) {
-        findings.push(finding({
-            code: 'AUTHORITY_GENERATION_REPLACED', severity: SEVERITY.VIOLATION, surfaceId: SURFACE.TRANSACTION_AUTHORITY_ROOT,
-            target: generation.path, message: 'the authority root identity changed after inspection began; the observed authority generation is not the pinned generation',
-            autoRepairable: false, elevatedPrivilegeRequired: false,
-        }));
-    }
+    if (observed.observable && observed.dev === generation.identity.dev && observed.ino === generation.identity.ino) return null;
+    return Object.freeze({
+        code: 'AUTHORITY_GENERATION_REPLACED', path: generation.path,
+        message: 'the authority root identity changed after inspection began; the observed authority generation is not the pinned generation',
+        observed: Object.freeze({ dev: observed.observable ? observed.dev : null, ino: observed.observable ? observed.ino : null }),
+        pinned: generation.identity,
+    });
+}
+
+function classifyGeneration(generation, findings) {
+    const { code, path: target, message } = generationDrift(generation) || {};
+    if (code === undefined) return;
+    findings.push(finding({ code, severity: SEVERITY.VIOLATION, surfaceId: SURFACE.TRANSACTION_AUTHORITY_ROOT, target, message, autoRepairable: false, elevatedPrivilegeRequired: false }));
 }
 
 // ---------------------------------------------------------------------------
@@ -833,9 +850,8 @@ function restorableAclState(acl) {
 
 function buildAclState(aclObservations) {
     if (!aclObservations || typeof aclObservations !== 'object') return Object.freeze({});
-    const state = {};
-    for (const target of Object.keys(aclObservations).sort()) state[target] = restorableAclState(aclObservations[target]);
-    return Object.freeze(state);
+    const restorable = target => [target, restorableAclState(aclObservations[target])];
+    return Object.freeze(Object.fromEntries(Object.keys(aclObservations).sort().map(restorable)));
 }
 
 function buildReport({ runtimeIdentity, targets, evaluations, findings, generation, contentHashes, aclState }) {
@@ -887,10 +903,8 @@ function evaluateRuntimeFilesystemContract({
     const findings = [];
     classifyGeneration(generation, findings);
     evaluateAncestry(targets, identity, aclObservations, findings);
-    const evaluations = [];
-    for (const planned of collectSurfaces(targets, findings)) {
-        evaluations.push(evaluateSurface(planned.spec, planned.target, { runtimeIdentity: identity, aclObservations }));
-    }
+    const evaluations = collectSurfaces(targets, findings)
+        .map(planned => evaluateSurface(planned.spec, planned.target, { runtimeIdentity: identity, aclObservations }));
     for (const evaluation of evaluations) findings.push(...evaluation.findings);
     return buildReport({
         runtimeIdentity: identity, targets, evaluations, findings, generation, contentHashes,
@@ -981,7 +995,7 @@ module.exports = {
     ACCESS, SEVERITY, SURFACE, RESERVED_NAMES, STORE_FILE, EPOCH_FILE, ENTRY_DIRECTORY,
     STAGING_DIRECTORY, COMMITTED_DIRECTORY,
     describeContract, observeObject, walkAncestry, sha256OfReadableFile, predictRuntimeAccess,
-    openGovernedRoot, closeGovernedRoot, evaluateRuntimeFilesystemContract, restorableAclState,
+    openGovernedRoot, closeGovernedRoot, generationDrift, evaluateRuntimeFilesystemContract, restorableAclState,
     collectLedgerSurfaces, LEDGER_ENTRY_FILE,
     assertPublicationIdentity, deriveRuntimeIdentityFromAuthority, processIdentity,
 };

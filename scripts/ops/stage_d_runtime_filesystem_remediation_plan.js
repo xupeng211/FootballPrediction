@@ -195,6 +195,25 @@ function blockedEntry(item, requiredAction = 'OWNER_DECISION_AND_MANUAL_EVIDENCE
     });
 }
 
+// Why a path cannot be planned at all, independent of which findings it
+// carries.  Each of these is a refusal rather than a repair: there is no
+// postcondition to repair toward, or the object the report described is no
+// longer the object at the path.
+function pathGuard(entry, observation) {
+    // Without a contract surface there is no required end state.
+    if (entry.spec === undefined) return 'NO_CONTRACT_SURFACE_SPEC_FOR_THIS_PATH';
+    // A re-observed symlink must never be followed to its target.
+    if (!observation.observable || observation.is_symbolic_link) return 'OWNER_DECISION_AND_MANUAL_EVIDENCE_REVIEW';
+    // A different device or inode means every conclusion drawn from the report —
+    // the ACL to replay, the content hash, the mode — belongs to an object that
+    // is no longer here.  The apply-time `pre` check cannot catch this: it
+    // compares against a fresh observation of the same replaced object.
+    if (entry.observed && entry.observed.observable && (observation.dev !== entry.observed.dev || observation.ino !== entry.observed.ino)) {
+        return 'OBJECT_REPLACED_SINCE_OBSERVATION';
+    }
+    return null;
+}
+
 // Plan one governed path as a unit.  The required end state depends on every
 // finding on that path, not on one at a time, so `post` is identical across all
 // operations emitted for the path and is a true postcondition rather than a
@@ -202,12 +221,8 @@ function blockedEntry(item, requiredAction = 'OWNER_DECISION_AND_MANUAL_EVIDENCE
 function planPath(entry, runtimeIdentity) {
     const observation = observeObject(entry.path);
     const findings = entry.findings;
-    if (entry.spec === undefined || !observation.observable || observation.is_symbolic_link) {
-        // Without a contract surface there is no postcondition to repair toward,
-        // and a re-observed symlink must never be followed to its target.
-        const action = entry.spec === undefined ? 'NO_CONTRACT_SURFACE_SPEC_FOR_THIS_PATH' : 'OWNER_DECISION_AND_MANUAL_EVIDENCE_REVIEW';
-        return { operations: [], blocked: findings.map(item => blockedEntry(item, action)) };
-    }
+    const guard = pathGuard(entry, observation);
+    if (guard !== null) return { operations: [], blocked: findings.map(item => blockedEntry(item, guard)) };
     const codesOnPath = new Set(findings.map(item => item.code));
     const targetMode = exactModeFor(entry.spec);
     const identityMismatch = observation.uid !== runtimeIdentity.uid || observation.gid !== runtimeIdentity.gid;
@@ -278,10 +293,16 @@ function groupByPath(violations) {
     return groups;
 }
 
-function surfaceSpecIndex(report) {
+// What the report observed for each governed path.  The plan re-observes every
+// path it plans, and the identity of that second observation has to be the
+// object the findings are about: a replacement between the audit and the plan
+// would otherwise bind the old object's ACL and hashes to the new object's
+// `pre`, and the apply-time `pre` check cannot see that it is comparing the
+// wrong pair.
+function surfaceObservationIndex(report) {
     const index = new Map();
     for (const evaluation of report.surfaces || []) {
-        if (evaluation && evaluation.spec) index.set(evaluation.spec.path, evaluation.spec);
+        if (evaluation && evaluation.spec) index.set(evaluation.spec.path, { spec: evaluation.spec, observed: evaluation.observation });
     }
     return index;
 }
@@ -302,12 +323,13 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
     const blocked = violations
         .filter(item => BLOCKING_FINDING_CODES.has(item.code) || !METADATA_REPAIR_CODES.has(item.code))
         .map(item => blockedEntry(item));
-    const specs = surfaceSpecIndex(report);
+    const specs = surfaceObservationIndex(report);
     const aclState = report.acl_state || {};
     const blockedOperations = [];
     const candidates = [];
     for (const group of groupByPath(violations.filter(item => METADATA_REPAIR_CODES.has(item.code) && !BLOCKING_FINDING_CODES.has(item.code))).values()) {
-        const planned = planPath({ ...group, spec: specs.get(group.path), acl: aclState[group.path] || null }, report.runtime_identity);
+        const known = specs.get(group.path) || {};
+        const planned = planPath({ ...group, spec: known.spec, observed: known.observed, acl: aclState[group.path] || null }, report.runtime_identity);
         blocked.push(...planned.blocked);
         blockedOperations.push(...(planned.blockedOperations || []));
         candidates.push(...planned.operations);
