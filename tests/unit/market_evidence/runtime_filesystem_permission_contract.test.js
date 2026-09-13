@@ -67,6 +67,7 @@ const planner = require('../../../scripts/ops/stage_d_runtime_filesystem_remedia
 
 const OPS = path.join(__dirname, '..', '..', '..', 'scripts', 'ops');
 const AUDIT_CLI = path.join(OPS, 'stage_d_runtime_filesystem_inspect.js');
+const inspectCli = require(AUDIT_CLI);
 const CONTRACT_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_permission_contract.js');
 const PLAN_MODULE = path.join(OPS, 'stage_d_runtime_filesystem_remediation_plan.js');
 
@@ -131,10 +132,13 @@ function makeFile(target, content, mode) {
 // Access-ACL round-trip helpers.  These drive the real getfacl/setfacl: an ACL
 // synthesised in memory would prove nothing about what setfacl actually
 // restores, which is the only claim a rollback manifest is allowed to make.
+// Trailing annotations are stripped for the same reason the CLI strips them:
+// getfacl marks every entry the mask limits with `#effective:...`, and that
+// annotation is not part of the ACL that setfacl has to restore.
 function aclLines(target) {
     const result = spawnSync('getfacl', ['-n', '-p', '--absolute-names', target], { encoding: 'utf8' });
     assert.equal(result.status, 0, `getfacl failed: ${result.stderr}`);
-    return result.stdout.split('\n').filter(line => line && !line.startsWith('#')).map(line => line.trim()).sort();
+    return result.stdout.split('\n').map(line => line.split('#')[0].trim()).filter(Boolean).sort();
 }
 
 function setAcl(args, target) {
@@ -489,6 +493,57 @@ test('16c. a blocked ACL removal is counted in the plan status, not hidden behin
     const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: { [target]: { available: true, ...EXTENDED_ACL } } }));
     assert.equal(restorable.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'), false);
     assert.equal(restorable.status, 'READY');
+});
+
+test('16d. a mask-limited ACL is recorded without its effective annotation and still round-trips', t => {
+    const root = tempRoot('acl-masked');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    // A type check on the permission field is not enough.  getfacl annotates
+    // every entry the mask limits with a trailing `#effective:` comment — which
+    // is precisely the state the publisher's own fchmod produces — and a parser
+    // that keeps the annotation records an unrestorable value while still
+    // reporting the ACL as restorable.
+    const annotated = contract.restorableAclState({
+        available: true, named_entries: [`user:${RUNTIME.uid}`], named_user_perms: { [String(RUNTIME.uid)]: 'rwx\t\t#effective:---' },
+        named_group_perms: {}, owner: 'rwx', group: '---', other: '---', mask: '---',
+    });
+    assert.equal(annotated.restorable, false, 'a permission value carrying the effective annotation is not replayable');
+    const refused = planner.buildRemediationPlan(evaluate(root, {
+        aclObservations: { [target]: { available: true, named_entries: [`user:${RUNTIME.uid}`], named_user_perms: { [String(RUNTIME.uid)]: 'rwx\t\t#effective:---' }, named_group_perms: {}, owner: 'rwx', group: '---', other: '---', mask: '---' } },
+    }));
+    assert.equal(refused.operations.some(operation => operation.operation === 'REMOVE_EXTENDED_ACL'), false);
+
+    // The acl package is absent from the dev container, so the canonical
+    // container profile lands in the first branch.  Neither branch is a skip.
+    if (spawnSync('getfacl', ['--version']).error) {
+        const report = evaluate(root, { aclObservations: { [target]: { available: false, reason: 'getfacl-not-installed' } } });
+        assert.equal(report.acl_state[target].restorable, false);
+        return;
+    }
+    // A real masked ACL: the named entry is granted rwx and then capped to
+    // nothing by the mask, so getfacl prints `user:<uid>:rwx  #effective:---`.
+    setAcl(['-m', `u:${RUNTIME.uid}:rwx`, '-m', 'm::---'], target);
+    const before = aclLines(target);
+    assert.ok(before.includes(`user:${RUNTIME.uid}:rwx`), 'the fixture must really produce a mask-limited entry');
+    // The CLI's own parser is what has to strip the annotation: this asserts on
+    // probeAcl rather than on a helper, so a parser that kept the annotation
+    // fails here even though the helper strips it independently.
+    const probe = inspectCli.probeAcl(target);
+    assert.equal(probe.available, true);
+    assert.deepEqual(Object.values(probe.named_user_perms), ['rwx'], 'the recorded permission must be the triad alone');
+    assert.equal(contract.restorableAclState(probe).restorable, true);
+    // And the payload the real CLI emits has to be a valid ACL argument.
+    const result = spawnSync(process.execPath, [AUDIT_CLI, '--authority-root', root, '--allocation-authority', path.join(root, 'allocation.authority.json'), '--mode', 'plan', '--json'], { encoding: 'utf8' });
+    const payload = JSON.parse(result.stdout).plan.rollback.map(entry => entry.restore.acl).find(entry => entry !== null);
+    assert.ok(payload, 'the plan must carry the observed ACL');
+    assert.equal(payload.entries.includes('#'), false, 'a rollback argument must never carry an annotation');
+    // Replay it for real: delete the ACL, then restore it from the recorded
+    // payload and require the access ACL to come back exactly.
+    setAcl(['-b'], target);
+    assert.notDeepEqual(aclLines(target), before);
+    setAcl(['--set', payload.entries], target);
+    assert.deepEqual(aclLines(target), before);
 });
 
 // ---------------------------------------------------------------------------
@@ -916,6 +971,51 @@ test('11b. an unexpected committed entry or a short file set is rejected', t => 
     const plan = planner.buildRemediationPlan(report);
     assert.ok(plan.blocked_operations.some(entry => entry.reason_code === 'UNEXPECTED_PACKAGE_FILE_SET'));
     assert.equal(plan.status, 'BLOCKED');
+});
+
+test('11c. a directory that cannot be listed is an observation gap, never an empty listing', t => {
+    // Treating a failed readdir as "no entries" would drop every governed object
+    // beneath it from the audit and still let the plan read as repairable, so a
+    // tree whose package files were never examined would look fully covered.
+    const packageRoot = tempRoot('listing-package');
+    t.after(() => cleanup(packageRoot));
+    const txPath = buildCompliantAuthority(packageRoot);
+    fs.chmodSync(txPath, 0o000); // readable metadata, unlistable contents
+    const packageReport = evaluate(packageRoot);
+    assert.ok(codes(packageReport).includes('UNOBSERVABLE_DIRECTORY_LISTING'));
+    const packagePlan = planner.buildRemediationPlan(packageReport);
+    assert.ok(packagePlan.blocked_operations.some(entry => entry.reason_code === 'UNOBSERVABLE_DIRECTORY_LISTING'));
+    assert.notEqual(packagePlan.status, 'READY');
+    // The package files were never observed, so no file-level operation may
+    // claim to cover them.
+    assert.equal(packagePlan.operations.some(operation => PACKAGE_FILES.some(name => operation.path.endsWith(name))), false);
+
+    // The same gap at the committed root hides every package at once.
+    const committedRoot = tempRoot('listing-committed');
+    t.after(() => cleanup(committedRoot));
+    buildCompliantAuthority(committedRoot);
+    fs.chmodSync(path.join(committedRoot, 'committed'), 0o000);
+    const committedReport = evaluate(committedRoot);
+    assert.ok(codes(committedReport).includes('UNOBSERVABLE_DIRECTORY_LISTING'));
+    assert.notEqual(planner.buildRemediationPlan(committedReport).status, 'READY');
+
+    // And at the ledger's entries directory, where the contract evaluates each
+    // entry file it can no longer enumerate.
+    const ledgerRoot = tempRoot('listing-ledger');
+    t.after(() => cleanup(ledgerRoot));
+    buildCompliantAuthority(ledgerRoot);
+    const ledger = buildLedger(path.dirname(ledgerRoot));
+    fs.chmodSync(path.join(ledger, 'entries'), 0o000);
+    const ledgerReport = evaluate(ledgerRoot, { ledgerRoot: ledger });
+    assert.ok(ledgerReport.findings.some(item => item.code === 'UNOBSERVABLE_DIRECTORY_LISTING' && item.path === path.join(ledger, 'entries')));
+
+    // A directory that simply does not exist is a different finding: the
+    // surface evaluator already reports it as missing, so the gap is not
+    // reported twice for the same absence.
+    const absent = path.join(ledgerRoot, 'no-such-ledger');
+    const absentReport = evaluate(ledgerRoot, { ledgerRoot: absent });
+    assert.equal(absentReport.findings.some(item => item.code === 'UNOBSERVABLE_DIRECTORY_LISTING' && item.path === path.join(absent, 'entries')), false);
+    assert.ok(codes(absentReport).includes('MISSING_REQUIRED_PATH'));
 });
 
 // ---------------------------------------------------------------------------

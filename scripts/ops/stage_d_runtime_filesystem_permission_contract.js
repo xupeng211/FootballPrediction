@@ -65,6 +65,9 @@ const STAGING_DIRECTORY = '.staging';
 const COMMITTED_DIRECTORY = 'committed';
 const TX_DIRECTORY = /^tx_[a-f0-9]{64}$/;
 const LEDGER_ENTRY_FILE = /^\d{12}\.json$/;
+// The exact shape of an access-ACL permission field, and therefore the only
+// shape that may be emitted as a `setfacl --set` argument.
+const ACL_PERMISSION = /^[r-][w-][x-]$/;
 
 const RESERVED_NAMES = Object.freeze([STORE_FILE, STAGING_DIRECTORY, COMMITTED_DIRECTORY]);
 
@@ -601,10 +604,31 @@ function readEntryNames(target) {
     }
 }
 
+// A listing that could not be read is not an empty listing.  Treating it as one
+// would drop every governed object underneath it from the audit, so a
+// complete-looking plan could be produced for a tree whose package files were
+// never examined at all.  A directory that is simply absent is left to the
+// surface evaluator, which already reports it as MISSING_REQUIRED_PATH; an
+// existing directory that cannot be listed is an observation gap that no
+// bounded metadata operation on the files themselves can resolve.
+function recordListingGap(findings, { surfaceId, target, code, label }) {
+    findings.push(finding({
+        code: 'UNOBSERVABLE_DIRECTORY_LISTING', severity: SEVERITY.VIOLATION, surfaceId, target,
+        message: `${label} exists but could not be listed (${code}), so the governed objects below it were never observed; the directory must be made readable and the tree re-audited before any file-level plan can be produced`,
+        autoRepairable: false, elevatedPrivilegeRequired: false,
+    }));
+}
+
+function listingGapOrNames(findings, { surfaceId, target, label }) {
+    const listing = readEntryNames(target);
+    if (listing.status !== 'OK' && listing.code !== 'ENOENT') recordListingGap(findings, { surfaceId, target, code: listing.code, label });
+    return listing;
+}
+
 function collectPackageSurfaces(authorityRoot, findings) {
     const surfaces = [];
     const committed = path.join(authorityRoot, COMMITTED_DIRECTORY);
-    const listing = readEntryNames(committed);
+    const listing = listingGapOrNames(findings, { surfaceId: SURFACE.COMMITTED_ROOT, target: committed, label: 'the committed directory' });
     if (listing.status !== 'OK') return surfaces;
     for (const name of listing.names) {
         if (!TX_DIRECTORY.test(name)) {
@@ -617,7 +641,7 @@ function collectPackageSurfaces(authorityRoot, findings) {
         }
         const txPath = path.join(committed, name);
         surfaces.push({ spec: PACKAGE_DIRECTORY_SPEC, target: txPath });
-        const names = readEntryNames(txPath);
+        const names = listingGapOrNames(findings, { surfaceId: SURFACE.TRANSACTION_PACKAGE_DIRECTORY, target: txPath, label: 'a committed transaction package directory' });
         if (names.status !== 'OK') continue;
         if (JSON.stringify(names.names) !== JSON.stringify([...TRANSACTION_FILES].sort())) {
             findings.push(finding({
@@ -631,11 +655,11 @@ function collectPackageSurfaces(authorityRoot, findings) {
     return surfaces;
 }
 
-function collectLedgerSurfaces(ledgerRoot) {
+function collectLedgerSurfaces(ledgerRoot, findings = []) {
     const surfaces = [{ spec: LEDGER_ROOT_SPEC, target: ledgerRoot }];
     surfaces.push({ spec: LEDGER_ENTRIES_SPEC, target: path.join(ledgerRoot, ENTRY_DIRECTORY) });
     surfaces.push({ spec: LEDGER_EPOCH_SPEC, target: path.join(ledgerRoot, EPOCH_FILE) });
-    const listing = readEntryNames(path.join(ledgerRoot, ENTRY_DIRECTORY));
+    const listing = listingGapOrNames(findings, { surfaceId: SURFACE.REQUEST_ACCOUNTING_ENTRIES, target: path.join(ledgerRoot, ENTRY_DIRECTORY), label: 'the request-accounting entries directory' });
     if (listing.status === 'OK') {
         for (const name of listing.names) {
             if (LEDGER_ENTRY_FILE.test(name)) surfaces.push({ spec: LEDGER_ENTRY_FILE_SPEC, target: path.join(ledgerRoot, ENTRY_DIRECTORY, name) });
@@ -653,7 +677,7 @@ function collectSurfaces({ authorityRoot, allocationArtifactPath, ledgerRoot, ru
         ...collectPackageSurfaces(authorityRoot, findings),
     ];
     if (allocationArtifactPath) planned.push({ spec: ALLOCATION_ARTIFACT_SPEC, target: allocationArtifactPath });
-    if (ledgerRoot) planned.push(...collectLedgerSurfaces(ledgerRoot));
+    if (ledgerRoot) planned.push(...collectLedgerSurfaces(ledgerRoot, findings));
     if (runLockTrustRoot) planned.push({ spec: TRUST_ROOT_SPEC, target: runLockTrustRoot });
     return planned;
 }
@@ -752,9 +776,16 @@ function restorableAclState(acl) {
     }
     const namedUsers = acl.named_user_perms || {};
     const namedGroups = acl.named_group_perms || {};
-    const complete = [acl.owner, acl.group, acl.other, acl.mask].every(value => typeof value === 'string')
-        && Object.values(namedUsers).every(value => typeof value === 'string')
-        && Object.values(namedGroups).every(value => typeof value === 'string');
+    // A value is only replayable if it is exactly a POSIX permission triad.  A
+    // type check is not enough: getfacl appends a `#effective:` annotation to
+    // any entry the mask limits, and a parser that keeps it would record
+    // "r-x  #effective:---" as the permission, mark the ACL restorable and hand
+    // setfacl an argument it rejects — losing the very entries the rollback
+    // exists to protect.
+    const valid = value => typeof value === 'string' && ACL_PERMISSION.test(value);
+    const complete = [acl.owner, acl.group, acl.other, acl.mask].every(valid)
+        && Object.values(namedUsers).every(valid)
+        && Object.values(namedGroups).every(valid);
     return Object.freeze({
         available: true,
         restorable: complete,

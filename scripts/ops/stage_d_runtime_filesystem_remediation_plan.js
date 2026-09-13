@@ -56,6 +56,10 @@ const BLOCKING_FINDING_CODES = Object.freeze(new Set([
     'UNOBSERVABLE_GOVERNED_PATH', 'UNEXPECTED_COMMITTED_ENTRY', 'UNEXPECTED_PACKAGE_FILE_SET',
     'UNOBSERVABLE_ANCESTOR', 'PRIVILEGED_RUNTIME_IDENTITY',
     'WORLD_WRITABLE_ANCESTOR', 'GROUP_WRITABLE_ANCESTOR',
+    // A directory that could not be listed hides an unknown number of governed
+    // objects.  Repairing the directory's own metadata would not produce a
+    // complete plan, so the whole plan is blocked until the tree is re-audited.
+    'UNOBSERVABLE_DIRECTORY_LISTING',
 ]));
 
 // chown is applied first because changing ownership can clear set-user/set-group

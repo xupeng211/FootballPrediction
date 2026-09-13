@@ -125,8 +125,15 @@ function probeAcl(target) {
         if (!qualifier) base[field] = permission;
     };
     for (const line of output.split('\n')) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('#') || !trimmed.includes(':')) continue;
+        // Anything from `#` on is annotation, not policy.  getfacl appends a
+        // trailing `#effective:...` to every entry the mask limits — which is
+        // exactly the state a publisher fchmod creates — and a parser that kept
+        // it would record "r-x\t#effective:---" as the permission, mark the ACL
+        // restorable and hand setfacl an argument it rejects.  The rollback
+        // would then fail for the one repair that cannot be undone any other
+        // way.  Leading `# file:`/`# owner:` lines fall out for free.
+        const trimmed = line.split('#')[0].trim();
+        if (!trimmed || !trimmed.includes(':')) continue;
         const [field, qualifier, permission] = trimmed.split(':');
         if (permission !== undefined) record(field, qualifier, permission);
     }

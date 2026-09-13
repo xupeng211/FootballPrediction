@@ -304,6 +304,22 @@ runtime trust root). Only the write surfaces are writable by the runtime; the
 immutable read surfaces are never made group- or world-writable in order to
 make cold-load succeed.
 
+Observation is fail-closed about its own completeness. A directory that cannot
+be listed is recorded as an `UNOBSERVABLE_DIRECTORY_LISTING` gap — an
+unrepairable finding that blocks the plan outright — rather than being read as
+an empty listing: otherwise a package directory that had lost its read bit
+would silently drop all six governed package artifacts from the audit while the
+plan still reported the tree as repairable. A directory that is simply absent
+is a different case and is reported once, as `MISSING_REQUIRED_PATH`. The plan
+is generated only from objects that were actually observed, so a repair plan can
+never claim coverage of a file it never saw; the directory must be made readable
+and the tree re-audited before a file-level plan is produced. Extended ACLs are
+parsed with the same discipline: `getfacl` annotates every entry the mask limits
+with a trailing `#effective:` comment — precisely the state the publisher's own
+`fchmod` produces — and the parser strips it and accepts only a strict
+`[r-][w-][x-]` permission triad, so an annotated value can never be recorded as
+restorable and emitted as an invalid `setfacl` argument.
+
 The required mechanism is **identity equality**: the uid that publishes the
 authority, the uid that owns the governed tree, and the uid that cold-loads it
 must be the same. Group access and named POSIX ACL entries are explicitly
