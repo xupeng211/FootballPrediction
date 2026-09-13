@@ -16,29 +16,40 @@
 // the two answer different questions.  The contract module states what the
 // permission contract IS — the surfaces, their exact modes, the access model
 // and the classification of an observed tree.  This module is the single
-// precondition the binder applies to that contract *before* it publishes: four
+// precondition the binder applies to that contract *before* it publishes: five
 // read-only observations (the publisher identity, the anchor metadata, the
-// effective umask and the anchor's ACLs) and no mutation.  Keeping the
-// precondition out of the classifier is also what lets it be proved on its own.
+// effective umask, the anchor's ACLs and what `.staging` would pass on to a
+// package created inside it) and no mutation.  Keeping the precondition out of
+// the classifier is also what lets it be proved on its own.
 //
-// Identity equality alone is not sufficient, which is what the last two checks
+// Identity equality alone is not sufficient, which is what the remaining checks
 // exist for.  A correctly owned 0700 anchor still reproduces Blocker #2 when
 //   * a default ACL sits on the anchor or on `.staging`, because every
 //     directory atomicPublisher.mkdirSync creates below it inherits those
 //     entries, and an inherited mask caps the mode the publisher's own fchmod
 //     can produce — the same mechanism that makes a named access ACL unable to
-//     survive the publisher at all; or
+//     survive the publisher at all;
 //   * the effective umask clears owner bits, because the mode the publisher
-//     asks mkdir for is then silently reduced, and a transaction package is
-//     immutable once it is renamed into committed/.
-// Neither condition leaves a trace in the anchor's own mode, neither is
-// repairable by this code, and both are refused here rather than discovered
-// after a package has been published.
+//     asks mkdir for is then silently reduced; or
+//   * `.staging` carries set-group-ID, or a group that is not the runtime's,
+//     because mkdir propagates both to the package directory it creates, and
+//     nothing in the publisher clears them before the rename.
+// None of these conditions leaves a trace in the anchor's own mode, none is
+// repairable by this code, and all are refused here rather than discovered after
+// a package has been published.
 
 const path = require('node:path');
 const {
     STAGING_DIRECTORY, assertRuntimeIdentity, contractError, observeObject, processIdentity,
 } = require('./stage_d_runtime_filesystem_permission_contract');
+
+// `.staging` is observed once and handed to both the ACL dimension and the
+// inheritance dimension, so the two cannot disagree about which object they
+// described.
+function observeStaging(anchor) {
+    const observation = observeObject(path.join(anchor, STAGING_DIRECTORY));
+    return observation.observable ? observation : null;
+}
 
 function nearestExistingAncestor(target) {
     let current = path.resolve(target);
@@ -51,9 +62,9 @@ function nearestExistingAncestor(target) {
 }
 
 // Identity says *who* publishes; it says nothing about what that publisher will
-// produce.  Two conditions reproduce Blocker #2 even from a correctly owned
-// 0700 anchor, so both are checked before the execution chain is entered and
-// both fail closed.
+// produce.  These conditions reproduce Blocker #2 even from a correctly owned
+// 0700 anchor, so each is checked before the execution chain is entered and each
+// fails closed.
 function assertPublicationUmask(umask) {
     const effective = umask === null || umask === undefined
         ? (typeof process.umask === 'function' ? process.umask() : null) : umask;
@@ -63,9 +74,42 @@ function assertPublicationUmask(umask) {
     return effective;
 }
 
-function assertPublicationAcls(anchor, aclProbe) {
-    const staging = path.join(anchor, STAGING_DIRECTORY);
-    const targets = [anchor, ...(observeObject(staging).observable ? [staging] : [])];
+// The publisher materialises each package with `mkdirSync(stagePath, { mode:
+// 0o700 })` inside `.staging` and never chmods the result.  A new directory
+// inherits exactly two things from the directory it is created in: the
+// set-group-ID bit, and — with that bit set — the parent's group instead of the
+// publisher's.  So a `.staging` carrying setgid hands every future package
+// directory `02700`, and a `.staging` whose group is not the runtime's hands it
+// a group the contract's identity rule does not allow.  Either way the package
+// violates the contract the moment the rename into `committed/` lands, and a
+// committed package directory is immutable from then on.  None of this is
+// visible in the anchor's own metadata, which is why identity equality and the
+// anchor checks above cannot see it.
+//
+// A `.staging` that could not be observed is deliberately not a refusal here.
+// The publisher opens it through its own descriptor and fails closed when it is
+// absent or unreadable, so such a tree cannot produce a package at all and there
+// is no inheritance left to constrain.
+function assertStagingInheritanceSafe(runtime, anchor, staging) {
+    if (staging === null) return null;
+    const risks = [];
+    if (staging.is_symbolic_link || !staging.is_directory) {
+        risks.push('is not a real directory, so the publisher\'s own open would follow a path this contract never described');
+    }
+    if ((staging.mode & 0o2000) !== 0) {
+        risks.push('carries the set-group-ID bit, which mkdirSync propagates to every package directory created inside it and which nothing clears before the rename');
+    }
+    if (staging.uid !== runtime.uid || staging.gid !== runtime.gid) {
+        risks.push(`is owned by ${staging.uid}:${staging.gid} rather than the declared runtime identity ${runtime.uid}:${runtime.gid}, so a package created inside it can inherit a group the contract does not allow`);
+    }
+    if (risks.length > 0) {
+        throw contractError('PUBLICATION_STAGING_INHERITANCE_UNSAFE', `${path.join(anchor, STAGING_DIRECTORY)} ${risks.join('; ')}`);
+    }
+    return Object.freeze({ path: staging.path, uid: staging.uid, gid: staging.gid, mode: staging.mode });
+}
+
+function assertPublicationAcls(anchor, staging, aclProbe) {
+    const targets = [anchor, ...(staging === null ? [] : [staging.path])];
     for (const target of targets) {
         const acl = typeof aclProbe === 'function' ? aclProbe(target) : null;
         if (!acl || !acl.available) {
@@ -111,8 +155,10 @@ function auditPublicationAnchor({ publisherIdentity, runtimeIdentity, authorityR
     if (observation.uid !== runtime.uid) {
         throw contractError('PUBLICATION_IDENTITY_UNRESOLVABLE', `the authority root anchor ${anchored.path} is owned by ${observation.uid}:${observation.gid}, not by the declared runtime identity ${runtime.uid}:${runtime.gid}`);
     }
+    const staging = observeStaging(anchored.path);
     const publicationUmask = assertPublicationUmask(umask);
-    const aclTargets = assertPublicationAcls(anchored.path, aclProbe);
+    const aclTargets = assertPublicationAcls(anchored.path, staging, aclProbe);
+    const stagingInheritance = assertStagingInheritanceSafe(runtime, anchored.path, staging);
     return Object.freeze({
         status: 'PUBLICATION_IDENTITY_VERIFIED',
         publisher_identity: publisher,
@@ -121,6 +167,7 @@ function auditPublicationAnchor({ publisherIdentity, runtimeIdentity, authorityR
         anchor_identity: Object.freeze({ uid: observation.uid, gid: observation.gid, mode: observation.mode, dev: observation.dev, ino: observation.ino }),
         publication_umask: publicationUmask,
         acl_evidence_targets: aclTargets,
+        staging_inheritance: stagingInheritance,
     });
 }
 

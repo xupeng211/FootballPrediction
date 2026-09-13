@@ -198,7 +198,11 @@ function blockedEntry(item, requiredAction = 'OWNER_DECISION_AND_MANUAL_EVIDENCE
 // Why a path cannot be planned at all, independent of which findings it
 // carries.  Each of these is a refusal rather than a repair: there is no
 // postcondition to repair toward, or the object the report described is no
-// longer the object at the path.
+// longer the object at the path.  The refusals are decided from the path's own
+// spec and from the fresh observation of it, never from the finding list: a
+// finding that blocks the whole path is a blocking code and is filtered out of
+// the group reaching `planPath`, so a guard that read findings would miss the
+// hazard precisely when the path also carries a repairable defect.
 function pathGuard(entry, observation) {
     // Without a contract surface there is no required end state.
     if (entry.spec === undefined) return 'NO_CONTRACT_SURFACE_SPEC_FOR_THIS_PATH';
@@ -211,6 +215,19 @@ function pathGuard(entry, observation) {
     if (entry.observed && entry.observed.observable && (observation.dev !== entry.observed.dev || observation.ino !== entry.observed.ino)) {
         return 'OBJECT_REPLACED_SINCE_OBSERVATION';
     }
+    // A hardlinked object shares its inode with every other name it has, so a
+    // chmod or chown applied through this governed path also changes metadata
+    // reachable at names this contract has no authority over.  The report
+    // records this as HARDLINK_DETECTED, but that finding is a blocking code and
+    // is therefore filtered out of the group handed to `planPath` before this
+    // runs — so a path carrying a hardlink *and* a MODE_MISMATCH would otherwise
+    // still produce a CHMOD, and a CHOWN where the identity also disagreed.  The
+    // refusal is read from the fresh observation rather than from the finding so
+    // that it does not depend on which findings were selected for planning, and
+    // so that it also covers a link created after the audit.  The condition is
+    // the contract's own: a *file* with a link count other than one.  For a
+    // directory a count above one is ordinary, not a hardlink.
+    if (observation.is_file && observation.nlink !== 1) return 'HARDLINK_IN_GOVERNED_PATH_UNPLANNABLE';
     return null;
 }
 

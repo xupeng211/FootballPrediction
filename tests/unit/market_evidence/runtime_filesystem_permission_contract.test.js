@@ -867,6 +867,58 @@ test('12g. the binder refuses a umask that would strip the mode the publisher as
     }
 });
 
+test('12h. the binder refuses a staging directory that would hand set-group-ID or a foreign group to the next package', t => {
+    const root = tempRoot('binder-staging-inheritance');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const staging = path.join(root, '.staging');
+    assertAuditVerifies(root);
+    // The declared probe decides the ACL dimension so the verdict below is about
+    // the staging metadata and nothing else; 12f and 20b prove that dimension on
+    // this same call against the host's real getfacl.
+    assert.equal(auditAnchor(root, { aclProbe: () => CLEAN_ACL }).staging_inheritance.mode & 0o2000, 0,
+        'a compliant staging carries no set-group-ID bit, or the fixture below would be describing a tree that was already wrong');
+
+    // `.staging` is the directory atomicPublisher.mkdirSync creates each package
+    // inside, with mode 0o700 and no chmod afterwards.  A new directory inherits
+    // the parent's set-group-ID bit, so a setgid `.staging` puts 02700 on every
+    // future package directory, and the contract's postcondition for a committed
+    // transaction directory is exactly 0700 — where it then stays, because a
+    // committed package is immutable.  None of this is visible in the anchor's
+    // own metadata, which is why identity equality and the anchor checks cannot
+    // see it.
+    fs.chmodSync(staging, 0o2700);
+    assert.equal(fs.statSync(root).mode & 0o7777, 0o700, 'the anchor has to stay clean, or this would only re-prove the anchor checks');
+    assert.throws(() => auditAnchor(root, { aclProbe: () => CLEAN_ACL }), error => error.code === 'PUBLICATION_STAGING_INHERITANCE_UNSAFE');
+    // And the refusal is live on the binder's own path rather than only under an
+    // injected probe, wherever the ACL dimension can run at all.
+    if (ACL_PROBE_AVAILABLE) {
+        const binder = require('../../../scripts/ops/stage_d_controlled_initialization');
+        assert.throws(() => binder.verifyPublicationIdentity({ '--authority-root': root }), error => error.code === 'PUBLICATION_STAGING_INHERITANCE_UNSAFE');
+    }
+    fs.chmodSync(staging, 0o700);
+
+    // The group is the other half of the same inheritance: the child of a
+    // set-group-ID directory takes the parent's group rather than the
+    // publisher's, and the contract requires a committed package to carry the
+    // runtime identity.  The group is varied with real chown metadata where the
+    // host gives this identity a second group, and declared where it does not.
+    // Both branches assert the same refusal, so neither is a skip.
+    const foreignGid = RUNTIME.groups.find(gid => gid !== RUNTIME.gid);
+    if (foreignGid === undefined) {
+        const declared = Object.freeze({ uid: RUNTIME.uid, gid: RUNTIME.gid + 1, groups: RUNTIME.groups, source: 'TEST' });
+        assert.throws(
+            () => audit.auditPublicationAnchor({ publisherIdentity: declared, runtimeIdentity: declared, authorityRoot: root, aclProbe: () => CLEAN_ACL }),
+            error => error.code === 'PUBLICATION_STAGING_INHERITANCE_UNSAFE',
+        );
+        return;
+    }
+    fs.chownSync(staging, RUNTIME.uid, foreignGid);
+    assert.equal(fs.statSync(staging).gid, foreignGid, 'the fixture has to really change the group, or the assertion below would pass for the wrong reason');
+    assert.throws(() => auditAnchor(root, { aclProbe: () => CLEAN_ACL }), error => error.code === 'PUBLICATION_STAGING_INHERITANCE_UNSAFE');
+    fs.chownSync(staging, RUNTIME.uid, RUNTIME.gid);
+});
+
 test('20d. an unprobed ancestor ACL is a blocking finding, not a verified traverse', t => {
     const root = tempRoot('ancestor-acl-gap');
     t.after(() => cleanup(root));
@@ -1755,6 +1807,37 @@ test('22. the planner refuses a path replaced since the report observed it', t =
     // observation it just took, so nothing downstream would catch it.
     assert.ok(after.blocked_operations.some(entry => entry.path === target && entry.required_action === 'OBJECT_REPLACED_SINCE_OBSERVATION'));
     assert.equal(after.status, 'BLOCKED');
+});
+
+test('22b. a hardlinked object is refused as a path, so its mode defect plans no operation', t => {
+    const root = tempRoot('plan-hardlink');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'metadata.json');
+    fs.chmodSync(target, 0o600); // a real, plannable MODE_MISMATCH
+    const before = planner.buildRemediationPlan(evaluate(root));
+    assert.ok(before.operations.some(operation => operation.path === target && operation.operation === 'CHMOD'),
+        'the fixture must be plannable before the link, or this proves nothing');
+    // A second name for the same inode, outside the authority root entirely.  A
+    // CHMOD applied through the governed name changes the metadata every other
+    // name sees, and those names are not governed by this contract — so the plan
+    // has to refuse the path rather than repair it.  The report carries this as
+    // HARDLINK_DETECTED, but that is a blocking code and is filtered out of the
+    // group reaching the planner, which is why the refusal is decided from the
+    // fresh observation instead of from the finding.
+    fs.linkSync(target, path.join(path.dirname(root), 'outside-name.json'));
+    assert.equal(contract.observeObject(target).nlink, 2, 'the fixture must really be a hardlink');
+    const report = evaluate(root);
+    assert.ok(codes(report).includes('HARDLINK_DETECTED'));
+    assert.ok(codes(report).includes('MODE_MISMATCH'));
+    const after = planner.buildRemediationPlan(report);
+    assert.equal(after.operations.some(operation => operation.path === target), false);
+    assert.equal(after.status, 'BLOCKED');
+    // The refusal is keyed on the path, so the path's other findings are
+    // escalated with it rather than planned around it: a partial repair is still
+    // a change to the object every one of those names shares.
+    assert.ok(after.blocked_operations.some(entry => entry.path === target && entry.reason_code === 'MODE_MISMATCH'
+        && entry.required_action === 'HARDLINK_IN_GOVERNED_PATH_UNPLANNABLE'));
 });
 
 // ---------------------------------------------------------------------------
