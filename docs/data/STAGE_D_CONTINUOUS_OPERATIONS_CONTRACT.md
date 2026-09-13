@@ -389,11 +389,12 @@ read with the audit CLI's own `getfacl` probe, so the binder can never be
 satisfied by weaker evidence than a full audit would accept — and where that
 probe is unavailable the binder refuses rather than verifying on identity alone.
 
-Status after this contract was added: `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`,
+Status after this contract was added (historical, superseded by the current
+status below): `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`,
 `BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`, `BLOCKER_2=OPEN`,
 `GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED`. Applying any metadata repair to
 the production authority remains a separate, separately authorized Phase B host
-procedure.
+procedure — and that continues to hold for any *future* repair.
 
 Status after the Phase B privilege and content-proof remediation below: the first
 Owner-authorized Phase B preflight ran read-only through its pre-mutation recheck
@@ -403,10 +404,22 @@ runtime uid/gid while every operation the planner emits against the real
 production plan requires elevated privilege. Production was left untouched
 (`PRODUCTION_PERMISSION_MUTATED=NO`, `PRODUCTION_CONTENT_MUTATED=NO`). That
 precondition has been replaced by the explicit three-role identity model below.
-`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`, `BLOCKER_2=OPEN`,
-`GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED` are unchanged.
+`BLOCKER_2=OPEN`, `GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED` were unchanged
+at that point.
 
-### Phase B host remediation procedure (specified here, not executed, not authorized)
+**Current status.** The Owner-authorized Phase B execution governed by this
+contract has since been executed and verified; the outcome is recorded in
+[`STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`](STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md).
+`BLOCKER_2_PRODUCTION_REMEDIATION=EXECUTED_AND_VERIFIED`, `BLOCKER_2=CLOSED`,
+`PHASE_B_COMPLETE=YES`. `GATE_2=NOT_ACCEPTED` and `GATE_3=NOT_AUTHORIZED` are
+deliberately retained because `BLOCKER_3` remains open. That execution ran under
+its own separate authorization, and those authorizations are **spent**:
+`PHASE_B_EXECUTION_AUTHORIZED=NO` in the block below still governs any future
+repair, and the closeout is a historical adjudication of one evidence set that
+does **not** authorize a future executor to skip a planner operation because it
+believes that operation's postcondition already holds.
+
+### Phase B host remediation procedure (governed here; future execution not authorized)
 
 Phase A emits a plan and cannot apply one. Applying it is a separate
 Owner-authorized host procedure, specified here so that it is bounded by the

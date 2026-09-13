@@ -183,12 +183,17 @@ INTERNAL_CONTRADICTION_FOUND=NO
 "An operation whose `pre` observation no longer matches at apply time aborts the procedure
 rather than being forced" — is ambiguous in scope: its antecedent could be the whole `pre`
 record rather than the device/inode binding named in the sentence immediately before it. That
-ambiguity demonstrably cost two halts. This closeout does **not** edit the contract's normative
-text, because the section it adjudicates is the standard being applied and because
-`STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md` is a machine-governed privileged-mutation contract.
-Tightening that sentence is recommended as a separate, narrowly scoped contract-clarification
+ambiguity demonstrably cost two halts. This closeout does **not** edit that sentence: it is the
+standard being adjudicated here, and tightening it is a change to the contract's normative
+mutation semantics. It is recommended as a separate, narrowly scoped contract-clarification
 mission if the Execution Controller wants the prose to state the binding as explicitly as the
 machine-readable `path_resolution_rule` already does.
+
+The contract's **normative** content is therefore unchanged by this PR: the mutation class,
+the content-write and recursive-operation prohibitions, the allowed operation classes, the
+`CHOWN` → `REMOVE_EXTENDED_ACL` → `CHMOD` ordering and its rollback ordering, the three-role
+identity model, the apply-time binding and the executor policy are all byte-identical. One
+thing in that file *was* corrected, and it is not normative: see section 13.
 
 ## 8. Content immutability — 9/9
 
@@ -289,3 +294,42 @@ still open**: the existing authority and evidence paths sit on the same physical
 domain. This closeout does not select a backup target, copy data, perform a restore, or change
 retention/RPO/RTO. Stage D has not started: no provider request, no quota consumption, no
 scheduler enablement, no canonical transaction.
+
+## 13. Independent review finding — stale contract status corrected
+
+The independent Codex review of this closeout returned one blocking `P1` with `P0=0`, `P2=0`,
+`P3=0`: the canonical
+[`STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md`](STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md) — the
+normative source for any future controlled host procedure — still declared
+`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED` / `BLOCKER_2=OPEN`, and still carried a heading
+stating Phase B was "not executed, not authorized". The reviewer's hazard is concrete: a
+future executor reading that contract would see the completed metadata repair as pending work
+and could re-run privileged mutation against the production authority.
+
+The finding is correct, and it is a **stale current-state claim**, not a defect in normative
+logic. The contract itself declares `lifecycle: current-state contract`, and no source file,
+test, schema or gate asserts on those literals — the only other occurrence in the repository is
+inside a superseded mission-scope record. Correcting it therefore required no machine-logic
+change.
+
+What changed in that file: the two stale state paragraphs are marked historical/superseded and
+a current-status block replaces the stale claim; the section heading no longer says the
+procedure was never executed; and the statement that the historical execution's authorizations
+are **spent** was added explicitly alongside the unchanged
+`PHASE_B_EXECUTION_AUTHORIZED=NO`. What did **not** change: the mutation class, the
+content-write and recursive-operation prohibitions, the allowed operation classes, the
+`CHOWN` → `REMOVE_EXTENDED_ACL` → `CHMOD` ordering and its rollback ordering, the three-role
+identity model, the executor policy, the apply-time binding, and the no-precedent rule. The
+status block was corrected to match the closeout, exactly as the other three current-state
+documents were.
+
+```text
+REVIEW_P1_HAZARD=STALE_CONTRACT_STATUS_CLAIM
+REVIEW_P1_REQUIRED_MACHINE_LOGIC_CHANGE=NO
+REVIEW_P1_RESOLUTION=CURRENT_STATE_CORRECTED_NORMATIVE_SEMANTICS_UNCHANGED
+PHASE_B_EXECUTION_AUTHORIZED=NO
+```
+
+Because the audited text is the contract that governs privileged production mutation, this
+correction is confined to state claims; the normative prose ambiguity recorded in section 7
+remains open and is still recommended for its own narrowly scoped mission.
