@@ -161,6 +161,16 @@ function collectTargetPaths(targets) {
             paths.push(txPath, ...safeReaddir(txPath).map(file => path.join(txPath, file)));
         }
     }
+    // The ledger has a layout of its own — entries/, the epoch anchor and each
+    // entry file — and the contract evaluates all of those as governed
+    // surfaces.  They are enumerated by reusing the contract's own surface
+    // collection rather than by re-deriving the layout here, so the probe set
+    // cannot drift from the evaluated set: a ledger artifact whose mode is
+    // compliant but which carries a named ACL is still observed, classified and
+    // given rollback evidence.
+    if (targets.ledgerRoot) {
+        paths.push(...contract.collectLedgerSurfaces(targets.ledgerRoot).map(entry => entry.target));
+    }
     // The allocation authority can sit outside the authority root, so its own
     // ancestry is governed too and its ACLs have to be observed to be classified.
     if (targets.allocationArtifactPath) {

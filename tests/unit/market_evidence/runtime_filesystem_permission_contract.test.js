@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable max-lines -- the Blocker #2 permission contract, its inert remediation planner and the kernel-enforced proof that binds them are one safety contract: the audit, the plan and the tests that falsify them have to be reviewed together, and splitting them would hide a mismatch between what is classified and what is planned. */
+//
 // Stage D Blocker #2 Phase A — runtime filesystem permission contract tests.
 //
 // These tests build REAL directory trees with REAL modes and REAL ownership on
@@ -426,6 +428,69 @@ test('16b. the recorded ACL reproduces the original access ACL through setfacl',
     assert.deepEqual(aclLines(target), expected);
 });
 
+test('12e. the publisher guard refuses a privileged identity on both sides, not only the mixed case', t => {
+    const root = tempRoot('guard-both-root');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const ROOT_IDENTITY = Object.freeze({ uid: 0, gid: 0, groups: Object.freeze([]) });
+    // The mixed case is the obvious one: a root container publishing into a
+    // runtime-user-owned tree.
+    assert.throws(
+        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: RUNTIME, authorityRoot: root }),
+        error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
+    );
+    // The dangerous one is the both-root case, and it is reachable through the
+    // binder's own derivation rather than through a caller mistake: the runtime
+    // identity is taken from the authority anchor's owner, so a root process
+    // facing a root-owned anchor gets uid 0 on both sides and used to verify
+    // itself.  `/` is a genuine root-owned, non-group-writable directory, so the
+    // derivation is exercised on real metadata instead of a declared value.
+    const derived = contract.deriveRuntimeIdentityFromAuthority('/');
+    assert.equal(derived.uid, 0, 'the filesystem root must be owned by uid 0 for this assertion to mean anything');
+    assert.throws(
+        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: derived, authorityRoot: '/' }),
+        error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
+    );
+    // Declaring the privileged runtime identity by hand is refused the same way,
+    // so the guard cannot be walked around by passing it in explicitly.
+    assert.throws(
+        () => contract.assertPublicationIdentity({ publisherIdentity: ROOT_IDENTITY, runtimeIdentity: ROOT_IDENTITY, authorityRoot: root }),
+        error => error.code === 'PUBLICATION_AS_PRIVILEGED_IDENTITY',
+    );
+    // The legitimate shape still verifies, so the new checks did not simply turn
+    // the guard permanently red.
+    assert.equal(contract.assertPublicationIdentity({ publisherIdentity: RUNTIME, runtimeIdentity: RUNTIME, authorityRoot: root }).status, 'PUBLICATION_IDENTITY_VERIFIED');
+});
+
+test('16c. a blocked ACL removal is counted in the plan status, not hidden behind READY', t => {
+    const root = tempRoot('acl-status');
+    t.after(() => cleanup(root));
+    const target = buildCompliantAuthority(root);
+    // Named entries are visible but cannot be replayed, so the removal is
+    // blocked.  Mode and identity are already correct, which makes the ACL the
+    // ONLY thing this tree needs — a status of NOT_REQUIRED would tell a caller
+    // the authority is fully repairable when it is not.
+    const incompleteEvidence = { [target]: { available: true, named_entries: [`user:${RUNTIME.uid}`] } };
+    const aclOnly = planner.buildRemediationPlan(evaluate(root, { aclObservations: incompleteEvidence }));
+    assert.equal(aclOnly.operations.length, 0);
+    assert.ok(aclOnly.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
+    assert.equal(aclOnly.status, 'BLOCKED');
+
+    // With a mode defect as well, part of the path is repairable and the ACL
+    // removal is not: READY would hide the half that needs an Owner decision.
+    fs.chmodSync(target, 0o710);
+    const mixed = planner.buildRemediationPlan(evaluate(root, { aclObservations: incompleteEvidence }));
+    assert.ok(mixed.operations.some(operation => operation.operation === 'CHMOD'));
+    assert.ok(mixed.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'));
+    assert.equal(mixed.status, 'PARTIAL_BLOCKED');
+
+    // Complete evidence unblocks the removal, and the same tree then reads READY,
+    // so the status is still driven by what the plan can actually do.
+    const restorable = planner.buildRemediationPlan(evaluate(root, { aclObservations: { [target]: { available: true, ...EXTENDED_ACL } } }));
+    assert.equal(restorable.blocked_operations.some(entry => entry.operation === 'REMOVE_EXTENDED_ACL'), false);
+    assert.equal(restorable.status, 'READY');
+});
+
 // ---------------------------------------------------------------------------
 // 4. committed package stays non-writable to the runtime
 // ---------------------------------------------------------------------------
@@ -774,6 +839,42 @@ test('15c. the inspect CLI collects ACLs for a standalone allocation authority c
     for (const ancestor of contract.walkAncestry(allocation)) {
         assert.ok(Object.prototype.hasOwnProperty.call(report.acl_state, ancestor.path), `${ancestor.path} was never probed`);
     }
+});
+
+test('15d. the inspect CLI probes the whole governed ledger layout, not just the ledger root', t => {
+    const root = tempRoot('ledger-acl');
+    t.after(() => cleanup(root));
+    buildCompliantAuthority(root);
+    const ledger = buildLedger(path.dirname(root));
+    const epoch = path.join(ledger, 'REQUEST_ACCOUNTING_EPOCH.json');
+    const entry = path.join(ledger, 'entries', '000000000001.json');
+    // The contract evaluates the epoch anchor and every entry file, so the probe
+    // set has to cover them too.  Otherwise a ledger artifact whose mode is
+    // compliant but which carries a named ACL is classified CLEAN, and its
+    // removal would be planned with no rollback evidence at all.
+    const evaluated = contract.collectLedgerSurfaces(ledger).map(surface => surface.target);
+    assert.ok(evaluated.includes(epoch) && evaluated.includes(entry), 'this test assumes the contract evaluates the ledger layout');
+    const run = mode => JSON.parse(spawnSync(process.execPath, [AUDIT_CLI, '--authority-root', root, '--ledger-root', ledger, '--mode', mode, '--json'], { encoding: 'utf8' }).stdout);
+    const report = run('audit');
+    for (const target of evaluated) {
+        assert.ok(Object.prototype.hasOwnProperty.call(report.acl_state, target), `${target} was never probed`);
+    }
+    // The acl package is absent from the dev container, so the canonical
+    // container profile lands in the first branch.  Neither branch is a skip:
+    // without the tools the contract has to say so, and with them the CLI has to
+    // actually detect and plan the removal.
+    if (spawnSync('getfacl', ['--version']).error) {
+        assert.equal(report.acl_state[entry].available, false);
+        assert.ok(report.findings.some(item => item.code === 'ACL_PROBE_UNAVAILABLE'));
+        return;
+    }
+    setAcl(['-m', `u:${RUNTIME.uid}:r--`], entry);
+    const damaged = spawnSync(process.execPath, [AUDIT_CLI, '--authority-root', root, '--ledger-root', ledger, '--mode', 'plan', '--json'], { encoding: 'utf8' });
+    const withAcl = JSON.parse(damaged.stdout);
+    assert.equal(damaged.status, 3, 'a named ACL on a governed ledger file is a violation');
+    assert.ok(withAcl.findings.some(item => item.code === 'EXTENDED_ACL_PRESENT' && item.path === entry));
+    assert.equal(withAcl.acl_state[entry].restorable, true);
+    assert.ok(withAcl.plan.operations.some(operation => operation.path === entry && operation.operation === 'REMOVE_EXTENDED_ACL'));
 });
 
 // ---------------------------------------------------------------------------

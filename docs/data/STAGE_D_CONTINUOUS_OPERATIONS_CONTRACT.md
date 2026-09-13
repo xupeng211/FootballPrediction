@@ -319,7 +319,14 @@ by the ordinary publication path.
 Recurrence prevention is enforced at the Stage D binder boundary:
 `scripts/ops/stage_d_controlled_initialization.js` resolves the runtime
 identity from the authority root's owning uid and fails closed — with no
-override flag — when the identity about to publish is not that identity. This
+override flag — when the identity about to publish is not that identity. A
+privileged identity is refused on **both** sides of that comparison, not only
+when a uid 0 publisher meets a non-root runtime. Because the binder derives the
+runtime identity from the authority anchor's owner, a root process facing a
+root-owned anchor would otherwise produce uid 0 on both sides and verify
+itself, which is precisely how owner-only packages kept being published; the
+guard therefore rejects a uid 0 publisher and a uid 0 runtime independently,
+and the contract already classifies a uid 0 runtime as a violation. This
 matters because a transaction package is immutable once renamed into
 `committed/`, so an inaccessible package is a permanent defect at publication
 time, not a repairable inconvenience.

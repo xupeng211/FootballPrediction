@@ -856,8 +856,19 @@ function assertPublicationIdentity({ publisherIdentity, runtimeIdentity, authori
     const publisher = assertRuntimeIdentity(publisherIdentity);
     const runtime = runtimeIdentity ? assertRuntimeIdentity(runtimeIdentity) : null;
     if (!runtime) throw contractError('PUBLICATION_IDENTITY_UNSPECIFIED', 'the expected cold-loading runtime identity must be declared explicitly');
-    if (publisher.uid === 0 && runtime.uid !== 0) {
-        throw contractError('PUBLICATION_AS_PRIVILEGED_IDENTITY', `publishing as uid 0 would create artifacts unreadable by runtime uid ${runtime.uid}`);
+    // A privileged process is refused on either side of the check, not only on
+    // the mixed one.  The both-root case is the one that matters most here:
+    // the binder derives the runtime identity from the authority anchor's
+    // owner, so a root process facing a root-owned authority gets uid 0 on both
+    // sides and would otherwise verify itself — keep publishing owner-only
+    // packages that the ordinary runtime user cannot read, which is exactly
+    // how Blocker #2 arose.  classifyAccess already treats a uid 0 runtime
+    // identity as a violation, so the guard must refuse it too.
+    if (publisher.uid === 0) {
+        throw contractError('PUBLICATION_AS_PRIVILEGED_IDENTITY', `publishing as uid 0 would create artifacts unreadable by runtime uid ${runtime.uid}; a privileged publisher is never accepted`);
+    }
+    if (runtime.uid === 0) {
+        throw contractError('PUBLICATION_AS_PRIVILEGED_IDENTITY', 'a privileged cold-loading runtime identity (uid 0) can never be contract-verified, so it is never accepted as the publication target');
     }
     if (publisher.uid !== runtime.uid || publisher.gid !== runtime.gid) {
         throw contractError('PUBLICATION_IDENTITY_MISMATCH', `publisher ${publisher.uid}:${publisher.gid} is not the declared runtime identity ${runtime.uid}:${runtime.gid}`);
@@ -909,5 +920,6 @@ module.exports = {
     STAGING_DIRECTORY, COMMITTED_DIRECTORY,
     describeContract, observeObject, walkAncestry, sha256OfReadableFile, predictRuntimeAccess,
     openGovernedRoot, closeGovernedRoot, evaluateRuntimeFilesystemContract, restorableAclState,
+    collectLedgerSurfaces, LEDGER_ENTRY_FILE,
     assertPublicationIdentity, deriveRuntimeIdentityFromAuthority, processIdentity,
 };

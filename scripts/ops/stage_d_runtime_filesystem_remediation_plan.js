@@ -273,7 +273,12 @@ function buildRemediationPlan(report, { generatedAt = null } = {}) {
         contract_version: report.contract_version,
         generated_at: generatedAt,
         report_status: report.status,
-        status: planStatus(operations, blocked),
+        // Both kinds of blockage count toward the overall status.  A blocked
+        // ACL removal is a repair this plan cannot complete, so reporting
+        // READY — or NOT_REQUIRED when it was the only operation needed —
+        // would let a caller driving off `status` believe the tree was fully
+        // repairable when part of it needs an Owner decision.
+        status: planStatus(operations, [...blocked, ...blockedOperations]),
         runtime_identity: report.runtime_identity,
         targets: report.targets,
         applies_content_writes: false,
