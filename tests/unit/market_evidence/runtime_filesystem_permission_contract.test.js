@@ -2332,3 +2332,450 @@ test('contract. an unrecognised violation is blocked rather than silently droppe
     assert.equal(plan.blocked_operations[0].reason_code, 'SOME_FUTURE_CODE');
     assert.throws(() => planner.buildRemediationPlan(null), error => error.code === 'INVALID_PLAN_INPUT');
 });
+
+
+// ---------------------------------------------------------------------------
+// Phase B privilege and content-proof contract (Phase A defect #2 remediation)
+// ---------------------------------------------------------------------------
+//
+// Phase A shipped a contract whose Phase B preconditions required the repair
+// process to run as the very identity that cannot read the authority, while
+// every operation the planner emits against the real production plan carries
+// elevated_privilege_required=true.  The first Owner-authorized Phase B
+// preflight stopped before mutating anything at that conflict, because a
+// contract that cannot be satisfied as written is a design gate rather than an
+// execution problem.  The tests below pin the replacement semantics, which
+// separate three identities the old contract collapsed into one: the target
+// runtime identity that must cold-load, the bounded privileged repair executor,
+// and the read-only content-evidence reader.  No one of them may be substituted
+// for another, and the privileged pair may never produce a proof the ordinary
+// runtime is supposed to produce for itself.
+const PRE_CONTENT_EVIDENCE_SOURCE = planner.PRE_CONTENT_EVIDENCE_SOURCE;
+
+// A plan for a real tree with one real metadata defect, built the same way every
+// other test in this file builds one: real modes on a real filesystem, judged by
+// the real audit.  The root is returned with the plan so a case can assert the
+// plan against the same tree it was derived from.
+function planWithDefect(t, label, mutate, evaluateOptions = {}) {
+    const root = tempRoot(label);
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    mutate(txPath);
+    const report = evaluate(root, evaluateOptions);
+    return { plan: planner.buildRemediationPlan(report), report, root, txPath };
+}
+
+test('17. the planner no longer requires the repair executor to be the runtime identity', t => {
+    const { plan } = planWithDefect(t, 'phaseb-precondition', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    // The contract now carries the three roles as machine-readable output, so
+    // the precondition is a value a caller can check rather than prose an
+    // operator has to interpret.
+    assert.ok(plan.target_runtime_identity);
+    assert.ok(plan.repair_executor_policy);
+    assert.ok(plan.pre_content_evidence_policy);
+
+    // The removed defect, stated as the assertion it used to fail: no
+    // precondition may require the mutating process to be the runtime identity.
+    // Its successor requires the opposite separation.
+    const preconditions = plan.preconditions.join(' | ');
+    assert.ok(
+        preconditions.includes('must not acquire a persistent capability'),
+        'the target runtime identity must be forbidden from acquiring a capability to make Phase B work',
+    );
+    assert.ok(
+        preconditions.includes('separately bounded privileged host executor'),
+        'mutation must be attributed to a separate bounded executor, not to the runtime identity',
+    );
+    assert.ok(
+        preconditions.includes('does not become the proof identity'),
+        'the executor must be forbidden from standing in for the proof identity',
+    );
+    assert.ok(
+        !/the runtime uid\/gid executing the repair equals/.test(preconditions),
+        'the contradictory precondition must be gone from the planner output',
+    );
+    assert.ok(
+        !/repair process runs as the runtime uid\/gid/.test(preconditions),
+        'no precondition may require the mutating process to run as the runtime identity',
+    );
+
+    // The contradiction is gone from the source too, so a later edit cannot
+    // reintroduce it without the string reappearing where a reviewer sees it.
+    const source = fs.readFileSync(PLAN_MODULE, 'utf8');
+    assert.ok(!source.includes('the runtime uid/gid executing the repair equals'));
+    assert.ok(!source.includes('repair process runs as the runtime uid/gid'));
+});
+
+test('18. the target runtime identity stays the ordinary, unprivileged identity', t => {
+    const { plan, report } = planWithDefect(t, 'phaseb-target-identity', txPath => fs.chmodSync(path.join(txPath, 'metadata.json'), 0o000));
+    // It is the identity the audit was evaluated for — reported, not invented —
+    // and it is reported whole, so a caller cannot read it as "uid 0 plus
+    // capabilities" or as a bare number with an implicit group.
+    assert.deepEqual(plan.target_runtime_identity, report.runtime_identity);
+    assert.equal(plan.target_runtime_identity.uid, RUNTIME.uid);
+    assert.equal(plan.target_runtime_identity.gid, RUNTIME.gid);
+    assert.notEqual(plan.target_runtime_identity.uid, 0);
+    assert.equal(plan.repair_executor_policy.executor_may_become_proof_identity, false);
+
+    // The privileged reader is a fallback for a read that FAILED; it is never
+    // the identity the contract prefers for content evidence.
+    assert.equal(plan.pre_content_evidence_policy.preferred_reader, 'TARGET_RUNTIME_IDENTITY');
+    assert.notEqual(plan.pre_content_evidence_policy.preferred_reader, PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED);
+});
+
+test('19. elevated privilege is authorized only for operations the planner marked', t => {
+    // A defect this identity owns is repairable unaided, so nothing in the plan
+    // may be marked as needing privilege — and the flag is computed against the
+    // DECLARED target runtime identity, not against whoever ran the planner.
+    const own = planWithDefect(t, 'phaseb-own-defect', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000)).plan;
+    assert.ok(own.operations.length > 0);
+    assert.ok(own.operations.every(operation => operation.elevated_privilege_required === false));
+    assert.equal(own.status, 'READY');
+
+    // The same tree judged against a foreign runtime identity needs a chown of
+    // the tree back to that identity, and only those operations may carry
+    // privilege.
+    const foreign = planWithDefect(
+        t, 'phaseb-foreign-defect',
+        txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000),
+        { runtimeIdentity: FOREIGN },
+    ).plan;
+    const privileged = foreign.operations.filter(operation => operation.elevated_privilege_required);
+    assert.ok(privileged.length > 0, 'a foreign-owned tree must require elevated privilege');
+    assert.ok(privileged.some(operation => operation.operation === 'CHOWN'), 're-owning the tree must require privilege');
+    assert.ok(privileged.every(operation => planner.ALLOWED_PRIVILEGED_OPERATION_CLASSES.includes(operation.operation)));
+    assert.equal(foreign.target_runtime_identity.uid, FOREIGN.uid);
+
+    // The per-operation flag is the ONLY channel that authorizes privilege: no
+    // operation carries it as anything other than a boolean, and the policy
+    // names it as the sole criterion rather than restating it as a class rule.
+    assert.ok(foreign.operations.every(operation => typeof operation.elevated_privilege_required === 'boolean'));
+    assert.equal(
+        foreign.repair_executor_policy.privileged_permitted_only_for,
+        'operations carrying elevated_privilege_required=true',
+    );
+    // The flag tracks the DECLARED identity, not the planner's own: the very
+    // same tree, judged against the identity that actually owns it, needs no
+    // privilege at all.  A flag derived from process.getuid() would report the
+    // opposite on one side or the other and is the defect this pins shut.
+    const root = tempRoot('phaseb-flag-follows-identity');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000);
+    const asOwner = planner.buildRemediationPlan(evaluate(root, { runtimeIdentity: { ...RUNTIME, groups: [...RUNTIME.groups] } }));
+    assert.ok(asOwner.operations.length > 0);
+    assert.ok(
+        asOwner.operations.every(operation => operation.elevated_privilege_required === false),
+        'the identity that owns the tree needs no privilege to repair it',
+    );
+});
+
+test('20. the repair executor policy is exactly BOUNDED_PRIVILEGED_HOST_EXECUTOR', t => {
+    const { plan } = planWithDefect(t, 'phaseb-executor-policy', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    assert.equal(planner.REPAIR_EXECUTOR_POLICY, 'BOUNDED_PRIVILEGED_HOST_EXECUTOR');
+    const policy = plan.repair_executor_policy;
+    assert.equal(policy.policy, 'BOUNDED_PRIVILEGED_HOST_EXECUTOR');
+    assert.equal(policy.owner_authorization_required, true);
+    assert.equal(policy.exact_plan_only, true);
+    assert.equal(policy.elevated_privilege_authorized_by, 'SEPARATE_OWNER_AUTHORIZED_PHASE_B');
+    // The rejected alternative is named so a reviewer can see it was considered
+    // and refused rather than overlooked.
+    assert.notEqual(policy.policy, 'CAPABILITY_SCOPED_RUNTIME_UID');
+    assert.equal(policy.executor_may_become_proof_identity, false);
+});
+
+test('21. capability injection into the runtime identity is not the canonical design', t => {
+    const { plan } = planWithDefect(t, 'phaseb-capability', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    assert.equal(planner.RUNTIME_CAPABILITY_INJECTION_POLICY, 'FORBIDDEN');
+    assert.equal(plan.repair_executor_policy.runtime_capability_injection, 'FORBIDDEN');
+    assert.equal(plan.repair_executor_policy.privilege_persistence_allowed, false);
+    // The rule is stated where an operator authorizing Phase B reads it, not
+    // only as a constant in the module: a runtime identity that needed a
+    // permanent capability to cold-load would be a worse defect than the one
+    // Phase B repairs.
+    assert.ok(
+        plan.preconditions.some(text => text.includes('must not acquire a persistent capability')),
+        'the no-capability rule must be an explicit Phase B precondition',
+    );
+    // And the capability route is nowhere offered as an allowed operation class.
+    assert.ok(!planner.ALLOWED_PRIVILEGED_OPERATION_CLASSES.some(name => /CAP_/.test(name)));
+});
+
+test('22. privileged mutation is restricted to the three allowed classes', t => {
+    const { plan } = planWithDefect(t, 'phaseb-classes', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    assert.deepEqual(planner.ALLOWED_PRIVILEGED_OPERATION_CLASSES, ['CHOWN', 'REMOVE_EXTENDED_ACL', 'CHMOD']);
+    assert.deepEqual(plan.repair_executor_policy.allowed_operation_classes, ['CHOWN', 'REMOVE_EXTENDED_ACL', 'CHMOD']);
+    // The policy constrains real output rather than sitting beside it: no
+    // emitted operation falls outside the class set.
+    assert.ok(plan.operations.every(operation => planner.ALLOWED_PRIVILEGED_OPERATION_CLASSES.includes(operation.operation)));
+    // Content is never among the classes: the mutation class is metadata only,
+    // on every operation and on every rollback entry.
+    assert.ok(plan.operations.every(operation => operation.content_impact === 'NONE'));
+    assert.equal(plan.applies_content_writes, false);
+});
+
+test('23. recursion, arbitrary paths, a root shell and privilege persistence are all refused', t => {
+    const { plan, report } = planWithDefect(t, 'phaseb-refusals', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    const policy = plan.repair_executor_policy;
+    assert.equal(policy.recursive_mutation_allowed, false);
+    assert.equal(policy.arbitrary_path_allowed, false);
+    assert.equal(policy.unrestricted_root_shell_allowed, false);
+    assert.equal(policy.privilege_persistence_allowed, false);
+
+    // "No arbitrary paths" is only meaningful if every emitted path is inside
+    // the governed root this plan was built from — an operation against a path
+    // outside it is exactly the escape the flag is supposed to forbid.
+    assert.ok(plan.operations.length > 0);
+    assert.ok(plan.operations.every(operation => operation.path.startsWith(report.targets.authorityRoot)));
+    assert.ok(plan.rollback.every(entry => entry.path.startsWith(report.targets.authorityRoot)));
+});
+
+test('24. the planner stays inert and still needs a separate Owner-authorized Phase B', t => {
+    const { plan, root } = planWithDefect(t, 'phaseb-inert', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    assert.equal(plan.mutating, false);
+    assert.equal(plan.execution_authorized, false);
+    assert.equal(plan.execution_requires, 'SEPARATE_OWNER_AUTHORIZED_PHASE_B');
+    assert.equal(plan.applies_content_writes, false);
+
+    // Declaring an executor policy must not smuggle in an executor.  The module
+    // exports no mutating entrypoint, and the CLI refuses an apply mode — so the
+    // new policy is a description of a future bounded procedure, not a callable
+    // one, and there is no repository path from this contract to production.
+    // Only callables are inspected: the policy constants legitimately carry the
+    // word "repair" in their names, and refusing them would be refusing the
+    // declaration this mission requires.
+    const callables = Object.entries(planner).filter(([, value]) => typeof value === 'function').map(([name]) => name);
+    assert.deepEqual(callables.sort(), ['buildRemediationPlan', 'planStatus', 'preContentEvidenceSourceFor', 'preContentEvidenceVerdict']);
+    assert.ok(!callables.some(name => /^(apply|execute|mutate|repair|run|main)/i.test(name)));
+    const refusal = spawnSync(process.execPath, [AUDIT_CLI, 'apply', '--authority-root', root], { encoding: 'utf8' });
+    assert.equal(refusal.status, 1, 'the CLI must refuse an apply mode');
+    assert.ok(`${refusal.stdout}${refusal.stderr}`.includes('unknown or forbidden argument: apply'));
+});
+
+test('25. an ordinarily readable artifact takes its PRE hash from the ordinary runtime read', () => {
+    assert.equal(planner.preContentEvidenceSourceFor({ runtime_read_status: 'HASHED' }), PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY);
+    assert.equal(PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY, 'ORDINARY_RUNTIME_READ');
+    // Readability wins even when the artifact also carries a repair finding: the
+    // ordinary read is PREFERRED, not merely permitted.
+    assert.equal(
+        planner.preContentEvidenceSourceFor({ runtime_read_status: 'HASHED', permission_defect_repaired_by_this_plan: true }),
+        PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY,
+    );
+});
+
+test('26. an EACCES artifact this plan repairs may fall back to a privileged read-only read', () => {
+    const eacces = {
+        runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+        permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
+        symlink_free: true, ancestry_real_directories: true,
+    };
+    assert.equal(planner.preContentEvidenceSourceFor(eacces), PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED);
+    assert.equal(PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED, 'PRIVILEGED_READ_ONLY_EVIDENCE');
+
+    // Every bounded precondition is load-bearing: dropping any one of them
+    // removes the permission to escalate, so no artifact reaches the privileged
+    // reader by a route the contract did not enumerate.
+    for (const missing of ['permission_defect_repaired_by_this_plan', 'dev_inode_bound', 'symlink_free', 'ancestry_real_directories']) {
+        assert.equal(
+            planner.preContentEvidenceSourceFor({ ...eacces, [missing]: false }),
+            null,
+            `${missing} must be required before a privileged read is permitted`,
+        );
+    }
+    // A different errno is a different problem, and none of them is repaired by
+    // a metadata plan, so none of them has a permitted evidence source at all.
+    for (const code of ['EIO', 'ENOENT', 'ELOOP', 'EPERM', null, undefined]) {
+        assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, read_error_code: code }), null);
+    }
+    // An artifact never observed as unreadable is not a fallback case either.
+    assert.equal(planner.preContentEvidenceSourceFor({ runtime_read_status: 'ABSENT', read_error_code: 'EACCES' }), null);
+    assert.equal(planner.preContentEvidenceSourceFor({}), null);
+    assert.equal(planner.preContentEvidenceSourceFor(), null);
+});
+
+test('27. a privileged read cannot stand in for any ordinary-runtime proof', t => {
+    const { plan } = planWithDefect(t, 'phaseb-no-substitution', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    const policy = plan.pre_content_evidence_policy;
+    assert.equal(policy.privileged_reader_may_mutate, false);
+    assert.equal(policy.privileged_read_may_satisfy_runtime_access_proof, false);
+    assert.equal(policy.post_repair_hasher, 'TARGET_RUNTIME_IDENTITY');
+    assert.equal(policy.preferred_reader, 'TARGET_RUNTIME_IDENTITY');
+    assert.equal(plan.repair_executor_policy.executor_may_become_proof_identity, false);
+
+    // What the fallback is scoped to: the repair's own defect, not any file the
+    // privileged reader can reach.
+    assert.equal(policy.eacces_fallback, 'PRIVILEGED_READ_ONLY_EVIDENCE');
+    assert.equal(policy.fallback_evidence_source, 'PRIVILEGED_READ_ONLY_EVIDENCE');
+    assert.ok(policy.fallback_permitted_only_for.includes('cannot read'));
+
+    // The policy must not expose a mutating verb as a capability of the reader:
+    // every key describes reading, recording or refusing, never writing.
+    assert.ok(
+        !Object.keys(policy).some(key => /^(write|mutate|repair|chmod|chown|setfacl|publish|delete)/i.test(key)),
+        'the content-evidence policy must not grant the reader a mutating verb',
+    );
+    assert.ok(
+        plan.postconditions.some(text => text.includes('requires no privileged read')),
+        'the post-repair manifest must be provable without privilege',
+    );
+    assert.ok(
+        plan.preconditions.some(text => text.includes('privileged success is never accepted as evidence')),
+        'privileged success must be refused as access proof',
+    );
+});
+
+test('28. every governed artifact requires a PRE hash and a missing one fails closed', () => {
+    const artifacts = [
+        { path: '/governed/a', runtime_read_status: 'HASHED' },
+        {
+            path: '/governed/b', runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+            permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
+            symlink_free: true, ancestry_real_directories: true,
+        },
+    ];
+    const complete = planner.preContentEvidenceVerdict(artifacts);
+    assert.equal(complete.status, 'READY');
+    assert.equal(complete.governed_artifacts_required, 2);
+    assert.equal(complete.permitted, 2);
+    assert.equal(complete.blocked.length, 0);
+    // Both evidence sources are usable, so the privileged one is exercised by a
+    // real artifact rather than being an unreachable branch.
+    assert.deepEqual(
+        complete.permitted === 2 ? planner.preContentEvidenceVerdict(artifacts).blocked : [],
+        [],
+    );
+    assert.equal(complete.missing_pre_evidence_result, 'BLOCKED');
+
+    // One unprovable artifact blocks the set: the content proof is universal, so
+    // a partial manifest is not a weaker proof, it is no proof.
+    const incomplete = planner.preContentEvidenceVerdict([...artifacts, { path: '/governed/c' }]);
+    assert.equal(incomplete.status, 'BLOCKED');
+    assert.equal(incomplete.governed_artifacts_required, 3);
+    assert.equal(incomplete.permitted, 2);
+    assert.deepEqual(incomplete.blocked.map(entry => entry.path), ['/governed/c']);
+    assert.equal(incomplete.blocked[0].evidence_source, null);
+
+    // An empty set is vacuously complete, which is exactly why the governed
+    // artifact set is enumerated by the audit rather than by this function's
+    // caller — the verdict classifies a set, it does not discover one.
+    assert.equal(planner.preContentEvidenceVerdict([]).status, 'READY');
+    assert.throws(() => planner.preContentEvidenceVerdict(null), error => error.code === 'INVALID_PRE_CONTENT_EVIDENCE_INPUT');
+});
+
+test('29. PRE content evidence binds the path to the observed device and inode', t => {
+    const { plan, report } = planWithDefect(t, 'phaseb-dev-ino', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    assert.equal(plan.pre_content_evidence_policy.require_dev_inode_binding, true);
+    assert.equal(plan.pre_content_evidence_policy.every_governed_artifact_requires_pre_sha256, true);
+
+    // The binding is what makes a PRE hash a statement about an object rather
+    // than about a name: an artifact whose dev/inode was not confirmed has no
+    // permitted evidence source, so a swapped object cannot inherit a hash.
+    const base = {
+        runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+        permission_defect_repaired_by_this_plan: true, symlink_free: true,
+        ancestry_real_directories: true,
+    };
+    assert.equal(planner.preContentEvidenceSourceFor({ ...base, dev_inode_bound: true }), PRE_CONTENT_EVIDENCE_SOURCE.PRIVILEGED);
+    assert.equal(planner.preContentEvidenceSourceFor({ ...base, dev_inode_bound: false }), null);
+
+    // And the real audit really observes the binding, so the requirement is
+    // satisfiable rather than aspirational: every governed surface carries a
+    // device and an inode, and it carries them for the same object the plan
+    // names.
+    assert.ok(report.surfaces.length > 0);
+    for (const surface of report.surfaces) {
+        assert.ok(Number.isInteger(surface.observation.dev), `${surface.spec.path} must bind a device`);
+        assert.ok(Number.isInteger(surface.observation.ino), `${surface.spec.path} must bind an inode`);
+    }
+});
+
+test('30. PRE/POST equality is the invariant, and a manifest commitment cannot replace it', t => {
+    const { plan } = planWithDefect(t, 'phaseb-pre-post', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    const policy = plan.pre_content_evidence_policy;
+    assert.equal(policy.invariant, 'PRE_SHA256 == POST_SHA256 for every governed artifact');
+    // The weakened form is refused by name: a commitment proves what SHOULD be
+    // on disk, never that the bytes a privileged reader saw are the bytes the
+    // ordinary runtime will read.
+    assert.ok(!policy.invariant.includes('manifest'));
+    assert.ok(plan.postconditions.some(text => text.includes('PRE_SHA256 equals POST_SHA256')));
+    assert.ok(plan.postconditions.some(text => text.includes('CONTENT_BYTES_AFTER equals CONTENT_BYTES_BEFORE')));
+    // And it is a postcondition on content, not on metadata.
+    assert.ok(plan.operations.every(operation => operation.content_bytes_must_be_identical === true));
+    assert.ok(plan.rollback.every(entry => entry.content_impact === 'NONE'));
+});
+
+test('31. the authority head, state hash, 903 count and cold-load proofs stay ordinary-runtime', t => {
+    const { plan } = planWithDefect(t, 'phaseb-authority-proof', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
+    const texts = [...plan.preconditions, ...plan.postconditions].join(' | ');
+    assert.ok(texts.includes('the final operational access is proved only by the target runtime identity'));
+    assert.ok(texts.includes('an ordinary cold-load by the target runtime identity reproduces the accepted head transaction'));
+    assert.ok(texts.includes('a fresh process boundary reproduces the same cold-load result'));
+    assert.ok(texts.includes('observation count'));
+
+    // The accepted baseline stays pinned in the machine-readable mission
+    // contract, so a future run cannot quietly substitute a re-derived value for
+    // the accepted one.  OBSERVATION_COUNT=903 in particular cannot be
+    // re-observed while the cold-load fails, so it is preserved as an unchanged
+    // constant rather than re-derived; and the contract names the proofs it
+    // belongs to without ever restating their values as inputs.
+    const missionScope = JSON.parse(fs.readFileSync(
+        path.join(__dirname, '..', '..', '..', 'docs', 'agentic', 'missions', 'STAGE_D_BLOCKER_2_PHASE_B_PRIVILEGE_AND_CONTENT_PROOF_CONTRACT_REMEDIATION.json'),
+        'utf8',
+    ));
+    const invariants = missionScope.protected_invariants.join(' | ');
+    for (const value of [
+        'OBSERVATION_COUNT=903',
+        'ed014a6f151143aa30cefcebc47374059aa18c38a83560610571331a665199e4',
+        '89e4276c8fe637318339821fe40d783d2f7fd8de65f6fc593b2035bd9445dad3',
+    ]) {
+        assert.ok(invariants.includes(value), `${value} must remain the accepted authority value`);
+    }
+    assert.ok(missionScope.protected_invariants.some(text => text.includes('ordinary-runtime only')));
+
+    // No privileged role is named as a producer of any of those proofs: the
+    // substitution this test forbids is the one the mission's review focus calls
+    // out by name.
+    assert.ok(!/privileged[^.]{0,120}(satisf|count as|qualif)[^.]{0,120}(head|state hash|observation|cold-load)/i.test(texts));
+    assert.equal(plan.pre_content_evidence_policy.privileged_read_may_satisfy_runtime_access_proof, false);
+});
+
+test('32. the reviewer severity semantics this contract is reviewed under are untouched', () => {
+    // This change must not alter how P0/P1/P2 reviewer findings are classified.
+    // The planner is what changed, so the check is that it introduces no second
+    // severity vocabulary that could be confused with the reviewer's.
+    const source = fs.readFileSync(PLAN_MODULE, 'utf8');
+    for (const reviewerToken of [/\bP0\b/, /\bP1\b/, /\bP2\b/, /\bP3\b/]) {
+        assert.ok(!reviewerToken.test(source), 'the planner must not classify reviewer severities');
+    }
+    // Its own blocking vocabulary is plan statuses and finding codes, and the
+    // new evidence policy reuses them rather than inventing a second scale.
+    assert.equal(planner.preContentEvidenceVerdict([]).missing_pre_evidence_result, 'BLOCKED');
+    assert.ok(planner.BLOCKING_FINDING_CODES instanceof Set);
+    assert.ok(![...planner.BLOCKING_FINDING_CODES].some(code => /^P\d$/.test(code)));
+});
+
+test('33. existing Phase A permission contract behaviour is unchanged', t => {
+    // The Phase A tests in this file must stay green.  The two properties most
+    // at risk from this change are the inertness of the plan and the mode
+    // postconditions, so both are re-asserted here against a clean tree and
+    // against a damaged one.
+    const root = tempRoot('phaseb-phasea-parity');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const clean = planner.buildRemediationPlan(evaluate(root));
+    assert.equal(clean.operations.length, 0);
+    assert.equal(clean.mutating, false);
+    assert.equal(clean.execution_authorized, false);
+    assert.equal(clean.execution_requires, 'SEPARATE_OWNER_AUTHORIZED_PHASE_B');
+    // The new fields are additive: a plan that needs nothing still reports them.
+    assert.ok(clean.repair_executor_policy && clean.pre_content_evidence_policy && clean.target_runtime_identity);
+
+    fs.chmodSync(path.join(txPath, 'metadata.json'), 0o600);
+    const damaged = planner.buildRemediationPlan(evaluate(root));
+    assert.ok(damaged.operations.length > 0);
+    for (const operation of damaged.operations.filter(item => item.operation === 'CHMOD')) {
+        const spec = evaluate(root).surfaces.find(item => item.spec.path === operation.path).spec;
+        assert.equal(operation.post.mode, spec.exact_mode);
+    }
+    assert.equal(damaged.rollback.length, damaged.operations.length);
+});

@@ -395,6 +395,17 @@ Status after this contract was added: `BLOCKER_2_PHASE_A_IMPLEMENTED=YES`,
 the production authority remains a separate, separately authorized Phase B host
 procedure.
 
+Status after the Phase B privilege and content-proof remediation below: the first
+Owner-authorized Phase B preflight ran read-only through its pre-mutation recheck
+and stopped **before any mutation** at a design gate, because the Phase B
+preconditions as originally written required the repair process to run as the
+runtime uid/gid while every operation the planner emits against the real
+production plan requires elevated privilege. Production was left untouched
+(`PRODUCTION_PERMISSION_MUTATED=NO`, `PRODUCTION_CONTENT_MUTATED=NO`). That
+precondition has been replaced by the explicit three-role identity model below.
+`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`, `BLOCKER_2=OPEN`,
+`GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED` are unchanged.
+
 ### Phase B host remediation procedure (specified here, not executed, not authorized)
 
 Phase A emits a plan and cannot apply one. Applying it is a separate
@@ -408,22 +419,107 @@ PHASE_B_CONTENT_WRITE=FORBIDDEN
 PHASE_B_RECURSIVE_CHMOD_CHOWN=FORBIDDEN
 PHASE_B_EXECUTION_AUTHORIZED=NO
 PHASE_B_REQUIRES=OWNER_AUTHORIZATION_AND_EXACT_PRECHECK_EVIDENCE
+PHASE_B_REPAIR_EXECUTOR_POLICY=BOUNDED_PRIVILEGED_HOST_EXECUTOR
+PHASE_B_RUNTIME_CAPABILITY_INJECTION=FORBIDDEN
+PHASE_B_ALLOWED_OPERATION_CLASSES=CHOWN,REMOVE_EXTENDED_ACL,CHMOD
+PHASE_B_EXECUTOR_IS_PROOF_IDENTITY=NO
 ```
 
+#### Phase B identity model — three roles, never collapsed
+
+An earlier revision of this section required "the repair process runs as the
+runtime uid/gid that will cold-load the authority". That requirement is
+unsatisfiable against the defect it exists to repair and has been removed: a
+governed package published by a root-running publisher is owned by uid 0, and the
+identity that cannot read it is by construction the identity that cannot
+`chown`, `chmod` or `setfacl` it either. Requiring the two to be the same process
+forbade every operation the planner emits. The three roles are now stated
+separately, and the planner emits them as machine-readable fields
+(`target_runtime_identity`, `repair_executor_policy`,
+`pre_content_evidence_policy`).
+
+**`TARGET_RUNTIME_IDENTITY`** is the ordinary identity that must own the repaired
+governed surfaces and must cold-load the accepted authority afterwards. It is
+freshly resolved at each Phase B execution from the authority anchor's owner —
+never hard-coded — and it must not acquire a permanent elevated capability in
+order to make Phase B work. It, and only it, performs the ordinary cold-load and
+the fresh-process cold-load that constitute the access proof.
+
+**`REPAIR_EXECUTOR_IDENTITY`** is a temporary, bounded, privileged host principal
+whose existence is scoped to the repair window and whose authority is the
+planner's exact output and nothing else. Its canonical policy is
+`BOUNDED_PRIVILEGED_HOST_EXECUTOR`. It is authorized to apply only operations the
+planner emitted, only when that operation carries
+`elevated_privilege_required=true`, and only within the classes `CHOWN`,
+`REMOVE_EXTENDED_ACL` and `CHMOD`. It may not choose arbitrary paths, add
+operations, recurse, open an exploratory root shell, rewrite content, create or
+delete a transaction, edit `STORE.json` or the allocation authority, or make a
+provider or network request; its privilege ends when the bounded operation set
+ends. **It is never the proof identity**: privileged success is not evidence that
+the target runtime identity can read the authority, and a cold-load that
+succeeded as the executor proves nothing about production.
+
+A capability injected into the Stage D runtime identity (`CAP_CHOWN`,
+`CAP_FOWNER`) is explicitly **not** the canonical design. It would leave every
+future publication and cold-load running under a permanent capability this
+contract never described, which is a worse defect than the one Phase B repairs.
+`RUNTIME_CAPABILITY_INJECTION_POLICY=FORBIDDEN`.
+
+**`PRE_REPAIR_CONTENT_EVIDENCE_READER`** is a distinct role for content evidence
+collection, separate from both runtime validation and metadata mutation. It uses
+an ordinary runtime read wherever that works. Only for a governed artifact that
+is `EACCES` to the target runtime identity *because of the permission defect this
+plan repairs* may it fall back to a privileged **read-only** open, and then only
+to stream the existing inode's bytes into a SHA-256 and close. It may not write,
+truncate, rename, copy over, `chmod`, `chown`, `setfacl`, repair metadata or
+content, or publish; and it may not satisfy any runtime-access, transaction-head,
+authority-state-hash or observation-count proof.
+
 **Preconditions.** The accepted authority identity is unchanged and the exact
-main revision equals the authorizing revision; the repair process runs as the
-runtime uid/gid that will cold-load the authority; the governed roots are on the
-expected filesystem device; no Stage D run is active (the run lock is absent or
-already reconciled), the scheduler is disabled and no provider request is
-authorized; and the pre-repair evidence below has already been captured outside
-the tree that will be mutated.
+main revision equals the authorizing revision; the target runtime identity is the
+ordinary uid/gid that must cold-load the authority after repair and holds no
+persistent elevation; metadata mutation, where an operation requires it, is
+performed by the separately bounded privileged host executor above under a
+separate Owner-authorized Phase B authorization, and never becomes the proof
+identity; the governed roots are on the expected filesystem device; no Stage D
+run is active (the run lock is absent or already reconciled), the scheduler is
+disabled and no provider request is authorized; and the pre-repair evidence below
+has already been captured outside the tree that will be mutated.
 
 **Pre-repair evidence.** A full governed-path metadata manifest (path, object
 type, uid, gid, mode, device, inode, link count), a content SHA-256 manifest for
 every governed artifact, the cold-load status of the authority as the runtime
-identity, and the `STORE.json` and allocation-authority hashes. The authority
-head/state hash is recorded only if it is readable through an already privileged
-evidence source; it is never obtained by escalating.
+identity, and the `STORE.json` and allocation-authority hashes.
+
+*Content hashes are never optional.* Every governed artifact must carry a
+`PRE_CONTENT_SHA256`, and the manifest records for each one which role produced
+it — `ORDINARY_RUNTIME_READ` or `PRIVILEGED_READ_ONLY_EVIDENCE`. An artifact whose
+pre-repair hash is missing is a blocking finding; the repair does not proceed and
+no operation is applied against it. The weaker invariant "the post-repair content
+manifest matches the manifest commitment" is **not** accepted as a substitute:
+a commitment cannot prove that the bytes a privileged reader saw are the bytes
+the ordinary runtime identity will later read. The proof is `PRE_SHA256 ==
+POST_SHA256` per artifact, with the post-repair hash taken by the target runtime
+identity through an ordinary read, so `POST == manifest commitment` is only ever
+a second, independent check.
+
+Every artifact the target runtime identity can read is hashed by it, and that
+hash's evidence source is `ORDINARY_RUNTIME_READ`. Only an artifact whose read
+fails with `EACCES` *because of the permission defect this plan repairs* — the
+defect being a mode/ownership/ACL finding the plan repairs for that exact path,
+with the artifact bound to its observed device and inode, symlink-free, beneath
+real directories — falls back to `PRIVILEGED_READ_ONLY_EVIDENCE` through the
+`PRE_REPAIR_CONTENT_EVIDENCE_READER` role above. A read that failed for any other
+reason (`EIO`, a missing path, a symlink, an unbound observation) has no
+permitted evidence source and blocks. The fallback is read-only by construction
+and is recorded per artifact, so the privileged surface of a Phase B execution is
+auditable from the evidence root alone.
+
+The authority head/state hash is recorded only if it is readable through an
+already privileged evidence source; it is never obtained by escalating. A
+privileged read is content evidence only: it can never satisfy the runtime-access,
+transaction-head, authority-state-hash, observation-count or cold-load proofs,
+which the `TARGET_RUNTIME_IDENTITY` must produce for itself.
 
 The evidence capture must run where extended ACLs are observable. `getfacl` is
 part of the `acl` package and is absent from the dev container, so a run inside
@@ -450,12 +546,43 @@ forbidden: an exact validated allow-list is enumerated first and every object is
 verified individually. An operation whose `pre` observation no longer matches at
 apply time aborts the procedure rather than being forced.
 
+The mutations are applied by the `REPAIR_EXECUTOR_IDENTITY` under
+`BOUNDED_PRIVILEGED_HOST_EXECUTOR`, whose authority is the planner's exact output
+and nothing else. It applies an operation only when that operation carries
+`elevated_privilege_required=true`, and only within `CHOWN`,
+`REMOVE_EXTENDED_ACL` and `CHMOD`. It may not add, reorder or widen operations,
+resolve a path other than the one recorded, follow a symlink, recurse, open an
+exploratory root shell, run a package manager, touch the network, or read or
+write any path outside the enumerated set. Its elevation is scoped to the bounded
+operation set and ends with it: no file capability is left on any binary, no
+`setuid` helper is installed, and no capability is granted to the Stage D runtime
+identity. It must not become the proof identity — a cold-load that succeeded as
+the executor, and in particular as root, is **not** evidence that the target
+runtime identity can cold-load the authority, and no root cold-load may be
+reported as the access proof.
+
+Every privileged mutation is journalled before and after it is applied, with the
+exact argv, the observed `pre` and resulting `post` metadata, and the rollback
+entry that undoes it. If the executor's privilege is unavailable when an
+operation needs it, the operation is not attempted with reduced semantics and the
+procedure stops. If the plan, the observed metadata or the executor's own
+identity drifts mid-procedure, the procedure stops rather than adapting, and a
+partial application is recovered only by replaying the exact rollback entries of
+the operations that were actually applied, in the planner's rollback order.
+
 **Post-repair proof.** A metadata manifest matching the contract's
-postconditions; a content SHA-256 manifest byte-identical to the pre-repair one
-(`CONTENT_BYTES_BEFORE == CONTENT_BYTES_AFTER`); a successful ordinary cold-load
-by the runtime identity; and exact reproduction of the accepted authority head,
+postconditions; a content SHA-256 manifest in which every artifact's
+`POST_CONTENT_SHA256` equals its recorded `PRE_CONTENT_SHA256`, taken by the
+target runtime identity through an ordinary read, so
+`CONTENT_BYTES_BEFORE == CONTENT_BYTES_AFTER`; a successful ordinary cold-load by
+the runtime identity; and exact reproduction of the accepted authority head,
 state hash, `OBSERVATION_COUNT=903`, `STORE_SHA256` and
 `ALLOCATION_AUTHORITY_SHA256`, repeated across a fresh process boundary.
+
+The post-repair manifest requires no privileged read at all: if any artifact
+still cannot be hashed by the target runtime identity after the repair, the
+repair did not achieve its purpose regardless of what the executor observed, and
+the result is `BLOCKED` rather than a passing proof.
 
 **Rollback.** The planner pairs every operation with a metadata-only rollback
 entry carrying the original uid/gid/mode/device/inode. Rollback is emitted in
