@@ -2365,6 +2365,20 @@ function planWithDefect(t, label, mutate, evaluateOptions = {}) {
     return { plan: planner.buildRemediationPlan(report), report, root, txPath };
 }
 
+// One entry of the evidence manifest, read out of the real audit CLI rather than
+// synthesised — so a test about PRE content evidence is a test about the
+// vocabulary the repository actually emits.
+function planManifestEntry(root, target) {
+    const result = spawnSync(process.execPath, [
+        AUDIT_CLI, '--authority-root', root, '--mode', 'audit', '--json',
+        '--allocation-authority', path.join(root, 'allocation.authority.json'),
+    ], { encoding: 'utf8' });
+    const parsed = JSON.parse(result.stdout);
+    const entry = (parsed.content_hashes || {})[target];
+    assert.ok(entry, `${target} must appear in the audit's content-hash manifest`);
+    return entry;
+}
+
 test('17. the planner no longer requires the repair executor to be the runtime identity', t => {
     const { plan } = planWithDefect(t, 'phaseb-precondition', txPath => fs.chmodSync(path.join(txPath, 'COMMITTED'), 0o000));
     // The contract now carries the three roles as machine-readable output, so
@@ -2552,20 +2566,31 @@ test('24. the planner stays inert and still needs a separate Owner-authorized Ph
     assert.ok(`${refusal.stdout}${refusal.stderr}`.includes('unknown or forbidden argument: apply'));
 });
 
-test('25. an ordinarily readable artifact takes its PRE hash from the ordinary runtime read', () => {
-    assert.equal(planner.preContentEvidenceSourceFor({ runtime_read_status: 'HASHED' }), PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY);
+test('25. an ordinarily readable artifact takes its PRE hash from the ordinary runtime read', t => {
+    const root = tempRoot('phaseb-manifest-vocabulary');
+    t.after(() => cleanup(root));
+    const txPath = buildCompliantAuthority(root);
+    const target = path.join(txPath, 'manifest.json');
+    // The evidence manifest reuses the audit CLI's own vocabulary rather than
+    // inventing a parallel one, so an entry the CLI really produced is what the
+    // classifier is asked about here — not a shape written to match it.
+    const observed = planManifestEntry(root, target);
+    assert.equal(observed.status, 'HASHED');
+    assert.ok(observed.sha256);
+    assert.equal(planner.preContentEvidenceSourceFor(observed), PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY);
     assert.equal(PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY, 'ORDINARY_RUNTIME_READ');
-    // Readability wins even when the artifact also carries a repair finding: the
-    // ordinary read is PREFERRED, not merely permitted.
+
+    // A readable artifact that also carries a repair finding still uses the
+    // ordinary read: it is PREFERRED, not merely permitted.
     assert.equal(
-        planner.preContentEvidenceSourceFor({ runtime_read_status: 'HASHED', permission_defect_repaired_by_this_plan: true }),
+        planner.preContentEvidenceSourceFor({ ...observed, permission_defect_repaired_by_this_plan: true }),
         PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY,
     );
 });
 
 test('26. an EACCES artifact this plan repairs may fall back to a privileged read-only read', () => {
     const eacces = {
-        runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+        status: 'NOT_READABLE', read_error_code: 'EACCES',
         permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
         symlink_free: true, ancestry_real_directories: true,
     };
@@ -2588,7 +2613,7 @@ test('26. an EACCES artifact this plan repairs may fall back to a privileged rea
         assert.equal(planner.preContentEvidenceSourceFor({ ...eacces, read_error_code: code }), null);
     }
     // An artifact never observed as unreadable is not a fallback case either.
-    assert.equal(planner.preContentEvidenceSourceFor({ runtime_read_status: 'ABSENT', read_error_code: 'EACCES' }), null);
+    assert.equal(planner.preContentEvidenceSourceFor({ status: 'ABSENT', read_error_code: 'EACCES' }), null);
     assert.equal(planner.preContentEvidenceSourceFor({}), null);
     assert.equal(planner.preContentEvidenceSourceFor(), null);
 });
@@ -2626,9 +2651,9 @@ test('27. a privileged read cannot stand in for any ordinary-runtime proof', t =
 
 test('28. every governed artifact requires a PRE hash and a missing one fails closed', () => {
     const artifacts = [
-        { path: '/governed/a', runtime_read_status: 'HASHED' },
+        { path: '/governed/a', status: 'HASHED' },
         {
-            path: '/governed/b', runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+            path: '/governed/b', status: 'NOT_READABLE', read_error_code: 'EACCES',
             permission_defect_repaired_by_this_plan: true, dev_inode_bound: true,
             symlink_free: true, ancestry_real_directories: true,
         },
@@ -2671,7 +2696,7 @@ test('29. PRE content evidence binds the path to the observed device and inode',
     // than about a name: an artifact whose dev/inode was not confirmed has no
     // permitted evidence source, so a swapped object cannot inherit a hash.
     const base = {
-        runtime_read_status: 'NOT_READABLE', read_error_code: 'EACCES',
+        status: 'NOT_READABLE', read_error_code: 'EACCES',
         permission_defect_repaired_by_this_plan: true, symlink_free: true,
         ancestry_real_directories: true,
     };

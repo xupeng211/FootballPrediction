@@ -394,6 +394,25 @@ function surfaceObservationIndex(report) {
 // allowed to come from.  Returns the source, or null to mean BLOCKED — never a
 // silent omission and never a guess.
 //
+// The input is one entry of the evidence manifest a Phase B execution collects,
+// and it reuses the vocabulary the audit CLI already emits rather than inventing
+// a parallel one:
+//
+//   `status` and `read_error_code`
+//        the same pair the CLI's `content_hashes` manifest carries for every
+//        governed artifact (`HASHED`, `NOT_READABLE`, or a reason it could not
+//        be hashed at all), so an artifact the audit could not read keeps its
+//        place in the manifest instead of dropping out of it.
+//   `permission_defect_repaired_by_this_plan`
+//        whether an operation in THIS plan repairs the very permission finding
+//        that made the read fail.  It is the plan's own linkage between the
+//        blocked read and the repair, and it is what confines the fallback to
+//        the defect Phase B exists to fix.
+//   `dev_inode_bound`, `symlink_free`, `ancestry_real_directories`
+//        the three facts the audit already establishes for a governed surface
+//        (device/inode identity, a non-symlink leaf, real-directory ancestors),
+//        restated here as preconditions of the privileged open.
+//
 // The ordinary runtime read is tried first and is the only source that also
 // demonstrates the runtime could read the artifact.  The privileged fallback
 // exists because the artifact Phase B repairs is precisely the one the ordinary
@@ -404,8 +423,8 @@ function surfaceObservationIndex(report) {
 // object, a non-regular file, a symlink, an unbound dev/inode, a broken ancestry
 // — is blocked rather than escalated.
 function preContentEvidenceSourceFor(artifact = {}) {
-    if (artifact.runtime_read_status === 'HASHED') return PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY;
-    if (artifact.runtime_read_status !== 'NOT_READABLE') return null;
+    if (artifact.status === 'HASHED') return PRE_CONTENT_EVIDENCE_SOURCE.ORDINARY;
+    if (artifact.status !== 'NOT_READABLE') return null;
     if (artifact.read_error_code !== 'EACCES') return null;
     if (artifact.permission_defect_repaired_by_this_plan !== true) return null;
     if (artifact.dev_inode_bound !== true) return null;
