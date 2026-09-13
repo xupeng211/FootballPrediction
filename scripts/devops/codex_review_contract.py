@@ -31,7 +31,16 @@ REVIEW_CHALLENGE_VERSION = "codex-independent-review-challenge/v2"
 # from user config, account default, catalog priority or environment: the exact
 # model and reasoning effort are part of the review contract, and changing
 # either is an explicit, reviewable workflow change.
-REVIEW_MODEL_PINNED = "gpt-6-astra"
+#
+# The pinned model is the only reviewer identity this workflow accepts, and
+# there is deliberately no automatic fallback to a previously pinned model: a
+# fallback chosen at runtime would make the executed model depend on
+# availability and would let a receipt describe a policy that was not the
+# approved one.  Receipts recorded under a retired pin remain genuine
+# historical evidence, but they classify as ``STALE_TOOLING`` and can never
+# satisfy a current exact-head approval; switching models again is a Controller
+# / Owner policy decision, not a runtime behaviour.
+REVIEW_MODEL_PINNED = "gpt-5.6-terra"
 REVIEW_REASONING_EFFORT_PINNED = "medium"
 REVIEW_MODEL_FLAG = "-m"
 REVIEW_EFFORT_CONFIG_KEY = "model_reasoning_effort"
