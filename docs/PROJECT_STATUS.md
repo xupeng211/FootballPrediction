@@ -70,8 +70,7 @@ audit（`scripts/ops/stage_d_runtime_filesystem_audit.js`）：它除了 publish
 还拒绝 anchor 或 `.staging` 上的 default ACL（会被下一个 package 继承）以及会清除 owner
 bits 的 effective umask；ancestor 的 ACL 证据缺失同样是阻塞 finding，不退回 mode bits 推断。
 该 Phase A **没有**修改任何 production 文件系统的 ownership 或 mode：
-`BLOCKER_2_PHASE_A_IMPLEMENTED=YES`、`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
-`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`。
+`BLOCKER_2_PHASE_A_IMPLEMENTED=YES`。
 
 第一次经 Owner 授权的 Phase B preflight 只读执行到 mutation 之前，即在 design gate 停止：原 contract
 的 precondition 要求 repair 以将 cold-load 的 runtime uid/gid 运行，而 planner 对 production plan
@@ -83,9 +82,28 @@ privilege 与 content-proof contract remediation：Phase B identity 拆成
 `BOUNDED_PRIVILEGED_HOST_EXECUTOR`）和 `PRE_REPAIR_CONTENT_EVIDENCE_READER` 三个角色，禁止把
 `CAP_CHOWN`/`CAP_FOWNER` 注入 runtime identity，并规定 EACCES governed artifact 的 PRE hash 可由
 bounded privileged read-only reader 采集、而 transaction head / state hash / 903 / cold-load /
-fresh-process 证明仍必须由 ordinary runtime identity 独立产生。修复 production authority metadata
-仍是另一个必须**单独重新授权**的 Phase B host procedure：`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
-`BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED`、`PHASE_B_COMPLETE=NO`。
+fresh-process 证明仍必须由 ordinary runtime identity 独立产生。
+
+随后在绑定的 authorizing main `c86a2b567b55bcf314a136e73bd9d5e5d231ed7e` 上，一次**单独 Owner
+授权**的 Phase B host procedure 执行了 production metadata 修复，并已通过 execution closeout 与
+deviation adjudication。planner 的 9 个 planned operation 中实际执行 8 个（7 × `CHOWN` +
+1 × `REMOVE_EXTENDED_ACL`，`CHMOD=0`）：唯一的第 9 个 operation（`seq=3 CHMOD`）其 contract
+postcondition `0700` 已被同路径上授权的 `REMOVE_EXTENDED_ACL` 副作用满足，重新推导的 canonical
+plan 已不再发出该 operation，因此**没有**执行任何多余的第九次 mutation。执行中出现两次 executor
+验证逻辑误判（`CONTRACT_POSTCONDITION` 的 mode 被过早比较；`setfacl -b` 合法改写 mode 后被当作
+drift），两次 halt 均未产生错误的 production 状态，rollback 因此未触发，其 rollback manifest
+未被使用。修复后 ordinary runtime identity 可独立 cold-load authority，且内容字节不变。
+
+`BLOCKER_2_PRODUCTION_REMEDIATION=EXECUTED_AND_VERIFIED`、
+`BLOCKER_2_RUNTIME_PERMISSION_CONTRACT=COMPLIANT`、`BLOCKER_2_CONTENT_IMMUTABILITY=PASS`、
+`BLOCKER_2_AUTHORITY_IDENTITY_PRESERVED=PASS`、`BLOCKER_2_ORDINARY_RUNTIME_COLD_LOAD=PASS`、
+`BLOCKER_2_FRESH_PROCESS_PROOF=PASS`、`BLOCKER_2_POST_REPAIR_PLAN=NOT_REQUIRED`、
+`PHASE_B_CLOSEOUT=ACCEPTED_WITH_DOCUMENTED_EXECUTION_DEVIATION`、`BLOCKER_2=CLOSED`、
+`PHASE_B_COMPLETE=YES`。`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为
+Blocker #3（authority 与 evidence 仍在同一 physical failure domain）仍然 OPEN；本次 closeout
+没有选择 backup target、没有复制数据、没有 restore，也没有改动 retention/RPO/RTO，并且没有启动
+Stage D、provider request、quota 消耗或 scheduler。证据、偏差裁定与 no-precedent 规则见
+[`Stage D Blocker #2 Phase B closeout`](data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md)。
 
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
