@@ -100,19 +100,26 @@ ledger/verified-quota fail-close 实现，以及唯一的
 - 指定不同物理故障域的 independent backup target。
 - 批准 retention / RPO / RTO（当前仅有 proposal）。
 - 轮换已暴露的 provider credential；任何 live 使用前必须完成。
-- 将已实现的 Blocker #2 runtime filesystem permission contract 应用到 production authority：
-  Phase A（contract + 只读 audit + inert remediation plan + binder publication audit）已完成且未改动
-  任何 production ownership/mode。第一次经 Owner 授权的 Phase B preflight 只读执行到 mutation 之前
-  即停在 design gate：原 contract 要求 repair 以 runtime uid/gid 运行，而 planner 对该 production
-  plan 发出的每个 operation 都要求 elevated privilege，两者无法同时满足；因此在**未做任何 mutation**
-  的情况下停止（`PRODUCTION_PERMISSION_MUTATED=NO`、`PRODUCTION_CONTENT_MUTATED=NO`）。该 precondition
-  已改为显式的三身份模型（`TARGET_RUNTIME_IDENTITY` / `REPAIR_EXECUTOR_IDENTITY` /
-  `PRE_REPAIR_CONTENT_EVIDENCE_READER`，其中 repair executor policy 为
-  `BOUNDED_PRIVILEGED_HOST_EXECUTOR`），pre-repair content proof 也补齐了 EACCES artifact 的
-  privileged read-only 证据来源；contract remediation 已在仓库内实现。把 plan 变成实际 metadata
-  修复仍是必须**单独重新授权**的 Phase B host procedure：`BLOCKER_2_PRODUCTION_REMEDIATION=NOT_EXECUTED`、
-  `BLOCKER_2=OPEN`、`GATE_2=NOT_ACCEPTED`、`PHASE_B_COMPLETE=NO`。
-- 指定不同物理故障域并完成 isolated restore proof（Blocker #3）。
+- Blocker #2 的 runtime filesystem permission **已完成并 closeout**（不再是剩余门禁）：Phase A
+  （contract + 只读 audit + inert remediation plan + binder publication audit）完成；第一次经 Owner
+  授权的 Phase B preflight 只读执行到 mutation 之前即停在 design gate——原 contract 要求 repair 以
+  runtime uid/gid 运行，而 planner 对该 production plan 发出的每个 operation 都要求 elevated
+  privilege——当时**未做任何 mutation**（`PRODUCTION_PERMISSION_MUTATED=NO`、
+  `PRODUCTION_CONTENT_MUTATED=NO`）；该 precondition 随后改为显式三身份模型
+  （`TARGET_RUNTIME_IDENTITY` / `REPAIR_EXECUTOR_IDENTITY` / `PRE_REPAIR_CONTENT_EVIDENCE_READER`，
+  repair executor policy 为 `BOUNDED_PRIVILEGED_HOST_EXECUTOR`），pre-repair content proof 也补齐了
+  EACCES artifact 的 privileged read-only 证据来源。绑定 authorizing main
+  `c86a2b567b55bcf314a136e73bd9d5e5d231ed7e` 的、**单独 Owner 授权**的 Phase B host procedure
+  已完成 production metadata 修复：9 个 planned operation 中执行 8 个（7 × `CHOWN` +
+  1 × `REMOVE_EXTENDED_ACL`，`CHMOD=0`），第 9 个（`seq=3 CHMOD`）的 contract postcondition `0700`
+  已由同路径授权的 `REMOVE_EXTENDED_ACL` 副作用满足，重新推导的 canonical plan 已不再发出它，
+  故**未**执行任何多余 mutation；两次 executor 验证逻辑误判未产生错误状态，rollback 未触发。
+  修复后 ordinary runtime identity 可独立 cold-load authority（`tx_0ba8d4ad…`/`903`），9/9 内容
+  `PRE_SHA256 == POST_SHA256`，post-repair plan 为 `NOT_REQUIRED`/`0`。状态：
+  `BLOCKER_2_PRODUCTION_REMEDIATION=EXECUTED_AND_VERIFIED`、`BLOCKER_2=CLOSED`、
+  `PHASE_B_COMPLETE=YES`；`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为 Gate 2 的
+  接受仍取决于下列 Blocker #3。详见 `docs/data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`。
+- 指定不同物理故障域并完成 isolated restore proof（Blocker #3；Gate 2 接受的前置条件）。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
 本轮已把 Owner 声明的 `STARTER_FREE / 500` 计划、`50` safety reserve、`450`
