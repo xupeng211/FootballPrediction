@@ -31,7 +31,7 @@ const { ALLOCATION_FILE } = require('./snapshotInputs');
 const { assertTransportContract, SnapshotIntegrityError } = require('./transport');
 const { assertNotGovernedProductionPath, isGovernedProductionPath, realLocationOf } = require('./localTransport');
 const { assertGenerationId, sha256Hex } = require('./snapshotManifest');
-const { loadAcceptedManifest } = require('./snapshotVerifier');
+const { assertSnapshotVerification, loadAcceptedManifest, verifySnapshot } = require('./snapshotVerifier');
 
 const RESTORE_VERSION = 'stage-d-independent-backup-restore/v1';
 
@@ -436,6 +436,50 @@ function relocateRestoredReport(report, destinationRoot, manifest) {
 async function executeRestore({ transport, snapshotId, destinationRoot, sourceRoots = [], includeFreshProcess = false, spawn = spawnSync, execPath = process.execPath } = {}) {
     assertTransportContract(transport);
     assertGenerationId(snapshotId);
+
+    // The precondition is the canonical verification, not the completeness
+    // marker.
+    //
+    // `loadAcceptedManifest` answers "was this generation sealed?": the marker
+    // exists and is structurally valid, it names the manifest that exists, and
+    // the manifest is byte for byte the one the marker bound.  It is
+    // deliberately not the whole contract.  The marker/manifest identity
+    // agreement, the artifact hashes and sizes, the required categories, the
+    // exact object set and the source summary are `verifySnapshot`'s, and the
+    // manifest validator leaves them there on purpose so each keeps its own
+    // failure code.
+    //
+    // Restoring on the marker alone therefore admitted a generation the
+    // canonical verifier refuses: an object no manifest entry accounts for, or
+    // a marker whose counts disagree with the manifest it binds, still
+    // materialized a complete restored tree, because the restore path never
+    // asked the question that would have refused it.
+    //
+    // The gate is `verifySnapshot` itself rather than a second implementation
+    // of it.  A restore-local re-check would be a second opinion free to drift
+    // from the canonical one, and the two would disagree silently; asking the
+    // canonical verifier is what makes it impossible for the restore path to
+    // accept a generation that `stage_d_restore_verify.js --verify-only`
+    // rejects.
+    //
+    // Nothing is admitted before it.  The destination is not evaluated, no
+    // staging directory is created and no object is read for materialization
+    // until the verifier has returned PASS; a generation that fails is refused
+    // with the verifier's own failure codes, and the destination is left
+    // exactly as it was found.
+    //
+    // This is an admission gate, not an atomic verify-and-restore.  What it
+    // guarantees is bounded by the transport: create-only writes and no delete
+    // verb, with a generation id that is never reused, so the objects verified
+    // here are the objects read below.  Where the store is a local filesystem,
+    // each object's size and hash are re-checked as it is written and the whole
+    // tree is proved again through the canonical readers before the commit, so
+    // a swap performed through the transport is caught before anything is
+    // committed -- but the window is not claimed to be closed against a process
+    // that mutates the store's directory directly, which is outside this
+    // module's threat model and has write authority there already.
+    const verification = assertSnapshotVerification(await verifySnapshot({ transport, snapshotId }));
+
     const { manifest, manifest_sha256: manifestSha256 } = await loadAcceptedManifest({ transport, snapshotId });
 
     const resolvedDestination = assertFreshDestination(destinationRoot, { sourceRoots });
@@ -459,6 +503,11 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
         ...report,
         snapshot_id: snapshotId,
         manifest_sha256: manifestSha256,
+        // The verification this restore was admitted on, carried into the
+        // report so the restored tree arrives with the proof that the gate ran
+        // and on what evidence it passed -- a caller holding only the report can
+        // see which generation was verified and against which object set.
+        snapshot_verification: verification,
         restored_object_count: written.length,
         transport: transport.describe(),
     });

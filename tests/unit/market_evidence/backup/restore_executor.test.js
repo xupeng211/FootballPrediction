@@ -20,7 +20,8 @@ test.after(() => {
 const { createLocalTransport } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { writeSnapshot } = require('../../../../src/infrastructure/market_evidence/backup/snapshotWriter');
-const { loadAcceptedManifest } = require('../../../../src/infrastructure/market_evidence/backup/snapshotVerifier');
+const { loadAcceptedManifest, verifySnapshot } = require('../../../../src/infrastructure/market_evidence/backup/snapshotVerifier');
+const { buildCompletenessMarker, payloadObjectKey } = require('../../../../src/infrastructure/market_evidence/backup/snapshotManifest');
 const {
     DIRECTORY_MODE,
     FILE_MODES,
@@ -224,6 +225,13 @@ test('a destination must be supplied explicitly', () => {
     }
 });
 
+// These two assert a corrupt generation cannot be restored, and they assert it
+// through the canonical verifier's own failure code rather than the restore's
+// wording.  The check moved: a restore used to read the artifacts and discover
+// the problem itself, and now the generation is refused before the destination
+// is even evaluated.  The property is the same and is checked earlier, so the
+// assertion names the reason (`ARTIFACT_MISSING`, `ARTIFACT_HASH_MISMATCH`)
+// instead of the layer that happened to notice it.
 test('a restore of a generation whose artifact is missing fails closed', async t => {
     const { root, transport, report } = await sealed(t, 'gapped');
     const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
@@ -232,8 +240,9 @@ test('a restore of a generation whose artifact is missing fails closed', async t
     const target = destination(t, 'gapped');
     await assert.rejects(
         executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }),
-        error => error instanceof SnapshotIntegrityError && /missing transactions\/STORE.json/.test(error.message)
+        error => error instanceof SnapshotIntegrityError && /ARTIFACT_MISSING: transactions\/STORE\.json/.test(error.message)
     );
+    assert.equal(fs.existsSync(target), false);
 });
 
 test('a restore of a generation whose artifact was tampered with fails closed', async t => {
@@ -247,8 +256,95 @@ test('a restore of a generation whose artifact was tampered with fails closed', 
     const target = destination(t, 'tampered');
     await assert.rejects(
         executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }),
-        error => error instanceof SnapshotIntegrityError && /content the manifest does not bind/.test(error.message)
+        error => error instanceof SnapshotIntegrityError && /ARTIFACT_HASH_MISMATCH: transactions\/STORE\.json/.test(error.message)
     );
+    assert.equal(fs.existsSync(target), false);
+});
+
+// The restore's precondition is the canonical verification, not the completeness
+// marker.
+//
+// `loadAcceptedManifest` answers "was this generation sealed?": the marker
+// exists and is structurally valid, it names the manifest that exists, and the
+// manifest is byte for byte the one the marker bound.  That is all it answers,
+// and it is deliberately not the whole contract.  A generation can satisfy every
+// one of those checks and still fail the canonical verifier -- and while the
+// restore was admitted on the marker alone, such a generation restored in full:
+// every object read, every hash checked against the manifest, the tree proved
+// and the destination committed, because the restore path never asked the
+// question that would have refused it.
+//
+// The two shapes below are the ones that separate the two entry points.  Each is
+// accepted by the marker checks and refused by exactly one canonical check, and
+// they are refused by *different* canonical checks, so a gate that passed for
+// the wrong reason could not pass both.
+const PRECONDITION_CASES = [
+    {
+        label: 'an object no manifest entry accounts for',
+        code: 'UNEXPECTED_OBJECT',
+        corrupt: async ({ transport, report }) => {
+            await transport.putObjectCreateOnly({
+                key: payloadObjectKey(report.snapshot_id, 'foreign/NOTE.bin'),
+                bytes: Buffer.from('an object no manifest entry accounts for', 'utf8'),
+            });
+        },
+    },
+    {
+        label: 'a completeness marker that disagrees with the manifest it binds',
+        code: 'IDENTITY_MISMATCH',
+        corrupt: async ({ root, report }) => {
+            const markerPath = path.join(root, ...report.completeness_object_key.split('/'));
+            const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+            // Rebuilt through the module's own builder, so the bytes stay
+            // canonical and the marker still binds the manifest hash.  Only the
+            // count drifts, which no marker check compares against the manifest.
+            fs.writeFileSync(markerPath, buildCompletenessMarker({ ...marker, artifact_count: marker.artifact_count + 1 }).bytes);
+        },
+    },
+];
+
+for (const { label, code, corrupt } of PRECONDITION_CASES) {
+    test(`a generation with ${label} cannot be restored`, async t => {
+        const sealedGeneration = await sealed(t, code.toLowerCase());
+        const { transport, report } = sealedGeneration;
+        await corrupt(sealedGeneration);
+        const target = destination(t, code.toLowerCase());
+
+        // The generation is still sealed: the marker binds the manifest, so the
+        // acceptance path admits it.  This is the anchor that makes the test
+        // about the precondition rather than about a malformed generation.
+        const accepted = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+        assert.equal(accepted.manifest.artifact_count, report.artifact_count);
+
+        // The canonical verifier refuses it, for the reason this case is about.
+        const verified = await verifySnapshot({ transport, snapshotId: report.snapshot_id });
+        assert.equal(verified.result, 'FAIL');
+        assert.deepEqual([...new Set(verified.failures.map(failure => failure.code))], [code]);
+
+        // The restore refuses with the verifier's reason, verbatim.  Comparing
+        // against the report's own text is what makes this about the canonical
+        // verifier being invoked rather than about some restore-local re-check
+        // that could drift from it.
+        const reason = verified.failures.map(failure => `${failure.code}: ${failure.detail}`).join('; ');
+        await assert.rejects(
+            executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }),
+            error => error instanceof SnapshotIntegrityError && error.message.includes(reason)
+        );
+
+        assert.equal(fs.existsSync(target), false, 'an unverified generation must not create a destination');
+        assert.deepEqual(fs.readdirSync(path.dirname(target)), [], 'no staging root may be created beside the destination');
+    });
+}
+
+test('a successful restore reports the verification it was admitted on', async t => {
+    const { transport, report } = await sealed(t, 'admitted');
+    const restored = await executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: destination(t, 'admitted') });
+
+    assert.equal(restored.result, 'PASS');
+    assert.equal(restored.snapshot_verification.result, 'PASS');
+    assert.equal(restored.snapshot_verification.snapshot_id, report.snapshot_id);
+    assert.equal(restored.snapshot_verification.evidence.manifest_sha256, report.manifest_sha256);
+    assert.deepEqual(restored.snapshot_verification.failures, []);
 });
 
 // A restore that fails must not have created anything.  Creating the

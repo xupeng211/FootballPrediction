@@ -345,7 +345,12 @@ test('a restore of a tampered generation fails and reports the carried report', 
     assert.equal(result.status, 1);
     const payload = payloadOf(result);
     assert.equal(payload.action, 'RESTORE_VERIFY_FAILED');
-    assert.ok(/content the manifest does not bind/.test(payload.error), payload.error);
+    // The operator path refuses for the canonical verifier's reason, which is
+    // the same reason `--verify-only` gives for this generation (the test above
+    // asserts that code directly).  The restore used to discover the tamper
+    // itself, with wording of its own; naming the verifier's code is what makes
+    // the two entry points visibly agree rather than merely both fail.
+    assert.ok(/ARTIFACT_HASH_MISMATCH: transactions\/STORE\.json content does not match the hash bound by the manifest/.test(payload.error), payload.error);
     assert.equal(fs.existsSync(path.join(destinationRoot, 'transactions', 'STORE.json')), false);
 });
 
