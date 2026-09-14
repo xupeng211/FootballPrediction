@@ -68,6 +68,15 @@ function describeAwsError(error, operation) {
     return `${operation} failed: ${name}${status}`;
 }
 
+// Three fields, one shape, two credential classes.  A long-lived R2 API token
+// and a temporary credential both arrive as an access key id plus a secret; a
+// temporary credential additionally carries a session token, and that is the
+// only difference this transport can see.  It deliberately does not classify
+// them further: the provider's and the operator's models of what a credential
+// may do are not decidable from its bytes, and a transport that guessed would be
+// reporting a scope it never checked.  Whatever is injected here is passed
+// straight to the SDK, which is the only component that knows how to sign with
+// a session token; nothing is added to the credential on the way.
 function assertExplicitCredentials(credentials) {
     if (credentials === null || typeof credentials !== 'object') throw new TransportContractError('credentials must be injected explicitly; no environment or profile fallback exists');
     assertNonEmptyString(credentials.accessKeyId, 'credentials.accessKeyId');
@@ -233,7 +242,10 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
 
         describe() {
             // Deliberately excludes credentials: this object is safe to
-            // serialize into a report or an error envelope.
+            // serialize into a report or an error envelope.  Whether a session
+            // token is present is reported, because it changes which credential
+            // class the run used and that belongs in an evidence record; the
+            // token itself is not, because it is a secret.
             return Object.freeze({
                 kind: 'r2-s3',
                 version: R2_TRANSPORT_VERSION,
@@ -246,6 +258,7 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
                 credentials_injected: true,
                 credential_source: 'INJECTED_EXPLICIT',
                 environment_fallback: false,
+                session_token_present: resolvedCredentials.sessionToken !== undefined,
             });
         },
     };

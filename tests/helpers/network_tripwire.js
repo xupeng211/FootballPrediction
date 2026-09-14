@@ -2,11 +2,17 @@
 
 // Refuses every outbound network attempt for the lifetime of a test file.
 //
-// The Stage D backup tooling has an offline half and an off-host half.  Only
-// the offline half is implemented, and the tests must prove that: a test that
-// silently reached a provider endpoint would pass for the wrong reason and
-// would consume someone's quota while doing it.  The tripwire turns any such
-// attempt into an immediate, named failure instead of a slow timeout.
+// The Stage D backup tooling has an offline half and a live half.  The live half
+// can address an off-host target, and that capability is exactly why the
+// tripwire exists: a test that silently reached a provider endpoint would pass
+// for the wrong reason, would consume someone's quota, and would turn a claim of
+// `R2_CONTACTED=NO` into a falsehood.  The live path is therefore proven offline
+// against an injected stub SDK, and the live entrypoints are exercised only in
+// their offline preflight mode -- which is asserted to make no request by
+// running it under this tripwire and requiring that it never trips.
+//
+// The tripwire turns any such attempt into an immediate, named failure instead
+// of a slow timeout.
 //
 // The tripwire is installed per test file and removed afterwards, so it cannot
 // leak into unrelated suites.  The suite also proves the tripwire itself works,
@@ -14,6 +20,7 @@
 
 const dns = require('node:dns');
 const http = require('node:http');
+const http2 = require('node:http2');
 const https = require('node:https');
 const net = require('node:net');
 const tls = require('node:tls');
@@ -45,11 +52,25 @@ const SEALED_ENTRY_POINTS = [
     { target: net, label: 'net', methods: ['connect', 'createConnection'] },
     { target: net.Socket.prototype, label: 'net.Socket.prototype', methods: ['connect'] },
     { target: tls, label: 'tls', methods: ['connect'] },
-    { target: dns, label: 'dns', methods: ['lookup'] },
+    { target: dns, label: 'dns', methods: ['lookup', 'resolve'] },
+    // The callback API above is only half of `dns`.  A client that awaits
+    // `dns.promises.lookup` resolves the same name through a different function
+    // object, so sealing one and not the other would leave a reachable path that
+    // the suite's own entry-point test would not have driven.  `dns.promises` is
+    // a lazily built singleton, so the object reached here is the object every
+    // caller gets, and the patch is both effective and restorable.
+    { target: dns.promises, label: 'dns.promises', methods: ['lookup', 'resolve'] },
+    // HTTP/2 opens its own connection and does not pass through `net.connect`,
+    // so it is a separate entry point rather than a variation on one.
+    { target: http2, label: 'http2', methods: ['connect'] },
     // The global fetch is sealed the same way as the module methods above
     // rather than as a special case, so one loop installs and restores every
     // entry point and one test can drive all of them.
     { target: globalThis, label: 'globalThis', methods: ['fetch'] },
+    // WebSocket is a third stack again -- it is neither the HTTP/1 client nor
+    // the HTTP/2 client sealed above -- and it is a writable global property, so
+    // it is sealed and restored by the same loop as everything else.
+    { target: globalThis, label: 'globalThis', methods: ['WebSocket'] },
 ];
 
 function deny(target) {
