@@ -111,13 +111,28 @@ services:
       - PROXY_PORT_START=${DEV_PROXY_PORT_START:-${DEV_HOST_PROXY_PORT:-7897}}
       - PROXY_PORT_END=${DEV_PROXY_PORT_END:-${DEV_HOST_PROXY_PORT:-7897}}
       - PROXY_PORTS=${DEV_PROXY_PORTS:-${DEV_HOST_PROXY_PORT:-7897}}
+      # ---------------------------------------------------------------------
+      # 通用代理 (generic HTTP/HTTPS/ALL proxy) —— 可显式禁用
+      #
       # 容器内 127.0.0.1 指向容器自身，所有通用代理变量必须指向宿主机网关。
-      - HTTP_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
-      - HTTPS_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
-      - ALL_PROXY=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
-      - http_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
-      - https_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
-      - all_proxy=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      # 宿主机没有代理时（例如 GitHub-hosted runner）必须能显式关闭，否则
+      # npm/pip 会去连一个死端口。
+      #
+      # 语义（三个 DEV_GENERIC_*_PROXY 覆盖变量，大小写两种拼写同源，不会漂移）：
+      #   未设置 -> 保持历史默认（宿主网关:${DEV_HOST_PROXY_PORT:-7897}）
+      #   设为空 -> 容器内该变量为空，即"不使用通用代理"
+      #   设为 URL -> 使用该 URL
+      #
+      # 这里必须用 ${VAR-default} 而不是 ${VAR:-default}：后者会把"已设置但为空"
+      # 也当作未设置，于是又落回默认值，显式禁用就会失效。反向地，未设置时
+      # ${VAR-default} 仍然取默认值，所以本地默认行为完全不变。
+      # ---------------------------------------------------------------------
+      - HTTP_PROXY=${DEV_GENERIC_HTTP_PROXY-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      - HTTPS_PROXY=${DEV_GENERIC_HTTPS_PROXY-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      - ALL_PROXY=${DEV_GENERIC_ALL_PROXY-socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      - http_proxy=${DEV_GENERIC_HTTP_PROXY-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      - https_proxy=${DEV_GENERIC_HTTPS_PROXY-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      - all_proxy=${DEV_GENERIC_ALL_PROXY-socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
       # The Odds API is a regular HTTPS provider and deliberately uses this
       # single stable HTTP CONNECT endpoint, never the rotating SOCKS pool.
       - THE_ODDS_API_KEY=${THE_ODDS_API_KEY:-}
