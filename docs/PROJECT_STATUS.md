@@ -105,6 +105,22 @@ Blocker #3（authority 与 evidence 仍在同一 physical failure domain）仍�
 Stage D、provider request、quota 消耗或 scheduler。证据、偏差裁定与 no-precedent 规则见
 [`Stage D Blocker #2 Phase B closeout`](data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md)。
 
+Blocker #3 的 repository-side backup / restore tooling 已实现并有离线证明：create-only
+写入（filesystem 用 `O_CREAT|O_EXCL`，S3 兼容层用 `If-None-Match: *`，**从不**用 HEAD-then-PUT
+模拟）、canonical JSON manifest 绑定 copy 前后的 source identity、**最后写入**的 completeness
+marker、只通过 canonical reader 完成的 isolated restore proof（含 fresh-process cold-load），
+以及零 production default、零 credential discovery、零网络。签名完全交给
+`@aws-sdk/client-s3`（本仓库不写 SigV4），SDK 只在按需 `loadR2Transport()` 时链接。contract 见
+[`Stage D Blocker #3 backup tooling contract`](data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md)。
+
+这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、`LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED`、
+`R2_BUCKET_CREATED=NO`、`R2_OBJECT_WRITTEN=NO`、`BACKUP_CREATED=NO`、
+`PRODUCTION_RESTORE_EXECUTED=NO`、`BUCKET_LOCK_CONFIGURATION=OUT_OF_SCOPE`、
+`POLICY_B_STATUS=PROPOSED_NOT_APPROVED`（`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`）。
+tooling 未接入 publication / scheduler / controlled initialization / cycle / transaction commit
+中的任何一条路径，因此没有任何 live 路径会触发 backup。剩余动作仍需 Owner：provision
+独立物理故障域 target，并单独授权一次对它的真实 backup + isolated restore proof。
+
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
 `docs/MODEL_ARTIFACTS.md` 和 `docs/data/FOTMOB_CURRENT_STATE.md`。代码合同与

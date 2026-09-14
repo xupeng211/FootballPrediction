@@ -120,6 +120,16 @@ ledger/verified-quota fail-close 实现，以及唯一的
   `PHASE_B_COMPLETE=YES`；`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为 Gate 2 的
   接受仍取决于下列 Blocker #3。详见 `docs/data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`。
 - 指定不同物理故障域并完成 isolated restore proof（Blocker #3；Gate 2 接受的前置条件）。
+  仓库侧 backup / restore tooling 已实现并有离线证明（`scripts/ops/stage_d_backup_snapshot.js`、
+  `scripts/ops/stage_d_restore_verify.js`，contract 见
+  `docs/data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`）：create-only 写入、
+  checksummed manifest、**最后写入**的 completeness marker、只用 canonical reader 做的
+  isolated restore proof（含 fresh-process cold-load）、零 production default、零 credential
+  discovery、零网络。但这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、
+  `LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED`、`BACKUP_CREATED=NO`、`POLICY_B_STATUS=PROPOSED_NOT_APPROVED`
+  （`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`），tooling 也**未**接入任何
+  publication / scheduler / cycle 路径。剩余动作仍需 Owner：provision 独立故障域 target，
+  并单独授权一次对该 target 的真实 backup + isolated restore proof。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
 本轮已把 Owner 声明的 `STARTER_FREE / 500` 计划、`50` safety reserve、`450`

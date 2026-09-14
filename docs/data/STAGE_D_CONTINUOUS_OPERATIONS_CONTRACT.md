@@ -407,6 +407,17 @@ precondition has been replaced by the explicit three-role identity model below.
 `BLOCKER_2=OPEN`, `GATE_2=NOT_ACCEPTED`, `GATE_3=NOT_AUTHORIZED` were unchanged
 at that point.
 
+**Blocker #3 tooling.** The repository-side backup and isolated-restore tooling
+for Blocker #3 is specified by its own contract,
+[`STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`](STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md).
+It is explicit-invocation only: it is **not** called from `atomicPublisher`,
+`stageDOperations`, the publication path, the scheduler, controlled
+initialization, the request cycle or the transaction commit, so nothing in this
+contract's live path can trigger a backup and nothing in the backup tooling can
+trigger a cycle. Its CLIs are offline and have no endpoint, bucket, region or
+credential flag; `LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED`. Blocker #3 remains OPEN
+and `GATE_2`/`GATE_3` are unchanged by it.
+
 **Current status.** The Owner-authorized Phase B execution governed by this
 contract has since been executed and verified; the outcome is recorded in
 [`STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`](STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md).
