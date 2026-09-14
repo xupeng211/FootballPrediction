@@ -16,6 +16,8 @@ const snapshotInputs = require('./snapshotInputs');
 const snapshotManifest = require('./snapshotManifest');
 const snapshotWriter = require('./snapshotWriter');
 const snapshotVerifier = require('./snapshotVerifier');
+const liveTargetIdentity = require('./liveTargetIdentity');
+const liveCredentialLoader = require('./liveCredentialLoader');
 
 module.exports = Object.freeze({
     ...transport,
@@ -23,6 +25,8 @@ module.exports = Object.freeze({
     ...snapshotManifest,
     ...snapshotWriter,
     ...snapshotVerifier,
+    ...liveTargetIdentity,
+    ...liveCredentialLoader,
     createLocalTransport: localTransport.createLocalTransport,
     canonicalizeKey: localTransport.canonicalizeKey,
     sha256OfBytes: localTransport.sha256OfBytes,
@@ -35,5 +39,12 @@ module.exports = Object.freeze({
     // backup tool that links the network client it does not use is a larger
     // attack surface than the job needs.  Nothing in this mission wires it to a
     // CLI; it is reachable only by a caller that asks for it by name.
+    //
+    // The two live loaders above are exported eagerly by contrast, and the
+    // distinction is the whole reason: they read a local file and validate it.
+    // Neither links a network client, opens a socket or resolves a name, so
+    // pulling them into every process that touches this barrel adds no
+    // capability to the offline CLIs -- those still have no flag that can reach
+    // them, and the offline CLI test asserts exactly that.
     loadR2Transport: () => require('./r2Transport'),
 });

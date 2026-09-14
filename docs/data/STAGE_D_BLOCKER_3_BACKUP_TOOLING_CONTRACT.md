@@ -24,15 +24,121 @@ from here. What it establishes, and all this contract relies on, is that the
 target must be a **dedicated bucket in a different physical fault domain** (not a
 second partition, a second internal SSD, or a same-host USB device).
 
-This contract makes **no claim about how far an R2 credential can be scoped**,
-and no part of the design depends on such a claim. R2's credential-scoping and
-lock behaviour is a provider capability that cannot be established offline, so it
-is not asserted here. The tooling instead relies on two properties it states and
-tests for itself, both of which hold for every target regardless of how that
-target's credentials happen to be scoped: the transport contract below admits no
-delete verb, so the writer needs no delete permission anywhere; and
-`BUCKET_LOCK_CONFIGURATION` is out of scope for this mission outright, so no
-Cloudflare REST API is called to configure a lock.
+This contract makes no claim about R2 credential scoping that has not been
+freshly checked against current provider documentation, and no part of the design
+depends on such a claim. In particular it does **not** claim that "R2 cannot
+prefix-scope credentials" — that statement is false of temporary credentials, and
+a design that rested on it would be resting on a falsehood. What current official
+Cloudflare documentation supports, as of 2026-09-14, is the three-layer model
+below. It is recorded as the provider's current documented capability, not as a
+property this repository proves: the repository cannot verify any of it offline,
+and none of it is asserted by a test here.
+
+```text
+CREDENTIAL_SCOPE_LAYER_1=LONG_LIVED_API_TOKEN
+  BUCKET_LEVEL_SCOPING=DOCUMENTED      ("you can scope your token to a set of buckets")
+  OBJECT_OR_PREFIX_SCOPING=NOT_DOCUMENTED_FOR_THIS_LAYER
+  PERMISSIONS=Admin Read & Write | Admin Read only | Object Read & Write | Object Read only
+  WRITE_ONLY_PERMISSION_DOCUMENTED=NO
+  DELETE_LACKING_PERMISSION_DOCUMENTED=NO
+
+CREDENTIAL_SCOPE_LAYER_2=TEMPORARY_CREDENTIAL
+  BUCKET_BINDING=EXACTLY_ONE
+  PREFIX_SCOPING=DOCUMENTED            ("restrict the credential further to specific paths within the bucket")
+  OBJECT_KEY_SCOPING=DOCUMENTED        (exact object keys, alongside prefixes)
+  EXCEEDS_PARENT_TOKEN=NO
+
+CREDENTIAL_SCOPE_LAYER_3=ACTION_LEVEL_SCOPE
+  EXPLICIT_ACTION_LIST=DOCUMENTED
+  ACTIONS_AVAILABLE=PutObject, GetObject, HeadObject, ListObjectsV2, (also) DeleteObject, DeleteObjects
+  DELETE_EXCLUDABLE_BY_CHOICE=YES      (exclusion is an issuance choice, not a provider inability)
+  ISSUANCE_MECHANISM=LOCAL_SIGNING_ONLY ("`actions` is currently supported via local signing only")
+```
+
+Two consequences are load-bearing. The first is that the **shape** of a
+credential does not determine its **authority**: a long-lived API token and a
+temporary credential both arrive as an access key id, a secret access key and an
+optional session token, and nothing in those bytes says which bucket permissions
+the credential carries. The transport therefore reports the credential's class
+(`session_token_present`) and never its authority, because authority is an
+issuance-time property it cannot observe. The second is that
+`DELETE_EXCLUDABLE_BY_CHOICE=YES` describes what is *expressible*, not what has
+been *expressed*: whether a given target's credential excludes
+`DeleteObject`/`DeleteObjects` is a provisioning fact this repository cannot
+check, and layer 3 depends on **local, client-side signing** with the parent
+token's secret access key in a trusted environment — an issuance decision that
+belongs to provisioning and is outside this repository.
+
+The tooling instead relies on properties it states and tests for itself, all of
+which hold for every target regardless of how that target's credentials happen to
+be scoped: the transport contract below admits no delete verb, so the writer
+needs no delete permission anywhere; the live credential is loaded from an
+explicit file and never discovered, so the authority in use is the authority the
+operator named; and `BUCKET_LOCK_CONFIGURATION` is out of scope for this mission
+outright, so no Cloudflare REST API is called to configure a lock.
+
+### Data-plane and bucket-administration credentials are different classes
+
+```text
+DATA_PLANE_CREDENTIAL=object operations only (put, get, head, list)
+BUCKET_ADMINISTRATION_CREDENTIAL=create/list/delete buckets, edit bucket configuration, configure locks
+RUNTIME_BACKUP_CREDENTIAL_CLASS=DATA_PLANE_REQUIRED
+RUNTIME_BACKUP_CREDENTIAL_MUST_NOT_ADMINISTER=YES
+CREDENTIAL_CLASS_VERIFIABLE_FROM_BYTES=NO
+```
+
+The runtime backup credential **must not** possess bucket-administration
+authority. That is a requirement on issuance rather than a property this
+repository enforces, and the distinction is exactly why it is written down: the
+class is invisible at runtime. `Object Read & Write` is a data-plane permission;
+`Admin Read & Write` — which current documentation describes as "create, list,
+and delete buckets, edit bucket configuration" — is a bucket-administration
+credential, and issuing one for a backup run would hand the backup path the
+ability to change the bucket and its lock configuration. The transport refuses
+every administration verb unconditionally, so an over-scoped credential grants
+nothing *through this tooling*; what it grants *through any other holder of the
+same file* is the reason the class is constrained at issuance. Provisioning a
+credential of the correct class, and keeping a bucket-administration credential
+out of the backup runtime, are operator obligations recorded here, not controls
+this repository implements.
+
+### Bucket Lock: a separate defensive layer, and what it can and cannot do
+
+```text
+BUCKET_LOCK_CONFIGURATION=OUT_OF_SCOPE_FOR_THIS_MISSION
+LOCK_CONFIGURED_BY_THIS_MISSION=NO
+INDEFINITE_RETENTION=YES
+ADMINISTRATIVELY_REMOVABLE=YES
+NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO
+BUCKET_LOCK_IS_A_SEPARATE_LAYER=YES
+```
+
+Bucket Lock is a **separate defensive layer** from this tooling, and an
+Indefinite Bucket Lock is **not** described here as irreversible, because it is
+not: current documentation describes removing a rule as a supported operation
+(dashboard *Delete*, `wrangler r2 bucket lock remove`, or the put-bucket-lock-
+configuration API) and states that changing lock configuration requires an API
+token with permission to edit R2 bucket configuration. `INDEFINITE_RETENTION=YES`
+means the rule's condition never expires on its own;
+`ADMINISTRATIVELY_REMOVABLE=YES` means an administrator can still change it. The
+two are not in tension, and conflating them is how a lock gets described as
+stronger than it is.
+
+`NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO` is precisely the
+`DATA_PLANE_CREDENTIAL` / `BUCKET_ADMINISTRATION_CREDENTIAL` distinction above:
+lock configuration is bucket administration, so a data-plane runtime credential
+cannot reach it. That is the property the lock layer is worth having — it means a
+backup process that is compromised *through this tooling* cannot strip the
+retention protecting the generations it writes. It is worth being equally clear
+about what the layer is not: this tooling neither configures a lock nor depends
+on one, no lock is configured by this mission, and a bucket without a lock is
+still a valid target for everything specified here. Configuring a lock is an
+Owner provisioning action under a separate authorization, and whether the target
+has one is not observable from this repository.
+
+Lock documentation also records that rules are prefix-scoped and that a rule
+without a prefix applies to every object in the bucket. That is relevant to
+provisioning and to nothing in this tooling's own contract.
 
 ## Scope and authority
 
@@ -45,7 +151,15 @@ STAGE_D_STARTED=NO
 BACKUP_TOOLING_CLASS=OFFLINE_IMPLEMENTATION_ONLY
 BACKUP_TOOLING_ENTRYPOINT=scripts/ops/stage_d_backup_snapshot.js (offline, filesystem transport)
 RESTORE_TOOLING_ENTRYPOINT=scripts/ops/stage_d_restore_verify.js (offline, filesystem transport)
-LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED
+LIVE_BACKUP_TOOLING_ENTRYPOINT=scripts/ops/stage_d_r2_backup_live.js (live-R2 wiring)
+LIVE_RESTORE_TOOLING_ENTRYPOINT=scripts/ops/stage_d_r2_restore_live.js (live-R2 wiring)
+LIVE_R2_CLI_WIRING=IMPLEMENTED
+LIVE_CLI_PROVEN_MODE=OFFLINE_PREFLIGHT_ONLY
+LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED
+LIVE_TARGET_IDENTITY_SOURCE=EXPLICIT_FILE (no default location, no discovery)
+LIVE_CREDENTIAL_SOURCE=EXPLICIT_FILE (no default, no profile, no environment, no provider chain)
+LIVE_TARGET_CONTACTED=NO
+OFFLINE_CLIS_UNCHANGED_NETLESS=YES
 BACKUP_INVOCATION_INTEGRATED_INTO_PUBLICATION_PATH=NO
 BUCKET_LOCK_CONFIGURATION=OUT_OF_SCOPE_FOR_THIS_MISSION
 POLICY_B_STATUS=PROPOSED_NOT_APPROVED
@@ -346,6 +460,72 @@ cannot reach a message, a stack trace assembled here, or a report — asserted b
 a test that fails a call with a secret embedded in the provider's message.
 `describe()` excludes credentials entirely and is safe to serialize.
 
+The credential carries three fields, not two. `accessKeyId` and
+`secretAccessKey` are required and `sessionToken` is optional, because a
+temporary credential is exactly that shape; the transport passes a session token
+through to the client when one is present. `describe()` reports
+`session_token_present` — the credential's **class**, never its value — so a run
+can record that it used a temporary credential without recording anything that
+could be used. That field is the only thing about a credential that reaches a
+report, and it is a boolean.
+
+### How the live path obtains a target and a credential
+
+```text
+TARGET_IDENTITY_SOURCE=EXPLICIT_FILE
+TARGET_IDENTITY_DEFAULT_LOCATION=NONE
+TARGET_IDENTITY_DISCOVERY=NO
+CREDENTIAL_SOURCE=EXPLICIT_FILE
+CREDENTIAL_DEFAULT_LOCATION=NONE
+CREDENTIAL_FILE_MODE=0600_OR_STRICTER
+CREDENTIAL_FILE_OWNER_MUST_BE_ONLY_READER=YES
+IMPLICIT_CREDENTIAL_DISCOVERY=NO
+SECRET_VALUE_IN_ARGV=NO
+SECRET_VALUE_IN_LOGS=NO
+SECRET_VALUE_IN_EVIDENCE=NO
+```
+
+Two loaders, two files, two jobs. `liveTargetIdentity.js` reads the **non-secret**
+addressing half — provider, endpoint, bucket, region, prefix and three bounded
+labels — from a closed nine-field schema, so a credential pasted into it is
+refused as an undefined field rather than accepted and ignored.
+`liveCredentialLoader.js` reads the secret half. Neither has a default location,
+and neither reads the environment at all: not `AWS_ACCESS_KEY_ID`, not
+`AWS_PROFILE`, not `AWS_SHARED_CREDENTIALS_FILE`, not `~/.aws`, not instance
+metadata, and not the SDK's provider chain. Both properties are asserted
+structurally — the module sources are checked for `process.env`, `homedir` and an
+SDK require — because "this loader ignores the environment" is a claim about the
+code rather than about a list of variables someone thought of.
+
+Fail-closed means every one of these is a refusal rather than a degradation: a
+missing or non-string path, a path that is not a regular file, a symbolic link, a
+file readable or writable by group or other (0600 or stricter), an empty file, a
+file over 64 KiB, a file that changes between being measured and being read,
+malformed JSON, a document that is not an object, an undefined field, a missing
+required field, and an empty or padded value. There is no partial load and no
+fallback to an ambient credential.
+
+**No field value is ever echoed in an error**, in either loader. A field is named,
+and only when that name is itself safe to print: `endpont` is a typo worth
+reporting, and an access key id used as a JSON object key is not. The parsers'
+own messages are replaced rather than forwarded, because `JSON.parse` quotes the
+input it choked on and that input is the file. The credential file's **path** is
+never reported either — a pointer to secret material is itself worth not
+publishing — while the identity file's `target_fingerprint` (16 hex characters
+over provider, endpoint, bucket, region and prefix) **is** reported, so evidence
+can name which target a run addressed without restating the account-bearing
+endpoint. Credential errors are additionally routed through a scrubber that
+replaces every credential value with `[REDACTED]` before anything is printed, so
+even an un-authored error text cannot carry a secret to a terminal.
+
+A credential file must not live inside the repository or inside a directory whose
+name ends in `.artifacts`, and both are refused before the file is opened. The
+evidence-directory rule is a **named convention, not a proof**: it recognises the
+shape it was written against, and keeping the file outside the repository and
+outside any evidence root remains an operator obligation. Parent-directory
+symlinks and file ownership are deliberately not checked, for the reasons
+recorded in the loaders' own headers.
+
 A precondition failure (`412`, or `409` where a proxy reports it that way) is
 classified as `ObjectAlreadyExistsError`. Anything else is a real failure and is
 **not** reinterpreted as a benign collision, because swallowing a genuine write
@@ -548,16 +728,79 @@ explicitly authorized mission makes by changing this refusal, not something a
 command-line argument can turn on. Until then a snapshot cannot be pointed at
 production even by an operator who means to.
 
-Neither CLI accepts an endpoint, bucket, region, credential or profile flag.
-Those flags are **rejected rather than ignored**, in both spellings: `--endpoint
-https://…` and `--endpoint=…` mean the same thing to whoever types them, so a
-check that matched only the first would silently ignore the second and let an
-operator believe the command was aimed at R2 when it was not. The rejected value
-is never echoed back — a value passed to one of these flags may be a credential,
-so echoing it would turn a refusal into a leak. A test drives every flag in both
-spellings at both CLIs and asserts each is refused by name, with the value
-appearing in neither stdout nor stderr. Live R2 wiring is a separate, explicitly
-authorized change.
+Neither offline CLI accepts an endpoint, bucket, region, credential or profile
+flag. Those flags are **rejected rather than ignored**, in both spellings:
+`--endpoint https://…` and `--endpoint=…` mean the same thing to whoever types
+them, so a check that matched only the first would silently ignore the second and
+let an operator believe the command was aimed at R2 when it was not. The rejected
+value is never echoed back — a value passed to one of these flags may be a
+credential, so echoing it would turn a refusal into a leak. A test drives every
+flag in both spellings at both offline CLIs and asserts each is refused by name,
+with the value appearing in neither stdout nor stderr.
+
+### The live entrypoints are separate files
+
+```text
+LIVE_BACKUP_ENTRYPOINT=scripts/ops/stage_d_r2_backup_live.js
+LIVE_RESTORE_ENTRYPOINT=scripts/ops/stage_d_r2_restore_live.js
+OFFLINE_CLIS_MODIFIED=NO
+LIVE_WIRING_ADDED_AS_A_FLAG_ON_THE_OFFLINE_CLIS=NO
+OFFLINE_CLIS_REFUSE_LIVE_FLAGS=YES
+```
+
+The live path is two new entrypoints, not two new flags. "The offline CLI cannot
+address a remote target" is a property that was proven, reviewed and merged in
+PR #1911; teaching that CLI an endpoint flag would destroy the property while
+leaving the file looking unchanged. The offline CLIs are therefore **byte-
+unchanged** by the live wiring, and the live flag names
+(`--target-identity-file`, `--credential-file`, `--preflight-only`) are refused
+by them for the same reason any other unimplemented flag is: their allowlist
+admits only what they implement, so a new flag is refused without anyone having
+to remember to add it to a denylist. A test asserts both halves — that each
+offline CLI still refuses the live flags, and that neither CLI's source contains
+a reference to the live loaders, the R2 transport or the SDK.
+
+The live CLIs carry the same refusal architecture and additionally reject
+**inline secrets**: `--access-key-id`, `--secret-access-key`, `--session-token`,
+`--access-key`, `--secret-key`, `--token`, `--api-token`, `--credentials`,
+`--credential`, `--profile`, `--aws-access-key-id`, `--aws-secret-access-key`,
+`--aws-session-token`, `--aws-profile`, `--endpoint`, `--endpoint-url`,
+`--bucket`, `--region`, `--prefix`, `--r2` and `--s3` are all refused by name in
+both spellings, with the value never echoed. A credential reaches the live path
+through a file and nothing else, so `SECRET_VALUE_IN_ARGV=NO` is a property of
+the accepted surface rather than a convention about how the command is typed.
+
+### The live CLIs have an offline preflight, and it is not a connectivity probe
+
+```text
+PREFLIGHT_CLASS=OFFLINE_PREFLIGHT
+LIVE_CONNECTIVITY_PREFLIGHT=LIVE_CONNECTIVITY_PREFLIGHT (a different class, not implemented)
+OFFLINE_PREFLIGHT_NETWORK_CALLS=0
+OFFLINE_PREFLIGHT_PROVES=the wiring loads, validates and constructs
+OFFLINE_PREFLIGHT_DOES_NOT_PROVE=reachability, credentials, permissions or the target's existence
+```
+
+`--preflight-only` loads the identity, loads the credential, constructs the real
+R2 transport and asserts the transport contract, then reports and stops. It makes
+**zero** network calls, and it says so in its own output rather than leaving the
+operator to infer it: the report carries `preflight_class: 'OFFLINE_PREFLIGHT'`,
+`live_connectivity_preflight: 'NOT_PERFORMED'` and `network_calls_made: 0`. The
+two classes are named separately because they answer different questions — an
+offline preflight proves that the wiring, the files and the validation are
+correct and proves nothing about whether the target exists, whether the
+credential is accepted or whether the permissions are sufficient. A probe that
+wrote a conditional-create object and read it back would be the connectivity
+class, is the thing
+`preflight-probe/conditional-write/v1/PROBE.json` names, and is **not** part of
+this work: no such object was written, and the key is recorded here only so that
+the probe this repository does not perform has a defined namespace.
+
+The offline preflight is exercised under the network tripwire in a child
+process, so "zero network calls" is asserted by a seal rather than by reading the
+code. Constructing the transport is what links `@aws-sdk/client-s3`; the client
+constructor performs no I/O, so this is the one place where a real SDK object
+exists without a request being possible — and the tripwire is what makes that
+statement checkable.
 
 That named list is a denylist, and a denylist can only refuse the names someone
 thought to write down. The names that matter most here are exactly the ones that
@@ -566,7 +809,9 @@ contains no `--r2=` (the character after `--r2` is `-`, not `=`), and
 `--storage-endpoint=…` contains no `--endpoint`. Both were parsed by nothing,
 ignored, and the command ran to completion and exited `0` while carrying an
 access key or an API token in its own argv. Each CLI therefore **accepts only
-the flags it implements**: every argument must be one of that CLI's own flags
+the flags it implements** — the live CLIs by the same rule, which is why the
+offline CLIs refuse the live flags without a second denylist to maintain: every
+argument must be one of that CLI's own flags
 (beyond the named refusals above), a flag it does not implement is refused by
 name, a value never begins with `--` so a flag in a value position is reported
 as the missing value it is rather than consumed, and a bare positional argument
@@ -586,10 +831,21 @@ are in tension the tooling refuses.
 Every test in this work runs with no network. A tripwire helper replaces
 `http.request`, `http.get`, `https.request`, `https.get`, `net.connect`,
 `net.createConnection`, `net.Socket.prototype.connect`, `tls.connect`,
-`dns.lookup` and `globalThis.fetch` with throwers, and asserts zero attempts
-across a full write, verify and restore. A test that silently reached a provider
-endpoint would pass for the wrong reason and would consume someone's quota while
-doing it.
+`dns.lookup`, `dns.resolve`, `dns.promises.lookup`, `dns.promises.resolve`,
+`http2.connect`, `globalThis.fetch` and `globalThis.WebSocket` with throwers,
+and asserts zero attempts across a full write, verify and restore. A test that
+silently reached a provider endpoint would pass for the wrong reason and would
+consume someone's quota while doing it.
+
+The seal is enumerated rather than sampled, and it was extended when the live
+path was wired: `http2.connect` because an SDK transport may negotiate HTTP/2
+instead of the `https.request` the earlier seal covered,
+`dns.promises.lookup` and `dns.promises.resolve` because the promise API is a
+separate function object from the callback one, and `globalThis.WebSocket`
+because it is a network client that reaches no `http`/`net` function at all. The
+newly sealed entry points are exercised by the existing driver that walks the
+seal list generically, so a seal that was added without being installed fails a
+test rather than sitting in a list.
 
 The seal covers every backup test file, not only the test in each that was
 written with the tripwire in mind — an outbound attempt is the same breach
@@ -628,6 +884,10 @@ permission contract the production authority does, without touching it.
 | Restore destination already exists | n/a | no | no | a restore never overwrites; choose a fresh destination |
 | Restored root fails the canonical-reader proof | n/a | no | no | the restore is not evidence; treat the generation as suspect |
 | Fresh process cannot load the restored root | n/a | no | no | the restored root is not self-sufficient; the proof fails |
+| Identity or credential file missing, loose or invalid | n/a | no | no | the live CLI fails closed before a transport exists |
+| Identity file carries a secret-shaped value | n/a | no | no | refused as a schema violation; a target identity is non-secret by construction |
+| Credential file inside the repository or an evidence directory | n/a | no | no | refused before the file is opened; keep the file elsewhere |
+| Delete operation requested of the transport | n/a | no | no | there is no delete verb; the request cannot be expressed |
 
 ## What this work does not do
 
@@ -635,6 +895,8 @@ permission contract the production authority does, without touching it.
 R2_BUCKET_CREATED=NO              R2_BUCKET_MODIFIED=NO
 R2_OBJECT_WRITTEN=NO              LIVE_S3_REQUEST_EXECUTED=NO
 CLOUDFLARE_AUTH_USED=NO           API_TOKEN_CREATED=NO
+CREDENTIAL_CREATED=NO             CREDENTIAL_VALUE_INSPECTED=NO
+BUCKET_LOCK_CONFIGURED=NO         R2_BUCKET_LOCK_MODIFIED=NO
 BACKUP_CREATED=NO                 PRODUCTION_BACKUP_CREATED=NO
 PRODUCTION_RESTORE_EXECUTED=NO    PRODUCTION_CONTENT_MUTATED=NO
 PRODUCTION_METADATA_MUTATED=NO    PROVIDER_REQUEST_EXECUTED=NO
@@ -643,6 +905,14 @@ SCHEDULER_CHANGED=NO              POLICY_B_ACTIVATED=NO
 BLOCKER_3_CLOSED=NO               GATE_2_ACCEPTED=NO
 GATE_3_AUTHORIZED=NO
 ```
+
+The live wiring is repository-side and offline. It makes the R2 target
+*addressable* and *provable*; it does not make it *reached*. Every live-mode
+statement in this contract is a statement about what the code would do with a
+target, established against a stub SDK in an in-memory bucket, and the words
+"the target" throughout mean the address the tooling was given rather than a
+bucket anyone contacted. No credential was created, no credential value was
+inspected, no lock was configured and no request was made.
 
 Blocker #3 is closed by an off-host target and an isolated-restore proof run
 against it. Neither exists yet. This contract describes the tooling that will

@@ -113,12 +113,29 @@ marker、只通过 canonical reader 完成的 isolated restore proof（含 fresh
 `@aws-sdk/client-s3`（本仓库不写 SigV4），SDK 只在按需 `loadR2Transport()` 时链接。contract 见
 [`Stage D Blocker #3 backup tooling contract`](data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md)。
 
-这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、`LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED`、
-`R2_BUCKET_CREATED=NO`、`R2_OBJECT_WRITTEN=NO`、`BACKUP_CREATED=NO`、
+live off-host 路径已接入为两个独立入口 `scripts/ops/stage_d_r2_backup_live.js` 与
+`scripts/ops/stage_d_r2_restore_live.js`，原 offline CLI **byte-unchanged 且继续 netless**：
+target identity（非 secret，closed 9-field schema）与 credential（0600 或更严、不得位于仓库或
+evidence 目录）各自只来自显式文件，无默认位置、无环境/profile/instance-metadata/provider-chain
+discovery，argv 内联 secret 一律被拒绝，secret 值不出现在 argv、日志或证据中。live CLI 提供
+`--preflight-only`，其类别是 `OFFLINE_PREFLIGHT`（`network_calls_made: 0`），与
+`LIVE_CONNECTIVITY_PREFLIGHT` 明确区分且后者**未执行**。credential model 区分
+`DATA_PLANE_CREDENTIAL` 与 `BUCKET_ADMINISTRATION_CREDENTIAL`：runtime backup credential 必须是
+data-plane 且不得持有 bucket-administration authority，因此
+`NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO`（Bucket Lock 为独立防御层，
+`INDEFINITE_RETENTION=YES`、`ADMINISTRATIVELY_REMOVABLE=YES`，本任务不配置任何 lock）。
+credential-scope 能力按当前官方文档分层记录（long-lived token 的 bucket-level scoping、
+temporary credential 的 prefix/object scoping、action-level `actions` 列表及其
+local-signing-only 限制），本仓库**不**声称 "R2 cannot prefix-scope credentials"。
+
+这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、`LIVE_R2_CLI_WIRING=IMPLEMENTED`、
+`LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED`、`R2_BUCKET_CREATED=NO`、`R2_OBJECT_WRITTEN=NO`、
+`CREDENTIAL_CREATED=NO`、`BUCKET_LOCK_CONFIGURED=NO`、`BACKUP_CREATED=NO`、
 `PRODUCTION_RESTORE_EXECUTED=NO`、`BUCKET_LOCK_CONFIGURATION=OUT_OF_SCOPE`、
 `POLICY_B_STATUS=PROPOSED_NOT_APPROVED`（`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`）。
 tooling 未接入 publication / scheduler / controlled initialization / cycle / transaction commit
-中的任何一条路径，因此没有任何 live 路径会触发 backup。剩余动作仍需 Owner：provision
+中的任何一条路径，因此没有任何 live 路径会触发 backup；live wiring 本身只在 stub SDK 上离线
+证明，没有发出任何真实 R2/S3 请求。剩余动作仍需 Owner：provision
 独立物理故障域 target，并单独授权一次对它的真实 backup + isolated restore proof。
 
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、

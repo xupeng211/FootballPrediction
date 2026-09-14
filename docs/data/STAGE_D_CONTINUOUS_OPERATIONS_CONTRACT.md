@@ -414,9 +414,18 @@ It is explicit-invocation only: it is **not** called from `atomicPublisher`,
 `stageDOperations`, the publication path, the scheduler, controlled
 initialization, the request cycle or the transaction commit, so nothing in this
 contract's live path can trigger a backup and nothing in the backup tooling can
-trigger a cycle. Its CLIs are offline and have no endpoint, bucket, region or
-credential flag; `LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED`. Blocker #3 remains OPEN
-and `GATE_2`/`GATE_3` are unchanged by it.
+trigger a cycle. Its live off-host entrypoints are separate scripts
+(`stage_d_r2_backup_live.js`, `stage_d_r2_restore_live.js`) and the original
+offline CLIs are byte-unchanged and remain netless; the live path takes its
+target identity and its credential from explicit files, never from the
+environment, a profile or a provider chain, and never from its own argv.
+`LIVE_R2_CLI_WIRING=IMPLEMENTED` and
+`LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED`: the wiring is proven offline against
+a stub SDK, and no R2 request has been made. The runtime backup credential is
+required to be a data-plane credential and must not carry bucket-administration
+authority, which is what makes `NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO` true of
+it; bucket lock configuration is out of scope for this work and no lock was
+configured. Blocker #3 remains OPEN and `GATE_2`/`GATE_3` are unchanged by it.
 
 **Current status.** The Owner-authorized Phase B execution governed by this
 contract has since been executed and verified; the outcome is recorded in

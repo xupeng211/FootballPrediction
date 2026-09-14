@@ -415,3 +415,321 @@ test('the CLI produces a generation a library call can then verify', async t => 
     assert.equal(manifest.total_bytes, report.total_bytes);
     assert.equal(manifest.secrets_included, false);
 });
+
+// ---------------------------------------------------------------------------
+// The live entrypoints.
+//
+// A separate CLI, not a flag on the offline one.  The offline CLI's inability
+// to address a remote target is a property that was proven, reviewed and merged;
+// teaching it an endpoint flag would destroy it, so the live path is a new file
+// and the offline files are unchanged.  These tests cover the live CLI's
+// refusals and its offline preflight mode, which is the only mode any test may
+// exercise: the sending path is proven at the library level against a stub SDK.
+// ---------------------------------------------------------------------------
+
+const LIVE_BACKUP_CLI = path.join(REPOSITORY_ROOT, 'scripts', 'ops', 'stage_d_r2_backup_live.js');
+const LIVE_RESTORE_CLI = path.join(REPOSITORY_ROOT, 'scripts', 'ops', 'stage_d_r2_restore_live.js');
+
+const LIVE_ACCESS_KEY_ID = 'synthetic-live-access-key-id-DO-NOT-USE';
+const LIVE_SECRET_ACCESS_KEY = 'synthetic-live-secret-access-key-DO-NOT-USE';
+const LIVE_SESSION_TOKEN = 'synthetic-live-session-token-DO-NOT-USE';
+const LIVE_SECRETS = [LIVE_ACCESS_KEY_ID, LIVE_SECRET_ACCESS_KEY, LIVE_SESSION_TOKEN];
+
+function liveIdentity(overrides = {}) {
+    return {
+        schema_version: 'stage-d-live-target-identity/v1',
+        provider: 'cloudflare-r2',
+        endpoint: 'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
+        bucket: 'footballprediction-stage-d-backup-test',
+        region: 'auto',
+        prefix: 'footballprediction/stage-d/transaction-v1/snapshots',
+        environment: 'test',
+        project: 'footballprediction',
+        purpose: 'stage-d-transaction-backup',
+        ...overrides,
+    };
+}
+
+function writeLiveConfig(t, { identity = {}, credentials = {}, credentialMode = 0o600 } = {}) {
+    const dir = temporary(t, 'stage-d-cli-live-config-');
+    const identityFile = path.join(dir, 'target-identity.json');
+    fs.writeFileSync(identityFile, JSON.stringify(liveIdentity(identity), null, 2), { mode: 0o600 });
+    const credentialFile = path.join(dir, 'credentials.json');
+    fs.writeFileSync(credentialFile, JSON.stringify({
+        accessKeyId: LIVE_ACCESS_KEY_ID,
+        secretAccessKey: LIVE_SECRET_ACCESS_KEY,
+        ...credentials,
+    }), { mode: credentialMode });
+    // Explicit: the creation mode is masked by the umask, and the mode is what
+    // the loader checks.
+    fs.chmodSync(credentialFile, credentialMode);
+    return { identityFile, credentialFile };
+}
+
+function assertNoLiveSecretLeaked(result, label) {
+    for (const secret of LIVE_SECRETS) {
+        assert.equal(result.stdout.includes(secret), false, `${label}: a credential value must not reach stdout`);
+        assert.equal(result.stderr.includes(secret), false, `${label}: a credential value must not reach stderr`);
+    }
+}
+
+test('the live CLIs are not reachable from the offline CLIs, and the offline CLIs are unchanged', t => {
+    const transportRoot = temporary(t, 'stage-d-cli-offline-unchanged-');
+
+    // Every flag the live path introduces is refused by the offline path.  It
+    // refuses them because its allowlist admits only what it implements, which
+    // is what keeps "the offline CLI cannot address a remote target" true
+    // without a second denylist to maintain.
+    for (const scriptPath of [SNAPSHOT_CLI, RESTORE_CLI]) {
+        for (const flag of ['--target-identity-file', '--credential-file', '--preflight-only', '--access-key', '--secret-key', '--aws-access-key-id', '--aws-session-token', '--endpoint-url', '--prefix', '--token', '--api-token']) {
+            const result = runCli(scriptPath, [flag, 'synthetic-value-DO-NOT-USE', '--transport-root', transportRoot]);
+            assert.notEqual(result.status, 0, `${path.basename(scriptPath)} must refuse ${flag}`);
+            const payload = payloadOf(result);
+            assert.ok(
+                /unknown flag is refused rather than ignored|live off-host target flags are rejected/.test(payload.error),
+                `${flag} must be refused by name: ${payload.error}`,
+            );
+            assert.equal(result.stdout.includes('synthetic-value-DO-NOT-USE'), false, `${flag} must not echo its value`);
+        }
+    }
+
+    // The structural half: neither offline CLI gained a reference to the live
+    // path.  A refusal test proves the flags are refused today; this proves the
+    // code that would use them is not there at all.
+    for (const scriptPath of [SNAPSHOT_CLI, RESTORE_CLI]) {
+        const source = fs.readFileSync(scriptPath, 'utf8');
+        assert.ok(/LIVE_R2_CLI_WIRING=NOT_IMPLEMENTED/.test(source), `${path.basename(scriptPath)} must still declare itself unwired`);
+        for (const forbidden of ['loadLiveTargetIdentity', 'loadLiveCredentials', 'createR2Transport', 'loadR2Transport', '@aws-sdk']) {
+            assert.equal(source.includes(forbidden), false, `${path.basename(scriptPath)} must not reference ${forbidden}`);
+        }
+    }
+});
+
+test('the live backup CLI preflights offline: no request, no secret, and the target is named', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t, { credentials: { sessionToken: LIVE_SESSION_TOKEN } });
+    const result = runCli(LIVE_BACKUP_CLI, ['--target-identity-file', identityFile, '--credential-file', credentialFile, '--preflight-only']);
+
+    assert.equal(result.status, 0, `the preflight must succeed: ${result.stdout} ${result.stderr}`);
+    assert.equal(/NETWORK_TRIPWIRE_TRIPPED/.test(result.stderr), false, 'the preflight is offline: it must make no request');
+    const payload = payloadOf(result);
+    assert.equal(payload.action, 'LIVE_PREFLIGHT_ONLY');
+    assert.equal(payload.live_r2_cli_wiring, 'IMPLEMENTED');
+    assert.equal(payload.preflight_class, 'OFFLINE_PREFLIGHT');
+    assert.equal(payload.live_connectivity_preflight, 'NOT_PERFORMED', 'an offline preflight proves the wiring, not reachability');
+    assert.equal(payload.network_calls_made, 0);
+    assert.equal(payload.target.bucket, 'footballprediction-stage-d-backup-test');
+    assert.equal(payload.target.prefix, 'footballprediction/stage-d/transaction-v1/snapshots');
+    assert.equal(payload.target.create_only, true);
+    assert.equal(payload.target.delete_exposed, false);
+    assert.equal(payload.target.session_token_present, true, 'a temporary credential is reported as a class');
+    assert.equal(payload.credentials.session_token_present, true);
+    assert.equal(typeof payload.target.target_fingerprint, 'string');
+    assert.equal(payload.live_connectivity_probe_key, 'preflight-probe/conditional-write/v1/PROBE.json');
+    assertNoLiveSecretLeaked(result, 'the preflight report');
+});
+
+test('the live restore CLI preflights offline and declares that it has no local source', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    const result = runCli(LIVE_RESTORE_CLI, ['--target-identity-file', identityFile, '--credential-file', credentialFile, '--preflight-only']);
+
+    assert.equal(result.status, 0, result.stdout);
+    assert.equal(/NETWORK_TRIPWIRE_TRIPPED/.test(result.stderr), false);
+    const payload = payloadOf(result);
+    assert.equal(payload.action, 'LIVE_PREFLIGHT_ONLY');
+    assert.equal(payload.network_calls_made, 0);
+    assert.deepEqual(payload.local_source_roots, [], 'a restore from the target has no filesystem source');
+    assert.equal(payload.target.kind, 'r2-s3');
+    assertNoLiveSecretLeaked(result, 'the preflight report');
+});
+
+test('the live CLIs refuse a credential or a target on the command line, in both spellings', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    const secret = LIVE_SECRET_ACCESS_KEY;
+    const flags = [
+        ['--access-key-id', secret],
+        ['--secret-access-key', secret],
+        ['--session-token', secret],
+        ['--access-key', secret],
+        ['--secret-key', secret],
+        ['--credentials', secret],
+        ['--profile', 'default'],
+        ['--aws-access-key-id', secret],
+        ['--aws-secret-access-key', secret],
+        ['--aws-session-token', secret],
+        ['--aws-profile', 'default'],
+        ['--endpoint', 'https://example.invalid'],
+        ['--endpoint-url', 'https://example.invalid'],
+        ['--bucket', 'stage-d-backup'],
+        ['--region', 'auto'],
+        ['--prefix', 'somewhere'],
+    ];
+
+    for (const cli of [LIVE_BACKUP_CLI, LIVE_RESTORE_CLI]) {
+        const name = path.basename(cli);
+        for (const [flag, value] of flags) {
+            for (const args of [[flag, value], [`${flag}=${value}`]]) {
+                const result = runCli(cli, [...args, '--target-identity-file', identityFile, '--credential-file', credentialFile, '--preflight-only']);
+                assert.equal(result.status, 1, `${name} ${args[0]} must be refused rather than ignored`);
+                const payload = payloadOf(result);
+                assert.equal(payload.action, 'LIVE_BACKUP_FAILED'.replace('BACKUP', cli === LIVE_BACKUP_CLI ? 'BACKUP' : 'RESTORE_VERIFY'), payload.error);
+                assert.ok(/come from explicit files/.test(payload.error), `${name} ${args[0]}: ${payload.error}`);
+                assert.ok(payload.error.includes(flag), `the refusal must name the flag: ${payload.error}`);
+                assert.equal(result.stdout.includes(value), false, `${name} ${args[0]} must never echo the value`);
+                assert.equal(result.stderr.includes(value), false);
+            }
+        }
+    }
+});
+
+test('the live CLIs refuse a repeated single-valued flag instead of silently choosing one', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    // The failure this refuses is not a typo: `valueAfter` reads the first
+    // occurrence, so `--target-identity-file A --target-identity-file B` would
+    // aim a non-preflight run at A while the operator believed it had said B.
+    // Each CLI has its own flag set, so the table is per CLI: repeating a flag
+    // the CLI does not implement would be refused as unknown, which is a
+    // different refusal and must not be mistaken for this one.
+    const shared = [
+        ['--target-identity-file', identityFile, identityFile],
+        ['--credential-file', credentialFile, credentialFile],
+        ['--snapshot-id', 'snap_20260914T000000000Z_0123456789abcdef', 'snap_20260914T000000000Z_fedcba9876543210'],
+    ];
+    const perCli = new Map([
+        [LIVE_BACKUP_CLI, [
+            ...shared,
+            ['--authority-root', '/tmp/a', '/tmp/b'],
+            ['--allocation-artifact', '/tmp/a.json', '/tmp/b.json'],
+            ['--ledger-root', '/tmp/a', '/tmp/b'],
+            ['--quota-config', '/tmp/a.json', '/tmp/b.json'],
+            ['--now', '2026-09-14T00:00:00.000Z', '2026-09-15T00:00:00.000Z'],
+        ]],
+        [LIVE_RESTORE_CLI, [
+            ...shared,
+            ['--destination-root', '/tmp/a', '/tmp/b'],
+        ]],
+    ]);
+
+    for (const cli of [LIVE_BACKUP_CLI, LIVE_RESTORE_CLI]) {
+        const name = path.basename(cli);
+        for (const [flag, first, second] of perCli.get(cli)) {
+            const result = runCli(cli, [
+                '--target-identity-file', identityFile,
+                '--credential-file', credentialFile,
+                flag, first,
+                flag, second,
+                '--preflight-only',
+            ]);
+            assert.equal(result.status, 1, `${name} ${flag} twice must be refused`);
+            const payload = payloadOf(result);
+            assert.ok(
+                /was given more than once/.test(payload.error),
+                `${name} ${flag} twice: ${payload.error}`,
+            );
+            assert.ok(
+                payload.error.includes(flag),
+                `the refusal must name the flag rather than resolve it: ${payload.error}`,
+            );
+            // The refusal must not print either candidate, because the second
+            // one is exactly the value the operator believed they had set.
+            assert.equal(result.stdout.includes(second), false, `${name} ${flag}: the second value must not be echoed`);
+            assert.equal(result.stderr.includes(second), false);
+            assertNoLiveSecretLeaked(result, `${name} ${flag} twice`);
+        }
+    }
+});
+
+test('the backup CLI still accepts a repeated --run-state, so the refusal is per-flag', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    // `--run-state` is the one flag that is meaningful more than once: a
+    // snapshot carries a list of run-state inputs.  A duplicate-flag refusal
+    // that did not exempt it would be a regression in the other direction.
+    const result = runCli(LIVE_BACKUP_CLI, [
+        '--target-identity-file', identityFile,
+        '--credential-file', credentialFile,
+        '--run-state', 'first',
+        '--run-state', 'second',
+        '--preflight-only',
+    ]);
+    const payload = payloadOf(result);
+    assert.notEqual(
+        /was given more than once/.test(payload.error || ''),
+        true,
+        `--run-state must stay repeatable: ${payload.error}`,
+    );
+    // The preflight does not read run state, so a repeated --run-state is
+    // accepted and the preflight still succeeds without a request.
+    assert.equal(result.status, 0, `the preflight must still pass: ${JSON.stringify(payload)}`);
+    assert.equal(payload.preflight_class, 'OFFLINE_PREFLIGHT');
+    assert.equal(payload.network_calls_made, 0);
+});
+
+test('the live CLIs refuse an unknown flag rather than ignoring it', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    for (const cli of [LIVE_BACKUP_CLI, LIVE_RESTORE_CLI]) {
+        for (const flag of ['--target-endpoint', '--r2-access-key-id=synthetic-value-DO-NOT-USE', '--storage-endpoint=https://example.invalid']) {
+            const result = runCli(cli, [flag, '--target-identity-file', identityFile, '--credential-file', credentialFile, '--preflight-only']);
+            assert.equal(result.status, 1, `${flag} must not be accepted`);
+            const payload = payloadOf(result);
+            assert.ok(/unknown flag is refused rather than ignored|come from explicit files/.test(payload.error), payload.error);
+            assert.ok(payload.error.includes(flag.slice(0, flag.indexOf('=') === -1 ? flag.length : flag.indexOf('='))), `the refusal must name the flag: ${payload.error}`);
+            assert.equal(result.stdout.includes('synthetic-value-DO-NOT-USE'), false);
+        }
+    }
+});
+
+test('the live CLIs fail closed when a file is missing, loose or invalid', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    const missing = path.join(temporary(t, 'stage-d-cli-live-missing-'), 'absent.json');
+
+    for (const cli of [LIVE_BACKUP_CLI, LIVE_RESTORE_CLI]) {
+        const name = path.basename(cli);
+        const cases = [
+            { args: ['--target-identity-file', missing, '--credential-file', credentialFile], match: /identity file could not be opened/ },
+            { args: ['--target-identity-file', identityFile, '--credential-file', missing], match: /credential file could not be opened/ },
+            { args: ['--credential-file', credentialFile], match: /--target-identity-file is required/ },
+            { args: ['--target-identity-file', identityFile], match: /--credential-file is required/ },
+        ];
+        for (const { args, match } of cases) {
+            const result = runCli(cli, [...args, '--preflight-only']);
+            assert.equal(result.status, 1, `${name} ${args[0]} must fail closed`);
+            const payload = payloadOf(result);
+            assert.ok(match.test(payload.error), `${name} ${args.join(' ')}: ${payload.error}`);
+        }
+    }
+
+    // A credential file anyone but its owner can read is refused, and the file
+    // is not used even though its contents are perfectly well formed.
+    const loose = writeLiveConfig(t, { credentialMode: 0o644 });
+    const result = runCli(LIVE_BACKUP_CLI, ['--target-identity-file', loose.identityFile, '--credential-file', loose.credentialFile, '--preflight-only']);
+    assert.equal(result.status, 1);
+    assert.ok(/group or other/.test(payloadOf(result).error));
+    assertNoLiveSecretLeaked(result, 'a refused loose credential');
+
+    // A target identity with a credential-shaped field is refused before any
+    // transport exists.
+    const withSecret = writeLiveConfig(t, { identity: { prefix: `snapshots/${'a'.repeat(64)}` } });
+    const secretive = runCli(LIVE_BACKUP_CLI, ['--target-identity-file', withSecret.identityFile, '--credential-file', withSecret.credentialFile, '--preflight-only']);
+    assert.equal(secretive.status, 1);
+    assert.ok(/shaped like a secret/.test(payloadOf(secretive).error));
+});
+
+test('a live CLI never runs its sending path without the roots a backup needs', t => {
+    const { identityFile, credentialFile } = writeLiveConfig(t);
+    // Without `--preflight-only` the CLI needs the authority roots, and it says
+    // so rather than defaulting to one.  Nothing is sent: the argument check
+    // happens before the transport is built.
+    const result = runCli(LIVE_BACKUP_CLI, ['--target-identity-file', identityFile, '--credential-file', credentialFile]);
+    assert.equal(result.status, 1);
+    const payload = payloadOf(result);
+    assert.ok(/--authority-root is required/.test(payload.error), payload.error);
+    assert.equal(/NETWORK_TRIPWIRE_TRIPPED/.test(result.stderr), false);
+});
+
+test('the live restore CLI refuses a credential file inside the repository', t => {
+    const inside = path.join(REPOSITORY_ROOT, 'credentials.json');
+    assert.equal(fs.existsSync(inside), false, 'this test must not create a credential file in the tree');
+    const { identityFile } = writeLiveConfig(t);
+    const result = runCli(LIVE_RESTORE_CLI, ['--target-identity-file', identityFile, '--credential-file', inside, '--preflight-only']);
+    assert.equal(result.status, 1);
+    assert.ok(/must not live inside the repository/.test(payloadOf(result).error));
+});
