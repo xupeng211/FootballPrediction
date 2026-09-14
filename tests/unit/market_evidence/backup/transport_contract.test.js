@@ -157,6 +157,93 @@ test('a symlinked object path is never followed', t => {
     assert.throws(() => transport.headObject({ key: 'link.json' }), error => error instanceof SnapshotIntegrityError && /symbolic links/.test(error.message));
 });
 
+// The transport validates the parent chain first and creates the object second.
+// While both steps name a path, the kernel resolves that path again at open
+// time, so a component that passed the check can be a symlink by the time it is
+// used -- and O_EXCL cannot help, because it speaks about the final component
+// while every intermediate component is resolved afresh.  The swaps below are
+// planted at exactly that seam: after every check has passed, immediately
+// before the create.
+//
+// They are deterministic rather than probabilistic.  The swap is performed by
+// the intercepted create itself, so the vulnerable window is entered on every
+// run instead of being hoped for, and the test cannot pass by being lucky.
+function plantParentSwap(t, { key, shape }) {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-parent-swap-'));
+    t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+    const governed = path.join(base, 'data', 'market_evidence', 'live');
+    const root = path.join(base, 'scratch');
+    const name = key.split('/').pop();
+    const segments = key.split('/').slice(1, -1);
+    const parent = path.join(root, 'a');
+    const landing = path.join(governed, ...segments, name);
+    // The adversary plants the structure it intends the redirected write to land in.
+    fs.mkdirSync(path.dirname(landing), { recursive: true });
+    fs.mkdirSync(shape === 'immediate' ? parent : path.join(parent, ...segments), { recursive: true });
+
+    const realOpenSync = fs.openSync;
+    let armed = true;
+    fs.openSync = (target, flags, mode) => {
+        if (armed && typeof target === 'string' && (flags & fs.constants.O_CREAT) && target.endsWith(`/${name}`)) {
+            armed = false;
+            if (shape === 'immediate') fs.rmdirSync(parent);
+            else fs.renameSync(parent, `${parent}_moved`);
+            fs.symlinkSync(governed, parent, 'dir');
+        }
+        return realOpenSync.call(fs, target, flags, mode);
+    };
+    return { root, governed, landing, restore: () => { fs.openSync = realOpenSync; } };
+}
+
+test('a parent directory swapped for a symlink mid-create cannot redirect the write', t => {
+    const planted = plantParentSwap(t, { key: 'a/b/object.bin', shape: 'intermediate' });
+    const transport = createLocalTransport({ root: planted.root });
+    assert.equal(isGovernedProductionPath(planted.governed), true, 'the planted destination must be governed by this module\'s own definition');
+    try {
+        assert.doesNotThrow(() => transport.putObjectCreateOnly({ key: 'a/b/object.bin', bytes: Buffer.from('redirected') }));
+    } finally {
+        planted.restore();
+    }
+    assert.equal(fs.existsSync(planted.landing), false, 'no byte may be written into the governed production area');
+    assert.equal(fs.existsSync(path.join(planted.root, 'a_moved', 'b', 'object.bin')), true,
+        'the write must follow the directory that was opened, not the symlink that replaced its path');
+});
+
+test('a parent directory replaced by a symlink mid-create fails closed', t => {
+    const planted = plantParentSwap(t, { key: 'a/object.bin', shape: 'immediate' });
+    const transport = createLocalTransport({ root: planted.root });
+    try {
+        assert.throws(
+            () => transport.putObjectCreateOnly({ key: 'a/object.bin', bytes: Buffer.from('redirected') }),
+            error => error instanceof SnapshotIntegrityError && /disappeared during the create/.test(error.message),
+            'the create must fail closed rather than follow the planted symlink'
+        );
+    } finally {
+        planted.restore();
+    }
+    assert.equal(fs.existsSync(planted.landing), false, 'no byte may be written into the governed production area');
+});
+
+test('the create path keeps its contract when the parent is reached by descriptor', t => {
+    const root = tempRoot(t);
+    const transport = createLocalTransport({ root });
+    const written = transport.putObjectCreateOnly({ key: 'generation/nested/object.bin', bytes: Buffer.from('payload') });
+    assert.equal(written.size, 7);
+    assert.equal(transport.getObject({ key: 'generation/nested/object.bin' }).toString('utf8'), 'payload');
+    assert.throws(
+        () => transport.putObjectCreateOnly({ key: 'generation/nested/object.bin', bytes: Buffer.from('again') }),
+        error => error instanceof ObjectAlreadyExistsError && error.code === 'OBJECT_ALREADY_EXISTS'
+    );
+    const outside = path.join(tempRoot(t), 'outside');
+    fs.mkdirSync(outside);
+    fs.symlinkSync(outside, path.join(root, 'linkdir'), 'dir');
+    assert.throws(
+        () => transport.putObjectCreateOnly({ key: 'linkdir/object.bin', bytes: Buffer.from('payload') }),
+        error => error instanceof SnapshotIntegrityError && /symbolic links/.test(error.message),
+        'a symlinked parent component must still be refused'
+    );
+});
+
 test('a missing object reads as absent rather than as an error', t => {
     const transport = createLocalTransport({ root: tempRoot(t) });
     assert.equal(transport.getObject({ key: 'nowhere/at/all.json' }), null);
