@@ -42,6 +42,29 @@ env:
   DEV_CACHE_MOUNT: "${{ github.workspace }}/.cache/dev_root_cache:/root/.cache"
   DEV_NPM_MOUNT: "${{ github.workspace }}/.cache/npm:/root/.npm"
   DEV_GITCONFIG_MOUNT: "${{ github.workspace }}/.cache/gitconfig:/root/.config/git"
+  # ---------------------------------------------------------------------------
+  # CI has no development proxy, so the dev container's generic proxy must be
+  # switched off explicitly.
+  #
+  # docker-compose.dev.yml derives HTTP_PROXY / HTTPS_PROXY / ALL_PROXY (and the
+  # lowercase spellings) from DEV_PROXY_HOST, which the CI steps below set to
+  # 127.0.0.1. Inside the container 127.0.0.1 is the container itself, and no
+  # proxy listens on the development proxy port there, so every generic proxy
+  # variable resolves to a dead endpoint. npm then sends its registry requests
+  # to that endpoint, hangs for ~70s across its retry backoff, and aborts with
+  # "npm error Exit handler never called!" -- while still exiting 0, so the
+  # install step looks green while node_modules is left without eslint.
+  #
+  # These three overrides are set to the EMPTY STRING. The compose file reads
+  # them with ${VAR-default} semantics, where a set-but-empty value is a real
+  # value, so the container gets an empty generic proxy: no proxy. Local
+  # development sets none of these variables and keeps the historical
+  # host-gateway defaults. Provider and The Odds API proxy configuration is
+  # deliberately NOT touched here.
+  # ---------------------------------------------------------------------------
+  DEV_GENERIC_HTTP_PROXY: ""
+  DEV_GENERIC_HTTPS_PROXY: ""
+  DEV_GENERIC_ALL_PROXY: ""
 
 jobs:
   production-gate:
@@ -136,6 +159,47 @@ jobs:
           env | grep '^DEV_' || true
           echo "[Production Gate] Container network alias probe (dev -> db):"
           docker compose -f docker-compose.dev.yml exec -T dev bash -lc 'ping -c 2 db'
+
+      - name: Assert CI generic proxy is disabled
+        env:
+          DEV_DB_HOST: db
+          DEV_REDIS_HOST: redis
+          DEV_PROXY_HOST: 127.0.0.1
+        run: |
+          # Positive proof that the empty-string overrides above actually reach
+          # the container.  If a future workflow edit removes them -- or a
+          # runtime delivers `KEY: ""` as unset, so that ${VAR-default} falls
+          # back to the host-gateway default -- npm would again send registry
+          # traffic to the dead loopback endpoint, hang for ~70s, abort with
+          # "npm error Exit handler never called!" and still exit 0, leaving a
+          # green install step and a node_modules without eslint.  Fail here,
+          # loudly and immediately, instead of one step later.
+          # Only variable NAMES and emptiness are printed -- never a value.
+          docker compose -f docker-compose.dev.yml exec -T dev bash -lc '
+            set -u
+            enabled=""
+            for name in HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; do
+              eval "value=\${$name-__UNSET__}"
+              case "$value" in
+                __UNSET__)
+                  printf "%s=<UNSET>\n" "$name"
+                  enabled="${enabled} ${name}"
+                  ;;
+                "")
+                  printf "%s=<empty>\n" "$name"
+                  ;;
+                *)
+                  printf "%s=<SET>\n" "$name"
+                  enabled="${enabled} ${name}"
+                  ;;
+              esac
+            done
+            if [ -n "${enabled}" ]; then
+              echo "[Production Gate] CI generic proxy is still active:${enabled}" >&2
+              exit 1
+            fi
+            echo "[Production Gate] CI generic proxy is disabled (all six variables are empty)."
+          '
 
       - name: Install project dependencies
         run: |
