@@ -58,6 +58,59 @@ controlled initialization, the request cycle or the transaction commit. Nothing
 in a live cycle can trigger a backup, and nothing in this tooling can trigger a
 cycle.
 
+### Controller scope reconciliation for PR #1911
+
+PR #1911 was built against a Controller authorization enumerating 27 exact
+paths. Five further paths were created without prior authority, and three
+authorized paths were never created. A read-only reconciliation adjudicated all
+five, and the Execution Controller has since supplementally authorized them.
+
+```text
+PR1911_SCOPE_RECONCILIATION=CONTROLLER_APPROVED
+ORIGINAL_CONTROLLER_AUTHORIZED_PATHS=27
+SUPPLEMENTALLY_AUTHORIZED_PATH_COUNT=5
+UNUSED_ORIGINAL_AUTHORIZED_PATH_COUNT=3
+FINAL_AUTHORIZED_PATH_COUNT=29
+UNAUTHORIZED_CHANGED_PATHS=0
+BUILDER_ORIGINAL_SCOPE_EXPANSION=UNAUTHORIZED_AT_TIME_OF_CREATION
+CONTROLLER_LATER_ADJUDICATION=APPROVED
+OTHER_UNDISCLOSED_SCOPE_EXPANSION=NO
+MANDATORY_TEST_MATRIX=40_COVERED_0_PARTIAL_0_NOT_FOUND
+```
+
+The five supplementally authorized paths are
+`tests/helpers/backup_authority_fixture.js`, `tests/helpers/network_tripwire.js`,
+`tests/unit/market_evidence/backup/backup_cli.test.js`,
+`tests/unit/market_evidence/backup/no_production_defaults.test.js` and
+`tests/unit/market_evidence/backup/transport_contract.test.js`. All five are
+test-support or test-only and none is reachable from shipped code. The tripwire
+is required by this contract's own offline proof; the CLI and absence-sweep
+suites cover the operator surface and the whole-tree properties that a
+per-module test layout has no home for; the fixture builds synthetic authorities
+through the real pipeline, because production must not be copied.
+
+This authorization is effective for the PR #1911 workstream only and is **not**
+precedent. It corrects an original authorization that under-specified this
+contract's own test plan; it does not license a future Builder to add paths
+without prior Controller authorization, and it changes no exclusion.
+
+The three unused authorized paths are
+`tests/unit/market_evidence/backup/local_transport.test.js`,
+`tests/unit/market_evidence/backup/r2_transport.test.js` and
+`tests/unit/market_evidence/backup/end_to_end_offline_restore.test.js`, recorded
+as `UNUSED_AUTHORIZED` with `UNUSED_ORIGINAL_PATHS_ARE_COVERAGE_GAPS=NO`. Their
+responsibilities were reorganized into the final layout — the two transport
+suites into `transport_contract.test.js`, and the end-to-end restore obligation
+into `backup_cli.test.js`, where it is exercised through the real operator
+surface as child processes rather than through library calls. They are not
+required to be created for filename compliance, and no duplicate test file
+exists to satisfy a name.
+
+The historical deviation is recorded rather than rewritten: the five paths were
+unauthorized when they were created, and the Controller's approval is a later
+adjudication. Nothing in this section accepts or merges PR #1911, and nothing in
+it closes Blocker #3.
+
 ## RPO/RTO policy — one proposal, deliberately unapproved
 
 Two candidate policies were put to the Controller. **Proposal B** — a snapshot

@@ -101,7 +101,12 @@
     "the historical pre-epoch request accounting uncertainty is preserved verbatim: REQUEST_ACCOUNTING_PRE_EPOCH_LOWER_BOUND=AT_LEAST_2_CONFIRMED and REQUEST_ACCOUNTING_PRE_EPOCH_EXACT_TOTAL=UNKNOWN are not reinterpreted",
     "no test contacts Cloudflare, R2, AWS, The Odds API or any remote S3 endpoint: every test runs behind a network tripwire that fails on the first outbound attempt, and the suite asserts zero attempts",
     "BLOCKER_3 stays OPEN and is not closed by tooling existing: GATE_2 stays NOT_ACCEPTED, GATE_3 stays NOT_AUTHORIZED and STAGE_D_STARTED stays NO",
-    "this mission stops at the merge gate: it does not merge, does not provision R2, does not create a bucket, does not write an object, does not perform a backup and does not restore anything into production"
+    "this mission stops at the merge gate: it does not merge, does not provision R2, does not create a bucket, does not write an object, does not perform a backup and does not restore anything into production",
+    "the Controller's supplemental authorization for PR #1911 covers exactly five paths -- tests/helpers/backup_authority_fixture.js, tests/helpers/network_tripwire.js, tests/unit/market_evidence/backup/backup_cli.test.js, tests/unit/market_evidence/backup/no_production_defaults.test.js and tests/unit/market_evidence/backup/transport_contract.test.js -- and is effective for this PR #1911 workstream only: it authorizes no other path, adds no authorized prefix, and does not relax any exclusion",
+    "the historical deviation is recorded rather than rewritten: BUILDER_ORIGINAL_SCOPE_EXPANSION=UNAUTHORIZED_AT_TIME_OF_CREATION and CONTROLLER_LATER_ADJUDICATION=APPROVED, so the five paths are never presented as having always been authorized",
+    "the authorization counts are fixed and reconciled: ORIGINAL_CONTROLLER_AUTHORIZED_PATHS=27, SUPPLEMENTALLY_AUTHORIZED_PATHS=5, UNUSED_ORIGINAL_AUTHORIZED_PATHS=3 (tests/unit/market_evidence/backup/local_transport.test.js, tests/unit/market_evidence/backup/r2_transport.test.js and tests/unit/market_evidence/backup/end_to_end_offline_restore.test.js, recorded UNUSED_AUTHORIZED with their responsibilities reorganized into the final test layout rather than duplicated for filename compliance), FINAL_AUTHORIZED_PATH_COUNT=29",
+    "PR1911_SCOPE_RECONCILIATION=CONTROLLER_APPROVED, OTHER_UNDISCLOSED_SCOPE_EXPANSION=NO and MANDATORY_TEST_MATRIX=40_COVERED_0_PARTIAL_0_NOT_FOUND: the five supplemental paths are test-support or test-only, none is reachable from shipped code, and no path beyond the final 29 was changed",
+    "Builder self-expansion is not precedent: this supplemental authorization corrects an original authorization that under-specified the mission's own test plan, and it grants no standing permission for a future Builder to add any path without prior Controller authorization"
   ],
   "forbidden_side_effects": [
     "creating, requesting, reading, printing, logging, copying or persisting any credential, API token or secret value, and any command that would echo one",
@@ -113,6 +118,7 @@
     "deleting, overwriting or repairing in place any snapshot generation, restored root, transport object or verification finding, including emulating a delete through any other verb",
     "modifying any excluded or forbidden path, including the canonical readers, the transaction store, the quota accounting implementation, provider adapters, scheduler code, production config, .github/**, database/**, data/**, deploy/** or docker/**",
     "Stage D execution, scheduler enablement, provider request, quota consumption, controlled initialization, transaction creation, training, prediction, backtest or model activation",
-    "force push, direct main push, self-review or self-merge, and merging this pull request"
+    "force push, direct main push, self-review or self-merge, and merging this pull request",
+    "adding any path beyond the final authorized 29, and treating the Controller's supplemental authorization of these five test-support paths as precedent for Builder self-expansion in any future mission"
   ]
 }
