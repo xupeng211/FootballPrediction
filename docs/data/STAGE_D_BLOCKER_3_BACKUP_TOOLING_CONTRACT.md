@@ -142,9 +142,17 @@ provisioning and to nothing in this tooling's own contract.
 
 ## Scope and authority
 
+The four adjudication lines below read `OPEN` / `NOT_ACCEPTED` while this tooling
+was being built. Blocker #3 has since been closed and Gate 2 accepted by the
+Controller, on evidence bound to main
+`e660e1a4152191458dc73f369c776be17ab15633` — recorded in
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md). They are
+corrected here because this is a current-state contract; nothing else in this
+document changes, and in particular the tooling was not what closed the blocker.
+
 ```text
-BLOCKER_3_STATUS=OPEN
-GATE_2=NOT_ACCEPTED
+BLOCKER_3_STATUS=CLOSED                       (was OPEN when this contract was written)
+GATE_2=ACCEPTED                               (was NOT_ACCEPTED)
 GATE_3=NOT_AUTHORIZED
 STAGE_D_STARTED=NO
 
@@ -1147,9 +1155,16 @@ PRODUCTION_RESTORE_EXECUTED=NO    PRODUCTION_CONTENT_MUTATED=NO
 PRODUCTION_METADATA_MUTATED=NO    PROVIDER_REQUEST_EXECUTED=NO
 THE_ODDS_API_QUOTA_CONSUMED=NO    STAGE_D_STARTED=NO
 SCHEDULER_CHANGED=NO              POLICY_B_ACTIVATED=NO
-BLOCKER_3_CLOSED=NO               GATE_2_ACCEPTED=NO
-GATE_3_AUTHORIZED=NO
+BLOCKER_3_CLOSED_BY_THIS_WORK=NO  GATE_2_ACCEPTED_BY_THIS_WORK=NO
+GATE_3_AUTHORIZED_BY_THIS_WORK=NO
 ```
+
+Each `..._BY_THIS_WORK` line is a statement about this workstream, not about the
+repository's current state: the live wiring neither closed Blocker #3 nor
+accepted Gate 2. Both have since happened, on separately authorized evidence —
+`BLOCKER_3=CLOSED`, `GATE_2=ACCEPTED`, `GATE_3=NOT_AUTHORIZED`,
+`STAGE_D_STARTED=NO`. See
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md).
 
 The live wiring is repository-side and offline. It makes the R2 target
 *addressable* and *provable*; it does not make it *reached*. Every live-mode
@@ -1160,5 +1175,11 @@ bucket anyone contacted. No credential was created, no credential value was
 inspected, no lock was configured and no request was made.
 
 Blocker #3 is closed by an off-host target and an isolated-restore proof run
-against it. Neither exists yet. This contract describes the tooling that will
-perform that proof; it is not the proof, and it does not close the blocker.
+against it. Both now exist: the target was provisioned separately by the Owner,
+and the isolated restore of the real pre-repair generation — the one written
+before the `required_directories` field existed — was performed from merged main
+and cold-loaded by a fresh process to the frozen authority values. `BLOCKER_3`
+is therefore `CLOSED` and `GATE_2` is `ACCEPTED`. This contract is unchanged by
+that: it still describes only the tooling, it is still not the proof, and it
+authorizes nothing further. The proof itself is recorded in
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md).

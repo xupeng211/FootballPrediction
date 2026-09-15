@@ -11,7 +11,10 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-09
+## Current State Snapshot — 2026-09-16
+
+本节于 2026-09-16 因 Blocker #3 关闭 / Gate 2 接受的状态变更而刷新（该裁定完成于
+2026-09-15/16）；`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 仍记录上一次完整知识审计的基线，早于本次刷新。
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
 下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
@@ -34,10 +37,10 @@ STAGE_D_SINGLE_CYCLE_BINDER=IMPLEMENTED_ON_REMEDIATION_BRANCH__NOT_AUTHORIZED
 STAGE_D_BINDER_AUTHORIZATION=NO
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
 STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
-STAGE_D_INDEPENDENT_BACKUP_RESTORE=OPEN_OWNER_TARGET_REQUIRED
+STAGE_D_INDEPENDENT_BACKUP_RESTORE=CLOSED_BLOCKER_3_GATE_2_ACCEPTED
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
-STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY
+STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY__NOT_RE_ADJUDICATED
 STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
 STAGE_D_STARTED=NO
@@ -68,13 +71,16 @@ CURRENT_MARKET_ASSETS=
 - historical odds staging/rebuild evidence
 
 CURRENT_HARD_BLOCKERS=
-- no physically independent backup target or isolated restore proof exists; all discovered local paths share `/dev/nvme0n1p5`
 - canonical value engine and canonical betting backtest are NOT_ESTABLISHED
 - bankroll/staking and CLV tracking are not established
 - fresh independent future holdout is not yet evaluated
 - production model activation remains NO / separately authorized
+（原第一条 "no physically independent backup target or isolated restore proof exists" 已解除：
+Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`。
+`OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
+不是 blocker。）
 
-NEXT_OWNER_DECISION=指定独立故障域 backup target 并完成隔离 restore proof；quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`，下一步是 Controller 的 preauthorization review，而不是执行；quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -117,9 +123,10 @@ ledger/verified-quota fail-close 实现，以及唯一的
   修复后 ordinary runtime identity 可独立 cold-load authority（`tx_0ba8d4ad…`/`903`），9/9 内容
   `PRE_SHA256 == POST_SHA256`，post-repair plan 为 `NOT_REQUIRED`/`0`。状态：
   `BLOCKER_2_PRODUCTION_REMEDIATION=EXECUTED_AND_VERIFIED`、`BLOCKER_2=CLOSED`、
-  `PHASE_B_COMPLETE=YES`；`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为 Gate 2 的
-  接受仍取决于下列 Blocker #3。详见 `docs/data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`。
-- 指定不同物理故障域并完成 isolated restore proof（Blocker #3；Gate 2 接受的前置条件）。
+  `PHASE_B_COMPLETE=YES`；当时 `GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为
+  Gate 2 的接受仍取决于下列 Blocker #3。详见 `docs/data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`。
+- **已完成**：指定不同物理故障域并完成 isolated restore proof（Blocker #3；Gate 2 接受的前置
+  条件）。`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`，`GATE_3=NOT_AUTHORIZED` 不变。
   仓库侧 backup / restore tooling 已实现并有离线证明（offline CLI `scripts/ops/stage_d_backup_snapshot.js`、
   `scripts/ops/stage_d_restore_verify.js`，contract 见
   `docs/data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`）：create-only 写入、
@@ -130,7 +137,8 @@ ledger/verified-quota fail-close 实现，以及唯一的
   identity 与 credential 各自只来自显式文件（无默认位置、无环境/profile/metadata/
   provider-chain discovery，argv 内联 secret 与日志/证据中的 secret 一律拒绝），
   `LIVE_R2_CLI_WIRING=IMPLEMENTED`，原 offline CLI byte-unchanged 且继续 netless。
-  但这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、
+  但这**没有**关闭 Blocker #3——关闭它的是下面那条 self-hosted 路径，不是这条 R2 wiring，
+  当时以下 R2 路径专属事实全部为否：`R2_TARGET_PROVISIONED=NO`、
   `LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED`（wiring 只在 stub SDK 上离线证明，未发出任何
   live request）、`R2_BUCKET_CREATED=NO`、`CREDENTIAL_CREATED=NO`、`BUCKET_LOCK_CONFIGURED=NO`、
   `BACKUP_CREATED=NO`、`POLICY_B_STATUS=PROPOSED_NOT_APPROVED`
@@ -138,8 +146,31 @@ ledger/verified-quota fail-close 实现，以及唯一的
   publication / scheduler / cycle 路径。runtime backup credential 必须是 data-plane
   credential，不得持有 bucket-administration authority（因此
   `NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO`）；Bucket Lock 是独立防御层，
-  `ADMINISTRATIVELY_REMOVABLE=YES`，不在本任务范围内配置。剩余动作仍需 Owner：provision
-  独立故障域 target，并单独授权一次对该 target 的真实 backup + isolated restore proof。
+  `ADMINISTRATIVELY_REMOVABLE=YES`，不在本任务范围内配置。
+- **Blocker #3 已由后续一次单独授权的 closure mission 关闭，Gate 2 已被接受。** 关闭依据不是
+  上述 tooling，而是一次真实证明：一个**不同物理故障域**的 off-host target 被 provisioning
+  （self-hosted S3 兼容 endpoint，`create_only: true`、无 delete verb、data-plane credential），
+  真实 canonical backup 写入其中并远端 verification，随后**从 merged main 出发**对该真实
+  generation 做 isolated restore —— restore 的正是 `required_directories` 字段出现**之前**写下
+  的那份 generation，即 backwards-compatibility 情形本身 —— 最后由 fresh process 冷加载恢复出的
+  authority，八个 frozen 值全部一致。`required_directories_source=DERIVED_FROM_CANONICAL_LAYOUT`、
+  `production_fallback_used=false`、`production_paths_read=[]`、
+  `EXISTING_REMOTE_GENERATION_MUTATED=NO`（`writes_performed=0`、`deletes_performed=0`）、
+  `SECRET_SCAN_PASS=YES`。状态：`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`、
+  `GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO`。
+  Gate 2 的接受区分**技术 gate 要求**与**长期运营加固**：被接受的技术要求是"物理独立的 off-host
+  可恢复性 + 对该真实 target 的 isolated restore proof"，已满足；`OFF_HOST=YES` 但
+  `OFF_SITE=NO`（同 `/24`、同 layer-2 段、同物理站点，`OFFSITE_GAP_ACCEPTED_AS_NONBLOCKING=YES`、
+  `LONG_TERM_OFFSITE_BACKUP_RECOMMENDED=YES`，**不**升格为 geographic disaster recovery）、
+  `DHCP_RESERVATION_STATUS=NOT_CONFIGURED`（`DHCP_RESERVATION_NONBLOCKING=YES`，未改动任何
+  router/DHCP 配置）、以及缺失的 zero-entry-ledger 向后兼容回归测试
+  （`MISSING_TRACKED_BACKCOMPAT_TEST_BLOCKS_GATE_2=NO`；该测试在 PR #1916 中被执行但**从未**被
+  track，因为 `.gitignore` 的 `backup/` 规则隐藏了整个 `tests/unit/market_evidence/backup/` 目录
+  —— 这也是该 PR 报告的 268 与 merged main 实测 251 的差额）三者均属加固而非 Gate 2 条件。
+  `AWS_FALLBACK=HISTORICAL_CANDIDATE_REQUIRING_REBASE_OR_REIMPLEMENTATION`：PR #1914 保持
+  `OPEN`、未 merge/close/rebase，与 main 有一处冲突。本次记录没有联系 The Odds API、没有消耗
+  provider quota、没有启动 scheduler、没有生成新 backup、没有删除任何远端对象、没有启动 Stage D。
+  完整记录见 `docs/data/STAGE_D_BLOCKER_3_CLOSEOUT.md`。
 - 在所有前置证据完整后，单独授权一次 bounded live preflight；当前不调用 provider、不启动 scheduler 或 Stage D。
 
 本轮已把 Owner 声明的 `STARTER_FREE / 500` 计划、`50` safety reserve、`450`

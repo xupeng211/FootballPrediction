@@ -425,14 +425,22 @@ a stub SDK, and no R2 request has been made. The runtime backup credential is
 required to be a data-plane credential and must not carry bucket-administration
 authority, which is what makes `NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK=NO` true of
 it; bucket lock configuration is out of scope for this work and no lock was
-configured. Blocker #3 remains OPEN and `GATE_2`/`GATE_3` are unchanged by it.
+configured. At the time this paragraph was written Blocker #3 was still OPEN and
+`GATE_2`/`GATE_3` were unchanged by it; both have since moved — `BLOCKER_3=CLOSED`
+and `GATE_2=ACCEPTED`, with `GATE_3=NOT_AUTHORIZED` unchanged — on separately
+authorized evidence recorded in
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md). Nothing in the
+tooling description above changes with that closure.
 
 **Current status.** The Owner-authorized Phase B execution governed by this
 contract has since been executed and verified; the outcome is recorded in
 [`STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md`](STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md).
 `BLOCKER_2_PRODUCTION_REMEDIATION=EXECUTED_AND_VERIFIED`, `BLOCKER_2=CLOSED`,
-`PHASE_B_COMPLETE=YES`. `GATE_2=NOT_ACCEPTED` and `GATE_3=NOT_AUTHORIZED` are
-deliberately retained because `BLOCKER_3` remains open. That execution ran under
+`PHASE_B_COMPLETE=YES`. At that point `GATE_2=NOT_ACCEPTED` and
+`GATE_3=NOT_AUTHORIZED` were deliberately retained because `BLOCKER_3` remained
+open; `GATE_2` has since been accepted when `BLOCKER_3` was closed, and
+`GATE_3=NOT_AUTHORIZED` still stands. See
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md). That execution ran under
 its own separate authorization, and those authorizations are **spent**:
 `PHASE_B_EXECUTION_AUTHORIZED=NO` in the block below still governs any future
 repair, and the closeout is a historical adjudication of one evidence set that

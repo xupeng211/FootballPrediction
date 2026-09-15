@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-09-08
+Last updated: 2026-09-16
 
 ## Current State
 
@@ -26,9 +26,9 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 | Predictive evidence | log loss `0.97834` vs prior `1.05654`; Brier `0.58456` vs prior `0.63590`; accuracy `55.96%` vs majority `48.62%`; `MODEL_OFFLINE_QUALITY_STATUS=PROMISING` |
 | Holdout | `CONSUMED_FOR_OFFLINE_EVALUATION`（109 outcomes，不再是 untouched/unopened） |
 | Market / odds evidence | Stage C canonical market-evidence spine = `IMPLEMENTED / PILOT`；maturity = `REPRODUCIBLE_PILOT`；historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
-| Remaining downstream gaps | Stage D independent backup/restore（`CONTINUOUS_CAPTURE_READY=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation |
+| Remaining downstream gaps | Stage D 持续采集本身尚未运营（`CONTINUOUS_CAPTURE_READY=NO`、`STAGE_D_STARTED=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation。独立备份/恢复已由 Blocker #3 关闭与 Gate 2 接受消除，不再列为 gap（`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`） |
 | Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
-| Next Owner decision | 完成下列 pre-Stage-D 运营决策后，单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
+| Next Owner decision | 在 Gate 3 前置条件复核后，单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
 
 Stage C 已在 PR #1890 正常合并并通过 main Production Gate，canonical transaction-v1
 architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据完整性，不证明持续采集、
@@ -36,10 +36,15 @@ architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据�
 `CONDITION_1_NON_HEAD_RETRY=COMPLETE`。单 Owner 治理已收敛，
 `SINGLE_OWNER_GOVERNANCE_RECONCILED=YES`，不重开 ruleset 工作。
 
-`STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY`；Stage D 名称为
+`STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY` 是 Blocker #3 关闭**之前**的 pre-Stage-D
+readiness 结论：其中"backup"这一半的不完整性已随 `BLOCKER_3=CLOSED` 与 `GATE_2=ACCEPTED`
+消除。本文件**不**据此重新裁定 Stage D readiness（那是 Controller 的决定），也不把 Gate 2
+接受当作 Stage D 执行授权。Stage D 名称为
 **EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS**；
 `NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE`；
 **`STAGE_D_STARTED=NO`**。GO_WITH_CONDITIONS 是有条件 readiness 结论，不是执行授权。
+Gate 3 状态为 `GATE_3=NOT_AUTHORIZED`，下一步是 Controller 的 preauthorization review，
+而不是执行。
 
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
 immutable hash-chained prospective ledger、唯一的
@@ -99,11 +104,12 @@ drift），两次 halt 均未产生错误的 production 状态，rollback 因此
 `BLOCKER_2_AUTHORITY_IDENTITY_PRESERVED=PASS`、`BLOCKER_2_ORDINARY_RUNTIME_COLD_LOAD=PASS`、
 `BLOCKER_2_FRESH_PROCESS_PROOF=PASS`、`BLOCKER_2_POST_REPAIR_PLAN=NOT_REQUIRED`、
 `PHASE_B_CLOSEOUT=ACCEPTED_WITH_DOCUMENTED_EXECUTION_DEVIATION`、`BLOCKER_2=CLOSED`、
-`PHASE_B_COMPLETE=YES`。`GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为
-Blocker #3（authority 与 evidence 仍在同一 physical failure domain）仍然 OPEN；本次 closeout
+`PHASE_B_COMPLETE=YES`。当时 `GATE_2=NOT_ACCEPTED`、`GATE_3=NOT_AUTHORIZED` 保持不变，因为
+Blocker #3（authority 与 evidence 仍在同一 physical failure domain）仍然 OPEN；该 closeout
 没有选择 backup target、没有复制数据、没有 restore，也没有改动 retention/RPO/RTO，并且没有启动
 Stage D、provider request、quota 消耗或 scheduler。证据、偏差裁定与 no-precedent 规则见
 [`Stage D Blocker #2 Phase B closeout`](data/STAGE_D_BLOCKER_2_PHASE_B_CLOSEOUT.md)。
+`GATE_2` 随后在 Blocker #3 关闭时被接受，`GATE_3=NOT_AUTHORIZED` 不变。
 
 Blocker #3 的 repository-side backup / restore tooling 已实现并有离线证明：create-only
 写入（filesystem 用 `O_CREAT|O_EXCL`，S3 兼容层用 `If-None-Match: *`，**从不**用 HEAD-then-PUT
@@ -135,8 +141,41 @@ local-signing-only 限制），本仓库**不**声称 "R2 cannot prefix-scope cr
 `POLICY_B_STATUS=PROPOSED_NOT_APPROVED`（`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`）。
 tooling 未接入 publication / scheduler / controlled initialization / cycle / transaction commit
 中的任何一条路径，因此没有任何 live 路径会触发 backup；live wiring 本身只在 stub SDK 上离线
-证明，没有发出任何真实 R2/S3 请求。剩余动作仍需 Owner：provision
-独立物理故障域 target，并单独授权一次对它的真实 backup + isolated restore proof。
+证明，没有发出任何真实 R2/S3 请求。
+
+**Blocker #3 已关闭、Gate 2 已接受。** Controller 已裁定
+`BLOCKER_3_CLOSURE_ACCEPTED=YES`、`GATE_2_ACCEPTANCE_AUTHORIZED=YES`，因此
+`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`。关闭依据是一份绑定 main
+`e660e1a4152191458dc73f369c776be17ab15633` 的既有证据链：一个**不同物理故障域**的 off-host
+target（self-hosted S3 兼容 endpoint，`create_only: true`、无 delete verb、data-plane
+credential），一次写入其中的真实 canonical backup，一次对它的远端 verification，以及一次**从
+merged main 出发**、对该真实 generation 的 isolated restore —— restore 的正是
+`required_directories` 字段出现之前写下的那份 generation，即 backwards-compatibility 情形
+本身 —— 最后由一个真正 fresh process 冷加载恢复出的 authority，八个 frozen 值全部一致。
+`required_directories_source=DERIVED_FROM_CANONICAL_LAYOUT`、`production_fallback_used=false`、
+`production_paths_read=[]`、`EXISTING_REMOTE_GENERATION_MUTATED=NO`（`writes_performed=0`、
+`deletes_performed=0`）、`SECRET_SCAN_PASS=YES`。完整记录见
+[`Stage D Blocker #3 closeout`](data/STAGE_D_BLOCKER_3_CLOSEOUT.md)。
+
+Gate 2 的接受区分**技术 gate 要求**与**长期运营加固**：被接受的技术要求是"物理独立的 off-host
+可恢复性 + 对该真实 target 的 isolated restore proof"，已由上述证据满足；下列各项属于加固，**不是**
+Gate 2 的条件，也不因它们而重新打开 Gate 2。
+`OFF_HOST=YES`、`OFF_SITE=NO`（两个地址同处一个 `/24`、同一 layer-2 段、同一物理站点，因此
+`OFFSITE_GAP_ACCEPTED_AS_NONBLOCKING=YES`、`LONG_TERM_OFFSITE_BACKUP_RECOMMENDED=YES`，且**不**
+把语义升格为 geographic disaster recovery）；`DHCP_RESERVATION_STATUS=NOT_CONFIGURED`
+（`DHCP_RESERVATION_NONBLOCKING=YES`、`DHCP_RESERVATION_RECOMMENDED=YES`，未改动任何
+router/DHCP 配置）；以及缺失的 zero-entry-ledger 向后兼容回归测试
+（`MISSING_TRACKED_BACKCOMPAT_TEST_BLOCKS_GATE_2=NO`；该测试在 PR #1916 中被实际执行但**从未**
+被 track —— `.gitignore` 的 `backup/` 规则隐藏了整个 `tests/unit/market_evidence/backup/`
+目录，这也是该 PR 报告的 268 与 merged main 实测 251 的差额 —— 本仓库**不**声称它在 PR #1916
+期间已被 track）。三者的登记与复现方式见该 closeout 的 follow-up register。
+
+`AWS_FALLBACK=HISTORICAL_CANDIDATE_REQUIRING_REBASE_OR_REIMPLEMENTATION`：PR #1914 保持
+`OPEN`、未 merge、未 close、未 rebase，其 head `4b1ff1240` 与 main 存在一处冲突
+（`src/infrastructure/market_evidence/backup/liveTargetIdentity.js`），其 `DOCUMENTED_SUPPORTED`
+的 atomic create-only 声明**未**被 live 证明，需要 AWS provisioning。
+`GATE_3=NOT_AUTHORIZED` 与 `STAGE_D_STARTED=NO` 不变；本次记录没有联系 The Odds API、没有消耗
+provider quota、没有启动 scheduler、没有生成新 backup、也没有删除任何远端对象。
 
 当前模型与市场证据的细节见 `docs/CAPABILITY_INDEX.md`、
 `docs/ACTIVE_MILESTONE.md`、`docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md`、
