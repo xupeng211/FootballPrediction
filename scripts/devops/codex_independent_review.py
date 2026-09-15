@@ -429,16 +429,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help=(
-            "写入 receipt 的进程 pid（可选，必须是正整数）。只做数字 pid 存活探测，"
-            "从不做 pattern 匹配；不给时改用 writer 启动时写下的 identity record。"
+            "写入 receipt 的进程 pid（可选，必须是正整数，且必须与 --pid-starttime 成对"
+            "给出）。只做数字 pid 存活探测，从不做 pattern 匹配；不给时改用 writer 启动时"
+            "写下的 identity record。"
         ),
     )
     wait.add_argument(
         "--pid-starttime",
         default=None,
         help=(
-            "该 pid 在 /proc/<pid>/stat 的 start time（field 22）。给出时作为不可复用的"
-            "进程身份参与校验；不给出时使用 writer 自己记录的 start time。"
+            "该 pid 在 /proc/<pid>/stat 的 start time（field 22），必须来自启动时观察到的"
+            "那个 writer。给出 --pid 时必须同时给出，否则 wait 拒绝启动；两者都不给时使用"
+            "writer 自己记录的 start time。"
         ),
     )
     wait.add_argument(

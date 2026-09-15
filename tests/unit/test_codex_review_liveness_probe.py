@@ -8,8 +8,9 @@ The incident this module guards against came from a probe that could not: a
 death was unobservable.  A bare pid is the next-best trap — the process holding
 ``/proc/<pid>`` later is not necessarily the one that was launched — so the
 writer publishes its own ``/proc`` start time at launch and these tests pin that
-binding, the refusal of pids that cannot designate one process, and the rule
-that an unusable hint is not evidence of death.
+binding, the refusal of pids that cannot designate one process (non-positive, or
+carrying no start time at all), and the rule that an unusable hint is not
+evidence of death.
 """
 
 from __future__ import annotations
@@ -90,18 +91,25 @@ def test_wait_case_3_writer_exit_without_receipt(
     try:
         if not _await_zombie(writer):
             pytest.skip("could not observe an unreaped child on this platform")
+        identity = process_starttime(writer.pid)
+        assert identity is not None, "a task keeps the start time it was launched with"
         # A live process whose command line contains the wrapper name: a
         # `pgrep -f` probe answers "still running" here and can never notice
         # the writer is gone, which is the defect this guards.
         decoy = subprocess.Popen(["sh", "-c", "sleep 30 # codex_independent_review"])
         assert _WriterProbe(None).alive() is True, "no probe is not evidence of death"
-        assert _WriterProbe(writer.pid).alive() is False
+        assert _WriterProbe(writer.pid).alive() is True, "an unbound pid is no probe, not a guess"
+        assert _WriterProbe(writer.pid, starttime=identity).alive() is False
 
         evidence = tmp_path / "evidence-dead-writer"
         evidence.mkdir(mode=0o700)
         started = time.monotonic()
         exit_code = _wait(
-            evidence, "0" * 39 + "1", timeout_seconds=DELIBERATE_TIMEOUT_SECONDS, pid=writer.pid
+            evidence,
+            "0" * 39 + "1",
+            timeout_seconds=DELIBERATE_TIMEOUT_SECONDS,
+            pid=writer.pid,
+            pid_starttime=identity,
         )
         elapsed = time.monotonic() - started
     finally:
@@ -244,6 +252,39 @@ def test_wait_refuses_a_pid_that_cannot_designate_one_process(
     assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
     assert payload["state"] == WAIT_STATE_REVIEW_FAILED
     assert "--pid 必须是正整数" in payload["detail"]
+
+
+def test_wait_refuses_an_unbound_pid(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """A pid with no start time is refused, not adopted as the writer.
+
+    The pid here belongs to a live, healthy process the whole time.  A wait that
+    took its first observation as the baseline would treat that process as the
+    writer and sit out the entire deadline; refusing is what keeps a recycled
+    pid from hiding the writer's death.
+    """
+
+    live = subprocess.Popen(["sleep", "60"])
+    try:
+        evidence = tmp_path / "evidence-unbound-pid"
+        evidence.mkdir(mode=0o700)
+        started = time.monotonic()
+        exit_code = _wait(
+            evidence,
+            "0" * 39 + "1",
+            timeout_seconds=DELIBERATE_TIMEOUT_SECONDS,
+            pid=live.pid,
+        )
+        elapsed = time.monotonic() - started
+    finally:
+        live.kill()
+        live.wait()
+
+    payload = _payload(capsys)
+    assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
+    assert elapsed < FAST_FAILURE_CEILING_SECONDS, "an unbound pid must be refused, not waited out"
+    assert payload["state"] == WAIT_STATE_REVIEW_FAILED
+    assert payload["writer_pid"] is None
+    assert "未绑定身份" in payload["detail"]
 
 
 def test_wait_refuses_a_starttime_without_a_pid(

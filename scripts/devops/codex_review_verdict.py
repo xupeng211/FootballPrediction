@@ -261,8 +261,12 @@ class _WriterProbe:
     an identity: the process holding ``/proc/<pid>`` when the waiter looks may
     not be the one that was launched.  The probe therefore compares the
     ``/proc`` start time, taken from the caller or from the record the writer
-    published at launch, and reports a mismatching pid as gone instead of
-    adopting it as the writer.
+    published at launch, and reports a mismatching pid as gone.
+
+    A pid that carries no start time is not probed at all.  Adopting the first
+    start time observed for it would make the pid its own baseline, so a pid
+    recycled before the first poll would be indistinguishable from the writer
+    and would hide the writer's death for the rest of the deadline.
     """
 
     def __init__(
@@ -304,21 +308,21 @@ class _WriterProbe:
             self._bind_recorded_writer()
             if self._pid is None:
                 return True
+        if self._starttime is None:
+            # An unbound pid is not an identity, and the first start time read
+            # for it would be a baseline the pid itself supplied: a writer that
+            # died and had its pid recycled would then pass for the writer
+            # forever.  Nothing is probed here, so the wait runs to its deadline
+            # and reports an explicit timeout instead of a guess.
+            return True
         stat = _process_stat(self._pid)
         if stat is None:
             # No readable /proc entry: fall back to the existence probe alone.
             return _process_exists(self._pid)
         state, starttime = stat
-        if state == "Z":
+        if starttime != self._starttime:
             return False
-        if self._starttime is None:
-            # Only a bare pid was supplied, so this first observation is the
-            # only identity there is and it defines the baseline.  A pid
-            # recycled before this point is indistinguishable here, which is
-            # why the writer publishes its own start time for the default path.
-            self._starttime = starttime
-            return True
-        return starttime == self._starttime
+        return state != "Z"
 
     def _bind_recorded_writer(self) -> None:
         """Adopt the identity the writer recorded for itself, once it exists."""
@@ -467,6 +471,11 @@ def _wait_precondition_error(
             f"--pid 必须是正整数: {pid}"
             "（0 与负数会让存活探测命中进程组或全部可访问进程，无法指定 writer）"
         )
+    if pid is not None and starttime is None:
+        return (
+            f"--pid {pid} 未绑定身份: 单独一个 pid 会被复用，无法证明它仍是那个 writer，"
+            "必须同时用 --pid-starttime 给出启动时观察到的 /proc start time"
+        )
     if starttime is not None and pid is None:
         return "--pid-starttime 需要同时给出 --pid"
     return None
@@ -528,8 +537,10 @@ def wait_for_receipt(
 
     Liveness is checked only as a bounded early exit, and only against a pid
     bound to a ``/proc`` start time: the caller's explicit ``pid``/``pid_starttime``
-    when given, otherwise the identity the writer published at launch.  Without
-    one of those there is no probe at all — the wait then runs to its deadline
+    pair, otherwise the identity the writer published at launch.  A ``pid`` with
+    no ``pid_starttime`` is refused before the wait starts, because the only
+    start time available for it would be one the pid itself supplies.  With
+    neither source there is no probe at all — the wait then runs to its deadline
     and says so, rather than guessing that the writer died.
     """
 
@@ -539,6 +550,10 @@ def wait_for_receipt(
     pattern = REVIEW_RECEIPT_GLOB.format(head12=requested_head[:12])
     started = time.monotonic()
     deadline = started + timeout_seconds
+    # Set once the wait is genuinely watching for a writer.  A refusal before
+    # that point reports no writer identity at all: nothing was probed, and
+    # naming a pid there would suggest it had been accepted as the writer's.
+    watching = False
     probe = _WriterProbe(
         pid,
         starttime=pid_starttime,
@@ -556,8 +571,8 @@ def wait_for_receipt(
             "evidence_dir": str(directory),
             "detail": detail,
             "elapsed_seconds": round(time.monotonic() - started, 3),
-            "writer_pid": probe.pid,
-            "writer_identity_source": probe.source,
+            "writer_pid": probe.pid if watching else None,
+            "writer_identity_source": probe.source if watching else "none",
         }
         payload.update(extra)
         print(json.dumps(payload, ensure_ascii=False), flush=True)
@@ -579,6 +594,7 @@ def wait_for_receipt(
     except ReviewReceiptError as exc:
         return fail(WAIT_STATE_REVIEW_FAILED, str(exc))
 
+    watching = True
     progress.announce(
         WAIT_STATE_PARENT_WAITING,
         f"head={requested_head} evidence_dir={directory} timeout={timeout_seconds}s",

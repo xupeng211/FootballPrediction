@@ -245,7 +245,7 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		--evidence-dir "$(EVIDENCE_DIR)" \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
 
-agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [WRITER_STARTTIME=<ticks>] [JSON=1]
+agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]（WRITER_PID 必须与 WRITER_STARTTIME 成对给出，单独的 pid 不构成身份）
 	@if [ -z "$(HEAD_SHA)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
 		echo "ERROR: HEAD_SHA and EVIDENCE_DIR are required."; \
 		exit 1; \
