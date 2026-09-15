@@ -476,33 +476,79 @@ function createStagingRoot(destination) {
     return staging;
 }
 
+// `/proc/self/fd` is how a directory-scoped name is spelled without `unlinkat`,
+// which Node does not expose; the canonical reader uses the same mechanism for
+// the same reason.
+const DIRECTORY_FD_ROOT = '/proc/self/fd';
+const DIRECTORY_OPEN_FLAGS = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0) | (fs.constants.O_NOFOLLOW || 0);
+
+// Opens a directory as a *descriptor*, so that what the walk goes on to read
+// and remove is the directory it decided about rather than whatever the path
+// resolves to next time it is used.
+//
+// The difference between the two is the whole safety of the walk.  A path-based
+// step decides an entry is a directory with one syscall and uses it with the
+// next, and between those two the entry can be replaced by a symbolic link: the
+// decision was about a directory, the use is about whatever the link now names,
+// and the reach of the cleanup silently becomes a property of that.  Here the
+// entry is opened *as* a directory -- with `O_NOFOLLOW`, so a link cannot be
+// opened as one at all -- and the identity that comes back is compared against
+// the identity observed immediately before, so a replacement inside that window
+// is refused rather than followed.  `readdir` and `unlink` then address the
+// descriptor's own directory, which nothing can swap out from underneath.
+function openStagingDirectory(target) {
+    const before = fs.lstatSync(target);
+    if (before.isSymbolicLink() || !before.isDirectory()) throw new SnapshotIntegrityError(`the staging tree holds an entry that is not a plain directory: ${target}`);
+    const fd = fs.openSync(target, DIRECTORY_OPEN_FLAGS);
+    try {
+        const opened = fs.fstatSync(fd);
+        if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) throw new SnapshotIntegrityError(`a staging directory was replaced while it was being opened: ${target}`);
+        return fd;
+    } catch (error) {
+        fs.closeSync(fd);
+        throw error;
+    }
+}
+
 // Removes the *contents* of a directory this invocation created, one entry at a
 // time, never following a symbolic link.
 //
 // The reach of this walk is bounded by construction rather than by a check: it
 // starts at a path the caller minted and held in a local variable, and every
-// other path it can name is that path joined with a name `readdirSync` returned
-// from a directory it has already visited.  `readdirSync` cannot return `..`,
-// so there is no traversal to refuse and no denylist to keep current.
+// other name it can act on is one `readdir` returned from a directory this walk
+// is holding open.  `readdir` cannot return `..`, so there is no traversal to
+// refuse and no denylist to keep current -- and because each name is spelled
+// relative to its parent's descriptor, a name cannot be re-pointed at anything
+// outside its parent either.
 //
 // A link is unlinked, never entered.  Descending through one would make the
 // walk's reach a property of whatever the link happens to point at, which is
 // the opposite of a bounded cleanup -- and the restored tree is written with
 // O_NOFOLLOW and refuses symbolic-link parents, so a link here is foreign
 // content, which is exactly what must not be walked into.
+//
+// Nothing here has to trust that reasoning to hold: a directory that is not a
+// plain directory at open time stops the cleanup instead of being descended
+// into, and the caller records that as a note on the failure that caused it
+// rather than as a failure of its own.
 function removeStagingContents(directory) {
-    for (const name of fs.readdirSync(directory)) {
-        const absolute = path.join(directory, name);
-        const stat = fs.lstatSync(absolute);
-        if (stat.isDirectory() && !stat.isSymbolicLink()) {
-            removeStagingContents(absolute);
-            // `rmdirSync` refuses a directory that is not empty, so a race that
-            // puts something back between the walk and this call stops the
-            // cleanup instead of deleting whatever arrived.
-            fs.rmdirSync(absolute);
-            continue;
+    const fd = openStagingDirectory(directory);
+    try {
+        for (const name of fs.readdirSync(`${DIRECTORY_FD_ROOT}/${fd}`)) {
+            const scoped = `${DIRECTORY_FD_ROOT}/${fd}/${name}`;
+            const stat = fs.lstatSync(scoped);
+            if (stat.isDirectory() && !stat.isSymbolicLink()) {
+                removeStagingContents(scoped);
+                // `rmdirSync` refuses a directory that is not empty, so a race
+                // that puts something back between the walk and this call stops
+                // the cleanup instead of deleting whatever arrived.
+                fs.rmdirSync(scoped);
+                continue;
+            }
+            fs.unlinkSync(scoped);
         }
-        fs.unlinkSync(absolute);
+    } finally {
+        fs.closeSync(fd);
     }
 }
 

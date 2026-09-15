@@ -549,6 +549,52 @@ test('staging cleanup unlinks a symbolic link rather than walking into it', asyn
     assert.equal(fs.existsSync(target), false);
 });
 
+// The same invariant one level down, which is where it is hardest to hold.  The
+// link above sits directly in the directory the walk minted; this one sits
+// inside a directory the walk has to *enter* to reach it, so the refusal has to
+// survive the step that holds one directory open while it enumerates another.
+// A walk that guarded only its first level would pass the test above and delete
+// the file below.
+//
+// The target is a directory with a file in it rather than a file, because
+// entering is the failure being tested: unlinking a link to a file and
+// unlinking a link to a directory are the same instruction, and only the second
+// can be got wrong by descending.
+test('staging cleanup unlinks a link it meets inside the tree rather than walking into it', async t => {
+    const { transport, report } = await sealed(t, 'nestednolinkwalk');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'nestednolinkwalk');
+    const parent = path.dirname(target);
+
+    const elsewhere = temporary(t, 'stage-d-outside-');
+    fs.mkdirSync(path.join(elsewhere, 'inner'), { mode: 0o700 });
+    fs.writeFileSync(path.join(elsewhere, 'inner', 'IRREPLACEABLE.bin'), 'outside the staging root');
+
+    // A directory the restore really creates, taken from the manifest rather
+    // than guessed: a link planted under a path the tree does not have would
+    // give the cleanup nothing to descend through and would prove nothing.
+    const nested = path.dirname(manifest.artifacts[0].logical_path);
+    assert.notEqual(nested, '.', 'the first artifact must live below the staging root, or there is no level to descend');
+
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const planting = duringMaterialization(transport, target, lastArtifact, bytes => {
+        const [staging] = stagingRootsBeside(target);
+        const inside = path.join(staging, nested);
+        assert.equal(fs.existsSync(inside), true, 'the level the link is planted in must exist, or the planting fails rather than the walk');
+        fs.symlinkSync(elsewhere, path.join(inside, 'escaped'));
+        bytes[1] ^= 0x01;
+    });
+
+    await assert.rejects(executeRestore({ transport: planting, snapshotId: report.snapshot_id, destinationRoot: target }));
+
+    assert.equal(fs.readFileSync(path.join(elsewhere, 'inner', 'IRREPLACEABLE.bin'), 'utf8'), 'outside the staging root', 'the cleanup must not have reached through a link it met below the root');
+    assert.deepEqual(fs.readdirSync(path.join(elsewhere, 'inner')), ['IRREPLACEABLE.bin'], 'nothing may be added or removed outside the staging root either');
+    assert.deepEqual(fs.readdirSync(elsewhere), ['inner'], 'the link target must be untouched');
+    assert.deepEqual(stagingRootsBeside(target), [], 'the staging root must be gone even though a link was nested inside it');
+    assert.deepEqual(fs.readdirSync(parent), [], 'and nothing else of this invocation may survive beside it');
+    assert.equal(fs.existsSync(target), false);
+});
+
 // A cleanup failure is recorded on the error that caused it, never thrown in its
 // place.  The restore already failed for a reason the operator needs; replacing
 // that reason with "the tidy-up failed as well" would hide the one that matters,
