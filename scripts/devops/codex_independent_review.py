@@ -11,7 +11,8 @@ owner: engineering workflow governance
 
 本模块只负责执行与 CLI：receipt 的证据读取与内部一致性证明在
 ``codex_review_receipt``，三态分类在 ``codex_review_classification``，把 receipt
-变成 verdict 的 exit-status 与等待原语在 ``codex_review_verdict``。
+变成 verdict 的 exit-status 在 ``codex_review_verdict``，阻塞等待与 writer 存活
+探测在 ``codex_review_wait``。
 
 ``run`` 与 ``wait`` 都把 receipt 当作 verdict 的唯一 authority，并把它写进
 process exit status（0=PASS/无 blocking finding，3=FAIL/有 blocking finding，
@@ -19,6 +20,14 @@ process exit status（0=PASS/无 blocking finding，3=FAIL/有 blocking finding�
 一次调用内，从而不需要"子进程结束后唤醒父 agent"这一机制；它按
 ``codex-review-receipt-<head12>-<runid>.json`` 轮询 evidence directory，超时与
 writer 异常退出都会显式失败，不会静默交还控制权。
+
+一个 head 可以被 review 多轮，run id 就是轮次身份：``run`` 为这一轮写下的每个
+产物都带同一个 run id，``wait`` 只消费它正在等待的那一轮的 receipt（``--run-id``
+显式给出，否则取该 head 最新 writer record 记录的 run id），其它轮次的 receipt
+会被列出但永不当作本轮 verdict。产物名因此不是调用方的选择：receipt 一律写在
+evidence directory 内、由 head 与 run id 决定的 canonical 名下，没有任何 override
+能把它挪到 ``wait`` 不扫描的位置。无法使用的输入（非完整 40 位 HEAD_SHA、非法
+run id）同样以结构化失败结束，而不是 traceback。
 
 本模块实现的是 `ENGINEERING_INDEPENDENT_REVIEW`：fresh Codex
 process/context、clean exact-head worktree、只读执行和可重算的 evidence
@@ -87,12 +96,17 @@ from scripts.devops.codex_review_receipt import (  # noqa: E402
 from scripts.devops.codex_review_verdict import (  # noqa: E402
     EXIT_REVIEW_INFRASTRUCTURE_ERROR,
     EXIT_REVIEW_PASS,
+    REVIEW_RECEIPT_PREFIX,
+    assert_canonical_run_id,
     assert_owner_only_directory,
-    process_starttime,
     read_receipt_verdict,
     verdict_exit_code,
-    wait_for_receipt,
     writer_identity_path,
+)
+from scripts.devops.codex_review_wait import (  # noqa: E402
+    WAIT_STATE_REVIEW_FAILED,
+    process_starttime,
+    wait_for_receipt,
 )
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
@@ -187,12 +201,40 @@ def _record_writer_identity(evidence_dir: Path, head_sha: str, run_id: str) -> N
     )
 
 
+def _round_worktree_path(evidence_dir: Path, head_sha: str, run_id: str) -> Path:
+    """Name this round's worktree, refusing a run id that is already in use.
+
+    Every artifact of a round is named by the reviewed head and the *full* run
+    id, the worktree included: the run id is the round's identity, so a name
+    that carries only a prefix of it is a name two rounds can share.  An
+    8-character projection let a second, perfectly legal round of the same head
+    collide with the first round's leftover worktree and die before its reviewer
+    ever started — a round that could not be reviewed at all, whose wait could
+    then only ever report a missing receipt.  A collision that survives the full
+    run id is the same round launched twice, which is named rather than left as
+    a bare errno.
+    """
+
+    worktree = evidence_dir / f"review-worktree-{head_sha[:12]}-{run_id}"
+    try:
+        worktree.mkdir(mode=0o700)
+    except FileExistsError as exc:
+        raise ReviewReceiptError(
+            f"round {run_id} 的 worktree 已存在，该 run id 已被占用: {worktree}"
+        ) from exc
+    worktree.rmdir()
+    return worktree
+
+
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     """Run a fresh read-only Codex review and emit one external receipt."""
 
     repo_root = Path(args.repo_root).resolve()
     base_sha = normalize_full_sha(args.base_sha, role="base SHA")
     expected_head = normalize_full_sha(args.head_sha, role="review head SHA")
+    # Refused before anything is created: an input the naming rule could not
+    # have produced must not reach the point of writing evidence files.
+    assert_canonical_run_id(args.run_id)
     actual_head = exact_head(repo_root, "HEAD")
     assert_exact_head(expected_head, actual_head, role="review head")
     if not (repo_root / ".git").exists() and not (repo_root / ".git").is_file():
@@ -213,11 +255,16 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
 
     evidence_dir = _require_external_path(Path(args.evidence_dir), repo_root)
     _ensure_private_directory(evidence_dir)
-    run_id = uuid.uuid4().hex
+    # The run id is the round's identity: it names every artifact this review
+    # writes, and it is what a later ``wait`` matches on to consume *this*
+    # round's receipt rather than one left behind by an earlier review of the
+    # same head.  Minting it here by default keeps the single-process flow
+    # unchanged; accepting an explicit value lets a parent name the round to the
+    # waiter before the review has started, which removes the window in which a
+    # stale receipt could look like an answer.
+    run_id = args.run_id or uuid.uuid4().hex
     _record_writer_identity(evidence_dir, expected_head, run_id)
-    worktree = evidence_dir / f"review-worktree-{expected_head[:12]}-{run_id[:8]}"
-    worktree.mkdir(mode=0o700)
-    worktree.rmdir()
+    worktree = _round_worktree_path(evidence_dir, expected_head, run_id)
     raw_path = evidence_dir / f"codex-review-output-{expected_head[:12]}-{run_id}.jsonl"
     stderr_path = evidence_dir / f"codex-review-stderr-{expected_head[:12]}-{run_id}.log"
     final_path = evidence_dir / f"codex-review-final-{expected_head[:12]}-{run_id}.json"
@@ -383,10 +430,13 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     }
     payload_sha = sha256_bytes(_canonical_json(receipt))
     receipt["integrity"] = {"receipt_payload_sha256": payload_sha}
+    # The receipt name *is* the round's identity, so it is derived only from the
+    # round: the reviewed head and the run id, inside the evidence directory.
+    # `wait` consumes a round by scanning that directory for exactly this name,
+    # so a receipt written anywhere else would be an artifact no wait could ever
+    # turn into a verdict.  There is therefore no override for it.
     receipt_path = _require_external_path(
-        Path(args.receipt_path)
-        if args.receipt_path
-        else evidence_dir / f"codex-review-receipt-{expected_head[:12]}-{run_id}.json",
+        evidence_dir / f"{REVIEW_RECEIPT_PREFIX}{expected_head[:12]}-{run_id}.json",
         repo_root,
     )
     _write_exclusive(receipt_path, _canonical_json(receipt))
@@ -405,8 +455,16 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--mission-id", required=True)
     run.add_argument("--mission-scope-file", required=True, type=Path)
     run.add_argument("--evidence-dir", required=True, type=Path)
-    run.add_argument("--receipt-path", type=Path, default=None)
     run.add_argument("--builder-context-id", default=None)
+    run.add_argument(
+        "--run-id",
+        default=None,
+        help=(
+            "显式指定这一轮 review 的 run id（canonical 小写 hex）。默认由 run 自己生成；"
+            "显式给出后父进程可以在 review 启动前就把它交给 wait，使轮次身份不依赖 writer "
+            "record 的发布时机。"
+        ),
+    )
     run.add_argument("--codex-binary", default="codex")
     run.add_argument("--timeout-seconds", type=int, default=1800)
     run.add_argument("--json", action="store_true")
@@ -416,8 +474,9 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "阻塞等待 exact-head review receipt。退出状态即 receipt verdict："
             "0=PASS 且无 blocking finding，3=FAIL 或存在 blocking finding，"
-            "1=无法建立 verdict（超时、receipt 缺失、writer 退出、head 不匹配）。"
-            "绝不静默交还控制权。"
+            "1=无法建立 verdict（超时、receipt 缺失、writer 退出、head 不匹配、输入非法）。"
+            "绝不静默交还控制权；一切拒绝都以结构化失败报告，不是 traceback。"
+            "同一 head 的其它 review round 的 receipt 不会被消费。"
         ),
     )
     wait.add_argument("--evidence-dir", required=True, type=Path)
@@ -441,6 +500,16 @@ def build_parser() -> argparse.ArgumentParser:
             "该 pid 在 /proc/<pid>/stat 的 start time（field 22），必须来自启动时观察到的"
             "那个 writer。给出 --pid 时必须同时给出，否则 wait 拒绝启动；两者都不给时使用"
             "writer 自己记录的 start time。"
+        ),
+    )
+    wait.add_argument(
+        "--run-id",
+        default=None,
+        help=(
+            "只消费这一轮 review（run id）的 receipt（canonical 小写 hex）。不给时取该 head "
+            "最新 writer record 记录的 run id；两者都拿不到时按 mtime 取最新，并在 detail "
+            "里明确说明轮次未被指定。同一个 head 被重复 review 时，属于其它轮次的 receipt "
+            "永远不会被当作本轮 verdict 消费。"
         ),
     )
     wait.add_argument(
@@ -485,11 +554,29 @@ def _print_classification(classification: ReceiptClassification) -> None:
     print(f"DETAIL={classification.detail}")
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Run the requested reviewer subcommand and return its exit status."""
+def _report_receipt_failure(exc: Exception, *, json_output: bool) -> None:
+    """Report one refusal on stderr, and on stdout when JSON was requested.
 
-    args = build_parser().parse_args(argv)
-    if args.command == "wait":
+    A caller that asked for a machine-readable stream must be able to read the
+    refusal from that stream: an empty stdout plus a stack trace is not a
+    structured failure, and a wrapper that only inspects stdout would report
+    "nothing" rather than "refused".
+    """
+
+    print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
+    if json_output:
+        print(json.dumps({"status": "FAIL", "error": str(exc)}, ensure_ascii=False))
+
+
+def _run_wait(args: argparse.Namespace) -> int:
+    """Run the canonical blocking wait and report whatever escapes it.
+
+    ``wait`` establishes its own failure states, so this is a backstop for the
+    rest: the refusal is printed in wait's own shape rather than letting a
+    traceback reach a caller that asked for machine-readable output.
+    """
+
+    try:
         return wait_for_receipt(
             evidence_dir=args.evidence_dir,
             head_sha=args.head_sha,
@@ -497,8 +584,34 @@ def main(argv: list[str] | None = None) -> int:
             poll_interval=args.poll_interval,
             pid=args.pid,
             pid_starttime=args.pid_starttime,
+            run_id=args.run_id,
             json_output=args.json,
         )
+    except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
+        print(f"INDEPENDENT_REVIEW_WAIT=FAIL: {exc}", file=sys.stderr)
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "state": WAIT_STATE_REVIEW_FAILED,
+                        "status": "FAIL",
+                        "head_sha": str(args.head_sha),
+                        "evidence_dir": str(args.evidence_dir),
+                        "detail": str(exc),
+                        "unexpected_error": True,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        return EXIT_REVIEW_INFRASTRUCTURE_ERROR
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the requested reviewer subcommand and return its exit status."""
+
+    args = build_parser().parse_args(argv)
+    if args.command == "wait":
+        return _run_wait(args)
     try:
         if args.command == "run":
             receipt_path = run_review(args)
@@ -540,7 +653,7 @@ def main(argv: list[str] | None = None) -> int:
                 expected_mission_scope_file=args.mission_scope_file,
             )
     except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
-        print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
+        _report_receipt_failure(exc, json_output=getattr(args, "json", False))
         return 1
     if args.command == "run":
         # The receipt is authoritative.  Report the reviewed verdict and carry
@@ -549,7 +662,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             review_result, blocking, counts = read_receipt_verdict(receipt_path)
         except ReviewReceiptError as exc:
-            print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
+            _report_receipt_failure(exc, json_output=getattr(args, "json", False))
             return EXIT_REVIEW_INFRASTRUCTURE_ERROR
         exit_code = verdict_exit_code(review_result, blocking)
         print(

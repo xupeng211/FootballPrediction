@@ -233,8 +233,9 @@ PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready 
 
 canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 证据读取与内部
 一致性证明在 `scripts/devops/codex_review_receipt.py`，三态分类在
-`scripts/devops/codex_review_classification.py`，verdict 的 exit-status 投影与阻塞式等待原语在
-`scripts/devops/codex_review_verdict.py`），入口为
+`scripts/devops/codex_review_classification.py`，verdict 的 exit-status 投影与 receipt 的命名/读取规则在
+`scripts/devops/codex_review_verdict.py`，阻塞式等待与 writer 存活/轮次身份绑定在
+`scripts/devops/codex_review_wait.py`），入口为
 `make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external dir>`。
 它必须：
 
@@ -341,7 +342,7 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
   匹配到自己，"writer 已退出"分支永远不可达；
 - receipt 文件名由 writer 决定：`codex-review-receipt-<head12>-<runid>.json`，不存在固定名。
 
-`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]`
+`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [RUN_ID=<runid>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]`
 是这条路径的 canonical 实现。它按 `codex-review-receipt-<head12>-*.json` 轮询 evidence directory，把状态
 显式外化（`PARENT_WAITING` / `REVIEW_RUNNING` / `REVIEW_FINISHED` / `REVIEW_FAILED` / `RECEIPT_MISSING` /
 `PARENT_CONTINUING`），并且：
@@ -353,8 +354,16 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
   否则以 exit `1` 拒绝。payload digest 是**可重算**的，只能证明 receipt 内部自洽；任何能在该目录里建文件的
   进程都能伪造一份自洽的 exact-head PASS，因此"谁能写这个目录"才是 verdict 的边界。读取侧与写入侧
   （`_ensure_private_directory`）共用同一条 owner-only 规则；
-- 同一 head 存在多个 receipt 时取 mtime 最新者——较新的 round 已经发声之后绝不回退到更早的 PASS——并在
-  结果里列出候选并提示每个 review round 使用独立的 evidence directory；
+- 同一个 head 可以被 review 多次（finding 修复后重审），因此**一个 head 上的多份 receipt 属于不同的
+  review round，mtime 顺序不是身份**。round 由 run id 标识，它写在每一份产物的文件名里
+  （`codex-review-receipt-<head12>-<runid>.json`、`codex-review-writer-<head12>-<runid>.json`）。`wait`
+  只消费它正在等待的那一轮的 receipt：`--run-id`（经 `make` 为 `RUN_ID`）显式给出时以它为准；未给出时取
+  该 head 最新 writer record 所记录的 run id。属于其它 round 的 receipt 会被列在
+  `receipts_from_other_rounds` 里并**永不**被当作本轮 verdict 消费——即使它是 PASS、即使它的 mtime 更新、
+  即使被等待那一轮的 writer 已经退出。两种方式都拿不到 round 时才退回 mtime 最新者，并在 `detail` 里明确
+  写出"round 未被指定、由 mtime 决定"。`--run-id` 在 review 启动前就已知，因此需要完全消除"旧 round 的
+  receipt 在新 round 的产物出现之前被看到"这一窗口时，应当在 `run` 与 `wait` 两端都显式给出同一个 run id。
+  run id 的合法形状是 canonical 小写 hex（1–64 位）；其它值在开始等待前以 exit `1` 拒绝。
 - pid 不是身份：writer 在启动时把**自己**的 pid 与 `/proc/<pid>/stat` 的 start time 写进 evidence
   directory 的 `codex-review-writer-<head12>-<runid>.json`，`wait` 默认绑定这条**已记录**的身份并逐次核对
   start time，因此被复用的 pid 会被判为 writer 已退出，而不是被当成原 writer 一直等到超时。调用方也可以
@@ -369,16 +378,21 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
   被拒绝的等待不会在 JSON 里报出任何 writer pid（`writer_pid=null`、`writer_identity_source="none"`），
   因为它从未被接受为身份。
 - 超时、writer 退出、receipt 缺失或不可读都是**显式失败状态**并以 exit `1` 结束，绝不静默交还控制权。
+- **非法输入是结构化失败，不是 traceback**：无法规范化成完整 40 位 SHA 的 `--head-sha`、非法 `--run-id`
+  都在报告机制建立之后被拒绝——exit `1`、`state=REVIEW_FAILED`、`status=FAIL`，加 `--json` 时 stdout 仍是
+  一行 JSON（`head_sha` 原样回显调用方给出的值）。调用方不需要、也不应该去解析 stderr 上的栈。
 
 状态行是机器可读契约：未加 `--json` 时进度走 stdout，加 `--json` 时改走 stderr，因此 stdout 始终只有
 一行 JSON。Builder 仍然可以在 bounded mission 内自修 CI/reviewer 的窄 finding；本节的退出状态只是让
 "review 已经给出阻断性 finding"这件事无法被误读成 PASS，不放宽任何 review 强度。
 
 经 `make` 调用时要注意 GNU make 的行为：recipe 失败会让 make 统一返回 exit `2`，因此 `make agent-review`
-只保证"exit 0 ⟺ 已审 PASS 且无 blocking finding"，非 0 既可能是 FAIL 也可能是基础设施错误。需要精确区分
-`0`/`3`/`1` 时应直接调用 `python3 scripts/devops/codex_independent_review.py run|wait …`，其 exit code 就是
-verdict；两种调用方式的 stdout JSON 都始终带有 `status`、`review_result`、`blocking_findings` 和
-`finding_counts_by_severity`，因此机器可读的结论不依赖 exit code 的粒度。
+与 `make agent-review-wait` 只保证"exit 0 ⟺ 已审 PASS 且无 blocking finding"，非 0 既可能是 FAIL 也可能是
+基础设施错误（`3` 与 `1` 在 make 这一层不可区分，这是 GNU make 的语义，不是本工作流可以保留的信息）。
+`make agent-review-wait` 的 help 文本按此描述，不再声称 make 保留精确的 `0/3/1`。需要精确区分 `0`/`3`/`1`
+时应直接调用 `python3 scripts/devops/codex_independent_review.py run|wait …`，其 exit code 就是 verdict；
+两种调用方式的 stdout JSON 都始终带有 `status`、`review_result`、`blocking_findings`、`finding_counts_by_severity`
+（`wait` 另带 `review_run_id` / `receipts_from_other_rounds`），因此机器可读的结论不依赖 exit code 的粒度。
 
 ### 11.4 Exact-head 与 merge readiness
 
