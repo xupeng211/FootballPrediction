@@ -20,7 +20,7 @@ const { createLocalTransport } = require('../../../../src/infrastructure/market_
 const { ObjectAlreadyExistsError, SnapshotIntegrityError, TransportContractError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { writeSnapshot, SourceChangedDuringSnapshotError } = require('../../../../src/infrastructure/market_evidence/backup/snapshotWriter');
 const { readRequestLedger, recordRequestIntent } = require('../../../../src/infrastructure/market_evidence/stageDOperations');
-const { CATEGORY } = require('../../../../src/infrastructure/market_evidence/backup/snapshotInputs');
+const { CATEGORY, COMMITTED_DIRECTORY, enumerateSnapshotInputs } = require('../../../../src/infrastructure/market_evidence/backup/snapshotInputs');
 const { completenessObjectKey, manifestObjectKey, parseCanonicalJsonObject, validateCompletenessMarker, validateSnapshotManifest } = require('../../../../src/infrastructure/market_evidence/backup/snapshotManifest');
 
 let shared = null;
@@ -34,6 +34,10 @@ function storeRoot(t) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-writer-store-'));
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
     return root;
+}
+
+function inputsRequiredDirectories() {
+    return enumerateSnapshotInputs(writeOptions()).required_directories;
 }
 
 function writeOptions(overrides = {}) {
@@ -214,6 +218,68 @@ test('a governed input set that grows during the copy aborts the generation', as
         error => error instanceof SourceChangedDuringSnapshotError && /input set changed/.test(error.message)
     );
     assert.equal(transport.getObject({ key: completenessObjectKey('snap_20260913T000000000Z_8899aabbccddeeff') }), null);
+});
+
+// An empty directory leaves no trace in the file set, and the governed layout
+// has directories that are required whether or not anything is in them.  A
+// `committed/tx_*` package directory is one: it is recorded as required as soon
+// as it exists, and a package nothing has been written into yet contributes no
+// artifact at all (that representation is tested in `snapshot_inputs.test.js`).
+// So a layout move during the copy is invisible to every file-level comparison
+// -- the same paths, the same sizes, the same content -- while the tree being
+// captured has gained a directory the restore is required to reproduce.  The
+// generation must not be sealed.
+//
+// What fires is the authority identity capture the writer already performs, not
+// a comparison of the two required-directory sets: a package directory's file
+// set is part of the authority contract, and the canonical reader refuses an
+// empty one.  The writer therefore carries no such comparison, and the note at
+// the end of `writeSnapshot` records why -- by the time one could run, every way
+// the layout could have moved has already been refused.  This test asserts the
+// property that survives that reasoning: however it is refused, a tree whose
+// layout moved underneath the copy is never sealed.
+//
+// The mirror case -- a required directory that goes away during the copy --
+// cannot be constructed here.  A `committed/tx_*` directory in the fixture is
+// either empty, in which case the tree it lives in is already refused before
+// the first write, or populated, in which case its removal changes the file set
+// and the content digest is what reports it.  Writing a test for it would mean
+// asserting a refusal that came from somewhere other than the case being named.
+test('a required directory that appears during the copy leaves no sealed generation', async t => {
+    const fx = fixture();
+    const directory = path.join(fx.authorityRoot, COMMITTED_DIRECTORY, `tx_${'ab'.repeat(32)}`);
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+    assert.equal(fs.existsSync(directory), false, 'the tree must start without this directory, or the identity capture would refuse the write before the copy began');
+
+    // The change this test makes has to be invisible to the file set: if it
+    // moved a file, the digest check would be the thing that fires and the test
+    // would say nothing about the layout at all.
+    const files = inputs => inputs.entries.map(entry => [entry.logical_path, entry.size]);
+    const baseline = enumerateSnapshotInputs(writeOptions());
+    fs.mkdirSync(directory, { mode: 0o700 });
+    const changed = enumerateSnapshotInputs(writeOptions());
+    assert.deepEqual(files(changed), files(baseline), 'the file set must be unchanged for this case to mean anything');
+    assert.notDeepEqual(changed.required_directories, baseline.required_directories, 'the layout must be the thing that changed');
+    fs.rmSync(directory, { recursive: true, force: true });
+    assert.deepEqual(inputsRequiredDirectories(), baseline.required_directories, 'the control must end where it started, or the write below begins from a tree the assertions never saw');
+
+    // The positive control.  The same write against this same tree, with the
+    // layout left alone, seals -- without it, a rejection below would be
+    // evidence only that something about this fixture cannot be written at all.
+    const controlId = 'snap_20260913T000000000Z_1122334455667788';
+    const control = createLocalTransport({ root: storeRoot(t) });
+    const sealed = await writeSnapshot({ transport: control, ...writeOptions(), snapshotId: controlId });
+    assert.equal(sealed.snapshot_id, controlId);
+    assert.notEqual(control.getObject({ key: completenessObjectKey(controlId) }), null, 'the control must seal, or the rejection below is not about the layout');
+
+    const snapshotId = 'snap_20260913T000000000Z_8899aabbccddeeff';
+    const transport = wrapTransport(createLocalTransport({ root: storeRoot(t) }), () => fs.mkdirSync(directory, { mode: 0o700 }));
+    await assert.rejects(
+        writeSnapshot({ transport, ...writeOptions(), snapshotId }),
+        error => error instanceof Error && /unexpected file set|authority changed|input set changed/.test(error.message),
+    );
+    assert.equal(transport.getObject({ key: completenessObjectKey(snapshotId) }), null, 'a generation whose layout moved must carry no completeness marker');
+    assert.equal(transport.getObject({ key: manifestObjectKey(snapshotId) }), null, 'a generation whose layout moved must carry no manifest');
 });
 
 // The input set that grows is caught by re-enumerating it: the file is new, so

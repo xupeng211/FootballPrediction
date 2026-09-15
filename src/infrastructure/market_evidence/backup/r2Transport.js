@@ -90,6 +90,42 @@ function assertExplicitCredentials(credentials) {
     return frozen;
 }
 
+// The SDK mutates the credential object it is handed.
+//
+// @aws-sdk/core's `resolveAwsSdkSigV4Config` wraps the caller's credentials in
+// an async provider and, on first resolution, annotates that same object in
+// place with `$source` and a `CREDENTIALS_CODE` feature flag.  There is no copy
+// on that path.  Handing it the frozen object above therefore fails at the
+// first signed request -- and only then, because the mutation is deferred to
+// provider resolution, which happens during signing rather than at
+// construction:
+//
+//     TypeError: Cannot set properties of undefined (setting 'CREDENTIALS_CODE')
+//
+// A probe that only constructs the client reports success, which is how this
+// survived the PR that introduced the freeze.
+//
+// The freeze is not decorative.  It is how this transport states that the
+// credential it validated is the credential it will use, and it is what makes
+// `describe().credential_source` a claim rather than a hope.  Removing it to
+// satisfy the SDK would trade a real guarantee for a workaround, so instead the
+// transport keeps the frozen object as its own record and hands the SDK a
+// private mutable copy built here from the validated values.  The caller's
+// object is never passed to the SDK, and the SDK's object is never exposed: a
+// mutation the SDK performs on its copy reaches neither the transport's record
+// nor the caller's input.
+//
+// Session-token handling is unchanged -- the copy carries exactly the fields
+// the frozen record carries, and the token is still never logged, serialized or
+// reported beyond the boolean `session_token_present`.
+function buildSdkCredentialCopy(resolvedCredentials) {
+    return {
+        accessKeyId: resolvedCredentials.accessKeyId,
+        secretAccessKey: resolvedCredentials.secretAccessKey,
+        ...(resolvedCredentials.sessionToken === undefined ? {} : { sessionToken: resolvedCredentials.sessionToken }),
+    };
+}
+
 const REQUIRED_SDK_MEMBERS = Object.freeze([
     'S3Client',
     'PutObjectCommand',
@@ -150,11 +186,15 @@ function createR2Transport({ endpoint, bucket, region, credentials = null, prefi
     // credentials validated above.  `credentials` is passed explicitly, so the
     // SDK's provider chain is never consulted -- there is nothing left for it
     // to discover.
+    //
+    // What is passed is the private copy, not the frozen record: the SDK
+    // annotates the object it is given, and handing it a frozen one turns every
+    // signed request into a TypeError.  See `buildSdkCredentialCopy` above.
     const resolvedClient = new S3Client({
         endpoint: resolvedEndpoint,
         region: resolvedRegion,
         forcePathStyle,
-        credentials: resolvedCredentials,
+        credentials: buildSdkCredentialCopy(resolvedCredentials),
     });
     if (resolvedClient === null || typeof resolvedClient !== 'object' || typeof resolvedClient.send !== 'function') {
         throw new TransportContractError('the SDK surface must produce a client exposing send()');

@@ -126,10 +126,11 @@ function assertPlainEntries(directory, label) {
     return names;
 }
 
-function enumerateCommittedPackages(authorityRoot) {
+function enumerateCommittedPackages(authorityRoot, requiredDirectories) {
     const committedRoot = path.join(authorityRoot, COMMITTED_DIRECTORY);
     const committedStat = fs.lstatSync(committedRoot);
     if (committedStat.isSymbolicLink() || !committedStat.isDirectory()) throw new SnapshotIntegrityError(`committed directory must be a plain directory: ${committedRoot}`);
+    requiredDirectories.add(`transactions/${COMMITTED_DIRECTORY}`);
     const entries = [];
     for (const packageName of assertPlainEntries(committedRoot, 'committed directory')) {
         if (packageName === STAGING_DIRECTORY) throw new SnapshotIntegrityError('staging must never appear below committed/');
@@ -137,6 +138,7 @@ function enumerateCommittedPackages(authorityRoot) {
         const packagePath = path.join(committedRoot, packageName);
         const packageStat = fs.lstatSync(packagePath);
         if (packageStat.isSymbolicLink() || !packageStat.isDirectory()) throw new SnapshotIntegrityError(`committed package must be a plain directory: ${packagePath}`);
+        requiredDirectories.add(`transactions/${COMMITTED_DIRECTORY}/${packageName}`);
         for (const fileName of assertPlainEntries(packagePath, `committed package ${packageName}`)) {
             const absolute = path.join(packagePath, fileName);
             const stat = fs.lstatSync(absolute);
@@ -153,10 +155,17 @@ function enumerateCommittedPackages(authorityRoot) {
     return entries;
 }
 
-function enumerateLedgerEntries(ledgerRoot) {
+function enumerateLedgerEntries(ledgerRoot, requiredDirectories) {
     const entriesRoot = path.join(ledgerRoot, ENTRY_DIRECTORY);
     const stat = fs.lstatSync(entriesRoot);
     if (stat.isSymbolicLink() || !stat.isDirectory()) throw new SnapshotIntegrityError(`request accounting entries directory must be a plain directory: ${entriesRoot}`);
+    // Recorded whether or not the directory turns out to hold anything.  This
+    // is the line that the whole defect turned on: the canonical ledger layout
+    // requires this directory to exist, the enumeration has always asserted
+    // that it does, and until now the assertion was thrown away -- so a
+    // generation whose ledger happened to be empty described a tree that could
+    // not be rebuilt from it.
+    requiredDirectories.add(`request-accounting/${ENTRY_DIRECTORY}`);
     const collected = [];
     for (const name of assertPlainEntries(entriesRoot, 'request accounting entries directory')) {
         if (!LEDGER_ENTRY_PATTERN.test(name)) throw new SnapshotIntegrityError(`request accounting entry name is invalid: ${name}`);
@@ -173,7 +182,7 @@ function enumerateLedgerEntries(ledgerRoot) {
     return collected;
 }
 
-function enumerateRunState(runStateInputs) {
+function enumerateRunState(runStateInputs, requiredDirectories) {
     const entries = [];
     for (const input of runStateInputs) {
         if (typeof input !== 'string' || !input.trim()) throw new SnapshotIntegrityError('run state inputs must be explicit paths');
@@ -185,6 +194,7 @@ function enumerateRunState(runStateInputs) {
         if (stat.isFile()) entries.push({ logical_path: `run-state/${name}`, category: CATEGORY.RUN_STATE, source_path: resolved, size: stat.size });
         else if (stat.isDirectory()) {
             const root = assertExplicitDirectory(resolved, 'run state input');
+            requiredDirectories.add('run-state');
             for (const child of assertPlainEntries(root, 'run state input')) {
                 const absolute = path.join(root, child);
                 const childStat = fs.lstatSync(absolute);
@@ -215,13 +225,22 @@ function enumerateSnapshotInputs({ authorityRoot, allocationArtifactPath, ledger
     const epoch = assertExplicitRegularFile(path.join(resolvedLedgerRoot, EPOCH_FILE), 'request accounting epoch');
     assertNameIsNotSecret(EPOCH_FILE, 'request accounting epoch');
 
+    // Directories the governed layout requires to exist, collected as the
+    // enumeration asserts them.  A file manifest is not a description of a
+    // tree: it is a description of the tree's *files*, and a directory with no
+    // files in it leaves no trace in one.  The canonical ledger layout requires
+    // `<ledger_root>/entries` to exist even when it is empty, so the generation
+    // has to carry that requirement explicitly or the restored root is not the
+    // tree the readers accept.
+    const requiredDirectories = new Set();
+
     const entries = [
         { logical_path: `transactions/${STORE_FILE}`, category: CATEGORY.STORE, source_path: store.resolved, size: store.size },
         { logical_path: `transactions/${ALLOCATION_FILE}`, category: CATEGORY.ALLOCATION_AUTHORITY, source_path: allocation.resolved, size: allocation.size },
-        ...enumerateCommittedPackages(resolvedAuthorityRoot),
+        ...enumerateCommittedPackages(resolvedAuthorityRoot, requiredDirectories),
         { logical_path: `request-accounting/${EPOCH_FILE}`, category: CATEGORY.REQUEST_ACCOUNTING_EPOCH, source_path: epoch.resolved, size: epoch.size },
-        ...enumerateLedgerEntries(resolvedLedgerRoot),
-        ...enumerateRunState(runStateInputs),
+        ...enumerateLedgerEntries(resolvedLedgerRoot, requiredDirectories),
+        ...enumerateRunState(runStateInputs, requiredDirectories),
         { logical_path: `config/${path.basename(quota.resolved)}`, category: CATEGORY.QUOTA_CONFIG, source_path: quota.resolved, size: quota.size },
     ];
 
@@ -241,6 +260,15 @@ function enumerateSnapshotInputs({ authorityRoot, allocationArtifactPath, ledger
     // every machine.
     entries.sort((left, right) => (left.logical_path < right.logical_path ? -1 : left.logical_path > right.logical_path ? 1 : 0));
 
+    // A path cannot be both a file and a directory.  The two sets are built
+    // independently above, so the disagreement is checked rather than assumed
+    // away: a required directory that an artifact already occupies would make
+    // the restore fail at mkdir with a message about the wrong thing.
+    const filePaths = new Set(entries.map(entry => entry.logical_path));
+    for (const directory of requiredDirectories) {
+        if (filePaths.has(directory)) throw new SnapshotIntegrityError(`a governed path is both a file and a required directory: ${directory}`);
+    }
+
     return Object.freeze({
         schema_version: SNAPSHOT_INPUTS_SCHEMA_VERSION,
         authority_root: resolvedAuthorityRoot,
@@ -250,12 +278,44 @@ function enumerateSnapshotInputs({ authorityRoot, allocationArtifactPath, ledger
         staging_excluded: true,
         staging_present: fs.existsSync(stagingPath),
         entries: Object.freeze(entries.map(entry => Object.freeze({ ...entry }))),
+        required_directories: Object.freeze([...requiredDirectories].sort()),
         total_bytes: entries.reduce((sum, entry) => sum + entry.size, 0),
         categories: Object.freeze(entries.reduce((accumulator, entry) => {
             accumulator[entry.category] = (accumulator[entry.category] || 0) + 1;
             return accumulator;
         }, {})),
     });
+}
+
+const REQUEST_ACCOUNTING_DIRECTORY = 'request-accounting';
+
+// Required directories for a generation whose manifest predates
+// `required_directories`.
+//
+// Generations written before the field existed do not describe their
+// directories, and one of them -- the only one accepted against real hardware
+// so far -- is already on the backup target.  Refusing to restore it would
+// make an intact backup unreadable over a manifest omission, so the
+// requirement is re-derived here instead.
+//
+// This is a statement of the canonical *layout*, not a fact about any
+// particular generation: the request-ledger contract is that a ledger root
+// contains an `entries` child directory, and the canonical reader requires it
+// to exist whether or not it holds anything.  Any generation that carries a
+// request-accounting artifact is therefore a generation whose ledger root must
+// contain that directory.  The same rule is applied to every pre-field
+// generation; nothing here reads a snapshot id, a timestamp or a machine path.
+//
+// It is version-bound by construction: the caller applies it only when the
+// manifest carries no `required_directories` field, and the restore report
+// records which of the two it used.
+function deriveRequiredDirectoriesForLegacyManifest(artifacts) {
+    if (!Array.isArray(artifacts)) throw new SnapshotIntegrityError('a legacy manifest must carry an artifact list to derive its required directories');
+    const derived = new Set();
+    const carriesLedger = artifacts.some(artifact => artifact && typeof artifact.logical_path === 'string'
+        && artifact.logical_path.startsWith(`${REQUEST_ACCOUNTING_DIRECTORY}/`));
+    if (carriesLedger) derived.add(`${REQUEST_ACCOUNTING_DIRECTORY}/${ENTRY_DIRECTORY}`);
+    return Object.freeze([...derived].sort());
 }
 
 module.exports = {
@@ -270,5 +330,6 @@ module.exports = {
     ENTRY_DIRECTORY,
     LEDGER_ENTRY_PATTERN,
     enumerateSnapshotInputs,
+    deriveRequiredDirectoriesForLegacyManifest,
     assertNameIsNotSecret,
 };

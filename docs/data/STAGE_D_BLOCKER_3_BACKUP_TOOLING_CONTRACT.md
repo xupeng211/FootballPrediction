@@ -284,6 +284,38 @@ absolute:
   manifest carries `secrets_included: false` as a positive assertion, and
   `validateSnapshotManifest` refuses a manifest that claims otherwise.
 
+### Required directories
+
+A category list describes files. A directory that holds no files therefore
+leaves no trace in it, and the governed layout has exactly one such directory
+that is required rather than incidental: `<ledger_root>/entries`, which the
+canonical ledger layout requires to exist and the canonical reader refuses a
+ledger root without — **whether or not the ledger has recorded anything**.
+
+The enumerated input set therefore carries `required_directories` alongside
+`entries`: the directories the restored tree must contain even though no
+artifact occupies them. It is enumerated from the same walk that produces the
+files, not inferred from them, and it is sorted so the manifest's canonical bytes
+do not depend on the order the enumeration happened to produce.
+
+| Required when | Directory |
+| --- | --- |
+| always | `<authority_root>/committed` |
+| per committed package | `<authority_root>/committed/tx_*` |
+| the request ledger is present | `<ledger_root>/entries` — recorded even when empty |
+| run-state inputs are named | `run-state` |
+
+A required directory may **contain** artifacts, and may not **be** one. Every
+ancestor of a required directory is checked against the artifact list, not just
+the whole path, because the conflict is the same one at every level: an artifact
+occupying `run-state` makes `run-state/<name>` just as uncreatable as an artifact
+occupying `run-state/<name>` itself. Paths are otherwise held to the same rule as
+artifact logical paths — no absolute path, no empty/`.`/`..` segment, no
+`.staging` — and the restore refuses at creation time as well, so a directory that
+escapes the destination root is refused by the writer, by validation and by the
+restore. A required directory that merely shares a name prefix with an artifact
+(`transactions/committed` beside `transactions/committed.json`) is not a conflict.
+
 ### Manifest
 
 Canonical JSON (`canonicalJson`), so the manifest hash is a function of content
@@ -303,6 +335,11 @@ alone and not of key order or whitespace. It binds:
   verbatim from the epoch — including `AT_LEAST_2_CONFIRMED` and `UNKNOWN`,
   which are **not reinterpreted** here;
 - every artifact: logical path, category, object key, size, SHA-256;
+- `required_directories` — the directories no artifact occupies, sorted, and
+  bound by the manifest hash like every other field. The field is **optional and
+  its absence carries meaning**: `Object.hasOwn` separates "absent" from
+  "present and empty", and only the absent case may have its requirement
+  re-derived (see *Old-generation compatibility*);
 - `artifact_count` and `total_bytes`, both re-derived from the artifact list at
   validation time.
 
@@ -327,10 +364,35 @@ generation stays as visible evidence rather than being quietly cleaned up.
 4. copy every governed input with a create-only write
 5. read every written object back, re-hash it and re-head it
 6. capture the source identity AFTER and require BEFORE == AFTER
-7. re-enumerate the governed input set and require it to be unchanged
+7. re-enumerate the governed input set, re-read every input and require the
+   content digest to be unchanged
 8. write the manifest, binding both identities
 9. write the completeness marker LAST, binding the manifest hash
 ```
+
+Step 7 re-enumerates the governed input set, re-reads every input and requires
+the content digest to be unchanged. There is deliberately **no second comparison
+of the `required_directories` set**, and the reason is worth stating because the
+comparison is the obvious thing to write: no reachable tree can fail it.
+
+- A `committed/tx_*` package directory that *appears* empty is refused by the
+  identity capture at step 6, because a package's file set is part of the
+  authority contract and the canonical reader rejects a package that holds none.
+- The same directory *disappearing* takes its files with it, so the digest at
+  step 7 reports it first.
+- The two directories every generation requires — `transactions/committed` and
+  `request-accounting/entries` — are required *because the walk found them*, so
+  their absence surfaces as an `ENOENT` from the re-enumeration rather than as a
+  difference between two sets.
+- A run-state input that changes kind changes the file set with it.
+
+A check that no reachable tree can fail reads like a safety property without
+being one, and shipping it invites the reader to trust a line that never runs.
+The writer states the guarantee in a comment at that point in the sequence
+instead, where it can be argued about, and the property that does hold is tested
+where it is observable: a tree whose layout moves during the copy is never
+sealed, with a positive control proving the same tree seals when the layout is
+left alone.
 
 **Documented deviation.** The mission's written sequence places the manifest (8)
 before the AFTER identity capture (6). Those two requirements cannot both hold:
@@ -413,6 +475,18 @@ halves are asserted by test in fresh child processes, and the second half is
 asserted because a probe that observed nothing would make the first half pass
 for the wrong reason.
 
+**A note on the name.** The module, `createR2Transport` and the reported
+`kind: 'r2-s3'` / `version: 'stage-d-r2-s3-transport/v1'` still name R2, while the
+transport also serves the self-hosted S3 target. The name is a label, not a
+claim: what the transport speaks is the S3 API, and `describe()` already reports
+the `endpoint`, `bucket` and `region` that identify which provider actually
+served the run, so the evidence names the target twice over. Renaming would touch
+the module path, the lazy-surface contract in the barrel, the identity assertions
+six test files make against it and the version string already recorded in
+existing evidence — for a change no consumer would observe. It is therefore
+recorded as `FU-4 NONBLOCKING_COSMETIC_FOLLOWUP` and deliberately left open
+rather than turned into a broad rename.
+
 ### Credential model
 
 ```text
@@ -468,6 +542,49 @@ through to the client when one is present. `describe()` reports
 can record that it used a temporary credential without recording anything that
 could be used. That field is the only thing about a credential that reaches a
 report, and it is a boolean.
+
+### The credential object the SDK is handed
+
+The transport freezes its own record of the credential, and hands the SDK a
+**mutable copy** of it. The pinned SDK requires that copy.
+
+`@aws-sdk/core`'s `resolveAwsSdkSigV4Config` wraps the caller's credentials in an
+async provider and, on first resolution, annotates *that same object* in place
+with `$source` and a `CREDENTIALS_CODE` feature flag. There is no copy on that
+path and `const attributedCreds = creds` is literally the caller's object, so a
+frozen credential fails at the first signed request with
+
+```text
+TypeError: Cannot set properties of undefined (setting 'CREDENTIALS_CODE')
+```
+
+— and it fails *late*. The mutation is deferred to provider resolution, which
+happens while signing rather than at construction, so code that constructs an
+`S3Client` and stops there reports success for both shapes. That is how an
+incompatible freeze reached `main` and required a disclosed runtime shim for the
+only live backup run so far.
+
+The repair keeps the freeze where it belongs and removes it where it does not:
+the transport's own `resolvedCredentials` record stays frozen — it is the
+transport's state and nothing should be able to mutate it — and the object
+passed to `S3Client` is a fresh, mutable copy built field by field from it. The
+caller's object is never passed through, so a mutation performed by the SDK
+cannot reach the caller's credential either; the SDK annotates its own copy and
+the caller's input is untouched.
+
+Nothing else about credential handling changes. The copy is still built from the
+validated credential and nothing else, no provider chain becomes reachable, the
+session token still reaches the client and still does not reach `describe()`, and
+nothing is written back to disk.
+
+A test drives the **real pinned SDK** rather than a stub — a stub the transport
+itself supplies cannot exhibit a behaviour of the library it stands in for — and
+resolves the provider the transport built, because resolving it is the step that
+failed. Its positive control is the same call on a mutable credential, which
+still fails on the pinned version: if a future SDK stops mutating, the control
+breaks loudly instead of the test quietly passing for the wrong reason. A second
+arm proves the caller's frozen input is still frozen and unannotated afterwards,
+and a third proves two transports never share the object the SDK sees.
 
 ### How the live path obtains a target and a credential
 
@@ -664,6 +781,34 @@ leave behind a partial tree at a path that had not existed before, and because a
 restore refuses a destination that already exists, that tree could never have
 been restored into again.
 
+The staging root is therefore removed when the restore fails, and it is the
+**only** thing a failed restore removes:
+
+- its name is minted by the invocation that creates it — `.<destination
+  basename>.restore-staging-<random>`, the suffix drawn locally and never derived
+  from anything the caller supplied — which is what makes "the staging root this
+  invocation created" a decidable question rather than a pattern match;
+- the cleanup removes the *contents* of that one directory and then the
+  directory, naming nothing that is not that path joined with a name
+  `readdirSync` returned. There is no traversal to refuse and no denylist to keep
+  current, because `readdirSync` cannot return `..`;
+- a symbolic link inside the staging tree is **unlinked, never entered**.
+  Descending through one would make the cleanup's reach a property of whatever
+  the link points at, and the restored tree refuses symbolic-link parents when it
+  is written, so a link in there is foreign content — exactly what must not be
+  walked into;
+- a staging root that is not a plain directory is refused rather than followed,
+  and `rmdir` refuses a directory that is not empty, so something arriving
+  between the walk and the removal stops the cleanup instead of being deleted;
+- the destination is not a special case here, it is simply a different path, and
+  nothing outside the staging root is ever named. A preexisting destination is
+  never deleted, and neither is anything else already in the parent;
+- a cleanup that fails is **recorded on the failure that caused it**, never
+  thrown in its place. The restore already failed for a reason the operator
+  needs, and replacing that reason with "the tidy-up failed as well" would hide
+  the one that matters. The note is appended best-effort; an error that cannot
+  carry one is still the error that gets reported.
+
 The **commit itself is create-only**, because that is the point at which "a
 restore never overwrites" has to be decided, and a check made earlier cannot
 decide it: another process can create the destination in between. The commit
@@ -678,9 +823,7 @@ complete proven tree. Entries are only ever moved, never deleted, and a
 directory that is no longer empty refuses to be removed, so the rollback stops
 rather than deletes anything it did not put there.
 
-Nothing here removes anything, so a failure leaves the staging directory in place as
-visible evidence of the attempt while the destination stays untouched. The
-report names the destination, not the staging path: the layout fields are
+The report names the destination, not the staging path: the layout fields are
 recomputed from the final destination — they are a pure function of the
 destination and the manifest — while the bytes, hashes, modes and identity in
 the report are the proof's own, carried through unaltered.
@@ -698,6 +841,35 @@ run_state=0444   quota_config=0444
 `umask` does not apply to an explicit `chmod`, so the restored mode is exactly
 the mode the contract names rather than the process default.
 
+**Required directories are materialized in their own right**, before the content
+is written, from the manifest's `required_directories`. A directory that no
+artifact occupies is thus produced by the restore rather than as a by-product of
+one that does — which is the whole point: `entries/` exists after a restore of a
+zero-entry ledger because the manifest said it must, not because something
+happened to be written into it. Each path is refused at creation time if it
+escapes the destination root, and the proof compares the created set against the
+manifest before it asks the canonical readers anything.
+
+### Old-generation compatibility
+
+A generation written before `required_directories` existed is still **admitted,
+verified and restored**. The restore re-derives the requirement from the
+canonical layout instead: a manifest that carries any `request-accounting`
+artifact is a generation whose ledger root must contain `entries`, because that
+is what the ledger contract says a ledger root is. The derivation reads no
+snapshot id, no timestamp and no machine path, and it is applied **only** when
+the field is absent — `Object.hasOwn`, not a truthiness test, so a generation
+that genuinely requires no directory stays distinguishable from one that
+predates the field.
+
+`required_directories_source` records which of the two the restore used,
+`MANIFEST_REQUIRED_DIRECTORIES` or `DERIVED_FROM_CANONICAL_LAYOUT`, so an
+operator can see that a restored old generation was reconstructed from the
+contract rather than read from the artifact. The report carries
+`required_directories` and `restored_directory_count` alongside it. A generation
+is never rewritten to add the field: the old generation on the backup target is
+read-only for this tooling, which has no delete verb and no update verb at all.
+
 **The proof is performed by the canonical readers.** `proveRestoredRoot` points
 `openMarketEvidenceAuthoritySnapshot` and `readRequestLedger` at the restored
 root with no other input and compares the result against what the manifest
@@ -706,6 +878,15 @@ four counts, the request-accounting epoch id, entry count and terminal hash, and
 the store, allocation and quota hashes. A bespoke checker would prove only that
 the checker and the writer agree; the canonical readers prove the restored bytes
 are an authority the runtime would accept.
+
+The directory comparison runs **before** either reader is called, and the
+canonical readers are not called at all when it fails. This ordering is the
+repair, not a detail: a reader pointed at a root missing `entries/` fails with
+`ENOENT ... lstat '<fd>/entries'` — or `UNSAFE_PATH` when the path is a file —
+naming a descriptor-scoped path the operator never wrote, which is how a missing
+directory was reported as a transport-shaped mystery. With the directories
+checked first, an incomplete layout is named as an incomplete layout, and the
+report's `proof` is `null` while `failures` describes what was actually found.
 
 When `--fresh-process` is requested the same proof is repeated across a process
 boundary: a child process imports the canonical readers, is given the restored
@@ -938,12 +1119,15 @@ permission contract the production authority does, without touching it.
 | --- | --- | --- | --- | --- |
 | Source identity moves during the copy | no | no | no — the partial payload stays as evidence | investigate the mover before re-running |
 | Governed input set changes during the copy | no | no | no | investigate the writer before re-running |
+| The governed directory layout changes during the copy | no | no | no | investigate the writer before re-running; a required directory that appeared or went is reported by the identity capture or the content digest, never by a comparison of the two directory sets — the writer carries none |
 | A create-only write loses to an existing key | no | no | no | the generation id is already taken; choose another |
 | A read-back after write disagrees | no | no | no | the transport is not trustworthy; stop |
 | Completeness marker missing | n/a | yes, into a new generation | no | the generation is incomplete; it is never repaired in place |
 | Artifact hash or size drift | n/a | yes, into a new generation | no | the generation is corrupt; re-snapshot from a healthy authority |
 | Restore destination already exists | n/a | no | no | a restore never overwrites; choose a fresh destination |
-| Restored root fails the canonical-reader proof | n/a | no | no | the restore is not evidence; treat the generation as suspect |
+| Restored layout is missing a required directory | n/a | no | **yes** — the staging root of that restore only | the generation does not describe the tree; treat it as suspect. Named as a missing directory, never as an `ENOENT` about a descriptor path |
+| Restored root fails the canonical-reader proof | n/a | no | **yes** — the staging root of that restore only | the restore is not evidence; treat the generation as suspect |
+| The staging root cannot be removed after a failure | n/a | no | no | the original failure is the reported one; the note appended to it names the path left behind |
 | Fresh process cannot load the restored root | n/a | no | no | the restored root is not self-sufficient; the proof fails |
 | Identity or credential file missing, loose or invalid | n/a | no | no | the live CLI fails closed before a transport exists |
 | Identity file carries a secret-shaped value | n/a | no | no | refused as a schema violation; a target identity is non-secret by construction |

@@ -102,7 +102,74 @@ function parseCanonicalJsonObject(bytes, label) {
     return parsed;
 }
 
+// A directory the restored tree must contain even though no artifact occupies
+// it.
+//
+// A manifest is a description of a tree's *files*.  A directory that holds no
+// files therefore leaves no trace in an artifact list, and the request ledger's
+// `entries/` is exactly that directory: the canonical layout requires it to
+// exist, the canonical reader refuses a ledger root without it, and it is
+// routinely empty.  Without this field a generation whose ledger happened to be
+// empty described a tree that could not be rebuilt from the description -- the
+// restore produced a root the canonical reader rejects, and the failure surfaced
+// as a mkdir-shaped ENOENT naming a path nobody had written.
+//
+// The field is optional and its absence carries meaning rather than being an
+// error.  Generations written before the field existed are already on the backup
+// target, and refusing them would make an intact backup unreadable over a
+// manifest omission, so a reader that finds the field absent re-derives the
+// requirement from the canonical layout instead.  `Object.hasOwn` is what
+// separates "absent" from "present and empty": a generation that genuinely
+// requires no directory stays distinguishable from one that predates the field,
+// and neither is guessed at.
+function assertRequiredDirectoryPath(directory, artifactPaths) {
+    if (typeof directory !== 'string' || !directory) throw new SnapshotIntegrityError('snapshot manifest required directory must be a non-empty string');
+    const segments = directory.split('/');
+    if (directory.startsWith('/') || segments.some(segment => segment === '' || segment === '.' || segment === '..')) {
+        throw new SnapshotIntegrityError(`snapshot manifest required directory path is unsafe: ${directory}`);
+    }
+    if (directory.includes('.staging')) throw new SnapshotIntegrityError(`staging must never appear in a snapshot manifest: ${directory}`);
+    // A path cannot be a file and a directory at once.  Every ancestor is
+    // checked rather than only the whole path, because the conflict is the same
+    // one at every level: an artifact occupying `run-state` makes `run-state/x`
+    // just as uncreatable as an artifact occupying `run-state/x` itself, and the
+    // restore would reach both as an mkdir failure about something else.
+    let prefix = '';
+    for (const segment of segments) {
+        prefix = prefix ? `${prefix}/${segment}` : segment;
+        if (artifactPaths.has(prefix)) throw new SnapshotIntegrityError(`snapshot manifest declares ${prefix} as both a file and a directory`);
+    }
+}
+
+function validateRequiredDirectories(directories, artifactPaths) {
+    if (!Array.isArray(directories)) throw new SnapshotIntegrityError('snapshot manifest required_directories must be an array');
+    const seen = new Set();
+    for (const directory of directories) {
+        assertRequiredDirectoryPath(directory, artifactPaths);
+        if (seen.has(directory)) throw new SnapshotIntegrityError(`duplicate required directory in snapshot manifest: ${directory}`);
+        seen.add(directory);
+    }
+}
+
+// Sorted, because the field is part of the manifest's canonical bytes and a
+// digest that depends on the order an enumeration happened to produce is not a
+// digest.  Validation runs first and on the caller's array as given, so a
+// duplicate is refused rather than quietly collapsed.
+//
+// The array is this module's own -- it is derived here rather than passed
+// through the way the artifact list is -- so it is frozen here.  The manifest
+// object is frozen and a mutable array inside it would be a nested field the
+// freeze does not reach, which is the shape of guarantee that turns out not to
+// hold when someone relies on it.
+function normalizeRequiredDirectories(directories, artifacts) {
+    validateRequiredDirectories(directories, new Set(artifacts.map(artifact => artifact.logical_path)));
+    return Object.freeze([...directories].sort());
+}
+
 function buildSnapshotManifest(fields) {
+    const artifacts = fields.artifacts;
+    if (!Array.isArray(artifacts)) throw new SnapshotIntegrityError('snapshot manifest artifacts must be an array');
+    const carriesRequiredDirectories = fields.required_directories !== undefined;
     const manifest = {
         schema_version: SNAPSHOT_MANIFEST_SCHEMA_VERSION,
         snapshot_id: fields.snapshot_id,
@@ -115,9 +182,13 @@ function buildSnapshotManifest(fields) {
         allocation_authority_sha256: fields.allocation_authority_sha256,
         request_accounting: fields.request_accounting,
         quota_config: fields.quota_config,
-        artifacts: fields.artifacts,
-        artifact_count: fields.artifacts.length,
-        total_bytes: fields.artifacts.reduce((sum, artifact) => sum + artifact.size, 0),
+        artifacts,
+        // Present only when the caller supplies it.  A writer always does; the
+        // omission is what a pre-field generation looks like, and it has to stay
+        // representable or the compatibility path could not be tested at all.
+        ...(carriesRequiredDirectories ? { required_directories: normalizeRequiredDirectories(fields.required_directories, artifacts) } : {}),
+        artifact_count: artifacts.length,
+        total_bytes: artifacts.reduce((sum, artifact) => sum + artifact.size, 0),
         secrets_included: false,
         completeness_marker: COMPLETENESS_OBJECT_NAME,
     };
@@ -274,6 +345,12 @@ function validateSnapshotManifest(value) {
 
     const seen = { logical_paths: new Set(), object_keys: new Set() };
     for (const artifact of value.artifacts) validateManifestArtifact(artifact, seen);
+
+    // Checked after the artifacts, because the two sets are only meaningful
+    // against each other: a required directory is refused if an artifact already
+    // occupies it.  A manifest that predates the field is accepted here and its
+    // requirement re-derived by the reader, which records that it did so.
+    if (Object.hasOwn(value, 'required_directories')) validateRequiredDirectories(value.required_directories, seen.logical_paths);
 
     if (value.artifact_count !== value.artifacts.length) throw new SnapshotIntegrityError('snapshot manifest artifact_count does not match the artifact list');
     const expectedTotal = value.artifacts.reduce((sum, artifact) => sum + artifact.size, 0);

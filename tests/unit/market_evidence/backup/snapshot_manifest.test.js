@@ -319,3 +319,132 @@ test('timestamps are validated as UTC ISO-8601', () => {
         assert.throws(() => validateSnapshotManifest({ ...manifest, created_at: created }), error => error instanceof SnapshotIntegrityError && /UTC ISO-8601/.test(error.message));
     }
 });
+
+// FU-1: what a manifest has to say about the directories its artifacts do not
+// fill.  The field is optional -- a manifest written before it existed is still
+// valid, and the restore derives the layout for those -- so the two things that
+// have to be true are that its presence is distinguishable from its absence and
+// that nothing unsafe can enter through it.
+function ledgerArtifacts() {
+    return [
+        artifact(),
+        artifact({ logical_path: 'request-accounting/EPOCH.json', category: 'request_accounting_epoch', object_key: payloadObjectKey(SNAPSHOT_ID, 'request-accounting/EPOCH.json') }),
+    ];
+}
+
+test('a manifest carries the directories its artifact list cannot describe', () => {
+    const { manifest, sha256: hash } = buildSnapshotManifest(manifestFields({
+        artifacts: ledgerArtifacts(),
+        required_directories: ['transactions/committed', 'request-accounting/entries'],
+    }));
+
+    assert.deepEqual(manifest.required_directories, ['request-accounting/entries', 'transactions/committed'], 'the field is part of the canonical bytes, so it is stored sorted rather than in the order it was enumerated');
+    assert.equal(Object.isFrozen(manifest.required_directories), true);
+    assert.equal(validateSnapshotManifest(manifest), true);
+
+    // The field is inside the manifest's own hash, so a directory dropped
+    // between the write and the restore is a manifest that does not match the
+    // one the completeness marker bound.
+    const withoutOne = buildSnapshotManifest(manifestFields({ artifacts: ledgerArtifacts(), required_directories: ['request-accounting/entries'] }));
+    assert.notEqual(withoutOne.sha256, hash);
+
+    // Validated as given, so a duplicate is refused rather than quietly
+    // collapsed: an enumeration that produced one is a bug in the writer.
+    assert.throws(
+        () => buildSnapshotManifest(manifestFields({ artifacts: ledgerArtifacts(), required_directories: ['transactions/committed', 'transactions/committed'] })),
+        error => error instanceof SnapshotIntegrityError && /duplicate required directory/.test(error.message)
+    );
+    assert.throws(
+        () => validateSnapshotManifest({ ...manifest, required_directories: ['transactions/committed', 'transactions/committed'] }),
+        error => error instanceof SnapshotIntegrityError && /duplicate required directory/.test(error.message)
+    );
+});
+
+test('a manifest written before the field existed stays valid, and its absence is not a value', () => {
+    const { manifest } = buildSnapshotManifest(manifestFields());
+    assert.equal(Object.hasOwn(manifest, 'required_directories'), false, 'the writer must omit the field rather than write an empty one');
+    assert.equal(validateSnapshotManifest(manifest), true);
+
+    // Present-and-empty is a different claim from absent: the first says the
+    // generation describes no required directory, the second says it does not
+    // describe them at all, and only the second may be re-derived.
+    assert.equal(Object.hasOwn({ ...manifest, required_directories: [] }, 'required_directories'), true);
+    assert.equal(validateSnapshotManifest({ ...manifest, required_directories: [] }), true);
+    assert.throws(
+        () => validateSnapshotManifest({ ...manifest, required_directories: undefined }),
+        error => error instanceof SnapshotIntegrityError && /must be an array/.test(error.message),
+        'a spread cannot express absence, and the field must be refused rather than read as one'
+    );
+});
+
+const UNSAFE_REQUIRED_DIRECTORIES = [
+    ['an absolute path', '/etc'],
+    ['a traversal segment', 'request-accounting/../../etc'],
+    ['a traversal segment alone', '..'],
+    ['the current directory', '.'],
+    ['an empty segment', 'request-accounting//entries'],
+    ['a trailing separator', 'request-accounting/entries/'],
+    ['an empty name', ''],
+    ['a staging path', '.staging/entries'],
+    ['a staging path below the root', 'request-accounting/.staging'],
+    ['a non-string', 7],
+    ['null', null],
+];
+
+test('an unsafe required directory is refused however it is spelled', () => {
+    const { manifest } = buildSnapshotManifest(manifestFields());
+    for (const [label, directory] of UNSAFE_REQUIRED_DIRECTORIES) {
+        assert.throws(
+            () => validateSnapshotManifest({ ...manifest, required_directories: [directory] }),
+            error => error instanceof SnapshotIntegrityError,
+            `${label} must be refused`
+        );
+    }
+    for (const [label, directories] of [['a non-array string', 'entries'], ['a non-array object', {}], ['undefined', undefined]]) {
+        assert.throws(
+            () => validateSnapshotManifest({ ...manifest, required_directories: directories }),
+            error => error instanceof SnapshotIntegrityError && /must be an array/.test(error.message),
+            `${label} must be refused`
+        );
+    }
+});
+
+// A required directory and an artifact occupy the same namespace, so the rule is
+// the same one at every level: a directory may contain artifacts, and may not
+// be one.  Both halves matter -- refusing a directory that merely *contains*
+// artifacts would refuse the layout the writer produces, and the restore reaches
+// the other direction as an mkdir failure naming a path nobody wrote.
+test('a required directory may contain artifacts and may not be one', () => {
+    const { manifest } = buildSnapshotManifest(manifestFields({ artifacts: ledgerArtifacts() }));
+    const required = directories => () => validateSnapshotManifest({ ...manifest, required_directories: directories });
+
+    assert.equal(required(['transactions', 'transactions/committed', 'request-accounting/entries'])(), true, 'a directory that contains artifacts is the layout the writer produces');
+
+    for (const [label, directory] of [
+        ['the artifact itself', 'transactions/STORE.json'],
+        ['below an artifact', 'transactions/STORE.json/nested'],
+        ['the ledger epoch file', 'request-accounting/EPOCH.json'],
+    ]) {
+        assert.throws(required([directory]), error => error instanceof SnapshotIntegrityError && /as both a file and a directory/.test(error.message), `${label} must be refused`);
+    }
+
+    // The conflict is not only at the whole path.  An artifact occupying an
+    // *ancestor* of a required directory makes the directory just as
+    // uncreatable, and every prefix is therefore checked rather than the path
+    // alone.
+    const occupiedAncestor = buildSnapshotManifest(manifestFields({
+        artifacts: [artifact({ logical_path: 'run-state', category: 'run_state', object_key: payloadObjectKey(SNAPSHOT_ID, 'run-state') })],
+    })).manifest;
+    assert.throws(
+        () => validateSnapshotManifest({ ...occupiedAncestor, required_directories: ['run-state/entries'] }),
+        error => error instanceof SnapshotIntegrityError && /declares run-state as both a file and a directory/.test(error.message),
+        'an artifact that occupies an ancestor must be refused, and the refusal must name the ancestor'
+    );
+
+    // A directory whose name merely begins with an artifact's is not in conflict
+    // with it.  This is the case a prefix comparison gets wrong: the two paths
+    // share every character up to the artifact's extension and neither is
+    // inside the other.
+    const sharingAPrefix = buildSnapshotManifest(manifestFields({ artifacts: [artifact({ logical_path: 'transactions/committed.json' })] })).manifest;
+    assert.equal(validateSnapshotManifest({ ...sharingAPrefix, required_directories: ['transactions/committed'] }), true);
+});

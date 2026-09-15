@@ -134,6 +134,61 @@ function transportFor(stub, { prefix = '', credentials = LONG_LIVED } = {}) {
     });
 }
 
+// The pinned SDK mutates the credential object it is handed.
+//
+// `@aws-sdk/core`'s `resolveAwsSdkSigV4Config` wraps the caller's credentials in
+// an async provider and, on first resolution, annotates *that same object* in
+// place with `$source` and a `CREDENTIALS_CODE` feature flag.  There is no copy
+// on that path, and the mutation is deferred to provider resolution -- which
+// happens while signing, not at construction -- so a frozen object fails at the
+// first signed request with:
+//
+//     TypeError: Cannot set properties of undefined (setting 'CREDENTIALS_CODE')
+//
+// and a probe that only constructs the client reports success for both shapes.
+// That is how the freeze reached main in the first place, and it is why these
+// tests drive the real client: a stub the transport itself supplies cannot
+// exhibit a behaviour of the library it stands in for.
+//
+// Nothing is sent.  Resolving a static credential performs no I/O, and the
+// tripwire installed for this file proves no socket was opened.
+const realSdk = require('@aws-sdk/client-s3');
+
+// The transport builds its own client and never exposes it, so the client is
+// captured by subclassing the one member of the SDK surface it constructs.
+// Everything else about the construction path is the transport's own.
+function transportOnRealSdk(credentials) {
+    const built = [];
+    class CapturingS3Client extends realSdk.S3Client {
+        constructor(config) {
+            super(config);
+            built.push(this);
+        }
+    }
+    const transport = createR2Transport({
+        endpoint: ENDPOINT,
+        bucket: BUCKET,
+        region: 'auto',
+        credentials,
+        sdk: {
+            S3Client: CapturingS3Client,
+            PutObjectCommand: realSdk.PutObjectCommand,
+            GetObjectCommand: realSdk.GetObjectCommand,
+            HeadObjectCommand: realSdk.HeadObjectCommand,
+            ListObjectsV2Command: realSdk.ListObjectsV2Command,
+        },
+    });
+    return { transport, built };
+}
+
+// The step that failed.  This is what signing does to the client's credential
+// provider before it can compute a signature.
+async function resolveCredentialProvider(client) {
+    const provider = client.config && client.config.credentials;
+    assert.equal(typeof provider, 'function', 'the client the transport built must expose a resolvable credential provider');
+    return provider({});
+}
+
 function seed(stub, entries) {
     for (const [key, value] of Object.entries(entries)) stub.objects.set(key, Buffer.from(value));
 }
@@ -381,4 +436,71 @@ test('the transport exposes no deletion verb, and cannot acquire one from the SD
         assert.equal(transport[verb], undefined, `the transport must not expose ${verb}`);
     }
     assert.equal(backup.assertTransportContract(transport), transport);
+});
+
+test('a frozen credential still signs: the client the transport builds resolves its provider', async () => {
+    // The credential the caller injects is frozen by the caller here, and the
+    // transport freezes its own record of it independently.  Both are the shape
+    // a loader that reads a credential file and seals it would produce.
+    const injected = Object.freeze({ accessKeyId: 'AKIASYNTHETICFROZEN', secretAccessKey: 'synthetic-frozen-secret' });
+    const { transport, built } = transportOnRealSdk(injected);
+    assert.equal(built.length, 1, 'the transport must build exactly one client');
+
+    const resolved = await resolveCredentialProvider(built[0]);
+
+    assert.equal(resolved.accessKeyId, injected.accessKeyId);
+    assert.equal(resolved.secretAccessKey, injected.secretAccessKey);
+    // The SDK annotated the object it was given, which is the mutation that a
+    // frozen object cannot accept.  Reaching this line at all is the repair.
+    assert.deepEqual(Object.keys(resolved.$source || {}), ['CREDENTIALS_CODE']);
+    // And it annotated its own copy: the caller's object is a different object
+    // and is untouched, so a mutation performed by the SDK cannot reach the
+    // credential the caller handed over.
+    assert.notEqual(resolved, injected);
+    assert.equal(injected.$source, undefined);
+    assert.equal(Object.isFrozen(injected), true);
+    assert.equal(transport.describe().credential_source, 'INJECTED_EXPLICIT');
+    assert.equal(transport.describe().environment_fallback, false);
+});
+
+test('a frozen temporary credential keeps its session token through the same path', async () => {
+    const injected = Object.freeze({ accessKeyId: 'ASIASYNTHETICFROZEN', secretAccessKey: 'synthetic-frozen-secret', sessionToken: 'synthetic-session-token-value' });
+    const { transport, built } = transportOnRealSdk(injected);
+    const resolved = await resolveCredentialProvider(built[0]);
+
+    assert.equal(resolved.sessionToken, injected.sessionToken, 'session-token handling is unchanged by the copy');
+    assert.deepEqual(Object.keys(resolved.$source || {}), ['CREDENTIALS_CODE']);
+    assert.notEqual(resolved, injected);
+    assert.equal(injected.sessionToken, 'synthetic-session-token-value');
+    assert.equal(transport.describe().session_token_present, true);
+    assert.equal(JSON.stringify(transport.describe()).includes(injected.sessionToken), false, 'the token is a class in the report, never a value');
+});
+
+test('two transports never share the credential object the SDK sees', async () => {
+    const first = transportOnRealSdk(Object.freeze({ ...LONG_LIVED }));
+    const second = transportOnRealSdk(Object.freeze({ ...LONG_LIVED }));
+    const resolvedFirst = await resolveCredentialProvider(first.built[0]);
+    const resolvedSecond = await resolveCredentialProvider(second.built[0]);
+
+    assert.notEqual(resolvedFirst, resolvedSecond, 'a shared object would let one transport observe the other\'s SDK state');
+    assert.deepEqual(Object.keys(resolvedFirst).sort(), ['$source', 'accessKeyId', 'secretAccessKey']);
+});
+
+test('the pinned SDK mutates the credential object it is handed, which is what the copy is for', async () => {
+    // This asserts a behaviour of the pinned dependency, not of this repository:
+    // it is the premise the repair is written against, and it is here so that a
+    // future SDK that stops mutating is a signal to revisit the copy rather than
+    // a silent divergence.  The mutable arm is the control: without it, the
+    // refusal in the frozen arm would be consistent with any number of causes.
+    const mutable = { ...LONG_LIVED };
+    const mutableClient = new realSdk.S3Client({ endpoint: ENDPOINT, region: 'auto', forcePathStyle: true, credentials: mutable });
+    const annotated = await resolveCredentialProvider(mutableClient);
+    assert.equal(annotated, mutable, 'the SDK annotates the object it was given rather than a copy of it');
+    assert.deepEqual(Object.keys(mutable.$source || {}), ['CREDENTIALS_CODE']);
+
+    const frozenClient = new realSdk.S3Client({ endpoint: ENDPOINT, region: 'auto', forcePathStyle: true, credentials: Object.freeze({ ...LONG_LIVED }) });
+    await assert.rejects(
+        () => resolveCredentialProvider(frozenClient),
+        error => error instanceof TypeError && /CREDENTIALS_CODE/.test(error.message),
+    );
 });
