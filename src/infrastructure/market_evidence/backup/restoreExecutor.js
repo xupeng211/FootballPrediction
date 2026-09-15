@@ -496,18 +496,45 @@ function createStagingRoot(destination) {
     return Object.freeze({ path: staging, fd: fs.openSync(staging, DIRECTORY_OPEN_FLAGS) });
 }
 
-// States whether the name still refers to the directory this restore made, and
-// refuses every way it can fail to.  An unlinked directory is the swap: the
+// States whether a name still refers to the directory this restore holds open,
+// and refuses every way it can fail to.  An unlinked directory is the swap: the
 // original is gone from the namespace, whatever occupies the name now is
-// someone else's, and walking through the held descriptor would empty a
-// directory nobody can see while the name-based removal at the end took the
-// replacement with it.
-function assertStagingRootIsOurs(staging, root) {
-    const held = fs.fstatSync(root.fd);
-    if (held.nlink === 0) throw new SnapshotIntegrityError(`the staging root this restore created is no longer linked at ${staging}`);
-    const named = fs.lstatSync(staging);
-    if (named.isSymbolicLink() || !named.isDirectory()) throw new SnapshotIntegrityError(`the staging root is not a plain directory: ${staging}`);
-    if (named.dev !== held.dev || named.ino !== held.ino) throw new SnapshotIntegrityError(`the staging root is not the directory this restore created: ${staging}`);
+// someone else's, and a removal by that name would take the replacement.
+//
+// This asks the narrowest question available -- not "is this the name I minted"
+// but "is the directory at this name the directory I am holding" -- because it
+// is the last thing done before the one removal that has to name a directory.
+function assertStillTheDirectoryWeHold(target, fd, label) {
+    const held = fs.fstatSync(fd);
+    if (held.nlink === 0) throw new SnapshotIntegrityError(`the ${label} is no longer linked at ${target}`);
+    const named = fs.lstatSync(target);
+    if (named.isSymbolicLink() || !named.isDirectory()) throw new SnapshotIntegrityError(`the ${label} is not a plain directory: ${target}`);
+    if (named.dev !== held.dev || named.ino !== held.ino) throw new SnapshotIntegrityError(`the ${label} is not the directory this restore created: ${target}`);
+}
+
+// The one removal that has to name a directory.
+//
+// `rmdir` is the only directory removal Node offers and it has no descriptor
+// form -- `unlinkat` with `AT_REMOVEDIR` is not exposed -- so the last step of
+// any cleanup names what it removes.  Three things bound what that name can
+// reach: it is spelled relative to a parent this walk holds open, so it can only
+// ever name a child of a directory that is already ours; the directory it names
+// is checked against the descriptor held open for it *at the moment of the
+// call*, so a directory that has been unlinked, replaced or turned into a link
+// is refused rather than removed; and `rmdir` refuses anything that is not
+// empty, so an entry arriving late stops the removal instead of being destroyed
+// with it.
+//
+// The check is not atomic with the call, and saying so is the point rather than
+// a gap in the reasoning: it narrows the window to the single syscall between
+// them, and what it cannot promise is that a process with this uid, writing
+// inside a directory this restore owns, cannot win that window.  What it does
+// promise is that the only directory that can be taken is one this walk has
+// just emptied itself, and that losing the window stops the cleanup instead of
+// continuing into the rest of the tree.
+function removeEmptiedDirectory(target, fd, label) {
+    assertStillTheDirectoryWeHold(target, fd, label);
+    fs.rmdirSync(target);
 }
 
 function closeStagingRoot(root) {
@@ -615,13 +642,15 @@ function emptyDirectoryThroughDescriptor(fd) {
             const childFd = openStagingDirectory(scoped);
             try {
                 emptyDirectoryThroughDescriptor(childFd);
+                // The descriptor stays open across the removal rather than being
+                // closed first, because it is what the name is checked against
+                // at the moment of the call.  Closing it first would hand the
+                // emptied directory's name back to the tree with nothing left
+                // that says which directory it was.
+                removeEmptiedDirectory(scoped, childFd, 'staging directory');
             } finally {
                 fs.closeSync(childFd);
             }
-            // `rmdirSync` refuses a directory that is not empty, so a race that
-            // puts something back between the walk and this call stops the
-            // cleanup instead of deleting whatever arrived.
-            fs.rmdirSync(scoped);
             continue;
         }
         fs.unlinkSync(scoped);
@@ -647,15 +676,16 @@ function discardStagingRoot(staging, destination, error, root) {
         // -- or the same name *and* the same reused inode number -- is refused
         // here rather than emptied: a mismatch is a cleanup note on the original
         // failure, and nothing is traversed or removed.
-        assertStagingRootIsOurs(staging, root);
+        assertStillTheDirectoryWeHold(staging, root.fd, 'staging root');
         emptyDirectoryThroughDescriptor(root.fd);
         // The removal is by name because `rmdir` cannot be performed through the
         // directory's own descriptor -- the final component of
         // `/proc/self/fd/<fd>` is the magic link itself and `rmdir` refuses a
         // symbolic link.  It is a single non-recursive `rmdir`, so what it can
-        // remove is one empty directory, and the walk that emptied it was
-        // bounded by the descriptor rather than by this name.
-        fs.rmdirSync(staging);
+        // remove is one empty directory, the walk that emptied it was bounded by
+        // the descriptor rather than by this name, and the name is checked
+        // against that descriptor again immediately before the call.
+        removeEmptiedDirectory(staging, root.fd, 'staging root');
     } catch (thrown) {
         cleanupFailure = thrown;
     }
@@ -690,7 +720,7 @@ function commitStagedRoot(staging, destination, root) {
     // staging root that is no longer the directory this restore made must not be
     // able to leave an empty destination behind on its way out, because a
     // destination that exists is a destination a later restore refuses.
-    assertStagingRootIsOurs(staging, root);
+    assertStillTheDirectoryWeHold(staging, root.fd, 'staging root');
     fs.mkdirSync(destination, { mode: DIRECTORY_MODE });
     fs.chmodSync(destination, DIRECTORY_MODE);
     // Both ends of every move are addressed through a descriptor this call
@@ -711,13 +741,13 @@ function commitStagedRoot(staging, destination, root) {
             moved.push(entry);
         }
         try {
-            fs.rmdirSync(staging);
+            removeEmptiedDirectory(staging, root.fd, 'staging root');
         } catch {
             // An empty staging directory that will not go away is untidy, not
             // unsafe, and the restored root is already complete and proven.
         }
     } catch (error) {
-        rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination);
+        rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination, destinationFd);
         throw error;
     } finally {
         fs.closeSync(destinationFd);
@@ -728,7 +758,7 @@ function commitStagedRoot(staging, destination, root) {
 // Both directories are open descriptors when this runs, so the rollback moves
 // entries back through the same identity the forward move used rather than
 // through a name that could have been re-pointed in between.
-function rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination) {
+function rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination, destinationFd) {
     for (const entry of moved.reverse()) {
         try {
             fs.renameSync(path.join(destinationDirectory, entry), path.join(stagingDirectory, entry));
@@ -737,6 +767,11 @@ function rollbackCommittedEntries(error, moved, stagingDirectory, destinationDir
         }
     }
     try {
+        // The destination is removed by name for the same reason the staging
+        // directories are -- `rmdir` has no descriptor form -- so the name is
+        // checked against the destination's own descriptor immediately before
+        // the call, and the descriptor is still open at this point.
+        assertStillTheDirectoryWeHold(destination, destinationFd, 'restored destination');
         removeDirectoryInParent(destination, 'restored destination parent');
     } catch (rollbackError) {
         error.message = `${error.message} (the destination could not be removed again: ${rollbackError.code || rollbackError.message})`;
