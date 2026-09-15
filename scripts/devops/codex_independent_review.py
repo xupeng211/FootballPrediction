@@ -24,7 +24,9 @@ writer 异常退出都会显式失败，不会静默交还控制权。
 一个 head 可以被 review 多轮，run id 就是轮次身份：``run`` 为这一轮写下的每个
 产物都带同一个 run id，``wait`` 只消费它正在等待的那一轮的 receipt（``--run-id``
 显式给出，否则取该 head 最新 writer record 记录的 run id），其它轮次的 receipt
-会被列出但永不当作本轮 verdict。无法使用的输入（非完整 40 位 HEAD_SHA、非法
+会被列出但永不当作本轮 verdict。产物名因此不是调用方的选择：receipt 一律写在
+evidence directory 内、由 head 与 run id 决定的 canonical 名下，没有任何 override
+能把它挪到 ``wait`` 不扫描的位置。无法使用的输入（非完整 40 位 HEAD_SHA、非法
 run id）同样以结构化失败结束，而不是 traceback。
 
 本模块实现的是 `ENGINEERING_INDEPENDENT_REVIEW`：fresh Codex
@@ -94,6 +96,7 @@ from scripts.devops.codex_review_receipt import (  # noqa: E402
 from scripts.devops.codex_review_verdict import (  # noqa: E402
     EXIT_REVIEW_INFRASTRUCTURE_ERROR,
     EXIT_REVIEW_PASS,
+    REVIEW_RECEIPT_PREFIX,
     assert_canonical_run_id,
     assert_owner_only_directory,
     read_receipt_verdict,
@@ -404,10 +407,13 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     }
     payload_sha = sha256_bytes(_canonical_json(receipt))
     receipt["integrity"] = {"receipt_payload_sha256": payload_sha}
+    # The receipt name *is* the round's identity, so it is derived only from the
+    # round: the reviewed head and the run id, inside the evidence directory.
+    # `wait` consumes a round by scanning that directory for exactly this name,
+    # so a receipt written anywhere else would be an artifact no wait could ever
+    # turn into a verdict.  There is therefore no override for it.
     receipt_path = _require_external_path(
-        Path(args.receipt_path)
-        if args.receipt_path
-        else evidence_dir / f"codex-review-receipt-{expected_head[:12]}-{run_id}.json",
+        evidence_dir / f"{REVIEW_RECEIPT_PREFIX}{expected_head[:12]}-{run_id}.json",
         repo_root,
     )
     _write_exclusive(receipt_path, _canonical_json(receipt))
@@ -426,7 +432,6 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--mission-id", required=True)
     run.add_argument("--mission-scope-file", required=True, type=Path)
     run.add_argument("--evidence-dir", required=True, type=Path)
-    run.add_argument("--receipt-path", type=Path, default=None)
     run.add_argument("--builder-context-id", default=None)
     run.add_argument(
         "--run-id",

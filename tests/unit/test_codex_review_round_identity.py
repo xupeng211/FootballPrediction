@@ -17,7 +17,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
-from typing import TYPE_CHECKING
+
+import pytest
 
 from scripts.devops import codex_independent_review as reviewer
 from scripts.devops.codex_review_verdict import (
@@ -32,10 +33,6 @@ from scripts.devops.codex_review_verdict import (
     run_id_from_name,
 )
 from scripts.devops.codex_review_wait import process_starttime
-
-if TYPE_CHECKING:
-    import pytest
-
 from tests.helpers.agentic_workflow_fixtures import MISSION_ID, make_repo
 from tests.helpers.codex_review_evidence_fixtures import (
     BLOCKING_FINDING,
@@ -305,3 +302,50 @@ def test_run_refuses_a_run_id_the_naming_rule_could_not_produce(
     captured = capsys.readouterr()
     assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
     assert "--run-id" in json.loads(captured.out)["error"]
+
+
+# --------------------------------------------------------------------------
+# The round names the artifact; the caller does not get to rename it.
+# --------------------------------------------------------------------------
+def test_run_refuses_to_move_this_rounds_receipt_out_of_the_evidence_directory(
+    tmp_path: Path,
+) -> None:
+    """A receipt the wait cannot find is a round whose verdict nobody can establish.
+
+    Round identity is carried by the artifact name inside the evidence
+    directory, and `wait` consumes a round by scanning exactly that name.  A
+    receipt written to another location, or under a name the naming rule could
+    not have produced, belongs to no round any wait can name — so a launch that
+    redirects it produces a review whose verdict is unreachable through the
+    canonical single-command wait.  That is the ambiguity between rounds this
+    model exists to remove, one layer down, so the launch entrypoint offers no
+    such redirection and refuses it before any artifact is created.
+    """
+
+    evidence = tmp_path / "evidence-canonical-receipt"
+    evidence.mkdir(mode=0o700)
+    elsewhere = tmp_path / "elsewhere-receipt.json"
+    with pytest.raises(SystemExit) as refusal:
+        reviewer.main(
+            [
+                "run",
+                "--repo-root",
+                str(tmp_path),
+                "--base-sha",
+                "1" * 40,
+                "--head-sha",
+                "2" * 40,
+                "--mission-id",
+                MISSION_ID,
+                "--mission-scope-file",
+                str(tmp_path / "absent.json"),
+                "--evidence-dir",
+                str(evidence),
+                "--receipt-path",
+                str(elsewhere),
+                "--json",
+            ]
+        )
+    assert refusal.value.code != 0, "the redirection is refused, not honoured"
+    assert not elsewhere.exists(), "no receipt may be written outside the evidence directory"
+    assert not list(evidence.iterdir()), "the refusal lands before any artifact is created"
