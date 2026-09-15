@@ -11,6 +11,7 @@
     "docs/agentic/missions/INVESTIGATE_AND_REPAIR_CODEX_REVIEW_PARENT_AUTO_RESUME.json",
     "scripts/devops/codex_independent_review.py",
     "scripts/devops/codex_review_verdict.py",
+    "tests/unit/test_codex_review_liveness_probe.py",
     "tests/unit/test_codex_review_verdict_propagation.py"
   ],
   "authorized_prefixes": [],
@@ -66,7 +67,8 @@
     "P0/P1/P2 remain the blocking severities and P3 remains non-blocking; no severity threshold is relaxed",
     "STALE_TOOLING still never satisfies merge readiness or a current exact-head review requirement",
     "the wait primitive never returns control silently: an absent, unreadable, wrong-head or timed-out receipt is an explicit non-zero failure state",
-    "the wait primitive never infers liveness from a command-line pattern, and never observes a fixed receipt filename that the writer does not produce"
+    "the wait primitive never infers liveness from a command-line pattern, and never observes a fixed receipt filename that the writer does not produce",
+    "the wait primitive probes a writer only through a pid bound to a /proc start time, refuses a pid that cannot designate one process, and treats an absent or unverifiable identity as no probe rather than as evidence of death"
   ],
   "forbidden_side_effects": [
     "contacting The Odds API, B2, AWS, Cloudflare or any other provider, and any provider quota consumption",

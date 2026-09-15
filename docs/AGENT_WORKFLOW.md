@@ -341,7 +341,7 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
   匹配到自己，"writer 已退出"分支永远不可达；
 - receipt 文件名由 writer 决定：`codex-review-receipt-<head12>-<runid>.json`，不存在固定名。
 
-`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [JSON=1]`
+`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [WRITER_STARTTIME=<ticks>] [JSON=1]`
 是这条路径的 canonical 实现。它按 `codex-review-receipt-<head12>-*.json` 轮询 evidence directory，把状态
 显式外化（`PARENT_WAITING` / `REVIEW_RUNNING` / `REVIEW_FINISHED` / `REVIEW_FAILED` / `RECEIPT_MISSING` /
 `PARENT_CONTINUING`），并且：
@@ -355,8 +355,15 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
   （`_ensure_private_directory`）共用同一条 owner-only 规则；
 - 同一 head 存在多个 receipt 时取 mtime 最新者——较新的 round 已经发声之后绝不回退到更早的 PASS——并在
   结果里列出候选并提示每个 review round 使用独立的 evidence directory；
-- `--pid` 只做数字 pid 存活探测，并核对 `/proc/<pid>/stat` 的 starttime 以识别 pid 复用；不给 `--pid` 时
-  不以"没有探针"推断死亡；
+- pid 不是身份：writer 在启动时把**自己**的 pid 与 `/proc/<pid>/stat` 的 start time 写进 evidence
+  directory 的 `codex-review-writer-<head12>-<runid>.json`，`wait` 默认绑定这条**已记录**的身份并逐次核对
+  start time，因此被复用的 pid 会被判为 writer 已退出，而不是被当成原 writer 一直等到超时。调用方也可以
+  用 `--pid` / `--pid-starttime` 显式给出自己要观察的 writer（经 `make` 则是 `WRITER_PID` /
+  `WRITER_STARTTIME`）；start time 必须来自真正的 writer 进程，`/proc/<pid>/stat` field 22 即为该值。
+  `--pid` 必须是正整数：`0` 与负数指向进程组或全部可访问进程，无法指定 writer，一律在开始等待前以 exit `1`
+  拒绝。identity record 只是存活提示、不是证据，它不携带任何 verdict；无法校验的记录（缺失、不可读、
+  pid 非正、绑定到别的 head）等同于"没有探针"，而不是"writer 已死亡"。
+- `--pid` 只做数字 pid 存活探测，并核对 start time 以识别 pid 复用；没有可用身份时不以"没有探针"推断死亡；
 - 超时、writer 退出、receipt 缺失或不可读都是**显式失败状态**并以 exit `1` 结束，绝不静默交还控制权。
 
 状态行是机器可读契约：未加 `--json` 时进度走 stdout，加 `--json` 时改走 stderr，因此 stdout 始终只有

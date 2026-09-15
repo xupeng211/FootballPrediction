@@ -23,6 +23,11 @@ CLI 主体保持在一个可评审的模块长度内。它不启动 reviewer，�
   （``0600``）且属于当前 uid；否则任何能往该目录写入的进程都能伪造一份自洽的
   exact-head PASS。读取侧与写入侧（``_ensure_private_directory``）共用
   ``assert_owner_only_directory``，规则只有一条。
+* pid 不是身份：``/proc/<pid>`` 可能在 waiter 查看之前就属于另一个进程。writer 因此在
+  启动时把**自己**的 pid 与 ``/proc`` start time 写进 evidence directory 的 identity
+  record，``wait`` 默认绑定这条**已记录**的身份并逐次核对 start time，而不是把首次看到的
+  进程当成 writer。非正 ``--pid`` 一律拒绝：``0`` 与负数会让存活探测命中进程组或全部可访问
+  进程，无法表达"指定的那个 writer"。
 """
 
 from __future__ import annotations
@@ -64,7 +69,25 @@ WAIT_STATE_PARENT_CONTINUING = "PARENT_CONTINUING"
 # The writer owns this naming rule; ``wait`` only reads it back.  The receipt
 # filename binds the head at 12 hex characters, which is the same prefix the
 # receipt body records in ``reviewed_head_sha``.
-REVIEW_RECEIPT_GLOB = "codex-review-receipt-{head12}-*.json"
+REVIEW_RECEIPT_PREFIX = "codex-review-receipt-"
+REVIEW_RECEIPT_GLOB = REVIEW_RECEIPT_PREFIX + "{head12}-*.json"
+
+# The writer's own launch record.  It is a liveness hint, never evidence: it
+# carries no verdict and is never read for one.
+WRITER_IDENTITY_PREFIX = "codex-review-writer-"
+WRITER_IDENTITY_GLOB = WRITER_IDENTITY_PREFIX + "{head12}-*.json"
+
+
+def writer_identity_path(directory: Path, head_sha: str, run_id: str) -> Path:
+    """Return the canonical path of one review run's writer identity record."""
+
+    return directory / f"{WRITER_IDENTITY_PREFIX}{head_sha[:12]}-{run_id}.json"
+
+
+def writer_identity_pattern(head_sha: str) -> str:
+    """Return the glob ``wait`` uses to find a writer identity record."""
+
+    return WRITER_IDENTITY_GLOB.format(head12=head_sha[:12])
 
 
 def assert_owner_only_directory(path: Path) -> None:
@@ -190,17 +213,25 @@ _PROC_STAT_STATE_INDEX = 0
 _PROC_STAT_STARTTIME_INDEX = 19
 
 
-def _process_identity(pid: int) -> str | None:
-    """Identify one running process as ``<state>:<starttime>``, or None if gone.
+def _process_stat(pid: int) -> tuple[str, str] | None:
+    """Return ``(state, starttime)`` for one pid, or None when unreadable.
 
-    Two observations of the same pid with different start times are two
-    different processes, which is how pid recycling is caught.
+    The second element is field 22 of ``/proc/<pid>/stat``: the process start
+    time in clock ticks.  Two observations of the same pid with different start
+    times are two different processes, which is how pid recycling is caught.
     """
 
     fields = _proc_stat_tail(pid)
     if fields is None or len(fields) <= _PROC_STAT_STARTTIME_INDEX:
         return None
-    return f"{fields[_PROC_STAT_STATE_INDEX]}:{fields[_PROC_STAT_STARTTIME_INDEX]}"
+    return fields[_PROC_STAT_STATE_INDEX], fields[_PROC_STAT_STARTTIME_INDEX]
+
+
+def process_starttime(pid: int) -> str | None:
+    """Return the start time that identifies one process for its whole life."""
+
+    stat = _process_stat(pid)
+    return None if stat is None else stat[1]
 
 
 def _process_exists(pid: int) -> bool:
@@ -218,51 +249,93 @@ def _process_exists(pid: int) -> bool:
 
 
 class _WriterProbe:
-    """Decide whether an explicitly-named writer process is still running.
+    """Decide whether the writer that was launched is still running.
 
     A pattern probe cannot answer this question, and this is the exact defect
     that stranded the incident this module is being repaired for: the watcher
     ran ``pgrep -f codex_independent_review``, the watcher's own command line
     contains that literal string, so the probe matched itself and the
-    "writer has exited" branch was unreachable forever.  Only an explicit
-    numeric pid can be probed honestly, and it is cross-checked against its
-    start time so a recycled pid is never mistaken for the original writer.
+    "writer has exited" branch was unreachable forever.
+
+    Only an explicit numeric pid can be probed honestly, and a pid alone is not
+    an identity: the process holding ``/proc/<pid>`` when the waiter looks may
+    not be the one that was launched.  The probe therefore compares the
+    ``/proc`` start time, taken from the caller or from the record the writer
+    published at launch, and reports a mismatching pid as gone instead of
+    adopting it as the writer.
     """
 
-    def __init__(self, pid: int | None) -> None:
+    def __init__(
+        self,
+        pid: int | None,
+        *,
+        starttime: str | None = None,
+        directory: Path | None = None,
+        pattern: str | None = None,
+        expected_head: str | None = None,
+    ) -> None:
         self._pid = pid
-        self._identity: str | None = None
-        self._primed = False
+        self._starttime = starttime
+        self._directory = directory
+        self._pattern = pattern
+        self._expected_head = expected_head
+        self._source = "argument" if pid is not None else "none"
+
+    @property
+    def pid(self) -> int | None:
+        """The pid under observation, once one is known."""
+
+        return self._pid
+
+    @property
+    def source(self) -> str:
+        """Where the probed identity came from: ``argument``, ``writer-record`` or ``none``."""
+
+        return self._source
 
     def alive(self) -> bool:
-        """Return whether the named writer is still running.
+        """Return whether the launched writer is still running.
 
-        Returns ``True`` when no pid was supplied.  Absence of a probe is not
+        Returns ``True`` when no probe is available.  Absence of a probe is not
         evidence of death, and inventing one would abandon a healthy wait.
         """
 
         if self._pid is None:
-            return True
-        identity = _process_identity(self._pid)
-        if identity is None:
+            self._bind_recorded_writer()
+            if self._pid is None:
+                return True
+        stat = _process_stat(self._pid)
+        if stat is None:
             # No readable /proc entry: fall back to the existence probe alone.
             return _process_exists(self._pid)
-        if identity.startswith("Z:"):
+        state, starttime = stat
+        if state == "Z":
             return False
-        if not self._primed:
-            self._identity = identity
-            self._primed = True
+        if self._starttime is None:
+            # Only a bare pid was supplied, so this first observation is the
+            # only identity there is and it defines the baseline.  A pid
+            # recycled before this point is indistinguishable here, which is
+            # why the writer publishes its own start time for the default path.
+            self._starttime = starttime
             return True
-        return identity == self._identity
+        return starttime == self._starttime
+
+    def _bind_recorded_writer(self) -> None:
+        """Adopt the identity the writer recorded for itself, once it exists."""
+
+        if self._directory is None or self._pattern is None or self._expected_head is None:
+            return
+        recorded = _recorded_writer_identity(
+            self._directory, self._pattern, expected_head=self._expected_head
+        )
+        if recorded is None:
+            return
+        self._pid, self._starttime = recorded
+        self._source = "writer-record"
 
 
-def _receipt_candidates(directory: Path, pattern: str) -> tuple[list[Path], Path | None]:
-    """Return JSON-loadable candidates newest-first, plus one unreadable one.
-
-    A writer observed mid-``_write_exclusive`` is a real state, not a verdict,
-    so a candidate that does not yet parse is reported separately rather than
-    treated as evidence.
-    """
+def _newest_first(directory: Path, pattern: str) -> list[Path]:
+    """Return the files matching one pattern, newest mtime first."""
 
     def _mtime(path: Path) -> int:
         try:
@@ -273,11 +346,22 @@ def _receipt_candidates(directory: Path, pattern: str) -> tuple[list[Path], Path
     try:
         paths = [p for p in directory.glob(pattern) if p.is_file()]
     except OSError:
-        return [], None
+        return []
     paths.sort(key=lambda p: (_mtime(p), p.name), reverse=True)
+    return paths
+
+
+def _receipt_candidates(directory: Path, pattern: str) -> tuple[list[Path], Path | None]:
+    """Return JSON-loadable candidates newest-first, plus one unreadable one.
+
+    A writer observed mid-``_write_exclusive`` is a real state, not a verdict,
+    so a candidate that does not yet parse is reported separately rather than
+    treated as evidence.
+    """
+
     readable: list[Path] = []
     unreadable: Path | None = None
-    for path in paths:
+    for path in _newest_first(directory, pattern):
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -335,13 +419,56 @@ def _success_detail(candidate: Path, review_result: str, blocking: int, found: l
     return detail
 
 
-def _wait_precondition_error(directory: Path, timeout_seconds: int) -> str | None:
+def _recorded_writer_identity(
+    directory: Path, pattern: str, *, expected_head: str
+) -> tuple[int, str] | None:
+    """Return the ``(pid, starttime)`` the newest writer record claims, if usable.
+
+    The writer publishes this at launch, so a waiter can bind to the process
+    that was actually started rather than to whichever process holds that pid
+    later.  A record that is absent, unreadable, malformed or bound to another
+    head yields ``None``: no probe is not evidence of death, and a hint that
+    cannot be verified is not a hint.
+
+    Records are read newest-first for the same reason receipts are, so a reused
+    evidence directory resolves to the most recent writer.  A stale record whose
+    writer is gone therefore ends a wait early, but only ever with an explicit
+    ``REVIEW_FAILED`` — never a PASS, and never a verdict.
+    """
+
+    for path in _newest_first(directory, pattern):
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(document, dict) or document.get("head_sha") != expected_head:
+            continue
+        pid = document.get("pid")
+        starttime = document.get("starttime")
+        if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
+            continue
+        if not isinstance(starttime, str) or not starttime:
+            continue
+        return pid, starttime
+    return None
+
+
+def _wait_precondition_error(
+    directory: Path, timeout_seconds: int, pid: int | None, starttime: str | None
+) -> str | None:
     """Return why a wait cannot start at all, or None when it can."""
 
     if not directory.is_dir():
         return f"evidence directory 不存在: {directory}"
     if timeout_seconds <= 0:
         return f"--timeout-seconds 必须为正数: {timeout_seconds}"
+    if pid is not None and pid <= 0:
+        return (
+            f"--pid 必须是正整数: {pid}"
+            "（0 与负数会让存活探测命中进程组或全部可访问进程，无法指定 writer）"
+        )
+    if starttime is not None and pid is None:
+        return "--pid-starttime 需要同时给出 --pid"
     return None
 
 
@@ -373,6 +500,7 @@ def wait_for_receipt(
     timeout_seconds: int = 1800,
     poll_interval: float = 5.0,
     pid: int | None = None,
+    pid_starttime: str | None = None,
     json_output: bool = False,
 ) -> int:
     """Block until the exact-head review receipt exists, then return its verdict.
@@ -397,19 +525,27 @@ def wait_for_receipt(
     can only mean corruption or tampering.  Likewise the newest readable
     candidate is authoritative — falling back to an older receipt for the same
     head would be exactly the stale-evidence acceptance this must prevent.
+
+    Liveness is checked only as a bounded early exit, and only against a pid
+    bound to a ``/proc`` start time: the caller's explicit ``pid``/``pid_starttime``
+    when given, otherwise the identity the writer published at launch.  Without
+    one of those there is no probe at all — the wait then runs to its deadline
+    and says so, rather than guessing that the writer died.
     """
 
     requested_head = normalize_full_sha(head_sha, role="waited-for head SHA")
     directory = Path(evidence_dir)
-    precondition = _wait_precondition_error(directory, timeout_seconds)
-    if precondition is not None:
-        print(f"INDEPENDENT_REVIEW_WAIT=FAIL: {precondition}", file=sys.stderr)
-        return EXIT_REVIEW_INFRASTRUCTURE_ERROR
     interval = max(float(poll_interval), 0.05)
     pattern = REVIEW_RECEIPT_GLOB.format(head12=requested_head[:12])
     started = time.monotonic()
     deadline = started + timeout_seconds
-    probe = _WriterProbe(pid)
+    probe = _WriterProbe(
+        pid,
+        starttime=pid_starttime,
+        directory=directory,
+        pattern=writer_identity_pattern(requested_head),
+        expected_head=requested_head,
+    )
     progress = _WaitProgress(sys.stderr if json_output else sys.stdout)
 
     def report(state: str, detail: str, exit_code: int, **extra: Any) -> int:
@@ -420,7 +556,8 @@ def wait_for_receipt(
             "evidence_dir": str(directory),
             "detail": detail,
             "elapsed_seconds": round(time.monotonic() - started, 3),
-            "writer_pid": pid,
+            "writer_pid": probe.pid,
+            "writer_identity_source": probe.source,
         }
         payload.update(extra)
         print(json.dumps(payload, ensure_ascii=False), flush=True)
@@ -432,6 +569,10 @@ def wait_for_receipt(
         progress.announce(state, detail)
         print(f"INDEPENDENT_REVIEW_WAIT=FAIL: {detail}", file=sys.stderr)
         return report(state, detail, EXIT_REVIEW_INFRASTRUCTURE_ERROR)
+
+    precondition = _wait_precondition_error(directory, timeout_seconds, pid, pid_starttime)
+    if precondition is not None:
+        return fail(WAIT_STATE_REVIEW_FAILED, precondition)
 
     try:
         assert_owner_only_directory(directory)
@@ -477,8 +618,8 @@ def wait_for_receipt(
         if not probe.alive():
             return fail(
                 WAIT_STATE_REVIEW_FAILED,
-                f"writer pid {pid} exited without producing a receipt for head "
-                f"{requested_head} in {directory}",
+                f"writer pid {probe.pid} (identity from {probe.source}) exited without "
+                f"producing a receipt for head {requested_head} in {directory}",
             )
         progress.announce(
             WAIT_STATE_REVIEW_RUNNING,

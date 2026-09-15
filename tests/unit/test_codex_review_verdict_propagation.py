@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
+import stat
 import subprocess
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -35,9 +35,8 @@ from scripts.devops.codex_review_verdict import (
     WAIT_STATE_RECEIPT_MISSING,
     WAIT_STATE_REVIEW_FAILED,
     WAIT_STATE_REVIEW_FINISHED,
-    _proc_stat_tail,
     _receipt_candidates,
-    _WriterProbe,
+    process_starttime,
     read_receipt_verdict,
     verdict_exit_code,
 )
@@ -49,19 +48,27 @@ from tests.helpers.agentic_workflow_fixtures import (
     write_valid_receipt,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 BLOCKING_FINDING: dict[str, Any] = {
     "severity": "P2",
     "title": "state block contradicts itself",
     "summary": "the document calls itself current-state while asserting the superseded value",
 }
 
-# A refusal or a dead-writer detection must end promptly, not consume the whole
-# deadline; the waits below are given long deadlines so the assertion is
-# meaningful rather than trivially satisfied by the timeout itself.
-FAST_FAILURE_CEILING_SECONDS = 30
 SHORT_TIMEOUT_SECONDS = 2
-DELIBERATE_TIMEOUT_SECONDS = 60
 TWO_REVIEW_ROUNDS = 2
+
+# A refusal must end promptly, not consume the whole deadline; the waits below
+# are given long deadlines so the assertion is meaningful rather than trivially
+# satisfied by the timeout itself.
+FAST_FAILURE_CEILING_SECONDS = 30
+DELIBERATE_TIMEOUT_SECONDS = 60
+
+# The writer's own modes: anything else is a file this harness did not write.
+OWNER_ONLY_FILE_MODE = 0o600
+OWNER_ONLY_DIRECTORY_MODE = 0o700
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -189,6 +196,7 @@ def _run_end_to_end(
     *,
     result: str,
     finding: dict[str, Any] | None,
+    evidence: Path | None = None,
 ) -> tuple[int, dict[str, Any]]:
     """Drive the real `run` subcommand against a stub reviewer binary."""
 
@@ -207,8 +215,9 @@ def _run_end_to_end(
     payload = json.dumps(document, ensure_ascii=False)
     monkeypatch.setenv("CODEX_CLI_PATH", str(_stub_codex(tmp_path / "codex-stub")))
     monkeypatch.setenv("STUB_FINAL_DOCUMENT", payload)
-    evidence = tmp_path / "e2e-evidence"
-    evidence.mkdir(mode=0o700)
+    if evidence is None:
+        evidence = tmp_path / "e2e-evidence"
+        evidence.mkdir(mode=0o700)
 
     exit_code = reviewer.main(
         [
@@ -388,57 +397,26 @@ def test_the_writer_side_refuses_a_directory_that_is_not_owner_only(tmp_path: Pa
 # --------------------------------------------------------------------------
 # CASE 3 — the review child dies without ever writing a receipt.
 # --------------------------------------------------------------------------
-
-
-def _await_zombie(process: subprocess.Popen[bytes]) -> bool:
-    """Wait until the child is an unreaped zombie, so its pid cannot be reused."""
-
-    deadline = time.monotonic() + 10
-    while time.monotonic() < deadline:
-        fields = _proc_stat_tail(process.pid)
-        if fields and fields[0] == "Z":
-            return True
-        time.sleep(0.01)
-    return False
-
-
-def test_wait_case_3_writer_exit_without_receipt(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+# A pid is not an identity: the writer publishes the one it can be held to.
+# --------------------------------------------------------------------------
+def test_run_publishes_the_writer_identity_it_can_be_held_to(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    if not Path("/proc").is_dir():
-        pytest.skip("liveness probing requires /proc")
+    """`wait` can only verify a launched writer if the writer said who it was."""
 
-    writer = subprocess.Popen(["sh", "-c", "exit 0 # codex_independent_review"])
-    decoy: subprocess.Popen[bytes] | None = None
-    try:
-        if not _await_zombie(writer):
-            pytest.skip("could not observe an unreaped child on this platform")
-        # A live process whose command line contains the wrapper name: a
-        # `pgrep -f` probe answers "still running" here and can never notice
-        # the writer is gone, which is the defect this guards.
-        decoy = subprocess.Popen(["sh", "-c", "sleep 30 # codex_independent_review"])
-        assert _WriterProbe(None).alive() is True, "no probe is not evidence of death"
-        assert _WriterProbe(writer.pid).alive() is False
-
-        evidence = tmp_path / "evidence-dead-writer"
-        evidence.mkdir(mode=0o700)
-        started = time.monotonic()
-        exit_code = _wait(
-            evidence, "0" * 39 + "1", timeout_seconds=DELIBERATE_TIMEOUT_SECONDS, pid=writer.pid
-        )
-        elapsed = time.monotonic() - started
-    finally:
-        if decoy is not None:
-            decoy.kill()
-            decoy.wait()
-        writer.wait()
-
-    assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
-    assert elapsed < FAST_FAILURE_CEILING_SECONDS, "a dead writer must be detected, not waited out"
-    payload = _payload(capsys)
-    assert payload["state"] == WAIT_STATE_REVIEW_FAILED
-    assert payload["status"] == "FAIL"
-    assert "exited without producing a receipt" in payload["detail"]
+    evidence = tmp_path / "identity-evidence"
+    evidence.mkdir(mode=0o700)
+    exit_code, _ = _run_end_to_end(
+        tmp_path, monkeypatch, capsys, result="PASS", finding=None, evidence=evidence
+    )
+    records = sorted(evidence.glob("codex-review-writer-*.json"))
+    assert exit_code == EXIT_REVIEW_PASS
+    assert len(records) == 1, "exactly one launch record per review run"
+    record = json.loads(records[0].read_text(encoding="utf-8"))
+    assert record["pid"] == os.getpid()
+    assert record["starttime"] == process_starttime(os.getpid())
+    assert stat.S_IMODE(records[0].stat().st_mode) == OWNER_ONLY_FILE_MODE
+    assert stat.S_IMODE(evidence.stat().st_mode) == OWNER_ONLY_DIRECTORY_MODE
 
 
 # --------------------------------------------------------------------------
@@ -554,9 +532,16 @@ def test_wait_reports_a_missing_receipt_instead_of_returning_control(
     assert payload["elapsed_seconds"] >= SHORT_TIMEOUT_SECONDS
 
 
-def test_wait_reports_a_missing_evidence_directory(tmp_path: Path) -> None:
+def test_wait_reports_a_missing_evidence_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A wait that cannot even start still reports why, in the same shape."""
+
     exit_code = _wait(tmp_path / "absent", "2" * 40)
+    payload = _payload(capsys)
     assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
+    assert payload["state"] == WAIT_STATE_REVIEW_FAILED
+    assert "evidence directory 不存在" in payload["detail"]
 
 
 def test_a_partially_written_receipt_is_not_a_verdict(tmp_path: Path) -> None:

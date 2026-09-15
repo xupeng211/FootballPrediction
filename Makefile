@@ -245,7 +245,7 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		--evidence-dir "$(EVIDENCE_DIR)" \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
 
-agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [JSON=1]
+agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [WRITER_STARTTIME=<ticks>] [JSON=1]
 	@if [ -z "$(HEAD_SHA)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
 		echo "ERROR: HEAD_SHA and EVIDENCE_DIR are required."; \
 		exit 1; \
@@ -256,6 +256,7 @@ agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt ve
 		$(if $(TIMEOUT_SECONDS),--timeout-seconds $(TIMEOUT_SECONDS),) \
 		$(if $(POLL_INTERVAL),--poll-interval $(POLL_INTERVAL),) \
 		$(if $(WRITER_PID),--pid $(WRITER_PID),) \
+		$(if $(WRITER_STARTTIME),--pid-starttime $(WRITER_STARTTIME),) \
 		$(if $(JSON),--json,)
 
 agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]

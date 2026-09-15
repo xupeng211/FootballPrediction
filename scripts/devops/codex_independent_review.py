@@ -88,9 +88,11 @@ from scripts.devops.codex_review_verdict import (  # noqa: E402
     EXIT_REVIEW_INFRASTRUCTURE_ERROR,
     EXIT_REVIEW_PASS,
     assert_owner_only_directory,
+    process_starttime,
     read_receipt_verdict,
     verdict_exit_code,
     wait_for_receipt,
+    writer_identity_path,
 )
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
@@ -157,6 +159,34 @@ def _write_exclusive(path: Path, body: bytes) -> None:
         raise ReviewReceiptError(f"写入 evidence 失败: {path}: {exc}") from exc
 
 
+def _record_writer_identity(evidence_dir: Path, head_sha: str, run_id: str) -> None:
+    """Publish this process's own un-reusable identity before the review starts.
+
+    A later ``wait`` must be able to answer "is the writer that was launched
+    still running?" honestly, and a bare pid cannot: the process holding that
+    pid when the waiter looks may be a different one.  Recording the ``/proc``
+    start time here, at launch, gives the waiter an identity to verify instead
+    of one to adopt, and it costs nothing when nobody reads it.
+    """
+
+    starttime = process_starttime(os.getpid())
+    if starttime is None:
+        return
+    body = json.dumps(
+        {
+            "pid": os.getpid(),
+            "starttime": starttime,
+            "head_sha": head_sha,
+            "recorded_at": datetime.now(UTC).isoformat(),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    _write_exclusive(
+        writer_identity_path(evidence_dir, head_sha, run_id), (body + "\n").encode("utf-8")
+    )
+
+
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     """Run a fresh read-only Codex review and emit one external receipt."""
 
@@ -184,6 +214,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     evidence_dir = _require_external_path(Path(args.evidence_dir), repo_root)
     _ensure_private_directory(evidence_dir)
     run_id = uuid.uuid4().hex
+    _record_writer_identity(evidence_dir, expected_head, run_id)
     worktree = evidence_dir / f"review-worktree-{expected_head[:12]}-{run_id[:8]}"
     worktree.mkdir(mode=0o700)
     worktree.rmdir()
@@ -397,7 +428,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--pid",
         type=int,
         default=None,
-        help="写入 receipt 的进程 pid（可选）。只做数字 pid 存活探测，从不做 pattern 匹配。",
+        help=(
+            "写入 receipt 的进程 pid（可选，必须是正整数）。只做数字 pid 存活探测，"
+            "从不做 pattern 匹配；不给时改用 writer 启动时写下的 identity record。"
+        ),
+    )
+    wait.add_argument(
+        "--pid-starttime",
+        default=None,
+        help=(
+            "该 pid 在 /proc/<pid>/stat 的 start time（field 22）。给出时作为不可复用的"
+            "进程身份参与校验；不给出时使用 writer 自己记录的 start time。"
+        ),
     )
     wait.add_argument(
         "--json",
@@ -452,6 +494,7 @@ def main(argv: list[str] | None = None) -> int:
             timeout_seconds=args.timeout_seconds,
             poll_interval=args.poll_interval,
             pid=args.pid,
+            pid_starttime=args.pid_starttime,
             json_output=args.json,
         )
     try:
