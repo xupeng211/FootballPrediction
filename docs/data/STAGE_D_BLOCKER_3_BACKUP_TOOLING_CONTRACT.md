@@ -539,7 +539,10 @@ constraints the other class is subject to:
   inside `192.168.0.0/16`, so a range test alone admits them while the transport
   dials a host the identity file does not name. The field must read as the
   address it dials, so the raw spelling is compared against the parsed address
-  and a mismatch is refused.
+  and a mismatch is refused. The refusal names the rule and states neither the
+  spelling nor the address that spelling resolves to, because the no-echo rule
+  below holds here too: what names a target in evidence is the
+  `target_fingerprint`, and a refusal is a message that reaches a log.
 
 The rule is narrower than "an operator may only use their own host", which is not
 something a loader can establish. What it establishes is the network the address

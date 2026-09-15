@@ -254,6 +254,23 @@ test('no rejection echoes a field value', t => {
             return error instanceof LiveTargetIdentityError;
         });
     }
+    // The self-hosted class reaches four refusals the cases above cannot, since
+    // they are evaluated only for that provider.  Each is driven with the value
+    // it refuses, so the assertion is about the rule that ran rather than about
+    // whichever rule happened to run first.
+    for (const endpoint of [
+        'https://marker-value.example.internal:9000',   // not a literal
+        'https://010.011.012.013:9000',                 // non-canonical spelling
+        'https://127.0.0.1:9000',                       // loopback
+        'https://203.0.113.10:9000',                    // globally routable
+    ]) {
+        const file = writeFile(t, selfHostedIdentity({ endpoint }));
+        assert.throws(() => loadLiveTargetIdentity({ targetIdentityFile: file }), error => {
+            assert.equal(error.message.includes(endpoint), false, `the refusal must not echo the endpoint: ${error.message}`);
+            assert.equal(error.message.includes(new URL(endpoint).hostname), false, `the refusal must not echo the host: ${error.message}`);
+            return error instanceof LiveTargetIdentityError;
+        });
+    }
 });
 
 test('the parser is reachable directly, and reads the same document the same way', t => {
@@ -345,19 +362,37 @@ test('a non-canonical spelling is refused, because the parser rewrites it to a d
     // identity file does not name -- the one failure this class exists to make
     // impossible.
     //
-    // The first spelling is the dangerous one and is asserted on its message,
-    // because the rewritten address IS the finding: 192.168.9.56 is a different
-    // machine from the 192.168.11.70 the text reads as.
-    refuses(t, selfHostedIdentity({ endpoint: 'https://192.168.011.070:9000' }), /192\.168\.9\.56/);
-    refuses(t, selfHostedIdentity({ endpoint: 'https://192.168.11:9000' }), /192\.168\.0\.11/);
-
-    // These two denote the SAME address as the canonical spelling and are
-    // refused anyway.  The rule is that the field is written as the literal it
-    // denotes, not that it resolves to an admitted address: an identity whose
-    // target can only be known by parsing it is an identity a reviewer cannot
-    // read, and this file is a governance artifact.
-    refuses(t, selfHostedIdentity({ endpoint: 'https://3232235782:9000' }), /non-canonical spelling/);
-    refuses(t, selfHostedIdentity({ endpoint: 'https://0xc0a80b46:9000' }), /non-canonical spelling/);
+    // What each spelling denotes is computed here rather than read out of the
+    // refusal, because the refusal does not restate it: no field value is
+    // echoed in an error.  The first two are the dangerous ones, because they
+    // denote a different machine from the one the text reads as --
+    // 192.168.9.56 is not 192.168.11.70, and it is a range a range test alone
+    // would have admitted.
+    const rewritten = [
+        ['192.168.011.070', '192.168.9.56'],   // octal octets
+        ['192.168.11', '192.168.0.11'],        // 24-bit tail
+        ['3232238406', '192.168.11.70'],       // one integer
+        ['0xc0a80b46', '192.168.11.70'],       // hexadecimal
+    ];
+    for (const [written, dialled] of rewritten) {
+        const endpoint = `https://${written}:9000`;
+        // The premise of the rule, asserted rather than assumed: if the platform
+        // ever stops rewriting the legacy IPv4 forms, this says so instead of
+        // letting the rule become vacuous without a failure.
+        assert.equal(new URL(endpoint).hostname, dialled, 'the legacy IPv4 rewrite this rule exists to catch has changed');
+        assert.throws(() => loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, selfHostedIdentity({ endpoint })) }), error => {
+            assert.equal(error instanceof LiveTargetIdentityError, true);
+            assert.match(error.message, /must be written as the IPv4 literal it denotes/);
+            // The last two spellings denote the SAME address as the canonical
+            // one and are refused anyway: the rule is that the field is written
+            // as the literal it denotes, not that it resolves to an admitted
+            // address, because an identity whose target can only be known by
+            // parsing it is an identity a reviewer cannot read.
+            assert.equal(error.message.includes(written), false, `the refusal must not restate the spelling: ${error.message}`);
+            assert.equal(error.message.includes(dialled), false, `the refusal must not restate the address it resolves to: ${error.message}`);
+            return true;
+        });
+    }
 
     // The canonical spelling of the same host still loads, so the rule refuses
     // spellings rather than the address -- without this the test would pass for

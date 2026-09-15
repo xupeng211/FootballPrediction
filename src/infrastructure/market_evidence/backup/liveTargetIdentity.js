@@ -320,8 +320,15 @@ function assertSelfHostedEndpoint(endpoint, rawHostname) {
     // definition, so requiring text equality there would refuse spellings that
     // legitimately denote one name; a literal has exactly one canonical
     // spelling, so requiring it costs nothing honest.
+    // The message names the rule and restates neither the spelling nor the
+    // address the spelling resolves to, because no field value is echoed in an
+    // error and this is the rule it is most tempting to make an exception for:
+    // the whole point is which host the spelling dials.  It stays out.  The
+    // message is what reaches a log or an evidence file, and what names a target
+    // there is the fingerprint, not the endpoint -- the one field this class
+    // exists to pin to a physical host.
     if (rawHostname !== host) {
-        throw new LiveTargetIdentityError(`target identity field endpoint must be written as the IPv4 literal it denotes for provider self-hosted-s3: "${rawHostname}" is a non-canonical spelling this parser resolves to ${host}, and the field is required to read as the address it dials so that a reader of the identity and the transport cannot disagree about which host receives the backup`);
+        throw new LiveTargetIdentityError('target identity field endpoint must be written as the IPv4 literal it denotes for provider self-hosted-s3; the WHATWG legacy IPv4 forms are refused because this parser resolves them to a host other than the one they read as, so the field would name one host while the transport dials another');
     }
     const value = parseIpv4Literal(host);
     if (value === null) {
