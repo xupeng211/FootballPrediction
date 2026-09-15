@@ -497,6 +497,67 @@ structurally — the module sources are checked for `process.env`, `homedir` and
 SDK require — because "this loader ignores the environment" is a claim about the
 code rather than about a list of variables someone thought of.
 
+### Two provider classes, and the endpoint is bound to the one that names it
+
+The identity's `provider` field is a closed enum with two members, each an
+adjudicated target class rather than a configuration value: `cloudflare-r2` and
+`self-hosted-s3`. Adding a third is a design decision that requires a mission,
+not an operator who needs one more endpoint.
+
+Region is validated **per provider**, not against a flat union. R2's S3 API takes
+`auto`; the self-hosted class takes `us-east-1`. The distinction is load-bearing
+because the region reaches the signature while the endpoint decides where the
+request goes, so a union would admit the two cross pairs — `cloudflare-r2` with
+`us-east-1`, and `self-hosted-s3` with `auto` — that name no real target. With one
+provider a flat list could not express that mistake; with two it can, so the
+check reads the pair.
+
+The endpoint is bound to the provider that names it. For `cloudflare-r2` the host
+must be an account subdomain **under** `r2.cloudflarestorage.com`: a suffix test
+rather than a substring test, so a host that merely contains that domain and ends
+somewhere else is refused, and the bare registrable domain is refused because it
+names no account. For `self-hosted-s3` the endpoint must be a **literal IPv4
+address in a range that is not globally routable** (`10/8`, `100.64/10`,
+`169.254/16`, `172.16/12`, `192.168/16`), written as the canonical dotted quad.
+
+Both self-hosted rules exist to keep this class from becoming a way around the
+constraints the other class is subject to:
+
+- **Loopback is refused**, with its own message, because a loopback endpoint is
+  the current machine: a "backup" written to one shares the exact failure domain
+  it exists to survive.
+- **A publicly routable address is refused**, so adding this class cannot turn
+  the live backup path into a way to ship production bytes to an arbitrary public
+  destination.
+- **A DNS name is refused** even when it looks private, because resolving one is
+  a network call this loader does not make, and a name it does not resolve is a
+  destination it has not checked.
+- **A non-canonical spelling is refused.** This is not pedantry. The URL parser
+  applies the WHATWG legacy IPv4 rules to the host, so `192.168.011.070` is read
+  with **octal** octets and becomes `192.168.9.56`, and the short form
+  `192.168.11` is read as a 24-bit tail and becomes `192.168.0.11`. Both land
+  inside `192.168.0.0/16`, so a range test alone admits them while the transport
+  dials a host the identity file does not name. The field must read as the
+  address it dials, so the raw spelling is compared against the parsed address
+  and a mismatch is refused. The refusal names the rule and states neither the
+  spelling nor the address that spelling resolves to, because the no-echo rule
+  below holds here too: what names a target in evidence is the
+  `target_fingerprint`, and a refusal is a message that reaches a log.
+
+The rule is narrower than "an operator may only use their own host", which is not
+something a loader can establish. What it establishes is the network the address
+sits in, and that is all it claims.
+
+**Create-only for the self-hosted class rests on the endpoint, not on this
+repository's reading of a vendor's documentation.** The `If-None-Match: *`
+requirement above is unchanged, and R2's support for it is recorded from
+Cloudflare's documentation. For a self-hosted endpoint no vendor statement covers
+the operator's own server, so the atomicity of `PutObject` carrying
+`If-None-Match: *` must be established for that endpoint by live evidence before a
+generation is relied upon: a server that accepted the header and wrote anyway
+would let two writers both believe they created the same generation. Neither
+class's `PutObject` behaviour is proven by this repository offline.
+
 Fail-closed means every one of these is a refusal rather than a degradation: a
 missing or non-string path, a path that is not a regular file, a symbolic link, a
 file readable or writable by group or other (0600 or stricter), an empty file, a
