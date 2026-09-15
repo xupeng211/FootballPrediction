@@ -63,7 +63,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
-        verify-targeted verify-pr verify-strict agent-preflight agent-review agent-merge-ready \
+        verify-targeted verify-pr verify-strict agent-preflight agent-review agent-review-wait agent-merge-ready \
         ci-local ci-local-pr pr-gate-local pr-ready pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
@@ -244,6 +244,19 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		--evidence-dir "$(EVIDENCE_DIR)" \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
+
+agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid>] [JSON=1]
+	@if [ -z "$(HEAD_SHA)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
+		echo "ERROR: HEAD_SHA and EVIDENCE_DIR are required."; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/codex_independent_review.py wait \
+		--evidence-dir "$(EVIDENCE_DIR)" \
+		--head-sha "$(HEAD_SHA)" \
+		$(if $(TIMEOUT_SECONDS),--timeout-seconds $(TIMEOUT_SECONDS),) \
+		$(if $(POLL_INTERVAL),--poll-interval $(POLL_INTERVAL),) \
+		$(if $(WRITER_PID),--pid $(WRITER_PID),) \
+		$(if $(JSON),--json,)
 
 agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]
 	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ] || [ -z "$(RECEIPT)" ]; then \

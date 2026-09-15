@@ -10,7 +10,15 @@ owner: engineering workflow governance
 输出必须位于 reviewed source tree 之外。
 
 本模块只负责执行与 CLI：receipt 的证据读取与内部一致性证明在
-``codex_review_receipt``，三态分类在 ``codex_review_classification``。
+``codex_review_receipt``，三态分类在 ``codex_review_classification``，把 receipt
+变成 verdict 的 exit-status 与等待原语在 ``codex_review_verdict``。
+
+``run`` 与 ``wait`` 都把 receipt 当作 verdict 的唯一 authority，并把它写进
+process exit status（0=PASS/无 blocking finding，3=FAIL/有 blocking finding，
+1=无法建立 verdict）。``wait`` 是单个阻塞命令，让整个 review lifecycle 留在
+一次调用内，从而不需要"子进程结束后唤醒父 agent"这一机制；它按
+``codex-review-receipt-<head12>-<runid>.json`` 轮询 evidence directory，超时与
+writer 异常退出都会显式失败，不会静默交还控制权。
 
 本模块实现的是 `ENGINEERING_INDEPENDENT_REVIEW`：fresh Codex
 process/context、clean exact-head worktree、只读执行和可重算的 evidence
@@ -76,6 +84,13 @@ from scripts.devops.codex_review_receipt import (  # noqa: E402
     exact_head,
     git_blob_sha256,
     sha256_file,
+)
+from scripts.devops.codex_review_verdict import (  # noqa: E402
+    EXIT_REVIEW_INFRASTRUCTURE_ERROR,
+    EXIT_REVIEW_PASS,
+    read_receipt_verdict,
+    verdict_exit_code,
+    wait_for_receipt,
 )
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
@@ -360,6 +375,31 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--codex-binary", default="codex")
     run.add_argument("--timeout-seconds", type=int, default=1800)
     run.add_argument("--json", action="store_true")
+    wait = sub.add_parser(
+        "wait",
+        help="阻塞直到 exact-head receipt 存在，并以 receipt verdict 作为退出状态",
+        description=(
+            "阻塞等待 exact-head review receipt。退出状态即 receipt verdict："
+            "0=PASS 且无 blocking finding，3=FAIL 或存在 blocking finding，"
+            "1=无法建立 verdict（超时、receipt 缺失、writer 退出、head 不匹配）。"
+            "绝不静默交还控制权。"
+        ),
+    )
+    wait.add_argument("--evidence-dir", required=True, type=Path)
+    wait.add_argument("--head-sha", required=True)
+    wait.add_argument("--timeout-seconds", type=int, default=1800)
+    wait.add_argument("--poll-interval", type=float, default=5.0)
+    wait.add_argument(
+        "--pid",
+        type=int,
+        default=None,
+        help="写入 receipt 的进程 pid（可选）。只做数字 pid 存活探测，从不做 pattern 匹配。",
+    )
+    wait.add_argument(
+        "--json",
+        action="store_true",
+        help="stdout 只输出 JSON（进度状态改走 stderr）",
+    )
     check = sub.add_parser("validate", help="验证一个外部 exact-head receipt")
     check.add_argument("--repo-root", type=Path, default=ROOT)
     check.add_argument("--receipt", required=True, type=Path)
@@ -401,6 +441,15 @@ def main(argv: list[str] | None = None) -> int:
     """Run the requested reviewer subcommand and return its exit status."""
 
     args = build_parser().parse_args(argv)
+    if args.command == "wait":
+        return wait_for_receipt(
+            evidence_dir=args.evidence_dir,
+            head_sha=args.head_sha,
+            timeout_seconds=args.timeout_seconds,
+            poll_interval=args.poll_interval,
+            pid=args.pid,
+            json_output=args.json,
+        )
     try:
         if args.command == "run":
             receipt_path = run_review(args)
@@ -445,16 +494,34 @@ def main(argv: list[str] | None = None) -> int:
         print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
         return 1
     if args.command == "run":
-        print(
-            json.dumps({"review_receipt": str(receipt_path), "status": "PASS"}, ensure_ascii=False)
-        )
-    else:
+        # The receipt is authoritative.  Report the reviewed verdict and carry
+        # it in the exit status, so a caller never has to re-read the receipt to
+        # discover that blocking findings were produced.
+        try:
+            review_result, blocking, counts = read_receipt_verdict(receipt_path)
+        except ReviewReceiptError as exc:
+            print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
+            return EXIT_REVIEW_INFRASTRUCTURE_ERROR
+        exit_code = verdict_exit_code(review_result, blocking)
         print(
             json.dumps(
-                {"review_receipt": str(receipt_path), "status": "PASS", "receipt": receipt},
+                {
+                    "review_receipt": str(receipt_path),
+                    "status": "PASS" if exit_code == EXIT_REVIEW_PASS else "FAIL",
+                    "review_result": review_result,
+                    "blocking_findings": blocking,
+                    "finding_counts_by_severity": counts,
+                },
                 ensure_ascii=False,
             )
         )
+        return exit_code
+    print(
+        json.dumps(
+            {"review_receipt": str(receipt_path), "status": "PASS", "receipt": receipt},
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
