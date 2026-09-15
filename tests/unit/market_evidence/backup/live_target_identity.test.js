@@ -261,3 +261,151 @@ test('the parser is reachable directly, and reads the same document the same way
     const loaded = loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, validIdentity()) });
     assert.deepEqual({ ...parsed }, { ...loaded });
 });
+
+// ---------------------------------------------------------------------------
+// The self-hosted target class
+// ---------------------------------------------------------------------------
+
+function selfHostedIdentity(overrides = {}) {
+    return validIdentity({
+        provider: 'self-hosted-s3',
+        endpoint: 'https://192.168.11.70:9000',
+        region: 'us-east-1',
+        ...overrides,
+    });
+}
+
+test('the self-hosted provider is admitted with a private literal endpoint', t => {
+    const identity = loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, selfHostedIdentity()) });
+    assert.equal(identity.provider, 'self-hosted-s3');
+    assert.equal(identity.endpoint, 'https://192.168.11.70:9000');
+    assert.equal(identity.region, 'us-east-1');
+    // The port is part of the origin, so a target on a non-default port keeps it
+    // rather than being silently reduced to the scheme default.
+    assert.equal(identity.endpoint.includes(':9000'), true);
+});
+
+test('every non-publicly-routable range is admitted, and the range boundaries are exact', t => {
+    const admitted = [
+        '10.0.0.1', '10.255.255.254',
+        '100.64.0.1', '100.127.255.254',
+        '169.254.1.1',
+        '172.16.0.1', '172.31.255.254',
+        '192.168.0.1', '192.168.255.254',
+    ];
+    for (const host of admitted) {
+        const identity = loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, selfHostedIdentity({ endpoint: `https://${host}:9000` })) });
+        assert.equal(identity.endpoint, `https://${host}:9000`);
+    }
+    // One address on each side of every boundary.  A range rule that is off by
+    // one admits or refuses exactly one address per edge, which is the kind of
+    // defect that never shows up in a happy-path test.
+    const refused = ['9.255.255.255', '11.0.0.0', '100.63.255.255', '100.128.0.0', '172.15.255.255', '172.32.0.0', '192.167.255.255', '192.169.0.0'];
+    for (const host of refused) {
+        refuses(t, selfHostedIdentity({ endpoint: `https://${host}:9000` }), /not globally routable/);
+    }
+});
+
+test('a loopback endpoint is refused, and is named as loopback rather than as an unremarkable out-of-range address', t => {
+    // Loopback is the one refusal in this class that has a specific reason: it
+    // is the current machine, so it shares the failure domain the off-host
+    // target exists to survive.  It would also fail the range test, so the
+    // point of the separate check is that the diagnosis names the real problem.
+    refuses(t, selfHostedIdentity({ endpoint: 'https://127.0.0.1:9000' }), /must not be a loopback address/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://127.1.2.3:9000' }), /must not be a loopback address/);
+});
+
+test('a publicly routable endpoint is refused for the self-hosted provider', t => {
+    // This is what keeps the class from becoming a way to ship production bytes
+    // to an arbitrary public destination: the provider can only name a host on a
+    // network the operator already controls.
+    refuses(t, selfHostedIdentity({ endpoint: 'https://8.8.8.8:9000' }), /not globally routable/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://203.0.113.10:9000' }), /not globally routable/);
+});
+
+test('a self-hosted endpoint must be a literal address, because a name cannot be checked offline', t => {
+    // A loader that resolved a name would make a network call, and a name it
+    // does not resolve is a destination it has not checked.  Both are refused
+    // rather than being admitted on the strength of how the name looks.
+    refuses(t, selfHostedIdentity({ endpoint: 'https://minio.internal:9000' }), /literal private IPv4 address/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://192.168.11.70.nip.io:9000' }), /literal private IPv4 address/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://[fd00::1]:9000' }), /IPv6 endpoint is not admitted/);
+});
+
+test('a non-canonical spelling is refused, because the parser rewrites it to a different address', t => {
+    // The URL parser applies the WHATWG legacy IPv4 rules to the host, and those
+    // rules REWRITE the text rather than preserving it.  An earlier version of
+    // this test asserted the opposite -- that the spellings normalise to one
+    // origin -- on the reasoning that normalisation is what makes two spellings
+    // of one address one target.  The measurement disproved it: the octets of
+    // `192.168.011.070` are read as OCTAL, so the host becomes 192.168.9.56, and
+    // the short form `192.168.11` is read as a 24-bit tail, so the host becomes
+    // 192.168.0.11.  Both land inside 192.168.0.0/16 and would therefore have
+    // passed the private-range test while the transport dialled a host the
+    // identity file does not name -- the one failure this class exists to make
+    // impossible.
+    //
+    // The first spelling is the dangerous one and is asserted on its message,
+    // because the rewritten address IS the finding: 192.168.9.56 is a different
+    // machine from the 192.168.11.70 the text reads as.
+    refuses(t, selfHostedIdentity({ endpoint: 'https://192.168.011.070:9000' }), /192\.168\.9\.56/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://192.168.11:9000' }), /192\.168\.0\.11/);
+
+    // These two denote the SAME address as the canonical spelling and are
+    // refused anyway.  The rule is that the field is written as the literal it
+    // denotes, not that it resolves to an admitted address: an identity whose
+    // target can only be known by parsing it is an identity a reviewer cannot
+    // read, and this file is a governance artifact.
+    refuses(t, selfHostedIdentity({ endpoint: 'https://3232235782:9000' }), /non-canonical spelling/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://0xc0a80b46:9000' }), /non-canonical spelling/);
+
+    // The canonical spelling of the same host still loads, so the rule refuses
+    // spellings rather than the address -- without this the test would pass for
+    // a loader that admitted no self-hosted endpoint at all.
+    const canonical = loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, selfHostedIdentity({ endpoint: 'https://192.168.11.70:9000' })) });
+    assert.equal(canonical.endpoint, 'https://192.168.11.70:9000');
+});
+
+// ---------------------------------------------------------------------------
+// Binding the endpoint to the provider it was declared with
+// ---------------------------------------------------------------------------
+
+test('the region is validated against the provider it was named with, not against a union', t => {
+    // `us-east-1` is a valid region for one provider and `auto` for the other,
+    // so a flat union would admit both cross pairs.  Each names a target that
+    // cannot resolve: the region reaches the signature, so the mismatched pair
+    // signs for one target and addresses another.
+    refuses(t, validIdentity({ region: 'us-east-1' }), /region must be one of: auto for provider cloudflare-r2/);
+    refuses(t, selfHostedIdentity({ region: 'auto' }), /region must be one of: us-east-1 for provider self-hosted-s3/);
+    refuses(t, selfHostedIdentity({ region: 'eu-west-1' }), /region must be one of: us-east-1 for provider self-hosted-s3/);
+});
+
+test('an R2 endpoint must be an account host under the provider domain', t => {
+    refuses(t, validIdentity({ endpoint: 'https://storage.example.com' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    // A host that merely CONTAINS the provider's domain ends somewhere else.
+    refuses(t, validIdentity({ endpoint: 'https://account.r2.cloudflarestorage.com.attacker.example' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    // The bare registrable domain carries no account label, so it names no
+    // target even though it is the provider's own domain.
+    refuses(t, validIdentity({ endpoint: 'https://r2.cloudflarestorage.com' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    // A publicly routable address is not an R2 endpoint either.
+    refuses(t, validIdentity({ endpoint: 'https://203.0.113.10' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+});
+
+test('the two providers cannot be aimed at each other, in either direction', t => {
+    // The pairing the binding exists to refuse: a valid endpoint for one
+    // provider declared with the other provider's name and region.  Either half
+    // alone looks correct, and only the pair is wrong.
+    refuses(t, validIdentity({ endpoint: 'https://192.168.11.70:9000' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    refuses(t, selfHostedIdentity({ endpoint: 'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com' }), /literal private IPv4 address/);
+});
+
+test('a self-hosted identity carries the port through to the fingerprint', t => {
+    // Two targets on one host differing only by port are different targets, so
+    // the fingerprint has to distinguish them -- otherwise evidence recorded
+    // against one would be read as evidence about the other.
+    const a = parseTargetIdentity(JSON.stringify(selfHostedIdentity({ endpoint: 'https://192.168.11.70:9000' })), 'inline');
+    const b = parseTargetIdentity(JSON.stringify(selfHostedIdentity({ endpoint: 'https://192.168.11.70:9001' })), 'inline');
+    assert.notEqual(a.target_fingerprint, b.target_fingerprint);
+    const again = parseTargetIdentity(JSON.stringify(selfHostedIdentity({ endpoint: 'https://192.168.11.70:9000' })), 'inline');
+    assert.equal(a.target_fingerprint, again.target_fingerprint);
+});
