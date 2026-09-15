@@ -29,14 +29,47 @@ const { canonicalizeKey } = require('./localTransport');
 
 const LIVE_TARGET_IDENTITY_SCHEMA_VERSION = 'stage-d-live-target-identity/v1';
 
-// One provider.  A closed enum is a stronger statement than a validated string:
-// this code path has been adjudicated for exactly one target class, and adding a
-// second is a design decision rather than a configuration value.
-const ALLOWED_PROVIDERS = Object.freeze(['cloudflare-r2']);
+// A closed enum, and it stays closed.  A closed enum is a stronger statement
+// than a validated string: it records which target classes this code path has
+// been adjudicated for, and every member is a design decision rather than a
+// configuration value.  That is why widening it is a reviewed act rather than
+// an edit.
+//
+// Two members, each admitted on its own decision:
+//
+//   cloudflare-r2 -- the original target class.
+//
+//   aws-s3        -- admitted after R2's provisioning was blocked on a payment
+//                    method the Owner could not supply and the work had to
+//                    continue against a different off-host target.  It was
+//                    admitted on official documentation rather than on a live
+//                    probe: conditional create is Amazon S3's own published
+//                    contract (`If-None-Match: "*"` on PutObject, 412 on an
+//                    existing key), Object Lock in compliance mode is
+//                    documented as irreversible by any principal including the
+//                    account root, and delete is independently deniable.  Its
+//                    create-only capability is therefore DOCUMENTED_SUPPORTED
+//                    and NOT live-proven.  Nothing here should be read as
+//                    claiming otherwise -- the live capability probe remains a
+//                    precondition of any real backup reaching this target.
+const ALLOWED_PROVIDERS = Object.freeze(['cloudflare-r2', 'aws-s3']);
 
-// R2's S3 API takes `auto` as the region.  Anything else means the operator is
-// addressing something other than the target this path was written for.
-const ALLOWED_REGIONS = Object.freeze(['auto']);
+// The region each admitted provider accepts, keyed by provider rather than held
+// as one flat list.  Region vocabularies do not overlap: `auto` is R2's S3 API's
+// own region value and is meaningless to Amazon S3, while an AWS region name is
+// meaningless to R2.  A pair drawn from two different providers names a target
+// that cannot resolve, so the pair is refused rather than forwarded -- the same
+// reason the provider list is closed.  A region is part of a target's identity,
+// not a tuning knob.
+const PROVIDER_REGIONS = Object.freeze({
+    'cloudflare-r2': Object.freeze(['auto']),
+    'aws-s3': Object.freeze(['ap-southeast-1']),
+});
+
+// The union, kept as the module's stated surface.  Validation uses
+// PROVIDER_REGIONS, because a union cannot say which region belongs to which
+// provider.
+const ALLOWED_REGIONS = Object.freeze([...new Set(Object.values(PROVIDER_REGIONS).flat())]);
 
 const REQUIRED_FIELDS = Object.freeze([
     'schema_version',
@@ -54,8 +87,13 @@ const MAX_IDENTITY_FILE_BYTES = 64 * 1024;
 const MAX_LABEL_LENGTH = 32;
 const LABEL_PATTERN = /^[a-z][a-z0-9-]*$/;
 
-// R2's documented bucket rules: 3-63 characters, lowercase letters, digits and
-// hyphens, beginning and ending alphanumeric.
+// The adjudicated bucket-name rules, which every admitted provider accepts:
+// 3-63 characters, lowercase letters, digits and hyphens, beginning and ending
+// alphanumeric.  These are R2's documented rules exactly, and Amazon S3's are a
+// superset that additionally permits dots -- so every name this pattern admits
+// is valid for both.  The pattern is deliberately the intersection rather than
+// the union: a name one admitted provider accepts and another refuses is not a
+// target, it is a provisioning mistake this file exists to catch.
 const BUCKET_PATTERN = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
 
 // A field name is printed only when it is safe to print.  Two independent
@@ -230,7 +268,8 @@ function parseTargetIdentity(text, source) {
     if (!BUCKET_PATTERN.test(bucket)) throw new LiveTargetIdentityError('target identity field bucket must be 3-63 characters of lowercase letters, digits and hyphens, beginning and ending alphanumeric');
 
     const region = stringField(raw.region, 'region');
-    if (!ALLOWED_REGIONS.includes(region)) throw new LiveTargetIdentityError(`target identity field region must be one of: ${ALLOWED_REGIONS.join(', ')}`);
+    const allowedRegions = PROVIDER_REGIONS[provider];
+    if (!allowedRegions.includes(region)) throw new LiveTargetIdentityError(`target identity field region must be one of: ${allowedRegions.join(', ')} for provider ${provider}`);
 
     const prefix = stringField(raw.prefix, 'prefix');
     try {
@@ -293,6 +332,7 @@ module.exports = {
     LIVE_TARGET_IDENTITY_SCHEMA_VERSION,
     ALLOWED_PROVIDERS,
     ALLOWED_REGIONS,
+    PROVIDER_REGIONS,
     REQUIRED_FIELDS,
     MAX_IDENTITY_FILE_BYTES,
 };

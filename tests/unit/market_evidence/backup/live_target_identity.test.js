@@ -122,8 +122,38 @@ test('the schema version is pinned', t => {
 });
 
 test('the provider and the region are closed enums', t => {
-    refuses(t, validIdentity({ provider: 'aws-s3' }), /provider must be one of: cloudflare-r2/);
-    refuses(t, validIdentity({ region: 'us-east-1' }), /region must be one of: auto/);
+    // The enums record which target classes this code path has been adjudicated
+    // for, so the guarantee under test is that an unrecognised value is refused
+    // -- not which particular values happen to be members.
+    refuses(t, validIdentity({ provider: 'backblaze-b2' }), /provider must be one of: cloudflare-r2, aws-s3/);
+    refuses(t, validIdentity({ provider: 'wasabi' }), /provider must be one of: cloudflare-r2, aws-s3/);
+    refuses(t, validIdentity({ provider: 'r2' }), /provider must be one of: cloudflare-r2, aws-s3/);
+    refuses(t, validIdentity({ region: 'us-east-1' }), /region must be one of: auto for provider cloudflare-r2/);
+});
+
+test('a region is validated against the provider it was named with, not against a union', t => {
+    // `auto` is a valid region and `aws-s3` is a valid provider, but the pair
+    // names a target that cannot resolve, because region vocabularies do not
+    // overlap between providers.  A flat union would admit this, and the
+    // failure would then surface as an endpoint or signature error somewhere
+    // less legible than a refusal to address a target that was never
+    // adjudicated.
+    refuses(t, validIdentity({ provider: 'aws-s3', region: 'auto' }), /region must be one of: ap-southeast-1 for provider aws-s3/);
+    refuses(t, validIdentity({ provider: 'aws-s3', region: 'eu-west-1' }), /region must be one of: ap-southeast-1 for provider aws-s3/);
+});
+
+test('an identity naming the second admitted provider loads', t => {
+    const identity = loadLiveTargetIdentity({
+        targetIdentityFile: writeFile(t, validIdentity({
+            provider: 'aws-s3',
+            endpoint: 'https://s3.ap-southeast-1.amazonaws.com',
+            region: 'ap-southeast-1',
+        })),
+    });
+    assert.equal(identity.provider, 'aws-s3');
+    assert.equal(identity.region, 'ap-southeast-1');
+    assert.equal(identity.endpoint, 'https://s3.ap-southeast-1.amazonaws.com');
+    assert.equal(Object.isFrozen(identity), true);
 });
 
 test('the endpoint must be an unambiguous https origin', t => {
