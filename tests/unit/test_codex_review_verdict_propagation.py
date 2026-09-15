@@ -324,6 +324,67 @@ def test_wait_case_2_fail(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
     assert payload["blocking_findings"] > 0
 
 
+def test_wait_refuses_a_non_private_evidence_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A writable-by-others evidence directory can be seeded with a forged PASS.
+
+    The payload digest is recomputable by anyone who can write the file, so a
+    receipt that verifies is only meaningful when the directory it lives in is
+    owner-only.  A group- or world-writable directory must be refused outright,
+    not merely observed.
+    """
+
+    repo, base, head = make_repo(tmp_path)
+    evidence = tmp_path / "evidence-shared"
+    _place(
+        evidence,
+        _seal(tmp_path, repo, base, head, slot="shared"),
+        name_head=head,
+        run_id="d" * 32,
+    )
+    evidence.chmod(0o777)
+
+    exit_code = _wait(evidence, head)
+    payload = _payload(capsys)
+    assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
+    assert exit_code != EXIT_REVIEW_PASS
+    assert payload["state"] == WAIT_STATE_REVIEW_FAILED
+
+
+def test_wait_refuses_a_receipt_another_uid_could_have_written(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The writer always emits 0600, so any other mode is not its output."""
+
+    repo, base, head = make_repo(tmp_path)
+    evidence = tmp_path / "evidence-loose"
+    placed = _place(
+        evidence,
+        _seal(tmp_path, repo, base, head, slot="loose"),
+        name_head=head,
+        run_id="e" * 32,
+    )
+    placed.chmod(0o644)
+
+    exit_code = _wait(evidence, head)
+    payload = _payload(capsys)
+    assert exit_code == EXIT_REVIEW_INFRASTRUCTURE_ERROR
+    assert exit_code != EXIT_REVIEW_PASS
+    assert payload["state"] == WAIT_STATE_REVIEW_FAILED
+
+
+def test_the_writer_side_refuses_a_directory_that_is_not_owner_only(tmp_path: Path) -> None:
+    """`run` and `wait` must apply one rule, not two."""
+
+    evidence = tmp_path / "evidence-writer-side"
+    evidence.mkdir(mode=0o700)
+    reviewer._ensure_private_directory(evidence)
+    evidence.chmod(0o750)
+    with pytest.raises(ReviewReceiptError):
+        reviewer._ensure_private_directory(evidence)
+
+
 # --------------------------------------------------------------------------
 # CASE 3 — the review child dies without ever writing a receipt.
 # --------------------------------------------------------------------------

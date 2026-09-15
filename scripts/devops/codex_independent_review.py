@@ -33,7 +33,6 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
-import stat
 import subprocess
 import sys
 from typing import Any
@@ -88,6 +87,7 @@ from scripts.devops.codex_review_receipt import (  # noqa: E402
 from scripts.devops.codex_review_verdict import (  # noqa: E402
     EXIT_REVIEW_INFRASTRUCTURE_ERROR,
     EXIT_REVIEW_PASS,
+    assert_owner_only_directory,
     read_receipt_verdict,
     verdict_exit_code,
     wait_for_receipt,
@@ -132,10 +132,14 @@ def _load_exact_review_scope(
 
 
 def _ensure_private_directory(path: Path) -> None:
+    """Create the evidence directory and prove it is owner-only.
+
+    The owner-only rule lives in ``codex_review_verdict`` so the reading side
+    (``wait``) enforces exactly the constraint the writing side applies.
+    """
+
     path.mkdir(mode=0o700, parents=True, exist_ok=True)
-    current_mode = stat.S_IMODE(path.stat().st_mode)
-    if current_mode & 0o077:
-        raise ReviewReceiptError(f"evidence directory 必须是 owner-only (0700): {path}")
+    assert_owner_only_directory(path)
 
 
 def _write_exclusive(path: Path, body: bytes) -> None:

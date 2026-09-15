@@ -17,6 +17,12 @@ CLI 主体保持在一个可评审的模块长度内。它不启动 reviewer，�
   ``codex-review-receipt-<head12>-<runid>.json`` 轮询真实产物、只做数字 pid 存活探测
   （``pgrep -f`` 会匹配 watcher 自己的命令行），并在超时、writer 异常退出、receipt 缺失
   或 head 不匹配时以显式失败状态结束，绝不静默交还控制权。
+* receipt 的 ``receipt_payload_sha256`` 是**可重算**的完整性字段：它只能证明 receipt
+  内部自洽，不能证明它由本项目的 reviewer 产出。因此 ``wait`` 在读 verdict 前先要求
+  evidence directory 为 owner-only（``0700``）、receipt 本身亦为 owner-only
+  （``0600``）且属于当前 uid；否则任何能往该目录写入的进程都能伪造一份自洽的
+  exact-head PASS。读取侧与写入侧（``_ensure_private_directory``）共用
+  ``assert_owner_only_directory``，规则只有一条。
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import stat
 import sys
 import time
 from typing import Any
@@ -58,6 +65,52 @@ WAIT_STATE_PARENT_CONTINUING = "PARENT_CONTINUING"
 # filename binds the head at 12 hex characters, which is the same prefix the
 # receipt body records in ``reviewed_head_sha``.
 REVIEW_RECEIPT_GLOB = "codex-review-receipt-{head12}-*.json"
+
+
+def assert_owner_only_directory(path: Path) -> None:
+    """Refuse an evidence directory another uid could have written into.
+
+    The receipt payload digest is a *recomputable* integrity field, so it
+    proves a receipt is internally consistent, not that this project's reviewer
+    produced it.  Anything that can create a file in the evidence directory can
+    therefore mint a self-consistent exact-head PASS receipt and have ``wait``
+    report it as a verdict.  Owner-only access is what closes that gap, and it
+    is the same constraint the writing side already applies.
+    """
+
+    try:
+        info = path.stat()
+    except OSError as exc:
+        raise ReviewReceiptError(f"无法读取 evidence directory metadata: {path}: {exc}") from exc
+    if not stat.S_ISDIR(info.st_mode):
+        raise ReviewReceiptError(f"evidence path 不是目录: {path}")
+    _assert_owner_only(info, path, kind="evidence directory", expected_mode=0o700)
+
+
+def assert_owner_only_file(path: Path) -> None:
+    """Refuse a receipt file another uid could have created or replaced."""
+
+    try:
+        info = path.stat()
+    except OSError as exc:
+        raise ReviewReceiptError(f"无法读取 receipt metadata: {path}: {exc}") from exc
+    if not stat.S_ISREG(info.st_mode):
+        raise ReviewReceiptError(f"receipt 不是普通文件: {path}")
+    _assert_owner_only(info, path, kind="receipt", expected_mode=0o600)
+
+
+def _assert_owner_only(info: os.stat_result, path: Path, *, kind: str, expected_mode: int) -> None:
+    """Shared owner/group/other check for one evidence path."""
+
+    if info.st_uid != os.getuid():
+        raise ReviewReceiptError(
+            f"{kind} 的 owner uid={info.st_uid} 与当前进程 uid={os.getuid()} 不一致: {path}"
+        )
+    mode = stat.S_IMODE(info.st_mode)
+    if mode & 0o077:
+        raise ReviewReceiptError(
+            f"{kind} 必须只对 owner 开放（期望 {oct(expected_mode)}）: {path} (mode={oct(mode)})"
+        )
 
 
 def read_receipt_verdict(
@@ -255,9 +308,17 @@ class _WaitProgress:
 def _candidate_verdict(
     found: list[Path], requested_head: str
 ) -> tuple[Path, str, int, dict[str, int]]:
-    """Derive the verdict of the newest readable candidate for one head."""
+    """Derive the verdict of the newest readable candidate for one head.
+
+    The candidate must also be owner-only.  A receipt another uid could have
+    created or replaced is refused rather than skipped: the writer always emits
+    ``0600`` files, so any other mode means the file is not the one this
+    harness wrote, and accepting it would hand the verdict to whoever could
+    write there.
+    """
 
     candidate = found[0]
+    assert_owner_only_file(candidate)
     review_result, blocking, counts = read_receipt_verdict(candidate, expected_head=requested_head)
     return candidate, review_result, blocking, counts
 
@@ -272,6 +333,16 @@ def _success_detail(candidate: Path, review_result: str, blocking: int, found: l
             "used, so use a fresh evidence directory per review round)"
         )
     return detail
+
+
+def _wait_precondition_error(directory: Path, timeout_seconds: int) -> str | None:
+    """Return why a wait cannot start at all, or None when it can."""
+
+    if not directory.is_dir():
+        return f"evidence directory 不存在: {directory}"
+    if timeout_seconds <= 0:
+        return f"--timeout-seconds 必须为正数: {timeout_seconds}"
+    return None
 
 
 def _timeout_outcome(
@@ -330,17 +401,9 @@ def wait_for_receipt(
 
     requested_head = normalize_full_sha(head_sha, role="waited-for head SHA")
     directory = Path(evidence_dir)
-    if not directory.is_dir():
-        print(
-            f"INDEPENDENT_REVIEW_WAIT=FAIL: evidence directory 不存在: {directory}",
-            file=sys.stderr,
-        )
-        return EXIT_REVIEW_INFRASTRUCTURE_ERROR
-    if timeout_seconds <= 0:
-        print(
-            f"INDEPENDENT_REVIEW_WAIT=FAIL: --timeout-seconds 必须为正数: {timeout_seconds}",
-            file=sys.stderr,
-        )
+    precondition = _wait_precondition_error(directory, timeout_seconds)
+    if precondition is not None:
+        print(f"INDEPENDENT_REVIEW_WAIT=FAIL: {precondition}", file=sys.stderr)
         return EXIT_REVIEW_INFRASTRUCTURE_ERROR
     interval = max(float(poll_interval), 0.05)
     pattern = REVIEW_RECEIPT_GLOB.format(head12=requested_head[:12])
@@ -369,6 +432,11 @@ def wait_for_receipt(
         progress.announce(state, detail)
         print(f"INDEPENDENT_REVIEW_WAIT=FAIL: {detail}", file=sys.stderr)
         return report(state, detail, EXIT_REVIEW_INFRASTRUCTURE_ERROR)
+
+    try:
+        assert_owner_only_directory(directory)
+    except ReviewReceiptError as exc:
+        return fail(WAIT_STATE_REVIEW_FAILED, str(exc))
 
     progress.announce(
         WAIT_STATE_PARENT_WAITING,

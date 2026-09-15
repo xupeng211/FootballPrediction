@@ -349,6 +349,10 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
 - receipt 的 `reviewed_head_sha` 必须等于 `HEAD_SHA`；不等即拒绝该 receipt 并以 exit `1` 立即失败，而不是
   继续等待；
 - 重算 `integrity.receipt_payload_sha256`，因此被改写或被写了一半的 receipt 不会被当成 PASS；
+- evidence directory 必须是 owner-only（`0700`）、receipt 必须属于当前 uid 且为 owner-only（`0600`），
+  否则以 exit `1` 拒绝。payload digest 是**可重算**的，只能证明 receipt 内部自洽；任何能在该目录里建文件的
+  进程都能伪造一份自洽的 exact-head PASS，因此"谁能写这个目录"才是 verdict 的边界。读取侧与写入侧
+  （`_ensure_private_directory`）共用同一条 owner-only 规则；
 - 同一 head 存在多个 receipt 时取 mtime 最新者——较新的 round 已经发声之后绝不回退到更早的 PASS——并在
   结果里列出候选并提示每个 review round 使用独立的 evidence directory；
 - `--pid` 只做数字 pid 存活探测，并核对 `/proc/<pid>/stat` 的 starttime 以识别 pid 复用；不给 `--pid` 时
