@@ -142,6 +142,46 @@ test('a region is validated against the provider it was named with, not against 
     refuses(t, validIdentity({ provider: 'aws-s3', region: 'eu-west-1' }), /region must be one of: ap-southeast-1 for provider aws-s3/);
 });
 
+test('an endpoint is validated against the provider it was named with', t => {
+    // The regression this pins: closing the provider enum closed the set of
+    // provider NAMES but not the set of hosts a request can reach, because the
+    // endpoint was free-form.  A target declaring `aws-s3` while naming an R2
+    // endpoint loaded successfully, and the transport would then have signed
+    // requests with an AWS region and sent them to a host the enum says is not
+    // admitted.  A closed provider name that does not bind the destination is a
+    // weaker guarantee than it appears.
+    refuses(
+        t,
+        validIdentity({
+            provider: 'aws-s3',
+            region: 'ap-southeast-1',
+            endpoint: 'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
+        }),
+        /endpoint must be https:\/\/s3\.ap-southeast-1\.amazonaws\.com for provider aws-s3/,
+    );
+    // Same provider, wrong region: an S3 endpoint for a region the target did
+    // not declare would sign for one region and address another.
+    refuses(
+        t,
+        validIdentity({ provider: 'aws-s3', region: 'ap-southeast-1', endpoint: 'https://s3.eu-west-1.amazonaws.com' }),
+        /endpoint must be https:\/\/s3\.ap-southeast-1\.amazonaws\.com for provider aws-s3/,
+    );
+    // A host that merely resembles the expected one is not the expected one.  A
+    // suffix match would admit any host ending in the provider's domain, which
+    // is how a closed enum quietly stops being closed.
+    refuses(
+        t,
+        validIdentity({ provider: 'aws-s3', region: 'ap-southeast-1', endpoint: 'https://s3.ap-southeast-1.amazonaws.com.attacker.example' }),
+        /endpoint must be https:\/\/s3\.ap-southeast-1\.amazonaws\.com for provider aws-s3/,
+    );
+    // The reverse direction, so the binding is not one-way.
+    refuses(
+        t,
+        validIdentity({ endpoint: 'https://s3.ap-southeast-1.amazonaws.com' }),
+        /endpoint must be an endpoint belonging to provider cloudflare-r2/,
+    );
+});
+
 test('an identity naming the second admitted provider loads', t => {
     const identity = loadLiveTargetIdentity({
         targetIdentityFile: writeFile(t, validIdentity({

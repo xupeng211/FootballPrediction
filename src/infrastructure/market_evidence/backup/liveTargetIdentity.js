@@ -231,6 +231,41 @@ function validateEndpoint(value) {
     return parsed.origin;
 }
 
+// R2's endpoint is not a function of its region: it carries the account, as a
+// single label under Cloudflare's R2 host.  The label is deliberately not
+// constrained further -- the guarantee being made is that the host belongs to
+// the declared provider, not that the named account exists.
+const R2_ENDPOINT_PATTERN = /^https:\/\/[a-z0-9][a-z0-9-]*\.r2\.cloudflarestorage\.com$/;
+
+// A provider name in the enum closes the set of providers.  On its own it does
+// NOT close the set of hosts a request can reach, because the endpoint was
+// free-form: a target declaring `aws-s3` while naming an R2 endpoint loaded
+// happily, and the transport would then have signed requests with an AWS region
+// and sent them to whatever host that endpoint named.  A closed enum that does
+// not constrain the destination is a weaker guarantee than it looks, so the
+// endpoint is bound to the provider it was declared with -- and, for a provider
+// whose endpoint IS a function of its region, as Amazon S3's is, to that region
+// as well.
+//
+// The comparison is exact for S3 rather than a suffix match: a host that merely
+// ends in `amazonaws.com` is not necessarily the endpoint the declared region
+// resolves to, and admitting a set of unrecognised-but-plausible AWS hosts is
+// how a closed enum stops being closed.  A future need for another AWS endpoint
+// form (dualstack, FIPS, a VPC endpoint) is a reviewed widening of this rule,
+// in the same way that adding a provider is a reviewed widening of the enum.
+function assertEndpointBelongsToProvider(endpoint, provider, region) {
+    if (provider === 'aws-s3') {
+        const expected = `https://s3.${region}.amazonaws.com`;
+        if (endpoint !== expected) {
+            throw new LiveTargetIdentityError(`target identity field endpoint must be ${expected} for provider ${provider} in region ${region}; an endpoint belonging to another provider or another region would send a request signed for one target to a different host`);
+        }
+        return;
+    }
+    if (!R2_ENDPOINT_PATTERN.test(endpoint)) {
+        throw new LiveTargetIdentityError(`target identity field endpoint must be an endpoint belonging to provider ${provider}; a host belonging to a different provider, or to no provider, is refused rather than addressed`);
+    }
+}
+
 function validateLabel(value, field) {
     const text = stringField(value, field);
     if (text.length > MAX_LABEL_LENGTH) throw new LiveTargetIdentityError(`target identity field ${field} must be at most ${MAX_LABEL_LENGTH} characters`);
@@ -270,6 +305,11 @@ function parseTargetIdentity(text, source) {
     const region = stringField(raw.region, 'region');
     const allowedRegions = PROVIDER_REGIONS[provider];
     if (!allowedRegions.includes(region)) throw new LiveTargetIdentityError(`target identity field region must be one of: ${allowedRegions.join(', ')} for provider ${provider}`);
+
+    // After the region, because for one admitted provider the endpoint is a
+    // function of that region: the endpoint cannot be checked against a region
+    // that has not been established yet.
+    assertEndpointBelongsToProvider(endpoint, provider, region);
 
     const prefix = stringField(raw.prefix, 'prefix');
     try {
