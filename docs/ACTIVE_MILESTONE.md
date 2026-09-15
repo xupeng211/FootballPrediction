@@ -11,7 +11,10 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-09
+## Current State Snapshot — 2026-09-16
+
+本节于 2026-09-16 因 Blocker #3 关闭 / Gate 2 接受的状态变更而刷新（该裁定完成于
+2026-09-15/16）；`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 仍记录上一次完整知识审计的基线，早于本次刷新。
 
 以下是 Agent 打开本文件时应先读取的短战术视图；旧 M3/FotMob 细节保留在
 下方历史证据段，不覆盖本节。本节是业务状态快照，不是实时 Git branch pointer。
@@ -134,7 +137,8 @@ ledger/verified-quota fail-close 实现，以及唯一的
   identity 与 credential 各自只来自显式文件（无默认位置、无环境/profile/metadata/
   provider-chain discovery，argv 内联 secret 与日志/证据中的 secret 一律拒绝），
   `LIVE_R2_CLI_WIRING=IMPLEMENTED`，原 offline CLI byte-unchanged 且继续 netless。
-  但这**不**关闭 Blocker #3：`R2_TARGET_PROVISIONED=NO`、
+  但这**没有**关闭 Blocker #3——关闭它的是下面那条 self-hosted 路径，不是这条 R2 wiring，
+  当时以下 R2 路径专属事实全部为否：`R2_TARGET_PROVISIONED=NO`、
   `LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED`（wiring 只在 stub SDK 上离线证明，未发出任何
   live request）、`R2_BUCKET_CREATED=NO`、`CREDENTIAL_CREATED=NO`、`BUCKET_LOCK_CONFIGURED=NO`、
   `BACKUP_CREATED=NO`、`POLICY_B_STATUS=PROPOSED_NOT_APPROVED`

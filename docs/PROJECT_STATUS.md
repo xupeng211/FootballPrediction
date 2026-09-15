@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-09-08
+Last updated: 2026-09-16
 
 ## Current State
 
