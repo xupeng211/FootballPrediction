@@ -233,7 +233,8 @@ PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready 
 
 canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 证据读取与内部
 一致性证明在 `scripts/devops/codex_review_receipt.py`，三态分类在
-`scripts/devops/codex_review_classification.py`），入口为
+`scripts/devops/codex_review_classification.py`，verdict 的 exit-status 投影与阻塞式等待原语在
+`scripts/devops/codex_review_verdict.py`），入口为
 `make agent-review BASE_SHA=<full SHA> HEAD_SHA=<full SHA> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external dir>`。
 它必须：
 
@@ -314,6 +315,70 @@ current-HEAD freshness 比较，因此即使 receipt 的每个字段仍与已安
 fail-closed，但本工作流不声称抵抗恶意同 UID 伪造。
 
 P0/P1/P2 均阻塞，P3 不阻塞；这比当前 STRICT provider-neutral evidence 更具体但不削弱 STRICT。reviewer 只写适合普通 code review 的 finding，不写隐藏推理。
+
+### 11.3.1 Review lifecycle：单命令阻塞与 verdict 传播
+
+`run` 与 `wait` 都把 receipt 当作 verdict 的唯一 authority，并把它写进 process exit status：`0` = 已审 PASS
+且无 blocking finding，`3` = 已审 FAIL 或存在任何 blocking finding，`1` = 无法建立 verdict（receipt 缺失、
+不可读、integrity 不匹配、head 不匹配、writer 异常退出或超时）。`run` 写完 receipt 后回读该文件、重算
+payload digest，再按 receipt 自己的 `review_result`/`blocking_findings` 决定退出状态与 stdout 的 `status`：
+stdout 的 `status` 只是 receipt verdict 的投影，不是独立结论。**规则：read receipt，不 read stdout**；任何
+`status`/PASS 字样都不构成 verdict。
+
+canonical 的 review lifecycle 形状是**单命令阻塞**：
+
+1. `make agent-review BASE_SHA=… HEAD_SHA=… MISSION_ID=… MISSION_SCOPE_FILE=… EVIDENCE_DIR=…`：
+   前台运行即阻塞到 receipt 写完，退出状态就是 verdict。已记录的 40 个 receipt 观测耗时 65–222 秒、
+   中位数约 110 秒，普通情况下完全落在单次工具调用上限内。
+2. 只有预计超过该上限时才改用 harness 追踪的后台任务。无论哪种，review 的整个生命周期都必须留在
+   **一个**由 harness 持有的命令里。
+
+一旦在 review 启动后把控制权交还出去，就必须有人在 review 结束时把控制权带回来；这条路径不允许用自己
+写的 watcher 实现：
+
+- `nohup … &` 之类的自脱离进程对 harness 不可见——没有 handle 就没有完成事件；
+- `pgrep -f <pattern>` 不能用来判断 writer 是否还活着：watcher 自己的命令行就包含该 pattern，probe 永远
+  匹配到自己，"writer 已退出"分支永远不可达；
+- receipt 文件名由 writer 决定：`codex-review-receipt-<head12>-<runid>.json`，不存在固定名。
+
+`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]`
+是这条路径的 canonical 实现。它按 `codex-review-receipt-<head12>-*.json` 轮询 evidence directory，把状态
+显式外化（`PARENT_WAITING` / `REVIEW_RUNNING` / `REVIEW_FINISHED` / `REVIEW_FAILED` / `RECEIPT_MISSING` /
+`PARENT_CONTINUING`），并且：
+
+- receipt 的 `reviewed_head_sha` 必须等于 `HEAD_SHA`；不等即拒绝该 receipt 并以 exit `1` 立即失败，而不是
+  继续等待；
+- 重算 `integrity.receipt_payload_sha256`，因此被改写或被写了一半的 receipt 不会被当成 PASS；
+- evidence directory 必须是 owner-only（`0700`）、receipt 必须属于当前 uid 且为 owner-only（`0600`），
+  否则以 exit `1` 拒绝。payload digest 是**可重算**的，只能证明 receipt 内部自洽；任何能在该目录里建文件的
+  进程都能伪造一份自洽的 exact-head PASS，因此"谁能写这个目录"才是 verdict 的边界。读取侧与写入侧
+  （`_ensure_private_directory`）共用同一条 owner-only 规则；
+- 同一 head 存在多个 receipt 时取 mtime 最新者——较新的 round 已经发声之后绝不回退到更早的 PASS——并在
+  结果里列出候选并提示每个 review round 使用独立的 evidence directory；
+- pid 不是身份：writer 在启动时把**自己**的 pid 与 `/proc/<pid>/stat` 的 start time 写进 evidence
+  directory 的 `codex-review-writer-<head12>-<runid>.json`，`wait` 默认绑定这条**已记录**的身份并逐次核对
+  start time，因此被复用的 pid 会被判为 writer 已退出，而不是被当成原 writer 一直等到超时。调用方也可以
+  用 `--pid` / `--pid-starttime` 显式给出自己要观察的 writer（经 `make` 则是 `WRITER_PID` /
+  `WRITER_STARTTIME`）；start time 必须来自真正的 writer 进程，`/proc/<pid>/stat` field 22 即为该值。
+  `--pid` 必须是正整数：`0` 与负数指向进程组或全部可访问进程，无法指定 writer，一律在开始等待前以 exit `1`
+  拒绝。**`--pid` 必须与 `--pid-starttime` 成对给出**：只给 pid 时，唯一可用的 start time 就是该 pid 自己
+  提供的，等于把被复用的 pid 当作基线并掩盖真 writer 的退出，因此这种未绑定身份同样在开始等待前以 exit `1`
+  拒绝（`WRITER_PID` 单独给出时同理）。identity record 只是存活提示、不是证据，它不携带任何 verdict；无法
+  校验的记录（缺失、不可读、pid 非正、绑定到别的 head）等同于"没有探针"，而不是"writer 已死亡"。
+- `--pid` 只做数字 pid 存活探测，并核对 start time 以识别 pid 复用；没有可用身份时不以"没有探针"推断死亡；
+  被拒绝的等待不会在 JSON 里报出任何 writer pid（`writer_pid=null`、`writer_identity_source="none"`），
+  因为它从未被接受为身份。
+- 超时、writer 退出、receipt 缺失或不可读都是**显式失败状态**并以 exit `1` 结束，绝不静默交还控制权。
+
+状态行是机器可读契约：未加 `--json` 时进度走 stdout，加 `--json` 时改走 stderr，因此 stdout 始终只有
+一行 JSON。Builder 仍然可以在 bounded mission 内自修 CI/reviewer 的窄 finding；本节的退出状态只是让
+"review 已经给出阻断性 finding"这件事无法被误读成 PASS，不放宽任何 review 强度。
+
+经 `make` 调用时要注意 GNU make 的行为：recipe 失败会让 make 统一返回 exit `2`，因此 `make agent-review`
+只保证"exit 0 ⟺ 已审 PASS 且无 blocking finding"，非 0 既可能是 FAIL 也可能是基础设施错误。需要精确区分
+`0`/`3`/`1` 时应直接调用 `python3 scripts/devops/codex_independent_review.py run|wait …`，其 exit code 就是
+verdict；两种调用方式的 stdout JSON 都始终带有 `status`、`review_result`、`blocking_findings` 和
+`finding_counts_by_severity`，因此机器可读的结论不依赖 exit code 的粒度。
 
 ### 11.4 Exact-head 与 merge readiness
 

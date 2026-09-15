@@ -10,7 +10,15 @@ owner: engineering workflow governance
 输出必须位于 reviewed source tree 之外。
 
 本模块只负责执行与 CLI：receipt 的证据读取与内部一致性证明在
-``codex_review_receipt``，三态分类在 ``codex_review_classification``。
+``codex_review_receipt``，三态分类在 ``codex_review_classification``，把 receipt
+变成 verdict 的 exit-status 与等待原语在 ``codex_review_verdict``。
+
+``run`` 与 ``wait`` 都把 receipt 当作 verdict 的唯一 authority，并把它写进
+process exit status（0=PASS/无 blocking finding，3=FAIL/有 blocking finding，
+1=无法建立 verdict）。``wait`` 是单个阻塞命令，让整个 review lifecycle 留在
+一次调用内，从而不需要"子进程结束后唤醒父 agent"这一机制；它按
+``codex-review-receipt-<head12>-<runid>.json`` 轮询 evidence directory，超时与
+writer 异常退出都会显式失败，不会静默交还控制权。
 
 本模块实现的是 `ENGINEERING_INDEPENDENT_REVIEW`：fresh Codex
 process/context、clean exact-head worktree、只读执行和可重算的 evidence
@@ -25,7 +33,6 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
-import stat
 import subprocess
 import sys
 from typing import Any
@@ -77,6 +84,16 @@ from scripts.devops.codex_review_receipt import (  # noqa: E402
     git_blob_sha256,
     sha256_file,
 )
+from scripts.devops.codex_review_verdict import (  # noqa: E402
+    EXIT_REVIEW_INFRASTRUCTURE_ERROR,
+    EXIT_REVIEW_PASS,
+    assert_owner_only_directory,
+    process_starttime,
+    read_receipt_verdict,
+    verdict_exit_code,
+    wait_for_receipt,
+    writer_identity_path,
+)
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -117,10 +134,14 @@ def _load_exact_review_scope(
 
 
 def _ensure_private_directory(path: Path) -> None:
+    """Create the evidence directory and prove it is owner-only.
+
+    The owner-only rule lives in ``codex_review_verdict`` so the reading side
+    (``wait``) enforces exactly the constraint the writing side applies.
+    """
+
     path.mkdir(mode=0o700, parents=True, exist_ok=True)
-    current_mode = stat.S_IMODE(path.stat().st_mode)
-    if current_mode & 0o077:
-        raise ReviewReceiptError(f"evidence directory 必须是 owner-only (0700): {path}")
+    assert_owner_only_directory(path)
 
 
 def _write_exclusive(path: Path, body: bytes) -> None:
@@ -136,6 +157,34 @@ def _write_exclusive(path: Path, body: bytes) -> None:
             os.fsync(stream.fileno())
     except OSError as exc:
         raise ReviewReceiptError(f"写入 evidence 失败: {path}: {exc}") from exc
+
+
+def _record_writer_identity(evidence_dir: Path, head_sha: str, run_id: str) -> None:
+    """Publish this process's own un-reusable identity before the review starts.
+
+    A later ``wait`` must be able to answer "is the writer that was launched
+    still running?" honestly, and a bare pid cannot: the process holding that
+    pid when the waiter looks may be a different one.  Recording the ``/proc``
+    start time here, at launch, gives the waiter an identity to verify instead
+    of one to adopt, and it costs nothing when nobody reads it.
+    """
+
+    starttime = process_starttime(os.getpid())
+    if starttime is None:
+        return
+    body = json.dumps(
+        {
+            "pid": os.getpid(),
+            "starttime": starttime,
+            "head_sha": head_sha,
+            "recorded_at": datetime.now(UTC).isoformat(),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    _write_exclusive(
+        writer_identity_path(evidence_dir, head_sha, run_id), (body + "\n").encode("utf-8")
+    )
 
 
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
@@ -165,6 +214,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     evidence_dir = _require_external_path(Path(args.evidence_dir), repo_root)
     _ensure_private_directory(evidence_dir)
     run_id = uuid.uuid4().hex
+    _record_writer_identity(evidence_dir, expected_head, run_id)
     worktree = evidence_dir / f"review-worktree-{expected_head[:12]}-{run_id[:8]}"
     worktree.mkdir(mode=0o700)
     worktree.rmdir()
@@ -360,6 +410,44 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--codex-binary", default="codex")
     run.add_argument("--timeout-seconds", type=int, default=1800)
     run.add_argument("--json", action="store_true")
+    wait = sub.add_parser(
+        "wait",
+        help="阻塞直到 exact-head receipt 存在，并以 receipt verdict 作为退出状态",
+        description=(
+            "阻塞等待 exact-head review receipt。退出状态即 receipt verdict："
+            "0=PASS 且无 blocking finding，3=FAIL 或存在 blocking finding，"
+            "1=无法建立 verdict（超时、receipt 缺失、writer 退出、head 不匹配）。"
+            "绝不静默交还控制权。"
+        ),
+    )
+    wait.add_argument("--evidence-dir", required=True, type=Path)
+    wait.add_argument("--head-sha", required=True)
+    wait.add_argument("--timeout-seconds", type=int, default=1800)
+    wait.add_argument("--poll-interval", type=float, default=5.0)
+    wait.add_argument(
+        "--pid",
+        type=int,
+        default=None,
+        help=(
+            "写入 receipt 的进程 pid（可选，必须是正整数，且必须与 --pid-starttime 成对"
+            "给出）。只做数字 pid 存活探测，从不做 pattern 匹配；不给时改用 writer 启动时"
+            "写下的 identity record。"
+        ),
+    )
+    wait.add_argument(
+        "--pid-starttime",
+        default=None,
+        help=(
+            "该 pid 在 /proc/<pid>/stat 的 start time（field 22），必须来自启动时观察到的"
+            "那个 writer。给出 --pid 时必须同时给出，否则 wait 拒绝启动；两者都不给时使用"
+            "writer 自己记录的 start time。"
+        ),
+    )
+    wait.add_argument(
+        "--json",
+        action="store_true",
+        help="stdout 只输出 JSON（进度状态改走 stderr）",
+    )
     check = sub.add_parser("validate", help="验证一个外部 exact-head receipt")
     check.add_argument("--repo-root", type=Path, default=ROOT)
     check.add_argument("--receipt", required=True, type=Path)
@@ -401,6 +489,16 @@ def main(argv: list[str] | None = None) -> int:
     """Run the requested reviewer subcommand and return its exit status."""
 
     args = build_parser().parse_args(argv)
+    if args.command == "wait":
+        return wait_for_receipt(
+            evidence_dir=args.evidence_dir,
+            head_sha=args.head_sha,
+            timeout_seconds=args.timeout_seconds,
+            poll_interval=args.poll_interval,
+            pid=args.pid,
+            pid_starttime=args.pid_starttime,
+            json_output=args.json,
+        )
     try:
         if args.command == "run":
             receipt_path = run_review(args)
@@ -445,16 +543,34 @@ def main(argv: list[str] | None = None) -> int:
         print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
         return 1
     if args.command == "run":
-        print(
-            json.dumps({"review_receipt": str(receipt_path), "status": "PASS"}, ensure_ascii=False)
-        )
-    else:
+        # The receipt is authoritative.  Report the reviewed verdict and carry
+        # it in the exit status, so a caller never has to re-read the receipt to
+        # discover that blocking findings were produced.
+        try:
+            review_result, blocking, counts = read_receipt_verdict(receipt_path)
+        except ReviewReceiptError as exc:
+            print(f"INDEPENDENT_REVIEW_RECEIPT=FAIL: {exc}", file=sys.stderr)
+            return EXIT_REVIEW_INFRASTRUCTURE_ERROR
+        exit_code = verdict_exit_code(review_result, blocking)
         print(
             json.dumps(
-                {"review_receipt": str(receipt_path), "status": "PASS", "receipt": receipt},
+                {
+                    "review_receipt": str(receipt_path),
+                    "status": "PASS" if exit_code == EXIT_REVIEW_PASS else "FAIL",
+                    "review_result": review_result,
+                    "blocking_findings": blocking,
+                    "finding_counts_by_severity": counts,
+                },
                 ensure_ascii=False,
             )
         )
+        return exit_code
+    print(
+        json.dumps(
+            {"review_receipt": str(receipt_path), "status": "PASS", "receipt": receipt},
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 

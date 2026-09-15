@@ -1,0 +1,83 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "INVESTIGATE_AND_REPAIR_CODEX_REVIEW_PARENT_AUTO_RESUME",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/INVESTIGATE_AND_REPAIR_CODEX_REVIEW_PARENT_AUTO_RESUME.json",
+    "scripts/devops/codex_independent_review.py",
+    "scripts/devops/codex_review_verdict.py",
+    "tests/unit/test_codex_review_liveness_probe.py",
+    "tests/unit/test_codex_review_verdict_propagation.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/PROJECT_VISION.md",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/agent_workflow_preflight.py",
+    "scripts/devops/codex_review_classification.py",
+    "scripts/devops/codex_review_contract.py",
+    "scripts/devops/codex_review_output.py",
+    "scripts/devops/codex_review_provenance.py",
+    "scripts/devops/codex_review_receipt.py",
+    "tests/helpers/agentic_workflow_fixtures.py"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "database/",
+    "deploy/",
+    "docs/_reports/",
+    "docs/data/",
+    "scripts/ops/",
+    "src/",
+    "tests/unit/market_evidence/"
+  ],
+  "excluded_tokens": [
+    "backup",
+    "backtest",
+    "bankroll",
+    "betfair",
+    "blocker-2",
+    "blocker-3",
+    "blocker_2",
+    "blocker_3",
+    "de-vig",
+    "model-activation",
+    "oddsportal",
+    "roi",
+    "scheduler",
+    "sportmonks",
+    "staking",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "the reviewed verdict stays receipt-authoritative: receipt bytes, not stdout and not the exit status, remain the evidence of record",
+    "receipt reviewed_head_sha stays bound to the exact reviewed commit, and a receipt for any other head is never accepted as a verdict",
+    "a receipt whose payload integrity digest does not recompute is never accepted, so a partially written or edited receipt never becomes a PASS",
+    "the reviewer stays a fresh, separate, ephemeral Codex process in a detached read-only exact-head worktree, and no isolation, provenance or model-pinning semantics change",
+    "P0/P1/P2 remain the blocking severities and P3 remains non-blocking; no severity threshold is relaxed",
+    "STALE_TOOLING still never satisfies merge readiness or a current exact-head review requirement",
+    "the wait primitive never returns control silently: an absent, unreadable, wrong-head or timed-out receipt is an explicit non-zero failure state",
+    "the wait primitive never infers liveness from a command-line pattern, and never observes a fixed receipt filename that the writer does not produce",
+    "the wait primitive probes a writer only through a pid bound to a /proc start time, refuses a pid that cannot designate one process (a non-positive pid, or a pid supplied without the start time it was launched with, whose first observed start time would be a baseline the pid itself supplied), and treats an absent or unverifiable identity as no probe rather than as evidence of death"
+  ],
+  "forbidden_side_effects": [
+    "contacting The Odds API, B2, AWS, Cloudflare or any other provider, and any provider quota consumption",
+    "creating, modifying, uploading or deleting any backup generation or remote object",
+    "Stage D start, Gate 3 authorization, or any change to Blocker 1/2/3 or Gate 2 status",
+    "production, transaction, RAW, ledger, quota or canonical identity mutation",
+    "scheduler activation, training, prediction, backtest or model activation",
+    "database schema or migration writes",
+    "production-gate.yml, remote CI scope loading, or CI receipt transport changes",
+    "force push, direct main push, self-review or self-merge"
+  ]
+}
