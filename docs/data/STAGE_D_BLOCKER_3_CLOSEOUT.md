@@ -95,8 +95,9 @@ The twelve closure criteria and their evidence:
 | Credential model | data-plane, minimum scope, no delete, no bucket administration |
 | `NORMAL_BACKUP_RUNTIME_CAN_REMOVE_LOCK` | `NO` |
 
-Identity was reconfirmed independently at five layers — SSH host key, `machine-id` hash,
-hostname, interface MAC and TLS certificate serial — and again at layer 2. The endpoint still
+Identity was reconfirmed independently — SSH host key, `machine-id` hash, hostname, MAC address,
+systemd unit and TLS certificate serial — and again at layer 2. No count of signals is asserted
+here; the enumeration is the one the accepted closure report itself records. The endpoint still
 identifies the same machine, so `BACKUP_TARGET_ADDRESS_IDENTITY_CHANGED` was not raised.
 
 TLS: HTTPS health `PASS`; plaintext HTTP `REFUSED`; certificate identity `EXPECTED`;
@@ -252,8 +253,9 @@ below as long-term disaster-recovery hardening.
 (`default via 192.168.11.1 dev enp2s0 proto dhcp src 192.168.11.70`). No reservation was found or
 configured. The Controller has adjudicated that this does not block Gate 2, because target identity
 was independently reconfirmed during the real closure proof using multiple host identity signals.
-What a reservation buys is that an address change does not have to be *detected*; it is already
-*detectable*, by five independent signals.
+What a reservation buys is that an address change does not have to be *detected*; the closure
+evidence records the target as already reconfirmed by independent identity signals, so an address
+change would be detectable rather than silent.
 
 ### 11.2 Nonblocking follow-up register
 
