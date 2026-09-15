@@ -468,12 +468,55 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
 // caller supplied.  That is what makes "the staging root created by this exact
 // invocation" a decidable question, and it is the precondition for removing one
 // at all.
+//
+// The name alone decides nothing, because a name is not a directory: a
+// concurrent process can remove this one and put an ordinary directory of its
+// own at the same name, and every later check that compares the directory to
+// itself will agree with it -- the replacement is a plain directory before the
+// check, a plain directory after it, and the two observations agree with each
+// other about it.
+//
+// Comparing `dev`/`ino` does not settle it either, which is the part that is
+// easy to get wrong: inode numbers are reused, and the filesystem hands the
+// just-freed number straight back to the directory a swapper creates at the
+// same name.  A comparison against a *recorded* number is therefore a race the
+// replacement usually wins.  The identity kept here is the descriptor itself,
+// held open for the whole restore: a descriptor is a reference to the inode
+// rather than a description of it, so it cannot be re-pointed, and it survives
+// the directory being unlinked -- which `fstat(fd).nlink === 0` then reports
+// exactly, since removing a directory from its parent takes its link count to
+// zero.  "The staging root this invocation created" is consequently a question
+// about an open file, and every name the cleanup can act on is spelled relative
+// to it.
 function createStagingRoot(destination) {
     const staging = path.join(path.dirname(destination), `.${path.basename(destination)}.restore-staging-${crypto.randomBytes(8).toString('hex')}`);
     if (isGovernedProductionPath(staging)) throw new SnapshotIntegrityError(`restore staging root must never be the governed production area: ${staging}`);
     fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
     fs.chmodSync(staging, DIRECTORY_MODE);
-    return staging;
+    return Object.freeze({ path: staging, fd: fs.openSync(staging, DIRECTORY_OPEN_FLAGS) });
+}
+
+// States whether the name still refers to the directory this restore made, and
+// refuses every way it can fail to.  An unlinked directory is the swap: the
+// original is gone from the namespace, whatever occupies the name now is
+// someone else's, and walking through the held descriptor would empty a
+// directory nobody can see while the name-based removal at the end took the
+// replacement with it.
+function assertStagingRootIsOurs(staging, root) {
+    const held = fs.fstatSync(root.fd);
+    if (held.nlink === 0) throw new SnapshotIntegrityError(`the staging root this restore created is no longer linked at ${staging}`);
+    const named = fs.lstatSync(staging);
+    if (named.isSymbolicLink() || !named.isDirectory()) throw new SnapshotIntegrityError(`the staging root is not a plain directory: ${staging}`);
+    if (named.dev !== held.dev || named.ino !== held.ino) throw new SnapshotIntegrityError(`the staging root is not the directory this restore created: ${staging}`);
+}
+
+function closeStagingRoot(root) {
+    try {
+        fs.closeSync(root.fd);
+    } catch {
+        // A descriptor that will not close is the process's problem, not the
+        // restore's: the result of the restore is already decided by here.
+    }
 }
 
 // `/proc/self/fd` is how a directory-scoped name is spelled without `unlinkat`,
@@ -497,6 +540,12 @@ const DIRECTORY_OPEN_FLAGS = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY |
 // is refused rather than followed.  `readdir`, `unlink` and `rename` then
 // address the descriptor's own directory, which nothing can swap out from
 // underneath.
+// The `lstat`-versus-`open` comparison above it only rules out a replacement
+// *during* this call, and it is only ever applied to a directory named by
+// `readdir` on a directory this walk already holds open.  The root of a walk is
+// not opened this way at all: its descriptor was taken when the restore created
+// it and is never re-derived from the name, because a name cannot be asked which
+// directory it used to mean.
 function openStagingDirectory(target, label = 'staging tree') {
     const before = fs.lstatSync(target);
     if (before.isSymbolicLink() || !before.isDirectory()) throw new SnapshotIntegrityError(`the ${label} holds an entry that is not a plain directory: ${target}`);
@@ -551,24 +600,31 @@ function removeDirectoryInParent(target, label) {
 // plain directory at open time stops the cleanup instead of being descended
 // into, and the caller records that as a note on the failure that caused it
 // rather than as a failure of its own.
-function removeStagingContents(directory) {
-    const fd = openStagingDirectory(directory);
-    try {
-        for (const name of fs.readdirSync(`${DIRECTORY_FD_ROOT}/${fd}`)) {
-            const scoped = `${DIRECTORY_FD_ROOT}/${fd}/${name}`;
-            const stat = fs.lstatSync(scoped);
-            if (stat.isDirectory() && !stat.isSymbolicLink()) {
-                removeStagingContents(scoped);
-                // `rmdirSync` refuses a directory that is not empty, so a race
-                // that puts something back between the walk and this call stops
-                // the cleanup instead of deleting whatever arrived.
-                fs.rmdirSync(scoped);
-                continue;
+//
+// The `fd` is already open on the directory to empty.  For the root of the walk
+// it is the descriptor the restore took when it created the directory, so the
+// walk cannot be aimed anywhere else at all; every other directory this reaches
+// was named by `readdir` on a directory already held open, so its provenance is
+// established by where the name came from rather than by comparing it to
+// anything.
+function emptyDirectoryThroughDescriptor(fd) {
+    for (const name of fs.readdirSync(`${DIRECTORY_FD_ROOT}/${fd}`)) {
+        const scoped = `${DIRECTORY_FD_ROOT}/${fd}/${name}`;
+        const stat = fs.lstatSync(scoped);
+        if (stat.isDirectory() && !stat.isSymbolicLink()) {
+            const childFd = openStagingDirectory(scoped);
+            try {
+                emptyDirectoryThroughDescriptor(childFd);
+            } finally {
+                fs.closeSync(childFd);
             }
-            fs.unlinkSync(scoped);
+            // `rmdirSync` refuses a directory that is not empty, so a race that
+            // puts something back between the walk and this call stops the
+            // cleanup instead of deleting whatever arrived.
+            fs.rmdirSync(scoped);
+            continue;
         }
-    } finally {
-        fs.closeSync(fd);
+        fs.unlinkSync(scoped);
     }
 }
 
@@ -582,13 +638,23 @@ function removeStagingContents(directory) {
 // replacing that reason with "the tidy-up also failed as well" would hide the
 // one that matters.  The note is therefore best-effort: an error that cannot
 // carry one is still the error that gets reported.
-function discardStagingRoot(staging, destination, error) {
+function discardStagingRoot(staging, destination, error, root) {
     let cleanupFailure = null;
     try {
         if (staging === destination) throw new SnapshotIntegrityError('refusing to clean a staging root that is the destination itself');
-        const stat = fs.lstatSync(staging);
-        if (stat.isSymbolicLink() || !stat.isDirectory()) throw new SnapshotIntegrityError(`the staging root is not a plain directory: ${staging}`);
-        removeStagingContents(staging);
+        // The directory this restore made is identified by the descriptor it
+        // took when it made it.  A directory that merely occupies the same name
+        // -- or the same name *and* the same reused inode number -- is refused
+        // here rather than emptied: a mismatch is a cleanup note on the original
+        // failure, and nothing is traversed or removed.
+        assertStagingRootIsOurs(staging, root);
+        emptyDirectoryThroughDescriptor(root.fd);
+        // The removal is by name because `rmdir` cannot be performed through the
+        // directory's own descriptor -- the final component of
+        // `/proc/self/fd/<fd>` is the magic link itself and `rmdir` refuses a
+        // symbolic link.  It is a single non-recursive `rmdir`, so what it can
+        // remove is one empty directory, and the walk that emptied it was
+        // bounded by the descriptor rather than by this name.
         fs.rmdirSync(staging);
     } catch (thrown) {
         cleanupFailure = thrown;
@@ -619,7 +685,12 @@ function discardStagingRoot(staging, destination, error) {
 // tree.  Entries are only ever moved, never deleted, so nothing of anyone
 // else's can be destroyed by the rollback -- and a directory that is no longer
 // empty refuses to be removed, so the rollback stops rather than deletes.
-function commitStagedRoot(staging, destination) {
+function commitStagedRoot(staging, destination, root) {
+    // The staging root is established before the destination exists at all: a
+    // staging root that is no longer the directory this restore made must not be
+    // able to leave an empty destination behind on its way out, because a
+    // destination that exists is a destination a later restore refuses.
+    assertStagingRootIsOurs(staging, root);
     fs.mkdirSync(destination, { mode: DIRECTORY_MODE });
     fs.chmodSync(destination, DIRECTORY_MODE);
     // Both ends of every move are addressed through a descriptor this call
@@ -628,15 +699,10 @@ function commitStagedRoot(staging, destination) {
     // for a symbolic link between the proof and this call would have its
     // *target* enumerated, and that target's entries moved into the restored
     // destination -- content that was never proven, installed as if it were.
-    const stagingFd = openStagingDirectory(staging);
-    let destinationFd;
-    try {
-        destinationFd = openStagingDirectory(destination, 'restored destination');
-    } catch (error) {
-        fs.closeSync(stagingFd);
-        throw error;
-    }
-    const stagingDirectory = `${DIRECTORY_FD_ROOT}/${stagingFd}`;
+    // The staging descriptor is the one taken when the directory was created, so
+    // it is the proven directory even if the name has moved on since.
+    const destinationFd = openStagingDirectory(destination, 'restored destination');
+    const stagingDirectory = `${DIRECTORY_FD_ROOT}/${root.fd}`;
     const destinationDirectory = `${DIRECTORY_FD_ROOT}/${destinationFd}`;
     const moved = [];
     try {
@@ -645,7 +711,7 @@ function commitStagedRoot(staging, destination) {
             moved.push(entry);
         }
         try {
-            removeDirectoryInParent(staging, 'staging root parent');
+            fs.rmdirSync(staging);
         } catch {
             // An empty staging directory that will not go away is untidy, not
             // unsafe, and the restored root is already complete and proven.
@@ -655,7 +721,6 @@ function commitStagedRoot(staging, destination) {
         throw error;
     } finally {
         fs.closeSync(destinationFd);
-        fs.closeSync(stagingFd);
     }
     return moved.length;
 }
@@ -767,13 +832,14 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
     // accumulating next to the thing it was supposed to be proving something
     // about, and indistinguishable at a glance from a restored root.
     const staging = createStagingRoot(resolvedDestination);
+    const stagingRoot = staging.path;
     try {
-        const layout = restoredLayout(staging, manifest);
+        const layout = restoredLayout(stagingRoot, manifest);
 
         // The layout goes in first and the content second, so a directory that
         // no artifact occupies is produced by the restore in its own right
         // rather than as a by-product of one that does.
-        const createdDirectories = createRequiredDirectories(staging, layout.required_directories);
+        const createdDirectories = createRequiredDirectories(stagingRoot, layout.required_directories);
 
         const written = [];
         for (const artifact of manifest.artifacts) {
@@ -783,11 +849,11 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
             if (sha256Hex(bytes) !== artifact.sha256) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} with content the manifest does not bind`);
             const mode = FILE_MODES[artifact.category];
             if (mode === undefined) throw new SnapshotIntegrityError(`no restored file mode is defined for category ${artifact.category}`);
-            const absolute = writeRestoredFile(staging, artifact.logical_path, bytes, mode);
+            const absolute = writeRestoredFile(stagingRoot, artifact.logical_path, bytes, mode);
             written.push(Object.freeze({ logical_path: artifact.logical_path, absolute_path: absolute, mode }));
         }
 
-        const report = await proveRestoredRoot({ destinationRoot: staging, manifest, layout, includeFreshProcess, spawn, execPath });
+        const report = await proveRestoredRoot({ destinationRoot: stagingRoot, manifest, layout, includeFreshProcess, spawn, execPath });
         const full = Object.freeze({
             ...report,
             snapshot_id: snapshotId,
@@ -807,11 +873,16 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
         // The commit: the destination is created create-only and the proven tree
         // is moved into it.  An interruption returns it to non-existent rather
         // than leaving a partial authority behind.
-        commitStagedRoot(staging, resolvedDestination);
+        commitStagedRoot(stagingRoot, resolvedDestination, staging);
         return relocateRestoredReport(full, resolvedDestination, manifest);
     } catch (error) {
-        discardStagingRoot(staging, resolvedDestination, error);
+        discardStagingRoot(stagingRoot, resolvedDestination, error, staging);
         throw error;
+    } finally {
+        // Held for the whole restore, because that is what makes the directory
+        // this invocation created identifiable at the end of it, and released
+        // exactly once -- after the cleanup has had the use of it.
+        closeStagingRoot(staging);
     }
 }
 

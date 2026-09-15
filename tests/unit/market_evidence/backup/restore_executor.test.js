@@ -638,6 +638,98 @@ test('a cleanup that cannot finish is recorded on the failure that caused it, ne
     assert.equal(fs.lstatSync(swapped).isSymbolicLink(), true, 'the refusal must be the swap, not a cleanup that succeeded anyway');
 });
 
+// The same swap with the one thing that makes it invisible to every check that
+// compares a directory to itself: the replacement is an ordinary directory, so
+// it is a plain directory before the open, it is a plain directory after it, and
+// the `lstat` and the `open` agree with each other about it.  A link is caught
+// because it is not a directory; this is caught only by knowing which directory
+// this restore actually made.
+//
+// The replacement holds a file that belongs to someone else and nothing of this
+// invocation's, so the cleanup must refuse it whole: not empty it, not remove
+// it, and not present the refusal as the reason the restore failed.  A cleanup
+// that matched the staging name instead of the staging directory passes every
+// assertion about the failure and loses the file.
+test('staging cleanup refuses an ordinary directory that merely has the staging name', async t => {
+    const { transport, report } = await sealed(t, 'swappedroot');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'swappedroot');
+    const parent = path.dirname(target);
+
+    let swapped = null;
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const swapping = duringMaterialization(transport, target, lastArtifact, bytes => {
+        const [staging] = stagingRootsBeside(target);
+        fs.rmSync(staging, { recursive: true, force: true });
+        fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
+        fs.writeFileSync(path.join(staging, 'IRREPLACEABLE.bin'), 'not the staging tree of this invocation');
+        swapped = staging;
+        bytes[1] ^= 0x01;
+    });
+
+    let caught = null;
+    try {
+        await executeRestore({ transport: swapping, snapshotId: report.snapshot_id, destinationRoot: target });
+    } catch (error) {
+        caught = error;
+    }
+
+    assert.ok(swapped !== null, 'the staging root must have been swapped for another directory before the restore failed');
+    assert.ok(caught instanceof SnapshotIntegrityError, `expected the restore's own failure, received ${caught && caught.name}: ${caught && caught.message}`);
+    assert.match(caught.message, /content the manifest does not bind/, 'the reason the restore failed must survive the cleanup');
+    assert.match(caught.message, /could not be removed/, 'the cleanup failure must be recorded');
+    assert.ok(caught.message.includes(swapped), 'the note must name the staging root it could not remove');
+    assert.equal(fs.readFileSync(path.join(swapped, 'IRREPLACEABLE.bin'), 'utf8'), 'not the staging tree of this invocation', 'a refused cleanup must not have emptied a directory this restore did not create');
+    assert.deepEqual(fs.readdirSync(swapped), ['IRREPLACEABLE.bin'], 'and must not have added or removed anything in it');
+    assert.equal(fs.lstatSync(swapped).isDirectory(), true, 'the refusal must be the identity, not a cleanup that succeeded anyway');
+    assert.deepEqual(fs.readdirSync(parent), [path.basename(swapped)], 'nothing else of this invocation may survive beside the replacement');
+    assert.equal(fs.existsSync(target), false, 'a failed restore must leave no destination');
+});
+
+// The identity binding, separated from the walk it guards.  An *empty*
+// replacement is the case a walk alone cannot refuse: there is nothing in it to
+// notice, `rmdir` has no non-empty directory to refuse, and the walk empties a
+// directory that no longer exists under any name while the removal takes the one
+// that does.  The descriptor is then the only thing that tells the two apart --
+// and it tells them apart without comparing anything, because a descriptor is
+// the directory rather than a description of it.
+//
+// This test fails with the descriptor walk kept and the identity check dropped,
+// which is what makes it a test of the binding rather than of the walk.
+test('staging cleanup leaves an empty directory that merely has the staging name', async t => {
+    const { transport, report } = await sealed(t, 'swappedemptyroot');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'swappedemptyroot');
+    const parent = path.dirname(target);
+
+    let swapped = null;
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const swapping = duringMaterialization(transport, target, lastArtifact, bytes => {
+        const [staging] = stagingRootsBeside(target);
+        fs.rmSync(staging, { recursive: true, force: true });
+        fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
+        swapped = staging;
+        bytes[1] ^= 0x01;
+    });
+
+    let caught = null;
+    try {
+        await executeRestore({ transport: swapping, snapshotId: report.snapshot_id, destinationRoot: target });
+    } catch (error) {
+        caught = error;
+    }
+
+    assert.ok(swapped !== null, 'the staging root must have been swapped for another directory before the restore failed');
+    assert.ok(caught instanceof SnapshotIntegrityError, `expected the restore's own failure, received ${caught && caught.name}: ${caught && caught.message}`);
+    assert.match(caught.message, /content the manifest does not bind/, 'the reason the restore failed must survive the cleanup');
+    assert.match(caught.message, /could not be removed/, 'the cleanup failure must be recorded');
+    assert.ok(caught.message.includes(swapped), 'the note must name the staging root it could not remove');
+    assert.deepEqual(fs.readdirSync(swapped), [], 'the cleanup must not have put anything in a directory this restore did not create');
+    assert.equal(fs.lstatSync(swapped).isDirectory(), true, 'and must not have removed it either');
+    assert.deepEqual(fs.readdirSync(parent), [path.basename(swapped)], 'nothing else of this invocation may survive beside the replacement');
+    assert.equal(fs.existsSync(target), false, 'a failed restore must leave no destination');
+});
+
 // Isolation is a property of where the destination *is*, not of how it is
 // spelled.  `path.resolve` never asks the filesystem, so a destination reached
 // through a symlinked ancestor names nothing while every write through it lands
