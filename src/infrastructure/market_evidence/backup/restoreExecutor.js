@@ -482,9 +482,9 @@ function createStagingRoot(destination) {
 const DIRECTORY_FD_ROOT = '/proc/self/fd';
 const DIRECTORY_OPEN_FLAGS = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY || 0) | (fs.constants.O_NOFOLLOW || 0);
 
-// Opens a directory as a *descriptor*, so that what the walk goes on to read
-// and remove is the directory it decided about rather than whatever the path
-// resolves to next time it is used.
+// Opens a directory as a *descriptor*, so that what the walk goes on to read,
+// move or remove is the directory it decided about rather than whatever the
+// path resolves to next time it is used.
 //
 // The difference between the two is the whole safety of the walk.  A path-based
 // step decides an entry is a directory with one syscall and uses it with the
@@ -494,19 +494,39 @@ const DIRECTORY_OPEN_FLAGS = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY |
 // entry is opened *as* a directory -- with `O_NOFOLLOW`, so a link cannot be
 // opened as one at all -- and the identity that comes back is compared against
 // the identity observed immediately before, so a replacement inside that window
-// is refused rather than followed.  `readdir` and `unlink` then address the
-// descriptor's own directory, which nothing can swap out from underneath.
-function openStagingDirectory(target) {
+// is refused rather than followed.  `readdir`, `unlink` and `rename` then
+// address the descriptor's own directory, which nothing can swap out from
+// underneath.
+function openStagingDirectory(target, label = 'staging tree') {
     const before = fs.lstatSync(target);
-    if (before.isSymbolicLink() || !before.isDirectory()) throw new SnapshotIntegrityError(`the staging tree holds an entry that is not a plain directory: ${target}`);
+    if (before.isSymbolicLink() || !before.isDirectory()) throw new SnapshotIntegrityError(`the ${label} holds an entry that is not a plain directory: ${target}`);
     const fd = fs.openSync(target, DIRECTORY_OPEN_FLAGS);
     try {
         const opened = fs.fstatSync(fd);
-        if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) throw new SnapshotIntegrityError(`a staging directory was replaced while it was being opened: ${target}`);
+        if (!opened.isDirectory() || opened.dev !== before.dev || opened.ino !== before.ino) throw new SnapshotIntegrityError(`a ${label} was replaced while it was being opened: ${target}`);
         return fd;
     } catch (error) {
         fs.closeSync(fd);
         throw error;
+    }
+}
+
+// Removes one directory by naming it as a child of its parent's descriptor.
+//
+// `rmdir` cannot be performed through the directory's own descriptor: the final
+// component of `/proc/self/fd/<fd>` is the magic link itself, and `rmdir`
+// refuses a symbolic link, so the call fails with `ENOTDIR` however healthy the
+// directory is.  Naming it relative to a held parent gives the same guarantee
+// the walk relies on -- the parent cannot be swapped out from underneath the
+// name -- while leaving the final component a real directory.  `rmdir` still
+// refuses a directory that is not empty, so an entry that arrives late stops
+// the removal instead of being destroyed with it.
+function removeDirectoryInParent(target, label) {
+    const parentFd = openStagingDirectory(path.dirname(target), label);
+    try {
+        fs.rmdirSync(`${DIRECTORY_FD_ROOT}/${parentFd}/${path.basename(target)}`);
+    } finally {
+        fs.closeSync(parentFd);
     }
 }
 
@@ -602,35 +622,57 @@ function discardStagingRoot(staging, destination, error) {
 function commitStagedRoot(staging, destination) {
     fs.mkdirSync(destination, { mode: DIRECTORY_MODE });
     fs.chmodSync(destination, DIRECTORY_MODE);
-    const moved = [];
+    // Both ends of every move are addressed through a descriptor this call
+    // holds, so what moves is what the proof proved.  Naming the staging root
+    // by path here would reopen the window the walk just closed: a root swapped
+    // for a symbolic link between the proof and this call would have its
+    // *target* enumerated, and that target's entries moved into the restored
+    // destination -- content that was never proven, installed as if it were.
+    const stagingFd = openStagingDirectory(staging);
+    let destinationFd;
     try {
-        for (const entry of fs.readdirSync(staging)) {
-            fs.renameSync(path.join(staging, entry), path.join(destination, entry));
-            moved.push(entry);
-        }
+        destinationFd = openStagingDirectory(destination, 'restored destination');
     } catch (error) {
-        rollbackCommittedEntries(error, moved, staging, destination);
+        fs.closeSync(stagingFd);
         throw error;
     }
+    const stagingDirectory = `${DIRECTORY_FD_ROOT}/${stagingFd}`;
+    const destinationDirectory = `${DIRECTORY_FD_ROOT}/${destinationFd}`;
+    const moved = [];
     try {
-        fs.rmdirSync(staging);
-    } catch {
-        // An empty staging directory that will not go away is untidy, not
-        // unsafe, and the restored root is already complete and proven.
+        for (const entry of fs.readdirSync(stagingDirectory)) {
+            fs.renameSync(path.join(stagingDirectory, entry), path.join(destinationDirectory, entry));
+            moved.push(entry);
+        }
+        try {
+            removeDirectoryInParent(staging, 'staging root parent');
+        } catch {
+            // An empty staging directory that will not go away is untidy, not
+            // unsafe, and the restored root is already complete and proven.
+        }
+    } catch (error) {
+        rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination);
+        throw error;
+    } finally {
+        fs.closeSync(destinationFd);
+        fs.closeSync(stagingFd);
     }
     return moved.length;
 }
 
-function rollbackCommittedEntries(error, moved, staging, destination) {
+// Both directories are open descriptors when this runs, so the rollback moves
+// entries back through the same identity the forward move used rather than
+// through a name that could have been re-pointed in between.
+function rollbackCommittedEntries(error, moved, stagingDirectory, destinationDirectory, destination) {
     for (const entry of moved.reverse()) {
         try {
-            fs.renameSync(path.join(destination, entry), path.join(staging, entry));
+            fs.renameSync(path.join(destinationDirectory, entry), path.join(stagingDirectory, entry));
         } catch (rollbackError) {
             error.message = `${error.message} (rollback could not return ${entry}: ${rollbackError.code || rollbackError.message})`;
         }
     }
     try {
-        fs.rmdirSync(destination);
+        removeDirectoryInParent(destination, 'restored destination parent');
     } catch (rollbackError) {
         error.message = `${error.message} (the destination could not be removed again: ${rollbackError.code || rollbackError.message})`;
     }

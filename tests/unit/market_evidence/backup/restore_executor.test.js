@@ -601,7 +601,7 @@ test('staging cleanup unlinks a link it meets inside the tree rather than walkin
 // and the failure being cleaned up for is exactly the failure most likely to
 // leave a tree behind.  The staging root here is not a plain directory, which is
 // a refusal that holds regardless of who is running -- a permission-based
-// sabotage would not, since uid 0 can delete from a directory it cannot write.
+// sabotage would not, since uid 0 can remove entries from a directory it cannot write.
 test('a cleanup that cannot finish is recorded on the failure that caused it, never in its place', async t => {
     const { transport, report } = await sealed(t, 'cleanupfail');
     const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
