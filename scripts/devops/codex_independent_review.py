@@ -11,7 +11,8 @@ owner: engineering workflow governance
 
 本模块只负责执行与 CLI：receipt 的证据读取与内部一致性证明在
 ``codex_review_receipt``，三态分类在 ``codex_review_classification``，把 receipt
-变成 verdict 的 exit-status 与等待原语在 ``codex_review_verdict``。
+变成 verdict 的 exit-status 在 ``codex_review_verdict``，阻塞等待与 writer 存活
+探测在 ``codex_review_wait``。
 
 ``run`` 与 ``wait`` 都把 receipt 当作 verdict 的唯一 authority，并把它写进
 process exit status（0=PASS/无 blocking finding，3=FAIL/有 blocking finding，
