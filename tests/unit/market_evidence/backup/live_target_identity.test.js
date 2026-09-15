@@ -422,6 +422,15 @@ test('an R2 endpoint must be an account host under the provider domain', t => {
     // The bare registrable domain carries no account label, so it names no
     // target even though it is the provider's own domain.
     refuses(t, validIdentity({ endpoint: 'https://r2.cloudflarestorage.com' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    // A leading dot is the other spelling of "no account label": the host ends
+    // with the suffix and is not the bare domain, so it passed both of the
+    // obvious tests while naming no account, and the loader addressed it.
+    refuses(t, validIdentity({ endpoint: 'https://.r2.cloudflarestorage.com' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
+    // More than one label stays admitted, because a virtual-hosted-style
+    // endpoint puts the bucket in front of the account id: the rule is that an
+    // account label is present, not that it is the only one.
+    const virtualHosted = loadLiveTargetIdentity({ targetIdentityFile: writeFile(t, validIdentity({ endpoint: 'https://bucket.0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com' })) });
+    assert.equal(virtualHosted.endpoint, 'https://bucket.0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com');
     // A publicly routable address is not an R2 endpoint either.
     refuses(t, validIdentity({ endpoint: 'https://203.0.113.10' }), /must be an account host under \.r2\.cloudflarestorage\.com/);
 });

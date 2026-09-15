@@ -367,7 +367,15 @@ function assertEndpointBelongsToProvider(endpoint, provider, rawHostname) {
         // -- ends somewhere else and is refused.  The bare registrable domain is
         // also refused, because R2 addresses an account subdomain and a host with
         // no account label names no target.
-        if (host === R2_ENDPOINT_SUFFIX.slice(1) || !host.endsWith(R2_ENDPOINT_SUFFIX)) {
+        //
+        // The length test refuses the other spelling of "no account label": a
+        // leading dot leaves an empty first label, and `.r2.cloudflarestorage.com`
+        // ends with the suffix and is not the bare domain, so it passes both of
+        // the tests above while naming no account -- the same defect the bare
+        // domain is refused for.  It is a length test rather than a label-count
+        // test because more than one label is legitimate: a virtual-hosted-style
+        // endpoint puts the bucket in front of the account id.
+        if (host === R2_ENDPOINT_SUFFIX.slice(1) || !host.endsWith(R2_ENDPOINT_SUFFIX) || host.length === R2_ENDPOINT_SUFFIX.length) {
             throw new LiveTargetIdentityError(`target identity field endpoint must be an account host under ${R2_ENDPOINT_SUFFIX} for provider ${provider}; an endpoint belonging to another provider, or to no provider, is refused rather than addressed`);
         }
         return;
