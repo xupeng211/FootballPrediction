@@ -201,6 +201,31 @@ def _record_writer_identity(evidence_dir: Path, head_sha: str, run_id: str) -> N
     )
 
 
+def _round_worktree_path(evidence_dir: Path, head_sha: str, run_id: str) -> Path:
+    """Name this round's worktree, refusing a run id that is already in use.
+
+    Every artifact of a round is named by the reviewed head and the *full* run
+    id, the worktree included: the run id is the round's identity, so a name
+    that carries only a prefix of it is a name two rounds can share.  An
+    8-character projection let a second, perfectly legal round of the same head
+    collide with the first round's leftover worktree and die before its reviewer
+    ever started — a round that could not be reviewed at all, whose wait could
+    then only ever report a missing receipt.  A collision that survives the full
+    run id is the same round launched twice, which is named rather than left as
+    a bare errno.
+    """
+
+    worktree = evidence_dir / f"review-worktree-{head_sha[:12]}-{run_id}"
+    try:
+        worktree.mkdir(mode=0o700)
+    except FileExistsError as exc:
+        raise ReviewReceiptError(
+            f"round {run_id} 的 worktree 已存在，该 run id 已被占用: {worktree}"
+        ) from exc
+    worktree.rmdir()
+    return worktree
+
+
 def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     """Run a fresh read-only Codex review and emit one external receipt."""
 
@@ -239,9 +264,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     # stale receipt could look like an answer.
     run_id = args.run_id or uuid.uuid4().hex
     _record_writer_identity(evidence_dir, expected_head, run_id)
-    worktree = evidence_dir / f"review-worktree-{expected_head[:12]}-{run_id[:8]}"
-    worktree.mkdir(mode=0o700)
-    worktree.rmdir()
+    worktree = _round_worktree_path(evidence_dir, expected_head, run_id)
     raw_path = evidence_dir / f"codex-review-output-{expected_head[:12]}-{run_id}.jsonl"
     stderr_path = evidence_dir / f"codex-review-stderr-{expected_head[:12]}-{run_id}.log"
     final_path = evidence_dir / f"codex-review-final-{expected_head[:12]}-{run_id}.json"

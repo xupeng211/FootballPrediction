@@ -216,6 +216,7 @@ def run_end_to_end(
             str(evidence),
             "--builder-context-id",
             "builder-process:999999",
+            "--json",
             *([] if run_id is None else ["--run-id", run_id]),
         ]
     )

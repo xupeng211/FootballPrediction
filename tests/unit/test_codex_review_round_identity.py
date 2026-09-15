@@ -349,3 +349,52 @@ def test_run_refuses_to_move_this_rounds_receipt_out_of_the_evidence_directory(
     assert refusal.value.code != 0, "the redirection is refused, not honoured"
     assert not elsewhere.exists(), "no receipt may be written outside the evidence directory"
     assert not list(evidence.iterdir()), "the refusal lands before any artifact is created"
+
+
+# --------------------------------------------------------------------------
+# Every artifact of a round carries the whole run id, the worktree included.
+# --------------------------------------------------------------------------
+def test_two_rounds_of_one_head_whose_run_ids_share_a_prefix_both_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Two distinct rounds must not collide on a truncated round name.
+
+    The run id is the round's identity, so a name that carries only a prefix of
+    it is a name two rounds can share.  The worktree was named with
+    ``run_id[:8]`` while the receipt, the writer record and the raw output all
+    carried the full run id, so two legal rounds of one head whose run ids agree
+    in their first eight characters collided: the second round found the first
+    round's leftover worktree, died at ``mkdir`` before its reviewer ever
+    started, and left a writer record whose receipt could never be produced.
+    That round could therefore not be reviewed at all, and the wait for it could
+    only ever report a missing receipt — the recoverability a round identity
+    exists to provide, lost one layer below where it was repaired.
+    """
+
+    repo, base, head = make_repo(tmp_path)
+    evidence = tmp_path / "evidence-shared-prefix"
+    evidence.mkdir(mode=0o700)
+    round_a = "deadbeef" + "1" * 24
+    round_b = "deadbeef" + "2" * 24
+    assert round_a != round_b
+    assert round_a[:8] == round_b[:8], "the two rounds differ only past the truncation point"
+
+    for run_id in (round_a, round_b):
+        exit_code, payload = run_end_to_end(
+            tmp_path,
+            monkeypatch,
+            capsys,
+            result="PASS",
+            finding=None,
+            evidence=evidence,
+            run_id=run_id,
+            repo_state=(repo, base, head),
+        )
+        assert exit_code == EXIT_REVIEW_PASS, f"round {run_id} must be reviewable"
+        assert Path(payload["review_receipt"]).name.endswith(f"-{run_id}.json")
+
+    assert sorted(path.name for path in evidence.glob("review-worktree-*")) == [
+        f"review-worktree-{head[:12]}-{round_a}",
+        f"review-worktree-{head[:12]}-{round_b}",
+    ], "each round keeps its own worktree, named by the whole run id, not by a prefix of it"
+    assert run_wait(evidence, head, run_id=round_b) == EXIT_REVIEW_PASS
