@@ -231,7 +231,7 @@ agent-preflight: ## Agentic Workflow V1 本地 governance preflight。Usage: mak
 		$(if $(REQUIRE_REVIEW),--require-review,) \
 		$(if $(JSON),--json,)
 
-agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-review BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external-dir>
+agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-review BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> EVIDENCE_DIR=<external-dir> [RUN_ID=<runid>]（RUN_ID 显式命名本轮 review，便于 agent-review-wait 只消费本轮 receipt）
 	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
 		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE EVIDENCE_DIR are required."; \
 		exit 1; \
@@ -243,9 +243,10 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		--mission-id "$(MISSION_ID)" \
 		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		--evidence-dir "$(EVIDENCE_DIR)" \
+		$(if $(RUN_ID),--run-id $(RUN_ID),) \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
 
-agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt verdict 作为进程退出状态（0=PASS 3=FAIL 1=无法建立 verdict）。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]（WRITER_PID 必须与 WRITER_STARTTIME 成对给出，单独的 pid 不构成身份）
+agent-review-wait: ## 阻塞等待 exact-head review receipt，并由 receipt verdict 决定结果。退出状态：直接调用 `python3 scripts/devops/codex_independent_review.py wait ...` 时为 0=PASS / 3=FAIL-or-blocking / 1=无法建立 verdict；经 make 调用时 GNU make 只原样保留成功状态，任何非 0 子进程状态都会被折叠成 make 自己的 exit 2，因此 3 与 1 在 make 这一层不可区分，机器调用请读 stdout 的 JSON（state/status）或直接调用 python 入口。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [RUN_ID=<runid>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]（WRITER_PID 必须与 WRITER_STARTTIME 成对给出，单独的 pid 不构成身份；RUN_ID 用来只消费指定 review round 的 receipt）
 	@if [ -z "$(HEAD_SHA)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
 		echo "ERROR: HEAD_SHA and EVIDENCE_DIR are required."; \
 		exit 1; \
@@ -255,6 +256,7 @@ agent-review-wait: ## 阻塞等待 exact-head review receipt，并以 receipt ve
 		--head-sha "$(HEAD_SHA)" \
 		$(if $(TIMEOUT_SECONDS),--timeout-seconds $(TIMEOUT_SECONDS),) \
 		$(if $(POLL_INTERVAL),--poll-interval $(POLL_INTERVAL),) \
+		$(if $(RUN_ID),--run-id $(RUN_ID),) \
 		$(if $(WRITER_PID),--pid $(WRITER_PID),) \
 		$(if $(WRITER_STARTTIME),--pid-starttime $(WRITER_STARTTIME),) \
 		$(if $(JSON),--json,)

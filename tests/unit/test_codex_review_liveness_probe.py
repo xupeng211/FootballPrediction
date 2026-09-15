@@ -28,11 +28,9 @@ from scripts.devops.codex_review_verdict import (
     EXIT_REVIEW_INFRASTRUCTURE_ERROR,
     WAIT_STATE_RECEIPT_MISSING,
     WAIT_STATE_REVIEW_FAILED,
-    _proc_stat_tail,
-    _WriterProbe,
-    process_starttime,
     writer_identity_path,
 )
+from scripts.devops.codex_review_wait import _proc_stat_tail, _WriterProbe, process_starttime
 from tests.helpers.agentic_workflow_fixtures import make_repo
 
 # A refusal or a dead-writer detection must end promptly, not consume the whole
