@@ -11,8 +11,9 @@ const { installNetworkTripwire } = require('../../../helpers/network_tripwire');
 const {
     CATEGORY,
     REQUIRED_CATEGORIES,
-    enumerateSnapshotInputs,
     assertNameIsNotSecret,
+    deriveRequiredDirectoriesForLegacyManifest,
+    enumerateSnapshotInputs,
 } = require('../../../../src/infrastructure/market_evidence/backup/snapshotInputs');
 const { SnapshotIntegrityError } = require('../../../../src/infrastructure/market_evidence/backup/transport');
 const { isGovernedProductionPath } = require('../../../../src/infrastructure/market_evidence/backup/localTransport');
@@ -262,4 +263,130 @@ test('no snapshot input root may reach the governed production area through a sy
             `${label} must be refused when it is reached through a symlinked ancestor`,
         );
     }
+});
+
+// FU-1: an enumerated file set cannot describe an empty directory.
+//
+// `entries` is a required part of the canonical ledger layout and it holds
+// nothing when the ledger has recorded nothing, so a representation built only
+// from the files under it loses it -- and the canonical reader refuses a ledger
+// root without it.  The required set is therefore enumerated alongside the files
+// rather than inferred from them, and these tests are about the difference.
+function zeroEntryFixture() {
+    const fx = buildBackupFixture({ transactionCount: 2 });
+    if (fs.readdirSync(path.join(fx.ledgerRoot, 'entries')).length !== 0) throw new Error('this fixture must carry a zero-entry ledger for the test to mean anything');
+    return fx;
+}
+
+test('a required directory is recorded whether or not it holds anything', t => {
+    const empty = zeroEntryFixture();
+    t.after(() => empty.cleanup());
+    const zeroEntry = enumerateSnapshotInputs({
+        authorityRoot: empty.authorityRoot,
+        allocationArtifactPath: empty.allocationArtifactPath,
+        ledgerRoot: empty.ledgerRoot,
+        quotaConfigPath: empty.quotaConfigPath,
+    });
+
+    // The control: this is the same enumerated set with entries in it.  Without
+    // it, an assertion about the empty case could pass for a representation that
+    // simply always names this directory.
+    const populated = enumerate();
+    assert.ok(populated.entries.some(entry => entry.logical_path.startsWith('request-accounting/entries/')), 'the populated fixture must carry ledger entries for the comparison to mean anything');
+    assert.equal(zeroEntry.entries.some(entry => entry.category === CATEGORY.REQUEST_ACCOUNTING_ENTRY), false, 'a zero-entry ledger contributes no file');
+
+    for (const [label, inputs] of [['zero-entry', zeroEntry], ['populated', populated]]) {
+        assert.ok(inputs.required_directories.includes('request-accounting/entries'), `the ${label} set must name request-accounting/entries`);
+        assert.ok(inputs.required_directories.includes('transactions/committed'), `the ${label} set must name transactions/committed`);
+    }
+});
+
+// The other half of the same representation: a package directory is required as
+// soon as it exists, even when nothing has been committed into it yet.  It
+// contributes no artifact whatsoever, so nothing about the file set records it
+// -- which is precisely why the layout has to be enumerated instead of inferred.
+test('an empty package directory is required while contributing no artifact', t => {
+    const fx = fixture();
+    const name = `tx_${'ab'.repeat(32)}`;
+    const directory = path.join(fx.authorityRoot, 'committed', name);
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+
+    const before = enumerate();
+    assert.equal(before.required_directories.includes(`transactions/committed/${name}`), false, 'the directory must not be required before it exists, or this test would pass for a set that names it unconditionally');
+
+    fs.mkdirSync(directory, { mode: 0o700 });
+    const after = enumerate();
+    assert.ok(after.required_directories.includes(`transactions/committed/${name}`), 'an empty package directory must still be recorded as required');
+    assert.deepEqual(
+        after.entries.map(entry => entry.logical_path),
+        before.entries.map(entry => entry.logical_path),
+        'it must contribute no file, which is what makes it invisible to a representation built from the file set',
+    );
+    assert.equal(after.total_bytes, before.total_bytes);
+});
+
+test('the required directory set is sorted, de-duplicated and frozen', () => {
+    const { required_directories: directories } = enumerate();
+    assert.ok(Array.isArray(directories));
+    assert.deepEqual([...directories], [...directories].sort(), 'a set with no canonical order cannot be compared or hashed across runs');
+    assert.equal(new Set(directories).size, directories.length, 'the same directory recorded twice would be a second way to describe one tree');
+    assert.equal(Object.isFrozen(directories), true);
+    // A package directory is required once per package, so the set carries more
+    // than the directories every generation shares -- this is not a constant.
+    assert.ok(directories.length > 2, `the set must be enumerated from the tree, not fixed; received ${JSON.stringify(directories)}`);
+    for (const directory of directories) {
+        assert.equal(path.isAbsolute(directory), false, `${directory} must be a logical path`);
+        assert.equal(directory.includes('..'), false);
+        assert.equal(directory.startsWith('.'), false);
+    }
+});
+
+// The legacy derivation is a reading of the *versioned contract*, not of one
+// generation: a manifest that predates the field describes a ledger by its
+// artifacts, and the request-ledger contract says a ledger root contains an
+// `entries` child directory.  Anything narrower would be a snapshot-specific
+// hack, which is the thing the repair is required not to be.
+test('a legacy manifest derives the ledger directory from the artifacts it carries', () => {
+    assert.deepEqual(deriveRequiredDirectoriesForLegacyManifest([
+        { logical_path: 'request-accounting/EPOCH.json' },
+        { logical_path: 'request-accounting/entries/000000000001.json' },
+        { logical_path: 'transactions/STORE.json' },
+    ]), ['request-accounting/entries']);
+
+    // The shape the real generation on the backup target has, and the one this
+    // derivation exists for: a sealed ledger root with nothing recorded in it
+    // yet.  Its only request-accounting artifact is the epoch file, and a
+    // derivation keyed on an `entries/` *descendant* would find none -- which is
+    // how an intact backup would stay unreadable over a manifest omission.
+    assert.deepEqual(deriveRequiredDirectoriesForLegacyManifest([
+        { logical_path: 'request-accounting/EPOCH.json' },
+        { logical_path: 'transactions/STORE.json' },
+    ]), ['request-accounting/entries']);
+
+    // A generation being restored with no ledger at all derives nothing: the
+    // derivation must not invent a directory the snapshot never described.
+    assert.deepEqual(deriveRequiredDirectoriesForLegacyManifest([
+        { logical_path: 'transactions/STORE.json' },
+    ]), []);
+
+    // The boundary is the directory itself, not the prefix of its name.  A
+    // sibling whose name merely begins with the same characters is not inside
+    // the ledger root, and deriving `entries` under it would put an empty
+    // directory in a restored tree that never had one.
+    assert.deepEqual(deriveRequiredDirectoriesForLegacyManifest([
+        { logical_path: 'request-accounting-archive/EPOCH.json' },
+        { logical_path: 'request-accounting' },
+    ]), []);
+
+    assert.equal(Object.isFrozen(deriveRequiredDirectoriesForLegacyManifest([])), true);
+    for (const malformed of [undefined, null, 'request-accounting/entries', {}]) {
+        assert.throws(
+            () => deriveRequiredDirectoriesForLegacyManifest(malformed),
+            error => error instanceof SnapshotIntegrityError && /must carry an artifact list/.test(error.message),
+            `${JSON.stringify(malformed)} must be refused rather than deriving an empty set`
+        );
+    }
+    // An artifact list with a malformed member derives nothing from it rather
+    // than throwing halfway: the caller has already validated the list.
+    assert.deepEqual(deriveRequiredDirectoriesForLegacyManifest([null, 7, { logical_path: 3 }]), []);
 });

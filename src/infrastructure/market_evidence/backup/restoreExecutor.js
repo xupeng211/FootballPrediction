@@ -27,7 +27,7 @@ const { spawnSync } = require('node:child_process');
 const { canonicalJson } = require('../transactionContract');
 const { openMarketEvidenceAuthoritySnapshot } = require('../authorityReader');
 const { readRequestLedger } = require('../stageDOperations');
-const { ALLOCATION_FILE } = require('./snapshotInputs');
+const { ALLOCATION_FILE, deriveRequiredDirectoriesForLegacyManifest } = require('./snapshotInputs');
 const { assertTransportContract, SnapshotIntegrityError } = require('./transport');
 const { assertNotGovernedProductionPath, isGovernedProductionPath, realLocationOf } = require('./localTransport');
 const { assertGenerationId, sha256Hex } = require('./snapshotManifest');
@@ -166,6 +166,35 @@ function readRestoredFile(absolute) {
     return fs.readFileSync(absolute);
 }
 
+// Which directories the restored tree must contain, and where that answer came
+// from.
+//
+// There are two sources and the report names which was used, rather than
+// presenting both as one fact.  A generation written by the current writer
+// carries `required_directories` and the manifest is authoritative.  A
+// generation written before the field existed does not, and the requirement is
+// re-derived from the canonical layout instead; that derivation is a statement
+// about the layout every ledger root has, not about the generation being read,
+// which is what keeps it version-bound rather than snapshot-bound.
+function resolveRequiredDirectories(manifest) {
+    if (Object.hasOwn(manifest, 'required_directories')) {
+        // Present-but-not-an-array is refused here rather than spread.  The
+        // manifest validator refuses the same shape with the same words, and a
+        // caller holding a hand-built manifest should get that refusal rather
+        // than a TypeError from an iterator.
+        const declared = manifest.required_directories;
+        if (!Array.isArray(declared)) throw new SnapshotIntegrityError('snapshot manifest required_directories must be an array');
+        return Object.freeze({
+            directories: Object.freeze([...declared]),
+            source: 'MANIFEST_REQUIRED_DIRECTORIES',
+        });
+    }
+    return Object.freeze({
+        directories: deriveRequiredDirectoriesForLegacyManifest(manifest.artifacts),
+        source: 'DERIVED_FROM_CANONICAL_LAYOUT',
+    });
+}
+
 function restoredLayout(destinationRoot, manifest) {
     const authorityRoot = path.join(destinationRoot, 'transactions');
     const ledgerRoot = path.join(destinationRoot, 'request-accounting');
@@ -173,6 +202,7 @@ function restoredLayout(destinationRoot, manifest) {
     const quota = manifest.artifacts.find(artifact => artifact.category === 'quota_config');
     if (!allocation) throw new SnapshotIntegrityError('the generation carries no allocation authority artifact and cannot be restored');
     if (!quota) throw new SnapshotIntegrityError('the generation carries no quota configuration artifact and cannot be restored');
+    const required = resolveRequiredDirectories(manifest);
     return Object.freeze({
         authority_root: authorityRoot,
         ledger_root: ledgerRoot,
@@ -182,7 +212,36 @@ function restoredLayout(destinationRoot, manifest) {
         quota_logical_path: quota.logical_path,
         store_path: path.join(authorityRoot, 'STORE.json'),
         expected_allocation_basename: ALLOCATION_FILE,
+        required_directories: required.directories,
+        required_directories_source: required.source,
     });
+}
+
+// Created explicitly, before any file is written.
+//
+// Most of these directories would come into existence as a side effect of
+// writing the files beneath them, and that is precisely why the one that holds
+// no files was invisible: nothing in a restore ever asked for a directory, only
+// for the files inside it, so an empty `entries/` was a thing the restore
+// produced only when the ledger happened to be non-empty.  Asking for the
+// layout directly is what turns that coincidence into a guarantee.
+//
+// The containment check is not redundant with the manifest validator's.  This
+// is the point where a logical name becomes a filesystem path, and the promise
+// that it stays inside the destination is this function's to keep whatever
+// supplied the name -- the manifest, a derivation from it, or a future caller.
+function createRequiredDirectories(root, directories) {
+    const created = [];
+    for (const directory of directories) {
+        const absolute = path.resolve(root, directory);
+        const relative = path.relative(root, absolute);
+        if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+            throw new SnapshotIntegrityError(`required directory escapes the destination root: ${directory}`);
+        }
+        createDirectory(root, absolute);
+        created.push(Object.freeze({ logical_path: directory, absolute_path: absolute }));
+    }
+    return created;
 }
 
 // A fresh process is the strongest available statement that the restored root
@@ -300,6 +359,38 @@ function compareRestoredFiles(resolvedRoot, manifest, failures) {
     return restoredFiles;
 }
 
+// The directories the manifest or the canonical layout requires, checked as
+// requirements rather than assumed from the files around them.  A generation
+// whose ledger is empty has no artifact that would create `request-accounting/
+// entries`, so "the files all match" is not evidence that the tree is the one
+// the reader accepts -- which is exactly the gap this restores.
+//
+// The failure is named here, in the manifest's own vocabulary.  Left to the
+// canonical reader it arrives as an ENOENT naming a path under /proc that the
+// operator never wrote, because the reader opens directories through a
+// descriptor-scoped walk; a report that says which logical directory is missing
+// is the difference between a diagnosable restore and an inexplicable one.
+function compareRestoredDirectories(resolvedRoot, layout, failures) {
+    const observed = [];
+    for (const directory of layout.required_directories) {
+        const absolute = path.join(resolvedRoot, directory);
+        let stat;
+        try {
+            stat = fs.lstatSync(absolute);
+        } catch (error) {
+            if (error.code !== 'ENOENT') throw error;
+            failures.push(`the restored tree is missing the required directory ${directory}`);
+            continue;
+        }
+        if (stat.isSymbolicLink() || !stat.isDirectory()) {
+            failures.push(`the restored required directory ${directory} is not a plain directory`);
+            continue;
+        }
+        observed.push(Object.freeze({ logical_path: directory, mode: stat.mode & 0o7777 }));
+    }
+    return observed;
+}
+
 // Reads the restored root back through the canonical readers and compares
 // everything against the manifest.  Performs no writes.
 async function proveRestoredRoot({ destinationRoot, manifest, layout = null, includeFreshProcess = false, spawn = spawnSync, execPath = process.execPath } = {}) {
@@ -307,12 +398,32 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
     const resolvedLayout = layout || restoredLayout(resolvedRoot, manifest);
     const failures = [];
 
-    const proof = readRestoredIdentity(resolvedLayout);
-    compareIdentity(proof, manifest, failures, 'restored authority');
-    compareGovernedHashes(proof, manifest, failures);
+    // The directory requirements are checked first, before any canonical reader
+    // is asked anything, because a missing required directory is precisely what
+    // makes those readers throw: `readRequestLedger` opens a ledger root through
+    // a descriptor-scoped walk and reports the absence of `entries/` as an
+    // ENOENT naming a path under /proc.  Asking it first would replace the named
+    // failure below with that ENOENT, which is the unhelpful message the whole
+    // repair exists to remove.
+    const restoredDirectories = compareRestoredDirectories(resolvedRoot, resolvedLayout, failures);
+    const directoriesSatisfied = failures.length === 0;
+
+    // The files are compared either way.  They are read by their manifest paths
+    // and do not depend on the directory walk, so a report of a tree whose
+    // layout is incomplete still says what content it did find.
     const restoredFiles = compareRestoredFiles(resolvedRoot, manifest, failures);
 
-    const freshProcess = includeFreshProcess ? proveColdLoadInFreshProcess(resolvedLayout, { spawn, execPath }) : null;
+    // The identity half of the proof is skipped rather than attempted when the
+    // layout is incomplete.  `proof` is null in that case and the report carries
+    // the failures it did find, which is the truthful account: the restored root
+    // could not be loaded, and the reason is named.
+    const proof = directoriesSatisfied ? readRestoredIdentity(resolvedLayout) : null;
+    if (proof !== null) {
+        compareIdentity(proof, manifest, failures, 'restored authority');
+        compareGovernedHashes(proof, manifest, failures);
+    }
+
+    const freshProcess = includeFreshProcess && directoriesSatisfied ? proveColdLoadInFreshProcess(resolvedLayout, { spawn, execPath }) : null;
     if (freshProcess && freshProcess.ok !== true) failures.push(`the restored root could not be loaded by a fresh process: ${freshProcess.error}`);
     if (freshProcess && freshProcess.ok === true) compareIdentity(freshProcess.identity, manifest, failures, 'fresh process authority');
 
@@ -327,6 +438,14 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
         restored_file_count: restoredFiles.length,
         restored_total_bytes: restoredFiles.reduce((sum, file) => sum + file.size, 0),
         restored_files: Object.freeze(restoredFiles),
+        // Both halves of the directory claim: what the restore was required to
+        // produce, where that requirement came from, and what it found.  A
+        // reader of the report can tell a generation that described its own
+        // layout from one whose layout was re-derived, without having to
+        // re-open the manifest to find out which.
+        required_directories: Object.freeze([...resolvedLayout.required_directories]),
+        required_directories_source: resolvedLayout.required_directories_source,
+        restored_directories: Object.freeze(restoredDirectories),
         proof: Object.freeze(proof),
         fresh_process_proof: freshProcess,
         production_fallback_used: false,
@@ -344,15 +463,77 @@ async function proveRestoredRoot({ destinationRoot, manifest, layout = null, inc
 // tree could never be restored into again.  It was also the one case where a
 // failed restore did not leave the destination as it was found.
 //
-// Nothing here removes anything, so a failure before the commit leaves the
-// staging directory behind as visible evidence of the attempt while the
-// destination itself stays exactly as it was.
+// The staging root is named for the invocation that created it: the random
+// suffix is drawn here, held in a local, and never derived from anything the
+// caller supplied.  That is what makes "the staging root created by this exact
+// invocation" a decidable question, and it is the precondition for removing one
+// at all.
 function createStagingRoot(destination) {
     const staging = path.join(path.dirname(destination), `.${path.basename(destination)}.restore-staging-${crypto.randomBytes(8).toString('hex')}`);
     if (isGovernedProductionPath(staging)) throw new SnapshotIntegrityError(`restore staging root must never be the governed production area: ${staging}`);
     fs.mkdirSync(staging, { mode: DIRECTORY_MODE });
     fs.chmodSync(staging, DIRECTORY_MODE);
     return staging;
+}
+
+// Removes the *contents* of a directory this invocation created, one entry at a
+// time, never following a symbolic link.
+//
+// The reach of this walk is bounded by construction rather than by a check: it
+// starts at a path the caller minted and held in a local variable, and every
+// other path it can name is that path joined with a name `readdirSync` returned
+// from a directory it has already visited.  `readdirSync` cannot return `..`,
+// so there is no traversal to refuse and no denylist to keep current.
+//
+// A link is unlinked, never entered.  Descending through one would make the
+// walk's reach a property of whatever the link happens to point at, which is
+// the opposite of a bounded cleanup -- and the restored tree is written with
+// O_NOFOLLOW and refuses symbolic-link parents, so a link here is foreign
+// content, which is exactly what must not be walked into.
+function removeStagingContents(directory) {
+    for (const name of fs.readdirSync(directory)) {
+        const absolute = path.join(directory, name);
+        const stat = fs.lstatSync(absolute);
+        if (stat.isDirectory() && !stat.isSymbolicLink()) {
+            removeStagingContents(absolute);
+            // `rmdirSync` refuses a directory that is not empty, so a race that
+            // puts something back between the walk and this call stops the
+            // cleanup instead of deleting whatever arrived.
+            fs.rmdirSync(absolute);
+            continue;
+        }
+        fs.unlinkSync(absolute);
+    }
+}
+
+// Runs when a restore fails.  Its whole job is to leave nothing behind, and its
+// whole risk is that "nothing" is not what it removes -- so the destination is
+// not a special case here, it is simply a different path, and nothing outside
+// the staging root is ever named.
+//
+// A cleanup failure is recorded on the error that caused it, never thrown in
+// its place.  The restore already failed for a reason the operator needs, and
+// replacing that reason with "the tidy-up also failed as well" would hide the
+// one that matters.  The note is therefore best-effort: an error that cannot
+// carry one is still the error that gets reported.
+function discardStagingRoot(staging, destination, error) {
+    let cleanupFailure = null;
+    try {
+        if (staging === destination) throw new SnapshotIntegrityError('refusing to clean a staging root that is the destination itself');
+        const stat = fs.lstatSync(staging);
+        if (stat.isSymbolicLink() || !stat.isDirectory()) throw new SnapshotIntegrityError(`the staging root is not a plain directory: ${staging}`);
+        removeStagingContents(staging);
+        fs.rmdirSync(staging);
+    } catch (thrown) {
+        cleanupFailure = thrown;
+    }
+    if (cleanupFailure === null) return;
+    try {
+        error.message = `${error.message} (the staging tree at ${staging} could not be removed: ${cleanupFailure.code || cleanupFailure.message})`;
+    } catch {
+        // A thrown value that will not carry a note is still the failure to
+        // report; losing the note is strictly better than losing the reason.
+    }
 }
 
 // The commit is the point at which the destination starts to exist, so it is
@@ -483,41 +664,67 @@ async function executeRestore({ transport, snapshotId, destinationRoot, sourceRo
     const { manifest, manifest_sha256: manifestSha256 } = await loadAcceptedManifest({ transport, snapshotId });
 
     const resolvedDestination = assertFreshDestination(destinationRoot, { sourceRoots });
+
+    // Everything below happens inside a tree this invocation created, named with
+    // entropy drawn for it, and never derived from anything the caller supplied.
+    // That is what makes the cleanup in the `catch` decidable: there is exactly
+    // one directory it may remove, and the destination is not it.
+    //
+    // The staging tree used to be left behind on failure, on the reasoning that
+    // it was visible evidence of the attempt and that the destination was
+    // untouched either way.  The destination part was true; the evidence part
+    // was the problem.  A failed restore is the common case for a generation
+    // that cannot be restored, so every retry left another complete copy of the
+    // authority at 0700 beside the destination -- the tooling's own litter,
+    // accumulating next to the thing it was supposed to be proving something
+    // about, and indistinguishable at a glance from a restored root.
     const staging = createStagingRoot(resolvedDestination);
-    const layout = restoredLayout(staging, manifest);
+    try {
+        const layout = restoredLayout(staging, manifest);
 
-    const written = [];
-    for (const artifact of manifest.artifacts) {
-        const bytes = await transport.getObject({ key: artifact.object_key });
-        if (bytes === null || bytes === undefined) throw new SnapshotIntegrityError(`the generation is missing ${artifact.logical_path} and cannot be restored`);
-        if (bytes.length !== artifact.size) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} at ${bytes.length} bytes but the manifest declares ${artifact.size}`);
-        if (sha256Hex(bytes) !== artifact.sha256) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} with content the manifest does not bind`);
-        const mode = FILE_MODES[artifact.category];
-        if (mode === undefined) throw new SnapshotIntegrityError(`no restored file mode is defined for category ${artifact.category}`);
-        const absolute = writeRestoredFile(staging, artifact.logical_path, bytes, mode);
-        written.push(Object.freeze({ logical_path: artifact.logical_path, absolute_path: absolute, mode }));
+        // The layout goes in first and the content second, so a directory that
+        // no artifact occupies is produced by the restore in its own right
+        // rather than as a by-product of one that does.
+        const createdDirectories = createRequiredDirectories(staging, layout.required_directories);
+
+        const written = [];
+        for (const artifact of manifest.artifacts) {
+            const bytes = await transport.getObject({ key: artifact.object_key });
+            if (bytes === null || bytes === undefined) throw new SnapshotIntegrityError(`the generation is missing ${artifact.logical_path} and cannot be restored`);
+            if (bytes.length !== artifact.size) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} at ${bytes.length} bytes but the manifest declares ${artifact.size}`);
+            if (sha256Hex(bytes) !== artifact.sha256) throw new SnapshotIntegrityError(`the generation holds ${artifact.logical_path} with content the manifest does not bind`);
+            const mode = FILE_MODES[artifact.category];
+            if (mode === undefined) throw new SnapshotIntegrityError(`no restored file mode is defined for category ${artifact.category}`);
+            const absolute = writeRestoredFile(staging, artifact.logical_path, bytes, mode);
+            written.push(Object.freeze({ logical_path: artifact.logical_path, absolute_path: absolute, mode }));
+        }
+
+        const report = await proveRestoredRoot({ destinationRoot: staging, manifest, layout, includeFreshProcess, spawn, execPath });
+        const full = Object.freeze({
+            ...report,
+            snapshot_id: snapshotId,
+            manifest_sha256: manifestSha256,
+            // The verification this restore was admitted on, carried into the
+            // report so the restored tree arrives with the proof that the gate
+            // ran and on what evidence it passed -- a caller holding only the
+            // report can see which generation was verified and against which
+            // object set.
+            snapshot_verification: verification,
+            restored_object_count: written.length,
+            restored_directory_count: createdDirectories.length,
+            transport: transport.describe(),
+        });
+        if (full.result !== 'PASS') throw new RestoreProofError(`restored root failed proof: ${full.failures.join('; ')}`, full);
+
+        // The commit: the destination is created create-only and the proven tree
+        // is moved into it.  An interruption returns it to non-existent rather
+        // than leaving a partial authority behind.
+        commitStagedRoot(staging, resolvedDestination);
+        return relocateRestoredReport(full, resolvedDestination, manifest);
+    } catch (error) {
+        discardStagingRoot(staging, resolvedDestination, error);
+        throw error;
     }
-
-    const report = await proveRestoredRoot({ destinationRoot: staging, manifest, layout, includeFreshProcess, spawn, execPath });
-    const full = Object.freeze({
-        ...report,
-        snapshot_id: snapshotId,
-        manifest_sha256: manifestSha256,
-        // The verification this restore was admitted on, carried into the
-        // report so the restored tree arrives with the proof that the gate ran
-        // and on what evidence it passed -- a caller holding only the report can
-        // see which generation was verified and against which object set.
-        snapshot_verification: verification,
-        restored_object_count: written.length,
-        transport: transport.describe(),
-    });
-    if (full.result !== 'PASS') throw new RestoreProofError(`restored root failed proof: ${full.failures.join('; ')}`, full);
-
-    // The commit: the destination is created create-only and the proven tree is
-    // moved into it.  An interruption returns it to non-existent rather than
-    // leaving a partial authority behind.
-    commitStagedRoot(staging, resolvedDestination);
-    return relocateRestoredReport(full, resolvedDestination, manifest);
 }
 
 module.exports = {
@@ -527,6 +734,8 @@ module.exports = {
     RestoreProofError,
     assertFreshDestination,
     restoredLayout,
+    resolveRequiredDirectories,
+    createRequiredDirectories,
     buildFreshProcessProbe,
     proveColdLoadInFreshProcess,
     proveRestoredRoot,

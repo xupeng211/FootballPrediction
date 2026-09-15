@@ -375,6 +375,7 @@ for (const [label, sabotage] of [
 
         await assert.rejects(executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }));
         assert.equal(fs.existsSync(target), false, `a failed restore must leave no destination behind: ${target}`);
+        assert.deepEqual(fs.readdirSync(path.dirname(target)), [], 'and no staging tree either');
 
         await assert.rejects(
             executeRestore({ transport, snapshotId: report.snapshot_id, destinationRoot: target }),
@@ -382,6 +383,7 @@ for (const [label, sabotage] of [
             'the retry must reach the real problem, which it only can if nothing was left in the way'
         );
         assert.equal(fs.existsSync(target), false);
+        assert.deepEqual(fs.readdirSync(path.dirname(target)), []);
     });
 }
 
@@ -403,6 +405,7 @@ test('a restore whose proof fails leaves the destination exactly as it was', asy
     assert.ok(caught instanceof RestoreProofError, `expected a proof failure, received ${caught && caught.name}: ${caught && caught.message}`);
     assert.ok(caught.report.failures.some(failure => /could not be loaded by a fresh process/.test(failure)), 'the report must carry the proof failure');
     assert.equal(fs.existsSync(target), false, 'a destination whose proof failed must not exist');
+    assert.deepEqual(fs.readdirSync(path.dirname(target)), [], 'the staged tree the proof ran against must not be left beside it');
 });
 
 // The gap between "the destination did not exist" and "the destination was
@@ -439,6 +442,154 @@ test('a destination created by another process mid-restore is refused, not repla
     assert.equal(placed, 'the destination existed before the commit', 'the competitor must actually have run before the commit');
     assert.equal(fs.existsSync(target), true, 'the competing destination must still be there');
     assert.deepEqual(fs.readdirSync(target), [], 'it must be untouched -- a restore never fills a destination it did not create');
+});
+
+// FU-3: the staging tree a failed restore used to leave behind.
+//
+// The staging root is the one directory a restore creates that nobody asked
+// for, so it is the one directory a restore may remove, and the whole safety of
+// removing it rests on being able to say *which* directory that is.  It is
+// minted here -- a random suffix drawn into a local variable, never derived from
+// anything the caller supplied -- which is what makes "the staging root created
+// by this exact invocation" a decidable question rather than a pattern match.
+//
+// These tests are the negative ones: what the cleanup must not reach, and what
+// it must not hide.  A test that only showed the staging root disappearing would
+// pass just as well for a cleanup that removed the whole parent.
+//
+// They also have to fail *after* materialization has begun.  The restore reads
+// every artifact twice -- once while the canonical verifier admits the
+// generation, once while it is written -- and the verifier reads through the
+// same transport, so corrupting the store refuses the generation during
+// admission, before a staging root exists.  The failure these tests are about
+// therefore has to land on the second read, and the staging root's own
+// existence is the signal for it: the root is created after admission, so its
+// presence means the restore is past the gate and into the window that used to
+// leave a tree behind.
+
+// Absolute paths, deliberately: a bare name is resolved against the process
+// working directory, so a test that swapped "the staging root" by name would
+// leave the real one alone and act on the repository instead.
+function stagingRootsBeside(target) {
+    const parent = path.dirname(target);
+    const prefix = `.${path.basename(target)}.restore-staging-`;
+    return fs.readdirSync(parent)
+        .filter(name => name.startsWith(prefix))
+        .map(name => path.join(parent, name))
+        .filter(absolute => {
+            const stat = fs.lstatSync(absolute);
+            return stat.isDirectory() && !stat.isSymbolicLink();
+        });
+}
+
+function duringMaterialization(transport, target, key, act) {
+    return {
+        ...transport,
+        async getObject(args) {
+            const bytes = await transport.getObject(args);
+            if (args.key === key && stagingRootsBeside(target).length === 1) act(bytes);
+            return bytes;
+        },
+    };
+}
+
+test('a failed restore removes the staging root it created and nothing else', async t => {
+    const { transport, report } = await sealed(t, 'cleanup');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'cleanup');
+    const parent = path.dirname(target);
+
+    // A bystander, and a look-alike named the way this invocation names its own
+    // staging root.  A cleanup that matched the pattern instead of holding the
+    // one path it minted would take the look-alike with it; one that reached for
+    // the parent would take both and then the directory itself.
+    const lookAlike = path.join(parent, `.${path.basename(target)}.restore-staging-0000000000000000`);
+    fs.writeFileSync(lookAlike, 'not the staging tree of this invocation');
+    fs.writeFileSync(path.join(parent, 'bystander.txt'), 'not a staging root at all');
+    const before = fs.readdirSync(parent).sort();
+
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const corrupting = duringMaterialization(transport, target, lastArtifact, bytes => { bytes[1] ^= 0x01; });
+    await assert.rejects(executeRestore({ transport: corrupting, snapshotId: report.snapshot_id, destinationRoot: target }));
+
+    assert.equal(fs.existsSync(target), false, 'a failed restore must leave no destination');
+    assert.deepEqual(fs.readdirSync(parent).sort(), before, 'the parent must hold exactly what it held before the restore');
+    assert.equal(fs.readFileSync(lookAlike, 'utf8'), 'not the staging tree of this invocation');
+    assert.deepEqual(stagingRootsBeside(target), [], 'no staging root of this invocation may survive it');
+});
+
+// The reach of the cleanup is bounded by construction rather than by a denylist:
+// it starts at a path this invocation minted and can only name that path joined
+// with a name `readdirSync` returned.  A symbolic link inside the staging tree
+// is the case that separates "bounded" from "tidy": descending through it would
+// make the reach a property of whatever the link points at, and the restored
+// tree refuses symbolic-link parents when it is written, so a link in there is
+// foreign content by definition.
+test('staging cleanup unlinks a symbolic link rather than walking into it', async t => {
+    const { transport, report } = await sealed(t, 'nolinkwalk');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'nolinkwalk');
+    const parent = path.dirname(target);
+
+    const elsewhere = temporary(t, 'stage-d-outside-');
+    fs.writeFileSync(path.join(elsewhere, 'IRREPLACEABLE.bin'), 'outside the staging root');
+
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const planting = duringMaterialization(transport, target, lastArtifact, bytes => {
+        const [staging] = stagingRootsBeside(target);
+        fs.symlinkSync(elsewhere, path.join(staging, 'escaped'));
+        bytes[1] ^= 0x01;
+    });
+
+    await assert.rejects(executeRestore({ transport: planting, snapshotId: report.snapshot_id, destinationRoot: target }));
+
+    assert.equal(fs.readFileSync(path.join(elsewhere, 'IRREPLACEABLE.bin'), 'utf8'), 'outside the staging root', 'the cleanup must not have reached through the link');
+    assert.deepEqual(fs.readdirSync(elsewhere), ['IRREPLACEABLE.bin'], 'nothing may be added or removed outside the staging root either');
+    assert.deepEqual(fs.readdirSync(parent), [], 'the staging root must be gone even though a link was in it');
+    assert.equal(fs.existsSync(target), false);
+});
+
+// A cleanup failure is recorded on the error that caused it, never thrown in its
+// place.  The restore already failed for a reason the operator needs; replacing
+// that reason with "the tidy-up failed as well" would hide the one that matters,
+// and the failure being cleaned up for is exactly the failure most likely to
+// leave a tree behind.  The staging root here is not a plain directory, which is
+// a refusal that holds regardless of who is running -- a permission-based
+// sabotage would not, since uid 0 can delete from a directory it cannot write.
+test('a cleanup that cannot finish is recorded on the failure that caused it, never in its place', async t => {
+    const { transport, report } = await sealed(t, 'cleanupfail');
+    const { manifest } = await loadAcceptedManifest({ transport, snapshotId: report.snapshot_id });
+    const target = destination(t, 'cleanupfail');
+
+    const elsewhere = temporary(t, 'stage-d-outside-');
+    fs.writeFileSync(path.join(elsewhere, 'IRREPLACEABLE.bin'), 'outside the staging root');
+    let swapped = null;
+
+    const lastArtifact = manifest.artifacts[manifest.artifacts.length - 1].object_key;
+    const swapping = duringMaterialization(transport, target, lastArtifact, bytes => {
+        const [staging] = stagingRootsBeside(target);
+        fs.rmSync(staging, { recursive: true, force: true });
+        fs.symlinkSync(elsewhere, staging);
+        swapped = staging;
+        bytes[1] ^= 0x01;
+    });
+
+    let caught = null;
+    try {
+        await executeRestore({ transport: swapping, snapshotId: report.snapshot_id, destinationRoot: target });
+    } catch (error) {
+        caught = error;
+    }
+
+    assert.ok(swapped !== null, 'the staging root must have been swapped for a link before the restore failed');
+    assert.ok(caught instanceof SnapshotIntegrityError, `expected the restore's own failure, received ${caught && caught.name}: ${caught && caught.message}`);
+    assert.match(caught.message, /content the manifest does not bind/, 'the reason the restore failed must survive the cleanup');
+    assert.match(caught.message, /could not be removed/, 'the cleanup failure must be recorded');
+    assert.ok(caught.message.includes(swapped), 'the note must name the staging root it could not remove');
+    assert.equal(fs.readFileSync(path.join(elsewhere, 'IRREPLACEABLE.bin'), 'utf8'), 'outside the staging root', 'a refused cleanup must not have gone looking for something to remove');
+    assert.deepEqual(fs.readdirSync(elsewhere), ['IRREPLACEABLE.bin']);
+    assert.equal(fs.existsSync(target), false, 'a failed restore must leave no destination');
+    assert.equal(fs.lstatSync(swapped).isSymbolicLink(), true, 'the refusal must be the swap, not a cleanup that succeeded anyway');
 });
 
 // Isolation is a property of where the destination *is*, not of how it is

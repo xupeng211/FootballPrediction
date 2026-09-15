@@ -229,6 +229,34 @@ async function writeSnapshot({
         throw new SourceChangedDuringSnapshotError(`the governed input set changed while snapshot ${resolvedSnapshotId} was being written; the generation is partial and carries no completeness marker`);
     }
 
+    // The manifest's required directories come from the enumeration that opened
+    // the write, and there is deliberately no second comparison of them here.
+    //
+    // The set is a function of the same walk whose file outputs are digested
+    // above, so a second comparison would be comparing two readings of one tree.
+    // The interesting case is the one it looks like it would catch -- a required
+    // directory that appears or disappears while leaving the file set alone,
+    // which is exactly an empty one -- and that case cannot reach this line:
+    //
+    //   - a new `committed/tx_*` directory is refused by `captureSourceIdentity`
+    //     immediately above, because a package's file set is part of the
+    //     authority contract and the canonical reader rejects a package that
+    //     holds none;
+    //   - a `committed/tx_*` directory that goes away takes its files with it,
+    //     which the content digest above reports first;
+    //   - the two directories that are required of every generation --
+    //     `transactions/committed` and `request-accounting/entries` -- are
+    //     required *because the walk found them*, so their absence is an ENOENT
+    //     from the re-enumeration rather than a difference between two sets;
+    //   - a run-state input that changes kind changes the file set with it.
+    //
+    // A comparison that no reachable tree can fail is not a safety property, it
+    // is a line that reads like one -- so the guarantee is stated here instead,
+    // where it can be argued about, rather than asserted by code that cannot be
+    // made to fail.  The layout is bound to the generation the same way the
+    // bytes are: it is read once, at the start, and every way it could have
+    // moved between then and the marker is refused upstream of this point.
+
     const authority = identityBefore.authority;
     const built = buildSnapshotManifest({
         snapshot_id: resolvedSnapshotId,
@@ -254,6 +282,12 @@ async function writeSnapshot({
         request_accounting: identityBefore.request_accounting,
         quota_config: identityBefore.quota_config,
         artifacts,
+        // Carried into the manifest rather than left implicit in the payload
+        // paths.  A generation whose ledger was empty has no artifact under
+        // `request-accounting/entries/`, and the canonical reader will not open
+        // a ledger root without that directory -- so the requirement has to be
+        // recorded as a requirement, not inferred from a file that is not there.
+        required_directories: inputsBefore.required_directories,
     });
 
     const manifestKey = manifestObjectKey(resolvedSnapshotId);
@@ -288,6 +322,7 @@ async function writeSnapshot({
         input_set_sha256: inputSetBefore,
         source_identity_equal: true,
         categories: inputsBefore.categories,
+        required_directories: inputsBefore.required_directories,
         staging_excluded: true,
         transport: transport.describe(),
     });
