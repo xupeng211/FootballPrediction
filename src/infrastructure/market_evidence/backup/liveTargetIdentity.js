@@ -29,14 +29,47 @@ const { canonicalizeKey } = require('./localTransport');
 
 const LIVE_TARGET_IDENTITY_SCHEMA_VERSION = 'stage-d-live-target-identity/v1';
 
-// One provider.  A closed enum is a stronger statement than a validated string:
-// this code path has been adjudicated for exactly one target class, and adding a
-// second is a design decision rather than a configuration value.
-const ALLOWED_PROVIDERS = Object.freeze(['cloudflare-r2']);
+// A closed enum, and it stays closed.  A closed enum is a stronger statement
+// than a validated string: it records which target classes this code path has
+// been adjudicated for, and every member is a design decision rather than a
+// configuration value.  That is why widening it is a reviewed act rather than
+// an edit.
+//
+// Two members, each admitted on its own decision:
+//
+//   cloudflare-r2 -- the original target class.
+//
+//   aws-s3        -- admitted after R2's provisioning was blocked on a payment
+//                    method the Owner could not supply and the work had to
+//                    continue against a different off-host target.  It was
+//                    admitted on official documentation rather than on a live
+//                    probe: conditional create is Amazon S3's own published
+//                    contract (`If-None-Match: "*"` on PutObject, 412 on an
+//                    existing key), Object Lock in compliance mode is
+//                    documented as irreversible by any principal including the
+//                    account root, and delete is independently deniable.  Its
+//                    create-only capability is therefore DOCUMENTED_SUPPORTED
+//                    and NOT live-proven.  Nothing here should be read as
+//                    claiming otherwise -- the live capability probe remains a
+//                    precondition of any real backup reaching this target.
+const ALLOWED_PROVIDERS = Object.freeze(['cloudflare-r2', 'aws-s3']);
 
-// R2's S3 API takes `auto` as the region.  Anything else means the operator is
-// addressing something other than the target this path was written for.
-const ALLOWED_REGIONS = Object.freeze(['auto']);
+// The region each admitted provider accepts, keyed by provider rather than held
+// as one flat list.  Region vocabularies do not overlap: `auto` is R2's S3 API's
+// own region value and is meaningless to Amazon S3, while an AWS region name is
+// meaningless to R2.  A pair drawn from two different providers names a target
+// that cannot resolve, so the pair is refused rather than forwarded -- the same
+// reason the provider list is closed.  A region is part of a target's identity,
+// not a tuning knob.
+const PROVIDER_REGIONS = Object.freeze({
+    'cloudflare-r2': Object.freeze(['auto']),
+    'aws-s3': Object.freeze(['ap-southeast-1']),
+});
+
+// The union, kept as the module's stated surface.  Validation uses
+// PROVIDER_REGIONS, because a union cannot say which region belongs to which
+// provider.
+const ALLOWED_REGIONS = Object.freeze([...new Set(Object.values(PROVIDER_REGIONS).flat())]);
 
 const REQUIRED_FIELDS = Object.freeze([
     'schema_version',
@@ -54,8 +87,13 @@ const MAX_IDENTITY_FILE_BYTES = 64 * 1024;
 const MAX_LABEL_LENGTH = 32;
 const LABEL_PATTERN = /^[a-z][a-z0-9-]*$/;
 
-// R2's documented bucket rules: 3-63 characters, lowercase letters, digits and
-// hyphens, beginning and ending alphanumeric.
+// The adjudicated bucket-name rules, which every admitted provider accepts:
+// 3-63 characters, lowercase letters, digits and hyphens, beginning and ending
+// alphanumeric.  These are R2's documented rules exactly, and Amazon S3's are a
+// superset that additionally permits dots -- so every name this pattern admits
+// is valid for both.  The pattern is deliberately the intersection rather than
+// the union: a name one admitted provider accepts and another refuses is not a
+// target, it is a provisioning mistake this file exists to catch.
 const BUCKET_PATTERN = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
 
 // A field name is printed only when it is safe to print.  Two independent
@@ -193,6 +231,41 @@ function validateEndpoint(value) {
     return parsed.origin;
 }
 
+// R2's endpoint is not a function of its region: it carries the account, as a
+// single label under Cloudflare's R2 host.  The label is deliberately not
+// constrained further -- the guarantee being made is that the host belongs to
+// the declared provider, not that the named account exists.
+const R2_ENDPOINT_PATTERN = /^https:\/\/[a-z0-9][a-z0-9-]*\.r2\.cloudflarestorage\.com$/;
+
+// A provider name in the enum closes the set of providers.  On its own it does
+// NOT close the set of hosts a request can reach, because the endpoint was
+// free-form: a target declaring `aws-s3` while naming an R2 endpoint loaded
+// happily, and the transport would then have signed requests with an AWS region
+// and sent them to whatever host that endpoint named.  A closed enum that does
+// not constrain the destination is a weaker guarantee than it looks, so the
+// endpoint is bound to the provider it was declared with -- and, for a provider
+// whose endpoint IS a function of its region, as Amazon S3's is, to that region
+// as well.
+//
+// The comparison is exact for S3 rather than a suffix match: a host that merely
+// ends in `amazonaws.com` is not necessarily the endpoint the declared region
+// resolves to, and admitting a set of unrecognised-but-plausible AWS hosts is
+// how a closed enum stops being closed.  A future need for another AWS endpoint
+// form (dualstack, FIPS, a VPC endpoint) is a reviewed widening of this rule,
+// in the same way that adding a provider is a reviewed widening of the enum.
+function assertEndpointBelongsToProvider(endpoint, provider, region) {
+    if (provider === 'aws-s3') {
+        const expected = `https://s3.${region}.amazonaws.com`;
+        if (endpoint !== expected) {
+            throw new LiveTargetIdentityError(`target identity field endpoint must be ${expected} for provider ${provider} in region ${region}; an endpoint belonging to another provider or another region would send a request signed for one target to a different host`);
+        }
+        return;
+    }
+    if (!R2_ENDPOINT_PATTERN.test(endpoint)) {
+        throw new LiveTargetIdentityError(`target identity field endpoint must be an endpoint belonging to provider ${provider}; a host belonging to a different provider, or to no provider, is refused rather than addressed`);
+    }
+}
+
 function validateLabel(value, field) {
     const text = stringField(value, field);
     if (text.length > MAX_LABEL_LENGTH) throw new LiveTargetIdentityError(`target identity field ${field} must be at most ${MAX_LABEL_LENGTH} characters`);
@@ -230,7 +303,13 @@ function parseTargetIdentity(text, source) {
     if (!BUCKET_PATTERN.test(bucket)) throw new LiveTargetIdentityError('target identity field bucket must be 3-63 characters of lowercase letters, digits and hyphens, beginning and ending alphanumeric');
 
     const region = stringField(raw.region, 'region');
-    if (!ALLOWED_REGIONS.includes(region)) throw new LiveTargetIdentityError(`target identity field region must be one of: ${ALLOWED_REGIONS.join(', ')}`);
+    const allowedRegions = PROVIDER_REGIONS[provider];
+    if (!allowedRegions.includes(region)) throw new LiveTargetIdentityError(`target identity field region must be one of: ${allowedRegions.join(', ')} for provider ${provider}`);
+
+    // After the region, because for one admitted provider the endpoint is a
+    // function of that region: the endpoint cannot be checked against a region
+    // that has not been established yet.
+    assertEndpointBelongsToProvider(endpoint, provider, region);
 
     const prefix = stringField(raw.prefix, 'prefix');
     try {
@@ -293,6 +372,7 @@ module.exports = {
     LIVE_TARGET_IDENTITY_SCHEMA_VERSION,
     ALLOWED_PROVIDERS,
     ALLOWED_REGIONS,
+    PROVIDER_REGIONS,
     REQUIRED_FIELDS,
     MAX_IDENTITY_FILE_BYTES,
 };
