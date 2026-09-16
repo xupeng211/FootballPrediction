@@ -261,15 +261,22 @@ may make future provider information visible to an earlier as-of query.
 The current canonical authority failure domain and every locally discovered
 artifact path are `/dev/nvme0n1p5`. A same-disk directory is explicitly not a
 backup target. An independent off-host target **is** configured — a self-hosted
-S3-compatible endpoint with `create_only: true` and no delete verb — and a real
-canonical backup, its remote verification and an isolated restore from merged
-main have been proven against it. That proof closed Blocker #3 and was accepted
-as Gate 2 (`BLOCKER_3=CLOSED`, `GATE_2=ACCEPTED`; see
+S3-compatible endpoint with `create_only: true` and no delete verb — and it holds
+a real canonical backup generation,
+`snap_20260915T125353656Z_d059e495e3047958`, written to it before this closure.
+From merged main the closure proved that generation's remote verification and an
+isolated restore of it. That proof closed Blocker #3 and was accepted as Gate 2
+(`BLOCKER_3=CLOSED`, `GATE_2=ACCEPTED`; see
 [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md)). An earlier
 revision of this section stated that no independent target was configured and
 that no production backup or restore proof existed; that statement is superseded
-by the closure. The proof performed no live write and no delete
-(`writes_performed=0`, `deletes_performed=0`). `OFF_HOST=YES` with `OFF_SITE=NO`,
+by the closure. The closure's own operations wrote no new generation and deleted
+nothing: it drove the real executor against the existing generation read-only and
+re-read it with `listObjects`/`getObject` only — `baseline_object_count: 14` →
+`observed_object_count: 14`, `differences: []` — so `writes_performed=0`,
+`deletes_performed=0` and `NEW_BACKUP_GENERATION_WRITTEN=NO` scope to those
+read-only operations, not to the earlier remote write that created the
+generation. `OFF_HOST=YES` with `OFF_SITE=NO`,
 and `DHCP_RESERVATION_STATUS=NOT_CONFIGURED`, remain registered non-blocking
 hardening items rather than Gate 2 conditions. Neither the closure nor the
 approved `RPO`/`RTO` objectives authorize any further backup generation or
