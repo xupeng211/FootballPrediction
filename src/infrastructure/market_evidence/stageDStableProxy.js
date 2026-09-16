@@ -470,10 +470,8 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
 
         const onData = chunk => {
             buffer += chunk.toString('latin1');
-            if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES && phase === 'connect_response') {
-                settle(PROXY_CONNECT_PROTOCOL_INVALID, 'response_too_large');
-                return;
-            }
+            // Each reader bounds its own buffer, so there is no cap here: a proxy that
+            // pipelines data behind its response head must not be failed for the head.
             if (phase === 'connect_response') readConnectResponse();
             if (!settled && phase === 'tunnel_proof') readNonceEcho();
         };

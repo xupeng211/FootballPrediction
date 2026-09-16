@@ -446,6 +446,23 @@ test('a listener that closes before completing a status line fails closed prompt
     assert.equal(Date.now() - startedAt < 5000, true, 'an incomplete status line must not wait out the inactivity timeout');
 });
 
+test('an unbounded response head fails closed instead of growing without limit', async t => {
+    // Every stage is bounded: a peer that streams bytes without ever completing a status
+    // line, or without ever terminating the response head, is cut off rather than allowed
+    // to hold the preflight -- and the process -- open indefinitely.
+    const endlessStatusLine = await startProxyStandIn(t, socket => socket.write(`HTTP/1.1 200 ${'x'.repeat(9000)}`));
+    const statusLine = await preflight(endlessStatusLine.port, { timeoutMs: 30000 });
+    assert.equal(statusLine.passed, false);
+    assert.equal(statusLine.classification, PROXY_CONNECT_PROTOCOL_INVALID);
+    assert.equal(statusLine.detail, 'response_too_large');
+
+    const endlessHead = await startProxyStandIn(t, socket => socket.write(`HTTP/1.1 200 Connection Established\r\nX-Pad: ${'x'.repeat(9000)}\r\n`));
+    const head = await preflight(endlessHead.port, { timeoutMs: 30000 });
+    assert.equal(head.passed, false);
+    assert.equal(head.classification, PROXY_CONNECT_PROTOCOL_INVALID);
+    assert.equal(head.detail, 'connect_response_head_too_large');
+});
+
 test('a silent listener times out rather than passing', async t => {
     const proxy = await startProxyStandIn(t, () => undefined);
     const result = await preflight(proxy.port, { timeoutMs: 150 });
