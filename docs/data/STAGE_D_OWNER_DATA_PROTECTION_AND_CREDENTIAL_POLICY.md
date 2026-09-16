@@ -184,7 +184,8 @@ preflight.
   approved local secret environment, and it makes no claim about provider-side revocation beyond
   the Owner's statement that the old credential must not be used.
 - **It does not by itself make every current-state document coherent, and the one place that
-  mattered needed two rounds of repair under two separate Controller authorizations.** One
+  mattered needed two rounds of repair under two separate Controller authorizations, neither of
+  which added a file.** One
   further current-state contract,
   [`STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`](STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md),
   declares `lifecycle: current-state contract`. Part of it was **already** coherent with
@@ -210,9 +211,15 @@ preflight.
   `LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED` and `LIVE_TARGET_CONTACTED=NO` — which read as bare
   current state but describe only what that workstream established and did, and one blanket
   sentence reading the contract's word "the target" as an address nobody had contacted. Each is
-  now scoped in place to that workstream rather than left contradicting the accepted closure.
-  Its `POLICY_B_STATUS=PROPOSED_NOT_APPROVED`
-  remains correct, and this record preserves that token unchanged. Documentation coherence only:
+  now scoped in place to that workstream rather than left contradicting the accepted closure. That
+  second round was authorized the same way and with the same shape as the first: the Execution
+  Controller expanded the **purpose** inside the one path already authorized
+  (`EXISTING_PATH_PURPOSE_EXPANSION=YES`, `PATH_EXPANSION_COUNT=1`, `NEW_PATH_EXPANSION=NO`) rather
+  than adding a file, and the mission-scope artifact records that expansion. An independent review
+  blocked an earlier revision of this round as exceeding the narrower purpose recorded at the time;
+  the expansion is what resolves that, not a restatement of it. Its
+  `POLICY_B_STATUS=PROPOSED_NOT_APPROVED` remains correct, and this record preserves that token
+  unchanged. Documentation coherence only:
   it changes no state token, `GATE_3` included.
 
 Related: [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md),
