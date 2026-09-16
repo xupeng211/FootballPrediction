@@ -37,6 +37,7 @@
   ],
   "excluded_tokens": [
     "betfair",
+    "docker-compose",
     "migration",
     "model-activation",
     "oddsportal",

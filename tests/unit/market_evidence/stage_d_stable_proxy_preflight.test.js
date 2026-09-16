@@ -235,7 +235,11 @@ test('proxy credentials are never reachable through enumeration or serialization
     // Only the agent-URL builder re-attaches them.  URL pre-encodes userinfo, so the
     // builder must splice it back verbatim rather than encoding it a second time.
     assert.equal(buildStageDProxyAgentUrl(endpoint), url);
-    const special = resolveEndpoint({ port: 3128, credentials: { username: 'fake@user', password: 'fake:p@ss' } });
+    // The two characters that break naive URL assembly: an "@" in the username and a ":"
+    // plus an "@" in the secret.  Splicing the encoded userinfo through verbatim is what
+    // keeps these intact; encoding it a second time would mangle both.
+    const awkwardUserInfo = 'fake:p@ss';
+    const special = resolveEndpoint({ port: 3128, credentials: { username: 'fake@user', password: awkwardUserInfo } });
     assert.equal(buildStageDProxyAgentUrl(special), 'http://fake%40user:fake%3Ap%40ss@127.0.0.1:3128');
 });
 

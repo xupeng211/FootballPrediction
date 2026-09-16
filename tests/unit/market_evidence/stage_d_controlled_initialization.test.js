@@ -37,9 +37,15 @@ const {
     PROXY_URL_INVALID,
     PROXY_TCP_CONNECT_FAILED,
     PROXY_CONNECT_PROTOCOL_INVALID,
+    STAGE_D_PROXY_PROBE_DESTINATION,
     resolveStageDStableProxyEndpoint,
     createStageDHttpConnectProxyPreflight,
 } = require('../../../src/infrastructure/market_evidence/stageDStableProxy');
+
+// The contract's own privileged, essentially never-bound loopback address.  Naming it
+// here rather than repeating the literal keeps the "definitely dead endpoint" claim tied
+// to the address the contract actually probes.
+const DEAD_ENDPOINT_URL = `http://${STAGE_D_PROXY_PROBE_DESTINATION.host}:${STAGE_D_PROXY_PROBE_DESTINATION.port}`;
 
 const START = '2026-09-08T00:00:00Z';
 const AUTHORIZATION_NOW = '2026-09-08T08:00:00Z';
@@ -524,7 +530,7 @@ test('a dead proxy endpoint fails closed before the authorization is consumed', 
     // Port 1 is privileged and never bound, so the refusal is deterministic.
     const ctx = makeContext(t);
     const proxyPreflight = createStageDHttpConnectProxyPreflight({
-        endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: 'http://127.0.0.1:1' }),
+        endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: DEAD_ENDPOINT_URL }),
         timeoutMs: 2000,
     });
     const components = componentsFor(ctx, { proxyPreflight });
