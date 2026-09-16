@@ -75,9 +75,15 @@ Adapter 只解析 The Odds API 当前 EPL `h2h` / `h2h_lay` 形状；未知、�
 受影响测试覆盖 observation contract、schema、production allocation bootstrap/reopen、trusted local root 内的 mapping/decision/T2 consistency、quarantine recovery、prospective zero-write、receipt/capture idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename 与 post-rename unknown outcome。独立 Node 子进程测试同时覆盖 identical writers（one commit + reuse）、competing writers（one commit + stale parent）和 fresh-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；targeted JS profile 会先校验/初始化 lockfile dependency tree，并拒绝 global ESLint fallback；`changed_files=0` / no-op 不算通过。
 
 上述 Stage C review / merge / main Gate 是已完成生命周期事实；实时 SHA/CI 状态仍从 Git/GitHub 获取。
-Stage D readiness = `GO_WITH_CONDITIONS`，`STAGE_D_STARTED=NO`。下一步是 Owner 确认
-provider quota/permission、production authority root、independent backup、retention/RPO/RTO、
-credential rotation，再单独授权一次 bounded live preflight。当前战线见
+Stage D readiness = `GO_WITH_CONDITIONS`，`STAGE_D_STARTED=NO`。Owner 侧确认项已逐项结清：
+quota configuration 已闭合（`STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY`，
+`config/stage_d_quota_budget.json` 携带 `quota_evidence_verified=true`）；production authority
+root 与 independent backup 随 Blocker #2 / Blocker #3 结清；retention/RPO/RTO 与 credential
+rotation 已由 Owner 批准，记录于
+[`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)。
+provider retention/analytical-use/redistribution/commercial terms 按上文仍属 production promotion
+门禁，不由本 pilot 或该批准覆盖。剩下的动作是**另行单独授权一次 bounded live preflight**；
+`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。当前战线见
 [ACTIVE_MILESTONE](../ACTIVE_MILESTONE.md) 与 [PROJECT_STATUS](../PROJECT_STATUS.md)。
 
 ## FUTURE_WORK

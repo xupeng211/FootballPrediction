@@ -60,10 +60,18 @@ provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epo
 本地 epoch 内 consumed requests 为零。该候选不启动 Stage D，不创建 RAW 或 transaction，也
 不启用 scheduler。
 
-下一步尚待 Owner/independent infrastructure：指定独立物理故障域的 backup target；批准或修订
-retention/RPO/RTO；轮换已暴露 credential；在这些证据与 isolated restore proof 完整后，才可
-另行考虑 bounded live preflight；Blocker #2 的 runtime filesystem permission 与 Blocker #3
-的 independent backup fault-domain 仍未解决。不得使用旧凭据、消耗 quota 或启动 continuous scheduler。
+Owner 数据保护与凭据治理已由 Owner 裁定，并记录于
+[`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](data/STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)：
+`RETENTION_POLICY_APPROVED=YES`（`RAW_RETENTION=LONG_TERM_NO_ROUTINE_DELETION`、
+`PRIMARY_DATA_RETENTION=LONG_TERM`、`INDEPENDENT_BACKUP_RETENTION_MINIMUM=180_DAYS`、
+`MINIMUM_RECENT_SUCCESSFUL_BACKUP_GENERATIONS=30`）、`RPO_APPROVED=24_HOURS`、
+`RTO_APPROVED=24_HOURS`，且 `CREDENTIAL_ROTATION_COMPLETED=YES`——已暴露的 provider credential
+已轮换，旧凭据不得再用于任何 live request，替代凭据只存在于 approved local secret environment。
+此前由本文件列为待办的 pre-Stage-D Owner 前置项（independent backup target、retention/RPO/RTO、
+credential rotation）连同 Blocker #2 的 runtime filesystem permission 至此均已结清：
+`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`。这些批准**不**授权 Gate 3、**不**授权任何 live request，
+也不启动 Stage D——`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持不变，仍不得消耗 quota
+或启动 continuous scheduler。
 Stage C 细节见 [`Stage C pilot`](data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md)，
 Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
 

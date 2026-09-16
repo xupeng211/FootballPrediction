@@ -276,9 +276,24 @@ snapshot only a cold-load-valid transaction root, then restore to an isolated
 root and prove the exact head/state/registry/provenance/ledger again before
 being called a backup.
 
-Proposed but unapproved service policy is: irrecoverable evidence retained
+Proposed but unapproved service policy was: irrecoverable evidence retained
 indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.
-`OWNER_APPROVAL_REQUIRED=YES`.
+`OWNER_APPROVAL_REQUIRED=YES`. **That approval has since been given.** The Owner
+has approved retention, RPO and RTO, recorded in
+[`STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md).
+The approved values are `RAW_RETENTION=LONG_TERM_NO_ROUTINE_DELETION`,
+`PRIMARY_DATA_RETENTION=LONG_TERM`,
+`INDEPENDENT_BACKUP_RETENTION_MINIMUM=180_DAYS`,
+`MINIMUM_RECENT_SUCCESSFUL_BACKUP_GENERATIONS=30`, `RPO_APPROVED=24_HOURS` and
+`RTO_APPROVED=24_HOURS`. The approved `RPO` agrees with the proposal above; the
+approved `RTO` deliberately does **not** — the Owner approved 24 hours where this
+contract proposed 4 hours, so `RTO_APPROVED=24_HOURS` is now the binding
+objective and the proposed `RTO <= 4h` is superseded rather than silently
+restated. Operational log retention was not addressed by that approval and
+remains unapproved. Those six values are approved **objectives**, not measured or
+exercised results: no backup, failover or recovery drill has been run against
+them, and the approval authorizes no Stage D start, no provider request and no
+change to `GATE_3`.
 
 ## Runtime filesystem permission contract (Blocker #2)
 
