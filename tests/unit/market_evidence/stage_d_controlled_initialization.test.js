@@ -32,20 +32,23 @@ const {
 const {
     STAGE_D_STABLE_PROXY_CONTRACT,
     STAGE_D_PROXY_ENDPOINT_ENV_VAR,
+    STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
     PROXY_URL_INVALID,
     PROXY_TCP_CONNECT_FAILED,
     PROXY_CONNECT_PROTOCOL_INVALID,
-    STAGE_D_PROXY_PROBE_DESTINATION,
+    PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     resolveStageDStableProxyEndpoint,
+    resolveStageDPreflightTarget,
     createStageDHttpConnectProxyPreflight,
 } = require('../../../src/infrastructure/market_evidence/stageDStableProxy');
 
-// The contract's own privileged, essentially never-bound loopback address.  Naming it
-// here rather than repeating the literal keeps the "definitely dead endpoint" claim tied
-// to the address the contract actually probes.
-const DEAD_ENDPOINT_URL = `http://${STAGE_D_PROXY_PROBE_DESTINATION.host}:${STAGE_D_PROXY_PROBE_DESTINATION.port}`;
+// The contract's own privileged, essentially never-bound loopback address.  Naming it as
+// an explicitly configured probe target keeps the "definitely dead endpoint" claim tied to
+// an address nothing is listening on, without relying on any implicit default.
+const DEAD_ENDPOINT_URL = 'http://127.0.0.1:1';
+const INERT_TARGET = resolveStageDPreflightTarget({ [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: 'tcp://127.0.0.1:9' });
 
 const START = '2026-09-08T00:00:00Z';
 const AUTHORIZATION_NOW = '2026-09-08T08:00:00Z';
@@ -531,6 +534,7 @@ test('a dead proxy endpoint fails closed before the authorization is consumed', 
     const ctx = makeContext(t);
     const proxyPreflight = createStageDHttpConnectProxyPreflight({
         endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: DEAD_ENDPOINT_URL }),
+        target: INERT_TARGET,
         timeoutMs: 2000,
     });
     const components = componentsFor(ctx, { proxyPreflight });
@@ -560,6 +564,27 @@ test('a missing dedicated endpoint fails closed even while the rotating harvesti
     await assert.rejects(
         executeStageDControlledInitialization(binderOptions(ctx, components)),
         error => error.code === PROXY_CONFIGURATION_MISSING,
+    );
+
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+    assert.equal(components.transport.call_count, 0);
+});
+
+test('an unconfigured probe target fails closed before the authorization is consumed', async t => {
+    // The probe target is a second, separate contract.  A Stage D cycle with an endpoint but
+    // no configured target has nothing the proxy could be proven against, so it must stop
+    // before authority is spent rather than probing something implicit.
+    const ctx = makeContext(t);
+    const proxyPreflight = createStageDHttpConnectProxyPreflight({
+        endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: 'http://127.0.0.1:1' }),
+        env: {},
+    });
+    const components = componentsFor(ctx, { proxyPreflight });
+
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     );
 
     assert.equal(consumptionMarkers(ctx).length, 0);

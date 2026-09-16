@@ -19,6 +19,7 @@ const { isVerifiedProspectiveTransactionCandidate, buildProspectiveMarketEvidenc
 const {
     STAGE_D_STABLE_PROXY_CONTRACT,
     resolveStageDStableProxyEndpoint,
+    resolveStageDPreflightTarget,
     buildStageDProxyAgentUrl,
     createStageDHttpConnectProxyPreflight,
 } = require('./stageDStableProxy');
@@ -2305,18 +2306,27 @@ async function executeStageDControlledInitialization(options = {}) {
         // preflight below is the same object the transport transmits through.  There is
         // no window in which the proven endpoint and the used endpoint can diverge.
         const proxyEndpoint = resolveStageDStableProxyEndpoint();
+        // The probe target is a separate contract from the endpoint: the proxy is what must
+        // be proven, the target is what it must prove itself against.  It is resolved here,
+        // before any socket is opened and long before authority is spent, so an unconfigured
+        // target fails closed with nothing consumed.  Nothing infers it from the host's
+        // routes, addresses or container topology.
+        const proxyPreflightTarget = resolveStageDPreflightTarget(process.env, { proxyEndpoint });
         boundTransport = createStageDOddsApiTransport({ endpoint: proxyEndpoint });
         boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
         boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
         boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
-        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint });
+        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget });
     }
     // ORDERING INVARIANT.  The Stage D proxy contract is proven before the one-shot
     // authorization is spent: configuration resolution, then the HTTP CONNECT protocol
-    // preflight, and only then consumption.  A dead, missing or non-CONNECT endpoint
-    // therefore leaves AUTHORIZATION_CONSUMED=NO, PROVIDER_REQUEST_ATTEMPTED=NO and
-    // QUOTA_UNITS_CHARGED_OR_ASSUMED=0.  The preflight is provider-independent, so it
-    // cannot contact The Odds API, resolve provider DNS or consume provider quota.
+    // preflight, and only then consumption.  A dead, missing, non-CONNECT or
+    // non-tunnelling endpoint therefore leaves AUTHORIZATION_CONSUMED=NO,
+    // PROVIDER_REQUEST_ATTEMPTED=NO and QUOTA_UNITS_CHARGED_OR_ASSUMED=0.  Passing
+    // requires a strict 2xx CONNECT to the configured project-controlled target AND a
+    // nonce round trip through the resulting tunnel, so a synthetic 200 that opens no
+    // tunnel fails here rather than spending authority.  The preflight never names the
+    // provider, so it cannot contact The Odds API, resolve provider DNS or consume quota.
     const proxyPreflightResult = await boundProxyPreflight.run();
     if (proxyPreflightResult?.passed !== true) {
         fail(proxyPreflightResult?.classification || 'PROXY_PREFLIGHT_FAILED', 'Stage D stable HTTP CONNECT proxy preflight did not pass');

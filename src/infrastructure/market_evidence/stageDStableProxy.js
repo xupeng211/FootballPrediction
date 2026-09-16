@@ -15,53 +15,57 @@
 //      proxy, or to a direct connection -- a silent fallback is exactly the defect
 //      that spent the previous one-shot authorization.
 //
-//   2. PROVIDER-INDEPENDENT PROOF.  The preflight proves the endpoint speaks HTTP
-//      CONNECT by sending a CONNECT for a deliberately unusable loopback address.
-//      It never names the provider, so it cannot resolve provider DNS, cannot send
-//      provider traffic, and cannot consume provider quota.
+//   2. PROVEN TUNNEL, NOT A PROVEN STATUS LINE.  A proxy is not proven because it
+//      returned something HTTP-shaped.  It is proven only when it accepts CONNECT
+//      for a project-controlled target, answers with a strict 2xx, and then carries
+//      a fresh random nonce through the tunnel that the target echoes back.  The
+//      preflight never names the provider, so it cannot resolve provider DNS, cannot
+//      send provider traffic, and cannot consume provider quota.
+//
+// Why the strict 2xx rule needs the probe target to be genuinely reachable: a proxy
+// answers a CONNECT for a destination it cannot reach with a proxy-class refusal
+// (502/504).  Those refusals are indistinguishable from what an ordinary origin
+// server returns to a CONNECT it does not implement, so accepting any non-2xx would
+// admit a non-proxy endpoint through the last gate before one-shot authority is
+// spent.  Requiring 2xx therefore only works against a target the proxy can
+// actually tunnel to -- which is why this module takes one as explicit
+// configuration rather than probing a deliberately unusable address.
 
+const crypto = require('node:crypto');
 const net = require('node:net');
 const tls = require('node:tls');
 
 const STAGE_D_STABLE_PROXY_CONTRACT = 'stage-d-dedicated-single-stable-http-connect-proxy/v1';
 
-// The canonical existing variable for this concept.  It is reused rather than
+// The canonical existing variable for the proxy endpoint.  It is reused rather than
 // duplicated: a second name for the same endpoint would be a configuration
 // ambiguity, which is the failure mode this contract exists to remove.
 const STAGE_D_PROXY_ENDPOINT_ENV_VAR = 'THE_ODDS_API_PROXY_URL';
 
+// A separate contract from the proxy endpoint: the proxy is the thing being proven,
+// the target is the thing it must prove itself against.  Conflating them would let an
+// endpoint prove itself by talking to itself.
+const STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR = 'STAGE_D_PROXY_PREFLIGHT_TARGET_URL';
+const STAGE_D_PROXY_PREFLIGHT_TARGET_PROTOCOL = 'tcp:';
+
 const STAGE_D_PROXY_SUPPORTED_PROTOCOLS = Object.freeze(['http:', 'https:']);
 const STAGE_D_PROXY_DEFAULT_PORTS = Object.freeze({ 'http:': 80, 'https:': 443 });
 
-// A bounded probe.  The endpoint is expected to be local, on the LAN, or otherwise
-// project-controlled, so the ceiling is deliberately far below the provider request
-// timeout rather than inherited from it.
+// A bounded probe.  The proxy and its target are expected to be project-controlled,
+// so the ceiling is deliberately far below the provider request timeout rather than
+// inherited from it.  It bounds each stage by inactivity; the probe additionally
+// enforces a hard overall deadline so no stage can extend the total.
 const STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS = 5000;
 
-// The CONNECT target is a privileged, essentially never-bound loopback port on the
-// proxy's own host, so the probe never asks the endpoint to reach anything real.  Because
-// the destination is unusable by construction, a working proxy answers with a proxy-class
-// refusal rather than an open tunnel; PROXY_CONNECT_PROOF_STATUSES below is the exact set
-// of responses this contract treats as proof of HTTP CONNECT support.
-const STAGE_D_PROXY_PROBE_DESTINATION = Object.freeze({ host: '127.0.0.1', port: 1 });
-
 const STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES = 8192;
+const STAGE_D_PROXY_NONCE_BYTES = 16;
 
-// The only statuses that prove the endpoint implements HTTP CONNECT for this request.
-//
-// A 2xx means the tunnel opened.  403 is a proxy policy refusal, and 502/503/504 are the
-// proxy failure classes for a tunnel that could not be established.  The probe destination
-// is deliberately unusable, so a working proxy cannot answer 2xx here: a proxy-class
-// refusal is the expected positive result, and 2xx is the rarer case.
-//
-// Everything else fails closed, because it proves nothing about the endpoint's ability to
-// proxy the governed request.  400, 404, 405 and 501 are specifically what an ordinary HTTP
-// origin server answers to a CONNECT it does not implement, and 405/501 are the signatures
-// the reviewer of this contract named.  Accepting them would let a non-proxy endpoint pass
-// the last gate before the one-shot authorization is spent -- the exact fail-open the
-// STAGE_D_PROXY_FALLBACK=NONE invariant exists to prevent.  A missing status here is
-// therefore a deliberate refusal, not an oversight.
-const PROXY_CONNECT_PROOF_STATUSES = Object.freeze([403, 502, 503, 504]);
+// The data-plane proof.  The binder writes one line through the established tunnel
+// and the project-controlled target must echo the nonce back verbatim.  The nonce is
+// random per run and is not a secret: its only job is to be unguessable by a stale,
+// synthetic or third-party responder that never actually carried bytes for us.
+const STAGE_D_PROXY_NONCE_PROTOCOL = 'stage-d-preflight-nonce-echo/v1';
+const STAGE_D_PROXY_NONCE_REQUEST_PREFIX = 'STAGE-D-PREFLIGHT';
 
 const PROXY_PREFLIGHT_PASS = 'PROXY_PREFLIGHT_PASS';
 const PROXY_CONFIGURATION_MISSING = 'PROXY_CONFIGURATION_MISSING';
@@ -70,9 +74,14 @@ const PROXY_DNS_OR_ADDRESS_RESOLUTION_FAILURE = 'PROXY_DNS_OR_ADDRESS_RESOLUTION
 const PROXY_TCP_CONNECT_FAILED = 'PROXY_TCP_CONNECT_FAILED';
 const PROXY_TLS_HANDSHAKE_FAILED = 'PROXY_TLS_HANDSHAKE_FAILED';
 const PROXY_CONNECT_PROTOCOL_INVALID = 'PROXY_CONNECT_PROTOCOL_INVALID';
+const PROXY_CONNECT_TUNNEL_REFUSED = 'PROXY_CONNECT_TUNNEL_REFUSED';
+const PROXY_CONNECT_TUNNEL_PROOF_FAILED = 'PROXY_CONNECT_TUNNEL_PROOF_FAILED';
 const PROXY_CONNECT_PREFLIGHT_TIMEOUT = 'PROXY_CONNECT_PREFLIGHT_TIMEOUT';
 const PROXY_AUTHENTICATION_CONFIGURATION_FAILURE = 'PROXY_AUTHENTICATION_CONFIGURATION_FAILURE';
 const STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID = 'STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID';
+const PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING = 'PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING';
+const PROXY_PREFLIGHT_TARGET_URL_INVALID = 'PROXY_PREFLIGHT_TARGET_URL_INVALID';
+const PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY = 'PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY';
 
 const PROXY_PREFLIGHT_CLASSIFICATIONS = Object.freeze([
     PROXY_PREFLIGHT_PASS,
@@ -82,6 +91,8 @@ const PROXY_PREFLIGHT_CLASSIFICATIONS = Object.freeze([
     PROXY_TCP_CONNECT_FAILED,
     PROXY_TLS_HANDSHAKE_FAILED,
     PROXY_CONNECT_PROTOCOL_INVALID,
+    PROXY_CONNECT_TUNNEL_REFUSED,
+    PROXY_CONNECT_TUNNEL_PROOF_FAILED,
     PROXY_CONNECT_PREFLIGHT_TIMEOUT,
     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
 ]);
@@ -103,7 +114,7 @@ const TRANSPORT_FAILURE_CODES = Object.freeze([
 
 // Proxy credentials are held off the enumerable surface of the endpoint object so
 // that JSON.stringify, Object.keys, spread and structured logging cannot carry them
-// into evidence by accident.  Only buildStageDProxyAgentUrl reads them.
+// into evidence by accident.  Only buildStageDProxyAuthorizationHeader reads them.
 const PROXY_CREDENTIALS = Symbol('stageDStableProxyCredentials');
 
 function failStageDProxy(code, message) {
@@ -184,12 +195,109 @@ function resolveStageDStableProxyEndpoint(env = process.env) {
     return Object.freeze(endpoint);
 }
 
+// Resolves the single configured preflight target, or fails closed.
+//
+// The target is a project-controlled TCP listener that the proxy must be able to
+// reach THROUGH ITS FORWARDING PATH -- not the proxy listener itself, not a public
+// website, not a provider host.  Its address is expressed in the proxy's coordinate
+// system, so it is explicit configuration in every environment; nothing here infers
+// it from socket.localAddress, host routes, a Docker gateway or anything else about
+// the current workstation.
+function parseStageDPreflightTargetUrl(candidate) {
+    let parsed;
+    try {
+        parsed = new URL(candidate);
+    } catch {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must be an absolute URL of the form tcp://host:port`);
+    }
+    if (parsed.protocol !== STAGE_D_PROXY_PREFLIGHT_TARGET_PROTOCOL) {
+        failStageDProxy(
+            PROXY_PREFLIGHT_TARGET_URL_INVALID,
+            `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must use the tcp: scheme; `
+            + `scheme "${parsed.protocol.replace(':', '')}" is not permitted for the preflight probe target`,
+        );
+    }
+    if (parsed.username !== '' || parsed.password !== '') {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must not carry userinfo; the probe target carries no credentials`);
+    }
+    if (parsed.pathname !== '' || parsed.search !== '' || parsed.hash !== '') {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must be exactly tcp://host:port with no path, query or fragment`);
+    }
+    if (typeof parsed.hostname !== 'string' || parsed.hostname === '') {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must name a host`);
+    }
+    if (parsed.port === '') {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must name an explicit port; the tcp: scheme has no default port`);
+    }
+    return parsed;
+}
+
+function resolveStageDPreflightTarget(env = process.env, { proxyEndpoint = null } = {}) {
+    const raw = env?.[STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR];
+    if (typeof raw !== 'string' || raw.trim() === '') {
+        failStageDProxy(
+            PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
+            `Stage D requires an explicit ${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} naming one project-controlled TCP target `
+            + 'reachable through the proxy forwarding path; there is no default target and no public-Internet fallback',
+        );
+    }
+    const parsed = parseStageDPreflightTargetUrl(raw.trim());
+    const port = Number(parsed.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must name a port between 1 and 65535`);
+    }
+    const target = Object.freeze({
+        host: parsed.hostname,
+        port,
+        redacted: `tcp://${parsed.hostname}:${port}`,
+    });
+    // An endpoint cannot prove itself by talking to itself: if the target is the proxy
+    // listener, a CONNECT would be answered by the very thing under test.  This is a
+    // literal host:port comparison, not a DNS equivalence check, so it only rejects
+    // the case that is decidable without resolution.
+    if (proxyEndpoint && proxyEndpoint.host === target.host && proxyEndpoint.port === target.port) {
+        failStageDProxy(
+            PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
+            `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must not name the proxy listener itself (${target.redacted} is the configured ${STAGE_D_PROXY_ENDPOINT_ENV_VAR})`,
+        );
+    }
+    return target;
+}
+
+// Canonical HTTP CONNECT credential attachment, shared by the preflight and the
+// governed transport.
+//
+// `https-proxy-agent` builds the header as
+//   Basic base64(decodeURIComponent(user) + ':' + decodeURIComponent(pass))
+// -- it percent-DECODES the URL userinfo before encoding the Basic payload.  The
+// preflight must produce byte-identical material, or it would authenticate with
+// different credentials than the transport it exists to gate: a secret containing
+// "@" or ":" would reach the proxy as "%40"/"%3A" and be rejected with a 407 that
+// says nothing about the transport's real chances.
+function buildStageDProxyAuthorizationHeader(endpoint) {
+    const credentials = endpoint[PROXY_CREDENTIALS];
+    if (!credentials) return null;
+    let username;
+    let password;
+    try {
+        username = decodeURIComponent(credentials.username);
+        password = decodeURIComponent(credentials.password);
+    } catch {
+        failStageDProxy(
+            PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
+            `${STAGE_D_PROXY_ENDPOINT_ENV_VAR} carries userinfo that is not valid percent-encoding`,
+        );
+    }
+    return `Basic ${Buffer.from(`${username}:${password}`, 'utf8').toString('base64')}`;
+}
+
 // Re-attaches credentials only at the point the agent is constructed.  Callers must
 // never log, persist or include the returned URL in an error message.
 //
 // `URL` hands back userinfo already percent-encoded, so re-encoding here would
-// double-encode it: a password containing "@" would reach the proxy as "%40" and be
-// rejected with a confusing 407.  The values are spliced in verbatim.
+// double-encode it and the agent's own decodeURIComponent would then yield the wrong
+// secret.  The values are spliced in verbatim so the agent decodes exactly what the
+// operator configured.
 function buildStageDProxyAgentUrl(endpoint) {
     const credentials = endpoint[PROXY_CREDENTIALS];
     const auth = credentials
@@ -198,29 +306,51 @@ function buildStageDProxyAgentUrl(endpoint) {
     return `${endpoint.scheme}://${auth}${endpoint.authority}`;
 }
 
-function buildStageDConnectProbe(endpoint) {
-    const destination = STAGE_D_PROXY_PROBE_DESTINATION;
-    const credentials = endpoint[PROXY_CREDENTIALS];
-    const authLine = credentials
-        ? `Proxy-Authorization: Basic ${Buffer.from(`${credentials.username}:${credentials.password}`, 'utf8').toString('base64')}\r\n`
-        : '';
-    return `CONNECT ${destination.host}:${destination.port} HTTP/1.1\r\n`
-        + `Host: ${destination.host}:${destination.port}\r\n`
-        + authLine
+function buildStageDConnectProbe(endpoint, target) {
+    const destination = `${target.host}:${target.port}`;
+    const authorization = buildStageDProxyAuthorizationHeader(endpoint);
+    return `CONNECT ${destination} HTTP/1.1\r\n`
+        + `Host: ${destination}\r\n`
+        + (authorization ? `Proxy-Authorization: ${authorization}\r\n` : '')
         + '\r\n';
 }
 
-function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
+function buildStageDNonceProbe(challenge) {
+    return `${STAGE_D_PROXY_NONCE_REQUEST_PREFIX} ${challenge.probe_id} ${challenge.nonce}\n`;
+}
+
+function createStageDPreflightChallenge() {
+    return Object.freeze({
+        probe_id: crypto.randomBytes(8).toString('hex'),
+        nonce: crypto.randomBytes(STAGE_D_PROXY_NONCE_BYTES).toString('hex'),
+    });
+}
+
+// Locates the end of the CONNECT response head.  The tunnel's data plane begins
+// immediately after it, so anything already buffered past this point belongs to the
+// nonce exchange rather than to the HTTP response.
+function findConnectResponseHeadEnd(buffer) {
+    const crlf = buffer.indexOf('\r\n\r\n');
+    if (crlf !== -1) return crlf + 4;
+    const lf = buffer.indexOf('\n\n');
+    if (lf !== -1) return lf + 2;
+    return -1;
+}
+
+function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, challenge }) {
     return new Promise(resolve => {
         const startedAt = clock();
         let settled = false;
         let socket = null;
+        let overallTimer = null;
         let tlsEstablished = false;
         let buffer = '';
+        let phase = 'connect_response';
 
         const settle = (classification, detail) => {
             if (settled) return;
             settled = true;
+            if (overallTimer) clearTimeout(overallTimer);
             if (socket) {
                 socket.removeAllListeners();
                 // destroy() itself emits only 'close', but a pending write or an RST can
@@ -233,6 +363,8 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
             resolve(Object.freeze({
                 schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
                 proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
+                nonce_protocol: STAGE_D_PROXY_NONCE_PROTOCOL,
+                proof_level: 'L3',
                 classification,
                 passed: classification === PROXY_PREFLIGHT_PASS,
                 endpoint: endpoint.redacted,
@@ -240,7 +372,8 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
                 host: endpoint.host,
                 port: endpoint.port,
                 has_credentials: endpoint.has_credentials,
-                probe_destination: `${STAGE_D_PROXY_PROBE_DESTINATION.host}:${STAGE_D_PROXY_PROBE_DESTINATION.port}`,
+                target: target.redacted,
+                nonce_verified: classification === PROXY_PREFLIGHT_PASS,
                 provider_contacted: false,
                 provider_dns_resolved: false,
                 started_at: startedAt,
@@ -256,14 +389,32 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
         const onConnected = () => {
             if (endpoint.scheme === 'https') tlsEstablished = true;
             try {
-                socket.write(buildStageDConnectProbe(endpoint));
+                socket.write(buildStageDConnectProbe(endpoint, target));
             } catch (error) {
                 settle(classifyProxySocketError(error, { scheme: endpoint.scheme, tlsEstablished }), error?.code || null);
             }
         };
 
-        const onData = chunk => {
-            buffer += chunk.toString('latin1');
+        // The tunnel proof.  A 2xx alone can be synthesised without any tunnel existing,
+        // so the pass condition is that a fresh random nonce written through the tunnel
+        // comes back verbatim.  Anything else fails closed.
+        const readNonceEcho = () => {
+            const lineEnd = buffer.indexOf('\n');
+            if (lineEnd === -1) {
+                if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES) {
+                    settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, 'nonce_response_too_large');
+                }
+                return; // bounded by the socket inactivity timeout and the overall deadline
+            }
+            const line = buffer.slice(0, lineEnd).replace(/\r$/, '');
+            if (line === challenge.nonce) {
+                settle(PROXY_PREFLIGHT_PASS, 'connect_2xx_nonce_round_trip');
+                return;
+            }
+            settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, line === '' ? 'empty_nonce_response' : 'nonce_mismatch');
+        };
+
+        const readConnectResponse = () => {
             const firstLineEnd = buffer.indexOf('\n');
             if (firstLineEnd === -1) {
                 if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES) settle(PROXY_CONNECT_PROTOCOL_INVALID, 'response_too_large');
@@ -279,11 +430,11 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
             }
             const status = Number(match[1]);
             if (status === 407) {
-                // The endpoint is a proxy that understands CONNECT but will not authenticate
-                // this request.  Whether that is because the configured secret is wrong or
-                // because none was configured at all, the governed provider request could
-                // not be authenticated either way, so the endpoint is not usable.  Failing
-                // closed here is what keeps the one-shot authorization unspent.
+                // The endpoint is a proxy that understands CONNECT but will not
+                // authenticate this request.  Whether the configured secret is wrong or
+                // none was configured, the governed request could not be authenticated
+                // either, so the endpoint is not usable.  A 407 is never itself proof of
+                // anything -- a successful preflight must still end in 2xx plus a nonce.
                 settle(
                     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
                     endpoint.has_credentials
@@ -292,15 +443,39 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
                 );
                 return;
             }
-            if ((status >= 200 && status < 300) || PROXY_CONNECT_PROOF_STATUSES.includes(status)) {
-                settle(PROXY_PREFLIGHT_PASS, status >= 200 && status < 300 ? 'proxy_tunnel_established' : `proxy_status_${status}`);
+            if (status < 200 || status > 299) {
+                // A syntactically valid refusal.  It proves the tunnel was NOT
+                // established, and it is exactly what an ordinary origin server or a
+                // fronting gateway returns to a CONNECT it does not implement, so no
+                // such status is ever accepted as capability proof.
+                settle(PROXY_CONNECT_TUNNEL_REFUSED, `non_2xx_status_${status}`);
                 return;
             }
-            // Anything else -- 400, 404, 405, 501 and the rest -- is what an ordinary HTTP
-            // origin server answers to a CONNECT it does not implement.  It proves nothing
-            // about the endpoint's ability to proxy the governed request, so it fails
-            // closed rather than being recorded as a protocol proof.
-            settle(PROXY_CONNECT_PROTOCOL_INVALID, `non_proxy_status_${status}`);
+            const headEnd = findConnectResponseHeadEnd(buffer);
+            if (headEnd === -1) {
+                if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES) settle(PROXY_CONNECT_PROTOCOL_INVALID, 'connect_response_head_too_large');
+                return; // wait for the rest of the response head before trusting the tunnel
+            }
+            // Everything past the response head is data-plane bytes from the target.
+            buffer = buffer.slice(headEnd);
+            phase = 'tunnel_proof';
+            try {
+                socket.write(buildStageDNonceProbe(challenge));
+            } catch (error) {
+                settle(classifyProxySocketError(error, { scheme: endpoint.scheme, tlsEstablished }), error?.code || null);
+                return;
+            }
+            readNonceEcho();
+        };
+
+        const onData = chunk => {
+            buffer += chunk.toString('latin1');
+            if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES && phase === 'connect_response') {
+                settle(PROXY_CONNECT_PROTOCOL_INVALID, 'response_too_large');
+                return;
+            }
+            if (phase === 'connect_response') readConnectResponse();
+            if (!settled && phase === 'tunnel_proof') readNonceEcho();
         };
 
         try {
@@ -320,17 +495,37 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
             return;
         }
 
+        // A hard ceiling over the whole probe, so a peer that trickles bytes cannot keep
+        // any single stage alive indefinitely on top of the inactivity timeout.
+        //
+        // Both timers are phase-aware, which keeps one invariant exact: once a 2xx has been
+        // received, failing to complete the nonce round trip is ALWAYS a tunnel proof
+        // failure, never a bare timeout.  That is what makes the "synthetic 200 that opens
+        // no tunnel" case a single unambiguous classification instead of a race between the
+        // two timers.  Before the 2xx, a stall is still an ordinary protocol timeout.
+        overallTimer = setTimeout(() => settle(
+            phase === 'tunnel_proof' ? PROXY_CONNECT_TUNNEL_PROOF_FAILED : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
+            phase === 'tunnel_proof' ? 'nonce_round_trip_inactivity' : 'overall_deadline_exceeded',
+        ), timeoutMs * 3);
         socket.setTimeout(timeoutMs);
-        socket.once('timeout', () => settle(PROXY_CONNECT_PREFLIGHT_TIMEOUT, null));
-        socket.once('error', onSocketError);
-        // A peer that accepts the connection and closes without completing a status
-        // line is not an HTTP CONNECT proxy.  Classify it immediately rather than
-        // waiting out the inactivity timeout.  For https:// the close is a handshake
-        // failure instead, since the tunnel was never established.
-        socket.once('close', () => settle(
-            endpoint.scheme === 'https' && !tlsEstablished ? PROXY_TLS_HANDSHAKE_FAILED : PROXY_CONNECT_PROTOCOL_INVALID,
-            'connection_closed_before_status_line',
+        socket.once('timeout', () => settle(
+            phase === 'tunnel_proof' ? PROXY_CONNECT_TUNNEL_PROOF_FAILED : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
+            phase === 'tunnel_proof' ? 'nonce_round_trip_inactivity' : null,
         ));
+        socket.once('error', onSocketError);
+        // A peer that accepts the connection and closes before the proof completes is
+        // never a pass.  For https:// the close before the handshake is a TLS failure
+        // instead, since the tunnel was never established.
+        socket.once('close', () => {
+            if (phase === 'tunnel_proof') {
+                settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, 'tunnel_closed_before_nonce_proof');
+                return;
+            }
+            settle(
+                endpoint.scheme === 'https' && !tlsEstablished ? PROXY_TLS_HANDSHAKE_FAILED : PROXY_CONNECT_PROTOCOL_INVALID,
+                'connection_closed_before_status_line',
+            );
+        });
         socket.on('data', onData);
     });
 }
@@ -340,8 +535,11 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
 // returned so the caller can record non-secret evidence either way.
 function createStageDHttpConnectProxyPreflight({
     endpoint = null,
+    target = null,
     timeoutMs = STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
     clock = () => new Date().toISOString(),
+    challengeFactory = createStageDPreflightChallenge,
+    env = process.env,
 } = {}) {
     if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
         failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight timeout must be a positive integer');
@@ -352,13 +550,32 @@ function createStageDHttpConnectProxyPreflight({
             failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight endpoint must be a resolved endpoint object');
         }
     }
+    if (target !== null) {
+        const required = ['host', 'port', 'redacted'];
+        if (typeof target !== 'object' || required.some(key => target[key] === undefined)) {
+            failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight target must be a resolved target object');
+        }
+    }
+    if (typeof challengeFactory !== 'function') {
+        failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight challenge factory must be callable');
+    }
     return Object.freeze({
         schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
         proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
+        nonce_protocol: STAGE_D_PROXY_NONCE_PROTOCOL,
         timeout_ms: timeoutMs,
         async run() {
-            const resolved = endpoint || resolveStageDStableProxyEndpoint();
-            return probeStageDHttpConnectProxy({ endpoint: resolved, timeoutMs, clock });
+            // Both contracts are resolved before any socket is opened, so a missing proxy
+            // endpoint or a missing probe target fails closed without touching the network.
+            const resolved = endpoint || resolveStageDStableProxyEndpoint(env);
+            const probeTarget = target || resolveStageDPreflightTarget(env, { proxyEndpoint: resolved });
+            return probeStageDHttpConnectProxy({
+                endpoint: resolved,
+                target: probeTarget,
+                timeoutMs,
+                clock,
+                challenge: challengeFactory(),
+            });
         },
     });
 }
@@ -366,11 +583,13 @@ function createStageDHttpConnectProxyPreflight({
 module.exports = {
     STAGE_D_STABLE_PROXY_CONTRACT,
     STAGE_D_PROXY_ENDPOINT_ENV_VAR,
+    STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR,
+    STAGE_D_PROXY_PREFLIGHT_TARGET_PROTOCOL,
     STAGE_D_PROXY_SUPPORTED_PROTOCOLS,
     STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
-    STAGE_D_PROXY_PROBE_DESTINATION,
+    STAGE_D_PROXY_NONCE_PROTOCOL,
+    STAGE_D_PROXY_NONCE_REQUEST_PREFIX,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
-    PROXY_CONNECT_PROOF_STATUSES,
     PROXY_PREFLIGHT_CLASSIFICATIONS,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
@@ -379,10 +598,17 @@ module.exports = {
     PROXY_TCP_CONNECT_FAILED,
     PROXY_TLS_HANDSHAKE_FAILED,
     PROXY_CONNECT_PROTOCOL_INVALID,
+    PROXY_CONNECT_TUNNEL_REFUSED,
+    PROXY_CONNECT_TUNNEL_PROOF_FAILED,
     PROXY_CONNECT_PREFLIGHT_TIMEOUT,
     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
+    PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
+    PROXY_PREFLIGHT_TARGET_URL_INVALID,
+    PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
     resolveStageDStableProxyEndpoint,
+    resolveStageDPreflightTarget,
     buildStageDProxyAgentUrl,
+    buildStageDProxyAuthorizationHeader,
     classifyStageDProxySocketError: classifyProxySocketError,
     createStageDHttpConnectProxyPreflight,
 };
