@@ -92,24 +92,39 @@ by the metadata evidence in §5; it is not asserted here on the basis of having 
 
 ## 5. Read-only verification performed while writing this record
 
-The checks below were performed without reading, printing, logging or persisting any credential
-value. Every result is a boolean or a filesystem timestamp.
+The checks below were performed without reading, comparing, hashing, measuring or otherwise
+processing the value of either credential. Every method below matches a variable **name** or a
+line of a file; no method ever places a credential value in a pipeline, a comparison, a command
+argument or an output. Every result is a boolean or a filesystem timestamp.
 
 | Check | Method | Result |
 | --- | --- | --- |
-| Replacement credential declared and non-empty | read the variable **name** in the approved local `.env`; test only whether the value is empty | `API_KEY_PRESENT=YES`, `API_KEY_NONEMPTY=YES` |
-| Credential not exposed through the process environment | test whether the variable is set in the shell | `API_KEY_IN_SHELL_ENV=NO` |
+| Replacement credential is declared | match the variable **name** in the approved local `.env`, counting matching lines only | `API_KEY_DECLARED=YES` |
+| Credential not exposed through the process environment | match the variable **name** across the environment, counting matching names only | `API_KEY_IN_SHELL_ENV=NO` |
 | Secret-file protections intact | `stat` on the local secret file | mode `0600`, owner-only, already gitignored by `.gitignore:33` |
 | Local secret file was replaced | `stat` mtime, observed twice in the same session | `2026-09-06 01:06` → `2026-09-16 08:25:38 +0800` |
-| Replacement is a same-shape provider credential | file size before/after | unchanged (`9737` bytes), consistent with a same-length provider key |
-| Credential leaked into version control | search every **tracked** file for the current value, counting matches only | `TRACKED_FILES_CONTAINING_CREDENTIAL=0` |
-| `.env` ever committed | `git log --all --diff-filter=A -- .env` | never tracked |
+| The secret file was never version-controlled | `git log --all --diff-filter=A -- .env` | never tracked |
 
-The mtime advance is the substantive corroboration: it was observed inside this session, on this
-host, moving from the pre-rotation timestamp to one after the Owner declared rotation complete.
-The credential value itself was never read, so this record states rotation as
-**Owner-attested and metadata-corroborated**, and does not claim an independent value-level proof.
-A value-level proof is impossible without reading a secret, which is prohibited.
+Stated as limits rather than left to inference, because the boundary is exactly what makes this
+record honest:
+
+- **Presence of the declaration is established; the value's shape is not.** Whether the value is
+  non-empty, and whether it has any particular length, prefix or hash, is **not** established by
+  this record and is not claimed anywhere in it. Establishing any of those would require reading
+  the value, which this mission's scope forbids.
+- **No value-based leak scan was performed and none is claimed.** Establishing that the credential
+  value appears in no tracked file requires the value itself in the search pipeline, which is the
+  prohibited operation. What is established instead is narrower and stated as such: the secret
+  file is gitignored and has never been tracked. A value-based leak scan remains a reasonable
+  separate task under its own authorization, and its absence is a gap in this record, not a
+  passed check.
+- **The mtime advance is the substantive corroboration.** It was observed on this host, moving
+  from the pre-rotation timestamp to one after the Owner declared rotation complete. It is
+  evidence about a file, not about a credential.
+
+Rotation is therefore recorded as **Owner-attested and metadata-corroborated**. This record does
+not claim an independent value-level proof, and §4 makes no claim about provider-side revocation
+beyond the Owner's statement that the old credential must not be used.
 
 No provider endpoint was contacted for any of these checks, and no quota was consumed.
 
