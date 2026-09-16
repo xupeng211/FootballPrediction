@@ -9,8 +9,6 @@ const fs = require('node:fs');
 const https = require('node:https');
 const path = require('node:path');
 const { HttpsProxyAgent } = require('https-proxy-agent');
-const { SocksProxyAgent } = require('socks-proxy-agent');
-const { getProxyProvider } = require('../network/ProxyProvider');
 const { isUtcTimestamp, sha256Text, stableStringify } = require('./contracts');
 const { seedFotMobFixtureUniverse } = require('../fixture_universe/FixtureUniverse');
 const { loadVerifiedAllocationAuthority } = require('../fixture_universe/AllocationAuthorityArtifact');
@@ -18,6 +16,12 @@ const { createCaptureReceipt, loadVerifiedCaptureReceipt } = require('./evidence
 const { openMarketEvidenceAuthoritySnapshot, isVerifiedMarketEvidenceAuthoritySnapshot } = require('./authorityReader');
 const { publishProspectiveMarketEvidenceTransaction } = require('./atomicPublisher');
 const { isVerifiedProspectiveTransactionCandidate, buildProspectiveMarketEvidenceTransaction } = require('./prospectiveBatch');
+const {
+    STAGE_D_STABLE_PROXY_CONTRACT,
+    resolveStageDStableProxyEndpoint,
+    buildStageDProxyAgentUrl,
+    createStageDHttpConnectProxyPreflight,
+} = require('./stageDStableProxy');
 
 const EPOCH_SCHEMA_VERSION = 'footballprediction-stage-d-request-accounting-epoch/v1';
 const LEDGER_SCHEMA_VERSION = 'footballprediction-stage-d-request-ledger/v1';
@@ -1984,17 +1988,21 @@ function sanitizeProviderHeaders(headers = {}) {
     return Object.fromEntries(Object.entries(headers).filter(([key]) => allowed.test(key)).map(([key, value]) => [key.toLowerCase(), String(value)]));
 }
 
-function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, timeoutMs = 15000, proxyProvider = null, proxyPoolName = 'default' } = {}) {
+function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, timeoutMs = 15000, endpoint = null } = {}) {
     if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) fail('INVALID_TRANSPORT', 'provider transport timeout must be positive');
-    if (proxyProvider !== null && (!proxyProvider || typeof proxyProvider.acquire !== 'function' || typeof proxyProvider.release !== 'function')) {
-        fail('INVALID_TRANSPORT', 'proxyProvider must expose acquire/release');
-    }
+    // The governed binder resolves the endpoint once and binds the same value into both
+    // this transport and the protocol preflight, so the endpoint that was proven is the
+    // endpoint that is used.  `endpoint` stays optional and, when absent, is resolved
+    // lazily and never defaulted, which keeps construction possible without
+    // THE_ODDS_API_PROXY_URL: the governed ordering gate is the preflight -- which runs
+    // before the one-shot authorization is consumed -- not an incidental build failure.
     const transport = {
         schema_version: 'footballprediction-stage-d-transport/v1',
         provider: PROVIDER,
         market_scope: MARKET_SCOPE,
         network_capability: 'provider',
         explicit_binding: 'the-odds-api-stage-d-controlled-adapter/v1',
+        proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
         preflight() {
             if (typeof apiKey !== 'string' || !apiKey.trim()) fail('CREDENTIAL_INVALID', 'The Odds API credential is unavailable');
         },
@@ -2004,73 +2012,59 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
             const url = new URL('https://api.the-odds-api.com/v4/sports/soccer_epl/odds');
             url.search = new URLSearchParams({ apiKey, regions: CONFIGURED_REGIONS.join(','), markets: CONFIGURED_MARKETS.join(','), oddsFormat: 'decimal' }).toString();
             const requestStartedAt = request.transmission_started_at;
-            const provider = proxyProvider || getProxyProvider({ poolName: proxyPoolName, disableHealthChecks: true });
-            const healthInterval = provider?.config?.healthCheckIntervalMs;
-            const healthTimer = provider?.healthTimer;
-            if (provider.stage_d_health_probe_disabled !== true || healthInterval !== 0 || healthTimer) {
-                fail('PROXY_HEALTH_PROBE_UNSAFE', 'Stage D provider transport requires a proxy provider with health probes disabled');
+            // Exactly one dedicated, project-controlled, stable HTTP CONNECT endpoint.
+            // The rotating harvesting pool, a workstation proxy and a direct connection
+            // are all forbidden fallbacks, so an absent or invalid endpoint aborts here,
+            // before any request object is constructed.  HttpsProxyAgent performs the
+            // HTTP CONNECT for both http:// and https:// proxy URLs.
+            const resolvedEndpoint = endpoint || resolveStageDStableProxyEndpoint();
+            let agent;
+            try {
+                agent = new HttpsProxyAgent(buildStageDProxyAgentUrl(resolvedEndpoint), { keepAlive: false, timeout: timeoutMs });
+            } catch (error) {
+                // Never propagate the agent library's own error: it embeds the
+                // credential-bearing proxy URL in its message.
+                fail('PROXY_AGENT_CONSTRUCTION_FAILED', `the Stage D proxy agent could not be constructed for ${resolvedEndpoint.redacted ?? 'the configured endpoint'}`);
             }
-            return Promise.resolve(provider.acquire({ consumer: 'stage-d-controlled-adapter', sticky: false })).then(lease => {
-                if (!lease?.proxy?.server) fail('PROXY_LEASE_INVALID', 'ProxyProvider returned an invalid lease');
-                const proxyUrl = lease.proxy.server;
-                const agent = proxyUrl.startsWith('socks')
-                    ? new SocksProxyAgent(proxyUrl, { timeout: timeoutMs })
-                    : new HttpsProxyAgent(proxyUrl, { keepAlive: false, timeout: timeoutMs });
-                const releaseLease = () => Promise.resolve(provider.release(lease)).catch(() => undefined);
-                return new Promise((resolve, reject) => {
-                    const finishFailure = error => {
-                        Promise.resolve(provider.reportFailure?.(lease, { reason: error.message, failureClass: 'provider_transport' }))
-                            .catch(() => undefined)
-                            .finally(() => { void releaseLease(); reject(error); });
-                    };
-                    const authorizationWindow = request?.[CONTROLLED_AUTHORIZATION_WINDOW];
-                    if (authorizationWindow === undefined) {
-                        void releaseLease();
-                        fail('STAGE_D_CONTROL_BOUNDARY_INVALID', 'provider transport requires a controlled authorization window');
-                    }
-                    try {
-                        assertPlainObject(authorizationWindow, 'controlled authorization window');
-                        assertExactKeys(authorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
-                        assertControlledAuthorizationWindow({
-                            issuedAt: authorizationWindow.issuedAt,
-                            expiresAt: authorizationWindow.expiresAt,
-                            now: systemClock(),
+            const authorizationWindow = request?.[CONTROLLED_AUTHORIZATION_WINDOW];
+            if (authorizationWindow === undefined) {
+                fail('STAGE_D_CONTROL_BOUNDARY_INVALID', 'provider transport requires a controlled authorization window');
+            }
+            assertPlainObject(authorizationWindow, 'controlled authorization window');
+            assertExactKeys(authorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
+            assertControlledAuthorizationWindow({
+                issuedAt: authorizationWindow.issuedAt,
+                expiresAt: authorizationWindow.expiresAt,
+                now: systemClock(),
+            });
+            return new Promise((resolve, reject) => {
+                const req = https.request({
+                    protocol: 'https:',
+                    hostname: 'api.the-odds-api.com',
+                    port: 443,
+                    method: 'GET',
+                    path: `${url.pathname}${url.search}`,
+                    headers: { 'User-Agent': 'FootballPrediction-stage-d-adapter/1.0' },
+                    rejectUnauthorized: true,
+                    agent,
+                }, response => {
+                    const chunks = [];
+                    response.on('data', chunk => chunks.push(Buffer.from(chunk)));
+                    response.on('end', () => {
+                        resolve({
+                            raw_text: Buffer.concat(chunks).toString('utf8'),
+                            http_status: response.statusCode,
+                            request_started_at: requestStartedAt,
+                            response_received_at: new Date().toISOString(),
+                            provider_quota: sanitizeProviderHeaders(response.headers),
+                            capture_id: request.request_id,
                         });
-                    } catch (error) {
-                        void releaseLease();
-                        throw error;
-                    }
-                    const req = https.request({
-                        protocol: 'https:',
-                        hostname: 'api.the-odds-api.com',
-                        port: 443,
-                        method: 'GET',
-                        path: `${url.pathname}${url.search}`,
-                        headers: { 'User-Agent': 'FootballPrediction-stage-d-adapter/1.0' },
-                        rejectUnauthorized: true,
-                        agent,
-                    }, response => {
-                        const chunks = [];
-                        response.on('data', chunk => chunks.push(Buffer.from(chunk)));
-                        response.on('end', () => {
-                            const result = {
-                                raw_text: Buffer.concat(chunks).toString('utf8'),
-                                http_status: response.statusCode,
-                                request_started_at: requestStartedAt,
-                                response_received_at: new Date().toISOString(),
-                                provider_quota: sanitizeProviderHeaders(response.headers),
-                                capture_id: request.request_id,
-                            };
-                            Promise.resolve(provider.reportSuccess?.(lease, { statusCode: response.statusCode }))
-                                .catch(() => undefined)
-                                .finally(() => { void releaseLease(); resolve(result); });
-                        });
-                        response.on('error', finishFailure);
                     });
-                    req.setTimeout(timeoutMs, () => req.destroy(new Error('The Odds API request timed out')));
-                    req.on('error', finishFailure);
-                    req.end();
+                    response.on('error', reject);
                 });
+                req.setTimeout(timeoutMs, () => req.destroy(new Error('The Odds API request timed out')));
+                req.on('error', reject);
+                req.end();
             });
         },
     };
@@ -2253,6 +2247,7 @@ async function executeStageDControlledInitialization(options = {}) {
         evidencePersistence,
         candidateBuilder,
         transactionPublisher,
+        proxyPreflight,
         clock,
     } = options;
     if (typeof authorityRoot !== 'string' || !authorityRoot.trim() || typeof allocationArtifactPath !== 'string' || !allocationArtifactPath.trim() || typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'authorityRoot, allocationArtifactPath and ledgerRoot are required');
@@ -2288,25 +2283,43 @@ async function executeStageDControlledInitialization(options = {}) {
         fixtureUniverseRawSha256: fixtureSource.raw_sha256,
         now,
     });
-    const componentKeys = ['transport', 'evidencePersistence', 'candidateBuilder', 'transactionPublisher'];
+    const componentKeys = ['transport', 'evidencePersistence', 'candidateBuilder', 'transactionPublisher', 'proxyPreflight'];
     const hasComponentOverride = componentKeys.some(key => Object.prototype.hasOwnProperty.call(options, key));
     let boundTransport;
     let boundEvidencePersistence;
     let boundCandidateBuilder;
     let boundTransactionPublisher;
+    let boundProxyPreflight;
     if (process.env.NODE_ENV === 'test') {
         if (!componentKeys.every(key => Object.prototype.hasOwnProperty.call(options, key))) fail('STAGE_D_TEST_COMPONENTS_REQUIRED', 'networkless tests must supply every reviewed fake component explicitly');
+        if (typeof proxyPreflight?.run !== 'function') fail('STAGE_D_TEST_COMPONENTS_REQUIRED', 'the test proxy preflight must expose run()');
         boundTransport = transport;
         boundEvidencePersistence = evidencePersistence;
         boundCandidateBuilder = candidateBuilder;
         boundTransactionPublisher = transactionPublisher;
+        boundProxyPreflight = proxyPreflight;
     } else {
         if (hasComponentOverride) fail('STAGE_D_COMPONENT_OVERRIDE_FORBIDDEN', 'production binder components are fixed to reviewed factories');
         if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim() || typeof runLockTrustRoot !== 'string' || !runLockTrustRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'production evidenceRoot and runLockTrustRoot are required');
-        boundTransport = createStageDOddsApiTransport();
+        // One resolution per governed cycle, or none at all: the endpoint proven by the
+        // preflight below is the same object the transport transmits through.  There is
+        // no window in which the proven endpoint and the used endpoint can diverge.
+        const proxyEndpoint = resolveStageDStableProxyEndpoint();
+        boundTransport = createStageDOddsApiTransport({ endpoint: proxyEndpoint });
         boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
         boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
         boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
+        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint });
+    }
+    // ORDERING INVARIANT.  The Stage D proxy contract is proven before the one-shot
+    // authorization is spent: configuration resolution, then the HTTP CONNECT protocol
+    // preflight, and only then consumption.  A dead, missing or non-CONNECT endpoint
+    // therefore leaves AUTHORIZATION_CONSUMED=NO, PROVIDER_REQUEST_ATTEMPTED=NO and
+    // QUOTA_UNITS_CHARGED_OR_ASSUMED=0.  The preflight is provider-independent, so it
+    // cannot contact The Odds API, resolve provider DNS or consume provider quota.
+    const proxyPreflightResult = await boundProxyPreflight.run();
+    if (proxyPreflightResult?.passed !== true) {
+        fail(proxyPreflightResult?.classification || 'PROXY_PREFLIGHT_FAILED', 'Stage D stable HTTP CONNECT proxy preflight did not pass');
     }
     const consumed = consumeStageDControlledAuthorization({
         authorizationRecord: { ...authorizationRecord, ...validatedAuthorization },
@@ -2343,6 +2356,7 @@ async function executeStageDControlledInitialization(options = {}) {
     const providerTransmissionAttempted = cycleResult.status !== 'CANCELLED_BEFORE_TRANSMISSION';
     return Object.freeze({
         ...cycleResult,
+        proxy_preflight: proxyPreflightResult,
         authorization_audit: Object.freeze({
             schema_version: 'footballprediction-stage-d-controlled-initialization-audit/v1',
             authorization_id: validatedAuthorization.authorization.authorization_id,

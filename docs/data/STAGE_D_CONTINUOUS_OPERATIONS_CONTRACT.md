@@ -241,8 +241,10 @@ replay and each transaction package, and the adapter revalidates the public root
 identity before any duplicate no-op or publication decision. A directory
 generation mismatch is an ambiguity requiring reconciliation, never a reason to
 continue.
-The default proxy lease adapter disables background health probes, so a Stage D
-request cannot create an unaccounted provider health request.
+The Stage D provider transport uses one dedicated, project-controlled, stable HTTP
+CONNECT proxy endpoint rather than a proxy lease, so a Stage D request can neither
+rotate across the harvesting pool nor create an unaccounted provider health request.
+See [Provider transport proxy contract](#provider-transport-proxy-contract).
 
 An already canonical The Odds API RAW SHA-256 is a successful
 `NO_OP_DUPLICATE_RAW_HASH`: the request remains accounted, the scheduler records
@@ -255,6 +257,50 @@ Each publication must preserve `capture_started_at`, `response_received_at`,
 and transaction publication time. Publisher-owned knowledge time remains bound
 into transaction identity and must not precede its input evidence. No later cycle
 may make future provider information visible to an earlier as-of query.
+
+## Provider transport proxy contract
+
+The Owner architecture decision for Stage D is a dedicated, project-controlled,
+single, stable HTTP CONNECT proxy endpoint, named by `THE_ODDS_API_PROXY_URL`. The
+rotating multi-node SOCKS5 pool (`config/proxy_pools.json`, `REG-TITAN-40`, ports
+10001–10040) remains the bulk-harvesting pool — one worker per port for FotMob,
+OddsPortal and Playwright capture — and is not reachable from the Stage D provider
+path.
+
+Recorded decision: `OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT`,
+`ROTATING_SOCKS_POOL_FOR_STAGE_D=PROHIBITED`,
+`CONCRETE_PRODUCTION_PROXY_ENDPOINT=NOT_YET_BOUND_BY_THIS_MISSION`,
+`PROXY_PROTOCOL_PREFLIGHT_REQUIRED=YES`,
+`PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES`, and `STAGE_D_PROXY_FALLBACK=NONE`.
+
+No production proxy endpoint has been provisioned by this decision, and none is
+recorded in tracked source. The Stage D transport cannot be bound to a pool name or
+to a caller-supplied proxy provider, and no reachable production path falls back to
+the rotating pool, to a workstation proxy, or to a direct connection. Absent
+configuration fails closed as `PROXY_CONFIGURATION_MISSING` — the
+repository-equivalent of `PRODUCTION_PROXY_ENDPOINT_NOT_CONFIGURED` — rather than
+degrading to a fallback.
+
+The ordering is fixed: proxy configuration validation, then proxy protocol
+preflight, then — only on pass — authorization consumption, request accounting and
+transmission. Before the one-shot authorization is spent, the binder resolves the
+endpoint and proves it speaks HTTP CONNECT by issuing a CONNECT for an unusable
+loopback address (`127.0.0.1:1`). The probe is provider-independent by construction:
+it never names The Odds API, so it cannot resolve provider DNS, contact the provider
+or consume provider quota. A refusal, a policy denial and an open tunnel are all
+valid HTTP CONNECT responses. A dead endpoint, a non-HTTP listener, a closed
+connection without a status line, an inactivity timeout, an `https://` TLS failure,
+an invalid or non-HTTP(S) endpoint URL, and a 407 that rejects configured credentials
+are each classified separately and none of them passes. A dead, missing or
+non-CONNECT endpoint therefore leaves `AUTHORIZATION_CONSUMED=NO`,
+`PROVIDER_REQUEST_ATTEMPTED=NO` and `QUOTA_UNITS_CHARGED_OR_ASSUMED=0`, and the
+unconsumed authorization remains usable until its own `expires_at` once the endpoint
+is provisioned.
+
+Proxy credentials, when the endpoint carries them, are held off every enumerable and
+serialized form of the endpoint. They never appear in logs, errors or evidence; the
+agent URL that re-attaches them is built at the point of use only, and it is never
+included in a message, a durable artifact or a preflight result.
 
 ## Durability, recovery, retention and backup
 
@@ -710,6 +756,7 @@ post-repair content-hash proof.
 | HTTP error | yes | only new request + budget | no | after terminal ledger and clean lock release | no |
 | Quota exhausted / quota unknown | no | no until configuration changes | no | no | quota owner for unknown/exhausted |
 | Credential invalid before transmission | no | no until credentials are corrected | no | after terminal ledger and clean lock release | credential owner |
+| Stage D proxy endpoint missing, dead, or not speaking HTTP CONNECT (preflight) | no | yes, with the same unconsumed authorization, once the endpoint is provisioned and the preflight passes | no | after the endpoint is configured | proxy/network owner |
 | Scheduler duplicate / stale lock / lock ambiguity | no | no | no | no | yes |
 | RAW or receipt persistence failure after possible transmission | yes | only new request + budget | no | after terminal ledger | yes |
 | Parser, identity, registry failure | yes | only new request + budget | no | after terminal ledger | yes |

@@ -490,10 +490,17 @@ path_is_leak_allowlisted() {
   esac
 }
 
+# Files whose low-level network access has been explicitly reviewed and is deliberately
+# outside the unified ProxyProvider lease layer.  Being on this list is a reviewed
+# decision, not a convenience: it means the file owns its proxy policy in the open
+# rather than inheriting the rotating pool's.  theOddsApiClient.js is the retired Stage D
+# transport; stageDOperations.js hosts the Stage D controlled adapter, which the Owner
+# decision binds to one dedicated stable HTTP CONNECT endpoint and forbids from falling
+# back to the rotating SOCKS pool (docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md).
 path_is_contract_allowlisted() {
   local file="$1"
   case "$file" in
-    src/infrastructure/recon/ReconHealthServer.js|src/infrastructure/monitoring/MetricsClient.js|src/infrastructure/market_evidence/theOddsApiClient.js|scripts/ops/generate_league_dictionary.js|scripts/ops/titan_seeder.js|scripts/ops/backfill_historical_raw_match_data.js)
+    src/infrastructure/recon/ReconHealthServer.js|src/infrastructure/monitoring/MetricsClient.js|src/infrastructure/market_evidence/theOddsApiClient.js|src/infrastructure/market_evidence/stageDOperations.js|scripts/ops/generate_league_dictionary.js|scripts/ops/titan_seeder.js|scripts/ops/backfill_historical_raw_match_data.js)
       return 0
       ;;
     *)

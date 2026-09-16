@@ -26,8 +26,20 @@ const {
     createStageDFakeTransport,
     createStageDProspectiveCandidateBuilder,
     createStageDFakePublisher,
+    createStageDOddsApiTransport,
     executeStageDControlledInitialization,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
+const {
+    STAGE_D_STABLE_PROXY_CONTRACT,
+    STAGE_D_PROXY_ENDPOINT_ENV_VAR,
+    PROXY_PREFLIGHT_PASS,
+    PROXY_CONFIGURATION_MISSING,
+    PROXY_URL_INVALID,
+    PROXY_TCP_CONNECT_FAILED,
+    PROXY_CONNECT_PROTOCOL_INVALID,
+    resolveStageDStableProxyEndpoint,
+    createStageDHttpConnectProxyPreflight,
+} = require('../../../src/infrastructure/market_evidence/stageDStableProxy');
 
 const START = '2026-09-08T00:00:00Z';
 const AUTHORIZATION_NOW = '2026-09-08T08:00:00Z';
@@ -185,7 +197,46 @@ function makeContext(t, authorizationOverrides = {}) {
     return ctx;
 }
 
-function componentsFor(ctx, { error = null, transmissionClock = null } = {}) {
+// The binder proves the Stage D proxy contract before it spends the one-shot
+// authorization.  Binder tests below exercise post-preflight behaviour, so they supply
+// a preflight that resolves without touching the network.  The real HTTP CONNECT probe
+// is covered by stage_d_stable_proxy_preflight.test.js.
+function createStageDFakeProxyPreflight({ classification = PROXY_PREFLIGHT_PASS } = {}) {
+    const result = Object.freeze({
+        schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
+        proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
+        classification,
+        passed: classification === PROXY_PREFLIGHT_PASS,
+        endpoint: 'http://proxy.invalid:3128',
+        scheme: 'http',
+        host: 'proxy.invalid',
+        port: 3128,
+        has_credentials: false,
+        probe_destination: '127.0.0.1:1',
+        provider_contacted: false,
+        provider_dns_resolved: false,
+        started_at: AUTHORIZATION_NOW,
+        completed_at: AUTHORIZATION_NOW,
+        detail: null,
+    });
+    let callCount = 0;
+    return Object.freeze({
+        schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
+        proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
+        timeout_ms: 1,
+        get call_count() { return callCount; },
+        async run() {
+            callCount += 1;
+            return result;
+        },
+    });
+}
+
+function consumptionMarkers(ctx) {
+    return fs.readdirSync(ctx.trustRoot).filter(name => name.startsWith('.stage-d-authorization-consumed'));
+}
+
+function componentsFor(ctx, { error = null, transmissionClock = null, proxyPreflight = null } = {}) {
     const response = {
         raw_text: ctx.rawText,
         http_status: 200,
@@ -205,6 +256,7 @@ function componentsFor(ctx, { error = null, transmissionClock = null } = {}) {
             allocationArtifactPath: ctx.allocationArtifactPath,
             status: 'unexpected-publish',
         }),
+        proxyPreflight: proxyPreflight || createStageDFakeProxyPreflight(),
     };
 }
 
@@ -434,4 +486,120 @@ test('CLI parser exposes only bounded artifact paths and cannot accept a private
     }
     assert.throws(() => parseControlledCliArgs(['--authorization', 'auth.json']), /is required/);
     assert.equal(typeof parseControlledCliArgs, 'function');
+});
+
+// ---------------------------------------------------------------------------
+// Ordering invariant: the Stage D proxy contract is proven BEFORE the one-shot
+// authorization is spent.  A proxy that is dead, missing, or not speaking HTTP
+// CONNECT must leave AUTHORIZATION_CONSUMED=NO, PROVIDER_REQUEST_ATTEMPTED=NO and
+// QUOTA_UNITS_CHARGED_OR_ASSUMED=0 -- the defect that spent the previous
+// authorization was exactly a proxy failure discovered after consumption.
+// ---------------------------------------------------------------------------
+
+test('a preflight that does not pass fails closed before the authorization is consumed', async t => {
+    for (const classification of [
+        PROXY_TCP_CONNECT_FAILED,
+        PROXY_CONNECT_PROTOCOL_INVALID,
+        PROXY_CONFIGURATION_MISSING,
+        PROXY_URL_INVALID,
+    ]) {
+        const ctx = makeContext(t);
+        const proxyPreflight = createStageDFakeProxyPreflight({ classification });
+        const components = componentsFor(ctx, { proxyPreflight });
+
+        await assert.rejects(
+            executeStageDControlledInitialization(binderOptions(ctx, components)),
+            error => error.code === classification,
+        );
+
+        assert.equal(proxyPreflight.call_count, 1, `${classification}: the preflight must run exactly once`);
+        assert.equal(consumptionMarkers(ctx).length, 0, `${classification}: the authorization must not be consumed`);
+        assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0, `${classification}: no request may be accounted`);
+        assert.equal(components.transport.call_count, 0, `${classification}: no transmission may be attempted`);
+    }
+});
+
+test('a dead proxy endpoint fails closed before the authorization is consumed', async t => {
+    // The strongest form of the regression: the real probe, against a real closed port.
+    // Port 1 is privileged and never bound, so the refusal is deterministic.
+    const ctx = makeContext(t);
+    const proxyPreflight = createStageDHttpConnectProxyPreflight({
+        endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: 'http://127.0.0.1:1' }),
+        timeoutMs: 2000,
+    });
+    const components = componentsFor(ctx, { proxyPreflight });
+
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === PROXY_TCP_CONNECT_FAILED,
+    );
+
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+    assert.equal(components.transport.call_count, 0);
+});
+
+test('a missing dedicated endpoint fails closed even while the rotating harvesting pool is configured', async t => {
+    const previousEndpoint = process.env[STAGE_D_PROXY_ENDPOINT_ENV_VAR];
+    delete process.env[STAGE_D_PROXY_ENDPOINT_ENV_VAR];
+    t.after(() => {
+        if (previousEndpoint === undefined) delete process.env[STAGE_D_PROXY_ENDPOINT_ENV_VAR];
+        else process.env[STAGE_D_PROXY_ENDPOINT_ENV_VAR] = previousEndpoint;
+    });
+
+    const ctx = makeContext(t);
+    // This is the production construction path: no endpoint argument, resolved from env.
+    const components = componentsFor(ctx, { proxyPreflight: createStageDHttpConnectProxyPreflight() });
+
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === PROXY_CONFIGURATION_MISSING,
+    );
+
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+    assert.equal(components.transport.call_count, 0);
+});
+
+test('a passing preflight is recorded and still consumes the authorization exactly once', async t => {
+    const ctx = makeContext(t);
+    const proxyPreflight = createStageDFakeProxyPreflight();
+    const components = componentsFor(ctx, { proxyPreflight });
+    const result = await executeStageDControlledInitialization(binderOptions(ctx, components, controlledClock()));
+
+    assert.equal(proxyPreflight.call_count, 1);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    assert.equal(result.proxy_preflight.passed, true);
+    assert.equal(result.proxy_preflight.classification, PROXY_PREFLIGHT_PASS);
+    assert.equal(result.proxy_preflight.proxy_contract, STAGE_D_STABLE_PROXY_CONTRACT);
+    assert.equal(result.proxy_preflight.provider_contacted, false);
+    assert.equal(result.proxy_preflight.provider_dns_resolved, false);
+});
+
+test('the production Stage D transport exposes the stable proxy contract and no pool binding', () => {
+    const transport = createStageDOddsApiTransport({ apiKey: 'not-a-real-key' });
+    assert.equal(transport.network_capability, 'provider');
+    assert.equal(transport.proxy_contract, STAGE_D_STABLE_PROXY_CONTRACT);
+});
+
+test('the proxy preflight is a mandatory binder component and cannot be omitted', async t => {
+    // `componentKeys` drives both the test-mode presence check and the production
+    // STAGE_D_COMPONENT_OVERRIDE_FORBIDDEN check, so proving membership here proves the
+    // production binder cannot be handed a caller-supplied preflight.  The production
+    // override path itself is unreachable from a temp-dir harness: the runtime trust
+    // root's parent chain is world-writable under /tmp, and that gate fires first.
+    const ctx = makeContext(t);
+    const components = componentsFor(ctx);
+    const options = binderOptions(ctx, components);
+    delete options.proxyPreflight;
+
+    await assert.rejects(
+        executeStageDControlledInitialization(options),
+        error => error.code === 'STAGE_D_TEST_COMPONENTS_REQUIRED',
+    );
+
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+    assert.equal(components.transport.call_count, 0);
+    assert.equal(components.proxyPreflight.call_count, 0);
 });
