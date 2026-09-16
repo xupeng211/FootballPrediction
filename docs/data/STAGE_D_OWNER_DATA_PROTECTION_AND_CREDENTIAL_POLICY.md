@@ -184,22 +184,36 @@ preflight.
   approved local secret environment, and it makes no claim about provider-side revocation beyond
   the Owner's statement that the old credential must not be used.
 - **It does not by itself make every current-state document coherent, and the one place that
-  mattered was reconciled under its own authorization.** One further current-state contract,
+  mattered needed two rounds of repair under two separate Controller authorizations.** One
+  further current-state contract,
   [`STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`](STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md),
-  declares `lifecycle: current-state contract`. Its closure-facing state was **already** coherent
-  with `BLOCKER_3=CLOSED`: PR #1917 corrected its four adjudication lines to
+  declares `lifecycle: current-state contract`. Part of it was **already** coherent with
+  `BLOCKER_3=CLOSED`: PR #1917 corrected its four adjudication lines to
   `BLOCKER_3_STATUS=CLOSED (was OPEN when this contract was written)` and
   `GATE_2=ACCEPTED (was NOT_ACCEPTED)`, and recorded there that its `..._BY_THIS_WORK` lines
-  describe that workstream rather than repository state. What it had **not** been brought to was
-  *this* approval: its RPO/RTO policy section was written before the Owner's decision, presented
-  Proposal A (`RPO <= 24h`) as an unadopted fallback, and said nothing about `RTO`. That path lay
-  outside this mission's original authorized paths, so this record first reported it rather than
-  editing it; the Execution Controller then authorized exactly one mission-scope expansion
+  describe that workstream rather than repository state. Two parts were not. First, its RPO/RTO
+  policy section was written before the Owner's decision, presented Proposal A (`RPO <= 24h`) as
+  an unadopted fallback, and said nothing about `RTO`. That path lay outside this mission's
+  original authorized paths, so this record first reported it rather than editing it; the
+  Execution Controller then authorized exactly one mission-scope expansion
   (`ADD_AUTHORIZED_PATH=docs/data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`), and that
   contract's RPO/RTO section now records `RPO_APPROVED=24_HOURS` and `RTO_APPROVED=24_HOURS` as
-  the Owner-approved objectives while keeping its historical proposal state visibly separate. Its
-  `POLICY_B_STATUS=PROPOSED_NOT_APPROVED` remains correct, and this record preserves that token
-  unchanged. Documentation coherence only: it changes no state token, `GATE_3` included.
+  the Owner-approved objectives while keeping its historical proposal state visibly separate.
+  Second, and found by review afterwards, its **top** current-state summary was still stale: the
+  header still read `NOT_WIRED_TO_A_TARGET` with no target, no credential and no CLI wiring, and
+  still said the work did not close Blocker #3, while its second section still placed the
+  authority in a single failure domain. A reader taking that summary at face value would have got
+  the pre-closure state. That summary is now reconciled in place, with the superseded status kept
+  explicitly as `HISTORICAL_STATE_WHEN_CONTRACT_WAS_WRITTEN` rather than deleted, and the
+  failure-domain paragraph split the same way. The same pass found three further live-mode lines in
+  that contract's authority block — `LIVE_CLI_PROVEN_MODE=OFFLINE_PREFLIGHT_ONLY`,
+  `LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED` and `LIVE_TARGET_CONTACTED=NO` — which read as bare
+  current state but describe only what that workstream established and did, and one blanket
+  sentence reading the contract's word "the target" as an address nobody had contacted. Each is
+  now scoped in place to that workstream rather than left contradicting the accepted closure.
+  Its `POLICY_B_STATUS=PROPOSED_NOT_APPROVED`
+  remains correct, and this record preserves that token unchanged. Documentation coherence only:
+  it changes no state token, `GATE_3` included.
 
 Related: [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md),
 [`STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md`](STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md),
