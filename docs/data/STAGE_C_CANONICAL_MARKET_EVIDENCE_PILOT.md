@@ -75,9 +75,25 @@ Adapter 只解析 The Odds API 当前 EPL `h2h` / `h2h_lay` 形状；未知、�
 受影响测试覆盖 observation contract、schema、production allocation bootstrap/reopen、trusted local root 内的 mapping/decision/T2 consistency、quarantine recovery、prospective zero-write、receipt/capture idempotency、transaction parent chain、candidate/staging tamper、I/O failure、atomic rename 与 post-rename unknown outcome。独立 Node 子进程测试同时覆盖 identical writers（one commit + reuse）、competing writers（one commit + stale parent）和 fresh-process reopen。canonical validation profiles 为 `make verify-targeted`、`make verify-pr`、`make verify-strict`；targeted JS profile 会先校验/初始化 lockfile dependency tree，并拒绝 global ESLint fallback；`changed_files=0` / no-op 不算通过。
 
 上述 Stage C review / merge / main Gate 是已完成生命周期事实；实时 SHA/CI 状态仍从 Git/GitHub 获取。
-Stage D readiness = `GO_WITH_CONDITIONS`，`STAGE_D_STARTED=NO`。下一步是 Owner 确认
-provider quota/permission、production authority root、independent backup、retention/RPO/RTO、
-credential rotation，再单独授权一次 bounded live preflight。当前战线见
+Stage D readiness = `GO_WITH_CONDITIONS`，`STAGE_D_STARTED=NO`。上面枚举的 Owner 侧确认项已
+逐项处理，但处理到的**证据级别并不相同**，不是每一项都被独立验证：
+
+- **provider quota / permission** —— 只在声明与配置层闭合
+  （`STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY`）：
+  `config/stage_d_quota_budget.json` 携带 `quota_evidence_verified=true`，其
+  `quota_evidence_class=OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE`、来源为 2026-09-09 的 Owner
+  声明加当前公开 Starter Free plan 证据。**未对 provider 做任何 quota probe，也未做任何
+  permission / entitlement 探测**，因此闭合的是配置与声明层面的证据，provider 侧的实际余额与
+  授权范围在首次获授权 response 返回 `x-requests-*` 之前仍为 UNKNOWN——这正是 fail-closed
+  设计预期，不是遗漏。
+- **production authority root 与 independent backup** —— 随 Blocker #2 / Blocker #3 结清，
+  且 backup 一侧有真实 off-host target 上的 isolated restore proof 支撑。
+- **retention/RPO/RTO 与 credential rotation** —— 已由 Owner 批准/声明，记录于
+  [`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)。
+provider retention/analytical-use/redistribution/commercial terms 按上文仍属 production promotion
+门禁，不由本 pilot 或该批准覆盖——该批准只覆盖单次 bounded live preflight 的前置治理项。
+剩下的动作是**另行单独授权一次 bounded live preflight**；
+`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。当前战线见
 [ACTIVE_MILESTONE](../ACTIVE_MILESTONE.md) 与 [PROJECT_STATUS](../PROJECT_STATUS.md)。
 
 ## FUTURE_WORK

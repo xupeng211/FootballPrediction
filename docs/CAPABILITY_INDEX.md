@@ -64,6 +64,12 @@
   generation 已从 merged main 做 isolated restore + fresh-process cold-load。
   `BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`，`GATE_3=NOT_AUTHORIZED` 不变（见
   `docs/data/STAGE_D_BLOCKER_3_CLOSEOUT.md`）。
+- **Stage D Owner 治理前提**：Owner 已批准 retention / RPO / RTO 并完成 provider credential
+  rotation，记录于 `docs/data/STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md`；
+  `RETENTION_POLICY_APPROVED=YES`、`RPO_APPROVED=24_HOURS`、`RTO_APPROVED=24_HOURS`、
+  `CREDENTIAL_ROTATION_COMPLETED=YES`。该批准只是 policy/治理决定：不 provisioning、不验证
+  backup target、不执行 recovery drill、不改变任何技术能力，也不授权 Gate 3、live request 或
+  Stage D 启动；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。
