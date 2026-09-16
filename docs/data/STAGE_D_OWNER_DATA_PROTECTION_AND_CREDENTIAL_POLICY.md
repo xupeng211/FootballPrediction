@@ -87,11 +87,14 @@ local secret environment and must never be printed, committed, logged, copied in
 artifacts, PR bodies, chat messages or repository files.
 
 That the replacement credential exists **only** there is the Owner's declaration, restated here
-rather than independently established. §5 corroborates the narrower facts — the credential is
-declared, it is not exported into this session's shell environment, and its secret file is
-owner-only, gitignored and was never added to the repository — and nothing in this record could
-exclude a copy held outside this host, for example in a provider dashboard or a password manager.
-No such exclusivity is claimed on this record's own evidence.
+rather than independently established. That the replacement credential is **declared** at all is
+also the Owner's declaration, recorded in the table above; §5 does not re-derive it, because doing
+so would mean reading the file the declaration lives in. §5 corroborates only the narrower facts
+that hold without reading that file — the credential is not exported into this session's shell
+environment, and its secret file is owner-only, gitignored and was never added to the repository
+— and nothing in this record could exclude a copy held outside this host, for example in a
+provider dashboard or a password manager. No such exclusivity is claimed on this record's own
+evidence.
 
 This record intentionally contains **no credential value, no prefix, no length and no hash** of
 either the old or the replacement credential. Rotation is asserted by the Owner and corroborated
@@ -100,9 +103,19 @@ by the metadata evidence in §5; it is not asserted here on the basis of having 
 ## 5. Read-only verification performed while writing this record
 
 The checks below were performed without reading, comparing, hashing, measuring or otherwise
-processing the value of either credential. Every method below matches a variable **name** or a
-line of a file; no method ever places a credential value in a pipeline, a comparison, a command
-argument or an output. Every result is a boolean, a filesystem timestamp or a filesystem mode.
+processing the value of either credential. Every method below reads only a filesystem mode, a
+filesystem timestamp, a repository path or a variable **name** across the environment; no method
+places a credential value in a pipeline, a comparison, a command argument or an output. Every
+result is a boolean, a filesystem timestamp or a filesystem mode.
+
+One check that an earlier revision of this record listed is deliberately **not** performed and is
+no longer claimed: matching the credential's variable name inside that host's local `.env`. The
+declaration sits on the same line as its value there, so matching it would pull the value into the
+executing process even without printing, hashing or piping it, which the secret boundary forbids.
+The environment check below differs on exactly that point: it matches the **name** across the
+environment, so the credential's value could only be read if it were present, and the recorded
+result is that the name is not present. `API_KEY_DECLARED=YES` therefore rests on the Owner's
+declaration recorded in §4, not on any content read performed by this section.
 
 The filesystem observations were taken on the Owner's workstation, outside the repository tree
 that carries this record. They are properties of that host's local secret file and are **not**
@@ -110,7 +123,6 @@ re-derivable from this repository; only the two `git` checks are.
 
 | Check | Method | Result |
 | --- | --- | --- |
-| Replacement credential is declared | match the variable **name** in that host's approved local `.env`, counting matching lines only | `API_KEY_DECLARED=YES` |
 | Credential not exported into the shell environment | match the variable **name** across this session's environment, counting matching names only | `API_KEY_IN_SHELL_ENV=NO` |
 | Secret-file protections as observed | `stat` on that host's local secret file, plus `git check-ignore -v .env` in this repository | mode `0600`, owner-only; `.env` matched by `.gitignore:33` |
 | That secret file's mtime advanced after the Owner declared rotation complete | `stat` mtime, observed twice in the same session on that host | `2026-09-06 01:06` → `2026-09-16 08:25:38 +0800` |
@@ -119,10 +131,11 @@ re-derivable from this repository; only the two `git` checks are.
 Stated as limits rather than left to inference, because the boundary is exactly what makes this
 record honest:
 
-- **Presence of the declaration is established; the value's shape is not.** Whether the value is
-  non-empty, and whether it has any particular length, prefix or hash, is **not** established by
-  this record and is not claimed anywhere in it. Establishing any of those would require reading
-  the value, which this mission's scope forbids.
+- **The declaration is the Owner's statement; the value's shape is established nowhere.** That the
+  replacement credential is declared rests on §4's Owner attestation, not on a check performed
+  here. Whether the value is non-empty, and whether it has any particular length, prefix or hash,
+  is **not** established by this record and is not claimed anywhere in it. Establishing any of
+  those would require reading the value, which this mission's scope forbids.
 - **No value-based leak scan was performed and none is claimed.** Establishing that the credential
   value appears in no tracked file requires the value itself in the search pipeline, which is the
   prohibited operation. What is established instead is narrower and stated as such: the approved
