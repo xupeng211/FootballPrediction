@@ -39,12 +39,29 @@ const STAGE_D_PROXY_DEFAULT_PORTS = Object.freeze({ 'http:': 80, 'https:': 443 }
 const STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS = 5000;
 
 // The CONNECT target is a privileged, essentially never-bound loopback port on the
-// proxy's own host.  The probe does not care whether the tunnel opens -- a refusal,
-// a policy denial and a success are all valid HTTP CONNECT proxy responses.  What
-// matters is that the endpoint answers as an HTTP proxy at all.
+// proxy's own host, so the probe never asks the endpoint to reach anything real.  Because
+// the destination is unusable by construction, a working proxy answers with a proxy-class
+// refusal rather than an open tunnel; PROXY_CONNECT_PROOF_STATUSES below is the exact set
+// of responses this contract treats as proof of HTTP CONNECT support.
 const STAGE_D_PROXY_PROBE_DESTINATION = Object.freeze({ host: '127.0.0.1', port: 1 });
 
 const STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES = 8192;
+
+// The only statuses that prove the endpoint implements HTTP CONNECT for this request.
+//
+// A 2xx means the tunnel opened.  403 is a proxy policy refusal, and 502/503/504 are the
+// proxy failure classes for a tunnel that could not be established.  The probe destination
+// is deliberately unusable, so a working proxy cannot answer 2xx here: a proxy-class
+// refusal is the expected positive result, and 2xx is the rarer case.
+//
+// Everything else fails closed, because it proves nothing about the endpoint's ability to
+// proxy the governed request.  400, 404, 405 and 501 are specifically what an ordinary HTTP
+// origin server answers to a CONNECT it does not implement, and 405/501 are the signatures
+// the reviewer of this contract named.  Accepting them would let a non-proxy endpoint pass
+// the last gate before the one-shot authorization is spent -- the exact fail-open the
+// STAGE_D_PROXY_FALLBACK=NONE invariant exists to prevent.  A missing status here is
+// therefore a deliberate refusal, not an oversight.
+const PROXY_CONNECT_PROOF_STATUSES = Object.freeze([403, 502, 503, 504]);
 
 const PROXY_PREFLIGHT_PASS = 'PROXY_PREFLIGHT_PASS';
 const PROXY_CONFIGURATION_MISSING = 'PROXY_CONFIGURATION_MISSING';
@@ -261,17 +278,29 @@ function probeStageDHttpConnectProxy({ endpoint, timeoutMs, clock }) {
                 return;
             }
             const status = Number(match[1]);
-            if (status === 407 && endpoint.has_credentials) {
-                // Credentials were supplied and the proxy still demands authentication:
-                // the configured secret is wrong.  That must fail closed rather than be
-                // mistaken for a healthy endpoint.
-                settle(PROXY_AUTHENTICATION_CONFIGURATION_FAILURE, 'proxy_rejected_configured_credentials');
+            if (status === 407) {
+                // The endpoint is a proxy that understands CONNECT but will not authenticate
+                // this request.  Whether that is because the configured secret is wrong or
+                // because none was configured at all, the governed provider request could
+                // not be authenticated either way, so the endpoint is not usable.  Failing
+                // closed here is what keeps the one-shot authorization unspent.
+                settle(
+                    PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
+                    endpoint.has_credentials
+                        ? 'proxy_rejected_configured_credentials'
+                        : 'proxy_authentication_required_but_no_credentials_configured',
+                );
                 return;
             }
-            // 2xx, 4xx (including 407 with no credentials configured) and 5xx all prove
-            // HTTP CONNECT semantics.  A 407 without configured credentials proves the
-            // protocol but does not prove the later authenticated request will succeed.
-            settle(PROXY_PREFLIGHT_PASS, status === 407 ? 'proxy_authentication_required' : `proxy_status_${status}`);
+            if ((status >= 200 && status < 300) || PROXY_CONNECT_PROOF_STATUSES.includes(status)) {
+                settle(PROXY_PREFLIGHT_PASS, status >= 200 && status < 300 ? 'proxy_tunnel_established' : `proxy_status_${status}`);
+                return;
+            }
+            // Anything else -- 400, 404, 405, 501 and the rest -- is what an ordinary HTTP
+            // origin server answers to a CONNECT it does not implement.  It proves nothing
+            // about the endpoint's ability to proxy the governed request, so it fails
+            // closed rather than being recorded as a protocol proof.
+            settle(PROXY_CONNECT_PROTOCOL_INVALID, `non_proxy_status_${status}`);
         };
 
         try {
@@ -341,6 +370,7 @@ module.exports = {
     STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
     STAGE_D_PROXY_PROBE_DESTINATION,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
+    PROXY_CONNECT_PROOF_STATUSES,
     PROXY_PREFLIGHT_CLASSIFICATIONS,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,

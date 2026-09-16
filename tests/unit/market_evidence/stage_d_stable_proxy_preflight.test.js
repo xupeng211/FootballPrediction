@@ -27,6 +27,7 @@ const {
     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
     PROXY_PREFLIGHT_CLASSIFICATIONS,
+    PROXY_CONNECT_PROOF_STATUSES,
     resolveStageDStableProxyEndpoint,
     buildStageDProxyAgentUrl,
     classifyStageDProxySocketError,
@@ -102,14 +103,50 @@ test('a CONNECT-speaking endpoint passes, and the probe names no provider', asyn
     assert.equal(/api\./.test(request), false);
 });
 
-test('an endpoint that demands authentication the caller did not configure still passes as a protocol proof', async t => {
+test('an endpoint that demands authentication the caller did not configure fails closed', async t => {
+    // The endpoint would authenticate the governed request no better than it authenticated
+    // this probe, so passing here would spend the one-shot authorization on a request that
+    // cannot succeed.  It has to fail closed instead.
     const proxy = await startProxyStandIn(t, socket => socket.end('HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="stage-d"\r\n\r\n'));
     const result = await preflight(proxy.port);
 
-    assert.equal(result.passed, true);
-    assert.equal(result.classification, PROXY_PREFLIGHT_PASS);
-    assert.equal(result.detail, 'proxy_authentication_required');
+    assert.equal(result.passed, false);
+    assert.equal(result.classification, PROXY_AUTHENTICATION_CONFIGURATION_FAILURE);
+    assert.equal(result.detail, 'proxy_authentication_required_but_no_credentials_configured');
+    assert.equal(result.has_credentials, false);
     assert.equal(/Proxy-Authorization/i.test(proxy.requestText()), false);
+});
+
+test('an ordinary HTTP origin server is not mistaken for a CONNECT proxy', async t => {
+    // The statuses a plain web server answers to a CONNECT it does not implement.  Each one
+    // is a well-formed HTTP status line, which is exactly why accepting "any status line"
+    // would let a non-proxy endpoint through the last gate before authorization is spent.
+    for (const [status, reason] of [[400, 'Bad Request'], [404, 'Not Found'], [405, 'Method Not Allowed'], [501, 'Not Implemented']]) {
+        const origin = await startProxyStandIn(t, socket => socket.end(`HTTP/1.1 ${status} ${reason}\r\nContent-Length: 0\r\n\r\n`));
+        const result = await preflight(origin.port);
+
+        assert.equal(result.passed, false, `${status} must not pass`);
+        assert.equal(result.classification, PROXY_CONNECT_PROTOCOL_INVALID, `${status} must be classified as a non-proxy response`);
+        assert.equal(result.detail, `non_proxy_status_${status}`);
+    }
+});
+
+test('only proxy-class refusals of the unreachable probe target count as protocol proof', async t => {
+    // The probe destination is deliberately unusable, so a working proxy refuses the tunnel
+    // rather than opening it.  These are the refusals only a CONNECT-implementing proxy
+    // produces; the set is pinned so widening it has to be a reviewed decision.
+    assert.deepEqual([...PROXY_CONNECT_PROOF_STATUSES], [403, 502, 503, 504]);
+    for (const [status, reason] of [[403, 'Forbidden'], [502, 'Bad Gateway'], [503, 'Service Unavailable'], [504, 'Gateway Timeout']]) {
+        const proxy = await startProxyStandIn(t, socket => socket.end(`HTTP/1.1 ${status} ${reason}\r\n\r\n`));
+        const result = await preflight(proxy.port);
+
+        assert.equal(result.passed, true, `${status} is a proxy-class tunnel refusal and must pass`);
+        assert.equal(result.classification, PROXY_PREFLIGHT_PASS);
+        assert.equal(result.detail, `proxy_status_${status}`);
+    }
+    for (const status of [400, 404, 405, 501]) {
+        assert.equal(PROXY_CONNECT_PROOF_STATUSES.includes(status), false, `${status} must stay outside the proof set`);
+    }
 });
 
 test('an endpoint that rejects the configured credentials fails closed without leaking them', async t => {

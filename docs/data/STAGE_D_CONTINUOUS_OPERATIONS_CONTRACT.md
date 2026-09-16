@@ -287,15 +287,29 @@ transmission. Before the one-shot authorization is spent, the binder resolves th
 endpoint and proves it speaks HTTP CONNECT by issuing a CONNECT for an unusable
 loopback address (`127.0.0.1:1`). The probe is provider-independent by construction:
 it never names The Odds API, so it cannot resolve provider DNS, contact the provider
-or consume provider quota. A refusal, a policy denial and an open tunnel are all
-valid HTTP CONNECT responses. A dead endpoint, a non-HTTP listener, a closed
-connection without a status line, an inactivity timeout, an `https://` TLS failure,
-an invalid or non-HTTP(S) endpoint URL, and a 407 that rejects configured credentials
-are each classified separately and none of them passes. A dead, missing or
-non-CONNECT endpoint therefore leaves `AUTHORIZATION_CONSUMED=NO`,
-`PROVIDER_REQUEST_ATTEMPTED=NO` and `QUOTA_UNITS_CHARGED_OR_ASSUMED=0`, and the
-unconsumed authorization remains usable until its own `expires_at` once the endpoint
-is provisioned.
+or consume provider quota.
+
+A pass requires a response that only an endpoint implementing HTTP CONNECT produces
+for that request: a 2xx tunnel, or a proxy-class refusal of the unreachable probe
+target (`403`, `502`, `503`, `504`). Because the probe destination is unusable by
+construction, a working proxy answers with one of those refusals rather than an open
+tunnel. Every other status fails closed, and deliberately so: `400`, `404`, `405` and
+`501` are what an ordinary HTTP origin server answers to a CONNECT it does not
+implement, so accepting "any well-formed status line" would let a non-proxy endpoint
+through the last gate before the one-shot authorization is spent. The accepted set is
+exported as `PROXY_CONNECT_PROOF_STATUSES` and pinned by a test, so widening it is a
+reviewed decision rather than an oversight.
+
+A 407 fails closed whether or not credentials were configured: if the endpoint will
+not authenticate this probe it will not authenticate the governed request either, so
+passing there would spend the authorization on a request that cannot succeed. A dead
+endpoint, a non-HTTP listener, a closed connection without a status line, an
+inactivity timeout, an `https://` TLS failure, an invalid or non-HTTP(S) endpoint URL
+and a rejected configured credential are each classified separately and none of them
+passes. A dead, missing or non-CONNECT endpoint therefore leaves
+`AUTHORIZATION_CONSUMED=NO`, `PROVIDER_REQUEST_ATTEMPTED=NO` and
+`QUOTA_UNITS_CHARGED_OR_ASSUMED=0`, and the unconsumed authorization remains usable
+until its own `expires_at` once the endpoint is provisioned.
 
 Proxy credentials, when the endpoint carries them, are held off every enumerable and
 serialized form of the endpoint. They never appear in logs, errors or evidence; the
