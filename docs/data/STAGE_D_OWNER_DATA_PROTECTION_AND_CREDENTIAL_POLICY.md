@@ -82,9 +82,16 @@ Two boundary notes, recorded rather than left to inference:
 | `OLD_CREDENTIAL_USABLE_FOR_FUTURE_LIVE_REQUEST` | `NO` |
 
 The previously exposed The Odds API credential has been rotated by the Owner. The old credential
-must not be used for any future live request. The replacement credential exists only in the
-approved local secret environment and must never be printed, committed, logged, copied into
-evidence artifacts, PR bodies, chat messages or repository files.
+must not be used for any future live request. The replacement credential is held in the approved
+local secret environment and must never be printed, committed, logged, copied into evidence
+artifacts, PR bodies, chat messages or repository files.
+
+That the replacement credential exists **only** there is the Owner's declaration, restated here
+rather than independently established. §5 corroborates the narrower facts — the credential is
+declared, it is not exported into this session's shell environment, and its secret file is
+owner-only, gitignored and was never added to the repository — and nothing in this record could
+exclude a copy held outside this host, for example in a provider dashboard or a password manager.
+No such exclusivity is claimed on this record's own evidence.
 
 This record intentionally contains **no credential value, no prefix, no length and no hash** of
 either the old or the replacement credential. Rotation is asserted by the Owner and corroborated
@@ -95,15 +102,19 @@ by the metadata evidence in §5; it is not asserted here on the basis of having 
 The checks below were performed without reading, comparing, hashing, measuring or otherwise
 processing the value of either credential. Every method below matches a variable **name** or a
 line of a file; no method ever places a credential value in a pipeline, a comparison, a command
-argument or an output. Every result is a boolean or a filesystem timestamp.
+argument or an output. Every result is a boolean, a filesystem timestamp or a filesystem mode.
+
+The filesystem observations were taken on the Owner's workstation, outside the repository tree
+that carries this record. They are properties of that host's local secret file and are **not**
+re-derivable from this repository; only the two `git` checks are.
 
 | Check | Method | Result |
 | --- | --- | --- |
-| Replacement credential is declared | match the variable **name** in the approved local `.env`, counting matching lines only | `API_KEY_DECLARED=YES` |
-| Credential not exposed through the process environment | match the variable **name** across the environment, counting matching names only | `API_KEY_IN_SHELL_ENV=NO` |
-| Secret-file protections intact | `stat` on the local secret file | mode `0600`, owner-only, already gitignored by `.gitignore:33` |
-| Local secret file was replaced | `stat` mtime, observed twice in the same session | `2026-09-06 01:06` → `2026-09-16 08:25:38 +0800` |
-| The secret file was never version-controlled | `git log --all --diff-filter=A -- .env` | never tracked |
+| Replacement credential is declared | match the variable **name** in that host's approved local `.env`, counting matching lines only | `API_KEY_DECLARED=YES` |
+| Credential not exported into the shell environment | match the variable **name** across this session's environment, counting matching names only | `API_KEY_IN_SHELL_ENV=NO` |
+| Secret-file protections as observed | `stat` on that host's local secret file, plus `git check-ignore -v .env` in this repository | mode `0600`, owner-only; `.env` matched by `.gitignore:33` |
+| That secret file's mtime advanced after the Owner declared rotation complete | `stat` mtime, observed twice in the same session on that host | `2026-09-06 01:06` → `2026-09-16 08:25:38 +0800` |
+| No commit on any ref ever added the approved secret file path | `git log --all --diff-filter=A -- .env` | no such commit |
 
 Stated as limits rather than left to inference, because the boundary is exactly what makes this
 record honest:
@@ -114,13 +125,17 @@ record honest:
   the value, which this mission's scope forbids.
 - **No value-based leak scan was performed and none is claimed.** Establishing that the credential
   value appears in no tracked file requires the value itself in the search pipeline, which is the
-  prohibited operation. What is established instead is narrower and stated as such: the secret
-  file is gitignored and has never been tracked. A value-based leak scan remains a reasonable
+  prohibited operation. What is established instead is narrower and stated as such: the approved
+  secret file is gitignored, and no commit on any ref ever added that path. It does not establish
+  that the value appears nowhere else in history, which is exactly what a value-based scan would
+  be needed to show. A value-based leak scan remains a reasonable
   separate task under its own authorization, and its absence is a gap in this record, not a
   passed check.
-- **The mtime advance is the substantive corroboration.** It was observed on this host, moving
-  from the pre-rotation timestamp to one after the Owner declared rotation complete. It is
-  evidence about a file, not about a credential.
+- **The mtime advance is the strongest corroboration available, and it is still only about a
+  file.** It was observed on that host, moving from a timestamp before the Owner declared rotation
+  complete to one after. An mtime records that a file was written; it does not record what was
+  written, so it corroborates the Owner's declaration without proving it. Neither timestamp is
+  re-derivable from this repository.
 
 Rotation is therefore recorded as **Owner-attested and metadata-corroborated**. This record does
 not claim an independent value-level proof, and §4 makes no claim about provider-side revocation
@@ -140,9 +155,14 @@ STAGE_D_STARTED=NO
 ```
 
 Also unchanged: `CONTINUOUS_CAPTURE_READY=NO`, `STAGE_D_BINDER_AUTHORIZATION=NO`,
-`STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY`, `THE_ODDS_API_CONTACTED=NO`,
-`STAGE_D_REQUEST_ACCOUNTING_EPOCH` still holds zero consumed requests, and the live executor
-remains disabled by default.
+`STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY`, `THE_ODDS_API_CONTACTED=NO`, and the
+live executor's disabled-by-default state.
+
+This record consumes no quota and certainly reaches no provider: nothing in §5 touched a network
+endpoint, and the request-accounting epoch is unchanged by it. The epoch's own consumed-request
+count is production ledger state living at an operator-supplied root with no canonical default
+path, so it is **not** re-measured here and this record makes no claim about its current value;
+the last recorded value is inherited from the accepted closure, not re-derived.
 
 Resolved by this record — the Owner-governance prerequisites that the canonical documents still
 listed as outstanding: credential rotation, and the approval of retention / RPO / RTO. Together
@@ -158,10 +178,18 @@ preflight.
 - It does not demonstrate that the approved RPO or RTO are achievable. They are objectives, not
   measured results.
 - It does not provision, configure or verify any backup target, retention rule, lifecycle policy
-  or bucket lock.
+  or bucket lock. The off-host target the accepted Blocker #3 closure already established is
+  unaffected by this record, which neither configures it further nor claims to have verified it.
 - It does not assert that a historical credential has been erased from any system outside the
   approved local secret environment, and it makes no claim about provider-side revocation beyond
   the Owner's statement that the old credential must not be used.
+- **It does not by itself make every current-state document coherent.** One further current-state
+  contract, [`STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`](STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md),
+  still carries a `## RPO/RTO policy — one proposal, deliberately unapproved` section whose
+  "Proposal A (uniform `RPO <= 24h`) remains the fallback" line, and a header status stating that
+  no target exists, are both superseded by this approval and by the accepted Blocker #3 closure.
+  That file is outside this mission's authorized paths, so it is reported here rather than edited.
+  It is a documentation-coherence residual: it changes no state token, `GATE_3` included.
 
 Related: [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md),
 [`STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md`](STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md),

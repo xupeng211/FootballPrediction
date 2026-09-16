@@ -66,7 +66,9 @@ Owner 数据保护与凭据治理已由 Owner 裁定，并记录于
 `PRIMARY_DATA_RETENTION=LONG_TERM`、`INDEPENDENT_BACKUP_RETENTION_MINIMUM=180_DAYS`、
 `MINIMUM_RECENT_SUCCESSFUL_BACKUP_GENERATIONS=30`）、`RPO_APPROVED=24_HOURS`、
 `RTO_APPROVED=24_HOURS`，且 `CREDENTIAL_ROTATION_COMPLETED=YES`——已暴露的 provider credential
-已轮换，旧凭据不得再用于任何 live request，替代凭据只存在于 approved local secret environment。
+已轮换，旧凭据不得再用于任何 live request；替代凭据保存在 approved local secret environment，
+且必须永不出现在 log、commit、证据包、PR body 或仓库文件中（"仅存在于该处"是 Owner 的声明，
+本文件不复述为自行验证的结论）。
 此前由本文件列为待办的 pre-Stage-D Owner 前置项（independent backup target、retention/RPO/RTO、
 credential rotation）连同 Blocker #2 的 runtime filesystem permission 至此均已结清：
 `BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`。这些批准**不**授权 Gate 3、**不**授权任何 live request，
