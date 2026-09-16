@@ -1,0 +1,78 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_OWNER_APPROVED_STABLE_HTTP_CONNECT_PROXY_RECONCILIATION_AND_PREFLIGHT_IMPLEMENTATION",
+  "task_type": "mixed",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "docs/agentic/missions/STAGE_D_OWNER_APPROVED_STABLE_HTTP_CONNECT_PROXY_RECONCILIATION_AND_PREFLIGHT_IMPLEMENTATION.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "scripts/devops/gatekeeper.sh",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "src/infrastructure/market_evidence/stageDStableProxy.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
+    "tests/unit/market_evidence/stage_d_stable_proxy_preflight.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    ".gitignore",
+    "AGENTS.md",
+    "Makefile",
+    "README.md",
+    "config/stage_d_quota_budget.json",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/PROJECT_VISION.md",
+    "package-lock.json",
+    "package.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "docker/",
+    "docs/_reports/",
+    "schemas/"
+  ],
+  "excluded_tokens": [
+    "betfair",
+    "migration",
+    "model-activation",
+    "oddsportal",
+    "playwright",
+    "proxy_pools",
+    "scheduler",
+    "sportmonks",
+    "stage_d_cycle",
+    "theoddsapi",
+    "transactionstore",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT: this mission implements the Owner decision STAGE_D_THE_ODDS_API_USES_DEDICATED_PROJECT_CONTROLLED_SINGLE_STABLE_HTTP_CONNECT_PROXY_ENDPOINT and nothing else; it does not re-adjudicate it, weaken it, or extend it to any other provider or workstream",
+    "ROTATING_SOCKS_POOL_FOR_STAGE_D=PROHIBITED and STAGE_D_PROXY_FALLBACK=NONE: the Stage D live provider path must never select the rotating default pool implicitly, and must never fall back to the default proxy pool, to ports 10001-10040, to a workstation Clash/Mihomo :7897 endpoint, or to a direct Internet connection; an absent or dead dedicated endpoint must fail closed before authorization consumption rather than degrade to any of them",
+    "PERSONAL_DEV_ONLY_ENDPOINT_NOT_ADOPTED: the currently observed Clash Verge/Mihomo *:7897 endpoint is classified PERSONAL_DEV_ONLY and is NOT the production endpoint; neither 127.0.0.1:7897, localhost:7897, nor any other current workstation endpoint is hard-coded, defaulted, or recorded as the production endpoint anywhere in this change set",
+    "CONCRETE_PRODUCTION_PROXY_ENDPOINT=NOT_YET_BOUND_BY_THIS_MISSION: no production proxy endpoint value appears in tracked source and no production endpoint has been provisioned by this mission; it is expected and correct that live Stage D still fails closed with PROXY_CONFIGURATION_MISSING, which is the repository-equivalent of PRODUCTION_PROXY_ENDPOINT_NOT_CONFIGURED",
+    "PROXY_PROTOCOL_PREFLIGHT_REQUIRED=YES and PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES: the proven ordering is proxy configuration validation, then proxy protocol preflight, then PASS, and only then authorization consumption, request accounting and transmission; a dead, missing or non-CONNECT endpoint must leave AUTHORIZATION_CONSUMED=NO, PROVIDER_REQUEST_ATTEMPTED=NO and QUOTA_UNITS_CHARGED_OR_ASSUMED=0",
+    "PREFLIGHT_IS_PROVIDER_INDEPENDENT: the preflight performs ZERO requests to The Odds API, ZERO provider DNS resolutions, ZERO calls to The Odds API hostname and ZERO quota consumption, because its CONNECT target is a loopback address the contract owns rather than any provider name",
+    "THE_ODDS_API_CONTACTED=NO and LIVE_PROVIDER_REQUESTS=0: this mission runs no real Gate 3 binder against The Odds API, sends no provider request, performs no provider DNS lookup as part of any test, runs no quota probe, creates no authorization, generates no candidate, activates nothing, and reuses no old authorization",
+    "PREVIOUS_AUTHORIZATION_UNTOUCHED: the spent authorization bd2d18956ae8e774fbb227bd56fa7619e2da0d4185372ae7e5108caefdc0c34a remains permanently spent; it is not copied, reactivated, un-marked, ledger-cleaned or used as executable test authority, and the historical evidence around it is left intact",
+    "NO_SECRET_EXPOSURE: no proxy password, no proxy URL embedded credential, no The Odds API key and no secret-bearing header is exposed in any changed file, log, error message, evidence artifact or test; the tests use obvious fake credentials only, and no local .env is read",
+    "HARVESTING_POOL_UNCHANGED: config/proxy_pools.json, REG-TITAN-40, the 40-node configuration and the ProxyProvider rotation behavior are byte-identical after this change; poolName='default' is not globally redefined, the harvesting pool is not converted to HTTP, and no bulk-harvesting path is redesigned",
+    "RETIRED_TRANSPORT_NOT_RESURRECTED: no retired transport path is revived merely because it already reads THE_ODDS_API_PROXY_URL",
+    "NO_PRODUCTION_RUNTIME_SIDE_EFFECT: no provider contact, no database write, no raw write, no training, no prediction, no backtest, no model activation and no migration apply occur; BLOCKER_3=CLOSED, GATE_2=ACCEPTED, GATE_3=NOT_AUTHORIZED and STAGE_D_STARTED=NO are preserved exactly and are never re-litigated, upgraded or downgraded",
+    "POST_BOUNDARY_ERROR_EVIDENCE_GAP=P1 is out of scope for this mission and stays OPEN_FOR_NEXT_MISSION; the parent-chain provisioning gap, the authority .staging gap and the 40-node bulk proxy provisioning gap are also out of scope and are not fixed here"
+  ],
+  "forbidden_side_effects": [
+    "contacting The Odds API, consuming provider quota, resolving a provider hostname, enabling the scheduler, starting Stage D, or creating a canonical transaction",
+    "creating, reactivating, copying, un-marking, ledger-cleaning or reusing any Gate 3 authorization, including the permanently spent bd2d18956ae8e774fbb227bd56fa7619e2da0d4185372ae7e5108caefdc0c34a",
+    "provisioning, configuring, defaulting or hard-coding a concrete production proxy endpoint, including 127.0.0.1:7897, localhost:7897, or any current workstation endpoint, in tracked source or in the runtime trust roots",
+    "writing an actual production proxy endpoint value, a proxy credential, or a The Odds API credential into tracked source, a test fixture, an evidence artifact or the pull request metadata",
+    "reading local .env, printing, logging, hashing or persisting a secret, or embedding a secret-bearing URL in an error message",
+    "modifying config/proxy_pools.json, REG-TITAN-40, the 40-node configuration, the ProxyProvider rotation behavior, the harvesting pool protocol, or any bulk-harvesting transport",
+    "resurrecting a retired transport path, or routing the Stage D live provider path through the rotating default pool",
+    "redesigning bulk harvesting, reopening Blocker #3, Gate 2 or Gate 3, or advancing the post-boundary evidence gap and the parent-chain, authority-'.staging' or 40-node provisioning gaps",
+    "force push, direct push to main, branch protection bypass, self-review, or merging this change set"
+  ]
+}
