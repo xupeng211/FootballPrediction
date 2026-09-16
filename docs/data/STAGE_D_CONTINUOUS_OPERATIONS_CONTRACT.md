@@ -260,8 +260,27 @@ may make future provider information visible to an earlier as-of query.
 
 The current canonical authority failure domain and every locally discovered
 artifact path are `/dev/nvme0n1p5`. A same-disk directory is explicitly not a
-backup target. No independent target is configured, so no production backup or
-restore proof exists.
+backup target. An independent off-host target **is** configured — a self-hosted
+S3-compatible endpoint with `create_only: true` and no delete verb — and it holds
+a real canonical backup generation,
+`snap_20260915T125353656Z_d059e495e3047958`, written to it before this closure.
+From merged main the closure proved that generation's remote verification and an
+isolated restore of it. That proof closed Blocker #3 and was accepted as Gate 2
+(`BLOCKER_3=CLOSED`, `GATE_2=ACCEPTED`; see
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md)). An earlier
+revision of this section stated that no independent target was configured and
+that no production backup or restore proof existed; that statement is superseded
+by the closure. The closure's own operations wrote no new generation and deleted
+nothing: it drove the real executor against the existing generation read-only and
+re-read it with `listObjects`/`getObject` only — `baseline_object_count: 14` →
+`observed_object_count: 14`, `differences: []` — so `writes_performed=0`,
+`deletes_performed=0` and `NEW_BACKUP_GENERATION_WRITTEN=NO` scope to those
+read-only operations, not to the earlier remote write that created the
+generation. `OFF_HOST=YES` with `OFF_SITE=NO`,
+and `DHCP_RESERVATION_STATUS=NOT_CONFIGURED`, remain registered non-blocking
+hardening items rather than Gate 2 conditions. Neither the closure nor the
+approved `RPO`/`RTO` objectives authorize any further backup generation or
+restore; each of those still requires its own separate Owner authorization.
 
 When an owner designates a physically/administratively independent target, a
 backup snapshot must include immutable transaction packages, `STORE.json`,
@@ -276,9 +295,32 @@ snapshot only a cold-load-valid transaction root, then restore to an isolated
 root and prove the exact head/state/registry/provenance/ledger again before
 being called a backup.
 
-Proposed but unapproved service policy is: irrecoverable evidence retained
-indefinitely, operational logs retained 90 days, `RPO <= 24h`, `RTO <= 4h`.
-`OWNER_APPROVAL_REQUIRED=YES`.
+The service policy proposed here before the Owner's decision was: irrecoverable
+evidence retained indefinitely, operational logs retained 90 days,
+`RPO <= 24h`, `RTO <= 4h`. That proposal carried
+`OWNER_APPROVAL_REQUIRED=YES`, and **that approval has since been given** — the
+token is left in this sentence as the state it held at the time of the proposal,
+not as current state. The Owner has approved retention, RPO and RTO, recorded in
+[`STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md).
+The approved values are `RAW_RETENTION=LONG_TERM_NO_ROUTINE_DELETION`,
+`PRIMARY_DATA_RETENTION=LONG_TERM`,
+`INDEPENDENT_BACKUP_RETENTION_MINIMUM=180_DAYS`,
+`MINIMUM_RECENT_SUCCESSFUL_BACKUP_GENERATIONS=30`, `RPO_APPROVED=24_HOURS` and
+`RTO_APPROVED=24_HOURS`.
+
+Reconciled item by item, because the approval does not match the proposal
+uniformly:
+
+| Proposed | Outcome |
+| --- | --- |
+| irrecoverable evidence retained indefinitely | Approved as `RAW_RETENTION=LONG_TERM_NO_ROUTINE_DELETION` / `PRIMARY_DATA_RETENTION=LONG_TERM`. That is a long-term, no-routine-deletion policy rather than a literal indefinite-retention commitment, and the approval adds two values the proposal did not carry at all: `INDEPENDENT_BACKUP_RETENTION_MINIMUM=180_DAYS` and `MINIMUM_RECENT_SUCCESSFUL_BACKUP_GENERATIONS=30`. |
+| operational logs retained 90 days | **Not addressed** by the approval. Operational log retention remains unapproved. |
+| `RPO <= 24h` | Approved and in agreement: `RPO_APPROVED=24_HOURS`. |
+| `RTO <= 4h` | **Superseded**: the Owner approved 24 hours where this contract proposed 4, so `RTO_APPROVED=24_HOURS` is the binding objective and the proposal is superseded rather than silently restated. |
+
+Those six approved values are **objectives**, not measured or exercised results:
+no backup, failover or recovery drill has been run against them, and the approval
+authorizes no Stage D start, no provider request and no change to `GATE_3`.
 
 ## Runtime filesystem permission contract (Blocker #2)
 

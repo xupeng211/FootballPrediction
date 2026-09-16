@@ -38,6 +38,8 @@ STAGE_D_BINDER_AUTHORIZATION=NO
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
 STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
 STAGE_D_INDEPENDENT_BACKUP_RESTORE=CLOSED_BLOCKER_3_GATE_2_ACCEPTED
+STAGE_D_OWNER_DATA_PROTECTION_POLICY=APPROVED_RETENTION_LONG_TERM__RPO_24H__RTO_24H
+STAGE_D_PROVIDER_CREDENTIAL_ROTATION=COMPLETED_OLD_CREDENTIAL_FORBIDDEN_FOR_LIVE
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
 STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY__NOT_RE_ADJUDICATED
@@ -101,11 +103,15 @@ ledger/verified-quota fail-close 实现，以及唯一的
 `HISTORICAL_PRE_EPOCH_EXACT_TOTAL=UNKNOWN`；它没有发起 provider request、启动 scheduler 或
 新增 canonical transaction。详见 `docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md`。
 
-剩余 pre-Stage-D 门禁仍由 Owner 或独立基础设施控制，尚未在本次任务中批准或执行：
+剩余 pre-Stage-D 门禁的 Owner 侧前置项已由 Owner 裁定结清；Gate 3 授权本身仍未裁定：
 
-- 指定不同物理故障域的 independent backup target。
-- 批准 retention / RPO / RTO（当前仅有 proposal）。
-- 轮换已暴露的 provider credential；任何 live 使用前必须完成。
+- 指定不同物理故障域的 independent backup target —— **已完成**（`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`）。
+- 批准 retention / RPO / RTO —— **已批准**（`RETENTION_POLICY_APPROVED=YES`、`RPO_APPROVED=24_HOURS`、
+  `RTO_APPROVED=24_HOURS`），见
+  [`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](data/STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)。
+- 轮换已暴露的 provider credential —— **已完成**（`CREDENTIAL_ROTATION_COMPLETED=YES`）；旧凭据不得再
+  用于任何 live request。该批准不授权 Gate 3、不授权任何 live request，也不启动 Stage D。
+- Gate 3 授权本身仍为 `GATE_3=NOT_AUTHORIZED`，由 Controller 的前置条件复核另行裁定。
 - Blocker #2 的 runtime filesystem permission **已完成并 closeout**（不再是剩余门禁）：Phase A
   （contract + 只读 audit + inert remediation plan + binder publication audit）完成；第一次经 Owner
   授权的 Phase B preflight 只读执行到 mutation 之前即停在 design gate——原 contract 要求 repair 以

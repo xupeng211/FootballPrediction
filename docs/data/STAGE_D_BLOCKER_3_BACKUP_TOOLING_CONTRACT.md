@@ -2,19 +2,40 @@
 
 > lifecycle: current-state contract
 >
-> 状态：`TOOLING_IMPLEMENTED__OFFLINE_ONLY__NOT_WIRED_TO_A_TARGET`。本合同定义 Stage D
-> Blocker #3 的 repository-side backup / restore tooling 边界：它可以被构建、被离线证明，但
-> **没有** target、**没有** credential、**没有** CLI wiring。它不授权 R2 provisioning、
-> 不授权真实 backup、不授权 production restore，也不关闭 Blocker #3。
+> `CURRENT_ADJUDICATED_STATE` —— 状态：
+> `TOOLING_IMPLEMENTED__LIVE_CLI_WIRED__OFF_HOST_TARGET_CONFIGURED__BLOCKER_3_CLOSED`。本合同定义
+> Stage D Blocker #3 的 repository-side backup / restore tooling 边界：tooling 已实现，live CLI
+> 已接线（`stage_d_r2_backup_live.js` / `stage_d_r2_restore_live.js`；已证明模式是 offline
+> preflight），独立 off-host target 已由 Owner 在单独授权下 provisioning，真实 generation 的
+> 远端 verification 与 isolated restore 已被证明并由 Controller 接受——因此
+> `BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`。该接受状态记录在
+> [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md)。
+>
+> 本合同**仍然不授权**任何新的 provisioning、新的真实 backup 或 production restore：每一次新的
+> backup / restore 仍需单独授权。它也不授权任何 provider 请求，`GATE_3=NOT_AUTHORIZED`、
+> `STAGE_D_STARTED=NO`。
+>
+> `HISTORICAL_STATE_WHEN_CONTRACT_WAS_WRITTEN` —— 本文件写作时的状态是
+> `TOOLING_IMPLEMENTED__OFFLINE_ONLY__NOT_WIRED_TO_A_TARGET`：当时**没有** target、**没有**
+> credential、**没有** CLI wiring，也不关闭 Blocker #3。该状态已被上文的
+> `CURRENT_ADJUDICATED_STATE` 取代，保留在此仅作为历史记录。
 
 ## Why Blocker #3 exists
 
-Stage D's accepted authority and its evidence currently live in one physical
-failure domain. A single disk, a single host or a single filesystem event can
-take the authority and every copy of it at once, so no restore procedure
-existing only on that host is a restore procedure at all. Blocker #3 is closed
-by a target in a *different* physical fault domain, plus an isolated-restore
-proof run against it — not by a script that copies files next to the originals.
+`HISTORICAL_STATE_WHEN_CONTRACT_WAS_WRITTEN`. When this contract was written,
+Stage D's accepted authority and its evidence lived in one physical failure
+domain: a single disk, a single host or a single filesystem event could take the
+authority and every copy of it at once, so no restore procedure existing only on
+that host was a restore procedure at all. Blocker #3 is closed by a target in a
+*different* physical fault domain, plus an isolated-restore proof run against it
+— not by a script that copies files next to the originals.
+
+`CURRENT_ADJUDICATED_STATE`. That condition no longer holds. The independent
+off-host target exists, and a real generation's remote verification and an
+isolated restore were proven against it and accepted, so `BLOCKER_3=CLOSED` and
+`GATE_2=ACCEPTED`. The authority's primary copy is still the local one; what
+changed is that it is no longer the *only* copy. Nothing in this section
+authorizes a further backup or restore.
 
 This document specifies the repository-side half of that work. Provisioning the
 off-host target is an Owner action under a separate authorization. The read-only
@@ -147,8 +168,17 @@ was being built. Blocker #3 has since been closed and Gate 2 accepted by the
 Controller, on evidence bound to main
 `e660e1a4152191458dc73f369c776be17ab15633` — recorded in
 [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md). They are
-corrected here because this is a current-state contract; nothing else in this
-document changes, and in particular the tooling was not what closed the blocker.
+corrected here because this is a current-state contract; the tooling was not what
+closed the blocker.
+
+The remaining live-mode lines in the same block are what *this workstream*
+established and did while building the wiring, and each is annotated as such in
+place. They are not claims about whether a target has since been reached. It has
+been: the accepted closure contacted the real off-host target and proved a real
+generation against it, its own operations writing no new generation and deleting
+nothing. Read as bare repository state, `LIVE_TARGET_CONTACTED=NO` or
+`LIVE_CLI_PROVEN_MODE=OFFLINE_PREFLIGHT_ONLY` would therefore be wrong. See the
+closeout above; no line below authorizes repeating any of it.
 
 ```text
 BLOCKER_3_STATUS=CLOSED                       (was OPEN when this contract was written)
@@ -162,11 +192,11 @@ RESTORE_TOOLING_ENTRYPOINT=scripts/ops/stage_d_restore_verify.js (offline, files
 LIVE_BACKUP_TOOLING_ENTRYPOINT=scripts/ops/stage_d_r2_backup_live.js (live-R2 wiring)
 LIVE_RESTORE_TOOLING_ENTRYPOINT=scripts/ops/stage_d_r2_restore_live.js (live-R2 wiring)
 LIVE_R2_CLI_WIRING=IMPLEMENTED
-LIVE_CLI_PROVEN_MODE=OFFLINE_PREFLIGHT_ONLY
-LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED
+LIVE_CLI_PROVEN_MODE=OFFLINE_PREFLIGHT_ONLY        (proven by this workstream)
+LIVE_CONNECTIVITY_PREFLIGHT=NOT_PERFORMED          (by this workstream; the probe class below)
 LIVE_TARGET_IDENTITY_SOURCE=EXPLICIT_FILE (no default location, no discovery)
 LIVE_CREDENTIAL_SOURCE=EXPLICIT_FILE (no default, no profile, no environment, no provider chain)
-LIVE_TARGET_CONTACTED=NO
+LIVE_TARGET_CONTACTED=NO                           (by this workstream; the accepted closure has since contacted the target read-only)
 OFFLINE_CLIS_UNCHANGED_NETLESS=YES
 BACKUP_INVOCATION_INTEGRATED_INTO_PUBLICATION_PATH=NO
 BUCKET_LOCK_CONFIGURATION=OUT_OF_SCOPE_FOR_THIS_MISSION
@@ -233,18 +263,51 @@ unauthorized when they were created, and the Controller's approval is a later
 adjudication. Nothing in this section accepts or merges PR #1911, and nothing in
 it closes Blocker #3.
 
-## RPO/RTO policy — one proposal, deliberately unapproved
+## RPO/RTO policy — historical proposal state and current approved state
+
+Two distinct things are recorded below, and reading either as the other is the
+error this section exists to prevent: the proposal state this contract was
+written under (`HISTORICAL_PROPOSAL_STATE`), and the objectives the Owner has
+since approved (`CURRENT_OWNER_APPROVED_STATE`).
+
+### HISTORICAL_PROPOSAL_STATE
 
 Two candidate policies were put to the Controller. **Proposal B** — a snapshot
-on every canonical commit, giving `RPO=0` for committed transactions — is the
-recommended one and is recorded here as `PROPOSED`, not as the governing policy.
-Proposal A (uniform `RPO <= 24h`) remains the fallback.
+on every canonical commit, giving `RPO=0` for committed transactions — was the
+recommended one and was recorded as `PROPOSED`, never as the governing policy.
+Proposal A (`RPO <= 24h`) was the fallback.
 
-`POLICY_B_STATUS=PROPOSED_NOT_APPROVED` means exactly what it says: the tooling
-does not assume per-commit invocation, no caller is wired to invoke it per
-commit, and `RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`. A future
-authorization that adopts Proposal B must add the invocation point *and* the
-availability argument that `RPO=0` requires; neither exists yet.
+`POLICY_B_STATUS=PROPOSED_NOT_APPROVED` still means exactly what it says, and
+the approval recorded below does not change it: the tooling does not assume
+per-commit invocation, no caller is wired to invoke it per commit, and
+`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`. Adoption of Proposal B would
+still require the invocation point *and* the availability argument that `RPO=0`
+requires; neither exists.
+
+### CURRENT_OWNER_APPROVED_STATE
+
+The Owner has since approved the recovery objectives. They are recorded
+canonically in
+[`STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)
+and are restated here only so that this current-state contract stops describing
+them otherwise:
+
+```text
+RPO_APPROVED=24_HOURS
+RTO_APPROVED=24_HOURS
+POLICY_B_STATUS=PROPOSED_NOT_APPROVED
+RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED
+```
+
+`RPO=24_HOURS` is therefore the approved recovery-point objective, not a
+fallback awaiting adoption, and `RTO=24_HOURS` is the approved recovery-time
+objective. Both are objectives and not measurements: no recovery drill has been
+run against either, and this contract claims neither has been demonstrated.
+
+The approval is bounded to those objectives. It adopts no proposed policy, and
+it imposes no per-commit invocation, no continuous replication, no stronger
+durability guarantee and no additional backup obligation — Proposal B is
+exactly as unapproved after the approval as it was before it.
 
 ## The snapshot contract
 
@@ -1167,12 +1230,15 @@ accepted Gate 2. Both have since happened, on separately authorized evidence —
 [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md).
 
 The live wiring is repository-side and offline. It makes the R2 target
-*addressable* and *provable*; it does not make it *reached*. Every live-mode
-statement in this contract is a statement about what the code would do with a
-target, established against a stub SDK in an in-memory bucket, and the words
-"the target" throughout mean the address the tooling was given rather than a
-bucket anyone contacted. No credential was created, no credential value was
-inspected, no lock was configured and no request was made.
+*addressable* and *provable*; the wiring existing does not make it *reached*.
+Every live-mode statement this contract established while the wiring was built is
+a statement about what the code would do with a target, established against a
+stub SDK in an in-memory bucket, and in those statements the words "the target"
+mean the address the tooling was given. Building the wiring contacted nothing: no
+credential was created, no credential value was inspected, no lock was configured
+and no request was made by it. What has happened since — a real off-host target,
+and a real generation proven against it and restored from it, read-only — belongs
+to the accepted closure in the next paragraph, not to this workstream.
 
 Blocker #3 is closed by an off-host target and an isolated-restore proof run
 against it. Both now exist: the target was provisioned separately by the Owner,
