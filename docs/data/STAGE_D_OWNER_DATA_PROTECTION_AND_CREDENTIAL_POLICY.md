@@ -184,20 +184,22 @@ preflight.
   approved local secret environment, and it makes no claim about provider-side revocation beyond
   the Owner's statement that the old credential must not be used.
 - **It does not by itself make every current-state document coherent, and the one place that
-  matters is narrower than it first appears.** One further current-state contract,
+  mattered was reconciled under its own authorization.** One further current-state contract,
   [`STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`](STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md),
-  declares `lifecycle: current-state contract`, and its closure-facing state is **already**
-  coherent with `BLOCKER_3=CLOSED`: PR #1917 corrected its four adjudication lines to
+  declares `lifecycle: current-state contract`. Its closure-facing state was **already** coherent
+  with `BLOCKER_3=CLOSED`: PR #1917 corrected its four adjudication lines to
   `BLOCKER_3_STATUS=CLOSED (was OPEN when this contract was written)` and
   `GATE_2=ACCEPTED (was NOT_ACCEPTED)`, and recorded there that its `..._BY_THIS_WORK` lines
-  describe that workstream rather than repository state. What it has **not** been brought to is
-  *this* approval. Its `## RPO/RTO policy — one proposal, deliberately unapproved` section was
-  written before the Owner's decision and was left as it stood, so it still presents Proposal A
-  (`RPO <= 24h`) as an unadopted fallback rather than as the objective the Owner has since
-  approved, and it says nothing about `RTO`. Its `POLICY_B_STATUS=PROPOSED_NOT_APPROVED` remains
-  correct, and this record preserves that token unchanged. That file is outside this mission's
-  authorized paths, so it is reported here rather than edited, and reconciling it would need its
-  own authorization. Documentation coherence only: it changes no state token, `GATE_3` included.
+  describe that workstream rather than repository state. What it had **not** been brought to was
+  *this* approval: its RPO/RTO policy section was written before the Owner's decision, presented
+  Proposal A (`RPO <= 24h`) as an unadopted fallback, and said nothing about `RTO`. That path lay
+  outside this mission's original authorized paths, so this record first reported it rather than
+  editing it; the Execution Controller then authorized exactly one mission-scope expansion
+  (`ADD_AUTHORIZED_PATH=docs/data/STAGE_D_BLOCKER_3_BACKUP_TOOLING_CONTRACT.md`), and that
+  contract's RPO/RTO section now records `RPO_APPROVED=24_HOURS` and `RTO_APPROVED=24_HOURS` as
+  the Owner-approved objectives while keeping its historical proposal state visibly separate. Its
+  `POLICY_B_STATUS=PROPOSED_NOT_APPROVED` remains correct, and this record preserves that token
+  unchanged. Documentation coherence only: it changes no state token, `GATE_3` included.
 
 Related: [`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md),
 [`STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md`](STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md),

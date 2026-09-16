@@ -233,18 +233,51 @@ unauthorized when they were created, and the Controller's approval is a later
 adjudication. Nothing in this section accepts or merges PR #1911, and nothing in
 it closes Blocker #3.
 
-## RPO/RTO policy — one proposal, deliberately unapproved
+## RPO/RTO policy — historical proposal state and current approved state
+
+Two distinct things are recorded below, and reading either as the other is the
+error this section exists to prevent: the proposal state this contract was
+written under (`HISTORICAL_PROPOSAL_STATE`), and the objectives the Owner has
+since approved (`CURRENT_OWNER_APPROVED_STATE`).
+
+### HISTORICAL_PROPOSAL_STATE
 
 Two candidate policies were put to the Controller. **Proposal B** — a snapshot
-on every canonical commit, giving `RPO=0` for committed transactions — is the
-recommended one and is recorded here as `PROPOSED`, not as the governing policy.
-Proposal A (uniform `RPO <= 24h`) remains the fallback.
+on every canonical commit, giving `RPO=0` for committed transactions — was the
+recommended one and was recorded as `PROPOSED`, never as the governing policy.
+Proposal A (`RPO <= 24h`) was the fallback.
 
-`POLICY_B_STATUS=PROPOSED_NOT_APPROVED` means exactly what it says: the tooling
-does not assume per-commit invocation, no caller is wired to invoke it per
-commit, and `RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`. A future
-authorization that adopts Proposal B must add the invocation point *and* the
-availability argument that `RPO=0` requires; neither exists yet.
+`POLICY_B_STATUS=PROPOSED_NOT_APPROVED` still means exactly what it says, and
+the approval recorded below does not change it: the tooling does not assume
+per-commit invocation, no caller is wired to invoke it per commit, and
+`RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED`. Adoption of Proposal B would
+still require the invocation point *and* the availability argument that `RPO=0`
+requires; neither exists.
+
+### CURRENT_OWNER_APPROVED_STATE
+
+The Owner has since approved the recovery objectives. They are recorded
+canonically in
+[`STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md`](STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)
+and are restated here only so that this current-state contract stops describing
+them otherwise:
+
+```text
+RPO_APPROVED=24_HOURS
+RTO_APPROVED=24_HOURS
+POLICY_B_STATUS=PROPOSED_NOT_APPROVED
+RPO_ZERO_COMMITTED_TRANSACTIONS=NOT_YET_ENFORCED
+```
+
+`RPO=24_HOURS` is therefore the approved recovery-point objective, not a
+fallback awaiting adoption, and `RTO=24_HOURS` is the approved recovery-time
+objective. Both are objectives and not measurements: no recovery drill has been
+run against either, and this contract claims neither has been demonstrated.
+
+The approval is bounded to those objectives. It adopts no proposed policy, and
+it imposes no per-commit invocation, no continuous replication, no stronger
+durability guarantee and no additional backup obligation — Proposal B is
+exactly as unapproved after the approval as it was before it.
 
 ## The snapshot contract
 
