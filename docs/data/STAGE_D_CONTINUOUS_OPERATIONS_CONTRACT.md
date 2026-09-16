@@ -260,8 +260,20 @@ may make future provider information visible to an earlier as-of query.
 
 The current canonical authority failure domain and every locally discovered
 artifact path are `/dev/nvme0n1p5`. A same-disk directory is explicitly not a
-backup target. No independent target is configured, so no production backup or
-restore proof exists.
+backup target. An independent off-host target **is** configured — a self-hosted
+S3-compatible endpoint with `create_only: true` and no delete verb — and a real
+canonical backup, its remote verification and an isolated restore from merged
+main have been proven against it. That proof closed Blocker #3 and was accepted
+as Gate 2 (`BLOCKER_3=CLOSED`, `GATE_2=ACCEPTED`; see
+[`STAGE_D_BLOCKER_3_CLOSEOUT.md`](STAGE_D_BLOCKER_3_CLOSEOUT.md)). An earlier
+revision of this section stated that no independent target was configured and
+that no production backup or restore proof existed; that statement is superseded
+by the closure. The proof performed no live write and no delete
+(`writes_performed=0`, `deletes_performed=0`). `OFF_HOST=YES` with `OFF_SITE=NO`,
+and `DHCP_RESERVATION_STATUS=NOT_CONFIGURED`, remain registered non-blocking
+hardening items rather than Gate 2 conditions. Neither the closure nor the
+approved `RPO`/`RTO` objectives authorize any further backup generation or
+restore; each of those still requires its own separate Owner authorization.
 
 When an owner designates a physically/administratively independent target, a
 backup snapshot must include immutable transaction packages, `STORE.json`,
