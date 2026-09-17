@@ -16,11 +16,33 @@
 //      that spent the previous one-shot authorization.
 //
 //   2. PROVEN TUNNEL, NOT A PROVEN STATUS LINE.  A proxy is not proven because it
-//      returned something HTTP-shaped.  It is proven only when it accepts CONNECT
-//      for a project-controlled target, answers with a strict 2xx, and then carries
-//      a fresh random nonce through the tunnel that the target echoes back.  The
-//      preflight never names the provider, so it cannot resolve provider DNS, cannot
-//      send provider traffic, and cannot consume provider quota.
+//      returned something HTTP-shaped, and it is not proven by anything the client
+//      can manufacture on its own.  It is proven only when it accepts CONNECT for a
+//      project-controlled target, answers with a strict 2xx, and then carries a fresh
+//      random challenge through the tunnel that the target answers with an HMAC-SHA-256
+//      over that challenge under a secret held by the target and this verifier alone.
+//      The preflight never names the provider, so it cannot resolve provider DNS,
+//      cannot send provider traffic, and cannot consume provider quota.
+//
+// Why a client-authored challenge is not enough on its own.  An earlier revision of
+// this module proved the data plane by writing a random nonce through the tunnel and
+// requiring the target to echo it verbatim.  Independent review rejected that, and
+// the objection is exact: a nonce the client invents is a value the client already
+// knows, so any responder that reads it -- and never dials the configured target --
+// can produce the expected reply.  Reflection is indistinguishable from forwarding
+// when the challenge carries no secret.  The proof therefore has to rest on material
+// the responder cannot compute: the target contributes a keyed MAC, and only an
+// entity holding the shared secret can answer a fresh challenge.  Nothing the client
+// sends is ever, by itself, sufficient to pass.
+//
+// What this does and does not prove.  A passing preflight proves the CONNECT tunnel
+// reached an entity that holds the configured preflight shared secret -- target
+// identity and control, to the strength of that secret.  It does NOT prove The Odds
+// API is reachable, that the provider would accept a request, that quota exists, that
+// general external egress works, or that the network will hold.  A compromised shared
+// secret would let a hostile responder forge attestation; that is the accepted
+// failure domain of a symmetric design, which is why the secret is dedicated,
+// high-entropy, never logged, and rotatable.
 //
 // Why the strict 2xx rule needs the probe target to be genuinely reachable: a proxy
 // answers a CONNECT for a destination it cannot reach with a proxy-class refusal
@@ -57,15 +79,29 @@ const STAGE_D_PROXY_DEFAULT_PORTS = Object.freeze({ 'http:': 80, 'https:': 443 }
 // enforces a hard overall deadline so no stage can extend the total.
 const STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS = 5000;
 
-const STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES = 8192;
-const STAGE_D_PROXY_NONCE_BYTES = 16;
+// A third contract, separate from both the proxy endpoint and the target address:
+// the key material the target must possess to answer a challenge.  It is deliberately
+// not derived from, and shares no bytes with, the provider key, the proxy credentials,
+// any authorization or ledger hash, or any machine identity -- a secret reused across
+// purposes is a secret whose blast radius is the union of those purposes.
+const STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR = 'STAGE_D_PROXY_PREFLIGHT_SHARED_SECRET';
 
-// The data-plane proof.  The binder writes one line through the established tunnel
-// and the project-controlled target must echo the nonce back verbatim.  The nonce is
-// random per run and is not a secret: its only job is to be unguessable by a stale,
-// synthetic or third-party responder that never actually carried bytes for us.
-const STAGE_D_PROXY_NONCE_PROTOCOL = 'stage-d-preflight-nonce-echo/v1';
-const STAGE_D_PROXY_NONCE_REQUEST_PREFIX = 'STAGE-D-PREFLIGHT';
+const STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES = 8192;
+
+// The data-plane proof.  The verifier writes one challenge line through the
+// established tunnel; the project-controlled target answers with an HMAC-SHA-256 over
+// a canonical, length-prefixed message under the shared secret.  The challenge is
+// fresh per execution and is not itself a secret: its job is to be unguessable and
+// never reused, so that no earlier response can be replayed against it.
+const STAGE_D_PROXY_ATTESTATION_PROTOCOL = 'stage-d-proxy-preflight/v1';
+const STAGE_D_PROXY_CHALLENGE_BYTES = 32;
+const STAGE_D_PROXY_RUN_ID_BYTES = 16;
+const STAGE_D_PROXY_ATTESTATION_MAC_BYTES = 32;
+
+// A shared secret shorter than this is not a meaningful attestation key.  Enforcing a
+// floor here means a mis-provisioned secret fails closed at configuration time rather
+// than silently degrading the proof to something a guesser could satisfy.
+const STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES = 32;
 
 const PROXY_PREFLIGHT_PASS = 'PROXY_PREFLIGHT_PASS';
 const PROXY_CONFIGURATION_MISSING = 'PROXY_CONFIGURATION_MISSING';
@@ -83,6 +119,17 @@ const PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING = 'PROXY_PREFLIGHT_TARGET_CON
 const PROXY_PREFLIGHT_TARGET_URL_INVALID = 'PROXY_PREFLIGHT_TARGET_URL_INVALID';
 const PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY = 'PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY';
 
+// Attestation configuration failures are thrown rather than returned, because they are
+// decided before a socket exists and must leave no room for a caller to treat them as a
+// probe outcome.  Attestation *outcomes* are returned like every other probe result.
+const PREFLIGHT_ATTESTATION_SECRET_MISSING = 'PREFLIGHT_ATTESTATION_SECRET_MISSING';
+const PREFLIGHT_ATTESTATION_SECRET_INVALID = 'PREFLIGHT_ATTESTATION_SECRET_INVALID';
+
+const PROXY_CONNECT_ATTESTATION_MALFORMED = 'PROXY_CONNECT_ATTESTATION_MALFORMED';
+const PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH = 'PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH';
+const PROXY_CONNECT_ATTESTATION_MAC_INVALID = 'PROXY_CONNECT_ATTESTATION_MAC_INVALID';
+const PROXY_CONNECT_ATTESTATION_TIMEOUT = 'PROXY_CONNECT_ATTESTATION_TIMEOUT';
+
 const PROXY_PREFLIGHT_CLASSIFICATIONS = Object.freeze([
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
@@ -93,8 +140,17 @@ const PROXY_PREFLIGHT_CLASSIFICATIONS = Object.freeze([
     PROXY_CONNECT_PROTOCOL_INVALID,
     PROXY_CONNECT_TUNNEL_REFUSED,
     PROXY_CONNECT_TUNNEL_PROOF_FAILED,
+    PROXY_CONNECT_ATTESTATION_MALFORMED,
+    PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH,
+    PROXY_CONNECT_ATTESTATION_MAC_INVALID,
+    PROXY_CONNECT_ATTESTATION_TIMEOUT,
     PROXY_CONNECT_PREFLIGHT_TIMEOUT,
     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
+]);
+
+const PREFLIGHT_ATTESTATION_CONFIGURATION_CLASSIFICATIONS = Object.freeze([
+    PREFLIGHT_ATTESTATION_SECRET_MISSING,
+    PREFLIGHT_ATTESTATION_SECRET_INVALID,
 ]);
 
 const DNS_FAILURE_CODES = Object.freeze(['ENOTFOUND', 'EAI_AGAIN', 'EAI_NODATA', 'EAI_FAIL', 'EAI_NONAME']);
@@ -116,6 +172,12 @@ const TRANSPORT_FAILURE_CODES = Object.freeze([
 // that JSON.stringify, Object.keys, spread and structured logging cannot carry them
 // into evidence by accident.  Only buildStageDProxyAuthorizationHeader reads them.
 const PROXY_CREDENTIALS = Symbol('stageDStableProxyCredentials');
+
+// The attestation secret is held the same way, and for a stronger reason: it must not
+// reach an evidence record, an error message, a JSON report or a log line.  Nothing
+// reads it except the MAC computation, and no representation of it -- not the bytes,
+// not a hash, not a length, not a prefix -- is ever placed on the enumerable surface.
+const PREFLIGHT_SECRET_BYTES = Symbol('stageDPreflightSecretBytes');
 
 function failStageDProxy(code, message) {
     const error = new Error(message);
@@ -264,6 +326,124 @@ function resolveStageDPreflightTarget(env = process.env, { proxyEndpoint = null 
     return target;
 }
 
+// Resolves the attestation secret, or fails closed.
+//
+// The representation is canonical base64 of opaque bytes: base64 is the one encoding
+// that survives an environment variable, a secret store and a deploy manifest without
+// re-interpretation, and it lets this contract state an entropy floor in bytes rather
+// than in characters.  The value is validated strictly -- a lenient decode would
+// accept a corrupted or truncated secret and turn a provisioning mistake into an
+// intermittent attestation failure against a live target instead of a startup refusal.
+function isCanonicalBase64(value) {
+    if (value.length === 0 || value.length % 4 !== 0) return false;
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
+    // Round-tripping rejects non-canonical trailing bits, which Buffer.from would
+    // otherwise accept and silently decode to different bytes than the operator encoded.
+    return Buffer.from(value, 'base64').toString('base64') === value;
+}
+
+function resolveStageDPreflightSecret(env = process.env) {
+    const raw = env?.[STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR];
+    if (typeof raw !== 'string' || raw.trim() === '') {
+        // Fails closed before any socket is opened, and is never generated on the fly:
+        // a secret this process invents cannot be known by the target, so a silently
+        // generated value would turn a missing deployment input into a confusing
+        // attestation failure rather than a configuration error.
+        failStageDProxy(
+            PREFLIGHT_ATTESTATION_SECRET_MISSING,
+            `Stage D requires ${STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR}, the shared secret the project-controlled preflight target `
+            + 'attests with; there is no default, no generated fallback and no reuse of any other credential',
+        );
+    }
+    const value = raw.trim();
+    if (!isCanonicalBase64(value)) {
+        failStageDProxy(
+            PREFLIGHT_ATTESTATION_SECRET_INVALID,
+            `${STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR} must be canonical base64 of the raw secret bytes`,
+        );
+    }
+    const bytes = Buffer.from(value, 'base64');
+    if (bytes.length < STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES) {
+        // The message states the requirement, never the observed length: a secret's
+        // size is not something an operator needs echoed back at them, and error text
+        // travels further than the configuration it describes.
+        failStageDProxy(
+            PREFLIGHT_ATTESTATION_SECRET_INVALID,
+            `${STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR} must decode to at least ${STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES} bytes of key material`,
+        );
+    }
+    return freezeStageDPreflightSecret(bytes);
+}
+
+function freezeStageDPreflightSecret(bytes) {
+    // The non-enumerable slot is installed before the freeze: freezing first would make
+    // the object non-extensible and the key material could not be attached at all.
+    const secret = { configured: true, encoding: 'base64', algorithm: 'HMAC-SHA-256' };
+    Object.defineProperty(secret, PREFLIGHT_SECRET_BYTES, { value: bytes, enumerable: false });
+    return Object.freeze(secret);
+}
+
+// The canonical MAC input, and the reason it is built this way rather than assembled
+// from a template string: an HMAC is only as unambiguous as its message encoding.  A
+// delimiter-joined string lets distinct field pairs collide when a field can contain
+// the delimiter; length prefixes make every encoding injective, so the bytes signed
+// are exactly the fields intended and nothing else.
+//
+//   message = "stage-d-proxy-preflight/v1" 0x00
+//             uint32be(byteLength(run_id))   run_id      (ASCII hex)
+//             uint32be(byteLength(challenge)) challenge  (ASCII hex)
+function buildStageDAttestationMessage({ runId, challenge }) {
+    const magic = Buffer.from(STAGE_D_PROXY_ATTESTATION_PROTOCOL, 'ascii');
+    const runIdBytes = Buffer.from(runId, 'ascii');
+    const challengeBytes = Buffer.from(challenge, 'ascii');
+    const runIdLength = Buffer.alloc(4);
+    const challengeLength = Buffer.alloc(4);
+    runIdLength.writeUInt32BE(runIdBytes.length, 0);
+    challengeLength.writeUInt32BE(challengeBytes.length, 0);
+    return Buffer.concat([
+        magic, Buffer.from([0]),
+        runIdLength, runIdBytes,
+        challengeLength, challengeBytes,
+    ]);
+}
+
+// The target's half of the protocol, exported so a dev/CI attestation target can be
+// built from the same definition the verifier checks against rather than from a
+// hand-copied restatement of it.  Importing this module starts no listener and opens
+// no socket: no reference target is provisioned by the existence of this function.
+function buildStageDAttestationResponse({ secret, runId, challenge }) {
+    const bytes = secret?.[PREFLIGHT_SECRET_BYTES];
+    if (!bytes) {
+        failStageDProxy(PREFLIGHT_ATTESTATION_SECRET_MISSING, 'a resolved preflight secret is required to compute an attestation response');
+    }
+    const mac = crypto
+        .createHmac('sha256', bytes)
+        .update(buildStageDAttestationMessage({ runId, challenge }))
+        .digest('hex');
+    return `${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${runId} ${mac}\n`;
+}
+
+function buildStageDAttestationChallengeRequest({ runId, challenge }) {
+    return `${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${runId} ${challenge}\n`;
+}
+
+function createStageDPreflightChallenge() {
+    return Object.freeze({
+        runId: crypto.randomBytes(STAGE_D_PROXY_RUN_ID_BYTES).toString('hex'),
+        challenge: crypto.randomBytes(STAGE_D_PROXY_CHALLENGE_BYTES).toString('hex'),
+    });
+}
+
+// Constant-time comparison of a received MAC against the expected one.  Length is
+// checked first because timingSafeEqual throws on a length mismatch, and a length
+// difference is a framing defect rather than a wrong-key result, so it is classified
+// separately by the caller.
+function stageDAttestationMacMatches(expected, receivedHex) {
+    const received = Buffer.from(receivedHex, 'hex');
+    if (received.length !== expected.length) return false;
+    return crypto.timingSafeEqual(expected, received);
+}
+
 // Canonical HTTP CONNECT credential attachment, shared by the preflight and the
 // governed transport.
 //
@@ -315,20 +495,9 @@ function buildStageDConnectProbe(endpoint, target) {
         + '\r\n';
 }
 
-function buildStageDNonceProbe(challenge) {
-    return `${STAGE_D_PROXY_NONCE_REQUEST_PREFIX} ${challenge.probe_id} ${challenge.nonce}\n`;
-}
-
-function createStageDPreflightChallenge() {
-    return Object.freeze({
-        probe_id: crypto.randomBytes(8).toString('hex'),
-        nonce: crypto.randomBytes(STAGE_D_PROXY_NONCE_BYTES).toString('hex'),
-    });
-}
-
 // Locates the end of the CONNECT response head.  The tunnel's data plane begins
 // immediately after it, so anything already buffered past this point belongs to the
-// nonce exchange rather than to the HTTP response.
+// challenge exchange rather than to the HTTP response.
 function findConnectResponseHeadEnd(buffer) {
     const crlf = buffer.indexOf('\r\n\r\n');
     if (crlf !== -1) return crlf + 4;
@@ -337,7 +506,7 @@ function findConnectResponseHeadEnd(buffer) {
     return -1;
 }
 
-function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, challenge }) {
+function probeStageDHttpConnectProxy({ endpoint, target, secret, timeoutMs, clock, challenge }) {
     return new Promise(resolve => {
         const startedAt = clock();
         let settled = false;
@@ -346,6 +515,14 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
         let tlsEstablished = false;
         let buffer = '';
         let phase = 'connect_response';
+
+        // Computed once, before the socket exists.  The expected MAC is a function of
+        // the challenge and the secret alone, so there is nothing the peer can send
+        // that changes what we are comparing against.
+        const expectedMac = crypto
+            .createHmac('sha256', secret[PREFLIGHT_SECRET_BYTES])
+            .update(buildStageDAttestationMessage(challenge))
+            .digest();
 
         const settle = (classification, detail) => {
             if (settled) return;
@@ -361,10 +538,11 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
                 socket.destroy();
             }
             resolve(Object.freeze({
-                schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
+                schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v2',
                 proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
-                nonce_protocol: STAGE_D_PROXY_NONCE_PROTOCOL,
-                proof_level: 'L3',
+                attestation_protocol: STAGE_D_PROXY_ATTESTATION_PROTOCOL,
+                attestation_algorithm: 'HMAC-SHA-256',
+                proof_level: 'AUTHENTICATED_PROJECT_CONTROLLED_TARGET_REACHABILITY',
                 classification,
                 passed: classification === PROXY_PREFLIGHT_PASS,
                 endpoint: endpoint.redacted,
@@ -373,9 +551,10 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
                 port: endpoint.port,
                 has_credentials: endpoint.has_credentials,
                 target: target.redacted,
-                nonce_verified: classification === PROXY_PREFLIGHT_PASS,
+                target_attested: classification === PROXY_PREFLIGHT_PASS,
                 provider_contacted: false,
                 provider_dns_resolved: false,
+                provider_reachability_proven: false,
                 started_at: startedAt,
                 completed_at: clock(),
                 detail: detail === undefined ? null : detail,
@@ -395,23 +574,46 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
             }
         };
 
-        // The tunnel proof.  A 2xx alone can be synthesised without any tunnel existing,
-        // so the pass condition is that a fresh random nonce written through the tunnel
-        // comes back verbatim.  Anything else fails closed.
-        const readNonceEcho = () => {
+        // The target attestation.  A 2xx can be synthesised without any tunnel existing,
+        // and so can any reply the client could have predicted; the pass condition is
+        // therefore a valid HMAC over this execution's fresh challenge, which only a
+        // responder that actually reached the secret-holding target can produce.
+        // Every rejection below is a distinct, deterministic failure -- none of them
+        // waits, and none of them degrades into a generic timeout.
+        const readAttestationResponse = () => {
             const lineEnd = buffer.indexOf('\n');
             if (lineEnd === -1) {
                 if (buffer.length > STAGE_D_PROXY_PROBE_MAX_RESPONSE_BYTES) {
-                    settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, 'nonce_response_too_large');
+                    settle(PROXY_CONNECT_ATTESTATION_MALFORMED, 'attestation_response_too_large');
                 }
                 return; // bounded by the socket inactivity timeout and the overall deadline
             }
             const line = buffer.slice(0, lineEnd).replace(/\r$/, '');
-            if (line === challenge.nonce) {
-                settle(PROXY_PREFLIGHT_PASS, 'connect_2xx_nonce_round_trip');
+            const parts = line.split(' ');
+            if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) {
+                settle(
+                    PROXY_CONNECT_ATTESTATION_MALFORMED,
+                    line === '' ? 'empty_attestation_response' : 'attestation_response_malformed',
+                );
                 return;
             }
-            settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, line === '' ? 'empty_nonce_response' : 'nonce_mismatch');
+            const [, responseRunId, macHex] = parts;
+            // A response bound to another execution is refused before the MAC is even
+            // examined: it cannot be a legitimate answer to this challenge, and
+            // treating it as a mere MAC failure would blur replay into a key mismatch.
+            if (responseRunId !== challenge.runId) {
+                settle(PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH, 'attestation_run_id_mismatch');
+                return;
+            }
+            if (!/^[0-9a-f]{64}$/.test(macHex)) {
+                settle(PROXY_CONNECT_ATTESTATION_MALFORMED, 'attestation_mac_malformed');
+                return;
+            }
+            if (!stageDAttestationMacMatches(expectedMac, macHex)) {
+                settle(PROXY_CONNECT_ATTESTATION_MAC_INVALID, 'attestation_mac_invalid');
+                return;
+            }
+            settle(PROXY_PREFLIGHT_PASS, 'connect_2xx_target_hmac_attested');
         };
 
         const readConnectResponse = () => {
@@ -434,7 +636,8 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
                 // authenticate this request.  Whether the configured secret is wrong or
                 // none was configured, the governed request could not be authenticated
                 // either, so the endpoint is not usable.  A 407 is never itself proof of
-                // anything -- a successful preflight must still end in 2xx plus a nonce.
+                // anything -- a successful preflight must still end in 2xx plus a valid
+                // target attestation.
                 settle(
                     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
                     endpoint.has_credentials
@@ -458,14 +661,14 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
             }
             // Everything past the response head is data-plane bytes from the target.
             buffer = buffer.slice(headEnd);
-            phase = 'tunnel_proof';
+            phase = 'attestation';
             try {
-                socket.write(buildStageDNonceProbe(challenge));
+                socket.write(buildStageDAttestationChallengeRequest(challenge));
             } catch (error) {
                 settle(classifyProxySocketError(error, { scheme: endpoint.scheme, tlsEstablished }), error?.code || null);
                 return;
             }
-            readNonceEcho();
+            readAttestationResponse();
         };
 
         const onData = chunk => {
@@ -473,7 +676,7 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
             // Each reader bounds its own buffer, so there is no cap here: a proxy that
             // pipelines data behind its response head must not be failed for the head.
             if (phase === 'connect_response') readConnectResponse();
-            if (!settled && phase === 'tunnel_proof') readNonceEcho();
+            if (!settled && phase === 'attestation') readAttestationResponse();
         };
 
         try {
@@ -497,26 +700,27 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
         // any single stage alive indefinitely on top of the inactivity timeout.
         //
         // Both timers are phase-aware, which keeps one invariant exact: once a 2xx has been
-        // received, failing to complete the nonce round trip is ALWAYS a tunnel proof
-        // failure, never a bare timeout.  That is what makes the "synthetic 200 that opens
-        // no tunnel" case a single unambiguous classification instead of a race between the
-        // two timers.  Before the 2xx, a stall is still an ordinary protocol timeout.
+        // received, failing to complete the target attestation is ALWAYS an attestation
+        // classification, never the bare protocol timeout that precedes it.  That is what
+        // makes the "synthetic 200 that opens no tunnel" case a single unambiguous
+        // classification instead of a race between the two timers.  Before the 2xx, a
+        // stall is still an ordinary protocol timeout.
         overallTimer = setTimeout(() => settle(
-            phase === 'tunnel_proof' ? PROXY_CONNECT_TUNNEL_PROOF_FAILED : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
-            phase === 'tunnel_proof' ? 'nonce_round_trip_inactivity' : 'overall_deadline_exceeded',
+            phase === 'attestation' ? PROXY_CONNECT_ATTESTATION_TIMEOUT : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
+            phase === 'attestation' ? 'attestation_inactivity' : 'overall_deadline_exceeded',
         ), timeoutMs * 3);
         socket.setTimeout(timeoutMs);
         socket.once('timeout', () => settle(
-            phase === 'tunnel_proof' ? PROXY_CONNECT_TUNNEL_PROOF_FAILED : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
-            phase === 'tunnel_proof' ? 'nonce_round_trip_inactivity' : null,
+            phase === 'attestation' ? PROXY_CONNECT_ATTESTATION_TIMEOUT : PROXY_CONNECT_PREFLIGHT_TIMEOUT,
+            phase === 'attestation' ? 'attestation_inactivity' : null,
         ));
         socket.once('error', onSocketError);
         // A peer that accepts the connection and closes before the proof completes is
         // never a pass.  For https:// the close before the handshake is a TLS failure
         // instead, since the tunnel was never established.
         socket.once('close', () => {
-            if (phase === 'tunnel_proof') {
-                settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, 'tunnel_closed_before_nonce_proof');
+            if (phase === 'attestation') {
+                settle(PROXY_CONNECT_TUNNEL_PROOF_FAILED, 'tunnel_closed_before_attestation');
                 return;
             }
             settle(
@@ -534,6 +738,7 @@ function probeStageDHttpConnectProxy({ endpoint, target, timeoutMs, clock, chall
 function createStageDHttpConnectProxyPreflight({
     endpoint = null,
     target = null,
+    secret = null,
     timeoutMs = STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
     clock = () => new Date().toISOString(),
     challengeFactory = createStageDPreflightChallenge,
@@ -554,22 +759,33 @@ function createStageDHttpConnectProxyPreflight({
             failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight target must be a resolved target object');
         }
     }
+    if (secret !== null) {
+        // An injected secret must carry the non-enumerable key bytes, so a caller cannot
+        // satisfy the attestation contract with a plain object that merely looks like one.
+        if (typeof secret !== 'object' || !secret[PREFLIGHT_SECRET_BYTES]) {
+            failStageDProxy(PREFLIGHT_ATTESTATION_SECRET_MISSING, 'proxy preflight secret must be a resolved secret carrying key material');
+        }
+    }
     if (typeof challengeFactory !== 'function') {
         failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight challenge factory must be callable');
     }
     return Object.freeze({
-        schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v1',
+        schema_version: 'footballprediction-stage-d-http-connect-proxy-preflight/v2',
         proxy_contract: STAGE_D_STABLE_PROXY_CONTRACT,
-        nonce_protocol: STAGE_D_PROXY_NONCE_PROTOCOL,
+        attestation_protocol: STAGE_D_PROXY_ATTESTATION_PROTOCOL,
+        attestation_algorithm: 'HMAC-SHA-256',
         timeout_ms: timeoutMs,
         async run() {
-            // Both contracts are resolved before any socket is opened, so a missing proxy
-            // endpoint or a missing probe target fails closed without touching the network.
+            // All three contracts are resolved before any socket is opened, so a missing
+            // proxy endpoint, a missing probe target or a missing/invalid attestation
+            // secret fails closed without touching the network.
             const resolved = endpoint || resolveStageDStableProxyEndpoint(env);
             const probeTarget = target || resolveStageDPreflightTarget(env, { proxyEndpoint: resolved });
+            const resolvedSecret = secret || resolveStageDPreflightSecret(env);
             return probeStageDHttpConnectProxy({
                 endpoint: resolved,
                 target: probeTarget,
+                secret: resolvedSecret,
                 timeoutMs,
                 clock,
                 challenge: challengeFactory(),
@@ -585,10 +801,21 @@ module.exports = {
     STAGE_D_PROXY_PREFLIGHT_TARGET_PROTOCOL,
     STAGE_D_PROXY_SUPPORTED_PROTOCOLS,
     STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
-    STAGE_D_PROXY_NONCE_PROTOCOL,
-    STAGE_D_PROXY_NONCE_REQUEST_PREFIX,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
+    STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR,
+    STAGE_D_PROXY_ATTESTATION_PROTOCOL,
+    STAGE_D_PROXY_ATTESTATION_MAC_BYTES,
+    STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES,
+    STAGE_D_PROXY_CHALLENGE_BYTES,
+    STAGE_D_PROXY_RUN_ID_BYTES,
     PROXY_PREFLIGHT_CLASSIFICATIONS,
+    PREFLIGHT_ATTESTATION_CONFIGURATION_CLASSIFICATIONS,
+    PREFLIGHT_ATTESTATION_SECRET_MISSING,
+    PREFLIGHT_ATTESTATION_SECRET_INVALID,
+    PROXY_CONNECT_ATTESTATION_MALFORMED,
+    PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH,
+    PROXY_CONNECT_ATTESTATION_MAC_INVALID,
+    PROXY_CONNECT_ATTESTATION_TIMEOUT,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
     PROXY_URL_INVALID,
@@ -605,8 +832,12 @@ module.exports = {
     PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
+    resolveStageDPreflightSecret,
     buildStageDProxyAgentUrl,
     buildStageDProxyAuthorizationHeader,
+    buildStageDAttestationMessage,
+    buildStageDAttestationResponse,
+    buildStageDAttestationChallengeRequest,
     classifyStageDProxySocketError: classifyProxySocketError,
     createStageDHttpConnectProxyPreflight,
 };

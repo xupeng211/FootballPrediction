@@ -20,6 +20,7 @@ const {
     STAGE_D_STABLE_PROXY_CONTRACT,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
+    resolveStageDPreflightSecret,
     buildStageDProxyAgentUrl,
     createStageDHttpConnectProxyPreflight,
 } = require('./stageDStableProxy');
@@ -2312,11 +2313,17 @@ async function executeStageDControlledInitialization(options = {}) {
         // target fails closed with nothing consumed.  Nothing infers it from the host's
         // routes, addresses or container topology.
         const proxyPreflightTarget = resolveStageDPreflightTarget(process.env, { proxyEndpoint });
+        // The attestation secret is the third contract, and the one that makes the proof
+        // unfalsifiable: the target must hold it, so a responder that never reached the
+        // target cannot answer a fresh challenge.  It is resolved alongside the other two,
+        // before any socket is opened, so a missing or malformed secret is a deterministic
+        // local configuration failure rather than something discovered mid-probe.
+        const proxyPreflightSecret = resolveStageDPreflightSecret(process.env);
         boundTransport = createStageDOddsApiTransport({ endpoint: proxyEndpoint });
         boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
         boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
         boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
-        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget });
+        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget, secret: proxyPreflightSecret });
     }
     // ORDERING INVARIANT.  The Stage D proxy contract is proven before the one-shot
     // authorization is spent: configuration resolution, then the HTTP CONNECT protocol
@@ -2324,9 +2331,10 @@ async function executeStageDControlledInitialization(options = {}) {
     // non-tunnelling endpoint therefore leaves AUTHORIZATION_CONSUMED=NO,
     // PROVIDER_REQUEST_ATTEMPTED=NO and QUOTA_UNITS_CHARGED_OR_ASSUMED=0.  Passing
     // requires a strict 2xx CONNECT to the configured project-controlled target AND a
-    // nonce round trip through the resulting tunnel, so a synthetic 200 that opens no
-    // tunnel fails here rather than spending authority.  The preflight never names the
-    // provider, so it cannot contact The Odds API, resolve provider DNS or consume quota.
+    // valid HMAC-SHA-256 attestation from that target over a fresh challenge, so neither a
+    // synthetic 200 that opens no tunnel nor a reflector that never dials the target can
+    // pass -- and neither reaches authority.  The preflight never names the provider, so
+    // it cannot contact The Odds API, resolve provider DNS or consume quota.
     const proxyPreflightResult = await boundProxyPreflight.run();
     if (proxyPreflightResult?.passed !== true) {
         fail(proxyPreflightResult?.classification || 'PROXY_PREFLIGHT_FAILED', 'Stage D stable HTTP CONNECT proxy preflight did not pass');

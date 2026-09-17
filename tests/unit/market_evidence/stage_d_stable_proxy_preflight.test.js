@@ -1,13 +1,20 @@
 'use strict';
 
 // Stage D dedicated stable HTTP CONNECT proxy: endpoint resolution, probe-target
-// resolution, credential fidelity and the strict tunnel proof.
+// resolution, secret resolution, credential fidelity and the HMAC target attestation.
+//
+// The centre of gravity here is one attack.  A responder that answers CONNECT with a
+// 2xx, reads the client's challenge and reflects it back -- without ever dialing the
+// configured target -- must FAIL.  It fails because the pass condition is a keyed MAC
+// over a fresh challenge, and a reflector does not hold the key.  Reflection is not
+// distinguishable from forwarding by framing alone; only secret material makes it so.
 //
 // Every network interaction in this file is a loopback listener created by the test
-// itself: a stand-in proxy, and a stand-in project-controlled probe target.  Nothing
-// here resolves a provider DNS name, contacts a provider or consumes quota, and the
-// only host name that ever appears in a probe request is 127.0.0.1.  The credentials
-// below are obvious fakes; no real secret appears in any assertion.
+// itself: a stand-in proxy, and a stand-in project-controlled attestation target.
+// Nothing here resolves a provider DNS name, contacts a provider or consumes quota, and
+// the only host name that ever appears in a probe request is 127.0.0.1.  The credentials
+// and the shared secret below are obvious fakes; no real secret appears in any
+// assertion, and no test reads the operator's environment or a local .env file.
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -21,8 +28,12 @@ const { HttpsProxyAgent } = require('https-proxy-agent');
 const {
     STAGE_D_PROXY_ENDPOINT_ENV_VAR,
     STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR,
+    STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR,
     STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
-    STAGE_D_PROXY_NONCE_REQUEST_PREFIX,
+    STAGE_D_PROXY_ATTESTATION_PROTOCOL,
+    STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES,
+    STAGE_D_PROXY_CHALLENGE_BYTES,
+    STAGE_D_PROXY_RUN_ID_BYTES,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
     PROXY_URL_INVALID,
@@ -33,22 +44,44 @@ const {
     PROXY_CONNECT_TUNNEL_REFUSED,
     PROXY_CONNECT_TUNNEL_PROOF_FAILED,
     PROXY_CONNECT_PREFLIGHT_TIMEOUT,
+    PROXY_CONNECT_ATTESTATION_MALFORMED,
+    PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH,
+    PROXY_CONNECT_ATTESTATION_MAC_INVALID,
+    PROXY_CONNECT_ATTESTATION_TIMEOUT,
     PROXY_AUTHENTICATION_CONFIGURATION_FAILURE,
     PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     PROXY_PREFLIGHT_TARGET_URL_INVALID,
     PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
+    PREFLIGHT_ATTESTATION_SECRET_MISSING,
+    PREFLIGHT_ATTESTATION_SECRET_INVALID,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
     PROXY_PREFLIGHT_CLASSIFICATIONS,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
+    resolveStageDPreflightSecret,
     buildStageDProxyAgentUrl,
     buildStageDProxyAuthorizationHeader,
+    buildStageDAttestationMessage,
+    buildStageDAttestationResponse,
     classifyStageDProxySocketError,
     createStageDHttpConnectProxyPreflight,
 } = require('../../../src/infrastructure/market_evidence/stageDStableProxy');
 
 const FAKE_USERNAME = 'stage-d-fake-proxy-user';
 const FAKE_PASSWORD = 'stage-d-fake-proxy-password';
+
+// An obvious fake.  It is long enough to clear the module's 32-byte floor, it is not
+// derived from anything, and it exists only in this file.  Production never sees it.
+const TEST_SECRET_TEXT = 'stage-d-test-secret-not-production-0123456789abcdef';
+const OTHER_SECRET_TEXT = 'stage-d-other-fake-secret-0123456789abcdefghij';
+
+function secretEnv(text = TEST_SECRET_TEXT) {
+    return { [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: Buffer.from(text, 'utf8').toString('base64') };
+}
+
+function testSecret(text = TEST_SECRET_TEXT) {
+    return resolveStageDPreflightSecret(secretEnv(text));
+}
 
 // The standardized discard port.  It is privileged and essentially never bound, so a
 // target on it is usable as an explicitly configured probe destination in the tests
@@ -122,13 +155,21 @@ function startProxyStandIn(t, respond) {
     });
 }
 
-// The project-controlled probe target: a plain TCP listener that echoes the nonce out
-// of each `STAGE-D-PREFLIGHT <probe_id> <nonce>` line, which is the only behaviour the
-// Stage D contract asks of whatever the Owner eventually deploys.
-function startProbeTarget(t, { mutateEcho = null } = {}) {
+// The project-controlled attestation target: a plain TCP listener that answers each
+// `stage-d-proxy-preflight/v1 <run_id> <challenge>` line with the HMAC the shared
+// secret produces over that challenge.  This is the whole of what the Stage D contract
+// asks of whatever the Owner eventually deploys, and it is the only behaviour a
+// conformant responder has that a reflector does not.
+//
+// `connections` counts every inbound socket, which is how the reflector tests below
+// prove the target was never reached: the assertion is not merely that the preflight
+// failed, but that it failed for the right reason.
+function startProbeTarget(t, { secret = testSecret(), respond = null } = {}) {
     return new Promise(resolve => {
         const lines = [];
+        let connections = 0;
         const server = net.createServer(socket => {
+            connections += 1;
             socket.on('error', () => undefined);
             let buffer = '';
             socket.on('data', chunk => {
@@ -139,23 +180,29 @@ function startProbeTarget(t, { mutateEcho = null } = {}) {
                     buffer = buffer.slice(index + 1);
                     lines.push(line);
                     const parts = line.split(' ');
-                    if (parts[0] !== STAGE_D_PROXY_NONCE_REQUEST_PREFIX || parts.length !== 3) continue;
-                    socket.write(mutateEcho ? mutateEcho(parts[2]) : `${parts[2]}\n`);
+                    if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) continue;
+                    if (respond) {
+                        respond(socket, { runId: parts[1], challenge: parts[2], secret });
+                        continue;
+                    }
+                    socket.write(buildStageDAttestationResponse({ secret, runId: parts[1], challenge: parts[2] }));
                 }
             });
         });
         server.listen(0, '127.0.0.1', () => {
             t.after(() => new Promise(done => { server.close(() => done()); }));
-            resolve({ port: server.address().port, lines });
+            resolve({ port: server.address().port, lines, connectionCount: () => connections });
         });
     });
 }
 
 // A conformant HTTP CONNECT proxy: it dials the destination named in the request and
 // pipes bytes both ways.  This is what a real deployment's proxy does, and it is the
-// only shape that can carry the nonce proof.
-async function startTunnellingProxy(t, { behavior = null } = {}) {
-    const target = await startProbeTarget(t);
+// shape a reflector merely imitates.  It dials whatever port the CONNECT names, so a
+// caller can point the preflight at a target of its choosing -- `target` here only
+// names the default one this helper stands up for its own convenience.
+async function startTunnellingProxy(t, { behavior = null, secret = testSecret(), target = null } = {}) {
+    target = target || await startProbeTarget(t, { secret });
     const proxy = await startProxyStandIn(t, (socket, head) => {
         const match = /^CONNECT ([^\s]+) HTTP\/1\.1\r\n/.exec(head);
         const destination = match ? match[1] : '';
@@ -176,26 +223,38 @@ async function startTunnellingProxy(t, { behavior = null } = {}) {
     return { proxy, target };
 }
 
-async function preflight(port, { timeoutMs = STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS, credentials = null, target = null } = {}) {
+async function preflight(port, {
+    timeoutMs = STAGE_D_PROXY_PREFLIGHT_TIMEOUT_MS,
+    credentials = null,
+    target = null,
+    secret = testSecret(),
+} = {}) {
     const result = await createStageDHttpConnectProxyPreflight({
         endpoint: resolveEndpoint({ port, credentials }),
         target: target || testTarget(INERT_TARGET_PORT),
+        secret,
         timeoutMs,
     }).run();
     observedOutcomes.add(result.classification);
     return result;
 }
 
-test('a proxy that really tunnels to the configured target passes the nonce proof', async t => {
+test('a proxy that really tunnels to the configured target passes the HMAC attestation', async t => {
     const { proxy, target } = await startTunnellingProxy(t);
     const result = await preflight(proxy.port, { target: testTarget(target.port, { proxyPort: proxy.port }) });
 
     assert.equal(result.passed, true);
     assert.equal(result.classification, PROXY_PREFLIGHT_PASS);
-    assert.equal(result.detail, 'connect_2xx_nonce_round_trip');
-    assert.equal(result.nonce_verified, true);
-    assert.equal(result.proof_level, 'L3');
+    assert.equal(result.detail, 'connect_2xx_target_hmac_attested');
+    assert.equal(result.target_attested, true);
+    assert.equal(result.attestation_algorithm, 'HMAC-SHA-256');
+    assert.equal(result.proof_level, 'AUTHENTICATED_PROJECT_CONTROLLED_TARGET_REACHABILITY');
     assert.equal(result.has_credentials, false);
+    // The claim this proof makes is bounded, and the result says so itself: a proven
+    // tunnel to a secret-holding target is not a proven provider path.
+    assert.equal(result.provider_reachability_proven, false);
+    assert.equal(result.provider_contacted, false);
+    assert.equal(result.provider_dns_resolved, false);
 
     // The load-bearing proof that the preflight is provider-independent: the only bytes
     // the endpoint ever sees ask it to tunnel to the configured loopback target.  No
@@ -207,55 +266,248 @@ test('a proxy that really tunnels to the configured target passes the nonce proo
     assert.equal(/api\./.test(request), false);
 
     // The pass is a data-plane fact, not a status line: the target actually received a
-    // challenge line and echoed its nonce back through the tunnel.
+    // fresh challenge through the tunnel, and the client's acceptance rests on a MAC
+    // that only the secret holder could have produced.
     assert.equal(target.lines.length, 1);
-    const [probeId, nonce] = target.lines[0].split(' ').slice(1);
-    assert.match(probeId, /^[0-9a-f]{16}$/);
-    assert.match(nonce, /^[0-9a-f]{32}$/);
+    const [runId, challenge] = target.lines[0].split(' ').slice(1);
+    assert.match(runId, new RegExp(`^[0-9a-f]{${STAGE_D_PROXY_RUN_ID_BYTES * 2}}$`));
+    assert.match(challenge, new RegExp(`^[0-9a-f]{${STAGE_D_PROXY_CHALLENGE_BYTES * 2}}$`));
     assert.equal(request.includes(target.lines[0]), true);
+});
+
+test('the challenge is fresh every run, so no two preflights share a MAC input', async t => {
+    const { proxy, target } = await startTunnellingProxy(t);
+    const probeTarget = testTarget(target.port, { proxyPort: proxy.port });
+    await preflight(proxy.port, { target: probeTarget });
+    await preflight(proxy.port, { target: probeTarget });
+
+    assert.equal(target.lines.length, 2);
+    const [firstRunId, firstChallenge] = target.lines[0].split(' ').slice(1);
+    const [secondRunId, secondChallenge] = target.lines[1].split(' ').slice(1);
+    assert.notEqual(firstRunId, secondRunId);
+    assert.notEqual(firstChallenge, secondChallenge);
 });
 
 test('a synthetic 200 that opens no tunnel fails the data-plane proof', async t => {
     // The mandatory §26 case: an endpoint that answers "200 Connection Established" and
     // then does nothing at all looks like a working proxy to any status-line check.  It
-    // must fail, because no tunnel ever carried a byte for us.
+    // must fail, because no tunnel ever carried a byte for us.  Once a 2xx is on the
+    // wire the classification is always attestation-specific, never the bare protocol
+    // timeout that precedes it, so this case has exactly one outcome.
     const proxy = await startProxyStandIn(t, socket => socket.write('HTTP/1.1 200 Connection Established\r\n\r\n'));
     const result = await preflight(proxy.port, { timeoutMs: 250, target: testTarget(INERT_TARGET_PORT) });
 
     assert.equal(result.passed, false);
-    assert.equal(result.classification, PROXY_CONNECT_TUNNEL_PROOF_FAILED);
-    assert.equal(result.detail, 'nonce_round_trip_inactivity');
-    assert.equal(result.nonce_verified, false);
+    assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_TIMEOUT);
+    assert.equal(result.detail, 'attestation_inactivity');
+    assert.equal(result.target_attested, false);
 });
 
-test('a 200 that is followed by a stale or synthetic echo fails the proof', async t => {
-    // A responder that answers the CONNECT but replays something other than the nonce it
-    // was just sent -- a cached response, a fixed banner, or a proxy that never actually
-    // forwarded the write.  Each shape fails closed.
-    const wrongNonce = await startTunnellingProxy(t, {
-        behavior: socket => {
-            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            socket.write(`${'0'.repeat(32)}\n`);
-        },
+test('an informed reflector that never dials the target cannot pass', async t => {
+    // THE attack this design exists to defeat, reproduced from the independent review
+    // that rejected the previous nonce-echo proof.  The endpoint:
+    //
+    //   1. answers CONNECT with a strict 2xx;
+    //   2. reads the client's challenge in full;
+    //   3. replies with a syntactically perfect response line, correctly bound to the
+    //      run id the client just sent;
+    //   4. never opens a connection to the configured target.
+    //
+    // Under the old contract this passed, because the response was a value the client
+    // itself had just supplied.  It must now fail: the MAC is computable only by an
+    // entity holding the shared secret, and this endpoint does not have it.  Note that
+    // the reflector is given every advantage -- it sees the exact protocol version, the
+    // exact run id and the exact challenge, and it answers immediately -- and still
+    // cannot produce a passing reply, because the missing ingredient is not information.
+    const target = await startProbeTarget(t);
+    const reflector = await startProxyStandIn(t, socket => {
+        socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+        let buffer = '';
+        socket.on('data', chunk => {
+            buffer += chunk.toString('latin1');
+            const lineEnd = buffer.indexOf('\n');
+            if (lineEnd === -1) return;
+            const parts = buffer.slice(0, lineEnd).replace(/\r$/, '').split(' ');
+            if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) return;
+            // Reflect the challenge as though it were a MAC: the naive forger.
+            socket.write(`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${parts[1]} ${parts[2]}\n`);
+        });
     });
-    const wrong = await preflight(wrongNonce.proxy.port, { target: testTarget(wrongNonce.target.port, { proxyPort: wrongNonce.proxy.port }) });
-    assert.equal(wrong.passed, false);
-    assert.equal(wrong.classification, PROXY_CONNECT_TUNNEL_PROOF_FAILED);
-    assert.equal(wrong.detail, 'nonce_mismatch');
 
-    const emptyLine = await startTunnellingProxy(t, {
-        behavior: socket => {
-            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            socket.write('\n');
-        },
+    const result = await preflight(reflector.port, { target: testTarget(target.port, { proxyPort: reflector.port }) });
+
+    assert.equal(result.passed, false, 'a reflector must never pass');
+    assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_MAC_INVALID);
+    assert.equal(result.detail, 'attestation_mac_invalid');
+    assert.equal(result.target_attested, false);
+    assert.equal(target.connectionCount(), 0, 'the configured target must never have been contacted');
+    assert.equal(target.lines.length, 0);
+
+    // An "informed" variant that also guesses a well-formed 64-hex MAC fares no better,
+    // which is the point: the response space is not searchable, so the only way to pass
+    // is to actually reach the secret holder.
+    const guesser = await startProxyStandIn(t, socket => {
+        socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+        let buffer = '';
+        socket.on('data', chunk => {
+            buffer += chunk.toString('latin1');
+            const lineEnd = buffer.indexOf('\n');
+            if (lineEnd === -1) return;
+            const parts = buffer.slice(0, lineEnd).replace(/\r$/, '').split(' ');
+            if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) return;
+            socket.write(`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${parts[1]} ${'ab'.repeat(32)}\n`);
+        });
     });
-    const empty = await preflight(emptyLine.proxy.port, { target: testTarget(emptyLine.target.port, { proxyPort: emptyLine.proxy.port }) });
-    assert.equal(empty.passed, false);
-    assert.equal(empty.classification, PROXY_CONNECT_TUNNEL_PROOF_FAILED);
-    assert.equal(empty.detail, 'empty_nonce_response');
+    const guessed = await preflight(guesser.port, { target: testTarget(target.port, { proxyPort: guesser.port }) });
+
+    assert.equal(guessed.passed, false);
+    assert.equal(guessed.classification, PROXY_CONNECT_ATTESTATION_MAC_INVALID);
+    assert.equal(target.connectionCount(), 0);
 });
 
-test('a tunnel that closes before proving itself fails closed', async t => {
+test('a well-formed response computed with the wrong secret fails', async t => {
+    // The strongest possible near-miss: a genuine, correctly framed, correctly bound,
+    // correctly encoded HMAC -- produced by an entity that really does hold a secret,
+    // just not the configured one.  Every superficial property of a valid response is
+    // present, so this is what separates keyed verification from shape validation.
+    const wrongKeyTarget = await startProbeTarget(t, { secret: testSecret(OTHER_SECRET_TEXT) });
+    const { proxy } = await startTunnellingProxy(t, { target: wrongKeyTarget });
+    const result = await preflight(proxy.port, {
+        target: testTarget(wrongKeyTarget.port, { proxyPort: proxy.port }),
+        secret: testSecret(),
+    });
+
+    assert.equal(result.passed, false, 'a response under the wrong key must not pass');
+    assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_MAC_INVALID);
+    assert.equal(result.detail, 'attestation_mac_invalid');
+    // The tunnel really was established and the challenge really did reach the target:
+    // this failure is about the key, not about a missing tunnel.
+    assert.equal(wrongKeyTarget.lines.length, 1);
+    assert.equal(wrongKeyTarget.connectionCount(), 1);
+});
+
+test('a response bound to another run id is refused before its MAC is examined', async t => {
+    const wrongRunId = await startTunnellingProxy(t, {
+        behavior: socket => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            let buffer = '';
+            socket.on('data', chunk => {
+                buffer += chunk.toString('latin1');
+                const lineEnd = buffer.indexOf('\n');
+                if (lineEnd === -1) return;
+                const parts = buffer.slice(0, lineEnd).replace(/\r$/, '').split(' ');
+                if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) return;
+                socket.write(`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${'0'.repeat(32)} ${'0'.repeat(64)}\n`);
+            });
+        },
+    });
+    const result = await preflight(wrongRunId.proxy.port, { target: testTarget(wrongRunId.target.port, { proxyPort: wrongRunId.proxy.port }) });
+
+    assert.equal(result.passed, false);
+    assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH);
+    assert.equal(result.detail, 'attestation_run_id_mismatch');
+});
+
+test('a malformed or unbound attestation response fails closed without waiting', async t => {
+    const cases = [
+        ['', 'empty_attestation_response'],
+        ['not-the-protocol 0 0', 'attestation_response_malformed'],
+        [`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} only-two-fields`, 'attestation_response_malformed'],
+        [`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} a b c d`, 'attestation_response_malformed'],
+    ];
+    for (const [payload, detail] of cases) {
+        const proxy = await startProxyStandIn(t, socket => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            socket.write(`${payload}\n`);
+        });
+        const result = await preflight(proxy.port, { timeoutMs: 30000 });
+
+        assert.equal(result.passed, false, `${JSON.stringify(payload)} must not pass`);
+        assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_MALFORMED, `${JSON.stringify(payload)} must be malformed`);
+        assert.equal(result.detail, detail);
+    }
+
+    // A non-conformant target that answers with a MAC that is the right protocol and the
+    // right run id but the wrong shape: too short, non-hex, uppercase hex, or truncated.
+    // These are framing defects rather than wrong-key results, so they are classified as
+    // malformed -- and none of them passes.
+    for (const mac of ['ab', 'zz'.repeat(32), 'AB'.repeat(32), 'ab'.repeat(31), '']) {
+        const target = await startProbeTarget(t, {
+            respond: (socket, { runId }) => socket.write(`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${runId} ${mac}\n`),
+        });
+        const { proxy } = await startTunnellingProxy(t, { target });
+        const result = await preflight(proxy.port, { target: testTarget(target.port, { proxyPort: proxy.port }) });
+
+        assert.equal(result.passed, false, `MAC ${JSON.stringify(mac)} must not pass`);
+        assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_MALFORMED, `MAC ${JSON.stringify(mac)} must be malformed`);
+        assert.equal(target.connectionCount(), 1);
+    }
+});
+
+test('a response replayed from an earlier run does not validate against a new challenge', async t => {
+    // Replay resistance is a property of the challenge, not of a nonce store: the MAC is
+    // bound to a challenge this execution has never seen before, so a response captured
+    // from any earlier run cannot satisfy it.  This is the regression §13 requires, and
+    // it is checked against a response that was genuinely valid when it was produced.
+    const secret = testSecret();
+    let captured = null;
+    const capturingTarget = await startProbeTarget(t, {
+        secret,
+        respond: (socket, { runId, challenge }) => {
+            const response = buildStageDAttestationResponse({ secret, runId, challenge });
+            if (captured === null) captured = response;
+            socket.write(response);
+        },
+    });
+
+    // Run one: an honest tunnel to an honest target.  The bytes captured here are a
+    // response the verifier genuinely accepted, not a sample we fabricated.
+    const { proxy: honest } = await startTunnellingProxy(t, { target: capturingTarget });
+    const first = await preflight(honest.port, { target: testTarget(capturingTarget.port, { proxyPort: honest.port }) });
+    assert.equal(first.passed, true);
+    assert.notEqual(captured, null, 'the capture must have produced a genuinely valid response');
+    const capturedMac = captured.trim().split(' ')[2];
+
+    // Replay A -- the response verbatim.  It carries the earlier run id, so it is refused
+    // on binding before its MAC is even compared.
+    const { proxy: verbatim } = await startTunnellingProxy(t, {
+        behavior: socket => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            let buffer = '';
+            socket.on('data', chunk => {
+                buffer += chunk.toString('latin1');
+                if (buffer.includes('\n')) socket.write(captured);
+            });
+        },
+    });
+    const replayedVerbatim = await preflight(verbatim.port, { target: testTarget(capturingTarget.port, { proxyPort: verbatim.port }) });
+    assert.equal(replayedVerbatim.passed, false, 'a replayed response must never pass');
+    assert.equal(replayedVerbatim.classification, PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH);
+
+    // Replay B -- the harder case.  The attacker strips the stale run id and re-stamps
+    // the MAC with this execution's own run id, so binding passes and the key itself
+    // must do the rejecting.  It does: the MAC was computed over a different challenge.
+    const { proxy: rebound } = await startTunnellingProxy(t, {
+        behavior: socket => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            let buffer = '';
+            socket.on('data', chunk => {
+                buffer += chunk.toString('latin1');
+                const lineEnd = buffer.indexOf('\n');
+                if (lineEnd === -1) return;
+                const parts = buffer.slice(0, lineEnd).replace(/\r$/, '').split(' ');
+                if (parts.length !== 3 || parts[0] !== STAGE_D_PROXY_ATTESTATION_PROTOCOL) return;
+                socket.write(`${STAGE_D_PROXY_ATTESTATION_PROTOCOL} ${parts[1]} ${capturedMac}\n`);
+            });
+        },
+    });
+    const replayedRebound = await preflight(rebound.port, { target: testTarget(capturingTarget.port, { proxyPort: rebound.port }) });
+    assert.equal(replayedRebound.passed, false, 'a re-bound replay must never pass');
+    assert.equal(replayedRebound.classification, PROXY_CONNECT_ATTESTATION_MAC_INVALID);
+    assert.equal(replayedRebound.target_attested, false);
+});
+
+test('a tunnel that closes before attesting itself fails closed', async t => {
     const closing = await startTunnellingProxy(t, {
         behavior: socket => socket.end('HTTP/1.1 200 Connection Established\r\n\r\n'),
     });
@@ -263,7 +515,26 @@ test('a tunnel that closes before proving itself fails closed', async t => {
 
     assert.equal(result.passed, false);
     assert.equal(result.classification, PROXY_CONNECT_TUNNEL_PROOF_FAILED);
-    assert.equal(result.detail, 'tunnel_closed_before_nonce_proof');
+    assert.equal(result.detail, 'tunnel_closed_before_attestation');
+});
+
+test('a target that accepts the challenge but never answers fails rather than passing', async t => {
+    const silent = await startProbeTarget(t, { respond: () => undefined });
+    const proxy = await startProxyStandIn(t, (socket, head) => {
+        const port = Number(head.split(' ')[1].split(':').pop());
+        const upstream = net.connect({ host: '127.0.0.1', port });
+        upstream.once('connect', () => {
+            socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            socket.pipe(upstream);
+            upstream.pipe(socket);
+        });
+        socket.once('close', () => upstream.destroy());
+    });
+    const result = await preflight(proxy.port, { timeoutMs: 250, target: testTarget(silent.port, { proxyPort: proxy.port }) });
+
+    assert.equal(result.passed, false);
+    assert.equal(result.classification, PROXY_CONNECT_ATTESTATION_TIMEOUT);
+    assert.equal(silent.lines.length, 1, 'the challenge must have reached the target');
 });
 
 test('no non-2xx response is accepted as proof of anything', async t => {
@@ -572,6 +843,156 @@ test('proxy credentials are never reachable through enumeration or serialization
     const awkwardUserInfo = 'fake:p@ss';
     const special = resolveEndpoint({ port: 3128, credentials: { username: 'fake@user', password: awkwardUserInfo } });
     assert.equal(buildStageDProxyAgentUrl(special), 'http://fake%40user:fake%3Ap%40ss@127.0.0.1:3128');
+});
+
+test('a missing, blank or malformed attestation secret fails closed before any socket', async t => {
+    // §6: the secret is a required deployment input.  It is never generated, never
+    // defaulted and never falls back to a test value, so its absence is a deterministic
+    // local configuration failure -- and it is decided before the network is touched.
+    const proxy = await startProxyStandIn(t, socket => socket.end('HTTP/1.1 200 Connection Established\r\n\r\n'));
+    const target = await startProbeTarget(t);
+
+    for (const env of [
+        {},
+        { [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: '' },
+        { [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: '   ' },
+    ]) {
+        assert.throws(
+            () => resolveStageDPreflightSecret(env),
+            error => error.code === PREFLIGHT_ATTESTATION_SECRET_MISSING
+                && error.message.includes(STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR),
+        );
+    }
+
+    // A present but unusable value: not base64 at all, not canonical base64, padded
+    // wrongly, or simply shorter than the floor.  Each is a provisioning mistake that
+    // must surface as a refusal rather than as an intermittent attestation failure.
+    const tooShort = Buffer.from('short', 'utf8').toString('base64');
+    const floorBytes = Buffer.alloc(STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES - 1, 7).toString('base64');
+    for (const [value, label] of [
+        ['not base64 at all!!', 'non-base64'],
+        [Buffer.from('x'.repeat(40), 'utf8').toString('base64').replace(/=+$/, ''), 'unpadded'],
+        ['AAAA=', 'bad padding length'],
+        [tooShort, 'too short'],
+        [floorBytes, 'just under the entropy floor'],
+    ]) {
+        assert.throws(
+            () => resolveStageDPreflightSecret({ [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: value }),
+            error => error.code === PREFLIGHT_ATTESTATION_SECRET_INVALID,
+            `${label} must be rejected`,
+        );
+    }
+
+    // Exactly at the floor is accepted: the contract is a minimum, not an equality.
+    const atFloor = Buffer.alloc(STAGE_D_PROXY_ATTESTATION_MIN_SECRET_BYTES, 7).toString('base64');
+    assert.equal(resolveStageDPreflightSecret({ [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: atFloor }).configured, true);
+
+    // And a preflight told to resolve its own secret with none configured refuses
+    // without opening the proxy socket.
+    const runner = createStageDHttpConnectProxyPreflight({
+        endpoint: resolveEndpoint({ port: proxy.port }),
+        target: testTarget(target.port, { proxyPort: proxy.port }),
+        env: {},
+    });
+    await assert.rejects(runner.run(), error => error.code === PREFLIGHT_ATTESTATION_SECRET_MISSING);
+    assert.equal(proxy.requestText(), '', 'no proxy socket may be opened when the secret is unconfigured');
+});
+
+test('the attestation secret never reaches an enumerable surface or an error message', async t => {
+    const secretText = TEST_SECRET_TEXT;
+    const secret = testSecret();
+    const encoded = Buffer.from(secretText, 'utf8').toString('base64');
+
+    // The resolved object carries no key material, no digest of it, and no shape hint:
+    // not the bytes, not a hash, not a length, not a prefix.  The whole point of a
+    // dedicated secret is defeated if its fingerprint travels with the evidence.
+    assert.deepEqual(Object.keys(secret).sort(), ['algorithm', 'configured', 'encoding']);
+    assert.deepEqual(JSON.parse(JSON.stringify(secret)), { configured: true, encoding: 'base64', algorithm: 'HMAC-SHA-256' });
+    const serializedSecret = JSON.stringify({ ...secret });
+    assert.equal(serializedSecret.includes(secretText), false);
+    assert.equal(serializedSecret.includes(encoded), false);
+    assert.equal(serializedSecret.includes(String(secretText.length)), false);
+
+    // A passing preflight result is what actually lands in evidence, so it is the one
+    // that matters most.
+    const { proxy, target } = await startTunnellingProxy(t);
+    const result = await preflight(proxy.port, { target: testTarget(target.port, { proxyPort: proxy.port }) });
+    assert.equal(result.passed, true);
+    const serializedResult = JSON.stringify(result);
+    assert.equal(serializedResult.includes(secretText), false);
+    assert.equal(serializedResult.includes(encoded), false);
+    // The MAC itself must not be echoed into evidence either: it is a valid response for
+    // a challenge that is still live, so publishing it hands over a replayable value.
+    assert.equal(/[0-9a-f]{64}/.test(serializedResult), false);
+
+    // A wrong-key failure is the other path that builds an error-ish message.  It must
+    // not carry the configured secret either.
+    const wrongKey = await startProbeTarget(t, { secret: testSecret(OTHER_SECRET_TEXT) });
+    const { proxy: tunnelling } = await startTunnellingProxy(t, { target: wrongKey });
+    const failed = await preflight(tunnelling.port, { target: testTarget(wrongKey.port, { proxyPort: tunnelling.port }) });
+    assert.equal(failed.passed, false);
+    assert.equal(JSON.stringify(failed).includes(secretText), false);
+    assert.equal(JSON.stringify(failed).includes(encoded), false);
+});
+
+test('the MAC input is length-prefixed, so distinct field pairs cannot collide', () => {
+    // A delimiter-joined protocol has an encoding ambiguity: ("ab","cd") and ("abc","d")
+    // concatenate identically, so one valid response would validate for a different
+    // challenge.  Length prefixes make the encoding injective, and this pins that.
+    const message = buildStageDAttestationMessage({ runId: 'ab', challenge: 'cd' });
+    const collision = buildStageDAttestationMessage({ runId: 'abc', challenge: 'd' });
+
+    assert.equal(Buffer.isBuffer(message), true);
+    assert.notEqual(message.toString('hex'), collision.toString('hex'));
+    // The pair that collides under naive concatenation produces messages of the *same*
+    // total length here: the defence is that the field boundaries are encoded, not that
+    // the messages differ in size.  `'ab'+'cd'` and `'abc'+'d'` are both `'abcd'`.
+    assert.equal(`${'ab'}${'cd'}`, `${'abc'}${'d'}`);
+    assert.equal(message.length, collision.length);
+
+    // The signed bytes are exactly: magic, NUL, u32be(len), run id, u32be(len), challenge.
+    const magicLength = STAGE_D_PROXY_ATTESTATION_PROTOCOL.length;
+    assert.equal(message.length, magicLength + 1 + 4 + 2 + 4 + 2);
+    assert.equal(message.subarray(0, magicLength).toString('ascii'), STAGE_D_PROXY_ATTESTATION_PROTOCOL);
+    assert.equal(message[magicLength], 0, 'the domain-separation byte must follow the version');
+    assert.equal(message.readUInt32BE(magicLength + 1), 2);
+    assert.equal(message.subarray(magicLength + 5, magicLength + 7).toString('ascii'), 'ab');
+    assert.equal(message.readUInt32BE(magicLength + 7), 2);
+    assert.equal(message.subarray(magicLength + 11).toString('ascii'), 'cd');
+
+    // The same inputs always produce the same bytes: the encoding is deterministic, so
+    // an independent target implementation can reproduce it exactly.
+    assert.equal(
+        buildStageDAttestationMessage({ runId: 'ab', challenge: 'cd' }).toString('hex'),
+        message.toString('hex'),
+    );
+});
+
+test('the reference target and the verifier agree on the protocol end to end', async t => {
+    // The exported response builder is what a dev/CI target is expected to use, so the
+    // two halves of the contract are pinned against each other here rather than being
+    // restated independently and left to drift.
+    const secret = testSecret();
+    const runId = 'a'.repeat(STAGE_D_PROXY_RUN_ID_BYTES * 2);
+    const challenge = 'b'.repeat(STAGE_D_PROXY_CHALLENGE_BYTES * 2);
+    const response = buildStageDAttestationResponse({ secret, runId, challenge });
+
+    assert.equal(response.endsWith('\n'), true);
+    const parts = response.trim().split(' ');
+    assert.equal(parts.length, 3);
+    assert.equal(parts[0], STAGE_D_PROXY_ATTESTATION_PROTOCOL);
+    assert.equal(parts[1], runId);
+    assert.match(parts[2], /^[0-9a-f]{64}$/);
+
+    // The response carries the MAC and nothing else -- in particular, not the secret.
+    assert.equal(response.includes(TEST_SECRET_TEXT), false);
+
+    // A different challenge yields a different MAC under the same key, and the same
+    // challenge under a different key does too.  Neither is a function of the other.
+    const otherChallenge = buildStageDAttestationResponse({ secret, runId, challenge: 'c'.repeat(64) });
+    const otherKey = buildStageDAttestationResponse({ secret: testSecret(OTHER_SECRET_TEXT), runId, challenge });
+    assert.notEqual(response, otherChallenge);
+    assert.notEqual(response, otherKey);
 });
 
 test('the preflight rejects an unusable timeout before it can open a socket', () => {

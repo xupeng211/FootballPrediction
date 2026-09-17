@@ -33,14 +33,17 @@ const {
     STAGE_D_STABLE_PROXY_CONTRACT,
     STAGE_D_PROXY_ENDPOINT_ENV_VAR,
     STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR,
+    STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR,
     PROXY_PREFLIGHT_PASS,
     PROXY_CONFIGURATION_MISSING,
     PROXY_URL_INVALID,
     PROXY_TCP_CONNECT_FAILED,
     PROXY_CONNECT_PROTOCOL_INVALID,
     PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
+    PREFLIGHT_ATTESTATION_SECRET_MISSING,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
+    resolveStageDPreflightSecret,
     createStageDHttpConnectProxyPreflight,
 } = require('../../../src/infrastructure/market_evidence/stageDStableProxy');
 
@@ -49,6 +52,13 @@ const {
 // an address nothing is listening on, without relying on any implicit default.
 const DEAD_ENDPOINT_URL = 'http://127.0.0.1:1';
 const INERT_TARGET = resolveStageDPreflightTarget({ [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: 'tcp://127.0.0.1:9' });
+
+// An obvious fake attestation secret, used only to get the preflight past configuration
+// resolution in the tests whose subject is a later failure.  It is never a production
+// value and never leaves this file.
+const TEST_PREFLIGHT_SECRET = resolveStageDPreflightSecret({
+    [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: Buffer.from('stage-d-test-secret-not-production-0123456789abcdef', 'utf8').toString('base64'),
+});
 
 const START = '2026-09-08T00:00:00Z';
 const AUTHORIZATION_NOW = '2026-09-08T08:00:00Z';
@@ -535,6 +545,7 @@ test('a dead proxy endpoint fails closed before the authorization is consumed', 
     const proxyPreflight = createStageDHttpConnectProxyPreflight({
         endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: DEAD_ENDPOINT_URL }),
         target: INERT_TARGET,
+        secret: TEST_PREFLIGHT_SECRET,
         timeoutMs: 2000,
     });
     const components = componentsFor(ctx, { proxyPreflight });
@@ -585,6 +596,29 @@ test('an unconfigured probe target fails closed before the authorization is cons
     await assert.rejects(
         executeStageDControlledInitialization(binderOptions(ctx, components)),
         error => error.code === PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
+    );
+
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+    assert.equal(components.transport.call_count, 0);
+});
+
+test('an unconfigured attestation secret fails closed before the authorization is consumed', async t => {
+    // The third contract, and the one that carries the security property: without the
+    // shared secret there is no way to tell a real tunnel from a reflector, so a Stage D
+    // cycle that has an endpoint and a target but no secret has no sound preflight.  It
+    // must stop before authority is spent rather than probe with a weaker proof.
+    const ctx = makeContext(t);
+    const proxyPreflight = createStageDHttpConnectProxyPreflight({
+        endpoint: resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: 'http://127.0.0.1:1' }),
+        target: INERT_TARGET,
+        env: {},
+    });
+    const components = componentsFor(ctx, { proxyPreflight });
+
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx, components)),
+        error => error.code === PREFLIGHT_ATTESTATION_SECRET_MISSING,
     );
 
     assert.equal(consumptionMarkers(ctx).length, 0);
