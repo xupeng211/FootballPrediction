@@ -1,0 +1,31 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "GENERIC_INDEPENDENT_REVIEW_PROTOCOL_FOUNDATION_AND_LEGACY_CODEX_ADAPTER",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/missions/GENERIC_INDEPENDENT_REVIEW_PROTOCOL_FOUNDATION_AND_LEGACY_CODEX_ADAPTER.json",
+    "schemas/agentic/independent_review_backends.schema.json",
+    "schemas/agentic/independent_review_receipt.schema.json",
+    "schemas/agentic/independent_review_result.schema.json",
+    "scripts/devops/independent_review_protocol.py",
+    "scripts/devops/independent_review_receipt.py",
+    "scripts/devops/independent_review_backends/__init__.py",
+    "scripts/devops/independent_review_backends/codex_cli.py",
+    "tests/unit/test_independent_review_protocol.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "docker/", "docs/data/", "docs/_manifests/", "docs/_reports/", "scripts/ops/", "src/", "tests/integration/"],
+  "excluded_tokens": ["backtest", "betfair", "migration", "model-activation", "oddsportal", "scheduler", "stage_d", "theoddsapi", "transactionstore", "value-engine"],
+  "protected_invariants": [
+    "Existing Codex reviewer entrypoints, exact-head/scope/diff binding, receipt integrity, three-state classification, pinned model and effort, read-only isolation and P0/P1/P2 blocking semantics remain unchanged.",
+    "The generic foundation is additive only and does not activate any backend other than codex-cli or change canonical acceptance policy.",
+    "No historical Codex receipt is rewritten or upgraded to a current approval."
+  ],
+  "forbidden_side_effects": [
+    "No provider, The Odds API, bookmaker, production, database, raw-data, scheduler, training, prediction, backtest, model-activation or credential action.",
+    "No Stage D runtime change, review acceptance change, force push, self-merge or historical evidence rewrite."
+  ]
+}
