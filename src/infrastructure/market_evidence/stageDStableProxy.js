@@ -118,6 +118,7 @@ const STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID = 'STAGE_D_PROXY_PREFLIGHT_C
 const PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING = 'PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING';
 const PROXY_PREFLIGHT_TARGET_URL_INVALID = 'PROXY_PREFLIGHT_TARGET_URL_INVALID';
 const PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY = 'PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY';
+const PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST = 'PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST';
 
 // Attestation configuration failures are thrown rather than returned, because they are
 // decided before a socket exists and must leave no room for a caller to treat them as a
@@ -257,6 +258,49 @@ function resolveStageDStableProxyEndpoint(env = process.env) {
     return Object.freeze(endpoint);
 }
 
+// Hosts the preflight target must never be.
+//
+// A preflight target is only meaningful if the project controls it: the pass condition is
+// that the tunnel reached an entity holding the configured shared secret.  A target that
+// is actually one of the project's upstream providers proves nothing about a
+// project-controlled listener, and reaching it would additionally make the preflight an
+// outbound contact with a third party -- which is exactly what the Stage D provider
+// zero-contact invariant forbids.  An operator who points the target at The Odds API
+// would therefore both void the proof and generate provider DNS and TCP traffic before
+// the one-shot authorization is consumed.
+//
+// These are the external hosts this repository actually talks to, so the list is
+// traceable rather than invented: The Odds API is the Stage D provider named by
+// theOddsApiClient.js; the harvesting and historical sources appear in the acquisition
+// configuration; the remainder are third-party utilities referenced from src.
+//
+// This is a denylist, and a denylist is not a completeness proof: it cannot enumerate
+// every public host.  The primary control remains that the target is explicit operator
+// configuration with no default.  What this closes is the concrete, plausible
+// misconfiguration of naming a known provider.
+const STAGE_D_PREFLIGHT_DENIED_TARGET_APEXES = Object.freeze([
+    'the-odds-api.com', // the Stage D provider itself (theOddsApiClient.js API_HOST)
+    'oddsportal.com', // harvesting source
+    'fotmob.com', // harvesting source
+    'football-data.co.uk', // historical results source
+    'premierleague.com', // fixtures and resources source
+    'telegram.org', // alert transport
+    'ipify.org', // public egress-address probe
+    'browserleaks.com', // TLS fingerprint probe
+    'httpbin.org', // public echo service
+]);
+
+// Matches the apex itself and anything beneath it, so a provider subdomain is denied
+// even though only the apex is listed.  Comparison is case-insensitive and tolerates a
+// single trailing dot, because "api.the-odds-api.com." is the same host as the listed
+// name while being a different string.
+function stageDPreflightTargetHostIsExternal(hostname) {
+    const normalized = String(hostname).toLowerCase().replace(/\.$/, '');
+    return STAGE_D_PREFLIGHT_DENIED_TARGET_APEXES.some(
+        apex => normalized === apex || normalized.endsWith(`.${apex}`),
+    );
+}
+
 // Resolves the single configured preflight target, or fails closed.
 //
 // The target is a project-controlled TCP listener that the proxy must be able to
@@ -304,6 +348,15 @@ function resolveStageDPreflightTarget(env = process.env, { proxyEndpoint = null 
         );
     }
     const parsed = parseStageDPreflightTargetUrl(raw.trim());
+    // Rejected before the port check and before any socket exists, so a provider target
+    // cannot be resolved, dialed or even reported as a probe outcome.
+    if (stageDPreflightTargetHostIsExternal(parsed.hostname)) {
+        failStageDProxy(
+            PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST,
+            `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must name a project-controlled target; `
+            + 'it must not name an external provider host, whose contact this preflight is required to avoid',
+        );
+    }
     const port = Number(parsed.port);
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
         failStageDProxy(PROXY_PREFLIGHT_TARGET_URL_INVALID, `${STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR} must name a port between 1 and 65535`);
@@ -830,6 +883,7 @@ module.exports = {
     PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     PROXY_PREFLIGHT_TARGET_URL_INVALID,
     PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
+    PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
     resolveStageDPreflightSecret,

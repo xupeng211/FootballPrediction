@@ -318,7 +318,16 @@ consumption.
 
 The target must not be The Odds API, FotMob, OddsPortal, a bookmaker, a public
 third-party website, the proxy listener itself, or personal workstation
-infrastructure. A pass requires all of: the endpoint's configuration resolves; the
+infrastructure. The provider hosts this repository actually talks to are enforced
+as a denylist rather than left to operator discipline: naming one — or any
+subdomain of one, in any letter case, with or without a trailing dot — fails
+closed with `PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST` at resolution time, before any
+socket exists. A target that is a provider would void the proof, because a
+provider is not a project-controlled attesting target, and would additionally
+make the preflight an outbound contact with a third party. A denylist cannot
+enumerate every public host, so this closes the concrete misconfiguration rather
+than claiming completeness; the primary control remains that the target is
+explicit operator configuration with no default. A pass requires all of: the endpoint's configuration resolves; the
 target configuration resolves; the shared secret resolves; the TCP (or TLS) connection
 to the endpoint succeeds; the endpoint receives
 `CONNECT <configured-target-host>:<port> HTTP/1.1`; the response is a syntactically

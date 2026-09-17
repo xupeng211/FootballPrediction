@@ -52,6 +52,7 @@ const {
     PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     PROXY_PREFLIGHT_TARGET_URL_INVALID,
     PROXY_PREFLIGHT_TARGET_CONFLICTS_WITH_PROXY,
+    PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST,
     PREFLIGHT_ATTESTATION_SECRET_MISSING,
     PREFLIGHT_ATTESTATION_SECRET_INVALID,
     STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
@@ -672,6 +673,56 @@ test('a probe target must be exactly tcp://host:port, with no default', () => {
     assert.deepEqual(Object.keys(target).sort(), ['host', 'port', 'redacted']);
     assert.equal(target.redacted, 'tcp://127.0.0.1:9');
     assert.equal(target.port, 9);
+});
+
+test('a probe target that names an external provider host is rejected before any socket', async t => {
+    // Independent review found this: the target contract accepted any well-formed
+    // tcp://host:port, so an operator could name the Stage D provider itself.  The
+    // preflight would then have resolved and dialed The Odds API, voiding the proof (a
+    // provider is not a project-controlled attesting target) and producing exactly the
+    // provider DNS and TCP contact the Stage D invariants forbid -- all before the
+    // one-shot authorization is consumed.  Rejection happens at resolution, so no
+    // socket is ever opened.
+    const providerTargets = [
+        'tcp://api.the-odds-api.com:443', // the Stage D provider, the concrete review finding
+        'tcp://the-odds-api.com:443', // the apex
+        'tcp://API.THE-ODDS-API.COM:443', // case must not be an escape hatch
+        'tcp://api.the-odds-api.com.:443', // a trailing dot is the same host, different string
+        'tcp://api.oddsportal.com:443', // a listed apex reached through a subdomain
+        'tcp://www.fotmob.com:443',
+        'tcp://www.football-data.co.uk:443',
+        'tcp://resources.premierleague.com:443',
+        'tcp://api.telegram.org:443',
+        'tcp://api.ipify.org:443',
+        'tcp://tls.browserleaks.com:443',
+        'tcp://httpbin.org:443',
+    ];
+    for (const url of providerTargets) {
+        assert.throws(
+            () => resolveStageDPreflightTarget({ [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: url }),
+            error => error.code === PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST,
+            `${url} must be rejected as an external host`,
+        );
+    }
+
+    // The rejection precedes every socket operation, including the TCP connect.
+    const proxy = await startProxyStandIn(t, socket => socket.end('HTTP/1.1 200 Connection Established\r\n\r\n'));
+    const runner = createStageDHttpConnectProxyPreflight({
+        endpoint: resolveEndpoint({ port: proxy.port }),
+        env: { [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: 'tcp://api.the-odds-api.com:443' },
+        secret: testSecret(),
+    });
+    await assert.rejects(runner.run(), error => error.code === PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST);
+    assert.equal(proxy.requestText(), '', 'no proxy socket may be opened for a rejected target');
+
+    // Names that merely resemble a denied apex are not denied, and an unrelated internal
+    // name is still accepted: the rule matches on label boundaries, not substrings.
+    for (const host of ['notthe-odds-api.com', 'the-odds-api.com.evil.internal', 'probe.internal']) {
+        assert.equal(
+            resolveStageDPreflightTarget({ [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: `tcp://${host}:9999` }).host,
+            host,
+        );
+    }
 });
 
 test('a probe target that names the proxy listener itself is rejected', () => {
