@@ -200,6 +200,27 @@ function redactStageDProxyEndpoint({ scheme, host, port, hasCredentials }) {
     return `${scheme}://${hasCredentials ? '<redacted>@' : ''}${host}:${port}`;
 }
 
+// URI syntax and socket addressing are different domains, and an IPv6 literal is the one
+// host where they disagree.  The WHATWG URL parser keeps the square brackets on
+// `hostname`, because that is the authority form a URI needs; `net.connect` and
+// `tls.connect` need the bare address instead, and treat a bracketed one as a DNS name,
+// so `[::1]` fails with ENOTFOUND before a socket exists.  Resolving the two forms in one
+// place, rather than stripping brackets at each dial site, keeps the URI form and the
+// network address from ever being confused: `host` and `authority` stay bracketed for the
+// agent URL and the evidence record, and only `dial_host` -- which nothing but a socket
+// call reads -- is unbracketed.
+function resolveEndpointDialHost(hostname) {
+    if (!hostname.startsWith('[') || !hostname.endsWith(']')) return hostname;
+    // A bracketed host is an IPv6 literal by construction, so the stripped form must be
+    // one.  If it is not, the endpoint is not something this contract can dial and is
+    // refused here rather than left to fail as an address-resolution error later.
+    const dialHost = hostname.slice(1, -1);
+    if (net.isIP(dialHost) !== 6) {
+        failStageDProxy(PROXY_URL_INVALID, `${STAGE_D_PROXY_ENDPOINT_ENV_VAR} names a bracketed host that is not an IPv6 address`);
+    }
+    return dialHost;
+}
+
 // Resolves the single stable endpoint, or fails closed.  This is the only place the
 // Stage D proxy endpoint is read, so the transport and the preflight can never
 // disagree about which endpoint is governed.
@@ -234,12 +255,16 @@ function resolveStageDStableProxyEndpoint(env = process.env) {
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
         failStageDProxy(PROXY_URL_INVALID, `${STAGE_D_PROXY_ENDPOINT_ENV_VAR} must name a port between 1 and 65535`);
     }
+    const dialHost = resolveEndpointDialHost(parsed.hostname);
     const username = parsed.username;
     const password = parsed.password;
     const hasCredentials = username !== '' || password !== '';
     const endpoint = {
         scheme: parsed.protocol.slice(0, -1),
         host: parsed.hostname,
+        // The socket-facing form of `host`: identical for a DNS name or an IPv4 literal,
+        // unbracketed for an IPv6 literal.
+        dial_host: dialHost,
         // parsed.host preserves IPv6 bracketing for URL reconstruction.
         authority: parsed.host,
         port,
@@ -735,13 +760,16 @@ function probeStageDHttpConnectProxy({ endpoint, target, secret, timeoutMs, cloc
         try {
             if (endpoint.scheme === 'https') {
                 socket = tls.connect({
-                    host: endpoint.host,
+                    host: endpoint.dial_host,
                     port: endpoint.port,
-                    servername: net.isIP(endpoint.host) ? undefined : endpoint.host,
+                    // An IP literal is not a name and must not be offered as SNI; the
+                    // bracketed form previously defeated this check, because isIP()
+                    // reports 0 for "[::1]" and would have sent it as a server name.
+                    servername: net.isIP(endpoint.dial_host) ? undefined : endpoint.dial_host,
                 });
                 socket.once('secureConnect', onConnected);
             } else {
-                socket = net.connect({ host: endpoint.host, port: endpoint.port });
+                socket = net.connect({ host: endpoint.dial_host, port: endpoint.port });
                 socket.once('connect', onConnected);
             }
         } catch (error) {
@@ -801,7 +829,11 @@ function createStageDHttpConnectProxyPreflight({
         failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight timeout must be a positive integer');
     }
     if (endpoint !== null) {
-        const required = ['scheme', 'host', 'port', 'redacted'];
+        // `dial_host` is required rather than optional: net.connect() substitutes localhost
+        // for an undefined host, so an endpoint object that satisfied every other check but
+        // carried no dial host would quietly be dialed on the local machine.  That is the
+        // silent fallback this contract exists to forbid, so it is refused here instead.
+        const required = ['scheme', 'host', 'dial_host', 'port', 'redacted'];
         if (typeof endpoint !== 'object' || required.some(key => endpoint[key] === undefined)) {
             failStageDProxy(STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID, 'proxy preflight endpoint must be a resolved endpoint object');
         }

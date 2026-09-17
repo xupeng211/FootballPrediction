@@ -2339,11 +2339,29 @@ async function executeStageDControlledInitialization(options = {}) {
     if (proxyPreflightResult?.passed !== true) {
         fail(proxyPreflightResult?.classification || 'PROXY_PREFLIGHT_FAILED', 'Stage D stable HTTP CONNECT proxy preflight did not pass');
     }
+    // The preflight is bounded by its own socket budget, not by the authorization's
+    // lifetime, so the reading taken before it is stale by however long the probe ran --
+    // potentially the whole probe budget.  Consuming on that reading would write the
+    // immutable consumption marker for an authorization that has ALREADY expired,
+    // permanently spending one-shot authority on a cycle that the transmission boundary
+    // is then required to cancel: authority consumed, nothing sent.  A preflight must
+    // never consume authority on a timestamp that predates the preflight.  The window is
+    // re-asserted here against a fresh reading, and that SAME reading is the one written
+    // into the marker, so the timestamp that authorised the consumption and the timestamp
+    // recorded in it are one clock read and cannot disagree.  Anything the probe outlived
+    // fails closed here, before the marker exists.
+    const controlledAuthorizationWindow = Object.freeze({
+        issuedAt: validatedAuthorization.authorization.issued_at,
+        expiresAt: validatedAuthorization.authorization.expires_at,
+    });
+    const postPreflightNow = trustedClock();
+    assertUtc(postPreflightNow, 'controlled authorization consumption time');
+    assertControlledAuthorizationWindow({ ...controlledAuthorizationWindow, now: postPreflightNow });
     const consumed = consumeStageDControlledAuthorization({
         authorizationRecord: { ...authorizationRecord, ...validatedAuthorization },
         ledgerRoot,
         runLockTrustRoot,
-        consumedAt: now,
+        consumedAt: postPreflightNow,
     });
     const cycleResult = await executeStageDOneCycle({
         authorityRoot,
@@ -2359,10 +2377,10 @@ async function executeStageDControlledInitialization(options = {}) {
         transactionPublisher: boundTransactionPublisher,
         runLockTrustRoot,
         clock: trustedClock,
-        controlledAuthorizationWindow: {
-            issuedAt: validatedAuthorization.authorization.issued_at,
-            expiresAt: validatedAuthorization.authorization.expires_at,
-        },
+        // The same window object the post-preflight check just admitted, not a second
+        // reading of the same two fields: the window that authorised consumption and the
+        // window the transmission boundary enforces are one value.
+        controlledAuthorizationWindow,
         expectedAuthorityPreState: {
             head_transaction_id: validatedAuthorization.authorization.authority_pre_head,
             state_hash: validatedAuthorization.authorization.authority_pre_state_hash,

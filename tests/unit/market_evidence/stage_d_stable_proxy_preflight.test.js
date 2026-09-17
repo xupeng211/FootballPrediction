@@ -815,6 +815,31 @@ test('the probe closes every socket it opened, on the pass and fail paths alike'
     assert.equal(await waitFor(() => dead.openSocketCount() === 0), true, 'the socket must be closed after a classified failure');
 });
 
+test('a bracketed IPv6 endpoint dials the bare address instead of failing to resolve it', async t => {
+    // URI syntax and socket addressing disagree on exactly one host form, and the
+    // disagreement is not cosmetic: handing "[::1]" to net.connect makes the socket layer
+    // treat it as a DNS name, so a perfectly valid endpoint is reported as an
+    // address-resolution failure and can never pass the preflight.  This is the falsifiable
+    // form of that regression -- dialing the bracketed form at a closed port yields
+    // ENOTFOUND and the DNS classification, while dialing the bare address yields a
+    // transport refusal (ECONNREFUSED here, ENETUNREACH/EADDRNOTAVAIL on a host without
+    // IPv6 loopback -- all three are PROXY_TCP_CONNECT_FAILED, none is a resolution
+    // failure, so the assertion holds either way).  Loopback only; no external network.
+    const endpoint = resolveEndpoint({ port: 1, host: '[::1]' });
+    const result = await createStageDHttpConnectProxyPreflight({
+        endpoint,
+        target: testTarget(INERT_TARGET_PORT),
+        secret: testSecret(),
+        timeoutMs: 2000,
+    }).run();
+
+    assert.equal(result.passed, false);
+    assert.equal(result.classification, PROXY_TCP_CONNECT_FAILED);
+    assert.notEqual(result.classification, PROXY_DNS_OR_ADDRESS_RESOLUTION_FAILURE);
+    // The evidence record keeps the URI form even though the socket used the bare one.
+    assert.equal(result.host, '[::1]');
+});
+
 test('a dead endpoint fails closed instead of falling back anywhere', async t => {
     // Port 1 is privileged and never bound, so this is refused deterministically rather
     // than racing an ephemeral port that another parallel test file could reclaim.
@@ -874,10 +899,28 @@ test('the resolved endpoint applies scheme defaults and stays credential-free wh
     assert.equal(httpsEndpoint.port, 443);
     assert.equal(httpsEndpoint.scheme, 'https');
 
-    // parseable.host keeps IPv6 bracketing intact for agent URL reconstruction.
+    // parseable.host keeps IPv6 bracketing intact for agent URL reconstruction, and
+    // dial_host is the same address in the form a socket actually accepts.
     const ipv6Endpoint = resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: `http://[::1]:3128` });
     assert.equal(ipv6Endpoint.host, '[::1]');
+    assert.equal(ipv6Endpoint.dial_host, '::1');
+    assert.equal(ipv6Endpoint.authority, '[::1]:3128');
     assert.equal(buildStageDProxyAgentUrl(ipv6Endpoint), 'http://[::1]:3128');
+
+    const longIpv6 = resolveEndpoint({ port: 3128, host: '[2001:db8::1]' });
+    assert.equal(longIpv6.host, '[2001:db8::1]');
+    assert.equal(longIpv6.dial_host, '2001:db8::1');
+
+    // Every host that is not an IPv6 literal is identical in both representations, so
+    // normalization cannot strip a character from a DNS name or an IPv4 address.
+    for (const host of ['127.0.0.1', 'localhost', 'proxy.internal']) {
+        const endpoint = resolveEndpoint({ port: 3128, host });
+        assert.equal(endpoint.dial_host, endpoint.host, `${host}: the dial host must equal the URI host`);
+        assert.equal(endpoint.dial_host, host, `${host}: normalization must not alter a non-IPv6 host`);
+    }
+    // Case folding is the URL parser's, not this contract's: both representations agree.
+    const mixedCase = resolveEndpoint({ port: 3128, host: 'PROXY.Internal' });
+    assert.equal(mixedCase.dial_host, mixedCase.host);
 });
 
 test('proxy credentials are never reachable through enumeration or serialization', () => {
@@ -891,9 +934,13 @@ test('proxy credentials are never reachable through enumeration or serialization
     // Pin the entire enumerable surface.  Adding any enumerable field here is exactly
     // the change that could leak a secret into evidence, so it must fail this test and
     // be reviewed deliberately.  `authority` is parseable.host and carries no credentials.
-    assert.deepEqual(Object.keys(endpoint).sort(), ['authority', 'has_credentials', 'host', 'port', 'redacted', 'scheme']);
+    // `dial_host` is the socket-facing form of `host` -- the same address, unbracketed for
+    // an IPv6 literal -- and for this endpoint it is bit-identical to `host`; it is a
+    // network address, never a credential.
+    assert.deepEqual(Object.keys(endpoint).sort(), ['authority', 'dial_host', 'has_credentials', 'host', 'port', 'redacted', 'scheme']);
     assert.equal(typeof endpoint.has_credentials, 'boolean');
     assert.equal(endpoint.authority, '127.0.0.1:3128');
+    assert.equal(endpoint.dial_host, '127.0.0.1');
 
     // Only the agent-URL builder re-attaches them.  URL pre-encodes userinfo, so the
     // builder must splice it back verbatim rather than encoding it a second time.
@@ -1072,6 +1119,15 @@ test('the preflight rejects a malformed endpoint or target object before it can 
             error => error.code === STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
         );
     }
+    // An endpoint carrying every legacy key but no dial host is refused rather than dialed.
+    // net.connect() substitutes localhost for an undefined host, so a hand-built endpoint
+    // missing dial_host would silently become a connection to the local machine.
+    assert.throws(
+        () => createStageDHttpConnectProxyPreflight({
+            endpoint: { scheme: 'http', host: '127.0.0.1', port: 3128, redacted: 'http://127.0.0.1:3128' },
+        }),
+        error => error.code === STAGE_D_PROXY_PREFLIGHT_CONFIGURATION_INVALID,
+    );
     for (const target of [{}, { host: '127.0.0.1' }, 'tcp://127.0.0.1:9', 42]) {
         assert.throws(
             () => createStageDHttpConnectProxyPreflight({ target }),
