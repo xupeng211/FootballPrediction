@@ -241,8 +241,10 @@ replay and each transaction package, and the adapter revalidates the public root
 identity before any duplicate no-op or publication decision. A directory
 generation mismatch is an ambiguity requiring reconciliation, never a reason to
 continue.
-The default proxy lease adapter disables background health probes, so a Stage D
-request cannot create an unaccounted provider health request.
+The Stage D provider transport uses one dedicated, project-controlled, stable HTTP
+CONNECT proxy endpoint rather than a proxy lease, so a Stage D request can neither
+rotate across the harvesting pool nor create an unaccounted provider health request.
+See [Provider transport proxy contract](#provider-transport-proxy-contract).
 
 An already canonical The Odds API RAW SHA-256 is a successful
 `NO_OP_DUPLICATE_RAW_HASH`: the request remains accounted, the scheduler records
@@ -255,6 +257,209 @@ Each publication must preserve `capture_started_at`, `response_received_at`,
 and transaction publication time. Publisher-owned knowledge time remains bound
 into transaction identity and must not precede its input evidence. No later cycle
 may make future provider information visible to an earlier as-of query.
+
+## Provider transport proxy contract
+
+The Owner architecture decision for Stage D is a dedicated, project-controlled,
+single, stable HTTP CONNECT proxy endpoint, named by `THE_ODDS_API_PROXY_URL`. The
+rotating multi-node SOCKS5 pool (`config/proxy_pools.json`, `REG-TITAN-40`, ports
+10001–10040) remains the bulk-harvesting pool — one worker per port for FotMob,
+OddsPortal and Playwright capture — and is not reachable from the Stage D provider
+path.
+
+Recorded decision: `OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT`,
+`ROTATING_SOCKS_POOL_FOR_STAGE_D=PROHIBITED`,
+`CONCRETE_PRODUCTION_PROXY_ENDPOINT=NOT_YET_BOUND_BY_THIS_MISSION`,
+`CONCRETE_PRODUCTION_PREFLIGHT_TARGET=NOT_YET_BOUND_BY_THIS_MISSION`,
+`PROXY_PROTOCOL_PREFLIGHT_REQUIRED=YES`,
+`PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES`, and `STAGE_D_PROXY_FALLBACK=NONE`.
+
+No production proxy endpoint has been provisioned by this decision, and none is
+recorded in tracked source. The Stage D transport cannot be bound to a pool name or
+to a caller-supplied proxy provider, and no reachable production path falls back to
+the rotating pool, to a workstation proxy, or to a direct connection. Absent
+configuration fails closed as `PROXY_CONFIGURATION_MISSING` — the
+repository-equivalent of `PRODUCTION_PROXY_ENDPOINT_NOT_CONFIGURED` — rather than
+degrading to a fallback.
+
+The ordering is fixed: proxy configuration validation, then proxy protocol
+preflight, then — only on pass — authorization consumption, request accounting and
+transmission. Before the one-shot authorization is spent, the binder resolves the
+endpoint and proves it by opening a real HTTP CONNECT tunnel to a second, explicitly
+configured target that must attest with a shared secret. The probe never names The Odds
+API, so it cannot resolve provider DNS, contact the provider or consume provider quota.
+
+### HTTP CONNECT preflight target
+
+A proxy is not proven because it returned an HTTP-shaped response, and it is not
+proven by anything the client can author on its own. It is proven only when it accepts
+CONNECT for a project-controlled target, answers with a strict 2xx, and then carries a
+fresh random challenge through the resulting tunnel that the target answers with an
+HMAC-SHA-256 over that challenge under a shared secret only the target and the
+verifier hold. The target is therefore a second contract, separate from the proxy
+endpoint, named by `STAGE_D_PROXY_PREFLIGHT_TARGET_URL` in the canonical form
+`tcp://host:port`. It is required for production Stage D: there is no implicit
+default, no hardcoded workstation address, no public-Internet fallback, no provider
+hostname, and no path, query, fragment or userinfo. The `tcp:` scheme is the only one
+accepted, and an explicit port is mandatory because `tcp:` has no default port.
+Rejecting a target that is literally the proxy's own host and port prevents an
+endpoint from proving itself by talking to itself; that comparison is a literal
+`host:port` match and makes no DNS-equivalence assumption.
+
+The target's address is expressed in the proxy's coordinate system and is explicit
+configuration in every environment. Nothing infers it from `socket.localAddress`,
+host routes, a Docker gateway, `localhost`, `host.docker.internal` or any other
+property of the current workstation. Its deployment topology — including whether the
+proxy's own loopback is the right address, which depends on whether the proxy and the
+target share a network namespace — is an Owner provisioning decision that this
+contract deliberately does not make. An unconfigured or invalid target fails closed
+before any proxy socket is opened, and in every case before authorization
+consumption.
+
+The target must not be The Odds API, FotMob, OddsPortal, a bookmaker, a public
+third-party website, the proxy listener itself, or personal workstation
+infrastructure. The provider hosts this repository actually talks to are enforced
+as a denylist rather than left to operator discipline: naming one — or any
+subdomain of one, in any letter case, with or without a trailing dot — fails
+closed with `PROXY_PREFLIGHT_TARGET_EXTERNAL_HOST` at resolution time, before any
+socket exists. A target that is a provider would void the proof, because a
+provider is not a project-controlled attesting target, and would additionally
+make the preflight an outbound contact with a third party. A denylist cannot
+enumerate every public host, so this closes the concrete misconfiguration rather
+than claiming completeness; the primary control remains that the target is
+explicit operator configuration with no default. A pass requires all of: the endpoint's configuration resolves; the
+target configuration resolves; the shared secret resolves; the TCP (or TLS) connection
+to the endpoint succeeds; the endpoint receives
+`CONNECT <configured-target-host>:<port> HTTP/1.1`; the response is a syntactically
+valid HTTP response; the status is strictly `200`–`299`; the tunnel remains open; and
+the target attestation verifies. Anything else fails closed.
+
+### Preflight attestation: why a client-authored nonce is not enough
+
+An earlier revision of this preflight proved the data plane by writing a fresh random
+nonce through the tunnel and requiring the target to echo it back verbatim.
+Independent adversarial review rejected that design, and the objection is exact: a
+nonce the client invents is a value the client already knows, so a responder that
+reads it — and never dials the configured target — can produce the expected reply.
+Reflection is indistinguishable from forwarding when the challenge carries no secret.
+A 2xx-and-reflect endpoint would therefore have passed the last gate before one-shot
+authority was spent, while the configured target was never contacted.
+
+The proof now rests on material the responder cannot compute. Each execution generates
+a fresh 256-bit challenge from `crypto.randomBytes` and a fresh 128-bit run id, writes
+`stage-d-proxy-preflight/v1 <run_id> <challenge>` through the tunnel, and accepts only
+`stage-d-proxy-preflight/v1 <run_id> <hmac_sha256>` where the MAC is
+`HMAC-SHA-256(secret, message)` over a length-prefixed, domain-separated encoding of
+the version, the run id and the challenge. The received MAC is compared with
+`crypto.timingSafeEqual` after an explicit length check; the secret is never compared
+with string equality, and no custom cryptographic construction is used.
+
+**What a pass proves, precisely.** It proves the CONNECT tunnel reached an entity that
+holds the configured preflight shared secret — target identity and control, to the
+strength of that secret. It does **not** prove The Odds API is reachable, that the
+provider would accept a request, that quota exists, that general external egress works,
+or that the network will hold; `provider_reachability_proven` is `false` in every
+preflight result. The accepted failure domain is symmetric: a compromised shared secret
+would let a hostile responder forge attestation. That is why the secret is dedicated
+(never shared with the provider key, the proxy credentials, any authorization or ledger
+hash, or any machine identity), required to be at least 32 bytes of key material, never
+logged or persisted in any form including its length, and rotatable by replacing the
+verifier and target deployments together. Asymmetric attestation would remove the
+shared-secret failure domain but is out of scope for this contract.
+
+Replay is refused by construction rather than by a nonce store: the MAC is bound to a
+challenge this execution has never seen before, so a response captured from any earlier
+run cannot satisfy it. A response carrying a different run id is refused on binding
+before its MAC is examined.
+
+### Preflight shared secret
+
+The shared secret is a third contract, separate from both the proxy endpoint and the
+target address, named by `STAGE_D_PROXY_PREFLIGHT_SHARED_SECRET`. Its representation is
+canonical base64 of opaque bytes, which is the one encoding that survives an
+environment variable, a secret store and a deploy manifest without
+re-interpretation, and it lets the contract state an entropy floor in bytes rather than
+in characters. The value is validated strictly — non-base64, non-canonical base64,
+mis-padded base64, and anything decoding to fewer than 32 bytes are each refused —
+because a lenient decode would accept a truncated secret and turn a provisioning
+mistake into an intermittent attestation failure against a live target instead of a
+startup refusal.
+
+It is required for production Stage D, and its absence, blankness or invalidity fails
+closed **before any proxy socket is opened** and in every case before authorization
+consumption. It is never generated at runtime, never defaulted, never falls back to an
+embedded test value, and never has a tracked-source default: a secret this process
+invents cannot be known by the target, so a silently generated value would convert a
+missing deployment input into a confusing attestation failure. It is held off every
+enumerable and serialized form of the resolved object — no bytes, no hash, no length,
+no prefix, no suffix — and it never appears in a log, an error message, an evidence
+artifact, a JSON report, a CLI summary or a test snapshot.
+
+`PRODUCTION_PREFLIGHT_TARGET`, `PRODUCTION_SHARED_SECRET` and the production proxy
+endpoint are all **NOT_BOUND** by this contract's implementation: nothing in tracked
+source supplies them, and provisioning them is an Owner deployment action. Until it
+happens, live Stage D fails closed, which is the intended and correct state.
+
+The contract in the canonical form:
+
+```
+OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT
+PREFLIGHT_TARGET_ARCHITECTURE=HYBRID_DEPLOYMENT_ABSTRACTION
+PRODUCTION_PREFLIGHT_TARGET=DEDICATED_PROJECT_CONTROLLED_STATIC_TCP_ATTESTATION_TARGET
+PREFLIGHT_ATTESTATION=HMAC_SHA256_SHARED_SECRET_CHALLENGE_RESPONSE
+PREFLIGHT_SHARED_SECRET=REQUIRED_BUT_NOT_PROVISIONED_BY_THIS_MISSION
+PRODUCTION_TARGET_ENDPOINT=NOT_BOUND
+PRODUCTION_SHARED_SECRET=NOT_BOUND
+PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES
+PROVIDER_REACHABILITY_NOT_PROVEN=YES
+PREFLIGHT_PROOF_LEVEL=AUTHENTICATED_PROJECT_CONTROLLED_TARGET_REACHABILITY
+INFORMED_REFLECTOR_WITHOUT_TARGET_CONTACT=FAIL
+```
+
+**No non-2xx status is accepted as proof of anything.** `403`, `407`, `502`, `503`
+and `504` get no special acceptance, and neither does any other refusal. This is
+deliberate and load-bearing: a proxy that cannot open a tunnel answers `502`/`504`,
+and an ordinary HTTP origin server answers `400`, `404`, `405` or `501` to a CONNECT
+it does not implement — and nothing in a status line distinguishes the two. Any
+non-2xx allowlist would therefore admit a non-proxy endpoint through the last gate
+before the one-shot authorization is spent. That is also why the probe target must be
+genuinely reachable rather than deliberately unusable: a 2xx is only attainable when
+the proxy can really reach the target, so strict 2xx plus a verified target attestation
+is the one rule that is both satisfiable by a working proxy and unsatisfiable by
+everything else.
+
+A `407` fails closed whether or not credentials were configured: if the endpoint will
+not authenticate this probe it will not authenticate the governed request either, so
+passing there would spend the authorization on a request that cannot succeed. A
+synthetic `200 Connection Established` that opens no tunnel fails the attestation and
+is classified `PROXY_CONNECT_ATTESTATION_TIMEOUT` — once a 2xx has been received,
+failing to complete the attestation is **always** an attestation classification and
+never the bare protocol timeout that precedes it, so this case has exactly one
+outcome. A reflected or synthesized response, a MAC computed under the wrong key, a
+response bound to another run id, a malformed or mis-sized MAC, and a tunnel that
+closes before attesting are each classified separately
+(`PROXY_CONNECT_ATTESTATION_MAC_INVALID`,
+`PROXY_CONNECT_ATTESTATION_RUN_ID_MISMATCH`,
+`PROXY_CONNECT_ATTESTATION_MALFORMED`,
+`PROXY_CONNECT_TUNNEL_PROOF_FAILED`) and none of them passes. A dead endpoint, a
+non-HTTP listener, a closed connection without a status line, an inactivity timeout,
+an `https://` TLS failure, an invalid or non-HTTP(S) endpoint URL and a rejected
+configured credential are each classified separately and none of them passes either. A dead, missing, non-CONNECT or non-tunnelling
+endpoint therefore leaves `AUTHORIZATION_CONSUMED=NO`,
+`PROVIDER_REQUEST_ATTEMPTED=NO` and `QUOTA_UNITS_CHARGED_OR_ASSUMED=0`, and the
+unconsumed authorization remains usable until its own `expires_at` once the endpoint
+and target are provisioned.
+
+Proxy credentials, when the endpoint carries them, are held off every enumerable and
+serialized form of the endpoint. They never appear in logs, errors or evidence; the
+agent URL that re-attaches them is built at the point of use only, and it is never
+included in a message, a durable artifact or a preflight result. The preflight
+attaches them through the same canonical path the real transport uses, so the two
+cannot diverge: the URL userinfo is percent-decoded before the Basic payload is
+encoded, exactly as `https-proxy-agent` does it. Encoding the still-encoded userinfo
+instead would authenticate with different bytes than the transport, and a secret
+containing `@`, `:` or `%` would reach the proxy mangled — producing a `407` that
+says nothing about the transport's real chances.
 
 ## Durability, recovery, retention and backup
 
@@ -710,6 +915,7 @@ post-repair content-hash proof.
 | HTTP error | yes | only new request + budget | no | after terminal ledger and clean lock release | no |
 | Quota exhausted / quota unknown | no | no until configuration changes | no | no | quota owner for unknown/exhausted |
 | Credential invalid before transmission | no | no until credentials are corrected | no | after terminal ledger and clean lock release | credential owner |
+| Stage D proxy endpoint, preflight target or preflight shared secret missing, dead, non-CONNECT, or unable to carry a verified target attestation (preflight) | no | yes, with the same unconsumed authorization, once the endpoint, target and shared secret are provisioned and the preflight passes | no | after all three are configured | proxy/network owner |
 | Scheduler duplicate / stale lock / lock ambiguity | no | no | no | no | yes |
 | RAW or receipt persistence failure after possible transmission | yes | only new request + budget | no | after terminal ledger | yes |
 | Parser, identity, registry failure | yes | only new request + budget | no | after terminal ledger | yes |
