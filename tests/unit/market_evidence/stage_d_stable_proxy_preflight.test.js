@@ -17,8 +17,8 @@
 // assertion, and no test reads the operator's environment or a local .env file.
 
 const assert = require('node:assert/strict');
+const { EventEmitter } = require('node:events');
 const fs = require('node:fs');
-const http = require('node:http');
 const net = require('node:net');
 const path = require('node:path');
 const test = require('node:test');
@@ -596,20 +596,30 @@ test('the preflight attaches credentials byte-identically to the agent that tran
     // still-encoded userinfo would authenticate with different bytes than the transport
     // it exists to gate, and a secret containing "@", ":" or "%" would reach the proxy
     // mangled -- producing a 407 that says nothing about the transport's real chances.
+    //
+    // The agent is driven through its own `connect(req, opts)` -- the method agent-base
+    // declares as its connection entry point and that the Node HTTP client reaches
+    // through `createSocket` on every proxied request.  Calling it directly exercises
+    // the library's real CONNECT and credential construction against a real loopback
+    // socket, while keeping the exchange entirely inside this process: no request is
+    // dispatched and no remote host is named.  `connect` touches only `emit` and `once`
+    // on the request object, so an `EventEmitter` is the whole of what it is handed --
+    // nothing in the agent itself is stubbed, aliased or reimplemented.
     const secret = { username: 'stage-d@fake', password: 'p@ss:word%40' };
     const standIn = await startProxyStandIn(t, socket => socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n'));
     const url = `http://${encodeURIComponent(secret.username)}:${encodeURIComponent(secret.password)}@127.0.0.1:${standIn.port}`;
 
     const agent = new HttpsProxyAgent(url);
     t.after(() => agent.destroy());
-    await new Promise(resolve => {
-        const req = http.request({ host: '127.0.0.1', port: 1, path: '/', agent, timeout: 2000 }, () => undefined);
-        req.on('error', () => resolve());
-        req.on('close', () => resolve());
-        req.end();
-    });
 
-    const transportHeader = /Proxy-Authorization: ([^\r\n]+)/i.exec(standIn.requestText());
+    // Resolves only once the proxy's response has been parsed, so the CONNECT head is
+    // already on the wire by the time this returns.
+    const agentSocket = await agent.connect(new EventEmitter(), { host: '127.0.0.1', port: 1, secureEndpoint: true });
+    t.after(() => agentSocket.destroy());
+
+    const requestText = standIn.requestText();
+    assert.equal(/^CONNECT 127\.0\.0\.1:1 HTTP\/1\.1\r\n/.test(requestText), true, 'the real agent must have written the CONNECT head');
+    const transportHeader = /Proxy-Authorization: ([^\r\n]+)/i.exec(requestText);
     assert.notEqual(transportHeader, null, 'the real agent must have attached a credential');
 
     const endpoint = resolveStageDStableProxyEndpoint({ [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: url });
