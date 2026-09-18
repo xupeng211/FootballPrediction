@@ -70,6 +70,16 @@ class GateCheck:
     message: str
 
 
+def _load_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"无法读取 JSON evidence {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise TypeError(f"JSON evidence 必须是 object: {path}")
+    return value
+
+
 def _git(args: list[str], repo_root: Path) -> str:
     result = subprocess.run(
         ["git", *args],
@@ -83,128 +93,7 @@ def _git(args: list[str], repo_root: Path) -> str:
     return result.stdout.strip()
 
 
-def _load_json(path: Path) -> dict[str, Any]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"无法读取 JSON evidence {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise TypeError(f"JSON evidence 必须是 object: {path}")
-    return value
-
-
-def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
-    path: Path,
-    *,
-    repo_root: Path,
-    expected_base: str,
-    expected_head: str,
-    expected_mission_id: str,
-    expected_scope_hash: str,
-) -> ReviewEvidence:
-    """Read commit-last DeepSeek evidence or return one untrusted NO_VERDICT."""
-
-    try:
-        value = _load_json(path)
-        from scripts.devops.independent_review_protocol import (  # noqa: PLC0415
-            canonical_json,
-            sha256_bytes,
-            validate_result,
-        )
-        from scripts.devops.independent_review_receipt import (  # noqa: PLC0415
-            load_backend_registry,
-            receipt_payload_sha256,
-        )
-
-        registry = load_backend_registry(
-            repo_root / "docs/agentic/independent_review_backends.json"
-        )
-        backend = registry.get(value.get("review_backend"))
-        if backend is None or value.get("review_backend") != BACKEND_DEEPSEEK:
-            raise ValueError("backend identity")
-        if (
-            backend["status"] != "active"
-            or value.get("requested_model") not in backend["allowed_requested_models"]
-        ):
-            raise ValueError("backend registry")
-        integrity = value.get("integrity")
-        if not isinstance(integrity, dict) or integrity.get(
-            "receipt_payload_sha256"
-        ) != receipt_payload_sha256(value):
-            raise ValueError("receipt integrity")
-        result = validate_result(
-            {"review_result": value.get("review_result"), "findings": value.get("findings")}
-        )
-        if value.get("finding_counts_by_severity") != result["finding_counts_by_severity"]:
-            raise ValueError("finding counts")
-        if value.get("base_sha") != expected_base or value.get("head_sha") != expected_head:
-            raise ValueError("head binding")
-        if (
-            value.get("mission_id") != expected_mission_id
-            or value.get("mission_scope_sha256") != expected_scope_hash
-        ):
-            raise ValueError("mission binding")
-        expected_diff = sha256_bytes(
-            subprocess.run(
-                ["git", "diff", "--binary", "--no-ext-diff", f"{expected_base}...{expected_head}"],
-                cwd=repo_root,
-                capture_output=True,
-                check=True,
-            ).stdout
-        )
-        if value.get("diff_sha256") != expected_diff:
-            raise ValueError("diff binding")
-        provenance = value.get("provenance")
-        if not isinstance(provenance, dict) or any(
-            not isinstance(provenance.get(field), str) or not provenance[field]
-            for field in backend["required_provenance_fields"]
-        ):
-            raise ValueError("provenance")
-        if value.get("resolved_model") != value.get("requested_model"):
-            raise ValueError("model fallback")
-        # Commit-last output files are named from the immutable receipt run id.
-        run_id = value.get("review_run_id")
-        if not isinstance(run_id, str) or not run_id:
-            raise ValueError("run id")
-        raw = path.parent / f"claude-deepseek-raw-{expected_head[:12]}-{run_id}.json"
-        final = path.parent / f"claude-deepseek-final-{expected_head[:12]}-{run_id}.json"
-        raw_bytes, final_bytes = raw.read_bytes(), final.read_bytes()
-        if value.get("raw_output_sha256") != sha256_bytes(raw_bytes) or value.get(
-            "final_result_sha256"
-        ) != sha256_bytes(final_bytes):
-            raise ValueError("raw/final binding")
-        if final_bytes != canonical_json(
-            {
-                "protocol_version": "INDEPENDENT_REVIEW_PROTOCOL_V1",
-                "review_result": result["review_result"],
-                "findings": result["findings"],
-            }
-        ):
-            raise ValueError("final result")
-        return ReviewEvidence(
-            BACKEND_DEEPSEEK,
-            True,
-            result["review_result"],
-            expected_base,
-            expected_head,
-            expected_diff,
-            expected_mission_id,
-            expected_scope_hash,
-            result["finding_counts_by_severity"],
-        )
-    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
-        return ReviewEvidence(
-            BACKEND_DEEPSEEK,
-            False,
-            "NO_VERDICT",
-            "",
-            "",
-            "",
-            "",
-            "",
-            {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
-            True,
-        )
+from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence
 
 
 def _load_exact_mission_scope(

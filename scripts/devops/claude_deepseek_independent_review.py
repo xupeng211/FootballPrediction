@@ -179,6 +179,15 @@ def _run_chunked_review(
             "raw_sha256": sha256_bytes(item["raw"]),
             "final_sha256": sha256_bytes(item["final"]),
             "session_id": item["session_id"],
+            "execution": {
+                "reviewer_command": list(item["execution"].command),
+                "resolved_model": item["execution"].resolved_model,
+                "claude_cli_version": item["execution"].cli_version,
+                "claude_binary_sha256": item["execution"].binary_sha256,
+                "settings_sha256": item["execution"].settings_sha256,
+                "provider_endpoint": item["execution"].endpoint,
+                "session_id": item["execution"].session_id,
+            },
         }
         for item in trusted
     ]

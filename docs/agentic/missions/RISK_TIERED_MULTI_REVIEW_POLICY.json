@@ -18,6 +18,8 @@
     "scripts/devops/claude_deepseek_independent_review.py",
     "scripts/devops/independent_review_backends/claude_code_deepseek.py",
     "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "scripts/devops/deepseek_receipt_evidence.py",
     "scripts/devops/independent_review_receipt.py",
     "scripts/devops/review_policy.py",
     "scripts/ops/helpers/agent_workflow_contract.py",
