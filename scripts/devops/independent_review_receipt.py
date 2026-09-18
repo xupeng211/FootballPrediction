@@ -326,7 +326,7 @@ def load_backend_registry(path: Path) -> dict[str, dict[str, Any]]:
         raise IndependentReviewProtocolError(f"cannot load backend registry: {exc}") from exc
 
 
-def _validate_codex_provenance(  # noqa: C901, PLR0912
+def _validate_codex_provenance(  # noqa: C901, PLR0912, PLR0915
     receipt: dict[str, Any], backend: dict[str, Any], context: ReceiptEvidenceContext
 ) -> None:
     """Bind Codex receipt claims to harness-observed execution facts.
@@ -420,6 +420,23 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912
         raise IndependentReviewProtocolError("trusted final result is not canonical JSON bytes")
     try:
         events = parse_json_lines(context.raw_output_bytes)
+        if any("item" in event and not isinstance(event["item"], dict) for event in events):
+            raise IndependentReviewProtocolError("raw output item event is malformed")
+        if sum(event.get("type") == "thread.started" for event in events) != 1:
+            raise IndependentReviewProtocolError(
+                "raw output must contain exactly one thread.started"
+            )
+        if (
+            sum(
+                event.get("type") == "item.completed"
+                and event.get("item", {}).get("type") == "agent_message"
+                for event in events
+            )
+            != 1
+        ):
+            raise IndependentReviewProtocolError(
+                "raw output must contain exactly one completed agent message"
+            )
         if reviewer_invocation_id(events, _CODEX_THREAD_ID_RE) != execution.thread_id:
             raise IndependentReviewProtocolError(
                 "raw output thread does not match trusted execution"

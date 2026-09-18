@@ -450,6 +450,24 @@ def test_raw_output_thread_must_match_trusted_execution_evidence():
         )
 
 
+@pytest.mark.parametrize("duplicate_index", [0, 2])
+def test_raw_output_rejects_mixed_or_duplicate_codex_events(duplicate_index):
+    receipt = _receipt()
+    context = _context(receipt)
+    raw_lines = _raw_output(context.final_result_bytes).splitlines()
+    forged_raw = b"\n".join((*raw_lines[:3], raw_lines[duplicate_index], *raw_lines[3:])) + b"\n"
+    forged_receipt = dict(receipt)
+    forged_receipt["raw_output_sha256"] = receipts.sha256_bytes(forged_raw)
+    _rehash(forged_receipt)
+    forged_context = receipts.ReceiptEvidenceContext(
+        **{**context.__dict__, "raw_output_bytes": forged_raw}
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(
+            forged_receipt, registry=_registry(), evidence_context=forged_context
+        )
+
+
 def test_scope_evidence_uses_reviewed_git_blob_not_dirty_worktree(tmp_path):
     """Regression for bootstrap P1: a checkout cannot substitute scope evidence."""
     repo, base, head = _temporary_scope_repo(tmp_path)
