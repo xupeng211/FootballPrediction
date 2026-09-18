@@ -8,9 +8,11 @@
     "docs/CAPABILITY_INDEX.md",
     "docs/agentic/missions/CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND.json",
     "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
     "scripts/devops/independent_review_receipt.py",
     "tests/unit/test_claude_code_deepseek_backend.py",
     "tests/unit/test_claude_deepseek_receipt_isolation.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
     "tests/unit/test_independent_review_protocol.py"
   ],
   "authorized_prefixes": [],
