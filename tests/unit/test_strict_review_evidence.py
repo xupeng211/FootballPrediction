@@ -43,14 +43,14 @@ def _body(
 """
 
 
-def test_normal_high_risk_path_cannot_waive_strict_review():
+def test_normal_critical_path_cannot_waive_dual_review():
     errors = validate_strict_review_evidence(
         _body("NORMAL", reviewed_sha=None, task_type="db-migration-sql"),
         CURRENT_SHA,
         changed_paths=["database/migrations/001.sql"],
         task_type="db-migration-sql",
     )
-    assert any("STRICT_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
+    assert any("CRITICAL_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
 
 
 def test_normal_unknown_path_cannot_waive_strict_review():
@@ -115,6 +115,16 @@ def test_critical_is_first_class_and_strict_cannot_downgrade_governance():
     )
     errors = validate_strict_review_evidence(
         _body("STRICT", task_type="workflow-governance"),
+        CURRENT_SHA,
+        changed_paths=["scripts/devops/agent_workflow.py"],
+        task_type="workflow-governance",
+    )
+    assert any("CRITICAL_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
+
+
+def test_normal_cannot_downgrade_governance_change_below_critical():
+    errors = validate_strict_review_evidence(
+        _body("NORMAL", reviewed_sha=None, task_type="workflow-governance"),
         CURRENT_SHA,
         changed_paths=["scripts/devops/agent_workflow.py"],
         task_type="workflow-governance",

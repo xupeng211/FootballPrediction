@@ -334,7 +334,15 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
     workflow_raw = workflow_values[0]
     workflow_class = workflow_raw.upper()
     classification_reasons = _strict_classification_reasons(changed_paths, task_type)
+    critical_reasons = _critical_classification_reasons(changed_paths, task_type)
     if workflow_class == WORKFLOW_CLASS_NORMAL:
+        if critical_reasons:
+            return [
+                "CRITICAL_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
+                "CRITICAL dual-review evidence; NORMAL cannot waive exact-head evidence ("
+                + "; ".join(critical_reasons)
+                + ")."
+            ]
         if classification_reasons:
             return [
                 "STRICT_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
@@ -343,7 +351,6 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
                 + ")."
             ]
         return []
-    critical_reasons = _critical_classification_reasons(changed_paths, task_type)
     if workflow_class == WORKFLOW_CLASS_STRICT and critical_reasons:
         return [
             "CRITICAL_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
