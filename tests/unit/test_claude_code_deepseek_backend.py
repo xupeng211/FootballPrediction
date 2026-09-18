@@ -66,6 +66,57 @@ def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_pa
     assert result["review_result"] == "PASS"
 
 
+def test_run_uses_explicit_bounded_timeout(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    observed: dict[str, object] = {}
+
+    def fake_run(command, **kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
+        observed.update(kwargs)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                b'{"is_error":false,"session_id":"fresh-session","structured_output":'
+                b'{"protocol_version":"INDEPENDENT_REVIEW_PROTOCOL_V1",'
+                b'"review_result":"PASS","findings":[]},"modelUsage":'
+                b'{"deepseek-flash":{"canonicalModel":"deepseek-flash"}}}'
+            ),
+        )
+
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    backend.run(prompt="review", cwd=tmp_path, timeout_seconds=backend.MAX_REVIEW_TIMEOUT_SECONDS)
+    assert observed["timeout"] == backend.MAX_REVIEW_TIMEOUT_SECONDS
+
+
+def test_timeout_is_no_verdict_and_does_not_leak_secret_or_prompt(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+
+    def fake_run(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
+        raise backend.subprocess.TimeoutExpired(command, 30, output=b"synthetic-secret")
+
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    with pytest.raises(backend.BackendInfrastructureError) as raised:
+        backend.run(prompt="private prompt", cwd=tmp_path, timeout_seconds=30)
+    assert str(raised.value) == "CLI_RUNTIME_TIMEOUT: no review verdict"
+    assert "synthetic-secret" not in str(raised.value)
+    assert "private prompt" not in str(raised.value)
+
+
+@pytest.mark.parametrize("timeout", [True, 29, 901, "900"])
+def test_run_rejects_invalid_timeout_before_cli_execution(timeout):
+    with pytest.raises(backend.BackendInfrastructureError, match="invalid review timeout"):
+        backend._validated_timeout(timeout)
+
+
 def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tmp_path: Path):
     binary = tmp_path / "claude"
     binary.write_bytes(b"synthetic cli")

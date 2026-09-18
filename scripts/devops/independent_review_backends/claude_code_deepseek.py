@@ -28,6 +28,9 @@ ENDPOINT = "https://api.deepseek.com/anthropic"
 EXPECTED_HOST = "api.deepseek.com"
 MODEL = "deepseek-flash"
 MIN_CLAUDE_VERSION = (2, 1, 276)
+DEFAULT_REVIEW_TIMEOUT_SECONDS = 900
+MIN_REVIEW_TIMEOUT_SECONDS = 30
+MAX_REVIEW_TIMEOUT_SECONDS = 900
 SECRET_PATH = Path(
     "/home/xupeng/.local/share/footballprediction-reviewer-secrets/anthropic_auth_token"
 )
@@ -74,6 +77,17 @@ def _version_at_least(version: str) -> bool:
     return bool(matched and tuple(map(int, matched.groups())) >= MIN_CLAUDE_VERSION)
 
 
+def _validated_timeout(timeout_seconds: int) -> int:
+    """Accept only the finite, backend-owned review timeout range."""
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, int)
+        or not MIN_REVIEW_TIMEOUT_SECONDS <= timeout_seconds <= MAX_REVIEW_TIMEOUT_SECONDS
+    ):
+        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: invalid review timeout")
+    return timeout_seconds
+
+
 @dataclass(frozen=True)
 class ExecutionEvidence:
     """Non-secret harness observations for a single Claude subprocess."""
@@ -115,7 +129,11 @@ def child_environment(secret: str) -> dict[str, str]:
 
 
 def run(
-    *, prompt: str, cwd: Path, secret_path: Path = SECRET_PATH
+    *,
+    prompt: str,
+    cwd: Path,
+    secret_path: Path = SECRET_PATH,
+    timeout_seconds: int = DEFAULT_REVIEW_TIMEOUT_SECONDS,
 ) -> tuple[bytes, dict[str, Any], ExecutionEvidence]:
     """Run one isolated, schema-bound Claude/DeepSeek turn.
 
@@ -123,6 +141,7 @@ def run(
     returns stderr or that environment, so callers cannot accidentally persist
     either as review evidence.
     """
+    timeout = _validated_timeout(timeout_seconds)
     binary_text = shutil.which("claude")
     if not binary_text:
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: claude unavailable")
@@ -161,8 +180,12 @@ def run(
         )
         try:
             output = subprocess.run(
-                command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=180
+                command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=timeout
             )
+        except subprocess.TimeoutExpired as exc:
+            # subprocess.run kills and reaps its direct child before raising.
+            # Never expose captured stdout/stderr: either may contain model text.
+            raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
         finally:
             secret = ""
     if output.returncode:

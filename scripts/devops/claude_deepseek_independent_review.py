@@ -70,7 +70,7 @@ def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
-def run_review(args: argparse.Namespace) -> Path:
+def _run_review(args: argparse.Namespace) -> Path:
     """Create an external generic receipt for a new DeepSeek review session."""
     root = args.repo_root.resolve()
     base, head = _sha(root, args.base_sha), _sha(root, args.head_sha)
@@ -201,6 +201,65 @@ def run_review(args: argparse.Namespace) -> Path:
     receipt_path = evidence / f"claude-deepseek-receipt-{head[:12]}-{run_id}.json"
     _write(receipt_path, canonical_json(receipt))
     return receipt_path
+
+
+def _cleanup_invocation(
+    *,
+    evidence: Path,
+    repo_root: Path,
+    before_dirs: set[Path],
+    before_artifacts: set[Path],
+    preserve_artifacts: bool,
+) -> OSError | None:
+    """Remove only worktrees/artifacts created by this review invocation."""
+    cleanup_error: OSError | None = None
+    created_worktrees = set(evidence.glob("claude-deepseek-worktree-*")).difference(before_dirs)
+    for worktree in created_worktrees:
+        try:
+            result = subprocess.run(
+                ["git", "worktree", "remove", "--force", str(worktree)],
+                cwd=repo_root,
+                capture_output=True,
+                check=False,
+            )
+        except OSError:
+            cleanup_error = OSError("temporary review worktree cleanup failed")
+        else:
+            if result.returncode:
+                cleanup_error = OSError("temporary review worktree cleanup failed")
+    if not preserve_artifacts or cleanup_error is not None:
+        # A receipt is commit-last evidence. If any later lifecycle step
+        # fails, remove only this invocation's artifacts so an incomplete run
+        # cannot be mistaken for an approval.
+        for artifact in set(evidence.glob("claude-deepseek-*")).difference(before_artifacts):
+            if artifact.is_file():
+                try:
+                    artifact.unlink()
+                except OSError:
+                    cleanup_error = OSError("temporary review artifact cleanup failed")
+    return cleanup_error
+
+
+def run_review(args: argparse.Namespace) -> Path:
+    """Run one review and always remove only this invocation's worktree."""
+    evidence = args.evidence_dir.resolve()
+    before_dirs = set(evidence.glob("claude-deepseek-worktree-*")) if evidence.exists() else set()
+    before_artifacts = set(evidence.glob("claude-deepseek-*")) if evidence.exists() else set()
+    completed = False
+    try:
+        receipt = _run_review(args)
+        completed = True
+    finally:
+        cleanup_error = _cleanup_invocation(
+            evidence=evidence,
+            repo_root=args.repo_root.resolve(),
+            before_dirs=before_dirs,
+            before_artifacts=before_artifacts,
+            preserve_artifacts=completed,
+        )
+        if cleanup_error is not None:
+            raise DeepSeekReviewError("temporary review worktree cleanup failed") from cleanup_error
+    return receipt
 
 
 def main(argv: list[str] | None = None) -> int:
