@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
-from types import SimpleNamespace
-from types import ModuleType
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -51,7 +51,7 @@ def _receipt() -> dict:
         "base_sha": BASE_SHA,
         "head_sha": HEAD_SHA,
         "diff_sha256": "b" * 64,
-        "mission_id": "GENERIC_TEST",
+        "mission_id": "GENERIC_INDEPENDENT_REVIEW_PROTOCOL_FOUNDATION_AND_LEGACY_CODEX_ADAPTER",
         "mission_scope_path": SCOPE_PATH,
         "mission_scope_sha256": "b" * 64,
         "review_prompt_sha256": "b" * 64,
@@ -115,6 +115,83 @@ def _validate(receipt: dict) -> dict:
 
 def _rehash(receipt: dict) -> None:
     receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=repo, check=True, capture_output=True, text=True
+    ).stdout.strip()
+
+
+def _temporary_scope_repo(tmp_path: Path) -> tuple[Path, str, str]:
+    """Create base and reviewed commits whose scope bytes are immutable Git evidence."""
+    repo = tmp_path / "scope-evidence-repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    (repo / "README").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", "README")
+    _git(
+        repo,
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.invalid",
+        "commit",
+        "-qm",
+        "base",
+    )
+    base = _git(repo, "rev-parse", "HEAD")
+    scope = repo / SCOPE_PATH
+    scope.parent.mkdir(parents=True)
+    scope.write_bytes((ROOT / SCOPE_PATH).read_bytes())
+    _git(repo, "add", SCOPE_PATH)
+    _git(
+        repo,
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.invalid",
+        "commit",
+        "-qm",
+        "scope A",
+    )
+    return repo, base, _git(repo, "rev-parse", "HEAD")
+
+
+def _temporary_receipt_context(
+    repo: Path, base: str, head: str, scope_bytes: bytes
+) -> tuple[dict, receipts.ReceiptEvidenceContext]:
+    receipt = _receipt()
+    final_bytes = receipts.canonical_json(
+        {
+            "protocol_version": PROTOCOL_VERSION,
+            "review_result": receipt["review_result"],
+            "findings": receipt["findings"],
+        }
+    )
+    context = receipts.ReceiptEvidenceContext(
+        repo_root=repo,
+        base_sha=base,
+        head_sha=head,
+        mission_scope_path=SCOPE_PATH,
+        prompt_bytes=PROMPT_BYTES,
+        raw_output_bytes=RAW_OUTPUT_BYTES,
+        final_result_bytes=final_bytes,
+    )
+    receipt.update(
+        {
+            "base_sha": base,
+            "head_sha": head,
+            "diff_sha256": receipts._actual_diff_sha256(context),
+            "mission_scope_sha256": receipts.sha256_bytes(scope_bytes),
+            "review_prompt_sha256": receipts.sha256_bytes(PROMPT_BYTES),
+            "raw_output_sha256": receipts.sha256_bytes(RAW_OUTPUT_BYTES),
+            "final_result_sha256": receipts.sha256_bytes(final_bytes),
+            "isolation": {**receipt["isolation"], "worktree_head_sha": head},
+        }
+    )
+    _rehash(receipt)
+    return receipt, context
 
 
 def test_valid_generic_pass_result():
@@ -208,6 +285,109 @@ def test_tampered_external_evidence_is_rejected_after_self_rehash():
     bad_context = receipts.ReceiptEvidenceContext(
         **{**_context(receipt).__dict__, "raw_output_bytes": b"tampered"}
     )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=bad_context)
+
+
+def test_scope_evidence_uses_reviewed_git_blob_not_dirty_worktree(tmp_path):
+    """Regression for bootstrap P1: a checkout cannot substitute scope evidence."""
+    repo, base, head = _temporary_scope_repo(tmp_path)
+    scope_path = repo / SCOPE_PATH
+    scope_a = scope_path.read_bytes()
+    scope_path.write_bytes(scope_a + b"\n")
+    receipt, context = _temporary_receipt_context(repo, base, head, scope_a)
+    assert receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+
+    receipt_b, context_b = _temporary_receipt_context(repo, base, head, scope_path.read_bytes())
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt_b, registry=_registry(), evidence_context=context_b)
+
+
+def test_negative_control_old_validator_accepted_dirty_worktree_scope(tmp_path, monkeypatch):
+    """The pre-bootstrap-P1 validator used checkout bytes instead of the head blob."""
+    repo, base, head = _temporary_scope_repo(tmp_path)
+    scope_path = repo / SCOPE_PATH
+    scope_path.write_bytes(scope_path.read_bytes() + b"\n")
+    forged_receipt, context = _temporary_receipt_context(repo, base, head, scope_path.read_bytes())
+    source = subprocess.run(
+        [
+            "git",
+            "show",
+            "5351dd7fef5edc7ff0526be10a443cb685c0572b:scripts/devops/independent_review_receipt.py",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout
+    old_module = ModuleType("pre_bootstrap_p1_generic_receipt_validator")
+    old_module.__file__ = str(ROOT / "scripts/devops/independent_review_receipt.py")
+    monkeypatch.setitem(sys.modules, old_module.__name__, old_module)
+    exec(compile(source, old_module.__file__, "exec"), old_module.__dict__)
+    assert (
+        old_module.validate_receipt(forged_receipt, registry=_registry(), evidence_context=context)[
+            "review_result"
+        ]
+        == "PASS"
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(forged_receipt, registry=_registry(), evidence_context=context)
+
+
+def test_scope_absent_at_reviewed_head_cannot_come_from_worktree(tmp_path):
+    repo, base, _head_with_scope = _temporary_scope_repo(tmp_path)
+    scope_path = repo / SCOPE_PATH
+    _git(repo, "checkout", "-q", base)
+    scope_path.parent.mkdir(parents=True, exist_ok=True)
+    scope_path.write_bytes((ROOT / SCOPE_PATH).read_bytes())
+    receipt, context = _temporary_receipt_context(repo, base, base, scope_path.read_bytes())
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+
+
+def test_scope_blob_from_different_commit_is_rejected(tmp_path):
+    repo, base, head_a = _temporary_scope_repo(tmp_path)
+    scope_path = repo / SCOPE_PATH
+    scope_path.write_bytes(scope_path.read_bytes() + b"\n")
+    _git(repo, "add", SCOPE_PATH)
+    _git(
+        repo,
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.invalid",
+        "commit",
+        "-qm",
+        "scope B",
+    )
+    scope_b = scope_path.read_bytes()
+    receipt, context = _temporary_receipt_context(repo, base, head_a, scope_b)
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+
+
+def test_receipt_mission_id_must_match_reviewed_scope_contract():
+    receipt = _receipt()
+    receipt["mission_id"] = "DIFFERENT_VALID_MISSION"
+    _rehash(receipt)
+    with pytest.raises(IndependentReviewProtocolError):
+        _validate(receipt)
+
+
+@pytest.mark.parametrize(
+    ("context_field", "value"),
+    [
+        ("head_sha", "a" * 40),
+        ("base_sha", "b" * 40),
+        ("head_sha", "HEAD:docs/agentic/missions/evil.json"),
+        ("mission_scope_path", "docs/agentic/missions/good.json:evil"),
+    ],
+)
+def test_untrusted_git_revision_or_scope_reference_is_rejected(context_field, value):
+    receipt = _receipt()
+    context_values = _context(receipt).__dict__.copy()
+    context_values[context_field] = value
+    bad_context = receipts.ReceiptEvidenceContext(**context_values)
     with pytest.raises(IndependentReviewProtocolError):
         receipts.validate_receipt(receipt, registry=_registry(), evidence_context=bad_context)
 

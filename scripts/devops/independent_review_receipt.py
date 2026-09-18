@@ -25,7 +25,14 @@ from scripts.devops.independent_review_protocol import (
     validate_result,
     validate_sha,
 )
-from scripts.ops.helpers.agent_workflow_scope_context import validate_mission_scope_reference_path
+from scripts.ops.helpers.agent_workflow_contract import (
+    MissionScopeError,
+    MissionScopeReferenceError,
+)
+from scripts.ops.helpers.agent_workflow_scope_context import (
+    load_mission_scope_blob,
+    validate_mission_scope_reference_path,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "agentic" / "independent_review_receipt.schema.json"
@@ -123,23 +130,77 @@ def _actual_diff_sha256(context: ReceiptEvidenceContext) -> str:
     return sha256_bytes(result.stdout)
 
 
-def _validate_external_bindings(receipt: dict[str, Any], context: ReceiptEvidenceContext) -> None:
+def _scope_bytes_at_reviewed_head(context: ReceiptEvidenceContext, scope_path: str) -> bytes:
+    """Read one validated scope blob from the reviewed immutable Git object."""
+    try:
+        commit = subprocess.run(
+            ["git", "cat-file", "-e", f"{context.head_sha}^{{commit}}"],
+            cwd=context.repo_root,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise IndependentReviewProtocolError(
+            f"cannot read reviewed mission scope blob: {exc}"
+        ) from exc
+    if commit.returncode != 0:
+        raise IndependentReviewProtocolError("reviewed head is not an available commit")
+    try:
+        tree_entry = subprocess.run(
+            ["git", "ls-tree", "-z", context.head_sha, "--", scope_path],
+            cwd=context.repo_root,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise IndependentReviewProtocolError(
+            f"cannot inspect reviewed mission scope blob: {exc}"
+        ) from exc
+    entry = tree_entry.stdout.split(b"\0", 1)[0]
+    if tree_entry.returncode != 0 or not entry.startswith((b"100644 blob ", b"100755 blob ")):
+        raise IndependentReviewProtocolError(
+            "reviewed head does not contain a regular mission scope blob"
+        )
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{context.head_sha}:{scope_path}"],
+            cwd=context.repo_root,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise IndependentReviewProtocolError(
+            f"cannot read reviewed mission scope blob: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        raise IndependentReviewProtocolError("reviewed head does not contain mission scope blob")
+    return result.stdout
+
+
+def _validate_external_bindings(  # noqa: C901
+    receipt: dict[str, Any], context: ReceiptEvidenceContext
+) -> None:
     """Bind receipt declarations to harness-owned bytes and exact Git facts."""
     base = validate_sha(context.base_sha, name="evidence base_sha", length=40)
     head = validate_sha(context.head_sha, name="evidence head_sha", length=40)
     if receipt["base_sha"].lower() != base or receipt["head_sha"].lower() != head:
         raise IndependentReviewProtocolError("receipt base/head do not match trusted evidence")
-    scope_path = validate_mission_scope_reference_path(context.mission_scope_path)
+    try:
+        scope_path = validate_mission_scope_reference_path(context.mission_scope_path)
+    except MissionScopeReferenceError as exc:
+        raise IndependentReviewProtocolError("trusted mission scope path is invalid") from exc
     if receipt["mission_scope_path"] != scope_path:
         raise IndependentReviewProtocolError("receipt scope path does not match trusted evidence")
-    scope_file = context.repo_root / scope_path
+    scope_bytes = _scope_bytes_at_reviewed_head(context, scope_path)
     try:
-        scope_bytes = scope_file.read_bytes()
-    except OSError as exc:
-        raise IndependentReviewProtocolError(f"cannot read trusted mission scope: {exc}") from exc
+        scope_contract, scope_digest = load_mission_scope_blob(context.repo_root, head, scope_path)
+    except (MissionScopeError, OSError) as exc:
+        raise IndependentReviewProtocolError("reviewed mission scope contract is invalid") from exc
+    if scope_contract.mission_id != receipt["mission_id"]:
+        raise IndependentReviewProtocolError("receipt mission_id does not match reviewed scope")
     if (
-        scope_file.is_symlink()
-        or sha256_bytes(scope_bytes) != receipt["mission_scope_sha256"].lower()
+        scope_digest != sha256_bytes(scope_bytes)
+        or scope_digest != receipt["mission_scope_sha256"].lower()
     ):
         raise IndependentReviewProtocolError(
             "receipt mission scope hash does not match trusted bytes"
