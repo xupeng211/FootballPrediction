@@ -100,6 +100,7 @@ class ReceiptEvidenceContext:
     final_result_bytes: bytes
     codex_execution: CodexExecutionEvidence | None = None
     claude_deepseek_execution: ClaudeDeepSeekExecutionEvidence | None = None
+    chunked_claude_evidence: tuple[dict[str, Any], ...] = ()
 
 
 SECRET_FIELD_TOKENS = (
@@ -480,6 +481,9 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
 ) -> None:
     if backend["backend_id"] != "claude-code-deepseek":
         return
+    if receipt["provenance"].get("chunked_review") is True:
+        _validate_chunked_claude_evidence(receipt, context)
+        return
     execution = context.claude_deepseek_execution
     if execution is None:
         raise IndependentReviewProtocolError(
@@ -571,6 +575,80 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         or event.get("structured_output") != json.loads(context.final_result_bytes)
     ):
         raise IndependentReviewProtocolError("raw Claude completion evidence is invalid")
+
+
+def _validate_chunked_claude_evidence(
+    receipt: dict[str, Any], context: ReceiptEvidenceContext
+) -> None:
+    """Validate harness-held chunks, not a receipt's self-consistent summary."""
+
+    provenance = receipt["provenance"]
+    chunks = context.chunked_claude_evidence
+    if not chunks or provenance.get("chunk_count") != len(chunks):
+        raise IndependentReviewProtocolError("chunk evidence is incomplete")
+    if len({item.get("session_id") for item in chunks}) != len(chunks):
+        raise IndependentReviewProtocolError("chunk session reuse is forbidden")
+    evidence_payload: list[dict[str, Any]] = []
+    all_findings: list[dict[str, Any]] = []
+    for index, item in enumerate(chunks):
+        if item.get("index") != index or not isinstance(
+            item.get("execution"), ClaudeDeepSeekExecutionEvidence
+        ):
+            raise IndependentReviewProtocolError("chunk execution evidence is malformed")
+        execution = item["execution"]
+        raw, prompt, final = item.get("raw"), item.get("prompt"), item.get("final")
+        if not all(isinstance(value, bytes) for value in (raw, prompt, final)):
+            raise IndependentReviewProtocolError("chunk bytes are unavailable")
+        try:
+            event, result = json.loads(raw), json.loads(final)
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise IndependentReviewProtocolError("chunk raw/final evidence is invalid") from exc
+        normalized = validate_result(result)
+        if (
+            event.get("is_error") is not False
+            or event.get("session_id") != execution.session_id
+            or event.get("structured_output") != result
+        ):
+            raise IndependentReviewProtocolError(
+                "chunk completion does not match execution evidence"
+            )
+        if (
+            execution.provider_endpoint != _CLAUDE_DEEPSEEK_ENDPOINT
+            or execution.resolved_model != _CLAUDE_DEEPSEEK_MODEL
+        ):
+            raise IndependentReviewProtocolError("chunk provider/model is not approved")
+        source = item.get("source")
+        if not isinstance(source, bytes) or sha256_bytes(source) != item.get("source_sha256"):
+            raise IndependentReviewProtocolError("chunk source evidence is invalid")
+        evidence_payload.append(
+            {
+                "index": index,
+                "source_sha256": item["source_sha256"],
+                "prompt_sha256": sha256_bytes(prompt),
+                "raw_sha256": sha256_bytes(raw),
+                "final_sha256": sha256_bytes(final),
+                "session_id": execution.session_id,
+            }
+        )
+        all_findings.extend(normalized["findings"])
+    if provenance.get("chunk_evidence_manifest_sha256") != sha256_bytes(
+        canonical_json(evidence_payload)
+    ):
+        raise IndependentReviewProtocolError("chunk evidence manifest hash mismatch")
+    expected = validate_result(
+        {
+            "protocol_version": PROTOCOL_VERSION,
+            "review_result": "FAIL"
+            if any(item["severity"] in {"P0", "P1", "P2"} for item in all_findings)
+            else "PASS",
+            "findings": all_findings,
+        }
+    )
+    if (
+        expected["review_result"] != receipt["review_result"]
+        or expected["findings"] != receipt["findings"]
+    ):
+        raise IndependentReviewProtocolError("chunk aggregate does not match trusted results")
 
 
 def validate_receipt(  # noqa: C901, PLR0912
