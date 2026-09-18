@@ -1,0 +1,49 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "GENERIC_RECEIPT_VALIDATION_BINDING_REPAIR",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "docs/agentic/missions/GENERIC_RECEIPT_VALIDATION_BINDING_REPAIR.json",
+    "schemas/agentic/independent_review_receipt.schema.json",
+    "scripts/devops/independent_review_receipt.py",
+    "tests/unit/test_independent_review_protocol.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "docker/",
+    "docs/_manifests/",
+    "docs/_reports/",
+    "docs/data/",
+    "scripts/ops/",
+    "src/",
+    "tests/integration/"
+  ],
+  "excluded_tokens": [
+    "backtest",
+    "betfair",
+    "migration",
+    "model-activation",
+    "oddsportal",
+    "scheduler",
+    "stage_d",
+    "theoddsapi",
+    "transactionstore",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "Existing Codex reviewer entrypoints and historical Codex validation remain unchanged.",
+    "A generic receipt must be externally bound to exact Git, scope, prompt, raw-output and canonical final-result evidence; a self-hash alone is insufficient.",
+    "No backend other than codex-cli is active and generic receipt validation does not become the current canonical acceptance authority."
+  ],
+  "forbidden_side_effects": [
+    "No model, provider, credential, CLIProxyAPI, CC Switch, project-runtime, database, raw-data or Stage D action.",
+    "No push, PR, merge, historical receipt mutation or review-policy change."
+  ]
+}
