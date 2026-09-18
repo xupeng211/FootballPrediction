@@ -17,7 +17,7 @@
 
 ## 2. 任务分类
 
-NORMAL 适合局部、低风险变更。STRICT 适合 DB/schema/write、ingestion、identity/auth/security、生产 runtime、training/model activation、关键架构和高影响破坏性行为。无法由现有 path/task classifier 安全分类时按 STRICT 处理，并在 PR `Risk` 说明原因。
+NORMAL 适合局部、低风险变更。STRICT 适合一般 DB/schema/write、ingestion 与生产 runtime 变更。CRITICAL 用于 review/merge authority、credential/auth、生产授权、破坏性或难回滚操作、production model decision、Stage D live authority 与 fail-closed controls；无法由现有 task/path classifier 安全分类时 fail closed，并在 PR `Risk` 说明原因。
 
 NORMAL：
 
@@ -37,7 +37,7 @@ branch/worktree → base/head snapshot → implementation
 → owner decision → main Production Gate exact merge SHA → DONE
 ```
 
-NORMAL 不默认运行本地 Codex review、DeepSeek、codex-loop、manifest/audit package 或 GitHub Codex Review。STRICT 只要求一个 primary independent reviewer；额外意见只能是 advisory，并且不能改变 owner 的 merge authority。
+Review policy source of truth is `scripts/devops/review_policy.py`: NORMAL requires one DeepSeek review by default (an explicit Codex selection is allowed); STRICT requires one Codex review; CRITICAL requires both Codex and DeepSeek reviews. Backend infrastructure failure is NO_VERDICT and never silently changes backend. Both CRITICAL receipts must bind the identical base/head/diff/mission/scope; P3 is surfaced but non-blocking.
 STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定 review target 与当前完整 PR HEAD。V1 的本地 pre-review 阶段可暂时声明 `Result=PENDING`；它永远不能让 PR merge-ready，也不能通过最终 required remote governance CI。真正的独立 Codex receipt 产生后，Builder 将其更新为 `PASS` 或 `FINDINGS_RESOLVED`。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
 
 ## 3. 验证 profile

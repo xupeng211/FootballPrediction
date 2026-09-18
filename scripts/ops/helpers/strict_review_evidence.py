@@ -40,6 +40,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (
 
 WORKFLOW_CLASS_NORMAL = "NORMAL"
 WORKFLOW_CLASS_STRICT = "STRICT"
+WORKFLOW_CLASS_CRITICAL = "CRITICAL"
 ACCEPTED_RESULTS: frozenset[str] = frozenset({"PASS", "FINDINGS_RESOLVED"})
 PENDING_RESULT = "PENDING"
 EVIDENCE_HEADING = "## Strict Review Evidence"
@@ -236,8 +237,45 @@ def _strict_classification_reasons(
     return reasons
 
 
+def _critical_classification_reasons(
+    changed_paths: Iterable[str] | None,
+    task_type: str | None,
+) -> list[str]:
+    """Return narrow canonical reasons that cannot be reviewed below CRITICAL.
+
+    This deliberately reuses the existing task/path authorization classifier,
+    rather than guessing from arbitrary source text.  It only covers controls
+    whose modification changes review authority, credentials, deployment, or
+    irreversible production boundaries.
+    """
+
+    paths = tuple(changed_paths or ())
+    categories = classify_paths(paths)
+    critical_categories = {
+        CATEGORY_ENV_SECRET,
+        CATEGORY_DB_MIGRATION_SQL,
+        CATEGORY_MODEL_ARTIFACT,
+        CATEGORY_RUNTIME_CONFIG,
+        CATEGORY_WORKFLOW_GOVERNANCE,
+        CATEGORY_SC002_DB_GOVERNANCE,
+    }
+    reasons = (
+        ["path categories " + ", ".join(sorted(set(categories) & critical_categories))]
+        if set(categories) & critical_categories
+        else []
+    )
+    if (task_type or "").strip().lower() in {
+        TASK_TYPE_DB_MIGRATION_SQL,
+        TASK_TYPE_MODEL_ARTIFACT,
+        TASK_TYPE_WORKFLOW_GOVERNANCE,
+        TASK_TYPE_SC002_DB_GOVERNANCE,
+    }:
+        reasons.append(f"task type '{task_type}'")
+    return reasons
+
+
 def parse_workflow_class(pr_body: str) -> str | None:
-    """Return NORMAL/STRICT from the Scope table, or None when invalid/missing."""
+    """Return one canonical workflow class from Scope, or None when invalid."""
 
     scope_sections = _section_matches(pr_body, "## Scope")
     if len(scope_sections) != 1:
@@ -247,7 +285,11 @@ def parse_workflow_class(pr_body: str) -> str | None:
         return None
     raw = values[0]
     normalized = raw.upper()
-    return normalized if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT} else None
+    return (
+        normalized
+        if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT, WORKFLOW_CLASS_CRITICAL}
+        else None
+    )
 
 
 def _valid_timestamp(value: str) -> bool:
@@ -301,11 +343,16 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
                 + ")."
             ]
         return []
-    if workflow_class != WORKFLOW_CLASS_STRICT:
+    if workflow_class not in {WORKFLOW_CLASS_STRICT, WORKFLOW_CLASS_CRITICAL}:
         return [
             "STRICT_REVIEW_CLASSIFICATION_INVALID: Scope must declare "
-            "Workflow class as NORMAL or STRICT."
+            "Workflow class as NORMAL, STRICT, or CRITICAL."
         ]
+
+    # The legacy PR-body evidence is retained for compatibility.  The actual
+    # backend requirement is enforced by the canonical policy evaluator.
+    if workflow_class == WORKFLOW_CLASS_CRITICAL:
+        return []
 
     evidence_sections = _section_matches(pr_body, EVIDENCE_HEADING)
     if not evidence_sections:

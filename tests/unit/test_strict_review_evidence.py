@@ -103,6 +103,27 @@ def test_strict_valid_current_full_sha_passes():
     assert validate_strict_review_evidence(_body("STRICT"), CURRENT_SHA) == []
 
 
+def test_critical_is_first_class_without_reinterpreting_existing_strict_missions():
+    assert (
+        validate_strict_review_evidence(
+            _body("CRITICAL", reviewed_sha=None, task_type="workflow-governance"),
+            CURRENT_SHA,
+            changed_paths=["scripts/devops/agent_workflow.py"],
+            task_type="workflow-governance",
+        )
+        == []
+    )
+    assert (
+        validate_strict_review_evidence(
+            _body("STRICT", task_type="workflow-governance"),
+            CURRENT_SHA,
+            changed_paths=["scripts/devops/agent_workflow.py"],
+            task_type="workflow-governance",
+        )
+        == []
+    )
+
+
 def test_strict_without_evidence_fails_closed():
     errors = validate_strict_review_evidence(_body("STRICT", reviewed_sha=None), CURRENT_SHA)
     assert any("STRICT_REVIEW_MISSING" in error for error in errors)

@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Task type | `source-code`, `workflow-governance`, or another matrix task type |
-| Workflow class | `NORMAL` or `STRICT` |
+| Workflow class | `NORMAL`, `STRICT`, or `CRITICAL` |
 | Mission ID | Current bounded mission identifier |
 | Mission scope contract | `docs/agentic/missions/<mission-id>.json` (tracked exact-head contract) |
 | Changed paths | `path/to/file` |

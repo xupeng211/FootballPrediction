@@ -23,11 +23,6 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# `classify_receipt` is the three-state provenance classifier;
-# `validate_receipt` is exactly `classify_receipt(...) == VALID_CURRENT` expressed
-# as a fail-closed raise.  The merge gate below uses the classifier directly so
-# that STALE_TOOLING and INVALID are both reported with machine-readable reasons
-# while remaining equally non-approving.
 from scripts.devops.codex_review_classification import (  # noqa: E402
     CLASSIFICATION_VALID_CURRENT,
     classify_receipt,
@@ -53,6 +48,13 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
 )
 from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
 from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
+from scripts.devops.review_policy import (  # noqa: E402
+    BACKEND_CODEX,
+    BACKEND_DEEPSEEK,
+    CandidateBinding,
+    ReviewEvidence,
+    evaluate_review_policy,
+)
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,119 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise TypeError(f"JSON evidence 必须是 object: {path}")
     return value
+
+
+def _deepseek_receipt_evidence(
+    path: Path,
+    *,
+    repo_root: Path,
+    expected_base: str,
+    expected_head: str,
+    expected_mission_id: str,
+    expected_scope_hash: str,
+) -> ReviewEvidence:
+    """Read commit-last DeepSeek evidence or return one untrusted NO_VERDICT."""
+
+    try:
+        value = _load_json(path)
+        from scripts.devops.independent_review_protocol import (  # noqa: PLC0415
+            canonical_json,
+            sha256_bytes,
+            validate_result,
+        )
+        from scripts.devops.independent_review_receipt import (  # noqa: PLC0415
+            load_backend_registry,
+            receipt_payload_sha256,
+        )
+
+        registry = load_backend_registry(
+            repo_root / "docs/agentic/independent_review_backends.json"
+        )
+        backend = registry.get(value.get("review_backend"))
+        if backend is None or value.get("review_backend") != BACKEND_DEEPSEEK:
+            raise ValueError("backend identity")
+        if (
+            backend["status"] != "active"
+            or value.get("requested_model") not in backend["allowed_requested_models"]
+        ):
+            raise ValueError("backend registry")
+        if value.get("integrity", {}).get("receipt_payload_sha256") != receipt_payload_sha256(
+            value
+        ):
+            raise ValueError("receipt integrity")
+        result = validate_result(
+            {"review_result": value.get("review_result"), "findings": value.get("findings")}
+        )
+        if value.get("finding_counts_by_severity") != result["finding_counts_by_severity"]:
+            raise ValueError("finding counts")
+        if value.get("base_sha") != expected_base or value.get("head_sha") != expected_head:
+            raise ValueError("head binding")
+        if (
+            value.get("mission_id") != expected_mission_id
+            or value.get("mission_scope_sha256") != expected_scope_hash
+        ):
+            raise ValueError("mission binding")
+        expected_diff = sha256_bytes(
+            subprocess.run(
+                ["git", "diff", "--binary", "--no-ext-diff", f"{expected_base}...{expected_head}"],
+                cwd=repo_root,
+                capture_output=True,
+                check=True,
+            ).stdout
+        )
+        if value.get("diff_sha256") != expected_diff:
+            raise ValueError("diff binding")
+        provenance = value.get("provenance")
+        if not isinstance(provenance, dict) or any(
+            not isinstance(provenance.get(field), str) or not provenance[field]
+            for field in backend["required_provenance_fields"]
+        ):
+            raise ValueError("provenance")
+        if value.get("resolved_model") != value.get("requested_model"):
+            raise ValueError("model fallback")
+        # Commit-last output files are named from the immutable receipt run id.
+        run_id = value.get("review_run_id")
+        if not isinstance(run_id, str) or not run_id:
+            raise ValueError("run id")
+        raw = path.parent / f"claude-deepseek-raw-{expected_head[:12]}-{run_id}.json"
+        final = path.parent / f"claude-deepseek-final-{expected_head[:12]}-{run_id}.json"
+        raw_bytes, final_bytes = raw.read_bytes(), final.read_bytes()
+        if value.get("raw_output_sha256") != sha256_bytes(raw_bytes) or value.get(
+            "final_result_sha256"
+        ) != sha256_bytes(final_bytes):
+            raise ValueError("raw/final binding")
+        if final_bytes != canonical_json(
+            {
+                "protocol_version": "INDEPENDENT_REVIEW_PROTOCOL_V1",
+                "review_result": result["review_result"],
+                "findings": result["findings"],
+            }
+        ):
+            raise ValueError("final result")
+        return ReviewEvidence(
+            BACKEND_DEEPSEEK,
+            True,
+            result["review_result"],
+            expected_base,
+            expected_head,
+            expected_diff,
+            expected_mission_id,
+            expected_scope_hash,
+            result["finding_counts_by_severity"],
+        )
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+        return ReviewEvidence(
+            BACKEND_DEEPSEEK,
+            False,
+            "NO_VERDICT",
+            "",
+            "",
+            "",
+            "",
+            "",
+            {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+            True,
+        )
 
 
 def _status(value: str | None) -> str:
@@ -376,46 +491,128 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     checks.append(local_check)
 
     classification: dict[str, Any] = {}
-    try:
-        result = classify_receipt(
-            Path(args.receipt),
-            repo_root=repo_root,
-            current_head=actual_head,
-            expected_base=base_sha,
-            expected_mission_id=args.mission_id,
-            expected_mission_scope_file=Path(args.mission_scope_file),
-        )
-    except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
-        receipt = {}
-        checks.append(GateCheck("independent-review", "FAIL", str(exc)))
-        checks.append(GateCheck("review-model-provenance", "FAIL", str(exc)))
+    review_evidence: list[ReviewEvidence] = []
+    if args.receipt:
+        try:
+            result = classify_receipt(
+                Path(args.receipt),
+                repo_root=repo_root,
+                current_head=actual_head,
+                expected_base=base_sha,
+                expected_mission_id=args.mission_id,
+                expected_mission_scope_file=Path(args.mission_scope_file),
+            )
+        except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
+            receipt = {}
+            checks.append(GateCheck("independent-review", "FAIL", str(exc)))
+            checks.append(GateCheck("review-model-provenance", "FAIL", str(exc)))
+        else:
+            receipt = result.receipt or {}
+            classification = result.to_dict()
+            # Only VALID_CURRENT may satisfy the current exact-head review
+            # requirement.  STALE_TOOLING preserves historical meaning but is never
+            # converted into a current approval; INVALID never holds at all.
+            approved = result.classification == CLASSIFICATION_VALID_CURRENT
+            checks.append(
+                GateCheck(
+                    "independent-review",
+                    "PASS" if approved and receipt.get("review_result") == "PASS" else "FAIL",
+                    f"engine=codex classification={result.classification} "
+                    f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
+                    f"blocking={receipt.get('blocking_findings')} "
+                    f"reasons={'/'.join(result.reason_codes) or 'NONE'}",
+                )
+            )
+            checks.append(
+                GateCheck(
+                    "review-model-provenance",
+                    "PASS" if approved else "FAIL",
+                    f"model={result.review_model} effort={result.review_reasoning_effort} "
+                    f"codex_cli_version={result.codex_cli_version} "
+                    f"approved_model={result.approved_review_model} "
+                    f"approved_effort={result.approved_review_reasoning_effort}",
+                )
+            )
+            review_evidence.append(
+                ReviewEvidence(
+                    BACKEND_CODEX,
+                    approved,
+                    str(receipt.get("review_result") or "NO_VERDICT"),
+                    str(receipt.get("base_sha") or ""),
+                    str(receipt.get("reviewed_head_sha") or ""),
+                    str(receipt.get("diff_sha256") or ""),
+                    str(receipt.get("mission_id") or ""),
+                    str(receipt.get("mission_scope_sha256") or ""),
+                    receipt.get("finding_counts_by_severity") or {},
+                    not approved,
+                )
+            )
     else:
-        receipt = result.receipt or {}
-        classification = result.to_dict()
-        # Only VALID_CURRENT may satisfy the current exact-head review
-        # requirement.  STALE_TOOLING preserves historical meaning but is never
-        # converted into a current approval; INVALID never holds at all.
-        approved = result.classification == CLASSIFICATION_VALID_CURRENT
+        receipt = {}
         checks.append(
             GateCheck(
                 "independent-review",
-                "PASS" if approved and receipt.get("review_result") == "PASS" else "FAIL",
-                f"engine=codex classification={result.classification} "
-                f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
-                f"blocking={receipt.get('blocking_findings')} "
-                f"reasons={'/'.join(result.reason_codes) or 'NONE'}",
+                "PASS",
+                "Codex receipt not required unless policy selects Codex",
             )
         )
         checks.append(
             GateCheck(
                 "review-model-provenance",
-                "PASS" if approved else "FAIL",
-                f"model={result.review_model} effort={result.review_reasoning_effort} "
-                f"codex_cli_version={result.codex_cli_version} "
-                f"approved_model={result.approved_review_model} "
-                f"approved_effort={result.approved_review_reasoning_effort}",
+                "PASS",
+                "Codex receipt not required unless policy selects Codex",
             )
         )
+
+    if args.deepseek_receipt and mission_scope_hash is not None:
+        review_evidence.append(
+            _deepseek_receipt_evidence(
+                Path(args.deepseek_receipt),
+                repo_root=repo_root,
+                expected_base=base_sha,
+                expected_head=expected_head,
+                expected_mission_id=args.mission_id,
+                expected_scope_hash=mission_scope_hash,
+            )
+        )
+    if mission_scope is not None and mission_scope_hash is not None:
+        policy = evaluate_review_policy(
+            mission_scope.workflow_class,
+            CandidateBinding(
+                base_sha,
+                expected_head,
+                __import__("hashlib")
+                .sha256(
+                    subprocess.run(
+                        [
+                            "git",
+                            "diff",
+                            "--binary",
+                            "--no-ext-diff",
+                            f"{base_sha}...{expected_head}",
+                        ],
+                        cwd=repo_root,
+                        capture_output=True,
+                        check=True,
+                    ).stdout
+                )
+                .hexdigest(),
+                args.mission_id,
+                mission_scope_hash,
+            ),
+            review_evidence,
+            selected_backend=args.selected_backend,
+        )
+        checks.append(
+            GateCheck(
+                "review-policy",
+                "PASS" if policy.status == "SATISFIED" else "FAIL",
+                "; ".join(policy.reasons) or "SATISFIED",
+            )
+        )
+    else:
+        policy = None
+        checks.append(GateCheck("review-policy", "FAIL", "mission scope unavailable"))
 
     exact_check = next(
         (check for check in checks if check.name == "exact-head"), GateCheck("", "UNKNOWN", "")
@@ -511,6 +708,13 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
         "mission_scope_path": mission_scope_path or "UNKNOWN",
         "mission_scope_sha256": mission_scope_hash or "UNKNOWN",
         "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
+        "review_policy_status": policy.status if policy is not None else "INVALID",
+        "review_policy_reasons": list(policy.reasons)
+        if policy is not None
+        else ["MISSION_SCOPE_UNAVAILABLE"],
+        "required_review_backends": list(policy.required_backends) if policy is not None else [],
+        "satisfied_review_backends": list(policy.satisfied_backends) if policy is not None else [],
+        "p3_findings": policy.p3_findings if policy is not None else "UNKNOWN",
         "protected_invariants": machine_protected
         if declared_protected == "PASS" and machine_protected == "PASS"
         else ("UNKNOWN" if declared_protected == "UNKNOWN" else "FAIL"),
@@ -538,6 +742,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                 f"REVIEW_MODEL={output['review_model']}",
                 f"REVIEW_REASONING_EFFORT={output['review_reasoning_effort']}",
                 f"CODEX_CLI_VERSION={output['codex_cli_version']}",
+                f"REVIEW_POLICY_STATUS={output['review_policy_status']}",
                 *(f"[{check.status}] {check.name}: {check.message}" for check in checks),
             ]
         )
@@ -561,7 +766,11 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--mission-id", required=True)
     gate.add_argument("--mission-scope-file", required=True, type=Path)
     gate.add_argument("--local-preflight-json", required=True, type=Path)
-    gate.add_argument("--receipt", required=True, type=Path)
+    gate.add_argument(
+        "--receipt", type=Path, help="validated Codex receipt, when policy requires it"
+    )
+    gate.add_argument("--deepseek-receipt", type=Path)
+    gate.add_argument("--selected-backend", choices=(BACKEND_CODEX, BACKEND_DEEPSEEK))
     gate.add_argument("--pr", type=int, default=None)
     gate.add_argument("--remote-ci-status", default="UNKNOWN")
     gate.add_argument("--protected-invariants", default="UNKNOWN")

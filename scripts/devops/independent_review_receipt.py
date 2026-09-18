@@ -334,6 +334,14 @@ def validate_backend_registry(registry: object) -> dict[str, dict[str, Any]]:
             != len(entry["required_provenance_fields"])
         ):
             raise IndependentReviewProtocolError("backend provenance/fallback policy is invalid")
+        eligibility = entry["task_eligibility"]
+        if (
+            not isinstance(eligibility, list)
+            or not eligibility
+            or len(set(eligibility)) != len(eligibility)
+            or not all(value in {"NORMAL", "STRICT", "CRITICAL"} for value in eligibility)
+        ):
+            raise IndependentReviewProtocolError("backend task eligibility is invalid")
         indexed[backend] = entry
     return indexed
 
