@@ -5,9 +5,25 @@ import pytest
 from scripts.devops.deepseek_review_chunks import (
     ChunkReviewError,
     aggregate,
+    chunk_evidence_manifest_bytes,
     plan,
     validate_manifest,
 )
+
+
+def test_chunk_evidence_manifest_ignores_transport_only_execution_metadata():
+    entry = {
+        "index": 0,
+        "source_sha256": "a" * 64,
+        "prompt_sha256": "b" * 64,
+        "raw_sha256": "c" * 64,
+        "final_sha256": "d" * 64,
+        "session_id": "fresh",
+        "execution": {"provider_endpoint": "https://api.deepseek.com/anthropic"},
+    }
+    assert chunk_evidence_manifest_bytes([entry]) == chunk_evidence_manifest_bytes(
+        [{key: value for key, value in entry.items() if key != "execution"}]
+    )
 
 
 def _manifest():

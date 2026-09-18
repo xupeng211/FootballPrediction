@@ -11,7 +11,12 @@ import re
 import subprocess
 from typing import Any
 
-from scripts.devops.deepseek_review_chunks import ChunkReviewError, plan, validate_manifest
+from scripts.devops.deepseek_review_chunks import (
+    ChunkReviewError,
+    chunk_evidence_manifest_bytes,
+    plan,
+    validate_manifest,
+)
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     IndependentReviewProtocolError,
@@ -163,7 +168,7 @@ def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> 
         )
         all_findings.extend(normalized["findings"])
     if provenance.get("chunk_evidence_manifest_sha256") != sha256_bytes(
-        canonical_json(evidence_payload)
+        chunk_evidence_manifest_bytes(evidence_payload)
     ):
         raise IndependentReviewProtocolError("chunk evidence manifest hash mismatch")
     expected = validate_result(

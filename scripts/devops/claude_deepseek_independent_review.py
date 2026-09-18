@@ -36,6 +36,7 @@ from scripts.devops.independent_review_protocol import (  # noqa: E402
 from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     MAX_CHUNK_DIFF_BYTES,
     aggregate,
+    chunk_evidence_manifest_bytes,
     plan,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
@@ -367,7 +368,7 @@ def _run_review(args: argparse.Namespace) -> Path:
                     "full_diff_sha256": sha256_bytes(diff),
                     "aggregate_result_sha256": sha256_bytes(final),
                     "chunk_evidence_manifest_sha256": sha256_bytes(
-                        canonical_json(json.loads(raw)["chunks"])
+                        chunk_evidence_manifest_bytes(json.loads(raw)["chunks"])
                     ),
                 }
                 if chunked

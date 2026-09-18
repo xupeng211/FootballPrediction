@@ -159,3 +159,10 @@ def aggregate(results: Iterable[dict[str, Any]], manifest: Manifest) -> dict[str
             "findings": findings,
         }
     )
+
+
+def chunk_evidence_manifest_bytes(entries: Iterable[dict[str, Any]]) -> bytes:
+    """Return the sole canonical per-chunk evidence manifest representation."""
+
+    fields = ("index", "source_sha256", "prompt_sha256", "raw_sha256", "final_sha256", "session_id")
+    return canonical_json([{field: entry[field] for field in fields} for entry in entries])
