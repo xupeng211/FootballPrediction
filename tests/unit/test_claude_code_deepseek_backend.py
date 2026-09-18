@@ -11,8 +11,8 @@ def test_child_environment_is_allowlisted_and_has_no_competing_route():
     env = backend.child_environment("synthetic-secret")
     assert env["ANTHROPIC_BASE_URL"] == backend.ENDPOINT
     assert env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
+    assert env["ANTHROPIC_API_KEY"] == "synthetic-secret"
     assert "HTTPS_PROXY" not in env
-    assert "ANTHROPIC_API_KEY" not in env
 
 
 def test_secret_source_rejects_symlink_and_unsafe_permissions(tmp_path: Path):
@@ -58,6 +58,7 @@ def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_pa
     child_env = observed["env"]
     assert isinstance(child_env, dict)
     assert child_env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
+    assert child_env["ANTHROPIC_API_KEY"] == "synthetic-secret"
     assert child_env["ANTHROPIC_BASE_URL"] == backend.ENDPOINT
     assert "HTTPS_PROXY" not in child_env
     assert "synthetic-secret" not in os.environ.values()

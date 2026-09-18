@@ -122,6 +122,11 @@ def child_environment(secret: str) -> dict[str, str]:
         # provider-routing or credential variables are inherited.
         "PATH": os.environ.get("PATH", os.defpath),
         "LANG": "C.UTF-8",
+        # Claude Code 2.1.276 documents ANTHROPIC_API_KEY as the only
+        # credential accepted by --bare.  Keep the Owner's token contract as
+        # well because the DeepSeek Anthropic-compatible endpoint expects it;
+        # both names exist only in this allowlisted child environment.
+        "ANTHROPIC_API_KEY": secret,
         "ANTHROPIC_AUTH_TOKEN": secret,
         "ANTHROPIC_BASE_URL": ENDPOINT,
         "CLAUDE_CODE_SIMPLE": "1",
