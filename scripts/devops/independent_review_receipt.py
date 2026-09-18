@@ -53,7 +53,9 @@ _CODEX_EXEC_MINIMUM_ARGV_LENGTH = 2
 _CLAUDE_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/anthropic"
 _CLAUDE_DEEPSEEK_MODEL = "deepseek-flash"
 _CLAUDE_MINIMUM_VERSION = (2, 1, 276)
-_CLAUDE_RESTRICTED_TOOLS = frozenset({"Bash", "Edit", "Write", "WebFetch", "WebSearch"})
+_CLAUDE_RESTRICTED_TOOLS = frozenset(
+    {"Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch"}
+)
 
 
 @dataclass(frozen=True)
@@ -523,6 +525,9 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         or command.count("--settings") != 1
         or not command[command.index("--settings") + 1 : command.index("--settings") + 2]
         or "--strict-mcp-config" not in command
+        or "--restricted" not in command
+        or command.count("--tools") != 1
+        or command[command.index("--tools") + 1 : command.index("--tools") + 2] != [""]
         or command.count("--disallowed-tools") != 1
         or not _CLAUDE_RESTRICTED_TOOLS.issubset(
             set(command[command.index("--disallowed-tools") + 1].split(","))

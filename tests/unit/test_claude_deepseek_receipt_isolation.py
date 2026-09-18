@@ -14,7 +14,9 @@ from tests.unit.test_independent_review_protocol import _claude_receipt_and_cont
     [
         ("--strict-mcp-config", None),
         ("--disallowed-tools", None),
-        ("Bash,Edit,Write,WebFetch,WebSearch", "Bash,Edit,Write"),
+        ("Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch", "Bash,Edit,Write"),
+        ("--restricted", None),
+        ("--tools", None),
     ],
 )
 def test_receipt_rejects_missing_isolation_command_controls(command_part, replacement):

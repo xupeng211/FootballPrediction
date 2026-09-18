@@ -41,6 +41,7 @@ def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_pa
         if command[1:] == ["--version"]:
             return SimpleNamespace(stdout="2.1.276 (Claude Code)\n")
         observed.update(kwargs)
+        observed["env"] = dict(kwargs["env"])
         return SimpleNamespace(
             returncode=0,
             stdout=(
@@ -110,6 +111,22 @@ def test_timeout_is_no_verdict_and_does_not_leak_secret_or_prompt(monkeypatch, t
     assert str(raised.value) == "CLI_RUNTIME_TIMEOUT: no review verdict"
     assert "synthetic-secret" not in str(raised.value)
     assert "private prompt" not in str(raised.value)
+
+
+def test_run_rejects_secret_reflection_before_raw_output_can_persist(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+
+    def fake_run(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
+        return SimpleNamespace(returncode=0, stdout=b"synthetic-secret", stderr=b"")
+
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    with pytest.raises(backend.BackendInfrastructureError, match="SECRET_LEAKAGE_DETECTED"):
+        backend.run(prompt="review", cwd=tmp_path)
 
 
 @pytest.mark.parametrize("timeout", [True, 29, 901, "900"])

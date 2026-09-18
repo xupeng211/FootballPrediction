@@ -37,9 +37,7 @@ SECRET_PATH = Path(
 SECRET_FILE_MODE = 0o600
 # Kept as bytes owned by this adapter instead of accepting mutable user or
 # project Claude settings.  The temporary file is hashed into provenance.
-DEDICATED_SETTINGS = (
-    b'{"permissions":{"allow":[],"deny":["Bash","Edit","Write","WebFetch","WebSearch"]}}\n'
-)
+DEDICATED_SETTINGS = b'{"permissions":{"allow":[],"deny":["Bash","Edit","Write","Read","Glob","Grep","WebFetch","WebSearch"]}}\n'
 # Claude Code 2.1.276 accepts this conservative subset of the generic result
 # schema.  ``validate_result`` remains the protocol authority after execution;
 # it accepts this strict subset without relaxing any generic rule.
@@ -69,6 +67,15 @@ CLAUDE_RESULT_SCHEMA = {
 
 class BackendInfrastructureError(RuntimeError):
     """Never interpret runtime/provider failure as a code-review verdict."""
+
+
+def _output_contains_secret(output: subprocess.CompletedProcess[bytes], secret: str) -> bool:
+    """Reject direct credential reflection before any provider output persists."""
+    marker = secret.encode("utf-8")
+    return any(
+        isinstance(value, bytes) and marker in value
+        for value in (getattr(output, "stdout", None), getattr(output, "stderr", None))
+    )
 
 
 def _version_at_least(version: str) -> bool:
@@ -169,14 +176,17 @@ def run(
         command = (
             str(binary),
             "--bare",
+            "--restricted",
             "--print",
             "--model",
             MODEL,
             "--settings",
             str(settings),
             "--strict-mcp-config",
+            "--tools",
+            "",
             "--disallowed-tools",
-            "Bash,Edit,Write,WebFetch,WebSearch",
+            "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch",
             "--output-format",
             "json",
             "--json-schema",
@@ -191,7 +201,11 @@ def run(
             # subprocess.run kills and reaps its direct child before raising.
             # Never expose captured stdout/stderr: either may contain model text.
             raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
+        else:
+            if _output_contains_secret(output, secret):
+                raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED")
         finally:
+            child_env.clear()
             secret = ""
     if output.returncode:
         raise BackendInfrastructureError(f"CLI_RUNTIME_FAILURE: exit={output.returncode}")
