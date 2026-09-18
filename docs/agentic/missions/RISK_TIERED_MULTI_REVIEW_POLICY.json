@@ -21,6 +21,7 @@
     "scripts/ops/helpers/agent_workflow_contract.py",
     "scripts/ops/helpers/strict_review_evidence.py",
     "tests/unit/test_review_policy.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
     "tests/unit/test_claude_deepseek_independent_review.py",
     "tests/unit/test_independent_review_protocol.py",
     "tests/unit/test_strict_review_evidence.py"

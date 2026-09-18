@@ -149,3 +149,13 @@ def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tm
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     with pytest.raises(backend.BackendInfrastructureError, match="INVALID_STRUCTURED_OUTPUT"):
         backend.run(prompt="review", cwd=tmp_path)
+
+
+def test_nonzero_diagnostic_is_allowlisted_and_does_not_reflect_output(monkeypatch, tmp_path: Path):
+    output = SimpleNamespace(
+        returncode=1, stdout=b"request too large private prompt", stderr=b"secret"
+    )
+    detail = backend._safe_nonzero_detail(output, 12)
+    assert detail.startswith("REQUEST_TOO_LARGE: exit=1;")
+    assert "private prompt" not in detail
+    assert "secret" not in detail

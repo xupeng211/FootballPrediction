@@ -54,12 +54,33 @@ _SAFE_BACKEND_FAILURE_CODES = frozenset(
         "SECRET_LEAKAGE_DETECTED",
     }
 )
+_SAFE_NONZERO_DETAILS = frozenset(
+    {
+        "AUTH_ERROR",
+        "RATE_LIMIT",
+        "USAGE_LIMIT",
+        "REQUEST_TOO_LARGE",
+        "CONTEXT_LIMIT",
+        "INVALID_MODEL",
+        "UNSUPPORTED_PARAMETER",
+        "INVALID_SCHEMA",
+        "STRUCTURED_OUTPUT_ERROR",
+        "PROVIDER_5XX",
+        "NETWORK_FAILURE",
+        "TLS_FAILURE",
+        "UNKNOWN_NONZERO_EXIT",
+    }
+)
 
 
 def _safe_backend_failure_code(error: backend.BackendInfrastructureError) -> str:
     """Expose only a stable non-secret infrastructure classification."""
 
-    code = str(error).split(":", 1)[0]
+    parts = str(error).split(":", 2)
+    code = parts[0]
+    detail = parts[1].strip() if len(parts) > 1 else ""
+    if code == "CLI_RUNTIME_FAILURE" and detail in _SAFE_NONZERO_DETAILS:
+        return f"{code}:{detail}"
     return code if code in _SAFE_BACKEND_FAILURE_CODES else "CLI_RUNTIME_FAILURE"
 
 

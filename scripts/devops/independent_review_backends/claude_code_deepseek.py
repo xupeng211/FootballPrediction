@@ -20,6 +20,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 from typing import Any
 
 BACKEND_ID = "claude-code-deepseek"
@@ -69,12 +70,50 @@ class BackendInfrastructureError(RuntimeError):
     """Never interpret runtime/provider failure as a code-review verdict."""
 
 
+_SAFE_NONZERO_CLASSES = (
+    (b"rate limit", "RATE_LIMIT"),
+    (b"usage limit", "USAGE_LIMIT"),
+    (b"request too large", "REQUEST_TOO_LARGE"),
+    (b"payload too large", "REQUEST_TOO_LARGE"),
+    (b"context length", "CONTEXT_LIMIT"),
+    (b"context window", "CONTEXT_LIMIT"),
+    (b"invalid model", "INVALID_MODEL"),
+    (b"unsupported parameter", "UNSUPPORTED_PARAMETER"),
+    (b"json schema", "INVALID_SCHEMA"),
+    (b"structured output", "STRUCTURED_OUTPUT_ERROR"),
+    (b"authentication", "AUTH_ERROR"),
+    (b"unauthorized", "AUTH_ERROR"),
+    (b"tls", "TLS_FAILURE"),
+    (b"network", "NETWORK_FAILURE"),
+    (b"status 5", "PROVIDER_5XX"),
+    (b"http 5", "PROVIDER_5XX"),
+)
+
+
 def _output_contains_secret(output: subprocess.CompletedProcess[bytes], secret: str) -> bool:
     """Reject direct credential reflection before any provider output persists."""
     marker = secret.encode("utf-8")
     return any(
         isinstance(value, bytes) and marker in value
         for value in (getattr(output, "stdout", None), getattr(output, "stderr", None))
+    )
+
+
+def _safe_nonzero_detail(output: subprocess.CompletedProcess[bytes], elapsed_seconds: int) -> str:
+    """Classify only allowlisted provider markers; never surface raw output."""
+
+    observed = b" ".join(
+        value
+        for value in (getattr(output, "stdout", b""), getattr(output, "stderr", b""))
+        if isinstance(value, bytes)
+    ).lower()
+    category = next(
+        (label for marker, label in _SAFE_NONZERO_CLASSES if marker in observed),
+        "UNKNOWN_NONZERO_EXIT",
+    )
+    return (
+        f"{category}: exit={output.returncode}; stdout_bytes={len(getattr(output, 'stdout', b'') or b'')}; "
+        f"stderr_bytes={len(getattr(output, 'stderr', b'') or b'')}; elapsed_seconds={elapsed_seconds}"
     )
 
 
@@ -193,6 +232,7 @@ def run(
             schema_bytes.decode("utf-8"),
             prompt,
         )
+        started = time.monotonic()
         try:
             output = subprocess.run(
                 command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=timeout
@@ -208,7 +248,9 @@ def run(
             child_env.clear()
             secret = ""
     if output.returncode:
-        raise BackendInfrastructureError(f"CLI_RUNTIME_FAILURE: exit={output.returncode}")
+        raise BackendInfrastructureError(
+            f"CLI_RUNTIME_FAILURE: {_safe_nonzero_detail(output, int(time.monotonic() - started))}"
+        )
     try:
         event = json.loads(output.stdout)
         result = event["structured_output"]
