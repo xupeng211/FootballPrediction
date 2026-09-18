@@ -9,7 +9,7 @@ owner: engineering workflow governance
 和 protected-invariant evidence。它绝不执行 merge、push、commit 或清理。
 """
 
-# ruff: noqa: I001, TRY301
+# ruff: noqa: TRY301
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ from scripts.devops.codex_review_classification import (  # noqa: E402
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
 from scripts.devops.codex_review_receipt import git_blob_sha256, sha256_file  # noqa: E402
+from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence  # noqa: E402
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -91,9 +92,6 @@ def _git(args: list[str], repo_root: Path) -> str:
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or f"git {' '.join(args)} failed")
     return result.stdout.strip()
-
-
-from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence
 
 
 def _load_exact_mission_scope(
