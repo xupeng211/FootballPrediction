@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://footballprediction.local/schemas/agentic/independent-review-receipt-v1.json",
   "type": "object", "additionalProperties": false,
-  "required": ["protocol_version", "receipt_version", "review_run_id", "review_backend", "review_harness", "provider", "requested_model", "base_sha", "head_sha", "diff_sha256", "mission_id", "mission_scope_path", "mission_scope_sha256", "review_prompt_sha256", "review_started_at", "review_completed_at", "review_result", "finding_counts_by_severity", "findings", "raw_output_sha256", "final_result_sha256", "isolation", "provenance", "integrity"],
+  "required": ["protocol_version", "receipt_version", "review_run_id", "review_backend", "review_harness", "provider", "requested_model", "resolved_model", "base_sha", "head_sha", "diff_sha256", "mission_id", "mission_scope_path", "mission_scope_sha256", "review_prompt_sha256", "review_started_at", "review_completed_at", "review_result", "finding_counts_by_severity", "findings", "raw_output_sha256", "final_result_sha256", "isolation", "provenance", "integrity"],
   "properties": {
     "protocol_version": {"const": "INDEPENDENT_REVIEW_PROTOCOL_V1"}, "receipt_version": {"const": "independent-review-receipt/v1"},
     "review_run_id": {"pattern": "^[a-z0-9][a-z0-9-]{7,127}$"}, "review_backend": {"pattern": "^[a-z0-9][a-z0-9-]{1,63}$"}, "review_harness": {"type": "string", "minLength": 1}, "provider": {"type": "string", "minLength": 1}, "requested_model": {"type": "string", "minLength": 1}, "resolved_model": {"type": "string", "minLength": 1},

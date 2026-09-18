@@ -48,7 +48,8 @@
   "protected_invariants": [
     "The complete candidate diff is authorized only by this bounded feature-level contract; historical repair scopes do not grant broader authority.",
     "Generic receipt claims are validated against harness-owned exact Git, scope, prompt, raw-output and canonical final-result evidence; self-integrity alone is insufficient.",
-    "Existing Codex reviewer entrypoints and historical Codex validation remain unchanged; codex-cli is the only active backend."
+    "Existing Codex reviewer entrypoints and historical Codex validation remain unchanged; codex-cli is the only active backend.",
+    "For codex-cli, resolved model and command/binary/CLI provenance are receipt claims checked against harness-owned execution evidence; a silent model fallback or self-asserted provenance fails closed."
   ],
   "forbidden_side_effects": [
     "No model, provider, credential, CLIProxyAPI, CC Switch, project-runtime, database, raw-data or Stage D action.",

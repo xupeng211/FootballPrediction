@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
-import sys
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 
 import pytest
 
@@ -19,12 +18,31 @@ from scripts.devops.independent_review_protocol import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE_SHA = "d6b5355380bcf01442ea8380adc9d42c1afcde37"
-HEAD_SHA = "6211c0c0bd9183d681cd535cf34fe25e692b1813"
-SCOPE_PATH = "docs/agentic/missions/GENERIC_INDEPENDENT_REVIEW_PROTOCOL_FOUNDATION_AND_LEGACY_CODEX_ADAPTER.json"
+BASE_SHA = subprocess.run(
+    ["git", "rev-parse", "HEAD^"], cwd=ROOT, check=True, capture_output=True, text=True
+).stdout.strip()
+HEAD_SHA = subprocess.run(
+    ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True
+).stdout.strip()
+SCOPE_PATH = (
+    "docs/agentic/missions/GENERIC_INDEPENDENT_REVIEW_FOUNDATION_BOOTSTRAP_ACCEPTANCE_REPAIR.json"
+)
 PROMPT_BYTES = b"generic protocol review prompt\n"
 RAW_OUTPUT_BYTES = b'{"type":"agent_message"}\n'
 SHA64 = "b" * 64
+REVIEWER_COMMAND = (
+    "/trusted/codex",
+    "exec",
+    "--sandbox",
+    "read-only",
+    "--ignore-user-config",
+    "--ephemeral",
+    "-m",
+    "gpt-5.6-terra",
+    "-c",
+    'model_reasoning_effort="medium"',
+)
+CODEX_BINARY_SHA = "c" * 64
 
 
 def _result(verdict: str = "PASS", findings: list[dict] | None = None) -> dict:
@@ -48,10 +66,11 @@ def _receipt() -> dict:
         "review_harness": "codex-cli",
         "provider": "openai",
         "requested_model": "gpt-5.6-terra",
+        "resolved_model": "gpt-5.6-terra",
         "base_sha": BASE_SHA,
         "head_sha": HEAD_SHA,
         "diff_sha256": "b" * 64,
-        "mission_id": "GENERIC_INDEPENDENT_REVIEW_PROTOCOL_FOUNDATION_AND_LEGACY_CODEX_ADAPTER",
+        "mission_id": "GENERIC_INDEPENDENT_REVIEW_FOUNDATION_BOOTSTRAP_ACCEPTANCE_REPAIR",
         "mission_scope_path": SCOPE_PATH,
         "mission_scope_sha256": "b" * 64,
         "review_prompt_sha256": "b" * 64,
@@ -72,15 +91,24 @@ def _receipt() -> dict:
             "worktree_clean_after": True,
         },
         "provenance": {
-            "reviewer_command": ["codex", "exec"],
-            "command_sha256": "b" * 64,
+            "reviewer_command": list(REVIEWER_COMMAND),
+            "command_sha256": receipts.sha256_bytes(
+                receipts.canonical_json(list(REVIEWER_COMMAND))
+            ),
             "codex_cli_version": "0.1.0",
-            "codex_binary_sha256": "b" * 64,
+            "codex_binary_sha256": CODEX_BINARY_SHA,
         },
     }
     context = _context(value)
     value["diff_sha256"] = receipts._actual_diff_sha256(context)
-    value["mission_scope_sha256"] = receipts.sha256_bytes((ROOT / SCOPE_PATH).read_bytes())
+    value["mission_scope_sha256"] = receipts.sha256_bytes(
+        subprocess.run(
+            ["git", "show", f"{HEAD_SHA}:{SCOPE_PATH}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout
+    )
     value["review_prompt_sha256"] = receipts.sha256_bytes(PROMPT_BYTES)
     value["raw_output_sha256"] = receipts.sha256_bytes(RAW_OUTPUT_BYTES)
     value["final_result_sha256"] = receipts.sha256_bytes(context.final_result_bytes)
@@ -104,6 +132,12 @@ def _context(receipt: dict) -> receipts.ReceiptEvidenceContext:
         prompt_bytes=PROMPT_BYTES,
         raw_output_bytes=RAW_OUTPUT_BYTES,
         final_result_bytes=final,
+        codex_execution=receipts.CodexExecutionEvidence(
+            reviewer_command=REVIEWER_COMMAND,
+            resolved_model="gpt-5.6-terra",
+            codex_cli_version="0.1.0",
+            codex_binary_sha256=CODEX_BINARY_SHA,
+        ),
     )
 
 
@@ -115,6 +149,25 @@ def _validate(receipt: dict) -> dict:
 
 def _rehash(receipt: dict) -> None:
     receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+
+
+def _historical_self_hash_only_validator(receipt: dict) -> str:
+    """Hermetic model of the original receipt-self-integrity-only defect."""
+    if receipt.get("integrity", {}).get(
+        "receipt_payload_sha256"
+    ) != receipts.receipt_payload_sha256(receipt):
+        raise IndependentReviewProtocolError("historical payload hash mismatch")
+    return receipt["review_result"]
+
+
+def _historical_worktree_scope_validator(
+    receipt: dict, context: receipts.ReceiptEvidenceContext
+) -> str:
+    """Hermetic model of the old mutable-worktree scope lookup defect."""
+    scope_bytes = (context.repo_root / receipt["mission_scope_path"]).read_bytes()
+    if receipt["mission_scope_sha256"] != receipts.sha256_bytes(scope_bytes):
+        raise IndependentReviewProtocolError("historical scope hash mismatch")
+    return receipt["review_result"]
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -177,6 +230,12 @@ def _temporary_receipt_context(
         prompt_bytes=PROMPT_BYTES,
         raw_output_bytes=RAW_OUTPUT_BYTES,
         final_result_bytes=final_bytes,
+        codex_execution=receipts.CodexExecutionEvidence(
+            reviewer_command=REVIEWER_COMMAND,
+            resolved_model="gpt-5.6-terra",
+            codex_cli_version="0.1.0",
+            codex_binary_sha256=CODEX_BINARY_SHA,
+        ),
     )
     receipt.update(
         {
@@ -289,6 +348,53 @@ def test_tampered_external_evidence_is_rejected_after_self_rehash():
         receipts.validate_receipt(receipt, registry=_registry(), evidence_context=bad_context)
 
 
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda value: value.update({"resolved_model": "unapproved-provider-fallback"}),
+        lambda value: value["provenance"].update({"command_sha256": "a" * 64}),
+        lambda value: value["provenance"].update({"codex_binary_sha256": "a" * 64}),
+        lambda value: value["provenance"].update({"codex_cli_version": None}),
+        lambda value: value["provenance"].update(
+            {"reviewer_command": ["/trusted/codex", "exec", "-m", "other-model"]}
+        ),
+    ],
+)
+def test_codex_provenance_claims_cannot_self_authorize(mutate):
+    receipt = _receipt()
+    mutate(receipt)
+    _rehash(receipt)
+    with pytest.raises(IndependentReviewProtocolError):
+        _validate(receipt)
+
+
+def test_missing_trusted_codex_execution_evidence_fails_closed():
+    receipt = _receipt()
+    context = _context(receipt)
+    context_without_execution = receipts.ReceiptEvidenceContext(
+        **{**context.__dict__, "codex_execution": None}
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(
+            receipt, registry=_registry(), evidence_context=context_without_execution
+        )
+
+
+def test_trusted_resolved_model_mismatch_is_rejected_even_when_receipt_rehashed():
+    receipt = _receipt()
+    context = _context(receipt)
+    mismatched_execution = receipts.CodexExecutionEvidence(
+        **{**context.codex_execution.__dict__, "resolved_model": "provider-fallback"}
+    )
+    mismatched_context = receipts.ReceiptEvidenceContext(
+        **{**context.__dict__, "codex_execution": mismatched_execution}
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(
+            receipt, registry=_registry(), evidence_context=mismatched_context
+        )
+
+
 def test_scope_evidence_uses_reviewed_git_blob_not_dirty_worktree(tmp_path):
     """Regression for bootstrap P1: a checkout cannot substitute scope evidence."""
     repo, base, head = _temporary_scope_repo(tmp_path)
@@ -303,35 +409,21 @@ def test_scope_evidence_uses_reviewed_git_blob_not_dirty_worktree(tmp_path):
         receipts.validate_receipt(receipt_b, registry=_registry(), evidence_context=context_b)
 
 
-def test_negative_control_old_validator_accepted_dirty_worktree_scope(tmp_path, monkeypatch):
+def test_negative_control_old_validator_accepted_dirty_worktree_scope(tmp_path):
     """The pre-bootstrap-P1 validator used checkout bytes instead of the head blob."""
     repo, base, head = _temporary_scope_repo(tmp_path)
     scope_path = repo / SCOPE_PATH
     scope_path.write_bytes(scope_path.read_bytes() + b"\n")
     forged_receipt, context = _temporary_receipt_context(repo, base, head, scope_path.read_bytes())
-    source = subprocess.run(
-        [
-            "git",
-            "show",
-            "5351dd7fef5edc7ff0526be10a443cb685c0572b:scripts/devops/independent_review_receipt.py",
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        check=True,
-        text=True,
-    ).stdout
-    old_module = ModuleType("pre_bootstrap_p1_generic_receipt_validator")
-    old_module.__file__ = str(ROOT / "scripts/devops/independent_review_receipt.py")
-    monkeypatch.setitem(sys.modules, old_module.__name__, old_module)
-    exec(compile(source, old_module.__file__, "exec"), old_module.__dict__)
-    assert (
-        old_module.validate_receipt(forged_receipt, registry=_registry(), evidence_context=context)[
-            "review_result"
-        ]
-        == "PASS"
-    )
+    assert _historical_worktree_scope_validator(forged_receipt, context) == "PASS"
     with pytest.raises(IndependentReviewProtocolError):
         receipts.validate_receipt(forged_receipt, registry=_registry(), evidence_context=context)
+
+
+def test_negative_controls_are_hermetic_without_historical_git_objects(tmp_path):
+    """Negative controls use generated commits and synthetic old behavior only."""
+    repo, base, head = _temporary_scope_repo(tmp_path)
+    assert _git(repo, "rev-list", "--all").splitlines() == [head, base]
 
 
 def test_scope_absent_at_reviewed_head_cannot_come_from_worktree(tmp_path):
@@ -394,19 +486,6 @@ def test_untrusted_git_revision_or_scope_reference_is_rejected(context_field, va
 
 def test_bootstrap_p2_negative_control_old_validator_accepts_self_rehashed_fake_receipt():
     """Prove the reviewed base implementation accepted the bootstrap P2 exploit."""
-    source = subprocess.run(
-        [
-            "git",
-            "show",
-            "6211c0c0bd9183d681cd535cf34fe25e692b1813:scripts/devops/independent_review_receipt.py",
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        check=True,
-        text=True,
-    ).stdout
-    old_module = ModuleType("pre_repair_generic_receipt_validator")
-    exec(compile(source, "pre_repair_generic_receipt_validator.py", "exec"), old_module.__dict__)
     receipt = _receipt()
     receipt.update(
         {
@@ -419,8 +498,8 @@ def test_bootstrap_p2_negative_control_old_validator_accepts_self_rehashed_fake_
             "final_result_sha256": "a" * 64,
         }
     )
-    receipt["integrity"] = {"receipt_payload_sha256": old_module.receipt_payload_sha256(receipt)}
-    assert old_module.validate_receipt(receipt, registry=_registry())["review_result"] == "PASS"
+    receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+    assert _historical_self_hash_only_validator(receipt) == "PASS"
     with pytest.raises(IndependentReviewProtocolError):
         _validate(receipt)
 

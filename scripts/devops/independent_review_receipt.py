@@ -16,6 +16,11 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from scripts.devops.codex_review_contract import (
+    REVIEW_REASONING_EFFORT_PINNED,
+    reviewer_selectors_from_command,
+)
+from scripts.devops.codex_review_provenance import ReviewReceiptError
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     RECEIPT_VERSION,
@@ -37,6 +42,22 @@ from scripts.ops.helpers.agent_workflow_scope_context import (
 ROOT = Path(__file__).resolve().parents[2]
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "agentic" / "independent_review_receipt.schema.json"
 _MISSION_ID_RE = __import__("re").compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+_CODEX_EXEC_MINIMUM_ARGV_LENGTH = 2
+
+
+@dataclass(frozen=True)
+class CodexExecutionEvidence:
+    """Trusted execution facts captured by the Codex review harness.
+
+    These values deliberately do not come from the receipt. The generic
+    receipt can claim provenance, but a caller must supply the facts observed
+    while invoking the backend before that claim can be accepted.
+    """
+
+    reviewer_command: tuple[str, ...]
+    resolved_model: str
+    codex_cli_version: str
+    codex_binary_sha256: str
 
 
 @dataclass(frozen=True)
@@ -50,6 +71,7 @@ class ReceiptEvidenceContext:
     prompt_bytes: bytes
     raw_output_bytes: bytes
     final_result_bytes: bytes
+    codex_execution: CodexExecutionEvidence | None = None
 
 
 SECRET_FIELD_TOKENS = (
@@ -267,10 +289,21 @@ def validate_backend_registry(registry: object) -> dict[str, dict[str, Any]]:
         if (
             not isinstance(entry["allowed_requested_models"], list)
             or not entry["allowed_requested_models"]
+            or not all(
+                isinstance(model, str) and model for model in entry["allowed_requested_models"]
+            )
+            or len(set(entry["allowed_requested_models"])) != len(entry["allowed_requested_models"])
         ):
             raise IndependentReviewProtocolError("backend allowed models are required")
-        if entry["no_silent_fallback"] is not True or not isinstance(
-            entry["required_provenance_fields"], list
+        if (
+            entry["no_silent_fallback"] is not True
+            or not isinstance(entry["required_provenance_fields"], list)
+            or not entry["required_provenance_fields"]
+            or not all(
+                isinstance(field, str) and field for field in entry["required_provenance_fields"]
+            )
+            or len(set(entry["required_provenance_fields"]))
+            != len(entry["required_provenance_fields"])
         ):
             raise IndependentReviewProtocolError("backend provenance/fallback policy is invalid")
         indexed[backend] = entry
@@ -283,6 +316,83 @@ def load_backend_registry(path: Path) -> dict[str, dict[str, Any]]:
         return validate_backend_registry(json.loads(path.read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError) as exc:
         raise IndependentReviewProtocolError(f"cannot load backend registry: {exc}") from exc
+
+
+def _validate_codex_provenance(  # noqa: C901, PLR0912
+    receipt: dict[str, Any], backend: dict[str, Any], context: ReceiptEvidenceContext
+) -> None:
+    """Bind Codex receipt claims to harness-observed execution facts.
+
+    ``no_silent_fallback`` is meaningful only when the resolved model is an
+    externally supplied fact. Comparing receipt fields with one another would
+    merely make a self-consistent forgery.
+    """
+    if backend["backend_id"] != "codex-cli":
+        return
+    execution = context.codex_execution
+    if execution is None:
+        raise IndependentReviewProtocolError("trusted Codex execution evidence is required")
+    if (
+        not isinstance(execution.reviewer_command, tuple)
+        or not execution.reviewer_command
+        or not all(isinstance(part, str) and part for part in execution.reviewer_command)
+        or not isinstance(execution.resolved_model, str)
+        or not execution.resolved_model
+        or not isinstance(execution.codex_cli_version, str)
+        or not execution.codex_cli_version.strip()
+    ):
+        raise IndependentReviewProtocolError("trusted Codex execution evidence is malformed")
+    trusted_binary_sha = validate_sha(
+        execution.codex_binary_sha256, name="trusted codex binary sha", length=64
+    )
+    provenance = receipt["provenance"]
+    if receipt["resolved_model"] != execution.resolved_model:
+        raise IndependentReviewProtocolError(
+            "receipt resolved model does not match trusted evidence"
+        )
+    if receipt["resolved_model"] != receipt["requested_model"]:
+        raise IndependentReviewProtocolError("receipt resolved model is an unapproved fallback")
+    command = provenance.get("reviewer_command")
+    if not isinstance(command, list) or not all(isinstance(part, str) and part for part in command):
+        raise IndependentReviewProtocolError("receipt reviewer command is invalid")
+    if tuple(command) != execution.reviewer_command:
+        raise IndependentReviewProtocolError(
+            "receipt reviewer command does not match trusted evidence"
+        )
+    if (
+        len(command) < _CODEX_EXEC_MINIMUM_ARGV_LENGTH
+        or command[1] != "exec"
+        or command.count("-m") != 1
+        or command.count("-c") != 1
+        or command.count("--sandbox") != 1
+        or "--ignore-user-config" not in command
+        or "--ephemeral" not in command
+        or "--sandbox" not in command
+        or command[command.index("--sandbox") + 1 : command.index("--sandbox") + 2] != ["read-only"]
+    ):
+        raise IndependentReviewProtocolError(
+            "receipt reviewer command is not canonical isolated Codex"
+        )
+    if provenance.get("command_sha256") != sha256_bytes(canonical_json(command)):
+        raise IndependentReviewProtocolError("receipt command hash does not match reviewer command")
+    if provenance.get("codex_binary_sha256", "").lower() != trusted_binary_sha:
+        raise IndependentReviewProtocolError("receipt binary hash does not match trusted evidence")
+    if provenance.get("codex_cli_version") != execution.codex_cli_version:
+        raise IndependentReviewProtocolError("receipt CLI version does not match trusted evidence")
+    try:
+        command_model, command_effort = reviewer_selectors_from_command(command)
+    except ReviewReceiptError as exc:
+        raise IndependentReviewProtocolError(
+            "receipt reviewer command lacks pinned selectors"
+        ) from exc
+    if command_model != receipt["requested_model"] or command_model != receipt["resolved_model"]:
+        raise IndependentReviewProtocolError(
+            "receipt reviewer command model does not match receipt"
+        )
+    if command_effort != REVIEW_REASONING_EFFORT_PINNED:
+        raise IndependentReviewProtocolError(
+            "receipt reviewer command reasoning effort is not approved"
+        )
 
 
 def validate_receipt(  # noqa: C901, PLR0912
@@ -323,7 +433,9 @@ def validate_receipt(  # noqa: C901, PLR0912
         "provenance",
         "integrity",
     }
-    if set(receipt) - (required | {"resolved_model"}) or not required.issubset(receipt):
+    if set(receipt) - (required | {"resolved_model"}) or not (
+        required | {"resolved_model"}
+    ).issubset(receipt):
         raise IndependentReviewProtocolError("receipt fields are invalid")
     if (
         receipt["protocol_version"] != PROTOCOL_VERSION
@@ -384,6 +496,7 @@ def validate_receipt(  # noqa: C901, PLR0912
         backend["required_provenance_fields"]
     ).issubset(receipt["provenance"]):
         raise IndependentReviewProtocolError("receipt required backend provenance is missing")
+    _validate_codex_provenance(receipt, backend, evidence_context)
     _validate_external_bindings(receipt, evidence_context)
     integrity = receipt["integrity"]
     if not isinstance(integrity, dict) or integrity.get(
