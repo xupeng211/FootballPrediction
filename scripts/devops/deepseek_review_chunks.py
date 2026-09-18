@@ -1,5 +1,8 @@
 """Deterministic canonical-diff chunk planning and fail-closed aggregation."""
 
+# Lifecycle: permanent
+# Owner: engineering workflow governance
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
