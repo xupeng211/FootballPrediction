@@ -62,7 +62,11 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
         ) != receipt_payload_sha256(value):
             raise ValueError("receipt integrity")
         result = validate_result(
-            {"review_result": value.get("review_result"), "findings": value.get("findings")}
+            {
+                "protocol_version": value.get("protocol_version"),
+                "review_result": value.get("review_result"),
+                "findings": value.get("findings"),
+            }
         )
         if value.get("finding_counts_by_severity") != result["finding_counts_by_severity"]:
             raise ValueError("finding counts")
@@ -85,7 +89,13 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             raise ValueError("diff binding")
         provenance = value.get("provenance")
         if not isinstance(provenance, dict) or any(
-            not isinstance(provenance.get(field), str) or not provenance[field]
+            (
+                not isinstance(provenance.get(field), list)
+                or not provenance[field]
+                or not all(isinstance(part, str) for part in provenance[field])
+            )
+            if field == "reviewer_command"
+            else (not isinstance(provenance.get(field), str) or not provenance[field])
             for field in backend["required_provenance_fields"]
         ):
             raise ValueError("provenance")

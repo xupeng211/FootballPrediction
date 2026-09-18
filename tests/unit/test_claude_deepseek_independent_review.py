@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.devops import claude_deepseek_independent_review as runner
+from scripts.devops import deepseek_receipt_evidence as consumer
 
 
 def test_runner_rejects_non_current_head_before_creating_external_evidence(tmp_path: Path):
@@ -149,3 +150,85 @@ def test_canonical_prompt_bytes_encodes_text_once():
         )
         == "CLI_RUNTIME_FAILURE"
     )
+
+
+def test_chunked_consumer_accepts_command_with_canonical_empty_tools_argument(
+    monkeypatch, tmp_path: Path
+):
+    """Chunked receipts retain the required empty value after ``--tools``."""
+
+    receipt = {
+        "protocol_version": "INDEPENDENT_REVIEW_PROTOCOL_V1",
+        "review_backend": "claude-code-deepseek",
+        "requested_model": "deepseek-flash",
+        "resolved_model": "deepseek-flash",
+        "base_sha": "a" * 40,
+        "head_sha": "b" * 40,
+        "diff_sha256": "d" * 64,
+        "mission_id": "MISSION",
+        "mission_scope_sha256": "c" * 64,
+        "review_run_id": "run",
+        "review_result": "PASS",
+        "findings": [],
+        "finding_counts_by_severity": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+        "integrity": {"receipt_payload_sha256": "ok"},
+        "provenance": {
+            "chunked_review": True,
+            "reviewer_command": ["claude", "--tools", ""],
+            "command_sha256": "d" * 64,
+            "claude_cli_version": "2.1.276",
+            "claude_binary_sha256": "e" * 64,
+            "settings_sha256": "f" * 64,
+            "provider_endpoint": "https://api.deepseek.com/anthropic",
+            "session_id": "session",
+        },
+    }
+    path = tmp_path / "receipt.json"
+    path.write_text(__import__("json").dumps(receipt), encoding="utf-8")
+    registry = {
+        "claude-code-deepseek": {
+            "status": "active",
+            "allowed_requested_models": ["deepseek-flash"],
+            "required_provenance_fields": list(receipt["provenance"].keys())[1:],
+        }
+    }
+    monkeypatch.setattr(consumer, "load_backend_registry", lambda _path: registry)
+    monkeypatch.setattr(consumer, "receipt_payload_sha256", lambda _value: "ok")
+    monkeypatch.setattr(
+        consumer,
+        "validate_result",
+        lambda _value: {
+            "review_result": "PASS",
+            "findings": [],
+            "finding_counts_by_severity": receipt["finding_counts_by_severity"],
+        },
+    )
+    monkeypatch.setattr(consumer, "sha256_bytes", lambda _value: "d" * 64)
+    monkeypatch.setattr(consumer, "validate_receipt", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        consumer.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(stdout=b"diff")
+    )
+    top = {"chunks": [], "manifest": {"chunks": []}}
+    raw = tmp_path / "claude-deepseek-raw-bbbbbbbbbbbb-run.json"
+    final = tmp_path / "claude-deepseek-final-bbbbbbbbbbbb-run.json"
+    raw.write_text(__import__("json").dumps(top), encoding="utf-8")
+    final.write_bytes(
+        consumer.canonical_json(
+            {
+                "protocol_version": "INDEPENDENT_REVIEW_PROTOCOL_V1",
+                "review_result": "PASS",
+                "findings": [],
+            }
+        )
+    )
+    receipt["raw_output_sha256"] = receipt["final_result_sha256"] = "d" * 64
+    path.write_text(__import__("json").dumps(receipt), encoding="utf-8")
+    result = consumer._deepseek_receipt_evidence(
+        path,
+        repo_root=tmp_path,
+        expected_base="a" * 40,
+        expected_head="b" * 40,
+        expected_mission_id="MISSION",
+        expected_scope_hash="c" * 64,
+    )
+    assert result.trusted is True
