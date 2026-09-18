@@ -1,0 +1,24 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND",
+  "task_type": "workflow-governance",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "docs/agentic/independent_review_backends.json",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND.json",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_receipt.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_claude_deepseek_receipt_isolation.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "tests/unit/test_independent_review_protocol.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "docker/", "scripts/ops/", "src/", "tests/integration/"],
+  "excluded_tokens": ["stage_d", "theoddsapi", "bookmaker", "migration", "model-activation"],
+  "protected_invariants": ["Codex legacy review validation remains unchanged.", "DeepSeek secret material is never tracked or recorded in receipts."],
+  "forbidden_side_effects": ["No Stage D, bookmaker, production database, or provider traffic except bounded DeepSeek reviewer probes."]
+}

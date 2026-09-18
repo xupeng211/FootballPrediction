@@ -50,6 +50,12 @@ RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "agentic" / "independent_review_receipt
 _MISSION_ID_RE = __import__("re").compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 _CODEX_THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
 _CODEX_EXEC_MINIMUM_ARGV_LENGTH = 2
+_CLAUDE_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/anthropic"
+_CLAUDE_DEEPSEEK_MODEL = "deepseek-flash"
+_CLAUDE_MINIMUM_VERSION = (2, 1, 276)
+_CLAUDE_RESTRICTED_TOOLS = frozenset(
+    {"Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch"}
+)
 
 
 @dataclass(frozen=True)
@@ -69,6 +75,19 @@ class CodexExecutionEvidence:
 
 
 @dataclass(frozen=True)
+class ClaudeDeepSeekExecutionEvidence:
+    """Harness-observed facts for one isolated Claude/DeepSeek turn."""
+
+    reviewer_command: tuple[str, ...]
+    resolved_model: str
+    claude_cli_version: str
+    claude_binary_sha256: str
+    settings_sha256: str
+    provider_endpoint: str
+    session_id: str
+
+
+@dataclass(frozen=True)
 class ReceiptEvidenceContext:
     """Harness-owned immutable facts required to validate a generic receipt."""
 
@@ -80,6 +99,7 @@ class ReceiptEvidenceContext:
     raw_output_bytes: bytes
     final_result_bytes: bytes
     codex_execution: CodexExecutionEvidence | None = None
+    claude_deepseek_execution: ClaudeDeepSeekExecutionEvidence | None = None
 
 
 SECRET_FIELD_TOKENS = (
@@ -446,6 +466,104 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912, PLR0915
         raise IndependentReviewProtocolError("raw output completion evidence is invalid") from exc
 
 
+def _validate_claude_deepseek_provenance(  # noqa: C901
+    receipt: dict[str, Any], backend: dict[str, Any], context: ReceiptEvidenceContext
+) -> None:
+    if backend["backend_id"] != "claude-code-deepseek":
+        return
+    execution = context.claude_deepseek_execution
+    if execution is None:
+        raise IndependentReviewProtocolError(
+            "trusted Claude/DeepSeek execution evidence is required"
+        )
+    endpoint = _CLAUDE_DEEPSEEK_ENDPOINT
+    values = (
+        execution.reviewer_command,
+        execution.resolved_model,
+        execution.claude_cli_version,
+        execution.settings_sha256,
+        execution.provider_endpoint,
+        execution.session_id,
+    )
+    if (
+        not execution.reviewer_command
+        or not all(isinstance(value, str) and value for value in values[1:])
+        or execution.provider_endpoint != endpoint
+    ):
+        raise IndependentReviewProtocolError(
+            "trusted Claude/DeepSeek execution evidence is malformed"
+        )
+    version = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", execution.claude_cli_version)
+    if not version or tuple(map(int, version.groups())) < _CLAUDE_MINIMUM_VERSION:
+        raise IndependentReviewProtocolError(
+            "trusted Claude CLI version is below the approved baseline"
+        )
+    provenance = receipt["provenance"]
+    expected = {
+        "reviewer_command": list(execution.reviewer_command),
+        "claude_cli_version": execution.claude_cli_version,
+        "claude_binary_sha256": execution.claude_binary_sha256,
+        "settings_sha256": execution.settings_sha256,
+        "provider_endpoint": endpoint,
+        "session_id": execution.session_id,
+    }
+    if any(provenance.get(key) != value for key, value in expected.items()):
+        raise IndependentReviewProtocolError(
+            "receipt Claude/DeepSeek provenance does not match trusted evidence"
+        )
+    if provenance.get("command_sha256") != sha256_bytes(
+        canonical_json(expected["reviewer_command"])
+    ):
+        raise IndependentReviewProtocolError("receipt Claude/DeepSeek command hash does not match")
+    command = list(execution.reviewer_command)
+    if (
+        "--bare" not in command
+        or "--print" not in command
+        or command.count("--model") != 1
+        or command[command.index("--model") + 1 : command.index("--model") + 2]
+        != [_CLAUDE_DEEPSEEK_MODEL]
+        or command.count("--settings") != 1
+        or not command[command.index("--settings") + 1 : command.index("--settings") + 2]
+        or "--strict-mcp-config" not in command
+        or "--restricted" not in command
+        or command.count("--tools") != 1
+        or command[command.index("--tools") + 1 : command.index("--tools") + 2] != [""]
+        or command.count("--disallowed-tools") != 1
+        or not _CLAUDE_RESTRICTED_TOOLS.issubset(
+            set(command[command.index("--disallowed-tools") + 1].split(","))
+        )
+        or command.count("--output-format") != 1
+        or command[command.index("--output-format") + 1 : command.index("--output-format") + 2]
+        != ["json"]
+        or command.count("--json-schema") != 1
+        or not command[command.index("--json-schema") + 1 : command.index("--json-schema") + 2]
+        or any(part in {"--resume", "--continue"} for part in command)
+    ):
+        raise IndependentReviewProtocolError(
+            "receipt Claude command is not canonical isolated DeepSeek"
+        )
+    if (
+        receipt["requested_model"] != _CLAUDE_DEEPSEEK_MODEL
+        or receipt["resolved_model"] != receipt["requested_model"]
+        or execution.resolved_model != receipt["requested_model"]
+    ):
+        raise IndependentReviewProtocolError(
+            "receipt Claude/DeepSeek model is an unapproved fallback"
+        )
+    for digest in (execution.claude_binary_sha256, execution.settings_sha256):
+        validate_sha(digest, name="trusted Claude provenance digest", length=64)
+    try:
+        event = json.loads(context.raw_output_bytes)
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise IndependentReviewProtocolError("raw Claude output is not one JSON result") from exc
+    if (
+        event.get("is_error") is not False
+        or event.get("session_id") != execution.session_id
+        or event.get("structured_output") != json.loads(context.final_result_bytes)
+    ):
+        raise IndependentReviewProtocolError("raw Claude completion evidence is invalid")
+
+
 def validate_receipt(  # noqa: C901, PLR0912
     receipt: object,
     *,
@@ -548,6 +666,7 @@ def validate_receipt(  # noqa: C901, PLR0912
     ).issubset(receipt["provenance"]):
         raise IndependentReviewProtocolError("receipt required backend provenance is missing")
     _validate_codex_provenance(receipt, backend, evidence_context)
+    _validate_claude_deepseek_provenance(receipt, backend, evidence_context)
     _validate_external_bindings(receipt, evidence_context)
     integrity = receipt["integrity"]
     if not isinstance(integrity, dict) or integrity.get(
