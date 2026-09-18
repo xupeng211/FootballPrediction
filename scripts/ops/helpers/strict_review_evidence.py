@@ -343,16 +343,19 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
                 + ")."
             ]
         return []
+    critical_reasons = _critical_classification_reasons(changed_paths, task_type)
+    if workflow_class == WORKFLOW_CLASS_STRICT and critical_reasons:
+        return [
+            "CRITICAL_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
+            "CRITICAL dual-review evidence; STRICT cannot downgrade ("
+            + "; ".join(critical_reasons)
+            + ")."
+        ]
     if workflow_class not in {WORKFLOW_CLASS_STRICT, WORKFLOW_CLASS_CRITICAL}:
         return [
             "STRICT_REVIEW_CLASSIFICATION_INVALID: Scope must declare "
             "Workflow class as NORMAL, STRICT, or CRITICAL."
         ]
-
-    # The legacy PR-body evidence is retained for compatibility.  The actual
-    # backend requirement is enforced by the canonical policy evaluator.
-    if workflow_class == WORKFLOW_CLASS_CRITICAL:
-        return []
 
     evidence_sections = _section_matches(pr_body, EVIDENCE_HEADING)
     if not evidence_sections:
@@ -384,10 +387,17 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
             values[key] = field_values[0].upper() if key == "result" else field_values[0]
     if values["version"] != "1":
         errors.append("STRICT_REVIEW_INVALID: evidence Version must be 1.")
-    if values["task_type"].upper() != WORKFLOW_CLASS_STRICT:
-        errors.append("STRICT_REVIEW_INVALID: evidence Task type must be STRICT.")
+    if values["task_type"].upper() != workflow_class:
+        errors.append(f"STRICT_REVIEW_INVALID: evidence Task type must be {workflow_class}.")
     if not values["provider"] or len(values["provider"]) > MAX_PROVIDER_LENGTH:
         errors.append("STRICT_REVIEW_INVALID: evidence Provider is required.")
+    if workflow_class == WORKFLOW_CLASS_CRITICAL and not {
+        "codex-cli",
+        "claude-code-deepseek",
+    }.issubset({part.strip() for part in values["provider"].split(",")}):
+        errors.append(
+            "CRITICAL_REVIEW_MISSING: evidence Provider must name codex-cli and claude-code-deepseek."
+        )
     accepted_results = ACCEPTED_RESULTS | ({PENDING_RESULT} if allow_pending else set())
     if values["result"] not in accepted_results:
         allowed = "PASS or FINDINGS_RESOLVED"

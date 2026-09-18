@@ -9,6 +9,8 @@ owner: engineering workflow governance
 和 protected-invariant evidence。它绝不执行 merge、push、commit 或清理。
 """
 
+# ruff: noqa: I001, TRY301
+
 from __future__ import annotations
 
 import argparse
@@ -47,7 +49,6 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     validate_mission_scope_reference,
 )
 from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
-from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 from scripts.devops.review_policy import (  # noqa: E402
     BACKEND_CODEX,
     BACKEND_DEEPSEEK,
@@ -55,6 +56,7 @@ from scripts.devops.review_policy import (  # noqa: E402
     ReviewEvidence,
     evaluate_review_policy,
 )
+from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -89,7 +91,7 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _deepseek_receipt_evidence(
+def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
     path: Path,
     *,
     repo_root: Path,
@@ -123,9 +125,10 @@ def _deepseek_receipt_evidence(
             or value.get("requested_model") not in backend["allowed_requested_models"]
         ):
             raise ValueError("backend registry")
-        if value.get("integrity", {}).get("receipt_payload_sha256") != receipt_payload_sha256(
-            value
-        ):
+        integrity = value.get("integrity")
+        if not isinstance(integrity, dict) or integrity.get(
+            "receipt_payload_sha256"
+        ) != receipt_payload_sha256(value):
             raise ValueError("receipt integrity")
         result = validate_result(
             {"review_result": value.get("review_result"), "findings": value.get("findings")}

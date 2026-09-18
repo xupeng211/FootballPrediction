@@ -19,7 +19,7 @@ def _body(
     task_type: str = "workflow-governance",
 ) -> str:
     evidence = ""
-    if workflow_class == "STRICT" and reviewed_sha is not None:
+    if workflow_class in {"STRICT", "CRITICAL"} and reviewed_sha is not None:
         evidence = f"""
 
 ## Strict Review Evidence
@@ -27,8 +27,8 @@ def _body(
 | Field | Value |
 | --- | --- |
 | Version | 1 |
-| Task type | STRICT |
-| Provider | local-codex-review |
+| Task type | {workflow_class} |
+| Provider | {"codex-cli, claude-code-deepseek" if workflow_class == "CRITICAL" else "local-codex-review"} |
 | Reviewed full SHA | {reviewed_sha} |
 | Result | PASS |
 | Timestamp | 2026-08-21T12:00:00Z |
@@ -103,25 +103,23 @@ def test_strict_valid_current_full_sha_passes():
     assert validate_strict_review_evidence(_body("STRICT"), CURRENT_SHA) == []
 
 
-def test_critical_is_first_class_without_reinterpreting_existing_strict_missions():
+def test_critical_is_first_class_and_strict_cannot_downgrade_governance():
     assert (
         validate_strict_review_evidence(
-            _body("CRITICAL", reviewed_sha=None, task_type="workflow-governance"),
+            _body("CRITICAL", task_type="workflow-governance"),
             CURRENT_SHA,
             changed_paths=["scripts/devops/agent_workflow.py"],
             task_type="workflow-governance",
         )
         == []
     )
-    assert (
-        validate_strict_review_evidence(
-            _body("STRICT", task_type="workflow-governance"),
-            CURRENT_SHA,
-            changed_paths=["scripts/devops/agent_workflow.py"],
-            task_type="workflow-governance",
-        )
-        == []
+    errors = validate_strict_review_evidence(
+        _body("STRICT", task_type="workflow-governance"),
+        CURRENT_SHA,
+        changed_paths=["scripts/devops/agent_workflow.py"],
+        task_type="workflow-governance",
     )
+    assert any("CRITICAL_REVIEW_CLASSIFICATION_REQUIRED" in error for error in errors)
 
 
 def test_strict_without_evidence_fails_closed():
