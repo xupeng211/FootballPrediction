@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 from pathlib import Path
+import re
 import subprocess
 from typing import Any
 
@@ -19,6 +20,11 @@ from jsonschema import Draft202012Validator, FormatChecker
 from scripts.devops.codex_review_contract import (
     REVIEW_REASONING_EFFORT_PINNED,
     reviewer_selectors_from_command,
+)
+from scripts.devops.codex_review_output import (
+    assert_successful_completion,
+    parse_json_lines,
+    reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
 from scripts.devops.independent_review_protocol import (
@@ -42,6 +48,7 @@ from scripts.ops.helpers.agent_workflow_scope_context import (
 ROOT = Path(__file__).resolve().parents[2]
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "agentic" / "independent_review_receipt.schema.json"
 _MISSION_ID_RE = __import__("re").compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+_CODEX_THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
 _CODEX_EXEC_MINIMUM_ARGV_LENGTH = 2
 
 
@@ -58,6 +65,7 @@ class CodexExecutionEvidence:
     resolved_model: str
     codex_cli_version: str
     codex_binary_sha256: str
+    thread_id: str
 
 
 @dataclass(frozen=True)
@@ -340,6 +348,8 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912
         or not execution.resolved_model
         or not isinstance(execution.codex_cli_version, str)
         or not execution.codex_cli_version.strip()
+        or not isinstance(execution.thread_id, str)
+        or not _CODEX_THREAD_ID_RE.fullmatch(execution.thread_id)
     ):
         raise IndependentReviewProtocolError("trusted Codex execution evidence is malformed")
     trusted_binary_sha = validate_sha(
@@ -365,6 +375,9 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912
         or command.count("-m") != 1
         or command.count("-c") != 1
         or command.count("--sandbox") != 1
+        or command.count("--json") != 1
+        or command.count("--output-schema") != 1
+        or command.count("--output-last-message") != 1
         or "--ignore-user-config" not in command
         or "--ephemeral" not in command
         or "--sandbox" not in command
@@ -393,6 +406,27 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912
         raise IndependentReviewProtocolError(
             "receipt reviewer command reasoning effort is not approved"
         )
+    for flag in ("--output-schema", "--output-last-message"):
+        flag_index = command.index(flag)
+        if not command[flag_index + 1 : flag_index + 2] or not command[flag_index + 1]:
+            raise IndependentReviewProtocolError(
+                "receipt reviewer command output evidence is incomplete"
+            )
+    try:
+        final_text = context.final_result_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise IndependentReviewProtocolError("trusted final result is not UTF-8") from exc
+    if not final_text.endswith("\n"):
+        raise IndependentReviewProtocolError("trusted final result is not canonical JSON bytes")
+    try:
+        events = parse_json_lines(context.raw_output_bytes)
+        if reviewer_invocation_id(events, _CODEX_THREAD_ID_RE) != execution.thread_id:
+            raise IndependentReviewProtocolError(
+                "raw output thread does not match trusted execution"
+            )
+        assert_successful_completion(events, final_text[:-1])
+    except ReviewReceiptError as exc:
+        raise IndependentReviewProtocolError("raw output completion evidence is invalid") from exc
 
 
 def validate_receipt(  # noqa: C901, PLR0912

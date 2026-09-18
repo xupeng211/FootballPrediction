@@ -28,8 +28,8 @@ SCOPE_PATH = (
     "docs/agentic/missions/GENERIC_INDEPENDENT_REVIEW_FOUNDATION_BOOTSTRAP_ACCEPTANCE_REPAIR.json"
 )
 PROMPT_BYTES = b"generic protocol review prompt\n"
-RAW_OUTPUT_BYTES = b'{"type":"agent_message"}\n'
 SHA64 = "b" * 64
+THREAD_ID = "trusted-codex-thread"
 REVIEWER_COMMAND = (
     "/trusted/codex",
     "exec",
@@ -41,6 +41,11 @@ REVIEWER_COMMAND = (
     "gpt-5.6-terra",
     "-c",
     'model_reasoning_effort="medium"',
+    "--json",
+    "--output-schema",
+    "/trusted/review-result-schema.json",
+    "--output-last-message",
+    "/trusted/final-result.json",
 )
 CODEX_BINARY_SHA = "c" * 64
 
@@ -51,6 +56,22 @@ def _result(verdict: str = "PASS", findings: list[dict] | None = None) -> dict:
         "review_result": verdict,
         "findings": findings or [],
     }
+
+
+def _raw_output(final_result_bytes: bytes, thread_id: str = THREAD_ID) -> bytes:
+    final_text = final_result_bytes.decode("utf-8")[:-1]
+    events = (
+        {"type": "thread.started", "thread_id": thread_id},
+        {"type": "turn.started"},
+        {
+            "type": "item.completed",
+            "item": {"type": "agent_message", "text": final_text},
+        },
+        {"type": "turn.completed"},
+    )
+    return b"".join(
+        json.dumps(event, separators=(",", ":")).encode("utf-8") + b"\n" for event in events
+    )
 
 
 def _registry() -> dict:
@@ -110,7 +131,7 @@ def _receipt() -> dict:
         ).stdout
     )
     value["review_prompt_sha256"] = receipts.sha256_bytes(PROMPT_BYTES)
-    value["raw_output_sha256"] = receipts.sha256_bytes(RAW_OUTPUT_BYTES)
+    value["raw_output_sha256"] = receipts.sha256_bytes(context.raw_output_bytes)
     value["final_result_sha256"] = receipts.sha256_bytes(context.final_result_bytes)
     value["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(value)}
     return value
@@ -130,13 +151,14 @@ def _context(receipt: dict) -> receipts.ReceiptEvidenceContext:
         head_sha=HEAD_SHA,
         mission_scope_path=SCOPE_PATH,
         prompt_bytes=PROMPT_BYTES,
-        raw_output_bytes=RAW_OUTPUT_BYTES,
+        raw_output_bytes=_raw_output(final),
         final_result_bytes=final,
         codex_execution=receipts.CodexExecutionEvidence(
             reviewer_command=REVIEWER_COMMAND,
             resolved_model="gpt-5.6-terra",
             codex_cli_version="0.1.0",
             codex_binary_sha256=CODEX_BINARY_SHA,
+            thread_id=THREAD_ID,
         ),
     )
 
@@ -228,13 +250,14 @@ def _temporary_receipt_context(
         head_sha=head,
         mission_scope_path=SCOPE_PATH,
         prompt_bytes=PROMPT_BYTES,
-        raw_output_bytes=RAW_OUTPUT_BYTES,
+        raw_output_bytes=_raw_output(final_bytes),
         final_result_bytes=final_bytes,
         codex_execution=receipts.CodexExecutionEvidence(
             reviewer_command=REVIEWER_COMMAND,
             resolved_model="gpt-5.6-terra",
             codex_cli_version="0.1.0",
             codex_binary_sha256=CODEX_BINARY_SHA,
+            thread_id=THREAD_ID,
         ),
     )
     receipt.update(
@@ -244,7 +267,7 @@ def _temporary_receipt_context(
             "diff_sha256": receipts._actual_diff_sha256(context),
             "mission_scope_sha256": receipts.sha256_bytes(scope_bytes),
             "review_prompt_sha256": receipts.sha256_bytes(PROMPT_BYTES),
-            "raw_output_sha256": receipts.sha256_bytes(RAW_OUTPUT_BYTES),
+            "raw_output_sha256": receipts.sha256_bytes(context.raw_output_bytes),
             "final_result_sha256": receipts.sha256_bytes(final_bytes),
             "isolation": {**receipt["isolation"], "worktree_head_sha": head},
         }
@@ -392,6 +415,38 @@ def test_trusted_resolved_model_mismatch_is_rejected_even_when_receipt_rehashed(
     with pytest.raises(IndependentReviewProtocolError):
         receipts.validate_receipt(
             receipt, registry=_registry(), evidence_context=mismatched_context
+        )
+
+
+def test_raw_output_must_bind_one_successful_completed_final_message():
+    receipt = _receipt()
+    context = _context(receipt)
+    forged_raw = b'{"type":"thread.started","thread_id":"trusted-codex-thread"}\n'
+    forged_receipt = dict(receipt)
+    forged_receipt["raw_output_sha256"] = receipts.sha256_bytes(forged_raw)
+    _rehash(forged_receipt)
+    forged_context = receipts.ReceiptEvidenceContext(
+        **{**context.__dict__, "raw_output_bytes": forged_raw}
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(
+            forged_receipt, registry=_registry(), evidence_context=forged_context
+        )
+
+
+def test_raw_output_thread_must_match_trusted_execution_evidence():
+    receipt = _receipt()
+    context = _context(receipt)
+    forged_raw = _raw_output(context.final_result_bytes, thread_id="wrong-codex-thread")
+    forged_receipt = dict(receipt)
+    forged_receipt["raw_output_sha256"] = receipts.sha256_bytes(forged_raw)
+    _rehash(forged_receipt)
+    forged_context = receipts.ReceiptEvidenceContext(
+        **{**context.__dict__, "raw_output_bytes": forged_raw}
+    )
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(
+            forged_receipt, registry=_registry(), evidence_context=forged_context
         )
 
 
