@@ -120,3 +120,18 @@ def test_runner_cleanup_failure_removes_receipt_and_returns_controlled_error(
     with pytest.raises(runner.DeepSeekReviewError, match="worktree cleanup failed"):
         runner.run_review(args)
     assert not (args.evidence_dir / "claude-deepseek-receipt-current.json").exists()
+
+
+def test_backend_failure_exposes_only_allowlisted_classification():
+    assert (
+        runner._safe_backend_failure_code(
+            runner.backend.BackendInfrastructureError("AUTH_FAILURE: private detail")
+        )
+        == "AUTH_FAILURE"
+    )
+    assert (
+        runner._safe_backend_failure_code(
+            runner.backend.BackendInfrastructureError("unexpected sensitive detail")
+        )
+        == "CLI_RUNTIME_FAILURE"
+    )

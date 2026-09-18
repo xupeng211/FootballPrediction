@@ -44,6 +44,25 @@ class DeepSeekReviewError(RuntimeError):
     """The DeepSeek review cannot establish a trustworthy verdict."""
 
 
+_SAFE_BACKEND_FAILURE_CODES = frozenset(
+    {
+        "AUTH_FAILURE",
+        "CLI_RUNTIME_FAILURE",
+        "CLI_RUNTIME_TIMEOUT",
+        "INVALID_STRUCTURED_OUTPUT",
+        "MODEL_MISMATCH",
+        "SECRET_LEAKAGE_DETECTED",
+    }
+)
+
+
+def _safe_backend_failure_code(error: backend.BackendInfrastructureError) -> str:
+    """Expose only a stable non-secret infrastructure classification."""
+
+    code = str(error).split(":", 1)[0]
+    return code if code in _SAFE_BACKEND_FAILURE_CODES else "CLI_RUNTIME_FAILURE"
+
+
 def _git(root: Path, *args: str, text: bool = True) -> str | bytes:
     result = subprocess.run(["git", *args], cwd=root, capture_output=True, check=False)
     if result.returncode:
@@ -114,7 +133,9 @@ def _run_review(args: argparse.Namespace) -> Path:
     try:
         raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
     except backend.BackendInfrastructureError as exc:
-        raise DeepSeekReviewError("backend infrastructure failure; no verdict") from exc
+        raise DeepSeekReviewError(
+            f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
+        ) from exc
     completed = _now()
     normalized = validate_result(result)
     final = canonical_json(
