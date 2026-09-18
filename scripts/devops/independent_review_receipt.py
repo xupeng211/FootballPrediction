@@ -338,6 +338,7 @@ def validate_backend_registry(registry: object) -> dict[str, dict[str, Any]]:
         if (
             not isinstance(eligibility, list)
             or not eligibility
+            or not all(isinstance(value, str) for value in eligibility)
             or len(set(eligibility)) != len(eligibility)
             or not all(value in {"NORMAL", "STRICT", "CRITICAL"} for value in eligibility)
         ):

@@ -55,6 +55,8 @@ from scripts.devops.review_policy import (  # noqa: E402
     CandidateBinding,
     ReviewEvidence,
     evaluate_review_policy,
+    load_active_backend_eligibility,
+    required_backends,
 )
 from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 
@@ -203,10 +205,6 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
             True,
         )
-
-
-def _status(value: str | None) -> str:
-    return (value or "UNKNOWN").strip().upper()
 
 
 def _load_exact_mission_scope(
@@ -552,20 +550,20 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             )
     else:
         receipt = {}
-        checks.append(
-            GateCheck(
-                "independent-review",
-                "PASS",
-                "Codex receipt not required unless policy selects Codex",
-            )
+        codex_required = mission_scope is not None and BACKEND_CODEX in required_backends(
+            mission_scope.workflow_class, selected_backend=args.selected_backend
         )
-        checks.append(
-            GateCheck(
-                "review-model-provenance",
-                "PASS",
-                "Codex receipt not required unless policy selects Codex",
+        for name, required_message in (
+            ("independent-review", "Codex receipt required by policy"),
+            ("review-model-provenance", "Codex provenance required by policy"),
+        ):
+            checks.append(
+                GateCheck(
+                    name,
+                    "FAIL" if codex_required else "PASS",
+                    required_message if codex_required else "Codex receipt not required",
+                )
             )
-        )
 
     if args.deepseek_receipt and mission_scope_hash is not None:
         review_evidence.append(
@@ -579,33 +577,39 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             )
         )
     if mission_scope is not None and mission_scope_hash is not None:
-        policy = evaluate_review_policy(
-            mission_scope.workflow_class,
-            CandidateBinding(
-                base_sha,
-                expected_head,
-                __import__("hashlib")
-                .sha256(
-                    subprocess.run(
-                        [
-                            "git",
-                            "diff",
-                            "--binary",
-                            "--no-ext-diff",
-                            f"{base_sha}...{expected_head}",
-                        ],
-                        cwd=repo_root,
-                        capture_output=True,
-                        check=True,
-                    ).stdout
-                )
-                .hexdigest(),
-                args.mission_id,
-                mission_scope_hash,
-            ),
-            review_evidence,
-            selected_backend=args.selected_backend,
-        )
+        try:
+            policy = evaluate_review_policy(
+                mission_scope.workflow_class,
+                CandidateBinding(
+                    base_sha,
+                    expected_head,
+                    __import__("hashlib")
+                    .sha256(
+                        subprocess.run(
+                            [
+                                "git",
+                                "diff",
+                                "--binary",
+                                "--no-ext-diff",
+                                f"{base_sha}...{expected_head}",
+                            ],
+                            cwd=repo_root,
+                            capture_output=True,
+                            check=True,
+                        ).stdout
+                    )
+                    .hexdigest(),
+                    args.mission_id,
+                    mission_scope_hash,
+                ),
+                review_evidence,
+                selected_backend=args.selected_backend,
+                backend_eligibility=load_active_backend_eligibility(
+                    repo_root / "docs/agentic/independent_review_backends.json"
+                ),
+            )
+        except (KeyError, OSError, TypeError, ValueError):
+            policy = evaluate_review_policy("UNKNOWN", CandidateBinding("", "", "", "", ""), ())
         checks.append(
             GateCheck(
                 "review-policy",
@@ -630,8 +634,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     )
     machine_protected = "PASS" if machine_safety_pass else "UNKNOWN"
     machine_forbidden = "NO" if machine_safety_pass else "UNKNOWN"
-    declared_protected = _status(args.protected_invariants)
-    declared_forbidden = _status(args.forbidden_side_effects)
+    declared_protected = (args.protected_invariants or "UNKNOWN").strip().upper()
+    declared_forbidden = (args.forbidden_side_effects or "UNKNOWN").strip().upper()
     checks.append(
         GateCheck(
             "protected-invariants",

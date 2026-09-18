@@ -67,6 +67,26 @@ def test_strict_codex_satisfies_without_deepseek_cost():
     assert result.status == "SATISFIED"
 
 
+def test_strict_ignores_advisory_deepseek_evidence():
+    result = evaluate_review_policy(
+        "STRICT",
+        _candidate(),
+        [_receipt(BACKEND_CODEX), _receipt(BACKEND_DEEPSEEK, trusted=False)],
+    )
+    assert result.status == "SATISFIED"
+
+
+def test_required_backend_must_be_eligible_in_active_registry():
+    result = evaluate_review_policy(
+        "STRICT",
+        _candidate(),
+        [_receipt(BACKEND_CODEX)],
+        backend_eligibility={BACKEND_CODEX: frozenset({"NORMAL"})},
+    )
+    assert result.status == "INVALID"
+    assert result.reasons == ("BACKEND_NOT_ELIGIBLE",)
+
+
 def test_critical_requires_both_independent_backends():
     result = evaluate_review_policy(
         "CRITICAL", _candidate(), [_receipt(BACKEND_CODEX), _receipt(BACKEND_DEEPSEEK)]
@@ -100,6 +120,27 @@ def test_unknown_class_and_backend_confusion_fail_closed():
     assert evaluate_review_policy("UNKNOWN", _candidate(), []).status == "INVALID"
     confused = _receipt(BACKEND_CODEX, trusted=False)
     assert evaluate_review_policy("STRICT", _candidate(), [confused]).status == "INVALID"
+
+
+def test_infrastructure_failure_is_not_misreported_as_binding_tamper():
+    result = evaluate_review_policy(
+        "NORMAL",
+        _candidate(),
+        [
+            _receipt(
+                BACKEND_DEEPSEEK,
+                trusted=False,
+                infrastructure_failure=True,
+                base_sha="",
+                head_sha="",
+                diff_sha256="",
+                mission_id="",
+                mission_scope_sha256="",
+            )
+        ],
+    )
+    assert result.status == "UNSATISFIED"
+    assert result.reasons == ("REVIEW_INFRASTRUCTURE_BLOCK",)
 
 
 def test_critical_rejects_duplicate_backend_and_override():

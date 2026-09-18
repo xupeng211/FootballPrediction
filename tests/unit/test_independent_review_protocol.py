@@ -582,6 +582,10 @@ def test_registry_rejects_duplicate_and_malformed_entries():
     raw["backends"].append(dict(raw["backends"][0]))
     with pytest.raises(IndependentReviewProtocolError):
         receipts.validate_backend_registry(raw)
+    raw = json.loads((ROOT / "docs/agentic/independent_review_backends.json").read_text())
+    raw["backends"][0]["task_eligibility"] = [{}]
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_backend_registry(raw)
 
 
 def test_legacy_adapter_delegates_current_and_stale_classification(monkeypatch, tmp_path):

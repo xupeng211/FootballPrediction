@@ -13,9 +13,11 @@ receipt validators before constructing ``ReviewEvidence``.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass
 import json
-from typing import Any, Iterable
+from pathlib import Path
+from typing import Any
 
 BACKEND_CODEX = "codex-cli"
 BACKEND_DEEPSEEK = "claude-code-deepseek"
@@ -24,6 +26,10 @@ WORKFLOW_STRICT = "STRICT"
 WORKFLOW_CRITICAL = "CRITICAL"
 WORKFLOW_CLASSES = frozenset({WORKFLOW_NORMAL, WORKFLOW_STRICT, WORKFLOW_CRITICAL})
 BLOCKING_SEVERITIES = ("P0", "P1", "P2")
+DEFAULT_BACKEND_ELIGIBILITY: Mapping[str, frozenset[str]] = {
+    BACKEND_CODEX: frozenset({WORKFLOW_NORMAL, WORKFLOW_STRICT, WORKFLOW_CRITICAL}),
+    BACKEND_DEEPSEEK: frozenset({WORKFLOW_NORMAL, WORKFLOW_CRITICAL}),
+}
 
 
 @dataclass(frozen=True)
@@ -86,6 +92,17 @@ def required_backends(
     raise ValueError("UNKNOWN_WORKFLOW_CLASS")
 
 
+def load_active_backend_eligibility(path: Path) -> dict[str, frozenset[str]]:
+    """Return eligibility from the repository-controlled active registry."""
+
+    from scripts.devops.independent_review_receipt import load_backend_registry  # noqa: PLC0415
+
+    return {
+        backend_id: frozenset(value["task_eligibility"])
+        for backend_id, value in load_backend_registry(path).items()
+    }
+
+
 def _counts(value: dict[str, int]) -> tuple[int, int]:
     if set(value) != {"P0", "P1", "P2", "P3"} or any(
         isinstance(count, bool) or not isinstance(count, int) or count < 0
@@ -101,6 +118,7 @@ def evaluate_review_policy(
     available_receipts: Iterable[ReviewEvidence],
     *,
     selected_backend: str | None = None,
+    backend_eligibility: Mapping[str, frozenset[str]] | None = None,
 ) -> PolicyResult:
     """Aggregate independent validated receipts for one exact candidate.
 
@@ -113,6 +131,9 @@ def evaluate_review_policy(
         required = required_backends(workflow_class, selected_backend=selected_backend)
     except ValueError as exc:
         return PolicyResult("INVALID", (str(exc),), (), (), 0)
+    eligibility = backend_eligibility or DEFAULT_BACKEND_ELIGIBILITY
+    if any(workflow_class not in eligibility.get(backend, frozenset()) for backend in required):
+        return PolicyResult("INVALID", ("BACKEND_NOT_ELIGIBLE",), required, (), 0)
     receipts = tuple(available_receipts)
     by_backend: dict[str, ReviewEvidence] = {}
     reasons: list[str] = []
@@ -120,6 +141,11 @@ def evaluate_review_policy(
     for receipt in receipts:
         if receipt.backend_id not in {BACKEND_CODEX, BACKEND_DEEPSEEK}:
             reasons.append("BACKEND_NOT_ALLOWED")
+            continue
+        # Advisory receipts are recorded separately, but only policy-owned
+        # backends may affect merge readiness.  A DeepSeek advisory receipt
+        # cannot invalidate STRICT's required Codex approval.
+        if receipt.backend_id not in required:
             continue
         if receipt.backend_id in by_backend:
             reasons.append("DUPLICATE_BACKEND_RECEIPT")
@@ -131,6 +157,9 @@ def evaluate_review_policy(
             reasons.append(str(exc))
             continue
         p3 += receipt_p3
+        if receipt.infrastructure_failure:
+            reasons.append("REVIEW_INFRASTRUCTURE_BLOCK")
+            continue
         if not receipt.trusted:
             reasons.append("INVALID_PROVENANCE")
         if (
@@ -147,9 +176,7 @@ def evaluate_review_policy(
             candidate.mission_scope_sha256,
         ):
             reasons.append("SAME_CANDIDATE_BINDING_MISMATCH")
-        if receipt.infrastructure_failure:
-            reasons.append("REVIEW_INFRASTRUCTURE_BLOCK")
-        elif receipt.result != "PASS" or blocking:
+        if receipt.result != "PASS" or blocking:
             reasons.append("REVIEW_FINDINGS_BLOCK")
     if reasons:
         return PolicyResult(
