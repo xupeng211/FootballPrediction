@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.devops import independent_review_receipt as receipts
-from scripts.devops.independent_review_backends import codex_cli
+from scripts.devops.independent_review_backends import claude_code_deepseek, codex_cli
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     IndependentReviewProtocolError,
@@ -622,3 +622,151 @@ def test_legacy_adapter_delegates_current_and_stale_classification(monkeypatch, 
     stale = codex_cli.classify_legacy_receipt(tmp_path / "receipt.json", repo_root=tmp_path)
     assert stale["legacy_classification"] == "STALE_TOOLING"
     assert stale["current_approval_eligible"] is False
+
+
+def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext]:
+    """Build hermetic harness facts for the DeepSeek-specific validator."""
+    scope_path = "docs/agentic/missions/CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND.json"
+    result = _result()
+    final = receipts.canonical_json(result)
+    command = (
+        "/trusted/claude",
+        "--bare",
+        "--print",
+        "--model",
+        "deepseek-flash",
+        "--settings",
+        "/trusted/settings.json",
+        "--strict-mcp-config",
+        "--output-format",
+        "json",
+    )
+    raw = json.dumps(
+        {
+            "is_error": False,
+            "session_id": "deepseek-fresh-session",
+            "structured_output": result,
+            "modelUsage": {
+                "deepseek-flash": {"canonicalModel": "deepseek-flash", "provider": "firstParty"}
+            },
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    context = receipts.ReceiptEvidenceContext(
+        repo_root=ROOT,
+        base_sha=BASE_SHA,
+        head_sha=HEAD_SHA,
+        mission_scope_path=scope_path,
+        prompt_bytes=b"DeepSeek independent review prompt\n",
+        raw_output_bytes=raw,
+        final_result_bytes=final,
+        claude_deepseek_execution=receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=command,
+            resolved_model="deepseek-flash",
+            claude_cli_version="2.1.276 (Claude Code)",
+            claude_binary_sha256="d" * 64,
+            settings_sha256="e" * 64,
+            provider_endpoint=claude_code_deepseek.ENDPOINT,
+            session_id="deepseek-fresh-session",
+        ),
+    )
+    receipt = {
+        "protocol_version": PROTOCOL_VERSION,
+        "receipt_version": "independent-review-receipt/v1",
+        "review_run_id": "deepseek-run-0001",
+        "review_backend": "claude-code-deepseek",
+        "review_harness": "claude-code",
+        "provider": "deepseek",
+        "requested_model": "deepseek-flash",
+        "resolved_model": "deepseek-flash",
+        "base_sha": BASE_SHA,
+        "head_sha": HEAD_SHA,
+        "diff_sha256": receipts._actual_diff_sha256(context),
+        "mission_id": "CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND",
+        "mission_scope_path": scope_path,
+        "mission_scope_sha256": receipts.sha256_bytes(
+            subprocess.run(
+                ["git", "show", f"{HEAD_SHA}:{scope_path}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+        ),
+        "review_prompt_sha256": receipts.sha256_bytes(context.prompt_bytes),
+        "review_started_at": "2026-01-01T00:00:00+00:00",
+        "review_completed_at": "2026-01-01T00:00:01+00:00",
+        "review_result": "PASS",
+        "finding_counts_by_severity": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+        "findings": [],
+        "raw_output_sha256": receipts.sha256_bytes(raw),
+        "final_result_sha256": receipts.sha256_bytes(final),
+        "isolation": {
+            "fresh_process": True,
+            "fresh_context": True,
+            "detached_worktree": True,
+            "read_only": True,
+            "worktree_head_sha": HEAD_SHA,
+            "worktree_clean_before": True,
+            "worktree_clean_after": True,
+        },
+        "provenance": {
+            "reviewer_command": list(command),
+            "command_sha256": receipts.sha256_bytes(receipts.canonical_json(list(command))),
+            "claude_cli_version": "2.1.276 (Claude Code)",
+            "claude_binary_sha256": "d" * 64,
+            "settings_sha256": "e" * 64,
+            "provider_endpoint": claude_code_deepseek.ENDPOINT,
+            "session_id": "deepseek-fresh-session",
+        },
+    }
+    receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+    return receipt, context
+
+
+def test_claude_deepseek_receipt_binds_harness_endpoint_model_and_lifecycle():
+    receipt, context = _claude_receipt_and_context()
+    assert (
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)[
+            "review_result"
+        ]
+        == "PASS"
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("provider_endpoint", "https://api.anthropic.com"),
+        ("session_id", "reused-session"),
+        ("settings_sha256", "f" * 64),
+        ("claude_binary_sha256", "f" * 64),
+        ("requested_model", "other-model"),
+    ],
+)
+def test_claude_deepseek_rejects_tampered_provenance(field, value):
+    receipt, context = _claude_receipt_and_context()
+    if field in receipt["provenance"]:
+        receipt["provenance"][field] = value
+    else:
+        receipt[field] = value
+    receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+
+
+def test_claude_deepseek_rejects_raw_and_final_result_mismatch():
+    receipt, context = _claude_receipt_and_context()
+    values = context.__dict__.copy()
+    values["raw_output_bytes"] = json.dumps(
+        {
+            "is_error": False,
+            "session_id": "deepseek-fresh-session",
+            "structured_output": _result("FAIL"),
+        }
+    ).encode("utf-8")
+    bad_context = receipts.ReceiptEvidenceContext(**values)
+    receipt["raw_output_sha256"] = receipts.sha256_bytes(values["raw_output_bytes"])
+    receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=bad_context)

@@ -1,5 +1,6 @@
-from pathlib import Path
 import os
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -10,7 +11,8 @@ def test_child_environment_is_allowlisted_and_has_no_competing_route():
     env = backend.child_environment("synthetic-secret")
     assert env["ANTHROPIC_BASE_URL"] == backend.ENDPOINT
     assert env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
-    assert "HTTPS_PROXY" not in env and "ANTHROPIC_API_KEY" not in env
+    assert "HTTPS_PROXY" not in env
+    assert "ANTHROPIC_API_KEY" not in env
 
 
 def test_secret_source_rejects_symlink_and_unsafe_permissions(tmp_path: Path):
@@ -28,3 +30,51 @@ def test_secret_source_rejects_symlink_and_unsafe_permissions(tmp_path: Path):
 
 def test_synthetic_secret_is_not_exported_to_parent():
     assert "synthetic-secret" not in os.environ.values()
+
+
+def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    observed: dict[str, object] = {}
+
+    def fake_run(command, **kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.276 (Claude Code)\n")
+        observed.update(kwargs)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                b'{"is_error":false,"session_id":"fresh-session","structured_output":'
+                b'{"protocol_version":"INDEPENDENT_REVIEW_PROTOCOL_V1",'
+                b'"review_result":"PASS","findings":[]},"modelUsage":'
+                b'{"deepseek-flash":{"canonicalModel":"deepseek-flash"}}}'
+            ),
+        )
+
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    raw, result, evidence = backend.run(prompt="review", cwd=tmp_path)
+    child_env = observed["env"]
+    assert isinstance(child_env, dict)
+    assert child_env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
+    assert child_env["ANTHROPIC_BASE_URL"] == backend.ENDPOINT
+    assert "HTTPS_PROXY" not in child_env
+    assert "synthetic-secret" not in os.environ.values()
+    assert "synthetic-secret" not in evidence.command
+    assert b"synthetic-secret" not in raw
+    assert result["review_result"] == "PASS"
+
+
+def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(
+        backend.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=b"not-json"),
+    )
+    with pytest.raises(backend.BackendInfrastructureError, match="INVALID_STRUCTURED_OUTPUT"):
+        backend.run(prompt="review", cwd=tmp_path)
