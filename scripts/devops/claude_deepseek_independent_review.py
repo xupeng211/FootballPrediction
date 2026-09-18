@@ -160,6 +160,15 @@ def _run_chunked_review(
                 f"chunk {chunk.index} infrastructure failure [{_safe_backend_failure_code(exc)}]"
             ) from exc
         normalized = validate_result(result)
+        execution_evidence = receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=execution.command,
+            resolved_model=execution.resolved_model,
+            claude_cli_version=execution.cli_version,
+            claude_binary_sha256=execution.binary_sha256,
+            settings_sha256=execution.settings_sha256,
+            provider_endpoint=execution.endpoint,
+            session_id=execution.session_id,
+        )
         final = canonical_json(
             {
                 "protocol_version": PROTOCOL_VERSION,
@@ -176,8 +185,8 @@ def _run_chunked_review(
                 "prompt": prompt.encode(),
                 "raw": raw,
                 "final": final,
-                "execution": execution,
-                "session_id": execution.session_id,
+                "execution": execution_evidence,
+                "session_id": execution_evidence.session_id,
             }
         )
     normalized = aggregate(values, manifest)
@@ -190,12 +199,12 @@ def _run_chunked_review(
             "final_sha256": sha256_bytes(item["final"]),
             "session_id": item["session_id"],
             "execution": {
-                "reviewer_command": list(item["execution"].command),
+                "reviewer_command": list(item["execution"].reviewer_command),
                 "resolved_model": item["execution"].resolved_model,
-                "claude_cli_version": item["execution"].cli_version,
-                "claude_binary_sha256": item["execution"].binary_sha256,
+                "claude_cli_version": item["execution"].claude_cli_version,
+                "claude_binary_sha256": item["execution"].claude_binary_sha256,
                 "settings_sha256": item["execution"].settings_sha256,
-                "provider_endpoint": item["execution"].endpoint,
+                "provider_endpoint": item["execution"].provider_endpoint,
                 "session_id": item["execution"].session_id,
             },
         }
@@ -272,6 +281,15 @@ def _run_review(args: argparse.Namespace) -> Path:
                 f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
             ) from exc
         normalized = validate_result(result)
+        execution = receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=execution.command,
+            resolved_model=execution.resolved_model,
+            claude_cli_version=execution.cli_version,
+            claude_binary_sha256=execution.binary_sha256,
+            settings_sha256=execution.settings_sha256,
+            provider_endpoint=execution.endpoint,
+            session_id=execution.session_id,
+        )
     completed = _now()
     final = canonical_json(
         {
@@ -334,12 +352,12 @@ def _run_review(args: argparse.Namespace) -> Path:
             "worktree_clean_after": True,
         },
         "provenance": {
-            "reviewer_command": list(execution.command),
-            "command_sha256": sha256_bytes(canonical_json(list(execution.command))),
-            "claude_cli_version": execution.cli_version,
-            "claude_binary_sha256": execution.binary_sha256,
+            "reviewer_command": list(execution.reviewer_command),
+            "command_sha256": sha256_bytes(canonical_json(list(execution.reviewer_command))),
+            "claude_cli_version": execution.claude_cli_version,
+            "claude_binary_sha256": execution.claude_binary_sha256,
             "settings_sha256": execution.settings_sha256,
-            "provider_endpoint": execution.endpoint,
+            "provider_endpoint": execution.provider_endpoint,
             "session_id": execution.session_id,
             **(
                 {
@@ -369,12 +387,12 @@ def _run_review(args: argparse.Namespace) -> Path:
         claude_deepseek_execution=None
         if chunked
         else receipts.ClaudeDeepSeekExecutionEvidence(
-            reviewer_command=execution.command,
+            reviewer_command=execution.reviewer_command,
             resolved_model=execution.resolved_model,
-            claude_cli_version=execution.cli_version,
-            claude_binary_sha256=execution.binary_sha256,
+            claude_cli_version=execution.claude_cli_version,
+            claude_binary_sha256=execution.claude_binary_sha256,
             settings_sha256=execution.settings_sha256,
-            provider_endpoint=execution.endpoint,
+            provider_endpoint=execution.provider_endpoint,
             session_id=execution.session_id,
         ),
         chunked_claude_evidence=tuple(trusted_chunks),
