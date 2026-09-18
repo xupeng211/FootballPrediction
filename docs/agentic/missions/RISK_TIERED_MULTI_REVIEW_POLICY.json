@@ -16,6 +16,7 @@
     "schemas/agentic/mission_scope.schema.json",
     "scripts/devops/agent_workflow.py",
     "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
     "scripts/devops/independent_review_receipt.py",
     "scripts/devops/review_policy.py",
     "scripts/ops/helpers/agent_workflow_contract.py",
