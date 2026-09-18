@@ -115,6 +115,16 @@ def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
+def _canonical_prompt_bytes(prompt: str | bytes) -> bytes:
+    """Bind receipt evidence to the exact prompt bytes sent by its path."""
+
+    if isinstance(prompt, bytes):
+        return prompt
+    if isinstance(prompt, str):
+        return prompt.encode()
+    raise DeepSeekReviewError("review prompt has unsupported type")
+
+
 def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: str) -> str:
     return (
         "You are an independent read-only code reviewer. Return only the required generic JSON result. "
@@ -306,7 +316,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         "mission_id": args.mission_id,
         "mission_scope_path": scope_path,
         "mission_scope_sha256": sha256_bytes(scope_bytes),
-        "review_prompt_sha256": sha256_bytes(prompt.encode()),
+        "review_prompt_sha256": sha256_bytes(_canonical_prompt_bytes(prompt)),
         "review_started_at": started,
         "review_completed_at": completed,
         "review_result": normalized["review_result"],
@@ -353,7 +363,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         base_sha=base,
         head_sha=head,
         mission_scope_path=scope_path,
-        prompt_bytes=prompt.encode(),
+        prompt_bytes=_canonical_prompt_bytes(prompt),
         raw_output_bytes=raw,
         final_result_bytes=final,
         claude_deepseek_execution=None

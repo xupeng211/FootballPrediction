@@ -129,6 +129,20 @@ def test_backend_failure_exposes_only_allowlisted_classification():
         )
         == "AUTH_FAILURE"
     )
+
+
+def test_chunked_receipt_prompt_bytes_hash_without_double_encoding():
+    """The chunk aggregate prompt is already canonical bytes at receipt construction."""
+
+    prompt = b'{"manifest":"chunked"}'
+    assert runner._canonical_prompt_bytes(prompt) is prompt
+    assert runner.sha256_bytes(runner._canonical_prompt_bytes(prompt)) == runner.sha256_bytes(
+        prompt
+    )
+
+
+def test_canonical_prompt_bytes_encodes_text_once():
+    assert runner._canonical_prompt_bytes("chunked") == b"chunked"
     assert (
         runner._safe_backend_failure_code(
             runner.backend.BackendInfrastructureError("unexpected sensitive detail")
