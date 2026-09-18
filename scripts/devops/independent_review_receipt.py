@@ -50,6 +50,10 @@ RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "agentic" / "independent_review_receipt
 _MISSION_ID_RE = __import__("re").compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 _CODEX_THREAD_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{4,256}$")
 _CODEX_EXEC_MINIMUM_ARGV_LENGTH = 2
+_CLAUDE_DEEPSEEK_ENDPOINT = "https://api.deepseek.com/anthropic"
+_CLAUDE_DEEPSEEK_MODEL = "deepseek-flash"
+_CLAUDE_MINIMUM_VERSION = (2, 1, 276)
+_CLAUDE_RESTRICTED_TOOLS = frozenset({"Bash", "Edit", "Write", "WebFetch", "WebSearch"})
 
 
 @dataclass(frozen=True)
@@ -460,7 +464,7 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912, PLR0915
         raise IndependentReviewProtocolError("raw output completion evidence is invalid") from exc
 
 
-def _validate_claude_deepseek_provenance(
+def _validate_claude_deepseek_provenance(  # noqa: C901
     receipt: dict[str, Any], backend: dict[str, Any], context: ReceiptEvidenceContext
 ) -> None:
     if backend["backend_id"] != "claude-code-deepseek":
@@ -470,7 +474,7 @@ def _validate_claude_deepseek_provenance(
         raise IndependentReviewProtocolError(
             "trusted Claude/DeepSeek execution evidence is required"
         )
-    endpoint = "https://api.deepseek.com/anthropic"
+    endpoint = _CLAUDE_DEEPSEEK_ENDPOINT
     values = (
         execution.reviewer_command,
         execution.resolved_model,
@@ -486,6 +490,11 @@ def _validate_claude_deepseek_provenance(
     ):
         raise IndependentReviewProtocolError(
             "trusted Claude/DeepSeek execution evidence is malformed"
+        )
+    version = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", execution.claude_cli_version)
+    if not version or tuple(map(int, version.groups())) < _CLAUDE_MINIMUM_VERSION:
+        raise IndependentReviewProtocolError(
+            "trusted Claude CLI version is below the approved baseline"
         )
     provenance = receipt["provenance"]
     expected = {
@@ -504,8 +513,32 @@ def _validate_claude_deepseek_provenance(
         canonical_json(expected["reviewer_command"])
     ):
         raise IndependentReviewProtocolError("receipt Claude/DeepSeek command hash does not match")
+    command = list(execution.reviewer_command)
     if (
-        receipt["requested_model"] != "deepseek-flash"
+        "--bare" not in command
+        or "--print" not in command
+        or command.count("--model") != 1
+        or command[command.index("--model") + 1 : command.index("--model") + 2]
+        != [_CLAUDE_DEEPSEEK_MODEL]
+        or command.count("--settings") != 1
+        or not command[command.index("--settings") + 1 : command.index("--settings") + 2]
+        or "--strict-mcp-config" not in command
+        or command.count("--disallowed-tools") != 1
+        or not _CLAUDE_RESTRICTED_TOOLS.issubset(
+            set(command[command.index("--disallowed-tools") + 1].split(","))
+        )
+        or command.count("--output-format") != 1
+        or command[command.index("--output-format") + 1 : command.index("--output-format") + 2]
+        != ["json"]
+        or command.count("--json-schema") != 1
+        or not command[command.index("--json-schema") + 1 : command.index("--json-schema") + 2]
+        or any(part in {"--resume", "--continue"} for part in command)
+    ):
+        raise IndependentReviewProtocolError(
+            "receipt Claude command is not canonical isolated DeepSeek"
+        )
+    if (
+        receipt["requested_model"] != _CLAUDE_DEEPSEEK_MODEL
         or receipt["resolved_model"] != receipt["requested_model"]
         or execution.resolved_model != receipt["requested_model"]
     ):

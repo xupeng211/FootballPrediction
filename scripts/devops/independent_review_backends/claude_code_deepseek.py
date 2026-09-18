@@ -15,6 +15,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -26,6 +27,7 @@ PROVIDER_ID = "deepseek"
 ENDPOINT = "https://api.deepseek.com/anthropic"
 EXPECTED_HOST = "api.deepseek.com"
 MODEL = "deepseek-flash"
+MIN_CLAUDE_VERSION = (2, 1, 276)
 SECRET_PATH = Path(
     "/home/xupeng/.local/share/footballprediction-reviewer-secrets/anthropic_auth_token"
 )
@@ -64,6 +66,12 @@ CLAUDE_RESULT_SCHEMA = {
 
 class BackendInfrastructureError(RuntimeError):
     """Never interpret runtime/provider failure as a code-review verdict."""
+
+
+def _version_at_least(version: str) -> bool:
+    """Require the reviewed Claude feature baseline without trusting defaults."""
+    matched = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", version)
+    return bool(matched and tuple(map(int, matched.groups())) >= MIN_CLAUDE_VERSION)
 
 
 @dataclass(frozen=True)
@@ -119,6 +127,11 @@ def run(
     if not binary_text:
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: claude unavailable")
     binary = Path(binary_text).resolve()
+    version = subprocess.run(
+        [str(binary), "--version"], capture_output=True, text=True, check=False
+    ).stdout.strip()
+    if not _version_at_least(version):
+        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: unsupported Claude version")
     secret = _secret(secret_path)
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
@@ -169,9 +182,6 @@ def run(
         or not session
     ):
         raise BackendInfrastructureError("MODEL_MISMATCH")
-    version = subprocess.run(
-        [str(binary), "--version"], capture_output=True, text=True, check=False
-    ).stdout.strip()
     return (
         output.stdout,
         result,

@@ -638,8 +638,12 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
         "--settings",
         "/trusted/settings.json",
         "--strict-mcp-config",
+        "--disallowed-tools",
+        "Bash,Edit,Write,WebFetch,WebSearch",
         "--output-format",
         "json",
+        "--json-schema",
+        '{"type":"object"}',
     )
     raw = json.dumps(
         {

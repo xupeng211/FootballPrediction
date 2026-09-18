@@ -10,6 +10,7 @@
     "scripts/devops/independent_review_backends/claude_code_deepseek.py",
     "scripts/devops/independent_review_receipt.py",
     "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_claude_deepseek_receipt_isolation.py",
     "tests/unit/test_independent_review_protocol.py"
   ],
   "authorized_prefixes": [],

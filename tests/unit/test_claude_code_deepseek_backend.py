@@ -71,10 +71,12 @@ def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tm
     binary.write_bytes(b"synthetic cli")
     monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
-    monkeypatch.setattr(
-        backend.subprocess,
-        "run",
-        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=b"not-json"),
-    )
+
+    def fake_run(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
+        return SimpleNamespace(returncode=0, stdout=b"not-json")
+
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
     with pytest.raises(backend.BackendInfrastructureError, match="INVALID_STRUCTURED_OUTPUT"):
         backend.run(prompt="review", cwd=tmp_path)
