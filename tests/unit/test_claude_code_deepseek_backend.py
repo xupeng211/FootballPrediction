@@ -23,6 +23,7 @@ def _approve_test_binary(monkeypatch, binary: Path) -> None:
 
 def test_child_environment_is_allowlisted_and_has_no_competing_route():
     env = backend.child_environment("synthetic-secret")
+    assert env["PATH"] == backend.CONTROLLED_CLAUDE_PATH
     assert env["ANTHROPIC_BASE_URL"] == backend.ENDPOINT
     assert env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
     assert env["ANTHROPIC_API_KEY"] == "synthetic-secret"

@@ -45,6 +45,10 @@ TRUSTED_CLAUDE_BINARY_ROOTS = (Path("/home/xupeng/.nvm/versions/node/v22.23.2"),
 TRUSTED_CLAUDE_BINARY_SHA256 = frozenset(
     {"5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab"}
 )
+# Never inherit the caller's PATH after credentials are injected.  The Claude
+# launcher is approved above; its child may resolve only this fixed installation
+# directory and root-owned system command directories.
+CONTROLLED_CLAUDE_PATH = "/home/xupeng/.nvm/versions/node/v22.23.2/bin:/usr/bin:/bin"
 # Kept as bytes owned by this adapter instead of accepting mutable user or
 # project Claude settings.  The temporary file is hashed into provenance.
 DEDICATED_SETTINGS = b'{"permissions":{"allow":[],"deny":["Bash","Edit","Write","Read","Glob","Grep","WebFetch","WebSearch"]}}\n'
@@ -220,7 +224,7 @@ def child_environment(secret: str) -> dict[str, str]:
         "HOME": "/nonexistent",
         # PATH is needed for the Claude launcher runtime only; no arbitrary
         # provider-routing or credential variables are inherited.
-        "PATH": os.environ.get("PATH", os.defpath),
+        "PATH": CONTROLLED_CLAUDE_PATH,
         "LANG": "C.UTF-8",
         # Claude Code 2.1.276 documents ANTHROPIC_API_KEY as the only
         # credential accepted by --bare.  Keep the Owner's token contract as
