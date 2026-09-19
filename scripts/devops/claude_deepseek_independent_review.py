@@ -37,6 +37,7 @@ from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     MAX_CHUNK_DIFF_BYTES,
     MAX_CHUNK_PROMPT_BYTES,
     aggregate,
+    build_chunk_prompt,
     chunk_evidence_manifest_bytes,
     plan,
 )
@@ -128,16 +129,7 @@ def _canonical_prompt_bytes(prompt: str | bytes) -> bytes:
 
 
 def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: str) -> str:
-    return (
-        "You are an independent read-only code reviewer. Return only the required generic JSON result. "
-        "PASS only when P0/P1/P2 are absent.\n"
-        f"Mission: {manifest.mission_id}\nBase: {manifest.base_sha}\nHead: {manifest.head_sha}\n"
-        f"Scope SHA256: {scope_sha}\nFull diff SHA256: {manifest.full_diff_sha256}\n"
-        f"Chunk manifest SHA256: {manifest.sha256}\nChunk: {chunk.index + 1}/{len(manifest.chunks)} "
-        f"range={chunk.start}:{chunk.end} source_sha256={chunk.source_sha256}\n"
-        f"Changed paths: {','.join(chunk.changed_paths)}\n"
-        f"Canonical chunk diff:\n{source.decode('utf-8', 'replace')}"
-    )
+    return build_chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
 
 
 def _run_chunked_review(

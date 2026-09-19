@@ -139,6 +139,21 @@ def validate_manifest(manifest: Manifest, diff: bytes) -> None:
         raise ChunkReviewError("chunk coverage is incomplete")
 
 
+def build_chunk_prompt(*, chunk: Chunk, source: bytes, manifest: Manifest, scope_sha: str) -> str:
+    """Build the canonical prompt whose final argument is sent to Claude."""
+
+    return (
+        "You are an independent read-only code reviewer. Return only the required generic JSON result. "
+        "PASS only when P0/P1/P2 are absent.\n"
+        f"Mission: {manifest.mission_id}\nBase: {manifest.base_sha}\nHead: {manifest.head_sha}\n"
+        f"Scope SHA256: {scope_sha}\nFull diff SHA256: {manifest.full_diff_sha256}\n"
+        f"Chunk manifest SHA256: {manifest.sha256}\nChunk: {chunk.index + 1}/{len(manifest.chunks)} "
+        f"range={chunk.start}:{chunk.end} source_sha256={chunk.source_sha256}\n"
+        f"Changed paths: {','.join(chunk.changed_paths)}\n"
+        f"Canonical chunk diff:\n{source.decode('utf-8', 'replace')}"
+    )
+
+
 def aggregate(results: Iterable[dict[str, Any]], manifest: Manifest) -> dict[str, Any]:
     """Aggregate only one validated result per manifest chunk; never vote."""
 

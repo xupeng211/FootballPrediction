@@ -13,6 +13,7 @@ from typing import Any
 
 from scripts.devops.deepseek_review_chunks import (
     ChunkReviewError,
+    build_chunk_prompt,
     chunk_evidence_manifest_bytes,
     plan,
     validate_manifest,
@@ -163,6 +164,16 @@ def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> 
             or item.get("source_sha256") != descriptor.source_sha256
         ):
             raise IndependentReviewProtocolError("chunk source evidence is invalid")
+        expected_prompt = build_chunk_prompt(
+            chunk=descriptor,
+            source=source,
+            manifest=manifest,
+            scope_sha=receipt["mission_scope_sha256"],
+        ).encode()
+        if prompt != expected_prompt or not command or command[-1].encode() != prompt:
+            raise IndependentReviewProtocolError(
+                "chunk prompt is not bound to the canonical source"
+            )
         evidence_payload.append(
             {
                 "index": index,
