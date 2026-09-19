@@ -36,6 +36,15 @@ SECRET_PATH = Path(
     "/home/xupeng/.local/share/footballprediction-reviewer-secrets/anthropic_auth_token"
 )
 SECRET_FILE_MODE = 0o600
+# ``claude`` is resolved from PATH only as a candidate.  Before any provider
+# credential is read, the candidate must resolve inside this installation root
+# and match the approved launcher digest.  This prevents a same-name PATH
+# shim from receiving the secret while preserving the existing no-fallback
+# behaviour when the controlled installation is unavailable or changed.
+TRUSTED_CLAUDE_BINARY_ROOTS = (Path("/home/xupeng/.nvm/versions/node/v22.23.2"),)
+TRUSTED_CLAUDE_BINARY_SHA256 = frozenset(
+    {"5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab"}
+)
 # Kept as bytes owned by this adapter instead of accepting mutable user or
 # project Claude settings.  The temporary file is hashed into provenance.
 DEDICATED_SETTINGS = b'{"permissions":{"allow":[],"deny":["Bash","Edit","Write","Read","Glob","Grep","WebFetch","WebSearch"]}}\n'
@@ -134,6 +143,36 @@ def _validated_timeout(timeout_seconds: int) -> int:
     return timeout_seconds
 
 
+def _approved_claude_binary(binary_text: str) -> tuple[Path, str]:
+    """Resolve and authenticate the Claude launcher before secret injection."""
+
+    if not isinstance(binary_text, str) or not binary_text:
+        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: claude unavailable")
+    candidate = Path(binary_text)
+    try:
+        binary = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: Claude launcher cannot be resolved"
+        ) from exc
+    if not binary.is_file():
+        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: Claude launcher is not a file")
+    trusted_roots = tuple(root.resolve(strict=True) for root in TRUSTED_CLAUDE_BINARY_ROOTS)
+    if not any(binary == root or root in binary.parents for root in trusted_roots):
+        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: Claude launcher is untrusted")
+    info = binary.stat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o022:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: Claude launcher permissions are unsafe"
+        )
+    digest = sha256(binary.read_bytes()).hexdigest()
+    if digest not in TRUSTED_CLAUDE_BINARY_SHA256:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: Claude launcher identity is unapproved"
+        )
+    return binary, digest
+
+
 @dataclass(frozen=True)
 class ExecutionEvidence:
     """Non-secret harness observations for a single Claude subprocess."""
@@ -194,9 +233,7 @@ def run(
     """
     timeout = _validated_timeout(timeout_seconds)
     binary_text = shutil.which("claude")
-    if not binary_text:
-        raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: claude unavailable")
-    binary = Path(binary_text).resolve()
+    binary, binary_sha256 = _approved_claude_binary(binary_text or "")
     version = subprocess.run(
         [str(binary), "--version"], capture_output=True, text=True, check=False
     ).stdout.strip()
@@ -272,7 +309,7 @@ def run(
         ExecutionEvidence(
             command,
             version,
-            sha256(binary.read_bytes()).hexdigest(),
+            binary_sha256,
             sha256(DEDICATED_SETTINGS).hexdigest(),
             ENDPOINT,
             MODEL,

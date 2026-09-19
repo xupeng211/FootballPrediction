@@ -1,3 +1,4 @@
+from hashlib import sha256
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -5,6 +6,19 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.devops.independent_review_backends import claude_code_deepseek as backend
+
+
+def _approve_test_binary(monkeypatch, binary: Path) -> None:
+    """Keep backend tests explicit about the launcher identity they approve."""
+
+    binary.chmod(0o755)
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (binary.parent,))
+    monkeypatch.setattr(
+        backend,
+        "TRUSTED_CLAUDE_BINARY_SHA256",
+        frozenset({sha256(binary.read_bytes()).hexdigest()}),
+    )
 
 
 def test_child_environment_is_allowlisted_and_has_no_competing_route():
@@ -52,7 +66,7 @@ def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_pa
             ),
         )
 
-    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     raw, result, evidence = backend.run(prompt="review", cwd=tmp_path)
@@ -87,7 +101,7 @@ def test_run_uses_explicit_bounded_timeout(monkeypatch, tmp_path: Path):
             ),
         )
 
-    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     backend.run(prompt="review", cwd=tmp_path, timeout_seconds=backend.MAX_REVIEW_TIMEOUT_SECONDS)
@@ -103,7 +117,7 @@ def test_timeout_is_no_verdict_and_does_not_leak_secret_or_prompt(monkeypatch, t
             return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
         raise backend.subprocess.TimeoutExpired(command, 30, output=b"synthetic-secret")
 
-    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     with pytest.raises(backend.BackendInfrastructureError) as raised:
@@ -122,7 +136,7 @@ def test_run_rejects_secret_reflection_before_raw_output_can_persist(monkeypatch
             return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
         return SimpleNamespace(returncode=0, stdout=b"synthetic-secret", stderr=b"")
 
-    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     with pytest.raises(backend.BackendInfrastructureError, match="SECRET_LEAKAGE_DETECTED"):
@@ -138,7 +152,7 @@ def test_run_rejects_invalid_timeout_before_cli_execution(timeout):
 def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tmp_path: Path):
     binary = tmp_path / "claude"
     binary.write_bytes(b"synthetic cli")
-    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
 
     def fake_run(command, **_kwargs):
@@ -151,7 +165,7 @@ def test_run_rejects_malformed_provider_output_as_infrastructure(monkeypatch, tm
         backend.run(prompt="review", cwd=tmp_path)
 
 
-def test_nonzero_diagnostic_is_allowlisted_and_does_not_reflect_output(monkeypatch, tmp_path: Path):
+def test_nonzero_diagnostic_is_allowlisted_and_does_not_reflect_output():
     output = SimpleNamespace(
         returncode=1, stdout=b"request too large private prompt", stderr=b"secret"
     )
@@ -159,3 +173,26 @@ def test_nonzero_diagnostic_is_allowlisted_and_does_not_reflect_output(monkeypat
     assert detail.startswith("REQUEST_TOO_LARGE: exit=1;")
     assert "private prompt" not in detail
     assert "secret" not in detail
+
+
+def test_path_selected_launcher_outside_trusted_root_is_rejected_before_secret(
+    monkeypatch, tmp_path
+):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"path shim")
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "_secret", lambda _path: pytest.fail("secret was read"))
+    with pytest.raises(backend.BackendInfrastructureError, match="launcher is untrusted"):
+        backend.run(prompt="review", cwd=tmp_path)
+
+
+def test_unapproved_launcher_digest_is_rejected_before_secret(monkeypatch, tmp_path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"unexpected cli")
+    binary.chmod(0o755)
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (tmp_path,))
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_SHA256", frozenset())
+    monkeypatch.setattr(backend, "_secret", lambda _path: pytest.fail("secret was read"))
+    with pytest.raises(backend.BackendInfrastructureError, match="identity is unapproved"):
+        backend.run(prompt="review", cwd=tmp_path)
