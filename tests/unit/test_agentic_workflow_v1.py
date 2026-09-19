@@ -381,7 +381,9 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
         "scripts.devops.agent_workflow_preflight.run_preflight",
         lambda *_args, **_kwargs: preflight,
     )
-    assert agent_workflow.merge_ready_command(args) == 0
+    # Workflow-governance paths are CRITICAL under the risk-tiered policy and
+    # therefore cannot reach merge-ready with only the Codex receipt.
+    assert agent_workflow.merge_ready_command(args) == 1
 
 
 @pytest.mark.parametrize("forbidden_status", ["PASS", "UNKNOWN"])
