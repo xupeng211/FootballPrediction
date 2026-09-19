@@ -49,6 +49,9 @@ NETWORK_TRANSPORT_VARIABLES = frozenset(
         "no_proxy",
     }
 )
+BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(
+    {"CODEX_CA_CERTIFICATE", "SSL_CERT_FILE", "SSL_CERT_DIR"}
+)
 
 
 def _is_builder_routing_or_auth_override(name: str) -> bool:
@@ -64,12 +67,17 @@ def _is_builder_routing_or_auth_override(name: str) -> bool:
     upper = name.upper()
     if name in NETWORK_TRANSPORT_VARIABLES:
         return False
-    return upper.startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY")) or upper in {
-        "CODEX_API_KEY",
-        "CODEX_ACCESS_TOKEN",
-        "CODEX_HOME",
-        "CODEX_CLI_PATH",
-    }
+    return (
+        upper.startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY"))
+        or upper in BUILDER_TRUST_ANCHOR_VARIABLES
+        or upper
+        in {
+            "CODEX_API_KEY",
+            "CODEX_ACCESS_TOKEN",
+            "CODEX_HOME",
+            "CODEX_CLI_PATH",
+        }
+    )
 
 
 def canonical_reviewer_environment(
