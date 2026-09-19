@@ -229,9 +229,9 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 )
             chunked_evidence = tuple(loaded)
         else:
-            prompt_name = value.get("review_prompt_path")
+            prompt_name = provenance.get("review_prompt_path")
             if not isinstance(prompt_name, str) or Path(prompt_name).name != prompt_name:
-                raise ValueError("review prompt path")
+                raise ValueError("review prompt path")  # noqa: TRY301
             prompt_path = path.parent / prompt_name
             _assert_external_artifact(prompt_path, repo_root=repo_root, kind="review prompt")
             prompt_bytes = prompt_path.read_bytes()

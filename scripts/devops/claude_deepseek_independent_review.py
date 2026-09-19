@@ -339,7 +339,6 @@ def _run_review(args: argparse.Namespace) -> Path:
         "mission_scope_path": scope_path,
         "mission_scope_sha256": sha256_bytes(scope_bytes),
         "review_prompt_sha256": sha256_bytes(_canonical_prompt_bytes(prompt)),
-        "review_prompt_path": prompt_path.name if not chunked else None,
         "review_started_at": started,
         "review_completed_at": completed,
         "review_result": normalized["review_result"],
@@ -364,6 +363,7 @@ def _run_review(args: argparse.Namespace) -> Path:
             "settings_sha256": execution.settings_sha256,
             "provider_endpoint": execution.provider_endpoint,
             "session_id": execution.session_id,
+            **({"review_prompt_path": prompt_path.name} if not chunked else {}),
             **(
                 {
                     "chunked_review": True,
