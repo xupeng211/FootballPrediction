@@ -437,9 +437,12 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             )
     else:
         receipt = {}
-        codex_required = mission_scope is not None and BACKEND_CODEX in required_backends(
-            mission_scope.workflow_class, selected_backend=args.selected_backend
-        )
+        try:
+            codex_required = mission_scope is not None and BACKEND_CODEX in required_backends(
+                mission_scope.workflow_class, selected_backend=args.selected_backend
+            )
+        except (KeyError, TypeError, ValueError):
+            codex_required = True
         for name, required_message in (
             ("independent-review", "Codex receipt required by policy"),
             ("review-model-provenance", "Codex provenance required by policy"),
