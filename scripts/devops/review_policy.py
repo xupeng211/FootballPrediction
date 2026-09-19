@@ -58,6 +58,9 @@ class ReviewEvidence:
     mission_scope_sha256: str
     finding_counts_by_severity: dict[str, int]
     infrastructure_failure: bool = False
+    # Backend validators may expose the model that produced this trusted
+    # evidence. The policy evaluator itself remains backend-neutral.
+    review_model: str | None = None
 
 
 @dataclass(frozen=True)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict
 import json
 
-from scripts.devops import review_policy
+from scripts.devops import agent_workflow, review_policy
 from scripts.devops.review_policy import (
     BACKEND_CODEX,
     BACKEND_DEEPSEEK,
@@ -40,6 +40,22 @@ def test_normal_defaults_to_deepseek_only():
     result = evaluate_review_policy("NORMAL", _candidate(), [_receipt(BACKEND_DEEPSEEK)])
     assert result.status == "SATISFIED"
     assert result.required_backends == (BACKEND_DEEPSEEK,)
+
+
+def test_merge_ready_projection_uses_satisfied_deepseek_evidence():
+    evidence = _receipt(BACKEND_DEEPSEEK, review_model="deepseek-flash")
+    candidate = _candidate()
+    policy = evaluate_review_policy("NORMAL", candidate, [evidence])
+
+    projection = agent_workflow._policy_review_projection(policy, [evidence])
+
+    assert policy.status == "SATISFIED"
+    assert projection["review_backend"] == BACKEND_DEEPSEEK
+    assert projection["independent_review_present"] == "YES"
+    assert projection["receipt_classification"] == "VALID_CURRENT"
+    assert projection["model_provenance_valid"] == "YES"
+    assert projection["reviewed_head_sha"] == candidate.head_sha
+    assert projection["blocking_findings"] == 0
 
 
 def test_normal_explicit_codex_is_allowed_but_not_implicit():

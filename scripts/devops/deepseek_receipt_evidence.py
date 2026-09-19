@@ -278,6 +278,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
             expected_mission_id,
             expected_scope_hash,
             result["finding_counts_by_severity"],
+            review_model=str(value["resolved_model"]),
         )
     except (OSError, RuntimeError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
         return ReviewEvidence(

@@ -35,6 +35,15 @@ from scripts.devops.exact_head import (  # noqa: E402
     assert_exact_head,
     normalize_full_sha,
 )
+from scripts.devops.review_policy import (  # noqa: E402
+    BACKEND_CODEX,
+    BACKEND_DEEPSEEK,
+    CandidateBinding,
+    ReviewEvidence,
+    evaluate_review_policy,
+    load_active_backend_eligibility,
+    required_backends,
+)
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     CONTRACT_SCHEMA_VERSION,
     DECISION_AUTO_REMEDIATE,
@@ -48,15 +57,6 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     validate_mission_scope_reference,
 )
 from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
-from scripts.devops.review_policy import (  # noqa: E402
-    BACKEND_CODEX,
-    BACKEND_DEEPSEEK,
-    CandidateBinding,
-    ReviewEvidence,
-    evaluate_review_policy,
-    load_active_backend_eligibility,
-    required_backends,
-)
 from scripts.ops.helpers.strict_review_evidence import validate_strict_review_evidence  # noqa: E402
 
 
@@ -67,6 +67,68 @@ class GateCheck:
     name: str
     status: str
     message: str
+
+
+def _policy_review_projection(policy: Any, evidence: list[ReviewEvidence]) -> dict[str, Any]:
+    """Project the policy-owned receipt into backend-neutral audit fields.
+
+    ``merge-ready`` historically exposed Codex receipt fields directly. That
+    is insufficient when NORMAL is satisfied by the policy's default DeepSeek
+    reviewer, because no Codex receipt is expected in that path. The policy
+    result and its already validated backend evidence are the authority for
+    this projection; PR metadata is never used as receipt proof.
+    """
+
+    if policy is None or policy.status != "SATISFIED":
+        return {}
+    selected = next(
+        (item for item in evidence if item.backend_id in policy.satisfied_backends),
+        None,
+    )
+    if selected is None:
+        return {}
+    counts = selected.finding_counts_by_severity
+    blocking = (
+        sum(counts[level] for level in ("P0", "P1", "P2"))
+        if isinstance(counts, dict)
+        and all(
+            isinstance(counts.get(level), int) and not isinstance(counts.get(level), bool)
+            for level in ("P0", "P1", "P2")
+        )
+        else "UNKNOWN"
+    )
+    valid = (
+        selected.trusted
+        and not selected.infrastructure_failure
+        and selected.result == "PASS"
+        and blocking == 0
+        and bool(selected.head_sha)
+    )
+    return {
+        "independent_review_present": "YES" if valid else "NO",
+        "independent_review_result": selected.result,
+        "receipt_classification": CLASSIFICATION_VALID_CURRENT if valid else "UNKNOWN",
+        "receipt_integrity": "INTACT" if valid else "UNKNOWN",
+        "receipt_reason_codes": [],
+        "review_backend": selected.backend_id,
+        "review_model": selected.review_model or "UNKNOWN",
+        "review_reasoning_effort": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "approved_review_model": selected.review_model or "UNKNOWN",
+        "approved_review_reasoning_effort": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "observed_codex_cli_version": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "codex_cli_version": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "model_provenance_valid": "YES" if valid else "NO",
+        "reviewed_head_sha": selected.head_sha or "UNKNOWN",
+        "blocking_findings": blocking,
+    }
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -514,6 +576,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
         policy = None
         checks.append(GateCheck("review-policy", "FAIL", "mission scope unavailable"))
 
+    policy_projection = _policy_review_projection(policy, review_evidence)
+
     exact_check = next(
         (check for check in checks if check.name == "exact-head"), GateCheck("", "UNKNOWN", "")
     )
@@ -587,27 +651,61 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
         ).status
         == "PASS"
         else "NO",
-        "independent_review_present": "YES" if receipt else "NO",
-        "independent_review_result": receipt.get("review_result", "UNKNOWN"),
-        "receipt_classification": classification.get("classification", "UNKNOWN"),
-        "receipt_integrity": classification.get("integrity", "UNKNOWN"),
-        "receipt_reason_codes": classification.get("reason_codes", []),
-        "review_model": classification.get("review_model") or "UNKNOWN",
-        "review_reasoning_effort": classification.get("review_reasoning_effort") or "UNKNOWN",
-        "approved_review_model": classification.get("approved_review_model", "UNKNOWN"),
-        "approved_review_reasoning_effort": classification.get(
-            "approved_review_reasoning_effort", "UNKNOWN"
+        "independent_review_present": policy_projection.get(
+            "independent_review_present", "YES" if receipt else "NO"
         ),
-        "observed_codex_cli_version": classification.get("observed_codex_cli_version", "UNKNOWN"),
-        "codex_cli_version": classification.get("codex_cli_version") or "UNKNOWN",
-        "model_provenance_valid": "YES"
-        if classification.get("classification") == CLASSIFICATION_VALID_CURRENT
-        else "NO",
-        "reviewed_head_sha": receipt.get("reviewed_head_sha", "UNKNOWN"),
+        "independent_review_result": policy_projection.get(
+            "independent_review_result", receipt.get("review_result", "UNKNOWN")
+        ),
+        "receipt_classification": classification.get(
+            "classification", policy_projection.get("receipt_classification", "UNKNOWN")
+        ),
+        "receipt_integrity": classification.get(
+            "integrity", policy_projection.get("receipt_integrity", "UNKNOWN")
+        ),
+        "receipt_reason_codes": classification.get(
+            "reason_codes", policy_projection.get("receipt_reason_codes", [])
+        ),
+        "review_backend": policy_projection.get(
+            "review_backend", BACKEND_CODEX if receipt else "UNKNOWN"
+        ),
+        "review_model": classification.get(
+            "review_model", policy_projection.get("review_model", "UNKNOWN")
+        )
+        or policy_projection.get("review_model", "UNKNOWN"),
+        "review_reasoning_effort": classification.get(
+            "review_reasoning_effort",
+            policy_projection.get("review_reasoning_effort", "UNKNOWN"),
+        )
+        or policy_projection.get("review_reasoning_effort", "UNKNOWN"),
+        "approved_review_model": classification.get(
+            "approved_review_model", policy_projection.get("approved_review_model", "UNKNOWN")
+        ),
+        "approved_review_reasoning_effort": classification.get(
+            "approved_review_reasoning_effort",
+            policy_projection.get("approved_review_reasoning_effort", "UNKNOWN"),
+        ),
+        "observed_codex_cli_version": classification.get(
+            "observed_codex_cli_version",
+            policy_projection.get("observed_codex_cli_version", "UNKNOWN"),
+        ),
+        "codex_cli_version": classification.get(
+            "codex_cli_version", policy_projection.get("codex_cli_version", "UNKNOWN")
+        )
+        or policy_projection.get("codex_cli_version", "UNKNOWN"),
+        "model_provenance_valid": policy_projection.get(
+            "model_provenance_valid",
+            "YES" if classification.get("classification") == CLASSIFICATION_VALID_CURRENT else "NO",
+        ),
+        "reviewed_head_sha": policy_projection.get(
+            "reviewed_head_sha", receipt.get("reviewed_head_sha", "UNKNOWN")
+        ),
         "current_pr_head_sha": actual_head or "UNKNOWN",
         "mission_scope_path": mission_scope_path or "UNKNOWN",
         "mission_scope_sha256": mission_scope_hash or "UNKNOWN",
-        "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
+        "blocking_findings": policy_projection.get(
+            "blocking_findings", receipt.get("blocking_findings", "UNKNOWN")
+        ),
         "review_policy_status": policy.status if policy is not None else "INVALID",
         "review_policy_reasons": list(policy.reasons)
         if policy is not None
