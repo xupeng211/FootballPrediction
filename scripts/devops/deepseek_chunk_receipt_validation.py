@@ -76,7 +76,7 @@ def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> 
             or len(chunks) != len(manifest.chunks)
             or len(top_chunks) != len(manifest.chunks)
         ):
-            raise ChunkReviewError("chunk evidence coverage is incomplete")
+            raise ChunkReviewError("chunk evidence coverage is incomplete")  # noqa: TRY301
     except (
         ChunkReviewError,
         OSError,
