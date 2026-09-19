@@ -229,6 +229,12 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 )
             chunked_evidence = tuple(loaded)
         else:
+            prompt_name = value.get("review_prompt_path")
+            if not isinstance(prompt_name, str) or Path(prompt_name).name != prompt_name:
+                raise ValueError("review prompt path")
+            prompt_path = path.parent / prompt_name
+            _assert_external_artifact(prompt_path, repo_root=repo_root, kind="review prompt")
+            prompt_bytes = prompt_path.read_bytes()
             command = provenance.get("reviewer_command")
             if not isinstance(command, list) or not all(isinstance(part, str) for part in command):
                 raise ValueError("reviewer command")
@@ -249,7 +255,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 base_sha=expected_base,
                 head_sha=expected_head,
                 mission_scope_path=value.get("mission_scope_path"),
-                prompt_bytes=raw_bytes if chunked_evidence else b"",
+                prompt_bytes=raw_bytes if chunked_evidence else prompt_bytes,
                 raw_output_bytes=raw_bytes,
                 final_result_bytes=final_bytes,
                 claude_deepseek_execution=one_shot_execution,

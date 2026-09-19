@@ -320,6 +320,9 @@ def _run_review(args: argparse.Namespace) -> Path:
             )
     _write(raw_path, raw)
     _write(final_path, final)
+    prompt_path = evidence / f"claude-deepseek-prompt-{head[:12]}-{run_id}.txt"
+    if not chunked:
+        _write(prompt_path, _canonical_prompt_bytes(prompt))
     receipt = {
         "protocol_version": PROTOCOL_VERSION,
         "receipt_version": "independent-review-receipt/v1",
@@ -336,6 +339,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         "mission_scope_path": scope_path,
         "mission_scope_sha256": sha256_bytes(scope_bytes),
         "review_prompt_sha256": sha256_bytes(_canonical_prompt_bytes(prompt)),
+        "review_prompt_path": prompt_path.name if not chunked else None,
         "review_started_at": started,
         "review_completed_at": completed,
         "review_result": normalized["review_result"],
