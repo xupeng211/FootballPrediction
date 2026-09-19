@@ -461,6 +461,13 @@ def test_invalid_workflow_class_caught_locally():
     assert any("CLASS_INVALID" in error for error in errors)
 
 
+def test_critical_workflow_class_is_accepted_by_metadata_contract():
+    errors = validate_pr_metadata(
+        _body(workflow_class="CRITICAL"), ["scripts/devops/agent_workflow.py"]
+    )
+    assert not any("CLASS_INVALID" in error for error in errors)
+
+
 def test_invalid_documentation_impact_caught_locally():
     body = _body().replace("| Capability changed? | yes |", "| Capability changed? | maybe |")
     errors = validate_pr_metadata(body, ["scripts/devops/agent_workflow.py"])

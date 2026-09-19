@@ -617,7 +617,8 @@ def validate_pr_metadata(  # noqa: C901, PLR0912
                 )
 
         workflow_values = rows.get("workflow class", [])
-        if len(workflow_values) != 1 or parse_workflow_class(pr_body) is None:
+        parsed_workflow_class = parse_workflow_class(pr_body)
+        if len(workflow_values) != 1 or parsed_workflow_class not in WORKFLOW_CLASSES:
             errors.append(
                 "AGENT_WORKFLOW_CLASS_INVALID: Scope must contain exactly one Workflow class of NORMAL, STRICT, or CRITICAL."
             )
