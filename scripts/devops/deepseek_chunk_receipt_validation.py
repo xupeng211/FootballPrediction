@@ -70,6 +70,13 @@ def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> 
         ):
             raise ChunkReviewError("chunk manifest binding mismatch")
         validate_manifest(manifest, diff)
+        top_chunks = top_evidence.get("chunks")
+        if (
+            not isinstance(top_chunks, list)
+            or len(chunks) != len(manifest.chunks)
+            or len(top_chunks) != len(manifest.chunks)
+        ):
+            raise ChunkReviewError("chunk evidence coverage is incomplete")
     except (
         ChunkReviewError,
         OSError,

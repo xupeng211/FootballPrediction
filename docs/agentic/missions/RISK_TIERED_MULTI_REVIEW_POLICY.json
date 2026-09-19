@@ -29,7 +29,8 @@
     "tests/unit/test_deepseek_review_chunks.py",
     "tests/unit/test_claude_deepseek_independent_review.py",
     "tests/unit/test_independent_review_protocol.py",
-    "tests/unit/test_strict_review_evidence.py"
+    "tests/unit/test_strict_review_evidence.py",
+    "tests/unit/test_agentic_workflow_v1.py"
   ],
   "authorized_prefixes": [],
   "excluded_paths": [],
