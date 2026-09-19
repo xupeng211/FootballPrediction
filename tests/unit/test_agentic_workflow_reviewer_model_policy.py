@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.devops import agent_workflow, codex_independent_review
+from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import (
     CLASSIFICATION_INVALID,
     CLASSIFICATION_STALE_TOOLING,
@@ -69,6 +69,7 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def _pinned_command() -> list[str]:

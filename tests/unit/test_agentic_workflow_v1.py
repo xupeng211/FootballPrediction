@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.ci.governance_growth_gate import check_local_worktree_growth
-from scripts.devops import agent_workflow, codex_independent_review
+from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import validate_receipt
 from scripts.devops.codex_review_contract import build_reviewer_command, validate_review_result
 from scripts.devops.codex_review_provenance import ReviewReceiptError
@@ -71,6 +71,7 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def test_agent_entry_points_to_canonical_workflow():

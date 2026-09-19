@@ -9,7 +9,12 @@ import subprocess
 
 import pytest
 
-from scripts.devops import agent_workflow, agent_workflow_preflight, codex_independent_review
+from scripts.devops import (
+    agent_workflow,
+    agent_workflow_preflight,
+    codex_independent_review,
+    codex_review_classification,
+)
 from scripts.devops.codex_review_receipt import _codex_prompt
 from scripts.ops import ai_workflow_gate
 from scripts.ops.helpers.agent_workflow_contract import (
@@ -96,6 +101,7 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def test_protected_stage_d_path_is_out_of_scope():
