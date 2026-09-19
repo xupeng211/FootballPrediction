@@ -87,6 +87,17 @@ def test_required_backend_must_be_eligible_in_active_registry():
     assert result.reasons == ("BACKEND_NOT_ELIGIBLE",)
 
 
+def test_explicit_empty_backend_eligibility_fails_closed():
+    result = evaluate_review_policy(
+        "CRITICAL",
+        _candidate(),
+        [_receipt(BACKEND_CODEX), _receipt(BACKEND_DEEPSEEK)],
+        backend_eligibility={},
+    )
+    assert result.status == "INVALID"
+    assert result.reasons == ("BACKEND_NOT_ELIGIBLE",)
+
+
 def test_critical_requires_both_independent_backends():
     result = evaluate_review_policy(
         "CRITICAL", _candidate(), [_receipt(BACKEND_CODEX), _receipt(BACKEND_DEEPSEEK)]

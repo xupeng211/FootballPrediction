@@ -401,10 +401,15 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             # requirement.  STALE_TOOLING preserves historical meaning but is never
             # converted into a current approval; INVALID never holds at all.
             approved = result.classification == CLASSIFICATION_VALID_CURRENT
+            review_pass = (
+                approved
+                and receipt.get("review_result") == "PASS"
+                and receipt.get("blocking_findings") == 0
+            )
             checks.append(
                 GateCheck(
                     "independent-review",
-                    "PASS" if approved and receipt.get("review_result") == "PASS" else "FAIL",
+                    "PASS" if review_pass else "FAIL",
                     f"engine=codex classification={result.classification} "
                     f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
                     f"blocking={receipt.get('blocking_findings')} "
@@ -414,7 +419,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             checks.append(
                 GateCheck(
                     "review-model-provenance",
-                    "PASS" if approved else "FAIL",
+                    "PASS" if review_pass else "FAIL",
                     f"model={result.review_model} effort={result.review_reasoning_effort} "
                     f"codex_cli_version={result.codex_cli_version} "
                     f"approved_model={result.approved_review_model} "
@@ -424,7 +429,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
             review_evidence.append(
                 ReviewEvidence(
                     BACKEND_CODEX,
-                    approved,
+                    review_pass,
                     str(receipt.get("review_result") or "NO_VERDICT"),
                     str(receipt.get("base_sha") or ""),
                     str(receipt.get("reviewed_head_sha") or ""),
@@ -438,7 +443,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     else:
         receipt = {}
         try:
-            codex_required = mission_scope is not None and BACKEND_CODEX in required_backends(
+            codex_required = mission_scope is None or BACKEND_CODEX in required_backends(
                 mission_scope.workflow_class, selected_backend=args.selected_backend
             )
         except (KeyError, TypeError, ValueError):

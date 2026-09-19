@@ -131,7 +131,9 @@ def evaluate_review_policy(
         required = required_backends(workflow_class, selected_backend=selected_backend)
     except ValueError as exc:
         return PolicyResult("INVALID", (str(exc),), (), (), 0)
-    eligibility = backend_eligibility or DEFAULT_BACKEND_ELIGIBILITY
+    eligibility = (
+        DEFAULT_BACKEND_ELIGIBILITY if backend_eligibility is None else backend_eligibility
+    )
     if any(workflow_class not in eligibility.get(backend, frozenset()) for backend in required):
         return PolicyResult("INVALID", ("BACKEND_NOT_ELIGIBLE",), required, (), 0)
     receipts = tuple(available_receipts)
