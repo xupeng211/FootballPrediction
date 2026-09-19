@@ -30,6 +30,7 @@ from scripts.devops.codex_review_provenance import (
     resolve_codex_binary,
 )
 from scripts.devops.codex_review_receipt import (
+    RECEIPT_SCHEMA_VERSION,
     ROOT,
     TARGET_BINDING_CODES,
     WRAPPER_NAME,
@@ -174,8 +175,11 @@ def _toolchain_reason_codes(facts: dict[str, Any]) -> tuple[list[str], str | Non
             if facts["wrapper_anchored"]
             else "WRAPPER_TOOLING_DRIFT_UNANCHORED"
         )
-    if facts["legacy_schema"]:
-        stale.append("RECEIPT_LEGACY_SCHEMA_V1")
+    receipt_schema_version = facts.get("receipt_schema_version")
+    if receipt_schema_version != RECEIPT_SCHEMA_VERSION:
+        stale.append(
+            "RECEIPT_LEGACY_SCHEMA_V1" if facts["legacy_schema"] else "RECEIPT_LEGACY_SCHEMA_V2"
+        )
     if facts["worktree_available"] is False:
         stale.append("REVIEW_WORKTREE_UNAVAILABLE")
     if facts["schema_file_available"] is False:

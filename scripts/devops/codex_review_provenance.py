@@ -25,7 +25,9 @@ class ReviewReceiptError(ValueError):
     """Raised when independent-review execution evidence is incomplete."""
 
 
-def observe_codex_cli_version(binary: Path, *, timeout_seconds: int = 60) -> str:
+def observe_codex_cli_version(
+    binary: Path, *, timeout_seconds: int = 60, environment: dict[str, str] | None = None
+) -> str:
     """Observe the installed Codex CLI version from the binary itself.
 
     The recorded CLI version must come from the same executable that runs the
@@ -40,6 +42,7 @@ def observe_codex_cli_version(binary: Path, *, timeout_seconds: int = 60) -> str
             text=True,
             check=False,
             timeout=timeout_seconds,
+            env=environment,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ReviewReceiptError(f"无法读取 Codex CLI version: {exc}") from exc
@@ -54,7 +57,7 @@ def observe_codex_cli_version(binary: Path, *, timeout_seconds: int = 60) -> str
     return match.group(1)
 
 
-def resolve_codex_binary(value: str) -> Path:
+def resolve_codex_binary(value: str, *, environment: dict[str, str] | None = None) -> Path:
     """Resolve the installed Codex CLI used for a fresh reviewer invocation.
 
     The selected assurance model permits the user's existing authenticated
@@ -66,10 +69,12 @@ def resolve_codex_binary(value: str) -> Path:
     if value != "codex":
         raise ReviewReceiptError("reviewer executable 只允许使用 PATH 中的 codex CLI")
     candidates: list[Path] = []
-    configured = os.environ.get("CODEX_CLI_PATH")
+    configured = (os.environ if environment is None else environment).get("CODEX_CLI_PATH")
     if configured:
         candidates.append(Path(configured))
-    resolved = shutil.which("codex")
+    resolved = shutil.which(
+        "codex", path=(os.environ if environment is None else environment).get("PATH")
+    )
     if resolved:
         candidates.append(Path(resolved))
     # Keep the system installation as a useful fallback when PATH is minimal.

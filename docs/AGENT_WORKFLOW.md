@@ -245,7 +245,8 @@ canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 
    `-c model_reasoning_effort="<REVIEW_REASONING_EFFORT>"`、`--json`、
    `--output-schema` 和独立 `--output-last-message`；review prompt 自带 exact base/head，
    不依赖 Builder 上下文，也不复用 persisted Builder session；
-3. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
+3. canonical Codex lane 由 runner 唯一的 isolation constructor 强制使用 repo 外、owner-only 的 project-controlled `CODEX_HOME` 与其官方 ChatGPT stored authentication；它清除 Builder 的 `CODEX_API_KEY`、`CODEX_ACCESS_TOKEN`、`OPENAI_*`、CLIProxyAPI/provider/base-url routing 和 caller `CODEX_HOME`，但保留通用 HTTP(S)/SOCKS proxy 与 CA transport settings。启动前必须安全检查 dedicated state=0700、auth file=0600、`codex login status` 显示 ChatGPT，或 fail-closed；
+4. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
 4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
    `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
    completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0；
@@ -291,7 +292,7 @@ evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉�
   receipt 记录的执行路径：升级后 PATH 指向新 executable、旧文件仍在原处时，旧 receipt 立刻降级为
   `STALE_TOOLING`（`CODEX_BINARY_DRIFT`），不会因为旧路径的 hash/version 仍自洽而继续冒充当前 review。
 - `STALE_TOOLING`：receipt 内部一致且 `INTEGRITY=INTACT`，但被记录的工具链或 policy 之后发生了合法变化
-  （wrapper 升级、Codex CLI/binary 升级，或 v1 legacy receipt 早于 model pinning），或者 review worktree
+  （wrapper 升级、Codex CLI/binary 升级，或早于 canonical auth/transport isolation 的 v1/v2 legacy receipt），或者 review worktree
   已不可用。合法升级也可能把 Codex CLI 装到新路径并删除旧 executable：receipt 记录的 executable 不再
   可用时用 `CODEX_BINARY_UNAVAILABLE`、当前 Codex CLI 完全无法解析时用 `CODEX_BINARY_UNRESOLVED`，
   两者都表示“记录的工具链无法被证明仍是当前 toolchain”，都只降级为 `STALE_TOOLING`，不构成 tamper。
