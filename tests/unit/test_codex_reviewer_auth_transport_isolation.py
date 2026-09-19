@@ -44,6 +44,9 @@ def test_builder_provider_and_auth_overrides_are_scrubbed_but_network_proxy_surv
         "HTTP_PROXY": "http://127.0.0.1:7897",
         "HTTPS_PROXY": "http://127.0.0.1:7897",
         "ALL_PROXY": "socks5://127.0.0.1:7897",
+        "CODEX_CA_CERTIFICATE": "/builder-controlled-ca.pem",
+        "SSL_CERT_FILE": "/builder-controlled-cert.pem",
+        "SSL_CERT_DIR": "/builder-controlled-certs",
         "OPENAI_BASE_URL": "http://builder-proxy.invalid",
         "OPENAI_API_KEY": "not-to-be-copied",
         "CODEX_API_KEY": "not-to-be-copied",
@@ -64,6 +67,10 @@ def test_builder_provider_and_auth_overrides_are_scrubbed_but_network_proxy_surv
     assert environment["HTTP_PROXY"] == source["HTTP_PROXY"]
     assert environment["HTTPS_PROXY"] == source["HTTPS_PROXY"]
     assert environment["ALL_PROXY"] == source["ALL_PROXY"]
+    assert all(
+        name not in environment
+        for name in ("CODEX_CA_CERTIFICATE", "SSL_CERT_FILE", "SSL_CERT_DIR")
+    )
 
 
 def test_preflight_rejects_missing_or_insecure_dedicated_auth(

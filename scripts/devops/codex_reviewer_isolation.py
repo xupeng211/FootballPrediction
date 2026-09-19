@@ -34,8 +34,9 @@ CANONICAL_CODEX_BINARY = Path("/usr/lib/chatgpt/resources/codex")
 # without allowing a caller-supplied PATH entry to shadow the child command.
 CANONICAL_EXEC_PATH = "/usr/local/bin:/usr/bin:/bin"
 
-# These are network transport settings, not model/provider selection.  They
-# remain available for installations that need an egress proxy or local CA.
+# Generic proxy variables are network transport settings, not model/provider
+# selection.  Trust-anchor variables stay out of the canonical lane because a
+# Builder-controlled CA would change the authentication transport's trust root.
 NETWORK_TRANSPORT_VARIABLES = frozenset(
     {
         "HTTP_PROXY",
@@ -46,9 +47,6 @@ NETWORK_TRANSPORT_VARIABLES = frozenset(
         "https_proxy",
         "all_proxy",
         "no_proxy",
-        "CODEX_CA_CERTIFICATE",
-        "SSL_CERT_FILE",
-        "SSL_CERT_DIR",
     }
 )
 
