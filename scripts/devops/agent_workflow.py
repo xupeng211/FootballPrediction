@@ -495,7 +495,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                     repo_root / "docs/agentic/independent_review_backends.json"
                 ),
             )
-        except (KeyError, OSError, TypeError, ValueError):
+        except (KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
             policy = evaluate_review_policy("UNKNOWN", CandidateBinding("", "", "", "", ""), ())
         checks.append(
             GateCheck(
