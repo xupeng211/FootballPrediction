@@ -66,16 +66,35 @@ BUILDER_PROCESS_INJECTION_VARIABLES = frozenset(
     {
         "DYLD_INSERT_LIBRARIES",
         "DYLD_LIBRARY_PATH",
+        "GCONV_PATH",
         "JAVA_TOOL_OPTIONS",
+        "LD_AUDIT",
         "LD_LIBRARY_PATH",
         "LD_PRELOAD",
+        "OPENSSL_CONF",
+        "OPENSSL_ENGINES",
+        "OPENSSL_MODULES",
         "NODE_OPTIONS",
         "NODE_PATH",
+        "NODE_TLS_REJECT_UNAUTHORIZED",
         "PERL5OPT",
         "PYTHONHOME",
+        "PYTHONINSPECT",
         "PYTHONPATH",
+        "PYTHONSTARTUP",
         "RUBYOPT",
+        "SSLKEYLOGFILE",
         "_JAVA_OPTIONS",
+        "BASH_ENV",
+        "ENV",
+        "GIT_CONFIG_GLOBAL",
+        "GIT_CONFIG_NOSYSTEM",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_PROXY_COMMAND",
+        "GIT_SSH",
+        "GIT_SSH_COMMAND",
+        "GIT_SSL_NO_VERIFY",
+        "WGETRC",
     }
 )
 
@@ -167,6 +186,21 @@ def canonical_reviewer_environment(
     return environment
 
 
+def _builder_environment_leaks(
+    source: Mapping[str, str], environment: Mapping[str, str]
+) -> set[str]:
+    """Return Builder-controlled names that survived environment sanitization."""
+
+    return {
+        name
+        for name in source
+        if name != "CODEX_HOME"
+        and _is_builder_routing_or_auth_override(name)
+        and name in environment
+        and not _is_safe_ca_transport_value(name, environment[name])
+    }
+
+
 def canonical_codex_binary() -> Path:
     """Return the fixed official Codex executable for the canonical lane.
 
@@ -235,13 +269,10 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
 
     _assert_private_home()
     _assert_no_custom_provider_configuration()
-    environment = canonical_reviewer_environment(codex_binary=codex_binary)
-    inherited = {name for name in os.environ if _is_builder_routing_or_auth_override(name)}
-    if any(
-        name in environment and not _is_safe_ca_transport_value(name, environment[name])
-        for name in inherited
-        if name != "CODEX_HOME"
-    ):
+    source = dict(os.environ)
+    environment = canonical_reviewer_environment(source, codex_binary=codex_binary)
+    leaked_names = _builder_environment_leaks(source, environment)
+    if leaked_names:
         raise ReviewReceiptError("Builder auth/provider routing leaked into canonical environment")
     if environment.get("CODEX_HOME") != str(CANONICAL_CODEX_HOME):
         raise ReviewReceiptError("canonical CODEX_HOME 未被强制设置")
@@ -269,14 +300,20 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
         f"{status.stdout}\n{status.stderr}"
     ):
         raise ReviewReceiptError("canonical reviewer 未建立官方 ChatGPT authentication")
+    custom_provider_leaks = any(
+        name.upper().startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY")) for name in leaked_names
+    )
+    cliproxyapi_leaks = any(
+        name.upper().startswith(("CLIPROXY", "CLI_PROXY")) for name in leaked_names
+    )
     return {
         "policy": ISOLATION_POLICY_VERSION,
         "canonical_codex_home_external": True,
         "canonical_codex_home_owner_only": True,
         "authentication_mode": "official_chatgpt_stored_state",
-        "builder_auth_override_inherited": False,
-        "custom_model_provider_inherited": False,
-        "cliproxyapi_routing_inherited": False,
+        "builder_auth_override_inherited": bool(leaked_names),
+        "custom_model_provider_inherited": custom_provider_leaks,
+        "cliproxyapi_routing_inherited": cliproxyapi_leaks,
         "generic_network_proxy_preserved": any(
             name in environment for name in NETWORK_TRANSPORT_VARIABLES if "PROXY" in name.upper()
         ),

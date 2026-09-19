@@ -52,9 +52,17 @@ def test_builder_provider_and_auth_overrides_are_scrubbed_but_network_proxy_surv
         "SSL_CERT_FILE": "/builder-controlled-cert.pem",
         "SSL_CERT_DIR": "/builder-controlled-certs",
         "LD_PRELOAD": "/builder-controlled-preload.so",
+        "LD_AUDIT": "/builder-controlled-audit.so",
+        "GCONV_PATH": "/builder-controlled-gconv",
         "NODE_OPTIONS": "--require=/builder-controlled-hook.js",
         "NODE_PATH": "/builder-controlled-node-modules",
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0",
+        "SSLKEYLOGFILE": "/builder-controlled-keys.log",
         "PYTHONPATH": "/builder-controlled-python",
+        "PYTHONSTARTUP": "/builder-controlled-startup.py",
+        "BASH_ENV": "/builder-controlled-bash-env",
+        "GIT_SSH_COMMAND": "/builder-controlled-git-ssh",
+        "GIT_SSL_NO_VERIFY": "1",
         "OPENAI_BASE_URL": "http://builder-proxy.invalid",
         "OPENAI_API_KEY": "not-to-be-copied",
         "CODEX_API_KEY": "not-to-be-copied",
@@ -86,9 +94,17 @@ def test_builder_provider_and_auth_overrides_are_scrubbed_but_network_proxy_surv
             "SSL_CERT_FILE",
             "SSL_CERT_DIR",
             "LD_PRELOAD",
+            "LD_AUDIT",
+            "GCONV_PATH",
             "NODE_OPTIONS",
             "NODE_PATH",
+            "NODE_TLS_REJECT_UNAUTHORIZED",
+            "SSLKEYLOGFILE",
             "PYTHONPATH",
+            "PYTHONSTARTUP",
+            "BASH_ENV",
+            "GIT_SSH_COMMAND",
+            "GIT_SSL_NO_VERIFY",
         )
     )
 
@@ -171,6 +187,33 @@ def test_valid_official_auth_preflight_uses_fixed_home_and_preserves_proxy(
     assert seen["CODEX_HOME"] == str(home)
     assert "OPENAI_BASE_URL" not in seen
     assert "--ignore-user-config" in _command(tmp_path)
+
+
+def test_preflight_rejects_environment_leak_even_if_constructor_returns_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    home = _home(tmp_path)
+    monkeypatch.setattr(isolation, "CANONICAL_CODEX_HOME", home)
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://builder-proxy.invalid")
+    monkeypatch.setattr(
+        isolation,
+        "canonical_reviewer_environment",
+        lambda *_args, **_kwargs: {
+            "CODEX_HOME": str(home),
+            "OPENAI_BASE_URL": "http://builder-proxy.invalid",
+        },
+    )
+    monkeypatch.setattr(
+        isolation.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="Logged in using ChatGPT", stderr=""
+        ),
+    )
+    with pytest.raises(ReviewReceiptError, match="leaked"):
+        isolation.canonical_reviewer_preflight(
+            codex_binary=Path("/test/codex"), command=_command(tmp_path)
+        )
 
 
 def test_preflight_rejects_non_chatgpt_auth_or_custom_provider_config(
