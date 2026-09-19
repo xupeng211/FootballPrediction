@@ -224,6 +224,32 @@ def test_current_receipt_matching_policy_is_valid_current(tmp_path: Path):
     assert result.review_reasoning_effort == REVIEW_REASONING_EFFORT_PINNED
 
 
+def test_receipt_policy_version_is_bound_to_current_runtime_policy(tmp_path: Path):
+    """A self-consistent receipt with an old auth policy cannot approve now."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    document = json.loads(receipt.read_text(encoding="utf-8"))
+    document["isolation"]["canonical_auth_transport"]["policy"] = (
+        "canonical-codex-auth-transport-isolation/legacy"
+    )
+    unsigned = dict(document)
+    unsigned.pop("integrity")
+    document["integrity"] = {
+        "receipt_payload_sha256": hashlib.sha256(_canonical_json(unsigned)).hexdigest()
+    }
+    receipt.write_text(
+        json.dumps(document, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert "CANONICAL_AUTH_TRANSPORT_INVALID" in result.reason_codes
+    assert result.current_approval_eligible is False
+    with pytest.raises(ReviewReceiptError, match="CANONICAL_AUTH_TRANSPORT_INVALID"):
+        validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
+
+
 def test_historical_audit_never_produces_current_approval(tmp_path: Path):
     """A historical query skips the exact-head check, so it cannot approve."""
 

@@ -36,6 +36,7 @@ from scripts.devops.codex_review_output import (  # noqa: E402
     reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
+from scripts.devops.codex_reviewer_isolation import ISOLATION_POLICY_VERSION  # noqa: E402
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -417,6 +418,7 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
     if schema_version == RECEIPT_SCHEMA_VERSION:
         canonical_auth = isolation.get("canonical_auth_transport")
         required_auth_facts = {
+            "policy": ISOLATION_POLICY_VERSION,
             "canonical_codex_home_external": True,
             "canonical_codex_home_owner_only": True,
             "authentication_mode": "official_chatgpt_stored_state",
