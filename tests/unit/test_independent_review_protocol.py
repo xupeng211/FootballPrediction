@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -76,6 +77,21 @@ def _raw_output(final_result_bytes: bytes, thread_id: str = THREAD_ID) -> bytes:
 
 def _registry() -> dict:
     return receipts.load_backend_registry(ROOT / "docs/agentic/independent_review_backends.json")
+
+
+def test_chunk_validator_and_receipt_modules_are_import_order_independent():
+    script = (
+        "import scripts.devops.deepseek_chunk_receipt_validation; "
+        "import scripts.devops.independent_review_receipt"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def _receipt() -> dict:
@@ -580,6 +596,10 @@ def test_bootstrap_p2_negative_control_old_validator_accepts_self_rehashed_fake_
 def test_registry_rejects_duplicate_and_malformed_entries():
     raw = json.loads((ROOT / "docs/agentic/independent_review_backends.json").read_text())
     raw["backends"].append(dict(raw["backends"][0]))
+    with pytest.raises(IndependentReviewProtocolError):
+        receipts.validate_backend_registry(raw)
+    raw = json.loads((ROOT / "docs/agentic/independent_review_backends.json").read_text())
+    raw["backends"][0]["task_eligibility"] = [{}]
     with pytest.raises(IndependentReviewProtocolError):
         receipts.validate_backend_registry(raw)
 

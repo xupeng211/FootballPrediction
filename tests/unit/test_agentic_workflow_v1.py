@@ -381,7 +381,9 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
         "scripts.devops.agent_workflow_preflight.run_preflight",
         lambda *_args, **_kwargs: preflight,
     )
-    assert agent_workflow.merge_ready_command(args) == 0
+    # Workflow-governance paths are CRITICAL under the risk-tiered policy and
+    # therefore cannot reach merge-ready with only the Codex receipt.
+    assert agent_workflow.merge_ready_command(args) == 1
 
 
 @pytest.mark.parametrize("forbidden_status", ["PASS", "UNKNOWN"])
@@ -459,6 +461,13 @@ def test_invalid_workflow_class_caught_locally():
         _body(workflow_class="MAYBE"), ["scripts/devops/agent_workflow.py"]
     )
     assert any("CLASS_INVALID" in error for error in errors)
+
+
+def test_critical_workflow_class_is_accepted_by_metadata_contract():
+    errors = validate_pr_metadata(
+        _body(workflow_class="CRITICAL"), ["scripts/devops/agent_workflow.py"]
+    )
+    assert not any("CLASS_INVALID" in error for error in errors)
 
 
 def test_invalid_documentation_impact_caught_locally():
@@ -555,6 +564,34 @@ def test_remote_merge_check_rejects_pending_pr_review_evidence(
     assert check.status == "FAIL"
     assert "final PR body review evidence invalid" in check.message
     assert evidence["verdict"] == "FAIL"
+
+
+def test_remote_merge_check_keeps_receipt_authority_local(monkeypatch: pytest.MonkeyPatch):
+    head = "2" * 40
+    critical_body = _body(
+        workflow_class="CRITICAL",
+        review_result="PASS",
+        reviewed_sha=head,
+        provider="codex-cli, claude-code-deepseek",
+    ).replace("| Task type | STRICT |", "| Task type | CRITICAL |")
+    fake_result = SimpleNamespace(
+        findings=[],
+        verdict="PASS",
+        pr=SimpleNamespace(
+            base_sha=BASE_SHA,
+            head_sha=head,
+            body=critical_body,
+        ),
+    )
+    monkeypatch.setattr("scripts.devops.pr_ready_check.evaluate", lambda _pr_number: fake_result)
+    check, evidence, _pr_body = agent_workflow._remote_pr_check(
+        1904,
+        changed_paths={"scripts/devops/agent_workflow.py"},
+        expected_base=BASE_SHA,
+        expected_head=head,
+    )
+    assert check.status == "PASS"
+    assert evidence["verdict"] == "PASS"
 
 
 def test_remote_merge_check_rejects_different_pr_base(monkeypatch: pytest.MonkeyPatch):

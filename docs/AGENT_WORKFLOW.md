@@ -17,7 +17,7 @@
 
 ## 2. 任务分类
 
-NORMAL 适合局部、低风险变更。STRICT 适合 DB/schema/write、ingestion、identity/auth/security、生产 runtime、training/model activation、关键架构和高影响破坏性行为。无法由现有 path/task classifier 安全分类时按 STRICT 处理，并在 PR `Risk` 说明原因。
+NORMAL 适合局部、低风险变更。STRICT 适合一般 DB/schema/write、ingestion 与生产 runtime 变更。CRITICAL 用于 review/merge authority、credential/auth、生产授权、破坏性或难回滚操作、production model decision、Stage D live authority 与 fail-closed controls；无法由现有 task/path classifier 安全分类时 fail closed，并在 PR `Risk` 说明原因。
 
 NORMAL：
 
@@ -37,7 +37,7 @@ branch/worktree → base/head snapshot → implementation
 → owner decision → main Production Gate exact merge SHA → DONE
 ```
 
-NORMAL 不默认运行本地 Codex review、DeepSeek、codex-loop、manifest/audit package 或 GitHub Codex Review。STRICT 只要求一个 primary independent reviewer；额外意见只能是 advisory，并且不能改变 owner 的 merge authority。
+Review policy source of truth is `scripts/devops/review_policy.py`: NORMAL requires one DeepSeek review by default (an explicit Codex selection is allowed); STRICT requires one Codex review; CRITICAL requires both Codex and DeepSeek reviews. Backend infrastructure failure is NO_VERDICT and never silently changes backend. Both CRITICAL receipts must bind the identical base/head/diff/mission/scope; P3 is surfaced but non-blocking. When the DeepSeek logical review is transported as multiple chunks, the chunks are one logical reviewer: the manifest, full byte coverage and trusted chunk evidence are validated as one aggregate receipt. No individual chunk is required to receive the entire diff, and this does not add a reviewer or a remote-attestation requirement.
 STRICT PR 使用一个最小、provider-neutral 的 `Strict Review Evidence` contract 绑定 review target 与当前完整 PR HEAD。V1 的本地 pre-review 阶段可暂时声明 `Result=PENDING`；它永远不能让 PR merge-ready，也不能通过最终 required remote governance CI。真正的独立 Codex receipt 产生后，Builder 将其更新为 `PASS` 或 `FINDINGS_RESOLVED`。现有 required governance path 同时复用 task/path classifier，拒绝高风险变更用 NORMAL 声明绕过 review；evidence 字段重复或多列也 fail-closed。它不运行 reviewer、不生成 manifest、不决定 merge；GitHub Codex Review 仍是 advisory。
 
 ## 3. 验证 profile
@@ -80,7 +80,7 @@ profile 的边界：
 ## Rollback
 ```
 
-内容必须是实际事实：命令、exit code、覆盖范围、runtime 影响和回滚办法。`Scope` 必须包含 `Workflow class = NORMAL` 或 `STRICT`。STRICT 的 evidence 只包含 version、task type、provider、reviewed full SHA、result 和带时区 timestamp；完整 SHA 必须等于当前 PR HEAD。普通 PR 不生成空 finding、manifest、snapshot 或 phase report。高风险路径需要的授权信息只在该 PR 的 `Risk` 之外按模板提示增加，不为 NORMAL 增加状态机式正文。
+内容必须是实际事实：命令、exit code、覆盖范围、runtime 影响和回滚办法。`Scope` 必须包含 `Workflow class = NORMAL`、`STRICT` 或 `CRITICAL`。STRICT/CRITICAL 的 evidence 只包含 version、task type、provider、reviewed full SHA、result 和带时区 timestamp；完整 SHA 必须等于当前 PR HEAD。普通 PR 不生成空 finding、manifest、snapshot 或 phase report。高风险路径需要的授权信息只在该 PR 的 `Risk` 之外按模板提示增加，不为 NORMAL 增加状态机式正文。
 
 ### 4.1 Current-state documentation backflow
 
@@ -469,3 +469,11 @@ review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_
 和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
 PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
 required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。
+
+CRITICAL 的 physical receipt authority 仍属于本地 `agent-merge-ready`/Execution Controller：
+它必须分别消费并验证当前 exact-head 的 Codex 与 DeepSeek receipt。GitHub required
+Production Gate 不读取 source tree 外的 owner-only receipt directory，也不声称通过
+PR metadata 对 receipt payload、provider execution 或 hostile-builder resistance 做远端
+证明；它只负责 exact PR HEAD、mission/workflow metadata、required tests/static/governance
+checks 和 provider-neutral 最终 evidence contract。Owner/Controller 只有在本地双 receipt
+validation 与远端 required CI 同时通过时才可 merge。

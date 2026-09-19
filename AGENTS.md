@@ -74,7 +74,7 @@ feature branch/worktree → 实现 → make verify-targeted → commit/push → 
 → required CI → owner merge decision → main Production Gate → DONE
 ```
 
-NORMAL 默认不要求本地 Codex review、DeepSeek audit、codex-loop、manifest package 或 GitHub Codex review。
+NORMAL 必须有一份当前有效的独立 review，默认且确定性选择 `claude-code-deepseek`；Controller 可明确选择 Codex，绝不因基础设施故障静默 fallback。
 
 ### STRICT
 
@@ -84,8 +84,14 @@ DB/schema/write boundary、data ingestion、identity/auth/security、生产 runt
 relevant/full validation → 一个 exact-head independent adversarial review → PR
 ```
 
-一个 STRICT 任务默认只有一个 primary independent reviewer。GitHub Codex Review 可以作为 advisory second opinion，但不是 approval 或 required status。
+STRICT 的唯一必需 primary independent reviewer 是 `codex-cli`；DeepSeek 只能作为 advisory，不能替代 Codex。
 STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider、结果、时间戳和被审查的完整 40 字符 SHA；required governance path 验证 evidence 是否存在、格式正确且绑定当前 PR HEAD，并用现有 task/path classifier 拒绝高风险变更声明为 NORMAL 来绕过 review。
+
+### CRITICAL
+
+改变 review authority、凭据/认证、生产授权、不可逆数据操作、模型生产决策或 fail-closed 控制的任务必须使用 CRITICAL。它要求同一 base/head/diff/mission/scope 上彼此独立的 `codex-cli` 与 `claude-code-deepseek` 两份 current receipt；任一缺失、NO_VERDICT、stale、无效或 P0/P1/P2 都 fail closed。P3 始终记录但不阻塞。不得隐式降级 class 或 fallback backend。
+
+CRITICAL receipt 的 authority split 保持在现有 `ENGINEERING_INDEPENDENT_REVIEW` assurance model 内：本地 `agent-merge-ready`/Execution Controller 读取并验证 source tree 外的 owner-only physical receipts；GitHub required CI 不读取这些本地 external files，也不把 PR 正文自填的 provider/result 当作 receipt validity。远端 CI 只验证 exact PR HEAD、mission/workflow metadata、required checks 和最终 review-evidence contract；Owner/Controller 只有在本地双 receipt validation 与远端 required CI 均通过后才可 merge。这不提供 cryptographic 或 hostile-builder resistance。
 
 ## 4. Canonical validation profiles
 
@@ -116,7 +122,7 @@ PR 使用唯一模板 [.github/pull_request_template.md](.github/pull_request_te
 Summary / Scope / Tests / Risk / Rollback
 ```
 
-`Scope` 必须说明 task type、变更路径和 runtime behavior 是否变化；还要声明 `Workflow class = NORMAL` 或 `STRICT`；`Tests` 必须写实际命令及结果；`Risk` 必须说明副作用边界；高风险路径另加模板中要求的授权字段。STRICT evidence 只证明一次独立 review 对应当前 exact HEAD，不运行 review、不替代 TEST/CI，也不决定 merge。
+`Scope` 必须说明 task type、变更路径和 runtime behavior 是否变化；还要声明 `Workflow class = NORMAL`、`STRICT` 或 `CRITICAL`；`Tests` 必须写实际命令及结果；`Risk` 必须说明副作用边界。实际 required backend/count 由 canonical policy evaluator 决定，receipt 不运行 review、不替代 TEST/CI。
 
 PR 生命周期：
 

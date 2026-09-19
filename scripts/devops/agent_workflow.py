@@ -23,21 +23,26 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# `classify_receipt` is the three-state provenance classifier;
-# `validate_receipt` is exactly `classify_receipt(...) == VALID_CURRENT` expressed
-# as a fail-closed raise.  The merge gate below uses the classifier directly so
-# that STALE_TOOLING and INVALID are both reported with machine-readable reasons
-# while remaining equally non-approving.
 from scripts.devops.codex_review_classification import (  # noqa: E402
     CLASSIFICATION_VALID_CURRENT,
     classify_receipt,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
 from scripts.devops.codex_review_receipt import git_blob_sha256, sha256_file  # noqa: E402
+from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence  # noqa: E402
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
     normalize_full_sha,
+)
+from scripts.devops.review_policy import (  # noqa: E402
+    BACKEND_CODEX,
+    BACKEND_DEEPSEEK,
+    CandidateBinding,
+    ReviewEvidence,
+    evaluate_review_policy,
+    load_active_backend_eligibility,
+    required_backends,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     CONTRACT_SCHEMA_VERSION,
@@ -64,17 +69,66 @@ class GateCheck:
     message: str
 
 
-def _git(args: list[str], repo_root: Path) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-        check=False,
+def _policy_review_projection(policy: Any, evidence: list[ReviewEvidence]) -> dict[str, Any]:
+    """Project the policy-owned receipt into backend-neutral audit fields.
+
+    ``merge-ready`` historically exposed Codex receipt fields directly. That
+    is insufficient when NORMAL is satisfied by the policy's default DeepSeek
+    reviewer, because no Codex receipt is expected in that path. The policy
+    result and its already validated backend evidence are the authority for
+    this projection; PR metadata is never used as receipt proof.
+    """
+
+    if policy is None or policy.status != "SATISFIED":
+        return {}
+    selected = next(
+        (item for item in evidence if item.backend_id in policy.satisfied_backends),
+        None,
     )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or f"git {' '.join(args)} failed")
-    return result.stdout.strip()
+    if selected is None:
+        return {}
+    counts = selected.finding_counts_by_severity
+    blocking = (
+        sum(counts[level] for level in ("P0", "P1", "P2"))
+        if isinstance(counts, dict)
+        and all(
+            isinstance(counts.get(level), int) and not isinstance(counts.get(level), bool)
+            for level in ("P0", "P1", "P2")
+        )
+        else "UNKNOWN"
+    )
+    valid = (
+        selected.trusted
+        and not selected.infrastructure_failure
+        and selected.result == "PASS"
+        and blocking == 0
+        and bool(selected.head_sha)
+    )
+    return {
+        "independent_review_present": "YES" if valid else "NO",
+        "independent_review_result": selected.result,
+        "receipt_classification": CLASSIFICATION_VALID_CURRENT if valid else "UNKNOWN",
+        "receipt_integrity": "INTACT" if valid else "UNKNOWN",
+        "receipt_reason_codes": [],
+        "review_backend": selected.backend_id,
+        "review_model": selected.review_model or "UNKNOWN",
+        "review_reasoning_effort": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "approved_review_model": selected.review_model or "UNKNOWN",
+        "approved_review_reasoning_effort": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "observed_codex_cli_version": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "codex_cli_version": (
+            "NOT_APPLICABLE" if selected.backend_id == BACKEND_DEEPSEEK else "UNKNOWN"
+        ),
+        "model_provenance_valid": "YES" if valid else "NO",
+        "reviewed_head_sha": selected.head_sha or "UNKNOWN",
+        "blocking_findings": blocking,
+    }
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -87,8 +141,17 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _status(value: str | None) -> str:
-    return (value or "UNKNOWN").strip().upper()
+def _git(args: list[str], repo_root: Path) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or f"git {' '.join(args)} failed")
+    return result.stdout.strip()
 
 
 def _load_exact_mission_scope(
@@ -376,46 +439,144 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     checks.append(local_check)
 
     classification: dict[str, Any] = {}
-    try:
-        result = classify_receipt(
-            Path(args.receipt),
-            repo_root=repo_root,
-            current_head=actual_head,
-            expected_base=base_sha,
-            expected_mission_id=args.mission_id,
-            expected_mission_scope_file=Path(args.mission_scope_file),
-        )
-    except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
-        receipt = {}
-        checks.append(GateCheck("independent-review", "FAIL", str(exc)))
-        checks.append(GateCheck("review-model-provenance", "FAIL", str(exc)))
+    review_evidence: list[ReviewEvidence] = []
+    if args.receipt:
+        try:
+            result = classify_receipt(
+                Path(args.receipt),
+                repo_root=repo_root,
+                current_head=actual_head,
+                expected_base=base_sha,
+                expected_mission_id=args.mission_id,
+                expected_mission_scope_file=Path(args.mission_scope_file),
+            )
+        except (ReviewReceiptError, ExactHeadError, OSError, ValueError) as exc:
+            receipt = {}
+            checks.append(GateCheck("independent-review", "FAIL", str(exc)))
+            checks.append(GateCheck("review-model-provenance", "FAIL", str(exc)))
+        else:
+            receipt = result.receipt or {}
+            classification = result.to_dict()
+            # Only VALID_CURRENT may satisfy the current exact-head review
+            # requirement.  STALE_TOOLING preserves historical meaning but is never
+            # converted into a current approval; INVALID never holds at all.
+            approved = result.classification == CLASSIFICATION_VALID_CURRENT
+            review_pass = (
+                approved
+                and receipt.get("review_result") == "PASS"
+                and receipt.get("blocking_findings") == 0
+            )
+            checks.append(
+                GateCheck(
+                    "independent-review",
+                    "PASS" if review_pass else "FAIL",
+                    f"engine=codex classification={result.classification} "
+                    f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
+                    f"blocking={receipt.get('blocking_findings')} "
+                    f"reasons={'/'.join(result.reason_codes) or 'NONE'}",
+                )
+            )
+            checks.append(
+                GateCheck(
+                    "review-model-provenance",
+                    "PASS" if review_pass else "FAIL",
+                    f"model={result.review_model} effort={result.review_reasoning_effort} "
+                    f"codex_cli_version={result.codex_cli_version} "
+                    f"approved_model={result.approved_review_model} "
+                    f"approved_effort={result.approved_review_reasoning_effort}",
+                )
+            )
+            review_evidence.append(
+                ReviewEvidence(
+                    BACKEND_CODEX,
+                    review_pass,
+                    str(receipt.get("review_result") or "NO_VERDICT"),
+                    str(receipt.get("base_sha") or ""),
+                    str(receipt.get("reviewed_head_sha") or ""),
+                    str(receipt.get("diff_sha256") or ""),
+                    str(receipt.get("mission_id") or ""),
+                    str(receipt.get("mission_scope_sha256") or ""),
+                    receipt.get("finding_counts_by_severity") or {},
+                    not approved,
+                )
+            )
     else:
-        receipt = result.receipt or {}
-        classification = result.to_dict()
-        # Only VALID_CURRENT may satisfy the current exact-head review
-        # requirement.  STALE_TOOLING preserves historical meaning but is never
-        # converted into a current approval; INVALID never holds at all.
-        approved = result.classification == CLASSIFICATION_VALID_CURRENT
-        checks.append(
-            GateCheck(
-                "independent-review",
-                "PASS" if approved and receipt.get("review_result") == "PASS" else "FAIL",
-                f"engine=codex classification={result.classification} "
-                f"integrity={result.integrity} head={receipt.get('reviewed_head_sha')} "
-                f"blocking={receipt.get('blocking_findings')} "
-                f"reasons={'/'.join(result.reason_codes) or 'NONE'}",
+        receipt = {}
+        try:
+            codex_required = mission_scope is None or BACKEND_CODEX in required_backends(
+                mission_scope.workflow_class, selected_backend=args.selected_backend
+            )
+        except (KeyError, TypeError, ValueError):
+            codex_required = True
+        for name, required_message in (
+            ("independent-review", "Codex receipt required by policy"),
+            ("review-model-provenance", "Codex provenance required by policy"),
+        ):
+            checks.append(
+                GateCheck(
+                    name,
+                    "FAIL" if codex_required else "PASS",
+                    required_message if codex_required else "Codex receipt not required",
+                )
+            )
+
+    if args.deepseek_receipt and mission_scope_hash is not None:
+        review_evidence.append(
+            _deepseek_receipt_evidence(
+                Path(args.deepseek_receipt),
+                repo_root=repo_root,
+                expected_base=base_sha,
+                expected_head=expected_head,
+                expected_mission_id=args.mission_id,
+                expected_scope_hash=mission_scope_hash,
             )
         )
+    if mission_scope is not None and mission_scope_hash is not None:
+        try:
+            policy = evaluate_review_policy(
+                mission_scope.workflow_class,
+                CandidateBinding(
+                    base_sha,
+                    expected_head,
+                    __import__("hashlib")
+                    .sha256(
+                        subprocess.run(
+                            [
+                                "git",
+                                "diff",
+                                "--binary",
+                                "--no-ext-diff",
+                                f"{base_sha}...{expected_head}",
+                            ],
+                            cwd=repo_root,
+                            capture_output=True,
+                            check=True,
+                        ).stdout
+                    )
+                    .hexdigest(),
+                    args.mission_id,
+                    mission_scope_hash,
+                ),
+                review_evidence,
+                selected_backend=args.selected_backend,
+                backend_eligibility=load_active_backend_eligibility(
+                    repo_root / "docs/agentic/independent_review_backends.json"
+                ),
+            )
+        except (KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+            policy = evaluate_review_policy("UNKNOWN", CandidateBinding("", "", "", "", ""), ())
         checks.append(
             GateCheck(
-                "review-model-provenance",
-                "PASS" if approved else "FAIL",
-                f"model={result.review_model} effort={result.review_reasoning_effort} "
-                f"codex_cli_version={result.codex_cli_version} "
-                f"approved_model={result.approved_review_model} "
-                f"approved_effort={result.approved_review_reasoning_effort}",
+                "review-policy",
+                "PASS" if policy.status == "SATISFIED" else "FAIL",
+                "; ".join(policy.reasons) or "SATISFIED",
             )
         )
+    else:
+        policy = None
+        checks.append(GateCheck("review-policy", "FAIL", "mission scope unavailable"))
+
+    policy_projection = _policy_review_projection(policy, review_evidence)
 
     exact_check = next(
         (check for check in checks if check.name == "exact-head"), GateCheck("", "UNKNOWN", "")
@@ -430,8 +591,8 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
     )
     machine_protected = "PASS" if machine_safety_pass else "UNKNOWN"
     machine_forbidden = "NO" if machine_safety_pass else "UNKNOWN"
-    declared_protected = _status(args.protected_invariants)
-    declared_forbidden = _status(args.forbidden_side_effects)
+    declared_protected = (args.protected_invariants or "UNKNOWN").strip().upper()
+    declared_forbidden = (args.forbidden_side_effects or "UNKNOWN").strip().upper()
     checks.append(
         GateCheck(
             "protected-invariants",
@@ -490,27 +651,68 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
         ).status
         == "PASS"
         else "NO",
-        "independent_review_present": "YES" if receipt else "NO",
-        "independent_review_result": receipt.get("review_result", "UNKNOWN"),
-        "receipt_classification": classification.get("classification", "UNKNOWN"),
-        "receipt_integrity": classification.get("integrity", "UNKNOWN"),
-        "receipt_reason_codes": classification.get("reason_codes", []),
-        "review_model": classification.get("review_model") or "UNKNOWN",
-        "review_reasoning_effort": classification.get("review_reasoning_effort") or "UNKNOWN",
-        "approved_review_model": classification.get("approved_review_model", "UNKNOWN"),
-        "approved_review_reasoning_effort": classification.get(
-            "approved_review_reasoning_effort", "UNKNOWN"
+        "independent_review_present": policy_projection.get(
+            "independent_review_present", "YES" if receipt else "NO"
         ),
-        "observed_codex_cli_version": classification.get("observed_codex_cli_version", "UNKNOWN"),
-        "codex_cli_version": classification.get("codex_cli_version") or "UNKNOWN",
-        "model_provenance_valid": "YES"
-        if classification.get("classification") == CLASSIFICATION_VALID_CURRENT
-        else "NO",
-        "reviewed_head_sha": receipt.get("reviewed_head_sha", "UNKNOWN"),
+        "independent_review_result": policy_projection.get(
+            "independent_review_result", receipt.get("review_result", "UNKNOWN")
+        ),
+        "receipt_classification": classification.get(
+            "classification", policy_projection.get("receipt_classification", "UNKNOWN")
+        ),
+        "receipt_integrity": classification.get(
+            "integrity", policy_projection.get("receipt_integrity", "UNKNOWN")
+        ),
+        "receipt_reason_codes": classification.get(
+            "reason_codes", policy_projection.get("receipt_reason_codes", [])
+        ),
+        "review_backend": policy_projection.get(
+            "review_backend", BACKEND_CODEX if receipt else "UNKNOWN"
+        ),
+        "review_model": classification.get(
+            "review_model", policy_projection.get("review_model", "UNKNOWN")
+        )
+        or policy_projection.get("review_model", "UNKNOWN"),
+        "review_reasoning_effort": classification.get(
+            "review_reasoning_effort",
+            policy_projection.get("review_reasoning_effort", "UNKNOWN"),
+        )
+        or policy_projection.get("review_reasoning_effort", "UNKNOWN"),
+        "approved_review_model": classification.get(
+            "approved_review_model", policy_projection.get("approved_review_model", "UNKNOWN")
+        ),
+        "approved_review_reasoning_effort": classification.get(
+            "approved_review_reasoning_effort",
+            policy_projection.get("approved_review_reasoning_effort", "UNKNOWN"),
+        ),
+        "observed_codex_cli_version": classification.get(
+            "observed_codex_cli_version",
+            policy_projection.get("observed_codex_cli_version", "UNKNOWN"),
+        ),
+        "codex_cli_version": classification.get(
+            "codex_cli_version", policy_projection.get("codex_cli_version", "UNKNOWN")
+        )
+        or policy_projection.get("codex_cli_version", "UNKNOWN"),
+        "model_provenance_valid": policy_projection.get(
+            "model_provenance_valid",
+            "YES" if classification.get("classification") == CLASSIFICATION_VALID_CURRENT else "NO",
+        ),
+        "reviewed_head_sha": policy_projection.get(
+            "reviewed_head_sha", receipt.get("reviewed_head_sha", "UNKNOWN")
+        ),
         "current_pr_head_sha": actual_head or "UNKNOWN",
         "mission_scope_path": mission_scope_path or "UNKNOWN",
         "mission_scope_sha256": mission_scope_hash or "UNKNOWN",
-        "blocking_findings": receipt.get("blocking_findings", "UNKNOWN"),
+        "blocking_findings": policy_projection.get(
+            "blocking_findings", receipt.get("blocking_findings", "UNKNOWN")
+        ),
+        "review_policy_status": policy.status if policy is not None else "INVALID",
+        "review_policy_reasons": list(policy.reasons)
+        if policy is not None
+        else ["MISSION_SCOPE_UNAVAILABLE"],
+        "required_review_backends": list(policy.required_backends) if policy is not None else [],
+        "satisfied_review_backends": list(policy.satisfied_backends) if policy is not None else [],
+        "p3_findings": policy.p3_findings if policy is not None else "UNKNOWN",
         "protected_invariants": machine_protected
         if declared_protected == "PASS" and machine_protected == "PASS"
         else ("UNKNOWN" if declared_protected == "UNKNOWN" else "FAIL"),
@@ -538,6 +740,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                 f"REVIEW_MODEL={output['review_model']}",
                 f"REVIEW_REASONING_EFFORT={output['review_reasoning_effort']}",
                 f"CODEX_CLI_VERSION={output['codex_cli_version']}",
+                f"REVIEW_POLICY_STATUS={output['review_policy_status']}",
                 *(f"[{check.status}] {check.name}: {check.message}" for check in checks),
             ]
         )
@@ -561,7 +764,11 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--mission-id", required=True)
     gate.add_argument("--mission-scope-file", required=True, type=Path)
     gate.add_argument("--local-preflight-json", required=True, type=Path)
-    gate.add_argument("--receipt", required=True, type=Path)
+    gate.add_argument(
+        "--receipt", type=Path, help="validated Codex receipt, when policy requires it"
+    )
+    gate.add_argument("--deepseek-receipt", type=Path)
+    gate.add_argument("--selected-backend", choices=(BACKEND_CODEX, BACKEND_DEEPSEEK))
     gate.add_argument("--pr", type=int, default=None)
     gate.add_argument("--remote-ci-status", default="UNKNOWN")
     gate.add_argument("--protected-invariants", default="UNKNOWN")

@@ -100,6 +100,7 @@ class ReceiptEvidenceContext:
     final_result_bytes: bytes
     codex_execution: CodexExecutionEvidence | None = None
     claude_deepseek_execution: ClaudeDeepSeekExecutionEvidence | None = None
+    chunked_claude_evidence: tuple[dict[str, Any], ...] = ()
 
 
 SECRET_FIELD_TOKENS = (
@@ -334,6 +335,15 @@ def validate_backend_registry(registry: object) -> dict[str, dict[str, Any]]:
             != len(entry["required_provenance_fields"])
         ):
             raise IndependentReviewProtocolError("backend provenance/fallback policy is invalid")
+        eligibility = entry["task_eligibility"]
+        if (
+            not isinstance(eligibility, list)
+            or not eligibility
+            or not all(isinstance(value, str) for value in eligibility)
+            or len(set(eligibility)) != len(eligibility)
+            or not all(value in {"NORMAL", "STRICT", "CRITICAL"} for value in eligibility)
+        ):
+            raise IndependentReviewProtocolError("backend task eligibility is invalid")
         indexed[backend] = entry
     return indexed
 
@@ -471,6 +481,9 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
 ) -> None:
     if backend["backend_id"] != "claude-code-deepseek":
         return
+    if receipt["provenance"].get("chunked_review") is True:
+        _validate_chunked_claude_evidence(receipt, context)
+        return
     execution = context.claude_deepseek_execution
     if execution is None:
         raise IndependentReviewProtocolError(
@@ -562,6 +575,18 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         or event.get("structured_output") != json.loads(context.final_result_bytes)
     ):
         raise IndependentReviewProtocolError("raw Claude completion evidence is invalid")
+
+
+def _validate_chunked_claude_evidence(
+    receipt: dict[str, Any], context: ReceiptEvidenceContext
+) -> None:
+    # Keep this import local: the chunk validator is independently importable,
+    # while receipt validation only needs it when a chunked receipt is present.
+    from scripts.devops.deepseek_chunk_receipt_validation import (  # noqa: PLC0415
+        _validate_chunked_claude_evidence as validate_chunked_evidence,
+    )
+
+    validate_chunked_evidence(receipt, context)
 
 
 def validate_receipt(  # noqa: C901, PLR0912

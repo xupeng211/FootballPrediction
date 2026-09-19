@@ -24,7 +24,7 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
     },
     "task_type": {"type": "string", "minLength": 1},
-    "workflow_class": {"enum": ["NORMAL", "STRICT"]},
+    "workflow_class": {"enum": ["NORMAL", "STRICT", "CRITICAL"]},
     "authorized_paths": {
       "type": "array",
       "items": {"type": "string", "minLength": 1},

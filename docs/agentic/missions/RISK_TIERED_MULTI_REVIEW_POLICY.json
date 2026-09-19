@@ -1,0 +1,49 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "RISK_TIERED_MULTI_REVIEW_POLICY",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "README.md",
+    ".github/pull_request_template.md",
+    "Makefile",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/missions/RISK_TIERED_MULTI_REVIEW_POLICY.json",
+    "schemas/agentic/independent_review_backends.schema.json",
+    "schemas/agentic/mission_scope.schema.json",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "scripts/devops/deepseek_receipt_evidence.py",
+    "scripts/devops/independent_review_receipt.py",
+    "scripts/devops/review_policy.py",
+    "scripts/ops/helpers/agent_workflow_contract.py",
+    "scripts/ops/helpers/strict_review_evidence.py",
+    "tests/unit/test_review_policy.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_deepseek_review_chunks.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "tests/unit/test_independent_review_protocol.py",
+    "tests/unit/test_strict_review_evidence.py",
+    "tests/unit/test_agentic_workflow_v1.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": ["src/", "database/", "config/"],
+  "excluded_tokens": ["stage_d", "secret", "credential", "migration"],
+  "protected_invariants": [
+    "current reviewer receipts remain exact-head and provenance-bound",
+    "backend failure remains no-verdict and never silently falls back",
+    "Stage D production execution remains outside this governance mission"
+  ],
+  "forbidden_side_effects": [
+    "no provider request except bounded bootstrap independent reviews",
+    "no production data, database, model, or Stage D mutation",
+    "no secret value is read into repository artifacts"
+  ]
+}

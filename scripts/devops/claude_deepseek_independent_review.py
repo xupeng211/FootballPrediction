@@ -33,6 +33,14 @@ from scripts.devops.independent_review_protocol import (  # noqa: E402
     sha256_bytes,
     validate_result,
 )
+from scripts.devops.deepseek_review_chunks import (  # noqa: E402
+    MAX_CHUNK_DIFF_BYTES,
+    MAX_CHUNK_PROMPT_BYTES,
+    aggregate,
+    build_chunk_prompt,
+    chunk_evidence_manifest_bytes,
+    plan,
+)
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     MissionScopeError,
     load_mission_scope_file,
@@ -42,6 +50,46 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
 
 class DeepSeekReviewError(RuntimeError):
     """The DeepSeek review cannot establish a trustworthy verdict."""
+
+
+_SAFE_BACKEND_FAILURE_CODES = frozenset(
+    {
+        "AUTH_FAILURE",
+        "CLI_RUNTIME_FAILURE",
+        "CLI_RUNTIME_TIMEOUT",
+        "INVALID_STRUCTURED_OUTPUT",
+        "MODEL_MISMATCH",
+        "SECRET_LEAKAGE_DETECTED",
+    }
+)
+_SAFE_NONZERO_DETAILS = frozenset(
+    {
+        "AUTH_ERROR",
+        "RATE_LIMIT",
+        "USAGE_LIMIT",
+        "REQUEST_TOO_LARGE",
+        "CONTEXT_LIMIT",
+        "INVALID_MODEL",
+        "UNSUPPORTED_PARAMETER",
+        "INVALID_SCHEMA",
+        "STRUCTURED_OUTPUT_ERROR",
+        "PROVIDER_5XX",
+        "NETWORK_FAILURE",
+        "TLS_FAILURE",
+        "UNKNOWN_NONZERO_EXIT",
+    }
+)
+
+
+def _safe_backend_failure_code(error: backend.BackendInfrastructureError) -> str:
+    """Expose only a stable non-secret infrastructure classification."""
+
+    parts = str(error).split(":", 2)
+    code = parts[0]
+    detail = parts[1].strip() if len(parts) > 1 else ""
+    if code == "CLI_RUNTIME_FAILURE" and detail in _SAFE_NONZERO_DETAILS:
+        return f"{code}:{detail}"
+    return code if code in _SAFE_BACKEND_FAILURE_CODES else "CLI_RUNTIME_FAILURE"
 
 
 def _git(root: Path, *args: str, text: bool = True) -> str | bytes:
@@ -68,6 +116,103 @@ def _write(path: Path, data: bytes) -> None:
 
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _canonical_prompt_bytes(prompt: str | bytes) -> bytes:
+    """Bind receipt evidence to the exact prompt bytes sent by its path."""
+
+    if isinstance(prompt, bytes):
+        return prompt
+    if isinstance(prompt, str):
+        return prompt.encode()
+    raise DeepSeekReviewError("review prompt has unsupported type")
+
+
+def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: str) -> str:
+    return build_chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
+
+
+def _run_chunked_review(
+    *, diff: bytes, base: str, head: str, scope: object, scope_sha: str, worktree: Path
+) -> tuple[bytes, dict, list[dict]]:
+    manifest = plan(
+        diff,
+        base_sha=base,
+        head_sha=head,
+        mission_id=scope.mission_id,
+        mission_scope_sha256=scope_sha,
+    )
+    values: list[dict] = []
+    trusted: list[dict] = []
+    for chunk in manifest.chunks:
+        source = diff[chunk.start : chunk.end]
+        prompt = _chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
+        if len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES:
+            raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
+        try:
+            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+        except backend.BackendInfrastructureError as exc:
+            raise DeepSeekReviewError(
+                f"chunk {chunk.index} infrastructure failure [{_safe_backend_failure_code(exc)}]"
+            ) from exc
+        normalized = validate_result(result)
+        execution_evidence = receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=execution.command,
+            resolved_model=execution.resolved_model,
+            claude_cli_version=execution.cli_version,
+            claude_binary_sha256=execution.binary_sha256,
+            settings_sha256=execution.settings_sha256,
+            provider_endpoint=execution.endpoint,
+            session_id=execution.session_id,
+        )
+        final = canonical_json(
+            {
+                "protocol_version": PROTOCOL_VERSION,
+                "review_result": normalized["review_result"],
+                "findings": normalized["findings"],
+            }
+        )
+        values.append({"chunk_index": chunk.index, "result": json.loads(final)})
+        trusted.append(
+            {
+                "index": chunk.index,
+                "source": source,
+                "source_sha256": chunk.source_sha256,
+                "prompt": prompt.encode(),
+                "raw": raw,
+                "final": final,
+                "execution": execution_evidence,
+                "session_id": execution_evidence.session_id,
+            }
+        )
+    normalized = aggregate(values, manifest)
+    evidence = [
+        {
+            "index": item["index"],
+            "source_sha256": item["source_sha256"],
+            "prompt_sha256": sha256_bytes(item["prompt"]),
+            "raw_sha256": sha256_bytes(item["raw"]),
+            "final_sha256": sha256_bytes(item["final"]),
+            "session_id": item["session_id"],
+            "execution": {
+                "reviewer_command": list(item["execution"].reviewer_command),
+                "resolved_model": item["execution"].resolved_model,
+                "claude_cli_version": item["execution"].claude_cli_version,
+                "claude_binary_sha256": item["execution"].claude_binary_sha256,
+                "settings_sha256": item["execution"].settings_sha256,
+                "provider_endpoint": item["execution"].provider_endpoint,
+                "session_id": item["execution"].session_id,
+            },
+        }
+        for item in trusted
+    ]
+    return (
+        canonical_json(
+            {"manifest": manifest.payload(), "manifest_sha256": manifest.sha256, "chunks": evidence}
+        ),
+        normalized,
+        trusted,
+    )
 
 
 def _run_review(args: argparse.Namespace) -> Path:
@@ -111,12 +256,37 @@ def _run_review(args: argparse.Namespace) -> Path:
         f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'replace')}"
     )
     started = _now()
-    try:
-        raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
-    except backend.BackendInfrastructureError as exc:
-        raise DeepSeekReviewError("backend infrastructure failure; no verdict") from exc
+    chunked = len(diff) > MAX_CHUNK_DIFF_BYTES
+    trusted_chunks: list[dict] = []
+    if chunked:
+        raw, normalized, trusted_chunks = _run_chunked_review(
+            diff=diff,
+            base=base,
+            head=head,
+            scope=scope,
+            scope_sha=sha256_bytes(scope_bytes),
+            worktree=worktree,
+        )
+        prompt = raw
+        execution = trusted_chunks[0]["execution"]
+    else:
+        try:
+            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+        except backend.BackendInfrastructureError as exc:
+            raise DeepSeekReviewError(
+                f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
+            ) from exc
+        normalized = validate_result(result)
+        execution = receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=execution.command,
+            resolved_model=execution.resolved_model,
+            claude_cli_version=execution.cli_version,
+            claude_binary_sha256=execution.binary_sha256,
+            settings_sha256=execution.settings_sha256,
+            provider_endpoint=execution.endpoint,
+            session_id=execution.session_id,
+        )
     completed = _now()
-    normalized = validate_result(result)
     final = canonical_json(
         {
             "protocol_version": PROTOCOL_VERSION,
@@ -128,8 +298,26 @@ def _run_review(args: argparse.Namespace) -> Path:
         raise DeepSeekReviewError("reviewer mutated detached worktree")
     raw_path = evidence / f"claude-deepseek-raw-{head[:12]}-{run_id}.json"
     final_path = evidence / f"claude-deepseek-final-{head[:12]}-{run_id}.json"
+    if chunked:
+        for item in trusted_chunks:
+            index = item["index"]
+            _write(
+                evidence / f"claude-deepseek-chunk-prompt-{head[:12]}-{run_id}-{index}.txt",
+                item["prompt"],
+            )
+            _write(
+                evidence / f"claude-deepseek-chunk-raw-{head[:12]}-{run_id}-{index}.json",
+                item["raw"],
+            )
+            _write(
+                evidence / f"claude-deepseek-chunk-final-{head[:12]}-{run_id}-{index}.json",
+                item["final"],
+            )
     _write(raw_path, raw)
     _write(final_path, final)
+    prompt_path = evidence / f"claude-deepseek-prompt-{head[:12]}-{run_id}.txt"
+    if not chunked:
+        _write(prompt_path, _canonical_prompt_bytes(prompt))
     receipt = {
         "protocol_version": PROTOCOL_VERSION,
         "receipt_version": "independent-review-receipt/v1",
@@ -145,7 +333,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         "mission_id": args.mission_id,
         "mission_scope_path": scope_path,
         "mission_scope_sha256": sha256_bytes(scope_bytes),
-        "review_prompt_sha256": sha256_bytes(prompt.encode()),
+        "review_prompt_sha256": sha256_bytes(_canonical_prompt_bytes(prompt)),
         "review_started_at": started,
         "review_completed_at": completed,
         "review_result": normalized["review_result"],
@@ -163,13 +351,28 @@ def _run_review(args: argparse.Namespace) -> Path:
             "worktree_clean_after": True,
         },
         "provenance": {
-            "reviewer_command": list(execution.command),
-            "command_sha256": sha256_bytes(canonical_json(list(execution.command))),
-            "claude_cli_version": execution.cli_version,
-            "claude_binary_sha256": execution.binary_sha256,
+            "reviewer_command": list(execution.reviewer_command),
+            "command_sha256": sha256_bytes(canonical_json(list(execution.reviewer_command))),
+            "claude_cli_version": execution.claude_cli_version,
+            "claude_binary_sha256": execution.claude_binary_sha256,
             "settings_sha256": execution.settings_sha256,
-            "provider_endpoint": execution.endpoint,
+            "provider_endpoint": execution.provider_endpoint,
             "session_id": execution.session_id,
+            **({"review_prompt_path": prompt_path.name} if not chunked else {}),
+            **(
+                {
+                    "chunked_review": True,
+                    "chunk_count": len(trusted_chunks),
+                    "chunk_manifest_sha256": json.loads(raw)["manifest_sha256"],
+                    "full_diff_sha256": sha256_bytes(diff),
+                    "aggregate_result_sha256": sha256_bytes(final),
+                    "chunk_evidence_manifest_sha256": sha256_bytes(
+                        chunk_evidence_manifest_bytes(json.loads(raw)["chunks"])
+                    ),
+                }
+                if chunked
+                else {}
+            ),
         },
     }
     receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}
@@ -178,18 +381,21 @@ def _run_review(args: argparse.Namespace) -> Path:
         base_sha=base,
         head_sha=head,
         mission_scope_path=scope_path,
-        prompt_bytes=prompt.encode(),
+        prompt_bytes=_canonical_prompt_bytes(prompt),
         raw_output_bytes=raw,
         final_result_bytes=final,
-        claude_deepseek_execution=receipts.ClaudeDeepSeekExecutionEvidence(
-            reviewer_command=execution.command,
+        claude_deepseek_execution=None
+        if chunked
+        else receipts.ClaudeDeepSeekExecutionEvidence(
+            reviewer_command=execution.reviewer_command,
             resolved_model=execution.resolved_model,
-            claude_cli_version=execution.cli_version,
-            claude_binary_sha256=execution.binary_sha256,
+            claude_cli_version=execution.claude_cli_version,
+            claude_binary_sha256=execution.claude_binary_sha256,
             settings_sha256=execution.settings_sha256,
-            provider_endpoint=execution.endpoint,
+            provider_endpoint=execution.provider_endpoint,
             session_id=execution.session_id,
         ),
+        chunked_claude_evidence=tuple(trusted_chunks),
     )
     receipts.validate_receipt(
         receipt,

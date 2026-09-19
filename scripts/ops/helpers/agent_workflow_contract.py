@@ -46,6 +46,7 @@ CRYPTOGRAPHIC_REVIEWER_PROVENANCE_REQUIRED = False
 HOSTILE_SAME_UID_FORGE_RESISTANCE = False
 BLOCKING_REVIEW_SEVERITIES: tuple[str, ...] = ("P0", "P1", "P2")
 ALL_REVIEW_SEVERITIES: tuple[str, ...] = (*BLOCKING_REVIEW_SEVERITIES, "P3")
+WORKFLOW_CLASSES: tuple[str, ...] = ("NORMAL", "STRICT", "CRITICAL")
 
 MISSION_SCOPE_SCHEMA_VERSION = "agentic-mission-scope/v1"
 MISSION_SCOPE_REFERENCE_FIELD = "Mission scope contract"
@@ -305,8 +306,8 @@ class MissionScope:
         if not isinstance(task_type, str) or task_type.strip().lower() not in KNOWN_TASK_TYPES:
             raise MissionScopeError(f"task_type is not a known task type: {task_type!r}")
         workflow_class = value["workflow_class"]
-        if workflow_class not in {"NORMAL", "STRICT"}:
-            raise MissionScopeError("workflow_class must be NORMAL or STRICT")
+        if workflow_class not in WORKFLOW_CLASSES:
+            raise MissionScopeError("workflow_class must be NORMAL, STRICT, or CRITICAL")
 
         authorized_paths = _normalize_scope_entries(
             value["authorized_paths"], field="authorized_paths", prefix=False
@@ -616,9 +617,10 @@ def validate_pr_metadata(  # noqa: C901, PLR0912
                 )
 
         workflow_values = rows.get("workflow class", [])
-        if len(workflow_values) != 1 or parse_workflow_class(pr_body) is None:
+        parsed_workflow_class = parse_workflow_class(pr_body)
+        if len(workflow_values) != 1 or parsed_workflow_class not in WORKFLOW_CLASSES:
             errors.append(
-                "AGENT_WORKFLOW_CLASS_INVALID: Scope must contain exactly one Workflow class of NORMAL or STRICT."
+                "AGENT_WORKFLOW_CLASS_INVALID: Scope must contain exactly one Workflow class of NORMAL, STRICT, or CRITICAL."
             )
 
     documentation, documentation_errors = _one_section(pr_body, "## Documentation Impact")

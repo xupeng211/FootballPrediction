@@ -4,7 +4,9 @@ lifecycle: permanent
 
 This helper validates only the small PR metadata contract needed to bind one
 independent review to the current full PR HEAD.  It does not run a reviewer,
-tests, lint, fixes, merge, or maintain review history.
+tests, lint, fixes, merge, or maintain review history.  For CRITICAL changes,
+the provider row is a remote metadata declaration only; physical exact-head
+receipt validation remains the local ``agent-merge-ready`` authority.
 """
 
 from __future__ import annotations
@@ -40,6 +42,7 @@ from scripts.ops.helpers.pr_authorization_matrix import (
 
 WORKFLOW_CLASS_NORMAL = "NORMAL"
 WORKFLOW_CLASS_STRICT = "STRICT"
+WORKFLOW_CLASS_CRITICAL = "CRITICAL"
 ACCEPTED_RESULTS: frozenset[str] = frozenset({"PASS", "FINDINGS_RESOLVED"})
 PENDING_RESULT = "PENDING"
 EVIDENCE_HEADING = "## Strict Review Evidence"
@@ -236,8 +239,47 @@ def _strict_classification_reasons(
     return reasons
 
 
+def _critical_classification_reasons(
+    changed_paths: Iterable[str] | None,
+    task_type: str | None,
+) -> list[str]:
+    """Return narrow canonical reasons that cannot be reviewed below CRITICAL.
+
+    This deliberately reuses the existing task/path authorization classifier,
+    rather than guessing from arbitrary source text.  It only covers controls
+    whose modification changes review authority, credentials, deployment, or
+    irreversible production boundaries.
+    """
+
+    paths = tuple(changed_paths or ())
+    if not paths:
+        return ["changed paths unavailable; CRITICAL classification is required"]
+    categories = classify_paths(paths)
+    critical_categories = {
+        CATEGORY_ENV_SECRET,
+        CATEGORY_DB_MIGRATION_SQL,
+        CATEGORY_MODEL_ARTIFACT,
+        CATEGORY_RUNTIME_CONFIG,
+        CATEGORY_WORKFLOW_GOVERNANCE,
+        CATEGORY_SC002_DB_GOVERNANCE,
+    }
+    reasons = (
+        ["path categories " + ", ".join(sorted(set(categories) & critical_categories))]
+        if set(categories) & critical_categories
+        else []
+    )
+    if (task_type or "").strip().lower() in {
+        TASK_TYPE_DB_MIGRATION_SQL,
+        TASK_TYPE_MODEL_ARTIFACT,
+        TASK_TYPE_WORKFLOW_GOVERNANCE,
+        TASK_TYPE_SC002_DB_GOVERNANCE,
+    }:
+        reasons.append(f"task type '{task_type}'")
+    return reasons
+
+
 def parse_workflow_class(pr_body: str) -> str | None:
-    """Return NORMAL/STRICT from the Scope table, or None when invalid/missing."""
+    """Return one canonical workflow class from Scope, or None when invalid."""
 
     scope_sections = _section_matches(pr_body, "## Scope")
     if len(scope_sections) != 1:
@@ -247,7 +289,11 @@ def parse_workflow_class(pr_body: str) -> str | None:
         return None
     raw = values[0]
     normalized = raw.upper()
-    return normalized if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT} else None
+    return (
+        normalized
+        if normalized in {WORKFLOW_CLASS_NORMAL, WORKFLOW_CLASS_STRICT, WORKFLOW_CLASS_CRITICAL}
+        else None
+    )
 
 
 def _valid_timestamp(value: str) -> bool:
@@ -291,8 +337,17 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
         ]
     workflow_raw = workflow_values[0]
     workflow_class = workflow_raw.upper()
-    classification_reasons = _strict_classification_reasons(changed_paths, task_type)
+    normalized_paths = tuple(changed_paths or ())
+    classification_reasons = _strict_classification_reasons(normalized_paths, task_type)
+    critical_reasons = _critical_classification_reasons(normalized_paths, task_type)
     if workflow_class == WORKFLOW_CLASS_NORMAL:
+        if critical_reasons:
+            return [
+                "CRITICAL_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
+                "CRITICAL dual-review evidence; NORMAL cannot waive exact-head evidence ("
+                + "; ".join(critical_reasons)
+                + ")."
+            ]
         if classification_reasons:
             return [
                 "STRICT_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
@@ -301,10 +356,17 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
                 + ")."
             ]
         return []
-    if workflow_class != WORKFLOW_CLASS_STRICT:
+    if workflow_class == WORKFLOW_CLASS_STRICT and critical_reasons:
+        return [
+            "CRITICAL_REVIEW_CLASSIFICATION_REQUIRED: changed paths/task type require "
+            "CRITICAL dual-review evidence; STRICT cannot downgrade ("
+            + "; ".join(critical_reasons)
+            + ")."
+        ]
+    if workflow_class not in {WORKFLOW_CLASS_STRICT, WORKFLOW_CLASS_CRITICAL}:
         return [
             "STRICT_REVIEW_CLASSIFICATION_INVALID: Scope must declare "
-            "Workflow class as NORMAL or STRICT."
+            "Workflow class as NORMAL, STRICT, or CRITICAL."
         ]
 
     evidence_sections = _section_matches(pr_body, EVIDENCE_HEADING)
@@ -337,10 +399,20 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
             values[key] = field_values[0].upper() if key == "result" else field_values[0]
     if values["version"] != "1":
         errors.append("STRICT_REVIEW_INVALID: evidence Version must be 1.")
-    if values["task_type"].upper() != WORKFLOW_CLASS_STRICT:
-        errors.append("STRICT_REVIEW_INVALID: evidence Task type must be STRICT.")
+    if values["task_type"].upper() != workflow_class:
+        errors.append(f"STRICT_REVIEW_INVALID: evidence Task type must be {workflow_class}.")
     if not values["provider"] or len(values["provider"]) > MAX_PROVIDER_LENGTH:
         errors.append("STRICT_REVIEW_INVALID: evidence Provider is required.")
+    # This provider list is intentionally not a receipt registry.  GitHub CI
+    # cannot read owner-only external evidence; local merge-ready validation
+    # must independently consume both exact-head physical receipts.
+    if workflow_class == WORKFLOW_CLASS_CRITICAL and not {
+        "codex-cli",
+        "claude-code-deepseek",
+    }.issubset({part.strip() for part in values["provider"].split(",")}):
+        errors.append(
+            "CRITICAL_REVIEW_MISSING: evidence Provider must name codex-cli and claude-code-deepseek."
+        )
     accepted_results = ACCEPTED_RESULTS | ({PENDING_RESULT} if allow_pending else set())
     if values["result"] not in accepted_results:
         allowed = "PASS or FINDINGS_RESOLVED"

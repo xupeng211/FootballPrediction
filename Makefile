@@ -63,7 +63,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
-        verify-targeted verify-pr verify-strict agent-preflight agent-review agent-review-wait agent-merge-ready \
+        verify-targeted verify-pr verify-strict agent-preflight agent-review agent-deepseek-review agent-review-wait agent-policy-evaluate agent-merge-ready \
         ci-local ci-local-pr pr-gate-local pr-ready pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
@@ -246,6 +246,23 @@ agent-review: ## 启动隔离 read-only Codex reviewer。Usage: make agent-revie
 		$(if $(RUN_ID),--run-id $(RUN_ID),) \
 		$(if $(BUILDER_CONTEXT_ID),--builder-context-id $(BUILDER_CONTEXT_ID),)
 
+agent-deepseek-review: ## 启动隔离 Claude/DeepSeek reviewer；不替代 Codex approval。Usage 同 agent-review。
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE EVIDENCE_DIR are required."; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/claude_deepseek_independent_review.py \
+		--repo-root "$(CURDIR)" --base-sha "$(BASE_SHA)" --head-sha "$(HEAD_SHA)" \
+		--mission-id "$(MISSION_ID)" --mission-scope-file "$(MISSION_SCOPE_FILE)" \
+		--evidence-dir "$(EVIDENCE_DIR)"
+
+agent-policy-evaluate: ## 只读评估已验证 review evidence；不启动 reviewer。
+	@if [ -z "$(WORKFLOW_CLASS)" ] || [ -z "$(CANDIDATE_JSON)" ] || [ -z "$(RECEIPTS_JSON)" ]; then \
+		echo "ERROR: WORKFLOW_CLASS CANDIDATE_JSON RECEIPTS_JSON are required."; exit 1; fi
+	@python3 scripts/devops/review_policy.py --workflow-class "$(WORKFLOW_CLASS)" \
+		--candidate-json "$(CANDIDATE_JSON)" --receipts-json "$(RECEIPTS_JSON)" \
+		$(if $(SELECTED_BACKEND),--selected-backend "$(SELECTED_BACKEND)",)
+
 agent-review-wait: ## 阻塞等待 exact-head review receipt，并由 receipt verdict 决定结果。退出状态：直接调用 `python3 scripts/devops/codex_independent_review.py wait ...` 时为 0=PASS / 3=FAIL-or-blocking / 1=无法建立 verdict；经 make 调用时 GNU make 只原样保留成功状态，任何非 0 子进程状态都会被折叠成 make 自己的 exit 2，因此 3 与 1 在 make 这一层不可区分，机器调用请读 stdout 的 JSON（state/status）或直接调用 python 入口。Usage: make agent-review-wait HEAD_SHA=<sha> EVIDENCE_DIR=<external-dir> [TIMEOUT_SECONDS=<n>] [POLL_INTERVAL=<seconds>] [RUN_ID=<runid>] [WRITER_PID=<pid> WRITER_STARTTIME=<ticks>] [JSON=1]（WRITER_PID 必须与 WRITER_STARTTIME 成对给出，单独的 pid 不构成身份；RUN_ID 用来只消费指定 review round 的 receipt）
 	@if [ -z "$(HEAD_SHA)" ] || [ -z "$(EVIDENCE_DIR)" ]; then \
 		echo "ERROR: HEAD_SHA and EVIDENCE_DIR are required."; \
@@ -261,9 +278,9 @@ agent-review-wait: ## 阻塞等待 exact-head review receipt，并由 receipt ve
 		$(if $(WRITER_STARTTIME),--pid-starttime $(WRITER_STARTTIME),) \
 		$(if $(JSON),--json,)
 
-agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make agent-merge-ready BASE_SHA=<sha> HEAD_SHA=<sha> MISSION_ID=<id> MISSION_SCOPE_FILE=<path> LOCAL_PREFLIGHT_JSON=<path> RECEIPT=<external-path> [PR=<number>] [JSON=1]
-	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ] || [ -z "$(RECEIPT)" ]; then \
-		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE LOCAL_PREFLIGHT_JSON RECEIPT are required."; \
+agent-merge-ready: ## 只读 merge-readiness gate，按 workflow policy 聚合 receipt，永不 merge。
+	@if [ -z "$(BASE_SHA)" ] || [ -z "$(HEAD_SHA)" ] || [ -z "$(MISSION_ID)" ] || [ -z "$(MISSION_SCOPE_FILE)" ] || [ -z "$(LOCAL_PREFLIGHT_JSON)" ]; then \
+		echo "ERROR: BASE_SHA HEAD_SHA MISSION_ID MISSION_SCOPE_FILE LOCAL_PREFLIGHT_JSON are required."; \
 		exit 1; \
 	fi
 	@python3 scripts/devops/agent_workflow.py merge-ready \
@@ -273,7 +290,9 @@ agent-merge-ready: ## 只读 merge-readiness gate，永不 merge。Usage: make a
 		--mission-id "$(MISSION_ID)" \
 		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		--local-preflight-json "$(LOCAL_PREFLIGHT_JSON)" \
-		--receipt "$(RECEIPT)" \
+		$(if $(RECEIPT),--receipt "$(RECEIPT)",) \
+		$(if $(DEEPSEEK_RECEIPT),--deepseek-receipt "$(DEEPSEEK_RECEIPT)",) \
+		$(if $(SELECTED_BACKEND),--selected-backend "$(SELECTED_BACKEND)",) \
 		$(if $(PR),--pr $(PR),) \
 		$(if $(PROTECTED_INVARIANTS),--protected-invariants $(PROTECTED_INVARIANTS),) \
 		$(if $(FORBIDDEN_SIDE_EFFECTS),--forbidden-side-effects $(FORBIDDEN_SIDE_EFFECTS),) \
