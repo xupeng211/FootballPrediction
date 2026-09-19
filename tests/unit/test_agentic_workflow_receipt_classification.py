@@ -41,7 +41,7 @@ from scripts.devops.codex_review_contract import (
     build_reviewer_command,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
-from scripts.devops.codex_review_receipt import REVIEW_OUTPUT_SCHEMA
+from scripts.devops.codex_review_receipt import RECEIPT_SCHEMA_VERSION_V2, REVIEW_OUTPUT_SCHEMA
 from tests.helpers.agentic_workflow_fixtures import BASE_SHA, MISSION_ID, MISSION_SCOPE_PATH
 from tests.helpers.agentic_workflow_fixtures import body as _body
 from tests.helpers.agentic_workflow_fixtures import make_repo as _make_repo
@@ -68,7 +68,8 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
-    monkeypatch.setattr(codex_independent_review, "resolve_codex_binary", lambda _: codex_binary)
+    monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def _pinned_command() -> list[str]:
@@ -183,7 +184,7 @@ def test_new_receipt_records_review_model(tmp_path: Path):
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     document = json.loads(receipt.read_text(encoding="utf-8"))
     recorded = document["provenance"]["reviewer_command"]
-    assert document["schema_version"] == "codex-independent-review-receipt/v2"
+    assert document["schema_version"] == "codex-independent-review-receipt/v3"
     assert document["model_provenance"]["review_model"] == REVIEW_MODEL_PINNED
     assert recorded[recorded.index("-m") + 1] == document["model_provenance"]["review_model"]
     assert document["model_provenance"]["derived_from_recorded_command"] is True
@@ -221,6 +222,32 @@ def test_current_receipt_matching_policy_is_valid_current(tmp_path: Path):
     assert result.current_approval_eligible is True
     assert result.review_model == REVIEW_MODEL_PINNED
     assert result.review_reasoning_effort == REVIEW_REASONING_EFFORT_PINNED
+
+
+def test_receipt_policy_version_is_bound_to_current_runtime_policy(tmp_path: Path):
+    """A self-consistent receipt with an old auth policy cannot approve now."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    document = json.loads(receipt.read_text(encoding="utf-8"))
+    document["isolation"]["canonical_auth_transport"]["policy"] = (
+        "canonical-codex-auth-transport-isolation/legacy"
+    )
+    unsigned = dict(document)
+    unsigned.pop("integrity")
+    document["integrity"] = {
+        "receipt_payload_sha256": hashlib.sha256(_canonical_json(unsigned)).hexdigest()
+    }
+    receipt.write_text(
+        json.dumps(document, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_INVALID
+    assert "CANONICAL_AUTH_TRANSPORT_INVALID" in result.reason_codes
+    assert result.current_approval_eligible is False
+    with pytest.raises(ReviewReceiptError, match="CANONICAL_AUTH_TRANSPORT_INVALID"):
+        validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
 
 
 def test_historical_audit_never_produces_current_approval(tmp_path: Path):
@@ -504,6 +531,7 @@ def test_swapped_cli_install_path_downgrades_old_receipt(
     binary.chmod(0o700)
     monkeypatch.delenv("CODEX_CLI_PATH", raising=False)
     monkeypatch.setenv("PATH", f"{upgraded}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: binary)
     result = _classification(receipt, repo, current_head=head, expected_base=base)
     assert result.classification == CLASSIFICATION_STALE_TOOLING
     assert result.integrity == INTEGRITY_INTACT
@@ -520,15 +548,34 @@ def test_unresolvable_current_cli_cannot_stay_current(
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
 
-    def _fail(_value: str) -> Path:
+    def _fail() -> Path:
         raise ReviewReceiptError("没有找到可执行的 Codex CLI")
 
-    monkeypatch.setattr(codex_review_classification, "resolve_codex_binary", _fail)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", _fail)
     result = _classification(receipt, repo, current_head=head)
     assert result.classification == CLASSIFICATION_STALE_TOOLING
     assert result.integrity == INTEGRITY_INTACT
     assert "CODEX_BINARY_UNRESOLVED" in result.reason_codes
     assert result.current_approval_eligible is False
+
+
+def test_current_classification_ignores_builder_cli_path_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Current receipt freshness follows the fixed canonical lane, not Builder routing."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    builder_binary = tmp_path / "builder-codex"
+    builder_binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 9.9.9"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
+    builder_binary.chmod(0o700)
+    monkeypatch.setenv("CODEX_CLI_PATH", str(builder_binary))
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_VALID_CURRENT
+    assert result.codex_cli_version == "0.153.4"
 
 
 def test_wrong_head_is_invalid(tmp_path: Path):
@@ -583,6 +630,29 @@ def test_old_v1_receipt_is_legacy_not_current_approval(tmp_path: Path):
     assert historical.review_model is None
     with pytest.raises(ReviewReceiptError, match="RECEIPT_LEGACY_SCHEMA_V1"):
         validate_receipt(receipt, repo_root=repo, current_head=head, expected_base=base)
+
+
+def test_old_v2_receipt_is_historical_not_current_approval(tmp_path: Path):
+    """v2 predates canonical auth/transport isolation and cannot approve current work."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    document = json.loads(receipt.read_text(encoding="utf-8"))
+    document["schema_version"] = RECEIPT_SCHEMA_VERSION_V2
+    unsigned = dict(document)
+    unsigned.pop("integrity")
+    document["integrity"] = {
+        "receipt_payload_sha256": hashlib.sha256(_canonical_json(unsigned)).hexdigest()
+    }
+    receipt.write_text(
+        json.dumps(document, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_STALE_TOOLING
+    assert result.integrity == INTEGRITY_INTACT
+    assert "RECEIPT_LEGACY_SCHEMA_V2" in result.reason_codes
+    assert result.current_approval_eligible is False
 
 
 def test_v1_command_hash_tamper_is_invalid(tmp_path: Path):

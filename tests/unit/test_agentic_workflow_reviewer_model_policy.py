@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.devops import agent_workflow, codex_independent_review
+from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import (
     CLASSIFICATION_INVALID,
     CLASSIFICATION_STALE_TOOLING,
@@ -68,7 +68,8 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
-    monkeypatch.setattr(codex_independent_review, "resolve_codex_binary", lambda _: codex_binary)
+    monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def _pinned_command() -> list[str]:
@@ -251,11 +252,11 @@ def test_pinned_policy_exposes_no_model_override_seam(monkeypatch: pytest.Monkey
     assert "--ignore-user-config" in command
 
 
-def test_reviewer_receipt_schema_stays_v2(tmp_path: Path):
+def test_reviewer_receipt_schema_stays_v3(tmp_path: Path):
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
     document = json.loads(receipt.read_text(encoding="utf-8"))
-    assert document["schema_version"] == "codex-independent-review-receipt/v2"
+    assert document["schema_version"] == "codex-independent-review-receipt/v3"
 
 
 @pytest.mark.parametrize("severity", ["P0", "P1", "P2"])

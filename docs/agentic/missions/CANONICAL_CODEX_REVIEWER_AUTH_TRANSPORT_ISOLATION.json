@@ -1,0 +1,40 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "CANONICAL_CODEX_REVIEWER_AUTH_TRANSPORT_ISOLATION",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/CANONICAL_CODEX_REVIEWER_AUTH_TRANSPORT_ISOLATION.json",
+    "schemas/agentic/codex_review_receipt.schema.json",
+    "scripts/devops/codex_independent_review.py",
+    "scripts/devops/codex_review_classification.py",
+    "scripts/devops/codex_review_provenance.py",
+    "scripts/devops/codex_reviewer_isolation.py",
+    "scripts/devops/codex_review_receipt.py",
+    "tests/helpers/agentic_workflow_fixtures.py",
+    "tests/unit/test_agentic_workflow_v1.py",
+    "tests/unit/test_agentic_workflow_receipt_classification.py",
+    "tests/unit/test_agentic_workflow_reviewer_model_policy.py",
+    "tests/unit/test_agentic_workflow_mission_scope.py",
+    "tests/unit/test_codex_reviewer_auth_transport_isolation.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": ["src/", "database/", "config/"],
+  "excluded_tokens": ["stage_d", "the_odds_api", "migration", "raw_data"],
+  "protected_invariants": [
+    "Builder Codex continues using its ordinary environment unchanged",
+    "canonical Codex review is exact-head, fresh, ephemeral, and read-only",
+    "canonical approval never falls back to Builder provider routing or credentials",
+    "historical valid receipts remain historical evidence and never silently become current approval"
+  ],
+  "forbidden_side_effects": [
+    "no production data, database, model, or Stage D mutation",
+    "no project provider request except bounded independent reviews",
+    "no credential value or credential-derived secret metadata in repository artifacts"
+  ]
+}

@@ -72,7 +72,6 @@ from scripts.devops.codex_review_output import (  # noqa: E402
 from scripts.devops.codex_review_provenance import (  # noqa: E402
     ReviewReceiptError,
     observe_codex_cli_version,
-    resolve_codex_binary,
 )
 from scripts.devops.codex_review_receipt import (  # noqa: E402
     CLI_VERSION_SOURCE_OBSERVED_STDOUT,
@@ -107,6 +106,11 @@ from scripts.devops.codex_review_wait import (  # noqa: E402
     WAIT_STATE_REVIEW_FAILED,
     process_starttime,
     wait_for_receipt,
+)
+from scripts.devops.codex_reviewer_isolation import (  # noqa: E402
+    canonical_codex_binary,
+    canonical_reviewer_environment,
+    canonical_reviewer_preflight,
 )
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
@@ -286,7 +290,10 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         head_sha=expected_head,
         mission_scope_sha256=mission_scope_hash,
     )
-    codex_binary = resolve_codex_binary(args.codex_binary)
+    # The canonical lane only accepts the fixed, official ChatGPT-owned
+    # executable.  Never resolve it through Builder PATH or CODEX_CLI_PATH.
+    codex_binary = canonical_codex_binary()
+    reviewer_environment = canonical_reviewer_environment(codex_binary=codex_binary)
     command = build_reviewer_command(
         codex_binary=str(codex_binary),
         base_sha=base_sha,
@@ -297,7 +304,10 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     # actually executed, and the CLI version is observed from the same resolved
     # executable: the receipt records the invocation, not a Builder declaration.
     review_model, review_reasoning_effort = reviewer_selectors_from_command(command)
-    codex_cli_version = observe_codex_cli_version(codex_binary)
+    codex_cli_version = observe_codex_cli_version(codex_binary, environment=reviewer_environment)
+    auth_transport_preflight = canonical_reviewer_preflight(
+        codex_binary=codex_binary, command=command
+    )
     prompt = _codex_prompt(
         mission_id=args.mission_id,
         base_sha=base_sha,
@@ -306,10 +316,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
         mission_scope_path=mission_scope_path,
         mission_scope_sha256=mission_scope_hash,
     )
-    env = os.environ.copy()
-    env["CODEX_AGENT_ROLE"] = REVIEW_ROLE_INDEPENDENT
-    env["CODEX_REVIEW_HEAD_SHA"] = expected_head
-    env["NO_COLOR"] = "1"
+    reviewer_environment["CODEX_REVIEW_HEAD_SHA"] = expected_head
 
     try:
         process = subprocess.run(
@@ -318,7 +325,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             input=prompt.encode("utf-8"),
             text=False,
             capture_output=True,
-            env=env,
+            env=reviewer_environment,
             check=False,
             timeout=args.timeout_seconds,
         )
@@ -398,6 +405,7 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "worktree_clean_before": True,
             "worktree_clean_after": not bool(worktree_status),
             "source_mutation_detected": bool(worktree_status),
+            "canonical_auth_transport": auth_transport_preflight,
         },
         "model_provenance": {
             "review_model": review_model,
@@ -465,7 +473,6 @@ def build_parser() -> argparse.ArgumentParser:
             "record 的发布时机。"
         ),
     )
-    run.add_argument("--codex-binary", default="codex")
     run.add_argument("--timeout-seconds", type=int, default=1800)
     run.add_argument("--json", action="store_true")
     wait = sub.add_parser(

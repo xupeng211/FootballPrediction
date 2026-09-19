@@ -38,7 +38,8 @@
       "description": "v1 receipts stay classifiable as historical evidence; only v2 records pinned model provenance.",
       "enum": [
         "codex-independent-review-receipt/v1",
-        "codex-independent-review-receipt/v2"
+        "codex-independent-review-receipt/v2",
+        "codex-independent-review-receipt/v3"
       ]
     },
     "contract_schema_version": {"const": "agentic-engineering-workflow/v1"},
@@ -87,7 +88,25 @@
         "worktree_path": {"type": "string", "minLength": 1},
         "worktree_clean_before": {"const": true},
         "worktree_clean_after": {"const": true},
-        "source_mutation_detected": {"const": false}
+        "source_mutation_detected": {"const": false},
+        "canonical_auth_transport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy", "canonical_codex_home_external", "canonical_codex_home_owner_only", "authentication_mode", "builder_auth_override_inherited", "custom_model_provider_inherited", "cliproxyapi_routing_inherited", "generic_network_proxy_preserved", "user_codex_config_ignored", "pinned_model_active", "pinned_reasoning_active"],
+          "properties": {
+            "policy": {"const": "canonical-codex-auth-transport-isolation/v1"},
+            "canonical_codex_home_external": {"const": true},
+            "canonical_codex_home_owner_only": {"const": true},
+            "authentication_mode": {"const": "official_chatgpt_stored_state"},
+            "builder_auth_override_inherited": {"const": false},
+            "custom_model_provider_inherited": {"const": false},
+            "cliproxyapi_routing_inherited": {"const": false},
+            "generic_network_proxy_preserved": {"type": "boolean"},
+            "user_codex_config_ignored": {"const": true},
+            "pinned_model_active": {"const": true},
+            "pinned_reasoning_active": {"const": true}
+          }
+        }
       }
     },
     "model_provenance": {
@@ -179,6 +198,16 @@
       "then": {
         "required": ["model_provenance"],
         "properties": {"provenance": {"required": ["reviewer_command"]}}
+      }
+    }
+    ,
+    {
+      "if": {
+        "properties": {"schema_version": {"const": "codex-independent-review-receipt/v3"}},
+        "required": ["schema_version"]
+      },
+      "then": {
+        "properties": {"isolation": {"required": ["canonical_auth_transport"]}}
       }
     }
   ]

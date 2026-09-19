@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.ci.governance_growth_gate import check_local_worktree_growth
-from scripts.devops import agent_workflow, codex_independent_review
+from scripts.devops import agent_workflow, codex_independent_review, codex_review_classification
 from scripts.devops.codex_review_classification import validate_receipt
 from scripts.devops.codex_review_contract import build_reviewer_command, validate_review_result
 from scripts.devops.codex_review_provenance import ReviewReceiptError
@@ -70,7 +70,8 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
-    monkeypatch.setattr(codex_independent_review, "resolve_codex_binary", lambda _: codex_binary)
+    monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def test_agent_entry_points_to_canonical_workflow():
@@ -381,9 +382,9 @@ def test_final_clean_review_can_reach_merge_ready(tmp_path: Path, monkeypatch: p
         "scripts.devops.agent_workflow_preflight.run_preflight",
         lambda *_args, **_kwargs: preflight,
     )
-    # Workflow-governance paths are CRITICAL under the risk-tiered policy and
-    # therefore cannot reach merge-ready with only the Codex receipt.
-    assert agent_workflow.merge_ready_command(args) == 1
+    # The fixture carries the active backend registry, so its explicit STRICT
+    # contract can satisfy the single-Codex policy without a fabricated fallback.
+    assert agent_workflow.merge_ready_command(args) == 0
 
 
 @pytest.mark.parametrize("forbidden_status", ["PASS", "UNKNOWN"])

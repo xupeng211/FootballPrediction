@@ -9,7 +9,12 @@ import subprocess
 
 import pytest
 
-from scripts.devops import agent_workflow, agent_workflow_preflight, codex_independent_review
+from scripts.devops import (
+    agent_workflow,
+    agent_workflow_preflight,
+    codex_independent_review,
+    codex_review_classification,
+)
 from scripts.devops.codex_review_receipt import _codex_prompt
 from scripts.ops import ai_workflow_gate
 from scripts.ops.helpers.agent_workflow_contract import (
@@ -95,7 +100,8 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     codex_binary.chmod(0o700)
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
-    monkeypatch.setattr(codex_independent_review, "resolve_codex_binary", lambda _: codex_binary)
+    monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def test_protected_stage_d_path_is_out_of_scope():
@@ -335,7 +341,7 @@ def test_explicit_remote_scope_context_binds_exact_ci_head(
 def test_local_preflight_uses_explicit_current_mission_scope(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    repo, base, head = _make_repo(tmp_path)
+    repo, base, head = _make_repo(tmp_path, workflow_class="CRITICAL")
     _git(repo, "checkout", "-qb", "feature")
     monkeypatch.setattr(agent_workflow_preflight, "ROOT", repo)
     monkeypatch.setattr("scripts.ops.helpers.git_change_helpers.ROOT_HELPER", repo)
@@ -345,7 +351,11 @@ def test_local_preflight_uses_explicit_current_mission_scope(
         lambda *_args, **_kwargs: [],
     )
     result = agent_workflow_preflight.run_preflight(
-        _body(reviewed_sha=head),
+        _body(
+            reviewed_sha=head,
+            workflow_class="CRITICAL",
+            provider="codex-cli, claude-code-deepseek",
+        ),
         base_ref=base,
         head_ref=head,
         mission_scope_file=_scope_file(repo),
@@ -358,10 +368,17 @@ def test_local_preflight_uses_explicit_current_mission_scope(
 def test_preflight_json_stdout_is_parseable_with_real_shared_gate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ):
-    repo, base, head = _make_repo(tmp_path)
+    repo, base, head = _make_repo(tmp_path, workflow_class="CRITICAL")
     _git(repo, "checkout", "-qb", "feature")
     body_path = tmp_path / "pr-body.md"
-    body_path.write_text(_body(reviewed_sha=head), encoding="utf-8")
+    body_path.write_text(
+        _body(
+            reviewed_sha=head,
+            workflow_class="CRITICAL",
+            provider="codex-cli, claude-code-deepseek",
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setattr(agent_workflow_preflight, "ROOT", repo)
     monkeypatch.setattr("scripts.ops.helpers.git_change_helpers.ROOT_HELPER", repo)
     monkeypatch.setattr("scripts.ops.ai_workflow_gate.ROOT", repo)

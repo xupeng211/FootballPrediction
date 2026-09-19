@@ -123,7 +123,10 @@ Revert this infrastructure change; business runtime files are outside the explic
 
 ## Dangerous File Authorization
 
-The exact workflow files and tests listed in Scope are authorized for this governance mission; no production path is authorized.
+Owner authorization covers the exact workflow files and tests listed in Scope.
+Reason: bounded synthetic workflow-governance contract testing only.
+Rollback: revert the test-only fixture change; no production path is authorized.
+Validation: the focused workflow test suite exercises the same scope contract.
 
 ## PR Authorization Matrix
 
@@ -135,7 +138,7 @@ The exact workflow files and tests listed in Scope are authorized for this gover
 | Field | Value |
 | --- | --- |
 | Version | 1 |
-| Task type | STRICT |
+| Task type | {workflow_class} |
 | Provider | {provider} |
 | Reviewed full SHA | {reviewed_sha} |
 | Result | {review_result} |
@@ -148,7 +151,9 @@ def _git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def make_repo(tmp_path: Path, *, wrapper_content: str | None = None) -> tuple[Path, str, str]:
+def make_repo(
+    tmp_path: Path, *, wrapper_content: str | None = None, workflow_class: str = "STRICT"
+) -> tuple[Path, str, str]:
     """Build a synthetic repo that also carries the real reviewer wrapper.
 
     The wrapper is committed at base and left untouched at head, so the exact
@@ -168,8 +173,15 @@ def make_repo(tmp_path: Path, *, wrapper_content: str | None = None) -> tuple[Pa
     schema_path.write_text('{"type":"object"}\n', encoding="utf-8")
     scope_path = repo / MISSION_SCOPE_PATH
     scope_path.parent.mkdir(parents=True)
+    scope_payload = mission_scope_payload()
+    scope_payload["workflow_class"] = workflow_class
     scope_path.write_text(
-        json.dumps(mission_scope_payload(), ensure_ascii=False, sort_keys=True) + "\n",
+        json.dumps(scope_payload, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    backend_registry = repo / "docs/agentic/independent_review_backends.json"
+    backend_registry.parent.mkdir(parents=True, exist_ok=True)
+    backend_registry.write_text(
+        (ROOT / "docs/agentic/independent_review_backends.json").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     wrapper_path = repo / WRAPPER_NAME
@@ -186,6 +198,7 @@ def make_repo(tmp_path: Path, *, wrapper_content: str | None = None) -> tuple[Pa
         "Makefile",
         "schemas/agentic/codex_review_result.schema.json",
         MISSION_SCOPE_PATH,
+        "docs/agentic/independent_review_backends.json",
         WRAPPER_NAME,
     )
     _git(repo, "commit", "-qm", "base")
@@ -356,6 +369,19 @@ def write_valid_receipt(
             "worktree_clean_before": True,
             "worktree_clean_after": True,
             "source_mutation_detected": False,
+            "canonical_auth_transport": {
+                "policy": "canonical-codex-auth-transport-isolation/v1",
+                "canonical_codex_home_external": True,
+                "canonical_codex_home_owner_only": True,
+                "authentication_mode": "official_chatgpt_stored_state",
+                "builder_auth_override_inherited": False,
+                "custom_model_provider_inherited": False,
+                "cliproxyapi_routing_inherited": False,
+                "generic_network_proxy_preserved": True,
+                "user_codex_config_ignored": True,
+                "pinned_model_active": True,
+                "pinned_reasoning_active": True,
+            },
         },
         "provenance": {
             "writer": WRAPPER_NAME,
@@ -391,6 +417,7 @@ def write_valid_receipt(
         model_index = legacy_command.index(REVIEW_MODEL_FLAG)
         del legacy_command[model_index : model_index + 2]
         receipt["provenance"]["command_sha256"] = _canonical_sha256(legacy_command)
+        receipt["isolation"].pop("canonical_auth_transport")
     else:
         receipt["provenance"]["reviewer_command"] = list(command)
         receipt["provenance"]["command_sha256"] = _canonical_sha256(command)

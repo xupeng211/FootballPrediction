@@ -1,21 +1,5 @@
 #!/usr/bin/env python3
-"""Receipt evidence for the engineering-independent Codex reviewer.
-
-lifecycle: permanent
-owner: engineering workflow governance
-
-This module owns the toolchain-independent half of receipt validation: it
-locates one external receipt, proves its evidence is internally consistent and
-anchored to the exact reviewed Git object, and hands the raw facts to the
-classification layer in ``codex_review_classification``.
-
-No check here compares against the *currently installed* toolchain.  That is
-deliberate: a later legitimate upgrade must never turn genuine historical
-evidence into INVALID, while a receipt that contradicts the reviewed Git object
-must fail.  Local hashes remain integrity evidence, not cryptographic reviewer
-identity; the same-uid residual risk stays an explicitly accepted project
-decision.
-"""
+"""Toolchain-independent receipt validation; lifecycle: permanent; owner: workflow governance."""
 
 from __future__ import annotations
 
@@ -52,6 +36,7 @@ from scripts.devops.codex_review_output import (  # noqa: E402
     reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
+from scripts.devops.codex_reviewer_isolation import ISOLATION_POLICY_VERSION  # noqa: E402
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -70,10 +55,13 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     mission_scope_sha256 as scope_file_sha256,
 )
 
-RECEIPT_SCHEMA_VERSION = "codex-independent-review-receipt/v2"
+RECEIPT_SCHEMA_VERSION = "codex-independent-review-receipt/v3"
 RECEIPT_SCHEMA_VERSION_V1 = "codex-independent-review-receipt/v1"
+RECEIPT_SCHEMA_VERSION_V2 = "codex-independent-review-receipt/v2"
 LEGACY_RECEIPT_SCHEMA_VERSIONS = frozenset({RECEIPT_SCHEMA_VERSION_V1})
-KNOWN_RECEIPT_SCHEMA_VERSIONS = frozenset({RECEIPT_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION_V1})
+KNOWN_RECEIPT_SCHEMA_VERSIONS = frozenset(
+    {RECEIPT_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION_V2, RECEIPT_SCHEMA_VERSION_V1}
+)
 
 MODEL_SOURCE_CODEX_EXEC_FLAG = "codex_exec_model_flag"
 EFFORT_SOURCE_CODEX_CONFIG_OVERRIDE = "codex_config_override"
@@ -273,12 +261,7 @@ REQUIRED_REVIEWER_COMMAND_FLAGS = (
     "--output-last-message",
 )
 
-# Frozen v1 reviewer argv.  A v1 receipt never recorded the executed argv, so
-# its ``command_sha256`` can only be re-verified against the exact invocation
-# shape that v1 wrapper versions executed.  The literal effort argument is
-# deliberately not built from the currently pinned policy: rebuilding it from
-# today's selectors would make every genuine v1 receipt look tampered as soon as
-# the pinned model or effort changes.
+# Frozen v1 argv retains its literal effort across current-policy changes.
 LEGACY_V1_EFFORT_ARGUMENT = 'model_reasoning_effort="medium"'
 
 
@@ -432,6 +415,26 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         raise _EvidenceError("ISOLATION_INVALID", "reviewer source mutation evidence 不是 false")
     if isolation.get("sandbox") != "read-only":
         raise _EvidenceError("ISOLATION_INVALID", "reviewer sandbox 必须为 read-only")
+    if schema_version == RECEIPT_SCHEMA_VERSION:
+        canonical_auth = isolation.get("canonical_auth_transport")
+        required_auth_facts = {
+            "policy": ISOLATION_POLICY_VERSION,
+            "canonical_codex_home_external": True,
+            "canonical_codex_home_owner_only": True,
+            "authentication_mode": "official_chatgpt_stored_state",
+            "builder_auth_override_inherited": False,
+            "custom_model_provider_inherited": False,
+            "cliproxyapi_routing_inherited": False,
+            "user_codex_config_ignored": True,
+            "pinned_model_active": True,
+            "pinned_reasoning_active": True,
+        }
+        if not isinstance(canonical_auth, dict) or any(
+            canonical_auth.get(key) != expected for key, expected in required_auth_facts.items()
+        ):
+            raise _EvidenceError(
+                "CANONICAL_AUTH_TRANSPORT_INVALID", "canonical auth/transport provenance 不完整"
+            )
 
     with _fault("REVIEW_WORKTREE_INVALID"):
         worktree_path = _require_external_path(
@@ -777,6 +780,7 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
 
     return {
         "legacy_schema": legacy,
+        "receipt_schema_version": schema_version,
         "base_sha": base_sha,
         "reviewed_head": reviewed_head,
         "schema_path": schema_path,
