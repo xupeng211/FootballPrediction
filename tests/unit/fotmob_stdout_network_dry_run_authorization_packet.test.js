@@ -436,12 +436,7 @@ test('Makefile preview 成功', () => {
             'FOTMOB_STDOUT_NETWORK_AUTH_PACKET_NODE=node',
             `PACKET=${PACKET_PATH}`,
         ],
-        {
-            cwd: PROJECT_ROOT,
-            encoding: 'utf8',
-            shell: false,
-            env: { ...process.env, MAKELEVEL: '0' },
-        }
+        { cwd: PROJECT_ROOT, encoding: 'utf8', shell: false }
     );
     assert.equal(result.status, 0, result.stderr);
     assertSafePayload(extractJson(result.stdout));

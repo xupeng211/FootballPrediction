@@ -69,6 +69,9 @@
 
 # 默认目标
 .DEFAULT_GOAL := help
+# Nested Make invocations used by JSON-producing verification commands must
+# keep stdout machine-readable even when the parent Makefile is active.
+MAKEFLAGS += --no-print-directory
 
 # ============================================
 # 颜色定义
