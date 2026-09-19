@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from typing import Any
+from typing import Any, NoReturn
 
 from scripts.devops.codex_review_verdict import (
     ReviewReceiptError,
@@ -58,7 +58,13 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
+def _reject(message: str) -> NoReturn:
+    """Raise the typed validation error used by the outer fail-closed guard."""
+
+    raise ValueError(message)
+
+
+def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
     path: Path,
     *,
     repo_root: Path,
@@ -77,17 +83,17 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
         )
         backend = registry.get(value.get("review_backend"))
         if backend is None or value.get("review_backend") != BACKEND_DEEPSEEK:
-            raise ValueError("backend identity")
+            _reject("backend identity")
         if (
             backend["status"] != "active"
             or value.get("requested_model") not in backend["allowed_requested_models"]
         ):
-            raise ValueError("backend registry")
+            _reject("backend registry")
         integrity = value.get("integrity")
         if not isinstance(integrity, dict) or integrity.get(
             "receipt_payload_sha256"
         ) != receipt_payload_sha256(value):
-            raise ValueError("receipt integrity")
+            _reject("receipt integrity")
         result = validate_result(
             {
                 "protocol_version": value.get("protocol_version"),
@@ -96,14 +102,14 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             }
         )
         if value.get("finding_counts_by_severity") != result["finding_counts_by_severity"]:
-            raise ValueError("finding counts")
+            _reject("finding counts")
         if value.get("base_sha") != expected_base or value.get("head_sha") != expected_head:
-            raise ValueError("head binding")
+            _reject("head binding")
         if (
             value.get("mission_id") != expected_mission_id
             or value.get("mission_scope_sha256") != expected_scope_hash
         ):
-            raise ValueError("mission binding")
+            _reject("mission binding")
         expected_diff = sha256_bytes(
             subprocess.run(
                 ["git", "diff", "--binary", "--no-ext-diff", f"{expected_base}...{expected_head}"],
@@ -113,7 +119,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             ).stdout
         )
         if value.get("diff_sha256") != expected_diff:
-            raise ValueError("diff binding")
+            _reject("diff binding")
         provenance = value.get("provenance")
         if not isinstance(provenance, dict) or any(
             (
@@ -125,9 +131,9 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             else (not isinstance(provenance.get(field), str) or not provenance[field])
             for field in backend["required_provenance_fields"]
         ):
-            raise ValueError("provenance")
+            _reject("provenance")
         if value.get("resolved_model") != value.get("requested_model"):
-            raise ValueError("model fallback")
+            _reject("model fallback")
         # Commit-last output files are named from the immutable receipt run id.
         run_id = _assert_run_id(value.get("review_run_id"))
         raw = path.parent / f"claude-deepseek-raw-{expected_head[:12]}-{run_id}.json"
@@ -138,7 +144,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
         if value.get("raw_output_sha256") != sha256_bytes(raw_bytes) or value.get(
             "final_result_sha256"
         ) != sha256_bytes(final_bytes):
-            raise ValueError("raw/final binding")
+            _reject("raw/final binding")
         if final_bytes != canonical_json(
             {
                 "protocol_version": "INDEPENDENT_REVIEW_PROTOCOL_V1",
@@ -146,7 +152,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 "findings": result["findings"],
             }
         ):
-            raise ValueError("final result")
+            _reject("final result")
         chunked_evidence: tuple[dict[str, Any], ...] = ()
         one_shot_execution = None
         if provenance.get("chunked_review") is True:
@@ -155,7 +161,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             manifest = top.get("manifest") if isinstance(top, dict) else None
             descriptors = manifest.get("chunks") if isinstance(manifest, dict) else None
             if not isinstance(chunks, list) or not isinstance(descriptors, list):
-                raise ValueError("chunk evidence manifest")
+                _reject("chunk evidence manifest")
             diff_bytes = subprocess.run(
                 ["git", "diff", "--binary", "--no-ext-diff", f"{expected_base}...{expected_head}"],
                 cwd=repo_root,
@@ -164,15 +170,15 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
             ).stdout
             loaded: list[dict[str, Any]] = []
             if len(chunks) != len(descriptors):
-                raise ValueError("chunk count")
+                _reject("chunk count")
             for index, entry in enumerate(chunks):
                 descriptor = descriptors[index]
                 execution = entry.get("execution") if isinstance(entry, dict) else None
                 if not isinstance(descriptor, dict) or not isinstance(execution, dict):
-                    raise ValueError("chunk descriptor/execution")
+                    _reject("chunk descriptor/execution")
                 start, end = descriptor.get("start"), descriptor.get("end")
                 if not isinstance(start, int) or not isinstance(end, int):
-                    raise ValueError("chunk range")
+                    _reject("chunk range")
                 prompt_path = path.parent / (
                     f"claude-deepseek-chunk-prompt-{expected_head[:12]}-{run_id}-{index}.txt"
                 )
@@ -193,7 +199,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 if not isinstance(command, list) or not all(
                     isinstance(part, str) for part in command
                 ):
-                    raise ValueError("chunk command")
+                    _reject("chunk command")
                 chunk_execution = ClaudeDeepSeekExecutionEvidence(
                     reviewer_command=tuple(command),
                     resolved_model=execution.get("resolved_model"),
@@ -214,7 +220,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                     or entry.get("final_sha256") != sha256_bytes(chunk_final_bytes)
                     or entry.get("session_id") != chunk_execution.session_id
                 ):
-                    raise ValueError("chunk artifact binding")
+                    _reject("chunk artifact binding")
                 loaded.append(
                     {
                         "index": index,
@@ -231,13 +237,13 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
         else:
             prompt_name = provenance.get("review_prompt_path")
             if not isinstance(prompt_name, str) or Path(prompt_name).name != prompt_name:
-                raise ValueError("review prompt path")  # noqa: TRY301
+                _reject("review prompt path")
             prompt_path = path.parent / prompt_name
             _assert_external_artifact(prompt_path, repo_root=repo_root, kind="review prompt")
             prompt_bytes = prompt_path.read_bytes()
             command = provenance.get("reviewer_command")
             if not isinstance(command, list) or not all(isinstance(part, str) for part in command):
-                raise ValueError("reviewer command")
+                _reject("reviewer command")
             one_shot_execution = ClaudeDeepSeekExecutionEvidence(
                 reviewer_command=tuple(command),
                 resolved_model=value.get("resolved_model"),

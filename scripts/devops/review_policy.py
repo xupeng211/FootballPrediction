@@ -7,17 +7,16 @@ verdict.  Callers must validate Codex/Claude evidence with their respective
 receipt validators before constructing ``ReviewEvidence``.
 """
 
-# Lifecycle: permanent
-# Owner: engineering workflow governance
-
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+    from pathlib import Path
 
 BACKEND_CODEX = "codex-cli"
 BACKEND_DEEPSEEK = "claude-code-deepseek"
@@ -34,6 +33,8 @@ DEFAULT_BACKEND_ELIGIBILITY: Mapping[str, frozenset[str]] = {
 
 @dataclass(frozen=True)
 class CandidateBinding:
+    """Exact candidate identity shared by every trusted review receipt."""
+
     base_sha: str
     head_sha: str
     diff_sha256: str
@@ -59,6 +60,8 @@ class ReviewEvidence:
 
 @dataclass(frozen=True)
 class PolicyResult:
+    """Fail-closed evaluation result for one candidate and risk tier."""
+
     status: str
     reasons: tuple[str, ...]
     required_backends: tuple[str, ...]
@@ -67,6 +70,8 @@ class PolicyResult:
     fallback_policy: str = "EXPLICIT_ONLY"
 
     def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable policy result."""
+
         return asdict(self)
 
 
@@ -112,7 +117,7 @@ def _counts(value: dict[str, int]) -> tuple[int, int]:
     return sum(value[level] for level in BLOCKING_SEVERITIES), value["P3"]
 
 
-def evaluate_review_policy(
+def evaluate_review_policy(  # noqa: C901, PLR0912
     workflow_class: str,
     candidate: CandidateBinding,
     available_receipts: Iterable[ReviewEvidence],
@@ -230,6 +235,8 @@ def _evidence(value: dict[str, Any]) -> ReviewEvidence:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Evaluate receipt facts supplied by the command-line policy harness."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workflow-class", required=True)
     parser.add_argument("--candidate-json", required=True)

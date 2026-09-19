@@ -21,7 +21,6 @@ from scripts.devops.deepseek_review_chunks import (
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     IndependentReviewProtocolError,
-    canonical_json,
     sha256_bytes,
     validate_result,
     validate_sha,
@@ -35,7 +34,9 @@ _RESTRICTED_TOOLS = frozenset(
 )
 
 
-def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> None:
+def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
+    receipt: dict[str, Any], context: Any
+) -> None:
     """Validate harness-held chunks, not a receipt's self-consistent summary."""
 
     provenance = receipt["provenance"]
@@ -69,7 +70,7 @@ def _validate_chunked_claude_evidence(receipt: dict[str, Any], context: Any) -> 
             or provenance.get("chunk_manifest_sha256") != manifest.sha256
             or provenance.get("full_diff_sha256") != sha256_bytes(diff)
         ):
-            raise ChunkReviewError("chunk manifest binding mismatch")
+            raise ChunkReviewError("chunk manifest binding mismatch")  # noqa: TRY301
         validate_manifest(manifest, diff)
         top_chunks = top_evidence.get("chunks")
         if (

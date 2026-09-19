@@ -1,12 +1,12 @@
 """Deterministic canonical-diff chunk planning and fail-closed aggregation."""
 
-# Lifecycle: permanent
-# Owner: engineering workflow governance
-
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
@@ -18,6 +18,7 @@ from scripts.devops.independent_review_protocol import (
 CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v1"
 MAX_CHUNK_DIFF_BYTES = 32_000
 MAX_CHUNK_PROMPT_BYTES = 40_000
+EXPECTED_DIFF_PATH_PARTS = 2
 # Bound the number of provider calls for one logical review before any call is
 # made.  This keeps the bootstrap review bounded even for unusually large diffs.
 MAX_CHUNK_COUNT = 64
@@ -29,6 +30,8 @@ class ChunkReviewError(ValueError):
 
 @dataclass(frozen=True)
 class Chunk:
+    """One contiguous byte range of the canonical diff."""
+
     index: int
     start: int
     end: int
@@ -36,6 +39,8 @@ class Chunk:
     changed_paths: tuple[str, ...]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the manifest representation of this chunk."""
+
         return {
             **asdict(self),
             "changed_paths": list(self.changed_paths),
@@ -45,6 +50,8 @@ class Chunk:
 
 @dataclass(frozen=True)
 class Manifest:
+    """Immutable metadata proving complete chunk coverage of one diff."""
+
     base_sha: str
     head_sha: str
     mission_id: str
@@ -54,6 +61,8 @@ class Manifest:
     chunks: tuple[Chunk, ...]
 
     def payload(self) -> dict[str, Any]:
+        """Return the canonical hash-bound manifest payload."""
+
         return {
             "manifest_version": "deepseek-chunk-manifest/v1",
             "chunking_algorithm": CHUNKING_ALGORITHM_VERSION,
@@ -72,6 +81,8 @@ class Manifest:
 
     @property
     def sha256(self) -> str:
+        """Return the hash of the canonical manifest payload."""
+
         return sha256_bytes(canonical_json(self.payload()))
 
 
@@ -80,7 +91,7 @@ def _paths(chunk: bytes) -> tuple[str, ...]:
     for line in chunk.decode("utf-8", "replace").splitlines():
         if line.startswith("diff --git a/"):
             parts = line.split(" b/", 1)
-            if len(parts) == 2:
+            if len(parts) == EXPECTED_DIFF_PATH_PARTS:
                 paths.append(parts[1])
     return tuple(dict.fromkeys(paths))
 

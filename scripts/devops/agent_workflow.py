@@ -9,8 +9,6 @@ owner: engineering workflow governance
 和 protected-invariant evidence。它绝不执行 merge、push、commit 或清理。
 """
 
-# ruff: noqa: TRY301
-
 from __future__ import annotations
 
 import argparse
