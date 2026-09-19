@@ -35,6 +35,7 @@ from scripts.devops.independent_review_protocol import (  # noqa: E402
 )
 from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     MAX_CHUNK_DIFF_BYTES,
+    MAX_CHUNK_PROMPT_BYTES,
     aggregate,
     chunk_evidence_manifest_bytes,
     plan,
@@ -134,7 +135,7 @@ def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: 
         f"Scope SHA256: {scope_sha}\nFull diff SHA256: {manifest.full_diff_sha256}\n"
         f"Chunk manifest SHA256: {manifest.sha256}\nChunk: {chunk.index + 1}/{len(manifest.chunks)} "
         f"range={chunk.start}:{chunk.end} source_sha256={chunk.source_sha256}\n"
-        f"Changed paths: {','.join(sorted({path for item in manifest.chunks for path in item.changed_paths}))}\n"
+        f"Changed paths: {','.join(chunk.changed_paths)}\n"
         f"Canonical chunk diff:\n{source.decode('utf-8', 'replace')}"
     )
 
@@ -154,6 +155,8 @@ def _run_chunked_review(
     for chunk in manifest.chunks:
         source = diff[chunk.start : chunk.end]
         prompt = _chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
+        if len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES:
+            raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
         try:
             raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
         except backend.BackendInfrastructureError as exc:

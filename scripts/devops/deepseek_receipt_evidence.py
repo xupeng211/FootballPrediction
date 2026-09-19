@@ -255,7 +255,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 base_sha=expected_base,
                 head_sha=expected_head,
                 mission_scope_path=value.get("mission_scope_path"),
-                prompt_bytes=raw_bytes if chunked_evidence else prompt_bytes,
+                prompt_bytes=raw_bytes if one_shot_execution is None else prompt_bytes,
                 raw_output_bytes=raw_bytes,
                 final_result_bytes=final_bytes,
                 claude_deepseek_execution=one_shot_execution,
