@@ -469,3 +469,11 @@ review 完成后 PR body 的 strict evidence 必须改为 Codex、PASS/FINDINGS_
 和当前 exact HEAD；`agent-merge-ready --pr` 会再次以 `allow_pending=false` 校验当前
 PR body。source change 自动使旧 evidence stale，新 HEAD 必须重新 CI + review。远端
 required checks 仍由 GitHub ruleset/API 产生，`pr-ready` 不替代 TEST、CI 或 REVIEW。
+
+CRITICAL 的 physical receipt authority 仍属于本地 `agent-merge-ready`/Execution Controller：
+它必须分别消费并验证当前 exact-head 的 Codex 与 DeepSeek receipt。GitHub required
+Production Gate 不读取 source tree 外的 owner-only receipt directory，也不声称通过
+PR metadata 对 receipt payload、provider execution 或 hostile-builder resistance 做远端
+证明；它只负责 exact PR HEAD、mission/workflow metadata、required tests/static/governance
+checks 和 provider-neutral 最终 evidence contract。Owner/Controller 只有在本地双 receipt
+validation 与远端 required CI 同时通过时才可 merge。

@@ -566,6 +566,34 @@ def test_remote_merge_check_rejects_pending_pr_review_evidence(
     assert evidence["verdict"] == "FAIL"
 
 
+def test_remote_merge_check_keeps_receipt_authority_local(monkeypatch: pytest.MonkeyPatch):
+    head = "2" * 40
+    critical_body = _body(
+        workflow_class="CRITICAL",
+        review_result="PASS",
+        reviewed_sha=head,
+        provider="codex-cli, claude-code-deepseek",
+    ).replace("| Task type | STRICT |", "| Task type | CRITICAL |")
+    fake_result = SimpleNamespace(
+        findings=[],
+        verdict="PASS",
+        pr=SimpleNamespace(
+            base_sha=BASE_SHA,
+            head_sha=head,
+            body=critical_body,
+        ),
+    )
+    monkeypatch.setattr("scripts.devops.pr_ready_check.evaluate", lambda _pr_number: fake_result)
+    check, evidence, _pr_body = agent_workflow._remote_pr_check(
+        1904,
+        changed_paths={"scripts/devops/agent_workflow.py"},
+        expected_base=BASE_SHA,
+        expected_head=head,
+    )
+    assert check.status == "PASS"
+    assert evidence["verdict"] == "PASS"
+
+
 def test_remote_merge_check_rejects_different_pr_base(monkeypatch: pytest.MonkeyPatch):
     head = "2" * 40
     fake_result = SimpleNamespace(

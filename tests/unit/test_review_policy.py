@@ -100,6 +100,15 @@ def test_critical_one_backend_is_unsatisfied():
     assert result.status == "UNSATISFIED"
 
 
+def test_critical_local_policy_requires_two_current_receipts_independent_of_pr_metadata():
+    codex_only = evaluate_review_policy("CRITICAL", _candidate(), [_receipt(BACKEND_CODEX)])
+    assert codex_only.status == "UNSATISFIED"
+    both_receipts = evaluate_review_policy(
+        "CRITICAL", _candidate(), [_receipt(BACKEND_CODEX), _receipt(BACKEND_DEEPSEEK)]
+    )
+    assert both_receipts.status == "SATISFIED"
+
+
 def test_critical_rejects_different_head_or_scope():
     wrong_head = _receipt(BACKEND_DEEPSEEK, head_sha="e" * 40)
     result = evaluate_review_policy("CRITICAL", _candidate(), [_receipt(BACKEND_CODEX), wrong_head])

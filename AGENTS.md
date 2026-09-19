@@ -91,6 +91,8 @@ STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider
 
 改变 review authority、凭据/认证、生产授权、不可逆数据操作、模型生产决策或 fail-closed 控制的任务必须使用 CRITICAL。它要求同一 base/head/diff/mission/scope 上彼此独立的 `codex-cli` 与 `claude-code-deepseek` 两份 current receipt；任一缺失、NO_VERDICT、stale、无效或 P0/P1/P2 都 fail closed。P3 始终记录但不阻塞。不得隐式降级 class 或 fallback backend。
 
+CRITICAL receipt 的 authority split 保持在现有 `ENGINEERING_INDEPENDENT_REVIEW` assurance model 内：本地 `agent-merge-ready`/Execution Controller 读取并验证 source tree 外的 owner-only physical receipts；GitHub required CI 不读取这些本地 external files，也不把 PR 正文自填的 provider/result 当作 receipt validity。远端 CI 只验证 exact PR HEAD、mission/workflow metadata、required checks 和最终 review-evidence contract；Owner/Controller 只有在本地双 receipt validation 与远端 required CI 均通过后才可 merge。这不提供 cryptographic 或 hostile-builder resistance。
+
 ## 4. Canonical validation profiles
 
 最终公开给 agent 的验证接口只有三种：
