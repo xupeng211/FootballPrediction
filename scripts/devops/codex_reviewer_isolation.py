@@ -50,7 +50,31 @@ NETWORK_TRANSPORT_VARIABLES = frozenset(
     }
 )
 BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(
-    {"CODEX_CA_CERTIFICATE", "SSL_CERT_FILE", "SSL_CERT_DIR"}
+    {
+        "CODEX_CA_CERTIFICATE",
+        "CURL_CA_BUNDLE",
+        "GIT_SSL_CAINFO",
+        "NODE_EXTRA_CA_CERTS",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_DIR",
+        "SSL_CERT_FILE",
+    }
+)
+BUILDER_PROCESS_INJECTION_VARIABLES = frozenset(
+    {
+        "DYLD_INSERT_LIBRARIES",
+        "DYLD_LIBRARY_PATH",
+        "JAVA_TOOL_OPTIONS",
+        "LD_LIBRARY_PATH",
+        "LD_PRELOAD",
+        "NODE_OPTIONS",
+        "NODE_PATH",
+        "PERL5OPT",
+        "PYTHONHOME",
+        "PYTHONPATH",
+        "RUBYOPT",
+        "_JAVA_OPTIONS",
+    }
 )
 
 
@@ -70,6 +94,7 @@ def _is_builder_routing_or_auth_override(name: str) -> bool:
     return (
         upper.startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY"))
         or upper in BUILDER_TRUST_ANCHOR_VARIABLES
+        or upper in BUILDER_PROCESS_INJECTION_VARIABLES
         or upper
         in {
             "CODEX_API_KEY",
