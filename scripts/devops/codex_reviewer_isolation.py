@@ -35,8 +35,9 @@ CANONICAL_CODEX_BINARY = Path("/usr/lib/chatgpt/resources/codex")
 CANONICAL_EXEC_PATH = "/usr/local/bin:/usr/bin:/bin"
 
 # Generic proxy variables are network transport settings, not model/provider
-# selection.  Trust-anchor variables stay out of the canonical lane because a
-# Builder-controlled CA would change the authentication transport's trust root.
+# selection.  CA transport settings remain available when they point at a
+# system-owned, non-writable trust root; a Builder-controlled CA path is never
+# copied into the canonical lane.
 NETWORK_TRANSPORT_VARIABLES = frozenset(
     {
         "HTTP_PROXY",
@@ -49,7 +50,7 @@ NETWORK_TRANSPORT_VARIABLES = frozenset(
         "no_proxy",
     }
 )
-BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(
+CA_TRANSPORT_VARIABLES = frozenset(
     {
         "CODEX_CA_CERTIFICATE",
         "CURL_CA_BUNDLE",
@@ -60,6 +61,7 @@ BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(
         "SSL_CERT_FILE",
     }
 )
+BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(CA_TRANSPORT_VARIABLES)
 BUILDER_PROCESS_INJECTION_VARIABLES = frozenset(
     {
         "DYLD_INSERT_LIBRARIES",
@@ -105,6 +107,36 @@ def _is_builder_routing_or_auth_override(name: str) -> bool:
     )
 
 
+def _is_safe_ca_path(value: str, *, directory: bool) -> bool:
+    """Return whether one CA path is a stable, system-owned trust root."""
+
+    try:
+        path = Path(value)
+        metadata = path.stat()
+    except (OSError, ValueError):
+        return False
+    mode = stat.S_IMODE(metadata.st_mode)
+    expected_type = path.is_dir() if directory else path.is_file()
+    return (
+        path.is_absolute()
+        and not path.is_symlink()
+        and metadata.st_uid == 0
+        and not mode & (stat.S_IWGRP | stat.S_IWOTH)
+        and expected_type
+    )
+
+
+def _is_safe_ca_transport_value(name: str, value: str) -> bool:
+    """Allow only stable system trust roots into the canonical environment."""
+
+    upper = name.upper()
+    if upper not in CA_TRANSPORT_VARIABLES or not value:
+        return False
+    directory = upper == "SSL_CERT_DIR"
+    values = value.split(os.pathsep) if directory else [value]
+    return all(_is_safe_ca_path(item, directory=directory) for item in values)
+
+
 def canonical_reviewer_environment(
     source: Mapping[str, str] | None = None, *, codex_binary: Path | None = None
 ) -> dict[str, str]:
@@ -116,6 +148,13 @@ def canonical_reviewer_environment(
         for name, value in original.items()
         if not _is_builder_routing_or_auth_override(name)
     }
+    environment.update(
+        {
+            name: value
+            for name, value in original.items()
+            if _is_safe_ca_transport_value(name, value)
+        }
+    )
     environment["CODEX_HOME"] = str(CANONICAL_CODEX_HOME)
     codex_bin_dir = "" if codex_binary is None else str(codex_binary.parent)
     environment["PATH"] = (
@@ -198,7 +237,11 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
     _assert_no_custom_provider_configuration()
     environment = canonical_reviewer_environment(codex_binary=codex_binary)
     inherited = {name for name in os.environ if _is_builder_routing_or_auth_override(name)}
-    if any(name in environment for name in inherited if name != "CODEX_HOME"):
+    if any(
+        name in environment and not _is_safe_ca_transport_value(name, environment[name])
+        for name in inherited
+        if name != "CODEX_HOME"
+    ):
         raise ReviewReceiptError("Builder auth/provider routing leaked into canonical environment")
     if environment.get("CODEX_HOME") != str(CANONICAL_CODEX_HOME):
         raise ReviewReceiptError("canonical CODEX_HOME 未被强制设置")

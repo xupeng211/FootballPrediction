@@ -93,6 +93,30 @@ def test_builder_provider_and_auth_overrides_are_scrubbed_but_network_proxy_surv
     )
 
 
+def test_system_ca_transport_survives_but_builder_owned_ca_is_not_inherited() -> None:
+    system_ca_file = Path("/etc/ssl/certs/ca-certificates.crt")
+    system_ca_dir = Path("/etc/ssl/certs")
+    if not system_ca_file.is_file() or not system_ca_dir.is_dir():
+        pytest.skip("system CA fixture is unavailable")
+    source = {
+        "CODEX_CA_CERTIFICATE": str(system_ca_file),
+        "CURL_CA_BUNDLE": str(system_ca_file),
+        "GIT_SSL_CAINFO": str(system_ca_file),
+        "NODE_EXTRA_CA_CERTS": str(system_ca_file),
+        "REQUESTS_CA_BUNDLE": str(system_ca_file),
+        "SSL_CERT_FILE": str(system_ca_file),
+        "SSL_CERT_DIR": str(system_ca_dir),
+    }
+    environment = isolation.canonical_reviewer_environment(source)
+    for name in isolation.CA_TRANSPORT_VARIABLES:
+        expected = str(system_ca_dir if name == "SSL_CERT_DIR" else system_ca_file)
+        assert environment[name] == expected
+    unsafe_environment = isolation.canonical_reviewer_environment(
+        {"CURL_CA_BUNDLE": "/builder-controlled-ca.pem"}
+    )
+    assert "CURL_CA_BUNDLE" not in unsafe_environment
+
+
 def test_preflight_rejects_missing_or_insecure_dedicated_auth(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
