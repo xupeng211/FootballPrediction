@@ -37,7 +37,9 @@ CANONICAL_EXEC_PATH = "/usr/local/bin:/usr/bin:/bin"
 # Generic proxy variables are network transport settings, not model/provider
 # selection.  CA transport settings remain available when they point at a
 # system-owned, non-writable trust root; a Builder-controlled CA path is never
-# copied into the canonical lane.
+# copied into the canonical lane.  Everything else is intentionally excluded
+# by the allowlist below, so a newly introduced Builder variable cannot drift
+# into the official reviewer lane by omission from a denylist.
 NETWORK_TRANSPORT_VARIABLES = frozenset(
     {
         "HTTP_PROXY",
@@ -61,69 +63,12 @@ CA_TRANSPORT_VARIABLES = frozenset(
         "SSL_CERT_FILE",
     }
 )
-BUILDER_TRUST_ANCHOR_VARIABLES = frozenset(CA_TRANSPORT_VARIABLES)
-BUILDER_PROCESS_INJECTION_VARIABLES = frozenset(
-    {
-        "DYLD_INSERT_LIBRARIES",
-        "DYLD_LIBRARY_PATH",
-        "GCONV_PATH",
-        "JAVA_TOOL_OPTIONS",
-        "LD_AUDIT",
-        "LD_LIBRARY_PATH",
-        "LD_PRELOAD",
-        "OPENSSL_CONF",
-        "OPENSSL_ENGINES",
-        "OPENSSL_MODULES",
-        "NODE_OPTIONS",
-        "NODE_PATH",
-        "NODE_TLS_REJECT_UNAUTHORIZED",
-        "PERL5OPT",
-        "PYTHONHOME",
-        "PYTHONINSPECT",
-        "PYTHONPATH",
-        "PYTHONSTARTUP",
-        "RUBYOPT",
-        "SSLKEYLOGFILE",
-        "_JAVA_OPTIONS",
-        "BASH_ENV",
-        "ENV",
-        "GIT_CONFIG_GLOBAL",
-        "GIT_CONFIG_NOSYSTEM",
-        "GIT_CONFIG_SYSTEM",
-        "GIT_PROXY_COMMAND",
-        "GIT_SSH",
-        "GIT_SSH_COMMAND",
-        "GIT_SSL_NO_VERIFY",
-        "WGETRC",
-    }
+CANONICAL_FIXED_ENVIRONMENT_NAMES = frozenset(
+    {"CODEX_AGENT_ROLE", "CODEX_HOME", "HOME", "NO_COLOR", "PATH"}
 )
-
-
-def _is_builder_routing_or_auth_override(name: str) -> bool:
-    """Return whether ``name`` can select a Builder auth/provider lane.
-
-    ``CODEX_API_KEY``, ``CODEX_ACCESS_TOKEN``, ``OPENAI_API_KEY`` and
-    ``OPENAI_BASE_URL`` are current documented/supported Codex inputs.  Prefix
-    handling also prevents an installed CLIProxyAPI integration from adding a
-    same-family override unnoticed.  Generic HTTP proxy variables are excluded
-    above and are explicitly not provider routing.
-    """
-
-    upper = name.upper()
-    if name in NETWORK_TRANSPORT_VARIABLES:
-        return False
-    return (
-        upper.startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY"))
-        or upper in BUILDER_TRUST_ANCHOR_VARIABLES
-        or upper in BUILDER_PROCESS_INJECTION_VARIABLES
-        or upper
-        in {
-            "CODEX_API_KEY",
-            "CODEX_ACCESS_TOKEN",
-            "CODEX_HOME",
-            "CODEX_CLI_PATH",
-        }
-    )
+CANONICAL_ALLOWED_ENVIRONMENT_NAMES = frozenset(
+    set(NETWORK_TRANSPORT_VARIABLES) | set(CA_TRANSPORT_VARIABLES)
+)
 
 
 def _is_safe_ca_path(value: str, *, directory: bool) -> bool:
@@ -163,9 +108,7 @@ def canonical_reviewer_environment(
 
     original = dict(os.environ if source is None else source)
     environment = {
-        name: value
-        for name, value in original.items()
-        if not _is_builder_routing_or_auth_override(name)
+        name: value for name, value in original.items() if name in NETWORK_TRANSPORT_VARIABLES
     }
     environment.update(
         {
@@ -175,6 +118,7 @@ def canonical_reviewer_environment(
         }
     )
     environment["CODEX_HOME"] = str(CANONICAL_CODEX_HOME)
+    environment["HOME"] = str(CANONICAL_CODEX_HOME.parent.parent)
     codex_bin_dir = "" if codex_binary is None else str(codex_binary.parent)
     environment["PATH"] = (
         f"{codex_bin_dir}{os.pathsep}{CANONICAL_EXEC_PATH}"
@@ -186,19 +130,24 @@ def canonical_reviewer_environment(
     return environment
 
 
-def _builder_environment_leaks(
-    source: Mapping[str, str], environment: Mapping[str, str]
-) -> set[str]:
-    """Return Builder-controlled names that survived environment sanitization."""
+def _unexpected_environment_names(environment: Mapping[str, str]) -> set[str]:
+    """Return names outside the explicit canonical environment allowlist."""
 
-    return {
+    allowed = CANONICAL_FIXED_ENVIRONMENT_NAMES | CANONICAL_ALLOWED_ENVIRONMENT_NAMES
+    unexpected = set(environment) - allowed
+    unsafe_ca = {
         name
-        for name in source
-        if name != "CODEX_HOME"
-        and _is_builder_routing_or_auth_override(name)
-        and name in environment
-        and not _is_safe_ca_transport_value(name, environment[name])
+        for name, value in environment.items()
+        if name.upper() in CA_TRANSPORT_VARIABLES and not _is_safe_ca_transport_value(name, value)
     }
+    return unexpected | unsafe_ca
+
+
+def _is_custom_provider_name(name: str) -> bool:
+    """Return whether ``name`` can select a custom model/provider lane."""
+
+    upper = name.upper()
+    return upper.startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY"))
 
 
 def canonical_codex_binary() -> Path:
@@ -269,9 +218,8 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
 
     _assert_private_home()
     _assert_no_custom_provider_configuration()
-    source = dict(os.environ)
-    environment = canonical_reviewer_environment(source, codex_binary=codex_binary)
-    leaked_names = _builder_environment_leaks(source, environment)
+    environment = canonical_reviewer_environment(codex_binary=codex_binary)
+    leaked_names = _unexpected_environment_names(environment)
     if leaked_names:
         raise ReviewReceiptError("Builder auth/provider routing leaked into canonical environment")
     if environment.get("CODEX_HOME") != str(CANONICAL_CODEX_HOME):
@@ -300,18 +248,20 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
         f"{status.stdout}\n{status.stderr}"
     ):
         raise ReviewReceiptError("canonical reviewer 未建立官方 ChatGPT authentication")
-    custom_provider_leaks = any(
-        name.upper().startswith(("OPENAI_", "CLIPROXY", "CLI_PROXY")) for name in leaked_names
-    )
+    custom_provider_leaks = any(_is_custom_provider_name(name) for name in environment)
     cliproxyapi_leaks = any(
-        name.upper().startswith(("CLIPROXY", "CLI_PROXY")) for name in leaked_names
+        name.upper().startswith(("CLIPROXY", "CLI_PROXY")) for name in environment
+    )
+    builder_auth_leaks = any(
+        name.upper() in {"CODEX_ACCESS_TOKEN", "CODEX_API_KEY"} or _is_custom_provider_name(name)
+        for name in environment
     )
     return {
         "policy": ISOLATION_POLICY_VERSION,
         "canonical_codex_home_external": True,
         "canonical_codex_home_owner_only": True,
         "authentication_mode": "official_chatgpt_stored_state",
-        "builder_auth_override_inherited": bool(leaked_names),
+        "builder_auth_override_inherited": builder_auth_leaks,
         "custom_model_provider_inherited": custom_provider_leaks,
         "cliproxyapi_routing_inherited": cliproxyapi_leaks,
         "generic_network_proxy_preserved": any(
