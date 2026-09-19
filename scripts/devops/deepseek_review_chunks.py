@@ -18,6 +18,9 @@ from scripts.devops.independent_review_protocol import (
 CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v1"
 MAX_CHUNK_DIFF_BYTES = 32_000
 MAX_CHUNK_PROMPT_BYTES = 40_000
+# Bound the number of provider calls for one logical review before any call is
+# made.  This keeps the bootstrap review bounded even for unusually large diffs.
+MAX_CHUNK_COUNT = 64
 
 
 class ChunkReviewError(ValueError):
@@ -56,6 +59,7 @@ class Manifest:
             "chunking_algorithm": CHUNKING_ALGORITHM_VERSION,
             "max_chunk_diff_bytes": MAX_CHUNK_DIFF_BYTES,
             "max_chunk_prompt_bytes": MAX_CHUNK_PROMPT_BYTES,
+            "max_chunk_count": MAX_CHUNK_COUNT,
             "base_sha": self.base_sha,
             "head_sha": self.head_sha,
             "mission_id": self.mission_id,
@@ -125,6 +129,8 @@ def validate_manifest(manifest: Manifest, diff: bytes) -> None:
         raise ChunkReviewError("full diff binding mismatch")
     if not manifest.chunks:
         raise ChunkReviewError("chunk manifest is empty")
+    if len(manifest.chunks) > MAX_CHUNK_COUNT:
+        raise ChunkReviewError("chunk count exceeds bounded review limit")
     position = 0
     reconstructed = bytearray()
     for index, chunk in enumerate(manifest.chunks):

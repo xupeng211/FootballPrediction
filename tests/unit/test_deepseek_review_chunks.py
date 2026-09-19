@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 from scripts.devops import deepseek_chunk_receipt_validation as chunk_validation
 from scripts.devops.deepseek_review_chunks import (
+    MAX_CHUNK_COUNT,
+    MAX_CHUNK_DIFF_BYTES,
     ChunkReviewError,
     aggregate,
     build_chunk_prompt,
@@ -79,6 +81,18 @@ def test_manifest_rejects_gap_overlap_or_tampered_source():
     manifest = _manifest()
     with pytest.raises(ChunkReviewError):
         validate_manifest(manifest, b"x" + b"diff --git a/a b/a\n+line\n" * 3000)
+
+
+def test_manifest_rejects_unbounded_provider_request_count():
+    diff = b"x" * ((MAX_CHUNK_DIFF_BYTES * (MAX_CHUNK_COUNT + 1)) + 1)
+    with pytest.raises(ChunkReviewError, match="chunk count exceeds"):
+        plan(
+            diff,
+            base_sha="a" * 40,
+            head_sha="b" * 40,
+            mission_id="MISSION",
+            mission_scope_sha256="c" * 64,
+        )
 
 
 def test_aggregate_is_fail_closed_and_surfaces_p3():
