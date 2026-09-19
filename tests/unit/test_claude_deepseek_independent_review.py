@@ -167,7 +167,7 @@ def test_chunked_consumer_accepts_command_with_canonical_empty_tools_argument(
         "diff_sha256": "d" * 64,
         "mission_id": "MISSION",
         "mission_scope_sha256": "c" * 64,
-        "review_run_id": "run",
+        "review_run_id": "a",
         "review_result": "PASS",
         "findings": [],
         "finding_counts_by_severity": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
@@ -183,7 +183,11 @@ def test_chunked_consumer_accepts_command_with_canonical_empty_tools_argument(
             "session_id": "session",
         },
     }
-    path = tmp_path / "receipt.json"
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir(mode=0o700)
+    path = evidence_dir / "claude-deepseek-receipt-bbbbbbbbbbbb-a.json"
     path.write_text(__import__("json").dumps(receipt), encoding="utf-8")
     registry = {
         "claude-code-deepseek": {
@@ -209,8 +213,8 @@ def test_chunked_consumer_accepts_command_with_canonical_empty_tools_argument(
         consumer.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(stdout=b"diff")
     )
     top = {"chunks": [], "manifest": {"chunks": []}}
-    raw = tmp_path / "claude-deepseek-raw-bbbbbbbbbbbb-run.json"
-    final = tmp_path / "claude-deepseek-final-bbbbbbbbbbbb-run.json"
+    raw = evidence_dir / "claude-deepseek-raw-bbbbbbbbbbbb-a.json"
+    final = evidence_dir / "claude-deepseek-final-bbbbbbbbbbbb-a.json"
     raw.write_text(__import__("json").dumps(top), encoding="utf-8")
     final.write_bytes(
         consumer.canonical_json(
@@ -221,14 +225,37 @@ def test_chunked_consumer_accepts_command_with_canonical_empty_tools_argument(
             }
         )
     )
+    raw.chmod(0o600)
+    final.chmod(0o600)
     receipt["raw_output_sha256"] = receipt["final_result_sha256"] = "d" * 64
     path.write_text(__import__("json").dumps(receipt), encoding="utf-8")
+    path.chmod(0o600)
     result = consumer._deepseek_receipt_evidence(
         path,
-        repo_root=tmp_path,
+        repo_root=repo_root,
         expected_base="a" * 40,
         expected_head="b" * 40,
         expected_mission_id="MISSION",
         expected_scope_hash="c" * 64,
     )
     assert result.trusted is True
+
+
+def test_chunked_consumer_rejects_incomplete_or_repo_local_artifacts(tmp_path: Path):
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir(mode=0o700)
+    artifact = evidence_dir / "chunk.json"
+    artifact.write_text("{}", encoding="utf-8")
+    artifact.chmod(0o644)
+    with pytest.raises(ValueError, match="invalid chunk artifact metadata"):
+        consumer._assert_external_artifact(
+            artifact, repo_root=tmp_path / "repo", kind="chunk artifact"
+        )
+
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    local = repo_root / "receipt.json"
+    local.write_text("{}", encoding="utf-8")
+    local.chmod(0o600)
+    with pytest.raises(ValueError, match="outside repository"):
+        consumer._assert_external_artifact(local, repo_root=repo_root, kind="receipt")

@@ -8,9 +8,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 from typing import Any
 
+from scripts.devops.codex_review_verdict import (
+    ReviewReceiptError,
+    assert_owner_only_directory,
+    assert_owner_only_file,
+)
 from scripts.devops.independent_review_protocol import canonical_json, sha256_bytes, validate_result
 from scripts.devops.independent_review_receipt import (
     ClaudeDeepSeekExecutionEvidence,
@@ -20,6 +26,26 @@ from scripts.devops.independent_review_receipt import (
     validate_receipt,
 )
 from scripts.devops.review_policy import BACKEND_DEEPSEEK, ReviewEvidence
+
+
+def _assert_external_artifact(path: Path, *, repo_root: Path, kind: str) -> None:
+    """Require evidence artifacts to live in a private external directory."""
+
+    resolved = path.resolve()
+    repository = repo_root.resolve()
+    if resolved == repository or repository in resolved.parents:
+        raise ValueError(f"{kind} must be outside repository worktree")
+    try:
+        assert_owner_only_directory(path.parent)
+        assert_owner_only_file(path)
+    except (OSError, ReviewReceiptError) as exc:
+        raise ValueError(f"invalid {kind} metadata: {path}: {exc}") from exc
+
+
+def _assert_run_id(run_id: Any) -> str:
+    if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{1,64}", run_id):
+        raise ValueError("run id")
+    return run_id
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -44,6 +70,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
     """Read commit-last DeepSeek evidence or return one untrusted NO_VERDICT."""
 
     try:
+        _assert_external_artifact(path, repo_root=repo_root, kind="receipt")
         value = _load_json(path)
         registry = load_backend_registry(
             repo_root / "docs/agentic/independent_review_backends.json"
@@ -102,11 +129,11 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
         if value.get("resolved_model") != value.get("requested_model"):
             raise ValueError("model fallback")
         # Commit-last output files are named from the immutable receipt run id.
-        run_id = value.get("review_run_id")
-        if not isinstance(run_id, str) or not run_id:
-            raise ValueError("run id")
+        run_id = _assert_run_id(value.get("review_run_id"))
         raw = path.parent / f"claude-deepseek-raw-{expected_head[:12]}-{run_id}.json"
         final = path.parent / f"claude-deepseek-final-{expected_head[:12]}-{run_id}.json"
+        _assert_external_artifact(raw, repo_root=repo_root, kind="raw artifact")
+        _assert_external_artifact(final, repo_root=repo_root, kind="final artifact")
         raw_bytes, final_bytes = raw.read_bytes(), final.read_bytes()
         if value.get("raw_output_sha256") != sha256_bytes(raw_bytes) or value.get(
             "final_result_sha256"
@@ -154,6 +181,13 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912
                 )
                 chunk_final_path = path.parent / (
                     f"claude-deepseek-chunk-final-{expected_head[:12]}-{run_id}-{index}.json"
+                )
+                _assert_external_artifact(prompt_path, repo_root=repo_root, kind="chunk prompt")
+                _assert_external_artifact(
+                    chunk_raw_path, repo_root=repo_root, kind="chunk raw artifact"
+                )
+                _assert_external_artifact(
+                    chunk_final_path, repo_root=repo_root, kind="chunk final artifact"
                 )
                 command = execution.get("reviewer_command")
                 if not isinstance(command, list) or not all(
