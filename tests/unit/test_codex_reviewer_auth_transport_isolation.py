@@ -6,6 +6,7 @@ lifecycle: test-fixture
 from __future__ import annotations
 
 from pathlib import Path
+import stat
 from types import SimpleNamespace
 
 import pytest
@@ -142,3 +143,25 @@ def test_preflight_rejects_non_chatgpt_auth_or_custom_provider_config(
         isolation.canonical_reviewer_preflight(
             codex_binary=Path("/test/codex"), command=_command(tmp_path)
         )
+
+
+def test_fixed_canonical_binary_rejects_group_writable_executable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _RootOwnedGroupWritableBinary:
+        def resolve(self, *, strict: bool) -> _RootOwnedGroupWritableBinary:
+            assert strict is True
+            return self
+
+        def stat(self) -> SimpleNamespace:
+            return SimpleNamespace(st_uid=0, st_mode=stat.S_IFREG | 0o775)
+
+        def is_file(self) -> bool:
+            return True
+
+        def __fspath__(self) -> str:
+            return "/usr/bin/true"
+
+    monkeypatch.setattr(isolation, "CANONICAL_CODEX_BINARY", _RootOwnedGroupWritableBinary())
+    with pytest.raises(ReviewReceiptError, match="不安全"):
+        isolation.canonical_codex_binary()

@@ -115,7 +115,7 @@ def canonical_codex_binary() -> Path:
         not binary.is_file()
         or not os.access(binary, os.X_OK)
         or metadata.st_uid != 0
-        or stat.S_IMODE(metadata.st_mode) & stat.S_IWOTH
+        or stat.S_IMODE(metadata.st_mode) & (stat.S_IWGRP | stat.S_IWOTH)
     ):
         raise ReviewReceiptError("canonical official Codex CLI 不安全")
     return binary

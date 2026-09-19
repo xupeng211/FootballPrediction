@@ -69,6 +69,7 @@ def _synthetic_codex_provenance_root(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("CODEX_HOME", str(codex_root))
     monkeypatch.setenv("PATH", f"{bin_root}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setattr(codex_independent_review, "canonical_codex_binary", lambda: codex_binary)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: codex_binary)
 
 
 def _pinned_command() -> list[str]:
@@ -504,6 +505,7 @@ def test_swapped_cli_install_path_downgrades_old_receipt(
     binary.chmod(0o700)
     monkeypatch.delenv("CODEX_CLI_PATH", raising=False)
     monkeypatch.setenv("PATH", f"{upgraded}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", lambda: binary)
     result = _classification(receipt, repo, current_head=head, expected_base=base)
     assert result.classification == CLASSIFICATION_STALE_TOOLING
     assert result.integrity == INTEGRITY_INTACT
@@ -520,15 +522,34 @@ def test_unresolvable_current_cli_cannot_stay_current(
     repo, base, head = _make_repo(tmp_path)
     receipt = _write_valid_receipt(tmp_path, repo, base, head)
 
-    def _fail(_value: str) -> Path:
+    def _fail() -> Path:
         raise ReviewReceiptError("没有找到可执行的 Codex CLI")
 
-    monkeypatch.setattr(codex_review_classification, "resolve_codex_binary", _fail)
+    monkeypatch.setattr(codex_review_classification, "canonical_codex_binary", _fail)
     result = _classification(receipt, repo, current_head=head)
     assert result.classification == CLASSIFICATION_STALE_TOOLING
     assert result.integrity == INTEGRITY_INTACT
     assert "CODEX_BINARY_UNRESOLVED" in result.reason_codes
     assert result.current_approval_eligible is False
+
+
+def test_current_classification_ignores_builder_cli_path_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Current receipt freshness follows the fixed canonical lane, not Builder routing."""
+
+    repo, base, head = _make_repo(tmp_path)
+    receipt = _write_valid_receipt(tmp_path, repo, base, head)
+    builder_binary = tmp_path / "builder-codex"
+    builder_binary.write_text(
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli 9.9.9"; exit 0; fi\nexit 0\n',
+        encoding="utf-8",
+    )
+    builder_binary.chmod(0o700)
+    monkeypatch.setenv("CODEX_CLI_PATH", str(builder_binary))
+    result = _classification(receipt, repo, current_head=head, expected_base=base)
+    assert result.classification == CLASSIFICATION_VALID_CURRENT
+    assert result.codex_cli_version == "0.153.4"
 
 
 def test_wrong_head_is_invalid(tmp_path: Path):

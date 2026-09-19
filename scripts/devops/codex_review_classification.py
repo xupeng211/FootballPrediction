@@ -24,11 +24,7 @@ from scripts.devops.codex_review_contract import (
     REVIEW_REASONING_EFFORT_PINNED,
     build_reviewer_command,
 )
-from scripts.devops.codex_review_provenance import (
-    ReviewReceiptError,
-    observe_codex_cli_version,
-    resolve_codex_binary,
-)
+from scripts.devops.codex_review_provenance import ReviewReceiptError, observe_codex_cli_version
 from scripts.devops.codex_review_receipt import (
     RECEIPT_SCHEMA_VERSION,
     ROOT,
@@ -39,6 +35,10 @@ from scripts.devops.codex_review_receipt import (
     _load_receipt_document,
     _verify_receipt_internals,
     sha256_file,
+)
+from scripts.devops.codex_reviewer_isolation import (
+    canonical_codex_binary,
+    canonical_reviewer_environment,
 )
 from scripts.devops.exact_head import ExactHeadError
 from scripts.ops.helpers.agent_workflow_contract import MissionScopeError
@@ -81,31 +81,33 @@ class ReceiptClassification:
         return payload
 
 
-def _observed_cli_version(codex_binary: Path) -> str | None:
+def _observed_cli_version(
+    codex_binary: Path, *, environment: dict[str, str] | None = None
+) -> str | None:
     """Observe the Codex CLI version, or ``None`` when it cannot be observed."""
 
     try:
-        return observe_codex_cli_version(codex_binary)
+        return observe_codex_cli_version(codex_binary, environment=environment)
     except (ReviewReceiptError, OSError, ValueError):
         return None
 
 
-def _current_codex_binary() -> tuple[Path | None, str | None]:
-    """Resolve the Codex CLI installed right now, independently of the receipt.
+def _current_codex_binary() -> tuple[Path | None, str | None, dict[str, str] | None]:
+    """Resolve the fixed canonical Codex CLI independently of the receipt.
 
-    Reading the "current" toolchain back from the path a receipt recorded would
-    let a legitimate upgrade that switches PATH, ``CODEX_CLI_PATH`` or a symlink
-    to a new CLI keep matching the retired executable, and old evidence would
-    stay ``VALID_CURRENT``.  Resolution failure yields ``(None, None)``, which
-    forces ``STALE_TOOLING``: the recorded toolchain then cannot be shown to
-    still be the installed one.
+    The runner and the current-toolchain classifier must agree on the same
+    project-controlled official executable.  Builder PATH/CODEX_CLI_PATH is
+    deliberately excluded from this resolution.  Failure yields a null triple,
+    which forces ``STALE_TOOLING`` because the recorded toolchain cannot be
+    shown to still be the active canonical one.
     """
 
     try:
-        binary = resolve_codex_binary("codex")
-        return binary, sha256_file(binary)
+        binary = canonical_codex_binary()
+        environment = canonical_reviewer_environment(codex_binary=binary)
+        return binary, sha256_file(binary), environment
     except (ReviewReceiptError, OSError, ValueError):
-        return None, None
+        return None, None, None
 
 
 def _cli_version_fault(
@@ -191,7 +193,9 @@ def _toolchain_reason_codes(facts: dict[str, Any]) -> tuple[list[str], str | Non
 
     current_binary_path = facts["current_binary_path"]
     observed_cli_version = (
-        _observed_cli_version(current_binary_path) if current_binary_path is not None else None
+        _observed_cli_version(current_binary_path, environment=facts["current_binary_environment"])
+        if current_binary_path is not None
+        else None
     )
     fault = _cli_version_fault(facts, observed_cli_version)
     if fault is not None:
@@ -307,7 +311,11 @@ def classify_receipt(
     # The currently installed Codex CLI is resolved here rather than read back
     # from the path the receipt recorded, so a swap of the installed executable
     # cannot leave retired evidence looking current.
-    facts["current_binary_path"], facts["current_binary_sha256"] = _current_codex_binary()
+    (
+        facts["current_binary_path"],
+        facts["current_binary_sha256"],
+        facts["current_binary_environment"],
+    ) = _current_codex_binary()
 
     stale_codes, invalid_code, invalid_detail = _toolchain_reason_codes(facts)
     if invalid_code is not None:

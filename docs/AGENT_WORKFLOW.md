@@ -245,13 +245,13 @@ canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 
    `-c model_reasoning_effort="<REVIEW_REASONING_EFFORT>"`、`--json`、
    `--output-schema` 和独立 `--output-last-message`；review prompt 自带 exact base/head，
    不依赖 Builder 上下文，也不复用 persisted Builder session；
-3. canonical Codex lane 由 runner 唯一的 isolation constructor 强制使用 repo 外、owner-only 的 project-controlled `CODEX_HOME` 与其官方 ChatGPT stored authentication；它清除 Builder 的 `CODEX_API_KEY`、`CODEX_ACCESS_TOKEN`、`OPENAI_*`、CLIProxyAPI/provider/base-url routing 和 caller `CODEX_HOME`，但保留通用 HTTP(S)/SOCKS proxy 与 CA transport settings。启动前必须安全检查 dedicated state=0700、auth file=0600、`codex login status` 显示 ChatGPT，或 fail-closed；
+3. canonical Codex lane 由 runner 唯一的 isolation constructor 强制使用 repo 外、owner-only 的 project-controlled `CODEX_HOME` 与其官方 ChatGPT stored authentication；它固定使用 `/usr/lib/chatgpt/resources/codex`，要求该 root-owned executable 不可 group/other 写入，并清除 Builder 的 `CODEX_API_KEY`、`CODEX_ACCESS_TOKEN`、`OPENAI_*`、CLIProxyAPI/provider/base-url routing 和 caller `CODEX_HOME`，但保留通用 HTTP(S)/SOCKS proxy 与 CA transport settings。启动前必须安全检查 dedicated state=0700、auth file=0600、`codex login status` 显示 ChatGPT，或 fail-closed；
 4. 把 raw JSONL、final normal-review JSON 和 receipt 写到 source tree 之外的 owner-only evidence directory；
-4. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
+5. 只从 Codex `thread.started`、唯一成功的 `turn.completed`、唯一已完成的
    `agent_message`、final schema、当前 Git diff 和文件 hash 派生 receipt；raw
    completed message 必须与 `--output-last-message` 字节内容一致，且 exit code 为 0；
    不接受 Builder 传入的 PASS/count/invocation 结论；
-5. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
+6. review 结束检查 detached worktree 仍 clean；任何缺失、非零退出、非 JSON、写入或 context collision 都 fail-closed。
 
 receipt schema 是 `schemas/agentic/codex_review_receipt.schema.json`，至少绑定：schema/contract version、
 `assurance_model=engineering_independent_review`、明确的 same-uid residual-risk 标记、Codex engine/role、
@@ -287,9 +287,9 @@ evidence 矛盾的 tamper，而不是可以由 `REVIEW_POLICY_DRIFT` 解释掉�
 
 - `VALID_CURRENT`：receipt 内部一致、绑定当前 exact base/head/diff/scope/challenge，且当前 toolchain
   （wrapper blob、Codex binary、CLI version、pinned model/effort、canonical command）与实际一致。这是唯一
-  可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。当前 Codex binary 由 runner
-  使用的同一个 `resolve_codex_binary`（PATH / `CODEX_CLI_PATH` / 系统 fallback）独立解析，而不是回读
-  receipt 记录的执行路径：升级后 PATH 指向新 executable、旧文件仍在原处时，旧 receipt 立刻降级为
+   可以作为当前 exact-head approval 的状态；`make agent-merge-ready` 只接受它。当前 Codex binary 由 runner
+   使用的同一个固定 `canonical_codex_binary` resolver 独立解析，不读取 Builder 的 PATH 或 `CODEX_CLI_PATH`，而不是回读
+   receipt 记录的执行路径：canonical executable 变化或不可用时，旧 receipt 立刻降级为
   `STALE_TOOLING`（`CODEX_BINARY_DRIFT`），不会因为旧路径的 hash/version 仍自洽而继续冒充当前 review。
 - `STALE_TOOLING`：receipt 内部一致且 `INTEGRITY=INTACT`，但被记录的工具链或 policy 之后发生了合法变化
   （wrapper 升级、Codex CLI/binary 升级，或早于 canonical auth/transport isolation 的 v1/v2 legacy receipt），或者 review worktree
