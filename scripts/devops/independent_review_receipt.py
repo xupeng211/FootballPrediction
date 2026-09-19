@@ -36,7 +36,6 @@ from scripts.devops.independent_review_protocol import (
     validate_result,
     validate_sha,
 )
-from scripts.devops.deepseek_review_chunks import ChunkReviewError, plan, validate_manifest
 from scripts.ops.helpers.agent_workflow_contract import (
     MissionScopeError,
     MissionScopeReferenceError,
@@ -578,15 +577,16 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         raise IndependentReviewProtocolError("raw Claude completion evidence is invalid")
 
 
-from scripts.devops.deepseek_chunk_receipt_validation import (
-    _validate_chunked_claude_evidence as _validate_chunked_evidence,
-)
-
-
 def _validate_chunked_claude_evidence(
     receipt: dict[str, Any], context: ReceiptEvidenceContext
 ) -> None:
-    _validate_chunked_evidence(receipt, context)
+    # Keep this import local: the chunk validator is independently importable,
+    # while receipt validation only needs it when a chunked receipt is present.
+    from scripts.devops.deepseek_chunk_receipt_validation import (  # noqa: PLC0415
+        _validate_chunked_claude_evidence as validate_chunked_evidence,
+    )
+
+    validate_chunked_evidence(receipt, context)
 
 
 def validate_receipt(  # noqa: C901, PLR0912
