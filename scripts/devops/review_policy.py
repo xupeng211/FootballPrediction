@@ -12,11 +12,13 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
-    from pathlib import Path
+
+from scripts.devops.independent_review_receipt import load_backend_registry
 
 BACKEND_CODEX = "codex-cli"
 BACKEND_DEEPSEEK = "claude-code-deepseek"
@@ -25,10 +27,10 @@ WORKFLOW_STRICT = "STRICT"
 WORKFLOW_CRITICAL = "CRITICAL"
 WORKFLOW_CLASSES = frozenset({WORKFLOW_NORMAL, WORKFLOW_STRICT, WORKFLOW_CRITICAL})
 BLOCKING_SEVERITIES = ("P0", "P1", "P2")
-DEFAULT_BACKEND_ELIGIBILITY: Mapping[str, frozenset[str]] = {
-    BACKEND_CODEX: frozenset({WORKFLOW_NORMAL, WORKFLOW_STRICT, WORKFLOW_CRITICAL}),
-    BACKEND_DEEPSEEK: frozenset({WORKFLOW_NORMAL, WORKFLOW_CRITICAL}),
-}
+BACKEND_REGISTRY_PATH = (
+    Path(__file__).resolve().parents[2] / "docs" / "agentic" / "independent_review_backends.json"
+)
+VALIDATED_FACTS_MARKER = "independent-review-receipt-validator/v1"
 
 
 @dataclass(frozen=True)
@@ -100,24 +102,27 @@ def required_backends(
 def load_active_backend_eligibility(path: Path) -> dict[str, frozenset[str]]:
     """Return eligibility from the repository-controlled active registry."""
 
-    from scripts.devops.independent_review_receipt import load_backend_registry  # noqa: PLC0415
-
     return {
         backend_id: frozenset(value["task_eligibility"])
         for backend_id, value in load_backend_registry(path).items()
+        if value["status"] == "active"
     }
 
 
-def _counts(value: dict[str, int]) -> tuple[int, int]:
-    if set(value) != {"P0", "P1", "P2", "P3"} or any(
-        isinstance(count, bool) or not isinstance(count, int) or count < 0
-        for count in value.values()
+def _counts(value: object) -> tuple[int, int]:
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"P0", "P1", "P2", "P3"}
+        or any(
+            isinstance(count, bool) or not isinstance(count, int) or count < 0
+            for count in value.values()
+        )
     ):
         raise ValueError("INVALID_FINDING_COUNTS")
     return sum(value[level] for level in BLOCKING_SEVERITIES), value["P3"]
 
 
-def evaluate_review_policy(  # noqa: C901, PLR0912
+def evaluate_review_policy(  # noqa: C901, PLR0912, PLR0915
     workflow_class: str,
     candidate: CandidateBinding,
     available_receipts: Iterable[ReviewEvidence],
@@ -136,13 +141,20 @@ def evaluate_review_policy(  # noqa: C901, PLR0912
         required = required_backends(workflow_class, selected_backend=selected_backend)
     except ValueError as exc:
         return PolicyResult("INVALID", (str(exc),), (), (), 0)
-    eligibility = (
-        DEFAULT_BACKEND_ELIGIBILITY if backend_eligibility is None else backend_eligibility
-    )
+    if backend_eligibility is None:
+        try:
+            eligibility = load_active_backend_eligibility(BACKEND_REGISTRY_PATH)
+        except (OSError, TypeError, ValueError):
+            # The repository registry is the policy authority.  A missing or
+            # malformed registry must never resurrect a hardcoded allow-list.
+            eligibility = {}
+    else:
+        eligibility = backend_eligibility
     if any(workflow_class not in eligibility.get(backend, frozenset()) for backend in required):
         return PolicyResult("INVALID", ("BACKEND_NOT_ELIGIBLE",), required, (), 0)
     receipts = tuple(available_receipts)
     by_backend: dict[str, ReviewEvidence] = {}
+    seen_backends: set[str] = set()
     reasons: list[str] = []
     p3 = 0
     for receipt in receipts:
@@ -154,15 +166,19 @@ def evaluate_review_policy(  # noqa: C901, PLR0912
         # cannot invalidate STRICT's required Codex approval.
         if receipt.backend_id not in required:
             continue
-        if receipt.backend_id in by_backend:
-            reasons.append("DUPLICATE_BACKEND_RECEIPT")
-            continue
-        by_backend[receipt.backend_id] = receipt
+        duplicate = receipt.backend_id in seen_backends
+        seen_backends.add(receipt.backend_id)
         try:
             blocking, receipt_p3 = _counts(receipt.finding_counts_by_severity)
         except ValueError as exc:
             reasons.append(str(exc))
+            if duplicate:
+                reasons.append("DUPLICATE_BACKEND_RECEIPT")
             continue
+        if duplicate:
+            reasons.append("DUPLICATE_BACKEND_RECEIPT")
+            continue
+        by_backend[receipt.backend_id] = receipt
         p3 += receipt_p3
         if receipt.infrastructure_failure:
             reasons.append("REVIEW_INFRASTRUCTURE_BLOCK")
@@ -219,7 +235,11 @@ def evaluate_review_policy(  # noqa: C901, PLR0912
     return PolicyResult("SATISFIED", (), required, tuple(satisfied), p3)
 
 
-def _evidence(value: dict[str, Any]) -> ReviewEvidence:
+def _evidence(value: object) -> ReviewEvidence:
+    if not isinstance(value, dict):
+        raise TypeError("INVALID_RECEIPT_FACTS")
+    if value.get("validated_by") != VALIDATED_FACTS_MARKER:
+        raise ValueError("UNVALIDATED_RECEIPT_FACTS")
     return ReviewEvidence(
         backend_id=str(value.get("backend_id", "")),
         trusted=value.get("trusted") is True,
@@ -234,6 +254,22 @@ def _evidence(value: dict[str, Any]) -> ReviewEvidence:
     )
 
 
+def _policy_object(value: object) -> dict[str, Any]:
+    """Require one JSON object before constructing trusted policy facts."""
+
+    if not isinstance(value, dict):
+        raise TypeError("INVALID_POLICY_INPUT")
+    return value
+
+
+def _policy_list(value: object) -> list[object]:
+    """Require the receipt JSON envelope to be an array."""
+
+    if not isinstance(value, list):
+        raise TypeError("INVALID_POLICY_INPUT")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     """Evaluate receipt facts supplied by the command-line policy harness."""
 
@@ -243,11 +279,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--receipts-json", required=True)
     parser.add_argument("--selected-backend")
     args = parser.parse_args(argv)
-    candidate = CandidateBinding(**json.loads(args.candidate_json))
-    receipts = [_evidence(value) for value in json.loads(args.receipts_json)]
-    result = evaluate_review_policy(
-        args.workflow_class, candidate, receipts, selected_backend=args.selected_backend
-    )
+    try:
+        candidate_value = json.loads(args.candidate_json)
+        receipts_value = json.loads(args.receipts_json)
+        candidate = CandidateBinding(**_policy_object(candidate_value))
+        receipts = [_evidence(value) for value in _policy_list(receipts_value)]
+        result = evaluate_review_policy(
+            args.workflow_class, candidate, receipts, selected_backend=args.selected_backend
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        result = PolicyResult("INVALID", (str(exc),), (), (), 0)
     print(json.dumps(result.to_dict(), sort_keys=True))
     return 0 if result.status == "SATISFIED" else 1
 

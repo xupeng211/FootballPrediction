@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+import json
+
+from scripts.devops import review_policy
 from scripts.devops.review_policy import (
     BACKEND_CODEX,
     BACKEND_DEEPSEEK,
+    VALIDATED_FACTS_MARKER,
     CandidateBinding,
     ReviewEvidence,
     evaluate_review_policy,
@@ -172,3 +177,57 @@ def test_critical_rejects_duplicate_backend_and_override():
         evaluate_review_policy("CRITICAL", _candidate(), [], selected_backend=BACKEND_CODEX).status
         == "INVALID"
     )
+
+
+def test_malformed_first_duplicate_cannot_be_replaced_by_later_valid_receipt():
+    malformed = _receipt(BACKEND_CODEX, finding_counts_by_severity=None)
+    valid = _receipt(BACKEND_CODEX)
+    result = evaluate_review_policy("STRICT", _candidate(), [malformed, valid])
+    assert result.status == "INVALID"
+    assert "INVALID_FINDING_COUNTS" in result.reasons
+    assert "DUPLICATE_BACKEND_RECEIPT" in result.reasons
+
+
+def test_default_policy_fails_closed_when_active_registry_cannot_load(monkeypatch):
+    def unavailable(_path):
+        raise ValueError("registry unavailable")
+
+    monkeypatch.setattr(review_policy, "load_active_backend_eligibility", unavailable)
+    result = evaluate_review_policy("CRITICAL", _candidate(), [])
+    assert result.status == "INVALID"
+    assert result.reasons == ("BACKEND_NOT_ELIGIBLE",)
+
+
+def test_policy_cli_rejects_hand_written_trusted_facts(capsys):
+    code = review_policy.main(
+        [
+            "--workflow-class",
+            "NORMAL",
+            "--candidate-json",
+            json.dumps(asdict(_candidate())),
+            "--receipts-json",
+            json.dumps([asdict(_receipt(BACKEND_DEEPSEEK))]),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+    assert code == 1
+    assert output["status"] == "INVALID"
+    assert output["reasons"] == ["UNVALIDATED_RECEIPT_FACTS"]
+
+
+def test_policy_cli_accepts_only_explicitly_validated_facts(capsys):
+    receipt = asdict(_receipt(BACKEND_DEEPSEEK))
+    receipt["validated_by"] = VALIDATED_FACTS_MARKER
+    code = review_policy.main(
+        [
+            "--workflow-class",
+            "NORMAL",
+            "--candidate-json",
+            json.dumps(asdict(_candidate())),
+            "--receipts-json",
+            json.dumps([receipt]),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert output["status"] == "SATISFIED"

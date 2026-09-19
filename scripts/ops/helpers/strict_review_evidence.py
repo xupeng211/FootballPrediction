@@ -4,7 +4,9 @@ lifecycle: permanent
 
 This helper validates only the small PR metadata contract needed to bind one
 independent review to the current full PR HEAD.  It does not run a reviewer,
-tests, lint, fixes, merge, or maintain review history.
+tests, lint, fixes, merge, or maintain review history.  For CRITICAL changes,
+the provider row is a remote metadata declaration only; physical exact-head
+receipt validation remains the local ``agent-merge-ready`` authority.
 """
 
 from __future__ import annotations
@@ -250,6 +252,8 @@ def _critical_classification_reasons(
     """
 
     paths = tuple(changed_paths or ())
+    if not paths:
+        return ["changed paths unavailable; CRITICAL classification is required"]
     categories = classify_paths(paths)
     critical_categories = {
         CATEGORY_ENV_SECRET,
@@ -333,8 +337,9 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
         ]
     workflow_raw = workflow_values[0]
     workflow_class = workflow_raw.upper()
-    classification_reasons = _strict_classification_reasons(changed_paths, task_type)
-    critical_reasons = _critical_classification_reasons(changed_paths, task_type)
+    normalized_paths = tuple(changed_paths or ())
+    classification_reasons = _strict_classification_reasons(normalized_paths, task_type)
+    critical_reasons = _critical_classification_reasons(normalized_paths, task_type)
     if workflow_class == WORKFLOW_CLASS_NORMAL:
         if critical_reasons:
             return [
@@ -398,6 +403,9 @@ def validate_strict_review_evidence(  # noqa: C901, PLR0911, PLR0912
         errors.append(f"STRICT_REVIEW_INVALID: evidence Task type must be {workflow_class}.")
     if not values["provider"] or len(values["provider"]) > MAX_PROVIDER_LENGTH:
         errors.append("STRICT_REVIEW_INVALID: evidence Provider is required.")
+    # This provider list is intentionally not a receipt registry.  GitHub CI
+    # cannot read owner-only external evidence; local merge-ready validation
+    # must independently consume both exact-head physical receipts.
     if workflow_class == WORKFLOW_CLASS_CRITICAL and not {
         "codex-cli",
         "claude-code-deepseek",

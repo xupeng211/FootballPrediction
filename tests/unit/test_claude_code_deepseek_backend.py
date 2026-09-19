@@ -196,3 +196,16 @@ def test_unapproved_launcher_digest_is_rejected_before_secret(monkeypatch, tmp_p
     monkeypatch.setattr(backend, "_secret", lambda _path: pytest.fail("secret was read"))
     with pytest.raises(backend.BackendInfrastructureError, match="identity is unapproved"):
         backend.run(prompt="review", cwd=tmp_path)
+
+
+def test_unavailable_trusted_launcher_root_is_typed_infrastructure_failure(
+    monkeypatch, tmp_path: Path
+):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    binary.chmod(0o755)
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (tmp_path / "missing",))
+    with pytest.raises(
+        backend.BackendInfrastructureError, match="trusted Claude launcher root cannot be resolved"
+    ):
+        backend._approved_claude_binary(str(binary))

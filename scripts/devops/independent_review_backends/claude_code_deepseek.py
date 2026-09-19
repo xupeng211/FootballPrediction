@@ -157,15 +157,30 @@ def _approved_claude_binary(binary_text: str) -> tuple[Path, str]:
         ) from exc
     if not binary.is_file():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: Claude launcher is not a file")
-    trusted_roots = tuple(root.resolve(strict=True) for root in TRUSTED_CLAUDE_BINARY_ROOTS)
+    try:
+        trusted_roots = tuple(root.resolve(strict=True) for root in TRUSTED_CLAUDE_BINARY_ROOTS)
+    except OSError as exc:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: trusted Claude launcher root cannot be resolved"
+        ) from exc
     if not any(binary == root or root in binary.parents for root in trusted_roots):
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: Claude launcher is untrusted")
-    info = binary.stat()
+    try:
+        info = binary.stat()
+    except OSError as exc:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: Claude launcher metadata unavailable"
+        ) from exc
     if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o022:
         raise BackendInfrastructureError(
             "CLI_RUNTIME_FAILURE: Claude launcher permissions are unsafe"
         )
-    digest = sha256(binary.read_bytes()).hexdigest()
+    try:
+        digest = sha256(binary.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise BackendInfrastructureError(
+            "CLI_RUNTIME_FAILURE: Claude launcher bytes unavailable"
+        ) from exc
     if digest not in TRUSTED_CLAUDE_BINARY_SHA256:
         raise BackendInfrastructureError(
             "CLI_RUNTIME_FAILURE: Claude launcher identity is unapproved"
