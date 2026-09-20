@@ -97,6 +97,13 @@ canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC v
 为 `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549`；它明确
 `PREPARED_NOT_AUTHORIZED`，不等同于 authorization artifact，`GATE_3=NOT_AUTHORIZED` 不变。
 
+同日的第一条 Owner 授权 Gate 3 请求已成为不可重用的历史证据：它经受控 binder
+跨过 transmission boundary 后以 HTTP 403 终态消费，未产生 RAW、receipt 或 transaction，
+且没有 retry。历史响应的 issuer/cause 因旧版 non-2xx 路径未保留安全诊断信息而仍为
+`UNKNOWN`。后续 source remediation 仅为未来 non-2xx 保留独立、限长、redacted 的 failure
+diagnostic；它不修改历史账本、不把失败响应变为 market RAW，也不授权第二次请求或改变
+`GATE_3=NOT_AUTHORIZED`。
+
 Stage C canonical market-evidence pilot 已通过独立 review、正常合并及 main Production Gate
 闭环（PR #1890）；非 head 逻辑批次 A → B → retry-A 修复也已闭环（PR #1893）。
 transaction-v1 spine 已在 main，支持不可变 RAW/receipt binding、replay、publisher knowledge time

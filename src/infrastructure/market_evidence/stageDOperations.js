@@ -1817,29 +1817,87 @@ function ensureEvidenceChildDirectory(rootDescriptor, name, label) {
     }
 }
 
+const FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-failure-diagnostic/v1';
+const FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
+const FAILURE_DIAGNOSTIC_HEADER_MAX_BYTES = 1024;
+const FAILURE_DIAGNOSTIC_HEADER_ALLOWLIST = new Set([
+    'content-type', 'date', 'server', 'via', 'x-request-id', 'request-id',
+    'x-correlation-id', 'cf-ray', 'x-requests-used', 'x-requests-remaining', 'x-requests-last',
+]);
+
+function boundedFailureDiagnosticText(value, maximumBytes) {
+    const bytes = Buffer.from(value, 'utf8');
+    if (bytes.length <= maximumBytes) return value;
+    return `${bytes.subarray(0, maximumBytes).toString('utf8')}[TRUNCATED]`;
+}
+
+function sanitizeFailureDiagnosticHeaders(headers = {}, redactionValues = []) {
+    if (!headers || typeof headers !== 'object' || Array.isArray(headers)) return {};
+    return Object.fromEntries(Object.entries(headers)
+        .filter(([key, value]) => FAILURE_DIAGNOSTIC_HEADER_ALLOWLIST.has(String(key).toLowerCase()) && typeof value === 'string')
+        .map(([key, value]) => [
+            String(key).toLowerCase(),
+            boundedFailureDiagnosticText(redactFailureDiagnosticText(String(value).replace(/[\r\n]/g, ' '), redactionValues), FAILURE_DIAGNOSTIC_HEADER_MAX_BYTES),
+        ]));
+}
+
+function redactFailureDiagnosticText(value, redactionValues = []) {
+    let text = String(value ?? '');
+    for (const secret of redactionValues) {
+        if (typeof secret === 'string' && secret) text = text.split(secret).join('[REDACTED]');
+    }
+    return text
+        .replace(/(?:proxy-)?authorization\s*:\s*[^\r\n;]+/gi, '[REDACTED_HEADER]')
+        .replace(/(?:set-)?cookie\s*:\s*[^\r\n;]+/gi, '[REDACTED_HEADER]')
+        .replace(/((?:api[_-]?key|token|password|secret|authorization|proxy-authorization)\s*(?:=|:|%3[dD])\s*)([^\s,;"'&]+)/gi, '$1[REDACTED]')
+        .replace(/(bearer\s+)([^\s,;"']+)/gi, '$1[REDACTED]')
+        .replace(/(https?:\/\/)[^\s/@]+@/gi, '$1[REDACTED]@');
+}
+
+function boundedFailureDiagnosticPayload(rawText, redactionValues) {
+    const sanitized = redactFailureDiagnosticText(rawText, redactionValues);
+    const bytes = Buffer.from(sanitized, 'utf8');
+    const truncated = bytes.length > FAILURE_DIAGNOSTIC_MAX_BYTES;
+    const text = bytes.subarray(0, FAILURE_DIAGNOSTIC_MAX_BYTES).toString('utf8');
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch { /* UTF-8 diagnostics are valid evidence */ }
+    const source = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    return Object.freeze({
+        encoding: parsed === null ? 'utf8' : 'json',
+        truncated,
+        text,
+        error_code: typeof source.code === 'string' ? redactFailureDiagnosticText(source.code, redactionValues) : null,
+        error_message: typeof source.message === 'string' ? redactFailureDiagnosticText(source.message, redactionValues) : null,
+    });
+}
+
 function withEvidenceDirectories(persistor, callback) {
     const rootDescriptor = openTrustedDirectoryDescriptor(persistor.root, 'Stage D evidence root', persistor.root_identity);
     let rawDescriptor;
     let receiptDescriptor;
+    let failureDiagnosticDescriptor;
     try {
         rawDescriptor = openChildDirectoryDescriptor(rootDescriptor.fd, 'raw', 'Stage D RAW root', persistor.raw_identity);
         receiptDescriptor = openChildDirectoryDescriptor(rootDescriptor.fd, 'receipts', 'Stage D receipt root', persistor.receipt_identity);
-        return callback({ rootDescriptor, rawDescriptor, receiptDescriptor });
+        failureDiagnosticDescriptor = openChildDirectoryDescriptor(rootDescriptor.fd, 'failure-diagnostics', 'Stage D failure diagnostic root', persistor.failure_diagnostic_identity);
+        return callback({ rootDescriptor, rawDescriptor, receiptDescriptor, failureDiagnosticDescriptor });
     } finally {
+        closeDirectoryDescriptor(failureDiagnosticDescriptor);
         closeDirectoryDescriptor(receiptDescriptor);
         closeDirectoryDescriptor(rawDescriptor);
         closeDirectoryDescriptor(rootDescriptor);
     }
 }
 
-function createStageDEvidencePersistence({ evidenceRoot, testHooks = null } = {}) {
+function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redactionValues = [] } = {}) {
     if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim()) fail('INVALID_EVIDENCE_ROOT', 'evidenceRoot is required');
+    if (!Array.isArray(redactionValues) || redactionValues.some(value => typeof value !== 'string')) fail('INVALID_EVIDENCE_PERSISTENCE', 'redactionValues must be a string array');
     if (testHooks !== null && process.env.NODE_ENV !== 'test') fail('INVALID_EVIDENCE_PERSISTENCE', 'test hooks are test-only');
     let testFault = null;
     let testFaultAuthorityRoot = null;
     if (testHooks !== null) {
         assertPlainObject(testHooks, 'testHooks');
-        if (testHooks.fault === 'RAW_ROOT_SWAP') assertExactKeys(testHooks, ['fault'], 'testHooks');
+        if (testHooks.fault === 'RAW_ROOT_SWAP' || testHooks.fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') assertExactKeys(testHooks, ['fault'], 'testHooks');
         else if (testHooks.fault === 'AUTHORITY_ROOT_SWAP_BEFORE_RECEIPT') {
             assertExactKeys(testHooks, ['fault', 'authorityRoot'], 'testHooks');
             if (typeof testHooks.authorityRoot !== 'string' || !testHooks.authorityRoot.trim()) fail('INVALID_EVIDENCE_PERSISTENCE', 'authorityRoot is required for the declarative test fault');
@@ -1853,10 +1911,11 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null } = {}
     const rootDescriptor = openTrustedDirectoryDescriptor(root, 'Stage D evidence root');
     let rawDescriptor;
     let receiptDescriptor;
+    let failureDiagnosticDescriptor;
     let testFaultApplied = false;
     const applyTestFault = fault => {
         if (testFault !== fault || testFaultApplied) return;
-        if (fault === 'RAW_ROOT_SWAP') {
+        if (fault === 'RAW_ROOT_SWAP' || fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') {
             const moved = `${root}.moved`;
             if (fs.existsSync(moved)) fail('INVALID_EVIDENCE_PERSISTENCE', 'declarative RAW root swap target already exists');
             fs.renameSync(root, moved);
@@ -1872,12 +1931,14 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null } = {}
     try {
         rawDescriptor = ensureEvidenceChildDirectory(rootDescriptor, 'raw', 'Stage D RAW root');
         receiptDescriptor = ensureEvidenceChildDirectory(rootDescriptor, 'receipts', 'Stage D receipt root');
+        failureDiagnosticDescriptor = ensureEvidenceChildDirectory(rootDescriptor, 'failure-diagnostics', 'Stage D failure diagnostic root');
         const persistor = {
             schema_version: 'footballprediction-stage-d-evidence-persistence/v1',
             root,
             root_identity: rootDescriptor.identity,
             raw_identity: rawDescriptor.identity,
             receipt_identity: receiptDescriptor.identity,
+            failure_diagnostic_identity: failureDiagnosticDescriptor.identity,
             persistRaw({ rawText } = {}) {
                 if (typeof rawText !== 'string') fail('RAW_PERSISTENCE_FAILED', 'rawText is required');
                 applyTestFault('RAW_ROOT_SWAP');
@@ -1924,11 +1985,48 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null } = {}
                     });
                 });
             },
+            persistFailureDiagnostic({ runId, requestId, httpStatus, responseReceivedAt, headers = {}, rawText = '', transportProvenance = null } = {}) {
+                assertToken(runId, 'failure diagnostic runId');
+                assertToken(requestId, 'failure diagnostic requestId');
+                if (!Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) fail('FAILURE_DIAGNOSTIC_INVALID', 'failure diagnostic HTTP status is invalid');
+                assertUtc(responseReceivedAt, 'failure diagnostic responseReceivedAt');
+                if (transportProvenance !== null) assertExactKeys(transportProvenance, ['canonical_provider_host', 'tls_validation'], 'failure diagnostic transport provenance');
+                applyTestFault('FAILURE_DIAGNOSTIC_ROOT_SWAP');
+                const diagnostic = {
+                    schema_version: FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
+                    run_id: runId,
+                    request_id: requestId,
+                    provider: PROVIDER,
+                    terminal_classification: 'HTTP_FAILURE_AFTER_TRANSMISSION',
+                    http_status: httpStatus,
+                    response_received_at: responseReceivedAt,
+                    safe_headers: sanitizeFailureDiagnosticHeaders(headers, redactionValues),
+                    payload: boundedFailureDiagnosticPayload(rawText, redactionValues),
+                    transport_provenance: transportProvenance,
+                };
+                const name = `${requestId}.json`;
+                const bytes = canonicalBytes(diagnostic);
+                return withEvidenceDirectories(this, ({ failureDiagnosticDescriptor: currentDiagnostics }) => {
+                    const target = scopedPath(currentDiagnostics.fd, name);
+                    try {
+                        const existing = readRegularFileBytes(target, 'Stage D failure diagnostic');
+                        if (existing.bytes !== bytes) fail('FAILURE_DIAGNOSTIC_CONFLICT', 'Stage D failure diagnostic already exists with different content');
+                    } catch (error) {
+                        if (error?.code !== 'ENOENT') throw error;
+                        writeExclusiveBytes(target, bytes, 'Stage D failure diagnostic', { directoryFd: currentDiagnostics.fd, mode: 0o400 });
+                    }
+                    return Object.freeze({
+                        failure_diagnostic_sha256: sha256Text(bytes),
+                        failure_diagnostic_evidence_reference: `failure-diagnostics/${name}`,
+                    });
+                });
+            },
         };
         Object.freeze(persistor);
         approvedPersistors.add(persistor);
         return persistor;
     } finally {
+        closeDirectoryDescriptor(failureDiagnosticDescriptor);
         closeDirectoryDescriptor(receiptDescriptor);
         closeDirectoryDescriptor(rawDescriptor);
         closeDirectoryDescriptor(rootDescriptor);
@@ -2059,6 +2157,11 @@ function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, t
                             request_started_at: requestStartedAt,
                             response_received_at: new Date().toISOString(),
                             provider_quota: sanitizeProviderHeaders(response.headers),
+                            failure_diagnostic_headers: response.headers,
+                            transport_provenance: Object.freeze({
+                                canonical_provider_host: 'api.the-odds-api.com',
+                                tls_validation: 'REJECT_UNAUTHORIZED',
+                            }),
                             capture_id: request.request_id,
                         });
                     });
@@ -2319,8 +2422,15 @@ async function executeStageDControlledInitialization(options = {}) {
         // before any socket is opened, so a missing or malformed secret is a deterministic
         // local configuration failure rather than something discovered mid-probe.
         const proxyPreflightSecret = resolveStageDPreflightSecret(process.env);
+        // These values remain closure-only redaction terms. They are never serialized,
+        // logged, returned, or used as diagnostics themselves.
+        const diagnosticRedactionValues = [
+            process.env.THE_ODDS_API_KEY,
+            process.env.THE_ODDS_API_PROXY_URL,
+            proxyPreflightSecret,
+        ];
         boundTransport = createStageDOddsApiTransport({ endpoint: proxyEndpoint });
-        boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot });
+        boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot, redactionValues: diagnosticRedactionValues });
         boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
         boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
         boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget, secret: proxyPreflightSecret });
@@ -2636,7 +2746,24 @@ async function executeStageDOneCycle({
                 reconcileRequired = true;
                 throw error;
             }
-            return Object.freeze({ status: 'HTTP_FAILURE_AFTER_TRANSMISSION', request_id: requestId, run_id: runId });
+            // Failure evidence is deliberately separate from market RAW and is written only
+            // after the consumed terminal record is durable. A persistence failure therefore
+            // cannot resurrect the authorization, request id, or accounting budget.
+            let diagnostic;
+            try {
+                diagnostic = evidencePersistence.persistFailureDiagnostic({
+                    runId,
+                    requestId,
+                    httpStatus: response.http_status,
+                    responseReceivedAt: responseAt,
+                    headers: response.failure_diagnostic_headers || response.provider_quota || {},
+                    rawText: typeof response.raw_text === 'string' ? response.raw_text : '',
+                    transportProvenance: response.transport_provenance || null,
+                });
+            } catch (error) {
+                fail('FAILURE_DIAGNOSTIC_PERSISTENCE_FAILED', 'post-boundary failure diagnostic persistence failed after durable terminal accounting');
+            }
+            return Object.freeze({ status: 'HTTP_FAILURE_AFTER_TRANSMISSION', request_id: requestId, run_id: runId, ...diagnostic });
         }
         if (typeof response.raw_text !== 'string') terminalizePostBoundaryFailure(Object.assign(new Error('successful response raw_text is required'), { code: 'RAW_PERSISTENCE_FAILED' }));
         let reconciledProviderQuota;
