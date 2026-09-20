@@ -125,12 +125,15 @@
 
 ### Stage D current capability note
 
-Stage D's controlled adapter prospectively persists a separate immutable
-`footballprediction-stage-d-failure-diagnostic/v1` artifact for non-2xx responses.
-It is bounded/redacted diagnostic evidence only, not canonical market RAW or a
-transaction; non-2xx requests remain consumed and terminal with no retry. The
-historical 2026-09-20 HTTP 403 predates this capability and remains diagnostically
-incomplete rather than being retroactively enriched.
+Stage D's controlled adapter prospectively persists separate immutable,
+bounded/redacted diagnostics for non-2xx responses
+(`footballprediction-stage-d-failure-diagnostic/v1`) and post-boundary transport
+exceptions (`footballprediction-stage-d-transport-failure-diagnostic/v1`). Both
+are diagnostic evidence only, not canonical market RAW or a transaction; the
+request remains consumed and terminal with no retry. The historical 2026-09-20
+HTTP 403 and subsequent ECONNRESET attempt predate the corresponding retention
+path and remain diagnostically incomplete rather than being retroactively
+enriched; the latter's provider-quota effect remains UNKNOWN.
 
 ## Domain: FotMob
 

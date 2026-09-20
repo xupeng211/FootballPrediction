@@ -1,0 +1,57 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_ECONNRESET_FORENSIC_TRANSPORT_FAILURE_EVIDENCE_HARDENING_AND_FRESH_CANDIDATE",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/STAGE_D_ECONNRESET_FORENSIC_TRANSPORT_FAILURE_EVIDENCE_HARDENING_AND_FRESH_CANDIDATE.json",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_operations.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "README.md",
+    "config/stage_d_quota_budget.json",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "docker/",
+    "deploy/",
+    "schemas/"
+  ],
+  "excluded_tokens": [
+    "scheduler",
+    "stage_d_cycle",
+    "bookmaker",
+    "oddsportal",
+    "training",
+    "prediction",
+    "backtest",
+    "value-engine",
+    "proxy_pools"
+  ],
+  "protected_invariants": [
+    "HISTORICAL_ECONNRESET_ATTEMPT_IMMUTABLE: the consumed ECONNRESET request, candidate, authorization, run id, request id, ledger entries and runtime evidence are never modified, reused, retried or reclassified",
+    "TRANSPORT_FAILURE_IS_CONSUMED_AND_TERMINAL: a post-boundary transport exception remains TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION with local budget consumed, no automatic retry, no RAW, no receipt and no transaction",
+    "DIAGNOSTICS_ARE_PROSPECTIVE_ONLY: new immutable transport diagnostics are future evidence only and cannot retroactively reconstruct the historical ECONNRESET",
+    "SECRET_SAFE_TRANSPORT_DIAGNOSTICS: only bounded allowlisted direct error fields and fixed provenance are retained; stack, cause, arbitrary fields, credentials, authorization, cookies, proxy URLs, preflight secrets and bodies never enter artifacts",
+    "LEDGER_FIRST_PERSISTENCE: durable terminal accounting precedes transport-diagnostic persistence, and diagnostic persistence failure cannot resurrect authority or permit retry",
+    "NO_PROVIDER_NETWORK_ACTIVITY: all validation uses fake/local transports and passive evidence only; zero provider requests, DNS lookups and quota probes",
+    "MERGE_AUTHORIZED_BY_OWNER_ON_EXACT_GREEN_HEAD: one squash merge is allowed only after CRITICAL exact-head Codex and DeepSeek review, required CI, merge readiness and post-merge Production Gate"
+  ],
+  "forbidden_side_effects": [
+    "contacting or resolving The Odds API, creating a live authorization, consuming authorization, creating request intent, crossing transmission boundary, making a provider request, probing quota or starting scheduler/continuous operations",
+    "editing historical ledger entries or runtime evidence, retrying the spent ECONNRESET request, reusing the spent candidate/authorization/run/request identifiers, or changing provider configuration/secrets",
+    "storing or logging provider credentials, proxy credentials, HMAC secrets, authorization values, cookies, arbitrary reflected error objects or secret-bearing response data",
+    "modifying PR #1914, unrelated provider/proxy architecture, bookmaker registry semantics, training, prediction, backtest, value betting or reviewer policy"
+  ]
+}

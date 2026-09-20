@@ -1820,6 +1820,22 @@ function ensureEvidenceChildDirectory(rootDescriptor, name, label) {
 const FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-failure-diagnostic/v1';
 const FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
 const FAILURE_DIAGNOSTIC_HEADER_MAX_BYTES = 1024;
+const TRANSPORT_FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-transport-failure-diagnostic/v1';
+const TRANSPORT_FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
+const TRANSPORT_FAILURE_DIAGNOSTIC_ERROR_CODE_MAX_BYTES = 128;
+const TRANSPORT_FAILURE_DIAGNOSTIC_MESSAGE_MAX_BYTES = 2048;
+const TRANSPORT_FAILURE_DIAGNOSTIC_SYSCALL_MAX_BYTES = 64;
+const TRANSPORT_FAILURE_PHASE = 'UNKNOWN_POST_BOUNDARY';
+const SAFE_TRANSPORT_ERROR_CODES = new Set([
+    'EADDRNOTAVAIL', 'EAI_AGAIN', 'EAI_FAIL', 'EAI_NODATA', 'EAI_NONAME', 'ECONNABORTED',
+    'ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH', 'ENETUNREACH', 'ENOTFOUND', 'EPIPE', 'EPROTO',
+    'ETIMEDOUT', 'CERT_HAS_EXPIRED', 'CERT_NOT_YET_VALID', 'DEPTH_ZERO_SELF_SIGNED_CERT',
+    'ERR_SSL_WRONG_VERSION_NUMBER', 'ERR_TLS_CERT_ALTNAME_INVALID', 'SELF_SIGNED_CERT_IN_CHAIN',
+    'UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+]);
+const SAFE_TRANSPORT_SYSCALLS = new Set([
+    'connect', 'end', 'getaddrinfo', 'lookup', 'read', 'socket', 'tls', 'write',
+]);
 const FAILURE_DIAGNOSTIC_HEADER_ALLOWLIST = new Set([
     'content-type', 'date', 'server', 'via', 'x-request-id', 'request-id',
     'x-correlation-id', 'cf-ray', 'x-requests-used', 'x-requests-remaining', 'x-requests-last',
@@ -1870,6 +1886,56 @@ function redactFailureDiagnosticText(value, redactionValues = []) {
         .replace(/((?:api[_-]?key|access[_-]?token|token|password|secret|authorization|proxy-authorization|cookie|set-cookie)\s*(?:=|:|%3[dD])\s*)([^\s,;"'&]+)/gi, '$1[REDACTED]')
         .replace(/(bearer\s+)([^\s,;"']+)/gi, '$1[REDACTED]')
         .replace(/(https?:\/\/)[^\s/@]+@/gi, '$1[REDACTED]@');
+}
+
+// Transport errors are not serialized as Error objects.  Node's network errors
+// commonly carry useful direct fields (code, message and syscall), but Error
+// also exposes stack/cause surfaces that may contain arbitrary request or
+// credential material.  Reading only own data properties avoids invoking a
+// caller-provided getter and keeps nested/cause objects outside the evidence
+// contract entirely.
+function readOwnDataProperty(value, key) {
+    if (!value || (typeof value !== 'object' && typeof value !== 'function')) return undefined;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) return undefined;
+    return descriptor.value;
+}
+
+function sanitizeTransportDiagnosticText(value, maximumBytes, redactionValues) {
+    if (typeof value !== 'string') return null;
+    const normalized = [...value].map(character => {
+        const codePoint = character.codePointAt(0);
+        return codePoint <= 0x1f || codePoint === 0x7f ? ' ' : character;
+    }).join('');
+    return boundedFailureDiagnosticText(redactFailureDiagnosticText(normalized, redactionValues), maximumBytes);
+}
+
+function safeTransportDiagnosticErrorCode(error, redactionValues) {
+    const value = sanitizeTransportDiagnosticText(
+        readOwnDataProperty(error, 'code'),
+        TRANSPORT_FAILURE_DIAGNOSTIC_ERROR_CODE_MAX_BYTES,
+        redactionValues,
+    );
+    return value !== null && SAFE_TRANSPORT_ERROR_CODES.has(value) ? value : null;
+}
+
+function safeTransportDiagnosticSyscall(error, redactionValues) {
+    const value = sanitizeTransportDiagnosticText(
+        readOwnDataProperty(error, 'syscall'),
+        TRANSPORT_FAILURE_DIAGNOSTIC_SYSCALL_MAX_BYTES,
+        redactionValues,
+    );
+    return value !== null && SAFE_TRANSPORT_SYSCALLS.has(value) ? value : null;
+}
+
+function reviewedTransportFailureProvenance(transport) {
+    const isProviderTransport = transport?.network_capability === 'provider';
+    return Object.freeze({
+        network_capability: isProviderTransport ? 'provider' : 'none',
+        proxy_contract: isProviderTransport && transport.proxy_contract === STAGE_D_STABLE_PROXY_CONTRACT
+            ? STAGE_D_STABLE_PROXY_CONTRACT
+            : null,
+    });
 }
 
 function safeJsonFailureDiagnosticText(rawText, redactionValues) {
@@ -2043,6 +2109,57 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
                     } catch (error) {
                         if (error?.code !== 'ENOENT') throw error;
                         writeExclusiveBytes(target, bytes, 'Stage D failure diagnostic', { directoryFd: currentDiagnostics.fd, mode: 0o400 });
+                    }
+                    return Object.freeze({
+                        failure_diagnostic_sha256: sha256Text(bytes),
+                        failure_diagnostic_evidence_reference: `failure-diagnostics/${name}`,
+                    });
+                });
+            },
+            persistTransportFailureDiagnostic({ runId, requestId, occurredAt, error, transportProvenance = null } = {}) {
+                assertToken(runId, 'transport failure diagnostic runId');
+                assertToken(requestId, 'transport failure diagnostic requestId');
+                assertUtc(occurredAt, 'transport failure diagnostic occurredAt');
+                if (transportProvenance !== null) {
+                    assertExactKeys(transportProvenance, ['network_capability', 'proxy_contract'], 'transport failure diagnostic provenance');
+                    if (!['none', 'provider'].includes(transportProvenance.network_capability)) fail('FAILURE_DIAGNOSTIC_INVALID', 'transport failure diagnostic network capability is invalid');
+                    if (transportProvenance.proxy_contract !== null && transportProvenance.proxy_contract !== STAGE_D_STABLE_PROXY_CONTRACT) fail('FAILURE_DIAGNOSTIC_INVALID', 'transport failure diagnostic proxy contract is invalid');
+                }
+                const safeErrorMessage = sanitizeTransportDiagnosticText(
+                    readOwnDataProperty(error, 'message'),
+                    TRANSPORT_FAILURE_DIAGNOSTIC_MESSAGE_MAX_BYTES,
+                    redactionValues,
+                ) || 'transport failure';
+                const diagnostic = {
+                    schema_version: TRANSPORT_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
+                    diagnostic_kind: 'TRANSPORT_FAILURE',
+                    run_id: runId,
+                    request_id: requestId,
+                    provider: PROVIDER,
+                    market: CONFIGURED_MARKETS[0],
+                    region: CONFIGURED_REGIONS[0],
+                    terminal_state: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION',
+                    occurred_at: occurredAt,
+                    error_code: safeTransportDiagnosticErrorCode(error, redactionValues),
+                    safe_error_message: safeErrorMessage,
+                    syscall: safeTransportDiagnosticSyscall(error, redactionValues),
+                    failure_phase: TRANSPORT_FAILURE_PHASE,
+                    transport_provenance: transportProvenance,
+                    transmission_boundary_crossed: true,
+                    http_response_received: false,
+                };
+                const bytes = canonicalBytes(diagnostic);
+                if (Buffer.byteLength(bytes, 'utf8') > TRANSPORT_FAILURE_DIAGNOSTIC_MAX_BYTES) fail('FAILURE_DIAGNOSTIC_INVALID', 'transport failure diagnostic exceeds the bounded size');
+                const name = `${requestId}.json`;
+                applyTestFault('FAILURE_DIAGNOSTIC_ROOT_SWAP');
+                return withEvidenceDirectories(this, ({ failureDiagnosticDescriptor: currentDiagnostics }) => {
+                    const target = scopedPath(currentDiagnostics.fd, name);
+                    try {
+                        const existing = readRegularFileBytes(target, 'Stage D transport failure diagnostic');
+                        if (existing.bytes !== bytes) fail('FAILURE_DIAGNOSTIC_CONFLICT', 'Stage D transport failure diagnostic already exists with different content');
+                    } catch (persistError) {
+                        if (persistError?.code !== 'ENOENT') throw persistError;
+                        writeExclusiveBytes(target, bytes, 'Stage D transport failure diagnostic', { directoryFd: currentDiagnostics.fd, mode: 0o400 });
                     }
                     return Object.freeze({
                         failure_diagnostic_sha256: sha256Text(bytes),
@@ -2753,11 +2870,27 @@ async function executeStageDOneCycle({
             }
             response = await transport.send(Object.freeze(transmissionRequest), STAGE_D_TRANSPORT_CALL_TOKEN);
         } catch (error) {
+            const terminalAt = trustedClock();
             try {
-                markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', at: trustedClock(), errorClassification: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION' });
+                markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', at: terminalAt, errorClassification: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION' });
             } catch (terminalError) {
                 reconcileRequired = true;
                 throw terminalError;
+            }
+            try {
+                evidencePersistence.persistTransportFailureDiagnostic({
+                    runId,
+                    requestId,
+                    occurredAt: terminalAt,
+                    error,
+                    transportProvenance: reviewedTransportFailureProvenance(transport),
+                });
+            } catch {
+                // The consumed terminal ledger fact is already durable.  A
+                // diagnostic write failure must remain a safe terminal error;
+                // it must never turn this spent request back into a retryable
+                // request or expose the original Error/cause in a new message.
+                fail('TRANSPORT_FAILURE_DIAGNOSTIC_PERSISTENCE_FAILED', 'post-boundary transport failure diagnostic persistence failed after durable terminal accounting');
             }
             throw error;
         }
