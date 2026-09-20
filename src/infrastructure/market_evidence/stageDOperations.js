@@ -1825,10 +1825,25 @@ const FAILURE_DIAGNOSTIC_HEADER_ALLOWLIST = new Set([
     'x-correlation-id', 'cf-ray', 'x-requests-used', 'x-requests-remaining', 'x-requests-last',
 ]);
 
+const FAILURE_DIAGNOSTIC_JSON_FIELD_ALLOWLIST = new Set(['code', 'message', 'status', 'type', 'title']);
+
+function utf8Prefix(value, maximumBytes) {
+    let result = '';
+    let size = 0;
+    for (const character of value) {
+        const characterSize = Buffer.byteLength(character, 'utf8');
+        if (size + characterSize > maximumBytes) break;
+        result += character;
+        size += characterSize;
+    }
+    return result;
+}
+
 function boundedFailureDiagnosticText(value, maximumBytes) {
     const bytes = Buffer.from(value, 'utf8');
     if (bytes.length <= maximumBytes) return value;
-    return `${bytes.subarray(0, maximumBytes).toString('utf8')}[TRUNCATED]`;
+    const marker = '[TRUNCATED]';
+    return `${utf8Prefix(value, maximumBytes - Buffer.byteLength(marker, 'utf8'))}${marker}`;
 }
 
 function sanitizeFailureDiagnosticHeaders(headers = {}, redactionValues = []) {
@@ -1857,16 +1872,27 @@ function redactFailureDiagnosticText(value, redactionValues = []) {
         .replace(/(https?:\/\/)[^\s/@]+@/gi, '$1[REDACTED]@');
 }
 
+function safeJsonFailureDiagnosticText(rawText, redactionValues) {
+    let parsed;
+    try { parsed = JSON.parse(rawText); } catch { return null; }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const safe = Object.fromEntries(Object.entries(parsed)
+        .filter(([key, value]) => FAILURE_DIAGNOSTIC_JSON_FIELD_ALLOWLIST.has(key) && typeof value === 'string')
+        .map(([key, value]) => [key, redactFailureDiagnosticText(value, redactionValues)]));
+    return JSON.stringify(safe);
+}
+
 function boundedFailureDiagnosticPayload(rawText, redactionValues) {
-    const sanitized = redactFailureDiagnosticText(rawText, redactionValues);
+    const jsonText = safeJsonFailureDiagnosticText(rawText, redactionValues);
+    const sanitized = jsonText === null ? redactFailureDiagnosticText(rawText, redactionValues) : jsonText;
     const bytes = Buffer.from(sanitized, 'utf8');
     const truncated = bytes.length > FAILURE_DIAGNOSTIC_MAX_BYTES;
-    const text = bytes.subarray(0, FAILURE_DIAGNOSTIC_MAX_BYTES).toString('utf8');
+    const text = truncated ? utf8Prefix(sanitized, FAILURE_DIAGNOSTIC_MAX_BYTES) : sanitized;
     let parsed = null;
     try { parsed = JSON.parse(text); } catch { /* UTF-8 diagnostics are valid evidence */ }
     const source = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
     return Object.freeze({
-        encoding: parsed === null ? 'utf8' : 'json',
+        encoding: jsonText === null ? 'utf8' : 'json',
         truncated,
         text,
         error_code: typeof source.code === 'string' ? redactFailureDiagnosticText(source.code, redactionValues) : null,

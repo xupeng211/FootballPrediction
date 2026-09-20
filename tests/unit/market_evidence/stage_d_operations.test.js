@@ -697,6 +697,7 @@ test('HTTP 403 retains a bounded, redacted failure diagnostic without creating m
     assert.equal(diagnostic.http_status, 403);
     assert.deepEqual(diagnostic.safe_headers, { 'content-type': 'application/json', 'x-request-id': 'safe-request-id-[REDACTED]' });
     assert.equal(diagnostic.payload.error_code, 'FORBIDDEN');
+    assert.deepEqual(JSON.parse(diagnostic.payload.text), { code: 'FORBIDDEN', message: 'apiKey=[REDACTED]; [REDACTED_HEADER]; https://[REDACTED]@proxy.invalid' });
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0].terminal_state, 'HTTP_FAILURE_AFTER_TRANSMISSION');
     assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')), []);
     assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath }).head_transaction_id, ctx.authoritySnapshot.head_transaction_id);
@@ -706,12 +707,14 @@ test('non-2xx diagnostic is bounded and a diagnostic write failure leaves durabl
     const bounded = liveAuthoritySetup(t);
     const boundedResult = await executeLive(bounded, {
         runId: 'http-429-run', requestId: 'http-429-request',
-        response: { http_status: 429, response_received_at: '2026-09-08T08:00:03Z', raw_text: 'x'.repeat(5000), failure_diagnostic_headers: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1' } },
+        response: { http_status: 429, response_received_at: '2026-09-08T08:00:03Z', raw_text: 'x'.repeat(5000), failure_diagnostic_headers: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1', 'x-request-id': '界'.repeat(1000) } },
     });
     const boundedDiagnostic = JSON.parse(fs.readFileSync(path.join(bounded.evidenceRoot, boundedResult.failure_diagnostic_evidence_reference), 'utf8'));
     assert.equal(boundedDiagnostic.payload.truncated, true);
     assert.equal(Buffer.byteLength(boundedDiagnostic.payload.text), 4096);
-    assert.deepEqual(boundedDiagnostic.safe_headers, { 'x-requests-last': '1', 'x-requests-remaining': '19', 'x-requests-used': '1' });
+    assert.deepEqual(Object.fromEntries(Object.entries(boundedDiagnostic.safe_headers).filter(([key]) => key !== 'x-request-id')), { 'x-requests-last': '1', 'x-requests-remaining': '19', 'x-requests-used': '1' });
+    assert.equal(Buffer.byteLength(boundedDiagnostic.safe_headers['x-request-id']) <= 1024, true);
+    assert.equal(boundedDiagnostic.safe_headers['x-request-id'].endsWith('[TRUNCATED]'), true);
 
     const failed = liveAuthoritySetup(t);
     const components = liveComponents(failed, { response: { http_status: 503, response_received_at: '2026-09-08T08:00:03Z', raw_text: 'gateway failure' } });
