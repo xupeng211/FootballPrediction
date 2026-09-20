@@ -155,13 +155,49 @@ const FROZEN_UNCHANGED_ENVIRONMENT = Object.freeze({
     defaultMode: 'direct',
     ciMode: 'direct',
   },
-  THE_ODDS_API_PROXY_URL: {
-    expression:
-      '${THE_ODDS_API_PROXY_URL:-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}',
-    defaultMode: 'http://host.docker.internal:7897',
-    ciMode: 'http://127.0.0.1:7897',
-  },
 });
+
+/**
+ * Stage D provider proxy 的期望形态。它与上面 FROZEN_UNCHANGED_ENVIRONMENT 分开，
+ * 因为它**必须**与通用代理家族不同：省略时不得回退到工作站 :7897，而要保持空缺，
+ * 由传输层以 PROXY_CONFIGURATION_MISSING 失败关闭。
+ *
+ * 表达式必须是 ${VAR-}（单横线、空默认值）。误写成 ${VAR:-...:7897} 就等于把
+ * "未配置"静默满足为个人 Clash 端点，这正是本测试要钉死的回归。
+ */
+const STAGE_D_PROXY_KEY = 'THE_ODDS_API_PROXY_URL';
+const STAGE_D_PROXY_EXPRESSION = '${THE_ODDS_API_PROXY_URL-}';
+
+/** 修复前的表达式：省略时解析出工作站代理，即被移除的缺陷。 */
+const LEGACY_STAGE_D_PROXY_EXPRESSION =
+  '${THE_ODDS_API_PROXY_URL:-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}';
+
+/**
+ * 检查 Stage D provider proxy 变量的形态：
+ * 必须存在、必须是 ${VAR-} 单横线空默认、且不得引用任何工作站代理插值。
+ * 全域函数（不抛错），因此可以喂给变异后的文本做可证伪性验证。
+ * @param {string} source
+ * @returns {string[]}
+ */
+function detectStageDProxyViolations(source) {
+  const environment = extractDevEnvironment(source);
+  const expression = environment.get(STAGE_D_PROXY_KEY);
+  if (expression === undefined) {
+    return [`${STAGE_D_PROXY_KEY}: missing from the dev service environment`];
+  }
+  const violations = [];
+  if (expression !== STAGE_D_PROXY_EXPRESSION) {
+    violations.push(
+      `${STAGE_D_PROXY_KEY}: must be exactly ${STAGE_D_PROXY_EXPRESSION}, got ${expression}`
+    );
+  }
+  for (const token of ['DEV_PROXY_HOST', 'PROXY_LOOPBACK_GATEWAY', 'DEV_HOST_PROXY_PORT', '7897']) {
+    if (expression.includes(token)) {
+      violations.push(`${STAGE_D_PROXY_KEY}: must not inherit the workstation proxy via ${token}`);
+    }
+  }
+  return violations;
+}
 
 /**
  * 找到与 text[openIndex]（'{'）配对的 '}'，支持嵌套默认值。
@@ -628,8 +664,8 @@ describe('unchanged proxy families', () => {
     }
   });
 
-  it('leaves The Odds API transport and proxy configuration byte-identical', () => {
-    const oddsApiKeys = ['THE_ODDS_API_KEY', 'THE_ODDS_API_TRANSPORT', 'THE_ODDS_API_PROXY_URL'];
+  it('leaves The Odds API key and transport configuration byte-identical', () => {
+    const oddsApiKeys = ['THE_ODDS_API_KEY', 'THE_ODDS_API_TRANSPORT'];
     for (const key of oddsApiKeys) {
       const frozen = FROZEN_UNCHANGED_ENVIRONMENT[key];
       assert.strictEqual(DEV_ENVIRONMENT.get(key), frozen.expression, `${key} expression changed`);
@@ -650,6 +686,78 @@ describe('unchanged proxy families', () => {
       assert.ok(!resolved.includes('registry.npmjs.org'), `${key} must not be hostname-patched`);
       assert.ok(!resolved.includes('registry.npmmirror.com'), `${key} must not be hostname-patched`);
     }
+  });
+});
+
+describe('Stage D provider proxy fails closed in docker-compose.dev.yml', () => {
+  // 本组钉死 §13/§17/§18：省略 THE_ODDS_API_PROXY_URL 时，compose 不得注入任何
+  // 端点，更不得注入工作站 :7897，否则 Stage D 的 PROXY_CONFIGURATION_MISSING
+  // 失败关闭契约会在配置层被静默绕过。
+
+  it('declares the Stage D proxy with the single-dash empty default form', () => {
+    assert.deepStrictEqual(detectStageDProxyViolations(COMPOSE_SOURCE), []);
+    assert.strictEqual(DEV_ENVIRONMENT.get(STAGE_D_PROXY_KEY), STAGE_D_PROXY_EXPRESSION);
+  });
+
+  it('resolves an omitted Stage D proxy to the empty string, never to a workstation proxy', () => {
+    // 这是 §18 的核心断言：省略时生效的 compose 值不含任何端点。
+    for (const resolutionEnvironment of [
+      {},
+      { PROXY_LOOPBACK_GATEWAY: 'host.docker.internal' },
+      CI_ENV,
+      { DEV_PROXY_HOST: 'host.docker.internal', DEV_HOST_PROXY_PORT: '7897' },
+    ]) {
+      const resolved = resolveDevVariable(DEV_ENVIRONMENT, STAGE_D_PROXY_KEY, resolutionEnvironment);
+      assert.strictEqual(resolved, '', `omitted Stage D proxy must stay empty, got ${resolved}`);
+      assert.ok(!resolved.includes('7897'), 'the workstation proxy port must never be injected');
+      assert.ok(!resolved.includes('host.docker.internal'), 'no host-gateway fallback is permitted');
+    }
+  });
+
+  it('does not let the generic dev proxy plumbing feed the Stage D variable', () => {
+    // 通用代理（HTTP_PROXY 等）继续默认指向工作站代理——那是开发便利，保持不变；
+    // 但那条通路绝不能把值漏给 Stage D 变量。
+    const genericDefaults = Object.fromEntries(
+      GENERIC_PROXY_KEYS.map(key => [
+        key,
+        resolveDevVariable(DEV_ENVIRONMENT, key, { PROXY_LOOPBACK_GATEWAY: 'host.docker.internal' }),
+      ])
+    );
+    assert.strictEqual(genericDefaults.HTTP_PROXY, 'http://host.docker.internal:7897');
+    assert.strictEqual(
+      resolveDevVariable(DEV_ENVIRONMENT, STAGE_D_PROXY_KEY, {}),
+      '',
+      'the generic family must not leak into the Stage D variable'
+    );
+  });
+
+  it('uses exactly the explicitly configured endpoint when one is supplied', () => {
+    const explicit = 'http://stage-d-proxy.internal:3128';
+    assert.strictEqual(
+      resolveDevVariable(DEV_ENVIRONMENT, STAGE_D_PROXY_KEY, { [STAGE_D_PROXY_KEY]: explicit }),
+      explicit
+    );
+    // "已设置但为空" 必须保持为空而不是回退——单横线形式的语义保证。
+    assert.strictEqual(
+      resolveDevVariable(DEV_ENVIRONMENT, STAGE_D_PROXY_KEY, { [STAGE_D_PROXY_KEY]: '' }),
+      ''
+    );
+  });
+
+  it('demonstrates the endpoint the pre-fix expression produced (negative control)', () => {
+    assert.strictEqual(resolveExpression(LEGACY_STAGE_D_PROXY_EXPRESSION, {}), 'http://host.docker.internal:7897');
+    assert.strictEqual(resolveExpression(LEGACY_STAGE_D_PROXY_EXPRESSION, CI_ENV), 'http://127.0.0.1:7897');
+  });
+
+  it('detects a regression back to the workstation-proxy default', () => {
+    const mutated = mutateOnce(COMPOSE_SOURCE, STAGE_D_PROXY_EXPRESSION, LEGACY_STAGE_D_PROXY_EXPRESSION);
+    const violations = detectStageDProxyViolations(mutated);
+    assert.ok(violations.length > 0, 'the workstation-proxy default must be detected');
+    assert.ok(violations[0].startsWith(`${STAGE_D_PROXY_KEY}:`), violations[0]);
+    assert.ok(
+      violations.some(violation => violation.includes('must not inherit the workstation proxy')),
+      violations.join('; ')
+    );
   });
 });
 
@@ -804,5 +912,18 @@ describe('real compose CLI cross-check', () => {
       assert.strictEqual(defaultMode[key], frozen.defaultMode, `default-mode ${key} drifted`);
       assert.strictEqual(ciMode[key], frozen.ciMode, `CI-mode ${key} drifted`);
     }
+    // Stage D provider proxy：真实 compose 解析必须与确定性求值器一致，
+    // 且省略时为空——绝不能被 docker compose 重新引入工作站端点。
+    assert.strictEqual(
+      defaultMode[STAGE_D_PROXY_KEY],
+      resolveDevVariable(DEV_ENVIRONMENT, STAGE_D_PROXY_KEY, {}),
+      `default-mode ${STAGE_D_PROXY_KEY} disagrees with the resolver`
+    );
+    assert.strictEqual(defaultMode[STAGE_D_PROXY_KEY], '', 'omitted Stage D proxy must resolve empty');
+    assert.strictEqual(ciMode[STAGE_D_PROXY_KEY], '', 'CI-mode Stage D proxy must resolve empty');
+    assert.ok(
+      !String(defaultMode[STAGE_D_PROXY_KEY]).includes('7897'),
+      'the real compose resolution must not inject the workstation proxy'
+    );
   });
 });

@@ -269,13 +269,15 @@ path.
 
 Recorded decision: `OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT`,
 `ROTATING_SOCKS_POOL_FOR_STAGE_D=PROHIBITED`,
-`CONCRETE_PRODUCTION_PROXY_ENDPOINT=NOT_YET_BOUND_BY_THIS_MISSION`,
-`CONCRETE_PRODUCTION_PREFLIGHT_TARGET=NOT_YET_BOUND_BY_THIS_MISSION`,
+`CONCRETE_PRODUCTION_PROXY_ENDPOINT=EXTERNALLY_BOUND__REPOSITORY_UNTRACKED`,
+`CONCRETE_PRODUCTION_PREFLIGHT_TARGET=EXTERNALLY_BOUND__REPOSITORY_UNTRACKED`,
 `PROXY_PROTOCOL_PREFLIGHT_REQUIRED=YES`,
 `PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES`, and `STAGE_D_PROXY_FALLBACK=NONE`.
 
-No production proxy endpoint has been provisioned by this decision, and none is
-recorded in tracked source. The Stage D transport cannot be bound to a pool name or
+No production proxy endpoint is recorded in tracked source. A separately controlled
+2026-09-20 deployment provisioned one dedicated project-controlled HTTP CONNECT listener
+and a distinct TCP HMAC target, with all concrete runtime inputs held outside Git in an
+owner-only binding. The Stage D transport cannot be bound to a pool name or
 to a caller-supplied proxy provider, and no reachable production path falls back to
 the rotating pool, to a workstation proxy, or to a direct connection. Absent
 configuration fails closed as `PROXY_CONFIGURATION_MISSING` — the
@@ -396,9 +398,9 @@ no prefix, no suffix — and it never appears in a log, an error message, an evi
 artifact, a JSON report, a CLI summary or a test snapshot.
 
 `PRODUCTION_PREFLIGHT_TARGET`, `PRODUCTION_SHARED_SECRET` and the production proxy
-endpoint are all **NOT_BOUND** by this contract's implementation: nothing in tracked
-source supplies them, and provisioning them is an Owner deployment action. Until it
-happens, live Stage D fails closed, which is the intended and correct state.
+endpoint remain absent from tracked source by design. They are externally bound only in
+the dedicated deployment environment; an omitted binding still fails closed before a
+socket or authorization consumption, which is the intended and correct state.
 
 The contract in the canonical form:
 
@@ -407,9 +409,9 @@ OWNER_PROXY_ARCHITECTURE_DECISION=DEDICATED_SINGLE_STABLE_HTTP_CONNECT_ENDPOINT
 PREFLIGHT_TARGET_ARCHITECTURE=HYBRID_DEPLOYMENT_ABSTRACTION
 PRODUCTION_PREFLIGHT_TARGET=DEDICATED_PROJECT_CONTROLLED_STATIC_TCP_ATTESTATION_TARGET
 PREFLIGHT_ATTESTATION=HMAC_SHA256_SHARED_SECRET_CHALLENGE_RESPONSE
-PREFLIGHT_SHARED_SECRET=REQUIRED_BUT_NOT_PROVISIONED_BY_THIS_MISSION
-PRODUCTION_TARGET_ENDPOINT=NOT_BOUND
-PRODUCTION_SHARED_SECRET=NOT_BOUND
+PREFLIGHT_SHARED_SECRET=REQUIRED_AND_EXTERNALLY_PROVISIONED
+PRODUCTION_TARGET_ENDPOINT=EXTERNALLY_BOUND__REPOSITORY_UNTRACKED
+PRODUCTION_SHARED_SECRET=EXTERNALLY_BOUND__REPOSITORY_UNTRACKED
 PREFLIGHT_BEFORE_AUTHORIZATION_CONSUMPTION=YES
 PROVIDER_REACHABILITY_NOT_PROVEN=YES
 PREFLIGHT_PROOF_LEVEL=AUTHENTICATED_PROJECT_CONTROLLED_TARGET_REACHABILITY

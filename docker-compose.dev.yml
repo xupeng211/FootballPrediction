@@ -137,7 +137,21 @@ services:
       # single stable HTTP CONNECT endpoint, never the rotating SOCKS pool.
       - THE_ODDS_API_KEY=${THE_ODDS_API_KEY:-}
       - THE_ODDS_API_TRANSPORT=${THE_ODDS_API_TRANSPORT:-direct}
-      - THE_ODDS_API_PROXY_URL=${THE_ODDS_API_PROXY_URL:-http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}}
+      # ---------------------------------------------------------------------
+      # Stage D provider proxy —— 故意没有默认值，且必须用 ${VAR-} 而不是 ${VAR:-}。
+      #
+      # 通用代理（上面那六个）默认指向宿主网关的本地代理是对的，那是开发便利；
+      # 而 THE_ODDS_API_PROXY_URL 命名的是 Stage D 传输层唯一稳定 HTTP CONNECT
+      # 端点。若它继承同一个 :7897 默认值，那么"未配置"就会被一个个人工作站代理
+      # 静默满足，Stage D 的 fail-closed 契约（STAGE_D_PROXY_FALLBACK=NONE、
+      # PROXY_CONFIGURATION_MISSING）在这条路径上就形同虚设。
+      #
+      # 因此：省略 -> 该变量为空 -> 传输层以 PROXY_CONFIGURATION_MISSING 失败关闭。
+      # 要本地联调 Stage D 代理，必须显式设置 THE_ODDS_API_PROXY_URL。
+      # 用 ${VAR-}（不带冒号）而不是 ${VAR:-}：后者会把"已设置但为空"也当作未设置
+      # 再落回默认值，显式置空就会失效。这与上面六个通用代理变量的写法理由相同。
+      # ---------------------------------------------------------------------
+      - THE_ODDS_API_PROXY_URL=${THE_ODDS_API_PROXY_URL-}
       - CONTAINER_PROXY=${DEV_CONTAINER_PROXY:-}
       - NO_PROXY=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
       - no_proxy=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}

@@ -1,0 +1,73 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_PRODUCTION_PROXY_ATTESTATION_PROVISIONING_AND_GATE3_CANDIDATE_PREPARATION",
+  "task_type": "docker-deploy",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docker-compose.dev.yml",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/STAGE_D_PRODUCTION_PROXY_ATTESTATION_PROVISIONING_AND_GATE3_CANDIDATE_PREPARATION.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "tests/unit/devops/production_gate_proxy.test.js",
+    "tests/unit/market_evidence/stage_d_stable_proxy_preflight.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    ".env",
+    ".gitignore",
+    "AGENTS.md",
+    "Makefile",
+    "README.md",
+    "config/stage_d_quota_budget.json",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/PROJECT_VISION.md",
+    "package-lock.json",
+    "package.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "docker/",
+    "docs/_reports/",
+    "schemas/",
+    "scripts/",
+    "src/"
+  ],
+  "excluded_tokens": [
+    "backtest",
+    "bookmaker",
+    "migration",
+    "model-activation",
+    "oddsportal",
+    "playwright",
+    "proxy_pools",
+    "scheduler",
+    "stage_d_cycle",
+    "theoddsapi",
+    "transactionstore",
+    "value-engine"
+  ],
+  "protected_invariants": [
+    "STAGE_D_PROXY_FALLBACK=NONE: THE_ODDS_API_PROXY_URL remains an explicit dedicated HTTP CONNECT endpoint; it never defaults to generic proxy variables, a workstation Clash/Mihomo endpoint, a rotating SOCKS pool or a direct route.",
+    "REMOTE_DEPLOYMENT_ONLY: concrete endpoint coordinates and all secret material remain external to Git, PR metadata and tests; the dedicated secret is root-only and its value, hash, length, prefix and suffix are never emitted.",
+    "DISTINCT_PROJECT_CONTROLLED_LISTENERS: the proxy and the TCP HMAC target are independently identifiable listeners on a documented project-controlled non-workstation host; the proxy may not CONNECT to itself.",
+    "CANONICAL_ATTESTATION_UNCHANGED: the deployed target uses the current canonical stageDStableProxy protocol helpers for fresh run_id/challenge and HMAC-SHA-256; strict 2xx and timing-safe verification stay unchanged.",
+    "ZERO_PROVIDER_CONTACT: no command resolves or contacts The Odds API, creates provider request intent, crosses the transmission boundary, consumes authorization, creates RAW evidence or charges/assumes quota.",
+    "GATE_STATE_PRESERVED: BLOCKER_2=CLOSED, BLOCKER_3=CLOSED, GATE_2=ACCEPTED, GATE_3=NOT_AUTHORIZED and STAGE_D_STARTED=NO; the spent authorization bd2d18956ae8e774fbb227bd56fa7619e2da0d4185372ae7e5108caefdc0c34a is never reused.",
+    "CANDIDATE_ONLY: any fresh Gate 3 material is a non-authorizing candidate for a future separate Owner decision; it neither activates nor consumes authorization and does not run a Stage D cycle.",
+    "EXISTING_CAPABILITIES_REVIEWED=YES; CURRENT_MILESTONE_REVIEWED=YES; VISION_ALIGNMENT_REVIEWED=YES: this narrowly closes the current Stage D transport readiness gap in the Market/Odds evidence layer and creates no North-Star-unrelated system."
+  ],
+  "forbidden_side_effects": [
+    "contacting, resolving or sending a request to The Odds API; consuming provider quota; creating provider RAW data; starting Stage D or its scheduler",
+    "activating, consuming, recreating or reusing any Gate 3 authorization, including the historical spent authorization",
+    "using a workstation Clash/Mihomo proxy, a rotating SOCKS pool, REG-TITAN-40, ports 10001-10040 or direct fallback as the Stage D transport",
+    "reading, printing, logging, hashing or committing any provider key, proxy credential, preflight secret, backup credential or authorization secret",
+    "changing router or DHCP configuration, modifying unrelated shared services, reopening Blocker 2/3, touching PR #1914, training, prediction, backtest, value betting or model activation",
+    "self-merging, bypassing required CI/review, force-pushing or modifying main directly"
+  ]
+}
