@@ -2360,6 +2360,34 @@ function createStageDProductionRuntimeAuthorization() {
     return STAGE_D_RUNTIME_AUTHORIZATION;
 }
 
+// The sole production component assembly path.  It is deliberately independent of
+// authorization consumption so configuration can be tested without opening a socket.
+// The HMAC capability remains opaque; evidence receives only transient strings it can
+// match for redaction before any diagnostic is persisted.
+function createStageDProductionComponents({ evidenceRoot, authorityRoot, allocationArtifactPath, fixtureUniverse, env = process.env } = {}) {
+    if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim() || typeof authorityRoot !== 'string' || !authorityRoot.trim() || typeof allocationArtifactPath !== 'string' || !allocationArtifactPath.trim()) {
+        fail('STAGE_D_INPUT_INVALID', 'production evidenceRoot, authorityRoot and allocationArtifactPath are required');
+    }
+    if (!fixtureUniverse || typeof fixtureUniverse !== 'object') fail('STAGE_D_INPUT_INVALID', 'production fixture universe is required');
+    const proxyEndpoint = resolveStageDStableProxyEndpoint(env);
+    const proxyPreflightTarget = resolveStageDPreflightTarget(env, { proxyEndpoint });
+    const proxyPreflightSecret = resolveStageDPreflightSecret(env);
+    const configuredPreflightSecret = env.STAGE_D_PROXY_PREFLIGHT_SHARED_SECRET;
+    const diagnosticRedactionValues = [
+        env.THE_ODDS_API_KEY,
+        env.THE_ODDS_API_PROXY_URL,
+        configuredPreflightSecret,
+        typeof configuredPreflightSecret === 'string' ? configuredPreflightSecret.trim() : null,
+    ].filter(value => typeof value === 'string');
+    return Object.freeze({
+        transport: createStageDOddsApiTransport({ apiKey: env.THE_ODDS_API_KEY, endpoint: proxyEndpoint }),
+        evidencePersistence: createStageDEvidencePersistence({ evidenceRoot, redactionValues: diagnosticRedactionValues }),
+        candidateBuilder: createStageDProspectiveCandidateBuilder({ universe: fixtureUniverse, supportedMarketKeys: CONFIGURED_MARKETS }),
+        transactionPublisher: createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath }),
+        proxyPreflight: createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget, secret: proxyPreflightSecret }),
+    });
+}
+
 // eslint-disable-next-line complexity -- the binder deliberately orders validation, consumption and shared-cycle admission.
 async function executeStageDControlledInitialization(options = {}) {
     assertPlainObject(options, 'Stage D controlled initialization options');
@@ -2435,34 +2463,17 @@ async function executeStageDControlledInitialization(options = {}) {
     } else {
         if (hasComponentOverride) fail('STAGE_D_COMPONENT_OVERRIDE_FORBIDDEN', 'production binder components are fixed to reviewed factories');
         if (typeof evidenceRoot !== 'string' || !evidenceRoot.trim() || typeof runLockTrustRoot !== 'string' || !runLockTrustRoot.trim()) fail('STAGE_D_INPUT_INVALID', 'production evidenceRoot and runLockTrustRoot are required');
-        // One resolution per governed cycle, or none at all: the endpoint proven by the
-        // preflight below is the same object the transport transmits through.  There is
-        // no window in which the proven endpoint and the used endpoint can diverge.
-        const proxyEndpoint = resolveStageDStableProxyEndpoint();
-        // The probe target is a separate contract from the endpoint: the proxy is what must
-        // be proven, the target is what it must prove itself against.  It is resolved here,
-        // before any socket is opened and long before authority is spent, so an unconfigured
-        // target fails closed with nothing consumed.  Nothing infers it from the host's
-        // routes, addresses or container topology.
-        const proxyPreflightTarget = resolveStageDPreflightTarget(process.env, { proxyEndpoint });
-        // The attestation secret is the third contract, and the one that makes the proof
-        // unfalsifiable: the target must hold it, so a responder that never reached the
-        // target cannot answer a fresh challenge.  It is resolved alongside the other two,
-        // before any socket is opened, so a missing or malformed secret is a deterministic
-        // local configuration failure rather than something discovered mid-probe.
-        const proxyPreflightSecret = resolveStageDPreflightSecret(process.env);
-        // These values remain closure-only redaction terms. They are never serialized,
-        // logged, returned, or used as diagnostics themselves.
-        const diagnosticRedactionValues = [
-            process.env.THE_ODDS_API_KEY,
-            process.env.THE_ODDS_API_PROXY_URL,
-            proxyPreflightSecret,
-        ];
-        boundTransport = createStageDOddsApiTransport({ endpoint: proxyEndpoint });
-        boundEvidencePersistence = createStageDEvidencePersistence({ evidenceRoot, redactionValues: diagnosticRedactionValues });
-        boundCandidateBuilder = createStageDProspectiveCandidateBuilder({ universe: fixtureSource.universe, supportedMarketKeys: CONFIGURED_MARKETS });
-        boundTransactionPublisher = createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath });
-        boundProxyPreflight = createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget, secret: proxyPreflightSecret });
+        const productionComponents = createStageDProductionComponents({
+            evidenceRoot,
+            authorityRoot,
+            allocationArtifactPath,
+            fixtureUniverse: fixtureSource.universe,
+        });
+        boundTransport = productionComponents.transport;
+        boundEvidencePersistence = productionComponents.evidencePersistence;
+        boundCandidateBuilder = productionComponents.candidateBuilder;
+        boundTransactionPublisher = productionComponents.transactionPublisher;
+        boundProxyPreflight = productionComponents.proxyPreflight;
     }
     // ORDERING INVARIANT.  The Stage D proxy contract is proven before the one-shot
     // authorization is spent: configuration resolution, then the HTTP CONNECT protocol
@@ -3025,6 +3036,7 @@ module.exports = {
     createStageDProspectiveCandidateBuilder,
     createStageDFakePublisher,
     createStageDTransactionPublisher,
+    createStageDProductionComponents,
     buildOfflineStageDRunPlan,
     executeStageDControlledInitialization,
     classifyDuplicateCapture,

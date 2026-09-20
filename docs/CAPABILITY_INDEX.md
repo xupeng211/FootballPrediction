@@ -76,6 +76,11 @@
   与 target reachability 已验证。该能力不触及 provider、也不证明 provider reachability；
   live binder 仍要求一份独立 Owner/Chief Engineer exact-hash authorization。fresh candidate
   已准备但状态为 `PREPARED_NOT_AUTHORIZED`，不是可执行 authorization。
+- **Stage D diagnostic-redaction production wiring**：`IMPLEMENTED / REPAIRED / NOT_AUTHORIZED`。
+  production assembly keeps the resolved HMAC preflight secret opaque and non-enumerable while
+  passing only transient environment strings to the strict diagnostic-redaction boundary. The
+  prior unconsumed candidate stopped locally with `INVALID_EVIDENCE_PERSISTENCE`; it is not
+  reusable, and the repair authorizes neither a provider request nor a scheduler.
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。

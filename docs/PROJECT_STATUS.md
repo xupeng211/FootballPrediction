@@ -61,6 +61,14 @@ receipt、无 transaction，run lock 已释放。历史请求的 response header
 所以 issuer/cause 仍为 `UNKNOWN`。未来版本的非 2xx 诊断能力是前瞻性的独立 failure
 diagnostic，不是 canonical market RAW，不能重写这条历史事实，也不改变 Gate 3 授权状态。
 
+之后的未授权 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
+在任何 canonical preflight、authorization consumption、request intent 或 provider transmission 前，
+因 `INVALID_EVIDENCE_PERSISTENCE` 停止。它暴露的本地 production-wiring defect 是：不透明的
+resolved HMAC preflight-secret wrapper 被传给只接受 `string[]` 的 diagnostic-redaction boundary。
+该 secret 没有被持久化或泄露；该 candidate、authorization、run id 和 request id 不可重用。
+本修复仅恢复 future diagnostic construction 的 typed/redacted binding，仍不授权 provider request；
+`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
+
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
 immutable hash-chained prospective ledger、唯一的
 `scripts/ops/stage_d_controlled_initialization.js` single-cycle binder 和 quota governance 已在

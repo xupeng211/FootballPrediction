@@ -145,6 +145,15 @@ market evidence, and never creates a transaction. A diagnostic persistence failu
 does not roll back consumption or permit a retry; the durable terminal ledger fact
 remains authoritative and the caller fails closed.
 
+Production component construction preserves this same boundary: the resolved HMAC
+preflight secret is an opaque, non-enumerable capability used only by the attestation
+preflight. It is never passed to evidence persistence. Diagnostic redaction receives
+only transient string values from the configured secret-bearing environment bindings;
+those values are used solely for in-memory matching before persistence and are never
+serialized, logged, returned, or hashed as diagnostic fields. A malformed or missing
+preflight secret still fails closed before any socket, authorization consumption, request
+intent, or provider transmission.
+
 ## Quota and request-budget contract
 
 Provider transmission requires an exact
