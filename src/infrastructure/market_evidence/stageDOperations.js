@@ -1847,9 +1847,12 @@ function redactFailureDiagnosticText(value, redactionValues = []) {
         if (typeof secret === 'string' && secret) text = text.split(secret).join('[REDACTED]');
     }
     return text
+        // Preserve syntactically valid JSON while redacting quoted values for every
+        // credential-bearing field class before the bounded payload is persisted.
+        .replace(/((?:"(?:api[_-]?key|access[_-]?token|token|password|secret|authorization|proxy-authorization|cookie|set-cookie)"|'(?:api[_-]?key|access[_-]?token|token|password|secret|authorization|proxy-authorization|cookie|set-cookie)')\s*:\s*)"(?:\\.|[^"\\])*"/gi, '$1"[REDACTED]"')
         .replace(/(?:proxy-)?authorization\s*:\s*[^\r\n;]+/gi, '[REDACTED_HEADER]')
         .replace(/(?:set-)?cookie\s*:\s*[^\r\n;]+/gi, '[REDACTED_HEADER]')
-        .replace(/((?:api[_-]?key|token|password|secret|authorization|proxy-authorization)\s*(?:=|:|%3[dD])\s*)([^\s,;"'&]+)/gi, '$1[REDACTED]')
+        .replace(/((?:api[_-]?key|access[_-]?token|token|password|secret|authorization|proxy-authorization|cookie|set-cookie)\s*(?:=|:|%3[dD])\s*)([^\s,;"'&]+)/gi, '$1[REDACTED]')
         .replace(/(bearer\s+)([^\s,;"']+)/gi, '$1[REDACTED]')
         .replace(/(https?:\/\/)[^\s/@]+@/gi, '$1[REDACTED]@');
 }

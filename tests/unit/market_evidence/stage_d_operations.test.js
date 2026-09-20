@@ -678,7 +678,7 @@ test('HTTP 403 retains a bounded, redacted failure diagnostic without creating m
         response: {
             http_status: 403,
             response_received_at: '2026-09-08T08:00:03Z',
-            raw_text: JSON.stringify({ code: 'FORBIDDEN', message: `apiKey=${apiKey}; Authorization: Bearer ${secret}; https://${proxyCredential}@proxy.invalid` }),
+            raw_text: JSON.stringify({ code: 'FORBIDDEN', message: `apiKey=${apiKey}; Authorization: Bearer ${secret}; https://${proxyCredential}@proxy.invalid`, cookie: 'session=untracked-cookie-secret', access_token: 'untracked-token-secret' }),
             failure_diagnostic_headers: {
                 'content-type': 'application/json', 'x-request-id': `safe-request-id-${apiKey}`, authorization: `Bearer ${secret}`, 'set-cookie': `sid=${secret}`,
             },
@@ -692,7 +692,7 @@ test('HTTP 403 retains a bounded, redacted failure diagnostic without creating m
     const diagnosticPath = path.join(ctx.evidenceRoot, result.failure_diagnostic_evidence_reference);
     const diagnosticText = fs.readFileSync(diagnosticPath, 'utf8');
     assert.equal(fs.statSync(diagnosticPath).mode & 0o222, 0);
-    for (const forbidden of [apiKey, proxyCredential, secret, 'authorization', 'set-cookie']) assert.equal(diagnosticText.toLowerCase().includes(forbidden.toLowerCase()), false);
+    for (const forbidden of [apiKey, proxyCredential, secret, 'untracked-cookie-secret', 'untracked-token-secret', 'authorization', 'set-cookie']) assert.equal(diagnosticText.toLowerCase().includes(forbidden.toLowerCase()), false);
     const diagnostic = JSON.parse(diagnosticText);
     assert.equal(diagnostic.http_status, 403);
     assert.deepEqual(diagnostic.safe_headers, { 'content-type': 'application/json', 'x-request-id': 'safe-request-id-[REDACTED]' });
