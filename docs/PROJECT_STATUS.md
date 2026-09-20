@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-09-16
+Last updated: 2026-09-21
 
 ## Current State
 
@@ -58,8 +58,17 @@ Stage D start；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
 第一条单次 Gate 3 live request 已于 2026-09-20 终态为 `HTTP_FAILURE_AFTER_TRANSMISSION`
 （HTTP 403），并在 sealed ledger 中计为一条 consumed request；它无 retry、无 RAW、无
 receipt、无 transaction，run lock 已释放。历史请求的 response headers/body 未被旧代码保留，
-所以 issuer/cause 仍为 `UNKNOWN`。未来版本的非 2xx 诊断能力是前瞻性的独立 failure
-diagnostic，不是 canonical market RAW，不能重写这条历史事实，也不改变 Gate 3 授权状态。
+所以 issuer/cause 仍为 `UNKNOWN`。
+
+随后唯一的一次新鲜 canary request
+（`stage_d_gate3_request_7a4ca27c79559335e37dd53a` /
+`stage_d_gate3_run_7a4ca27c79559335e37dd53a`）在 2026-09-20 终态为
+`TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION`，底层错误为 `ECONNRESET`。它同样无
+retry、无 RAW、无 receipt、无 transaction，且 run lock 已释放；当前 post-epoch
+consumed total 为 `2`、ambiguous consumed 为 `0`。本地请求预算已保守计为 consumed，但没有
+权威 provider response/quota evidence，因此 provider quota actual effect、failure phase 与
+reset origin 均为 `UNKNOWN`。新增 transport diagnostic 只对未来异常前瞻生效，不能为这次历史
+ECONNRESET 追造不存在的 artifact，也不能修改历史 ledger、重用候选或改变 Gate 3 授权状态。
 
 之后的未授权 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
 在任何 canonical preflight、authorization consumption、request intent 或 provider transmission 前，
@@ -80,7 +89,8 @@ owner-controlled bounded authorization artifact，在模块内部创建 private 
 automated ceiling、`h2h × uk = 1` credit、header reconciliation 和 no-unverified-reset；
 provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epoch 保存
 `AT_LEAST_2_CONFIRMED` historical lower bound 与 exact `UNKNOWN`，不伪造 lifetime total；
-本地 epoch 内 consumed requests 为零。该候选不启动 Stage D，不创建 RAW 或 transaction，也
+当前 post-epoch accounting 保留两条 consumed terminal requests、零 ambiguous requests。
+新的 transport diagnostic 仅改善未来 evidence retention；该历史 canary 不创建 RAW 或 transaction，也
 不启用 scheduler。
 
 Owner 数据保护与凭据治理已由 Owner 裁定，并记录于

@@ -145,6 +145,32 @@ market evidence, and never creates a transaction. A diagnostic persistence failu
 does not roll back consumption or permit a retry; the durable terminal ledger fact
 remains authoritative and the caller fails closed.
 
+For a future exception from `transport.send()` after the durable transmission
+boundary, the adapter first makes the consumed
+`TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION` ledger state durable and then
+writes a separate immutable
+`footballprediction-stage-d-transport-failure-diagnostic/v1` artifact in the
+same `failure-diagnostics/` authority. The transport artifact is strictly
+allowlisted: it records the run/request binding, provider/`h2h`/`uk` envelope,
+terminal state, occurrence time, a bounded allowlisted direct `Error.code` and
+an `safe_error_message` derived only from that closed code allowlist (or a
+fixed generic value), an allowlisted syscall, the conservative
+`UNKNOWN_POST_BOUNDARY` phase, fixed proxy-contract provenance, and explicit
+`transmission_boundary_crossed=true` / `http_response_received=false` flags.
+It never serializes `Error`, `stack`, `cause`, arbitrary enumerable fields,
+hostname/address/port values, credentials or request bodies. It is diagnostic
+evidence only: it cannot become market RAW, a receipt or a transaction. A
+transport-diagnostic persistence failure leaves the consumed ledger fact and
+run-lock accounting authoritative and fails closed; it never permits a retry.
+
+The consumed 2026-09-20 ECONNRESET attempt is historical evidence, not a
+retroactive instance of this new schema. Its local evidence proves only the
+conservative post-boundary transmission marker and the transport error; no
+authoritative HTTP response, provider-quota effect, narrower failure phase or
+reset origin was retained. Its provider quota effect therefore remains
+`UNKNOWN`, local request budget remains consumed, no RAW/receipt/transaction
+exists, and the historical attempt must not be retried or rewritten.
+
 Production component construction preserves this same boundary: the resolved HMAC
 preflight secret is an opaque, non-enumerable capability used only by the attestation
 preflight. It is never passed to evidence persistence. Diagnostic redaction receives

@@ -669,6 +669,126 @@ test('HTTP failure and transport timeout are consumed and never retried', async 
     assert.equal(timeoutRequest.quota_units_charged_or_assumed, 1);
 });
 
+test('post-boundary transport failures retain bounded diagnostics without RAW, receipt, transaction, or retry', async t => {
+    const failures = [
+        ['ECONNRESET', 'read'],
+        ['ETIMEDOUT', 'connect'],
+        ['ECONNREFUSED', 'connect'],
+        ['ERR_SSL_WRONG_VERSION_NUMBER', 'tls'],
+        [null, 'read'],
+    ];
+    for (const [code, syscall] of failures) {
+        const ctx = liveAuthoritySetup(t);
+        const message = `post-boundary ${code || 'generic transport failure'}`;
+        const error = new Error(message);
+        if (code !== null) error.code = code;
+        error.syscall = syscall;
+        const components = liveComponents(ctx, { error });
+        await assert.rejects(
+            executeLive(ctx, { components, runId: `transport-${code || 'generic'}-run`, requestId: `transport-${code || 'generic'}-request` }),
+            thrown => code === null ? thrown.message === message : thrown.code === code,
+        );
+        assert.equal(components.transport.call_count, 1);
+        const request = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0];
+        assert.equal(request.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+        assert.equal(request.quota_units_charged_or_assumed, 1);
+        assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+        assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')), []);
+        assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'receipts')), []);
+        const diagnosticPath = path.join(ctx.evidenceRoot, 'failure-diagnostics', `${request.request_id}.json`);
+        assert.equal(fs.statSync(diagnosticPath).mode & 0o222, 0);
+        const diagnostic = JSON.parse(fs.readFileSync(diagnosticPath, 'utf8'));
+        assert.equal(diagnostic.schema_version, 'footballprediction-stage-d-transport-failure-diagnostic/v1');
+        assert.equal(diagnostic.diagnostic_kind, 'TRANSPORT_FAILURE');
+        assert.equal(diagnostic.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+        assert.equal(diagnostic.failure_phase, 'UNKNOWN_POST_BOUNDARY');
+        assert.equal(diagnostic.transmission_boundary_crossed, true);
+        assert.equal(diagnostic.http_response_received, false);
+        assert.equal(diagnostic.error_code, code);
+        assert.equal(diagnostic.syscall, syscall);
+        assert.equal(diagnostic.transport_provenance.network_capability, 'none');
+        assert.equal(diagnostic.transport_provenance.proxy_contract, null);
+    }
+});
+
+test('transport diagnostics redact direct and nested secret reflections and ignore unsafe error surfaces', async t => {
+    const ctx = liveAuthoritySetup(t);
+    const apiKey = 'transport-diagnostic-api-key-must-not-persist';
+    const proxyUrl = 'http://proxy-user:proxy-password@proxy.invalid:3128';
+    const queryCredentialUrl = 'http://proxy.example:3128/path?api_key=transport-query-secret&token=transport-token';
+    const preflightSecret = 'transport-diagnostic-preflight-secret-must-not-persist';
+    const error = new Error([
+        `ECONNRESET apiKey=${apiKey}`,
+        `proxy=${proxyUrl}`,
+        `query=${queryCredentialUrl}`,
+        `secret=${preflightSecret}`,
+        `Authorization: Bearer ${preflightSecret}`,
+    ].join('; '));
+    error.code = apiKey;
+    error.syscall = preflightSecret;
+    error.hostname = apiKey;
+    error.address = proxyUrl;
+    error.port = preflightSecret;
+    error.cause = { message: `nested=${apiKey}`, proxy: proxyUrl, secret: preflightSecret };
+    error.stack = `Error: ${apiKey}\n    at ${proxyUrl}\nsecret=${preflightSecret}`;
+    const components = liveComponents(ctx, { error });
+    components.evidencePersistence = createStageDEvidencePersistence({
+        evidenceRoot: ctx.evidenceRoot,
+        redactionValues: [apiKey, proxyUrl, preflightSecret],
+    });
+    await assert.rejects(
+        executeLive(ctx, { components, runId: 'transport-secret-run', requestId: 'transport-secret-request' }),
+        thrown => thrown.code === apiKey,
+    );
+    const diagnosticPath = path.join(ctx.evidenceRoot, 'failure-diagnostics', 'transport-secret-request.json');
+    const diagnosticText = fs.readFileSync(diagnosticPath, 'utf8');
+    for (const forbidden of [apiKey, proxyUrl, 'proxy-user', 'proxy-password', preflightSecret, 'nested=', 'cause', 'stack']) {
+        assert.equal(diagnosticText.includes(forbidden), false, `transport diagnostic leaked ${forbidden}`);
+    }
+    const diagnostic = JSON.parse(diagnosticText);
+    assert.equal(diagnostic.error_code, null);
+    assert.equal(diagnostic.syscall, null);
+    assert.equal(diagnostic.safe_error_message, 'transport failure');
+    assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'hostname'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'address'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'port'), false);
+});
+
+test('oversized UTF-8 error messages are ignored and diagnostic persistence failure cannot undo consumption', async t => {
+    const bounded = liveAuthoritySetup(t);
+    const oversized = new Error('界'.repeat(2000));
+    oversized.code = 'ECONNRESET';
+    oversized.syscall = 'read';
+    const boundedComponents = liveComponents(bounded, { error: oversized });
+    await assert.rejects(
+        executeLive(bounded, { components: boundedComponents, runId: 'transport-oversized-run', requestId: 'transport-oversized-request' }),
+        error => error.code === 'ECONNRESET',
+    );
+    const boundedText = fs.readFileSync(path.join(bounded.evidenceRoot, 'failure-diagnostics', 'transport-oversized-request.json'), 'utf8');
+    assert.equal(Buffer.byteLength(boundedText, 'utf8') <= 4096, true);
+    assert.equal(boundedText.includes('界'), false);
+    const boundedDiagnostic = JSON.parse(boundedText);
+    assert.equal(boundedDiagnostic.safe_error_message, 'transport error ECONNRESET');
+
+    const failed = liveAuthoritySetup(t);
+    const movedEvidenceRoot = `${failed.evidenceRoot}.moved`;
+    const failedComponents = liveComponents(failed, { error: Object.assign(new Error('diagnostic persistence failure'), { code: 'ECONNRESET' }) });
+    failedComponents.evidencePersistence = createStageDEvidencePersistence({
+        evidenceRoot: failed.evidenceRoot,
+        testHooks: { fault: 'FAILURE_DIAGNOSTIC_ROOT_SWAP' },
+    });
+    await assert.rejects(
+        executeLive(failed, { components: failedComponents, runId: 'transport-diagnostic-write-failure-run', requestId: 'transport-diagnostic-write-failure-request' }),
+        error => error.code === 'TRANSPORT_FAILURE_DIAGNOSTIC_PERSISTENCE_FAILED',
+    );
+    const failedRequest = readRequestLedger({ ledgerRoot: failed.ledgerRoot }).requests[0];
+    assert.equal(failedRequest.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+    assert.equal(failedRequest.quota_units_charged_or_assumed, 1);
+    assert.equal(inspectStageDRunLock({ operationRoot: failed.ledgerRoot }).state, 'ABSENT');
+    fs.rmSync(failed.evidenceRoot, { recursive: true, force: true });
+    fs.renameSync(movedEvidenceRoot, failed.evidenceRoot);
+});
+
 test('HTTP 403 retains a bounded, redacted failure diagnostic without creating market RAW or a transaction', async t => {
     const ctx = liveAuthoritySetup(t);
     const apiKey = 'test-api-key-that-must-not-persist';

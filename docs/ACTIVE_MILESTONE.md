@@ -84,7 +84,7 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 `OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
 不是 blocker。）
 
-NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；上一份 candidate 已在 authorization 前因本地 `INVALID_EVIDENCE_PERSISTENCE` 停止，未消耗 authorization、未创建 request intent、未跨 transmission boundary，且不得复用。修复合并并通过 main Production Gate 后，才可重新准备新的 exact-main-bound `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；此前停止的 candidate 不可复用。一次 HTTP 403 与随后一次 ECONNRESET canary 均已在 transmission boundary 后消费并永久终态化，当前 post-epoch consumed total 为 `2`、ambiguous 为 `0`，不得重试或重写。transport-diagnostic hardening 合并并通过 main Production Gate 后，才可重新准备一个新的 exact-main-bound `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -100,9 +100,11 @@ canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC v
 同日的第一条 Owner 授权 Gate 3 请求已成为不可重用的历史证据：它经受控 binder
 跨过 transmission boundary 后以 HTTP 403 终态消费，未产生 RAW、receipt 或 transaction，
 且没有 retry。历史响应的 issuer/cause 因旧版 non-2xx 路径未保留安全诊断信息而仍为
-`UNKNOWN`。后续 source remediation 仅为未来 non-2xx 保留独立、限长、redacted 的 failure
-diagnostic；它不修改历史账本、不把失败响应变为 market RAW，也不授权第二次请求或改变
-`GATE_3=NOT_AUTHORIZED`。
+`UNKNOWN`。随后第二条请求以 `TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION` / `ECONNRESET`
+终态消费；没有权威 HTTP response 或 provider quota evidence，failure phase、reset origin
+与 provider quota actual effect 均为 `UNKNOWN`。transport diagnostics 仅为未来 non-2xx/
+transport failure 保留独立、限长、redacted evidence；它不修改历史账本、不把失败变为 market
+RAW，也不授权第二次请求或改变 `GATE_3=NOT_AUTHORIZED`。
 
 随后准备执行的 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
 在 canonical preflight、authorization consumption 和 provider transmission 之前停止，分类为
