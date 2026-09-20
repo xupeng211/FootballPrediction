@@ -152,8 +152,9 @@ writes a separate immutable
 `footballprediction-stage-d-transport-failure-diagnostic/v1` artifact in the
 same `failure-diagnostics/` authority. The transport artifact is strictly
 allowlisted: it records the run/request binding, provider/`h2h`/`uk` envelope,
-terminal state, occurrence time, bounded/redacted direct `Error.code` and
-`Error.message` values, an allowlisted syscall, the conservative
+terminal state, occurrence time, a bounded allowlisted direct `Error.code` and
+an `safe_error_message` derived only from that closed code allowlist (or a
+fixed generic value), an allowlisted syscall, the conservative
 `UNKNOWN_POST_BOUNDARY` phase, fixed proxy-contract provenance, and explicit
 `transmission_boundary_crossed=true` / `http_response_received=false` flags.
 It never serializes `Error`, `stack`, `cause`, arbitrary enumerable fields,

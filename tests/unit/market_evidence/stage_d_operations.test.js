@@ -754,7 +754,7 @@ test('transport diagnostics redact direct and nested secret reflections and igno
     assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'port'), false);
 });
 
-test('oversized UTF-8 transport errors remain bounded and diagnostic persistence failure cannot undo consumption', async t => {
+test('oversized UTF-8 error messages are ignored and diagnostic persistence failure cannot undo consumption', async t => {
     const bounded = liveAuthoritySetup(t);
     const oversized = new Error('界'.repeat(2000));
     oversized.code = 'ECONNRESET';
@@ -768,7 +768,6 @@ test('oversized UTF-8 transport errors remain bounded and diagnostic persistence
     assert.equal(Buffer.byteLength(boundedText, 'utf8') <= 4096, true);
     assert.equal(boundedText.includes('界'), false);
     const boundedDiagnostic = JSON.parse(boundedText);
-    assert.equal(Buffer.byteLength(boundedDiagnostic.safe_error_message, 'utf8') <= 2048, true);
     assert.equal(boundedDiagnostic.safe_error_message, 'transport error ECONNRESET');
 
     const failed = liveAuthoritySetup(t);
