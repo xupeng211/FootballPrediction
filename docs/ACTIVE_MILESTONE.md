@@ -84,7 +84,7 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 `OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
 不是 blocker。）
 
-NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；已有一个 fresh、exact-main-bound、`PREPARED_NOT_AUTHORIZED` candidate，下一步只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；上一份 candidate 已在 authorization 前因本地 `INVALID_EVIDENCE_PERSISTENCE` 停止，未消耗 authorization、未创建 request intent、未跨 transmission boundary，且不得复用。修复合并并通过 main Production Gate 后，才可重新准备新的 exact-main-bound `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -103,6 +103,14 @@ canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC v
 `UNKNOWN`。后续 source remediation 仅为未来 non-2xx 保留独立、限长、redacted 的 failure
 diagnostic；它不修改历史账本、不把失败响应变为 market RAW，也不授权第二次请求或改变
 `GATE_3=NOT_AUTHORIZED`。
+
+随后准备执行的 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
+在 canonical preflight、authorization consumption 和 provider transmission 之前停止，分类为
+`INVALID_EVIDENCE_PERSISTENCE`。原因是生产装配把不透明的 resolved HMAC preflight-secret
+对象传入只接受 `string[]` 的 diagnostic-redaction 边界；该对象没有被序列化或泄露。该 candidate、
+其 authorization、run id 与 request id 均不复用。该修复只让 future non-2xx diagnostic 的
+secret-redaction wiring 可构造，不授权任何 provider request；`GATE_3=NOT_AUTHORIZED`、
+`STAGE_D_STARTED=NO` 保持。
 
 Stage C canonical market-evidence pilot 已通过独立 review、正常合并及 main Production Gate
 闭环（PR #1890）；非 head 逻辑批次 A → B → retry-A 修复也已闭环（PR #1893）。

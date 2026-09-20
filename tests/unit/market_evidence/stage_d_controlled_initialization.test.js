@@ -27,6 +27,7 @@ const {
     createStageDProspectiveCandidateBuilder,
     createStageDFakePublisher,
     createStageDOddsApiTransport,
+    createStageDProductionComponents,
     executeStageDControlledInitialization,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
 const {
@@ -41,6 +42,7 @@ const {
     PROXY_CONNECT_PROTOCOL_INVALID,
     PROXY_PREFLIGHT_TARGET_CONFIGURATION_MISSING,
     PREFLIGHT_ATTESTATION_SECRET_MISSING,
+    PREFLIGHT_ATTESTATION_SECRET_INVALID,
     resolveStageDStableProxyEndpoint,
     resolveStageDPreflightTarget,
     resolveStageDPreflightSecret,
@@ -728,6 +730,64 @@ test('the production Stage D transport exposes the stable proxy contract and no 
     const transport = createStageDOddsApiTransport({ apiKey: 'not-a-real-key' });
     assert.equal(transport.network_capability, 'provider');
     assert.equal(transport.proxy_contract, STAGE_D_STABLE_PROXY_CONTRACT);
+});
+
+test('the real production component assembly keeps the resolved HMAC secret opaque and supplies only strings to diagnostic redaction', t => {
+    const ctx = makeContext(t);
+    const apiKey = 'production-wiring-test-api-key';
+    const proxyUrl = 'http://test-user:test-password@127.0.0.1:3128';
+    const preflightSecret = Buffer.from('production-wiring-test-preflight-secret-0123456789abcdef', 'utf8').toString('base64');
+    const env = {
+        THE_ODDS_API_KEY: apiKey,
+        THE_ODDS_API_PROXY_URL: proxyUrl,
+        [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: 'tcp://127.0.0.1:9',
+        [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: preflightSecret,
+    };
+    const resolvedSecret = resolveStageDPreflightSecret(env);
+    assert.deepEqual(Object.keys(resolvedSecret).sort(), ['algorithm', 'configured', 'encoding']);
+    assert.equal(JSON.stringify(resolvedSecret).includes(preflightSecret), false);
+
+    const components = createStageDProductionComponents({
+        evidenceRoot: ctx.evidenceRoot,
+        authorityRoot: ctx.authorityRoot,
+        allocationArtifactPath: ctx.allocationArtifactPath,
+        fixtureUniverse: ctx.fixture.universe,
+        env,
+    });
+    assert.equal(Object.isFrozen(components), true);
+    const persisted = components.evidencePersistence.persistFailureDiagnostic({
+        runId: 'production-wiring-regression-run',
+        requestId: 'production-wiring-regression-request',
+        httpStatus: 403,
+        responseReceivedAt: '2026-09-08T08:00:03Z',
+        rawText: `apiKey=${apiKey}; proxy=${proxyUrl}; secret=${preflightSecret}`,
+    });
+    const diagnostic = fs.readFileSync(path.join(ctx.evidenceRoot, persisted.failure_diagnostic_evidence_reference), 'utf8');
+    for (const secret of [apiKey, 'test-password', preflightSecret]) assert.equal(diagnostic.includes(secret), false);
+    assert.match(diagnostic, /\[REDACTED\]/);
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
+
+    for (const [name, value, code] of [
+        ['missing', undefined, PREFLIGHT_ATTESTATION_SECRET_MISSING],
+        ['malformed', 'not canonical base64!', PREFLIGHT_ATTESTATION_SECRET_INVALID],
+        ['short', Buffer.from('short', 'utf8').toString('base64'), PREFLIGHT_ATTESTATION_SECRET_INVALID],
+    ]) {
+        const invalidEnv = { ...env };
+        if (value === undefined) delete invalidEnv[STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR];
+        else invalidEnv[STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR] = value;
+        assert.throws(
+            () => createStageDProductionComponents({
+                evidenceRoot: ctx.evidenceRoot,
+                authorityRoot: ctx.authorityRoot,
+                allocationArtifactPath: ctx.allocationArtifactPath,
+                fixtureUniverse: ctx.fixture.universe,
+                env: invalidEnv,
+            }),
+            error => error.code === code,
+            `${name} production configuration must fail closed`,
+        );
+    }
 });
 
 test('the proxy preflight is a mandatory binder component and cannot be omitted', async t => {
