@@ -669,6 +669,78 @@ test('HTTP failure and transport timeout are consumed and never retried', async 
     assert.equal(timeoutRequest.quota_units_charged_or_assumed, 1);
 });
 
+test('HTTP 403 retains a bounded, redacted failure diagnostic without creating market RAW or a transaction', async t => {
+    const ctx = liveAuthoritySetup(t);
+    const apiKey = 'test-api-key-that-must-not-persist';
+    const proxyCredential = 'test-proxy-credential-that-must-not-persist';
+    const secret = 'test-hmac-secret-that-must-not-persist';
+    const components = liveComponents(ctx, {
+        response: {
+            http_status: 403,
+            response_received_at: '2026-09-08T08:00:03Z',
+            raw_text: JSON.stringify({ code: 'FORBIDDEN', message: `apiKey=${apiKey}; Authorization: Bearer ${secret}; https://${proxyCredential}@proxy.invalid`, cookie: 'session=untracked-cookie-secret', access_token: 'untracked-token-secret' }),
+            failure_diagnostic_headers: {
+                'content-type': 'application/json', 'x-request-id': `safe-request-id-${apiKey}`, authorization: `Bearer ${secret}`, 'set-cookie': `sid=${secret}`,
+            },
+            transport_provenance: { canonical_provider_host: 'api.the-odds-api.com', tls_validation: 'REJECT_UNAUTHORIZED' },
+        },
+    });
+    components.evidencePersistence = createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot, redactionValues: [apiKey, proxyCredential, secret] });
+    const result = await executeLive(ctx, { components, runId: 'http-403-run', requestId: 'http-403-request' });
+    assert.equal(result.status, 'HTTP_FAILURE_AFTER_TRANSMISSION');
+    assert.match(result.failure_diagnostic_evidence_reference, /^failure-diagnostics\//);
+    const diagnosticPath = path.join(ctx.evidenceRoot, result.failure_diagnostic_evidence_reference);
+    const diagnosticText = fs.readFileSync(diagnosticPath, 'utf8');
+    assert.equal(fs.statSync(diagnosticPath).mode & 0o222, 0);
+    for (const forbidden of [apiKey, proxyCredential, secret, 'untracked-cookie-secret', 'untracked-token-secret', 'authorization', 'set-cookie']) assert.equal(diagnosticText.toLowerCase().includes(forbidden.toLowerCase()), false);
+    const diagnostic = JSON.parse(diagnosticText);
+    assert.equal(diagnostic.http_status, 403);
+    assert.deepEqual(diagnostic.safe_headers, { 'content-type': 'application/json', 'x-request-id': 'safe-request-id-[REDACTED]' });
+    assert.equal(diagnostic.payload.error_code, 'FORBIDDEN');
+    assert.deepEqual(JSON.parse(diagnostic.payload.text), { code: 'FORBIDDEN', message: 'apiKey=[REDACTED]; [REDACTED_HEADER]; https://[REDACTED]@proxy.invalid' });
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0].terminal_state, 'HTTP_FAILURE_AFTER_TRANSMISSION');
+    assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')), []);
+    assert.equal(openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath }).head_transaction_id, ctx.authoritySnapshot.head_transaction_id);
+});
+
+test('non-2xx diagnostic is bounded and a diagnostic write failure leaves durable consumed HTTP failure', async t => {
+    const bounded = liveAuthoritySetup(t);
+    const boundedResult = await executeLive(bounded, {
+        runId: 'http-429-run', requestId: 'http-429-request',
+        response: { http_status: 429, response_received_at: '2026-09-08T08:00:03Z', raw_text: 'x'.repeat(5000), failure_diagnostic_headers: { 'x-requests-used': '1', 'x-requests-remaining': '19', 'x-requests-last': '1', 'x-request-id': '界'.repeat(1000) } },
+    });
+    const boundedDiagnostic = JSON.parse(fs.readFileSync(path.join(bounded.evidenceRoot, boundedResult.failure_diagnostic_evidence_reference), 'utf8'));
+    assert.equal(boundedDiagnostic.payload.truncated, true);
+    assert.equal(Buffer.byteLength(boundedDiagnostic.payload.text), 4096);
+    assert.deepEqual(Object.fromEntries(Object.entries(boundedDiagnostic.safe_headers).filter(([key]) => key !== 'x-request-id')), { 'x-requests-last': '1', 'x-requests-remaining': '19', 'x-requests-used': '1' });
+    assert.equal(Buffer.byteLength(boundedDiagnostic.safe_headers['x-request-id']) <= 1024, true);
+    assert.equal(boundedDiagnostic.safe_headers['x-request-id'].endsWith('[TRUNCATED]'), true);
+
+    const failed = liveAuthoritySetup(t);
+    const components = liveComponents(failed, { response: { http_status: 503, response_received_at: '2026-09-08T08:00:03Z', raw_text: 'gateway failure' } });
+    components.evidencePersistence = createStageDEvidencePersistence({ evidenceRoot: failed.evidenceRoot, testHooks: { fault: 'FAILURE_DIAGNOSTIC_ROOT_SWAP' } });
+    await assert.rejects(
+        executeLive(failed, { components, runId: 'diagnostic-write-failure-run', requestId: 'diagnostic-write-failure-request' }),
+        error => error.code === 'FAILURE_DIAGNOSTIC_PERSISTENCE_FAILED'
+    );
+    const request = readRequestLedger({ ledgerRoot: failed.ledgerRoot }).requests[0];
+    assert.equal(request.terminal_state, 'HTTP_FAILURE_AFTER_TRANSMISSION');
+    assert.equal(request.quota_units_charged_or_assumed, 1);
+});
+
+test('every governed non-2xx status retains a terminal diagnostic without retrying', async t => {
+    for (const status of [400, 401, 404, 500, 502, 503]) {
+        const ctx = liveAuthoritySetup(t);
+        const result = await executeLive(ctx, {
+            runId: `http-${status}-run`, requestId: `http-${status}-request`,
+            response: { http_status: status, response_received_at: '2026-09-08T08:00:03Z', raw_text: Buffer.from([0xff, 0x00, 0x61]).toString('utf8') },
+        });
+        assert.equal(result.status, 'HTTP_FAILURE_AFTER_TRANSMISSION');
+        assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0].terminal_state, 'HTTP_FAILURE_AFTER_TRANSMISSION');
+        assert.equal(fs.existsSync(path.join(ctx.evidenceRoot, result.failure_diagnostic_evidence_reference)), true);
+    }
+});
+
 test('RAW and receipt persistence failures retain consumed usage and do not retry', async t => {
     const rawFailure = liveAuthoritySetup(t);
     const originalEvidenceRoot = rawFailure.evidenceRoot;

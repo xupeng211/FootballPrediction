@@ -1,0 +1,29 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_POST_BOUNDARY_NON_2XX_DIAGNOSTIC_RETENTION_AND_NEXT_GATE3_CANDIDATE",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md", "docs/PROJECT_STATUS.md", "docs/CAPABILITY_INDEX.md", "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/STAGE_D_POST_BOUNDARY_NON_2XX_DIAGNOSTIC_RETENTION_AND_NEXT_GATE3_CANDIDATE.json",
+    "src/infrastructure/market_evidence/stageDOperations.js", "tests/unit/market_evidence/stage_d_operations.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "README.md", "config/stage_d_quota_budget.json", "package.json", "package-lock.json"],
+  "excluded_prefixes": [".github/", "config/", "data/", "docker/", "deploy/", "schemas/"],
+  "excluded_tokens": ["scheduler", "stage_d_cycle", "bookmaker", "oddsportal", "training", "prediction", "backtest", "value-engine", "proxy_pools"],
+  "protected_invariants": [
+    "HISTORICAL_GATE3_REQUEST_IMMUTABLE: the consumed HTTP 403 request, candidate, authorization, run id and request id are never modified, reused, or reclassified",
+    "NON_2XX_IS_CONSUMED_AND_TERMINAL: every non-2xx remains HTTP_FAILURE_AFTER_TRANSMISSION with no retry, authorization resurrection, RAW publication, or canonical transaction",
+    "FAILURE_DIAGNOSTICS_ARE_PROSPECTIVE_ONLY: separate immutable repository-external evidence is bound to a future run/request and is not market RAW or a transaction",
+    "SECRET_SAFE_DIAGNOSTICS: allowlisted response headers and bounded payloads are redacted before persistence; credentials, authorization values, cookies, proxy credentials and preflight secrets never enter artifacts or logs",
+    "NO_PROVIDER_NETWORK_ACTIVITY: all validation uses fake/local transports and creates zero provider requests or provider DNS lookups",
+    "MERGE_AUTHORIZED_BY_OWNER_ON_EXACT_GREEN_HEAD: one squash merge is authorized only after CRITICAL dual review, exact-head CI, merge readiness, and post-merge Production Gate"
+  ],
+  "forbidden_side_effects": [
+    "contacting or resolving The Odds API, creating a final authorization, consuming another authorization, or making a second provider request",
+    "editing historical ledger entries or runtime evidence, reusing the spent candidate/authorization/run/request identifiers, or starting Stage D/scheduler/continuous operations",
+    "storing or logging provider credentials, proxy credentials, HMAC secrets, authorization values, or secret-bearing response data",
+    "modifying bookmaker registry semantics, PR #1914, reviewer architecture, proxy pools, training, prediction, backtest, or value betting"
+  ]
+}

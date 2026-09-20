@@ -55,6 +55,12 @@ candidate `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549` 已
 `PREPARED_NOT_AUTHORIZED`。这不是 Gate 3 approval、request intent、provider request 或
 Stage D start；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
 
+第一条单次 Gate 3 live request 已于 2026-09-20 终态为 `HTTP_FAILURE_AFTER_TRANSMISSION`
+（HTTP 403），并在 sealed ledger 中计为一条 consumed request；它无 retry、无 RAW、无
+receipt、无 transaction，run lock 已释放。历史请求的 response headers/body 未被旧代码保留，
+所以 issuer/cause 仍为 `UNKNOWN`。未来版本的非 2xx 诊断能力是前瞻性的独立 failure
+diagnostic，不是 canonical market RAW，不能重写这条历史事实，也不改变 Gate 3 授权状态。
+
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
 immutable hash-chained prospective ledger、唯一的
 `scripts/ops/stage_d_controlled_initialization.js` single-cycle binder 和 quota governance 已在

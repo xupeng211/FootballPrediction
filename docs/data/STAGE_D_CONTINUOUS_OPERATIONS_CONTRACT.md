@@ -134,6 +134,17 @@ a new budget decision and a new run admission. Duplicate request IDs and any
 terminal-state rewrite are rejected. Usage is never decremented; network
 ambiguity after the durable transmission boundary remains consumed.
 
+For a future non-2xx response, the adapter first makes the consumed
+`HTTP_FAILURE_AFTER_TRANSMISSION` ledger state durable, then writes a separate,
+immutable `footballprediction-stage-d-failure-diagnostic/v1` artifact under the
+runtime evidence root's `failure-diagnostics/` directory. It is keyed by the
+request id and contains only the HTTP status, response timestamp, strict,
+individually bounded and redacted allowlisted headers, optional safe transport provenance, and a redacted UTF-8/JSON
+payload capped at 4096 bytes. It is not provider market RAW, is never parsed as
+market evidence, and never creates a transaction. A diagnostic persistence failure
+does not roll back consumption or permit a retry; the durable terminal ledger fact
+remains authoritative and the caller fails closed.
+
 ## Quota and request-budget contract
 
 Provider transmission requires an exact
