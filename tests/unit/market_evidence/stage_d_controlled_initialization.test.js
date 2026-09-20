@@ -741,7 +741,7 @@ test('the real production component assembly keeps the resolved HMAC secret opaq
         THE_ODDS_API_KEY: apiKey,
         THE_ODDS_API_PROXY_URL: proxyUrl,
         [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: 'tcp://127.0.0.1:9',
-        [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: preflightSecret,
+        [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: ` ${preflightSecret} `,
     };
     const resolvedSecret = resolveStageDPreflightSecret(env);
     assert.deepEqual(Object.keys(resolvedSecret).sort(), ['algorithm', 'configured', 'encoding']);
@@ -760,10 +760,10 @@ test('the real production component assembly keeps the resolved HMAC secret opaq
         requestId: 'production-wiring-regression-request',
         httpStatus: 403,
         responseReceivedAt: '2026-09-08T08:00:03Z',
-        rawText: `apiKey=${apiKey}; proxy=${proxyUrl}; secret=${preflightSecret}`,
+        rawText: `apiKey=${apiKey}; proxy=${proxyUrl}; secret=${preflightSecret}; configured=${env[STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]}`,
     });
     const diagnostic = fs.readFileSync(path.join(ctx.evidenceRoot, persisted.failure_diagnostic_evidence_reference), 'utf8');
-    for (const secret of [apiKey, 'test-password', preflightSecret]) assert.equal(diagnostic.includes(secret), false);
+    for (const secret of [apiKey, 'test-password', preflightSecret, env[STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]]) assert.equal(diagnostic.includes(secret), false);
     assert.match(diagnostic, /\[REDACTED\]/);
     assert.equal(consumptionMarkers(ctx).length, 0);
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);

@@ -2372,10 +2372,12 @@ function createStageDProductionComponents({ evidenceRoot, authorityRoot, allocat
     const proxyEndpoint = resolveStageDStableProxyEndpoint(env);
     const proxyPreflightTarget = resolveStageDPreflightTarget(env, { proxyEndpoint });
     const proxyPreflightSecret = resolveStageDPreflightSecret(env);
+    const configuredPreflightSecret = env.STAGE_D_PROXY_PREFLIGHT_SHARED_SECRET;
     const diagnosticRedactionValues = [
         env.THE_ODDS_API_KEY,
         env.THE_ODDS_API_PROXY_URL,
-        env.STAGE_D_PROXY_PREFLIGHT_SHARED_SECRET,
+        configuredPreflightSecret,
+        typeof configuredPreflightSecret === 'string' ? configuredPreflightSecret.trim() : null,
     ].filter(value => typeof value === 'string');
     return Object.freeze({
         transport: createStageDOddsApiTransport({ apiKey: env.THE_ODDS_API_KEY, endpoint: proxyEndpoint }),
