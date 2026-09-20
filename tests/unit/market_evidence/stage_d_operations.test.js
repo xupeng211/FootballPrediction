@@ -715,10 +715,12 @@ test('transport diagnostics redact direct and nested secret reflections and igno
     const ctx = liveAuthoritySetup(t);
     const apiKey = 'transport-diagnostic-api-key-must-not-persist';
     const proxyUrl = 'http://proxy-user:proxy-password@proxy.invalid:3128';
+    const queryCredentialUrl = 'http://proxy.example:3128/path?api_key=transport-query-secret&token=transport-token';
     const preflightSecret = 'transport-diagnostic-preflight-secret-must-not-persist';
     const error = new Error([
         `ECONNRESET apiKey=${apiKey}`,
         `proxy=${proxyUrl}`,
+        `query=${queryCredentialUrl}`,
         `secret=${preflightSecret}`,
         `Authorization: Bearer ${preflightSecret}`,
     ].join('; '));
@@ -746,7 +748,7 @@ test('transport diagnostics redact direct and nested secret reflections and igno
     const diagnostic = JSON.parse(diagnosticText);
     assert.equal(diagnostic.error_code, null);
     assert.equal(diagnostic.syscall, null);
-    assert.match(diagnostic.safe_error_message, /\[REDACTED\]/);
+    assert.equal(diagnostic.safe_error_message, 'transport failure');
     assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'hostname'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'address'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(diagnostic, 'port'), false);
@@ -764,9 +766,10 @@ test('oversized UTF-8 transport errors remain bounded and diagnostic persistence
     );
     const boundedText = fs.readFileSync(path.join(bounded.evidenceRoot, 'failure-diagnostics', 'transport-oversized-request.json'), 'utf8');
     assert.equal(Buffer.byteLength(boundedText, 'utf8') <= 4096, true);
+    assert.equal(boundedText.includes('界'), false);
     const boundedDiagnostic = JSON.parse(boundedText);
     assert.equal(Buffer.byteLength(boundedDiagnostic.safe_error_message, 'utf8') <= 2048, true);
-    assert.equal(boundedDiagnostic.safe_error_message.endsWith('[TRUNCATED]'), true);
+    assert.equal(boundedDiagnostic.safe_error_message, 'transport error ECONNRESET');
 
     const failed = liveAuthoritySetup(t);
     const movedEvidenceRoot = `${failed.evidenceRoot}.moved`;

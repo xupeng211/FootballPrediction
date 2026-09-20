@@ -1823,7 +1823,6 @@ const FAILURE_DIAGNOSTIC_HEADER_MAX_BYTES = 1024;
 const TRANSPORT_FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-transport-failure-diagnostic/v1';
 const TRANSPORT_FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
 const TRANSPORT_FAILURE_DIAGNOSTIC_ERROR_CODE_MAX_BYTES = 128;
-const TRANSPORT_FAILURE_DIAGNOSTIC_MESSAGE_MAX_BYTES = 2048;
 const TRANSPORT_FAILURE_DIAGNOSTIC_SYSCALL_MAX_BYTES = 64;
 const TRANSPORT_FAILURE_PHASE = 'UNKNOWN_POST_BOUNDARY';
 const SAFE_TRANSPORT_ERROR_CODES = new Set([
@@ -2125,11 +2124,14 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
                     if (!['none', 'provider'].includes(transportProvenance.network_capability)) fail('FAILURE_DIAGNOSTIC_INVALID', 'transport failure diagnostic network capability is invalid');
                     if (transportProvenance.proxy_contract !== null && transportProvenance.proxy_contract !== STAGE_D_STABLE_PROXY_CONTRACT) fail('FAILURE_DIAGNOSTIC_INVALID', 'transport failure diagnostic proxy contract is invalid');
                 }
-                const safeErrorMessage = sanitizeTransportDiagnosticText(
-                    readOwnDataProperty(error, 'message'),
-                    TRANSPORT_FAILURE_DIAGNOSTIC_MESSAGE_MAX_BYTES,
-                    redactionValues,
-                ) || 'transport failure';
+                const safeErrorCode = safeTransportDiagnosticErrorCode(error, redactionValues);
+                // Error.message is an untrusted reflection surface: even after
+                // known-value redaction it may retain an endpoint, query
+                // credential, or an unknown secret.  Keep the field useful but
+                // derive it only from the closed error-code allowlist.
+                const safeErrorMessage = safeErrorCode
+                    ? `transport error ${safeErrorCode}`
+                    : 'transport failure';
                 const diagnostic = {
                     schema_version: TRANSPORT_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
                     diagnostic_kind: 'TRANSPORT_FAILURE',
@@ -2140,7 +2142,7 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
                     region: CONFIGURED_REGIONS[0],
                     terminal_state: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION',
                     occurred_at: occurredAt,
-                    error_code: safeTransportDiagnosticErrorCode(error, redactionValues),
+                    error_code: safeErrorCode,
                     safe_error_message: safeErrorMessage,
                     syscall: safeTransportDiagnosticSyscall(error, redactionValues),
                     failure_phase: TRANSPORT_FAILURE_PHASE,
