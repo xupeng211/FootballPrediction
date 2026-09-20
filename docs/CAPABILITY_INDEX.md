@@ -70,6 +70,12 @@
   `CREDENTIAL_ROTATION_COMPLETED=YES`。该批准只是 policy/治理决定：不 provisioning、不验证
   backup target、不执行 recovery drill、不改变任何技术能力，也不授权 Gate 3、live request 或
   Stage D 启动；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。
+- **Stage D production transport preflight**：`IMPLEMENTED / ATTESTED / BLOCKED`。一个
+  dedicated stable HTTP CONNECT proxy 和独立 project-controlled TCP HMAC target 已在
+  repository 外的部署环境绑定；canonical preflight 的 strict 2xx、fresh HMAC attestation
+  与 target reachability 已验证。该能力不触及 provider、也不证明 provider reachability；
+  live binder 仍要求一份独立 Owner/Chief Engineer exact-hash authorization。fresh candidate
+  已准备但状态为 `PREPARED_NOT_AUTHORIZED`，不是可执行 authorization。
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。

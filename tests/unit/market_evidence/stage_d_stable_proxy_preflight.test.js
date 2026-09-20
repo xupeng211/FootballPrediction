@@ -871,6 +871,105 @@ test('an absent endpoint fails closed while the rotating harvesting pool remains
     return assert.rejects(runner.run(), error => error.code === PROXY_CONFIGURATION_MISSING);
 });
 
+// The generic dev proxy variables are real, are set to a real workstation endpoint by
+// docker-compose.dev.yml, and must never be able to satisfy the Stage D provider proxy.
+// These three fixtures are the composition-layer fallbacks, expressed as environment:
+// the generic family, the host-gateway family, and the port family.  Each one is
+// witnessed as actually present before the assertion runs, so a fixture that silently
+// stopped being populated could not make the test pass vacuously.
+const GENERIC_PROXY_AMBIENT_ENV = Object.freeze({
+    HTTP_PROXY: 'http://host.docker.internal:7897',
+    HTTPS_PROXY: 'http://host.docker.internal:7897',
+    ALL_PROXY: 'socks5://host.docker.internal:7897',
+    http_proxy: 'http://host.docker.internal:7897',
+    https_proxy: 'http://host.docker.internal:7897',
+    all_proxy: 'socks5://host.docker.internal:7897',
+});
+
+const HOST_GATEWAY_AMBIENT_ENV = Object.freeze({
+    PROXY_LOOPBACK_GATEWAY: 'host.docker.internal',
+    DEV_PROXY_HOST: 'host.docker.internal',
+    WSL2_PROXY_HOST: 'host.docker.internal',
+    DEV_HOST_PROXY_PORT: '7897',
+    DEV_PROXY_PORT: '7897',
+    DEV_PROXY_PORT_START: '7897',
+    DEV_PROXY_PORT_END: '7897',
+    DEV_PROXY_PORTS: '7897',
+    PROXY_HOST: 'host.docker.internal',
+    PROXY_PORT: '7897',
+});
+
+test('an ambient generic proxy cannot satisfy the Stage D provider proxy', () => {
+    // Witness the precondition: the generic family really is populated.
+    for (const [key, value] of Object.entries(GENERIC_PROXY_AMBIENT_ENV)) {
+        assert.equal(GENERIC_PROXY_AMBIENT_ENV[key], value);
+        assert.notEqual(value, '', `${key} fixture must be non-empty to be a real fallback`);
+    }
+    assert.throws(
+        () => resolveStageDStableProxyEndpoint({ ...GENERIC_PROXY_AMBIENT_ENV }),
+        error => error.code === PROXY_CONFIGURATION_MISSING && error.message.includes(STAGE_D_PROXY_ENDPOINT_ENV_VAR),
+    );
+});
+
+test('the dev host-gateway and port family cannot satisfy the Stage D provider proxy', () => {
+    for (const [key, value] of Object.entries(HOST_GATEWAY_AMBIENT_ENV)) {
+        assert.notEqual(value, '', `${key} fixture must be non-empty to be a real fallback`);
+    }
+    assert.throws(
+        () => resolveStageDStableProxyEndpoint({ ...HOST_GATEWAY_AMBIENT_ENV }),
+        error => error.code === PROXY_CONFIGURATION_MISSING,
+    );
+    // Both fallback families together still cannot name an endpoint.
+    assert.throws(
+        () => resolveStageDStableProxyEndpoint({ ...HOST_GATEWAY_AMBIENT_ENV, ...GENERIC_PROXY_AMBIENT_ENV }),
+        error => error.code === PROXY_CONFIGURATION_MISSING,
+    );
+});
+
+test('an explicitly configured endpoint is used exactly, not merged with any fallback', () => {
+    const configured = 'http://stage-d-proxy.internal:3128';
+    for (const ambient of [{}, GENERIC_PROXY_AMBIENT_ENV, HOST_GATEWAY_AMBIENT_ENV, { ...GENERIC_PROXY_AMBIENT_ENV, ...HOST_GATEWAY_AMBIENT_ENV }]) {
+        const endpoint = resolveStageDStableProxyEndpoint({ ...ambient, [STAGE_D_PROXY_ENDPOINT_ENV_VAR]: configured });
+        assert.equal(endpoint.host, 'stage-d-proxy.internal');
+        assert.equal(endpoint.dial_host, 'stage-d-proxy.internal');
+        assert.equal(endpoint.port, 3128);
+        assert.equal(endpoint.scheme, 'http');
+        assert.equal(buildStageDProxyAgentUrl(endpoint), configured);
+        // None of the ambient values may leak into the governed endpoint.
+        for (const leaked of ['host.docker.internal', '7897', 'socks5']) {
+            assert.ok(!buildStageDProxyAgentUrl(endpoint).includes(leaked), `ambient value leaked: ${leaked}`);
+        }
+    }
+});
+
+test('an absent endpoint opens no socket at all, so there is no direct or fallback dial', async t => {
+    // A live listener stands in for "some proxy that a fallback could have reached".
+    // If resolution fell back to anything -- the harvesting pool, the workstation proxy,
+    // a direct connection -- this listener would observe a connection.
+    let connections = 0;
+    const listener = net.createServer(socket => {
+        connections += 1;
+        socket.destroy();
+    });
+    await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
+    t.after(() => new Promise(resolve => listener.close(resolve)));
+    const port = listener.address().port;
+    assert.ok(port > 0, 'the witness listener must be bound before the assertion');
+
+    const env = {
+        ...GENERIC_PROXY_AMBIENT_ENV,
+        ...HOST_GATEWAY_AMBIENT_ENV,
+        [STAGE_D_PROXY_PREFLIGHT_TARGET_ENV_VAR]: `tcp://127.0.0.1:${port}`,
+        [STAGE_D_PROXY_PREFLIGHT_SECRET_ENV_VAR]: testSecret(),
+    };
+    const runner = createStageDHttpConnectProxyPreflight({ env });
+    await assert.rejects(runner.run(), error => error.code === PROXY_CONFIGURATION_MISSING);
+
+    // Nothing was dialled, so the listener stayed silent.
+    await new Promise(resolve => setTimeout(resolve, 50));
+    assert.equal(connections, 0, 'a missing endpoint must not dial anything, including a fallback');
+});
+
 test('the SOCKS scheme of the harvesting pool is rejected for the Stage D provider transport', () => {
     for (const url of ['socks5://127.0.0.1:10001', 'socks5h://127.0.0.1:10001', 'socks4://127.0.0.1:10001']) {
         assert.throws(

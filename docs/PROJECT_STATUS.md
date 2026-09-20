@@ -46,6 +46,15 @@ readiness 结论：其中"backup"这一半的不完整性已随 `BLOCKER_3=CLOSE
 Gate 3 状态为 `GATE_3=NOT_AUTHORIZED`，下一步是 Controller 的 preauthorization review，
 而不是执行。
 
+2026-09-20 的 Stage D production transport readiness 已完成一次新鲜复核：项目控制的
+非工作站主机提供专用稳定 HTTP CONNECT proxy，独立 TCP HMAC target 只在该 proxy 的
+网络坐标中可达；repository 外的 owner-only binding 供应 endpoint、target 和 dedicated
+secret。canonical strict-2xx/HMAC preflight 通过，且不解析、不联系 The Odds API。current
+authority、sealed zero-entry ledger、quota configuration 与 run-lock 均重新读取；fresh
+candidate `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549` 已准备但
+`PREPARED_NOT_AUTHORIZED`。这不是 Gate 3 approval、request intent、provider request 或
+Stage D start；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
+
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
 immutable hash-chained prospective ledger、唯一的
 `scripts/ops/stage_d_controlled_initialization.js` single-cycle binder 和 quota governance 已在

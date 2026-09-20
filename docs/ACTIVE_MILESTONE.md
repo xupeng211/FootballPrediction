@@ -33,6 +33,8 @@ CANONICAL_MARKET_EVIDENCE_SPINE=IMPLEMENTED / PILOT
 CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
 CONTINUOUS_CAPTURE_READY=NO
 STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__OPERATIONALLY_DISABLED
+STAGE_D_PRODUCTION_PROXY_PREFLIGHT=PROVISIONED_AND_ATTESTED__NO_PROVIDER_CONTACT
+STAGE_D_GATE3_CANDIDATE=PREPARED_NOT_AUTHORIZED
 STAGE_D_SINGLE_CYCLE_BINDER=IMPLEMENTED_ON_REMEDIATION_BRANCH__NOT_AUTHORIZED
 STAGE_D_BINDER_AUTHORIZATION=NO
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
@@ -42,7 +44,7 @@ STAGE_D_OWNER_DATA_PROTECTION_POLICY=APPROVED_RETENTION_LONG_TERM__RPO_24H__RTO_
 STAGE_D_PROVIDER_CREDENTIAL_ROTATION=COMPLETED_OLD_CREDENTIAL_FORBIDDEN_FOR_LIVE
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
-STAGE_D_READINESS_VERDICT=INCOMPLETE_BACKUP_ONLY__NOT_RE_ADJUDICATED
+STAGE_D_READINESS_VERDICT=PRE_GATE_3_PREREQUISITES_READJUDICATED__CANDIDATE_PREPARED_NOT_AUTHORIZED
 STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
 STAGE_D_STARTED=NO
@@ -82,9 +84,18 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 `OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
 不是 blocker。）
 
-NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`，下一步是 Controller 的 preauthorization review，而不是执行；quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；已有一个 fresh、exact-main-bound、`PREPARED_NOT_AUTHORIZED` candidate，下一步只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
+
+2026-09-20 的受控 Stage D 网络 provisioning 已在一个现有、项目控制的非工作站主机上
+建立单一稳定 HTTP CONNECT listener 与独立 loopback TCP HMAC attestation listener；三项
+deployment input 位于 repository 外的 owner-only binding，且 source tree 不含 endpoint secret。
+canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC verification 通过。
+该证明没有解析或联系 The Odds API，不能证明 provider reachability，也没有消费 authorization、
+创建 request intent、跨过 transmission boundary 或消耗 quota。fresh Gate 3 candidate 的 SHA-256
+为 `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549`；它明确
+`PREPARED_NOT_AUTHORIZED`，不等同于 authorization artifact，`GATE_3=NOT_AUTHORIZED` 不变。
 
 Stage C canonical market-evidence pilot 已通过独立 review、正常合并及 main Production Gate
 闭环（PR #1890）；非 head 逻辑批次 A → B → retry-A 修复也已闭环（PR #1893）。
