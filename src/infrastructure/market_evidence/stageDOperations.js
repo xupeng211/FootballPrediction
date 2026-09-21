@@ -1732,7 +1732,7 @@ function assertBudgetLedgerValid(ledger, config) {
         ) {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a post-response failure has no reconciled provider quota evidence');
         }
-        if (request.error_classification?.startsWith('PROVIDER_QUOTA_')) {
+        if (request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED') {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
         }
     }
@@ -1850,6 +1850,11 @@ const POST_RESPONSE_FAILURE_CODES = new Map([
     ['RAW_PERSISTENCE_FAILED', 'successful response RAW evidence persistence failed'],
     ['PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider quota reconciliation failed after response capture'],
     ['RECEIPT_PERSISTENCE_FAILED', 'successful response receipt persistence failed'],
+]);
+const POST_RESPONSE_FAILURE_CODES_BY_PHASE = new Map([
+    ['RAW_PERSISTENCE', 'RAW_PERSISTENCE_FAILED'],
+    ['QUOTA_RECONCILIATION', 'PROVIDER_QUOTA_RECONCILIATION_FAILED'],
+    ['RECEIPT_PERSISTENCE', 'RECEIPT_PERSISTENCE_FAILED'],
 ]);
 const SAFE_TRANSPORT_ERROR_CODES = new Set([
     'EADDRNOTAVAIL', 'EAI_AGAIN', 'EAI_FAIL', 'EAI_NODATA', 'EAI_NONAME', 'ECONNABORTED',
@@ -2195,6 +2200,7 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
                 assertUtc(responseReceivedAt, 'post-response diagnostic responseReceivedAt');
                 if (!POST_RESPONSE_FAILURE_PHASES.has(failurePhase)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic failure phase is invalid');
                 if (!POST_RESPONSE_FAILURE_CODES.has(errorCode)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic error code is invalid');
+                if (POST_RESPONSE_FAILURE_CODES_BY_PHASE.get(failurePhase) !== errorCode) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic failure phase and error code do not correspond');
                 if (rawSha256 !== null && !/^[a-f0-9]{64}$/.test(rawSha256)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw SHA-256 is invalid');
                 if (rawEvidenceReference !== null && !/^raw\/[a-f0-9]{64}\.json$/.test(rawEvidenceReference)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw evidence reference is invalid');
                 if ((rawSha256 === null) !== (rawEvidenceReference === null)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw evidence binding is incomplete');

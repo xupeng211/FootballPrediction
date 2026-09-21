@@ -298,6 +298,22 @@ test('2xx quota reconciliation failure preserves RAW and bounded post-response e
     );
 });
 
+test('post-response diagnostic enforces failure phase and error-code pairing', t => {
+    const ctx = liveAuthoritySetup(t);
+    const persistence = createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot });
+    assert.throws(
+        () => persistence.persistPostResponseFailureDiagnostic({
+            runId: 'diagnostic-pair-run',
+            requestId: 'diagnostic-pair-request',
+            httpStatus: 200,
+            responseReceivedAt: '2026-09-08T08:00:03Z',
+            failurePhase: 'RAW_PERSISTENCE',
+            errorCode: 'RECEIPT_PERSISTENCE_FAILED',
+        }),
+        error => error.code === 'POST_RESPONSE_DIAGNOSTIC_INVALID',
+    );
+});
+
 test('missing, malformed and inconsistent 2xx quota headers are distinct post-response failures with no retry', async t => {
     const cases = [
         ['missing', {}],
