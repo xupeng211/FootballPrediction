@@ -500,20 +500,43 @@ function assertGitObjectSha(value, label) {
 }
 
 function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../../..') } = {}) {
-    const resolveRevision = (revision, label) => {
+    const testOnlySourceBinding = process.env.NODE_ENV === 'test';
+    const resolvedRepoRoot = path.resolve(repoRoot);
+    const runGit = (args, label) => {
         try {
-            return execFileSync('git', ['-C', repoRoot, 'rev-parse', '--verify', '--end-of-options', revision], {
+            return execFileSync('git', ['-C', resolvedRepoRoot, ...args], {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
             }).trim();
         } catch {
-            fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', `unable to resolve ${label} from the trusted runtime Git checkout`);
+            fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', `unable to verify ${label} from the trusted runtime Git checkout`);
         }
     };
+    const resolveRevision = (revision, label) => runGit(['rev-parse', '--verify', '--end-of-options', revision], label);
+    if (!testOnlySourceBinding) {
+        let requestedRoot;
+        let gitRoot;
+        try {
+            requestedRoot = fs.realpathSync.native(resolvedRepoRoot);
+            gitRoot = fs.realpathSync.native(runGit(['rev-parse', '--show-toplevel'], 'runtime Git root'));
+        } catch {
+            fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted runtime Git checkout root is unavailable');
+        }
+        if (requestedRoot !== gitRoot) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'runtime source path is not the Git worktree being verified');
+        const status = runGit(['status', '--porcelain=v1', '--untracked-files=all'], 'runtime Git cleanliness');
+        if (status !== '') fail('QUOTA_ADJUDICATION_SOURCE_DIRTY', 'trusted runtime Git checkout has index or worktree changes');
+    }
     const sourceMainSha = resolveRevision('HEAD^{commit}', 'runtime commit');
     const sourceMainTreeSha = resolveRevision('HEAD^{tree}', 'runtime tree');
     assertGitObjectSha(sourceMainSha, 'runtime source main SHA');
     assertGitObjectSha(sourceMainTreeSha, 'runtime source main tree SHA');
+    if (!testOnlySourceBinding) {
+        const trustedMainSha = resolveRevision('refs/remotes/origin/main^{commit}', 'trusted origin/main commit');
+        const trustedMainTreeSha = resolveRevision('refs/remotes/origin/main^{tree}', 'trusted origin/main tree');
+        if (sourceMainSha !== trustedMainSha || sourceMainTreeSha !== trustedMainTreeSha) {
+            fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'runtime source commit/tree does not exactly match trusted origin/main');
+        }
+    }
     return Object.freeze({ source_main_sha: sourceMainSha, source_main_tree_sha: sourceMainTreeSha });
 }
 
