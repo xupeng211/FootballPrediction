@@ -49,6 +49,9 @@ const TRUSTED_GIT_ENVIRONMENT = Object.freeze({
     LANG: 'C',
     LC_ALL: 'C',
 });
+const TRUSTED_GIT_CONFIG_OVERRIDES = Object.freeze([
+    '-c', 'core.fsmonitor=false',
+]);
 const SUBSCRIPTION_TIER = 'starter_free';
 const QUOTA_EVIDENCE_CLASS = 'OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE';
 const QUOTA_RESET_RULE = 'PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET';
@@ -524,7 +527,12 @@ function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../
     }
     const runGit = (args, label) => {
         try {
-            return execFileSync(TRUSTED_GIT_EXECUTABLE, ['-c', `safe.directory=${trustedGitRoot}`, '-C', resolvedRepoRoot, ...args], {
+            return execFileSync(TRUSTED_GIT_EXECUTABLE, [
+                ...TRUSTED_GIT_CONFIG_OVERRIDES,
+                '-c', `safe.directory=${trustedGitRoot}`,
+                '-C', resolvedRepoRoot,
+                ...args,
+            ], {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
                 // Node's coverage runner adds NODE_V8_COVERAGE to a child

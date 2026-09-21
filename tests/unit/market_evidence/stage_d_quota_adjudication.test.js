@@ -3,6 +3,7 @@
 process.env.NODE_ENV = 'test';
 
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -180,6 +181,37 @@ test('runtime source binding ignores a PATH Git shim', t => {
     const resolved = resolveStageDGitSourceBinding();
     assert.equal(resolved.source_main_sha, SOURCE_MAIN_SHA);
     assert.equal(resolved.source_main_tree_sha, SOURCE_MAIN_TREE_SHA);
+    assert.equal(fs.existsSync(markerPath), false);
+});
+
+test('trusted source checks disable checkout-local fsmonitor commands', t => {
+    const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-local-git-config-'));
+    const repoRoot = path.join(sandboxRoot, 'repo');
+    fs.mkdirSync(repoRoot, { mode: 0o700 });
+    const markerPath = path.join(sandboxRoot, 'fsmonitor-invoked');
+    const fsmonitorPath = path.join(sandboxRoot, 'fsmonitor.sh');
+    const originalNodeEnv = process.env.NODE_ENV;
+    t.after(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+        fs.rmSync(sandboxRoot, { recursive: true, force: true });
+    });
+
+    const git = (args) => execFileSync('/usr/bin/git', ['-C', repoRoot, ...args], { encoding: 'utf8' }).trim();
+    git(['init', '-q', '--initial-branch=main']);
+    git(['config', 'user.email', 'stage-d-test@example.invalid']);
+    git(['config', 'user.name', 'Stage D Test']);
+    fs.writeFileSync(path.join(repoRoot, 'fixture.txt'), 'fixture\n', 'utf8');
+    git(['add', 'fixture.txt']);
+    git(['commit', '-q', '-m', 'fixture']);
+    const commitSha = git(['rev-parse', 'HEAD']);
+    git(['update-ref', 'refs/remotes/origin/main', commitSha]);
+    fs.writeFileSync(fsmonitorPath, `#!/bin/sh\nprintf invoked > ${JSON.stringify(markerPath)}\nexit 0\n`, { mode: 0o700 });
+    fs.chmodSync(fsmonitorPath, 0o700);
+    git(['config', 'core.fsmonitor', fsmonitorPath]);
+
+    process.env.NODE_ENV = 'production';
+    const resolved = resolveStageDGitSourceBinding({ repoRoot });
+    assert.equal(resolved.source_main_sha, commitSha);
     assert.equal(fs.existsSync(markerPath), false);
 });
 
