@@ -70,6 +70,7 @@ function loadReplayUniverse({ fixtureRawPath, allocationArtifactPath } = {}) {
 function parseArgs(argv = process.argv.slice(2)) {
     const values = {};
     const allowed = new Set(REQUIRED_FLAGS);
+    allowed.add('--quota-adjudication');
     allowed.add('--help');
     for (let index = 0; index < argv.length; index += 1) {
         const flag = argv[index];
@@ -92,6 +93,7 @@ function helpText() {
         ...REQUIRED_FLAGS.map(flag => `  ${flag} <path>`),
         '',
         'The authorization artifact must be a read-only direct child of the supplied runtime trust root.',
+        'When the ledger contains an unresolved provider-quota divergence, --quota-adjudication is required and must match the authorization hash.',
         'The CLI does not accept run-time authorization tokens, live booleans, retries, or request counts.',
     ].join('\n');
 }
@@ -141,6 +143,7 @@ async function main(argv = process.argv.slice(2)) {
         allocationArtifactPath: args['--allocation-authority'],
         ledgerRoot: args['--ledger-root'],
         quotaConfigPath: args['--quota-config'],
+        ...(args['--quota-adjudication'] ? { quotaAdjudicationPath: args['--quota-adjudication'] } : {}),
         fixtureUniverseRawPath: args['--fixture-universe-raw'],
         evidenceRoot: args['--evidence-root'],
         runLockTrustRoot: args['--run-lock-trust-root'],

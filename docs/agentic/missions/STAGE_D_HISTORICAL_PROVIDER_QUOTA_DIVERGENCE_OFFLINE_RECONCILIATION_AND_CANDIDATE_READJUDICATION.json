@@ -1,0 +1,64 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_HISTORICAL_PROVIDER_QUOTA_DIVERGENCE_OFFLINE_RECONCILIATION_AND_CANDIDATE_READJUDICATION",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_VISION.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/STAGE_D_HISTORICAL_PROVIDER_QUOTA_DIVERGENCE_OFFLINE_RECONCILIATION_AND_CANDIDATE_READJUDICATION.json",
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "scripts/ops/stage_d_cycle.js",
+    "scripts/ops/stage_d_quota_adjudication.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_operations.test.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
+    "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "config/stage_d_quota_budget.json",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "docker/",
+    "deploy/",
+    "schemas/"
+  ],
+  "excluded_tokens": [
+    "provider-contact",
+    "api.the-odds-api.com",
+    "scheduler",
+    "stage_d_cycle --live",
+    "training",
+    "prediction",
+    "backtest",
+    "value-engine",
+    "proxy_pools"
+  ],
+  "protected_invariants": [
+    "HISTORICAL_LEDGER_IMMUTABLE: all four post-epoch consumed requests, including stage_d_gate3_request_8b2c3c72a4bb6728f814da31, remain byte-for-byte preserved and consumed=4/ambiguous=0",
+    "PROVIDER_EFFECT_UNKNOWN: missing historical provider quota/status evidence is never reconstructed, invented, reset or presented as exact",
+    "CONSERVATIVE_ADJUDICATION_ONLY: any admission exception is a separate immutable hash-bound artifact tied to the current epoch, billing period, ledger generation, quota configuration and exactly one unresolved historical request",
+    "FAIL_CLOSED_QUOTA: malformed, stale, conflicting, tampered, writable, symlinked or budget-exceeding adjudication blocks admission and protects the reserve",
+    "ZERO_PROVIDER_CONTACT: all tests and offline adjudication perform zero provider requests, DNS lookups, quota probes or proxy CONNECTs",
+    "NO_LIVE_AUTHORITY: no live authorization, consumption marker, request intent, binder invocation, transmission or scheduler is created",
+    "CRITICAL_EXACT_HEAD_MERGE: source changes may merge only after exact-head Codex and DeepSeek review, required CI and post-merge Production Gate"
+  ],
+  "forbidden_side_effects": [
+    "contacting or resolving The Odds API or any provider endpoint, probing quota, using alternate providers or proxies, or performing live HTTP",
+    "rewriting historical ledger/evidence/candidate/authorization identities, lowering consumed accounting, or silently resetting a billing period",
+    "creating live authorization, consuming authorization, creating request intent, crossing transmission boundary, starting scheduler or continuous Stage D",
+    "printing or persisting credentials, proxy/HMAC secrets, authorization values, cookies, arbitrary headers, Error objects or stack traces",
+    "changing quota configuration, provider infrastructure, review authority, unrelated business/model/data systems, or using a new governance artifact to bypass a failed gate"
+  ]
+}
