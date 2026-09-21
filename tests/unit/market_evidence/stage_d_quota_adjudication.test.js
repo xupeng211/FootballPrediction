@@ -8,6 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
+const { resolveGitSourceBinding } = require('../../../scripts/ops/stage_d_quota_adjudication');
 const {
     initializeRequestAccountingEpoch,
     readRequestLedger,
@@ -20,6 +21,7 @@ const {
     createStageDQuotaAdjudication,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
+    resolveStageDGitSourceBinding,
 } = require('../../../src/infrastructure/market_evidence/stageDOperations');
 
 const AUTHORITY = Object.freeze({
@@ -125,11 +127,31 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
         quotaConfigSha256: binding?.quotaConfigSha256 || canonicalSha(config),
         quotaAdjudication: binding?.artifact || null,
         quotaAdjudicationSha256: binding?.artifactSha256 || null,
+        expectedSourceMainSha: SOURCE_MAIN_SHA,
+        expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
         runId: 'next-offline-run',
         now: NOW,
         ...overrides,
     };
 }
+
+test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', () => {
+    const currentSource = resolveStageDGitSourceBinding();
+    const runtimeSource = resolveGitSourceBinding({
+        sourceMainSha: currentSource.source_main_sha,
+        sourceMainTreeSha: currentSource.source_main_tree_sha,
+    });
+    assert.match(runtimeSource.source_main_sha, /^[a-f0-9]{40}$/);
+    assert.match(runtimeSource.source_main_tree_sha, /^[a-f0-9]{40}$/);
+    assert.throws(
+        () => resolveGitSourceBinding({ sourceMainSha: 'f'.repeat(40), sourceMainTreeSha: runtimeSource.source_main_tree_sha }),
+        error => error.code === 'INVALID_AUTHORIZATION',
+    );
+    assert.throws(
+        () => resolveGitSourceBinding({ sourceMainSha: runtimeSource.source_main_sha, sourceMainTreeSha: 'f'.repeat(40) }),
+        error => error.code === 'INVALID_AUTHORIZATION',
+    );
+});
 
 test('unresolved provider quota divergence remains a hard admission block without adjudication', t => {
     const ctx = setup(t);
@@ -291,6 +313,8 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
         ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
         quotaConfig: config,
         quotaConfigSha256: binding.quotaConfigSha256,
+        expectedSourceMainSha: SOURCE_MAIN_SHA,
+        expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
         now: NOW,
     });
     assert.equal(loaded.sha256, binding.artifactSha256);
@@ -304,6 +328,8 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
         ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
         quotaConfig: config,
         quotaConfigSha256: binding.quotaConfigSha256,
+        expectedSourceMainSha: SOURCE_MAIN_SHA,
+        expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
         now: NOW,
     });
     assert.equal(loadedWithoutCallerHash.sha256, binding.artifactSha256);
@@ -320,6 +346,8 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
             ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
             quotaConfig: config,
             quotaConfigSha256: binding.quotaConfigSha256,
+            expectedSourceMainSha: SOURCE_MAIN_SHA,
+            expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
             now: NOW,
         }),
         error => error.code === 'QUOTA_ADJUDICATION_CONFLICT',
@@ -343,6 +371,8 @@ test('writable and symlink adjudication paths are rejected before admission', t 
             ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
             quotaConfig: config,
             quotaConfigSha256: binding.quotaConfigSha256,
+            expectedSourceMainSha: SOURCE_MAIN_SHA,
+            expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
             now: NOW,
         }),
         error => error.code === 'MUTABLE_EVIDENCE',
@@ -361,6 +391,8 @@ test('writable and symlink adjudication paths are rejected before admission', t 
             ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
             quotaConfig: config,
             quotaConfigSha256: binding.quotaConfigSha256,
+            expectedSourceMainSha: SOURCE_MAIN_SHA,
+            expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
             now: NOW,
         }),
         error => error.code === 'UNSAFE_PATH',

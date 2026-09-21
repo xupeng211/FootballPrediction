@@ -301,6 +301,13 @@ exact 40-character lowercase Git commit and tree object IDs used for the
 runtime. They are not content SHA-256 fields; the quota configuration,
 adjudication bytes and other file-evidence hashes retain their separate
 64-character SHA-256 contracts.
+The offline adjudication entrypoint resolves `HEAD^{commit}` and
+`HEAD^{tree}` from the trusted runtime checkout, verifies that the supplied
+pair is the current checkout's actual commit/tree pair, and refuses unknown
+objects or a tree unrelated to that commit. The offline dry-run reader,
+budget admission path and future production binder require the same runtime
+source binding when they read or admit the artifact; a 40-character value by
+itself is never sufficient.
 
 For the governed one-credit request model, the admission bound is the maximum
 of the last trusted provider `used` value, when one exists, and the exact local
