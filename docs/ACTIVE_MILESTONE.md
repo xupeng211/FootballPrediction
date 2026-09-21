@@ -11,7 +11,7 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-16
+## Current State Snapshot — 2026-09-21
 
 本节于 2026-09-16 因 Blocker #3 关闭 / Gate 2 接受的状态变更而刷新（该裁定完成于
 2026-09-15/16）；`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 仍记录上一次完整知识审计的基线，早于本次刷新。
@@ -32,13 +32,14 @@ STAGE_C_MERGE_COMPLETE=YES
 CANONICAL_MARKET_EVIDENCE_SPINE=IMPLEMENTED / PILOT
 CURRENT_MARKET_EVIDENCE_MATURITY=REPRODUCIBLE_PILOT
 CONTINUOUS_CAPTURE_READY=NO
-STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__OPERATIONALLY_DISABLED
+STAGE_D_EXECUTABLE_CONTRACT=CONTROLLED_ADAPTER_IMPLEMENTED__POST_RESPONSE_EVIDENCE_FAIL_CLOSED
 STAGE_D_PRODUCTION_PROXY_PREFLIGHT=PROVISIONED_AND_ATTESTED__NO_PROVIDER_CONTACT
 STAGE_D_GATE3_CANDIDATE=PREPARED_NOT_AUTHORIZED
 STAGE_D_SINGLE_CYCLE_BINDER=IMPLEMENTED_ON_REMEDIATION_BRANCH__NOT_AUTHORIZED
 STAGE_D_BINDER_AUTHORIZATION=NO
 STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
 STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
+STAGE_D_POST_RESPONSE_SEMANTICS=REPAIRED_PROSPECTIVELY__RAW_BEFORE_QUOTA__DIAGNOSTIC_ON_LOCAL_FAILURE
 STAGE_D_INDEPENDENT_BACKUP_RESTORE=CLOSED_BLOCKER_3_GATE_2_ACCEPTED
 STAGE_D_OWNER_DATA_PROTECTION_POLICY=APPROVED_RETENTION_LONG_TERM__RPO_24H__RTO_24H
 STAGE_D_PROVIDER_CREDENTIAL_ROTATION=COMPLETED_OLD_CREDENTIAL_FORBIDDEN_FOR_LIVE
@@ -84,7 +85,7 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 `OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
 不是 blocker。）
 
-NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；此前停止的 candidate 不可复用。一次 HTTP 403 与随后一次 ECONNRESET canary 均已在 transmission boundary 后消费并永久终态化，当前 post-epoch consumed total 为 `2`、ambiguous 为 `0`，不得重试或重写。transport-diagnostic hardening 合并并通过 main Production Gate 后，才可重新准备一个新的 exact-main-bound `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其作独立 exact-hash 授权，而不是执行。quota configuration 已闭合但仍不得在本任务中启动 Stage D。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；此前停止的 candidate 不可复用。历史上共有四条 post-epoch consumed request、零 ambiguous request，均不可重试或重写。最后一条请求确实完成了 HTTP response 并进入 2xx 分支，但旧实现随后在 provider quota reconciliation 失败，未保留 exact status/quota header；该历史 evidence-loss event 不追造、不重试。post-response repair 已把未来路径改为 RAW 先保留、quota 仍 fail-closed、局部失败写入独立诊断；source merge、exact-head reviews、required CI、main Production Gate 后才可准备一个绑定新 main 的 `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其独立 exact-hash 授权，而不是执行。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -97,22 +98,21 @@ canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC v
 为 `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549`；它明确
 `PREPARED_NOT_AUTHORIZED`，不等同于 authorization artifact，`GATE_3=NOT_AUTHORIZED` 不变。
 
-同日的第一条 Owner 授权 Gate 3 请求已成为不可重用的历史证据：它经受控 binder
-跨过 transmission boundary 后以 HTTP 403 终态消费，未产生 RAW、receipt 或 transaction，
-且没有 retry。历史响应的 issuer/cause 因旧版 non-2xx 路径未保留安全诊断信息而仍为
-`UNKNOWN`。随后第二条请求以 `TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION` / `ECONNRESET`
-终态消费；没有权威 HTTP response 或 provider quota evidence，failure phase、reset origin
-与 provider quota actual effect 均为 `UNKNOWN`。transport diagnostics 仅为未来 non-2xx/
-transport failure 保留独立、限长、redacted evidence；它不修改历史账本、不把失败变为 market
-RAW，也不授权第二次请求或改变 `GATE_3=NOT_AUTHORIZED`。
+同日的历史 Gate 3 attempts 均为不可重用 evidence：早先的 HTTP 403 与 ECONNRESET
+attempts，以及后续 owner-authorized canary，均在 transmission boundary 后 consumed，不能
+retry、不能重写、不能复用 candidate/authorization/run/request identity。最后一条 canary
+的 retained evidence 只证明 `HTTP_RESPONSE_RECEIVED=YES`、2xx branch reached 和 quota
+reconciliation failed；exact HTTP status 与 provider quota headers 均为 `UNKNOWN`，不能把
+2xx 推断成 200。旧实现未保存 RAW、receipt、transaction 或 post-response diagnostic；本次
+repair 只对未来 response 生效：先保存 immutable RAW，再执行 quota reconciliation，失败时
+写 `footballprediction-stage-d-post-response-failure-diagnostic/v1`，quota effect 继续
+`UNKNOWN`，不允许 retry。`POST_RESPONSE_PROCESSING_FAILURE` 与 true transport failure、
+non-2xx 维持不同终态，`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。
 
-随后准备执行的 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
-在 canonical preflight、authorization consumption 和 provider transmission 之前停止，分类为
-`INVALID_EVIDENCE_PERSISTENCE`。原因是生产装配把不透明的 resolved HMAC preflight-secret
-对象传入只接受 `string[]` 的 diagnostic-redaction 边界；该对象没有被序列化或泄露。该 candidate、
-其 authorization、run id 与 request id 均不复用。该修复只让 future non-2xx diagnostic 的
-secret-redaction wiring 可构造，不授权任何 provider request；`GATE_3=NOT_AUTHORIZED`、
-`STAGE_D_STARTED=NO` 保持。
+旧的未授权 candidate 与其 authorization/run/request identity 均不复用。此前 diagnostic
+redaction wiring defect 已由前一项修复闭合；本次修复继续不创建 live authorization、不
+consume request intent、不跨 transmission boundary、不接触 provider。持久化的 RAW 只
+支持未来的 offline local re-adjudication，不能绕过 quota/authority/transaction governance。
 
 Stage C canonical market-evidence pilot 已通过独立 review、正常合并及 main Production Gate
 闭环（PR #1890）；非 head 逻辑批次 A → B → retry-A 修复也已闭环（PR #1893）。
