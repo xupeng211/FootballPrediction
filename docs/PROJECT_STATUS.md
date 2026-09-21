@@ -28,7 +28,7 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 | Market / odds evidence | Stage C canonical market-evidence spine = `IMPLEMENTED / PILOT`；maturity = `REPRODUCIBLE_PILOT`；historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
 | Remaining downstream gaps | Stage D 持续采集本身尚未运营（`CONTINUOUS_CAPTURE_READY=NO`、`STAGE_D_STARTED=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation。独立备份/恢复已由 Blocker #3 关闭与 Gate 2 接受消除，不再列为 gap（`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`） |
 | Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
-| Next Owner decision | 在 Gate 3 前置条件复核后，单独授权一次 bounded live preflight；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
+| Next Owner decision | `GATE_3=NOT_AUTHORIZED`；post-response quota/evidence repair 已完成 prospective contract，仍需新 main exact-head candidate 的独立 Owner/Chief Engineer 授权；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
 
 Stage C 已在 PR #1890 正常合并并通过 main Production Gate，canonical transaction-v1
 architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据完整性，不证明持续采集、
@@ -46,37 +46,27 @@ readiness 结论：其中"backup"这一半的不完整性已随 `BLOCKER_3=CLOSE
 Gate 3 状态为 `GATE_3=NOT_AUTHORIZED`，下一步是 Controller 的 preauthorization review，
 而不是执行。
 
-2026-09-20 的 Stage D production transport readiness 已完成一次新鲜复核：项目控制的
-非工作站主机提供专用稳定 HTTP CONNECT proxy，独立 TCP HMAC target 只在该 proxy 的
-网络坐标中可达；repository 外的 owner-only binding 供应 endpoint、target 和 dedicated
-secret。canonical strict-2xx/HMAC preflight 通过，且不解析、不联系 The Odds API。current
-authority、sealed zero-entry ledger、quota configuration 与 run-lock 均重新读取；fresh
-candidate `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549` 已准备但
-`PREPARED_NOT_AUTHORIZED`。这不是 Gate 3 approval、request intent、provider request 或
-Stage D start；`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
-
-第一条单次 Gate 3 live request 已于 2026-09-20 终态为 `HTTP_FAILURE_AFTER_TRANSMISSION`
-（HTTP 403），并在 sealed ledger 中计为一条 consumed request；它无 retry、无 RAW、无
-receipt、无 transaction，run lock 已释放。历史请求的 response headers/body 未被旧代码保留，
-所以 issuer/cause 仍为 `UNKNOWN`。
-
-随后唯一的一次新鲜 canary request
-（`stage_d_gate3_request_7a4ca27c79559335e37dd53a` /
-`stage_d_gate3_run_7a4ca27c79559335e37dd53a`）在 2026-09-20 终态为
-`TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION`，底层错误为 `ECONNRESET`。它同样无
-retry、无 RAW、无 receipt、无 transaction，且 run lock 已释放；当前 post-epoch
-consumed total 为 `2`、ambiguous consumed 为 `0`。本地请求预算已保守计为 consumed，但没有
-权威 provider response/quota evidence，因此 provider quota actual effect、failure phase 与
-reset origin 均为 `UNKNOWN`。新增 transport diagnostic 只对未来异常前瞻生效，不能为这次历史
-ECONNRESET 追造不存在的 artifact，也不能修改历史 ledger、重用候选或改变 Gate 3 授权状态。
-
-之后的未授权 candidate `32dc38add92f23892c10d589771a2d7119ab38d6e09f52a04f0d4b166f6bc754`
-在任何 canonical preflight、authorization consumption、request intent 或 provider transmission 前，
-因 `INVALID_EVIDENCE_PERSISTENCE` 停止。它暴露的本地 production-wiring defect 是：不透明的
-resolved HMAC preflight-secret wrapper 被传给只接受 `string[]` 的 diagnostic-redaction boundary。
-该 secret 没有被持久化或泄露；该 candidate、authorization、run id 和 request id 不可重用。
-本修复仅恢复 future diagnostic construction 的 typed/redacted binding，仍不授权 provider request；
+2026-09-20/21 的 Stage D production transport readiness 已完成新鲜复核：项目控制的非工作站主机
+提供专用稳定 HTTP CONNECT proxy，独立 TCP HMAC target 只在该 proxy 的网络坐标中可达；repository
+外的 owner-only binding 供应 endpoint、target 和 dedicated secret。canonical strict-2xx/HMAC
+preflight 通过，且不解析、不联系 The Odds API。远端 Squid freshness、application runtime
+provenance、authority、sealed ledger、quota configuration 与 run-lock 均由对应上下文复核；
 `GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持。
+
+此前唯一 owner-authorized canary 在 transmission boundary 后完成了一次 HTTP exchange 并进入
+2xx branch，随后本地 provider quota reconciliation 失败。历史 retained evidence 不含 exact
+HTTP status 或 quota header values，因此两者均为 `UNKNOWN`；不得把 2xx 推断为 200。旧实现未
+持久化 RAW、receipt、transaction 或 post-response diagnostic，但 ledger 已将该 attempt 永久计为
+consumed。当前 post-epoch accounting 为 `4` consumed、`0` ambiguous、`NO` active run lock；
+该 request、candidate、authorization、run id 和 request id 均不可重试、重写或复用。
+
+本次 source repair 将未来的 completed-2xx local failure 单独分类为
+`POST_RESPONSE_PROCESSING_FAILURE`：先持久化 immutable RAW，再进行 quota reconciliation；
+quota failure 写入 `footballprediction-stage-d-post-response-failure-diagnostic/v1`，保存
+exact status/response timestamp/RAW binding 与安全 numeric quota evidence，但仍不发布 receipt
+或 transaction，且 quota effect 保持 `UNKNOWN`。true transport 与 non-2xx semantics 保持
+不变；修复自身不创建 authorization、不创建 request intent、不跨 transmission boundary、不
+接触 provider。保留的 RAW/diagnostic 仅支持未来 offline local re-adjudication。
 
 Stage D 的 offline one-cycle contract、fail-closed run lock、sealed request-accounting epoch、
 immutable hash-chained prospective ledger、唯一的
@@ -89,9 +79,10 @@ owner-controlled bounded authorization artifact，在模块内部创建 private 
 automated ceiling、`h2h × uk = 1` credit、header reconciliation 和 no-unverified-reset；
 provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epoch 保存
 `AT_LEAST_2_CONFIRMED` historical lower bound 与 exact `UNKNOWN`，不伪造 lifetime total；
-当前 post-epoch accounting 保留两条 consumed terminal requests、零 ambiguous requests。
-新的 transport diagnostic 仅改善未来 evidence retention；该历史 canary 不创建 RAW 或 transaction，也
-不启用 scheduler。
+当前 post-epoch accounting 保留四条 consumed terminal requests、零 ambiguous requests。
+新的 transport 与 post-response diagnostics 仅改善未来 evidence retention；历史 canary 不追造
+RAW 或 transaction，也不启用 scheduler。`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED` 不等于 Gate 3
+authorization。
 
 Owner 数据保护与凭据治理已由 Owner 裁定，并记录于
 [`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](data/STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)：

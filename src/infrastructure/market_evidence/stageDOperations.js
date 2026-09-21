@@ -59,12 +59,14 @@ const EVENT_TYPES = new Set([
     'RESPONSE_RECEIVED',
     'HTTP_FAILURE_AFTER_TRANSMISSION',
     'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION',
+    'POST_RESPONSE_PROCESSING_FAILURE',
     'CANCELLED_BEFORE_TRANSMISSION',
 ]);
 const TERMINAL_STATES = new Set([
     'RESPONSE_RECEIVED',
     'HTTP_FAILURE_AFTER_TRANSMISSION',
     'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION',
+    'POST_RESPONSE_PROCESSING_FAILURE',
     'CANCELLED_BEFORE_TRANSMISSION',
 ]);
 const activeLockTokens = new WeakSet();
@@ -783,7 +785,7 @@ function validateProviderQuotaRecord(value) {
     );
     assertPlainObject(value.raw_headers, 'provider quota raw_headers');
     for (const [key, rawValue] of Object.entries(value.raw_headers)) {
-        if (!PROVIDER_QUOTA_HEADER_PATTERN.test(key) || typeof rawValue !== 'string' || rawValue.includes('\n') || rawValue.includes('\r')) {
+        if (!PROVIDER_QUOTA_HEADER_PATTERN.test(key) || typeof rawValue !== 'string' || !/^\d{1,32}$/.test(rawValue)) {
             fail('INVALID_PROVIDER_QUOTA_HEADERS', 'provider quota raw header evidence is invalid');
         }
     }
@@ -791,7 +793,7 @@ function validateProviderQuotaRecord(value) {
         if (!Object.prototype.hasOwnProperty.call(value.raw_headers, header)) {
             fail('INVALID_PROVIDER_QUOTA_HEADERS', `provider quota header ${header} is missing`);
         }
-        if (!/^\d+$/.test(value.raw_headers[header])) {
+        if (!/^\d{1,32}$/.test(value.raw_headers[header])) {
             fail('INVALID_PROVIDER_QUOTA_HEADERS', `provider quota header ${header} must be a non-negative integer`);
         }
     }
@@ -899,7 +901,7 @@ function validateTransition(previous, eventType, record) {
         }
         return;
     }
-    if (!['RESPONSE_RECEIVED', 'HTTP_FAILURE_AFTER_TRANSMISSION', 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION'].includes(eventType)) {
+    if (!['RESPONSE_RECEIVED', 'HTTP_FAILURE_AFTER_TRANSMISSION', 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', 'POST_RESPONSE_PROCESSING_FAILURE'].includes(eventType)) {
         if (eventType === 'CANCELLED_BEFORE_TRANSMISSION' && previous.transmission_state === 'TRANSMISSION_NOT_STARTED' && record.transmission_state === 'TRANSMISSION_NOT_STARTED' && record.terminal_state === eventType && record.quota_units_charged_or_assumed === 0) return;
         fail('INVALID_LEDGER_TRANSITION', 'ledger event is not a permitted request transition');
     }
@@ -914,6 +916,9 @@ function validateTransition(previous, eventType, record) {
     }
     if (eventType === 'RESPONSE_RECEIVED' && record.provider_quota === null) {
         fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'successful provider responses require quota header reconciliation');
+    }
+    if (eventType === 'POST_RESPONSE_PROCESSING_FAILURE' && record.error_classification === null) {
+        fail('INVALID_LEDGER_TRANSITION', 'post-response processing failure requires an error classification');
     }
     if (record.response_received_at !== null && Date.parse(record.response_received_at) < Date.parse(previous.transmitted_at)) {
         fail('INVALID_LEDGER_TRANSITION', 'response cannot precede transmission');
@@ -1161,7 +1166,7 @@ function markRequestTerminal({ ledgerRoot, expectedRootIdentity = null, requestI
     const request = {
         ...previous,
         terminal_state: terminalState,
-        ...(['RESPONSE_RECEIVED', 'HTTP_FAILURE_AFTER_TRANSMISSION'].includes(terminalState) ? { response_received_at: at } : {}),
+        ...(['RESPONSE_RECEIVED', 'HTTP_FAILURE_AFTER_TRANSMISSION', 'POST_RESPONSE_PROCESSING_FAILURE'].includes(terminalState) ? { response_received_at: at } : {}),
         receipt_evidence_reference: receiptEvidenceReference,
         error_classification: errorClassification,
         provider_quota: providerQuota,
@@ -1714,7 +1719,20 @@ function assertBudgetLedgerValid(ledger, config) {
         if (request.terminal_state === 'RESPONSE_RECEIVED' && request.provider_quota === null) {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a successful response has no reconciled provider quota evidence');
         }
-        if (request.error_classification?.startsWith('PROVIDER_QUOTA_')) {
+        // A quota-reconciliation failure is a valid consumed terminal state
+        // even though provider_quota is deliberately null and the provider
+        // effect remains unknown.  Other post-response failures still require
+        // a reconciled quota record before they can be treated as ordinary
+        // ledger outcomes.  The error-classification guard below blocks the
+        // next budget admission for the unreconciled quota case.
+        if (
+            request.terminal_state === 'POST_RESPONSE_PROCESSING_FAILURE' &&
+            request.provider_quota === null &&
+            request.error_classification !== 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+        ) {
+            fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a post-response failure has no reconciled provider quota evidence');
+        }
+        if (request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED') {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
         }
     }
@@ -1825,6 +1843,19 @@ const TRANSPORT_FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
 const TRANSPORT_FAILURE_DIAGNOSTIC_ERROR_CODE_MAX_BYTES = 128;
 const TRANSPORT_FAILURE_DIAGNOSTIC_SYSCALL_MAX_BYTES = 64;
 const TRANSPORT_FAILURE_PHASE = 'UNKNOWN_POST_BOUNDARY';
+const POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-post-response-failure-diagnostic/v1';
+const POST_RESPONSE_FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
+const POST_RESPONSE_FAILURE_PHASES = new Set(['RAW_PERSISTENCE', 'QUOTA_RECONCILIATION', 'RECEIPT_PERSISTENCE']);
+const POST_RESPONSE_FAILURE_CODES = new Map([
+    ['RAW_PERSISTENCE_FAILED', 'successful response RAW evidence persistence failed'],
+    ['PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider quota reconciliation failed after response capture'],
+    ['RECEIPT_PERSISTENCE_FAILED', 'successful response receipt persistence failed'],
+]);
+const POST_RESPONSE_FAILURE_CODES_BY_PHASE = new Map([
+    ['RAW_PERSISTENCE', 'RAW_PERSISTENCE_FAILED'],
+    ['QUOTA_RECONCILIATION', 'PROVIDER_QUOTA_RECONCILIATION_FAILED'],
+    ['RECEIPT_PERSISTENCE', 'RECEIPT_PERSISTENCE_FAILED'],
+]);
 const SAFE_TRANSPORT_ERROR_CODES = new Set([
     'EADDRNOTAVAIL', 'EAI_AGAIN', 'EAI_FAIL', 'EAI_NODATA', 'EAI_NONAME', 'ECONNABORTED',
     'ECONNREFUSED', 'ECONNRESET', 'EHOSTUNREACH', 'ENETUNREACH', 'ENOTFOUND', 'EPIPE', 'EPROTO',
@@ -1965,6 +1996,38 @@ function boundedFailureDiagnosticPayload(rawText, redactionValues) {
     });
 }
 
+function safeObservedQuotaHeaders(headers = {}) {
+    if (!headers || typeof headers !== 'object' || Array.isArray(headers)) return {};
+    let names;
+    try {
+        names = Object.getOwnPropertyNames(headers);
+    } catch {
+        return {};
+    }
+    const observed = {};
+    for (const name of names) {
+        const normalizedName = String(name).toLowerCase();
+        if (!REQUIRED_QUOTA_HEADERS.includes(normalizedName)) continue;
+        const descriptor = Object.getOwnPropertyDescriptor(headers, name);
+        if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) continue;
+        const value = descriptor.value;
+        const normalizedValue = typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
+        // Only bounded decimal values are safe to retain as observed quota
+        // evidence.  Missing or malformed values are represented by the
+        // diagnostic error code, never by an untrusted header string.
+        if (/^\d{1,32}$/.test(normalizedValue)) observed[normalizedName] = normalizedValue;
+    }
+    return observed;
+}
+
+function safePostResponseTransportProvenance(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const host = readOwnDataProperty(value, 'canonical_provider_host');
+    const tls = readOwnDataProperty(value, 'tls_validation');
+    if (host !== 'api.the-odds-api.com' || tls !== 'REJECT_UNAUTHORIZED') return null;
+    return Object.freeze({ canonical_provider_host: host, tls_validation: tls });
+}
+
 function withEvidenceDirectories(persistor, callback) {
     const rootDescriptor = openTrustedDirectoryDescriptor(persistor.root, 'Stage D evidence root', persistor.root_identity);
     let rawDescriptor;
@@ -1991,7 +2054,7 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
     let testFaultAuthorityRoot = null;
     if (testHooks !== null) {
         assertPlainObject(testHooks, 'testHooks');
-        if (testHooks.fault === 'RAW_ROOT_SWAP' || testHooks.fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') assertExactKeys(testHooks, ['fault'], 'testHooks');
+        if (testHooks.fault === 'RAW_ROOT_SWAP' || testHooks.fault === 'RAW_PERSISTENCE_FAILURE' || testHooks.fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') assertExactKeys(testHooks, ['fault'], 'testHooks');
         else if (testHooks.fault === 'AUTHORITY_ROOT_SWAP_BEFORE_RECEIPT') {
             assertExactKeys(testHooks, ['fault', 'authorityRoot'], 'testHooks');
             if (typeof testHooks.authorityRoot !== 'string' || !testHooks.authorityRoot.trim()) fail('INVALID_EVIDENCE_PERSISTENCE', 'authorityRoot is required for the declarative test fault');
@@ -2009,7 +2072,10 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
     let testFaultApplied = false;
     const applyTestFault = fault => {
         if (testFault !== fault || testFaultApplied) return;
-        if (fault === 'RAW_ROOT_SWAP' || fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') {
+        if (fault === 'RAW_PERSISTENCE_FAILURE') {
+            testFaultApplied = true;
+            fail('RAW_PERSISTENCE_FAILED', 'declarative RAW persistence failure');
+        } else if (fault === 'RAW_ROOT_SWAP' || fault === 'FAILURE_DIAGNOSTIC_ROOT_SWAP') {
             const moved = `${root}.moved`;
             if (fs.existsSync(moved)) fail('INVALID_EVIDENCE_PERSISTENCE', 'declarative RAW root swap target already exists');
             fs.renameSync(root, moved);
@@ -2035,6 +2101,7 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
             failure_diagnostic_identity: failureDiagnosticDescriptor.identity,
             persistRaw({ rawText } = {}) {
                 if (typeof rawText !== 'string') fail('RAW_PERSISTENCE_FAILED', 'rawText is required');
+                applyTestFault('RAW_PERSISTENCE_FAILURE');
                 applyTestFault('RAW_ROOT_SWAP');
                 const rawSha256 = sha256Text(rawText);
                 const name = `${rawSha256}.json`;
@@ -2112,6 +2179,68 @@ function createStageDEvidencePersistence({ evidenceRoot, testHooks = null, redac
                     return Object.freeze({
                         failure_diagnostic_sha256: sha256Text(bytes),
                         failure_diagnostic_evidence_reference: `failure-diagnostics/${name}`,
+                    });
+                });
+            },
+            persistPostResponseFailureDiagnostic({
+                runId,
+                requestId,
+                httpStatus,
+                responseReceivedAt,
+                failurePhase,
+                errorCode,
+                rawSha256 = null,
+                rawEvidenceReference = null,
+                observedQuotaHeaders = {},
+                transportProvenance = null,
+            } = {}) {
+                assertToken(runId, 'post-response diagnostic runId');
+                assertToken(requestId, 'post-response diagnostic requestId');
+                if (!Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic HTTP status is invalid');
+                assertUtc(responseReceivedAt, 'post-response diagnostic responseReceivedAt');
+                if (!POST_RESPONSE_FAILURE_PHASES.has(failurePhase)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic failure phase is invalid');
+                if (!POST_RESPONSE_FAILURE_CODES.has(errorCode)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic error code is invalid');
+                if (POST_RESPONSE_FAILURE_CODES_BY_PHASE.get(failurePhase) !== errorCode) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic failure phase and error code do not correspond');
+                if (rawSha256 !== null && !/^[a-f0-9]{64}$/.test(rawSha256)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw SHA-256 is invalid');
+                if (rawEvidenceReference !== null && !/^raw\/[a-f0-9]{64}\.json$/.test(rawEvidenceReference)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw evidence reference is invalid');
+                if ((rawSha256 === null) !== (rawEvidenceReference === null)) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic raw evidence binding is incomplete');
+                const diagnostic = {
+                    schema_version: POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
+                    diagnostic_kind: 'POST_RESPONSE_PROCESSING_FAILURE',
+                    run_id: runId,
+                    request_id: requestId,
+                    provider: PROVIDER,
+                    market: CONFIGURED_MARKETS[0],
+                    region: CONFIGURED_REGIONS[0],
+                    terminal_state: 'POST_RESPONSE_PROCESSING_FAILURE',
+                    http_status: httpStatus,
+                    response_received_at: responseReceivedAt,
+                    failure_phase: failurePhase,
+                    error_code: errorCode,
+                    safe_error_message: POST_RESPONSE_FAILURE_CODES.get(errorCode),
+                    raw_sha256: rawSha256,
+                    raw_evidence_reference: rawEvidenceReference,
+                    safe_observed_quota_headers: safeObservedQuotaHeaders(observedQuotaHeaders),
+                    transport_provenance: safePostResponseTransportProvenance(transportProvenance),
+                    http_response_received: true,
+                    transmission_boundary_crossed: true,
+                };
+                const bytes = canonicalBytes(diagnostic);
+                if (Buffer.byteLength(bytes, 'utf8') > POST_RESPONSE_FAILURE_DIAGNOSTIC_MAX_BYTES) fail('POST_RESPONSE_DIAGNOSTIC_INVALID', 'post-response diagnostic exceeds the bounded size');
+                const name = `${requestId}.json`;
+                applyTestFault('FAILURE_DIAGNOSTIC_ROOT_SWAP');
+                return withEvidenceDirectories(this, ({ failureDiagnosticDescriptor: currentDiagnostics }) => {
+                    const target = scopedPath(currentDiagnostics.fd, name);
+                    try {
+                        const existing = readRegularFileBytes(target, 'Stage D post-response diagnostic');
+                        if (existing.bytes !== bytes) fail('POST_RESPONSE_DIAGNOSTIC_CONFLICT', 'Stage D post-response diagnostic already exists with different content');
+                    } catch (persistError) {
+                        if (persistError?.code !== 'ENOENT') throw persistError;
+                        writeExclusiveBytes(target, bytes, 'Stage D post-response diagnostic', { directoryFd: currentDiagnostics.fd, mode: 0o400 });
+                    }
+                    return Object.freeze({
+                        post_response_diagnostic_sha256: sha256Text(bytes),
+                        post_response_diagnostic_evidence_reference: `failure-diagnostics/${name}`,
                     });
                 });
             },
@@ -2233,7 +2362,25 @@ function createStageDFakeTransport({ response = null, error = null, transmission
 
 function sanitizeProviderHeaders(headers = {}) {
     const allowed = PROVIDER_QUOTA_HEADER_PATTERN;
-    return Object.fromEntries(Object.entries(headers).filter(([key]) => allowed.test(key)).map(([key, value]) => [key.toLowerCase(), String(value)]));
+    if (!headers || typeof headers !== 'object' || Array.isArray(headers)) return {};
+    let names;
+    try {
+        names = Object.getOwnPropertyNames(headers);
+    } catch {
+        return {};
+    }
+    const sanitized = {};
+    for (const name of names) {
+        if (!allowed.test(name)) continue;
+        const descriptor = Object.getOwnPropertyDescriptor(headers, name);
+        if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) continue;
+        const value = descriptor.value;
+        if (typeof value !== 'string' && typeof value !== 'number') continue;
+        const normalized = String(value).trim();
+        if (normalized.length > 128 || normalized.includes('\n') || normalized.includes('\r')) continue;
+        sanitized[name.toLowerCase()] = normalized;
+    }
+    return sanitized;
 }
 
 function createStageDOddsApiTransport({ apiKey = process.env.THE_ODDS_API_KEY, timeoutMs = 15000, endpoint = null } = {}) {
@@ -2940,7 +3087,50 @@ async function executeStageDOneCycle({
             }
             return Object.freeze({ status: 'HTTP_FAILURE_AFTER_TRANSMISSION', request_id: requestId, run_id: runId, ...diagnostic });
         }
-        if (typeof response.raw_text !== 'string') terminalizePostBoundaryFailure(Object.assign(new Error('successful response raw_text is required'), { code: 'RAW_PERSISTENCE_FAILED' }));
+        const terminalizePostResponseFailure = ({ failurePhase, errorCode, raw = null, providerQuota = null } = {}) => {
+            try {
+                markRequestTerminal({
+                    ledgerRoot,
+                    expectedRootIdentity: lockedLedgerRootIdentity,
+                    requestId,
+                    terminalState: 'POST_RESPONSE_PROCESSING_FAILURE',
+                    at: responseAt,
+                    errorClassification: errorCode,
+                    providerQuota,
+                });
+            } catch (terminalError) {
+                reconcileRequired = true;
+                throw terminalError;
+            }
+            try {
+                return evidencePersistence.persistPostResponseFailureDiagnostic({
+                    runId,
+                    requestId,
+                    httpStatus: response.http_status,
+                    responseReceivedAt: responseAt,
+                    failurePhase,
+                    errorCode,
+                    rawSha256: raw?.raw_sha256 || null,
+                    rawEvidenceReference: raw?.raw_evidence_reference || null,
+                    observedQuotaHeaders: response.provider_quota || {},
+                    transportProvenance: response.transport_provenance || null,
+                });
+            } catch {
+                fail('POST_RESPONSE_DIAGNOSTIC_PERSISTENCE_FAILED', 'post-response diagnostic persistence failed after durable terminal accounting');
+            }
+        };
+        if (typeof response.raw_text !== 'string') {
+            const error = Object.assign(new Error('successful response raw_text is required'), { code: 'RAW_PERSISTENCE_FAILED' });
+            terminalizePostResponseFailure({ failurePhase: 'RAW_PERSISTENCE', errorCode: 'RAW_PERSISTENCE_FAILED' });
+            throw error;
+        }
+        let persistedRaw;
+        try {
+            persistedRaw = evidencePersistence.persistRaw({ rawText: response.raw_text });
+        } catch (error) {
+            terminalizePostResponseFailure({ failurePhase: 'RAW_PERSISTENCE', errorCode: 'RAW_PERSISTENCE_FAILED' });
+            throw error;
+        }
         let reconciledProviderQuota;
         try {
             reconciledProviderQuota = reconcileProviderQuotaHeaders({
@@ -2951,12 +3141,11 @@ async function executeStageDOneCycle({
                 previousProviderQuota: latestReconciledProviderQuota(ledger),
             });
         } catch (error) {
-            terminalizePostBoundaryFailure(error);
+            terminalizePostResponseFailure({ failurePhase: 'QUOTA_RECONCILIATION', errorCode: 'PROVIDER_QUOTA_RECONCILIATION_FAILED', raw: persistedRaw });
+            throw error;
         }
-        let persistedRaw;
         let persistedReceipt;
         try {
-            persistedRaw = evidencePersistence.persistRaw({ rawText: response.raw_text });
             const ingestedAt = trustedClock();
             const receipt = createCaptureReceipt({
                 capture_id: response.capture_id || requestId,
@@ -2969,17 +3158,17 @@ async function executeStageDOneCycle({
                 response_size_bytes: Buffer.byteLength(response.raw_text),
                 raw_sha256: persistedRaw.raw_sha256,
                 raw_evidence_reference: persistedRaw.raw_evidence_reference,
-                provider_quota: response.provider_quota || null,
+                provider_quota: safeObservedQuotaHeaders(response.provider_quota),
                 software_version: 'stage-d-live-adapter/1.0.0',
             });
             persistedReceipt = evidencePersistence.persistReceipt({ receipt });
         } catch (error) {
-            try {
-                markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION', at: trustedClock(), errorClassification: 'RAW_OR_RECEIPT_PERSISTENCE_FAILURE_AFTER_TRANSMISSION' });
-            } catch (terminalError) {
-                reconcileRequired = true;
-                throw terminalError;
-            }
+            terminalizePostResponseFailure({
+                failurePhase: 'RECEIPT_PERSISTENCE',
+                errorCode: 'RECEIPT_PERSISTENCE_FAILED',
+                raw: persistedRaw,
+                providerQuota: reconciledProviderQuota,
+            });
             throw error;
         }
         try {
@@ -3145,6 +3334,7 @@ module.exports = {
     EXPECTED_REQUEST_COST_CREDITS,
     MAX_PROVIDER_REQUESTS_PER_CYCLE,
     REQUIRED_QUOTA_HEADERS,
+    POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
     HISTORICAL_PRE_EPOCH_EXACT_TOTAL,

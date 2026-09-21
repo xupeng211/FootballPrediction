@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable max-lines -- the Stage D matrix keeps accounting, evidence and retry boundaries together for auditability. */
 
 process.env.NODE_ENV = 'test';
 
@@ -255,6 +256,224 @@ function intent(ctx, requestId = 'request-a', runId = 'run-a') {
         createdAt: '2026-09-08T01:00:00Z',
     });
 }
+
+test('2xx quota reconciliation failure preserves RAW and bounded post-response evidence while failing closed', async t => {
+    const ctx = liveAuthoritySetup(t);
+    await assert.rejects(
+        executeLive(ctx, {
+            components: liveComponents(ctx, {
+                response: {
+                    raw_text: ctx.rawText,
+                    http_status: 207,
+                    response_received_at: '2026-09-08T08:00:03Z',
+                    provider_quota: { 'x-requests-used': '1' },
+                },
+            }),
+            runId: 'baseline-post-response-run',
+            requestId: 'baseline-post-response-request',
+        }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED',
+    );
+    const request = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0];
+    assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(request.response_received_at, '2026-09-08T08:00:03Z');
+    assert.equal(request.error_classification, 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
+    assert.equal(request.provider_quota, null);
+    assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')).length, 1);
+    assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'receipts')), []);
+    const diagnosticPath = path.join(ctx.evidenceRoot, 'failure-diagnostics', 'baseline-post-response-request.json');
+    const diagnostic = JSON.parse(fs.readFileSync(diagnosticPath, 'utf8'));
+    assert.equal(diagnostic.schema_version, 'footballprediction-stage-d-post-response-failure-diagnostic/v1');
+    assert.equal(diagnostic.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(diagnostic.http_status, 207);
+    assert.equal(diagnostic.response_received_at, '2026-09-08T08:00:03Z');
+    assert.equal(diagnostic.failure_phase, 'QUOTA_RECONCILIATION');
+    assert.deepEqual(diagnostic.safe_observed_quota_headers, { 'x-requests-used': '1' });
+    assert.equal(diagnostic.raw_sha256, sha256Text(ctx.rawText));
+    assert.equal(diagnostic.raw_evidence_reference, `raw/${sha256Text(ctx.rawText)}.json`);
+    assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+    assert.throws(
+        () => assertRequestBudget({ ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: quotaConfig(), runId: 'next-run', now: '2026-09-08T08:00:06Z' }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_REQUIRED',
+    );
+});
+
+test('post-response diagnostic enforces failure phase and error-code pairing', t => {
+    const ctx = liveAuthoritySetup(t);
+    const persistence = createStageDEvidencePersistence({ evidenceRoot: ctx.evidenceRoot });
+    assert.throws(
+        () => persistence.persistPostResponseFailureDiagnostic({
+            runId: 'diagnostic-pair-run',
+            requestId: 'diagnostic-pair-request',
+            httpStatus: 200,
+            responseReceivedAt: '2026-09-08T08:00:03Z',
+            failurePhase: 'RAW_PERSISTENCE',
+            errorCode: 'RECEIPT_PERSISTENCE_FAILED',
+        }),
+        error => error.code === 'POST_RESPONSE_DIAGNOSTIC_INVALID',
+    );
+});
+
+test('missing, malformed and inconsistent 2xx quota headers are distinct post-response failures with no retry', async t => {
+    const cases = [
+        ['missing', {}],
+        ['malformed', { 'x-requests-used': 'quota-secret-value', 'x-requests-remaining': '19', 'x-requests-last': '1' }],
+        ['inconsistent', { 'x-requests-used': '1', 'x-requests-remaining': '18', 'x-requests-last': '1' }],
+    ];
+    for (const [label, providerQuota] of cases) {
+        const ctx = liveAuthoritySetup(t);
+        const requestId = `post-response-${label}-request`;
+        const components = liveComponents(ctx, {
+            response: {
+                raw_text: ctx.rawText,
+                http_status: 200,
+                response_received_at: '2026-09-08T08:00:03Z',
+                provider_quota: providerQuota,
+            },
+        });
+        await assert.rejects(
+            executeLive(ctx, { components, runId: `post-response-${label}-run`, requestId }),
+            error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED',
+        );
+        assert.equal(components.transport.call_count, 1);
+        const request = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0];
+        assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+        assert.equal(request.error_classification, 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
+        assert.equal(request.provider_quota, null);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')).length, 1);
+        assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'receipts')), []);
+        const diagnosticText = fs.readFileSync(path.join(ctx.evidenceRoot, 'failure-diagnostics', `${requestId}.json`), 'utf8');
+        assert.equal(diagnosticText.includes('quota-secret-value'), false);
+        const diagnostic = JSON.parse(diagnosticText);
+        assert.equal(diagnostic.http_response_received, true);
+        assert.equal(diagnostic.transmission_boundary_crossed, true);
+        assert.equal(diagnostic.raw_sha256, sha256Text(ctx.rawText));
+        assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+    }
+});
+
+test('quota reconciliation conflict with prior provider state preserves the completed response for offline adjudication', async t => {
+    const ctx = liveAuthoritySetup(t);
+    intent(ctx, 'prior-request', 'prior-run');
+    markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'prior-request', transmittedAt: '2026-09-08T07:00:01Z' });
+    markRequestTerminal({
+        ledgerRoot: ctx.ledgerRoot,
+        requestId: 'prior-request',
+        terminalState: 'RESPONSE_RECEIVED',
+        at: '2026-09-08T07:00:02Z',
+        receiptEvidenceReference: 'receipts/prior-request.json',
+        providerQuota: reconciledQuota(),
+    });
+    const requestId = 'quota-conflict-request';
+    const components = liveComponents(ctx, {
+        response: {
+            raw_text: ctx.rawText,
+            http_status: 200,
+            response_received_at: '2026-09-08T08:00:03Z',
+            provider_quota: { 'x-requests-used': '3', 'x-requests-remaining': '17', 'x-requests-last': '1' },
+        },
+    });
+    await assert.rejects(
+        executeLive(ctx, { components, runId: 'quota-conflict-run', requestId }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED',
+    );
+    const ledger = readRequestLedger({ ledgerRoot: ctx.ledgerRoot });
+    assert.equal(ledgerUsageSummary(ledger).consumed_request_count, 2);
+    assert.equal(ledger.requests.find(request => request.request_id === requestId).terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    const diagnostic = JSON.parse(fs.readFileSync(path.join(ctx.evidenceRoot, 'failure-diagnostics', `${requestId}.json`), 'utf8'));
+    assert.equal(diagnostic.failure_phase, 'QUOTA_RECONCILIATION');
+    assert.deepEqual(diagnostic.safe_observed_quota_headers, { 'x-requests-used': '3', 'x-requests-remaining': '17', 'x-requests-last': '1' });
+    assert.equal(components.transport.call_count, 1);
+});
+
+test('RAW persistence failure is a post-response failure and preserves bounded diagnostic evidence', async t => {
+    const ctx = liveAuthoritySetup(t);
+    const components = liveComponents(ctx);
+    components.evidencePersistence = createStageDEvidencePersistence({
+        evidenceRoot: ctx.evidenceRoot,
+        testHooks: { fault: 'RAW_PERSISTENCE_FAILURE' },
+    });
+    await assert.rejects(
+        executeLive(ctx, { components, runId: 'raw-post-response-run', requestId: 'raw-post-response-request' }),
+        error => error.code === 'RAW_PERSISTENCE_FAILED',
+    );
+    const request = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0];
+    assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(request.error_classification, 'RAW_PERSISTENCE_FAILED');
+    assert.deepEqual(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')), []);
+    const diagnostic = JSON.parse(fs.readFileSync(path.join(ctx.evidenceRoot, 'failure-diagnostics', 'raw-post-response-request.json'), 'utf8'));
+    assert.equal(diagnostic.failure_phase, 'RAW_PERSISTENCE');
+    assert.equal(diagnostic.raw_sha256, null);
+    assert.equal(diagnostic.raw_evidence_reference, null);
+    assert.equal(diagnostic.http_status, 200);
+    assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+    assert.throws(
+        () => assertRequestBudget({ ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: quotaConfig(), runId: 'raw-post-response-next-run', now: '2026-09-08T08:00:06Z' }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_REQUIRED',
+    );
+});
+
+test('post-response diagnostic persistence failure leaves durable consumed terminal state and no retry', async t => {
+    const ctx = liveAuthoritySetup(t);
+    const components = liveComponents(ctx, {
+        response: {
+            raw_text: ctx.rawText,
+            http_status: 200,
+            response_received_at: '2026-09-08T08:00:03Z',
+            provider_quota: { 'x-requests-used': '1' },
+        },
+    });
+    components.evidencePersistence = createStageDEvidencePersistence({
+        evidenceRoot: ctx.evidenceRoot,
+        testHooks: { fault: 'FAILURE_DIAGNOSTIC_ROOT_SWAP' },
+    });
+    await assert.rejects(
+        executeLive(ctx, { components, runId: 'post-response-diagnostic-failure-run', requestId: 'post-response-diagnostic-failure-request' }),
+        error => error.code === 'POST_RESPONSE_DIAGNOSTIC_PERSISTENCE_FAILED',
+    );
+    const request = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests[0];
+    assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(request.quota_units_charged_or_assumed, 1);
+    assert.equal(components.transport.call_count, 1);
+    assert.equal(inspectStageDRunLock({ operationRoot: ctx.ledgerRoot }).state, 'ABSENT');
+    assert.equal(fs.existsSync(path.join(`${ctx.evidenceRoot}.moved`, 'raw', `${sha256Text(ctx.rawText)}.json`)), true);
+});
+
+test('post-response diagnostics never reflect quota, provider, proxy or preflight secret values', async t => {
+    const ctx = liveAuthoritySetup(t);
+    const apiKey = 'post-response-api-key-secret';
+    const proxySecret = 'post-response-proxy-secret';
+    const preflightSecret = 'post-response-preflight-secret';
+    const components = liveComponents(ctx, {
+        response: {
+            raw_text: ctx.rawText,
+            http_status: 200,
+            response_received_at: '2026-09-08T08:00:03Z',
+            provider_quota: {
+                'x-requests-used': apiKey,
+                'x-requests-remaining': '19',
+                'x-requests-last': '1',
+            },
+            transport_provenance: {
+                canonical_provider_host: proxySecret,
+                tls_validation: preflightSecret,
+            },
+        },
+    });
+    components.evidencePersistence = createStageDEvidencePersistence({
+        evidenceRoot: ctx.evidenceRoot,
+        redactionValues: [apiKey, proxySecret, preflightSecret],
+    });
+    await assert.rejects(
+        executeLive(ctx, { components, runId: 'post-response-secret-run', requestId: 'post-response-secret-request' }),
+        error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_FAILED',
+    );
+    const diagnosticText = fs.readFileSync(path.join(ctx.evidenceRoot, 'failure-diagnostics', 'post-response-secret-request.json'), 'utf8');
+    for (const secret of [apiKey, proxySecret, preflightSecret]) assert.equal(diagnosticText.includes(secret), false);
+    const diagnostic = JSON.parse(diagnosticText);
+    assert.deepEqual(diagnostic.safe_observed_quota_headers, { 'x-requests-remaining': '19', 'x-requests-last': '1' });
+    assert.equal(diagnostic.transport_provenance, null);
+});
 
 test('Stage D accounting epoch preserves the historical lower bound and unknown exact lifetime total', t => {
     const ctx = setup(t);
@@ -874,11 +1093,12 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
     });
     await assert.rejects(
         executeLive(rawFailure, { components: rawComponents, runId: 'raw-failure-run', requestId: 'raw-failure-request' }),
-        error => error.code === 'DIRECTORY_IDENTITY_CHANGED'
+        error => error.code === 'POST_RESPONSE_DIAGNOSTIC_PERSISTENCE_FAILED'
     );
     assert.equal(rawComponents.transport.call_count, 1);
     const rawRequest = readRequestLedger({ ledgerRoot: rawFailure.ledgerRoot }).requests[0];
-    assert.equal(rawRequest.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+    assert.equal(rawRequest.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(rawRequest.error_classification, 'RAW_PERSISTENCE_FAILED');
     assert.equal(rawRequest.quota_units_charged_or_assumed, 1);
     fs.rmSync(originalEvidenceRoot, { recursive: true, force: true });
     fs.renameSync(movedEvidenceRoot, originalEvidenceRoot);
@@ -907,8 +1127,11 @@ test('RAW and receipt persistence failures retain consumed usage and do not retr
         error => error.code === 'RECEIPT_CONFLICT'
     );
     const receiptRequest = readRequestLedger({ ledgerRoot: receiptFailure.ledgerRoot }).requests[0];
-    assert.equal(receiptRequest.terminal_state, 'TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION');
+    assert.equal(receiptRequest.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+    assert.equal(receiptRequest.error_classification, 'RECEIPT_PERSISTENCE_FAILED');
     assert.equal(receiptRequest.quota_units_charged_or_assumed, 1);
+    assert.equal(fs.readdirSync(path.join(receiptFailure.evidenceRoot, 'raw')).length, 1);
+    assert.equal(fs.existsSync(path.join(receiptFailure.evidenceRoot, 'failure-diagnostics', 'receipt-failure-request.json')), true);
 });
 
 test('candidate/parser failure releases the lock after consumed response, while publication failure leaves an explicit reconciliation lock', async t => {

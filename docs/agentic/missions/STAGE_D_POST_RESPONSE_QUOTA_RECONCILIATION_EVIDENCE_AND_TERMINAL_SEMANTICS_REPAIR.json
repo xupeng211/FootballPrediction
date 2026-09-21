@@ -1,0 +1,58 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_POST_RESPONSE_QUOTA_RECONCILIATION_EVIDENCE_AND_TERMINAL_SEMANTICS_REPAIR",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/STAGE_D_POST_RESPONSE_QUOTA_RECONCILIATION_EVIDENCE_AND_TERMINAL_SEMANTICS_REPAIR.json",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_operations.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "README.md",
+    "config/stage_d_quota_budget.json",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "docker/",
+    "deploy/",
+    "schemas/"
+  ],
+  "excluded_tokens": [
+    "scheduler",
+    "stage_d_cycle",
+    "bookmaker",
+    "oddsportal",
+    "training",
+    "prediction",
+    "backtest",
+    "value-engine",
+    "proxy_pools"
+  ],
+  "protected_invariants": [
+    "HISTORICAL_CANARY_IMMUTABLE: the consumed run stage_d_gate3_run_8b2c3c72a4bb6728f814da31, request stage_d_gate3_request_8b2c3c72a4bb6728f814da31, candidate and ledger evidence are never modified, retried, reclassified or reused",
+    "POST_RESPONSE_IS_NOT_TRANSPORT: a completed validated HTTP response followed by local quota, RAW or receipt processing failure is POST_RESPONSE_PROCESSING_FAILURE, not TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION",
+    "RAW_BEFORE_QUOTA: a valid completed 2xx response preserves immutable RAW, SHA and evidence reference before quota reconciliation can fail",
+    "QUOTA_FAIL_CLOSED: missing, malformed, inconsistent or conflicting quota evidence leaves local consumption durable, provider quota effect UNKNOWN, and permits no retry or quota probe",
+    "SAFE_POST_RESPONSE_DIAGNOSTICS: only bounded fixed-schema fields, exact HTTP status/time, RAW binding and safe numeric quota observations are retained; credentials, authorization, proxy/preflight secrets, arbitrary headers, Error objects, stack and cause never persist",
+    "TRUE_TRANSPORT_AND_NON2XX_PRESERVED: transport exceptions retain transport terminal/diagnostic semantics and authoritative non-2xx responses retain HTTP_FAILURE_AFTER_TRANSMISSION semantics",
+    "NO_PROVIDER_NETWORK_ACTIVITY: all reproduction and validation uses fake/local transports and creates zero provider requests, DNS lookups or quota probes",
+    "MERGE_AUTHORIZED_BY_OWNER_ON_EXACT_GREEN_HEAD: one squash merge is allowed only after CRITICAL exact-head Codex and DeepSeek review, required CI, merge readiness and post-merge Production Gate"
+  ],
+  "forbidden_side_effects": [
+    "contacting or resolving The Odds API, creating a live authorization, consuming authorization, creating request intent, crossing transmission boundary, making a provider request or probing quota",
+    "editing the historical ledger, RAW, diagnostics, candidate, authorization, run id or request id; retrying the spent canary; or starting Stage D/scheduler/continuous operations",
+    "storing or logging provider credentials, proxy credentials, HMAC secrets, authorization values, cookies, arbitrary reflected errors or secret-bearing response data",
+    "modifying provider/proxy infrastructure, quota configuration, PR review authority, bookmaker semantics, training, prediction, backtest, value betting or unrelated architecture"
+  ]
+}

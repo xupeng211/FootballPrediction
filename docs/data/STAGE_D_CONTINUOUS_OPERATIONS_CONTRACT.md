@@ -120,6 +120,7 @@ REQUEST_INTENT / TRANSMISSION_NOT_STARTED
   -> RESPONSE_RECEIVED
      | HTTP_FAILURE_AFTER_TRANSMISSION
      | TRANSPORT_FAILURE_AFTER_POSSIBLE_TRANSMISSION
+     | POST_RESPONSE_PROCESSING_FAILURE
      | (remain ambiguous-consumed after crash)
 
 REQUEST_INTENT / TRANSMISSION_NOT_STARTED
@@ -133,6 +134,14 @@ reference and error class. A retry is not automatic: it needs a new `request_id`
 a new budget decision and a new run admission. Duplicate request IDs and any
 terminal-state rewrite are rejected. Usage is never decremented; network
 ambiguity after the durable transmission boundary remains consumed.
+
+`POST_RESPONSE_PROCESSING_FAILURE` is reserved for a completed, validated HTTP
+response whose later local processing failed. It is not a transport failure and
+is further classified by `error_classification` as
+`RAW_PERSISTENCE_FAILED`, `PROVIDER_QUOTA_RECONCILIATION_FAILED`, or
+`RECEIPT_PERSISTENCE_FAILED`. The ledger keeps the exact
+`response_received_at`; the immutable diagnostic is keyed by the same
+`request_id` under `failure-diagnostics/`.
 
 For a future non-2xx response, the adapter first makes the consumed
 `HTTP_FAILURE_AFTER_TRANSMISSION` ledger state durable, then writes a separate,
@@ -163,6 +172,34 @@ evidence only: it cannot become market RAW, a receipt or a transaction. A
 transport-diagnostic persistence failure leaves the consumed ledger fact and
 run-lock accounting authoritative and fails closed; it never permits a retry.
 
+For a completed 2xx response, the adapter validates the status, response time
+and text, then persists immutable market RAW before attempting quota
+reconciliation. If reconciliation reports missing, malformed, inconsistent or
+conflicting headers, the consumed ledger is terminalized as
+`POST_RESPONSE_PROCESSING_FAILURE` with
+`PROVIDER_QUOTA_RECONCILIATION_FAILED`, and an immutable
+`footballprediction-stage-d-post-response-failure-diagnostic/v1` artifact is
+written. The artifact contains the exact HTTP status and response timestamp,
+the RAW SHA/reference when RAW exists, fixed failure semantics, transport
+provenance only from a closed allowlist, and only bounded numeric observed
+quota fields. It never stores credentials, arbitrary headers, error objects,
+stack/cause data, response bodies or secret-bearing values.
+
+Quota reconciliation remains fail-closed: no receipt, canonical transaction,
+retry or follow-up quota probe is allowed after this failure, and the provider
+quota actual effect remains `UNKNOWN`. A successful RAW capture therefore does
+not imply quota authorization passed. A RAW persistence failure or receipt
+persistence failure uses the same post-response terminal state and diagnostic;
+the receipt remains unpublished, while any already-persisted RAW stays
+immutable. Diagnostic persistence failure cannot undo the durable consumed
+terminal state.
+
+This ordering is also the offline-recovery contract: a later bounded local
+adjudication may use the retained RAW, SHA, request identity, HTTP status and
+immutable capture timestamp without re-requesting the provider. It must remain
+idempotent, revalidate the evidence and quota/authority policy, and cannot
+publish a transaction merely because a RAW file exists.
+
 The consumed 2026-09-20 ECONNRESET attempt is historical evidence, not a
 retroactive instance of this new schema. Its local evidence proves only the
 conservative post-boundary transmission marker and the transport error; no
@@ -170,6 +207,16 @@ authoritative HTTP response, provider-quota effect, narrower failure phase or
 reset origin was retained. Its provider quota effect therefore remains
 `UNKNOWN`, local request budget remains consumed, no RAW/receipt/transaction
 exists, and the historical attempt must not be retried or rewritten.
+
+The subsequent owner-authorized canary is a separate immutable historical
+event: retained evidence proves `HTTP_RESPONSE_RECEIVED=YES`, the 2xx branch
+was reached and quota reconciliation failed after the response. The exact HTTP
+status and provider quota headers were not durably retained, so both remain
+`UNKNOWN` (the 2xx fact does not justify inferring status 200). The old code
+persisted neither RAW nor receipt nor transaction nor a post-response
+diagnostic; it remains consumed once, is not retroactively reconstructed and
+must not be retried. The post-response ordering and diagnostic contract above
+is prospective.
 
 Production component construction preserves this same boundary: the resolved HMAC
 preflight secret is an opaque, non-enumerable capability used only by the attestation
@@ -216,6 +263,12 @@ would cross per-run, daily, automated-monthly, safety-buffer, or stop-threshold
 limits. Ambiguous consumed requests and prior provider-quota divergence block
 the next cycle. It does not infer a plan, quota reset rule, cost, or available
 credit from historic headers.
+
+A consumed `POST_RESPONSE_PROCESSING_FAILURE` with
+`PROVIDER_QUOTA_RECONCILIATION_FAILED` is also a quota-governance blocker until
+the retained evidence is explicitly re-adjudicated. RAW preservation is data
+protection only; it never authorizes a new provider request or treats the
+provider quota actual effect as known.
 
 The current Owner-declared plan and governed cost facts are:
 

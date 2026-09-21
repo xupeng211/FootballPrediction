@@ -81,6 +81,14 @@
   passing only transient environment strings to the strict diagnostic-redaction boundary. The
   prior unconsumed candidate stopped locally with `INVALID_EVIDENCE_PERSISTENCE`; it is not
   reusable, and the repair authorizes neither a provider request nor a scheduler.
+- **Stage D post-response evidence semantics**：`IMPLEMENTED / PROSPECTIVE / NOT_AUTHORIZED`。
+  A completed 2xx response now persists immutable RAW before quota reconciliation. Missing,
+  malformed, inconsistent or conflicting quota evidence becomes
+  `POST_RESPONSE_PROCESSING_FAILURE` with bounded
+  `footballprediction-stage-d-post-response-failure-diagnostic/v1` evidence; quota safety stays
+  fail-closed, no receipt/transaction is published, and the provider is never retried. The
+  consumed historical 2xx response remains exact-status/quota-header `UNKNOWN` and is not
+  retroactively reconstructed.
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。
@@ -128,12 +136,14 @@
 Stage D's controlled adapter prospectively persists separate immutable,
 bounded/redacted diagnostics for non-2xx responses
 (`footballprediction-stage-d-failure-diagnostic/v1`) and post-boundary transport
-exceptions (`footballprediction-stage-d-transport-failure-diagnostic/v1`). Both
-are diagnostic evidence only, not canonical market RAW or a transaction; the
-request remains consumed and terminal with no retry. The historical 2026-09-20
-HTTP 403 and subsequent ECONNRESET attempt predate the corresponding retention
-path and remain diagnostically incomplete rather than being retroactively
-enriched; the latter's provider-quota effect remains UNKNOWN.
+exceptions (`footballprediction-stage-d-transport-failure-diagnostic/v1`). It now
+also preserves RAW before a completed-2xx quota decision and writes
+`footballprediction-stage-d-post-response-failure-diagnostic/v1` for later local
+processing failures. These artifacts are diagnostic/evidence only, not a canonical
+transaction; the request remains consumed and terminal with no retry. The latest
+historical 2xx canary proved response receipt and quota-reconciliation failure but
+did not retain exact status or quota headers, so those values remain UNKNOWN and
+are not retroactively enriched; post-epoch accounting is 4 consumed / 0 ambiguous.
 
 ## Domain: FotMob
 
