@@ -15,6 +15,7 @@ const {
     createStageDQuotaAdjudication,
     persistStageDQuotaAdjudication,
     readRequestLedger,
+    resolveStageDGitSourceBinding,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
 
 const REQUIRED_FLAGS = Object.freeze([
@@ -74,6 +75,16 @@ function helpText() {
     ].join('\n');
 }
 
+function resolveGitSourceBinding({ sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization = null } = {}) {
+    const runtimeSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization });
+    if (sourceMainSha !== runtimeSource.source_main_sha || sourceMainTreeSha !== runtimeSource.source_main_tree_sha) {
+        const error = new Error('source main commit/tree must match the current trusted runtime Git checkout');
+        error.code = 'INVALID_AUTHORIZATION';
+        throw error;
+    }
+    return runtimeSource;
+}
+
 function main(argv = process.argv.slice(2)) {
     const args = parseArgs(argv);
     if (args.help) {
@@ -83,13 +94,17 @@ function main(argv = process.argv.slice(2)) {
     const configSource = readRegularQuotaConfig(args['--quota-config']);
     const ledger = readRequestLedger({ ledgerRoot: path.resolve(args['--ledger-root']) });
     const adjudicatedAt = args['--adjudicated-at'] || new Date().toISOString();
+    const source = resolveGitSourceBinding({
+        sourceMainSha: args['--source-main-sha'],
+        sourceMainTreeSha: args['--source-main-tree'],
+    });
     const artifact = createStageDQuotaAdjudication({
         ledger,
         quotaConfig: configSource.value,
         quotaConfigSha256: sha256Text(configSource.bytes),
         historicalRequestId: args['--historical-request-id'],
-        sourceMainSha: args['--source-main-sha'],
-        sourceMainTreeSha: args['--source-main-tree'],
+        sourceMainSha: source.source_main_sha,
+        sourceMainTreeSha: source.source_main_tree_sha,
         adjudicatedAt,
         adjudicationId: args['--adjudication-id'],
     });
@@ -121,4 +136,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { REQUIRED_FLAGS, readRegularQuotaConfig, parseArgs, helpText, main };
+module.exports = { REQUIRED_FLAGS, readRegularQuotaConfig, parseArgs, helpText, resolveGitSourceBinding, main };

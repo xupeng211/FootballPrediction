@@ -5,6 +5,7 @@
 // govern whether an acquisition may happen; transaction-v1 remains the only
 // canonical evidence publication authority.
 const crypto = require('node:crypto');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const https = require('node:https');
 const path = require('node:path');
@@ -39,6 +40,18 @@ const RUN_LOCK_TRUST_FILE_PREFIX = '.stage-d-runtime-fence-';
 const RUN_LOCK_GENERATION_FILE_PREFIX = '.stage-d-ledger-generation-';
 const PROVIDER = 'the-odds-api';
 const MARKET_SCOPE = 'EPL_1X2_H2H';
+const TRUSTED_GIT_EXECUTABLE = '/usr/bin/git';
+const TRUSTED_GIT_ENVIRONMENT = Object.freeze({
+    PATH: '/usr/bin:/bin',
+    GIT_CONFIG_NOSYSTEM: '1',
+    GIT_CONFIG_GLOBAL: '/dev/null',
+    GIT_CONFIG_SYSTEM: '/dev/null',
+    LANG: 'C',
+    LC_ALL: 'C',
+});
+const TRUSTED_GIT_CONFIG_OVERRIDES = Object.freeze([
+    '-c', 'core.fsmonitor=false',
+]);
 const SUBSCRIPTION_TIER = 'starter_free';
 const QUOTA_EVIDENCE_CLASS = 'OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE';
 const QUOTA_RESET_RULE = 'PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET';
@@ -491,6 +504,98 @@ function parseCanonicalJsonBytes(bytes, label) {
 function assertSha256(value, label) {
     if (typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value)) fail('INVALID_AUTHORIZATION', `${label} must be a lowercase SHA-256`);
     return value;
+}
+
+function assertGitObjectSha(value, label) {
+    if (typeof value !== 'string' || !/^[a-f0-9]{40}$/.test(value)) fail('INVALID_AUTHORIZATION', `${label} must be a lowercase Git object SHA`);
+    return value;
+}
+
+// eslint-disable-next-line complexity -- trusted source verification intentionally enumerates each fail-closed provenance check.
+function resolveStageDGitSourceBinding({
+    repoRoot = path.resolve(__dirname, '../../..'),
+    testRuntimeAuthorization = null,
+} = {}) {
+    const testOnlySourceBinding = testRuntimeAuthorization === STAGE_D_TEST_RUNTIME_AUTHORIZATION;
+    if (testOnlySourceBinding && process.env.NODE_ENV !== 'test') {
+        fail('STAGE_D_NOT_AUTHORIZED', 'test runtime source binding is unavailable outside NODE_ENV=test');
+    }
+    const resolvedRepoRoot = path.resolve(repoRoot);
+    let trustedGitRoot;
+    let trustedGitStat;
+    try {
+        trustedGitRoot = fs.realpathSync.native(resolvedRepoRoot);
+        trustedGitStat = fs.lstatSync(TRUSTED_GIT_EXECUTABLE);
+    } catch {
+        fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted Git executable is unavailable');
+    }
+    if (!trustedGitStat.isFile() || trustedGitStat.uid !== 0 || (trustedGitStat.mode & 0o022) !== 0 || (trustedGitStat.mode & 0o111) === 0) {
+        fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted Git executable is not a root-owned, non-writable executable');
+    }
+    const runGit = (args, label) => {
+        try {
+            return execFileSync(TRUSTED_GIT_EXECUTABLE, [
+                ...TRUSTED_GIT_CONFIG_OVERRIDES,
+                '-c', `safe.directory=${trustedGitRoot}`,
+                '-C', resolvedRepoRoot,
+                ...args,
+            ], {
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'ignore'],
+                // Node's coverage runner adds NODE_V8_COVERAGE to a child
+                // environment.  Keep the policy immutable while handing the
+                // child-process API a mutable copy for that runtime addition.
+                env: { ...TRUSTED_GIT_ENVIRONMENT },
+            }).trim();
+        } catch {
+            fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', `unable to verify ${label} from the trusted runtime Git checkout`);
+        }
+    };
+    const resolveRevision = (revision, label) => runGit(['rev-parse', '--verify', '--end-of-options', revision], label);
+    if (!testOnlySourceBinding) {
+        let requestedRoot;
+        let gitRoot;
+        try {
+            requestedRoot = fs.realpathSync.native(resolvedRepoRoot);
+            gitRoot = fs.realpathSync.native(runGit(['rev-parse', '--show-toplevel'], 'runtime Git root'));
+        } catch {
+            fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted runtime Git checkout root is unavailable');
+        }
+        if (requestedRoot !== gitRoot) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'runtime source path is not the Git worktree being verified');
+        const status = runGit(['status', '--porcelain=v1', '--untracked-files=all'], 'runtime Git cleanliness');
+        if (status !== '') fail('QUOTA_ADJUDICATION_SOURCE_DIRTY', 'trusted runtime Git checkout has index or worktree changes');
+        const indexFlags = runGit(['ls-files', '-v', '-z'], 'runtime Git index flags');
+        const hiddenTrackedState = indexFlags
+            .split('\0')
+            .filter(Boolean)
+            .some(entry => /^[a-zS]/.test(entry));
+        if (hiddenTrackedState) fail('QUOTA_ADJUDICATION_SOURCE_DIRTY', 'trusted runtime Git checkout has hidden assume-unchanged or skip-worktree state');
+    }
+    const sourceMainSha = resolveRevision('HEAD^{commit}', 'runtime commit');
+    const sourceMainTreeSha = resolveRevision('HEAD^{tree}', 'runtime tree');
+    assertGitObjectSha(sourceMainSha, 'runtime source main SHA');
+    assertGitObjectSha(sourceMainTreeSha, 'runtime source main tree SHA');
+    if (!testOnlySourceBinding) {
+        const trustedMainSha = resolveRevision('refs/remotes/origin/main^{commit}', 'trusted origin/main commit');
+        const trustedMainTreeSha = resolveRevision('refs/remotes/origin/main^{tree}', 'trusted origin/main tree');
+        if (sourceMainSha !== trustedMainSha || sourceMainTreeSha !== trustedMainTreeSha) {
+            fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'runtime source commit/tree does not exactly match trusted origin/main');
+        }
+    }
+    return Object.freeze({ source_main_sha: sourceMainSha, source_main_tree_sha: sourceMainTreeSha });
+}
+
+function requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization = null } = {}) {
+    if (typeof expectedSourceMainSha !== 'string' || typeof expectedSourceMainTreeSha !== 'string') {
+        fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication admission requires the trusted runtime Git source binding');
+    }
+    assertGitObjectSha(expectedSourceMainSha, 'expected source main SHA');
+    assertGitObjectSha(expectedSourceMainTreeSha, 'expected source main tree SHA');
+    const runtimeSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization });
+    if (expectedSourceMainSha !== runtimeSource.source_main_sha || expectedSourceMainTreeSha !== runtimeSource.source_main_tree_sha) {
+        fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'expected source main commit/tree does not match the trusted runtime Git checkout');
+    }
+    return runtimeSource;
 }
 
 function isDirectChild(parent, child) {
@@ -1714,7 +1819,7 @@ function assertApprovedQuotaConfiguration(value, { now } = {}) {
 }
 
 // eslint-disable-next-line complexity -- local budget admission enumerates every ambiguous ledger state.
-function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null } = {}) {
+function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null } = {}) {
     if (!ledger || !ledger.epoch || !Array.isArray(ledger.requests)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'durable request ledger is unavailable');
     validateEpoch(ledger.epoch);
     const periodStart = Date.parse(config.period_start_at);
@@ -1755,12 +1860,15 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
     }
     if (unresolvedQuotaDivergences.length) {
         if (quotaAdjudication === null) fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
+        const expectedSource = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
         validateQuotaAdjudication(quotaAdjudication, {
             ledger,
             quotaConfig: config,
             quotaConfigSha256,
             quotaAdjudicationSha256,
             now,
+            expectedSourceMainSha: expectedSource.source_main_sha,
+            expectedSourceMainTreeSha: expectedSource.source_main_tree_sha,
         });
     } else if (quotaAdjudication !== null) {
         fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication is not permitted when the ledger has no unresolved provider divergence');
@@ -1768,7 +1876,7 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
     return summary;
 }
 
-function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, runId, now, requestedUnits = 1 }) {
+function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, runId, now, requestedUnits = 1 }) {
     const config = validateQuotaConfiguration(quotaConfig, { now });
     assertToken(runId, 'run_id');
     assertUtc(now, 'budget now');
@@ -1776,7 +1884,7 @@ function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, qu
     if (requestedUnits !== config.expected_request_cost_credits || requestedUnits > config.max_requests_per_stage_d_run) {
         fail('REQUEST_BUDGET_DENIED', 'expected provider request cost is not bounded by the cycle contract');
     }
-    assertBudgetLedgerValid(ledger, config, quotaAdjudication, { now, quotaConfigSha256, quotaAdjudicationSha256 });
+    assertBudgetLedgerValid(ledger, config, quotaAdjudication, { now, quotaConfigSha256, quotaAdjudicationSha256, expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
     const timestamped = ledger.requests.filter(request => requestIsConsumed(request) && request.transmitted_at !== null);
     const monthly = timestamped.filter(request => Date.parse(request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.transmitted_at) < Date.parse(config.period_end_at));
     const day = now.slice(0, 10);
@@ -1885,8 +1993,8 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     }
     if (!/^[a-f0-9]{64}$/.test(value.ledger_last_entry_hash || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ledger hash is invalid');
     assertSha256(value.quota_config_sha256, 'quota adjudication quota_config_sha256');
-    assertSha256(value.source_main_sha, 'quota adjudication source_main_sha');
-    assertSha256(value.source_main_tree_sha, 'quota adjudication source_main_tree_sha');
+    assertGitObjectSha(value.source_main_sha, 'quota adjudication source_main_sha');
+    assertGitObjectSha(value.source_main_tree_sha, 'quota adjudication source_main_tree_sha');
     assertExactKeys(value.evidence_references, ['classes', 'ledger_request_ids'], 'quota adjudication evidence_references');
     if (!Array.isArray(value.evidence_references.classes) || value.evidence_references.classes.length < 1 || value.evidence_references.classes.length > 16) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence classes are invalid');
     if (!Array.isArray(value.evidence_references.ledger_request_ids) || value.evidence_references.ledger_request_ids.length < 1 || value.evidence_references.ledger_request_ids.length > 128) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence request IDs are invalid');
@@ -1898,8 +2006,16 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (value.billing_period_id !== config.billing_period_id) fail('QUOTA_ADJUDICATION_PERIOD_MISMATCH', 'quota adjudication billing period does not match the governed quota configuration');
     if (typeof quotaConfigSha256 !== 'string' || value.quota_config_sha256 !== quotaConfigSha256) fail('QUOTA_ADJUDICATION_CONFIG_MISMATCH', 'quota adjudication quota configuration hash does not match the governed configuration');
     if (typeof quotaAdjudicationSha256 === 'string' && sha256Text(canonicalBytes(value)) !== quotaAdjudicationSha256) fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'quota adjudication bytes do not match the governed artifact hash');
-    if (expectedSourceMainSha !== null && value.source_main_sha !== expectedSourceMainSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main SHA does not match the expected source');
-    if (expectedSourceMainTreeSha !== null && value.source_main_tree_sha !== expectedSourceMainTreeSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main tree does not match the expected source');
+    if ((expectedSourceMainSha === null) !== (expectedSourceMainTreeSha === null)) {
+        fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source binding requires both expected commit and tree objects');
+    }
+    if (expectedSourceMainSha !== null) {
+        assertGitObjectSha(expectedSourceMainSha, 'expected quota adjudication source main SHA');
+        assertGitObjectSha(expectedSourceMainTreeSha, 'expected quota adjudication source main tree SHA');
+        if (value.source_main_sha !== expectedSourceMainSha || value.source_main_tree_sha !== expectedSourceMainTreeSha) {
+            fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source commit/tree does not match the trusted runtime source');
+        }
+    }
     if (!ledger || value.accounting_epoch_id !== ledger.epoch?.epoch_id) fail('QUOTA_ADJUDICATION_EPOCH_MISMATCH', 'quota adjudication accounting epoch does not match the durable ledger');
     if (value.ledger_entry_count !== ledger.entries.length || value.ledger_last_entry_hash !== ledger.last_entry_hash) fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication does not bind the current append-only ledger generation');
     const summary = ledgerUsageSummary(ledger);
@@ -1930,9 +2046,10 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     });
 }
 
-function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256, historicalRequestId, sourceMainSha, sourceMainTreeSha, adjudicatedAt, adjudicationId } = {}) {
+function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256, historicalRequestId, sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization = null, adjudicatedAt, adjudicationId } = {}) {
     const now = adjudicatedAt;
     const config = validateQuotaConfiguration(quotaConfig, { now });
+    const source = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha: sourceMainSha, expectedSourceMainTreeSha: sourceMainTreeSha, testRuntimeAuthorization });
     const summary = ledgerUsageSummary(ledger);
     const unresolved = ledger.requests.filter(request => request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
     const historical = ledger.requests.find(request => request.request_id === historicalRequestId);
@@ -1971,16 +2088,24 @@ function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256,
             ledger_request_ids: ledger.requests.map(request => request.request_id).sort(),
         },
         quota_config_sha256: quotaConfigSha256,
-        source_main_sha: sourceMainSha,
-        source_main_tree_sha: sourceMainTreeSha,
+        source_main_sha: source.source_main_sha,
+        source_main_tree_sha: source.source_main_tree_sha,
         adjudication_policy_version: QUOTA_ADJUDICATION_POLICY_VERSION,
     };
-    return validateQuotaAdjudication(artifact, { ledger, quotaConfig: config, quotaConfigSha256, now });
+    return validateQuotaAdjudication(artifact, {
+        ledger,
+        quotaConfig: config,
+        quotaConfigSha256,
+        expectedSourceMainSha: source.source_main_sha,
+        expectedSourceMainTreeSha: source.source_main_tree_sha,
+        now,
+    });
 }
 
-function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, now } = {}) {
+function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, now } = {}) {
     if (typeof quotaAdjudicationPath !== 'string' || !quotaAdjudicationPath.trim()) fail('INVALID_QUOTA_ADJUDICATION', 'quotaAdjudicationPath is required');
     if (expectedSha256 !== null) assertSha256(expectedSha256, 'quota adjudication sha256');
+    const expectedSource = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
     const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
     try {
         const resolvedPath = path.resolve(quotaAdjudicationPath);
@@ -1999,7 +2124,7 @@ function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLock
         const observedSha256 = sha256Text(observed.bytes);
         if (expectedSha256 !== null && observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the bytes read from the governed artifact');
         const value = parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication');
-        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, now }), sha256: observedSha256, path: resolvedPath });
+        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, path: resolvedPath });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);
     }
@@ -2946,6 +3071,9 @@ async function executeStageDControlledInitialization(options = {}) {
     });
     const ledger = readRequestLedger({ ledgerRoot: path.resolve(ledgerRoot) });
     const normalizedQuotaConfig = createStageDProductionQuotaConfiguration(quotaSource.value, { now });
+    const quotaAdjudicationGitSource = authorizationRecord.authorization.quota_adjudication_sha256 === null
+        ? null
+        : resolveStageDGitSourceBinding();
     const quotaAdjudicationSource = authorizationRecord.authorization.quota_adjudication_sha256 === null
         ? null
         : readBoundQuotaAdjudication({
@@ -2956,6 +3084,8 @@ async function executeStageDControlledInitialization(options = {}) {
             ledger,
             quotaConfig: normalizedQuotaConfig,
             quotaConfigSha256: quotaSource.sha256,
+            expectedSourceMainSha: quotaAdjudicationGitSource.source_main_sha,
+            expectedSourceMainTreeSha: quotaAdjudicationGitSource.source_main_tree_sha,
             now,
         });
     const quotaAdjudication = quotaAdjudicationSource?.value || null;
@@ -3049,6 +3179,8 @@ async function executeStageDControlledInitialization(options = {}) {
         requestId: validatedAuthorization.authorization.request_id,
         quotaAdjudication: quotaAdjudicationSource?.value || null,
         quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
+        expectedSourceMainSha: quotaAdjudicationGitSource?.source_main_sha || null,
+        expectedSourceMainTreeSha: quotaAdjudicationGitSource?.source_main_tree_sha || null,
         runtimeAuthorization: createStageDProductionRuntimeAuthorization(),
         transport: boundTransport,
         evidencePersistence: boundEvidencePersistence,
@@ -3102,6 +3234,8 @@ async function executeStageDOneCycle({
     quotaConfigSha256 = null,
     quotaAdjudication = null,
     quotaAdjudicationSha256 = null,
+    expectedSourceMainSha = null,
+    expectedSourceMainTreeSha = null,
     runId,
     requestId,
     runtimeAuthorization = null,
@@ -3202,6 +3336,8 @@ async function executeStageDOneCycle({
             quotaConfigSha256,
             quotaAdjudication,
             quotaAdjudicationSha256,
+            expectedSourceMainSha,
+            expectedSourceMainTreeSha,
             runId,
             now: budgetNow,
             requestedUnits: EXPECTED_REQUEST_COST_CREDITS,
@@ -3515,7 +3651,7 @@ async function executeStageDOneCycle({
     return cycleResult;
 }
 
-function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, runId, now, runLockTrustRoot } = {}) {
+function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, runId, now, runLockTrustRoot } = {}) {
     assertPlainObject(authoritySnapshot, 'authoritySnapshot');
     if (!/^tx_[a-f0-9]{64}$/.test(authoritySnapshot.head_transaction_id || '') || !/^[a-f0-9]{64}$/.test(authoritySnapshot.state_hash || '')) {
         fail('AUTHORITY_NOT_READY', 'canonical Stage C authority must reopen before a Stage D cycle is planned');
@@ -3548,6 +3684,8 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
                 quotaConfigSha256,
                 quotaAdjudication,
                 quotaAdjudicationSha256,
+                expectedSourceMainSha,
+                expectedSourceMainTreeSha,
                 runId,
                 now,
                 requestedUnits: EXPECTED_REQUEST_COST_CREDITS,
@@ -3624,6 +3762,7 @@ module.exports = {
     QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION,
     QUOTA_ADJUDICATION_USAGE_BASIS,
     QUOTA_ADJUDICATION_FILE_PATTERN,
+    resolveStageDGitSourceBinding,
     POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,

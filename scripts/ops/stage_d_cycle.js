@@ -12,6 +12,7 @@ const {
     initializeRequestAccountingEpoch,
     readBoundQuotaAdjudication,
     readRequestLedger,
+    resolveStageDGitSourceBinding,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
 const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
 
@@ -78,9 +79,11 @@ function main() {
     const quotaConfigSource = readQuotaConfigSource(valueAfter('--quota-config'));
     const quotaConfig = quotaConfigSource?.value || null;
     const ledger = readRequestLedger({ ledgerRoot: resolvedLedgerRoot });
-    const quotaAdjudicationSource = valueAfter('--quota-adjudication')
+    const quotaAdjudicationPath = valueAfter('--quota-adjudication');
+    const quotaAdjudicationGitSource = quotaAdjudicationPath ? resolveStageDGitSourceBinding() : null;
+    const quotaAdjudicationSource = quotaAdjudicationPath
         ? readBoundQuotaAdjudication({
-            quotaAdjudicationPath: path.resolve(valueAfter('--quota-adjudication')),
+            quotaAdjudicationPath: path.resolve(quotaAdjudicationPath),
             ledgerRoot: resolvedLedgerRoot,
             runLockTrustRoot,
             // The descriptor-bound reader computes the observed hash from the
@@ -90,6 +93,8 @@ function main() {
             ledger,
             quotaConfig,
             quotaConfigSha256: quotaConfigSource?.sha256 || null,
+            expectedSourceMainSha: quotaAdjudicationGitSource.source_main_sha,
+            expectedSourceMainTreeSha: quotaAdjudicationGitSource.source_main_tree_sha,
             now,
         })
         : null;
@@ -101,6 +106,8 @@ function main() {
         quotaConfigSha256: quotaConfigSource?.sha256 || null,
         quotaAdjudication: quotaAdjudicationSource?.value || null,
         quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
+        expectedSourceMainSha: quotaAdjudicationGitSource?.source_main_sha || null,
+        expectedSourceMainTreeSha: quotaAdjudicationGitSource?.source_main_tree_sha || null,
         runId: valueAfter('--run-id') || `stage-d-dry-run-${Date.now()}`,
         now,
         runLockTrustRoot,
