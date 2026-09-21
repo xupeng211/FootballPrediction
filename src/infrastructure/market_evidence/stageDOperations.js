@@ -493,6 +493,11 @@ function assertSha256(value, label) {
     return value;
 }
 
+function assertGitObjectSha(value, label) {
+    if (typeof value !== 'string' || !/^[a-f0-9]{40}$/.test(value)) fail('INVALID_AUTHORIZATION', `${label} must be a lowercase Git object SHA`);
+    return value;
+}
+
 function isDirectChild(parent, child) {
     return path.dirname(path.resolve(child)) === path.resolve(parent);
 }
@@ -1885,8 +1890,8 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     }
     if (!/^[a-f0-9]{64}$/.test(value.ledger_last_entry_hash || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ledger hash is invalid');
     assertSha256(value.quota_config_sha256, 'quota adjudication quota_config_sha256');
-    assertSha256(value.source_main_sha, 'quota adjudication source_main_sha');
-    assertSha256(value.source_main_tree_sha, 'quota adjudication source_main_tree_sha');
+    assertGitObjectSha(value.source_main_sha, 'quota adjudication source_main_sha');
+    assertGitObjectSha(value.source_main_tree_sha, 'quota adjudication source_main_tree_sha');
     assertExactKeys(value.evidence_references, ['classes', 'ledger_request_ids'], 'quota adjudication evidence_references');
     if (!Array.isArray(value.evidence_references.classes) || value.evidence_references.classes.length < 1 || value.evidence_references.classes.length > 16) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence classes are invalid');
     if (!Array.isArray(value.evidence_references.ledger_request_ids) || value.evidence_references.ledger_request_ids.length < 1 || value.evidence_references.ledger_request_ids.length > 128) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence request IDs are invalid');

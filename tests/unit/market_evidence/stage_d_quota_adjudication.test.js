@@ -29,8 +29,8 @@ const AUTHORITY = Object.freeze({
 });
 const START = '2026-09-08T05:56:56Z';
 const NOW = '2026-09-08T08:00:00Z';
-const SOURCE_MAIN_SHA = 'c'.repeat(64);
-const SOURCE_MAIN_TREE_SHA = 'd'.repeat(64);
+const SOURCE_MAIN_SHA = 'c'.repeat(40);
+const SOURCE_MAIN_TREE_SHA = 'd'.repeat(40);
 
 function canonicalSha(value) {
     return sha256Text(`${stableStringify(value)}\n`);
@@ -139,6 +139,28 @@ test('unresolved provider quota divergence remains a hard admission block withou
     assert.throws(
         () => assertRequestBudget({ ledger, quotaConfig: config, runId: 'next-offline-run', now: NOW }),
         error => error.code === 'PROVIDER_QUOTA_RECONCILIATION_REQUIRED',
+    );
+});
+
+test('source provenance binds Git commit and tree object IDs, not content SHA-256 values', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const binding = buildArtifact(ctx, config);
+    assert.equal(binding.artifact.source_main_sha, SOURCE_MAIN_SHA);
+    assert.equal(binding.artifact.source_main_tree_sha, SOURCE_MAIN_TREE_SHA);
+    assert.throws(
+        () => createStageDQuotaAdjudication({
+            ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
+            quotaConfig: config,
+            quotaConfigSha256: canonicalSha(config),
+            historicalRequestId: 'historical-quota-request',
+            sourceMainSha: 'e'.repeat(64),
+            sourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+            adjudicatedAt: NOW,
+            adjudicationId: 'sqa_test-invalid-source-sha',
+        }),
+        error => error.code === 'INVALID_AUTHORIZATION',
     );
 });
 

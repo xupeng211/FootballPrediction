@@ -296,6 +296,12 @@ classification is
 `PROVIDER_QUOTA_ACTUAL_EFFECT=UNKNOWN`; it never invents provider headers or
 rewrites a ledger entry.
 
+The artifact's `source_main_sha` and `source_main_tree_sha` fields bind the
+exact 40-character lowercase Git commit and tree object IDs used for the
+runtime. They are not content SHA-256 fields; the quota configuration,
+adjudication bytes and other file-evidence hashes retain their separate
+64-character SHA-256 contracts.
+
 For the governed one-credit request model, the admission bound is the maximum
 of the last trusted provider `used` value, when one exists, and the exact local
 consumed units for the current period. The bound is checked against the
