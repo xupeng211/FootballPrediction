@@ -523,7 +523,11 @@ function requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expected
     }
     assertGitObjectSha(expectedSourceMainSha, 'expected source main SHA');
     assertGitObjectSha(expectedSourceMainTreeSha, 'expected source main tree SHA');
-    return Object.freeze({ source_main_sha: expectedSourceMainSha, source_main_tree_sha: expectedSourceMainTreeSha });
+    const runtimeSource = resolveStageDGitSourceBinding();
+    if (expectedSourceMainSha !== runtimeSource.source_main_sha || expectedSourceMainTreeSha !== runtimeSource.source_main_tree_sha) {
+        fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'expected source main commit/tree does not match the trusted runtime Git checkout');
+    }
+    return runtimeSource;
 }
 
 function isDirectChild(parent, child) {
@@ -1969,6 +1973,7 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
 function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256, historicalRequestId, sourceMainSha, sourceMainTreeSha, adjudicatedAt, adjudicationId } = {}) {
     const now = adjudicatedAt;
     const config = validateQuotaConfiguration(quotaConfig, { now });
+    const source = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha: sourceMainSha, expectedSourceMainTreeSha: sourceMainTreeSha });
     const summary = ledgerUsageSummary(ledger);
     const unresolved = ledger.requests.filter(request => request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
     const historical = ledger.requests.find(request => request.request_id === historicalRequestId);
@@ -2007,11 +2012,18 @@ function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256,
             ledger_request_ids: ledger.requests.map(request => request.request_id).sort(),
         },
         quota_config_sha256: quotaConfigSha256,
-        source_main_sha: sourceMainSha,
-        source_main_tree_sha: sourceMainTreeSha,
+        source_main_sha: source.source_main_sha,
+        source_main_tree_sha: source.source_main_tree_sha,
         adjudication_policy_version: QUOTA_ADJUDICATION_POLICY_VERSION,
     };
-    return validateQuotaAdjudication(artifact, { ledger, quotaConfig: config, quotaConfigSha256, now });
+    return validateQuotaAdjudication(artifact, {
+        ledger,
+        quotaConfig: config,
+        quotaConfigSha256,
+        expectedSourceMainSha: source.source_main_sha,
+        expectedSourceMainTreeSha: source.source_main_tree_sha,
+        now,
+    });
 }
 
 function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, now } = {}) {

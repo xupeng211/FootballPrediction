@@ -31,8 +31,9 @@ const AUTHORITY = Object.freeze({
 });
 const START = '2026-09-08T05:56:56Z';
 const NOW = '2026-09-08T08:00:00Z';
-const SOURCE_MAIN_SHA = 'c'.repeat(40);
-const SOURCE_MAIN_TREE_SHA = 'd'.repeat(40);
+const SOURCE_BINDING = resolveStageDGitSourceBinding();
+const SOURCE_MAIN_SHA = SOURCE_BINDING.source_main_sha;
+const SOURCE_MAIN_TREE_SHA = SOURCE_BINDING.source_main_tree_sha;
 
 function canonicalSha(value) {
     return sha256Text(`${stableStringify(value)}\n`);
@@ -135,7 +136,7 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
     };
 }
 
-test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', () => {
+test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', t => {
     const currentSource = resolveStageDGitSourceBinding();
     const runtimeSource = resolveGitSourceBinding({
         sourceMainSha: currentSource.source_main_sha,
@@ -150,6 +151,17 @@ test('runtime source binding resolves a real commit/tree pair and rejects unknow
     assert.throws(
         () => resolveGitSourceBinding({ sourceMainSha: runtimeSource.source_main_sha, sourceMainTreeSha: 'f'.repeat(40) }),
         error => error.code === 'INVALID_AUTHORIZATION',
+    );
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const binding = buildArtifact(ctx, config);
+    assert.throws(
+        () => assertRequestBudget(budgetArgs(ctx, config, binding, {
+            expectedSourceMainSha: 'a'.repeat(40),
+            expectedSourceMainTreeSha: 'b'.repeat(40),
+        })),
+        error => error.code === 'QUOTA_ADJUDICATION_SOURCE_MISMATCH',
     );
 });
 
