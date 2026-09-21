@@ -40,6 +40,15 @@ const RUN_LOCK_TRUST_FILE_PREFIX = '.stage-d-runtime-fence-';
 const RUN_LOCK_GENERATION_FILE_PREFIX = '.stage-d-ledger-generation-';
 const PROVIDER = 'the-odds-api';
 const MARKET_SCOPE = 'EPL_1X2_H2H';
+const TRUSTED_GIT_EXECUTABLE = '/usr/bin/git';
+const TRUSTED_GIT_ENVIRONMENT = Object.freeze({
+    PATH: '/usr/bin:/bin',
+    GIT_CONFIG_NOSYSTEM: '1',
+    GIT_CONFIG_GLOBAL: '/dev/null',
+    GIT_CONFIG_SYSTEM: '/dev/null',
+    LANG: 'C',
+    LC_ALL: 'C',
+});
 const SUBSCRIPTION_TIER = 'starter_free';
 const QUOTA_EVIDENCE_CLASS = 'OWNER_DECLARATION_PLUS_PUBLIC_PLAN_EVIDENCE';
 const QUOTA_RESET_RULE = 'PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET';
@@ -502,11 +511,21 @@ function assertGitObjectSha(value, label) {
 function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../../..') } = {}) {
     const testOnlySourceBinding = process.env.NODE_ENV === 'test';
     const resolvedRepoRoot = path.resolve(repoRoot);
+    let trustedGitStat;
+    try {
+        trustedGitStat = fs.lstatSync(TRUSTED_GIT_EXECUTABLE);
+    } catch {
+        fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted Git executable is unavailable');
+    }
+    if (!trustedGitStat.isFile() || trustedGitStat.uid !== 0 || (trustedGitStat.mode & 0o022) !== 0 || (trustedGitStat.mode & 0o111) === 0) {
+        fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted Git executable is not a root-owned, non-writable executable');
+    }
     const runGit = (args, label) => {
         try {
-            return execFileSync('git', ['-C', resolvedRepoRoot, ...args], {
+            return execFileSync(TRUSTED_GIT_EXECUTABLE, ['-C', resolvedRepoRoot, ...args], {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
+                env: TRUSTED_GIT_ENVIRONMENT,
             }).trim();
         } catch {
             fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', `unable to verify ${label} from the trusted runtime Git checkout`);

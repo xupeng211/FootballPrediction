@@ -165,6 +165,24 @@ test('runtime source binding resolves a real commit/tree pair and rejects unknow
     );
 });
 
+test('runtime source binding ignores a PATH Git shim', t => {
+    const shimRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-git-shim-'));
+    const markerPath = path.join(shimRoot, 'invoked');
+    const shimPath = path.join(shimRoot, 'git');
+    fs.writeFileSync(shimPath, `#!/bin/sh\nprintf invoked > ${JSON.stringify(markerPath)}\nprintf '%s\\n' ${'f'.repeat(40)}\n`, { mode: 0o755 });
+    fs.chmodSync(shimPath, 0o755);
+    const originalPath = process.env.PATH;
+    t.after(() => {
+        process.env.PATH = originalPath;
+        fs.rmSync(shimRoot, { recursive: true, force: true });
+    });
+    process.env.PATH = `${shimRoot}${path.delimiter}${originalPath || ''}`;
+    const resolved = resolveStageDGitSourceBinding();
+    assert.equal(resolved.source_main_sha, SOURCE_MAIN_SHA);
+    assert.equal(resolved.source_main_tree_sha, SOURCE_MAIN_TREE_SHA);
+    assert.equal(fs.existsSync(markerPath), false);
+});
+
 test('unresolved provider quota divergence remains a hard admission block without adjudication', t => {
     const ctx = setup(t);
     const config = quotaConfig();
