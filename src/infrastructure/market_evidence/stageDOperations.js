@@ -527,7 +527,10 @@ function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../
             return execFileSync(TRUSTED_GIT_EXECUTABLE, ['-c', `safe.directory=${trustedGitRoot}`, '-C', resolvedRepoRoot, ...args], {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
-                env: TRUSTED_GIT_ENVIRONMENT,
+                // Node's coverage runner adds NODE_V8_COVERAGE to a child
+                // environment.  Keep the policy immutable while handing the
+                // child-process API a mutable copy for that runtime addition.
+                env: { ...TRUSTED_GIT_ENVIRONMENT },
             }).trim();
         } catch {
             fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', `unable to verify ${label} from the trusted runtime Git checkout`);
