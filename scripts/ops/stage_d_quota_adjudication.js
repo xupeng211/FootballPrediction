@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 
+// Lifecycle: permanent — bounded offline Stage D quota-adjudication entrypoint.
+// Owner: Stage D continuous-operations maintainers (see .github/CODEOWNERS).
+
 // Offline-only Stage D quota adjudication.  This command reads the sealed local
 // ledger and quota configuration, creates a conservative UNKNOWN-provider-effect
 // artifact, and writes it create-only into the explicit runtime trust root.  It
