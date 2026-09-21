@@ -511,8 +511,10 @@ function assertGitObjectSha(value, label) {
 function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../../..') } = {}) {
     const testOnlySourceBinding = process.env.NODE_ENV === 'test';
     const resolvedRepoRoot = path.resolve(repoRoot);
+    let trustedGitRoot;
     let trustedGitStat;
     try {
+        trustedGitRoot = fs.realpathSync.native(resolvedRepoRoot);
         trustedGitStat = fs.lstatSync(TRUSTED_GIT_EXECUTABLE);
     } catch {
         fail('QUOTA_ADJUDICATION_SOURCE_UNAVAILABLE', 'trusted Git executable is unavailable');
@@ -522,7 +524,7 @@ function resolveStageDGitSourceBinding({ repoRoot = path.resolve(__dirname, '../
     }
     const runGit = (args, label) => {
         try {
-            return execFileSync(TRUSTED_GIT_EXECUTABLE, ['-C', resolvedRepoRoot, ...args], {
+            return execFileSync(TRUSTED_GIT_EXECUTABLE, ['-c', `safe.directory=${trustedGitRoot}`, '-C', resolvedRepoRoot, ...args], {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
                 env: TRUSTED_GIT_ENVIRONMENT,
