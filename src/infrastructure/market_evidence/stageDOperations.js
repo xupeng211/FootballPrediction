@@ -1719,7 +1719,17 @@ function assertBudgetLedgerValid(ledger, config) {
         if (request.terminal_state === 'RESPONSE_RECEIVED' && request.provider_quota === null) {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a successful response has no reconciled provider quota evidence');
         }
-        if (request.terminal_state === 'POST_RESPONSE_PROCESSING_FAILURE' && request.provider_quota === null) {
+        // A quota-reconciliation failure is a valid consumed terminal state
+        // even though provider_quota is deliberately null and the provider
+        // effect remains unknown.  Other post-response failures still require
+        // a reconciled quota record before they can be treated as ordinary
+        // ledger outcomes.  The error-classification guard below blocks the
+        // next budget admission for the unreconciled quota case.
+        if (
+            request.terminal_state === 'POST_RESPONSE_PROCESSING_FAILURE' &&
+            request.provider_quota === null &&
+            request.error_classification !== 'PROVIDER_QUOTA_RECONCILIATION_FAILED'
+        ) {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a post-response failure has no reconciled provider quota evidence');
         }
         if (request.error_classification?.startsWith('PROVIDER_QUOTA_')) {
