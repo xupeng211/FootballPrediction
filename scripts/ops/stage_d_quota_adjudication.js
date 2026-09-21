@@ -75,8 +75,8 @@ function helpText() {
     ].join('\n');
 }
 
-function resolveGitSourceBinding({ sourceMainSha, sourceMainTreeSha } = {}) {
-    const runtimeSource = resolveStageDGitSourceBinding();
+function resolveGitSourceBinding({ sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization = null } = {}) {
+    const runtimeSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization });
     if (sourceMainSha !== runtimeSource.source_main_sha || sourceMainTreeSha !== runtimeSource.source_main_tree_sha) {
         const error = new Error('source main commit/tree must match the current trusted runtime Git checkout');
         error.code = 'INVALID_AUTHORIZATION';

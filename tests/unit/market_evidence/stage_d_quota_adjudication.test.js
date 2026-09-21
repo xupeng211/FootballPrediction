@@ -19,6 +19,7 @@ const {
     ledgerUsageSummary,
     assertRequestBudget,
     createStageDTestQuotaConfiguration,
+    createStageDTestRuntimeAuthorization,
     createStageDQuotaAdjudication,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
@@ -32,7 +33,8 @@ const AUTHORITY = Object.freeze({
 });
 const START = '2026-09-08T05:56:56Z';
 const NOW = '2026-09-08T08:00:00Z';
-const SOURCE_BINDING = resolveStageDGitSourceBinding();
+const TEST_RUNTIME_AUTHORIZATION = createStageDTestRuntimeAuthorization();
+const SOURCE_BINDING = resolveStageDGitSourceBinding({ testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION });
 const SOURCE_MAIN_SHA = SOURCE_BINDING.source_main_sha;
 const SOURCE_MAIN_TREE_SHA = SOURCE_BINDING.source_main_tree_sha;
 
@@ -112,6 +114,7 @@ function buildArtifact(ctx, config, ledger = readRequestLedger({ ledgerRoot: ctx
         historicalRequestId: 'historical-quota-request',
         sourceMainSha: SOURCE_MAIN_SHA,
         sourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
         adjudicatedAt: NOW,
         adjudicationId: 'sqa_test-current-epoch',
     });
@@ -131,6 +134,7 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
         quotaAdjudicationSha256: binding?.artifactSha256 || null,
         expectedSourceMainSha: SOURCE_MAIN_SHA,
         expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
         runId: 'next-offline-run',
         now: NOW,
         ...overrides,
@@ -138,19 +142,20 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
 }
 
 test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', t => {
-    const currentSource = resolveStageDGitSourceBinding();
+    const currentSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION });
     const runtimeSource = resolveGitSourceBinding({
         sourceMainSha: currentSource.source_main_sha,
         sourceMainTreeSha: currentSource.source_main_tree_sha,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
     });
     assert.match(runtimeSource.source_main_sha, /^[a-f0-9]{40}$/);
     assert.match(runtimeSource.source_main_tree_sha, /^[a-f0-9]{40}$/);
     assert.throws(
-        () => resolveGitSourceBinding({ sourceMainSha: 'f'.repeat(40), sourceMainTreeSha: runtimeSource.source_main_tree_sha }),
+        () => resolveGitSourceBinding({ sourceMainSha: 'f'.repeat(40), sourceMainTreeSha: runtimeSource.source_main_tree_sha, testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION }),
         error => error.code === 'INVALID_AUTHORIZATION',
     );
     assert.throws(
-        () => resolveGitSourceBinding({ sourceMainSha: runtimeSource.source_main_sha, sourceMainTreeSha: 'f'.repeat(40) }),
+        () => resolveGitSourceBinding({ sourceMainSha: runtimeSource.source_main_sha, sourceMainTreeSha: 'f'.repeat(40), testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION }),
         error => error.code === 'INVALID_AUTHORIZATION',
     );
     const ctx = setup(t);
@@ -178,7 +183,7 @@ test('runtime source binding ignores a PATH Git shim', t => {
         fs.rmSync(shimRoot, { recursive: true, force: true });
     });
     process.env.PATH = `${shimRoot}${path.delimiter}${originalPath || ''}`;
-    const resolved = resolveStageDGitSourceBinding();
+    const resolved = resolveStageDGitSourceBinding({ testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION });
     assert.equal(resolved.source_main_sha, SOURCE_MAIN_SHA);
     assert.equal(resolved.source_main_tree_sha, SOURCE_MAIN_TREE_SHA);
     assert.equal(fs.existsSync(markerPath), false);
@@ -213,6 +218,55 @@ test('trusted source checks disable checkout-local fsmonitor commands', t => {
     const resolved = resolveStageDGitSourceBinding({ repoRoot });
     assert.equal(resolved.source_main_sha, commitSha);
     assert.equal(fs.existsSync(markerPath), false);
+});
+
+test('NODE_ENV=test cannot disable trusted source cleanliness checks', t => {
+    const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-test-env-source-binding-'));
+    const repoRoot = path.join(sandboxRoot, 'repo');
+    fs.mkdirSync(repoRoot, { mode: 0o700 });
+    t.after(() => fs.rmSync(sandboxRoot, { recursive: true, force: true }));
+
+    const git = (args) => execFileSync('/usr/bin/git', ['-C', repoRoot, ...args], { encoding: 'utf8' }).trim();
+    git(['init', '-q', '--initial-branch=main']);
+    git(['config', 'user.email', 'stage-d-test@example.invalid']);
+    git(['config', 'user.name', 'Stage D Test']);
+    const fixturePath = path.join(repoRoot, 'fixture.txt');
+    fs.writeFileSync(fixturePath, 'fixture\n', 'utf8');
+    git(['add', 'fixture.txt']);
+    git(['commit', '-q', '-m', 'fixture']);
+    const commitSha = git(['rev-parse', 'HEAD']);
+    git(['update-ref', 'refs/remotes/origin/main', commitSha]);
+    fs.writeFileSync(fixturePath, 'tampered\n', 'utf8');
+
+    assert.throws(
+        () => resolveStageDGitSourceBinding({ repoRoot }),
+        error => error.code === 'QUOTA_ADJUDICATION_SOURCE_DIRTY',
+    );
+});
+
+test('assume-unchanged and skip-worktree flags cannot hide source changes', t => {
+    const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-hidden-index-state-'));
+    const repoRoot = path.join(sandboxRoot, 'repo');
+    fs.mkdirSync(repoRoot, { mode: 0o700 });
+    t.after(() => fs.rmSync(sandboxRoot, { recursive: true, force: true }));
+
+    const git = (args) => execFileSync('/usr/bin/git', ['-C', repoRoot, ...args], { encoding: 'utf8' }).trim();
+    git(['init', '-q', '--initial-branch=main']);
+    git(['config', 'user.email', 'stage-d-test@example.invalid']);
+    git(['config', 'user.name', 'Stage D Test']);
+    const fixturePath = path.join(repoRoot, 'fixture.txt');
+    fs.writeFileSync(fixturePath, 'fixture\n', 'utf8');
+    git(['add', 'fixture.txt']);
+    git(['commit', '-q', '-m', 'fixture']);
+    const commitSha = git(['rev-parse', 'HEAD']);
+    git(['update-ref', 'refs/remotes/origin/main', commitSha]);
+    git(['update-index', '--skip-worktree', 'fixture.txt']);
+    fs.writeFileSync(fixturePath, 'tampered\n', 'utf8');
+
+    assert.throws(
+        () => resolveStageDGitSourceBinding({ repoRoot }),
+        error => error.code === 'QUOTA_ADJUDICATION_SOURCE_DIRTY',
+    );
 });
 
 test('unresolved provider quota divergence remains a hard admission block without adjudication', t => {
@@ -397,6 +451,7 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
         quotaConfigSha256: binding.quotaConfigSha256,
         expectedSourceMainSha: SOURCE_MAIN_SHA,
         expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
         now: NOW,
     });
     assert.equal(loaded.sha256, binding.artifactSha256);
@@ -412,6 +467,7 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
         quotaConfigSha256: binding.quotaConfigSha256,
         expectedSourceMainSha: SOURCE_MAIN_SHA,
         expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
         now: NOW,
     });
     assert.equal(loadedWithoutCallerHash.sha256, binding.artifactSha256);
@@ -430,6 +486,7 @@ test('persisted adjudication is immutable, hash-bound, path-safe, and rejects a 
             quotaConfigSha256: binding.quotaConfigSha256,
             expectedSourceMainSha: SOURCE_MAIN_SHA,
             expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+            testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
             now: NOW,
         }),
         error => error.code === 'QUOTA_ADJUDICATION_CONFLICT',
@@ -455,6 +512,7 @@ test('writable and symlink adjudication paths are rejected before admission', t 
             quotaConfigSha256: binding.quotaConfigSha256,
             expectedSourceMainSha: SOURCE_MAIN_SHA,
             expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+            testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
             now: NOW,
         }),
         error => error.code === 'MUTABLE_EVIDENCE',
@@ -475,6 +533,7 @@ test('writable and symlink adjudication paths are rejected before admission', t 
             quotaConfigSha256: binding.quotaConfigSha256,
             expectedSourceMainSha: SOURCE_MAIN_SHA,
             expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+            testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
             now: NOW,
         }),
         error => error.code === 'UNSAFE_PATH',

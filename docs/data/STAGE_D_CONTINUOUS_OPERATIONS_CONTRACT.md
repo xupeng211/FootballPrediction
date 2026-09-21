@@ -303,11 +303,11 @@ adjudication bytes and other file-evidence hashes retain their separate
 64-character SHA-256 contracts.
 The offline adjudication entrypoint resolves `HEAD^{commit}` and
 `HEAD^{tree}` from the trusted runtime checkout, verifies that the checkout
-has no index/worktree/untracked changes, and requires the pair to exactly
-match `refs/remotes/origin/main` in production. It refuses unknown objects, a
-tree unrelated to that commit, stale feature-branch/detached source, or a
-dirty runtime; the test-only networkless path is explicitly isolated by
-`NODE_ENV=test`. The offline dry-run reader, budget admission path and future
+has no index/worktree/untracked changes or hidden assume-unchanged/skip-worktree
+flags, and requires the pair to exactly match `refs/remotes/origin/main`.
+It refuses unknown objects, a tree unrelated to that commit, or stale
+feature-branch/detached source whose commit/tree does not match trusted
+origin/main, or a dirty runtime. The offline dry-run reader, budget admission path and future
 production binder require the same runtime source binding when they read or
 admit the artifact; a 40-character value by itself is never sufficient.
 
