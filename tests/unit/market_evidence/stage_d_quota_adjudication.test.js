@@ -198,6 +198,26 @@ test('source provenance binds Git commit and tree object IDs, not content SHA-25
     );
 });
 
+test('artifact source binding is checked against the trusted runtime pair at admission', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const binding = buildArtifact(ctx, config);
+    const forged = {
+        ...binding.artifact,
+        source_main_sha: 'a'.repeat(40),
+        source_main_tree_sha: 'b'.repeat(40),
+    };
+    assert.throws(
+        () => assertRequestBudget(budgetArgs(ctx, config, {
+            ...binding,
+            artifact: forged,
+            artifactSha256: canonicalSha(forged),
+        })),
+        error => error.code === 'QUOTA_ADJUDICATION_SOURCE_MISMATCH',
+    );
+});
+
 test('valid conservative adjudication permits one request while preserving UNKNOWN provider effect', t => {
     const ctx = setup(t);
     const config = quotaConfig();

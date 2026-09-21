@@ -1961,8 +1961,16 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (value.billing_period_id !== config.billing_period_id) fail('QUOTA_ADJUDICATION_PERIOD_MISMATCH', 'quota adjudication billing period does not match the governed quota configuration');
     if (typeof quotaConfigSha256 !== 'string' || value.quota_config_sha256 !== quotaConfigSha256) fail('QUOTA_ADJUDICATION_CONFIG_MISMATCH', 'quota adjudication quota configuration hash does not match the governed configuration');
     if (typeof quotaAdjudicationSha256 === 'string' && sha256Text(canonicalBytes(value)) !== quotaAdjudicationSha256) fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'quota adjudication bytes do not match the governed artifact hash');
-    if (expectedSourceMainSha !== null && value.source_main_sha !== expectedSourceMainSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main SHA does not match the expected source');
-    if (expectedSourceMainTreeSha !== null && value.source_main_tree_sha !== expectedSourceMainTreeSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main tree does not match the expected source');
+    if ((expectedSourceMainSha === null) !== (expectedSourceMainTreeSha === null)) {
+        fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source binding requires both expected commit and tree objects');
+    }
+    if (expectedSourceMainSha !== null) {
+        assertGitObjectSha(expectedSourceMainSha, 'expected quota adjudication source main SHA');
+        assertGitObjectSha(expectedSourceMainTreeSha, 'expected quota adjudication source main tree SHA');
+        if (value.source_main_sha !== expectedSourceMainSha || value.source_main_tree_sha !== expectedSourceMainTreeSha) {
+            fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source commit/tree does not match the trusted runtime source');
+        }
+    }
     if (!ledger || value.accounting_epoch_id !== ledger.epoch?.epoch_id) fail('QUOTA_ADJUDICATION_EPOCH_MISMATCH', 'quota adjudication accounting epoch does not match the durable ledger');
     if (value.ledger_entry_count !== ledger.entries.length || value.ledger_last_entry_hash !== ledger.last_entry_hash) fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication does not bind the current append-only ledger generation');
     const summary = ledgerUsageSummary(ledger);
