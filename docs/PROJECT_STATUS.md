@@ -28,7 +28,7 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 | Market / odds evidence | Stage C canonical market-evidence spine = `IMPLEMENTED / PILOT`；maturity = `REPRODUCIBLE_PILOT`；historical odds staging + provider-defined closing semantics；VALUE_MVP-1 = `MARKET_BETTER_THAN_MODEL`（另一历史研究路径） |
 | Remaining downstream gaps | Stage D 持续采集本身尚未运营（`CONTINUOUS_CAPTURE_READY=NO`、`STAGE_D_STARTED=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation。独立备份/恢复已由 Blocker #3 关闭与 Gate 2 接受消除，不再列为 gap（`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`） |
 | Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
-| Next Owner decision | `GATE_3=NOT_AUTHORIZED`；post-response quota/evidence repair 已完成 prospective contract，仍需新 main exact-head candidate 的独立 Owner/Chief Engineer 授权；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
+| Next Owner decision | `GATE_3=NOT_AUTHORIZED`；post-response quota/evidence repair 已完成 prospective contract，历史 provider effect 仍为 `UNKNOWN`，当前 blocker 由显式 conservative offline adjudication 处理但尚未创建/应用；当前 candidate 仍不可修改或执行。即使离线 admission 成功，仍需新 main exact-head candidate 的独立 Owner/Chief Engineer 授权；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
 
 Stage C 已在 PR #1890 正常合并并通过 main Production Gate，canonical transaction-v1
 architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据完整性，不证明持续采集、
@@ -83,6 +83,14 @@ provider-reported balance 仍为首次授权成功 response 前的 UNKNOWN。epo
 新的 transport 与 post-response diagnostics 仅改善未来 evidence retention；历史 canary 不追造
 RAW 或 transaction，也不启用 scheduler。`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED` 不等于 Gate 3
 authorization。
+
+当前 quota-divergence contract 另有一个 provider-free offline path：
+`scripts/ops/stage_d_quota_adjudication.js` 只能为当前 epoch/billing period/ledger
+generation 生成一个 create-only、hash-bound adjudication。它把四条本地 consumed request
+作为保守 admission usage，但明确保留 `PROVIDER_QUOTA_ACTUAL_EFFECT=UNKNOWN`；它不补写历史
+headers、不降低 consumed、不探测 provider、不创建 authorization/request intent/transmission。
+在该 artifact 通过 canonical zero-network budget re-evaluation 之前，
+`PROVIDER_QUOTA_RECONCILIATION_REQUIRED` 仍是 truthful blocker；日历切换不会隐式清零。
 
 Owner 数据保护与凭据治理已由 Owner 裁定，并记录于
 [`Stage D Owner data-protection, retention/RPO/RTO and credential-rotation policy`](data/STAGE_D_OWNER_DATA_PROTECTION_AND_CREDENTIAL_POLICY.md)：

@@ -37,15 +37,16 @@ STAGE_D_PRODUCTION_PROXY_PREFLIGHT=PROVISIONED_AND_ATTESTED__NO_PROVIDER_CONTACT
 STAGE_D_GATE3_CANDIDATE=PREPARED_NOT_AUTHORIZED
 STAGE_D_SINGLE_CYCLE_BINDER=IMPLEMENTED_ON_REMEDIATION_BRANCH__NOT_AUTHORIZED
 STAGE_D_BINDER_AUTHORIZATION=NO
-STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__NOT_MERGED
-STAGE_D_PROVIDER_QUOTA_EVIDENCE=CLOSED_CONFIGURATION_ONLY
+STAGE_D_REQUEST_ACCOUNTING_EPOCH=LOCAL_SIDECAR_ESTABLISHED__MERGED_AND_IMMUTABLE
+STAGE_D_PROVIDER_QUOTA_EVIDENCE=HISTORICAL_PROVIDER_EFFECT_UNKNOWN__CONSERVATIVE_OFFLINE_ADJUDICATION_REQUIRED
+STAGE_D_QUOTA_ADJUDICATION=CONTRACT_IMPLEMENTED__ARTIFACT_NOT_YET_CREATED
 STAGE_D_POST_RESPONSE_SEMANTICS=REPAIRED_PROSPECTIVELY__RAW_BEFORE_QUOTA__DIAGNOSTIC_ON_LOCAL_FAILURE
 STAGE_D_INDEPENDENT_BACKUP_RESTORE=CLOSED_BLOCKER_3_GATE_2_ACCEPTED
 STAGE_D_OWNER_DATA_PROTECTION_POLICY=APPROVED_RETENTION_LONG_TERM__RPO_24H__RTO_24H
 STAGE_D_PROVIDER_CREDENTIAL_ROTATION=COMPLETED_OLD_CREDENTIAL_FORBIDDEN_FOR_LIVE
 CONDITION_1_NON_HEAD_RETRY=COMPLETE
 SINGLE_OWNER_GOVERNANCE_RECONCILED=YES
-STAGE_D_READINESS_VERDICT=PRE_GATE_3_PREREQUISITES_READJUDICATED__CANDIDATE_PREPARED_NOT_AUTHORIZED
+STAGE_D_READINESS_VERDICT=PRE_GATE_3_QUOTA_ADJUDICATION_PENDING__CANDIDATE_PREPARED_NOT_AUTHORIZED
 STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 NEXT_SYSTEM_BOTTLENECK=CONTINUOUS_DURABLE_MARKET_EVIDENCE_CAPTURE
 STAGE_D_STARTED=NO
@@ -85,7 +86,7 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 `OFF_SITE=NO` 与 `DHCP_RESERVATION_STATUS=NOT_CONFIGURED` 作为 nonblocking 加固项登记，
 不是 blocker。）
 
-NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；此前停止的 candidate 不可复用。历史上共有四条 post-epoch consumed request、零 ambiguous request，均不可重试或重写。最后一条请求确实完成了 HTTP response 并进入 2xx 分支，但旧实现随后在 provider quota reconciliation 失败，未保留 exact status/quota header；该历史 evidence-loss event 不追造、不重试。post-response repair 已把未来路径改为 RAW 先保留、quota 仍 fail-closed、局部失败写入独立诊断；source merge、exact-head reviews、required CI、main Production Gate 后才可准备一个绑定新 main 的 `PREPARED_NOT_AUTHORIZED` candidate，下一步仍只能由 Owner/Chief Engineer 对其独立 exact-hash 授权，而不是执行。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
+NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；当前 candidate `sdc_stage_d_gate3_1ebfd8f484b8957d00ee111f27da1202`（SHA-256 `52da1f2f78ea0bed39f732b40a5a8eb06f68cbbf70f3b97b77dda8a3b81fe725`）仍只是 `PREPARED_NOT_AUTHORIZED`，不先复用或修改。历史上共有四条 post-epoch consumed request、零 ambiguous request，均不可重试或重写。最后一条请求确实完成了 HTTP response 并进入 2xx 分支，但旧实现随后在 provider quota reconciliation 失败，未保留 exact status/quota header；该历史 evidence-loss event 不追造、不重试。prospective post-response repair 已把未来路径改为 RAW 先保留、quota 仍 fail-closed、局部失败写入独立诊断；本 mission 增加 provider-effect `UNKNOWN` 的 hash-bound conservative offline adjudication，但在 artifact 创建和零网络 admission 复核完成前，quota blocker 仍保持。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
 
@@ -95,7 +96,7 @@ deployment input 位于 repository 外的 owner-only binding，且 source tree �
 canonical preflight 以 strict 2xx + fresh challenge/run-id + timing-safe HMAC verification 通过。
 该证明没有解析或联系 The Odds API，不能证明 provider reachability，也没有消费 authorization、
 创建 request intent、跨过 transmission boundary 或消耗 quota。fresh Gate 3 candidate 的 SHA-256
-为 `af6c2a3e4ee8a910a56c3d3453c292bc3db3e7e053a574208be068f5b3f8d549`；它明确
+为 `52da1f2f78ea0bed39f732b40a5a8eb06f68cbbf70f3b97b77dda8a3b81fe725`；它明确
 `PREPARED_NOT_AUTHORIZED`，不等同于 authorization artifact，`GATE_3=NOT_AUTHORIZED` 不变。
 
 同日的历史 Gate 3 attempts 均为不可重用 evidence：早先的 HTTP 403 与 ECONNRESET

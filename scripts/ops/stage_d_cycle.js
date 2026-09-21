@@ -10,6 +10,8 @@ const { openMarketEvidenceAuthoritySnapshot } = require('../../src/infrastructur
 const {
     buildOfflineStageDRunPlan,
     initializeRequestAccountingEpoch,
+    readBoundQuotaAdjudication,
+    readRequestLedger,
 } = require('../../src/infrastructure/market_evidence/stageDOperations');
 const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
 
@@ -28,6 +30,14 @@ function readQuotaConfig(filePath) {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function readQuotaConfigSource(filePath) {
+    if (!filePath) return null;
+    const stat = fs.lstatSync(filePath);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('quota config must be a regular file');
+    const bytes = fs.readFileSync(filePath, 'utf8');
+    return Object.freeze({ value: JSON.parse(bytes), sha256: sha256Text(bytes) });
+}
+
 function authoritySnapshot(authorityRoot) {
     const root = path.resolve(authorityRoot || 'data/market_evidence/live/transactions');
     return openMarketEvidenceAuthoritySnapshot({
@@ -36,6 +46,7 @@ function authoritySnapshot(authorityRoot) {
     });
 }
 
+// eslint-disable-next-line complexity -- the offline entrypoint enumerates its mutually exclusive safety gates.
 function main() {
     const initializeLedger = process.argv.includes('--initialize-request-accounting-epoch');
     const dryRun = process.argv.includes('--dry-run');
@@ -64,11 +75,32 @@ function main() {
         sha256Text(resolvedLedgerRoot),
     ));
     if (!fs.existsSync(runLockTrustRoot)) fs.mkdirSync(runLockTrustRoot, { recursive: true, mode: 0o700 });
+    const quotaConfigSource = readQuotaConfigSource(valueAfter('--quota-config'));
+    const quotaConfig = quotaConfigSource?.value || null;
+    const ledger = readRequestLedger({ ledgerRoot: resolvedLedgerRoot });
+    const quotaAdjudicationSource = valueAfter('--quota-adjudication')
+        ? readBoundQuotaAdjudication({
+            quotaAdjudicationPath: path.resolve(valueAfter('--quota-adjudication')),
+            ledgerRoot: resolvedLedgerRoot,
+            runLockTrustRoot,
+            // The descriptor-bound reader computes the observed hash from the
+            // same immutable file descriptor that it validates.  Do not read
+            // this untrusted path separately before that check.
+            expectedSha256: null,
+            ledger,
+            quotaConfig,
+            quotaConfigSha256: quotaConfigSource?.sha256 || null,
+            now,
+        })
+        : null;
     const plan = buildOfflineStageDRunPlan({
         operationRoot: path.resolve(operationRoot),
         ledgerRoot: resolvedLedgerRoot,
         authoritySnapshot: snapshot,
-        quotaConfig: readQuotaConfig(valueAfter('--quota-config')),
+        quotaConfig,
+        quotaConfigSha256: quotaConfigSource?.sha256 || null,
+        quotaAdjudication: quotaAdjudicationSource?.value || null,
+        quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
         runId: valueAfter('--run-id') || `stage-d-dry-run-${Date.now()}`,
         now,
         runLockTrustRoot,
@@ -85,4 +117,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { valueAfter, readQuotaConfig, authoritySnapshot, main };
+module.exports = { valueAfter, readQuotaConfig, readQuotaConfigSource, authoritySnapshot, main };

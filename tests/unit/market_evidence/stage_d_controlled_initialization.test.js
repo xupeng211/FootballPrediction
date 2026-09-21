@@ -129,7 +129,7 @@ function overwriteReadOnlyFile(filePath, bytes) {
 
 function makeAuthorization(ctx, overrides = {}) {
     const authorization = {
-        schema_version: 'footballprediction-stage-d-controlled-initialization-authorization/v1',
+        schema_version: 'footballprediction-stage-d-controlled-initialization-authorization/v2',
         authorization_id: 'sda_networkless-test-authorization',
         authorization_status: 'OWNER_AND_CHIEF_ENGINEER_AUTHORIZED',
         mission: 'CONTROLLED_STAGE_D_SINGLE_CYCLE',
@@ -145,6 +145,7 @@ function makeAuthorization(ctx, overrides = {}) {
         authority_pre_store_sha256: ctx.storeSha256,
         authority_pre_allocation_authority_sha256: ctx.allocationSha256,
         quota_config_sha256: ctx.quotaConfigSha256,
+        quota_adjudication_sha256: null,
         fixture_universe_raw_sha256: ctx.rawSha256,
         run_id: 'stage-d-controlled-test-run',
         request_id: 'stage-d-controlled-test-request',
@@ -514,6 +515,18 @@ test('CLI parser exposes only bounded artifact paths and cannot accept a private
         assert.throws(() => parseControlledCliArgs([forbidden, 'true']), /unknown or forbidden argument/);
     }
     assert.throws(() => parseControlledCliArgs(['--authorization', 'auth.json']), /is required/);
+    const bounded = parseControlledCliArgs([
+        '--authorization', 'auth.json',
+        '--authority-root', 'authority',
+        '--allocation-authority', 'allocation.json',
+        '--ledger-root', 'ledger',
+        '--quota-config', 'quota.json',
+        '--quota-adjudication', 'stage-d-quota-adjudication-sqa_current.json',
+        '--fixture-universe-raw', 'fixtures.raw',
+        '--evidence-root', 'evidence',
+        '--run-lock-trust-root', 'trust',
+    ]);
+    assert.equal(bounded['--quota-adjudication'], 'stage-d-quota-adjudication-sqa_current.json');
     assert.equal(typeof parseControlledCliArgs, 'function');
 });
 

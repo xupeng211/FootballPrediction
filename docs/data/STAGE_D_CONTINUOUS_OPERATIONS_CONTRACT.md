@@ -12,7 +12,7 @@ STAGE_D_NAME=EPL 1X2 CONTINUOUS MARKET EVIDENCE OPERATIONS
 TARGET_COMPETITION=EPL
 MARKET_SCOPE=1X2 / The Odds API h2h decimal response
 PROVIDER_SCOPE=The Odds API only
-STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run (public offline); scripts/ops/stage_d_controlled_initialization.js (future separately authorized live binder)
+STAGE_D_ENTRYPOINT=scripts/ops/stage_d_cycle.js --dry-run (public offline); scripts/ops/stage_d_quota_adjudication.js (offline-only owner adjudication); scripts/ops/stage_d_controlled_initialization.js (future separately authorized live binder)
 STAGE_D_SINGLE_CYCLE_ENGINE=executeStageDOneCycle factory-bound controlled adapter
 LIVE_EXECUTOR_IMPLEMENTED=YES
 LIVE_EXECUTOR_DEFAULT_STATE=DISABLED
@@ -53,7 +53,7 @@ Stage D, provider access, scheduler start, blocker #2 filesystem permission
 repair, or blocker #3 independent backup/restore.
 
 The authorization artifact schema is
-`footballprediction-stage-d-controlled-initialization-authorization/v1` and
+`footballprediction-stage-d-controlled-initialization-authorization/v2` and
 its approval status must be `OWNER_AND_CHIEF_ENGINEER_AUTHORIZED`. Its exact
 scope includes `mission=CONTROLLED_STAGE_D_SINGLE_CYCLE`,
 `provider=the-odds-api`, `configured_markets=[h2h]`,
@@ -61,8 +61,11 @@ scope includes `mission=CONTROLLED_STAGE_D_SINGLE_CYCLE`,
 `expected_request_cost_credits=1`, the exact `accounting_epoch_id`,
 `authority_pre_head`, `authority_pre_state_hash`, pre-observation count,
 pre-`STORE.json` hash, allocation-authority hash, quota-config hash,
-fixture-universe RAW hash, `run_id`, `request_id`, `issued_at` and
-`expires_at`. The binder rejects missing, malformed, expired, replayed,
+fixture-universe RAW hash, optional `quota_adjudication_sha256`, `run_id`,
+`request_id`, `issued_at` and `expires_at`. When the sealed ledger contains an
+unresolved provider-quota divergence, the field is required and binds the
+read-only adjudication artifact; when no divergence exists it must be `null`.
+The binder rejects missing, malformed, expired, replayed,
 wrong-scope, wrong-epoch, wrong-authority, untrusted, writable or
 non-canonical artifacts before transport construction/use. `max_provider_requests`
 greater than one is not representable in this entry path. A calendar date
@@ -269,6 +272,49 @@ A consumed `POST_RESPONSE_PROCESSING_FAILURE` with
 the retained evidence is explicitly re-adjudicated. RAW preservation is data
 protection only; it never authorizes a new provider request or treats the
 provider quota actual effect as known.
+
+### Offline quota-divergence adjudication
+
+The old implementation lost the exact response/quota fields for one completed
+2xx canary. The durable local facts are therefore exact only for the local
+accounting boundary: the four post-epoch requests remain consumed, while the
+historical provider-side effect, exact status and exact quota headers remain
+`UNKNOWN`. The canonical pre-admission result is still
+`PROVIDER_QUOTA_RECONCILIATION_REQUIRED` until an explicit offline artifact is
+validated.
+
+`scripts/ops/stage_d_quota_adjudication.js` is the only adjudication entrypoint.
+It reads the sealed ledger and quota configuration, performs no provider or DNS
+operation, and writes one create-only, owner-only artifact as a direct child of
+the external runtime trust root. The artifact schema is
+`footballprediction-stage-d-quota-adjudication/v1`; it binds the current epoch,
+billing period, quota-config hash, append-only ledger generation, local consumed
+request/unit counts and exactly the unresolved historical request/run. Its
+policy identity is `stage-d-conservative-quota-adjudication/v1` and its
+classification is
+`PROVIDER_EFFECT_UNKNOWN_BUT_BUDGETED_AS_CONSUMED`. It records
+`PROVIDER_QUOTA_ACTUAL_EFFECT=UNKNOWN`; it never invents provider headers or
+rewrites a ledger entry.
+
+For the governed one-credit request model, the admission bound is the maximum
+of the last trusted provider `used` value, when one exists, and the exact local
+consumed units for the current period. The bound is checked against the
+configured `automated_spend_limit`, not the full plan limit, so the reserve is
+protected. An artifact is invalid if its epoch, period, quota hash, ledger
+generation, historical request binding, file hash, permissions or policy
+identity do not match. Multiple current-period artifacts, a newer unresolved
+divergence, a billing-period mismatch, a calendar-only reset, or a bound at or
+above the automatic ceiling all fail closed. A new local accounting period is
+not silently admitted: the existing `PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET`
+rule still requires a valid current-period configuration and adjudication.
+
+The offline plan may consume a validated adjudication for a zero-network budget
+decision, but it still reports provider effect as `UNKNOWN` and keeps
+`transmission_permitted=false`. The live binder, when separately authorized in
+the future, must bind the adjudication hash in authorization schema v2 and
+revalidate it immediately before the shared cycle path. No adjudication path
+creates authorization, request intent, transmission, scheduler activity or a
+provider request.
 
 The current Owner-declared plan and governed cost facts are:
 

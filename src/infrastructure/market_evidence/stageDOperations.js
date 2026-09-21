@@ -53,6 +53,12 @@ const REQUIRED_QUOTA_HEADERS = Object.freeze(['x-requests-used', 'x-requests-rem
 const PROVIDER_QUOTA_HEADER_PATTERN = /^(?:x-(?:requests|ratelimit|credits)-(?:remaining|used|last|limit|reset)|ratelimit-(?:remaining|used|limit|reset))$/i;
 const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
 const HISTORICAL_PRE_EPOCH_EXACT_TOTAL = 'UNKNOWN';
+const QUOTA_ADJUDICATION_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication/v1';
+const QUOTA_ADJUDICATION_POLICY_VERSION = 'stage-d-conservative-quota-adjudication/v1';
+const QUOTA_ADJUDICATION_REASON = 'HISTORICAL_QUOTA_HEADER_LOSS_AFTER_COMPLETED_2XX';
+const QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION = 'PROVIDER_EFFECT_UNKNOWN_BUT_BUDGETED_AS_CONSUMED';
+const QUOTA_ADJUDICATION_USAGE_BASIS = 'POST_EPOCH_LOCAL_CONSUMED_UNITS__EACH_TRANSMISSION_MAY_HAVE_BEEN_CHARGED';
+const QUOTA_ADJUDICATION_FILE_PATTERN = /^stage-d-quota-adjudication-[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.json$/;
 const EVENT_TYPES = new Set([
     'REQUEST_INTENT',
     'TRANSMISSION_STARTED_OR_MAY_HAVE_STARTED',
@@ -82,7 +88,7 @@ const STAGE_D_RUNTIME_AUTHORIZATION = Symbol('stage-d-runtime-authorization');
 const STAGE_D_TEST_RUNTIME_AUTHORIZATION = Symbol('stage-d-test-runtime-authorization');
 const STAGE_D_TRANSPORT_CALL_TOKEN = Object.freeze({ stage_d: 'transport-call' });
 const CONTROLLED_AUTHORIZATION_WINDOW = Symbol('controlled-authorization-window');
-const CONTROLLED_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v1';
+const CONTROLLED_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v2';
 const CONTROLLED_AUTHORIZATION_STATUS = 'OWNER_AND_CHIEF_ENGINEER_AUTHORIZED';
 const CONTROLLED_AUTHORIZATION_MISSION = 'CONTROLLED_STAGE_D_SINGLE_CYCLE';
 const CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS = 24 * 60 * 60 * 1000;
@@ -407,6 +413,7 @@ function ensureChildDirectoryDescriptor(parentDescriptor, name, label) {
     }
 }
 
+// eslint-disable-next-line complexity -- descriptor/inode/permission checks are deliberately explicit for governed evidence.
 function readRegularFileBytes(filePath, label, { immutable = true } = {}) {
     const before = fs.lstatSync(filePath);
     if (before.isSymbolicLink() || !before.isFile()) fail('UNSAFE_PATH', `${label} must be a regular file`);
@@ -416,9 +423,11 @@ function readRegularFileBytes(filePath, label, { immutable = true } = {}) {
         fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
         const opened = fs.fstatSync(fd);
         if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) fail('UNSAFE_PATH', `${label} changed during open`);
+        if (immutable && (opened.mode & 0o222) !== 0) fail('MUTABLE_EVIDENCE', `${label} became writable during open`);
         const bytes = fs.readFileSync(fd, 'utf8');
         const after = fs.fstatSync(fd);
         if (after.dev !== opened.dev || after.ino !== opened.ino) fail('UNSAFE_PATH', `${label} changed during read`);
+        if (immutable && (after.mode & 0o222) !== 0) fail('MUTABLE_EVIDENCE', `${label} became writable during read`);
         return Object.freeze({ bytes, stat: opened });
     } finally {
         if (fd !== undefined) fs.closeSync(fd);
@@ -527,6 +536,7 @@ function controlledAuthorizationScope(authorization) {
         authority_pre_store_sha256: authorization.authority_pre_store_sha256,
         authority_pre_allocation_authority_sha256: authorization.authority_pre_allocation_authority_sha256,
         quota_config_sha256: authorization.quota_config_sha256,
+        quota_adjudication_sha256: authorization.quota_adjudication_sha256,
         fixture_universe_raw_sha256: authorization.fixture_universe_raw_sha256,
         run_id: authorization.run_id,
         request_id: authorization.request_id,
@@ -534,7 +544,7 @@ function controlledAuthorizationScope(authorization) {
 }
 
 // eslint-disable-next-line complexity -- controlled authorization validates each immutable scope field independently.
-function validateStageDControlledAuthorization({ authorization, authoritySnapshot, authorityRoot, allocationArtifactPath, ledger, quotaConfig, quotaConfigSha256, fixtureUniverseRawSha256, now } = {}) {
+function validateStageDControlledAuthorization({ authorization, authoritySnapshot, authorityRoot, allocationArtifactPath, ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256, fixtureUniverseRawSha256, now } = {}) {
     assertExactKeys(
         authorization,
         [
@@ -554,6 +564,7 @@ function validateStageDControlledAuthorization({ authorization, authoritySnapsho
             'authority_pre_store_sha256',
             'authority_pre_allocation_authority_sha256',
             'quota_config_sha256',
+            'quota_adjudication_sha256',
             'fixture_universe_raw_sha256',
             'run_id',
             'request_id',
@@ -573,6 +584,7 @@ function validateStageDControlledAuthorization({ authorization, authoritySnapsho
     assertSha256(authorization.authority_pre_store_sha256, 'authorization.authority_pre_store_sha256');
     assertSha256(authorization.authority_pre_allocation_authority_sha256, 'authorization.authority_pre_allocation_authority_sha256');
     assertSha256(authorization.quota_config_sha256, 'authorization.quota_config_sha256');
+    if (authorization.quota_adjudication_sha256 !== null) assertSha256(authorization.quota_adjudication_sha256, 'authorization.quota_adjudication_sha256');
     assertSha256(authorization.fixture_universe_raw_sha256, 'authorization.fixture_universe_raw_sha256');
     assertToken(authorization.run_id, 'authorization.run_id');
     assertToken(authorization.request_id, 'authorization.request_id');
@@ -591,6 +603,8 @@ function validateStageDControlledAuthorization({ authorization, authoritySnapsho
     if (authorization.authority_pre_store_sha256 !== sha256RegularFile(path.join(resolvedAuthorityRoot, 'STORE.json'), 'Stage D authority STORE.json')) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authorization STORE hash does not match the authority root');
     if (authorization.authority_pre_allocation_authority_sha256 !== sha256RegularFile(resolvedAllocationPath, 'Stage D allocation authority')) fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'authorization allocation authority hash does not match the authority root');
     if (authorization.quota_config_sha256 !== quotaConfigSha256) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization quota configuration hash does not match the supplied governed configuration');
+    if (authorization.quota_adjudication_sha256 !== quotaAdjudicationSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the supplied governed artifact');
+    if (ledger.requests.some(request => request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED') && authorization.quota_adjudication_sha256 === null) fail('AUTHORIZATION_QUOTA_ADJUDICATION_REQUIRED', 'an unresolved provider quota divergence requires a bound quota adjudication artifact');
     if (authorization.fixture_universe_raw_sha256 !== fixtureUniverseRawSha256) fail('AUTHORIZATION_FIXTURE_UNIVERSE_MISMATCH', 'authorization fixture-universe RAW hash does not match the supplied replay input');
     const validatedQuota = validateQuotaConfiguration(quotaConfig, { now });
     if (validatedQuota.provider !== authorization.provider || validatedQuota.expected_request_cost_credits !== authorization.expected_request_cost_credits || validatedQuota.max_provider_requests_per_cycle !== authorization.max_provider_requests || validatedQuota.max_requests_per_stage_d_run !== authorization.max_provider_requests) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization does not bind the governed one-request quota configuration');
@@ -610,7 +624,7 @@ function consumeStageDControlledAuthorization({ authorizationRecord, ledgerRoot,
         writeExclusiveImmutable(
             scopedPath(trustDescriptor.fd, markerName),
             {
-                schema_version: 'footballprediction-stage-d-controlled-initialization-consumption/v1',
+                schema_version: 'footballprediction-stage-d-controlled-initialization-consumption/v2',
                 authorization_id: authorization.authorization_id,
                 authorization_sha256,
                 scope_sha256,
@@ -622,6 +636,7 @@ function consumeStageDControlledAuthorization({ authorizationRecord, ledgerRoot,
                 expected_request_cost_credits: scope.expected_request_cost_credits,
                 accounting_epoch_id: scope.accounting_epoch_id,
                 authority_pre_head: scope.authority_pre_head,
+                quota_adjudication_sha256: scope.quota_adjudication_sha256,
                 run_id: scope.run_id,
                 request_id: scope.request_id,
                 consumed_at: consumedAt,
@@ -1699,7 +1714,7 @@ function assertApprovedQuotaConfiguration(value, { now } = {}) {
 }
 
 // eslint-disable-next-line complexity -- local budget admission enumerates every ambiguous ledger state.
-function assertBudgetLedgerValid(ledger, config) {
+function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null } = {}) {
     if (!ledger || !ledger.epoch || !Array.isArray(ledger.requests)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'durable request ledger is unavailable');
     validateEpoch(ledger.epoch);
     const periodStart = Date.parse(config.period_start_at);
@@ -1708,6 +1723,7 @@ function assertBudgetLedgerValid(ledger, config) {
     if (epochStarted < periodStart || epochStarted >= periodEnd) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request accounting epoch is outside the locally governed budget period');
     const summary = ledgerUsageSummary(ledger);
     if (summary.ambiguous_consumed_request_ids.length) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'ambiguous consumed request state requires reconciliation');
+    const unresolvedQuotaDivergences = [];
     for (const request of ledger.requests) {
         if (Date.parse(request.created_at) < epochStarted) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request predates the sealed accounting epoch');
         if (request.transmitted_at !== null) {
@@ -1732,14 +1748,27 @@ function assertBudgetLedgerValid(ledger, config) {
         ) {
             fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'a post-response failure has no reconciled provider quota evidence');
         }
-        if (request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED') {
-            fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
-        }
+        if (request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED') unresolvedQuotaDivergences.push(request);
+    }
+    if (quotaAdjudication !== null && typeof quotaAdjudicationSha256 !== 'string') {
+        fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'budget admission requires a hash-bound quota adjudication artifact');
+    }
+    if (unresolvedQuotaDivergences.length) {
+        if (quotaAdjudication === null) fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
+        validateQuotaAdjudication(quotaAdjudication, {
+            ledger,
+            quotaConfig: config,
+            quotaConfigSha256,
+            quotaAdjudicationSha256,
+            now,
+        });
+    } else if (quotaAdjudication !== null) {
+        fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication is not permitted when the ledger has no unresolved provider divergence');
     }
     return summary;
 }
 
-function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits = 1 }) {
+function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, runId, now, requestedUnits = 1 }) {
     const config = validateQuotaConfiguration(quotaConfig, { now });
     assertToken(runId, 'run_id');
     assertUtc(now, 'budget now');
@@ -1747,7 +1776,7 @@ function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits =
     if (requestedUnits !== config.expected_request_cost_credits || requestedUnits > config.max_requests_per_stage_d_run) {
         fail('REQUEST_BUDGET_DENIED', 'expected provider request cost is not bounded by the cycle contract');
     }
-    assertBudgetLedgerValid(ledger, config);
+    assertBudgetLedgerValid(ledger, config, quotaAdjudication, { now, quotaConfigSha256, quotaAdjudicationSha256 });
     const timestamped = ledger.requests.filter(request => requestIsConsumed(request) && request.transmitted_at !== null);
     const monthly = timestamped.filter(request => Date.parse(request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.transmitted_at) < Date.parse(config.period_end_at));
     const day = now.slice(0, 10);
@@ -1756,7 +1785,10 @@ function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits =
     const monthlyUsed = monthly.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
     const dailyUsed = daily.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
     const runUsed = thisRun.reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
-    if (monthlyUsed + requestedUnits > config.automated_spend_limit) {
+    const conservativeProviderUsage = quotaAdjudication === null
+        ? monthlyUsed
+        : Math.max(monthlyUsed, quotaAdjudication.conservative_effective_provider_usage);
+    if (conservativeProviderUsage + requestedUnits > config.automated_spend_limit) {
         fail('REQUEST_BUDGET_DENIED', 'monthly budget would cross the configured automated spend limit');
     }
     if (runUsed + requestedUnits > config.max_requests_per_stage_d_run) fail('REQUEST_BUDGET_DENIED', 'run request budget is exhausted');
@@ -1768,6 +1800,8 @@ function assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits =
         billing_period_id: config.billing_period_id,
         monthly_used: monthlyUsed,
         monthly_remaining_after_request: config.monthly_quota_limit - monthlyUsed - requestedUnits,
+        conservative_provider_usage: conservativeProviderUsage,
+        conservative_remaining_after_request: config.automated_spend_limit - conservativeProviderUsage - requestedUnits,
         automated_spend_limit: config.automated_spend_limit,
         expected_request_cost_credits: config.expected_request_cost_credits,
         daily_used: dailyUsed,
@@ -1780,6 +1814,217 @@ function latestReconciledProviderQuota(ledger) {
         .filter(request => request.provider_quota?.reconciliation_status === 'RECONCILED')
         .sort((left, right) => Date.parse(left.response_received_at || left.transmitted_at) - Date.parse(right.response_received_at || right.transmitted_at))
         .at(-1)?.provider_quota || null;
+}
+
+function consumedQuotaUnitsInPeriod(ledger, config) {
+    const periodStart = Date.parse(config.period_start_at);
+    const periodEnd = Date.parse(config.period_end_at);
+    return ledger.requests
+        .filter(request => requestIsConsumed(request) && request.transmitted_at !== null)
+        .filter(request => Date.parse(request.transmitted_at) >= periodStart && Date.parse(request.transmitted_at) < periodEnd)
+        .reduce((sum, request) => sum + request.quota_units_charged_or_assumed, 0);
+}
+
+function validateTrustedQuotaEvidence(value, config) {
+    if (value === null) return null;
+    assertExactKeys(value, ['reported_used', 'reported_remaining', 'reported_last_cost', 'response_received_at'], 'quota adjudication trusted provider evidence');
+    for (const field of ['reported_used', 'reported_remaining', 'reported_last_cost']) assertNonNegativeInteger(value[field], `quota adjudication ${field}`);
+    assertUtc(value.response_received_at, 'quota adjudication trusted provider response_received_at');
+    if (value.reported_used + value.reported_remaining !== config.monthly_quota_limit) fail('INVALID_QUOTA_ADJUDICATION', 'trusted provider quota evidence does not reconcile to the configured plan limit');
+    if (value.reported_last_cost !== config.expected_request_cost_credits) fail('INVALID_QUOTA_ADJUDICATION', 'trusted provider quota evidence does not bind to the governed request cost');
+    return Object.freeze({ ...value });
+}
+
+// A quota adjudication is deliberately not provider evidence.  It is an immutable,
+// owner-controlled statement that the local Stage D accounting upper bound must be
+// budgeted as consumed while the exact provider-side effect remains UNKNOWN.  Its
+// ledger generation and quota-config bindings make it stale as soon as the governed
+// facts change; it cannot be used as a generic quota override.
+// eslint-disable-next-line complexity -- fail-closed validation enumerates every immutable adjudication binding.
+function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudicationSha256 = null, now, expectedSourceMainSha = null, expectedSourceMainTreeSha = null } = {}) {
+    assertExactKeys(
+        value,
+        [
+            'adjudication_id',
+            'schema_version',
+            'provider',
+            'accounting_epoch_id',
+            'billing_period_id',
+            'adjudicated_at',
+            'adjudication_reason',
+            'historical_request_id',
+            'historical_run_id',
+            'local_consumed_requests',
+            'local_consumed_quota_units',
+            'ledger_entry_count',
+            'ledger_last_entry_hash',
+            'last_trusted_provider_quota_evidence',
+            'provider_exact_effect_known',
+            'provider_effect_classification',
+            'provider_quota_actual_effect',
+            'conservative_usage_basis',
+            'conservative_effective_provider_usage',
+            'conservative_remaining_automatic_budget',
+            'evidence_references',
+            'quota_config_sha256',
+            'source_main_sha',
+            'source_main_tree_sha',
+            'adjudication_policy_version',
+        ],
+        'Stage D quota adjudication'
+    );
+    if (value.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication schema is invalid');
+    if (!/^sqa_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(value.adjudication_id || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ID is invalid');
+    if (value.provider !== PROVIDER) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication provider is invalid');
+    assertToken(value.accounting_epoch_id, 'quota adjudication accounting_epoch_id');
+    assertUtc(value.adjudicated_at, 'quota adjudication adjudicated_at');
+    assertToken(value.historical_request_id, 'quota adjudication historical_request_id');
+    assertToken(value.historical_run_id, 'quota adjudication historical_run_id');
+    for (const field of ['local_consumed_requests', 'local_consumed_quota_units', 'ledger_entry_count', 'conservative_effective_provider_usage', 'conservative_remaining_automatic_budget']) {
+        assertNonNegativeInteger(value[field], `quota adjudication ${field}`);
+    }
+    if (!/^[a-f0-9]{64}$/.test(value.ledger_last_entry_hash || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ledger hash is invalid');
+    assertSha256(value.quota_config_sha256, 'quota adjudication quota_config_sha256');
+    assertSha256(value.source_main_sha, 'quota adjudication source_main_sha');
+    assertSha256(value.source_main_tree_sha, 'quota adjudication source_main_tree_sha');
+    assertExactKeys(value.evidence_references, ['classes', 'ledger_request_ids'], 'quota adjudication evidence_references');
+    if (!Array.isArray(value.evidence_references.classes) || value.evidence_references.classes.length < 1 || value.evidence_references.classes.length > 16) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence classes are invalid');
+    if (!Array.isArray(value.evidence_references.ledger_request_ids) || value.evidence_references.ledger_request_ids.length < 1 || value.evidence_references.ledger_request_ids.length > 128) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence request IDs are invalid');
+    for (const item of [...value.evidence_references.classes, ...value.evidence_references.ledger_request_ids]) assertToken(item, 'quota adjudication evidence reference');
+    if (value.adjudication_reason !== QUOTA_ADJUDICATION_REASON || value.adjudication_policy_version !== QUOTA_ADJUDICATION_POLICY_VERSION) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication policy identity is invalid');
+    if (value.provider_exact_effect_known !== false || value.provider_quota_actual_effect !== 'UNKNOWN') fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication must preserve unknown provider effect');
+    if (value.provider_effect_classification !== QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION || value.conservative_usage_basis !== QUOTA_ADJUDICATION_USAGE_BASIS) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication conservative policy is invalid');
+    const config = validateQuotaConfiguration(quotaConfig, { now });
+    if (value.billing_period_id !== config.billing_period_id) fail('QUOTA_ADJUDICATION_PERIOD_MISMATCH', 'quota adjudication billing period does not match the governed quota configuration');
+    if (typeof quotaConfigSha256 !== 'string' || value.quota_config_sha256 !== quotaConfigSha256) fail('QUOTA_ADJUDICATION_CONFIG_MISMATCH', 'quota adjudication quota configuration hash does not match the governed configuration');
+    if (typeof quotaAdjudicationSha256 === 'string' && sha256Text(canonicalBytes(value)) !== quotaAdjudicationSha256) fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'quota adjudication bytes do not match the governed artifact hash');
+    if (expectedSourceMainSha !== null && value.source_main_sha !== expectedSourceMainSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main SHA does not match the expected source');
+    if (expectedSourceMainTreeSha !== null && value.source_main_tree_sha !== expectedSourceMainTreeSha) fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source main tree does not match the expected source');
+    if (!ledger || value.accounting_epoch_id !== ledger.epoch?.epoch_id) fail('QUOTA_ADJUDICATION_EPOCH_MISMATCH', 'quota adjudication accounting epoch does not match the durable ledger');
+    if (value.ledger_entry_count !== ledger.entries.length || value.ledger_last_entry_hash !== ledger.last_entry_hash) fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication does not bind the current append-only ledger generation');
+    const summary = ledgerUsageSummary(ledger);
+    const localUnits = consumedQuotaUnitsInPeriod(ledger, config);
+    if (value.local_consumed_requests !== summary.consumed_request_count || value.local_consumed_quota_units !== localUnits) fail('QUOTA_ADJUDICATION_LEDGER_MISMATCH', 'quota adjudication local consumption does not match the durable ledger');
+    if (Date.parse(value.adjudicated_at) < Date.parse(config.period_start_at) || Date.parse(value.adjudicated_at) >= Date.parse(config.period_end_at) || Date.parse(value.adjudicated_at) > Date.parse(now)) fail('QUOTA_ADJUDICATION_PERIOD_MISMATCH', 'quota adjudication timestamp is outside the governed current period');
+    const unresolved = ledger.requests.filter(request => request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
+    if (unresolved.length !== 1 || unresolved[0].request_id !== value.historical_request_id || unresolved[0].run_id !== value.historical_run_id) fail('QUOTA_ADJUDICATION_STALE', 'quota adjudication does not cover exactly the current unresolved quota divergence');
+    if (!value.evidence_references.ledger_request_ids.includes(value.historical_request_id)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence does not reference the historical request');
+    const historical = unresolved[0];
+    if (!requestIsConsumed(historical) || historical.quota_units_charged_or_assumed !== EXPECTED_REQUEST_COST_CREDITS || historical.provider_quota !== null) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'historical quota divergence is not a consumed unresolved request');
+    const trusted = latestReconciledProviderQuota(ledger);
+    const validatedTrusted = validateTrustedQuotaEvidence(value.last_trusted_provider_quota_evidence, config);
+    if ((trusted === null) !== (validatedTrusted === null)) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'quota adjudication trusted provider evidence does not match the ledger');
+    if (trusted && (trusted.reported_used !== validatedTrusted.reported_used || trusted.reported_remaining !== validatedTrusted.reported_remaining || trusted.reported_last_cost !== validatedTrusted.reported_last_cost)) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'quota adjudication trusted provider evidence differs from the ledger');
+    const trustedUsed = validatedTrusted?.reported_used || 0;
+    if (value.conservative_effective_provider_usage < Math.max(localUnits, trustedUsed)) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage would undercount known consumed evidence');
+    if (value.conservative_effective_provider_usage > config.monthly_quota_limit) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage exceeds the configured plan limit');
+    if (value.conservative_remaining_automatic_budget !== config.automated_spend_limit - value.conservative_effective_provider_usage) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative remaining automatic budget does not reconcile to the configured ceiling');
+    if (quotaAdjudicationSha256 !== null && typeof quotaAdjudicationSha256 !== 'string') fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'quota adjudication hash binding is invalid');
+    return Object.freeze({
+        ...value,
+        evidence_references: Object.freeze({
+            classes: Object.freeze([...value.evidence_references.classes]),
+            ledger_request_ids: Object.freeze([...value.evidence_references.ledger_request_ids]),
+        }),
+        last_trusted_provider_quota_evidence: validatedTrusted,
+    });
+}
+
+function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256, historicalRequestId, sourceMainSha, sourceMainTreeSha, adjudicatedAt, adjudicationId } = {}) {
+    const now = adjudicatedAt;
+    const config = validateQuotaConfiguration(quotaConfig, { now });
+    const summary = ledgerUsageSummary(ledger);
+    const unresolved = ledger.requests.filter(request => request.error_classification === 'PROVIDER_QUOTA_RECONCILIATION_FAILED');
+    const historical = ledger.requests.find(request => request.request_id === historicalRequestId);
+    if (unresolved.length !== 1 || !historical || unresolved[0].request_id !== historicalRequestId) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'offline quota adjudication requires exactly one specified unresolved historical divergence');
+    const localUnits = consumedQuotaUnitsInPeriod(ledger, config);
+    const trusted = latestReconciledProviderQuota(ledger);
+    const effectiveUsage = Math.max(localUnits, trusted?.reported_used || 0);
+    const artifact = {
+        adjudication_id: adjudicationId,
+        schema_version: QUOTA_ADJUDICATION_SCHEMA_VERSION,
+        provider: PROVIDER,
+        accounting_epoch_id: ledger.epoch.epoch_id,
+        billing_period_id: config.billing_period_id,
+        adjudicated_at: adjudicatedAt,
+        adjudication_reason: QUOTA_ADJUDICATION_REASON,
+        historical_request_id: historicalRequestId,
+        historical_run_id: historical.run_id,
+        local_consumed_requests: summary.consumed_request_count,
+        local_consumed_quota_units: localUnits,
+        ledger_entry_count: ledger.entries.length,
+        ledger_last_entry_hash: ledger.last_entry_hash,
+        last_trusted_provider_quota_evidence: trusted === null ? null : {
+            reported_used: trusted.reported_used,
+            reported_remaining: trusted.reported_remaining,
+            reported_last_cost: trusted.reported_last_cost,
+            response_received_at: ledger.requests.find(request => request.provider_quota === trusted)?.response_received_at || null,
+        },
+        provider_exact_effect_known: false,
+        provider_effect_classification: QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION,
+        provider_quota_actual_effect: 'UNKNOWN',
+        conservative_usage_basis: QUOTA_ADJUDICATION_USAGE_BASIS,
+        conservative_effective_provider_usage: effectiveUsage,
+        conservative_remaining_automatic_budget: config.automated_spend_limit - effectiveUsage,
+        evidence_references: {
+            classes: ['REQUEST_LEDGER', 'HISTORICAL_TERMINAL_RECORD', 'OWNER_OFFLINE_CONSERVATIVE_POLICY'],
+            ledger_request_ids: ledger.requests.map(request => request.request_id).sort(),
+        },
+        quota_config_sha256: quotaConfigSha256,
+        source_main_sha: sourceMainSha,
+        source_main_tree_sha: sourceMainTreeSha,
+        adjudication_policy_version: QUOTA_ADJUDICATION_POLICY_VERSION,
+    };
+    return validateQuotaAdjudication(artifact, { ledger, quotaConfig: config, quotaConfigSha256, now });
+}
+
+function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, now } = {}) {
+    if (typeof quotaAdjudicationPath !== 'string' || !quotaAdjudicationPath.trim()) fail('INVALID_QUOTA_ADJUDICATION', 'quotaAdjudicationPath is required');
+    if (expectedSha256 !== null) assertSha256(expectedSha256, 'quota adjudication sha256');
+    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
+    try {
+        const resolvedPath = path.resolve(quotaAdjudicationPath);
+        if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication must be a direct child of the external runtime trust root');
+        const artifactName = path.basename(resolvedPath);
+        if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(artifactName)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
+        for (const name of fs.readdirSync(directoryFdPath(trustDescriptor.fd)).filter(entry => QUOTA_ADJUDICATION_FILE_PATTERN.test(entry) && entry !== artifactName)) {
+            const competingPath = scopedPath(trustDescriptor.fd, name);
+            const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
+            const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
+            if (competingValue.accounting_epoch_id === ledger?.epoch?.epoch_id && competingValue.billing_period_id === quotaConfig?.billing_period_id) {
+                fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
+            }
+        }
+        const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, artifactName), 'Stage D quota adjudication', { immutable: true });
+        const observedSha256 = sha256Text(observed.bytes);
+        if (expectedSha256 !== null && observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the bytes read from the governed artifact');
+        const value = parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication');
+        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, now }), sha256: observedSha256, path: resolvedPath });
+    } finally {
+        closeDirectoryDescriptor(trustDescriptor);
+    }
+}
+
+function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrustRoot, artifact } = {}) {
+    if (typeof artifactPath !== 'string' || !artifactPath.trim()) fail('INVALID_QUOTA_ADJUDICATION', 'artifactPath is required');
+    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
+    try {
+        const resolvedPath = path.resolve(artifactPath);
+        if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication output must be a direct child of the external runtime trust root');
+        if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(path.basename(resolvedPath))) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
+        for (const name of fs.readdirSync(directoryFdPath(trustDescriptor.fd)).filter(entry => QUOTA_ADJUDICATION_FILE_PATTERN.test(entry))) {
+            const competingPath = scopedPath(trustDescriptor.fd, name);
+            const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
+            const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
+            if (competingValue.accounting_epoch_id === artifact.accounting_epoch_id && competingValue.billing_period_id === artifact.billing_period_id) {
+                fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
+            }
+        }
+        writeExclusiveImmutable(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), artifact, 'Stage D quota adjudication', { directoryFd: trustDescriptor.fd });
+        return Object.freeze({ path: resolvedPath, sha256: sha256Text(canonicalBytes(artifact)) });
+    } finally {
+        closeDirectoryDescriptor(trustDescriptor);
+    }
 }
 
 function reconcileProviderQuotaHeaders({ headers, quotaConfig, expectedRequestCostCredits, localConsumedAfterRequest, previousProviderQuota = null } = {}) {
@@ -2658,7 +2903,7 @@ function createStageDProductionComponents({ evidenceRoot, authorityRoot, allocat
 async function executeStageDControlledInitialization(options = {}) {
     assertPlainObject(options, 'Stage D controlled initialization options');
     if (Object.prototype.hasOwnProperty.call(options, 'runtimeAuthorization')) fail('STAGE_D_RUNTIME_AUTHORIZATION_INPUT_FORBIDDEN', 'runtimeAuthorization is private and cannot be supplied to the production binder');
-    for (const forbiddenInput of ['quotaConfig', 'quotaConfigSha256', 'fixtureUniverseRawSha256']) {
+    for (const forbiddenInput of ['quotaConfig', 'quotaConfigSha256', 'quotaAdjudication', 'quotaAdjudicationSha256', 'fixtureUniverseRawSha256']) {
         if (Object.prototype.hasOwnProperty.call(options, forbiddenInput)) fail('STAGE_D_INPUT_BINDING_FORBIDDEN', `${forbiddenInput} is bound to the governed input bytes and cannot be supplied to the production binder`);
     }
     const {
@@ -2667,6 +2912,7 @@ async function executeStageDControlledInitialization(options = {}) {
         allocationArtifactPath,
         ledgerRoot,
         quotaConfigPath,
+        quotaAdjudicationPath,
         fixtureUniverseRawPath,
         fixtureUniverse,
         evidenceRoot,
@@ -2700,6 +2946,19 @@ async function executeStageDControlledInitialization(options = {}) {
     });
     const ledger = readRequestLedger({ ledgerRoot: path.resolve(ledgerRoot) });
     const normalizedQuotaConfig = createStageDProductionQuotaConfiguration(quotaSource.value, { now });
+    const quotaAdjudicationSource = authorizationRecord.authorization.quota_adjudication_sha256 === null
+        ? null
+        : readBoundQuotaAdjudication({
+            quotaAdjudicationPath,
+            ledgerRoot,
+            runLockTrustRoot,
+            expectedSha256: authorizationRecord.authorization.quota_adjudication_sha256,
+            ledger,
+            quotaConfig: normalizedQuotaConfig,
+            quotaConfigSha256: quotaSource.sha256,
+            now,
+        });
+    const quotaAdjudication = quotaAdjudicationSource?.value || null;
     const validatedAuthorization = validateStageDControlledAuthorization({
         authorization: authorizationRecord.authorization,
         authoritySnapshot,
@@ -2708,6 +2967,7 @@ async function executeStageDControlledInitialization(options = {}) {
         ledger,
         quotaConfig: normalizedQuotaConfig,
         quotaConfigSha256: quotaSource.sha256,
+        quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
         fixtureUniverseRawSha256: fixtureSource.raw_sha256,
         now,
     });
@@ -2784,8 +3044,11 @@ async function executeStageDControlledInitialization(options = {}) {
         allocationArtifactPath,
         ledgerRoot,
         quotaConfig: normalizedQuotaConfig,
+        quotaConfigSha256: quotaSource.sha256,
         runId: validatedAuthorization.authorization.run_id,
         requestId: validatedAuthorization.authorization.request_id,
+        quotaAdjudication: quotaAdjudicationSource?.value || null,
+        quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
         runtimeAuthorization: createStageDProductionRuntimeAuthorization(),
         transport: boundTransport,
         evidencePersistence: boundEvidencePersistence,
@@ -2836,6 +3099,9 @@ async function executeStageDOneCycle({
     allocationArtifactPath,
     ledgerRoot,
     quotaConfig,
+    quotaConfigSha256 = null,
+    quotaAdjudication = null,
+    quotaAdjudicationSha256 = null,
     runId,
     requestId,
     runtimeAuthorization = null,
@@ -2930,7 +3196,16 @@ async function executeStageDOneCycle({
         if (ledger.requests.some(row => row.run_id === runId)) fail('DUPLICATE_RUN_ID', 'run_id has already been accounted and cannot be reused');
         const budgetNow = trustedClock();
         assertUtc(budgetNow, 'budget now');
-        const budgetDecision = assertRequestBudget({ ledger, quotaConfig, runId, now: budgetNow, requestedUnits: EXPECTED_REQUEST_COST_CREDITS });
+        const budgetDecision = assertRequestBudget({
+            ledger,
+            quotaConfig,
+            quotaConfigSha256,
+            quotaAdjudication,
+            quotaAdjudicationSha256,
+            runId,
+            now: budgetNow,
+            requestedUnits: EXPECTED_REQUEST_COST_CREDITS,
+        });
         try {
             // The descriptor pins the authority read, while this path check
             // prevents a replaced public root from becoming the authority
@@ -3240,7 +3515,7 @@ async function executeStageDOneCycle({
     return cycleResult;
 }
 
-function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, runId, now, runLockTrustRoot } = {}) {
+function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, runId, now, runLockTrustRoot } = {}) {
     assertPlainObject(authoritySnapshot, 'authoritySnapshot');
     if (!/^tx_[a-f0-9]{64}$/.test(authoritySnapshot.head_transaction_id || '') || !/^[a-f0-9]{64}$/.test(authoritySnapshot.state_hash || '')) {
         fail('AUTHORITY_NOT_READY', 'canonical Stage C authority must reopen before a Stage D cycle is planned');
@@ -3267,7 +3542,16 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
         let budget;
         try {
             if (!ledger) fail('REQUEST_LEDGER_UNAVAILABLE', 'request ledger is unavailable');
-            budget = assertRequestBudget({ ledger, quotaConfig, runId, now, requestedUnits: EXPECTED_REQUEST_COST_CREDITS });
+            budget = assertRequestBudget({
+                ledger,
+                quotaConfig,
+                quotaConfigSha256,
+                quotaAdjudication,
+                quotaAdjudicationSha256,
+                runId,
+                now,
+                requestedUnits: EXPECTED_REQUEST_COST_CREDITS,
+            });
         } catch (error) {
             budget = { allowed: false, code: error.code || 'REQUEST_BUDGET_DENIED', message: error.message };
         }
@@ -3334,6 +3618,12 @@ module.exports = {
     EXPECTED_REQUEST_COST_CREDITS,
     MAX_PROVIDER_REQUESTS_PER_CYCLE,
     REQUIRED_QUOTA_HEADERS,
+    QUOTA_ADJUDICATION_SCHEMA_VERSION,
+    QUOTA_ADJUDICATION_POLICY_VERSION,
+    QUOTA_ADJUDICATION_REASON,
+    QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION,
+    QUOTA_ADJUDICATION_USAGE_BASIS,
+    QUOTA_ADJUDICATION_FILE_PATTERN,
     POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION,
     MARKET_SCOPE,
     HISTORICAL_PRE_EPOCH_REQUEST_TOTAL,
@@ -3349,6 +3639,10 @@ module.exports = {
     releaseStageDRunLock,
     bindStageDRunLockGeneration,
     validateQuotaConfiguration,
+    validateQuotaAdjudication,
+    createStageDQuotaAdjudication,
+    readBoundQuotaAdjudication,
+    persistStageDQuotaAdjudication,
     validateProviderQuotaRecord,
     reconcileProviderQuotaHeaders,
     createStageDTestRuntimeAuthorization,
