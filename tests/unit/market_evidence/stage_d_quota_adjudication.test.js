@@ -21,6 +21,7 @@ const {
     createStageDTestQuotaConfiguration,
     createStageDTestRuntimeAuthorization,
     createStageDQuotaAdjudication,
+    createStageDQuotaAdjudicationSuccessor,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
     resolveStageDGitSourceBinding,
@@ -538,4 +539,28 @@ test('writable and symlink adjudication paths are rejected before admission', t 
         }),
         error => error.code === 'UNSAFE_PATH',
     );
+});
+
+test('immutable source successor preserves conservative usage and rejects siblings or forged lineage', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const binding = buildArtifact(ctx, config);
+    const predecessor = { ...binding.artifact, source_main_sha: 'a'.repeat(40), source_main_tree_sha: 'b'.repeat(40) };
+    const predecessorSha256 = canonicalSha(predecessor);
+    const predecessorPath = path.join(ctx.trustRoot, 'stage-d-quota-adjudication-predecessor.json');
+    persistStageDQuotaAdjudication({ artifactPath: predecessorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: predecessor });
+    const successor = createStageDQuotaAdjudicationSuccessor({
+        ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: config,
+        quotaConfigSha256: binding.quotaConfigSha256, predecessor, predecessorSha256,
+        sourceMainSha: SOURCE_MAIN_SHA, sourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION, adjudicatedAt: NOW,
+        adjudicationId: 'sqa_test-source-successor',
+    });
+    assert.equal(successor.conservative_effective_provider_usage, predecessor.conservative_effective_provider_usage);
+    assert.equal(successor.predecessor_sha256, predecessorSha256);
+    const successorPath = path.join(ctx.trustRoot, 'stage-d-quota-adjudication-successor.json');
+    persistStageDQuotaAdjudication({ artifactPath: successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: successor });
+    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: path.join(ctx.trustRoot, 'stage-d-quota-adjudication-sibling.json'), ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: successor }), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
+    assert.throws(() => createStageDQuotaAdjudicationSuccessor({ ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: config, quotaConfigSha256: binding.quotaConfigSha256, predecessor, predecessorSha256: '0'.repeat(64), sourceMainSha: SOURCE_MAIN_SHA, sourceMainTreeSha: SOURCE_MAIN_TREE_SHA, testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION, adjudicatedAt: NOW, adjudicationId: 'sqa_test-forged-successor' }));
 });
