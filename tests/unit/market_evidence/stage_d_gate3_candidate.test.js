@@ -61,7 +61,10 @@ function setup(t) {
     const ledger = state();
     replace(stageD, 'readRequestLedger', () => ledger);
     replace(stageD, 'validateQuotaConfiguration', value => value);
-    replace(stageD, 'validateQuotaAdjudication', value => value);
+    replace(stageD, 'readBoundQuotaAdjudication', () => Object.freeze({
+        value: Object.freeze({ adjudication: 'fixture' }),
+        sha256: ADJUDICATION_SHA,
+    }));
     replace(stageD, 'ledgerUsageSummary', () => ({ consumed_request_count: 4, ambiguous_consumed_request_ids: [] }));
     replace(stageD, 'inspectStageDRunLock', () => ({ state: 'ABSENT' }));
     replace(stageD, 'resolveStageDGitSourceBinding', () => ({ source_main_sha: SOURCE_SHA, source_main_tree_sha: SOURCE_TREE }));

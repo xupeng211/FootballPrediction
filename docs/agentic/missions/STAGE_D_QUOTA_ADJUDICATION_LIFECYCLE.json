@@ -9,6 +9,7 @@
     "scripts/ops/stage_d_quota_adjudication.js",
     "src/infrastructure/market_evidence/stageDGate3Candidate.js",
     "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_gate3_candidate.test.js",
     "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
   ],
   "authorized_prefixes": [],
