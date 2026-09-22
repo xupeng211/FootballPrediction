@@ -1,0 +1,18 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_QUOTA_ADJUDICATION_LIFECYCLE",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/agentic/missions/STAGE_D_QUOTA_ADJUDICATION_LIFECYCLE.json",
+    "scripts/ops/stage_d_quota_adjudication.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [".env", "AGENTS.md", "Makefile", "README.md", "package.json", "package-lock.json"],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "docker/", "schemas/"],
+  "excluded_tokens": ["backtest", "migration", "model-activation", "scheduler", "theoddsapi"],
+  "protected_invariants": ["HISTORICAL_ADJUDICATION_IMMUTABLE", "NO_QUOTA_RESET", "ZERO_PROVIDER_CONTACT"],
+  "forbidden_side_effects": ["provider DNS or request", "live authorization, binder, request intent or transmission", "historical evidence mutation or deletion"]
+}
