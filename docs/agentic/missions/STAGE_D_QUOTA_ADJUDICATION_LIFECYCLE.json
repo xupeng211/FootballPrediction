@@ -7,6 +7,7 @@
     "docs/agentic/missions/STAGE_D_QUOTA_ADJUDICATION_LIFECYCLE.json",
     "docs/CAPABILITY_INDEX.md",
     "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "scripts/ops/stage_d_cycle.js",
     "scripts/ops/stage_d_quota_adjudication.js",
     "src/infrastructure/market_evidence/stageDGate3Candidate.js",
     "src/infrastructure/market_evidence/stageDOperations.js",

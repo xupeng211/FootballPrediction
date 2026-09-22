@@ -134,6 +134,8 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
         quotaConfigSha256: binding?.quotaConfigSha256 || canonicalSha(config),
         quotaAdjudication: binding?.artifact || null,
         quotaAdjudicationSha256: binding?.artifactSha256 || null,
+        quotaAdjudicationPredecessor: binding?.predecessor || null,
+        quotaAdjudicationPredecessorSha256: binding?.predecessorSha256 || null,
         expectedSourceMainSha: SOURCE_MAIN_SHA,
         expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
         testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
@@ -613,6 +615,7 @@ test('successor lineage rejects siblings, forged hashes, stale source, malformed
     const reset = { ...state.successor, conservative_effective_provider_usage: 1, conservative_remaining_automatic_budget: config.automated_spend_limit - 1 };
     assert.throws(() => validateQuotaAdjudication(reset, { ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: config, quotaConfigSha256: state.binding.quotaConfigSha256, predecessor: state.predecessor, predecessorSha256: state.predecessorSha256, now: NOW }), error => error.code === 'QUOTA_ADJUDICATION_LINEAGE_INVALID');
     assert.throws(() => assertRequestBudget(budgetArgs(ctx, config, { artifact: state.successor, artifactSha256: state.successorSha256 })), error => error.code === 'QUOTA_ADJUDICATION_LINEAGE_INVALID');
+    assert.equal(assertRequestBudget(budgetArgs(ctx, config, { artifact: state.successor, artifactSha256: state.successorSha256, predecessor: state.predecessor, predecessorSha256: state.predecessorSha256 })).allowed, true);
     const malformed = { ...state.successor };
     delete malformed.predecessor_sha256;
     assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: path.join(ctx.trustRoot, 'stage-d-quota-adjudication-sqa_test-malformed.json'), ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: malformed }), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');

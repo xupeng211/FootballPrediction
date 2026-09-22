@@ -1836,7 +1836,7 @@ function assertApprovedQuotaConfiguration(value, { now } = {}) {
 }
 
 // eslint-disable-next-line complexity -- local budget admission enumerates every ambiguous ledger state.
-function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null } = {}) {
+function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null, quotaAdjudicationPredecessor = null, quotaAdjudicationPredecessorSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null } = {}) {
     if (!ledger || !ledger.epoch || !Array.isArray(ledger.requests)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'durable request ledger is unavailable');
     validateEpoch(ledger.epoch);
     const periodStart = Date.parse(config.period_start_at);
@@ -1883,6 +1883,8 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
             quotaConfig: config,
             quotaConfigSha256,
             quotaAdjudicationSha256,
+            predecessor: quotaAdjudicationPredecessor,
+            predecessorSha256: quotaAdjudicationPredecessorSha256,
             now,
             expectedSourceMainSha: expectedSource.source_main_sha,
             expectedSourceMainTreeSha: expectedSource.source_main_tree_sha,
@@ -1893,7 +1895,7 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
     return summary;
 }
 
-function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, runId, now, requestedUnits = 1 }) {
+function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, quotaAdjudicationPredecessor = null, quotaAdjudicationPredecessorSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, runId, now, requestedUnits = 1 }) {
     const config = validateQuotaConfiguration(quotaConfig, { now });
     assertToken(runId, 'run_id');
     assertUtc(now, 'budget now');
@@ -1901,7 +1903,7 @@ function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, qu
     if (requestedUnits !== config.expected_request_cost_credits || requestedUnits > config.max_requests_per_stage_d_run) {
         fail('REQUEST_BUDGET_DENIED', 'expected provider request cost is not bounded by the cycle contract');
     }
-    assertBudgetLedgerValid(ledger, config, quotaAdjudication, { now, quotaConfigSha256, quotaAdjudicationSha256, expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
+    assertBudgetLedgerValid(ledger, config, quotaAdjudication, { now, quotaConfigSha256, quotaAdjudicationSha256, quotaAdjudicationPredecessor, quotaAdjudicationPredecessorSha256, expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
     const timestamped = ledger.requests.filter(request => requestIsConsumed(request) && request.transmitted_at !== null);
     const monthly = timestamped.filter(request => Date.parse(request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.transmitted_at) < Date.parse(config.period_end_at));
     const day = now.slice(0, 10);
@@ -2243,7 +2245,7 @@ function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLock
         }
         if (expectedSha256 !== null && observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the bytes read from the governed artifact');
         const predecessor = predecessors[0] || null;
-        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, predecessor: predecessor?.value || null, predecessorSha256: predecessor?.sha256 || null, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, path: resolvedPath });
+        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, predecessor: predecessor?.value || null, predecessorSha256: predecessor?.sha256 || null, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, predecessor: predecessor?.value || null, predecessorSha256: predecessor?.sha256 || null, path: resolvedPath });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);
     }
@@ -3207,6 +3209,8 @@ async function executeStageDControlledInitialization(options = {}) {
             now,
         });
     const quotaAdjudication = quotaAdjudicationSource?.value || null;
+    const quotaAdjudicationPredecessor = quotaAdjudicationSource?.predecessor || null;
+    const quotaAdjudicationPredecessorSha256 = quotaAdjudicationSource?.predecessorSha256 || null;
     const validatedAuthorization = validateStageDControlledAuthorization({
         authorization: authorizationRecord.authorization,
         authoritySnapshot,
@@ -3297,6 +3301,8 @@ async function executeStageDControlledInitialization(options = {}) {
         requestId: validatedAuthorization.authorization.request_id,
         quotaAdjudication: quotaAdjudicationSource?.value || null,
         quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
+        quotaAdjudicationPredecessor: quotaAdjudicationPredecessor,
+        quotaAdjudicationPredecessorSha256: quotaAdjudicationPredecessorSha256,
         expectedSourceMainSha: quotaAdjudicationGitSource?.source_main_sha || null,
         expectedSourceMainTreeSha: quotaAdjudicationGitSource?.source_main_tree_sha || null,
         runtimeAuthorization: createStageDProductionRuntimeAuthorization(),
@@ -3352,6 +3358,8 @@ async function executeStageDOneCycle({
     quotaConfigSha256 = null,
     quotaAdjudication = null,
     quotaAdjudicationSha256 = null,
+    quotaAdjudicationPredecessor = null,
+    quotaAdjudicationPredecessorSha256 = null,
     expectedSourceMainSha = null,
     expectedSourceMainTreeSha = null,
     runId,
@@ -3454,6 +3462,8 @@ async function executeStageDOneCycle({
             quotaConfigSha256,
             quotaAdjudication,
             quotaAdjudicationSha256,
+            quotaAdjudicationPredecessor,
+            quotaAdjudicationPredecessorSha256,
             expectedSourceMainSha,
             expectedSourceMainTreeSha,
             runId,
@@ -3769,7 +3779,7 @@ async function executeStageDOneCycle({
     return cycleResult;
 }
 
-function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, runId, now, runLockTrustRoot } = {}) {
+function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapshot, quotaConfig = null, quotaConfigSha256 = null, quotaAdjudication = null, quotaAdjudicationSha256 = null, quotaAdjudicationPredecessor = null, quotaAdjudicationPredecessorSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, runId, now, runLockTrustRoot } = {}) {
     assertPlainObject(authoritySnapshot, 'authoritySnapshot');
     if (!/^tx_[a-f0-9]{64}$/.test(authoritySnapshot.head_transaction_id || '') || !/^[a-f0-9]{64}$/.test(authoritySnapshot.state_hash || '')) {
         fail('AUTHORITY_NOT_READY', 'canonical Stage C authority must reopen before a Stage D cycle is planned');
@@ -3802,6 +3812,8 @@ function buildOfflineStageDRunPlan({ operationRoot, ledgerRoot, authoritySnapsho
                 quotaConfigSha256,
                 quotaAdjudication,
                 quotaAdjudicationSha256,
+                quotaAdjudicationPredecessor,
+                quotaAdjudicationPredecessorSha256,
                 expectedSourceMainSha,
                 expectedSourceMainTreeSha,
                 runId,
