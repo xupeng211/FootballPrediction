@@ -13,6 +13,7 @@ const path = require('node:path');
 const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
 const {
     createStageDQuotaAdjudication,
+    createStageDQuotaAdjudicationSuccessor,
     persistStageDQuotaAdjudication,
     readRequestLedger,
     resolveStageDGitSourceBinding,
@@ -48,7 +49,7 @@ function readRegularQuotaConfig(filePath) {
 
 function parseArgs(argv = process.argv.slice(2)) {
     const values = {};
-    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--help']);
+    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--predecessor', '--predecessor-sha256', '--help']);
     for (let index = 0; index < argv.length; index += 1) {
         const flag = argv[index];
         if (flag === '--help') return Object.freeze({ help: true });
@@ -98,7 +99,10 @@ function main(argv = process.argv.slice(2)) {
         sourceMainSha: args['--source-main-sha'],
         sourceMainTreeSha: args['--source-main-tree'],
     });
-    const artifact = createStageDQuotaAdjudication({
+    const predecessor = args['--predecessor'] ? readRegularQuotaConfig(args['--predecessor']) : null;
+    if ((predecessor === null) !== (!args['--predecessor-sha256'])) throw new Error('--predecessor and --predecessor-sha256 must be supplied together');
+    const create = predecessor === null ? createStageDQuotaAdjudication : createStageDQuotaAdjudicationSuccessor;
+    const artifact = create({
         ledger,
         quotaConfig: configSource.value,
         quotaConfigSha256: sha256Text(configSource.bytes),
@@ -107,6 +111,7 @@ function main(argv = process.argv.slice(2)) {
         sourceMainTreeSha: source.source_main_tree_sha,
         adjudicatedAt,
         adjudicationId: args['--adjudication-id'],
+        ...(predecessor === null ? {} : { predecessor: predecessor.value, predecessorSha256: args['--predecessor-sha256'] }),
     });
     const persisted = persistStageDQuotaAdjudication({
         artifactPath: args['--output'],

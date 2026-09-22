@@ -67,6 +67,7 @@ const PROVIDER_QUOTA_HEADER_PATTERN = /^(?:x-(?:requests|ratelimit|credits)-(?:r
 const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
 const HISTORICAL_PRE_EPOCH_EXACT_TOTAL = 'UNKNOWN';
 const QUOTA_ADJUDICATION_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication/v1';
+const QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication/v2';
 const QUOTA_ADJUDICATION_POLICY_VERSION = 'stage-d-conservative-quota-adjudication/v1';
 const QUOTA_ADJUDICATION_REASON = 'HISTORICAL_QUOTA_HEADER_LOSS_AFTER_COMPLETED_2XX';
 const QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION = 'PROVIDER_EFFECT_UNKNOWN_BUT_BUDGETED_AS_CONSUMED';
@@ -1966,6 +1967,7 @@ function validateTrustedQuotaEvidence(value, config) {
 // facts change; it cannot be used as a generic quota override.
 // eslint-disable-next-line complexity -- fail-closed validation enumerates every immutable adjudication binding.
 function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudicationSha256 = null, now, expectedSourceMainSha = null, expectedSourceMainTreeSha = null } = {}) {
+    const successor = value?.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION;
     assertExactKeys(
         value,
         [
@@ -1994,10 +1996,11 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
             'source_main_sha',
             'source_main_tree_sha',
             'adjudication_policy_version',
+            ...(successor ? ['predecessor_adjudication_id', 'predecessor_sha256', 'predecessor_source_main_sha', 'predecessor_source_main_tree_sha', 'supersession_reason'] : []),
         ],
         'Stage D quota adjudication'
     );
-    if (value.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication schema is invalid');
+    if (![QUOTA_ADJUDICATION_SCHEMA_VERSION, QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION].includes(value.schema_version)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication schema is invalid');
     if (!/^sqa_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(value.adjudication_id || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ID is invalid');
     if (value.provider !== PROVIDER) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication provider is invalid');
     assertToken(value.accounting_epoch_id, 'quota adjudication accounting_epoch_id');
@@ -2030,6 +2033,15 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
         assertGitObjectSha(expectedSourceMainTreeSha, 'expected quota adjudication source main tree SHA');
         if (value.source_main_sha !== expectedSourceMainSha || value.source_main_tree_sha !== expectedSourceMainTreeSha) {
             fail('QUOTA_ADJUDICATION_SOURCE_MISMATCH', 'quota adjudication source commit/tree does not match the trusted runtime source');
+        }
+    }
+    if (successor) {
+        assertToken(value.predecessor_adjudication_id, 'quota adjudication predecessor_adjudication_id');
+        assertSha256(value.predecessor_sha256, 'quota adjudication predecessor_sha256');
+        assertGitObjectSha(value.predecessor_source_main_sha, 'quota adjudication predecessor_source_main_sha');
+        assertGitObjectSha(value.predecessor_source_main_tree_sha, 'quota adjudication predecessor_source_main_tree_sha');
+        if (value.predecessor_adjudication_id === value.adjudication_id || value.predecessor_source_main_sha === value.source_main_sha || value.predecessor_source_main_tree_sha === value.source_main_tree_sha || value.supersession_reason !== 'SOURCE_BINDING_REFRESH_AFTER_REVIEWED_CODE_CHANGE') {
+            fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication successor lineage is invalid');
         }
     }
     if (!ledger || value.accounting_epoch_id !== ledger.epoch?.epoch_id) fail('QUOTA_ADJUDICATION_EPOCH_MISMATCH', 'quota adjudication accounting epoch does not match the durable ledger');
@@ -2118,6 +2130,40 @@ function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256,
     });
 }
 
+// A source refresh is an append-only lineage transition, never a replacement:
+// it carries the predecessor's conservative floor forward and can only be used
+// while the same ledger generation and billing period remain in force.
+function createStageDQuotaAdjudicationSuccessor({ ledger, quotaConfig, quotaConfigSha256, predecessor, predecessorSha256, sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization = null, adjudicatedAt, adjudicationId } = {}) {
+    const config = validateQuotaConfiguration(quotaConfig, { now: adjudicatedAt });
+    const source = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha: sourceMainSha, expectedSourceMainTreeSha: sourceMainTreeSha, testRuntimeAuthorization });
+    const prior = validateQuotaAdjudication(predecessor, { ledger, quotaConfig: config, quotaConfigSha256, quotaAdjudicationSha256: predecessorSha256, now: adjudicatedAt });
+    if (prior.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'only an immutable v1 adjudication can be refreshed');
+    if (prior.source_main_sha === source.source_main_sha && prior.source_main_tree_sha === source.source_main_tree_sha) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'successor requires a distinct reviewed source binding');
+    const localUnits = consumedQuotaUnitsInPeriod(ledger, config);
+    const trusted = latestReconciledProviderQuota(ledger);
+    const effectiveUsage = Math.max(localUnits, trusted?.reported_used || 0, prior.conservative_effective_provider_usage);
+    const successor = {
+        ...prior,
+        adjudication_id: adjudicationId,
+        schema_version: QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION,
+        adjudicated_at: adjudicatedAt,
+        local_consumed_requests: ledgerUsageSummary(ledger).consumed_request_count,
+        local_consumed_quota_units: localUnits,
+        ledger_entry_count: ledger.entries.length,
+        ledger_last_entry_hash: ledger.last_entry_hash,
+        conservative_effective_provider_usage: effectiveUsage,
+        conservative_remaining_automatic_budget: config.automated_spend_limit - effectiveUsage,
+        source_main_sha: source.source_main_sha,
+        source_main_tree_sha: source.source_main_tree_sha,
+        predecessor_adjudication_id: prior.adjudication_id,
+        predecessor_sha256: predecessorSha256,
+        predecessor_source_main_sha: prior.source_main_sha,
+        predecessor_source_main_tree_sha: prior.source_main_tree_sha,
+        supersession_reason: 'SOURCE_BINDING_REFRESH_AFTER_REVIEWED_CODE_CHANGE',
+    };
+    return validateQuotaAdjudication(successor, { ledger, quotaConfig: config, quotaConfigSha256, expectedSourceMainSha: source.source_main_sha, expectedSourceMainTreeSha: source.source_main_tree_sha, now: adjudicatedAt });
+}
+
 function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, now } = {}) {
     if (typeof quotaAdjudicationPath !== 'string' || !quotaAdjudicationPath.trim()) fail('INVALID_QUOTA_ADJUDICATION', 'quotaAdjudicationPath is required');
     if (expectedSha256 !== null) assertSha256(expectedSha256, 'quota adjudication sha256');
@@ -2128,18 +2174,20 @@ function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLock
         if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication must be a direct child of the external runtime trust root');
         const artifactName = path.basename(resolvedPath);
         if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(artifactName)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
+        const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, artifactName), 'Stage D quota adjudication', { immutable: true });
+        const observedSha256 = sha256Text(observed.bytes);
+        const value = parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication');
         for (const name of fs.readdirSync(directoryFdPath(trustDescriptor.fd)).filter(entry => QUOTA_ADJUDICATION_FILE_PATTERN.test(entry) && entry !== artifactName)) {
             const competingPath = scopedPath(trustDescriptor.fd, name);
             const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
             const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
-            if (competingValue.accounting_epoch_id === ledger?.epoch?.epoch_id && competingValue.billing_period_id === quotaConfig?.billing_period_id) {
+            const successorOfCompeting = value => value.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && value.predecessor_adjudication_id === competingValue.adjudication_id && value.predecessor_sha256 === sha256Text(competing.bytes);
+            const competingIsPredecessor = value.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && value.predecessor_adjudication_id === competingValue.adjudication_id && value.predecessor_sha256 === sha256Text(competing.bytes);
+            if (competingValue.accounting_epoch_id === ledger?.epoch?.epoch_id && competingValue.billing_period_id === quotaConfig?.billing_period_id && !competingIsPredecessor && !successorOfCompeting(value)) {
                 fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
             }
         }
-        const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, artifactName), 'Stage D quota adjudication', { immutable: true });
-        const observedSha256 = sha256Text(observed.bytes);
         if (expectedSha256 !== null && observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the bytes read from the governed artifact');
-        const value = parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication');
         return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, path: resolvedPath });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);
@@ -2157,7 +2205,8 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
             const competingPath = scopedPath(trustDescriptor.fd, name);
             const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
             const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
-            if (competingValue.accounting_epoch_id === artifact.accounting_epoch_id && competingValue.billing_period_id === artifact.billing_period_id) {
+            const validSuccessor = artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && artifact.predecessor_adjudication_id === competingValue.adjudication_id && artifact.predecessor_sha256 === sha256Text(competing.bytes);
+            if (competingValue.accounting_epoch_id === artifact.accounting_epoch_id && competingValue.billing_period_id === artifact.billing_period_id && !validSuccessor) {
                 fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
             }
         }
@@ -3773,6 +3822,7 @@ module.exports = {
     MAX_PROVIDER_REQUESTS_PER_CYCLE,
     REQUIRED_QUOTA_HEADERS,
     QUOTA_ADJUDICATION_SCHEMA_VERSION,
+    QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION,
     QUOTA_ADJUDICATION_POLICY_VERSION,
     QUOTA_ADJUDICATION_REASON,
     QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION,
@@ -3796,6 +3846,7 @@ module.exports = {
     validateQuotaConfiguration,
     validateQuotaAdjudication,
     createStageDQuotaAdjudication,
+    createStageDQuotaAdjudicationSuccessor,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
     validateProviderQuotaRecord,
