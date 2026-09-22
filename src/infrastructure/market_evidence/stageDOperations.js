@@ -125,6 +125,22 @@ function createStageDProductionQuotaConfiguration(value, { now } = {}) {
     return normalized;
 }
 
+// Data-only metadata for offline Gate 3 candidate preparation. This does not
+// expose a runtime capability, authorization, transport, consumption path or secret.
+function getStageDControlledAuthorizationContract() {
+    return Object.freeze({
+        schema_version: CONTROLLED_AUTHORIZATION_SCHEMA_VERSION,
+        authorization_status: CONTROLLED_AUTHORIZATION_STATUS,
+        mission: CONTROLLED_AUTHORIZATION_MISSION,
+        max_lifetime_ms: CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS,
+        provider: PROVIDER,
+        configured_markets: Object.freeze([...CONFIGURED_MARKETS]),
+        configured_regions: Object.freeze([...CONFIGURED_REGIONS]),
+        max_provider_requests: MAX_PROVIDER_REQUESTS_PER_CYCLE,
+        expected_request_cost_credits: EXPECTED_REQUEST_COST_CREDITS,
+    });
+}
+
 function assertPlainObject(value, label) {
     if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) {
         fail('INVALID_CONTRACT', `${label} must be a plain object`);
@@ -3784,6 +3800,7 @@ module.exports = {
     persistStageDQuotaAdjudication,
     validateProviderQuotaRecord,
     reconcileProviderQuotaHeaders,
+    getStageDControlledAuthorizationContract,
     createStageDTestRuntimeAuthorization,
     createStageDTestQuotaConfiguration,
     assertRequestBudget,

@@ -1,0 +1,32 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "STAGE_D_CANONICAL_GATE3_CANDIDATE_GENERATOR",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/agentic/missions/STAGE_D_CANONICAL_GATE3_CANDIDATE_GENERATOR.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "scripts/ops/stage_d_candidate_prepare.js",
+    "src/infrastructure/market_evidence/stageDGate3Candidate.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_gate3_candidate.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [".env", ".gitignore", "AGENTS.md", "Makefile", "README.md", "config/stage_d_quota_budget.json", "docs/AGENT_WORKFLOW.md", "docs/PROJECT_VISION.md", "package-lock.json", "package.json"],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "docker/", "docs/_reports/", "schemas/"],
+  "excluded_tokens": ["backtest", "bookmaker", "migration", "model-activation", "oddsportal", "playwright", "proxy_pools", "scheduler", "stage_d_cycle", "theoddsapi", "transactionstore", "value-engine"],
+  "protected_invariants": [
+    "ZERO_PROVIDER_CONTACT: candidate preparation and validation perform no provider DNS lookup, provider request, quota probe, authorization creation, authorization consumption, request intent creation or transmission.",
+    "CANDIDATE_ONLY: the sole output is immutable PREPARED_NOT_AUTHORIZED evidence for a separate owner decision.",
+    "BINDER_CONTRACT_SINGLE_SOURCE: required authorization schema derives from the safe metadata export of the canonical binder contract; v1 and unknown schemas fail closed.",
+    "HISTORICAL_EVIDENCE_IMMUTABLE: the stale candidate and all ledger/quota-adjudication evidence are not modified, reused or rebound.",
+    "EXISTING_CAPABILITIES_REVIEWED=YES; CURRENT_MILESTONE_REVIEWED=YES; VISION_ALIGNMENT_REVIEWED=YES."
+  ],
+  "forbidden_side_effects": [
+    "contacting or resolving The Odds API, consuming provider quota, creating provider RAW data, or starting Stage D or a scheduler",
+    "creating, consuming or reusing a live Gate 3 authorization; invoking the controlled live binder; creating a request intent; or crossing transmission",
+    "modifying historical ledger, quota adjudication, candidate or authorization evidence",
+    "self-merging, bypassing required CI/review, force-pushing or modifying main directly",
+    "reading, printing, logging, hashing or committing provider, proxy, preflight, backup or authorization secrets"
+  ]
+}
