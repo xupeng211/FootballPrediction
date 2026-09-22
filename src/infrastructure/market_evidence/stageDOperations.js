@@ -2082,6 +2082,7 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
         });
         if (prior.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION
             || prior.adjudication_id !== value.predecessor_adjudication_id
+            || value.predecessor_sha256 !== predecessorSha256
             || prior.source_main_sha !== value.predecessor_source_main_sha
             || prior.source_main_tree_sha !== value.predecessor_source_main_tree_sha
             || prior.accounting_epoch_id !== value.accounting_epoch_id
