@@ -2063,11 +2063,12 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (value.conservative_effective_provider_usage < Math.max(localUnits, trustedUsed)) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage would undercount known consumed evidence');
     if (value.conservative_effective_provider_usage > config.monthly_quota_limit) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage exceeds the configured plan limit');
     if (value.conservative_remaining_automatic_budget !== config.automated_spend_limit - value.conservative_effective_provider_usage) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative remaining automatic budget does not reconcile to the configured ceiling');
-    // Callers which admit bytes from the runtime trust root supply the direct
-    // predecessor below.  The structural validator remains usable by the
-    // existing in-memory budget APIs; those APIs only receive the already
-    // validated value returned by readBoundQuotaAdjudication.
-    if (successor && predecessor !== null) {
+    // A v2 statement has no standalone meaning: every admission path must
+    // provide and validate its immutable direct v1 predecessor.  This keeps
+    // in-memory budget callers fail-closed too, rather than relying on only
+    // the trust-root reader to supply lineage evidence.
+    if (successor) {
+        if (predecessor === null) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor requires its immutable predecessor');
         if (typeof predecessor !== 'object' || Array.isArray(predecessor)) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor predecessor is malformed');
         assertSha256(predecessorSha256, 'quota adjudication successor predecessor_sha256 binding');
         const prior = validateQuotaAdjudication(predecessor, {
