@@ -302,8 +302,8 @@ validated.
 
 `scripts/ops/stage_d_quota_adjudication.js` is the only adjudication entrypoint.
 It reads the sealed ledger and quota configuration, performs no provider or DNS
-operation, and writes one create-only, owner-only artifact as a direct child of
-the external runtime trust root. The artifact schema is
+operation, and writes the initial create-only, owner-only artifact as a direct
+child of the external runtime trust root. The initial artifact schema is
 `footballprediction-stage-d-quota-adjudication/v1`; it binds the current epoch,
 billing period, quota-config hash, append-only ledger generation, local consumed
 request/unit counts and exactly the unresolved historical request/run. Its
@@ -318,6 +318,14 @@ exact 40-character lowercase Git commit and tree object IDs used for the
 runtime. They are not content SHA-256 fields; the quota configuration,
 adjudication bytes and other file-evidence hashes retain their separate
 64-character SHA-256 contracts.
+For one unchanged epoch/period, the only lifecycle exception is the explicit
+one in [Quota-adjudication source lifecycle](#quota-adjudication-source-lifecycle):
+the entrypoint may append exactly one
+`footballprediction-stage-d-quota-adjudication/v2` direct successor to that v1
+artifact. The v2 artifact is not a replacement or new quota decision: it
+retains the v1 bytes, names their ID and hash, and preserves the epoch, period,
+ledger/config bindings, UNKNOWN effect and conservative usage floor.
+
 The offline adjudication entrypoint resolves `HEAD^{commit}` and
 `HEAD^{tree}` from the trusted runtime checkout, verifies that the checkout
 has no index/worktree/untracked changes or hidden assume-unchanged/skip-worktree
@@ -334,9 +342,12 @@ consumed units for the current period. The bound is checked against the
 configured `automated_spend_limit`, not the full plan limit, so the reserve is
 protected. An artifact is invalid if its epoch, period, quota hash, ledger
 generation, historical request binding, file hash, permissions or policy
-identity do not match. Multiple current-period artifacts, a newer unresolved
-divergence, a billing-period mismatch, a calendar-only reset, or a bound at or
-above the automatic ceiling all fail closed. A new local accounting period is
+identity do not match. Multiple current-period artifacts fail closed except for
+the one canonical pair of an immutable v1 predecessor and its direct v2
+successor; sibling successors, chains and every other additional artifact are
+conflicts. A newer unresolved divergence, a billing-period mismatch, a
+calendar-only reset, or a bound at or above the automatic ceiling also fail
+closed. A new local accounting period is
 not silently admitted: the existing `PROVIDER_RECONCILED__NO_UNVERIFIED_AUTOMATIC_RESET`
 rule still requires a valid current-period configuration and adjudication.
 
