@@ -71,6 +71,23 @@ non-canonical artifacts before transport construction/use. `max_provider_request
 greater than one is not representable in this entry path. A calendar date
 never resets quota or accounting.
 
+## Quota-adjudication source lifecycle
+
+Quota adjudications are immutable, canonical JSON evidence under the external
+runtime trust root. A v1 adjudication remains valid historical evidence, but it
+cannot be silently rebound when reviewed source changes. When the same sealed
+ledger generation and billing period require a new exact source binding, the
+offline-only adjudication entrypoint may create exactly one v2 immutable
+successor. The successor must name the v1 predecessor and its byte SHA-256,
+preserve the accounting epoch, billing period, ledger generation, quota-config
+binding and UNKNOWN provider effect, and carry forward a conservative effective
+usage no lower than its predecessor. Siblings, missing/tampered predecessors,
+chains, cycles, source-pair replay and any apparent quota reset are rejected.
+The predecessor is never modified or deleted. Candidate and binder admission
+read the complete trust-root namespace and accept a successor only with its
+exact direct predecessor; an old source-bound predecessor cannot satisfy a
+current-source admission.
+
 ## Run, lock, and scheduler contract
 
 The external scheduler supplies an opaque `run_id` for exactly one cycle. Before

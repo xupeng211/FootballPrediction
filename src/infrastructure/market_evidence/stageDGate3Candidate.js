@@ -181,14 +181,15 @@ function runtimeState(input, now) {
     const ledger = stageD.readRequestLedger({ ledgerRoot });
     const quotaSource = readRegular(input.quotaConfigPath, 'quota configuration');
     const quotaConfig = stageD.validateQuotaConfiguration(JSON.parse(quotaSource.bytes), { now });
-    const adjudicationSource = readRegular(input.quotaAdjudicationPath, 'quota adjudication', true);
-    const adjudication = JSON.parse(adjudicationSource.bytes);
     const source = sourceDetails();
-    const validatedAdjudication = stageD.validateQuotaAdjudication(adjudication, {
+    const adjudicationSource = stageD.readBoundQuotaAdjudication({
+        quotaAdjudicationPath: path.resolve(input.quotaAdjudicationPath),
+        ledgerRoot,
+        runLockTrustRoot: trust,
+        expectedSha256: null,
         ledger,
         quotaConfig,
         quotaConfigSha256: hash(quotaSource.bytes),
-        quotaAdjudicationSha256: hash(adjudicationSource.bytes),
         expectedSourceMainSha: source.source_main_sha,
         expectedSourceMainTreeSha: source.source_main_tree_sha,
         now,
@@ -207,8 +208,8 @@ function runtimeState(input, now) {
         ledger,
         quotaConfig,
         quotaConfigSha256: hash(quotaSource.bytes),
-        adjudication: validatedAdjudication,
-        quotaAdjudicationSha256: hash(adjudicationSource.bytes),
+        adjudication: adjudicationSource.value,
+        quotaAdjudicationSha256: adjudicationSource.sha256,
         summary,
         authority,
         fixtureSha256: hash(fixture.bytes),

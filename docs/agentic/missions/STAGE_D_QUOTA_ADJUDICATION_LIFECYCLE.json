@@ -5,7 +5,9 @@
   "workflow_class": "CRITICAL",
   "authorized_paths": [
     "docs/agentic/missions/STAGE_D_QUOTA_ADJUDICATION_LIFECYCLE.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
     "scripts/ops/stage_d_quota_adjudication.js",
+    "src/infrastructure/market_evidence/stageDGate3Candidate.js",
     "src/infrastructure/market_evidence/stageDOperations.js",
     "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
   ],

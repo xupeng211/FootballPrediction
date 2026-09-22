@@ -1966,7 +1966,7 @@ function validateTrustedQuotaEvidence(value, config) {
 // ledger generation and quota-config bindings make it stale as soon as the governed
 // facts change; it cannot be used as a generic quota override.
 // eslint-disable-next-line complexity -- fail-closed validation enumerates every immutable adjudication binding.
-function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudicationSha256 = null, now, expectedSourceMainSha = null, expectedSourceMainTreeSha = null } = {}) {
+function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudicationSha256 = null, predecessor = null, predecessorSha256 = null, now, expectedSourceMainSha = null, expectedSourceMainTreeSha = null } = {}) {
     const successor = value?.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION;
     assertExactKeys(
         value,
@@ -2040,7 +2040,7 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
         assertSha256(value.predecessor_sha256, 'quota adjudication predecessor_sha256');
         assertGitObjectSha(value.predecessor_source_main_sha, 'quota adjudication predecessor_source_main_sha');
         assertGitObjectSha(value.predecessor_source_main_tree_sha, 'quota adjudication predecessor_source_main_tree_sha');
-        if (value.predecessor_adjudication_id === value.adjudication_id || value.predecessor_source_main_sha === value.source_main_sha || value.predecessor_source_main_tree_sha === value.source_main_tree_sha || value.supersession_reason !== 'SOURCE_BINDING_REFRESH_AFTER_REVIEWED_CODE_CHANGE') {
+        if (value.predecessor_adjudication_id === value.adjudication_id || (value.predecessor_source_main_sha === value.source_main_sha && value.predecessor_source_main_tree_sha === value.source_main_tree_sha) || value.supersession_reason !== 'SOURCE_BINDING_REFRESH_AFTER_REVIEWED_CODE_CHANGE') {
             fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication successor lineage is invalid');
         }
     }
@@ -2063,6 +2063,33 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (value.conservative_effective_provider_usage < Math.max(localUnits, trustedUsed)) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage would undercount known consumed evidence');
     if (value.conservative_effective_provider_usage > config.monthly_quota_limit) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage exceeds the configured plan limit');
     if (value.conservative_remaining_automatic_budget !== config.automated_spend_limit - value.conservative_effective_provider_usage) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative remaining automatic budget does not reconcile to the configured ceiling');
+    // Callers which admit bytes from the runtime trust root supply the direct
+    // predecessor below.  The structural validator remains usable by the
+    // existing in-memory budget APIs; those APIs only receive the already
+    // validated value returned by readBoundQuotaAdjudication.
+    if (successor && predecessor !== null) {
+        if (typeof predecessor !== 'object' || Array.isArray(predecessor)) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor predecessor is malformed');
+        const prior = validateQuotaAdjudication(predecessor, {
+            ledger,
+            quotaConfig: config,
+            quotaConfigSha256,
+            quotaAdjudicationSha256: predecessorSha256,
+            now,
+        });
+        if (prior.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION
+            || prior.adjudication_id !== value.predecessor_adjudication_id
+            || prior.source_main_sha !== value.predecessor_source_main_sha
+            || prior.source_main_tree_sha !== value.predecessor_source_main_tree_sha
+            || prior.accounting_epoch_id !== value.accounting_epoch_id
+            || prior.billing_period_id !== value.billing_period_id
+            || prior.quota_config_sha256 !== value.quota_config_sha256
+            || prior.ledger_entry_count !== value.ledger_entry_count
+            || prior.ledger_last_entry_hash !== value.ledger_last_entry_hash
+            || prior.conservative_effective_provider_usage > value.conservative_effective_provider_usage
+            || Date.parse(prior.adjudicated_at) > Date.parse(value.adjudicated_at)) {
+            fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor does not preserve its immutable predecessor');
+        }
+    }
     if (quotaAdjudicationSha256 !== null && typeof quotaAdjudicationSha256 !== 'string') fail('QUOTA_ADJUDICATION_HASH_MISMATCH', 'quota adjudication hash binding is invalid');
     return Object.freeze({
         ...value,
@@ -2161,9 +2188,33 @@ function createStageDQuotaAdjudicationSuccessor({ ledger, quotaConfig, quotaConf
         predecessor_source_main_tree_sha: prior.source_main_tree_sha,
         supersession_reason: 'SOURCE_BINDING_REFRESH_AFTER_REVIEWED_CODE_CHANGE',
     };
-    return validateQuotaAdjudication(successor, { ledger, quotaConfig: config, quotaConfigSha256, expectedSourceMainSha: source.source_main_sha, expectedSourceMainTreeSha: source.source_main_tree_sha, now: adjudicatedAt });
+    return validateQuotaAdjudication(successor, { ledger, quotaConfig: config, quotaConfigSha256, predecessor: prior, predecessorSha256, expectedSourceMainSha: source.source_main_sha, expectedSourceMainTreeSha: source.source_main_tree_sha, now: adjudicatedAt });
 }
 
+function isDirectQuotaAdjudicationSuccessor(successor, predecessor, predecessorSha256) {
+    return successor?.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION
+        && predecessor?.schema_version === QUOTA_ADJUDICATION_SCHEMA_VERSION
+        && successor.predecessor_adjudication_id === predecessor.adjudication_id
+        && successor.predecessor_sha256 === predecessorSha256
+        && successor.predecessor_source_main_sha === predecessor.source_main_sha
+        && successor.predecessor_source_main_tree_sha === predecessor.source_main_tree_sha;
+}
+
+function readQuotaAdjudicationArtifacts(trustDescriptor) {
+    return fs.readdirSync(directoryFdPath(trustDescriptor.fd))
+        .filter(name => QUOTA_ADJUDICATION_FILE_PATTERN.test(name))
+        .map(name => {
+            const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, name), 'Stage D quota adjudication', { immutable: true });
+            return Object.freeze({
+                name,
+                bytes: observed.bytes,
+                sha256: sha256Text(observed.bytes),
+                value: parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication'),
+            });
+        });
+}
+
+// eslint-disable-next-line complexity -- trust-root lineage admission enumerates fail-closed cases.
 function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLockTrustRoot, expectedSha256 = null, ledger, quotaConfig, quotaConfigSha256, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, now } = {}) {
     if (typeof quotaAdjudicationPath !== 'string' || !quotaAdjudicationPath.trim()) fail('INVALID_QUOTA_ADJUDICATION', 'quotaAdjudicationPath is required');
     if (expectedSha256 !== null) assertSha256(expectedSha256, 'quota adjudication sha256');
@@ -2174,21 +2225,23 @@ function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLock
         if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication must be a direct child of the external runtime trust root');
         const artifactName = path.basename(resolvedPath);
         if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(artifactName)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
-        const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, artifactName), 'Stage D quota adjudication', { immutable: true });
-        const observedSha256 = sha256Text(observed.bytes);
-        const value = parseCanonicalJsonBytes(observed.bytes, 'Stage D quota adjudication');
-        for (const name of fs.readdirSync(directoryFdPath(trustDescriptor.fd)).filter(entry => QUOTA_ADJUDICATION_FILE_PATTERN.test(entry) && entry !== artifactName)) {
-            const competingPath = scopedPath(trustDescriptor.fd, name);
-            const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
-            const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
-            const successorOfCompeting = value => value.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && value.predecessor_adjudication_id === competingValue.adjudication_id && value.predecessor_sha256 === sha256Text(competing.bytes);
-            const competingIsPredecessor = value.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && value.predecessor_adjudication_id === competingValue.adjudication_id && value.predecessor_sha256 === sha256Text(competing.bytes);
-            if (competingValue.accounting_epoch_id === ledger?.epoch?.epoch_id && competingValue.billing_period_id === quotaConfig?.billing_period_id && !competingIsPredecessor && !successorOfCompeting(value)) {
-                fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
-            }
+        const artifacts = readQuotaAdjudicationArtifacts(trustDescriptor);
+        const selected = artifacts.find(entry => entry.name === artifactName);
+        if (!selected) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication disappeared during trusted read');
+        const observedSha256 = selected.sha256;
+        const value = selected.value;
+        const currentPeriod = artifacts.filter(entry => entry.name !== artifactName
+            && entry.value.accounting_epoch_id === ledger?.epoch?.epoch_id
+            && entry.value.billing_period_id === quotaConfig?.billing_period_id);
+        const predecessors = currentPeriod.filter(entry => isDirectQuotaAdjudicationSuccessor(value, entry.value, entry.sha256));
+        if (value.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION) {
+            if (predecessors.length !== 1 || currentPeriod.length !== 1) fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor lineage is missing, duplicated, or conflicted');
+        } else if (currentPeriod.length !== 0) {
+            fail('QUOTA_ADJUDICATION_CONFLICT', 'a successor exists or the current quota adjudication namespace conflicts');
         }
         if (expectedSha256 !== null && observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_ADJUDICATION_MISMATCH', 'authorization quota adjudication hash does not match the bytes read from the governed artifact');
-        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, path: resolvedPath });
+        const predecessor = predecessors[0] || null;
+        return Object.freeze({ value: validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256: observedSha256, predecessor: predecessor?.value || null, predecessorSha256: predecessor?.sha256 || null, expectedSourceMainSha: expectedSource.source_main_sha, expectedSourceMainTreeSha: expectedSource.source_main_tree_sha, now }), sha256: observedSha256, path: resolvedPath });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);
     }
@@ -2201,14 +2254,12 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
         const resolvedPath = path.resolve(artifactPath);
         if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication output must be a direct child of the external runtime trust root');
         if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(path.basename(resolvedPath))) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
-        for (const name of fs.readdirSync(directoryFdPath(trustDescriptor.fd)).filter(entry => QUOTA_ADJUDICATION_FILE_PATTERN.test(entry))) {
-            const competingPath = scopedPath(trustDescriptor.fd, name);
-            const competing = readRegularFileBytes(competingPath, 'competing Stage D quota adjudication', { immutable: true });
-            const competingValue = parseCanonicalJsonBytes(competing.bytes, 'competing Stage D quota adjudication');
-            const validSuccessor = artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION && artifact.predecessor_adjudication_id === competingValue.adjudication_id && artifact.predecessor_sha256 === sha256Text(competing.bytes);
-            if (competingValue.accounting_epoch_id === artifact.accounting_epoch_id && competingValue.billing_period_id === artifact.billing_period_id && !validSuccessor) {
-                fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
-            }
+        const currentPeriod = readQuotaAdjudicationArtifacts(trustDescriptor).filter(entry => entry.value.accounting_epoch_id === artifact.accounting_epoch_id && entry.value.billing_period_id === artifact.billing_period_id);
+        const predecessors = currentPeriod.filter(entry => isDirectQuotaAdjudicationSuccessor(artifact, entry.value, entry.sha256));
+        if (artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION) {
+            if (predecessors.length !== 1 || currentPeriod.length !== 1) fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor must have exactly one immutable direct predecessor');
+        } else if (currentPeriod.length !== 0) {
+            fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
         }
         writeExclusiveImmutable(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), artifact, 'Stage D quota adjudication', { directoryFd: trustDescriptor.fd });
         return Object.freeze({ path: resolvedPath, sha256: sha256Text(canonicalBytes(artifact)) });
