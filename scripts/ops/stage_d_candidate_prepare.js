@@ -49,7 +49,7 @@ function input(values) {
 function help() {
     return [
         'Stage D canonical offline Gate 3 candidate preparation',
-        'node scripts/ops/stage_d_gate3_candidate.js prepare|validate',
+        'node scripts/ops/stage_d_candidate_prepare.js prepare|validate',
         ...FLAGS.map(flag => `  ${flag} <path>`),
         'validate also requires --candidate <path> [--expected-sha256 <sha256>]',
         '',
