@@ -2205,6 +2205,11 @@ function isDirectQuotaAdjudicationSuccessor(successor, predecessor, predecessorS
         && successor.predecessor_source_main_tree_sha === predecessor.source_main_tree_sha;
 }
 
+function quotaAdjudicationSuccessorFileName(predecessorSha256) {
+    assertSha256(predecessorSha256, 'quota adjudication successor predecessor_sha256');
+    return `stage-d-quota-adjudication-successor-${predecessorSha256}.json`;
+}
+
 function readQuotaAdjudicationArtifacts(trustDescriptor) {
     return fs.readdirSync(directoryFdPath(trustDescriptor.fd))
         .filter(name => QUOTA_ADJUDICATION_FILE_PATTERN.test(name))
@@ -2259,6 +2264,10 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
         const resolvedPath = path.resolve(artifactPath);
         if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication output must be a direct child of the external runtime trust root');
         if (!QUOTA_ADJUDICATION_FILE_PATTERN.test(path.basename(resolvedPath))) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication filename is outside the governed namespace');
+        if (artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION
+            && path.basename(resolvedPath) !== quotaAdjudicationSuccessorFileName(artifact.predecessor_sha256)) {
+            fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor filename must be deterministic from its immutable predecessor');
+        }
         const currentPeriod = readQuotaAdjudicationArtifacts(trustDescriptor).filter(entry => entry.value.accounting_epoch_id === artifact.accounting_epoch_id && entry.value.billing_period_id === artifact.billing_period_id);
         const predecessors = currentPeriod.filter(entry => isDirectQuotaAdjudicationSuccessor(artifact, entry.value, entry.sha256));
         if (artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION) {
