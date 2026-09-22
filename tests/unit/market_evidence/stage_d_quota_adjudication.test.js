@@ -9,7 +9,7 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
-const { resolveGitSourceBinding } = require('../../../scripts/ops/stage_d_quota_adjudication');
+const { resolveGitSourceBinding, readBoundPredecessor } = require('../../../scripts/ops/stage_d_quota_adjudication');
 const {
     initializeRequestAccountingEpoch,
     readRequestLedger,
@@ -306,7 +306,7 @@ async function raceSuccessorWriters(t, writerCount) {
     for (const failure of failures) {
         const outcome = JSON.parse(failure.stdout.trim().split('\n').at(-1));
         assert.equal(outcome.ok, false);
-        assert.ok(['EEXIST', 'QUOTA_ADJUDICATION_CONFLICT'].includes(outcome.code), `loser must fail closed: ${JSON.stringify(outcome)}`);
+        assert.equal(outcome.code, 'QUOTA_ADJUDICATION_CONFLICT', `loser must fail closed: ${JSON.stringify(outcome)}`);
     }
     const successorPath = path.join(ctx.trustRoot, `stage-d-quota-adjudication-successor-${predecessorSha256}.json`);
     const successorFiles = fs.readdirSync(ctx.trustRoot).filter(name => name.startsWith('stage-d-quota-adjudication-successor-'));
@@ -315,8 +315,19 @@ async function raceSuccessorWriters(t, writerCount) {
     const loaded = readBound(ctx, config, successorPath, successorSha256);
     assert.equal(loaded.predecessorSha256, predecessorSha256);
     assert.equal(loaded.value.conservative_effective_provider_usage, 4);
-    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: loaded.value }), error => ['EEXIST', 'QUOTA_ADJUDICATION_CONFLICT'].includes(error.code));
+    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: loaded.value }), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
 }
+
+test('CLI predecessor reader derives and verifies the immutable predecessor bytes hash', t => {
+    const sourcePath = path.join(setup(t).root, 'predecessor.json');
+    const bytes = `${stableStringify({ immutable: true })}\n`;
+    fs.writeFileSync(sourcePath, bytes, { mode: 0o400 });
+    const sha256 = sha256Text(bytes);
+    const bound = readBoundPredecessor(sourcePath, sha256);
+    assert.equal(bound.sha256, sha256);
+    assert.deepEqual(bound.value, { immutable: true });
+    assert.throws(() => readBoundPredecessor(sourcePath, '0'.repeat(64)), error => error.code === 'QUOTA_ADJUDICATION_HASH_MISMATCH');
+});
 
 test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', t => {
     const currentSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION });

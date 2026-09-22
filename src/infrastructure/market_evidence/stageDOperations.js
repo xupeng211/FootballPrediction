@@ -2275,7 +2275,12 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
         } else if (currentPeriod.length !== 0) {
             fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
         }
-        writeExclusiveImmutable(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), artifact, 'Stage D quota adjudication', { directoryFd: trustDescriptor.fd });
+        try {
+            writeExclusiveImmutable(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), artifact, 'Stage D quota adjudication', { directoryFd: trustDescriptor.fd });
+        } catch (error) {
+            if (error?.code === 'EEXIST') fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor claim already exists');
+            throw error;
+        }
         return Object.freeze({ path: resolvedPath, sha256: sha256Text(canonicalBytes(artifact)) });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);

@@ -47,6 +47,17 @@ function readRegularJsonFile(filePath, label) {
     }
 }
 
+function readBoundPredecessor(filePath, claimedSha256) {
+    const predecessor = readRegularJsonFile(filePath, '--predecessor');
+    const observedSha256 = sha256Text(predecessor.bytes);
+    if (claimedSha256 !== observedSha256) {
+        const error = new Error('--predecessor-sha256 does not match the predecessor bytes read');
+        error.code = 'QUOTA_ADJUDICATION_HASH_MISMATCH';
+        throw error;
+    }
+    return Object.freeze({ ...predecessor, sha256: observedSha256 });
+}
+
 function parseArgs(argv = process.argv.slice(2)) {
     const values = {};
     const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--predecessor', '--predecessor-sha256', '--help']);
@@ -100,8 +111,9 @@ function main(argv = process.argv.slice(2)) {
         sourceMainSha: args['--source-main-sha'],
         sourceMainTreeSha: args['--source-main-tree'],
     });
-    const predecessor = args['--predecessor'] ? readRegularJsonFile(args['--predecessor'], '--predecessor') : null;
-    if ((predecessor === null) !== (!args['--predecessor-sha256'])) throw new Error('--predecessor and --predecessor-sha256 must be supplied together');
+    const hasPredecessor = Boolean(args['--predecessor']);
+    if (hasPredecessor !== Boolean(args['--predecessor-sha256'])) throw new Error('--predecessor and --predecessor-sha256 must be supplied together');
+    const predecessor = hasPredecessor ? readBoundPredecessor(args['--predecessor'], args['--predecessor-sha256']) : null;
     const create = predecessor === null ? createStageDQuotaAdjudication : createStageDQuotaAdjudicationSuccessor;
     const artifact = create({
         ledger,
@@ -112,7 +124,7 @@ function main(argv = process.argv.slice(2)) {
         sourceMainTreeSha: source.source_main_tree_sha,
         adjudicatedAt,
         adjudicationId: args['--adjudication-id'],
-        ...(predecessor === null ? {} : { predecessor: predecessor.value, predecessorSha256: args['--predecessor-sha256'] }),
+        ...(predecessor === null ? {} : { predecessor: predecessor.value, predecessorSha256: predecessor.sha256 }),
     });
     const persisted = persistStageDQuotaAdjudication({
         artifactPath: args['--output'],
@@ -144,4 +156,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { REQUIRED_FLAGS, readRegularJsonFile, parseArgs, helpText, resolveGitSourceBinding, main };
+module.exports = { REQUIRED_FLAGS, readRegularJsonFile, readBoundPredecessor, parseArgs, helpText, resolveGitSourceBinding, main };
