@@ -13,6 +13,7 @@ const path = require('node:path');
 const { sha256Text } = require('../../src/infrastructure/market_evidence/contracts');
 const {
     createStageDQuotaAdjudication,
+    createStageDQuotaAdjudicationSuccessor,
     persistStageDQuotaAdjudication,
     readRequestLedger,
     resolveStageDGitSourceBinding,
@@ -29,26 +30,37 @@ const REQUIRED_FLAGS = Object.freeze([
     '--adjudication-id',
 ]);
 
-function readRegularQuotaConfig(filePath) {
-    if (typeof filePath !== 'string' || !filePath.trim()) throw new Error('--quota-config is required');
+function readRegularJsonFile(filePath, label) {
+    if (typeof filePath !== 'string' || !filePath.trim()) throw new Error(`${label} is required`);
     const before = fs.lstatSync(filePath);
-    if (before.isSymbolicLink() || !before.isFile()) throw new Error('quota config must be a regular file');
+    if (before.isSymbolicLink() || !before.isFile()) throw new Error(`${label} must be a regular file`);
     const fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
     try {
         const opened = fs.fstatSync(fd);
-        if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) throw new Error('quota config changed during open');
+        if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) throw new Error(`${label} changed during open`);
         const bytes = fs.readFileSync(fd, 'utf8');
         const after = fs.fstatSync(fd);
-        if (after.dev !== opened.dev || after.ino !== opened.ino) throw new Error('quota config changed during read');
+        if (after.dev !== opened.dev || after.ino !== opened.ino) throw new Error(`${label} changed during read`);
         return Object.freeze({ bytes, value: JSON.parse(bytes) });
     } finally {
         fs.closeSync(fd);
     }
 }
 
+function readBoundPredecessor(filePath, claimedSha256) {
+    const predecessor = readRegularJsonFile(filePath, '--predecessor');
+    const observedSha256 = sha256Text(predecessor.bytes);
+    if (claimedSha256 !== observedSha256) {
+        const error = new Error('--predecessor-sha256 does not match the predecessor bytes read');
+        error.code = 'QUOTA_ADJUDICATION_HASH_MISMATCH';
+        throw error;
+    }
+    return Object.freeze({ ...predecessor, sha256: observedSha256 });
+}
+
 function parseArgs(argv = process.argv.slice(2)) {
     const values = {};
-    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--help']);
+    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--predecessor', '--predecessor-sha256', '--help']);
     for (let index = 0; index < argv.length; index += 1) {
         const flag = argv[index];
         if (flag === '--help') return Object.freeze({ help: true });
@@ -69,6 +81,7 @@ function helpText() {
         'node scripts/ops/stage_d_quota_adjudication.js',
         ...REQUIRED_FLAGS.map(flag => `  ${flag} <value>`),
         '  --adjudicated-at <UTC timestamp> (optional; defaults to current UTC time)',
+        '  --predecessor <immutable v1 adjudication> --predecessor-sha256 <SHA256> (together, for a source successor)',
         '',
         'The output must be a new direct child of the explicit runtime trust root.',
         'The command never contacts or resolves The Odds API and never changes the request ledger.',
@@ -91,14 +104,18 @@ function main(argv = process.argv.slice(2)) {
         process.stdout.write(`${helpText()}\n`);
         return;
     }
-    const configSource = readRegularQuotaConfig(args['--quota-config']);
+    const configSource = readRegularJsonFile(args['--quota-config'], '--quota-config');
     const ledger = readRequestLedger({ ledgerRoot: path.resolve(args['--ledger-root']) });
     const adjudicatedAt = args['--adjudicated-at'] || new Date().toISOString();
     const source = resolveGitSourceBinding({
         sourceMainSha: args['--source-main-sha'],
         sourceMainTreeSha: args['--source-main-tree'],
     });
-    const artifact = createStageDQuotaAdjudication({
+    const hasPredecessor = Boolean(args['--predecessor']);
+    if (hasPredecessor !== Boolean(args['--predecessor-sha256'])) throw new Error('--predecessor and --predecessor-sha256 must be supplied together');
+    const predecessor = hasPredecessor ? readBoundPredecessor(args['--predecessor'], args['--predecessor-sha256']) : null;
+    const create = predecessor === null ? createStageDQuotaAdjudication : createStageDQuotaAdjudicationSuccessor;
+    const artifact = create({
         ledger,
         quotaConfig: configSource.value,
         quotaConfigSha256: sha256Text(configSource.bytes),
@@ -107,6 +124,7 @@ function main(argv = process.argv.slice(2)) {
         sourceMainTreeSha: source.source_main_tree_sha,
         adjudicatedAt,
         adjudicationId: args['--adjudication-id'],
+        ...(predecessor === null ? {} : { predecessor: predecessor.value, predecessorSha256: predecessor.sha256 }),
     });
     const persisted = persistStageDQuotaAdjudication({
         artifactPath: args['--output'],
@@ -124,6 +142,8 @@ function main(argv = process.argv.slice(2)) {
         provider_quota_actual_effect: artifact.provider_quota_actual_effect,
         conservative_effective_provider_usage: artifact.conservative_effective_provider_usage,
         conservative_remaining_automatic_budget: artifact.conservative_remaining_automatic_budget,
+        predecessor_adjudication_id: artifact.predecessor_adjudication_id || null,
+        predecessor_sha256: artifact.predecessor_sha256 || null,
     }, null, 2)}\n`);
 }
 
@@ -136,4 +156,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { REQUIRED_FLAGS, readRegularQuotaConfig, parseArgs, helpText, resolveGitSourceBinding, main };
+module.exports = { REQUIRED_FLAGS, readRegularJsonFile, readBoundPredecessor, parseArgs, helpText, resolveGitSourceBinding, main };

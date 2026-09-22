@@ -3,13 +3,13 @@
 process.env.NODE_ENV = 'test';
 
 const assert = require('node:assert/strict');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
-const { resolveGitSourceBinding } = require('../../../scripts/ops/stage_d_quota_adjudication');
+const { resolveGitSourceBinding, readBoundPredecessor } = require('../../../scripts/ops/stage_d_quota_adjudication');
 const {
     initializeRequestAccountingEpoch,
     readRequestLedger,
@@ -21,6 +21,8 @@ const {
     createStageDTestQuotaConfiguration,
     createStageDTestRuntimeAuthorization,
     createStageDQuotaAdjudication,
+    createStageDQuotaAdjudicationSuccessor,
+    validateQuotaAdjudication,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
     resolveStageDGitSourceBinding,
@@ -132,6 +134,8 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
         quotaConfigSha256: binding?.quotaConfigSha256 || canonicalSha(config),
         quotaAdjudication: binding?.artifact || null,
         quotaAdjudicationSha256: binding?.artifactSha256 || null,
+        quotaAdjudicationPredecessor: binding?.predecessor || null,
+        quotaAdjudicationPredecessorSha256: binding?.predecessorSha256 || null,
         expectedSourceMainSha: SOURCE_MAIN_SHA,
         expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
         testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
@@ -140,6 +144,190 @@ function budgetArgs(ctx, config, binding, overrides = {}) {
         ...overrides,
     };
 }
+
+function createPersistedSourceSuccessor(ctx, config, { usage = 4 } = {}) {
+    const binding = buildArtifact(ctx, config);
+    const predecessor = {
+        ...binding.artifact,
+        adjudication_id: 'sqa_test-historical-predecessor',
+        source_main_sha: 'a'.repeat(40),
+        source_main_tree_sha: 'b'.repeat(40),
+        conservative_effective_provider_usage: usage,
+        conservative_remaining_automatic_budget: config.automated_spend_limit - usage,
+    };
+    const predecessorSha256 = canonicalSha(predecessor);
+    const predecessorPath = path.join(ctx.trustRoot, 'stage-d-quota-adjudication-sqa_test-historical-predecessor.json');
+    persistStageDQuotaAdjudication({ artifactPath: predecessorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: predecessor });
+    const successor = createStageDQuotaAdjudicationSuccessor({
+        ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
+        quotaConfig: config,
+        quotaConfigSha256: binding.quotaConfigSha256,
+        predecessor,
+        predecessorSha256,
+        sourceMainSha: SOURCE_MAIN_SHA,
+        sourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
+        adjudicatedAt: NOW,
+        adjudicationId: 'sqa_test-current-source-successor',
+    });
+    const successorPath = path.join(ctx.trustRoot, `stage-d-quota-adjudication-successor-${predecessorSha256}.json`);
+    const persisted = persistStageDQuotaAdjudication({ artifactPath: successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: successor });
+    return Object.freeze({ binding, predecessor, predecessorSha256, predecessorPath, successor, successorPath, successorSha256: persisted.sha256 });
+}
+
+function readBound(ctx, config, artifactPath, expectedSha256) {
+    return readBoundQuotaAdjudication({
+        quotaAdjudicationPath: artifactPath,
+        ledgerRoot: ctx.ledgerRoot,
+        runLockTrustRoot: ctx.trustRoot,
+        expectedSha256,
+        ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }),
+        quotaConfig: config,
+        quotaConfigSha256: canonicalSha(config),
+        expectedSourceMainSha: SOURCE_MAIN_SHA,
+        expectedSourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION,
+        now: NOW,
+    });
+}
+
+function startSuccessorWriter({ ctx, config, binding, predecessor, predecessorSha256, adjudicationId }) {
+    // Each writer is a separate process and waits for the parent-controlled
+    // stdin barrier.  This makes the competing O_EXCL claims deterministic
+    // rather than relying on scheduling or a sleep to expose the race.
+    const operationsPath = path.resolve(__dirname, '../../../src/infrastructure/market_evidence/stageDOperations.js');
+    const script = `
+        'use strict';
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const operations = require(process.env.STAGE_D_OPERATIONS_PATH);
+        const input = JSON.parse(process.env.STAGE_D_SUCCESSOR_INPUT);
+        process.stdout.write('READY\\n');
+        process.stdin.once('data', () => {
+            try {
+                const authorization = operations.createStageDTestRuntimeAuthorization();
+                const successor = operations.createStageDQuotaAdjudicationSuccessor({
+                    ledger: operations.readRequestLedger({ ledgerRoot: input.ledgerRoot }),
+                    quotaConfig: input.quotaConfig,
+                    quotaConfigSha256: input.quotaConfigSha256,
+                    predecessor: input.predecessor,
+                    predecessorSha256: input.predecessorSha256,
+                    sourceMainSha: input.sourceMainSha,
+                    sourceMainTreeSha: input.sourceMainTreeSha,
+                    testRuntimeAuthorization: authorization,
+                    adjudicatedAt: input.adjudicatedAt,
+                    adjudicationId: input.adjudicationId,
+                });
+                const result = operations.persistStageDQuotaAdjudication({
+                    artifactPath: path.join(input.trustRoot, input.successorName),
+                    ledgerRoot: input.ledgerRoot,
+                    runLockTrustRoot: input.trustRoot,
+                    artifact: successor,
+                });
+                process.stdout.write(JSON.stringify({ ok: true, sha256: result.sha256 }) + '\\n');
+                process.exitCode = 0;
+            } catch (error) {
+                process.stdout.write(JSON.stringify({ ok: false, code: error && error.code, message: error && error.message }) + '\\n');
+                process.exitCode = 1;
+            }
+        });
+    `;
+    const input = {
+        ledgerRoot: ctx.ledgerRoot,
+        trustRoot: ctx.trustRoot,
+        quotaConfig: config,
+        quotaConfigSha256: binding.quotaConfigSha256,
+        predecessor,
+        predecessorSha256,
+        sourceMainSha: SOURCE_MAIN_SHA,
+        sourceMainTreeSha: SOURCE_MAIN_TREE_SHA,
+        adjudicatedAt: NOW,
+        adjudicationId,
+        successorName: `stage-d-quota-adjudication-successor-${predecessorSha256}.json`,
+    };
+    const child = spawn(process.execPath, ['-e', script], {
+        env: { ...process.env, STAGE_D_OPERATIONS_PATH: operationsPath, STAGE_D_SUCCESSOR_INPUT: JSON.stringify(input) },
+        stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', chunk => { stdout += chunk; });
+    child.stderr.on('data', chunk => { stderr += chunk; });
+    const result = new Promise((resolve, reject) => {
+        child.once('error', reject);
+        child.once('close', code => resolve({ code, stdout, stderr }));
+    });
+    const ready = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(`successor writer did not reach barrier: ${stderr}`)), 5000);
+        const poll = () => {
+            if (stdout.startsWith('READY\n')) {
+                clearTimeout(timeout);
+                resolve();
+            } else setImmediate(poll);
+        };
+        poll();
+    });
+    return { child, ready, result };
+}
+
+async function raceSuccessorWriters(t, writerCount) {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const binding = buildArtifact(ctx, config);
+    const predecessor = {
+        ...binding.artifact,
+        adjudication_id: 'sqa_test-concurrent-predecessor',
+        source_main_sha: 'a'.repeat(40),
+        source_main_tree_sha: 'b'.repeat(40),
+        conservative_effective_provider_usage: 4,
+        conservative_remaining_automatic_budget: config.automated_spend_limit - 4,
+    };
+    const predecessorSha256 = canonicalSha(predecessor);
+    const predecessorPath = path.join(ctx.trustRoot, 'stage-d-quota-adjudication-sqa_test-concurrent-predecessor.json');
+    persistStageDQuotaAdjudication({ artifactPath: predecessorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: predecessor });
+    const writers = Array.from({ length: writerCount }, (_, index) => startSuccessorWriter({
+        ctx,
+        config,
+        binding,
+        predecessor,
+        predecessorSha256,
+        adjudicationId: `sqa_test-concurrent-${index}`,
+    }));
+    await Promise.all(writers.map(writer => writer.ready));
+    for (const writer of writers) writer.child.stdin.end('GO\n');
+    const results = await Promise.all(writers.map(writer => writer.result));
+    const successes = results.filter(result => result.code === 0);
+    const failures = results.filter(result => result.code !== 0);
+    assert.equal(successes.length, 1, `expected exactly one atomic successor claim: ${JSON.stringify(results)}`);
+    assert.equal(failures.length, writerCount - 1);
+    for (const failure of failures) {
+        const outcome = JSON.parse(failure.stdout.trim().split('\n').at(-1));
+        assert.equal(outcome.ok, false);
+        assert.equal(outcome.code, 'QUOTA_ADJUDICATION_CONFLICT', `loser must fail closed: ${JSON.stringify(outcome)}`);
+    }
+    const successorPath = path.join(ctx.trustRoot, `stage-d-quota-adjudication-successor-${predecessorSha256}.json`);
+    const successorFiles = fs.readdirSync(ctx.trustRoot).filter(name => name.startsWith('stage-d-quota-adjudication-successor-'));
+    assert.deepEqual(successorFiles, [path.basename(successorPath)]);
+    const successorSha256 = canonicalSha(JSON.parse(fs.readFileSync(successorPath, 'utf8')));
+    const loaded = readBound(ctx, config, successorPath, successorSha256);
+    assert.equal(loaded.predecessorSha256, predecessorSha256);
+    assert.equal(loaded.value.conservative_effective_provider_usage, 4);
+    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: loaded.value }), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
+}
+
+test('CLI predecessor reader derives and verifies the immutable predecessor bytes hash', t => {
+    const sourcePath = path.join(setup(t).root, 'predecessor.json');
+    const bytes = `${stableStringify({ immutable: true })}\n`;
+    fs.writeFileSync(sourcePath, bytes, { mode: 0o400 });
+    const sha256 = sha256Text(bytes);
+    const bound = readBoundPredecessor(sourcePath, sha256);
+    assert.equal(bound.sha256, sha256);
+    assert.deepEqual(bound.value, { immutable: true });
+    assert.throws(() => readBoundPredecessor(sourcePath, '0'.repeat(64)), error => error.code === 'QUOTA_ADJUDICATION_HASH_MISMATCH');
+});
 
 test('runtime source binding resolves a real commit/tree pair and rejects unknown or unrelated objects', t => {
     const currentSource = resolveStageDGitSourceBinding({ testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION });
@@ -538,4 +726,47 @@ test('writable and symlink adjudication paths are rejected before admission', t 
         }),
         error => error.code === 'UNSAFE_PATH',
     );
+});
+
+test('immutable source successor preserves historical bytes, UNKNOWN effect, and conservative usage', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const state = createPersistedSourceSuccessor(ctx, config);
+    const predecessorBytes = fs.readFileSync(state.predecessorPath);
+    const loaded = readBound(ctx, config, state.successorPath, state.successorSha256);
+    assert.equal(loaded.value.conservative_effective_provider_usage, 4);
+    assert.equal(loaded.value.provider_quota_actual_effect, 'UNKNOWN');
+    assert.equal(loaded.value.predecessor_sha256, state.predecessorSha256);
+    assert.deepEqual(fs.readFileSync(state.predecessorPath), predecessorBytes);
+    assert.throws(() => readBound(ctx, config, state.predecessorPath, state.predecessorSha256), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
+});
+
+test('two concurrent successor writers atomically admit exactly one canonical successor', async t => {
+    await raceSuccessorWriters(t, 2);
+});
+
+test('many concurrent successor writers atomically admit exactly one canonical successor', async t => {
+    await raceSuccessorWriters(t, 6);
+});
+
+test('successor lineage rejects siblings, forged hashes, stale source, malformed metadata, and quota reset', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const state = createPersistedSourceSuccessor(ctx, config);
+    const sibling = { ...state.successor, adjudication_id: 'sqa_test-sibling' };
+    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: state.successorPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: sibling }), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
+    assert.throws(() => createStageDQuotaAdjudicationSuccessor({ ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: config, quotaConfigSha256: state.binding.quotaConfigSha256, predecessor: state.predecessor, predecessorSha256: '0'.repeat(64), sourceMainSha: SOURCE_MAIN_SHA, sourceMainTreeSha: SOURCE_MAIN_TREE_SHA, testRuntimeAuthorization: TEST_RUNTIME_AUTHORIZATION, adjudicatedAt: NOW, adjudicationId: 'sqa_test-forged-successor' }), error => error.code === 'QUOTA_ADJUDICATION_HASH_MISMATCH');
+    const reset = { ...state.successor, conservative_effective_provider_usage: 1, conservative_remaining_automatic_budget: config.automated_spend_limit - 1 };
+    assert.throws(() => validateQuotaAdjudication(reset, { ledger: readRequestLedger({ ledgerRoot: ctx.ledgerRoot }), quotaConfig: config, quotaConfigSha256: state.binding.quotaConfigSha256, predecessor: state.predecessor, predecessorSha256: state.predecessorSha256, now: NOW }), error => error.code === 'QUOTA_ADJUDICATION_LINEAGE_INVALID');
+    assert.throws(() => assertRequestBudget(budgetArgs(ctx, config, { artifact: state.successor, artifactSha256: state.successorSha256 })), error => error.code === 'QUOTA_ADJUDICATION_LINEAGE_INVALID');
+    assert.equal(assertRequestBudget(budgetArgs(ctx, config, { artifact: state.successor, artifactSha256: state.successorSha256, predecessor: state.predecessor, predecessorSha256: state.predecessorSha256 })).allowed, true);
+    const forgedSuccessorBinding = { ...state.successor, predecessor_sha256: 'f'.repeat(64) };
+    assert.throws(() => assertRequestBudget(budgetArgs(ctx, config, { artifact: forgedSuccessorBinding, artifactSha256: canonicalSha(forgedSuccessorBinding), predecessor: state.predecessor, predecessorSha256: state.predecessorSha256 })), error => error.code === 'QUOTA_ADJUDICATION_LINEAGE_INVALID');
+    const malformed = { ...state.successor };
+    delete malformed.predecessor_sha256;
+    assert.throws(() => persistStageDQuotaAdjudication({ artifactPath: path.join(ctx.trustRoot, 'stage-d-quota-adjudication-sqa_test-malformed.json'), ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact: malformed }), error => /predecessor_sha256/.test(error.message));
+    const wrongSource = { ...state.successor, source_main_sha: 'c'.repeat(40) };
+    assert.throws(() => assertRequestBudget(budgetArgs(ctx, config, { artifact: wrongSource, artifactSha256: canonicalSha(wrongSource) })), error => error.code === 'QUOTA_ADJUDICATION_SOURCE_MISMATCH');
 });

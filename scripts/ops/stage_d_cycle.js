@@ -106,6 +106,8 @@ function main() {
         quotaConfigSha256: quotaConfigSource?.sha256 || null,
         quotaAdjudication: quotaAdjudicationSource?.value || null,
         quotaAdjudicationSha256: quotaAdjudicationSource?.sha256 || null,
+        quotaAdjudicationPredecessor: quotaAdjudicationSource?.predecessor || null,
+        quotaAdjudicationPredecessorSha256: quotaAdjudicationSource?.predecessorSha256 || null,
         expectedSourceMainSha: quotaAdjudicationGitSource?.source_main_sha || null,
         expectedSourceMainTreeSha: quotaAdjudicationGitSource?.source_main_tree_sha || null,
         runId: valueAfter('--run-id') || `stage-d-dry-run-${Date.now()}`,

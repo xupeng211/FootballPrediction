@@ -181,14 +181,15 @@ function runtimeState(input, now) {
     const ledger = stageD.readRequestLedger({ ledgerRoot });
     const quotaSource = readRegular(input.quotaConfigPath, 'quota configuration');
     const quotaConfig = stageD.validateQuotaConfiguration(JSON.parse(quotaSource.bytes), { now });
-    const adjudicationSource = readRegular(input.quotaAdjudicationPath, 'quota adjudication', true);
-    const adjudication = JSON.parse(adjudicationSource.bytes);
     const source = sourceDetails();
-    const validatedAdjudication = stageD.validateQuotaAdjudication(adjudication, {
+    const adjudicationSource = stageD.readBoundQuotaAdjudication({
+        quotaAdjudicationPath: path.resolve(input.quotaAdjudicationPath),
+        ledgerRoot,
+        runLockTrustRoot: trust,
+        expectedSha256: null,
         ledger,
         quotaConfig,
         quotaConfigSha256: hash(quotaSource.bytes),
-        quotaAdjudicationSha256: hash(adjudicationSource.bytes),
         expectedSourceMainSha: source.source_main_sha,
         expectedSourceMainTreeSha: source.source_main_tree_sha,
         now,
@@ -207,8 +208,10 @@ function runtimeState(input, now) {
         ledger,
         quotaConfig,
         quotaConfigSha256: hash(quotaSource.bytes),
-        adjudication: validatedAdjudication,
-        quotaAdjudicationSha256: hash(adjudicationSource.bytes),
+        adjudication: adjudicationSource.value,
+        quotaAdjudicationSha256: adjudicationSource.sha256,
+        quotaAdjudicationPredecessor: adjudicationSource.predecessor,
+        quotaAdjudicationPredecessorSha256: adjudicationSource.predecessorSha256,
         summary,
         authority,
         fixtureSha256: hash(fixture.bytes),
@@ -226,6 +229,8 @@ function constructCandidate(input, state, now, id = crypto.randomBytes(16).toStr
         quotaConfigSha256: state.quotaConfigSha256,
         quotaAdjudication: state.adjudication,
         quotaAdjudicationSha256: state.quotaAdjudicationSha256,
+        quotaAdjudicationPredecessor: state.quotaAdjudicationPredecessor,
+        quotaAdjudicationPredecessorSha256: state.quotaAdjudicationPredecessorSha256,
         expectedSourceMainSha: state.source.source_main_sha,
         expectedSourceMainTreeSha: state.source.source_main_tree_sha,
         runId,
@@ -344,6 +349,8 @@ function prepareGate3Candidate(input, { now = new Date().toISOString(), id } = {
             quotaConfigSha256: state.quotaConfigSha256,
             quotaAdjudication: state.adjudication,
             quotaAdjudicationSha256: state.quotaAdjudicationSha256,
+            quotaAdjudicationPredecessor: state.quotaAdjudicationPredecessor,
+            quotaAdjudicationPredecessorSha256: state.quotaAdjudicationPredecessorSha256,
             expectedSourceMainSha: state.source.source_main_sha,
             expectedSourceMainTreeSha: state.source.source_main_tree_sha,
             runId: candidate.future_authorization_ids.run_id,
