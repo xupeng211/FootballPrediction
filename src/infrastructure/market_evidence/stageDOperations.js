@@ -2069,6 +2069,7 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     // validated value returned by readBoundQuotaAdjudication.
     if (successor && predecessor !== null) {
         if (typeof predecessor !== 'object' || Array.isArray(predecessor)) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor predecessor is malformed');
+        assertSha256(predecessorSha256, 'quota adjudication successor predecessor_sha256 binding');
         const prior = validateQuotaAdjudication(predecessor, {
             ledger,
             quotaConfig: config,

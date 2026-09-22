@@ -90,13 +90,14 @@
   consumed historical 2xx response remains exact-status/quota-header `UNKNOWN` and is not
   retroactively reconstructed.
 - **Stage D offline quota-divergence adjudication**：`IMPLEMENTED / OFFLINE-ONLY / NOT_AUTHORIZED`。
-  `scripts/ops/stage_d_quota_adjudication.js` creates one immutable, owner-only,
-  hash-bound artifact for the current unresolved historical divergence. It preserves
-  local consumed `4`, represents provider effect as `UNKNOWN`, budgets current-period
-  local units conservatively against the configured automated ceiling, and fails closed
-  on epoch/period/ledger/hash/request conflicts, tampering, multiple artifacts or
-  reserve violations. It performs zero provider contact and does not create live
-  authorization, request intent or transmission; Stage D remains `NOT_STARTED`.
+  `scripts/ops/stage_d_quota_adjudication.js` creates immutable, owner-only,
+  hash-bound evidence for the current unresolved historical divergence. A reviewed
+  source change uses one explicit v2 immutable successor of the original v1 evidence,
+  never a rewrite: predecessor ID/bytes, epoch, billing period, ledger generation,
+  UNKNOWN provider effect and the conservative usage floor are bound and revalidated.
+  It preserves local consumed `4`, rejects sibling/replay/tampered lineage and any
+  quota reset, and performs zero provider contact, live authorization, request intent
+  or transmission; Stage D remains `NOT_STARTED`.
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。
