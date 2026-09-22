@@ -254,6 +254,12 @@ function persistCandidate({ candidateDirectory: directory, candidate }) {
     } finally {
         fs.closeSync(fd);
     }
+    const directoryFd = fs.openSync(trustedDirectory.path, fs.constants.O_RDONLY | fs.constants.O_DIRECTORY);
+    try {
+        fs.fsyncSync(directoryFd);
+    } finally {
+        fs.closeSync(directoryFd);
+    }
     const observed = readRegular(output, 'persisted candidate', true);
     if (!observed.bytes.equals(bytes) || hash(observed.bytes) !== hash(bytes))
         {fail('CANDIDATE_PERSISTENCE_FAILED', 'candidate changed after write');}
@@ -319,6 +325,7 @@ function validateGate3Candidate({ candidatePath, input, expectedSha256 = null, n
     if (
         candidate.schema_version !== CANDIDATE_SCHEMA_VERSION ||
         candidate.candidate_status !== CANDIDATE_STATUS ||
+        path.basename(resolvedCandidatePath) !== `${candidate.candidate_id}.json` ||
         !FILE_PATTERN.test(path.basename(resolvedCandidatePath))
     )
         {fail('INVALID_CANDIDATE', 'candidate identity or status is invalid');}

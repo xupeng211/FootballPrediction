@@ -119,5 +119,9 @@ test('reuse, unsafe paths and overwrite are rejected', t => {
     const alias = path.join(path.dirname(inputs.candidateDirectory), 'candidate-link.json');
     fs.symlinkSync(first.path, alias);
     assert.throws(() => candidateModule.validateGate3Candidate({ candidatePath: alias, input: inputs, now: NOW }), /direct child/);
+    const wrongName = path.join(inputs.candidateDirectory, 'sdc_stage_d_gate3_11111111111111111111111111111111.json');
+    fs.copyFileSync(first.path, wrongName);
+    fs.chmodSync(wrongName, 0o400);
+    assert.throws(() => candidateModule.validateGate3Candidate({ candidatePath: wrongName, input: inputs, now: NOW }), /identity or status/);
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(first.path)).digest('hex'), first.sha256);
 });
