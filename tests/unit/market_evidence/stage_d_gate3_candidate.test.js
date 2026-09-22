@@ -87,6 +87,39 @@ test('canonical Gate 3 candidate derives the v2 binder contract and validates of
     assert.equal(candidateModule.validateGate3Candidate({ candidatePath: result.path, input: inputs, expectedSha256: result.sha256, now: NOW }).sha256, result.sha256);
 });
 
+test('candidate layer fail closes when binder metadata is not the exact canonical v2 contract', t => {
+    const inputs = setup(t);
+    const canonical = stageD.getStageDControlledAuthorizationContract;
+    t.after(() => { stageD.getStageDControlledAuthorizationContract = canonical; });
+    const valid = canonical();
+    const variants = [
+        ['v1', { ...valid, schema_version: 'footballprediction-stage-d-controlled-initialization-authorization/v1' }],
+        ['future', { ...valid, schema_version: 'footballprediction-stage-d-controlled-initialization-authorization/v999' }],
+        ['missing schema', Object.fromEntries(Object.entries(valid).filter(([key]) => key !== 'schema_version'))],
+        ['null schema', { ...valid, schema_version: null }],
+        ['malformed schema', { ...valid, schema_version: { value: valid.schema_version } }],
+        ['malformed shape', { ...valid, configured_markets: ['h2h', 'spreads'] }],
+    ];
+    for (const [label, metadata] of variants) {
+        stageD.getStageDControlledAuthorizationContract = () => metadata;
+        assert.throws(
+            () => candidateModule.prepareGate3Candidate(inputs, {
+                now: NOW,
+                id: crypto.createHash('md5').update(label).digest('hex'),
+            }),
+            error => error.code === 'UNSUPPORTED_AUTHORIZATION_SCHEMA' || error.code === 'INVALID_CANDIDATE',
+            label
+        );
+    }
+    stageD.getStageDControlledAuthorizationContract = canonical;
+    const result = candidateModule.prepareGate3Candidate(inputs, { now: NOW, id: 'abcdefabcdefabcdefabcdefabcdefab' });
+    stageD.getStageDControlledAuthorizationContract = () => ({ ...valid, schema_version: 'footballprediction-stage-d-controlled-initialization-authorization/v1' });
+    assert.throws(
+        () => candidateModule.validateGate3Candidate({ candidatePath: result.path, input: inputs, now: NOW }),
+        error => error.code === 'UNSUPPORTED_AUTHORIZATION_SCHEMA'
+    );
+});
+
 test('v1, unknown schema, byte tampering and source drift fail closed without rewrite', t => {
     const inputs = setup(t);
     const result = candidateModule.prepareGate3Candidate(inputs, { now: NOW, id: 'fedcba9876543210fedcba9876543210' });

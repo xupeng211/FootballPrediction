@@ -12,6 +12,12 @@ const stageD = require('./stageDOperations');
 
 const CANDIDATE_SCHEMA_VERSION = 'footballprediction-stage-d-gate3-authorization-candidate/v2';
 const CANDIDATE_STATUS = 'PREPARED_NOT_AUTHORIZED';
+// This is an intentional candidate-layer allowlist, not a second source for
+// emitted metadata.  Emission still derives from the binder getter below, but
+// the future-authorization artifact must never be prepared from an unexpected
+// (including legacy or future) binder metadata value.
+const ACCEPTED_CONTROLLED_AUTHORIZATION_SCHEMA_VERSION =
+    'footballprediction-stage-d-controlled-initialization-authorization/v2';
 const FILE_PATTERN = /^sdc_stage_d_gate3_[a-f0-9]{32}\.json$/;
 const SAFE_GIT = '/usr/bin/git';
 
@@ -45,6 +51,58 @@ function exactKeys(value, keys, label) {
         Object.keys(value).sort().join(',') !== [...keys].sort().join(',')
     )
         {fail('INVALID_CANDIDATE', `${label} keys are invalid`);}
+}
+function requiredContractString(value, label) {
+    if (typeof value !== 'string' || !value)
+        {fail('UNSUPPORTED_AUTHORIZATION_SCHEMA', `${label} is not valid controlled authorization metadata`);}
+}
+function requiredSingleContractValue(value, label) {
+    if (!Array.isArray(value) || value.length !== 1 || typeof value[0] !== 'string' || !value[0])
+        {fail('UNSUPPORTED_AUTHORIZATION_SCHEMA', `${label} is not valid controlled authorization metadata`);}
+}
+function requiredContractInteger(value, expected, label) {
+    if (!Number.isSafeInteger(value) || value !== expected)
+        {fail('UNSUPPORTED_AUTHORIZATION_SCHEMA', `${label} is not valid controlled authorization metadata`);}
+}
+function controlledAuthorizationContract() {
+    const contract = stageD.getStageDControlledAuthorizationContract();
+    exactKeys(
+        contract,
+        [
+            'schema_version',
+            'authorization_status',
+            'mission',
+            'max_lifetime_ms',
+            'provider',
+            'configured_markets',
+            'configured_regions',
+            'max_provider_requests',
+            'expected_request_cost_credits',
+        ],
+        'controlled authorization contract'
+    );
+    if (contract.schema_version !== ACCEPTED_CONTROLLED_AUTHORIZATION_SCHEMA_VERSION)
+        {fail('UNSUPPORTED_AUTHORIZATION_SCHEMA', 'controlled authorization metadata is not the canonical v2 contract');}
+    requiredContractString(contract.authorization_status, 'authorization_status');
+    requiredContractString(contract.mission, 'mission');
+    if (!Number.isSafeInteger(contract.max_lifetime_ms) || contract.max_lifetime_ms <= 0)
+        {fail('UNSUPPORTED_AUTHORIZATION_SCHEMA', 'max_lifetime_ms is not valid controlled authorization metadata');}
+    requiredContractString(contract.provider, 'provider');
+    requiredSingleContractValue(contract.configured_markets, 'configured_markets');
+    requiredSingleContractValue(contract.configured_regions, 'configured_regions');
+    requiredContractInteger(contract.max_provider_requests, 1, 'max_provider_requests');
+    requiredContractInteger(contract.expected_request_cost_credits, 1, 'expected_request_cost_credits');
+    return Object.freeze({
+        schema_version: contract.schema_version,
+        authorization_status: contract.authorization_status,
+        mission: contract.mission,
+        max_lifetime_ms: contract.max_lifetime_ms,
+        provider: contract.provider,
+        configured_markets: Object.freeze([...contract.configured_markets]),
+        configured_regions: Object.freeze([...contract.configured_regions]),
+        max_provider_requests: contract.max_provider_requests,
+        expected_request_cost_credits: contract.expected_request_cost_credits,
+    });
 }
 function readRegular(file, label, immutable = false) {
     const before = fs.lstatSync(file);
@@ -159,7 +217,7 @@ function runtimeState(input, now) {
 }
 function constructCandidate(input, state, now, id = crypto.randomBytes(16).toString('hex')) {
     if (typeof id !== 'string' || !/^[a-f0-9]{32}$/.test(id)) fail('INVALID_CANDIDATE', 'candidate identifier is invalid');
-    const contract = stageD.getStageDControlledAuthorizationContract();
+    const contract = controlledAuthorizationContract();
     const runId = `stage_d_gate3_run_${id}`,
         requestId = `stage_d_gate3_request_${id}`;
     stageD.assertRequestBudget({
@@ -353,13 +411,14 @@ function validateGate3Candidate({ candidatePath, input, expectedSha256 = null, n
     return Object.freeze({
         candidate,
         sha256: actual,
-        authorization_schema: stageD.getStageDControlledAuthorizationContract().schema_version,
+        authorization_schema: controlledAuthorizationContract().schema_version,
     });
 }
 
 module.exports = {
     CANDIDATE_SCHEMA_VERSION,
     CANDIDATE_STATUS,
+    ACCEPTED_CONTROLLED_AUTHORIZATION_SCHEMA_VERSION,
     prepareGate3Candidate,
     validateGate3Candidate,
     constructCandidate,
