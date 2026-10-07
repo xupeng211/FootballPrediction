@@ -1,0 +1,61 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "RECOVER_FOOTBALLPREDICTION_RESEARCH_CORRECTNESS",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/inference/model_asof_contract.py",
+    "src/ml/inference/canonical_prematch_feature_engine.py",
+    "src/ml/inference/standings_asof_runtime_source_normalization_contract.py",
+    "docs/PROJECT_STATUS.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/data/MODEL_ASOF_CONTRACT.md",
+    "docs/CANONICAL_OFFLINE_MODEL_EVALUATION.md",
+    "docs/agentic/missions/RECOVER_FOOTBALLPREDICTION_RESEARCH_CORRECTNESS.json"
+  ],
+  "authorized_prefixes": [
+    "tests/unit/ml/"
+  ],
+  "excluded_paths": [
+    "AGENTS.md",
+    "README.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/PROJECT_VISION.md",
+    "package.json",
+    "package-lock.json",
+    "config/model_artifacts.json",
+    "config/model_feature_contracts.json",
+    "Makefile",
+    "scripts/devops/gatekeeper.sh"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "database/",
+    "data/",
+    "deploy/",
+    "src/infrastructure/",
+    "scripts/ops/",
+    "docs/_reports/"
+  ],
+  "excluded_tokens": [
+    "migration",
+    "stage_d",
+    "quota",
+    "activation",
+    "backtest"
+  ],
+  "protected_invariants": [
+    "No alteration of frozen protocol, candidate, historical receipts, holdout-consumption history, scope authority, production readiness or activation.",
+    "Reject precision-lossy temporal evidence; preserve all representable existing timestamp, feature order, numeric formulas and error-class behavior.",
+    "Production protocol Git ancestry and hash binding must remain fail-closed; test fixtures must not reinterpret historical freeze identity.",
+    "Use real dependency implementations outside deliberately isolated negative tests. Existing no-write and no-fit safeguards remain effective.",
+    "Extend existing canonical validation profiles; never remove/skip tests, lower assertions, introduce a parallel CI, change review/merge authority or silently mask failure.",
+    "EXISTING_CAPABILITIES_REVIEWED=YES; CURRENT_MILESTONE_REVIEWED=YES; VISION_ALIGNMENT_REVIEWED=YES."
+  ],
+  "forbidden_side_effects": [
+    "No football/odds provider contact, quota consumption, acquisition, business DB/raw writes, migration, real-data training, prediction, backtest, activation or production operations.",
+    "No reading/logging/copying credential values or mutating historical evidence.",
+    "No merge, release, force push or edits to existing user worktrees."
+  ]
+}

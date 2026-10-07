@@ -17,7 +17,9 @@ from src.ml.training import canonical_training_producer as producer
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PROTOCOL_PATH = PROJECT_ROOT / "config" / "canonical_offline_model_evaluation_protocol.json"
 SYNTHETIC_RESERVED_ROWS = 2
-PROTOCOL_FREEZE_SHA = "82fbcd55db98b710089483b9c7d13f1ad6937e11"
+# 该真实仓库祖先引入了已检入的 protocol；夹具必须绑定实际 Git 历史。
+# 生产代码仍独立验证两个 revision 的对象存在性、祖先关系和 protocol 字节。
+PROTOCOL_FREEZE_SHA = "0e21c2c9be52d0e760d57aa95d1deb511f516e7f"
 EXPECTED_PROTOCOL_SHA256 = "ac97da6d3c3f870505c1de27509e3c91710d36ff40dfd24b0c4cc489d43b653a"
 
 

@@ -272,6 +272,37 @@ def test_post_t_observed_evidence_is_rejected() -> None:
         _validate(manifest, payloads)
 
 
+def test_runtime_capture_inherits_exact_microsecond_availability_boundary() -> None:
+    decision_time = "2026-08-18T10:00:00.000001Z"
+    exact_entry = _entry(observed_at=decision_time)
+    exact_manifest, exact_payloads = _manifest(
+        [exact_entry],
+        context_overrides={
+            "MODEL_DECISION_TIME_UTC": decision_time,
+            "FEATURE_AS_OF_UTC": decision_time,
+        },
+    )
+    assert _validate(exact_manifest, exact_payloads)["valid"] is True
+
+    late_entry = _entry(observed_at="2026-08-18T10:00:00.000002Z")
+    late_manifest, late_payloads = _manifest(
+        [late_entry],
+        context_overrides={
+            "MODEL_DECISION_TIME_UTC": decision_time,
+            "FEATURE_AS_OF_UTC": decision_time,
+        },
+    )
+    with _raises("SOURCE_AVAILABLE_AFTER_DECISION"):
+        _validate(late_manifest, late_payloads)
+
+
+def test_unrepresentable_observed_at_precision_is_rejected_at_runtime_capture_boundary() -> None:
+    entry = _entry(observed_at="2026-08-18T10:00:00.0000001Z")
+    manifest, payloads = _manifest([entry])
+    with _raises("CAPTURE_TIMESTAMP_INVALID"):
+        _validate(manifest, payloads)
+
+
 def test_event_time_only_evidence_is_rejected() -> None:
     entry = _entry(observed_at=None)
     manifest, payloads = _manifest([entry])

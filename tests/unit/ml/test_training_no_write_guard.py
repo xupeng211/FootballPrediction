@@ -12,7 +12,7 @@ import importlib.util
 import logging
 from pathlib import Path
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -24,7 +24,9 @@ class ArtifactBranchEnteredError(Exception):
 
 
 def _stub_module(name: str, **attrs):
-    module = sys.modules.get(name) or ModuleType(name)
+    # Never decorate an already imported real package: pytest's conftest and
+    # sibling ML tests may have loaded it before this fixture starts.
+    module = ModuleType(name)
     for key, value in attrs.items():
         setattr(module, key, value)
     sys.modules[name] = module
@@ -91,45 +93,67 @@ def _install_training_dependency_stubs() -> None:
     )
 
 
-_install_training_dependency_stubs()
-src_package = _stub_module("src")
-src_package.__path__ = [str(PROJECT_ROOT / "src")]
-constants_package = _stub_module("src.constants")
-constants_package.__path__ = [str(PROJECT_ROOT / "src" / "constants")]
-
-_GUARD_SPEC = importlib.util.spec_from_file_location(
-    "training_write_guard",
-    PROJECT_ROOT / "src" / "ml" / "training_write_guard.py",
-)
-training_write_guard = importlib.util.module_from_spec(_GUARD_SPEC)
-sys.modules[_GUARD_SPEC.name] = training_write_guard
-_GUARD_SPEC.loader.exec_module(training_write_guard)
-ml_package = _stub_module("src.ml")
-ml_package.__path__ = [str(PROJECT_ROOT / "src" / "ml")]
-sys.modules["src.ml.training_write_guard"] = training_write_guard
-
-_TRAIN_MODEL_SPEC = importlib.util.spec_from_file_location(
-    "train_model",
-    PROJECT_ROOT / "scripts" / "ops" / "train_model.py",
-)
-train_model = importlib.util.module_from_spec(_TRAIN_MODEL_SPEC)
-sys.modules[_TRAIN_MODEL_SPEC.name] = train_model
-_TRAIN_MODEL_SPEC.loader.exec_module(train_model)
-
-_BASELINE_SPEC = importlib.util.spec_from_file_location(
-    "train_baseline_v1",
-    PROJECT_ROOT / "scripts" / "model_training" / "train_baseline_v1.py",
-)
-train_baseline_v1 = importlib.util.module_from_spec(_BASELINE_SPEC)
-sys.modules[_BASELINE_SPEC.name] = train_baseline_v1
-_BASELINE_SPEC.loader.exec_module(train_baseline_v1)
+def _load_module(module_name: str, relative_path: str) -> ModuleType:
+    spec = importlib.util.spec_from_file_location(module_name, PROJECT_ROOT / relative_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_training_write_confirmation_requires_both_flags() -> None:
-    assert training_write_guard.training_write_confirmed({}) is False
-    assert training_write_guard.training_write_confirmed({"ALLOW_TRAINING_WRITE": "yes"}) is False
+@pytest.fixture
+def training_modules():
+    """Load guard targets with test-only stubs and restore imports afterwards.
+
+    These source files import heavyweight ML and database packages at module load
+    time.  The guard tests intentionally avoid those dependencies, but the stubs
+    must never survive this test: other ML tests require the actual packages.
+    """
+    original_modules = sys.modules.copy()
+    try:
+        _install_training_dependency_stubs()
+        src_package = _stub_module("src")
+        src_package.__path__ = [str(PROJECT_ROOT / "src")]
+        constants_package = _stub_module("src.constants")
+        constants_package.__path__ = [str(PROJECT_ROOT / "src" / "constants")]
+
+        training_write_guard = _load_module(
+            "_training_no_write_guard_contract",
+            "src/ml/training_write_guard.py",
+        )
+        ml_package = _stub_module("src.ml")
+        ml_package.__path__ = [str(PROJECT_ROOT / "src" / "ml")]
+        sys.modules["src.ml.training_write_guard"] = training_write_guard
+        train_model = _load_module(
+            "_training_no_write_guard_train_model",
+            "scripts/ops/train_model.py",
+        )
+        train_baseline_v1 = _load_module(
+            "_training_no_write_guard_baseline",
+            "scripts/model_training/train_baseline_v1.py",
+        )
+        yield SimpleNamespace(
+            guard=training_write_guard,
+            train_model=train_model,
+            baseline=train_baseline_v1,
+            joblib=sys.modules["joblib"],
+        )
+    finally:
+        # Do not leave either stubbed dependencies or dynamically loaded source
+        # modules in the shared interpreter used by the rest of tests/unit/ml.
+        for module_name in set(sys.modules) - set(original_modules):
+            del sys.modules[module_name]
+        sys.modules.update(original_modules)
+
+
+def test_training_write_confirmation_requires_both_flags(training_modules) -> None:
+    guard = training_modules.guard
+    assert guard.training_write_confirmed({}) is False
+    assert guard.training_write_confirmed({"ALLOW_TRAINING_WRITE": "yes"}) is False
     assert (
-        training_write_guard.training_write_confirmed(
+        guard.training_write_confirmed(
             {
                 "ALLOW_TRAINING_WRITE": "yes",
                 "FINAL_TRAINING_WRITE_CONFIRMATION": "yes",
@@ -139,12 +163,16 @@ def test_training_write_confirmation_requires_both_flags() -> None:
     )
 
 
-def test_require_training_write_confirmation_fails_closed() -> None:
-    with pytest.raises(training_write_guard.TrainingWriteGuardError):
-        training_write_guard.require_training_write_confirmation({})
+def test_require_training_write_confirmation_fails_closed(training_modules) -> None:
+    guard = training_modules.guard
+    with pytest.raises(guard.TrainingWriteGuardError):
+        guard.require_training_write_confirmation({})
 
 
-def test_train_model_save_model_blocked_before_artifact_write(monkeypatch) -> None:
+def test_train_model_save_model_blocked_before_artifact_write(
+    monkeypatch, training_modules
+) -> None:
+    train_model = training_modules.train_model
     monkeypatch.delenv("ALLOW_TRAINING_WRITE", raising=False)
     monkeypatch.delenv("FINAL_TRAINING_WRITE_CONFIRMATION", raising=False)
 
@@ -164,10 +192,13 @@ def test_train_model_save_model_blocked_before_artifact_write(monkeypatch) -> No
         )
 
 
-def test_train_model_save_model_requires_double_confirmation_before_branch(monkeypatch) -> None:
+def test_train_model_save_model_requires_double_confirmation_before_branch(
+    monkeypatch, training_modules
+) -> None:
+    train_model = training_modules.train_model
     monkeypatch.setenv("ALLOW_TRAINING_WRITE", "yes")
     monkeypatch.setenv("FINAL_TRAINING_WRITE_CONFIRMATION", "yes")
-    joblib_stub = sys.modules["joblib"]
+    joblib_stub = training_modules.joblib
     monkeypatch.setattr(
         joblib_stub,
         "dump",
@@ -190,7 +221,10 @@ def test_train_model_save_model_requires_double_confirmation_before_branch(monke
         )
 
 
-def test_baseline_persist_outputs_blocked_before_mkdir(monkeypatch, tmp_path) -> None:
+def test_baseline_persist_outputs_blocked_before_mkdir(
+    monkeypatch, tmp_path, training_modules
+) -> None:
+    train_baseline_v1 = training_modules.baseline
     monkeypatch.delenv("ALLOW_TRAINING_WRITE", raising=False)
     monkeypatch.delenv("FINAL_TRAINING_WRITE_CONFIRMATION", raising=False)
     output_dir = tmp_path / "blocked_artifacts"
@@ -224,8 +258,9 @@ def test_baseline_persist_outputs_blocked_before_mkdir(monkeypatch, tmp_path) ->
 
 
 def test_baseline_persist_outputs_requires_double_confirmation_before_branch(
-    monkeypatch, tmp_path
+    monkeypatch, tmp_path, training_modules
 ) -> None:
+    train_baseline_v1 = training_modules.baseline
     monkeypatch.setenv("ALLOW_TRAINING_WRITE", "yes")
     monkeypatch.setenv("FINAL_TRAINING_WRITE_CONFIRMATION", "yes")
     output_dir = tmp_path / "branch_probe"
@@ -263,7 +298,8 @@ def test_baseline_persist_outputs_requires_double_confirmation_before_branch(
     assert not output_dir.exists()
 
 
-def test_report_only_mode_does_not_call_training_or_save(monkeypatch) -> None:
+def test_report_only_mode_does_not_call_training_or_save(monkeypatch, training_modules) -> None:
+    train_model = training_modules.train_model
     expected = {
         "TASK": "filtered_feature_matrix_report_only",
         "mode": "report-only",
@@ -281,7 +317,9 @@ def test_report_only_mode_does_not_call_training_or_save(monkeypatch) -> None:
     assert train_model.run_report_only_mode(object()) == expected
 
 
-def test_setup_logging_console_only_does_not_create_log_dir(monkeypatch) -> None:
+def test_setup_logging_console_only_does_not_create_log_dir(monkeypatch, training_modules) -> None:
+    train_model = training_modules.train_model
+
     def fail_mkdir(self, *args, **kwargs):
         raise AssertionError("console-only logging must not create directories")
 

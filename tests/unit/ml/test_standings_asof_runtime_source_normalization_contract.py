@@ -572,6 +572,25 @@ def test_non_bmp_identifier_is_not_applicable_by_schema_and_fails_closed() -> No
         validate_normalization_envelope_structure(envelope)
 
 
+def test_timestamp_canonicalization_preserves_milliseconds_and_rejects_submilliseconds() -> None:
+    manifest, _payloads = _capture_manifest()
+    exact_millisecond = _envelope(manifest)
+    exact_millisecond["EVIDENCE_ATTESTATIONS"][0]["SOURCE_OBSERVED_AT_UTC"] = (
+        "2026-08-18T10:30:00.001000Z"
+    )
+    _refresh_digest(exact_millisecond)
+    assert validate_normalization_envelope_structure(exact_millisecond)["valid"] is True
+
+    submillisecond = _envelope(manifest)
+    submillisecond["EVIDENCE_ATTESTATIONS"][0]["SOURCE_OBSERVED_AT_UTC"] = (
+        "2026-08-18T10:30:00.000001Z"
+    )
+    with _raises("NORMALIZATION_TIMESTAMP_INVALID"):
+        compute_normalization_content_digest(submillisecond)
+    with _raises("NORMALIZATION_TIMESTAMP_INVALID"):
+        validate_normalization_envelope_structure(submillisecond)
+
+
 @pytest.mark.parametrize(
     ("field", "tampered_value"),
     [

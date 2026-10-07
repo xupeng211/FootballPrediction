@@ -11,7 +11,7 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
-## Current State Snapshot — 2026-09-21
+## Current State Snapshot — 2026-10-07
 
 本节于 2026-09-16 因 Blocker #3 关闭 / Gate 2 接受的状态变更而刷新（该裁定完成于
 2026-09-15/16）；`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 仍记录上一次完整知识审计的基线，早于本次刷新。
@@ -89,6 +89,21 @@ Stage D Blocker #3 已关闭、Gate 2 已接受，`BLOCKER_3=CLOSED`、`GATE_2=A
 NEXT_OWNER_DECISION=Gate 3 状态为 `NOT_AUTHORIZED`；当前 candidate `sdc_stage_d_gate3_1ebfd8f484b8957d00ee111f27da1202`（SHA-256 `52da1f2f78ea0bed39f732b40a5a8eb06f68cbbf70f3b97b77dda8a3b81fe725`）仍只是 `PREPARED_NOT_AUTHORIZED`，不先复用或修改。历史上共有四条 post-epoch consumed request、零 ambiguous request，均不可重试或重写。最后一条请求确实完成了 HTTP response 并进入 2xx 分支，但旧实现随后在 provider quota reconciliation 失败，未保留 exact status/quota header；该历史 evidence-loss event 不追造、不重试。prospective post-response repair 已把未来路径改为 RAW 先保留、quota 仍 fail-closed、局部失败写入独立诊断；本 mission 增加 provider-effect `UNKNOWN` 的 hash-bound conservative offline adjudication，但在 artifact 创建和零网络 admission 复核完成前，quota blocker 仍保持。不是训练、value betting、UI、第二 provider、其他赛事或新一轮广泛架构设计。
 DO_NOT_START_WITHOUT_AUTHORIZATION=network fetch / browser capture / DB or raw write / training / prediction / backtest / value-betting implementation / model activation / migration / cleanup
 ```
+
+### 2026-10-07 bounded correctness recovery（候选、未合并）
+
+`be0f1f5eda6a2e0f63363115c44f33eec13244bc` 是本次修复的 verified main base，且其
+required checks 已成功。PR #1933/#1934 已合并；仅 PR #1914 仍 open/conflicting。本仓库约有
+2,701 个 tracked files 与约 43 MB tracked text。本 candidate 只恢复既有 temporal validation、
+offline-evaluation test fixture 与 ML test isolation：拒绝会丢失 UTC precision 或 standings
+millisecond boundary 信息的证据，修复可在干净 checkout 运行的真实 Git-history fixture，并让
+guard tests 不污染真实 ML dependencies。它不产生数据、production、capture、API manifest、训练、
+评估或模型激活进展。continuous capture 仍未被 production 证明；API manifest pending；canonical
+value engine、canonical backtest、CLV 和 fresh independent holdout 均仍缺失。既有 888/545/436/109
+和 model metrics 是历史 evidence，未被本 candidate 重跑或重新解释。
+修复前 full ML collection 的已知基线为 46 failures、16 errors、426 pass（collection-time stubs
+污染真实 dependencies）；candidate 的 fixture-local isolation 与 canonical inventory 扩展必须由最终
+exact HEAD 的 dev-image validation 验证，尚不把候选代码陈述为已完成的 research 或 production 事实。
 
 2026-09-20 的受控 Stage D 网络 provisioning 已在一个现有、项目控制的非工作站主机上
 建立单一稳定 HTTP CONNECT listener 与独立 loopback TCP HMAC attestation listener；三项

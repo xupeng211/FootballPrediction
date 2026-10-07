@@ -47,6 +47,15 @@ npm run evaluate:offline -- \
 evaluation artifact 的 holdout 状态为
 `CONSUMED_FOR_OFFLINE_EVALUATION`；以后不得再称这 109 行为 untouched/blind/unopened。
 
+## Test-fixture Git ancestry
+
+离线 evaluation/replay 的 unit fixtures 必须使用当前 clean checkout 中确实存在的、可解析的
+protocol ancestor；它们使用 `0e21c2c9be52d0e760d57aa95d1deb511f516e7f`（canonical
+offline evaluation protocol introduction）验证 ancestry binding。这个 fixture-only 修复不改变
+production protocol、candidate、历史 freeze ID、receipt 或 hash binding；nonexistent、stale 与
+mismatched ancestry 的负例保持。它不构成 formal research，也不重新执行或重新解释任何历史
+evaluation。
+
 ## 解释边界
 
 `PROMISING`、`MIXED`、`WEAK`、`CLEARLY_UNDERPERFORMING` 由协议中的固定规则产生。

@@ -127,6 +127,43 @@ def test_exact_observed_at_at_or_before_t_can_prove_availability() -> None:
     assert validate_model_as_of_context(_context(evidence=[evidence])) is True
 
 
+def test_microsecond_exact_observed_at_is_accepted_but_one_microsecond_later_is_rejected() -> None:
+    decision_time = "2026-08-17T12:00:00.000001Z"
+    exact_evidence = {
+        "SOURCE_OBSERVED_AT_UTC": decision_time,
+        "availability_proof": "EXACT_OBSERVATION_TIMESTAMP",
+    }
+    assert (
+        validate_model_as_of_context(
+            _context(
+                MODEL_DECISION_TIME_UTC=decision_time,
+                FEATURE_AS_OF_UTC=decision_time,
+                evidence=[exact_evidence],
+            )
+        )
+        is True
+    )
+
+    later_evidence = dict(exact_evidence, SOURCE_OBSERVED_AT_UTC="2026-08-17T12:00:00.000002Z")
+    with _raises_reason("SOURCE_AVAILABLE_AFTER_DECISION"):
+        validate_model_as_of_context(
+            _context(
+                MODEL_DECISION_TIME_UTC=decision_time,
+                FEATURE_AS_OF_UTC=decision_time,
+                evidence=[later_evidence],
+            )
+        )
+
+
+def test_observed_at_with_nonzero_precision_beyond_microseconds_is_rejected() -> None:
+    evidence = {
+        "SOURCE_OBSERVED_AT_UTC": "2026-08-17T12:00:00.0000001Z",
+        "availability_proof": "EXACT_OBSERVATION_TIMESTAMP",
+    }
+    with _raises_reason("SOURCE_TIME_PRECISION_AMBIGUOUS"):
+        validate_model_as_of_context(_context(evidence=[evidence]))
+
+
 def test_observed_at_after_t_is_rejected() -> None:
     evidence = {
         "SOURCE_OBSERVED_AT_UTC": "2026-08-17T12:00:01Z",

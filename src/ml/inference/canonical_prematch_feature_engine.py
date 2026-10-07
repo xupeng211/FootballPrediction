@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 from src.ml.inference.feature_contract_registry import VNEXT_CONTRACT_ID, FeatureContractRegistry
+from src.ml.inference.model_asof_contract import _has_unrepresentable_subsecond_precision
 
 FEATURE_CONTRACT_VERSION = "canonical_prematch/vnext/v1"
 TRAINING_DECISION = "ACCEPTED_FOR_TRAINING"
@@ -68,6 +69,11 @@ def _parse_utc(value: Any, label: str) -> datetime:
         parsed = datetime.fromisoformat(normalized)
     except ValueError:
         _fail("INVALID_TIMESTAMP", f"{label} is not ISO-8601")
+    if _has_unrepresentable_subsecond_precision(value):
+        _fail(
+            "INVALID_TIMESTAMP",
+            f"{label} has subsecond precision that cannot be represented exactly",
+        )
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         _fail("INVALID_TIMESTAMP", f"{label} must include a UTC offset")
     return parsed.astimezone(UTC)
