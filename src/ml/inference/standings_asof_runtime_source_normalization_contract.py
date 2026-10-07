@@ -213,6 +213,11 @@ def _timestamp(value: Any, label: str) -> str:
         parsed = _parse_model_asof_utc(value, label, "NORMALIZATION_TIMESTAMP_INVALID")
     except ModelAsOfValidationError as exc:
         raise NormalizationValidationError(exc.reason_code, str(exc)) from exc
+    if parsed.microsecond % 1000:
+        raise NormalizationValidationError(
+            "NORMALIZATION_TIMESTAMP_INVALID",
+            f"{label} has sub-millisecond precision that cannot be canonicalized exactly",
+        )
     return parsed.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 

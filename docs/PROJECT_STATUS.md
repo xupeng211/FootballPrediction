@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-09-21
+Last updated: 2026-10-07
 
 ## Current State
 
@@ -29,6 +29,26 @@ supporting history / completed evidence，保留用于追溯，不再把旧阶�
 | Remaining downstream gaps | Stage D 持续采集本身尚未运营（`CONTINUOUS_CAPTURE_READY=NO`、`STAGE_D_STARTED=NO`）；canonical value engine；canonical betting backtest；bankroll/staking；CLV；fresh independent future holdout；production activation。独立备份/恢复已由 Blocker #3 关闭与 Gate 2 接受消除，不再列为 gap（`BLOCKER_3=CLOSED`、`GATE_2=ACCEPTED`） |
 | Non-capabilities | `MODEL_QUALITY_PROVEN=NO`; `PROFITABILITY_PROVEN=NO`; `PRODUCTION_READY=NO`; `MODEL_ACTIVATED=NO`; `BACKTEST=NOT_ESTABLISHED` |
 | Next Owner decision | `GATE_3=NOT_AUTHORIZED`；post-response quota/evidence repair 已完成 prospective contract，历史 provider effect 仍为 `UNKNOWN`，当前 blocker 由显式 conservative offline adjudication 处理但尚未创建/应用；当前 candidate 仍不可修改或执行。即使离线 admission 成功，仍需新 main exact-head candidate 的独立 Owner/Chief Engineer 授权；不是训练、value betting、UI、第二 provider、其他赛事或广泛架构重设计 |
+
+### 2026-10-07 correctness-recovery candidate（未合并、非新的研究执行）
+
+- 以已核对的 main 基线 `be0f1f5eda6a2e0f63363115c44f33eec13244bc` 为准：该基线的
+  required checks 已成功；PR #1933、#1934 已合并，当前只见 PR #1914 仍 open 且有 conflict。
+  这些是工作流/仓库现状，不改变 production、数据或授权状态。
+- 当前盘点约为 2,701 个 tracked files、约 43 MB tracked text。该 candidate 只修复 temporal
+  parser 的精度拒绝、offline-evaluation 测试 fixture 与 ML test isolation；不执行数据、训练、
+  prediction、评估重跑、backtest、模型 activation 或 provider/DB 操作。
+- temporal 修复的边界是：不能无损表示的 UTC 小数秒、或不能无损 canonicalize 到 standings
+  毫秒的时间，必须在既有 fail-closed 边界拒绝，不能被截断为较早且看似安全的 T。它保留
+  可表示的历史毫秒、offset、feature formula/order 与 hash 合同。
+- 修复前，`tests/unit/ml/` 会被 collection-time guard stubs 污染，已观察到 46 failures、
+  16 errors、426 pass；candidate 将 stubs 限定到 guard test fixture 并恢复 import state。完整
+  ML suite 的 CI inventory 变更单独留在治理候选，未包含于本业务修复。该修复仍须由 final exact HEAD 的 dev-image
+  canonical validation 证明，不能以本段文字代替测试结果。
+- 历史 `888 / 545 / 436 / 109`、model metrics 与 `PROMISING` 都仍是既有历史 evidence，
+  本 candidate 未重新执行 formal research。continuous capture 尚未获 production 证明；API
+  manifest 仍 pending；canonical value engine、canonical backtest、CLV 与 fresh independent
+  holdout 仍缺失。
 
 Stage C 已在 PR #1890 正常合并并通过 main Production Gate，canonical transaction-v1
 architecture/spine 存在于 main；它证明可重放 pilot 的转换和证据完整性，不证明持续采集、

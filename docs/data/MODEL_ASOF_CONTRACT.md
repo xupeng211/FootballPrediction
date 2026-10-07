@@ -76,6 +76,16 @@ numeric parity。
 的 source/capture contract 明确证明两者关系时，才可以使用该证明。不能用 event time
 或 capture time 事后推断 model 已经知道事实。
 
+### UTC precision preservation
+
+进入此合同的 RFC3339 UTC 时间必须能被解析实现**无损表示**。若小数秒超过 Python
+microsecond precision 而被丢弃的位中有非零值，必须沿既有 fail-closed 错误边界拒绝；不得
+静默截断、四舍五入或把未知时间向较早的 T coercion。超过六位但额外位全为零仍可表示。
+standings runtime-source normalization 的 canonical millisecond 输出同样只接受可无损
+millisecond 表示的输入；例如任意非零 microsecond remainder 不能被截成同一毫秒。此规则
+不改变既有整毫秒 canonical form、offset compatibility、feature order、numeric formulas 或
+hash contracts。
+
 ## Availability proof and fail-closed rules
 
 动态事实只有在 `INFORMATION_AVAILABLE_BY_MODEL_DECISION=YES` 可被诚实证明时才能

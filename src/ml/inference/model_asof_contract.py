@@ -11,10 +11,12 @@ or inferring an observation timestamp.
 """
 
 from datetime import UTC, datetime
+import re
 from typing import Any
 
 MODEL_ASOF_CONTRACT_ID = "canonical-model-asof/v1"
 MODEL_ASOF_CONTRACT_VERSION = "v1"
+_MICROSECOND_FRACTION_DIGITS = 6
 _V1_FEATURE_COUNT = 20
 _V_NEXT_FEATURE_COUNT = 17
 MODEL_ASOF_FIELD_NAMES = frozenset(
@@ -142,6 +144,31 @@ class ModelAsOfValidationError(ValueError):
     def __init__(self, reason_code: str, message: str):
         super().__init__(f"{reason_code}: {message}")
         self.reason_code = reason_code
+
+
+def _has_unrepresentable_subsecond_precision(value: str) -> bool:
+    """Return whether ISO-8601 fractional fields would lose non-zero precision.
+
+    ``datetime.fromisoformat`` accepts more than six fractional digits, but
+    silently truncates them to Python's microsecond precision. Timestamps at
+    an information boundary must not acquire a different instant through that
+    coercion. Extra trailing zeroes are exact and therefore remain valid.
+
+    The check intentionally examines every ISO fractional field rather than
+    depending on one spelling of the UTC offset. That lets consumers which
+    support non-UTC offsets apply the same losslessness rule before converting
+    to UTC.
+    """
+    # Python also discards a fractional UTC offset when its whole-second
+    # component is zero. A negative such offset can move evidence past T.
+    zero_offset = re.search(r"[+-](?:00|00:?00|00:?00:?00)[.,](\d+)$", value)
+    if zero_offset and any(digit != "0" for digit in zero_offset.group(1)):
+        return True
+    return any(
+        len(fraction) > _MICROSECOND_FRACTION_DIGITS
+        and any(digit != "0" for digit in fraction[_MICROSECOND_FRACTION_DIGITS:])
+        for fraction in re.findall(r"[.,](\d+)", value)
+    )
 
 
 def _exact_object(
@@ -313,6 +340,11 @@ def _parse_model_asof_utc(value: Any, field: str, reason_code: str) -> datetime:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
         raise ModelAsOfValidationError(reason_code, f"{field} is malformed") from exc
+    if _has_unrepresentable_subsecond_precision(value):
+        raise ModelAsOfValidationError(
+            reason_code,
+            f"{field} has subsecond precision that cannot be represented exactly",
+        )
     if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
         raise ModelAsOfValidationError(reason_code, f"{field} must be absolute UTC")
     return parsed.astimezone(UTC)

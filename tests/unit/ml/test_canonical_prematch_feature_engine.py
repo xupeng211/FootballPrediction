@@ -277,6 +277,30 @@ def test_temporal_and_target_boundaries_fail_closed(mutation, reason) -> None:
         build_canonical_prematch_features(context)
 
 
+@pytest.mark.parametrize(
+    "timestamp",
+    [
+        "2025-01-10T12:00:00.0000001Z",
+        "2025-01-10T12:00:00-00:00:00.000001",
+        "2025-01-10T12:00:00+00:00:00.000001",
+    ],
+)
+def test_nonzero_precision_beyond_microseconds_is_rejected_without_changing_offset_support(
+    timestamp: str,
+) -> None:
+    lossy_context = _context()
+    lossy_context["target_kickoff_utc"] = timestamp
+    with pytest.raises(CanonicalPrematchFeatureError, match="INVALID_TIMESTAMP"):
+        build_canonical_prematch_features(lossy_context)
+
+    offset_context = _context()
+    offset_context["target_kickoff_utc"] = "2025-01-10T20:00:00+08:00"
+    offset_context["feature_as_of_utc"] = "2025-01-10T20:00:00+08:00"
+    assert build_canonical_prematch_features(offset_context)["feature_as_of_status"] == (
+        KICKOFF_REFERENCE_ONLY
+    )
+
+
 def test_explicit_decision_mode_requires_availability_proof() -> None:
     with pytest.raises(CanonicalPrematchFeatureError, match="SOURCE_AVAILABLE_AFTER_DECISION"):
         build_canonical_prematch_features(_context(decision_time="2025-01-10T10:00:00Z"))
