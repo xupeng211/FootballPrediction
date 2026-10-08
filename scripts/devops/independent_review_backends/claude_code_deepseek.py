@@ -1,7 +1,8 @@
 """Least-privilege Claude Code adapter for DeepSeek reviews.
 
 The real secret is read only inside the bounded transport child and is never
-returned, logged, or represented in an artifact. Claude receives a local token. Generic receipt validation remains outside this
+returned, logged, or represented in an artifact. Claude receives a local token.
+Generic receipt validation remains outside this
 adapter so backend claims cannot validate themselves.
 
 Lifecycle: permanent
