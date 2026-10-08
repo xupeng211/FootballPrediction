@@ -1,0 +1,39 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "CANONICAL_CANDIDATE_VS_CLOSING_MARKET_RETROSPECTIVE_DIAGNOSTIC",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "scripts/model_evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "package.json",
+    "README.md",
+    "docs/CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/CANONICAL_CANDIDATE_VS_CLOSING_MARKET_RETROSPECTIVE_DIAGNOSTIC.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "Makefile", "package-lock.json", "docs/PROJECT_VISION.md", "docs/PROJECT_MAP.md"],
+  "excluded_prefixes": [".github/", ".githooks/", "config/", "schemas/", "database/", "deploy/", "data/", "scripts/devops/", "scripts/ci/", "scripts/ops/", "src/infrastructure/", "src/ml/training/", "src/ml/inference/", "src/ml/value_mvp/"],
+  "excluded_tokens": ["stage_d", "reviewer", "harness"],
+  "protected_invariants": [
+    "Owner order: only the previously consumed frozen 109-row population; no favorable sample selection",
+    "Frozen candidate, research inputs and existing evaluation protocols remain byte-unchanged",
+    "Reuse canonical identity, provider contract, no-vig, metrics and artifact validation",
+    "All 109 matches accounted; paired metrics share outcomes and population",
+    "RETROSPECTIVE_DIAGNOSTIC only; no untouched holdout, ROI, CLV or profitability claim",
+    "PR 1937/1938/1939 and historical receipts, ledgers and UNKNOWN reservations remain untouched",
+    "No workflow, Harness, CI or reviewer policy development"
+  ],
+  "forbidden_side_effects": [
+    "network football/odds/API/provider request or browser capture",
+    "DB connection/write, raw write, migration or research source mutation",
+    "training, tuning, candidate loading/deserialization, inference or activation",
+    "Stage D, value engine, staking, betting, release or deployment",
+    "paid independent review/qualification calls without separate Owner budget",
+    "merge, force push, deletion or mutation of other worktrees/PRs"
+  ]
+}
