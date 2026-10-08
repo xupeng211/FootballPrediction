@@ -26,7 +26,9 @@ from scripts.devops.independent_review_protocol import IndependentReviewProtocol
 PROVIDER_ENDPOINT = "https://api.deepseek.com/anthropic"
 PROVIDER_HOST = "api.deepseek.com"
 PROVIDER_PATH = "/anthropic/v1/messages?beta=true"
-POLICY = "deepseek-single-request/v1"
+POLICY = "deepseek-single-request/v2"
+REVIEW_EFFORT = "low"
+REVIEW_THINKING = {"type": "adaptive", "display": "omitted"}
 MAX_REQUEST_BYTES = 512 * 1024
 MAX_DECODED_REQUEST_BYTES = 60_000
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
@@ -147,6 +149,8 @@ class SingleRequestTransport(AbstractContextManager):
             or payload.get("model") != "deepseek-flash"
             or payload.get("max_tokens") != OUTPUT_LIMIT
             or payload.get("stream") is not True
+            or payload.get("output_config") != {"effort": REVIEW_EFFORT}
+            or payload.get("thinking") != REVIEW_THINKING
             or len(json.dumps(payload, ensure_ascii=False).encode()) > MAX_DECODED_REQUEST_BYTES
         ):
             raise TransportError("provider input budget/model mismatch")
@@ -235,6 +239,8 @@ class SingleRequestTransport(AbstractContextManager):
                 "response_sha256": sha256(result).hexdigest(),
                 "response_bytes": len(result),
                 "output_limit": OUTPUT_LIMIT,
+                "review_effort": REVIEW_EFFORT,
+                "thinking_enabled": True,
                 "observed_output_usage": output_usage,
                 "redirects": 0,
                 "retries": 0,
@@ -322,6 +328,8 @@ def validate_transport(evidence: Any, log: bytes, prompt: bytes) -> None:
             or evidence.get("physical_attempts") != 1
             or evidence.get("prompt_sha256") != sha256(prompt).hexdigest()
             or evidence.get("output_limit") != OUTPUT_LIMIT
+            or evidence.get("review_effort") != REVIEW_EFFORT
+            or evidence.get("thinking_enabled") is not True
             or type(evidence.get("observed_output_usage")) is not int
             or not 0 <= evidence["observed_output_usage"] <= OUTPUT_LIMIT
             or evidence.get("redirects") != 0

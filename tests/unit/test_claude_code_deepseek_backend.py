@@ -231,6 +231,8 @@ def test_unavailable_trusted_launcher_root_is_typed_infrastructure_failure(
 
 def test_budget_recipe_is_fixed_and_hash_bound_in_dedicated_settings():
     env = backend.child_environment("synthetic", endpoint="http://127.0.0.1:1234/anthropic")
+    assert env["CLAUDE_CODE_EFFORT_LEVEL"] == "low"
+    assert "MAX_THINKING_TOKENS" not in env
     assert env["CLAUDE_CODE_MAX_RETRIES"] == "0"
     assert env["CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK"] == "1"
     assert env["CLAUDE_CODE_NO_MODEL_FALLBACK"] == "1"

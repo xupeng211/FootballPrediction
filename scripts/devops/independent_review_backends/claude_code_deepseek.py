@@ -60,6 +60,9 @@ CONTROLLED_CLAUDE_PATH = "/home/xupeng/.nvm/versions/node/v22.23.2/bin:/usr/bin:
 MAX_REVIEW_OUTPUT_TOKENS = 16384
 MAX_REVIEW_CONTEXT_TOKENS = 64000
 REVIEW_BUDGET_ENV = {
+    # DeepSeek ignores thinking.budget_tokens; pin its documented effort instead.
+    # Thinking stays enabled and truncation still yields NO_VERDICT.
+    "CLAUDE_CODE_EFFORT_LEVEL": "low",
     "CLAUDE_CODE_MAX_RETRIES": "0",
     "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
     "CLAUDE_CODE_NO_MODEL_FALLBACK": "1",

@@ -33,6 +33,8 @@ def synthetic_transport_evidence(prompt: bytes):
         "response_sha256": "b" * 64,
         "response_bytes": 200,
         "output_limit": 16384,
+        "review_effort": transport.REVIEW_EFFORT,
+        "thinking_enabled": True,
         "observed_output_usage": 20,
         "redirects": 0,
         "retries": 0,
@@ -56,6 +58,8 @@ def _body(prompt="review", **overrides):
             "model": "deepseek-flash",
             "max_tokens": 16384,
             "stream": True,
+            "output_config": {"effort": transport.REVIEW_EFFORT},
+            "thinking": transport.REVIEW_THINKING,
             "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
             **overrides,
         }
@@ -149,7 +153,16 @@ def test_redirect_or_provider_failure_is_not_forwarded_or_retried(monkeypatch, t
 
 @pytest.mark.parametrize(
     "body",
-    [_body("changed prompt"), _body(max_tokens=16385), _body(model="other"), _body("x" * 60001)],
+    [
+        _body("changed prompt"),
+        _body(max_tokens=16385),
+        _body(model="other"),
+        _body("x" * 60001),
+        _body(output_config={"effort": "high"}),
+        _body(output_config=None),
+        _body(thinking={"type": "disabled"}),
+        _body(thinking=None),
+    ],
 )
 def test_unapproved_or_oversized_request_never_dispatches(monkeypatch, tmp_path, body):
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
@@ -181,6 +194,8 @@ def test_partial_or_secret_reflecting_response_fails_closed(monkeypatch, tmp_pat
     ("field", "value"),
     [
         ("physical_attempts", 2),
+        ("review_effort", "high"),
+        ("thinking_enabled", False),
         ("redirects", 1),
         ("prompt_sha256", "c" * 64),
         ("request_bytes", 999999),
