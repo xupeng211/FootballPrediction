@@ -1,5 +1,14 @@
 # Project Status
 
+## Engineering — risk-based review recovery candidate
+
+风险审核恢复候选仅提供 `scripts/devops/review_recovery.py` 的只读资格/故障替代预览和
+`scripts/devops/review_coverage.py` 的完整 Git 材料导出/核验；状态为
+`PROPOSED / BLOCKED_PENDING_QUALIFICATION_AND_OWNER_ADOPTION`。正式 NORMAL/STRICT/CRITICAL
+规则、active backend、receipt authority、CI和合并门禁未改变。详见
+[审核交付恢复候选](agentic/REVIEW_DELIVERY_RECOVERY.md)。
+PR1937/1938保持Draft，旧Harness任务和历史accounting不变；业务阶段及生产授权未改变。
+
 ## Engineering maintenance — Recon historical boundary
 
 The three ad hoc probes retained under `archive/recon_v2_research/` are detached
