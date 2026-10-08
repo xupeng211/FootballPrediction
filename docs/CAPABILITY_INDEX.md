@@ -34,10 +34,12 @@
 
 ## Engineering asset boundary
 
-- `archive/recon_v2_research/` is retained historical source, excluded from current
+- `archive/recon_v2_research/` is retired (its three probes removed), excluded from current
   build and recursive source scans. The active Recon implementation, supported
   research/data/model paths and Stage D backup/restore assets remain maintained.
-  See `docs/PROJECT_MAP.md` for the boundary and validation ownership.
+  The historical QA export under legacy `test_data/` is also removed from the
+  tracked tree with its exact original retained externally. Other legacy fixtures
+  and code remain. See `docs/PROJECT_MAP.md` for the narrow boundary and validation ownership.
 
 ## Current capability snapshot — 2026-09-21
 

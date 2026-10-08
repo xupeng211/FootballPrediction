@@ -82,3 +82,6 @@ docs/_build/
 .github/
 .gitlab-ci.yml
 .travis.yml
+
+# Retired historical QA exports. Active/raw fixtures elsewhere stay in the context.
+tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data/

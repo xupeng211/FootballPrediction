@@ -77,7 +77,7 @@ status 或执行授权来源；这些职责仍分别属于 AGENTS.md、CAPABILIT
 
 ## Retired Recon experiment boundary
 
-`archive/recon_v2_research/` retains three historical, ad hoc network probes
+`archive/recon_v2_research/` formerly held three historical, ad hoc network probes
 (`debug_decrypt_failure.js`, `j1_probe_final.js`, `research_api_direct.js`). They
 are not supported runtime, research, ingestion or recovery entrypoints. Current
 Recon implementations live under `src/infrastructure/recon/`, with maintained
@@ -89,8 +89,8 @@ SQL/Python scans prune it before descending; other archive trees and active
 source retain their checks. Legacy-test size inventory only inspects its own
 `Z_LEGACY` candidates. Node/pytest discovery, source/data loader roots and
 registered npm/Make/deployment/recovery entrypoints do not register these probes;
-existing ESLint and formatter ignores already exclude `archive/`. No historical
-file is deleted by this boundary change. Reintroducing one as an active dependency
+existing ESLint and formatter ignores already exclude `archive/`. Phase 1 retained
+the files; phase 2 removes these three previously qualified probes. Reintroducing one as an active dependency
 requires a reviewed migration into the maintained source/tool roots and fresh
 qualification, not direct execution from the historical directory.
 
@@ -189,3 +189,36 @@ README canonical 表只定义"正式入口"，不授予执行权。所有含副�
 - `config/db_schema_authority.json` 的 authority、lifecycle 或 startup policy 发生变化时，
   同步更新 README、CAPABILITY_INDEX 与本节。
 - 新 Agent 反馈按本文档找不到能力时，立即修正。
+
+## Historical QA-export retirement (phase 2)
+
+The old `tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data/` QA-export subtree is
+retired from the tracked tree and explicitly excluded from Docker context. This
+is a narrow boundary: all other legacy tests, the 7,591-feature original
+`fixtures/premium_match_sample.json`, mock responses and research fixtures remain.
+The QA export is not replaced with synthetic data, and its original bytes were
+retained outside Git before removal. No claim is made that its historical match
+records have no archival value. The project storage policy already places large
+collected data outside source control.
+
+Qualification is limited to current registered entrypoints: pytest ignores the
+legacy archive; the Node runner discovers tests under unit/integration/stress and
+builds data dependencies under docs/config/data. Production data loaders use
+registered data/cache/config roots or explicitly supplied local inputs, not this
+old QA-export directory. The current governed recovery generation contains
+quota/accounting/transaction/run-state objects, not this export. The legacy-size
+audit is preserved (including RN-005 for the retained premium sample); no scanner
+or CI gate is ignored or disabled. Docker's last explicit exclusion prevents the
+existing `!tests/` exception from reintroducing QA exports.
+
+The exact export was 2,484,963 bytes (SHA-256
+`b0f47df433ebe2e8e5f55b9eaf99959aaaa58d80ec45a2fb01e53cd7d8fe08cd`),
+ending in truncated JSON. Truncation and
+absence of filename references are supporting observations, not retirement proof.
+Restoring archival access uses the file from base commit
+`c626e3109f2fc0c298551d0a9746e76540dfe410` or the externally retained original;
+operator-chosen arbitrary input paths are not automatic discovery registrations.
+Future registration of this directory requires requalification. Existing
+`archive/recon_v2_research/` boundaries remain, and its three previously certified
+probes are also removed. External validation/review evidence determines whether
+this candidate is ready; this document does not assert a passing review.
