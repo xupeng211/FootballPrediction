@@ -563,6 +563,21 @@ legacy-writer execution is authorized.
   语义链上叠加合同。
 - 未改变：no-write 默认、无 DB/网络/训练/回测执行、无 migration、SC-002 状态不变。
 
+## Canonical frozen-candidate retrospective diagnostic（2026-10-08）
+
+Owner 授权消费已评价的 109 场冻结预测；新增 `npm run diagnose:closing` 内部离线 consumer。
+真实结果 109 accounted / 109 paired / 0 excluded：model Log Loss=0.978340037241、market=0.899730233518，
+delta=+0.078609803723（95% iid paired bootstrap CI [+0.015476340689,+0.140815637412]）；
+Brier model=0.584557279738、market=0.527801063082、delta=+0.056756216656。
+本批证据支持 `MARKET_BETTER_THAN_MODEL`，不证明未来表现或盈利。
+38 场的两份 CSV 存在等价同公司报价，复用 canonical semantic identity 折叠完整等价三元组，
+来源全部保留且不双计权重；原 CSV SHA-256/size/blob identity 匹配，当前 Git 无法重新读取历史 commit。
+GD-A01/A02/A03、frame、candidate 与评价 receipt 均按原合同核对，不修改原资产/协议、不训练/推理。
+此研究是 9-feature frozen XGBoost / consumed 109，下面 VALUE_MVP 是 13-feature logistic / OOS 511，
+不能混合统计。报告：[CANONICAL_CLOSING_MARKET_RETROSPECTIVE](CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md)。
+独立审核未运行（Owner 未授权新增付费调用），Draft 候选验收仍待审核与正式 CI；
+原 `PROMISING`（vs prior）、production activation=NO、Stage D/历史 UNKNOWN accounting 均保持。
+
 ## VALUE_MVP-1 — Offline probability benchmark: prematch baseline vs closing 1X2 market
 
 - **VALUE_MVP_1_STATUS=IMPLEMENTED_AWAITING_OWNER_ACCEPTANCE（Draft PR #1831 已建立待 Owner 验收；

@@ -13,6 +13,17 @@
 
 ## Current State Snapshot — 2026-09-21
 
+### Owner 另行授权的离线业务研究（2026-10-08）
+
+`CANONICAL_CANDIDATE_VS_CLOSING_MARKET_RETROSPECTIVE_DIAGNOSTIC` 已实现最小 consumer，
+真实冻结 109 场全部配对（0 排除）；market Log Loss=0.899730、model=0.978340，
+paired delta=+0.078610（95% iid paired bootstrap CI [+0.015476,+0.140816]）。
+结论为本批历史样本市场更好；这 109 场已 consumed，不是 future/untouched evidence。
+见 [正式报告与复现入口](CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md)。
+当前候选交付须保持 Draft，付费独立审核没有预算授权；不能视为 MERGE_READY / DONE。
+下一步研究方向是市场相对校准与增量信息的可验证假设设计，任何新训练或未来评价仍需单独授权。
+下面 Stage D 的 Gate 3、quota/ledger/provider 状态与旧任务全部保持；此研究未启动 Stage D。
+
 本节于 2026-09-16 因 Blocker #3 关闭 / Gate 2 接受的状态变更而刷新（该裁定完成于
 2026-09-15/16）；`LAST_KNOWLEDGE_AUDIT_BASE_SHA` 仍记录上一次完整知识审计的基线，早于本次刷新。
 
