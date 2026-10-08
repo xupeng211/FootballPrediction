@@ -6,6 +6,7 @@ from hashlib import sha256
 from http import HTTPStatus
 import http.client
 import json
+import os
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -130,7 +131,10 @@ def test_real_local_http_allows_exactly_one_upstream_request(monkeypatch, tmp_pa
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
     _fake_upstream(monkeypatch, counter)
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway)[0] == HTTPStatus.OK
         evidence = gateway.evidence()
@@ -149,7 +153,10 @@ def test_redirect_or_provider_failure_is_not_forwarded_or_retried(monkeypatch, t
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
     _fake_upstream(monkeypatch, counter, status=status)
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway)[0] == HTTPStatus.BAD_GATEWAY
         assert _post(gateway)[0] == HTTPStatus.BAD_GATEWAY
@@ -176,7 +183,10 @@ def test_unapproved_or_oversized_request_never_dispatches(monkeypatch, tmp_path,
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
     _fake_upstream(monkeypatch, counter)
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway, body)[0] == HTTPStatus.BAD_GATEWAY
     assert not counter.exists()
@@ -189,7 +199,10 @@ def test_partial_or_secret_reflecting_response_fails_closed(monkeypatch, tmp_pat
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
     _fake_upstream(monkeypatch, counter, response=response)
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway)[0] == HTTPStatus.BAD_GATEWAY
         with pytest.raises(transport.TransportError):
@@ -251,7 +264,10 @@ def test_only_fixed_review_package_reaches_upstream(monkeypatch, tmp_path, extra
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
     _fake_upstream(monkeypatch, counter)
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway, _body(**extras))[0] == HTTPStatus.OK
         transport.validate_transport(gateway.evidence(), attempt.read_bytes(), b"review")
@@ -263,7 +279,10 @@ def test_duplicate_canonical_prompt_is_rejected_before_dispatch(monkeypatch, tmp
     _fake_upstream(monkeypatch, counter)
     messages = [{"role": "user", "content": [{"type": "text", "text": "review"}]}] * 2
     with transport.SingleRequestTransport(
-        secret="synthetic-provider-secret", prompt="review", timeout=30, attempt_path=attempt
+        secret_loader=lambda: "synthetic-provider-secret",
+        prompt="review",
+        timeout=30,
+        attempt_path=attempt,
     ) as gateway:
         assert _post(gateway, _body(messages=messages))[0] == HTTPStatus.BAD_GATEWAY
     assert not counter.exists()
@@ -278,3 +297,26 @@ def test_reader_rejects_self_consistent_log_for_changed_physical_package():
     evidence.update(request_sha256="f" * 64, attempt_log_sha256=sha256(log).hexdigest())
     with pytest.raises(IndependentReviewProtocolError):
         transport.validate_transport(evidence, log, b"review")
+
+
+def test_secret_is_loaded_only_in_transport_child(monkeypatch, tmp_path):
+    loaded, counter, attempt = tmp_path / "loaded", tmp_path / "counter", tmp_path / "attempt.jsonl"
+    _fake_upstream(monkeypatch, counter)
+
+    def loader():
+        loaded.write_text(str(os.getpid()))
+        return "synthetic-provider-secret"
+
+    with transport.SingleRequestTransport(
+        secret_loader=loader, prompt="review", timeout=30, attempt_path=attempt
+    ) as gateway:
+        assert not loaded.exists()
+        assert gateway._secret == ""
+        with pytest.raises(transport.TransportError, match="outside transport child"):
+            gateway._load_provider_secret()
+        assert not loaded.exists()
+        assert _post(gateway)[0] == HTTPStatus.OK
+        assert int(loaded.read_text()) == gateway._process.pid
+        assert int(loaded.read_text()) != os.getpid()
+        assert gateway._secret == ""
+    assert b"synthetic-provider-secret" not in attempt.read_bytes()

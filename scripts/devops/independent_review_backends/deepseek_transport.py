@@ -19,6 +19,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 from scripts.devops.independent_review_protocol import IndependentReviewProtocolError
@@ -112,8 +113,12 @@ def _json(value: Any) -> bytes:
 class SingleRequestTransport(AbstractContextManager):
     """固定 TLS 上游；一轮 CLI 只能消耗一个不可补充的 provider request。"""
 
-    def __init__(self, *, secret: str, prompt: str, timeout: int, attempt_path: Path):
-        self._secret = secret
+    def __init__(
+        self, *, secret_loader: Callable[[], str], prompt: str, timeout: int, attempt_path: Path
+    ):
+        self._secret_loader = secret_loader
+        self._parent_pid = os.getpid()
+        self._secret = ""
         self._prompt = prompt
         self._deadline = time.monotonic() + timeout
         self._local_token = secrets.token_hex(32)
@@ -234,6 +239,15 @@ class SingleRequestTransport(AbstractContextManager):
         if len(canonical_parts) != 1:
             raise TransportError("canonical prompt absent or ambiguous in CLI request")
 
+    def _load_provider_secret(self) -> None:
+        """真实密钥仅由 transport 子进程读入；父进程只持有路径回调。"""
+        if os.getpid() == self._parent_pid:
+            raise TransportError("credential loading outside transport child")
+        try:
+            self._secret = self._secret_loader()
+        except Exception as exc:
+            raise TransportError("provider credential unavailable") from exc
+
     def _canonical_body(self) -> bytes:
         # 门构造固定包，只保留唯一 canonical prompt；原生 SDK scaffolding 不进入审核。
         body = _json(review_payload(self._prompt))
@@ -246,6 +260,7 @@ class SingleRequestTransport(AbstractContextManager):
     def _forward(self, body: bytes) -> bytes:
         self._validate_body(body)
         cli_request_hash = sha256(body).hexdigest()
+        self._load_provider_secret()
         body = self._canonical_body()
         self._attempted = True  # 在 DNS/TLS/request 之前消耗额度；异常也不恢复。
         request_hash = sha256(body).hexdigest()

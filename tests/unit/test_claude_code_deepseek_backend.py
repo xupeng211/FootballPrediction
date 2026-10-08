@@ -142,14 +142,16 @@ def test_timeout_is_no_verdict_and_does_not_leak_secret_or_prompt(monkeypatch, t
     assert "private prompt" not in str(raised.value)
 
 
-def test_run_rejects_secret_reflection_before_raw_output_can_persist(monkeypatch, tmp_path: Path):
+def test_run_rejects_local_token_reflection_before_raw_output_can_persist(
+    monkeypatch, tmp_path: Path
+):
     binary = tmp_path / "claude"
     binary.write_bytes(b"synthetic cli")
 
     def fake_run(command, **_kwargs):
         if command[1:] == ["--version"]:
             return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
-        return SimpleNamespace(returncode=0, stdout=b"synthetic-secret", stderr=b"")
+        return SimpleNamespace(returncode=0, stdout=b"local-token", stderr=b"")
 
     _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
@@ -259,8 +261,8 @@ def synthetic_gateway(monkeypatch):
         cli_token = "local-token"
         cli_endpoint = "http://127.0.0.1:1234/anthropic"
 
-        def __init__(self, *, secret, prompt, timeout, attempt_path):
-            assert secret == "synthetic-secret"
+        def __init__(self, *, secret_loader, prompt, timeout, attempt_path):
+            assert callable(secret_loader)
             assert timeout > 0
             self.metadata, log = synthetic_transport_evidence(prompt.encode())
             attempt_path.write_bytes(log)

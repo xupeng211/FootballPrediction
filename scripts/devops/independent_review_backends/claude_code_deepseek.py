@@ -1,7 +1,7 @@
 """Least-privilege Claude Code adapter for DeepSeek reviews.
 
-The secret is read only when launching Claude and is never returned, logged,
-or represented in an artifact. Generic receipt validation remains outside this
+The real secret is read only inside the bounded transport child and is never
+returned, logged, or represented in an artifact. Claude receives a local token. Generic receipt validation remains outside this
 adapter so backend claims cannot validate themselves.
 
 Lifecycle: permanent
@@ -277,7 +277,6 @@ def run(  # noqa: C901, PLR0912, PLR0915
         raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: version probe timed out") from exc
     if not _version_at_least(version):
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: unsupported Claude version")
-    secret = _secret(secret_path)
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
     schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
@@ -286,7 +285,10 @@ def run(  # noqa: C901, PLR0912, PLR0915
         raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: startup budget exhausted")
     with (
         SingleRequestTransport(
-            secret=secret, prompt=prompt, timeout=remaining, attempt_path=attempt_path
+            secret_loader=lambda: _secret(secret_path),
+            prompt=prompt,
+            timeout=remaining,
+            attempt_path=attempt_path,
         ) as transport,
         tempfile.TemporaryDirectory(prefix="fp-claude-review-home-") as isolated_home,
     ):
@@ -332,11 +334,10 @@ def run(  # noqa: C901, PLR0912, PLR0915
             # Never expose captured stdout/stderr: either may contain model text.
             raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
         else:
-            if _output_contains_secret(output, secret):
+            if _output_contains_secret(output, transport.cli_token):
                 raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED")
         finally:
             child_env.clear()
-            secret = ""
         try:
             transport_evidence = transport.evidence()
             transport_log = attempt_path.read_bytes()
