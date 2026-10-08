@@ -411,6 +411,8 @@ def scan_repo(ap=None):  # noqa: D103
             d
             for d in dirs
             if d not in {".git", "node_modules", "__pycache__", ".pytest_cache", ".claude"}
+            # Retired Recon probes; keep all other SQL/migration scan roots.
+            and (Path(root) / d).relative_to(REPO_ROOT).as_posix() != "archive/recon_v2_research"
         ]
         for fn in fnames:
             if fn.endswith(".sql"):

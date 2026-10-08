@@ -53,7 +53,9 @@ const WALK_EXCLUDED_DIRS = new Set([
   '.mypy_cache'
 ]);
 const WALK_EXCLUDED_PATHS = new Set([
-  '.claude/worktrees'
+  '.claude/worktrees',
+  // Retired probes; current Recon source remains under src/infrastructure/recon.
+  'archive/recon_v2_research'
 ]);
 const CORE_TABLE_DDL_RE = /\bCREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+"?(matches|raw_match_data|matches_oddsportal_mapping)"?\b/i;
 

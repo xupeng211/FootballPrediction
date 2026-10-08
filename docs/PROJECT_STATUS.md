@@ -1,5 +1,15 @@
 # Project Status
 
+## Engineering maintenance — Recon historical boundary
+
+The three ad hoc probes retained under `archive/recon_v2_research/` are detached
+from current build/source-discovery inputs. Maintained Recon code and tests,
+canonical ingestion/training/evaluation and Stage D recovery assets remain in
+the active tree. This is an engineering asset-boundary change, not a business
+milestone, acquisition authorization, model activation or Stage D gate change.
+No historical assets are deleted. Boundary details: `docs/PROJECT_MAP.md`.
+
+
 - lifecycle: current-state
 - owner: project governance
 

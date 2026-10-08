@@ -1,0 +1,47 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_ACTIVE_BOUNDARY_CONVERGENCE",
+  "task_type": "mixed",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    ".dockerignore",
+    "scripts/ops/helpers/repoHygiene.js",
+    "scripts/ops/technical_debt_workflow_audit_dry_run.js",
+    "scripts/ops/python_db_write_static_enforcement.py",
+    "scripts/ops/sql_migration_policy_static_enforcement.py",
+    "tests/unit/scripts/recon_retirement_boundary.test.js",
+    "docs/PROJECT_MAP.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FOOTBALLPREDICTION_ACTIVE_BOUNDARY_CONVERGENCE.json",
+    "tests/unit/test_recon_retirement_boundary.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    "archive/",
+    "archive_vault_2026/",
+    "data/",
+    "database/",
+    "src/",
+    "config/",
+    "deploy/",
+    "docker/",
+    ".github/",
+    "docs/_reports/",
+    "docs/_manifests/",
+    "docs/data/",
+    "tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Preserve the active Recon implementation, tests, ingestion/model/research and all production recovery assets.",
+    "Only the reviewed archive/recon_v2_research subtree exits current build and scanner discovery; other scan roots retain checks.",
+    "Keep the two old Harness missions, accounting, receipts and evidence byte unchanged.",
+    "No weakening of current review/authorization policy; no merge or release."
+  ],
+  "forbidden_side_effects": [
+    "No production network requests, browser capture, database/raw writes, training, prediction, backtest, model activation, migration apply or production recovery.",
+    "No historical asset deletion/move, Harness modification, old mission resume, merge or release."
+  ]
+}
