@@ -15,8 +15,10 @@ from scripts.devops.independent_review_protocol import (
     validate_result,
 )
 
-CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v2"
+CHUNKING_ALGORITHM_VERSION = "canonical-diff-files/v3"
 MAX_CHUNK_DIFF_BYTES = 48_000
+# Soft packing target for complete small-file diffs, not a larger call cap.
+COMPOSITE_FILE_TARGET_BYTES = 24_000
 MAX_CHUNK_PROMPT_BYTES = 56_000
 MAX_TOTAL_PROMPT_BYTES = 3 * 1024 * 1024
 MAX_REVIEW_PROVIDER_SECONDS = 1800
@@ -67,9 +69,10 @@ class Manifest:
         """Return the canonical hash-bound manifest payload."""
 
         return {
-            "manifest_version": "deepseek-chunk-manifest/v2",
+            "manifest_version": "deepseek-chunk-manifest/v3",
             "chunking_algorithm": CHUNKING_ALGORITHM_VERSION,
             "max_chunk_diff_bytes": MAX_CHUNK_DIFF_BYTES,
+            "composite_file_target_bytes": COMPOSITE_FILE_TARGET_BYTES,
             "max_chunk_prompt_bytes": MAX_CHUNK_PROMPT_BYTES,
             "max_chunk_count": MAX_CHUNK_COUNT,
             "max_total_prompt_bytes": MAX_TOTAL_PROMPT_BYTES,
@@ -105,9 +108,17 @@ def _cut(diff: bytes, start: int) -> int:
     """Prefer newline boundaries; a giant line is split by its byte identity."""
 
     target = min(len(diff), start + MAX_CHUNK_DIFF_BYTES)
+    # Avoid cutting ordinary code files in half, which creates speculative
+    # missing-context reasoning. Large single artifacts retain the hard byte cap.
+    soft_target = min(target, start + COMPOSITE_FILE_TARGET_BYTES)
+    boundary = diff.rfind(b"\ndiff --git ", start, soft_target)
+    if boundary < start:
+        boundary = diff.find(b"\ndiff --git ", soft_target, target)
+    if boundary >= start:
+        return boundary + 1
     if target == len(diff):
         return target
-    newline = diff.rfind(b"\n", start + 1, target + 1)
+    newline = diff.rfind(b"\n", start + 1, target)
     if newline > start:
         return newline + 1
     # A giant Unicode line must retain complete code points in each prompt.
@@ -163,7 +174,12 @@ def validate_manifest(manifest: Manifest, diff: bytes) -> None:
     position = 0
     reconstructed = bytearray()
     for index, chunk in enumerate(manifest.chunks):
-        if chunk.index != index or chunk.start != position or chunk.end <= chunk.start:
+        if (
+            chunk.index != index
+            or chunk.start != position
+            or chunk.end <= chunk.start
+            or chunk.end - chunk.start > MAX_CHUNK_DIFF_BYTES
+        ):
             raise ChunkReviewError("chunk ranges are not an exact ordered partition")
         source = diff[chunk.start : chunk.end]
         if sha256_bytes(source) != chunk.source_sha256:

@@ -309,3 +309,35 @@ def test_giant_unicode_line_preserves_every_byte_without_replacement():
     assert b"".join(sources) == diff
     for source in sources:
         assert source.decode().encode() == source
+
+
+def test_newline_at_hard_limit_does_not_exceed_diff_byte_ceiling():
+    diff = b"x" * MAX_CHUNK_DIFF_BYTES + b"\nrest"
+    manifest = plan(
+        diff,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="boundary",
+        mission_scope_sha256="c" * 64,
+    )
+    assert all(chunk.end - chunk.start <= MAX_CHUNK_DIFF_BYTES for chunk in manifest.chunks)
+    assert b"".join(diff[chunk.start : chunk.end] for chunk in manifest.chunks) == diff
+
+
+def test_small_code_files_are_not_cut_at_the_hard_limit():
+    first = b"diff --git a/first.py b/first.py\n" + b"-old\n+new\n" * 2100
+    second = b"diff --git a/second.py b/second.py\n" + b"-old\n+new\n" * 3000
+    third = b"diff --git a/third.py b/third.py\n+small\n"
+    diff = first + second + third
+    manifest = plan(
+        diff,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="file-context",
+        mission_scope_sha256="c" * 64,
+    )
+    ends = {chunk.end for chunk in manifest.chunks}
+    assert len(first) in ends
+    assert len(first) + len(second) in ends
+    assert all(chunk.end - chunk.start <= MAX_CHUNK_DIFF_BYTES for chunk in manifest.chunks)
+    assert b"".join(diff[chunk.start : chunk.end] for chunk in manifest.chunks) == diff
