@@ -49,6 +49,10 @@ def _transport_log(provenance: dict[str, Any], directory: Path, repo_root: Path)
         _reject("bounded transport log path")
     path = directory / name
     _assert_external_artifact(path, repo_root=repo_root, kind="transport log")
+    response_path = path.with_suffix(".response.sse")
+    _assert_external_artifact(response_path, repo_root=repo_root, kind="transport response")
+    if sha256_bytes(response_path.read_bytes()) != transport.get("response_sha256"):
+        _reject("bounded transport response hash")
     return path.read_bytes()
 
 

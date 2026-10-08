@@ -83,7 +83,7 @@ def _fake_upstream(
         def getresponse(self):
             chunks = iter([response, b""])
 
-            def header(name, default=""):
+            def header(name, default=None):
                 if name == "Content-Type":
                     return "text/event-stream"
                 return default

@@ -59,6 +59,7 @@ class SingleRequestTransport(AbstractContextManager):
         self._failed = False
         self._evidence: dict[str, Any] | None = None
         self._connection: http.client.HTTPSConnection | None = None
+        self._upstream_status: int | None = None
         self._server = HTTPServer(("127.0.0.1", 0), self._handler())
         self._server.timeout = 0.1
         # Linux task process: parent can terminate/reap even blocked DNS/TLS.
@@ -125,7 +126,13 @@ class SingleRequestTransport(AbstractContextManager):
                     self.wfile.write(response)
                 except (OSError, ValueError, http.client.HTTPException, TransportError):
                     transport._failed = True
-                    transport._record({"event": "REJECTED", "attempted": transport._attempted})
+                    transport._record(
+                        {
+                            "event": "REJECTED",
+                            "attempted": transport._attempted,
+                            "upstream_status": transport._upstream_status,
+                        }
+                    )
                     # 不把上游 3xx 或 Location 暴露给会自动重定向的 CLI。
                     self.send_error(502, "bounded transport rejected")
 
@@ -182,6 +189,7 @@ class SingleRequestTransport(AbstractContextManager):
                 },
             )
             response = connection.getresponse()
+            self._upstream_status = response.status
             if (
                 response.status != SUCCESS_STATUS
                 or response.getheader("Content-Type", "").split(";")[0] != "text/event-stream"
@@ -209,6 +217,13 @@ class SingleRequestTransport(AbstractContextManager):
                 raise TransportError("credential reflected by upstream")
             if b"event: message_stop" not in result:
                 raise TransportError("incomplete upstream stream")
+            # 保留失败 CLI 处理前的真实、受限且无 credential 的 provider 原始响应。
+            response_path = self._attempt_path.with_suffix(".response.sse")
+            with response_path.open("xb") as file:
+                response_path.chmod(0o600)
+                file.write(result)
+                file.flush()
+                os.fsync(file.fileno())
             self._evidence = {
                 "policy": POLICY,
                 "endpoint": PROVIDER_ENDPOINT,
