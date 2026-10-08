@@ -464,7 +464,14 @@ def scan_repository(
             "egg-info",
             ".egg-info",
         }
-        dirs[:] = [d for d in dirs if d not in dirs_to_skip]
+        # This exact subtree contains retired network probes, not active source.
+        # Neighboring archive trees retain their existing scan coverage.
+        dirs[:] = [
+            d
+            for d in dirs
+            if d not in dirs_to_skip
+            and (Path(root) / d).relative_to(REPO_ROOT).as_posix() != "archive/recon_v2_research"
+        ]
         for fname in files:
             if fname.endswith(".py"):
                 full = Path(root) / fname

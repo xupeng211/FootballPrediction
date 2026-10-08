@@ -539,7 +539,9 @@ function checkDockerignore() {
 function checkLargeLegacy(gitFiles) {
     const large = [];
     for (const f of gitFiles) {
-        try { const st = fs.statSync(path.join(REPO_ROOT, f)); if (st.size > 100 * 1024 && f.includes('Z_LEGACY')) large.push({ path: f, sizeKB: Math.round(st.size / 1024) }); }
+        // Only legacy-test inventory is relevant here; do not inspect unrelated assets.
+        if (!f.includes('Z_LEGACY')) continue;
+        try { const st = fs.statSync(path.join(REPO_ROOT, f)); if (st.size > 100 * 1024) large.push({ path: f, sizeKB: Math.round(st.size / 1024) }); }
         catch { /* skip */ }
     }
     if (!large.length) return null;

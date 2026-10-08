@@ -75,6 +75,25 @@ status 或执行授权来源；这些职责仍分别属于 AGENTS.md、CAPABILIT
 | `tests/` | 单元、集成、夹具 | 含 `tests/unit/odds_staging_*`、`tests/unit/canonical_inventory_*`、`tests/integration/odds_staging/` 等 |
 | `docs/` | 架构与运维文档 | `docs/_reports`、`docs/_manifests` 为历史治理资产，新任务默认不得创建 |
 
+## Retired Recon experiment boundary
+
+`archive/recon_v2_research/` retains three historical, ad hoc network probes
+(`debug_decrypt_failure.js`, `j1_probe_final.js`, `research_api_direct.js`). They
+are not supported runtime, research, ingestion or recovery entrypoints. Current
+Recon implementations live under `src/infrastructure/recon/`, with maintained
+regressions under `tests/unit/Recon*.test.js`; those active assets stay in images
+and validation. The archived probes contain no model/data/recovery artifacts.
+
+The production build context excludes this exact historical subtree. Repository
+SQL/Python scans prune it before descending; other archive trees and active
+source retain their checks. Legacy-test size inventory only inspects its own
+`Z_LEGACY` candidates. Node/pytest discovery, source/data loader roots and
+registered npm/Make/deployment/recovery entrypoints do not register these probes;
+existing ESLint and formatter ignores already exclude `archive/`. No historical
+file is deleted by this boundary change. Reintroducing one as an active dependency
+requires a reviewed migration into the maintained source/tool roots and fresh
+qualification, not direct execution from the historical directory.
+
 ## 正式 / 兼容 / 历史代码分布
 
 - **CANONICAL（正式入口指向的实现）**：`src/infrastructure/canonical/`

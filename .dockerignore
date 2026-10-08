@@ -27,6 +27,10 @@ env/
 ENV/
 .venv/
 
+# Retired Recon experiments: historical source only, never runtime/build inputs.
+# Keep active Recon implementations and tests under src/ and tests/.
+archive/recon_v2_research/
+
 # Data directories
 data/
 *.csv

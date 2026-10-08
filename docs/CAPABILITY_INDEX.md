@@ -32,6 +32,13 @@
 5. 看 Legacy or forbidden alternatives：避免重复造轮子或依赖历史脚本。
 6. 每行状态与授权可能变化；以 README canonical 表和 current-state 文档为准。
 
+## Engineering asset boundary
+
+- `archive/recon_v2_research/` is retained historical source, excluded from current
+  build and recursive source scans. The active Recon implementation, supported
+  research/data/model paths and Stage D backup/restore assets remain maintained.
+  See `docs/PROJECT_MAP.md` for the boundary and validation ownership.
+
 ## Current capability snapshot — 2026-09-21
 
 - **Data assets**：historical odds staging/rebuild evidence、frozen FotMob 888
