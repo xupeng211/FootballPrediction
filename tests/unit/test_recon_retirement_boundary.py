@@ -16,9 +16,9 @@ def test_scanners_prune_retired_probes_and_preserve_active_findings(tmp_path, mo
     for directory in (RETIRED_ROOT, "archive/recon_v2_research_active", "src"):
         root = tmp_path / directory
         root.mkdir(parents=True)
-        (root / "write.py").write_text(
-            'import psycopg2\ncursor.execute("INSERT INTO matches VALUES (1)")\n'
-        )
+        # Discovery needs only a DB-client signal; write-risk behavior is covered
+        # by the maintained phase2a regressions. Never execute these fixtures.
+        (root / "write.py").write_text("import psycopg2\n")
         (root / "schema.sql").write_text("CREATE TABLE matches (match_id text);\n")
     monkeypatch.setattr(py, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(sql, "REPO_ROOT", tmp_path)
@@ -37,7 +37,7 @@ def test_scanners_prune_retired_probes_and_preserve_active_findings(tmp_path, mo
         "archive/recon_v2_research_active/write.py",
         "src/write.py",
     ]
-    assert all(row["requires_review"] for row in python_results)
+    assert all(row["db_client_signals"] for row in python_results)
     assert sorted(row["path"] for row in sql_results) == [
         "archive/recon_v2_research_active/schema.sql",
         "src/schema.sql",
