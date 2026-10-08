@@ -1,5 +1,15 @@
 # Project Status
 
+## Engineering — bounded full-diff review capacity
+
+PR #1937 remains a separate Draft candidate while the v2 DeepSeek capacity
+recipe is qualified. This infrastructure change increases per-chunk capacity
+without increasing the 64-invocation limit, preserves every canonical diff byte,
+and adds a one-request, redirect-free fixed-upstream transport with persistent attempt logs and finite input/output/wall budgets. Native CLI retry controls alone do not bound HTTP redirects. It does not authorize
+the business PR: Owner approval and merge of this separate infrastructure are
+required before its use for #1937, followed by fresh dual review and required CI.
+No business runtime, model/data, Stage D authority or Harness history changes.
+
 ## Engineering maintenance — Recon historical boundary
 
 The three ad hoc probes retained under `archive/recon_v2_research/` are detached

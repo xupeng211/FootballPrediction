@@ -42,6 +42,16 @@ def _assert_external_artifact(path: Path, *, repo_root: Path, kind: str) -> None
         raise ValueError(f"invalid {kind} metadata: {path}: {exc}") from exc
 
 
+def _transport_log(provenance: dict[str, Any], directory: Path, repo_root: Path) -> bytes:
+    transport = provenance.get("transport")
+    name = transport.get("attempt_log") if isinstance(transport, dict) else None
+    if not isinstance(name, str) or Path(name).name != name:
+        _reject("bounded transport log path")
+    path = directory / name
+    _assert_external_artifact(path, repo_root=repo_root, kind="transport log")
+    return path.read_bytes()
+
+
 def _assert_run_id(run_id: Any) -> str:
     if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{1,64}", run_id):
         raise ValueError("run id")
@@ -208,6 +218,8 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
                     settings_sha256=execution.get("settings_sha256"),
                     provider_endpoint=execution.get("provider_endpoint"),
                     session_id=execution.get("session_id"),
+                    transport=execution.get("transport"),
+                    transport_log=_transport_log(execution, path.parent, repo_root),
                 )
                 prompt_bytes = prompt_path.read_bytes()
                 chunk_raw_bytes = chunk_raw_path.read_bytes()
@@ -252,6 +264,8 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
                 settings_sha256=provenance.get("settings_sha256"),
                 provider_endpoint=provenance.get("provider_endpoint"),
                 session_id=provenance.get("session_id"),
+                transport=provenance.get("transport"),
+                transport_log=_transport_log(provenance, path.parent, repo_root),
             )
         validate_receipt(
             value,

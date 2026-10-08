@@ -18,6 +18,7 @@ from scripts.devops.deepseek_review_chunks import (
     plan,
     validate_manifest,
 )
+from scripts.devops.independent_review_backends.deepseek_transport import validate_transport
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     IndependentReviewProtocolError,
@@ -106,6 +107,7 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
         ):
             raise IndependentReviewProtocolError("chunk execution evidence is malformed")
         execution = item["execution"]
+        validate_transport(execution.transport, execution.transport_log, item["prompt"])
         raw, prompt, final = item.get("raw"), item.get("prompt"), item.get("final")
         if not all(isinstance(value, bytes) for value in (raw, prompt, final)):
             raise IndependentReviewProtocolError("chunk bytes are unavailable")
@@ -132,6 +134,8 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
             or not execution.reviewer_command
             or "--bare" not in command
             or "--print" not in command
+            or command.count("--max-turns") != 1
+            or command[command.index("--max-turns") + 1 : command.index("--max-turns") + 2] != ["1"]
             or command.count("--model") != 1
             or command[command.index("--model") + 1 : command.index("--model") + 2] != [_MODEL]
             or command.count("--settings") != 1

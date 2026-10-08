@@ -15,9 +15,12 @@ from scripts.devops.independent_review_protocol import (
     validate_result,
 )
 
-CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v1"
-MAX_CHUNK_DIFF_BYTES = 32_000
-MAX_CHUNK_PROMPT_BYTES = 40_000
+CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v2"
+MAX_CHUNK_DIFF_BYTES = 48_000
+MAX_CHUNK_PROMPT_BYTES = 56_000
+MAX_TOTAL_PROMPT_BYTES = 3 * 1024 * 1024
+MAX_REVIEW_PROVIDER_SECONDS = 1800
+UTF8_CONTINUATION_MARKER = 0x80
 EXPECTED_DIFF_PATH_PARTS = 2
 # Bound the number of provider calls for one logical review before any call is
 # made.  This keeps the bootstrap review bounded even for unusually large diffs.
@@ -64,11 +67,13 @@ class Manifest:
         """Return the canonical hash-bound manifest payload."""
 
         return {
-            "manifest_version": "deepseek-chunk-manifest/v1",
+            "manifest_version": "deepseek-chunk-manifest/v2",
             "chunking_algorithm": CHUNKING_ALGORITHM_VERSION,
             "max_chunk_diff_bytes": MAX_CHUNK_DIFF_BYTES,
             "max_chunk_prompt_bytes": MAX_CHUNK_PROMPT_BYTES,
             "max_chunk_count": MAX_CHUNK_COUNT,
+            "max_total_prompt_bytes": MAX_TOTAL_PROMPT_BYTES,
+            "max_review_provider_seconds": MAX_REVIEW_PROVIDER_SECONDS,
             "base_sha": self.base_sha,
             "head_sha": self.head_sha,
             "mission_id": self.mission_id,
@@ -88,7 +93,7 @@ class Manifest:
 
 def _paths(chunk: bytes) -> tuple[str, ...]:
     paths: list[str] = []
-    for line in chunk.decode("utf-8", "replace").splitlines():
+    for line in chunk.decode("utf-8", "strict").splitlines():
         if line.startswith("diff --git a/"):
             parts = line.split(" b/", 1)
             if len(parts) == EXPECTED_DIFF_PATH_PARTS:
@@ -103,7 +108,12 @@ def _cut(diff: bytes, start: int) -> int:
     if target == len(diff):
         return target
     newline = diff.rfind(b"\n", start + 1, target + 1)
-    return newline + 1 if newline > start else target
+    if newline > start:
+        return newline + 1
+    # A giant Unicode line must retain complete code points in each prompt.
+    while target > start and diff[target] & 0xC0 == UTF8_CONTINUATION_MARKER:
+        target -= 1
+    return target
 
 
 def plan(
@@ -113,12 +123,20 @@ def plan(
 
     if not diff:
         raise ChunkReviewError("empty canonical diff cannot be reviewed")
+    # Never replace undecodable source bytes in a supposedly complete review.
+    diff.decode("utf-8", errors="strict")
     chunks: list[Chunk] = []
     start = 0
+    current_path: tuple[str, ...] = ()
     while start < len(diff):
         end = _cut(diff, start)
         source = diff[start:end]
-        chunks.append(Chunk(len(chunks), start, end, sha256_bytes(source), _paths(source)))
+        paths = _paths(source)
+        carried = () if source.startswith(b"diff --git a/") else current_path
+        owners = tuple(dict.fromkeys(carried + paths))
+        chunks.append(Chunk(len(chunks), start, end, sha256_bytes(source), owners))
+        if paths:
+            current_path = paths[-1:]
         start = end
     manifest = Manifest(
         base_sha,
@@ -167,7 +185,7 @@ def build_chunk_prompt(*, chunk: Chunk, source: bytes, manifest: Manifest, scope
         f"Chunk manifest SHA256: {manifest.sha256}\nChunk: {chunk.index + 1}/{len(manifest.chunks)} "
         f"range={chunk.start}:{chunk.end} source_sha256={chunk.source_sha256}\n"
         f"Changed paths: {','.join(chunk.changed_paths)}\n"
-        f"Canonical chunk diff:\n{source.decode('utf-8', 'replace')}"
+        f"Canonical chunk diff:\n{source.decode('utf-8', 'strict')}"
     )
 
 

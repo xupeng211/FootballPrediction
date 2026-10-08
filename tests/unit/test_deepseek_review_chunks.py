@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from tests.unit.test_deepseek_transport import synthetic_transport_evidence
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -144,6 +146,8 @@ def _chunk_validation_fixture(tmp_path: Path):
         "/trusted/claude",
         "--bare",
         "--print",
+        "--max-turns",
+        "1",
         "--model",
         "deepseek-flash",
         "--settings",
@@ -160,6 +164,7 @@ def _chunk_validation_fixture(tmp_path: Path):
         "{}",
         prompt.decode(),
     )
+    transport, log = synthetic_transport_evidence(prompt)
     execution = ClaudeDeepSeekExecutionEvidence(
         reviewer_command=command,
         resolved_model="deepseek-flash",
@@ -168,6 +173,8 @@ def _chunk_validation_fixture(tmp_path: Path):
         settings_sha256="e" * 64,
         provider_endpoint="https://api.deepseek.com/anthropic",
         session_id="fresh-session",
+        transport=transport,
+        transport_log=log,
     )
     evidence_payload = [
         {
@@ -241,6 +248,8 @@ def test_chunk_validator_rejects_tampered_command_prompt(monkeypatch, tmp_path: 
         settings_sha256=item["execution"].settings_sha256,
         provider_endpoint=item["execution"].provider_endpoint,
         session_id=item["execution"].session_id,
+        transport=item["execution"].transport,
+        transport_log=item["execution"].transport_log,
     )
     monkeypatch.setattr(
         chunk_validation.subprocess,
@@ -249,3 +258,54 @@ def test_chunk_validator_rejects_tampered_command_prompt(monkeypatch, tmp_path: 
     )
     with pytest.raises(IndependentReviewProtocolError, match="chunk prompt is not bound"):
         chunk_validation._validate_chunked_claude_evidence(receipt, context)
+
+
+def test_large_deletion_over_original_64_chunk_limit_is_lossless_and_bounded():
+    # All deleted lines, including their markers/formatting, reach model inputs.
+    diff = b"diff --git a/history.json b/history.json\n" + b'-    "historical": 12345,\n' * 115000
+    assert len(diff) > 64 * 32000
+    manifest = plan(
+        diff,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="LARGE_DELETION",
+        mission_scope_sha256="c" * 64,
+    )
+    assert 1 < len(manifest.chunks) <= MAX_CHUNK_COUNT
+    assert b"".join(diff[c.start : c.end] for c in manifest.chunks) == diff
+    for chunk in manifest.chunks:
+        assert chunk.changed_paths == ("history.json",)
+        prompt = build_chunk_prompt(
+            chunk=chunk, source=diff[chunk.start : chunk.end], manifest=manifest, scope_sha="c" * 64
+        )
+        assert (
+            prompt.split("Canonical chunk diff:\n", 1)[1].encode() == diff[chunk.start : chunk.end]
+        )
+    with pytest.raises(ChunkReviewError, match="missing chunk"):
+        aggregate([_result(i) for i in range(len(manifest.chunks) - 1)], manifest)
+
+
+def test_invalid_utf8_cannot_be_certified_via_replacement_characters():
+    with pytest.raises(UnicodeDecodeError):
+        plan(
+            b"diff --git a/a b/a\n+invalid \xff\n",
+            base_sha="a" * 40,
+            head_sha="b" * 40,
+            mission_id="INVALID",
+            mission_scope_sha256="c" * 64,
+        )
+
+
+def test_giant_unicode_line_preserves_every_byte_without_replacement():
+    diff = b"diff --git a/history b/history\n-" + "旧资产".encode() * 15000
+    manifest = plan(
+        diff,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="UNICODE",
+        mission_scope_sha256="c" * 64,
+    )
+    sources = [diff[chunk.start : chunk.end] for chunk in manifest.chunks]
+    assert b"".join(sources) == diff
+    for source in sources:
+        assert source.decode().encode() == source
