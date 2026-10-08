@@ -194,7 +194,7 @@ def test_reader_rejects_forged_transport_summary(field, value):
 
 
 @pytest.mark.parametrize(
-    "stop,usage", [("max_tokens", 20), ("tool_use", 16385), ("tool_use", None)]
+    ("stop", "usage"), [("max_tokens", 20), ("tool_use", 16385), ("tool_use", None)]
 )
 def test_provider_completion_and_output_budget_must_be_provable(stop, usage):
     raw = COMPLETE_SSE.replace(b'"tool_use"', json.dumps(stop).encode()).replace(
