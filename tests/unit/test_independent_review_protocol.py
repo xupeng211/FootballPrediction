@@ -17,6 +17,7 @@ from scripts.devops.independent_review_protocol import (
     IndependentReviewProtocolError,
     validate_result,
 )
+from tests.unit.test_deepseek_transport import synthetic_transport_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_SHA = subprocess.run(
@@ -653,6 +654,8 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
         "/trusted/claude",
         "--bare",
         "--print",
+        "--max-turns",
+        "1",
         "--model",
         "deepseek-flash",
         "--settings",
@@ -668,7 +671,7 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
         "--json-schema",
         '{"type":"object"}',
     )
-    raw = json.dumps(
+    raw = receipts.canonical_json(
         {
             "is_error": False,
             "session_id": "deepseek-fresh-session",
@@ -677,9 +680,8 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
                 "deepseek-flash": {"canonicalModel": "deepseek-flash", "provider": "firstParty"}
             },
         },
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
+    )
+    transport, log = synthetic_transport_evidence(b"DeepSeek independent review prompt\n")
     context = receipts.ReceiptEvidenceContext(
         repo_root=ROOT,
         base_sha=BASE_SHA,
@@ -696,6 +698,8 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
             settings_sha256="e" * 64,
             provider_endpoint=claude_code_deepseek.ENDPOINT,
             session_id="deepseek-fresh-session",
+            transport=transport,
+            transport_log=log,
         ),
     )
     receipt = {
@@ -713,12 +717,7 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
         "mission_id": "CLAUDE_CODE_DEEPSEEK_INDEPENDENT_REVIEW_BACKEND",
         "mission_scope_path": scope_path,
         "mission_scope_sha256": receipts.sha256_bytes(
-            subprocess.run(
-                ["git", "show", f"{HEAD_SHA}:{scope_path}"],
-                cwd=ROOT,
-                check=True,
-                capture_output=True,
-            ).stdout
+            receipts._scope_bytes_at_reviewed_head(context, scope_path)
         ),
         "review_prompt_sha256": receipts.sha256_bytes(context.prompt_bytes),
         "review_started_at": "2026-01-01T00:00:00+00:00",
@@ -745,6 +744,7 @@ def _claude_receipt_and_context() -> tuple[dict, receipts.ReceiptEvidenceContext
             "settings_sha256": "e" * 64,
             "provider_endpoint": claude_code_deepseek.ENDPOINT,
             "session_id": "deepseek-fresh-session",
+            "transport": transport,
         },
     }
     receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}

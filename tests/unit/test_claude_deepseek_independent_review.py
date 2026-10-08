@@ -259,3 +259,50 @@ def test_chunked_consumer_rejects_incomplete_or_repo_local_artifacts(tmp_path: P
     local.chmod(0o600)
     with pytest.raises(ValueError, match="outside repository"):
         consumer._assert_external_artifact(local, repo_root=repo_root, kind="receipt")
+
+
+def _chunk_args(tmp_path):
+    return {
+        "diff": b"diff --git a/history b/history\n" + b"-old\n" * 12000,
+        "base": "a" * 40,
+        "head": "b" * 40,
+        "scope": SimpleNamespace(mission_id="BOUND_TEST"),
+        "scope_sha": "c" * 64,
+        "worktree": tmp_path,
+        "attempt_prefix": tmp_path / "deepseek-attempt-test",
+    }
+
+
+def test_aggregate_prompt_budget_is_checked_before_first_provider_attempt(monkeypatch, tmp_path):
+    monkeypatch.setattr(runner, "MAX_TOTAL_PROMPT_BYTES", 10)
+    monkeypatch.setattr(runner.backend, "run", lambda **_kwargs: pytest.fail("provider dispatched"))
+    with pytest.raises(runner.DeepSeekReviewError, match="prompt byte budget"):
+        runner._run_chunked_review(**_chunk_args(tmp_path))
+
+
+def test_exhausted_wall_budget_cannot_dispatch_next_provider_attempt(monkeypatch, tmp_path):
+    ticks = iter([1000, 3000])
+    monkeypatch.setattr(runner.time, "monotonic", lambda: next(ticks))
+    monkeypatch.setattr(runner.backend, "run", lambda **_kwargs: pytest.fail("provider dispatched"))
+    with pytest.raises(runner.DeepSeekReviewError, match="wall budget exhausted"):
+        runner._run_chunked_review(**_chunk_args(tmp_path))
+
+
+def test_failed_review_keeps_physical_attempt_accounting(monkeypatch, tmp_path):
+    args = _args(tmp_path)
+    args.evidence_dir.mkdir(mode=0o700)
+
+    def failed_run(_args):
+        (_args.evidence_dir / "deepseek-attempt-current.jsonl").write_text(
+            "physical attempt UNKNOWN\n"
+        )
+        (_args.evidence_dir / "claude-deepseek-receipt-current.json").write_text("{}")
+        raise runner.DeepSeekReviewError("provider failure")
+
+    monkeypatch.setattr(runner, "_run_review", failed_run)
+    with pytest.raises(runner.DeepSeekReviewError):
+        runner.run_review(args)
+    assert (
+        args.evidence_dir / "deepseek-attempt-current.jsonl"
+    ).read_text() == "physical attempt UNKNOWN\n"
+    assert not (args.evidence_dir / "claude-deepseek-receipt-current.json").exists()

@@ -37,6 +37,8 @@ def test_receipt_rejects_missing_isolation_command_controls(command_part, replac
         settings_sha256=execution.settings_sha256,
         provider_endpoint=execution.provider_endpoint,
         session_id=execution.session_id,
+        transport=execution.transport,
+        transport_log=execution.transport_log,
     )
     receipt["provenance"]["reviewer_command"] = command
     receipt["provenance"]["command_sha256"] = receipts.sha256_bytes(
@@ -63,6 +65,8 @@ def test_receipt_rejects_unsupported_cli_baseline():
         settings_sha256=execution.settings_sha256,
         provider_endpoint=execution.provider_endpoint,
         session_id=execution.session_id,
+        transport=execution.transport,
+        transport_log=execution.transport_log,
     )
     receipt["provenance"]["claude_cli_version"] = "2.1.275 (Claude Code)"
     receipt["integrity"] = {"receipt_payload_sha256": receipts.receipt_payload_sha256(receipt)}

@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,20 +27,22 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.devops import independent_review_receipt as receipts  # noqa: E402
+from scripts.devops.deepseek_review_chunks import (  # noqa: E402
+    MAX_CHUNK_DIFF_BYTES,
+    MAX_CHUNK_PROMPT_BYTES,
+    MAX_REVIEW_PROVIDER_SECONDS,
+    MAX_TOTAL_PROMPT_BYTES,
+    aggregate,
+    build_chunk_prompt,
+    chunk_evidence_manifest_bytes,
+    plan,
+)
 from scripts.devops.independent_review_backends import claude_code_deepseek as backend  # noqa: E402
 from scripts.devops.independent_review_protocol import (  # noqa: E402
     PROTOCOL_VERSION,
     canonical_json,
     sha256_bytes,
     validate_result,
-)
-from scripts.devops.deepseek_review_chunks import (  # noqa: E402
-    MAX_CHUNK_DIFF_BYTES,
-    MAX_CHUNK_PROMPT_BYTES,
-    aggregate,
-    build_chunk_prompt,
-    chunk_evidence_manifest_bytes,
-    plan,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     MissionScopeError,
@@ -133,7 +136,14 @@ def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: 
 
 
 def _run_chunked_review(
-    *, diff: bytes, base: str, head: str, scope: object, scope_sha: str, worktree: Path
+    *,
+    diff: bytes,
+    base: str,
+    head: str,
+    scope: object,
+    scope_sha: str,
+    worktree: Path,
+    attempt_prefix: Path,
 ) -> tuple[bytes, dict, list[dict]]:
     manifest = plan(
         diff,
@@ -142,15 +152,34 @@ def _run_chunked_review(
         mission_id=scope.mission_id,
         mission_scope_sha256=scope_sha,
     )
+    # All input/call budgets are checked before the first provider attempt.
+    prompts = [
+        _chunk_prompt(
+            chunk=chunk,
+            source=diff[chunk.start : chunk.end],
+            manifest=manifest,
+            scope_sha=scope_sha,
+        )
+        for chunk in manifest.chunks
+    ]
+    sizes = [len(prompt.encode()) for prompt in prompts]
+    if any(size > MAX_CHUNK_PROMPT_BYTES for size in sizes) or sum(sizes) > MAX_TOTAL_PROMPT_BYTES:
+        raise DeepSeekReviewError("review prompt byte budget exceeded")
+    deadline = time.monotonic() + MAX_REVIEW_PROVIDER_SECONDS
     values: list[dict] = []
     trusted: list[dict] = []
-    for chunk in manifest.chunks:
+    for chunk, prompt in zip(manifest.chunks, prompts, strict=True):
         source = diff[chunk.start : chunk.end]
-        prompt = _chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
-        if len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES:
-            raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
+        remaining = int(deadline - time.monotonic())
+        if remaining < backend.MIN_REVIEW_TIMEOUT_SECONDS:
+            raise DeepSeekReviewError("review provider wall budget exhausted")
         try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+            raw, result, execution = backend.run(
+                prompt=prompt,
+                cwd=worktree,
+                timeout_seconds=min(backend.MAX_REVIEW_TIMEOUT_SECONDS, remaining),
+                attempt_path=attempt_prefix.with_name(f"{attempt_prefix.name}-{chunk.index}.jsonl"),
+            )
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
                 f"chunk {chunk.index} infrastructure failure [{_safe_backend_failure_code(exc)}]"
@@ -164,6 +193,8 @@ def _run_chunked_review(
             settings_sha256=execution.settings_sha256,
             provider_endpoint=execution.endpoint,
             session_id=execution.session_id,
+            transport=execution.transport,
+            transport_log=execution.transport_log,
         )
         final = canonical_json(
             {
@@ -202,6 +233,7 @@ def _run_chunked_review(
                 "settings_sha256": item["execution"].settings_sha256,
                 "provider_endpoint": item["execution"].provider_endpoint,
                 "session_id": item["execution"].session_id,
+                "transport": item["execution"].transport,
             },
         }
         for item in trusted
@@ -250,10 +282,10 @@ def _run_review(args: argparse.Namespace) -> Path:
         raise DeepSeekReviewError("diff evidence is invalid")
     prompt = (
         "You are an independent read-only code reviewer. Review the exact diff below. "
-        "Return only the required generic JSON result. PASS only when P0/P1/P2 are absent; "
+        "Submit the required generic JSON result using the StructuredOutput tool; do not return it as plain text. PASS only when P0/P1/P2 are absent; "
         "FAIL when a P0/P1/P2 exists. Findings require severity, title, and evidence.\n"
         f"Mission: {scope.mission_id}\nBase: {base}\nHead: {head}\n"
-        f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'replace')}"
+        f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'strict')}"
     )
     started = _now()
     chunked = len(diff) > MAX_CHUNK_DIFF_BYTES
@@ -266,12 +298,17 @@ def _run_review(args: argparse.Namespace) -> Path:
             scope=scope,
             scope_sha=sha256_bytes(scope_bytes),
             worktree=worktree,
+            attempt_prefix=evidence / f"deepseek-attempt-{head[:12]}-{run_id}",
         )
         prompt = raw
         execution = trusted_chunks[0]["execution"]
     else:
         try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+            raw, result, execution = backend.run(
+                prompt=prompt,
+                cwd=worktree,
+                attempt_path=evidence / f"deepseek-attempt-{head[:12]}-{run_id}-0.jsonl",
+            )
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
                 f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
@@ -285,6 +322,8 @@ def _run_review(args: argparse.Namespace) -> Path:
             settings_sha256=execution.settings_sha256,
             provider_endpoint=execution.endpoint,
             session_id=execution.session_id,
+            transport=execution.transport,
+            transport_log=execution.transport_log,
         )
     completed = _now()
     final = canonical_json(
@@ -358,6 +397,7 @@ def _run_review(args: argparse.Namespace) -> Path:
             "settings_sha256": execution.settings_sha256,
             "provider_endpoint": execution.provider_endpoint,
             "session_id": execution.session_id,
+            "transport": execution.transport,
             **({"review_prompt_path": prompt_path.name} if not chunked else {}),
             **(
                 {
@@ -394,6 +434,8 @@ def _run_review(args: argparse.Namespace) -> Path:
             settings_sha256=execution.settings_sha256,
             provider_endpoint=execution.provider_endpoint,
             session_id=execution.session_id,
+            transport=execution.transport,
+            transport_log=execution.transport_log,
         ),
         chunked_claude_evidence=tuple(trusted_chunks),
     )

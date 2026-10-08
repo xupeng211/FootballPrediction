@@ -27,6 +27,7 @@ from scripts.devops.codex_review_output import (
     reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
+from scripts.devops.independent_review_backends.deepseek_transport import validate_transport
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     RECEIPT_VERSION,
@@ -85,6 +86,8 @@ class ClaudeDeepSeekExecutionEvidence:
     settings_sha256: str
     provider_endpoint: str
     session_id: str
+    transport: dict[str, Any] | None = None
+    transport_log: bytes = b""
 
 
 @dataclass(frozen=True)
@@ -489,6 +492,7 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         raise IndependentReviewProtocolError(
             "trusted Claude/DeepSeek execution evidence is required"
         )
+    validate_transport(execution.transport, execution.transport_log, context.prompt_bytes)
     endpoint = _CLAUDE_DEEPSEEK_ENDPOINT
     values = (
         execution.reviewer_command,
@@ -519,6 +523,7 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
         "settings_sha256": execution.settings_sha256,
         "provider_endpoint": endpoint,
         "session_id": execution.session_id,
+        "transport": execution.transport,
     }
     if any(provenance.get(key) != value for key, value in expected.items()):
         raise IndependentReviewProtocolError(
@@ -532,6 +537,8 @@ def _validate_claude_deepseek_provenance(  # noqa: C901
     if (
         "--bare" not in command
         or "--print" not in command
+        or command.count("--max-turns") != 1
+        or command[command.index("--max-turns") + 1 : command.index("--max-turns") + 2] != ["1"]
         or command.count("--model") != 1
         or command[command.index("--model") + 1 : command.index("--model") + 2]
         != [_CLAUDE_DEEPSEEK_MODEL]

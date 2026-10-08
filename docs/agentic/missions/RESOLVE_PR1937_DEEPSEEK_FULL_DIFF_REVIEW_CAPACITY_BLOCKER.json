@@ -1,0 +1,58 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "RESOLVE_PR1937_DEEPSEEK_FULL_DIFF_REVIEW_CAPACITY_BLOCKER",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/independent_review_receipt.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "tests/unit/test_deepseek_review_chunks.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "tests/unit/test_independent_review_protocol.py",
+    "tests/unit/test_claude_deepseek_receipt_isolation.py",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/RESOLVE_PR1937_DEEPSEEK_FULL_DIFF_REVIEW_CAPACITY_BLOCKER.json",
+    "scripts/devops/independent_review_backends/deepseek_transport.py",
+    "scripts/devops/deepseek_receipt_evidence.py",
+    "tests/unit/test_deepseek_transport.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    "src/",
+    "config/",
+    "data/",
+    "models/",
+    "model_zoo/",
+    "database/",
+    "deploy/",
+    "docker/",
+    ".github/",
+    "archive/",
+    "archive_vault_2026/",
+    "docs/_reports/",
+    "docs/_manifests/",
+    "docs/data/",
+    "tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Preserve PR #1937 business candidate and its 2512644-byte slimming; infrastructure is a separate branch/PR from origin/main.",
+    "Every canonical diff byte must be covered exactly once, bound to base/head/diff/scope/manifest/prompt and independent provider execution.",
+    "No increase beyond 64 logical/provider attempts. Enforce one fixed TLS provider request per isolated CLI through a bounded process, reject redirects/second requests, preserve failed attempt logs, pin zero retry/fallback and finite byte/output/wall budgets.",
+    "All missing/invalid/stale/chunk-failing results remain fail closed; no summary, sampling, synthetic receipt, dropped deletions or PENDING acceptance.",
+    "No use of the proposed infrastructure to approve business PR #1937 before Owner approves and merges infrastructure.",
+    "Preserve both old Harness tasks and all accounting/receipt/raw evidence byte unchanged."
+  ],
+  "forbidden_side_effects": [
+    "No production/data provider requests, DB/raw writes, training, prediction, backtest, model activation, migration or recovery execution.",
+    "Reviewer provider calls only within declared finite recipe; no blind or silent retry/fallback.",
+    "No Harness mutation, old mission resume/retry/refund/rewrite/reclassification, merge, release or force push."
+  ]
+}

@@ -1,7 +1,8 @@
 """Least-privilege Claude Code adapter for DeepSeek reviews.
 
-The secret is read only when launching Claude and is never returned, logged,
-or represented in an artifact. Generic receipt validation remains outside this
+The real secret is read only inside the bounded transport child and is never
+returned, logged, or represented in an artifact. Claude receives a local token.
+Generic receipt validation remains outside this
 adapter so backend claims cannot validate themselves.
 
 Lifecycle: permanent
@@ -22,6 +23,13 @@ import subprocess
 import tempfile
 import time
 from typing import Any
+
+from scripts.devops.deepseek_review_chunks import MAX_CHUNK_PROMPT_BYTES
+from scripts.devops.independent_review_backends.deepseek_transport import (
+    CLAUDE_RESULT_SCHEMA,
+    SingleRequestTransport,
+    TransportError,
+)
 
 BACKEND_ID = "claude-code-deepseek"
 PROVIDER_ID = "deepseek"
@@ -51,32 +59,34 @@ TRUSTED_CLAUDE_BINARY_SHA256 = frozenset(
 CONTROLLED_CLAUDE_PATH = "/home/xupeng/.nvm/versions/node/v22.23.2/bin:/usr/bin:/bin"
 # Kept as bytes owned by this adapter instead of accepting mutable user or
 # project Claude settings.  The temporary file is hashed into provenance.
-DEDICATED_SETTINGS = b'{"permissions":{"allow":[],"deny":["Bash","Edit","Write","Read","Glob","Grep","WebFetch","WebSearch"]}}\n'
-# Claude Code 2.1.276 accepts this conservative subset of the generic result
-# schema.  ``validate_result`` remains the protocol authority after execution;
-# it accepts this strict subset without relaxing any generic rule.
-CLAUDE_RESULT_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["protocol_version", "review_result", "findings"],
-    "properties": {
-        "protocol_version": {"const": "INDEPENDENT_REVIEW_PROTOCOL_V1"},
-        "review_result": {"enum": ["PASS", "FAIL"]},
-        "findings": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["severity", "title", "evidence"],
-                "properties": {
-                    "severity": {"enum": ["P0", "P1", "P2", "P3"]},
-                    "title": {"type": "string", "minLength": 1},
-                    "evidence": {"type": "string", "minLength": 1},
-                },
+MAX_REVIEW_OUTPUT_TOKENS = 16384
+MAX_REVIEW_CONTEXT_TOKENS = 64000
+REVIEW_BUDGET_ENV = {
+    # DeepSeek ignores thinking.budget_tokens; pin its documented effort instead.
+    # Thinking stays enabled and truncation still yields NO_VERDICT.
+    "CLAUDE_CODE_EFFORT_LEVEL": "low",
+    "CLAUDE_CODE_MAX_RETRIES": "0",
+    "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+    "CLAUDE_CODE_NO_MODEL_FALLBACK": "1",
+    "CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTO_COMPACT": "1",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(MAX_REVIEW_OUTPUT_TOKENS),
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS": str(MAX_REVIEW_CONTEXT_TOKENS),
+}
+DEDICATED_SETTINGS = (
+    json.dumps(
+        {
+            "env": REVIEW_BUDGET_ENV,
+            "permissions": {
+                "allow": [],
+                "deny": ["Bash", "Edit", "Write", "Read", "Glob", "Grep", "WebFetch", "WebSearch"],
             },
         },
-    },
-}
+        separators=(",", ":"),
+    ).encode()
+    + b"\n"
+)
 
 
 class BackendInfrastructureError(RuntimeError):
@@ -204,6 +214,8 @@ class ExecutionEvidence:
     requested_model: str
     resolved_model: str
     session_id: str
+    transport: dict[str, Any]
+    transport_log: bytes
 
 
 def _secret(path: Path = SECRET_PATH) -> str:
@@ -218,7 +230,7 @@ def _secret(path: Path = SECRET_PATH) -> str:
     return value
 
 
-def child_environment(secret: str) -> dict[str, str]:
+def child_environment(secret: str, *, endpoint: str) -> dict[str, str]:
     """Build the only environment visible to Claude; no user-global routing."""
     return {
         "HOME": "/nonexistent",
@@ -232,47 +244,67 @@ def child_environment(secret: str) -> dict[str, str]:
         # both names exist only in this allowlisted child environment.
         "ANTHROPIC_API_KEY": secret,
         "ANTHROPIC_AUTH_TOKEN": secret,
-        "ANTHROPIC_BASE_URL": ENDPOINT,
+        "ANTHROPIC_BASE_URL": endpoint,
         "CLAUDE_CODE_SIMPLE": "1",
+        **REVIEW_BUDGET_ENV,
     }
 
 
-def run(
+def run(  # noqa: C901, PLR0912, PLR0915
     *,
     prompt: str,
     cwd: Path,
     secret_path: Path = SECRET_PATH,
     timeout_seconds: int = DEFAULT_REVIEW_TIMEOUT_SECONDS,
+    attempt_path: Path,
 ) -> tuple[bytes, dict[str, Any], ExecutionEvidence]:
     """Run one isolated, schema-bound Claude/DeepSeek turn.
 
-    The credential exists only in the child environment.  This function never
+    The provider credential exists only in the bounded transport process.  This function never
     returns stderr or that environment, so callers cannot accidentally persist
     either as review evidence.
     """
+    if len(prompt.encode("utf-8")) > MAX_CHUNK_PROMPT_BYTES:
+        raise BackendInfrastructureError("PROMPT_BUDGET_EXCEEDED: no provider attempt")
     timeout = _validated_timeout(timeout_seconds)
+    deadline = time.monotonic() + timeout
     binary_text = shutil.which("claude")
     binary, binary_sha256 = _approved_claude_binary(binary_text or "")
-    version = subprocess.run(
-        [str(binary), "--version"], capture_output=True, text=True, check=False
-    ).stdout.strip()
+    try:
+        version = subprocess.run(
+            [str(binary), "--version"], capture_output=True, text=True, check=False, timeout=10
+        ).stdout.strip()
+    except subprocess.TimeoutExpired as exc:
+        raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: version probe timed out") from exc
     if not _version_at_least(version):
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: unsupported Claude version")
-    secret = _secret(secret_path)
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
     schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
-    with tempfile.TemporaryDirectory(prefix="fp-claude-review-home-") as isolated_home:
+    remaining = int(deadline - time.monotonic())
+    if remaining <= 0:
+        raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: startup budget exhausted")
+    with (
+        SingleRequestTransport(
+            secret_loader=lambda: _secret(secret_path),
+            prompt=prompt,
+            timeout=remaining,
+            attempt_path=attempt_path,
+        ) as transport,
+        tempfile.TemporaryDirectory(prefix="fp-claude-review-home-") as isolated_home,
+    ):
         runtime = Path(isolated_home)
         settings = runtime / "settings.json"
         settings.write_bytes(DEDICATED_SETTINGS)
-        child_env = child_environment(secret)
+        child_env = child_environment(transport.cli_token, endpoint=transport.cli_endpoint)
         child_env["HOME"] = isolated_home
         command = (
             str(binary),
             "--bare",
             "--restricted",
             "--print",
+            "--max-turns",
+            "1",
             "--model",
             MODEL,
             "--settings",
@@ -291,18 +323,27 @@ def run(
         started = time.monotonic()
         try:
             output = subprocess.run(
-                command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=timeout
+                command,
+                cwd=cwd,
+                env=child_env,
+                capture_output=True,
+                check=False,
+                timeout=max(0.1, deadline - time.monotonic()),
             )
         except subprocess.TimeoutExpired as exc:
             # subprocess.run kills and reaps its direct child before raising.
             # Never expose captured stdout/stderr: either may contain model text.
             raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
         else:
-            if _output_contains_secret(output, secret):
+            if _output_contains_secret(output, transport.cli_token):
                 raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED")
         finally:
             child_env.clear()
-            secret = ""
+        try:
+            transport_evidence = transport.evidence()
+            transport_log = attempt_path.read_bytes()
+        except TransportError as exc:
+            raise BackendInfrastructureError("TRANSPORT_BOUND_FAILURE: no review verdict") from exc
     if output.returncode:
         raise BackendInfrastructureError(
             f"CLI_RUNTIME_FAILURE: {_safe_nonzero_detail(output, int(time.monotonic() - started))}"
@@ -334,5 +375,7 @@ def run(
             MODEL,
             resolved,
             session,
+            transport_evidence,
+            transport_log,
         ),
     )
