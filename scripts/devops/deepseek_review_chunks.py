@@ -178,7 +178,7 @@ def build_chunk_prompt(*, chunk: Chunk, source: bytes, manifest: Manifest, scope
     """Build the canonical prompt whose final argument is sent to Claude."""
 
     return (
-        "You are an independent read-only code reviewer. Return only the required generic JSON result. "
+        "You are an independent read-only code reviewer. Submit the required generic JSON result using the StructuredOutput tool; do not return it as plain text. "
         "PASS only when P0/P1/P2 are absent.\n"
         f"Mission: {manifest.mission_id}\nBase: {manifest.base_sha}\nHead: {manifest.head_sha}\n"
         f"Scope SHA256: {scope_sha}\nFull diff SHA256: {manifest.full_diff_sha256}\n"

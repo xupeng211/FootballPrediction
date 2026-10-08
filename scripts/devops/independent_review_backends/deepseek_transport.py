@@ -31,7 +31,7 @@ MAX_REQUEST_BYTES = 512 * 1024
 MAX_DECODED_REQUEST_BYTES = 60_000
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 SYSTEM_CA_FILE = "/etc/ssl/certs/ca-certificates.crt"
-OUTPUT_LIMIT = 4096
+OUTPUT_LIMIT = 16384
 EXPECTED_EVENT_COUNT = 3
 SUCCESS_STATUS = 200
 
@@ -224,6 +224,7 @@ class SingleRequestTransport(AbstractContextManager):
                 file.write(result)
                 file.flush()
                 os.fsync(file.fileno())
+            output_usage = _completed_output_usage(result)
             self._evidence = {
                 "policy": POLICY,
                 "endpoint": PROVIDER_ENDPOINT,
@@ -234,6 +235,7 @@ class SingleRequestTransport(AbstractContextManager):
                 "response_sha256": sha256(result).hexdigest(),
                 "response_bytes": len(result),
                 "output_limit": OUTPUT_LIMIT,
+                "observed_output_usage": output_usage,
                 "redirects": 0,
                 "retries": 0,
             }
@@ -277,6 +279,25 @@ class SingleRequestTransport(AbstractContextManager):
         self._file.close()
 
 
+def _completed_output_usage(result: bytes) -> int:
+    """截断/模型不符/usage 不可证明均不能完成传输资格。"""
+    frames = [json.loads(line[6:]) for line in result.splitlines() if line.startswith(b"data: ")]
+    deltas = [frame for frame in frames if frame.get("type") == "message_delta"]
+    starts = [frame for frame in frames if frame.get("type") == "message_start"]
+    if (
+        len(starts) != 1
+        or len(deltas) != 1
+        or starts[0].get("message", {}).get("model") != "deepseek-flash"
+        or deltas[0].get("delta", {}).get("stop_reason") != "tool_use"
+    ):
+        raise TransportError("provider output is incomplete or wrong model")
+    usage = deltas[0].get("usage", {})
+    output_usage = usage.get("output_tokens")
+    if type(output_usage) is not int or not 0 <= output_usage <= OUTPUT_LIMIT:
+        raise TransportError("provider output budget unverifiable")
+    return output_usage
+
+
 def validate_transport(evidence: Any, log: bytes, prompt: bytes) -> None:
     """读取侧验证物理 attempt artifact；不接受 receipt 自填的次数。"""
     try:
@@ -301,6 +322,8 @@ def validate_transport(evidence: Any, log: bytes, prompt: bytes) -> None:
             or evidence.get("physical_attempts") != 1
             or evidence.get("prompt_sha256") != sha256(prompt).hexdigest()
             or evidence.get("output_limit") != OUTPUT_LIMIT
+            or type(evidence.get("observed_output_usage")) is not int
+            or not 0 <= evidence["observed_output_usage"] <= OUTPUT_LIMIT
             or evidence.get("redirects") != 0
             or evidence.get("retries") != 0
             or not 0 < evidence.get("request_bytes", 0) <= MAX_REQUEST_BYTES

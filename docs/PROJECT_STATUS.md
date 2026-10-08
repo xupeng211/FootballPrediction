@@ -8,7 +8,7 @@ without increasing the 64-invocation limit, preserves every canonical diff byte,
 and adds a one-request, redirect-free fixed-upstream transport with persistent attempt logs and finite input/output/wall budgets. Native CLI retry controls alone do not bound HTTP redirects. It does not authorize
 the business PR: Owner approval and merge of this separate infrastructure are
 required before its use for #1937, followed by fresh dual review and required CI.
-No business runtime, model/data, Stage D authority or Harness history changes.
+Real qualification exposed two additional blockers: the isolated Official OpenAI login refresh token was revoked, and the original 4,096 output limit could be consumed entirely by DeepSeek reasoning without a verdict. The proposed output limit is explicitly 16,384 (at most 1,048,576 output tokens over 64 requests), including reasoning; no truncation/retry becomes PASS. No business runtime, model/data, Stage D authority or Harness history changes.
 
 ## Engineering maintenance — Recon historical boundary
 

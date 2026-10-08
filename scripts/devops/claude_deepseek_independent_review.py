@@ -282,7 +282,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         raise DeepSeekReviewError("diff evidence is invalid")
     prompt = (
         "You are an independent read-only code reviewer. Review the exact diff below. "
-        "Return only the required generic JSON result. PASS only when P0/P1/P2 are absent; "
+        "Submit the required generic JSON result using the StructuredOutput tool; do not return it as plain text. PASS only when P0/P1/P2 are absent; "
         "FAIL when a P0/P1/P2 exists. Findings require severity, title, and evidence.\n"
         f"Mission: {scope.mission_id}\nBase: {base}\nHead: {head}\n"
         f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'strict')}"

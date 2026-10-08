@@ -235,7 +235,7 @@ def test_budget_recipe_is_fixed_and_hash_bound_in_dedicated_settings():
     assert env["CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK"] == "1"
     assert env["CLAUDE_CODE_NO_MODEL_FALLBACK"] == "1"
     assert env["DISABLE_AUTO_COMPACT"] == "1"
-    assert env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "4096"
+    assert env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "16384"
     assert json.loads(backend.DEDICATED_SETTINGS)["env"] == backend.REVIEW_BUDGET_ENV
 
 

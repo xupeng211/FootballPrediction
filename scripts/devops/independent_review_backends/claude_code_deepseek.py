@@ -57,7 +57,7 @@ TRUSTED_CLAUDE_BINARY_SHA256 = frozenset(
 CONTROLLED_CLAUDE_PATH = "/home/xupeng/.nvm/versions/node/v22.23.2/bin:/usr/bin:/bin"
 # Kept as bytes owned by this adapter instead of accepting mutable user or
 # project Claude settings.  The temporary file is hashed into provenance.
-MAX_REVIEW_OUTPUT_TOKENS = 4096
+MAX_REVIEW_OUTPUT_TOKENS = 16384
 MAX_REVIEW_CONTEXT_TOKENS = 64000
 REVIEW_BUDGET_ENV = {
     "CLAUDE_CODE_MAX_RETRIES": "0",

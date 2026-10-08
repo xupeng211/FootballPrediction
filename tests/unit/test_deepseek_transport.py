@@ -18,6 +18,7 @@ from scripts.devops.independent_review_backends import deepseek_transport as tra
 from scripts.devops.independent_review_protocol import IndependentReviewProtocolError
 
 PRIVATE_MODE = 0o600
+COMPLETE_SSE = b'event: message_start\ndata: {"type":"message_start","message":{"model":"deepseek-flash"}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":20}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n'
 
 
 def synthetic_transport_evidence(prompt: bytes):
@@ -31,7 +32,8 @@ def synthetic_transport_evidence(prompt: bytes):
         "prompt_sha256": sha256(prompt).hexdigest(),
         "response_sha256": "b" * 64,
         "response_bytes": 200,
-        "output_limit": 4096,
+        "output_limit": 16384,
+        "observed_output_usage": 20,
         "redirects": 0,
         "retries": 0,
     }
@@ -52,7 +54,7 @@ def _body(prompt="review", **overrides):
     return json.dumps(
         {
             "model": "deepseek-flash",
-            "max_tokens": 4096,
+            "max_tokens": 16384,
             "stream": True,
             "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
             **overrides,
@@ -60,9 +62,7 @@ def _body(prompt="review", **overrides):
     ).encode()
 
 
-def _fake_upstream(
-    monkeypatch, counter: Path, *, status=200, response=b"event: message_stop\ndata: {}\n\n"
-):
+def _fake_upstream(monkeypatch, counter: Path, *, status=200, response=COMPLETE_SSE):
     class Connection:
         sock = None
 
@@ -149,7 +149,7 @@ def test_redirect_or_provider_failure_is_not_forwarded_or_retried(monkeypatch, t
 
 @pytest.mark.parametrize(
     "body",
-    [_body("changed prompt"), _body(max_tokens=4097), _body(model="other"), _body("x" * 60001)],
+    [_body("changed prompt"), _body(max_tokens=16385), _body(model="other"), _body("x" * 60001)],
 )
 def test_unapproved_or_oversized_request_never_dispatches(monkeypatch, tmp_path, body):
     counter, attempt = tmp_path / "counter", tmp_path / "attempt.jsonl"
@@ -191,3 +191,14 @@ def test_reader_rejects_forged_transport_summary(field, value):
     evidence[field] = value
     with pytest.raises(IndependentReviewProtocolError):
         transport.validate_transport(evidence, log, b"review")
+
+
+@pytest.mark.parametrize(
+    "stop,usage", [("max_tokens", 20), ("tool_use", 16385), ("tool_use", None)]
+)
+def test_provider_completion_and_output_budget_must_be_provable(stop, usage):
+    raw = COMPLETE_SSE.replace(b'"tool_use"', json.dumps(stop).encode()).replace(
+        b'"output_tokens":20', b'"output_tokens":' + json.dumps(usage).encode()
+    )
+    with pytest.raises(transport.TransportError):
+        transport._completed_output_usage(raw)
