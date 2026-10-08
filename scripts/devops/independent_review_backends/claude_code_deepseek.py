@@ -25,6 +25,7 @@ from typing import Any
 
 from scripts.devops.deepseek_review_chunks import MAX_CHUNK_PROMPT_BYTES
 from scripts.devops.independent_review_backends.deepseek_transport import (
+    CLAUDE_RESULT_SCHEMA,
     SingleRequestTransport,
     TransportError,
 )
@@ -85,31 +86,6 @@ DEDICATED_SETTINGS = (
     ).encode()
     + b"\n"
 )
-# Claude Code 2.1.276 accepts this conservative subset of the generic result
-# schema.  ``validate_result`` remains the protocol authority after execution;
-# it accepts this strict subset without relaxing any generic rule.
-CLAUDE_RESULT_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["protocol_version", "review_result", "findings"],
-    "properties": {
-        "protocol_version": {"const": "INDEPENDENT_REVIEW_PROTOCOL_V1"},
-        "review_result": {"enum": ["PASS", "FAIL"]},
-        "findings": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["severity", "title", "evidence"],
-                "properties": {
-                    "severity": {"enum": ["P0", "P1", "P2", "P3"]},
-                    "title": {"type": "string", "minLength": 1},
-                    "evidence": {"type": "string", "minLength": 1},
-                },
-            },
-        },
-    },
-}
 
 
 class BackendInfrastructureError(RuntimeError):
