@@ -115,6 +115,74 @@ request per cycle; it must not embed retry loops or call a fallback provider.
 The production transport is explicitly bound to The Odds API and is never
 selected by the public dry-run CLI.
 
+## Billing-period rollover（显式离线转换）
+
+`footballprediction-stage-d-quota-adjudication-rollover/v1` 与 policy
+`stage-d-billing-period-rollover/v1` 是独立的跨期 schema，复用
+`scripts/ops/stage_d_quota_adjudication.js`。旧 v1/v2 schema、同周期 v1→v2 唯一
+后继规则、保守 usage floor 和 source freshness 语义不变；rollover 不能用于同周期
+source refresh。它不创建 epoch、不更换 ledger、不产生 authorization 或请求。
+
+- 同一个永久 epoch/genesis、全部原 entries 与旧裁定原件永久保留。
+  首次前驱必须是合法 v2 及其原 v1；后续前驱必须是紧邻月份的 rollover。
+- common fields 绑定当前精确 source commit/tree、当前 quota-config SHA-256、
+  epoch、当前完整 entry count/tail、全部 Consumed count、历史 divergence request/run、
+  `provider_quota_actual_effect=UNKNOWN`、当月 local units 和保守预算。
+- `rollover` 只含：`previous_billing_period_id`、`previous_epoch_id`、
+  `epoch_genesis_hash`、`previous_ledger_entry_count`、`previous_ledger_tail_sha256`、
+  `historical_consumed_count`、`historical_unknown_classification`、
+  `previous_quota_config_bytes`/`previous_quota_config_sha256`、
+  `previous_adjudication`/`previous_adjudication_sha256`、
+  `previous_v1`/`previous_v1_sha256`（后续月为 null）、
+  `owner_evidence`/`owner_evidence_sha256`。旧配置以原字节保留，不能只对解析后对象做 hash。
+- 每个历史裁定在其原始 generation 的真实 ledger prefix 上重新验证，前驱时期
+  不要求其历史 source 等于当前 source；当前 admission 仍完整执行 canonical Git
+  clean/origin-main/commit/tree 验证。内部历史验证 capability 不导出、不授予执行权限。
+- rollover 本身绑定完整当前 generation；缺条目、换空账本、篡改 tail、追加未完成请求、
+  新 divergence、历史 UNKNOWN/count 降低、回退或错误前驱均拒绝。
+  前驱之后新增的 entries 必须发生在前驱批准之后、该旧周期截止之前。
+- 仅允许紧邻 UTC 自然月：例如 Sep→Oct→Nov；旧 guard start 可以晚于旧月起点，
+  旧 end 必须为新月第一日 00:00 UTC；新 guard 必须是整个新自然月，不能延长旧区间
+  并重命名新月。禁止跳月、回退、同月重复与同前驱冲突后继。
+- history 链最多 120 次逐月转换，超限 fail-closed，须另行合同审查；这不是无限授权链。
+
+Owner evidence schema 为 `footballprediction-stage-d-billing-period-evidence/v1`：
+字段严格为 `schema_version`、`approval_status=OWNER_APPROVED_BILLING_PERIOD_ROLLOVER`、
+`provider=the-odds-api`、`previous_billing_period_id`、`billing_period_id`、
+`previous_account_identity_sha256`、`account_identity_sha256`、`quota_config_sha256`、
+`previous_adjudication_sha256`、`reset_rule=MONTHLY_FIRST_DAY_00_UTC`、
+`provider_period_start_at`、`provider_period_end_at`、`observed_at`、`approved_at`、
+`reported_used`、`reported_remaining`、`account_evidence_reference`、`account_evidence_sha256`。
+账户 identity 是 Owner 批准的非秘密账户标识 hash，绝不能用明文 API Key；同次及后续
+转换必须同一账户。证据观察必须在新月内，先观察后批准，批准不晚于裁定，裁定时观察
+不超过 24 小时；used+remaining 必须为 500。此 artifact 是 Owner account/reset decision，
+不是 Provider header，不声明程序已直接验证账户，也不构成 Gate 3 授权。
+Owner 负责把 reference/hash 对应的可审计账户及 reset 原件与声明核对，不能将空引用、
+虚构 screenshot hash 或单纯月初时钟当作证明。
+
+新旧配置均固定 500 quota / 50 reserve / 450 automated ceiling、h2h/uk、cost=1、
+run/cycle max=1、calendar-auto-zero=false。九月历史消费保存在九月风险链中，不重复扣
+十月预算；当月保守 floor=max(当月 local units、当月可信 Provider used、Owner 当月
+reported used)。未来 header reconciliation 使用此保守 floor+1，并保持同周期单 credit
+单调要求。可信 Provider header 仅从 transmission 与 response 均在当前区间的记录读取，
+旧月 header 不能当作新月余额。
+
+Owner evidence 是 external owner-only Trust Root 的不可变 canonical JSON 直接子文件：
+`stage-d-billing-period-evidence-<byte-sha256>.json`。所有前驱原件仍必须在同一 Trust Root，
+递归 cold read 会重新核对其 bytes/hash/namespace。rollover 输出名固定为
+`stage-d-quota-adjudication-rollover-<sha256(epoch-id)>-<YYYY-MM>.json`；沿用既有
+O_EXCL/fsync/create-only writer，重复或竞争 writer 不能产生第二个合法文件。
+这沿用现有同 uid Owner-controlled filesystem 的 engineering assurance，非密码学签名
+或 hostile-builder resistance，也不替代独立审查。
+
+CLI 在原 adjudication 参数外使用 `--predecessor` + `--predecessor-sha256`、
+`--previous-quota-config` + `--owner-rollover-evidence`；首次 v2 前驱另需
+`--previous-v1` + `--previous-v1-sha256`。CLI 要求无 active run lock、所有历史 request
+terminal，当前配置有效且 source 正确，再生成新裁定；不修改任何 ledger/config。
+Candidate、dry-run 和 binder 使用既有 `--quota-adjudication` 路径，hash 包含整个继承链。
+实际配置、Owner evidence、裁定、Candidate、Gate 3 授权及单次采集各自需要对应批准；
+本次仅实现及合成离线验证，`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。
+
 ## Durable request-accounting epoch
 
 The sealed epoch is repository-runtime sidecar data, not a canonical transaction:
