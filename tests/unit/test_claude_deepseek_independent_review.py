@@ -259,3 +259,132 @@ def test_chunked_consumer_rejects_incomplete_or_repo_local_artifacts(tmp_path: P
     local.chmod(0o600)
     with pytest.raises(ValueError, match="outside repository"):
         consumer._assert_external_artifact(local, repo_root=repo_root, kind="receipt")
+
+
+@pytest.mark.parametrize("oversized_chunk", [0, 1])
+def test_all_chunk_prompts_are_bounded_before_any_provider_call(
+    monkeypatch, tmp_path: Path, oversized_chunk
+):
+    diff = b"diff --git a/a b/a\n" + b"+line\n" * 7000
+    prompts = []
+    calls = []
+
+    def prompt(**kwargs):
+        index = kwargs["chunk"].index
+        prompts.append(index)
+        return "x" * (runner.MAX_CHUNK_PROMPT_BYTES + 1) if index == oversized_chunk else "small"
+
+    monkeypatch.setattr(runner, "_chunk_prompt", prompt)
+    monkeypatch.setattr(runner.backend, "run", lambda **kwargs: calls.append(kwargs))
+    with pytest.raises(runner.DeepSeekReviewError, match="canonical byte limit"):
+        runner._run_chunked_review(
+            diff=diff,
+            base="a" * 40,
+            head="b" * 40,
+            scope=SimpleNamespace(mission_id="MISSION"),
+            scope_sha="c" * 64,
+            worktree=tmp_path,
+        )
+    assert prompts == [0, 1]
+    assert calls == []
+
+
+def test_full_inventory_is_never_truncated_to_fit_prompt_limit(monkeypatch, tmp_path: Path):
+    path_count = 300
+    diff = b"".join(
+        f"diff --git a/{index:04d}-{'x' * 120} b/{index:04d}-{'x' * 120}\n+line\n".encode()
+        for index in range(path_count)
+    )
+    manifest = runner.plan(
+        diff,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="MISSION",
+        mission_scope_sha256="c" * 64,
+    )
+    assert len(manifest.full_changed_paths) == path_count
+    first = manifest.chunks[0]
+    prompt = runner._chunk_prompt(
+        chunk=first, source=diff[first.start : first.end], manifest=manifest, scope_sha="c" * 64
+    )
+    assert len(prompt.encode()) > runner.MAX_CHUNK_PROMPT_BYTES
+    assert manifest.full_changed_paths[-1] in prompt
+    calls = []
+    monkeypatch.setattr(runner.backend, "run", lambda **kwargs: calls.append(kwargs))
+    with pytest.raises(runner.DeepSeekReviewError, match="canonical byte limit"):
+        runner._run_chunked_review(
+            diff=diff,
+            base="a" * 40,
+            head="b" * 40,
+            scope=SimpleNamespace(mission_id="MISSION"),
+            scope_sha="c" * 64,
+            worktree=tmp_path,
+        )
+    assert calls == []
+
+
+@pytest.mark.parametrize("severity", [None, "P2"])
+def test_chunked_runner_preserves_full_coverage_and_verdict_without_extra_calls(
+    monkeypatch, tmp_path: Path, severity
+):
+    diff = (
+        b"diff --git a/source b/source\n" + b"+line\n" * 7000 + b"diff --git a/test b/test\n+test\n"
+    )
+    calls = []
+
+    def fake_run(*, prompt, cwd):
+        calls.append((prompt, cwd))
+        result = {
+            "protocol_version": runner.PROTOCOL_VERSION,
+            "review_result": "FAIL" if severity else "PASS",
+            "findings": [{"severity": severity, "title": "risk", "evidence": "source"}]
+            if severity
+            else [],
+        }
+        execution = SimpleNamespace(
+            command=("offline-test-double", prompt),
+            resolved_model="deepseek-flash",
+            cli_version="2.1.278",
+            binary_sha256="d" * 64,
+            settings_sha256="e" * 64,
+            endpoint="https://api.deepseek.com/anthropic",
+            session_id=f"offline-session-{len(calls)}",
+        )
+        return runner.canonical_json(result), result, execution
+
+    monkeypatch.setattr(runner.backend, "run", fake_run)
+    _raw, result, trusted = runner._run_chunked_review(
+        diff=diff,
+        base="a" * 40,
+        head="b" * 40,
+        scope=SimpleNamespace(mission_id="MISSION"),
+        scope_sha="c" * 64,
+        worktree=tmp_path,
+    )
+    expected_chunk_count = 2
+    assert len(calls) == len(trusted) == expected_chunk_count
+    assert b"".join(item["source"] for item in trusted) == diff
+    assert all('Full PR changed paths: ["source","test"]' in prompt for prompt, _cwd in calls)
+    assert result["review_result"] == ("FAIL" if severity else "PASS")
+    if severity:
+        assert result["finding_counts_by_severity"][severity] == len(trusted)
+
+
+def test_chunked_runner_does_not_retry_infrastructure_failure(monkeypatch, tmp_path: Path):
+    calls = []
+
+    def fail(**kwargs):
+        calls.append(kwargs)
+        raise runner.backend.BackendInfrastructureError("timeout")
+
+    monkeypatch.setattr(runner.backend, "run", fail)
+    with pytest.raises(runner.DeepSeekReviewError, match="chunk 0 infrastructure failure"):
+        runner._run_chunked_review(
+            diff=b"diff --git a/a b/a\n" + b"+line\n" * 7000,
+            base="a" * 40,
+            head="b" * 40,
+            scope=SimpleNamespace(mission_id="MISSION"),
+            scope_sha="c" * 64,
+            worktree=tmp_path,
+        )
+    assert len(calls) == 1

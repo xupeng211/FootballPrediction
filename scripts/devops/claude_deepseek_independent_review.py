@@ -144,11 +144,22 @@ def _run_chunked_review(
     )
     values: list[dict] = []
     trusted: list[dict] = []
+    # Check every complete inventory before any provider call, including a
+    # later chunk with a larger local inventory. Never truncate path context.
+    prompts = [
+        _chunk_prompt(
+            chunk=chunk,
+            source=diff[chunk.start : chunk.end],
+            manifest=manifest,
+            scope_sha=scope_sha,
+        )
+        for chunk in manifest.chunks
+    ]
+    if any(len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES for prompt in prompts):
+        raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
     for chunk in manifest.chunks:
         source = diff[chunk.start : chunk.end]
-        prompt = _chunk_prompt(chunk=chunk, source=source, manifest=manifest, scope_sha=scope_sha)
-        if len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES:
-            raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
+        prompt = prompts[chunk.index]
         try:
             raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
         except backend.BackendInfrastructureError as exc:
