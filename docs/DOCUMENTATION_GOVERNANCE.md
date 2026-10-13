@@ -217,7 +217,8 @@ The stable mapping is intentionally small:
 | Canonical business entrypoint | `README.md` + `docs/CAPABILITY_INDEX.md` |
 | Project-wide current blocker or stage | `docs/PROJECT_STATUS.md` |
 | FotMob acquisition/retention/domain blocker | `docs/data/FOTMOB_CURRENT_STATE.md` |
-| Workflow or authorization semantics | `AGENTS.md` + `docs/AGENT_WORKFLOW.md` |
+| Stage D billing-period, quota, ledger or accounting contract | `docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md` |
+| Engineering workflow or engineering authorization semantics | `AGENTS.md` + `docs/AGENT_WORKFLOW.md` |
 | Repository structure or authority navigation | `docs/PROJECT_MAP.md` |
 | North Star, target architecture, or vision maturity state | `docs/PROJECT_VISION.md` |
 
@@ -242,6 +243,10 @@ the changed paths plus the PR declaration; it does not infer business meaning,
 rewrite Markdown, create manifests, or add a new required GitHub check. The
 existing cleanup checker remains focused on its allowlist/destructive-operation
 scope and is reused for governance-file safety.
+
+The Stage D mapping uses audited exact domain paths and their existing
+current-state/mission documents. An unrelated domain contract cannot substitute
+for it; unknown domains and domain/workflow mixtures remain fail-closed.
 
 Do not create replacement authority files such as `PROJECT_STATUS_V2.md`,
 `NEW_RULES.md`, `NEW_WORKFLOW.md`, or similar parallel entrypoints to bypass the
