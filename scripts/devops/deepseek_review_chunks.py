@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import codecs
 from dataclasses import asdict, dataclass
+import re
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -18,7 +20,6 @@ from scripts.devops.independent_review_protocol import (
 CHUNKING_ALGORITHM_VERSION = "canonical-diff-lines/v1"
 MAX_CHUNK_DIFF_BYTES = 32_000
 MAX_CHUNK_PROMPT_BYTES = 40_000
-EXPECTED_DIFF_PATH_PARTS = 2
 # Bound the number of provider calls for one logical review before any call is
 # made.  This keeps the bootstrap review bounded even for unusually large diffs.
 MAX_CHUNK_COUNT = 64
@@ -59,6 +60,9 @@ class Manifest:
     full_diff_sha256: str
     full_diff_bytes: int
     chunks: tuple[Chunk, ...]
+    # Derived from the full diff, never from a union of chunk-local inventories.
+    # Not a new manifest field on disk: validators rederive it from trusted Git bytes.
+    full_changed_paths: tuple[str, ...]
 
     def payload(self) -> dict[str, Any]:
         """Return the canonical hash-bound manifest payload."""
@@ -86,14 +90,112 @@ class Manifest:
         return sha256_bytes(canonical_json(self.payload()))
 
 
-def _paths(chunk: bytes) -> tuple[str, ...]:
-    paths: list[str] = []
-    for line in chunk.decode("utf-8", "replace").splitlines():
-        if line.startswith("diff --git a/"):
-            parts = line.split(" b/", 1)
-            if len(parts) == EXPECTED_DIFF_PATH_PARTS:
-                paths.append(parts[1])
-    return tuple(dict.fromkeys(paths))
+def _quote_path(value: bytes) -> str:
+    """Use Git's reversible C quoting for paths that cannot be plain UTF-8."""
+
+    escapes = {
+        7: r"\a",
+        8: r"\b",
+        9: r"\t",
+        10: r"\n",
+        11: r"\v",
+        12: r"\f",
+        13: r"\r",
+        34: r"\"",
+        92: r"\\",
+    }
+    printable_ascii = range(0x20, 0x7F)
+    return (
+        '"'
+        + "".join(
+            escapes.get(byte, chr(byte) if byte in printable_ascii else f"\\{byte:03o}")
+            for byte in value
+        )
+        + '"'
+    )
+
+
+def _decode_path(value: bytes, *, prefix: bytes = b"") -> str:
+    """Preserve raw bytes using Git quoting; plain UTF-8 inventories stay readable.
+
+    Literal leading quotes are quoted too, so a UTF-8 filename cannot collide
+    with the C-quoted representation of a non-UTF-8 filename. Strip diff's
+    a/b prefix from raw bytes before rendering, never from the quoted string.
+    """
+
+    if value.startswith(b'"'):
+        if not re.fullmatch(rb'"(?:[^"\\]|\\(?:[abtnvfr"\\]|[0-3][0-7]{2}))*"', value):
+            raise ChunkReviewError("invalid quoted diff path")
+        value = codecs.escape_decode(value[1:-1])[0]
+    if not value.startswith(prefix):
+        raise ChunkReviewError("invalid diff path prefix")
+    value = value[len(prefix) :]
+    if not value or b"\0" in value:
+        raise ChunkReviewError("empty or NUL diff path")
+    try:
+        decoded = value.decode("utf-8")
+    except UnicodeDecodeError:
+        return _quote_path(value)
+    return _quote_path(value) if decoded.startswith('"') else decoded
+
+
+def _file_paths(header: bytes, section: bytes) -> tuple[str, ...]:
+    """Include both rename endpoints; otherwise deduplicate old/new paths."""
+
+    metadata = section.split(b"\n@@", 1)[0].split(b"\nGIT binary patch", 1)[0]
+    for action in (b"rename", b"copy"):
+        old = re.search(rb"^" + action + rb" from (.+)$", metadata, re.MULTILINE)
+        new = re.search(rb"^" + action + rb" to (.+)$", metadata, re.MULTILINE)
+        if old and new:
+            return tuple(dict.fromkeys((_decode_path(old[1]), _decode_path(new[1]))))
+    candidates: list[tuple[str, str]] = []
+    for separator in re.finditer(rb' (?=b/|"b/)', header):
+        left, right = header[: separator.start()], header[separator.end() :]
+        # A quoted token must be consumed completely, including escaped quotes.
+        try:
+            old_path = _decode_path(left, prefix=b"a/")
+            new_path = _decode_path(right, prefix=b"b/")
+        except ChunkReviewError:
+            continue
+        candidates.append((old_path, new_path))
+    identical = [pair for pair in candidates if pair[0] == pair[1]]
+    candidates = identical or candidates
+    if len(candidates) != 1:
+        raise ChunkReviewError("ambiguous or invalid canonical diff paths")
+    return tuple(dict.fromkeys(candidates[0]))
+
+
+def _file_ranges(diff: bytes) -> tuple[tuple[int, int, tuple[str, ...]], ...]:
+    """Locate file sections in full diff byte order, independently of chunks."""
+
+    headers = list(re.finditer(rb"^diff --git (.+)\n", diff, re.MULTILINE))
+    return tuple(
+        (
+            header.start(),
+            headers[index + 1].start() if index + 1 < len(headers) else len(diff),
+            _file_paths(
+                header[1],
+                diff[
+                    header.end() : headers[index + 1].start()
+                    if index + 1 < len(headers)
+                    else len(diff)
+                ],
+            ),
+        )
+        for index, header in enumerate(headers)
+    )
+
+
+def _range_paths(
+    files: tuple[tuple[int, int, tuple[str, ...]], ...], start: int, end: int
+) -> tuple[str, ...]:
+    """First-appearance ordering, with exact-path deduplication and overlap."""
+
+    return tuple(
+        dict.fromkeys(
+            path for left, right, paths in files if left < end and right > start for path in paths
+        )
+    )
 
 
 def _cut(diff: bytes, start: int) -> int:
@@ -114,11 +216,14 @@ def plan(
     if not diff:
         raise ChunkReviewError("empty canonical diff cannot be reviewed")
     chunks: list[Chunk] = []
+    files = _file_ranges(diff)
     start = 0
     while start < len(diff):
         end = _cut(diff, start)
         source = diff[start:end]
-        chunks.append(Chunk(len(chunks), start, end, sha256_bytes(source), _paths(source)))
+        chunks.append(
+            Chunk(len(chunks), start, end, sha256_bytes(source), _range_paths(files, start, end))
+        )
         start = end
     manifest = Manifest(
         base_sha,
@@ -128,6 +233,7 @@ def plan(
         sha256_bytes(diff),
         len(diff),
         tuple(chunks),
+        _range_paths(files, 0, len(diff)),
     )
     validate_manifest(manifest, diff)
     return manifest
@@ -142,6 +248,9 @@ def validate_manifest(manifest: Manifest, diff: bytes) -> None:
         raise ChunkReviewError("chunk manifest is empty")
     if len(manifest.chunks) > MAX_CHUNK_COUNT:
         raise ChunkReviewError("chunk count exceeds bounded review limit")
+    files = _file_ranges(diff)
+    if manifest.full_changed_paths != _range_paths(files, 0, len(diff)):
+        raise ChunkReviewError("full changed paths binding mismatch")
     position = 0
     reconstructed = bytearray()
     for index, chunk in enumerate(manifest.chunks):
@@ -150,6 +259,8 @@ def validate_manifest(manifest: Manifest, diff: bytes) -> None:
         source = diff[chunk.start : chunk.end]
         if sha256_bytes(source) != chunk.source_sha256:
             raise ChunkReviewError("chunk source hash mismatch")
+        if chunk.changed_paths != _range_paths(files, chunk.start, chunk.end):
+            raise ChunkReviewError("chunk changed paths binding mismatch")
         reconstructed.extend(source)
         position = chunk.end
     if position != len(diff) or sha256_bytes(bytes(reconstructed)) != manifest.full_diff_sha256:
@@ -166,7 +277,14 @@ def build_chunk_prompt(*, chunk: Chunk, source: bytes, manifest: Manifest, scope
         f"Scope SHA256: {scope_sha}\nFull diff SHA256: {manifest.full_diff_sha256}\n"
         f"Chunk manifest SHA256: {manifest.sha256}\nChunk: {chunk.index + 1}/{len(manifest.chunks)} "
         f"range={chunk.start}:{chunk.end} source_sha256={chunk.source_sha256}\n"
-        f"Changed paths: {','.join(chunk.changed_paths)}\n"
+        f"Full PR changed paths: {canonical_json(list(manifest.full_changed_paths)).decode()}\n"
+        f"Current chunk changed paths: {canonical_json(list(chunk.changed_paths)).decode()}\n"
+        "The full PR inventory is derived from the entire canonical diff; the current chunk inventory "
+        "identifies file sections overlapping this byte range, which may start or end inside a file.\n"
+        "A file absent from this chunk is not necessarily absent from the full PR. Do not assert that "
+        "the PR omits a test or other asset solely because it is not shown in this chunk. If a conclusion "
+        "requires content from another chunk that is unavailable here, state the evidence limitation "
+        "rather than inventing a missing-file fact.\n"
         f"Canonical chunk diff:\n{source.decode('utf-8', 'replace')}"
     )
 

@@ -1,0 +1,50 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_DEEPSEEK_CHUNK_GLOBAL_CONTEXT_FIX",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "tests/unit/test_deepseek_review_chunks.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "docs/agentic/missions/FP_DEEPSEEK_CHUNK_GLOBAL_CONTEXT_FIX.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "scripts/devops/review_policy.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "docs/agentic/independent_review_backends.json",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "src/",
+    "scripts/ops/",
+    "tests/integration/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "theoddsapi",
+    "migration",
+    "model-activation"
+  ],
+  "protected_invariants": [
+    "完整文件清单仅从同一 canonical full diff 确定性提取；局部清单按原 chunk 字节范围对应文件区段。",
+    "原 chunking 算法、完整覆盖、数量和字节限制、Receipt schema、严格验证、Policy、Registry、Provider、模型、费用及请求边界保持不变。",
+    "CRITICAL 要求同一候选的独立 Codex 与 DeepSeek 两份有效 Receipt；P0/P1/P2 阻断，P3 保留。",
+    "本修复候选仅作为被审查对象；使用可信 main 基线的既有 Runner 与 Validator，不让待审 prompt 实现自行授信。"
+  ],
+  "forbidden_side_effects": [
+    "不修改 PR #1941 或旧审核证据；不 Merge、不 Force Push。",
+    "除 Owner 已授权的各一次正式 Codex 和 DeepSeek 逻辑审核外，不追加模型调用，不主动 Retry、Resume、Fallback，不购买 Credits、不充值、不切换账户。",
+    "不调用真实赔率 Provider，不启动 Stage D，不写入真实 Ledger、Quota、RAW 或数据库。",
+    "不修改审核权威、Launcher 白名单、Backend、Harness 或引入新的审核架构。"
+  ]
+}
