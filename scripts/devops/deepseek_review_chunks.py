@@ -90,17 +90,53 @@ class Manifest:
         return sha256_bytes(canonical_json(self.payload()))
 
 
-def _decode_path(value: bytes) -> str:
-    """Decode Git's C-quoted path bytes without treating spaces as separators."""
+def _quote_path(value: bytes) -> str:
+    """Use Git's reversible C quoting for paths that cannot be plain UTF-8."""
+
+    escapes = {
+        7: r"\a",
+        8: r"\b",
+        9: r"\t",
+        10: r"\n",
+        11: r"\v",
+        12: r"\f",
+        13: r"\r",
+        34: r"\"",
+        92: r"\\",
+    }
+    printable_ascii = range(0x20, 0x7F)
+    return (
+        '"'
+        + "".join(
+            escapes.get(byte, chr(byte) if byte in printable_ascii else f"\\{byte:03o}")
+            for byte in value
+        )
+        + '"'
+    )
+
+
+def _decode_path(value: bytes, *, prefix: bytes = b"") -> str:
+    """Preserve raw bytes using Git quoting; plain UTF-8 inventories stay readable.
+
+    Literal leading quotes are quoted too, so a UTF-8 filename cannot collide
+    with the C-quoted representation of a non-UTF-8 filename. Strip diff's
+    a/b prefix from raw bytes before rendering, never from the quoted string.
+    """
 
     if value.startswith(b'"'):
-        if not re.fullmatch(rb'"(?:[^"\\]|\\(?:[abtnvfr"\\]|[0-7]{3}))*"', value):
+        if not re.fullmatch(rb'"(?:[^"\\]|\\(?:[abtnvfr"\\]|[0-3][0-7]{2}))*"', value):
             raise ChunkReviewError("invalid quoted diff path")
         value = codecs.escape_decode(value[1:-1])[0]
+    if not value.startswith(prefix):
+        raise ChunkReviewError("invalid diff path prefix")
+    value = value[len(prefix) :]
+    if not value or b"\0" in value:
+        raise ChunkReviewError("empty or NUL diff path")
     try:
-        return value.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise ChunkReviewError("diff path is not UTF-8") from exc
+        decoded = value.decode("utf-8")
+    except UnicodeDecodeError:
+        return _quote_path(value)
+    return _quote_path(value) if decoded.startswith('"') else decoded
 
 
 def _file_paths(header: bytes, section: bytes) -> tuple[str, ...]:
@@ -117,11 +153,11 @@ def _file_paths(header: bytes, section: bytes) -> tuple[str, ...]:
         left, right = header[: separator.start()], header[separator.end() :]
         # A quoted token must be consumed completely, including escaped quotes.
         try:
-            old_path, new_path = _decode_path(left), _decode_path(right)
+            old_path = _decode_path(left, prefix=b"a/")
+            new_path = _decode_path(right, prefix=b"b/")
         except ChunkReviewError:
             continue
-        if old_path.startswith("a/") and new_path.startswith("b/"):
-            candidates.append((old_path[2:], new_path[2:]))
+        candidates.append((old_path, new_path))
     identical = [pair for pair in candidates if pair[0] == pair[1]]
     candidates = identical or candidates
     if len(candidates) != 1:

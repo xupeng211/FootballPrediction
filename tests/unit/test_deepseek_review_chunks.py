@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 from dataclasses import replace
 import json
 from types import SimpleNamespace
@@ -15,6 +16,8 @@ from scripts.devops.deepseek_review_chunks import (
     MAX_CHUNK_COUNT,
     MAX_CHUNK_DIFF_BYTES,
     ChunkReviewError,
+    _decode_path,
+    _quote_path,
     aggregate,
     build_chunk_prompt,
     chunk_evidence_manifest_bytes,
@@ -343,6 +346,24 @@ def test_every_chunk_has_global_inventory_and_accurate_overlapping_local_paths()
             ("old\tname", "new name"),
         ),
         (b"diff --git a/binary b/binary\nGIT binary patch\nliteral 1\nA000\n", ("binary",)),
+        (
+            b'diff --git "a/bad\\377name" "b/bad\\377name"\n+line\n',
+            ('"bad\\377name"',),
+        ),
+        (
+            b'diff --git "a/old\\377" "b/new\\376"\nsimilarity index 100%\n'
+            b'rename from "old\\377"\nrename to "new\\376"\n',
+            ('"old\\377"', '"new\\376"'),
+        ),
+        (
+            b'diff --git "a/old\\377" "b/new\\376"\nsimilarity index 100%\n'
+            b'copy from "old\\377"\ncopy to "new\\376"\n',
+            ('"old\\377"', '"new\\376"'),
+        ),
+        (
+            b'diff --git "a/space \\"quote\\\\name\\377" "b/space \\"quote\\\\name\\377"\n+line\n',
+            ('"space \\"quote\\\\name\\377"',),
+        ),
     ],
 )
 def test_full_inventory_is_deterministic_for_git_change_kinds_and_quoted_paths(diff, expected):
@@ -362,6 +383,88 @@ def test_inventory_deduplicates_in_full_diff_first_appearance_order():
 def test_invalid_path_header_fails_closed(header):
     with pytest.raises(ChunkReviewError, match="ambiguous or invalid"):
         _plan(header + b"+line\n")
+
+
+def test_path_representation_roundtrips_and_never_collides_with_literal_quoted_names():
+    # No files are created. Include every non-NUL byte and UTF-8 lookalikes of
+    # the escaped representation; replacements/Latin-1 would lose identity.
+    raw_paths = [b"name" + bytes([byte]) + b".txt" for byte in range(1, 256)]
+    raw_paths += ["中.txt".encode(), b'"name\\377.txt"', b'"quoted"', b"name\xef\xbf\xbd.txt"]
+    rendered = [_decode_path(_quote_path(raw).encode()) for raw in raw_paths]
+    assert len(set(rendered)) == len(set(raw_paths))
+    for raw, path in zip(raw_paths, rendered, strict=True):
+        recovered = (
+            codecs.escape_decode(path[1:-1].encode())[0] if path.startswith('"') else path.encode()
+        )
+        assert recovered == raw
+        assert json.loads(canonical_json([path])) == [path]
+    assert _decode_path(b"ordinary.txt") == "ordinary.txt"
+    assert _decode_path("中文.txt".encode()) == "中文.txt"
+    assert _decode_path(b'"bad\\377name"') != _decode_path(b'"\\"bad\\\\377name\\""')
+
+
+def test_diff_prefixes_are_removed_before_rendering_non_utf8_and_literal_quoted_paths():
+    raw_paths = (b"bad\xffname", b'"bad\\377name"')
+    diff = b"".join(
+        b"diff --git "
+        + _quote_path(b"a/" + path).encode()
+        + b" "
+        + _quote_path(b"b/" + path).encode()
+        + b"\n+line\n"
+        for path in raw_paths
+    )
+    manifest = _plan(diff)
+    assert manifest.full_changed_paths == tuple(_quote_path(path) for path in raw_paths)
+    assert len(set(manifest.full_changed_paths)) == len(raw_paths)
+    assert manifest.chunks[0].changed_paths == manifest.full_changed_paths
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        b'"bad\\q"',
+        b'"bad\\400"',
+        b'"bad\\777"',
+        b'"bad\\37"',
+        b'"unfinished',
+        b'"bad\\000"',
+        b"bad\0",
+        b"",
+    ],
+)
+def test_malformed_quoted_or_impossible_git_paths_fail_closed(path):
+    with pytest.raises(ChunkReviewError):
+        _decode_path(path)
+
+
+def test_non_utf8_multichunk_prompt_and_strict_validator_reconstruction(monkeypatch, tmp_path):
+    diff = (
+        b'diff --git "a/bad\\377name" "b/bad\\377name"\n'
+        + b"+implementation\n" * 4000
+        + b'diff --git "a/tests\\376.py" "b/tests\\376.py"\n+test\n'
+    )
+    manifest = _plan(diff)
+    assert manifest.full_changed_paths == ('"bad\\377name"', '"tests\\376.py"')
+    assert manifest.chunks[0].changed_paths == ('"bad\\377name"',)
+    assert b"".join(diff[c.start : c.end] for c in manifest.chunks) == diff
+    validate_manifest(manifest, diff)
+    assert json.loads(canonical_json(manifest.payload())) == manifest.payload()
+    receipt, context, _item, _diff = _chunk_validation_fixture(tmp_path, diff)
+    for chunk, item in zip(manifest.chunks, context.chunked_claude_evidence, strict=True):
+        prompt = item["prompt"].decode()
+        assert (
+            "Full PR changed paths: " + canonical_json(list(manifest.full_changed_paths)).decode()
+            in prompt
+        )
+        assert (
+            "Current chunk changed paths: " + canonical_json(list(chunk.changed_paths)).decode()
+            in prompt
+        )
+        assert prompt.encode() == item["prompt"]
+    monkeypatch.setattr(
+        chunk_validation.subprocess, "run", lambda *_a, **_kw: SimpleNamespace(stdout=diff)
+    )
+    chunk_validation._validate_chunked_claude_evidence(receipt, context)
 
 
 @pytest.mark.parametrize("inventory", ["global", "local"])
