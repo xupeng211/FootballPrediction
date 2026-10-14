@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "CANONICAL_DEEPSEEK_CONSERVATIVE_COST_BOUND_RECOVERY",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/DIRECT_DEEPSEEK_COST_BOUND.md",
+    "docs/agentic/missions/CANONICAL_DEEPSEEK_CONSERVATIVE_COST_BOUND_RECOVERY.json",
+    "scripts/devops/independent_review_backends/direct_deepseek.py",
+    "scripts/devops/direct_deepseek_independent_review.py",
+    "scripts/devops/direct_deepseek_receipt_evidence.py",
+    "scripts/devops/independent_review_receipt.py",
+    "scripts/devops/deepseek_receipt_evidence.py",
+    "tests/unit/test_direct_deepseek_bound.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "docker/",
+    "scripts/ops/",
+    "src/",
+    "tests/integration/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "theoddsapi",
+    "bookmaker",
+    "migration",
+    "model-activation"
+  ],
+  "protected_invariants": [
+    "OpenAI reviewer and original canonical dual receipt gates remain unchanged.",
+    "Live Provider requests are prohibited; new identity remains reserved.",
+    "No historical receipt, ledger or UNKNOWN is modified."
+  ],
+  "forbidden_side_effects": [
+    "No live requests, qualification, full review, remote writes, deployment or budget increases."
+  ]
+}

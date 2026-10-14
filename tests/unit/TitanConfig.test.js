@@ -1,7 +1,10 @@
-const { describe, it } = require('node:test');
+const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 const Module = require('node:module');
 const { TitanConfig } = require('../../src/infrastructure/config/TitanConfig');
+const DATABASE_ENV_KEYS = Object.freeze([
+  'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_MAX_CONNECTIONS'
+]);
 
 function restoreEnv(key, value) {
   if (typeof value === 'undefined') {
@@ -12,7 +15,29 @@ function restoreEnv(key, value) {
   process.env[key] = value;
 }
 
-describe('TitanConfig', () => {
+describe('TitanConfig', { concurrency: false }, () => {
+  let databaseEnvironment;
+
+  beforeEach(() => {
+    databaseEnvironment = Object.fromEntries(
+      DATABASE_ENV_KEYS.map(key => [key, process.env[key]])
+    );
+    // 默认值测试必须排除宿主及隔离 Controller 的数据库环境覆盖。
+    for (const key of DATABASE_ENV_KEYS) {
+      delete process.env[key];
+    }
+  });
+
+  afterEach(() => {
+    for (const key of DATABASE_ENV_KEYS) {
+      restoreEnv(key, databaseEnvironment[key]);
+    }
+    assert.ok(
+      DATABASE_ENV_KEYS.every(key => process.env[key] === databaseEnvironment[key]),
+      '每个测试结束后必须还原数据库环境变量'
+    );
+  });
+
   it('应该加载默认配置', () => {
     const config = new TitanConfig();
     const db = config.getDatabase();
@@ -20,6 +45,32 @@ describe('TitanConfig', () => {
     assert.strictEqual(db.name, 'football_db');
     assert.strictEqual(db.user, 'football_user');
     assert.strictEqual(db.port, 5432);
+  });
+
+  it('应该使用显式数据库环境覆盖配置', () => {
+    Object.assign(process.env, {
+      DB_HOST: '127.0.0.1',
+      DB_PORT: '5544',
+      DB_NAME: 'titan_config_test',
+      DB_USER: 'titan_test_user',
+      DB_PASSWORD: 'titan-test-only',
+      DB_MAX_CONNECTIONS: '7'
+    });
+
+    assert.deepStrictEqual(new TitanConfig().getDatabase(), {
+      host: '127.0.0.1',
+      port: 5544,
+      name: 'titan_config_test',
+      user: 'titan_test_user',
+      password: 'titan-test-only',
+      maxConnections: 7
+    });
+  });
+
+  it('应该读取正式隔离环境的 validation 数据库用户名', () => {
+    process.env.DB_USER = 'validation';
+
+    assert.strictEqual(new TitanConfig().getDatabase().user, 'validation');
   });
 
   it('应该验证必填配置', () => {

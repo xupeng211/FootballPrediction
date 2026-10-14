@@ -23,6 +23,7 @@ import subprocess
 from typing import TYPE_CHECKING, Any
 
 from scripts.devops import codex_independent_review as reviewer
+from scripts.devops import codex_review_classification as classification
 from scripts.devops.codex_review_contract import review_challenge
 from scripts.devops.codex_review_verdict import writer_identity_path
 from scripts.devops.codex_review_wait import process_starttime
@@ -193,7 +194,33 @@ def run_end_to_end(
         "findings": [finding] if finding else [],
     }
     payload = json.dumps(document, ensure_ascii=False)
-    monkeypatch.setenv("CODEX_CLI_PATH", str(stub_codex(tmp_path / "codex-stub")))
+    # Canonical runner deliberately ignores Builder CODEX_CLI_PATH. Explicitly
+    # inject the transport fixture at its existing test seam; never launch the
+    # real official CLI or relax production binary/authentication checks.
+    stub = stub_codex(tmp_path / "codex-stub")
+    environment = {"PATH": os.environ["PATH"], "LANG": "C.UTF-8", "STUB_FINAL_DOCUMENT": payload}
+    for module in (reviewer, classification):
+        monkeypatch.setattr(module, "canonical_codex_binary", lambda: stub)
+        monkeypatch.setattr(
+            module, "canonical_reviewer_environment", lambda **_kwargs: dict(environment)
+        )
+    monkeypatch.setattr(
+        reviewer,
+        "canonical_reviewer_preflight",
+        lambda **_kwargs: {
+            "policy": "canonical-codex-auth-transport-isolation/v1",
+            "canonical_codex_home_external": True,
+            "canonical_codex_home_owner_only": True,
+            "authentication_mode": "official_chatgpt_stored_state",
+            "builder_auth_override_inherited": False,
+            "custom_model_provider_inherited": False,
+            "cliproxyapi_routing_inherited": False,
+            "generic_network_proxy_preserved": False,
+            "user_codex_config_ignored": True,
+            "pinned_model_active": True,
+            "pinned_reasoning_active": True,
+        },
+    )
     monkeypatch.setenv("STUB_FINAL_DOCUMENT", payload)
     if evidence is None:
         evidence = tmp_path / "e2e-evidence"

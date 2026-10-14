@@ -2,6 +2,20 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# 只读 Controller 快照启动才进入可信模式；环境变量不能选择该模式。
+TRUSTED_QA_MODE=0
+if [[ "$ROOT_DIR" == '/snapshot' ]]; then
+  [[ "${BASH_SOURCE[0]}" == '/snapshot/scripts/devops/gatekeeper.sh' ]] || exit 1
+  unset NODE_OPTIONS NODE_PATH NODE_V8_COVERAGE BASH_ENV ENV PYTHONPATH PYTHONHOME LD_PRELOAD LD_LIBRARY_PATH
+  unset GATEKEEPER_LOCAL_CI GATEKEEPER_DIRECT_MODE GATEKEEPER_LOCAL_CI_ACTIVE GATEKEEPER_LOCAL_HOOK_ACTIVE
+  export GATEKEEPER_PYTHON_BIN=/usr/local/bin/python
+  export PATH='/usr/local/bin:/usr/bin:/bin'
+  /usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool check || exit 1
+  TRUSTED_QA_MODE=1
+  export GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_WORKSPACE_ROOT=/app
+fi
+readonly TRUSTED_QA_MODE
+
 COMPOSE_FILE="${GATEKEEPER_COMPOSE_FILE:-docker-compose.dev.yml}"
 DEV_SERVICE="${GATEKEEPER_DEV_SERVICE:-dev}"
 MODE="${GATEKEEPER_MODE:-push}"
@@ -82,6 +96,10 @@ fail() {
 
 if [[ -n "$CLI_PARSE_ERROR" ]]; then
   fail "$CLI_PARSE_ERROR"
+fi
+if [[ "$TRUSTED_QA_MODE" == '1' ]]; then
+  [[ "$LOCAL_HOOK_MODE" == '0' && "$MODE_ARGUMENT_SEEN" == '1' ]] || fail '可信门禁只接受显式正式模式。'
+  [[ "$MODE_ARGUMENT_VALUE" == 'pr' || "$MODE_ARGUMENT_VALUE" == 'push' ]] || fail '可信门禁模式不匹配。'
 fi
 
 # Git's pre-push protocol supplies one line per ref update on stdin:
@@ -661,6 +679,11 @@ resolve_python_quality_targets() {
 }
 
 bootstrap_node_dependencies() {
+  if [[ "$TRUSTED_QA_MODE" == '1' ]]; then
+    /usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool check \
+      || fail '可信 Node 工具或 stamp 失配；禁止运行时安装。'
+    return 0
+  fi
   local expected_hash=''
   local installed_hash=''
   local reason=''
@@ -709,6 +732,7 @@ bootstrap_python_dependencies() {
   if ! python -m mypy --version >/dev/null 2>&1 \
     || ! python -m ruff --version >/dev/null 2>&1 \
     || ! python -c 'import pytest_cov' >/dev/null 2>&1; then
+    [[ "$TRUSTED_QA_MODE" == '0' ]] || fail '可信 Python QA 依赖缺失；禁止运行时安装。'
     log 'Python QA 依赖缺失，执行 pip install -r requirements.txt。'
     pip install --no-cache-dir -r requirements.txt >/dev/null
   fi
@@ -771,8 +795,13 @@ assert_quality_tooling() {
   python -m mypy --version >/dev/null 2>&1 || fail '容器内缺少 mypy，请先重建开发镜像。'
   python -m ruff --version >/dev/null 2>&1 || fail '容器内缺少 ruff，请先重建开发镜像。'
   python -c 'import pytest_cov' >/dev/null 2>&1 || fail '容器内缺少 pytest-cov，请先重建开发镜像。'
-  [[ -x node_modules/.bin/eslint ]] || fail '项目依赖中缺少 eslint。'
-  [[ -x node_modules/.bin/c8 ]] || fail '项目依赖中缺少 c8。'
+  if [[ "$TRUSTED_QA_MODE" == '1' ]]; then
+    /usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool check \
+      || fail '可信 QA 工具核验失败。'
+  else
+    [[ -x node_modules/.bin/eslint ]] || fail '项目依赖中缺少 eslint。'
+    [[ -x node_modules/.bin/c8 ]] || fail '项目依赖中缺少 c8。'
+  fi
 }
 
 assert_local_hook_tooling() {
@@ -1222,7 +1251,11 @@ run_static_quality_checks() {
   local file
   local ruff_rc=0
 
-  npm run lint
+  if [[ "$TRUSTED_QA_MODE" == '1' ]]; then
+    /usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool lint
+  else
+    npm run lint
+  fi
 
   mapfile -t python_targets < <(resolve_python_quality_targets)
   if [[ "${#python_targets[@]}" -eq 0 ]]; then
@@ -1523,7 +1556,12 @@ run_coverage_guards() {
 
 run_recon_core_coverage_guard() {
   log '执行 Recon 核心独立覆盖率门禁（行覆盖率 >= 90%）。'
-  run_with_failure_reason 'npm run test:coverage:recon-core failed' npm run test:coverage:recon-core
+  if [[ "$TRUSTED_QA_MODE" == '1' ]]; then
+    run_with_failure_reason 'npm run test:coverage:recon-core failed' \
+      /usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool recon-core
+  else
+    run_with_failure_reason 'npm run test:coverage:recon-core failed' npm run test:coverage:recon-core
+  fi
 }
 
 run_remote_merge_enforcement() {

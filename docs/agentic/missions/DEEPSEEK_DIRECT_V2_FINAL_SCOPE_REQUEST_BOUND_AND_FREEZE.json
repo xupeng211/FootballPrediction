@@ -1,0 +1,74 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "DEEPSEEK_DIRECT_V2_FINAL_SCOPE_REQUEST_BOUND_AND_FREEZE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/DIRECT_DEEPSEEK_COST_BOUND.md",
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/missions/CRITICAL_DUAL_REVIEW_STANDALONE_OFFLINE_ADMISSION_IMPLEMENTATION.json",
+    "docs/agentic/missions/DEEPSEEK_DIRECT_V1_MINIMAL_REVIEWER_V2_DISPUTE_INTEGRATION.json",
+    "docs/agentic/missions/DEEPSEEK_DIRECT_V2_FINAL_SCOPE_REQUEST_BOUND_AND_FREEZE.json",
+    "docs/agentic/missions/OPTION_B_CANONICAL_INDEPENDENT_FINAL_REVIEW_EXECUTION.json",
+    "docs/agentic/missions/OPTION_B_CANONICAL_SCOPE_AND_READONLY_SANDBOX_RECOVERY.json",
+    "schemas/agentic/codex_review_receipt.schema.json",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/codex_independent_review.py",
+    "scripts/devops/codex_review_contract.py",
+    "scripts/devops/codex_review_receipt.py",
+    "scripts/devops/direct_deepseek_dispute.py",
+    "scripts/devops/direct_deepseek_independent_review.py",
+    "scripts/devops/direct_deepseek_receipt_evidence.py",
+    "scripts/devops/direct_deepseek_source.py",
+    "scripts/devops/gatekeeper.sh",
+    "scripts/devops/independent_review_backends/direct_deepseek.py",
+    "scripts/devops/independent_review_backends/direct_deepseek_money.py",
+    "scripts/devops/review_policy.py",
+    "scripts/devops/validation_profiles.py",
+    "scripts/test/run_test_suite.js",
+    "scripts/test/test_temp_dirs.js",
+    "tests/helpers/codex_review_evidence_fixtures.py",
+    "tests/unit/TitanConfig.test.js",
+    "tests/unit/fotmob_detail_capture_remediation.test.js",
+    "tests/unit/gatekeeper_boundary_implementation_static.test.js",
+    "tests/unit/scripts/run_test_suite.test.js",
+    "tests/unit/test_direct_deepseek_bound.py",
+    "tests/unit/test_direct_deepseek_dispute.py",
+    "tests/unit/test_direct_deepseek_standalone.py",
+    "tests/unit/test_validation_profiles.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "scripts/devops/codex_reviewer_isolation.py"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "database/",
+    "config/",
+    "docker/",
+    ".github/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "pr1903",
+    "model-activation"
+  ],
+  "protected_invariants": [
+    "STANDALONE_DIRECT_V1={\"football_ancestor\":\"2752b0a5084052fa66367e58832cb11a368384a9\",\"football_base\":\"82b007a27232e5fdd7568c0797cb35c7a8fd26d6\",\"harness_base\":\"33cf7f449cf33d4dd1f663d920732ed93f319de0\",\"harness_head\":\"ea507645cc143b883927fbb67b164cc85d4503a5\",\"harness_origin\":\"git@github.com:xupeng211/codex-mission-harness.git\",\"harness_paths\":[\"src/harness/factory_validation.py\",\"tests/test_factory_phase2.py\"],\"harness_root\":\"/home/xupeng/codex-mission-harness.deepseek-direct-bound\",\"harness_tree\":\"64de596b14cdfb4deda804f3222448dc7218dd88\",\"version\":1}",
+    "Full original Option B base 82b007a27232e5fdd7568c0797cb35c7a8fd26d6 through final HEAD, including all repairs and dispute adaptation; HEAD/tree resolved after commit. No historical chunk reused. Exact contiguous canonical coverage; chunk count must follow actual bytes, not the historical eight.",
+    "Frozen Harness source and V2 validators unchanged. Approved group source ranges are support evidence from the same complete source diffs, not extra canonical coverage. Exact UTF-8 ranges, source hash, group and execution binding required. Missing necessary evidence or body overflow stops; no truncation or additional call.",
+    "R is the actual total Football and Harness chunk count (R<=16). Four qualification, R review, R fixed independent group adjudication, one final cross-group synthesis: 5+2R POST, 9+2R logical HTTP, 10+2R physical HTTP with at most one price302. Exact committed plan/grant/ledger enforce the tighter per-plan bound. No retry, UNKNOWN terminal.",
+    "No prior grant, paid budget, qualification, receipt, FAIL or offline finding adjudication transfers. New exact-head strict, independent real review and explicitly approved price/account/budget/capacity/execution grant required; OFFLINE_FIXTURE is not production acceptance. Factory 2000000, first_paid_execution HARD_BLOCKER and original P0/P1/P2 review policy unchanged.",
+    "DIRECT_DISPUTE_V2={\"groups\":{\"football:0\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:1\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:10\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:2\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:3\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:4\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:5\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:6\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:7\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:8\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"football:9\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606}],\"harness:0\":[{\"end\":1930,\"path\":\"docs/agentic/independent_review_backends.json\",\"source\":\"football\",\"start\":0},{\"end\":1536,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":1048},{\"end\":6551,\"path\":\"scripts/devops/independent_review_backends/direct_deepseek.py\",\"source\":\"football\",\"start\":4745},{\"end\":3818,\"path\":\"scripts/devops/direct_deepseek_source.py\",\"source\":\"football\",\"start\":1472},{\"end\":1575,\"path\":\"scripts/devops/direct_deepseek_receipt_evidence.py\",\"source\":\"football\",\"start\":606},{\"end\":801,\"source\":\"harness\",\"start\":0}]},\"version\":\"direct-dispute-v2/v1\"}"
+  ],
+  "forbidden_side_effects": [
+    "Offline implementation is not production authorization: no paid grant, Provider HTTP, real qualification/reviewer/profile, billing, topup, live activation or formal gate during this mission. Future execution requires separate Owner approval of exact final HEAD/scope/requests/runtime/price/money/currency/account exposure/expiry and residual risk.",
+    "No Harness source/ref change, business semantic change, weakening review or test contracts, historical ledger/receipt mutation, destructive Git, main change, remote writes, push/PR/merge/deploy."
+  ]
+}
