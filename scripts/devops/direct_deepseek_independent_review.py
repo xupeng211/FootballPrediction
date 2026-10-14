@@ -155,9 +155,16 @@ def run_review(args: argparse.Namespace, *, transport=None, grant=None, registry
     if standalone:
         if registered.get("status") != "reserved":
             raise backend.DirectError("STANDALONE_REGISTRY_IDENTITY")
+        task_toolchain = (
+            backend.verify_task_grant(manifest, grant)
+            if grant.get("contract") == "task-bound/dispute-v2/v1"
+            else None
+        )
         if not offline and (
-            _sha(ROOT, "HEAD") != manifest["binding"]["head_sha"]
+            _sha(ROOT, "HEAD")
+            != (task_toolchain["head"] if task_toolchain else manifest["binding"]["head_sha"])
             or _git(ROOT, "status", "--porcelain")
+            or (task_toolchain and str(ROOT.resolve()) != task_toolchain["root"])
         ):
             raise backend.DirectError("EXECUTED_SOURCE_IDENTITY")
         if (

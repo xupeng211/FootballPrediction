@@ -26,7 +26,7 @@ from tests.helpers.direct_harness_source import (
     portable_harness as portable_harness,  # noqa: PLC0414
 )
 
-EXPECTED_CHUNK_MICROUSD = 324404
+EXPECTED_CHUNK_MICROUSD = 21832
 EXPECTED_MAX_OUTPUT = 8192
 EXPECTED_REQUEST_BODY_BYTES = 40_000
 EXPECTED_STANDALONE_MAX_HTTP = 18
@@ -428,7 +428,7 @@ def test_completed_fixture_mode_cannot_be_rebound_to_live_or_new_grant(case):
     journal.close()
 
 
-def test_conditional_fee_formula_prices_entire_context_at_peak_miss(case):
+def test_engineering_fee_estimate_is_separate_from_context_at_peak_miss(case):
     args, _ = case
     manifest, bodies, _ = runner.build_plan(args)
     assert (
@@ -436,6 +436,9 @@ def test_conditional_fee_formula_prices_entire_context_at_peak_miss(case):
     )  # microUSD，向上取整；不是无条件 Provider 美元硬帽。
     assert manifest["reserve_micro_usd"] == len(bodies) * EXPECTED_CHUNK_MICROUSD
     assert manifest["cost_status"] == "CONDITIONAL_COST_BOUND"
+    assert backend.POLICY["context_capacity"] == 1_048_576  # noqa: PLR2004
+    assert backend.POLICY["budget_estimated_input_tokens"] == 40_003  # noqa: PLR2004
+    assert backend.POLICY["budget_estimate_kind"] == "ENGINEERING_ESTIMATE_NOT_PROVIDER_CAP"
 
 
 def test_real_https_boundary_one_successful_post_with_provider_output_cap(monkeypatch):

@@ -18,11 +18,14 @@ import sqlite3
 import ssl
 import stat
 import sys
+import time
 from typing import Any
 from urllib.parse import urljoin
 
+from scripts.devops import independent_review_protocol as protocol
 from scripts.devops.independent_review_backends import direct_deepseek_money as money
-from scripts.devops.independent_review_protocol import canonical_json, sha256_bytes, validate_result
+from scripts.devops.independent_review_backends import direct_deepseek_wire as wire
+from scripts.devops.independent_review_protocol import canonical_json, sha256_bytes
 
 # 保留 Backend 原有公开接口及同一异常类型。
 DirectError = money.DirectError
@@ -30,6 +33,7 @@ balance_amount = money.balance_amount
 currency = money.currency
 money_amount = money.money_amount
 money_key = money.money_key
+validate_result = protocol.validate_result
 
 BACKEND_ID = "direct-deepseek-api"
 RUNNER_VERSION = "1.2.0"
@@ -42,13 +46,23 @@ SECRET_PATH = Path(
 )
 # 绝不把本次离线开发当作生产批准。未来必须独立审查与 Owner 决策。
 LIVE_EXECUTION_APPROVED = False
+MAX_PROMPT_BYTES = 40_000
 POLICY = {
-    "version": "deepseek-flash-2026-10-09/conditional-v1",
+    "version": "deepseek-flash-2026-10-14/engineering-estimate-v2",
     "model": MODEL,
     "model_version": "DeepSeek-V4.1-Flash",
     "endpoint": ENDPOINT,
     # 1M 采用 2**20，比十进制百万更保守；不是精确输入估算。
     "context_capacity": 1_048_576,
+    # 费用准入与模型容量分离：已审计 ByteLevel/BPE + 双消息模板的局部上界。
+    # 对全部正文统一预留，包含动态 dispute；不是 Provider billing 承诺。
+    "budget_estimated_input_tokens": MAX_PROMPT_BYTES + 3,
+    "budget_estimate_kind": "ENGINEERING_ESTIMATE_NOT_PROVIDER_CAP",
+    "budget_tokenizer_sha256": "e7310d1dafe0a86d8a5629fe78a7c763760f651db9b8682718a1781dcd6fe495",
+    # 仅本 lane 的 CNY grant 准入；不声称多个 grant/state 共享任务预算。
+    "total_task_budget_micro_cny": 50_000_000,
+    "ordinary_dispatch_ceiling_micro_cny": 40_000_000,
+    "unallocated_safety_reserve_micro_cny": 10_000_000,
     "server_output_limit": 393_216,
     "max_output": 8192,
     "max_requests": 64,
@@ -58,7 +72,6 @@ POLICY = {
     "cost_status": "CONDITIONAL_COST_BOUND",
     "live_status": "NO_GO_FOR_LIVE",
 }
-MAX_PROMPT_BYTES = 40_000
 MAX_RESPONSE_BYTES = 4_000_000
 QUALIFICATION_COUNT = 4
 MAX_STANDALONE_POSTS = 13
@@ -128,6 +141,7 @@ def runtime_identity() -> str:
     root = Path(__file__).resolve().parents[3]
     paths = [
         "scripts/devops/independent_review_backends/direct_deepseek.py",
+        "scripts/devops/independent_review_backends/direct_deepseek_wire.py",
         "scripts/devops/direct_deepseek_independent_review.py",
         "scripts/devops/direct_deepseek_source.py",
         "scripts/devops/independent_review_backends/direct_deepseek_money.py",
@@ -161,92 +175,19 @@ def payload(
     prompt: str, max_output: int = POLICY["max_output"], *, qualification=False, synthesis=False
 ) -> bytes:
     """冻结全部实际发送字段；正文 bytes 限制不充当 token 计数。"""
-    if (
-        type(max_output) is not int
-        or not 1 <= max_output <= POLICY["max_output"]
-        or max_output > POLICY["server_output_limit"]
-    ):
-        raise DirectError("OUTPUT_CAPACITY")
-    if not isinstance(prompt, str) or len(prompt.encode()) > MAX_PROMPT_BYTES:
-        raise DirectError("PROMPT_BYTE_CAPACITY")
-    # 字节限制只是内存/传输 admission；费用预留使用完整 context，不用 bytes 冒充 token。
-    body = canonical_json(
-        {
-            "model": MODEL,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": QUALIFICATION_SYSTEM
-                    if qualification
-                    else SYNTHESIS_SYSTEM
-                    if synthesis
-                    else SYSTEM,
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "max_tokens": max_output,
-            "thinking": {"type": "disabled"},
-            "reasoning_effort": "none",
-            "stream": False,
-            "response_format": {"type": "json_object"},
-        }
+    return wire.payload(
+        sys.modules[__name__], prompt, max_output, qualification=qualification, synthesis=synthesis
     )
-
-    if len(body) > MAX_PROMPT_BYTES:
-        raise DirectError("REQUEST_BODY_CAPACITY")
-    return body
 
 
 def request_cost(body: bytes, snapshot=None) -> int:
-    """按完整上下文和实际 max_tokens 计算条件性整数预留。"""
-    value = json.loads(body)
-    if value.get("method") == "GET":
-        if (
-            set(value) != {"method", "endpoint", "kind"}
-            or value["endpoint"] not in CONTROL_URLS
-            or value["kind"] not in {"price", "models", "balance_start", "balance_end"}
-            or value["endpoint"]
-            != (
-                price_url(snapshot["currency"] if snapshot else "USD")
-                if value["kind"] == "price"
-                else "https://api.deepseek.com/models"
-                if value["kind"] == "models"
-                else "https://api.deepseek.com/user/balance"
-            )
-        ):
-            raise DirectError("CONTROL_REQUEST_POLICY")
-        return 0
-    if sha256_bytes(canonical_json(POLICY)) != POLICY_SHA:
-        raise DirectError("POLICY_CHANGED")
-    try:
-        if body != payload(
-            value["messages"][1]["content"],
-            value["max_tokens"],
-            qualification=value["messages"][0]["content"] == QUALIFICATION_SYSTEM,
-            synthesis=value["messages"][0]["content"] == SYNTHESIS_SYSTEM,
-        ):
-            raise DirectError("REQUEST_FORMAT")
-    except (KeyError, IndexError, TypeError):
-        raise DirectError("REQUEST_FORMAT") from None
-    if (
-        value.get("model") != MODEL
-        or value.get("thinking") != {"type": "disabled"}
-        or value.get("reasoning_effort") != "none"
-        or value.get("stream") is not False
-        or type(value.get("max_tokens")) is not int
-        or not 1 <= value["max_tokens"] <= POLICY["max_output"]
-    ):
-        raise DirectError("REQUEST_POLICY")
-    numerator = POLICY["context_capacity"] * (
-        snapshot["rates_micro_per_million"]["peak:input_cache_miss"]
-        if snapshot
-        else POLICY["input_micro_usd_per_million"]
-    ) + value["max_tokens"] * (
-        snapshot["rates_micro_per_million"]["peak:output"]
-        if snapshot
-        else POLICY["output_micro_usd_per_million"]
-    )
-    return (numerator + 999_999) // 1_000_000
+    """按局部 Tokenizer 条件估算和实际 max_tokens 计算整数费用预留。
+
+    40,003 来自审计的全正文包络，不是 bytes/token 等式；每次预留全部输出。
+    价格取报价的 peak cache miss，逐请求向上取整到 micro 原币。
+    模型容量、事后 usage 检查和资源合同仍使用 context_capacity。
+    """
+    return wire.request_cost(sys.modules[__name__], body, snapshot)
 
 
 class HttpsTransport:
@@ -276,6 +217,8 @@ class HttpsTransport:
             self.sent.add(digest)  # 交付前消耗；同一实例任何异常也不复用。
             journal = Journal()
             try:
+                if grant.get("contract") == "task-bound/dispute-v2/v1":
+                    verify_task_grant(manifest, grant, dispatch=True)
                 journal.claim_http_attempt(manifest, body, grant)
             finally:
                 journal.close()
@@ -353,55 +296,9 @@ class HttpsTransport:
                 connection.close()
 
 
-def decode(raw: bytes, body: bytes) -> dict[str, Any]:  # noqa: C901
+def decode(raw: bytes, body: bytes) -> dict[str, Any]:
     """只接受完整正常结束；usage 校验是事后检测，不冒充 Provider 硬保证。"""
-    try:
-        descriptor = json.loads(body)
-        if descriptor.get("method") == "GET":
-            if descriptor["kind"] == "price":
-                return {"price_sha256": sha256_bytes(raw)}
-            response = json.loads(raw)
-            if descriptor["kind"] == "models":
-                if MODEL not in [item["id"] for item in response["data"]]:
-                    raise ValueError
-            else:
-                if response["is_available"] is not True:
-                    raise ValueError
-                for balance in response["balance_infos"]:
-                    balance_amount(response, balance["currency"])
-                if not response["balance_infos"]:
-                    raise ValueError
-            return response
-        response = json.loads(raw)
-        (choice,) = response["choices"]
-        message = choice["message"]
-        usage = response["usage"]
-        prompt, completion = usage["prompt_tokens"], usage["completion_tokens"]
-        if (
-            response["model"] != MODEL
-            or not isinstance(response["id"], str)
-            or not response["id"]
-            or choice["finish_reason"] != "stop"
-            or message.get("role") != "assistant"
-            or message.get("tool_calls")
-            or message.get("reasoning_content")
-            or any(type(x) is not int or x < 0 for x in (prompt, completion))
-            or prompt > POLICY["context_capacity"]
-            or completion > json.loads(body)["max_tokens"]
-            or prompt + completion > POLICY["context_capacity"]
-            or usage["total_tokens"] != prompt + completion
-            or usage.get("completion_tokens_details", {}).get("reasoning_tokens", 0) != 0
-        ):
-            raise ValueError
-        hit, miss = usage["prompt_cache_hit_tokens"], usage["prompt_cache_miss_tokens"]
-        if any(type(x) is not int or x < 0 for x in (hit, miss)) or hit + miss != prompt:
-            raise ValueError
-        result = json.loads(message["content"])
-        if descriptor["messages"][0]["content"] not in {QUALIFICATION_SYSTEM, SYNTHESIS_SYSTEM}:
-            validate_result(result)
-        return result
-    except Exception:
-        raise DirectError("INVALID_PROVIDER_RESPONSE") from None
+    return wire.decode(sys.modules[__name__], raw, body)
 
 
 class Journal:
@@ -786,4 +683,81 @@ def validate_standalone_admission(manifest, bodies, grant, *, offline):
         validate_standalone_admission as validate,
     )
 
-    return validate(manifest, bodies, grant, offline=offline)
+    validate(manifest, bodies, grant, offline=offline)
+    # 所有 CNY standalone 派发复用此门禁，包括 reserve 和实际 transport。
+    # 大于40元的grant不能自动动用10元余量；USD历史合同不在CNY门禁范围内。
+    if currency(manifest) == "CNY" and (
+        grant["cap_micro_cny"] > POLICY["ordinary_dispatch_ceiling_micro_cny"]
+    ):
+        raise DirectError("CNY_ORDINARY_DISPATCH_CEILING")
+
+
+def verify_task_grant(manifest, grant, *, dispatch=False):
+    """只读验证 Controller 共享占额；不创建数据库、不再扣一次任务费用。"""
+    if grant.get("contract") != "task-bound/dispute-v2/v1":
+        raise DirectError("TASK_BOUND_GRANT_REQUIRED")
+    reference = grant.get("task_budget", {})
+    ticket, binding = reference.get("ticket", {}), reference.get("binding", {})
+    path = Path(ticket.get("authority", "/nonexistent"))
+    try:
+        private(path.parent, directory=True)
+        private(path)
+        for suffix in ("-journal", "-wal", "-shm"):
+            sidecar = path.with_name(path.name + suffix)
+            if sidecar.exists() or sidecar.is_symlink():
+                private(sidecar)
+        digest = sha256_bytes(
+            json.dumps(binding, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        )
+        if (
+            ticket.get("version") != "factory-direct-v2-cny/v1"
+            or ticket.get("binding_sha256") != digest
+        ):
+            raise ValueError
+        db = sqlite3.connect(path.absolute().as_uri() + "?mode=ro", uri=True)
+        try:
+            approval_row = db.execute(
+                "SELECT approval FROM authorizations WHERE id=?", (ticket["authorization"],)
+            ).fetchone()
+            row = db.execute(
+                "SELECT binding,amount,status FROM claims WHERE authorization=? AND operation=?",
+                (ticket["authorization"], ticket["operation"]),
+            ).fetchone()
+        finally:
+            db.close()
+        approval = json.loads(approval_row[0]) if approval_row else {}
+        direct = binding["direct"]
+        if (
+            not row
+            or json.loads(row[0]) != binding
+            or row[1] != ticket["amount_micro_cny"]
+            or row[2] not in ({"CLAIMED"} if dispatch else {"CLAIMED", "COMPLETE"})
+            or approval.get("authority") != str(path.absolute())
+            or approval.get("task_sha256") != ticket["task_sha256"]
+            or approval.get("route") != ticket["version"]
+            or approval.get("user_approved") is not True
+            or approval.get("expires_at", 0) <= time.time()
+            or approval.get("policy")
+            != {
+                "total_micro_cny": 50_000_000,
+                "ordinary_micro_cny": 40_000_000,
+                "reserve_micro_cny": 10_000_000,
+            }
+            or type(grant.get("accepted_account_exposure_micro_cny")) is not int
+            or not 0
+            <= grant["accepted_account_exposure_micro_cny"]
+            <= POLICY["total_task_budget_micro_cny"]
+            or currency(manifest) != "CNY"
+            or direct["grant_id"] != grant["id"]
+            or direct["manifest_sha256"] != sha256_bytes(canonical_json(manifest))
+            or direct["review_identity"] != manifest["review_identity"]
+            or direct["source"] != manifest["binding"]
+            or direct["price_sha256"] != manifest["standalone"]["price_sha256"]
+            or direct["toolchain"]["runtime_sha256"] != manifest["runtime_sha256"]
+            or row[1] != manifest["reserve_micro_cny"]
+            or grant["cap_micro_cny"] != row[1]
+        ):
+            raise ValueError
+    except (OSError, ValueError, KeyError, TypeError, sqlite3.Error):
+        raise DirectError("BLOCKED_BY_TASK_BUDGET_POLICY") from None
+    return direct["toolchain"]

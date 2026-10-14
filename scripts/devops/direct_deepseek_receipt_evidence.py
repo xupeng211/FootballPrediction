@@ -12,6 +12,7 @@ from argparse import Namespace
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 import json
+from pathlib import Path
 import re
 
 from scripts.devops.independent_review_backends import direct_deepseek as backend
@@ -439,6 +440,11 @@ def validate_price_snapshot(snapshot, unit, digest):
 
 def validate_standalone_admission(manifest, bodies, grant, *, offline):  # noqa: C901
     """一次性显式有限风险授权；不是费用硬帽、Factory fallback 或 live 开关。"""
+    if grant.get("contract") == "task-bound/dispute-v2/v1":
+        backend.verify_task_grant(manifest, grant)
+        original = {k: v for k, v in grant.items() if k != "task_budget"}
+        original["contract"] = "standalone-informed-risk/dispute-v2"
+        return validate_standalone_admission(manifest, bodies, original, offline=offline)
     unit = backend.currency(manifest)
     cap_key, balance_key, exposure_key = [
         backend.money_key(k, unit) for k in ("cap", "balance", "accepted_account_exposure")
@@ -540,3 +546,24 @@ def validate_standalone_admission(manifest, bodies, grant, *, offline):  # noqa:
                 raise ValueError
     except (KeyError, TypeError, ValueError, OverflowError):
         raise backend.DirectError("STANDALONE_AUTHORIZATION_DENIED") from None
+
+
+def task_balance_end(path, *, repo_root, mission_id):
+    """复验已有完整 receipt 后复用余额证据；不发 GET、不补预算。"""
+    receipt = json.loads(Path(path).read_bytes())
+    fact = consume_direct(
+        Path(path),
+        repo_root=Path(repo_root),
+        expected_base=receipt["base_sha"],
+        expected_head=receipt["head_sha"],
+        expected_mission_id=mission_id,
+        expected_scope_hash=receipt["mission_scope_sha256"],
+    )
+    if not fact.trusted or not fact.standalone_identity:
+        raise backend.DirectError("PREVIOUS_RECEIPT_BALANCE_UNVERIFIED")
+    stem = receipt["provenance"]["artifact_stem"]
+    prompt = json.loads((Path(path).parent / f"{stem}-prompt.json").read_bytes())
+    raw = json.loads((Path(path).parent / f"{stem}-raw.json").read_bytes())
+    kinds = prompt["manifest"]["standalone"]["request_kinds"]
+    index = kinds.index("balance_end")
+    return backend.balance_amount(json.loads(raw["responses"][index]), "CNY")
