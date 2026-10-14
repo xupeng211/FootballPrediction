@@ -313,7 +313,7 @@ test('子测试临时目录按批次隔离，覆盖率使用工作区且成功/�
         `);
         assert.equal(result.status, coverage ? 1 : 0, result.stderr.toString());
         assert.match(result.stdout.toString(), /# pass 1\n# fail 0/);
-        if (coverage) assert.match(`${result.stdout}${result.stderr}`, /coverage.*threshold/i);
+        if (coverage) assert.match(`${result.stdout}${result.stderr}`, /coverage.*threshold|覆盖率未达标/i);
         const paths = JSON.parse(fs.readFileSync(recorded, 'utf8'));
         assert.equal(paths.tmp, path.join(paths.root, 'tmp'));
         assert.equal(path.dirname(paths.root), parentTmpDir);
