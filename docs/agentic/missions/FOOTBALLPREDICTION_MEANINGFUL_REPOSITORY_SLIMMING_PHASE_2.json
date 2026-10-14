@@ -1,0 +1,47 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_MEANINGFUL_REPOSITORY_SLIMMING_PHASE_2",
+  "task_type": "mixed",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    ".dockerignore",
+    "tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data/quality_test_sample_20251130.json",
+    "tests/unit/scripts/recon_retirement_boundary.test.js",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FOOTBALLPREDICTION_MEANINGFUL_REPOSITORY_SLIMMING_PHASE_2.json",
+    "archive/recon_v2_research/debug_decrypt_failure.js",
+    "archive/recon_v2_research/j1_probe_final.js",
+    "archive/recon_v2_research/research_api_direct.js",
+    "docs/CAPABILITY_INDEX.md"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    "src/",
+    "scripts/",
+    "config/",
+    "data/",
+    "models/",
+    "model_zoo/",
+    "database/",
+    "deploy/",
+    "docker/",
+    ".github/",
+    "archive_vault_2026/",
+    "docs/_manifests/",
+    "docs/_reports/",
+    "docs/data/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Preserve canonical runtime, tests, scanners, research/raw fixtures, ingestion, training/evaluation, all model/data and accepted recovery assets.",
+    "Retire only the historical QA-export subtree after preserving the exact original externally; delete only the previously certified Recon probes alongside it.",
+    "Do not weaken scans, review policy, authorization gates or testing; preserve both historical Harness tasks and all accounting/evidence byte unchanged.",
+    "No merge or release; current HEAD must receive independent Official OpenAI and Direct DeepSeek review, fail closed if unavailable."
+  ],
+  "forbidden_side_effects": [
+    "No live acquisition, provider action, production/database/raw writes, training, prediction, backtest, model activation, migration apply or recovery execution.",
+    "No Harness modifications, historical mission resume/retry/rewrite, merge, release, history rewriting or force push."
+  ]
+}
