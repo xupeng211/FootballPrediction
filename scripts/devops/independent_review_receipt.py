@@ -27,6 +27,7 @@ from scripts.devops.codex_review_output import (
     reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
+from scripts.devops.direct_deepseek_receipt_evidence import validate_direct_provenance
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     RECEIPT_VERSION,
@@ -101,6 +102,7 @@ class ReceiptEvidenceContext:
     codex_execution: CodexExecutionEvidence | None = None
     claude_deepseek_execution: ClaudeDeepSeekExecutionEvidence | None = None
     chunked_claude_evidence: tuple[dict[str, Any], ...] = ()
+    direct_execution: Any | None = None
 
 
 SECRET_FIELD_TOKENS = (
@@ -690,8 +692,15 @@ def validate_receipt(  # noqa: C901, PLR0912
         backend["required_provenance_fields"]
     ).issubset(receipt["provenance"]):
         raise IndependentReviewProtocolError("receipt required backend provenance is missing")
+    if (
+        evidence_context.direct_execution is not None
+        and receipt["review_backend"] != "direct-deepseek-api"
+    ):
+        raise IndependentReviewProtocolError("Direct execution cannot prove a CLI identity")
     _validate_codex_provenance(receipt, backend, evidence_context)
     _validate_claude_deepseek_provenance(receipt, backend, evidence_context)
+
+    validate_direct_provenance(receipt, evidence_context, backend)
     _validate_external_bindings(receipt, evidence_context)
     integrity = receipt["integrity"]
     if not isinstance(integrity, dict) or integrity.get(

@@ -25,10 +25,14 @@ from scripts.devops.codex_review_contract import (  # noqa: E402
     build_review_prompt,
     parse_final_message,
     parse_timestamp,
+    receipt_prompt_sha,
     review_challenge,
     reviewer_selectors_from_command,
     sha256_bytes,
     validate_review_result,
+)
+from scripts.devops.codex_review_contract import (  # noqa: E402, F401 -- retained external compatibility export
+    declared_model_provenance as _declared_model_provenance,
 )
 from scripts.devops.codex_review_output import (  # noqa: E402
     assert_successful_completion,
@@ -301,11 +305,6 @@ def _load_receipt_document(receipt_path: Path, repo_root: Path) -> tuple[dict[st
     if not isinstance(receipt, dict):
         raise _EvidenceError("RECEIPT_JSON_INVALID", "receipt 必须是 JSON object")
     return receipt, permission_faults
-
-
-def _declared_model_provenance(receipt: dict[str, Any]) -> dict[str, Any]:
-    value = receipt.get("model_provenance")
-    return value if isinstance(value, dict) else {}
 
 
 def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
@@ -714,15 +713,12 @@ def _verify_receipt_internals(  # noqa: C901, PLR0912, PLR0915
         ):
             raise _EvidenceError("MODEL_PROVENANCE_INVALID", "receipt codex_cli_version 缺失")
 
-    expected_prompt_sha = sha256_bytes(
-        _codex_prompt(
-            mission_id=receipt["mission_id"],
-            base_sha=base_sha,
-            head_sha=reviewed_head,
-            mission_scope=mission_scope,
-            mission_scope_path=scope_relative_path,
-            mission_scope_sha256=scope_commit_hash,
-        ).encode("utf-8")
+    from scripts.devops import direct_deepseek_independent_review as direct_runner  # noqa: PLC0415
+
+    with _fault("STANDALONE_DUAL_BINDING_INVALID"):
+        direct_runner.validate_codex_standalone_binding(receipt, mission_scope, repo_root, raw_path)
+    expected_prompt_sha = receipt_prompt_sha(
+        receipt, mission_scope, base_sha, reviewed_head, scope_relative_path
     )
     if provenance.get("prompt_sha256") != expected_prompt_sha:
         raise _EvidenceError(

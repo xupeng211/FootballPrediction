@@ -478,3 +478,37 @@ PR metadata 对 receipt payload、provider execution 或 hostile-builder resista
 证明；它只负责 exact PR HEAD、mission/workflow metadata、required tests/static/governance
 checks 和 provider-neutral 最终 evidence contract。Owner/Controller 只有在本地双 receipt
 validation 与远端 required CI 同时通过时才可 merge。
+
+
+### 一次性 Standalone Direct 候选（离线，默认关闭）
+
+仅对含 `STANDALONE_DIRECT_V1` 冻结合同的 CRITICAL scope，已验证的
+`direct-deepseek-api` 可以替代旧 CLI 的 DeepSeek 身份；不冒充 `claude-code-deepseek`，
+不改变 NORMAL/STRICT 或无该合同的 CRITICAL。Registry 仍 reserved、全局 live 仍 false。
+该限定路线需要未来单独批准的 owner-only `standalone-informed-risk/v1` 授权：准确同币种 USD 或 CNY 金额、
+账户余额及可接受暴露、价格摘要、完整最终执行身份/plan hash、runtime、source、请求清单、
+到期时间、容量以及一次 canonical Codex。没有授权默认拒绝；离线 fixture 永不构成 current approval。
+
+复用原 Journal，整轮在首个 HTTP 前预留；最多 13 POST：4 Qualification、
+8 FootballPrediction review、1 Harness companion review。完整固定清单使用 17 次逻辑 HTTP：
+启动 price/models/balance 三次 GET、全部 13 POST、结束余额一次 GET；仅公开价格允许
+一次白名单 302 follow-up，物理 HTTP 最多 18。12 POST 的较小合法计划仍可准入。
+13 POST 整轮保守容量为 13 × (1,048,576 + 8,192) = 13,737,984 单位，需未来独立批准。
+正文上限 40,000 bytes、每次输出上限 8,192 tokens 不变；未使用名额不得补救或挪用。
+无 retry/模型 POST redirect/格式修复/续写；资格、审查失败或
+UNKNOWN 后立即停止；一次 Codex 认领持久化后不重新认领。全部响应、来源及资格语义由 consumer 重算。
+
+`PHYSICAL_COST_BOUND=UNPROVEN`。客户端整轮条件性预留不是 Provider 账单硬帽；金额不写死为
+USD5 或历史估算。账单未结算保持 UNKNOWN，不能记零或退还失败请求预留。Standalone 独立容量
+必须明确批准，不能自动绕过 Factory 2,000,000 cap 或 first_paid_execution HARD_BLOCKER。
+最终提交后重新计算完整 scope/source/chunks/请求/条件金额；旧 receipt 和旧 strict 仅为历史证据。
+此候选不授予真实调用、充值、production、merge 或正式验收权限。
+
+公开价格准入仅允许官方HTTPS价格白名单（既有 pricing、zh-cn/pricing及其尾斜杠），
+最多一次302；额外GET发送前持久化并计入18 HTTP上限，不授权POST重试。需真实核验最终URL；
+未知目标/模型/币种/计费档位/时间/正文或缺少完整价格快照一律拒绝生产执行。
+CNY使用独立microCNY字段，USD保留microUSD字段；整轮预留、余额、授权和ledger同币种，
+没有自动汇率或合并。生产需24小时内、完整六档价格且首次GET正文重验；旧价格仅可离线兼容。
+CNY固定中文入口，USD保留英文入口；中文空闲/高峰六档原币价格由原验证器校验，
+最终URL与计划及快照绑定。已观察中文公开报价；新HEAD正式strict及生产价格重验仍待授权，
+费用候选不是grant，模拟价格不是官方报价或真实调用授权。

@@ -230,7 +230,7 @@ def _round_worktree_path(evidence_dir: Path, head_sha: str, run_id: str) -> Path
     return worktree
 
 
-def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
+def run_review(args: argparse.Namespace) -> Path:  # noqa: C901, PLR0915
     """Run a fresh read-only Codex review and emit one external receipt."""
 
     repo_root = Path(args.repo_root).resolve()
@@ -267,6 +267,17 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
     # waiter before the review has started, which removes the window in which a
     # stale receipt could look like an answer.
     run_id = args.run_id or uuid.uuid4().hex
+    import scripts.devops.direct_deepseek_independent_review as direct_runner  # noqa: PLC0415
+
+    standalone = direct_runner.codex_standalone_guard(
+        mission_scope,
+        root=repo_root,
+        base=base_sha,
+        head=expected_head,
+        scope_hash=mission_scope_hash,
+        receipt_path=getattr(args, "deepseek_receipt", None),
+        claim_run_id=run_id,
+    )
     _record_writer_identity(evidence_dir, expected_head, run_id)
     worktree = _round_worktree_path(evidence_dir, expected_head, run_id)
     raw_path = evidence_dir / f"codex-review-output-{expected_head[:12]}-{run_id}.jsonl"
@@ -436,6 +447,8 @@ def run_review(args: argparse.Namespace) -> Path:  # noqa: PLR0915
             "final_message_sha256": sha256_file(final_path),
         },
     }
+    if standalone is not None:
+        receipt["provenance"]["standalone"] = standalone
     payload_sha = sha256_bytes(_canonical_json(receipt))
     receipt["integrity"] = {"receipt_payload_sha256": payload_sha}
     # The receipt name *is* the round's identity, so it is derived only from the
@@ -457,6 +470,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="启动新的 read-only Codex reviewer")
+    run.add_argument("--deepseek-receipt", type=Path)
     run.add_argument("--repo-root", type=Path, default=ROOT)
     run.add_argument("--base-sha", required=True)
     run.add_argument("--head-sha", required=True)

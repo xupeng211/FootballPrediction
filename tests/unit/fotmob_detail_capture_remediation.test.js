@@ -434,15 +434,20 @@ test('P1-3: Makefile defines the five canonical data-fotmob-detail-capture targe
 });
 
 function runMake(target, envVars) {
-    const fakeBin = fs.mkdtempSync('/tmp/fotmob_make_bin_');
+    const fakeBin = tmpDir('fotmob_make_bin_');
     const logPath = path.join(fakeBin, 'docker-calls.log');
     fs.writeFileSync(path.join(fakeBin, 'docker'),
-        '#!/bin/sh\nprintf called >> "$FOTMOB_MAKE_DOCKER_LOG"\n');
-    fs.chmodSync(path.join(fakeBin, 'docker'), 0o755);
+        '#!/bin/sh\nprintf "%s\\n" "$@" >> "$FOTMOB_MAKE_DOCKER_LOG"\n');
+    // 夹具只需被可信 shell 读取；不能依赖临时挂载可执行或回退到真实 Docker。
+    fs.chmodSync(path.join(fakeBin, 'docker'), 0o600);
     try {
-        const env = { ...process.env, ...envVars, PATH: `${fakeBin}:${process.env.PATH}`, FOTMOB_MAKE_DOCKER_LOG: logPath };
-        const result = spawnSync('make', [target], { cwd: REPO_ROOT, encoding: 'utf8', env });
-        return { status: result.status, output: `${result.stdout}${result.stderr}`, dockerCalled: fs.existsSync(logPath) };
+        const env = { ...process.env, ...envVars, FOTMOB_MAKE_DOCKER_LOG: logPath };
+        const result = spawnSync('make', [target, `COMPOSE_DEV=/bin/sh '${path.join(fakeBin, 'docker')}'`], { cwd: REPO_ROOT, encoding: 'utf8', env });
+        return {
+            status: result.status, output: `${result.stdout}${result.stderr}`,
+            dockerCalled: fs.existsSync(logPath),
+            dockerArgs: fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '',
+        };
     } finally {
         fs.rmSync(fakeBin, { recursive: true, force: true });
     }
@@ -495,8 +500,9 @@ test('P1-3: execute target fails in make before Node unless every variable is ex
     const ok = runMake('data-fotmob-detail-capture-execute', {
         ...vars, NETWORK_AUTHORIZATION: 'yes', DELAY_MS: '60000',
     });
-    assert.equal(ok.status, 0);
+    assert.equal(ok.status, 0, ok.output);
     assert.equal(ok.dockerCalled, true);
+    assert.match(ok.dockerArgs, /^exec\n-T\n/);
 });
 
 test('P1-3: execute dry-run passes every variable with no dangerous defaults', () => {
