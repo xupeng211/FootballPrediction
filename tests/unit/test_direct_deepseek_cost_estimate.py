@@ -1,6 +1,6 @@
 """人民币费用估算/准入定点回归；只使用临时Git、临时Ledger和合成响应。"""
 
-# 费用/容量验收值独立于实现常量；同名 alias 用于显式导入 pytest fixtures。
+# 费用/容量验收值独立于实现常量；模块属性绑定保留原 pytest fixture 对象。
 # 延迟导入保留冻结资格模块加载顺序；fake runtime 保留实际接口参数。
 # ruff: noqa: PLR2004, PLC0414, PLC0415
 
@@ -18,6 +18,8 @@ from scripts.devops.independent_review_backends import direct_deepseek as backen
 from scripts.devops.independent_review_protocol import canonical_json
 from tests.helpers.direct_harness_source import harness_source
 from tests.helpers.direct_harness_source import portable_harness as portable_harness
+from tests.unit import test_direct_deepseek_bound as bound_fixtures
+from tests.unit import test_direct_deepseek_dispute as dispute_fixtures
 from tests.unit.test_direct_deepseek_bound import (
     FakeTransport,
     capacity_candidate,
@@ -25,12 +27,13 @@ from tests.unit.test_direct_deepseek_bound import (
     grant_for,
     response,
 )
-from tests.unit.test_direct_deepseek_bound import case as case
 from tests.unit.test_direct_deepseek_bound import no_network as no_network
 from tests.unit.test_direct_deepseek_dispute import DisputeTransport
 from tests.unit.test_direct_deepseek_dispute import grant_for as dispute_grant
-from tests.unit.test_direct_deepseek_dispute import integrated as integrated
 from tests.unit.test_direct_deepseek_standalone import standalone_case as standalone_case
+
+case = bound_fixtures.case
+integrated = dispute_fixtures.integrated
 
 
 @pytest.mark.parametrize("character", ["x", "中", '"', "\\", "\x00"])

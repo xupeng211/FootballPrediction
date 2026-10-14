@@ -1,6 +1,6 @@
 """原费用测试中的完整离线 Factory 模拟；不提供正式 Provider 审核证据。"""
 
-# 保留原测试的延迟导入、fixture alias、模拟接口与断言。
+# 保留原测试的延迟导入、fixture 对象、模拟接口与断言。
 # ruff: noqa: PLR2004, PLC0414, PLC0415, ARG002
 from __future__ import annotations
 
@@ -14,13 +14,15 @@ from scripts.devops import direct_deepseek_independent_review as runner
 from scripts.devops.independent_review_backends import direct_deepseek as backend
 from scripts.devops.independent_review_protocol import canonical_json
 from tests.helpers.direct_harness_source import portable_harness as portable_harness
+from tests.unit import test_direct_deepseek_dispute as dispute_fixtures
 from tests.unit.test_direct_deepseek_bound import case as case
 from tests.unit.test_direct_deepseek_bound import git
 from tests.unit.test_direct_deepseek_bound import no_network as no_network
 from tests.unit.test_direct_deepseek_cost_estimate import offline_harness_root
 from tests.unit.test_direct_deepseek_dispute import DisputeTransport
-from tests.unit.test_direct_deepseek_dispute import integrated as integrated
 from tests.unit.test_direct_deepseek_standalone import standalone_case as standalone_case
+
+integrated = dispute_fixtures.integrated
 
 
 def test_factory_full_task_rework_two_v2_reviews_shared_budget(integrated, tmp_path, monkeypatch):  # noqa: C901, PLR0915
