@@ -31,7 +31,8 @@ def is_safe_confidence(confidence: float) -> bool:
 
 
 def extract_team_names_from_url(url: str) -> tuple[str, str] | None:
-    match = re.search(r"/football/england/premier-league-[^/]+/([^/]+)/?", url)
+    path = re.split(r"[?#]", url, maxsplit=1)[0]
+    match = re.search(r"/football/england/premier-league-[^/]+/([^/]+)/?", path)
     if not match:
         return None
 
