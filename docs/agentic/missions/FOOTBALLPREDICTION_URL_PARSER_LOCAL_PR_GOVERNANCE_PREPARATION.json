@@ -1,0 +1,55 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_URL_PARSER_LOCAL_PR_GOVERNANCE_PREPARATION",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/utils/teams/url_tools.py",
+    "tests/unit/test_team_url_tools.py",
+    "docs/agentic/missions/FOOTBALLPREDICTION_URL_PARSER_LOCAL_PR_GOVERNANCE_PREPARATION.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/DOCUMENTATION_GOVERNANCE.md",
+    "ruff.toml",
+    "pyproject.toml",
+    "pytest.ini",
+    "requirements.txt",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "scripts/",
+    "schemas/",
+    "config/",
+    "database/",
+    "data/",
+    "models/",
+    "training/",
+    "deploy/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "pr1903",
+    "blocker"
+  ],
+  "protected_invariants": [
+    "Business comparison Base remains 14633c3ca99309a1a4d6d9b5b107f2c0b8c98342; the two reviewed business blobs are exactly those in 50442c7e4cf573d27ed118a10d6d930cd4efd545.",
+    "The existing URL correction, all 55 regression cases and assertions, and the effective lint/format rules remain unchanged.",
+    "Only this explicitly user-authorized tracked mission scope may be added after the reviewed salvage commit; no permanent governance policy is changed.",
+    "Strict exact-head review, canonical receipt eligibility, scope exclusions and required CI stay fail-closed.",
+    "Historical E2E_03 stays BLOCKED and interrupted with no Controller QA or LOCAL_CANDIDATE_READY; historical ledgers and UNKNOWN stay unchanged.",
+    "Formal FootballPrediction source, old salvage candidate, Harness, daily/dedicated proxy, accounts and credentials remain unchanged."
+  ],
+  "forbidden_side_effects": [
+    "No real model inference, qualification or paid reviewer during this local preparation; later canonical review needs separate user authorization.",
+    "No OAuth refresh, login, account switching, credential access or proxy reconfiguration.",
+    "No production/provider request, production database or data mutation, trading, training, prediction or model activation; only disposable offline QA resources are permitted.",
+    "No network dependency installation, destructive Git operation, old history rewrite, CI bypass or weakening of protected governance rules.",
+    "No push, PR creation, merge, release or deploy during this local preparation."
+  ]
+}
