@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import re
 
+from scripts.ops.helpers.pr_authorization_matrix import CATEGORY_WORKFLOW_GOVERNANCE, classify_path
+
 DOCUMENTATION_IMPACT_HEADING = "## Documentation Impact"
 VISION_IMPACT_FIELD = "Project vision / target-state changed?"
 DOCUMENTATION_IMPACT_FIELDS: tuple[str, ...] = (
@@ -228,20 +230,25 @@ def _contract_mapping_errors(changed: set[str]) -> list[str]:
         for path in changed
         if (_matches(path, "docs/data/*_CONTRACT.md") and path != STAGE_D_CONTRACT_DOC)
         or (
-            path.startswith(("src/", "database/migrations/", "models/", "training/"))
+            (
+                path.startswith(("src/", "database/migrations/", "models/", "training/"))
+                or (
+                    path.startswith("scripts/")
+                    and CATEGORY_WORKFLOW_GOVERNANCE not in classify_path(path)
+                )
+            )
             and path not in STAGE_D_CONTRACT_PATHS
         )
     }
     if unmapped_paths:
         return [
-            "contract changed=yes has no approved domain mapping: "
-            + ", ".join(sorted(unmapped_paths))
+            "contract paths have no approved domain mapping: " + ", ".join(sorted(unmapped_paths))
         ]
     if changed & STAGE_D_CONTRACT_PATHS:
         unsupported = changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
         if unsupported:
             return [
-                "contract changed=yes mixes Stage D with workflow or unmapped paths: "
+                "contract mapping mixes Stage D with workflow or unmapped paths: "
                 + ", ".join(sorted(unsupported))
             ]
     elif "contract" not in classify_changed_paths(changed):
@@ -266,11 +273,17 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     if not classified and _normalise(vision_value) != "yes" and _normalise(contract_value) != "yes":
         return []
 
-    errors: list[str] = []
+    # Actual contract paths must not borrow a workflow mapping via a false declaration.
+    errors = (
+        _contract_mapping_errors(changed)
+        if "contract" in classified or _normalise(contract_value) == "yes"
+        else []
+    )
     if DOCUMENTATION_IMPACT_HEADING not in pr_body:
         return [
+            *errors,
             "Documentation Impact is required for long-lived capability/status paths: "
-            + ", ".join(sorted(classified))
+            + ", ".join(sorted(classified)),
         ]
 
     values = {name: _table_value(pr_body, label) for name, label in YES_NO_FIELDS.items()}
@@ -297,7 +310,6 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     declared_docs = {token.strip("`\"'") for token in re.split(r"[,;\s]+", updated_docs) if token}
     reason = _table_value(pr_body, "If not updated, explicit reason")
     if _normalise(values["contract"]) == "yes":
-        errors.extend(_contract_mapping_errors(changed))
         classified.setdefault("contract", set())
     if source_updated:
         if not updated_docs or _normalise(updated_docs) in HOLLOW_REASON_VALUES:
