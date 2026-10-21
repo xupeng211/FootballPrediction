@@ -669,25 +669,71 @@ test('REMOTE CI PRESERVATION: full Gatekeeper keeps ephemeral DB cold-start vali
     assert.doesNotMatch(workflow, /gatekeeper\.sh --mode=\"\$\{GATEKEEPER_CI_MODE\}\"/);
 });
 
-test('LOCAL HOOK BEHAVIOR: pre-commit and pre-push stay DB/Docker-free with dangerous commands stubbed', () => {
+test('LOCAL HOOK BEHAVIOR: pre-commit and pre-push stay DB/Docker-free with dangerous commands stubbed', (t) => {
     const probe = createHookSafetyProbe();
     try {
+        const eslintPath = path.join(REPO_ROOT, 'node_modules/.bin/eslint');
+        assert.ok(fileExists(eslintPath), '行为测试必须使用现有真实 ESLint，不能将依赖缺失当作 noexec');
+        // 与普通 Hook 使用同一内核可执行性检查；文件存在不代表挂载允许执行。
+        const tooling = spawnSync('bash', ['-c', '[[ -x "$1" ]]', 'hook-tooling-probe', eslintPath], {
+            env: probe.env, encoding: 'utf8', timeout: 10000
+        });
+        assert.ifError(tooling.error);
+        assert.ok(tooling.status === 0 || tooling.status === 1, '可执行性探针必须正常结束');
+        const executable = tooling.status === 0;
         for (const [name, hookPath] of [
             ['pre-commit', PRE_COMMIT_HOOK],
             ['pre-push', PRE_PUSH_HOOK]
         ]) {
             const result = runHook(hookPath, probe.env);
             const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+            assert.ifError(result.error);
             assert.equal(
                 result.status,
-                0,
-                `${name} hermetic hook failed unexpectedly:\n${output.slice(-6000)}`
+                executable ? 0 : 1,
+                `${name} hermetic hook returned an unexpected result:\n${output.slice(-6000)}`
             );
+            if (executable) {
+                assert.match(output, /本地 Git Hook hermetic 门禁通过/);
+                assert.match(output, /eslint "src\/\*\*\/\*\.js"/, '成功路径必须实际运行原 lint');
+            } else {
+                assert.match(output, /ERROR: 本地 Git Hook hermetic 模式缺少 eslint。/);
+                assert.doesNotMatch(output, /执行静态质量检查|hermetic 门禁通过/);
+            }
+            t.diagnostic(`${name}: ${executable ? '真实 lint 与 Hook 成功' : '不可执行 ESLint 正确 fail-closed'}`);
             assert.equal(
                 readProbeMarker(probe.markerPath),
                 '',
                 `${name} invoked Docker, PostgreSQL, Redis, dbBlueprint, or a network connection`
             );
+        }
+    } finally {
+        probe.cleanup();
+    }
+});
+
+test('LOCAL HOOK BEHAVIOR: missing or non-executable ESLint fails closed before quality checks', () => {
+    const probe = createHookSafetyProbe();
+    try {
+        const fixtureGate = path.join(probe.probeRoot, 'scripts/devops/gatekeeper.sh');
+        fs.mkdirSync(path.dirname(fixtureGate), { recursive: true });
+        fs.copyFileSync(GATEKEEPER_SH, fixtureGate);
+        for (const state of ['missing', 'non-executable']) {
+            if (state === 'non-executable') {
+                const eslintPath = path.join(probe.probeRoot, 'node_modules/.bin/eslint');
+                fs.mkdirSync(path.dirname(eslintPath), { recursive: true });
+                // 真实入口的无执行权限副本，不伪造 ESLint，也不修改现有工具权限。
+                fs.writeFileSync(eslintPath, fs.readFileSync(path.join(REPO_ROOT, 'node_modules/.bin/eslint')), { mode: 0o644 });
+            }
+            const result = spawnSync('bash', [fixtureGate, '--mode=commit', '--local-hook'], {
+                cwd: probe.probeRoot, env: probe.env, encoding: 'utf8', timeout: 10000
+            });
+            const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+            assert.ifError(result.error);
+            assert.equal(result.status, 1, `${state} ESLint must fail closed`);
+            assert.match(output, /ERROR: 本地 Git Hook hermetic 模式缺少 eslint。/);
+            assert.doesNotMatch(output, /执行静态质量检查|hermetic 门禁通过/);
+            assert.equal(readProbeMarker(probe.markerPath), '', '拒绝路径也不能访问 Docker、DB 或网络');
         }
     } finally {
         probe.cleanup();
@@ -715,5 +761,79 @@ test('LOCAL HOOK CONTRACT: malformed invocation fails closed before tooling or D
         }
     } finally {
         probe.cleanup();
+    }
+});
+
+
+test('TRUSTED QA: readonly snapshot gate checks physical identity before bootstrap', () => {
+    const gate = readDoc(GATEKEEPER_SH);
+    const check = '/usr/local/bin/python3 -I /snapshot/scripts/devops/validation_profiles.py --trusted-tool check';
+    assert.ok(gate.indexOf(check) < gate.indexOf('bootstrap_node_dependencies()'));
+    assert.match(gate, /BASH_SOURCE\[0\].*\/snapshot\/scripts\/devops\/gatekeeper\.sh/);
+    assert.match(gate, /readonly TRUSTED_QA_MODE/);
+    const bootstrap = gate.slice(gate.indexOf('bootstrap_node_dependencies()'), gate.indexOf('bootstrap_python_dependencies()'));
+    assert.ok(bootstrap.indexOf('--trusted-tool check') < bootstrap.indexOf('npm ci --no-fund'));
+    assert.match(bootstrap, /return 0/);
+    assert.match(gate, /可信 Python QA 依赖缺失；禁止运行时安装/);
+    assert.match(gate, /--trusted-tool lint/);
+    assert.match(gate, /--trusted-tool recon-core/);
+    assert.match(gate, /'npm run test:coverage failed' npm run test:coverage/);
+});
+
+test('TRUSTED QA: fixed ESLint config preserves rules, overrides, ignores and rejects mutable config discovery', async () => {
+    const { ESLint } = require('eslint');
+    const dependencies = path.dirname(path.dirname(require.resolve('eslint/package.json')));
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'trusted-eslint-config-'));
+    try {
+        fs.copyFileSync(path.join(REPO_ROOT, '.eslintrc.json'), path.join(fixture, '.eslintrc.json'));
+        const emptyIgnore = path.join(fixture, 'frozen-ignore');
+        fs.writeFileSync(emptyIgnore, '');
+        const files = ['src/example.js', 'config/example.js', 'scripts/ops/example.js',
+            'scripts/maintenance/example.js', 'scripts/test/example.js',
+            'src/infrastructure/recon/ReconEngine.js'];
+        for (const file of files) {
+            fs.mkdirSync(path.dirname(path.join(fixture, file)), { recursive: true });
+            fs.writeFileSync(path.join(fixture, file), 'module.exports = {};\n');
+        }
+        const normal = new ESLint({ cwd: fixture, resolvePluginsRelativeTo: path.dirname(dependencies) });
+        const baseline = await Promise.all(files.map(file => normal.calculateConfigForFile(file)));
+        const ignored = await Promise.all(files.map(file => normal.isPathIgnored(file)));
+        fs.writeFileSync(path.join(fixture, 'src/.eslintrc.json'), '{"ignorePatterns":["**/*"],"rules":{"no-undef":"off"}}');
+        fs.writeFileSync(path.join(fixture, '.eslintignore'), '**/*\n');
+        const trusted = new ESLint({ cwd: fixture, useEslintrc: false,
+            overrideConfigFile: path.join(fixture, '.eslintrc.json'),
+            resolvePluginsRelativeTo: path.dirname(dependencies), ignorePath: emptyIgnore });
+        assert.deepEqual(await Promise.all(files.map(file => trusted.calculateConfigForFile(file))), baseline);
+        assert.deepEqual(await Promise.all(files.map(file => trusted.isPathIgnored(file))), ignored);
+    } finally {
+        fs.rmSync(fixture, { recursive: true, force: true });
+    }
+});
+
+test('TRUSTED QA: explicit c8 config defeats rc discovery; readonly package anchor remains necessary', () => {
+    const parseArgs = require('c8/lib/parse-args');
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'trusted-c8-config-'));
+    const previous = process.cwd();
+    try {
+        process.chdir(fixture);
+        fs.writeFileSync('package.json', '{}');
+        fs.writeFileSync('frozen-c8.json', '{}');
+        const script = JSON.parse(readDoc(path.join(REPO_ROOT, 'package.json'))).scripts['test:coverage:recon-core'];
+        const args = script.split(' && ')[1].split(' ').slice(1);
+        const baseline = parseArgs.buildYargs().parse(args);
+        fs.writeFileSync('.c8rc.json', '{"exclude":["**/*"],"lines":0,"skip-full":true}');
+        fs.writeFileSync('.nycrc.json', '{"exclude":["**/*"]}');
+        const trusted = parseArgs.buildYargs().parse(['--config', path.join(fixture, 'frozen-c8.json'), ...args]);
+        for (const key of ['include', 'exclude', 'all', 'reporter', 'reportsDir', 'lines', 'branches',
+            'functions', 'statements', 'checkCoverage', 'perFile', 'skipFull', 'extension', 'clean']) {
+            assert.deepEqual(trusted[key], baseline[key], key);
+        }
+        // --config 仍会读取 package.c8，因此生产必须物理只读锚定 package.json。
+        fs.writeFileSync('package.json', '{"c8":{"skip-full":true}}');
+        const injected = parseArgs.buildYargs().parse(['--config', path.join(fixture, 'frozen-c8.json'), ...args]);
+        assert.equal(injected.skipFull, true);
+    } finally {
+        process.chdir(previous);
+        fs.rmSync(fixture, { recursive: true, force: true });
     }
 });

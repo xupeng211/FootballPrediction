@@ -214,3 +214,37 @@ Canonical Codex reviewer authentication/transport is a separate lane: `make agen
 Independent reviewer 必须是新的 Codex 子进程/会话，运行于 exact-head 的 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。`make agent-review ...` 使用现有 Codex CLI 的 `codex exec --ephemeral --sandbox read-only`、stdin prompt、独立 schema 和 final-message 输出，并在 source tree 外生成 machine-readable receipt。receipt 必须绑定完整 base/head、diff hash、Codex invocation、fresh context、worktree clean-before/after、read-only sandbox、成功完成事件和原始输出；其中本地 hash/provenance 只是 integrity evidence，不是 cryptographic reviewer identity。项目 assurance model 是 `ENGINEERING_INDEPENDENT_REVIEW`，明确接受同一 OS uid 的恶意 Builder 理论上篡改本地 evidence 的 residual risk，不声称 hostile-builder resistance。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。
 
 `make agent-review` 与 `make agent-review-wait` 都把 receipt 当作 verdict 的唯一 authority：直接调用 `scripts/devops/codex_independent_review.py run|wait` 时 exit `0` = 已审 PASS 且无 blocking finding，exit `3` = 已审 FAIL 或存在任何 blocking finding，exit `1` = 无法建立 verdict；经 `make` 调用时 GNU make 会把任何 recipe 失败统一报成 exit `2`，因此 `make agent-review` 与 `make agent-review-wait` 的保证是"exit 0 ⟺ PASS，非 0 ⟺ 不是 PASS"（`3` 与 `1` 在 make 这一层不可区分，这是 make 的语义，不是可以保留的信息），精确 verdict 一律取 stdout JSON 的 `status`/`review_result`/`blocking_findings`。stdout 的 `status` 只是 receipt verdict 的投影，不是独立结论。review lifecycle 必须在**一个**由 harness 持有的命令内完成：前台跑 `make agent-review`（已记录的 40 个 receipt 耗时 65–222 秒），预计超时才改用 harness 追踪的后台任务；`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir>` 用于阻塞等待一个已经在跑的 review 并取回它的 verdict。不得用 `nohup … &` 之类的自脱离进程，也不得用 `pgrep -f` 判断 writer 存活（watcher 自己的命令行就匹配该 pattern），更不得等待一个 writer 并不产生的固定 receipt 文件名。`agent-review-wait` 只做数字 pid 存活探测（拒绝非正 pid：`0` 与负数指向进程组或全部可访问进程，无法指定 writer）、按 `codex-review-receipt-<head12>-*.json` 绑定 exact head、重算 payload integrity，并要求 evidence directory 为 owner-only（`0700`）、receipt 属于当前 uid 且为 owner-only（`0600`）——payload digest 是可重算的，任何能写入该目录的进程都能伪造自洽的 exact-head PASS，所以读取侧与写入侧共用同一条 owner-only 规则——并在超时、writer 退出、receipt 缺失、权限不满足或 head 不匹配时以显式失败状态结束，绝不静默交还控制权。同一个 head 可以有多轮 review（finding 修复后重审），因此 mtime 顺序不是身份：`run` 用 run id 标识本轮，它写在每份产物名里，`agent-review-wait` 只消费它正在等待的那一轮的 receipt——`RUN_ID` 显式给出时以它为准，未给出时取该 head 最新 writer record 记录的 run id；属于其它轮次的 receipt 会被列出但永不被当作本轮 verdict 消费（即使它是 PASS、即使它更新），两种方式都拿不到轮次时才退回 mtime 最新并在 `detail` 里声明轮次未被指定；run id 必须是 canonical 小写 hex，非法值与无法规范化的 `HEAD_SHA` 都在开始等待前以结构化失败（exit `1`，`--json` 时 stdout 仍是一行 JSON）结束，不是 traceback。pid 不是身份：`run` 在启动时把自己 pid 与 `/proc` start time 写成 `codex-review-writer-<head12>-<runid>.json`，`agent-review-wait` 默认绑定这条已记录身份并逐次核对 start time（被复用的 pid 判为已退出），调用方也可用 `WRITER_PID`/`WRITER_STARTTIME` 显式指定——两者必须成对给出，只给 pid 时唯一可用的 start time 就是该 pid 自己提供的，等于把被复用的 pid 当作基线，因此这种未绑定身份在开始等待前即以 exit `1` 拒绝；没有可校验身份时不得把"没有探针"当成"writer 已死亡"。
+
+
+### 一次性 Standalone Direct 候选（离线，默认关闭）
+
+仅对含 `STANDALONE_DIRECT_V1` 冻结合同的 CRITICAL scope，已验证的
+`direct-deepseek-api` 可以替代旧 CLI 的 DeepSeek 身份；不冒充 `claude-code-deepseek`，
+不改变 NORMAL/STRICT 或无该合同的 CRITICAL。Registry 仍 reserved、全局 live 仍 false。
+该限定路线需要未来单独批准的 owner-only `standalone-informed-risk/v1` 授权：准确同币种 USD 或 CNY 金额、
+账户余额及可接受暴露、价格摘要、完整最终执行身份/plan hash、runtime、source、请求清单、
+到期时间、容量以及一次 canonical Codex。没有授权默认拒绝；离线 fixture 永不构成 current approval。
+
+复用原 Journal，整轮在首个 HTTP 前预留；最多 13 POST：4 Qualification、
+8 FootballPrediction review、1 Harness companion review。完整固定清单使用 17 次逻辑 HTTP：
+启动 price/models/balance 三次 GET、全部 13 POST、结束余额一次 GET；仅公开价格允许
+一次白名单 302 follow-up，物理 HTTP 最多 18。12 POST 的较小合法计划仍可准入。
+13 POST 整轮保守容量为 13 × (1,048,576 + 8,192) = 13,737,984 单位，需未来独立批准。
+正文上限 40,000 bytes、每次输出上限 8,192 tokens 不变；未使用名额不得补救或挪用。
+无 retry/模型 POST redirect/格式修复/续写；资格、审查失败或
+UNKNOWN 后立即停止；一次 Codex 认领持久化后不重新认领。全部响应、来源及资格语义由 consumer 重算。
+
+`PHYSICAL_COST_BOUND=UNPROVEN`。客户端整轮条件性预留不是 Provider 账单硬帽；金额不写死为
+USD5 或历史估算。账单未结算保持 UNKNOWN，不能记零或退还失败请求预留。Standalone 独立容量
+必须明确批准，不能自动绕过 Factory 2,000,000 cap 或 first_paid_execution HARD_BLOCKER。
+最终提交后重新计算完整 scope/source/chunks/请求/条件金额；旧 receipt 和旧 strict 仅为历史证据。
+此候选不授予真实调用、充值、production、merge 或正式验收权限。
+
+公开价格准入仅允许官方HTTPS价格白名单（既有 pricing、zh-cn/pricing及其尾斜杠），
+最多一次302；额外GET发送前持久化并计入18 HTTP上限，不授权POST重试。需真实核验最终URL；
+未知目标/模型/币种/计费档位/时间/正文或缺少完整价格快照一律拒绝生产执行。
+CNY使用独立microCNY字段，USD保留microUSD字段；整轮预留、余额、授权和ledger同币种，
+没有自动汇率或合并。生产需24小时内、完整六档价格且首次GET正文重验；旧价格仅可离线兼容。
+CNY固定中文入口，USD保留英文入口；中文空闲/高峰六档原币价格由原验证器校验，
+最终URL与计划及快照绑定。已观察中文公开报价；新HEAD正式strict及生产价格重验仍待授权，
+费用候选不是grant，模拟价格不是官方报价或真实调用授权。

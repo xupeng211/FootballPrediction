@@ -30,6 +30,10 @@ from scripts.devops.codex_review_classification import (  # noqa: E402
 from scripts.devops.codex_review_provenance import ReviewReceiptError  # noqa: E402
 from scripts.devops.codex_review_receipt import git_blob_sha256, sha256_file  # noqa: E402
 from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence  # noqa: E402
+from scripts.devops.direct_deepseek_independent_review import (  # noqa: E402
+    standalone_config,
+    standalone_evidence_fields,
+)
 from scripts.devops.exact_head import (  # noqa: E402
     ExactHeadError,
     assert_exact_head,
@@ -498,6 +502,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                     str(receipt.get("mission_scope_sha256") or ""),
                     receipt.get("finding_counts_by_severity") or {},
                     not approved,
+                    **standalone_evidence_fields(receipt),
                 )
             )
     else:
@@ -556,6 +561,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                     .hexdigest(),
                     args.mission_id,
                     mission_scope_hash,
+                    standalone_required=standalone_config(mission_scope) is not None,
                 ),
                 review_evidence,
                 selected_backend=args.selected_backend,

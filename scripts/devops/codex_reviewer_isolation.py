@@ -10,11 +10,15 @@ reviewer lane.  Builder Codex continues to use its ordinary shell untouched.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from pathlib import Path
 import pwd
+import selectors
 import stat
 import subprocess
+import time
 from typing import TYPE_CHECKING
 
 from scripts.devops.codex_review_contract import REVIEW_MODEL_PINNED, REVIEW_REASONING_EFFORT_PINNED
@@ -248,6 +252,8 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
         f"{status.stdout}\n{status.stderr}"
     ):
         raise ReviewReceiptError("canonical reviewer 未建立官方 ChatGPT authentication")
+    if os.environ.get("CMH_TASK_BILLING_BINDING"):
+        _verify_task_plus_binding(os.environ["CMH_TASK_BILLING_BINDING"], codex_binary, environment)
     custom_provider_leaks = any(_is_custom_provider_name(name) for name in environment)
     cliproxyapi_leaks = any(
         name.upper().startswith(("CLIPROXY", "CLI_PROXY")) for name in environment
@@ -271,3 +277,77 @@ def canonical_reviewer_preflight(*, codex_binary: Path, command: list[str]) -> d
         "pinned_model_active": True,
         "pinned_reasoning_active": True,
     }
+
+
+def _task_billing_account(binary, environment):
+    """只有 initialize/account/read；不解析 auth.json、不启动 thread/turn。"""
+    process = subprocess.Popen(
+        [str(binary), "app-server", "--stdio"],
+        env=environment,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    selector = selectors.DefaultSelector()
+    selector.register(process.stdout, selectors.EVENT_READ)
+    buffer = b""
+    max_response_bytes = 1_000_000
+
+    def request(number, method, params):
+        nonlocal buffer
+        process.stdin.write(
+            (json.dumps({"id": number, "method": method, "params": params}) + "\n").encode()
+        )
+        process.stdin.flush()
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            if b"\n" not in buffer:
+                if not selector.select(timeout=0.2):
+                    continue
+                block = os.read(process.stdout.fileno(), 65536)
+                if not block or len(buffer) + len(block) > max_response_bytes:
+                    raise ReviewReceiptError("ACCOUNT_WORKSPACE_BINDING_PENDING")
+                buffer += block
+                continue
+            line, buffer = buffer.split(b"\n", 1)
+            value = json.loads(line)
+            if value.get("id") == number:
+                if "error" in value:
+                    raise ReviewReceiptError("ACCOUNT_WORKSPACE_BINDING_PENDING")
+                return value["result"]
+            if "method" in value and "id" in value:
+                raise ReviewReceiptError("unexpected billing preflight request")
+        raise ReviewReceiptError("ACCOUNT_WORKSPACE_BINDING_PENDING")
+
+    try:
+        request(1, "initialize", {"clientInfo": {"name": "task-billing-preflight", "version": "1"}})
+        process.stdin.write(b'{"method":"initialized"}\n')
+        process.stdin.flush()
+        return request(2, "account/read", {"refreshToken": False}).get("account") or {}
+    finally:
+        selector.close()
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
+def _verify_task_plus_binding(binding_file, binary, environment):
+    path = Path(binding_file)
+    _assert_private_regular_file(path)
+    binding = json.loads(path.read_bytes())  # 此文件只含部署批准的非秘密身份，不是认证文件。
+    account = _task_billing_account(binary, environment)
+    if (
+        binding.get("codex_home") != str(CANONICAL_CODEX_HOME)
+        or binding.get("expires_at", 0) <= time.time()
+        or binding.get("user_confirmed_no_credits_no_topup") is not True
+        or account.get("type") != "chatgpt"
+        or str(account.get("planType", "")).lower() != "plus"
+        or not account.get("email")
+        or not account.get("workspaceId")
+        or binding.get("workspace_id") != account.get("workspaceId")
+        or hashlib.sha256(account["email"].encode()).hexdigest() != binding.get("account_sha256")
+    ):
+        raise ReviewReceiptError("ACCOUNT_WORKSPACE_BINDING_PENDING")

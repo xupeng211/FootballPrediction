@@ -164,7 +164,7 @@ def build_review_prompt(
         mission_scope_sha256=mission_scope_sha256,
     )
     scope_json = json.dumps(mission_scope.to_dict(), ensure_ascii=False, sort_keys=True)
-    return f"""你是 FOOTBALLPREDICTION 的 {REVIEW_ROLE_INDEPENDENT}。
+    prompt = f"""你是 FOOTBALLPREDICTION 的 {REVIEW_ROLE_INDEPENDENT}。
 
 这是一次全新的 Codex reviewer invocation；你不能使用 Builder 的思路、私有草稿、自证或结论作为证据。
 只审查 detached read-only worktree 中的真实代码、完整 diff、测试与仓库治理合同。
@@ -208,6 +208,18 @@ context、exact HEAD、clean worktree、read-only 和 self-review 排除。
   ]
 }}
 没有 P0/P1/P2 时 result=PASS；存在任一 P0/P1/P2 时 result=FAIL。"""
+    from scripts.devops.direct_deepseek_independent_review import companion_source  # noqa: PLC0415
+
+    companion = companion_source(mission_scope)
+    if companion is not None:
+        binding, diff = companion
+        prompt += (
+            "\nHarness companion REQUIRED independent source review; do not rely on another reviewer's verdict.\n"
+            + json.dumps(binding, sort_keys=True)
+            + "\nComplete canonical companion diff:\n"
+            + diff.decode("utf-8", "strict")
+        )
+    return prompt
 
 
 def build_reviewer_command(
@@ -277,3 +289,23 @@ def reviewer_selectors_from_command(command: list[str]) -> tuple[str, str]:
     if not effort:
         raise ReviewReceiptError("reviewer command 缺少显式 reasoning effort")
     return model, effort
+
+
+def declared_model_provenance(receipt: dict[str, Any]) -> dict[str, Any]:
+    """保留原 consumer 的非字典 fail-closed 投影。"""
+    value = receipt.get("model_provenance")
+    return value if isinstance(value, dict) else {}
+
+
+def receipt_prompt_sha(receipt, scope, base, head, scope_path):
+    """scope hash 已由 caller 验证等于 exact-HEAD blob；不更改原 prompt。"""
+    return sha256_bytes(
+        build_review_prompt(
+            mission_id=receipt["mission_id"],
+            base_sha=base,
+            head_sha=head,
+            mission_scope=scope,
+            mission_scope_path=scope_path,
+            mission_scope_sha256=receipt["mission_scope_sha256"],
+        ).encode("utf-8")
+    )

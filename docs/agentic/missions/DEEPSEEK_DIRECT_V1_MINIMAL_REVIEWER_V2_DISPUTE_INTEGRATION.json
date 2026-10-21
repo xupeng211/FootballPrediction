@@ -1,0 +1,36 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "DEEPSEEK_DIRECT_V1_MINIMAL_REVIEWER_V2_DISPUTE_INTEGRATION",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/direct_deepseek_dispute.py",
+    "scripts/devops/direct_deepseek_independent_review.py",
+    "scripts/devops/direct_deepseek_receipt_evidence.py",
+    "scripts/devops/independent_review_backends/direct_deepseek.py",
+    "tests/unit/test_direct_deepseek_dispute.py",
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/DIRECT_DEEPSEEK_COST_BOUND.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/DEEPSEEK_DIRECT_V1_MINIMAL_REVIEWER_V2_DISPUTE_INTEGRATION.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    "src/",
+    "database/",
+    "config/",
+    "docker/",
+    ".github/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Frozen Football base d348d117cf3336f969251a653fb6b26dfd61211c; Harness ea507645cc143b883927fbb67b164cc85d4503a5 read-only. Exact future HEAD is resolved after local commit, never self-embedded.",
+    "Reuse existing frozen V2 semantic/source validators; do not weaken P0/P1/P2 or manufacture model citations. Preserve originals; UNKNOWN terminal; no retry or history import.",
+    "New dispute execution requires separately approved committed scope, bounded source groups, new grant, price/account/budget/capacity/request plan. No historical approval transfers. Factory 2000000 and first paid blocker unchanged."
+  ],
+  "forbidden_side_effects": [
+    "No real Provider GET/POST, credential read, billing, paid grant, topup, third V1 review, formal strict/pr/targeted or Codex reviewer during this offline mission.",
+    "No Harness edits, historical state/evidence mutation, other worktree edits, main changes, remote writes, push, PR, merge or deployment."
+  ]
+}

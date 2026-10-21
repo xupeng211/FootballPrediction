@@ -1,9 +1,9 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { createTestTempDirs } = require('./test_temp_dirs');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const TEST_ROOT = path.join(PROJECT_ROOT, 'tests');
@@ -769,6 +769,37 @@ function writeCoverageSummary(summary) {
 }
 
 /**
+ * 完整转发 UTF-8 字节；暂时不可写最多等待 100 次、每次 10ms。
+ * @param {number} fd
+ * @param {string} text
+ */
+function writeCompleteOutputSync(fd, text) {
+  const buffer = Buffer.from(text, 'utf8');
+  const wait = new Int32Array(new SharedArrayBuffer(4));
+  let offset = 0;
+  let retries = 0;
+
+  while (offset < buffer.length) {
+    let written;
+    try {
+      written = fs.writeSync(fd, buffer, offset, buffer.length - offset);
+    } catch (error) {
+      if (!['EINTR', 'EAGAIN', 'EWOULDBLOCK'].includes(error.code) || retries >= 100) {
+        throw error;
+      }
+      retries += 1;
+      Atomics.wait(wait, 0, 0, 10);
+      continue;
+    }
+
+    if (!Number.isInteger(written) || written <= 0 || written > buffer.length - offset) {
+      throw new Error(`输出 fd=${fd} 未取得有效字节进展。`);
+    }
+    offset += written;
+  }
+}
+
+/**
  * 执行 node --test。
  * @param {string[]} files
  * @param {{ coverage?: boolean, label?: string }} [options]
@@ -786,27 +817,27 @@ function runNodeTests(files, options = {}) {
   if (coverage) {
     args.push('--experimental-test-coverage');
     if (supportsNativeCoverageThresholds()) {
-      args.push(
-        `--test-coverage-lines=${COVERAGE_THRESHOLDS.lines}`,
-        `--test-coverage-functions=${COVERAGE_THRESHOLDS.functions}`,
-        `--test-coverage-branches=${COVERAGE_THRESHOLDS.branches}`,
-      );
+      args.push(...Object.entries(COVERAGE_THRESHOLDS).map(
+        ([metric, threshold]) => `--test-coverage-${metric}=${threshold}`,
+      ));
     }
   }
   // Preload guard env for test files that exercise guarded DB write paths (#1587).
   // No-op when the test batch doesn't include a guarded file.
   args.push('--require', './scripts/ops/helpers/guard_test_env_preload.js');
+  args.push('--require', './scripts/test/test_temp_dirs.js');
   args.push(...files.map(file => path.relative(PROJECT_ROOT, file)));
 
   const workspaceBefore = snapshotWorkspaceStatus();
-  const testTempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'footballprediction-node-tests-'));
+  const tempDirs = createTestTempDirs(coverage, COVERAGE_REPORT_DIR);
   const startTime = Date.now();
   let result;
   try {
     const childEnv = {
       ...process.env,
-      LOG_DIR: path.join(testTempDir, 'logs'),
-      FP_TEST_TMP_DIR: testTempDir,
+      LOG_DIR: path.join(tempDirs.testTempDir, 'logs'),
+      FP_TEST_TMP_DIR: tempDirs.testTempDir,
+      TMPDIR: tempDirs.nodeTempDir,
     };
     delete childEnv.NODE_TEST_CONTEXT;
 
@@ -817,18 +848,21 @@ function runNodeTests(files, options = {}) {
       env: childEnv,
     });
   } finally {
-    fs.rmSync(testTempDir, { recursive: true, force: true });
+    tempDirs.cleanup();
   }
   const durationMs = Date.now() - startTime;
   const stdout = result.stdout || '';
   const stderr = result.stderr || '';
   const combinedOutput = `${stdout}\n${stderr}`;
 
-  // Use fs.writeSync to guarantee output is fully flushed before returning.
-  // process.stdout.write can internally buffer under pipe backpressure;
-  // process.exitCode alone cannot guarantee the parent spawnSync receives complete output.
-  fs.writeSync(1, stdout);
-  fs.writeSync(2, stderr);
+  // 按实际字节数推进，保留先 stdout 后 stderr 的原有转发顺序。
+  try {
+    writeCompleteOutputSync(1, stdout);
+    writeCompleteOutputSync(2, stderr);
+  } finally {
+    // 输出异常直接传播为非零进程退出，同时仍执行原工作区完整性检查。
+    verifyWorkspaceUnchanged(workspaceBefore, label);
+  }
 
   if (result.error) {
     verifyWorkspaceUnchanged(workspaceBefore, label);
@@ -953,6 +987,7 @@ module.exports = {
   collectTestFiles,
   resolveCoreUnitFiles,
   resolveAffectedTestFiles,
+  writeCompleteOutputSync,
   runNodeTests,
   snapshotWorkspaceStatus,
   verifyWorkspaceUnchanged,

@@ -17,6 +17,7 @@ from scripts.devops.codex_review_verdict import (
     assert_owner_only_directory,
     assert_owner_only_file,
 )
+from scripts.devops.direct_deepseek_receipt_evidence import consume_direct
 from scripts.devops.independent_review_protocol import canonical_json, sha256_bytes, validate_result
 from scripts.devops.independent_review_receipt import (
     ClaudeDeepSeekExecutionEvidence,
@@ -78,6 +79,15 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
     try:
         _assert_external_artifact(path, repo_root=repo_root, kind="receipt")
         value = _load_json(path)
+        if value.get("review_backend") == "direct-deepseek-api":
+            return consume_direct(
+                path,
+                repo_root=repo_root,
+                expected_base=expected_base,
+                expected_head=expected_head,
+                expected_mission_id=expected_mission_id,
+                expected_scope_hash=expected_scope_hash,
+            )
         registry = load_backend_registry(
             repo_root / "docs/agentic/independent_review_backends.json"
         )

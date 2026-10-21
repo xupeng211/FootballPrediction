@@ -22,6 +22,7 @@ from scripts.devops.independent_review_receipt import load_backend_registry
 
 BACKEND_CODEX = "codex-cli"
 BACKEND_DEEPSEEK = "claude-code-deepseek"
+BACKEND_DIRECT = "direct-deepseek-api"
 WORKFLOW_NORMAL = "NORMAL"
 WORKFLOW_STRICT = "STRICT"
 WORKFLOW_CRITICAL = "CRITICAL"
@@ -42,6 +43,7 @@ class CandidateBinding:
     diff_sha256: str
     mission_id: str
     mission_scope_sha256: str
+    standalone_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,9 @@ class ReviewEvidence:
     # Backend validators may expose the model that produced this trusted
     # evidence. The policy evaluator itself remains backend-neutral.
     review_model: str | None = None
+    standalone_identity: str | None = None
+    source_bindings_sha256: str | None = None
+    qualification_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -125,7 +130,7 @@ def _counts(value: object) -> tuple[int, int]:
     return sum(value[level] for level in BLOCKING_SEVERITIES), value["P3"]
 
 
-def evaluate_review_policy(  # noqa: C901, PLR0912, PLR0915
+def evaluate_review_policy(  # noqa: C901, PLR0911, PLR0912, PLR0915
     workflow_class: str,
     candidate: CandidateBinding,
     available_receipts: Iterable[ReviewEvidence],
@@ -140,10 +145,38 @@ def evaluate_review_policy(  # noqa: C901, PLR0912, PLR0915
     unsatisfied policy, never an invitation to fall back silently.
     """
 
+    receipts = tuple(available_receipts)
+    bounded = [r for r in receipts if r.backend_id == BACKEND_DIRECT]
     try:
         required = required_backends(workflow_class, selected_backend=selected_backend)
     except ValueError as exc:
         return PolicyResult("INVALID", (str(exc),), (), (), 0)
+    if bounded:
+        if (
+            workflow_class != WORKFLOW_CRITICAL
+            or len(bounded) != 1
+            or not bounded[0].trusted
+            or not all(
+                (
+                    bounded[0].standalone_identity,
+                    bounded[0].source_bindings_sha256,
+                    bounded[0].qualification_sha256,
+                )
+            )
+        ):
+            return PolicyResult("INVALID", ("UNQUALIFIED_STANDALONE",), required, (), 0)
+        required = (BACKEND_CODEX, BACKEND_DIRECT)
+        codex = [r for r in receipts if r.backend_id == BACKEND_CODEX]
+        if codex and (
+            codex[0].standalone_identity,
+            codex[0].source_bindings_sha256,
+            codex[0].qualification_sha256,
+        ) != (
+            bounded[0].standalone_identity,
+            bounded[0].source_bindings_sha256,
+            bounded[0].qualification_sha256,
+        ):
+            return PolicyResult("INVALID", ("STANDALONE_DUAL_BINDING_MISMATCH",), required, (), 0)
     if backend_eligibility is None:
         try:
             eligibility = load_active_backend_eligibility(BACKEND_REGISTRY_PATH)
@@ -153,15 +186,23 @@ def evaluate_review_policy(  # noqa: C901, PLR0912, PLR0915
             eligibility = {}
     else:
         eligibility = backend_eligibility
+    if bounded or candidate.standalone_required:
+        registry = load_backend_registry(BACKEND_REGISTRY_PATH)
+        if (
+            registry.get(BACKEND_DIRECT, {}).get("status") == "reserved"
+            and registry[BACKEND_DIRECT]["transport_policy"]
+            == "one-shot-standalone-informed-risk-default-deny"
+        ):
+            eligibility = dict(eligibility)
+            eligibility[BACKEND_DIRECT] = frozenset({WORKFLOW_CRITICAL})
     if any(workflow_class not in eligibility.get(backend, frozenset()) for backend in required):
         return PolicyResult("INVALID", ("BACKEND_NOT_ELIGIBLE",), required, (), 0)
-    receipts = tuple(available_receipts)
     by_backend: dict[str, ReviewEvidence] = {}
     seen_backends: set[str] = set()
     reasons: list[str] = []
     p3 = 0
     for receipt in receipts:
-        if receipt.backend_id not in {BACKEND_CODEX, BACKEND_DEEPSEEK}:
+        if receipt.backend_id not in {BACKEND_CODEX, BACKEND_DEEPSEEK, BACKEND_DIRECT}:
             reasons.append("BACKEND_NOT_ALLOWED")
             continue
         # Advisory receipts are recorded separately, but only policy-owned

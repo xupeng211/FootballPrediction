@@ -1,0 +1,66 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "CRITICAL_DUAL_REVIEW_STANDALONE_OFFLINE_ADMISSION_IMPLEMENTATION",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/DIRECT_DEEPSEEK_COST_BOUND.md",
+    "docs/agentic/independent_review_backends.json",
+    "docs/agentic/missions/CRITICAL_DUAL_REVIEW_STANDALONE_OFFLINE_ADMISSION_IMPLEMENTATION.json",
+    "docs/agentic/missions/OPTION_B_CANONICAL_INDEPENDENT_FINAL_REVIEW_EXECUTION.json",
+    "docs/agentic/missions/OPTION_B_CANONICAL_SCOPE_AND_READONLY_SANDBOX_RECOVERY.json",
+    "schemas/agentic/codex_review_receipt.schema.json",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/codex_independent_review.py",
+    "scripts/devops/codex_review_contract.py",
+    "scripts/devops/codex_review_receipt.py",
+    "scripts/devops/direct_deepseek_independent_review.py",
+    "scripts/devops/direct_deepseek_receipt_evidence.py",
+    "scripts/devops/gatekeeper.sh",
+    "scripts/devops/independent_review_backends/direct_deepseek.py",
+    "scripts/devops/review_policy.py",
+    "scripts/devops/validation_profiles.py",
+    "scripts/test/run_test_suite.js",
+    "scripts/test/test_temp_dirs.js",
+    "tests/helpers/codex_review_evidence_fixtures.py",
+    "tests/unit/TitanConfig.test.js",
+    "tests/unit/fotmob_detail_capture_remediation.test.js",
+    "tests/unit/gatekeeper_boundary_implementation_static.test.js",
+    "tests/unit/scripts/run_test_suite.test.js",
+    "tests/unit/test_direct_deepseek_bound.py",
+    "tests/unit/test_direct_deepseek_standalone.py",
+    "tests/unit/test_validation_profiles.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "scripts/devops/codex_reviewer_isolation.py"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "database/",
+    "config/",
+    "docker/",
+    ".github/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "pr1903",
+    "model-activation"
+  ],
+  "protected_invariants": [
+    "STANDALONE_DIRECT_V1={\"football_ancestor\":\"2752b0a5084052fa66367e58832cb11a368384a9\",\"football_base\":\"82b007a27232e5fdd7568c0797cb35c7a8fd26d6\",\"harness_base\":\"33cf7f449cf33d4dd1f663d920732ed93f319de0\",\"harness_head\":\"ea507645cc143b883927fbb67b164cc85d4503a5\",\"harness_origin\":\"git@github.com:xupeng211/codex-mission-harness.git\",\"harness_paths\":[\"src/harness/factory_validation.py\",\"tests/test_factory_phase2.py\"],\"harness_root\":\"/tmp/option-b-canonical-review-hsgi4kps/harness\",\"harness_tree\":\"64de596b14cdfb4deda804f3222448dc7218dd88\",\"version\":1}",
+    "Exact reviewed HEAD/tree is resolved after local commit by invocation/plan, never self-embedded. Frozen functional baseline 2752b0a5084052fa66367e58832cb11a368384a9 must remain an ancestor. Full original Option B diff and all repairs plus admission changes are independently reviewed. Historical scopes are evidence only, not active authorization.",
+    "One explicitly approved standalone whole-round informed-risk exception only: physical billing cap UNPROVEN; no Factory fallback, cap increase, qualification exemption, current receipt reuse or automatic retry. Registry reserved, live default false. FOUR semantic qualification cases, complete FootballPrediction and Harness diff bodies, same source identity on both independent receipts, exactly one canonical Codex only after full DeepSeek PASS.",
+    "Factory 2000000 cap and first_paid_execution HARD_BLOCKER, CRITICAL independent Codex+DeepSeek, P0/P1/P2 blocking, owner-only ledger/receipt, Source Binding, UNKNOWN terminal state, no silent fallback and Docker contracts unchanged."
+  ],
+  "forbidden_side_effects": [
+    "Offline implementation is not production authorization: no paid grant, Provider HTTP, real qualification/reviewer/profile, billing, topup, live activation or formal gate during this mission. Future execution requires separate Owner approval of exact final HEAD/scope/requests/runtime/price/money/currency/account exposure/expiry and residual risk.",
+    "No Harness source/ref change, business semantic change, weakening review or test contracts, historical ledger/receipt mutation, destructive Git, main change, remote writes, push/PR/merge/deploy."
+  ]
+}
