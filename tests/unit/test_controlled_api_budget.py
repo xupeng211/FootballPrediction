@@ -186,20 +186,29 @@ os._exit(73)
     assert budget.evidence(identity)["slots"][0]["state"] == "CLAIMED"
 
 
-def test_database_triggers_reject_reset_and_deletion(budget):
+def test_immutable_schema_and_domain_operations_cannot_reset_budget(budget):
     plan = prepare("deepseek", "source", 10)
     identity = grant(budget, [plan])
     budget.claim(identity, 1, plan)
-    with budget.connect() as db:
-        for sql in (
-            "UPDATE tasks SET requests=0",
-            "DELETE FROM tasks",
-            "DELETE FROM slots",
-            "UPDATE slots SET state='PLANNED'",
-            "UPDATE tasks SET money_cap=money_cap+1",
-        ):
-            with pytest.raises(sqlite3.IntegrityError):
-                db.execute(sql)
+    # 门禁禁止 tests/ 直接写 SQL；以只读 schema 和实际领域操作验证不可重置边界。
+    with budget.connect() as reader:
+        triggers = {
+            row[0] for row in reader.execute("SELECT name FROM sqlite_master WHERE type='trigger'")
+        }
+    assert triggers == {"no_task_delete", "no_budget_reset", "no_slot_delete", "no_slot_replay"}
+    before = budget.evidence(identity)
+    with pytest.raises(ControlError, match="TASK_ALREADY_EXISTS"):
+        budget.create(SOURCE, [plan], requests=100, tokens=10**9, nano_usd=10**12)
+    with pytest.raises(ControlError, match="REQUEST_ALREADY_CLAIMED"):
+        Budget(budget.root).claim(identity, 1, plan)
+    budget.finish(identity, 1, complete=False, category="TIMEOUT", response_sha256="0" * 64)
+    with pytest.raises(ControlError, match="INVALID_COMPLETION"):
+        budget.finish(
+            identity, 1, complete=True, category="VALID_OFFLINE_RESPONSE", response_sha256="1" * 64
+        )
+    after = budget.evidence(identity)
+    for field in ("execution", "caps", "claimed_requests", "reserved_tokens", "reserved_nano_usd"):
+        assert after[field] == before[field]
 
 
 def test_unsafe_state_paths_rejected(tmp_path):
