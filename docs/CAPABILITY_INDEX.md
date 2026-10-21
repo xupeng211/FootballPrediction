@@ -285,3 +285,6 @@ database, or raw-data mutation and is not a production acquisition entrypoint.
   clean Git object source-binding 与未合格通道结果持久化已准备；真实 Provider admission、
   金额硬帽、Qualification、正式 Receipt/AI Gate 迁移及合法自举仍 BLOCKED。
   不继承 CLI 资格，不改变 #1946/#1941；见 [维护合同](agentic/controlled_direct_api.md)。
+  `controlled_api_admission` 现可复核同一 exact source 的完整本地 TLS 分块并持久化
+  **非正式**迁移证据包；拒绝换身份、缺块与历史资格冒用。既有正式 policy 对它仍不满足，
+  不授予资格或 Receipt 效力；首次信任来源需 Owner 的明确迁移合同。

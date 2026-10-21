@@ -10,7 +10,7 @@ import json
 import subprocess
 from typing import TYPE_CHECKING
 
-from scripts.devops.controlled_api_policy import ControlError, source_identity
+from scripts.devops.controlled_api_policy import PROFILES, ControlError, source_identity
 from scripts.devops.exact_head import assert_exact_head, normalize_full_sha
 from scripts.devops.independent_review_protocol import sha256_bytes
 from scripts.ops.helpers.agent_workflow_contract import MissionScope, validate_mission_scope
@@ -66,6 +66,9 @@ def qualification_requirements(provider: str) -> dict:
         raise ControlError("UNKNOWN_REVIEWER")
     return {
         "execution_identity": f"{HTTPS_CHANNEL}/{provider}",
+        "provider": provider,
+        "requested_model": PROFILES[provider].model,
+        "qualification_scope": "EXACT_TOOLCHAIN_MODEL_PROMPT_AND_ISOLATION_RECIPE",
         "current_approval_eligible": False,
         "legacy_qualification_inheritance": False,
         "qualification_status": "NOT_RUN",
@@ -75,8 +78,10 @@ def qualification_requirements(provider: str) -> dict:
             "exclusive_credential_and_egress_deployment",
             "owner_paid_execution_authorization",
             "independent_channel_qualification",
+            "owner_approved_qualification_plan_and_acceptance_criteria",
             "approved_registry_and_receipt_contract_migration",
             "exact_source_binding_and_full_results",
+            "formal_review_context_and_placeholder_validation",
             "independent_critical_review_of_bootstrap_candidate",
         ],
     }

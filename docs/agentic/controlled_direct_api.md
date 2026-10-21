@@ -142,3 +142,78 @@ Owner 也未接受风险例外。必须先取得能约束既有合格审核通�
 最短交付顺序：审阅本候选及本地状态分类 → 确认供应商强制计费上界/部署边界与合法
 自举路线 → 单独授权新身份 Qualification 和工具链正式独立双审 → exact-head CI/Docker
 → Owner 决定工具链交付 → #1946 正式审核 → #1941 版本整合和审核。不得先改两旧 PR。
+
+## PR1947：离线 Admission / Qualification 集成准备
+
+`controlled_api_admission.prepare_admission` 复用 `bind_source` 重新读取 clean exact
+HEAD。预算任务必须属于同一个 repository/base/head/diff/mission/scope；所有已冻结槽
+必须 COMPLETE 且来自本地 TLS broker，不能丢弃失败块、UNKNOWN 或仅取已成功的子集。
+结果文件需 owner-only 0600、无 symlink/hardlink，逐一与账本的 execution、slot、
+provider/model、新通道身份、request/policy/response SHA 及 source 比较。重新运行结果
+合同，重算 findings/counts，跨文件且无行号的真实 P2 原样保留。预算和历史工件只读。
+
+准备包带新的 `controlled-api-admission-preparation/v1` schema、正式 `CandidateBinding`
+字段映射、每块结果和工件摘要；`save_preparation` 仅 O_EXCL 写入仓库外的0700目录、
+文件0600并fsync，不覆盖任何既有证据。它是**非正式迁移工件**，不是 Receipt emitter。
+即使两路 Mock 全部 PASS，也固定 qualification=NOT_RUN、current_approval_eligible=false、
+ready_for_real_review=false；现有正式 policy 不获得任何 ReviewEvidence，仍不满足。
+实际负面测试证明正式 receipt validator 拒绝该schema，policy拒绝新身份冒充旧backend。
+
+内部 Controller 入口（仅零 Provider 的准备，不代表审查完成）：
+
+```bash
+python3 -m scripts.devops.controlled_api_admission \
+  --project <clean-worktree> --base <40-hex> --head <40-hex> \
+  --mission <mission> --scope docs/agentic/missions/<mission>.json \
+  --state-root <existing-private-state> --task <existing-task> \
+  --output <new-external-private-directory>/preparation.json
+```
+
+exit 0只表示准备工件已保存。缺块、换源、假资格、错误计数、私有权限或持久化失败
+退出1且不返还预算。该命令不建账、不调用Provider、不执行Qualification、不生成正式PASS。
+Qualification 必须绑定独立 channel、provider/model、exact toolchain、完整prompt/context及
+隔离配方；旧CLI资格不能迁移，本地TLS conformance不是模型缺陷发现能力验收。
+
+### 最小信任自举决策（仅提案，未实施、未授权）
+
+当前权威AGENTS.md §3、§10及registry/policy只认可`codex-cli`和
+`claude-code-deepseek`。没有现成条款允许Builder测试、离线CLI进程或Owner自签代替
+CRITICAL独立双审；当前也没有能自动接纳外部Qualification证书的正式入口。
+
+优先路线：取得能约束**已有合格双路**的绝对费用保证，再由两路独立审核当前候选，
+无需改变治理合同。但现有CLI无物理费用帽，账户公开软延迟限额不能补齐。
+
+若该路线无法成立，需要Owner批准一份**前瞻的、限定本通道的迁移合同**。最少明确：
+
+1. 由谁提供首次独立信任、其资格和与Builder的独立性；由谁验证并接受。不是把本次
+   Builder或Mock设为可信Reviewer，外部人工验收也不自动替代CRITICAL两模型审查。
+2. 允许可信Controller在冻结的未合并候选上做独立通道Qualification，固定两路新身份、
+   模型/参数、完整输入及反例集、无旧资格继承；资格作用域必须绑定工具链和隔离配方。
+3. Qualification是授予**执行通道资格**的证据，不是被审PR的PASS；资格成立之后仍需
+   两路独立、同base/head/diff/mission/scope的正式审核，无P0/P1/P2，exact-head CI及Docker。
+4. Registry/Receipt对新身份、独立执行provenance、Source Binding与完整结果的验证规则
+   须先经独立接受，再显式接入policy；未知通道、失配、缺证据仍fail-closed。
+
+精确变更面仅在Owner批准后确定：AGENTS.md §3/§10与AGENT_WORKFLOW.md §11的迁移
+条款；`independent_review_backends.json`的新身份及资格事实；
+`independent_review_receipt.py`/schema的Direct API provenance验证；`review_policy.py`
+保留双路并选择已合格新身份。相应负面测试必须覆盖旧身份冒用、过期资格、换模型、
+缺独立资格、缺块和stale HEAD。当前**未修改**上述权威、registry、schema或policy。
+仅添加backend名称不足以打破循环，不先写自授资格的生产逻辑。
+
+### 外部计费证据：取得与验证标准
+
+| 需要的证据 | 取得方式 | 验收要求 |
+| --- | --- | --- |
+| OpenAI适用账户的强制上界 | 账户管理员通过官方控制台导出脱敏设置，并向官方支持/合同方索取有约束力的说明 | 明确org/project/model、全部收费项、预算周期、执行期内不能重置；传播超额为0或有可信数值上界δ，可将总帽设为B+δ。现公开条款没有δ数值，仍NOT_PROVEN |
+| DeepSeek预付不可透支或强制金额帽 | 账户管理员取得适用账户的合同及强制设置证明 | 覆盖延迟入账、未知usage、失败请求、并发及重试，无额外欠款/计费出口；仅余额截图不足 |
+| 执行期价格上界 | 两供应商提供适用模型/区域/计费SKU的锁价或合同最高费率 | 输入/输出/推理/cache及所有附加收费均列明；未知项目拒绝；新API费用用USD，不能换算成CLI Standard credits |
+
+本轮定向复核的OpenAI官方[spend limits](https://developers.openai.com/api/docs/guides/spend-limits)
+仍说明enforcement非即时、recorded spend可能超过配置值；DeepSeek公开价格页不是绝对
+支出或不可透支保证。没有对账户做变更或密钥探测，两路及合计仍NOT_PROVEN。
+
+剩余生产接入应在可信迁移合同确定后做一次局部实现：完整审核输入/分块覆盖、
+真实host/credential admission、唯一预算授权根及不可绕过部署、正式新身份Receipt验证。
+这些仍是工程工作，不用Mock证据假装已经完成；其语义取决于未批准的资格/计费合同。
+本轮不再为这些外部前置条件增加预算框架。最短顺序仍为#1947合法交付→#1946→#1941。
