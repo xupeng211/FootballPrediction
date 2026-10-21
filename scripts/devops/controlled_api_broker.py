@@ -79,6 +79,7 @@ class Broker:
             raw = post_once(plan, self.credential, fixture=self.fixture, timeout=self.timeout)
             _reject_secret(raw, self.credential)
             result = _result(raw, plan)
+            _reject_secret(canonical_json(result), self.credential)
             # 非正式结果，与 source/请求/模型/执行身份一起持久化。写失败不授权、不退款。
             evidence = self.budget.evidence(self.task)
             artifact = {

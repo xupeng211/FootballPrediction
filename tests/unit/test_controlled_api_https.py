@@ -93,11 +93,18 @@ def test_tls_concurrent_brokers_share_claim(tmp_path, tls_site):
         assert len(calls) == 1
 
 
-@pytest.mark.parametrize("change", ["usage", "model", "secret"])
+@pytest.mark.parametrize("change", ["usage", "model", "secret", "escaped_secret"])
 def test_tls_unknown_billing_or_identity_no_receipt(tmp_path, tls_site, change):
     payload = response()
     if change == "secret":
         payload["choices"][0]["message"]["content"] = CREDENTIAL.value
+    elif change == "escaped_secret":
+        review = json.loads(payload["choices"][0]["message"]["content"])
+        review["findings"] = [
+            {"severity": "P3", "title": "不要暴露凭据", "evidence": CREDENTIAL.value}
+        ]
+        text = json.dumps(review).replace("fixture-", "\\u0066ixture-")
+        payload["choices"][0]["message"]["content"] = text
     else:
         payload.pop(change)
     with tls_site(payload) as (fixture, calls):
