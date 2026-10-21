@@ -1332,6 +1332,9 @@ run_canonical_python_unit_gate() {
     tests/unit/scripts/ops/test_train_model_dry_run.py
     tests/unit/database/repositories/test_prediction_repo_l3_contract.py
     tests/unit/ml/test_training_no_write_guard.py
+    tests/unit/test_controlled_api_budget.py
+    tests/unit/test_controlled_api_runner.py
+    tests/unit/test_controlled_api_sandbox.py
   )
 
   export PYTHONPATH="${WORKSPACE_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"

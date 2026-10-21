@@ -1,0 +1,34 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_DELIVERY_AUTONOMOUS_ENGINEERING",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/controlled_api_policy.py",
+    "scripts/devops/controlled_api_budget.py",
+    "scripts/devops/controlled_api_runner.py",
+    "scripts/devops/controlled_api_sandbox.py",
+    "scripts/devops/gatekeeper.sh",
+    "tests/unit/test_controlled_api_budget.py",
+    "tests/unit/test_controlled_api_runner.py",
+    "tests/unit/test_controlled_api_sandbox.py",
+    "docs/agentic/controlled_direct_api.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FOOTBALLPREDICTION_DELIVERY_AUTONOMOUS_ENGINEERING.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": ["src/", "database/", "data/", "models/", "training/", ".github/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "CRITICAL dual review, Reviewer identity, qualification, Source Binding, exact-head Receipt and AI Gate remain unchanged.",
+    "The new execution identity is unqualified and cannot emit a formal approval receipt.",
+    "Live paid execution is unavailable while physical cost bounds are NOT_PROVEN.",
+    "PR1946 and PR1941 remain unchanged; main and Harness are not modified."
+  ],
+  "forbidden_side_effects": [
+    "No real Provider inference, Qualification, official CRITICAL review, or Stage D Live.",
+    "No historical Receipt or business Ledger mutation, production operation, database write or model activation.",
+    "No main mutation, force push, rebase, history rewrite, self-merge or security gate bypass."
+  ]
+}
