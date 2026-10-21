@@ -1,7 +1,7 @@
 {
   "schema_version": "agentic-mission-scope/v1",
   "mission_id": "FOOTBALLPREDICTION_PR1947_AUTONOMOUS_ENGINEERING_DELIVERY",
-  "task_type": "workflow-governance",
+  "task_type": "mixed",
   "workflow_class": "CRITICAL",
   "authorized_paths": [
     "config/python_db_write_allowlist.json",
