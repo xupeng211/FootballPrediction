@@ -16,23 +16,19 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
+import re
+import stat
 import subprocess
 import sys
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 SHA1_LENGTH = 40
+_PRIVATE_DIRECTORY_MODE = 0o700
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.devops import independent_review_receipt as receipts  # noqa: E402
-from scripts.devops.independent_review_backends import claude_code_deepseek as backend  # noqa: E402
-from scripts.devops.independent_review_protocol import (  # noqa: E402
-    PROTOCOL_VERSION,
-    canonical_json,
-    sha256_bytes,
-    validate_result,
-)
 from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     MAX_CHUNK_DIFF_BYTES,
     MAX_CHUNK_PROMPT_BYTES,
@@ -40,6 +36,13 @@ from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     build_chunk_prompt,
     chunk_evidence_manifest_bytes,
     plan,
+)
+from scripts.devops.independent_review_backends import claude_code_deepseek as backend  # noqa: E402
+from scripts.devops.independent_review_protocol import (  # noqa: E402
+    PROTOCOL_VERSION,
+    canonical_json,
+    sha256_bytes,
+    validate_result,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     MissionScopeError,
@@ -50,6 +53,10 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
 
 class DeepSeekReviewError(RuntimeError):
     """The DeepSeek review cannot establish a trustworthy verdict."""
+
+    def __init__(self, message: str, *, diagnostic: dict | None = None):
+        super().__init__(message)
+        self.diagnostic = diagnostic
 
 
 _SAFE_BACKEND_FAILURE_CODES = frozenset(
@@ -118,6 +125,102 @@ def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
+def _invoke_review(*, prompt: str, worktree: Path, chunk_index: int | None = None):
+    """Keep typed observations across the redaction boundary, never raw error text."""
+    execution = None
+    try:
+        raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+        normalized = validate_result(result)
+    except (backend.BackendInfrastructureError, ValueError) as exc:
+        code = (
+            _safe_backend_failure_code(exc)
+            if isinstance(exc, backend.BackendInfrastructureError)
+            else "INVALID_STRUCTURED_OUTPUT"
+        )
+        observation = exc if execution is None else execution
+        status, digest = backend.validate_process_digest(
+            getattr(observation, "process_digest", None)
+        )
+        if getattr(observation, "process_digest_status", None) == "INVALID":
+            status, digest = "INVALID", None
+        prefix = (
+            f"chunk {chunk_index} infrastructure failure"
+            if chunk_index is not None
+            else "backend infrastructure failure"
+        )
+        raise DeepSeekReviewError(
+            f"{prefix} [{code}]; no verdict",
+            diagnostic={
+                "error_code": code,
+                "process_digest_status": status,
+                "process_digest": digest,
+            },
+        ) from None
+    return raw, normalized, execution
+
+
+def _write_failure_diagnostic(evidence: Path, name: str, payload: dict) -> None:
+    """Publish owner-only failure metadata atomically, without replacing any path."""
+    if not re.fullmatch(r"review-failure-deepseek-[0-9a-f]{12}-[0-9a-f]{32}\.json", name):
+        raise OSError("invalid diagnostic filename")
+    directory_fd = os.open(evidence, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    temporary = f".{name}.{uuid.uuid4().hex}.tmp"
+    published = False
+    try:
+        info = os.fstat(directory_fd)
+        if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != _PRIVATE_DIRECTORY_MODE:
+            raise OSError("unsafe diagnostic directory")
+        fd = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o600,
+            dir_fd=directory_fd,
+        )
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(canonical_json(payload))
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.link(
+                temporary,
+                name,
+                src_dir_fd=directory_fd,
+                dst_dir_fd=directory_fd,
+                follow_symlinks=False,
+            )
+            published = True
+            os.fsync(directory_fd)
+        except OSError:
+            if published:
+                os.unlink(name, dir_fd=directory_fd)
+            raise
+        finally:
+            os.unlink(temporary, dir_fd=directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+def _persist_failure(evidence: Path, diagnostic: dict, *, cleanup_failed: bool) -> None:
+    """Persist the already-safe envelope, or emit only that envelope on write failure."""
+    payload = {
+        **diagnostic,
+        "artifact_kind": "independent-review-failure-diagnostic/v1",
+        "cleanup_status": "FAILED" if cleanup_failed else "COMPLETE",
+        "diagnostic_write_status": "PERSISTED",
+    }
+    payload["payload_sha256"] = sha256_bytes(canonical_json(payload))
+    name = f"review-failure-deepseek-{payload['head_sha'][:12]}-{payload['run_id']}.json"
+    try:
+        _write_failure_diagnostic(evidence, name, payload)
+    except OSError:
+        payload.pop("payload_sha256")
+        payload["diagnostic_write_status"] = "DIAGNOSTIC_WRITE_FAILED"
+        print(
+            "DEEPSEEK_REVIEW_DIAGNOSTIC=" + canonical_json(payload).decode().strip(),
+            file=sys.stderr,
+        )
+
+
 def _canonical_prompt_bytes(prompt: str | bytes) -> bytes:
     """Bind receipt evidence to the exact prompt bytes sent by its path."""
 
@@ -161,12 +264,19 @@ def _run_chunked_review(
         source = diff[chunk.start : chunk.end]
         prompt = prompts[chunk.index]
         try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
-        except backend.BackendInfrastructureError as exc:
-            raise DeepSeekReviewError(
-                f"chunk {chunk.index} infrastructure failure [{_safe_backend_failure_code(exc)}]"
-            ) from exc
-        normalized = validate_result(result)
+            raw, normalized, execution = _invoke_review(
+                prompt=prompt, worktree=worktree, chunk_index=chunk.index
+            )
+        except DeepSeekReviewError as exc:
+            exc.diagnostic.update(
+                chunked=True,
+                chunk_index=chunk.index,
+                chunk_count=len(manifest.chunks),
+                chunk_source_sha256=chunk.source_sha256,
+                manifest_sha256=manifest.sha256,
+                prompt_sha256=sha256_bytes(prompt.encode()),
+            )
+            raise
         execution_evidence = receipts.ClaudeDeepSeekExecutionEvidence(
             reviewer_command=execution.command,
             resolved_model=execution.resolved_model,
@@ -269,34 +379,57 @@ def _run_review(args: argparse.Namespace) -> Path:
     started = _now()
     chunked = len(diff) > MAX_CHUNK_DIFF_BYTES
     trusted_chunks: list[dict] = []
-    if chunked:
-        raw, normalized, trusted_chunks = _run_chunked_review(
-            diff=diff,
-            base=base,
-            head=head,
-            scope=scope,
-            scope_sha=sha256_bytes(scope_bytes),
-            worktree=worktree,
-        )
-        prompt = raw
-        execution = trusted_chunks[0]["execution"]
-    else:
-        try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
-        except backend.BackendInfrastructureError as exc:
-            raise DeepSeekReviewError(
-                f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
-            ) from exc
-        normalized = validate_result(result)
-        execution = receipts.ClaudeDeepSeekExecutionEvidence(
-            reviewer_command=execution.command,
-            resolved_model=execution.resolved_model,
-            claude_cli_version=execution.cli_version,
-            claude_binary_sha256=execution.binary_sha256,
-            settings_sha256=execution.settings_sha256,
-            provider_endpoint=execution.endpoint,
-            session_id=execution.session_id,
-        )
+    try:
+        if chunked:
+            raw, normalized, trusted_chunks = _run_chunked_review(
+                diff=diff,
+                base=base,
+                head=head,
+                scope=scope,
+                scope_sha=sha256_bytes(scope_bytes),
+                worktree=worktree,
+            )
+            prompt = raw
+            execution = trusted_chunks[0]["execution"]
+        else:
+            raw, normalized, execution = _invoke_review(prompt=prompt, worktree=worktree)
+            execution = receipts.ClaudeDeepSeekExecutionEvidence(
+                reviewer_command=execution.command,
+                resolved_model=execution.resolved_model,
+                claude_cli_version=execution.cli_version,
+                claude_binary_sha256=execution.binary_sha256,
+                settings_sha256=execution.settings_sha256,
+                provider_endpoint=execution.endpoint,
+                session_id=execution.session_id,
+            )
+    except DeepSeekReviewError as exc:
+        exc.diagnostic = {
+            "repository": "xupeng211/FootballPrediction",
+            "run_id": run_id,
+            "base_sha": base,
+            "head_sha": head,
+            "diff_sha256": sha256_bytes(diff),
+            "mission_id": scope.mission_id,
+            "mission_scope_sha256": sha256_bytes(scope_bytes),
+            "chunked": False,
+            "chunk_index": None,
+            "chunk_count": None,
+            "chunk_source_sha256": None,
+            "manifest_sha256": None,
+            "prompt_sha256": sha256_bytes(_canonical_prompt_bytes(prompt)),
+            "backend": backend.BACKEND_ID,
+            "provider": backend.PROVIDER_ID,
+            "requested_model": backend.MODEL,
+            "toolchain_sha256": {
+                "runner": sha256_bytes(Path(__file__).read_bytes()),
+                "backend": sha256_bytes(Path(backend.__file__).read_bytes()),
+                "protocol": sha256_bytes(
+                    (ROOT / "scripts/devops/independent_review_protocol.py").read_bytes()
+                ),
+            },
+            **(exc.diagnostic or {}),
+        }
+        raise
     completed = _now()
     final = canonical_json(
         {
@@ -463,9 +596,12 @@ def run_review(args: argparse.Namespace) -> Path:
     before_dirs = set(evidence.glob("claude-deepseek-worktree-*")) if evidence.exists() else set()
     before_artifacts = set(evidence.glob("claude-deepseek-*")) if evidence.exists() else set()
     completed = False
+    primary_error = None
     try:
         receipt = _run_review(args)
         completed = True
+    except (DeepSeekReviewError, backend.BackendInfrastructureError, OSError, ValueError) as exc:
+        primary_error = exc
     finally:
         cleanup_error = _cleanup_invocation(
             evidence=evidence,
@@ -474,8 +610,13 @@ def run_review(args: argparse.Namespace) -> Path:
             before_artifacts=before_artifacts,
             preserve_artifacts=completed,
         )
-        if cleanup_error is not None:
-            raise DeepSeekReviewError("temporary review worktree cleanup failed") from cleanup_error
+    if primary_error is not None:
+        diagnostic = getattr(primary_error, "diagnostic", None)
+        if diagnostic is not None:
+            _persist_failure(evidence, diagnostic, cleanup_failed=cleanup_error is not None)
+        raise primary_error
+    if cleanup_error is not None:
+        raise DeepSeekReviewError("temporary review worktree cleanup failed") from None
     return receipt
 
 
@@ -492,7 +633,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         receipt = run_review(args)
     except (DeepSeekReviewError, OSError, ValueError) as exc:
-        print(f"DEEPSEEK_INDEPENDENT_REVIEW=NO_VERDICT: {exc}", file=sys.stderr)
+        detail = "LOCAL_IO_FAILURE" if isinstance(exc, OSError) else str(exc)
+        print(f"DEEPSEEK_INDEPENDENT_REVIEW=NO_VERDICT: {detail}", file=sys.stderr)
         return 1
     print(json.dumps({"review_receipt": str(receipt), "status": "COMPLETE"}))
     return 0

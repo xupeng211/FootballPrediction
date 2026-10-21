@@ -1,0 +1,43 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_REVIEW_DELIVERY_RELIABILITY_MINIMAL_FIX",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/independent_review_protocol.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "tests/unit/test_independent_review_protocol.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "docs/agentic/missions/FP_REVIEW_DELIVERY_RELIABILITY_MINIMAL_FIX.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "scripts/devops/review_policy.py",
+    "docs/agentic/independent_review_backends.json"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "src/",
+    "data/",
+    "database/",
+    "config/",
+    "deploy/",
+    "scripts/ops/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "CRITICAL requires independent Codex and DeepSeek PASS receipts bound to the same exact candidate; invalid or incomplete results remain fail-closed.",
+    "Do not filter or downgrade blocking findings; preserve meaningful cross-file findings without requiring line numbers.",
+    "Keep Receipt schemas, source binding, model routing, launcher allowlists, credentials and existing review qualification semantics unchanged.",
+    "Never rewrite historical receipts or alter PR #1941 business files."
+  ],
+  "forbidden_side_effects": [
+    "No real Provider calls, review models, qualification or paid E2E.",
+    "No source commits, push, PR creation or update, merge, Stage D Live, database or ledger writes.",
+    "No Harness changes, retries, resume, fallback, new scheduler, or scope expansion."
+  ]
+}

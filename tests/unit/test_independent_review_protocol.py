@@ -312,11 +312,78 @@ def test_p1_fail_and_p3_only_pass_semantics():
         _result("FAIL", []),
         _result("PASS", [{"severity": "P9", "title": "bad", "evidence": "proof"}]),
         _result("PASS", [{"severity": "P3", "title": "", "evidence": "proof"}]),
+        {"protocol_version": PROTOCOL_VERSION, "review_result": "PASS"},
+        _result("FAIL", [{"severity": "P2", "title": "missing evidence"}]),
     ],
 )
 def test_invalid_result_semantics_rejected(result):
     with pytest.raises(IndependentReviewProtocolError):
         validate_result(result)
+
+
+@pytest.mark.parametrize(
+    ("title", "evidence"),
+    [
+        ("placeholder", "placeholder"),
+        (" [ToDo] ", "proof"),
+        ("TBD", "proof"),
+        ("risk", "N/A"),
+        ("待补充", "待填写"),
+        ("...", "---"),
+        ("placeholder", "A concrete trigger bypasses the guard"),
+        ("A guard is bypassed", "placeholder"),
+    ],
+)
+def test_blocker_rejects_sentinel_fields(title, evidence):
+    for severity in ("P0", "P1", "P2"):
+        value = _result("FAIL", [{"severity": severity, "title": title, "evidence": evidence}])
+        before = json.dumps(value)
+        with pytest.raises(IndependentReviewProtocolError, match="INVALID_FINDING_EVIDENCE"):
+            validate_result(value)
+        assert json.dumps(value) == before
+
+
+@pytest.mark.parametrize(
+    "location", [{"file": "guard.py", "line": 4}, {}, {"symbol": "TODO_guard"}]
+)
+def test_meaningful_blocker_without_required_location(location):
+    finding = {
+        "severity": "P2",
+        "title": "The TODO branch bypasses the shared write guard",
+        "evidence": "When the CLI sends an empty lock token, writer.py accepts it because guard.py only rejects None; unauthorized writes can proceed.",
+        **location,
+    }
+    normalized = validate_result(_result("FAIL", [finding]))
+    assert normalized["findings"] == [finding]
+    assert normalized["blocking_findings"] == 1
+    assert normalized["review_result"] == "FAIL"
+
+
+def test_placeholder_receipt_fails_current_validation_without_rewrite():
+    receipt, context = _claude_receipt_and_context()
+    receipt.update(
+        review_result="FAIL",
+        findings=[{"severity": "P2", "title": "placeholder", "evidence": "placeholder"}],
+        finding_counts_by_severity={"P0": 0, "P1": 0, "P2": 1, "P3": 0},
+    )
+    result = _result("FAIL", receipt["findings"])
+    final = receipts.canonical_json(result)
+    raw = json.loads(context.raw_output_bytes)
+    raw["structured_output"] = result
+    values = {
+        **context.__dict__,
+        "raw_output_bytes": receipts.canonical_json(raw),
+        "final_result_bytes": final,
+    }
+    context = receipts.ReceiptEvidenceContext(**values)
+    receipt["raw_output_sha256"] = receipts.sha256_bytes(context.raw_output_bytes)
+    receipt["final_result_sha256"] = receipts.sha256_bytes(final)
+    _rehash(receipt)
+    before = receipts.canonical_json(receipt)
+    with pytest.raises(IndependentReviewProtocolError, match="INVALID_FINDING_EVIDENCE"):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+    assert receipts.canonical_json(receipt) == before
+    assert receipt["review_result"] == "FAIL"
 
 
 def test_receipt_validates_integrity_and_required_backend_facts():
