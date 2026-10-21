@@ -6,11 +6,30 @@ from pathlib import Path
 import re
 import sys
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow  # noqa: E402, I001
+from scripts.devops.review_policy import (  # noqa: E402
+    CandidateBinding,
+    evaluate_review_policy,
+    required_backends,
+)
+from scripts.ops.ai_workflow_gate import (  # noqa: E402
+    check_mixed_governance_business,
+    validate as validate_workflow_gate,
+)
+from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
+    MissionScope,
+    validate_mission_scope,
+    validate_pr_metadata,
+)
+from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
+from scripts.ops.helpers.git_change_helpers import Change  # noqa: E402
+from scripts.ops.helpers.strict_review_evidence import parse_workflow_class  # noqa: E402
 
 
 _MARKDOWN_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
@@ -387,6 +406,260 @@ def test_contract_change_without_current_state_update_fails():
     errors = check_documentation_backflow(body, {"scripts/ops/ai_workflow_gate.py"})
 
     assert any("contract changed=yes cannot" in error for error in errors)
+
+
+_STAGE_D_DOC = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
+_STAGE_D_NINE_PATHS = {
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "scripts/ops/stage_d_quota_adjudication.js",
+    "tests/unit/market_evidence/stage_d_billing_period_rollover.test.js",
+    _STAGE_D_DOC,
+    "README.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json",
+}
+_STAGE_D_DECLARED_DOCS = (
+    f"{_STAGE_D_DOC}, README.md, docs/CAPABILITY_INDEX.md, "
+    "docs/ACTIVE_MILESTONE.md, docs/PROJECT_STATUS.md"
+)
+
+
+def _stage_d_contract_body(**overrides):
+    fields = {
+        "capability": "yes",
+        "milestone": "yes",
+        "blocker": "yes",
+        "contract": "yes",
+        "source_updated": "yes",
+        "updated_docs": _STAGE_D_DECLARED_DOCS,
+        "reason": "Existing CLI and project navigation remain unchanged; domain evidence changes do not grant live authority.",
+    }
+    fields.update(overrides)
+    return (
+        "## Scope\n\n| Field | Value |\n| --- | --- |\n"
+        "| Task type | source-code |\n| Workflow class | CRITICAL |\n\n" + _impact_body(**fields)
+    )
+
+
+def test_stage_d_original_nine_paths_require_only_domain_contract():
+    body = _stage_d_contract_body()
+    assert len(_STAGE_D_NINE_PATHS) == 9  # noqa: PLR2004 -- frozen original candidate count
+    assert parse_task_type(body) == "source-code"
+    assert parse_workflow_class(body) == "CRITICAL"
+    assert validate_pr_metadata(body) == []
+    assert check_documentation_backflow(body, _STAGE_D_NINE_PATHS) == []
+
+
+@pytest.mark.parametrize(
+    "workflow_path",
+    [
+        "scripts/ops/ai_workflow_gate.py",
+        "scripts/devops/pr_ready_check.py",
+        "scripts/ops/helpers/strict_review_evidence.py",
+    ],
+)
+def test_workflow_contract_still_requires_both_engineering_docs(workflow_path):
+    body = _impact_body(
+        contract="yes", source_updated="yes", updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md"
+    )
+    changed = {workflow_path, "AGENTS.md", "docs/AGENT_WORKFLOW.md"}
+    assert check_documentation_backflow(body, changed) == []
+
+
+def test_pure_stage_d_contract_keeps_its_domain_mapping():
+    body = _impact_body(contract="yes", source_updated="yes", updated_docs=_STAGE_D_DOC)
+    changed = {"scripts/ops/stage_d_quota_adjudication.js", _STAGE_D_DOC}
+    assert check_documentation_backflow(body, changed) == []
+
+
+@pytest.mark.parametrize(
+    "domain_path",
+    [
+        "src/infrastructure/market_evidence/stageDOperations.js",
+        "scripts/ops/stage_d_quota_adjudication.js",
+        "tests/unit/market_evidence/stage_d_billing_period_rollover.test.js",
+    ],
+)
+def test_stage_d_missing_actual_contract_fails_even_when_declared(domain_path):
+    body = _impact_body(contract="yes", source_updated="yes", updated_docs=_STAGE_D_DOC)
+    errors = check_documentation_backflow(body, {domain_path})
+    assert any(f"requires {_STAGE_D_DOC}" in error for error in errors)
+
+
+def test_stage_d_unrelated_domain_contract_is_not_a_substitute():
+    other = "docs/data/UNRELATED_DOMAIN_CONTRACT.md"
+    body = _stage_d_contract_body(updated_docs=_STAGE_D_DECLARED_DOCS.replace(_STAGE_D_DOC, other))
+    changed = (_STAGE_D_NINE_PATHS - {_STAGE_D_DOC}) | {other}
+    errors = check_documentation_backflow(body, changed)
+    assert any("no approved domain mapping" in error for error in errors)
+
+
+@pytest.mark.parametrize("missing_doc", ["AGENTS.md", "docs/AGENT_WORKFLOW.md"])
+def test_workflow_contract_omitting_required_engineering_doc_fails(missing_doc):
+    declared = "AGENTS.md, docs/AGENT_WORKFLOW.md"
+    body = _impact_body(contract="yes", source_updated="yes", updated_docs=declared)
+    changed = {"scripts/ops/ai_workflow_gate.py", "AGENTS.md", "docs/AGENT_WORKFLOW.md"} - {
+        missing_doc
+    }
+    errors = check_documentation_backflow(body, changed)
+    assert any(f"requires {missing_doc}" in error for error in errors)
+
+
+def test_stage_d_contract_cannot_declare_source_of_truth_not_updated():
+    errors = check_documentation_backflow(
+        _stage_d_contract_body(source_updated="no"), _STAGE_D_NINE_PATHS
+    )
+    assert any("contract changed=yes cannot" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "claimed_doc", ["docs/data/UNRELATED_DOMAIN_CONTRACT.md", _STAGE_D_DOC + ".bak", "none"]
+)
+def test_stage_d_missing_exact_declared_contract_fails(claimed_doc):
+    body = _stage_d_contract_body(
+        updated_docs=_STAGE_D_DECLARED_DOCS.replace(_STAGE_D_DOC, claimed_doc)
+    )
+    errors = check_documentation_backflow(body, _STAGE_D_NINE_PATHS)
+    assert any(f"requires {_STAGE_D_DOC}" in error for error in errors)
+
+
+@pytest.mark.parametrize("contract", ["yes", "no"])
+def test_stage_d_mapping_does_not_weaken_mixed_governance_business_ban(contract):
+    changed = _STAGE_D_NINE_PATHS | {"AGENTS.md", "docs/AGENT_WORKFLOW.md"}
+    body = _stage_d_contract_body(
+        contract=contract,
+        updated_docs=_STAGE_D_DECLARED_DOCS + ", AGENTS.md, docs/AGENT_WORKFLOW.md",
+    )
+    assert any("mixes Stage D" in error for error in check_documentation_backflow(body, changed))
+    assert any(
+        "Mixed governance + business code" in error
+        for error in check_mixed_governance_business(changed)
+    )
+
+
+@pytest.mark.parametrize(
+    ("extra_path", "expected_error"),
+    [
+        ("src/other_domain/model.py", "no approved domain mapping"),
+        ("config/other_domain.json", "mixes Stage D"),
+        ("scripts/ops/helpers/documentation_backflow.py", "mixes Stage D"),
+        ("scripts/ops/unknown_provider_domain.js", "no approved domain mapping"),
+    ],
+)
+def test_stage_d_document_cannot_cover_unmapped_or_workflow_changes(extra_path, expected_error):
+    errors = check_documentation_backflow(
+        _stage_d_contract_body(), _STAGE_D_NINE_PATHS | {extra_path}
+    )
+    assert any(expected_error in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "unknown_path", ["src/other_domain/model.py", "docs/data/OTHER_CONTRACT.md"]
+)
+def test_unknown_contract_domain_fails_closed(unknown_path):
+    body = _impact_body(
+        contract="yes", source_updated="yes", updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md"
+    )
+    errors = check_documentation_backflow(body, {unknown_path})
+    assert any("no approved domain" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "unknown_path",
+    [
+        "src/other_domain/model.py",
+        "docs/data/OTHER_CONTRACT.md",
+        "database/migrations/001.sql",
+        "scripts/ops/unknown_provider_domain.js",
+        "scripts/data/unknown_domain.py",
+        "scripts/model_training/unknown_domain.py",
+    ],
+)
+def test_unknown_domain_contract_still_fails_when_engineering_docs_are_present(unknown_path):
+    body = _impact_body(
+        contract="yes",
+        source_updated="yes",
+        updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md, docs/data/OTHER_CONTRACT.md",
+    )
+    changed = {"AGENTS.md", "docs/AGENT_WORKFLOW.md", unknown_path}
+    assert any(
+        "no approved domain" in error for error in check_documentation_backflow(body, changed)
+    )
+
+
+@pytest.mark.parametrize("declaration", ["no", "maybe", "", "missing_row", "missing_section"])
+def test_unknown_script_workflow_mixture_cannot_hide_behind_impact_declarations(declaration):
+    body = _impact_body(
+        contract=declaration,
+        source_updated="yes",
+        updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md",
+    )
+    if declaration == "missing_row":
+        body = body.replace("| Data/model/authorization contract changed? | missing_row |\n", "")
+    elif declaration == "missing_section":
+        body = ""
+    changed = {"scripts/ops/unknown_provider_domain.js", "AGENTS.md", "docs/AGENT_WORKFLOW.md"}
+    assert any(
+        "no approved domain mapping" in error
+        for error in check_documentation_backflow(body, changed)
+    )
+    # Exercise the existing formal gate caller, including its real changed-path input.
+    errors = validate_workflow_gate(body, changes=[Change("M", path) for path in sorted(changed)])
+    assert any("no approved domain mapping" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "path", ["scripts/ops/ordinary_bugfix.js", "scripts/data/ordinary_bugfix.py"]
+)
+def test_unrelated_script_bugfix_without_contract_context_is_unchanged(path):
+    assert check_documentation_backflow("", {path}) == []
+
+
+def test_stage_d_exact_mapping_does_not_authorize_excluded_scope_paths():
+    scope = MissionScope.from_mapping(
+        {
+            "schema_version": "agentic-mission-scope/v1",
+            "mission_id": "FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER",
+            "task_type": "source-code",
+            "workflow_class": "CRITICAL",
+            "authorized_paths": sorted(_STAGE_D_NINE_PATHS),
+            "authorized_prefixes": [],
+            "excluded_paths": ["AGENTS.md", "docs/AGENT_WORKFLOW.md"],
+            "excluded_prefixes": [],
+            "excluded_tokens": [],
+            "protected_invariants": ["Gate 3 not authorized; immutable historical evidence."],
+            "forbidden_side_effects": ["No production writes or provider requests."],
+        }
+    )
+    assert validate_mission_scope(_STAGE_D_NINE_PATHS, scope) == []
+    assert any(
+        "explicitly excluded" in error
+        for error in validate_mission_scope(_STAGE_D_NINE_PATHS | {"AGENTS.md"}, scope)
+    )
+
+
+def test_stage_d_domain_mapping_does_not_lower_critical_dual_review():
+    assert required_backends("CRITICAL") == ("codex-cli", "claude-code-deepseek")
+    candidate = CandidateBinding("a" * 40, "b" * 40, "c" * 64, "stage-d", "d" * 64)
+    result = evaluate_review_policy("CRITICAL", candidate, [])
+    assert result.status != "SATISFIED"
+    assert result.required_backends == ("codex-cli", "claude-code-deepseek")
+
+
+@pytest.mark.parametrize("value", ["yes: explained", "maybe", ""])
+def test_stage_d_contract_mapping_preserves_strict_yes_no(value):
+    errors = check_documentation_backflow(
+        _stage_d_contract_body(contract=value), _STAGE_D_NINE_PATHS
+    )
+    assert errors
+
+
+def test_stage_d_bugfix_still_requires_substantive_no_change_reason():
+    body = _stage_d_contract_body(contract="no", reason="none")
+    errors = check_documentation_backflow(body, _STAGE_D_NINE_PATHS)
+    assert any("specific reason" in error for error in errors)
 
 
 def test_api_capability_change_without_current_state_update_fails():

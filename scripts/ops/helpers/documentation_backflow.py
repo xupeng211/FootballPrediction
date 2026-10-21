@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import re
 
+from scripts.ops.helpers.pr_authorization_matrix import CATEGORY_WORKFLOW_GOVERNANCE, classify_path
+
 DOCUMENTATION_IMPACT_HEADING = "## Documentation Impact"
 VISION_IMPACT_FIELD = "Project vision / target-state changed?"
 DOCUMENTATION_IMPACT_FIELDS: tuple[str, ...] = (
@@ -112,6 +114,27 @@ REQUIRED_DOCS_BY_CATEGORY: dict[str, tuple[str, ...]] = {
     "contract": ("AGENTS.md", "docs/AGENT_WORKFLOW.md"),
 }
 
+# Only this audited domain has a business-contract mapping. Other domains and
+# cross-domain/workflow changes must not borrow its document as a substitute.
+STAGE_D_CONTRACT_DOC = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
+STAGE_D_CONTRACT_PATHS = frozenset(
+    {
+        "src/infrastructure/market_evidence/stageDOperations.js",
+        "scripts/ops/stage_d_quota_adjudication.js",
+        "tests/unit/market_evidence/stage_d_billing_period_rollover.test.js",
+        STAGE_D_CONTRACT_DOC,
+    }
+)
+STAGE_D_COMPANION_DOC_PATHS = frozenset(
+    {
+        "README.md",
+        "docs/CAPABILITY_INDEX.md",
+        "docs/ACTIVE_MILESTONE.md",
+        "docs/PROJECT_STATUS.md",
+        "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json",
+    }
+)
+
 HOLLOW_REASON_VALUES = frozenset(
     {
         "",
@@ -152,6 +175,8 @@ def classify_changed_paths(changed: set[str]) -> dict[str, set[str]]:
         matches = {path for path in changed if any(_matches(path, rule) for rule in rules)}
         if matches:
             classified[category] = matches
+    if stage_d_paths := changed & STAGE_D_CONTRACT_PATHS:
+        classified.setdefault("contract", set()).update(stage_d_paths)
     return classified
 
 
@@ -189,9 +214,46 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
         if "docs/data/FOTMOB_CURRENT_STATE.md" in changed:
             required.append("docs/data/FOTMOB_CURRENT_STATE.md")
         return tuple(required)
-    if category == "contract" and "AGENTS.md" in changed:
-        return ("AGENTS.md", "docs/AGENT_WORKFLOW.md")
+    if (
+        category == "contract"
+        and changed & STAGE_D_CONTRACT_PATHS
+        and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
+    ):
+        return (STAGE_D_CONTRACT_DOC,)
     return REQUIRED_DOCS_BY_CATEGORY[category]
+
+
+def _contract_mapping_errors(changed: set[str]) -> list[str]:
+    """Reject unsupported domains and ambiguous Stage D/workflow mixtures."""
+    unmapped_paths = {
+        path
+        for path in changed
+        if (_matches(path, "docs/data/*_CONTRACT.md") and path != STAGE_D_CONTRACT_DOC)
+        or (
+            (
+                path.startswith(("src/", "database/migrations/", "models/", "training/"))
+                or (
+                    path.startswith("scripts/")
+                    and CATEGORY_WORKFLOW_GOVERNANCE not in classify_path(path)
+                )
+            )
+            and path not in STAGE_D_CONTRACT_PATHS
+        )
+    }
+    if unmapped_paths:
+        return [
+            "contract paths have no approved domain mapping: " + ", ".join(sorted(unmapped_paths))
+        ]
+    if changed & STAGE_D_CONTRACT_PATHS:
+        unsupported = changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
+        if unsupported:
+            return [
+                "contract mapping mixes Stage D with workflow or unmapped paths: "
+                + ", ".join(sorted(unsupported))
+            ]
+    elif "contract" not in classify_changed_paths(changed):
+        return ["contract changed=yes has no approved domain or workflow mapping"]
+    return []
 
 
 def check_documentation_backflow(  # noqa: C901, PLR0912
@@ -207,14 +269,21 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     """
     classified = classify_changed_paths(changed)
     vision_value = _table_value(pr_body, VISION_IMPACT_FIELD)
-    if not classified and _normalise(vision_value) != "yes":
+    contract_value = _table_value(pr_body, YES_NO_FIELDS["contract"])
+    if not classified and _normalise(vision_value) != "yes" and _normalise(contract_value) != "yes":
         return []
 
-    errors: list[str] = []
+    # Actual contract paths must not borrow a workflow mapping via a false declaration.
+    errors = (
+        _contract_mapping_errors(changed)
+        if "contract" in classified or _normalise(contract_value) == "yes"
+        else []
+    )
     if DOCUMENTATION_IMPACT_HEADING not in pr_body:
         return [
+            *errors,
             "Documentation Impact is required for long-lived capability/status paths: "
-            + ", ".join(sorted(classified))
+            + ", ".join(sorted(classified)),
         ]
 
     values = {name: _table_value(pr_body, label) for name, label in YES_NO_FIELDS.items()}
@@ -238,7 +307,10 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
 
     source_updated = _normalise(values["source_of_truth"]) == "yes"
     updated_docs = _table_value(pr_body, "Updated authoritative docs")
+    declared_docs = {token.strip("`\"'") for token in re.split(r"[,;\s]+", updated_docs) if token}
     reason = _table_value(pr_body, "If not updated, explicit reason")
+    if _normalise(values["contract"]) == "yes":
+        classified.setdefault("contract", set())
     if source_updated:
         if not updated_docs or _normalise(updated_docs) in HOLLOW_REASON_VALUES:
             errors.append(
@@ -257,7 +329,7 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
             errors.extend(
                 f"{category} changed=yes requires {required_doc} in the changed and declared docs"
                 for required_doc in _required_docs_for(category, changed)
-                if required_doc not in changed or required_doc not in updated_docs
+                if required_doc not in changed or required_doc not in declared_docs
             )
     elif not _is_substantive_reason(reason):
         errors.append(
@@ -284,7 +356,7 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
             errors.append(
                 "vision changed=yes cannot use no-update reason instead of docs/PROJECT_VISION.md"
             )
-        if "docs/PROJECT_VISION.md" not in changed or "docs/PROJECT_VISION.md" not in updated_docs:
+        if "docs/PROJECT_VISION.md" not in changed or "docs/PROJECT_VISION.md" not in declared_docs:
             errors.append(
                 "vision changed=yes requires docs/PROJECT_VISION.md in the changed and declared docs"
             )

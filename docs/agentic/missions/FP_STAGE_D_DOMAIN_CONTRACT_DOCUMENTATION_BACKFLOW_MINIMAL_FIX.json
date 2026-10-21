@@ -1,0 +1,43 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_DOMAIN_CONTRACT_DOCUMENTATION_BACKFLOW_MINIMAL_FIX",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/ops/helpers/documentation_backflow.py",
+    "tests/unit/test_project_knowledge_convergence.py",
+    "tests/unit/test_agentic_workflow_mission_scope.py",
+    "tests/unit/test_agentic_workflow_remote_scope.py",
+    "docs/DOCUMENTATION_GOVERNANCE.md",
+    "docs/agentic/missions/FP_STAGE_D_DOMAIN_CONTRACT_DOCUMENTATION_BACKFLOW_MINIMAL_FIX.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "scripts/ops/stage_d_quota_adjudication.js",
+    "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "scripts/devops/",
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "tests/unit/market_evidence/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Permanent epoch, September consumption, UNKNOWN, append-only ledger, quota and adjudication evidence remain unchanged.",
+    "Engineering workflow contract mapping, mixed governance/business prohibition, Rules G/H, exact mission scope and CRITICAL dual-review requirements remain enforced.",
+    "Only audited Stage D exact domain paths map to the existing Stage D contract; unknown domains and domain/workflow mixtures fail closed.",
+    "Gate 3 NOT_AUTHORIZED; Stage D NOT_STARTED; this mission is local/offline only."
+  ],
+  "forbidden_side_effects": [
+    "Implementation and validation remain local/offline. Commit, Push and remote PR creation/update are prohibited except for the separate Owner-authorized FP_STAGE_D_DOMAIN_BACKFLOW_GOVERNANCE_PR_DELIVERY phase: one governance Commit on fix/stage-d-domain-documentation-backflow, one normal origin Push of that branch and one independent Draft PR targeting main. Merge, Rebase, Force Push, Draft-to-Ready transition, business worktree/source/test modification and any other delivery action remain prohibited.",
+    "Reviewer or paid model invocation, Policy/Registry/Validator/CI/Harness modification.",
+    "Real provider/account API requests or production database/ledger/RAW/quota/epoch/authorization mutations."
+  ]
+}

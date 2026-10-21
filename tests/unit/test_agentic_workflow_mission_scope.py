@@ -58,6 +58,38 @@ def _scope_file(repo: Path) -> Path:
     return repo / MISSION_SCOPE_PATH
 
 
+def _makefile_scope_body(**overrides: str) -> str:
+    """描述只改变合成 Makefile 输出的 Scope/preflight 候选。"""
+    body = _body(**overrides)
+    for old, new in (
+        (
+            "| Changed paths | scripts/devops/agent_workflow.py; tests/unit/test_agentic_workflow_v1.py |",
+            "| Changed paths | Makefile |",
+        ),
+        ("| Capability changed? | yes |", "| Capability changed? | no |"),
+        (
+            "| Data/model/authorization contract changed? | yes |",
+            "| Data/model/authorization contract changed? | no |",
+        ),
+        (
+            "| Repository structure/authority navigation changed? | yes |",
+            "| Repository structure/authority navigation changed? | no |",
+        ),
+        ("| Source-of-truth docs updated | yes |", "| Source-of-truth docs updated | no |"),
+        (
+            "| Updated authoritative docs | AGENTS.md; docs/AGENT_WORKFLOW.md; docs/CAPABILITY_INDEX.md |",
+            "| Updated authoritative docs | none |",
+        ),
+        (
+            "The relevant workflow and capability authorities are updated in this mission.",
+            "Only the synthetic Makefile echo output changes; canonical entrypoints, "
+            "capabilities, workflow/data/authorization contracts and navigation remain unchanged.",
+        ),
+    ):
+        body = body.replace(old, new)
+    return body
+
+
 def _assert_error(errors: list[str], fragment: str) -> None:
     assert errors
     assert fragment in errors[0]
@@ -351,7 +383,7 @@ def test_local_preflight_uses_explicit_current_mission_scope(
         lambda *_args, **_kwargs: [],
     )
     result = agent_workflow_preflight.run_preflight(
-        _body(
+        _makefile_scope_body(
             reviewed_sha=head,
             workflow_class="CRITICAL",
             provider="codex-cli, claude-code-deepseek",
@@ -372,7 +404,7 @@ def test_preflight_json_stdout_is_parseable_with_real_shared_gate(
     _git(repo, "checkout", "-qb", "feature")
     body_path = tmp_path / "pr-body.md"
     body_path.write_text(
-        _body(
+        _makefile_scope_body(
             reviewed_sha=head,
             workflow_class="CRITICAL",
             provider="codex-cli, claude-code-deepseek",

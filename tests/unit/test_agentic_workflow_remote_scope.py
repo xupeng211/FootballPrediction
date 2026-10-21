@@ -100,6 +100,38 @@ def _assert_error(errors: list[str], fragment: str) -> None:
     assert fragment in errors[0]
 
 
+def _makefile_scope_body(*, reviewed_sha: str) -> str:
+    """描述只改变合成 Makefile 输出的远端 Scope 候选。"""
+    body = _fixture_body(reviewed_sha=reviewed_sha)
+    for old, new in (
+        (
+            "| Changed paths | scripts/devops/agent_workflow.py; tests/unit/test_agentic_workflow_v1.py |",
+            "| Changed paths | Makefile |",
+        ),
+        ("| Capability changed? | yes |", "| Capability changed? | no |"),
+        (
+            "| Data/model/authorization contract changed? | yes |",
+            "| Data/model/authorization contract changed? | no |",
+        ),
+        (
+            "| Repository structure/authority navigation changed? | yes |",
+            "| Repository structure/authority navigation changed? | no |",
+        ),
+        ("| Source-of-truth docs updated | yes |", "| Source-of-truth docs updated | no |"),
+        (
+            "| Updated authoritative docs | AGENTS.md; docs/AGENT_WORKFLOW.md; docs/CAPABILITY_INDEX.md |",
+            "| Updated authoritative docs | none |",
+        ),
+        (
+            "The relevant workflow and capability authorities are updated in this mission.",
+            "Only the synthetic Makefile echo output changes; canonical entrypoints, "
+            "capabilities, workflow/data/authorization contracts and navigation remain unchanged.",
+        ),
+    ):
+        body = body.replace(old, new)
+    return body
+
+
 # ---------------------------------------------------------------------------
 # 1. Path safety of a PR-supplied reference (untrusted input)
 # ---------------------------------------------------------------------------
@@ -518,7 +550,7 @@ def test_gate_remote_flag_set_enforces_the_prs_own_scope(
     capsys: pytest.CaptureFixture[str],
     gate_repo: Repo,
 ) -> None:
-    body = _fixture_body(reviewed_sha=gate_repo.head)
+    body = _makefile_scope_body(reviewed_sha=gate_repo.head)
     code, out = _run_gate(
         tmp_path,
         monkeypatch,
@@ -552,7 +584,7 @@ def test_gate_without_the_scope_flag_does_not_enforce_scope(
 ) -> None:
     """Regression guard for the F03-A gap itself."""
 
-    body = _fixture_body(reviewed_sha=gate_repo.head)
+    body = _makefile_scope_body(reviewed_sha=gate_repo.head)
     code, out = _run_gate(
         tmp_path,
         monkeypatch,
