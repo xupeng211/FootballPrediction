@@ -26,6 +26,8 @@ from scripts.devops.independent_review_protocol import canonical_json
 STATE_DIRECTORY_MODE = 0o700
 STATE_FILE_MODE = 0o600
 MAX_AUTHORIZED_PLANS = 100
+STATE_MARKER = b"controlled-api-private-execution-state/v1\n"
+APPLICATION_ID = 0x43504149
 
 
 class Budget:
@@ -37,12 +39,19 @@ class Budget:
             raise ControlError("UNSAFE_STATE_PATH")
         if initialize:
             self.root.mkdir(mode=STATE_DIRECTORY_MODE, parents=False, exist_ok=False)
+            marker = self.root / ".execution-state"
+            fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, STATE_FILE_MODE)
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(STATE_MARKER)
+                stream.flush()
+                os.fsync(stream.fileno())
         elif not self.root.is_dir():
             raise ControlError("STATE_MISSING_NO_AUTOMATIC_RESET")
         info = self.root.stat()
         if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != STATE_DIRECTORY_MODE:
             raise ControlError("UNSAFE_STATE_DIRECTORY")
         self.path = self.root / "budget.sqlite3"
+        self._initializing = initialize
         flags = os.O_RDWR | os.O_NOFOLLOW
         if initialize:
             flags |= os.O_CREAT | os.O_EXCL
@@ -90,15 +99,51 @@ class Budget:
                        OR (OLD.state = 'CLAIMED' AND NEW.state IN ('COMPLETE', 'UNKNOWN')))
                   BEGIN SELECT RAISE(ABORT, 'immutable claim'); END;
                 PRAGMA user_version=1;
+                PRAGMA application_id=1129333065;
             """)
+        self._initializing = False
+
+    def _guard_state(self) -> None:
+        """只写本组件新建的私有执行状态，不接受其他 SQLite/Receipt/Ledger。"""
+        if any(path.is_symlink() for path in (self.root, *self.root.parents)):
+            raise ControlError("UNSAFE_STATE_PATH")
+        for path, mode in ((self.root, STATE_DIRECTORY_MODE), (self.path, STATE_FILE_MODE)):
+            info = path.lstat()
+            expected_type = stat.S_ISDIR if path == self.root else stat.S_ISREG
+            if (
+                not expected_type(info.st_mode)
+                or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != mode
+                or (path == self.path and info.st_nlink != 1)
+            ):
+                raise ControlError("UNSAFE_STATE_FILE")
+        marker = self.root / ".execution-state"
+        fd = os.open(marker, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            info = os.fstat(stream.fileno())
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != STATE_FILE_MODE
+                or info.st_nlink != 1
+                or stream.read(len(STATE_MARKER) + 1) != STATE_MARKER
+            ):
+                raise ControlError("EXECUTION_STATE_IDENTITY_REQUIRED")
 
     def connect(self) -> sqlite3.Connection:
         """每次操作单独连接，使用 FULL 同步与 SQLite 文件锁跨进程串行化。"""
         # mode=rw 禁止恢复时悄悄新建空账本；目录也不可由普通 Runner 自动重建。
+        self._guard_state()
         db = sqlite3.connect(
             self.path.as_uri() + "?mode=rw", uri=True, timeout=10, isolation_level=None
         )
         db.execute("PRAGMA synchronous=FULL")
+        if (
+            not self._initializing
+            and db.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
+        ):
+            db.close()
+            raise ControlError("EXECUTION_STATE_IDENTITY_REQUIRED")
         return db
 
     def create(

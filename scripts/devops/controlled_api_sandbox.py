@@ -102,3 +102,60 @@ def run_offline(
         ],
     )
     return subprocess.run(command, env={}, capture_output=True, text=True, timeout=30, check=False)
+
+
+def broker_worker_command(project: Path, broker_socket: Path, argv: list[str]) -> list[str]:
+    """worker 不挂载账本/计划/凭据，只能经固定 broker socket 请求任务槽。"""
+    binary = shutil.which("bwrap")
+    if not binary:
+        raise ControlError("NETWORK_ISOLATION_UNAVAILABLE")
+    command = [
+        binary,
+        "--unshare-all",
+        "--die-with-parent",
+        "--new-session",
+        "--clearenv",
+        "--cap-drop",
+        "ALL",
+    ]
+    for path in ("/usr", "/lib", "/lib64"):
+        if Path(path).exists():
+            command.extend(["--ro-bind", path, path])
+    command.extend(
+        [
+            "--proc",
+            "/proc",
+            "--dev",
+            "/dev",
+            "--tmpfs",
+            "/tmp",
+            "--dir",
+            "/run",
+            "--dir",
+            "/app",
+            "--ro-bind",
+            str((project / "scripts").resolve(strict=True)),
+            "/app/scripts",
+            "--ro-bind",
+            str(broker_socket.resolve(strict=True)),
+            "/run/broker.sock",
+            "--chdir",
+            "/app",
+            "--setenv",
+            "PYTHONPATH",
+            "/app",
+            "--setenv",
+            "PYTHONDONTWRITEBYTECODE",
+            "1",
+            "--setenv",
+            "PATH",
+            "/usr/bin",
+            "--setenv",
+            "HOME",
+            "/nonexistent",
+            "--",
+            "/usr/bin/python3",
+            *argv,
+        ]
+    )
+    return command

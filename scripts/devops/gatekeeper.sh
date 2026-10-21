@@ -1335,6 +1335,9 @@ run_canonical_python_unit_gate() {
     tests/unit/test_controlled_api_budget.py
     tests/unit/test_controlled_api_runner.py
     tests/unit/test_controlled_api_sandbox.py
+    tests/unit/test_controlled_api_https.py
+    tests/unit/test_controlled_api_classification.py
+    tests/unit/test_controlled_api_binding.py
   )
 
   export PYTHONPATH="${WORKSPACE_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"

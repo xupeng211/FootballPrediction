@@ -279,3 +279,9 @@ database, or raw-data mutation and is not a production acquisition entrypoint.
 - README canonical 表增删入口时同步本索引。
 - 任何状态变化（NOT_ESTABLISHED → CANONICAL、BLOCKED 解除、新能力落地）时更新对应行。
 - 新增能力前先查本索引；发现缺失即补行，同时声明新组件的生命周期（AGENTS.md §2.5）。
+
+- **PR1947 受控 HTTPS 预生产候选**：精确分类的私有 SQLite 执行状态、发送前原子 claim、
+  固定计划 TLS broker 和无凭据/无网络 worker 已实现，使用本地 TLS Provider 替身验收。
+  clean Git object source-binding 与未合格通道结果持久化已准备；真实 Provider admission、
+  金额硬帽、Qualification、正式 Receipt/AI Gate 迁移及合法自举仍 BLOCKED。
+  不继承 CLI 资格，不改变 #1946/#1941；见 [维护合同](agentic/controlled_direct_api.md)。

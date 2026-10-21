@@ -65,7 +65,7 @@ def _openai_text(data: dict) -> str:
     return content[0]["text"]
 
 
-def _result(raw: bytes, plan: dict) -> None:
+def _result(raw: bytes, plan: dict) -> dict:
     """验证 Provider envelope、总 Usage（含 reasoning）与现有结果合同；不授予资格。"""
     data = _decode(raw)
     policy = plan["policy"]
@@ -95,7 +95,7 @@ def _result(raw: bytes, plan: dict) -> None:
         or usage["total_tokens"] != input_tokens + output_tokens
     ):
         raise ControlError("USAGE_UNKNOWN_OR_EXCEEDS_RESERVATION")
-    validate_result(_decode(text.encode()))
+    return validate_result(_decode(text.encode()))
 
 
 def _exchange(connection: UnixHTTP, plan: dict) -> bytes:

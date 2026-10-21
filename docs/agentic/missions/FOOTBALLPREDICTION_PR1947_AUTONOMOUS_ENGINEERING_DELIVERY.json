@@ -1,0 +1,50 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_PR1947_AUTONOMOUS_ENGINEERING_DELIVERY",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "config/python_db_write_allowlist.json",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/controlled_direct_api.md",
+    "docs/agentic/missions/FOOTBALLPREDICTION_PR1947_AUTONOMOUS_ENGINEERING_DELIVERY.json",
+    "scripts/devops/controlled_api_binding.py",
+    "scripts/devops/controlled_api_broker.py",
+    "scripts/devops/controlled_api_budget.py",
+    "scripts/devops/controlled_api_https.py",
+    "scripts/devops/controlled_api_policy.py",
+    "scripts/devops/controlled_api_runner.py",
+    "scripts/devops/controlled_api_sandbox.py",
+    "scripts/devops/gatekeeper.sh",
+    "scripts/ops/python_db_write_static_enforcement.py",
+    "tests/unit/controlled_api_tls_fixture.py",
+    "tests/unit/test_controlled_api_binding.py",
+    "tests/unit/test_controlled_api_budget.py",
+    "tests/unit/test_controlled_api_classification.py",
+    "tests/unit/test_controlled_api_https.py",
+    "tests/unit/test_controlled_api_runner.py",
+    "tests/unit/test_controlled_api_sandbox.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [
+    "src/",
+    "database/",
+    "data/",
+    "models/",
+    "training/",
+    ".github/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "CRITICAL dual review, Reviewer identity, qualification, Source Binding, exact-head Receipt and AI Gate remain unchanged.",
+    "New offline/HTTPS candidate identities remain unqualified and cannot emit a formal approval receipt.",
+    "Live paid execution is unavailable while physical cost bounds are NOT_PROVEN.",
+    "PR1946 and PR1941 remain unchanged; main and Harness are not modified."
+  ],
+  "forbidden_side_effects": [
+    "No real Provider inference, Qualification, official CRITICAL review, or Stage D Live.",
+    "No historical Receipt, Evidence or business Ledger mutation; no business DB write, production operation or model activation. Only new private execution-state budget writes and synthetic local TLS are authorized.",
+    "No main mutation, force push, rebase, history rewrite, self-merge or security gate bypass."
+  ]
+}
