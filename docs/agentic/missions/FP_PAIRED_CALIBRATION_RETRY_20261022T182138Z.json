@@ -1,0 +1,52 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_PAIRED_CALIBRATION_RETRY_20261022T182138Z",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "docs/agentic/missions/FP_PAIRED_CALIBRATION_RETRY_20261022T182138Z.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package-lock.json",
+    "docs/PROJECT_VISION.md",
+    "docs/PROJECT_MAP.md"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/",
+    "src/infrastructure/",
+    "src/ml/training/",
+    "src/ml/inference/",
+    "src/ml/value_mvp/"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "reviewer",
+    "harness"
+  ],
+  "protected_invariants": [
+    "Only offline paired probability calibration diagnostics using existing frozen research population; no training/new data/favorable selection",
+    "Preserve AWAY/DRAW/HOME canonical order and existing no-vig, five-bin edges and insufficient-sample threshold",
+    "Model and market means and empirical frequency in each bin use identical paired matches; expose binning anchor",
+    "Frozen assets/protocols/historical research evidence remain byte-unchanged",
+    "No trading, ROI or production-profit claim; no production behavior change",
+    "No governance, review policy or Harness source changes; local candidate only"
+  ],
+  "forbidden_side_effects": [
+    "network/data collection, DB access/write, training, inference of business model, activation, real betting, Stage D Live",
+    "paid review/qualification, push, PR, merge, deployment, other worktrees or historical ledger mutation"
+  ]
+}
