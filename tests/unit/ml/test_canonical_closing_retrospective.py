@@ -15,6 +15,14 @@ import xgboost as xgb
 from src.ml.evaluation import canonical_closing_retrospective as diagnostic
 from src.ml.training import canonical_training_producer as producer
 
+CALIBRATION_STATISTICS = (
+    "model_mean",
+    "market_mean",
+    "observed_frequency",
+    "model_absolute_gap",
+    "market_absolute_gap",
+)
+
 
 @pytest.fixture(autouse=True)
 def prohibit_side_effects(monkeypatch):
@@ -162,6 +170,24 @@ def test_valid_pair_class_mapping_metrics_and_determinism(sources):
     assert row["log_loss"]["market"] == pytest.approx(-np.log(q[0]))
     assert row["brier"]["market"] == pytest.approx(np.sum((q - [1, 0, 0]) ** 2))
     assert row["bookmakers"][0]["margin"] == pytest.approx(-0.05)
+    calibration = first["paired_calibration"]
+    assert calibration["binning_basis"] == "model_probability"
+    assert calibration["boundary_semantics"] == "left_closed_right_open_except_final_bin_includes_1.0"
+    assert calibration["bin_edges"] == [0, 0.2, 0.4, 0.6, 0.8, 1]
+    assert calibration["minimum_nonempty_bin_count"] == 10
+    assert calibration["sample_status"] == "INSUFFICIENT_SAMPLE"
+    assert list(calibration["classwise"]) == ["AWAY", "DRAW", "HOME"]
+    for index, name in enumerate(("AWAY", "DRAW", "HOME")):
+        bins = calibration["classwise"][name]
+        assert len(bins) == 5
+        assert sum(b["count"] for b in bins) == first["valid_paired_matches"]
+        occupied = bins[1 if index < 2 else 2]
+        assert occupied["count"] == 3
+        assert occupied["model_mean"] == [0.2, 0.3, 0.5][index]
+        assert occupied["market_mean"] == round(float(q[index]), 12)
+        assert occupied["observed_frequency"] == round(1 / 3, 12)
+        assert occupied["model_absolute_gap"] == round(abs([0.2, 0.3, 0.5][index] - 1 / 3), 12)
+        assert occupied["market_absolute_gap"] == round(abs(float(q[index]) - 1 / 3), 12)
 
 
 @pytest.mark.parametrize("field", ["class_names", "probability_column_order", "model_class_order"])
@@ -219,6 +245,12 @@ def test_row_faults_excluded_and_accounted(sources, fault):  # noqa: C901 -- 独
     assert result["accounted_matches"] == len(sources["reserved_ids"])
     assert result["excluded_matches"] == 1
     assert result["rows"][0]["reason"]
+    assert result["rows"][0]["status"] == "EXCLUDED"
+    assert result["exclusion_reasons"] == {result["rows"][0]["reason"]: 1}
+    for name, bins in result["paired_calibration"]["classwise"].items():
+        assert sum(b["count"] for b in bins) == result["valid_paired_matches"] == 2
+        occupied = next(b for b in bins if b["count"])
+        assert occupied["observed_frequency"] == (0.0 if name == "AWAY" else 0.5)
 
 
 @pytest.mark.parametrize("selection", diagnostic.SELECTIONS)
@@ -254,6 +286,17 @@ def test_missing_predictions_insufficient_evidence(sources):
     assert result["excluded_matches"] == len(sources["reserved_ids"])
     assert result["result_interpretation"] == "INSUFFICIENT_EVIDENCE"
     assert result["metrics"] is None
+    assert result["uncertainty"] is None
+    assert result["valid_paired_matches"] == 0
+    calibration = result["paired_calibration"]
+    assert calibration["sample_status"] == "INSUFFICIENT_SAMPLE"
+    assert calibration["minimum_observed_nonempty_bin_count"] == 0
+    for bins in calibration["classwise"].values():
+        assert len(bins) == 5
+        for entry in bins:
+            assert entry["count"] == 0
+            assert entry["sample_status"] == "INSUFFICIENT_SAMPLE"
+            assert all(entry[key] is None for key in CALIBRATION_STATISTICS)
 
 
 def test_duplicate_population_or_prediction_rejected(sources):
@@ -317,3 +360,127 @@ def test_cli_source_loader_tamper_fails_before_subprocess(tmp_path):
     path.write_text("{}", encoding="utf-8")
     with pytest.raises(ValueError, match="SOURCE_HASH_MISMATCH"):
         diagnostic.load_sources({"evaluation": path})
+
+
+@pytest.mark.parametrize("class_index", [0, 1, 2])
+def test_paired_calibration_uses_model_mask_for_both_sides(class_index):
+    """市场概率跨箱时仍只比较模型箱内同场，覆盖 A/D/H 映射。"""
+    p = np.array([0.1, 0.15, 0.7])
+    q = np.array([0.8, 0.05, 0.1])
+    model = np.column_stack((p, (1 - p) / 2, (1 - p) / 2))
+    market = np.column_stack((q, (1 - q) / 2, (1 - q) / 2))
+    model = np.roll(model, class_index, axis=1)
+    market = np.roll(market, class_index, axis=1)
+    labels = np.array([class_index, (class_index + 1) % 3, (class_index + 2) % 3])
+    result = diagnostic._paired_calibration_summary(model, market, labels)
+    bins = result["classwise"][["AWAY", "DRAW", "HOME"][class_index]]
+    assert bins[0] == {
+        "bin": [0.0, 0.2],
+        "count": 2,
+        "model_mean": 0.125,
+        "market_mean": 0.425,
+        "observed_frequency": 0.5,
+        "model_absolute_gap": 0.375,
+        "market_absolute_gap": 0.075,
+        "sample_status": "INSUFFICIENT_SAMPLE",
+    }
+    assert bins[3]["count"] == 1
+    assert bins[3]["market_mean"] == 0.1
+    assert bins[3]["observed_frequency"] == 0.0
+
+
+@pytest.mark.parametrize("class_index", [0, 1, 2])
+def test_paired_calibration_all_boundaries_and_conservation(class_index):
+    """每个内部边界进右箱，0 和 1 均计数；各类别守恒。"""
+    edges = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    model = np.roll(
+        np.column_stack((edges, (1 - edges) / 2, (1 - edges) / 2)), class_index, axis=1
+    )
+    market = np.full((6, 3), 1 / 3)
+    labels = np.arange(6) % 3
+    result = diagnostic._paired_calibration_summary(model, market, labels)
+    assert list(result["classwise"]) == ["AWAY", "DRAW", "HOME"]
+    for bins in result["classwise"].values():
+        assert len(bins) == 5
+        assert [b["bin"] for b in bins] == [
+            [0.0, 0.2],
+            [0.2, 0.4],
+            [0.4, 0.6],
+            [0.6, 0.8],
+            [0.8, 1.0],
+        ]
+        assert sum(b["count"] for b in bins) == 6
+    bins = result["classwise"][["AWAY", "DRAW", "HOME"][class_index]]
+    assert [b["count"] for b in bins] == [1, 1, 1, 1, 2]
+    assert [b["model_mean"] for b in bins] == [0.0, 0.2, 0.4, 0.6, 0.9]
+    assert all(b["market_mean"] == round(1 / 3, 12) for b in bins)
+
+
+@pytest.mark.parametrize("count", [0, 9, 10])
+def test_paired_calibration_fixed_sample_threshold_empty_bins_and_rounding(count):
+    """非空箱门槛固定为 10；空箱不拉低顶层状态，五项均为空。"""
+    model = np.full((count, 3), 1 / 3)
+    market = np.tile([0.1, 0.3, 0.6], (count, 1))
+    labels = np.zeros(count, dtype=int)
+    result = diagnostic._paired_calibration_summary(model, market, labels)
+    expected_status = "INSUFFICIENT_SAMPLE" if count < 10 else "DESCRIPTIVE_ONLY"
+    assert result["sample_status"] == expected_status
+    assert result["minimum_observed_nonempty_bin_count"] == count
+    assert result["minimum_nonempty_bin_count"] == 10
+    for index, name in enumerate(("AWAY", "DRAW", "HOME")):
+        bins = result["classwise"][name]
+        assert len(bins) == 5
+        assert sum(b["count"] for b in bins) == count
+        for entry in bins:
+            if entry["count"]:
+                assert entry["count"] == count
+                assert entry["sample_status"] == expected_status
+                frequency = float(index == 0)
+                assert entry["model_mean"] == round(1 / 3, 12)
+                assert entry["market_mean"] == [0.1, 0.3, 0.6][index]
+                assert entry["observed_frequency"] == frequency
+                assert entry["model_absolute_gap"] == round(abs(1 / 3 - frequency), 12)
+                assert entry["market_absolute_gap"] == round(abs([0.1, 0.3, 0.6][index] - frequency), 12)
+            else:
+                assert entry["sample_status"] == "INSUFFICIENT_SAMPLE"
+                assert all(entry[key] is None for key in CALIBRATION_STATISTICS)
+
+
+def test_paired_calibration_top_level_uses_smallest_nonempty_bin():
+    """总对数足够但存在小箱时，顶层仍提示小样本。"""
+    model = np.array([[0.1, 0.3, 0.6]] * 10 + [[0.3, 0.3, 0.4]])
+    result = diagnostic._paired_calibration_summary(model, model, np.zeros(11, dtype=int))
+    assert result["minimum_observed_nonempty_bin_count"] == 1
+    assert result["sample_status"] == "INSUFFICIENT_SAMPLE"
+    assert result["classwise"]["AWAY"][0]["sample_status"] == "DESCRIPTIVE_ONLY"
+    assert result["classwise"]["AWAY"][1]["sample_status"] == "INSUFFICIENT_SAMPLE"
+
+
+def test_analyze_paired_calibration_below_scoring_threshold(sources, monkeypatch):
+    """通过真实 fixture 报价链配对，校准不依赖 30 对评分门槛。"""
+    monkeypatch.setattr(diagnostic, "MINIMUM_PAIRS", 30)
+    for i, (p, q) in enumerate(zip([0.1, 0.15, 0.7], [0.8, 0.05, 0.1], strict=True)):
+        sources["evaluation"]["prediction_rows"][i]["probabilities"] = {
+            "P_AWAY": p,
+            "P_DRAW": (1 - p) / 2,
+            "P_HOME": (1 - p) / 2,
+        }
+        probabilities = {"away": q, "draw": (1 - q) / 2, "home": (1 - q) / 2}
+        for obs in sources["gd01"]["rows"][i]["football_data"]["observations"]:
+            odds = 1 / probabilities[obs["selection"]]
+            obs["decimal_odds"] = odds
+            column = f"{obs['bookmaker_source_id']}C{obs['selection'][0].upper()}"
+            sources["csv_rows"]["saved"][i][column] = str(odds)
+    result = diagnostic.analyze(sources)
+    assert result["valid_paired_matches"] == result["accounted_matches"] == 3
+    assert result["excluded_matches"] == 0
+    assert result["exclusion_reasons"] == {}
+    assert result["metrics"] is None
+    assert result["uncertainty"] is None
+    assert result["result_interpretation"] == "INSUFFICIENT_EVIDENCE"
+    entry = result["paired_calibration"]["classwise"]["AWAY"][0]
+    assert entry["count"] == 2
+    assert [entry[key] for key in CALIBRATION_STATISTICS] == [0.125, 0.425, 0.5, 0.375, 0.075]
+    assert result["claim_boundary"] == (
+        "No fresh holdout, decision-time execution, tradable value, profitability, ROI or CLV proof"
+    )

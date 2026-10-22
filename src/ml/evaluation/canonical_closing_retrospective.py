@@ -19,6 +19,8 @@ import numpy as np
 from src.ml.evaluation import canonical_offline_model_evaluation_contract as contract
 from src.ml.evaluation.canonical_offline_model_evaluation_artifacts import build_evaluation_receipt
 from src.ml.evaluation.canonical_offline_model_evaluation_metrics import (
+    _calibration_summary,
+    _round_number,
     metric_bundle,
     validate_probability_matrix,
 )
@@ -355,6 +357,63 @@ def _market(  # noqa: PLR0915 -- 每份完整报价先验证再折叠；不跨 s
     return list(reversed(consensus["p"])), details
 
 
+def _paired_calibration_summary(
+    model: np.ndarray[Any, Any], market: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]
+) -> dict[str, Any]:
+    """按模型概率对同场两端作历史描述；不是市场自身分箱或优势证明。"""
+    summary = _calibration_summary(
+        model,
+        labels,
+        {
+            "calibration": {
+                "bin_edges": contract.CALIBRATION_BIN_EDGES,
+                "minimum_nonempty_bin_count": contract.CALIBRATION_MIN_NONEMPTY_BIN_COUNT,
+            }
+        },
+    )
+    classwise: dict[str, list[dict[str, Any]]] = {}
+    for class_index, class_name in enumerate(contract.CLASS_NAMES):
+        bins = []
+        values = model[:, class_index]
+        for entry in summary["classwise"][class_name]:
+            low, high = entry["bin"]
+            mask = (values >= low) & ((values <= high) if high == 1.0 else (values < high))
+            count = entry["count"]
+            market_mean: float | None = None
+            market_gap: float | None = None
+            if count:
+                market_mean = float(np.mean(market[mask, class_index]))
+                frequency = float(np.mean(labels[mask] == class_index))
+                market_gap = abs(market_mean - frequency)
+            bins.append(
+                {
+                    "bin": entry["bin"],
+                    "count": count,
+                    "model_mean": entry.get("predicted_mean"),
+                    "market_mean": _round_number(market_mean),
+                    "observed_frequency": entry.get("observed_frequency"),
+                    "model_absolute_gap": entry.get("absolute_gap"),
+                    "market_absolute_gap": _round_number(market_gap),
+                    "sample_status": (
+                        "INSUFFICIENT_SAMPLE"
+                        if count < summary["minimum_nonempty_bin_count"]
+                        else "DESCRIPTIVE_ONLY"
+                    ),
+                }
+            )
+        classwise[class_name] = bins
+    return {
+        "method": summary["method"],
+        "binning_basis": "model_probability",
+        "boundary_semantics": "left_closed_right_open_except_final_bin_includes_1.0",
+        "bin_edges": summary["bin_edges"],
+        "minimum_nonempty_bin_count": summary["minimum_nonempty_bin_count"],
+        "minimum_observed_nonempty_bin_count": summary["minimum_observed_nonempty_bin_count"],
+        "sample_status": summary["sample_status"],
+        "classwise": classwise,
+    }
+
+
 def analyze(sources: dict[str, Any]) -> dict[str, Any]:
     """每个 reserved ID 必须有去向；row 缺陷排除、全局合同缺陷停止评分。"""
     evaluation = sources["evaluation"]
@@ -425,12 +484,10 @@ def analyze(sources: dict[str, Any]) -> dict[str, Any]:
     metrics: dict[str, Any] | None = None
     uncertainty: dict[str, Any] | None = None
     interpretation = "INSUFFICIENT_EVIDENCE"
+    model_array = np.asarray(model, dtype=float).reshape(-1, len(contract.CLASS_NAMES))
+    market_array = np.asarray(market, dtype=float).reshape(-1, len(contract.CLASS_NAMES))
+    y = np.asarray(labels, dtype=int)
     if len(labels) >= MINIMUM_PAIRS:
-        model_array, market_array, y = (
-            np.asarray(model),
-            np.asarray(market),
-            np.asarray(labels, dtype=int),
-        )
         model_metrics, market_metrics = (
             metric_bundle(model_array, y),
             metric_bundle(market_array, y),
@@ -470,6 +527,7 @@ def analyze(sources: dict[str, Any]) -> dict[str, Any]:
             sorted(Counter(r["reason"] for r in rows if r["status"] == "EXCLUDED").items())
         ),
         "class_order": list(contract.CLASS_NAMES),
+        "paired_calibration": _paired_calibration_summary(model_array, market_array, y),
         "metrics": metrics,
         "uncertainty": uncertainty,
         "bootstrap": {
