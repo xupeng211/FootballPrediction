@@ -1,5 +1,21 @@
 # Project Status
 
+
+## Stage D 最小跨期修复候选（2026-10-13）
+
+本变更在现有永久 epoch/append-only ledger 与外部 Trust Root 上实现显式逐月
+rollover，不修改九月四条 Consumed、UNKNOWN 或旧 v1/v2。旧配置已过期；旧 v2
+源码绑定不能作为当前执行授权。新 schema 绑定历史前驱、旧配置字节、账本尾哈希、
+Owner 账户/reset approval 和当前精确 commit/tree；新月用量与 Provider headers
+按周期隔离。既有 Candidate/binder 继续绑定裁定 hash，无需重写 Adapter。
+
+状态：`LOCAL_IMPLEMENTATION / OFFLINE_VALIDATION / FORMAL_REVIEW_PENDING`。
+这不是 main 上已合并交付的声明，也未生成真实 rollover artifact、quota config、
+Candidate 或授权。`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 不变。
+下一交付门禁是本变更 exact-head 的 CRITICAL 双独立审查（Codex 与 DeepSeek），
+本 mission 不授权模型调用、Push、PR 或 Merge。未来真实周期建立和单次请求仍需独立批准。
+合同：`docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md` 的 Billing-period rollover 节。
+
 ## Engineering maintenance — Recon historical boundary
 
 The three ad hoc probes retained under `archive/recon_v2_research/` are detached

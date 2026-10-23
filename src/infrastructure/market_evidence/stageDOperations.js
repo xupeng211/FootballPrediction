@@ -68,6 +68,11 @@ const HISTORICAL_PRE_EPOCH_REQUEST_TOTAL = 'AT_LEAST_2_CONFIRMED';
 const HISTORICAL_PRE_EPOCH_EXACT_TOTAL = 'UNKNOWN';
 const QUOTA_ADJUDICATION_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication/v1';
 const QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication/v2';
+const QUOTA_ROLLOVER_SCHEMA_VERSION = 'footballprediction-stage-d-quota-adjudication-rollover/v1';
+const QUOTA_ROLLOVER_POLICY_VERSION = 'stage-d-billing-period-rollover/v1';
+const QUOTA_ROLLOVER_EVIDENCE_SCHEMA_VERSION = 'footballprediction-stage-d-billing-period-evidence/v1';
+// 仅用于验证不可变历史前驱，不可用于当前 admission 或创建 runtime capability。
+const HISTORICAL_QUOTA_LINEAGE = Symbol('historical-quota-lineage-validation');
 const QUOTA_ADJUDICATION_POLICY_VERSION = 'stage-d-conservative-quota-adjudication/v1';
 const QUOTA_ADJUDICATION_REASON = 'HISTORICAL_QUOTA_HEADER_LOSS_AFTER_COMPLETED_2XX';
 const QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION = 'PROVIDER_EFFECT_UNKNOWN_BUT_BUDGETED_AS_CONSUMED';
@@ -1836,13 +1841,14 @@ function assertApprovedQuotaConfiguration(value, { now } = {}) {
 }
 
 // eslint-disable-next-line complexity -- local budget admission enumerates every ambiguous ledger state.
-function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null, quotaAdjudicationPredecessor = null, quotaAdjudicationPredecessorSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null } = {}) {
+function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now = new Date().toISOString(), quotaConfigSha256 = null, quotaAdjudicationSha256 = null, quotaAdjudicationPredecessor = null, quotaAdjudicationPredecessorSha256 = null, expectedSourceMainSha = null, expectedSourceMainTreeSha = null, testRuntimeAuthorization = null, historicalLineage = null } = {}) {
     if (!ledger || !ledger.epoch || !Array.isArray(ledger.requests)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'durable request ledger is unavailable');
     validateEpoch(ledger.epoch);
     const periodStart = Date.parse(config.period_start_at);
     const periodEnd = Date.parse(config.period_end_at);
     const epochStarted = Date.parse(ledger.epoch.started_at);
-    if (epochStarted < periodStart || epochStarted >= periodEnd) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request accounting epoch is outside the locally governed budget period');
+    const rollover = quotaAdjudication?.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION;
+    if (!rollover && (epochStarted < periodStart || epochStarted >= periodEnd)) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request accounting epoch is outside the locally governed budget period');
     const summary = ledgerUsageSummary(ledger);
     if (summary.ambiguous_consumed_request_ids.length) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'ambiguous consumed request state requires reconciliation');
     const unresolvedQuotaDivergences = [];
@@ -1850,7 +1856,7 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
         if (Date.parse(request.created_at) < epochStarted) fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request predates the sealed accounting epoch');
         if (request.transmitted_at !== null) {
             const transmittedAt = Date.parse(request.transmitted_at);
-            if (transmittedAt < epochStarted || transmittedAt < periodStart || transmittedAt >= periodEnd) {
+            if (transmittedAt < epochStarted || transmittedAt >= periodEnd || (transmittedAt < periodStart && (!rollover || !isInheritedQuotaTransmission(quotaAdjudication, transmittedAt)))) {
                 fail('REQUEST_ACCOUNTING_AMBIGUOUS', 'request transmission is outside the sealed local accounting period');
             }
         }
@@ -1877,7 +1883,9 @@ function assertBudgetLedgerValid(ledger, config, quotaAdjudication = null, { now
     }
     if (unresolvedQuotaDivergences.length) {
         if (quotaAdjudication === null) fail('PROVIDER_QUOTA_RECONCILIATION_REQUIRED', 'prior provider quota divergence requires explicit reconciliation');
-        const expectedSource = requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
+        const expectedSource = historicalLineage === HISTORICAL_QUOTA_LINEAGE
+            ? { source_main_sha: expectedSourceMainSha, source_main_tree_sha: expectedSourceMainTreeSha }
+            : requireExpectedStageDGitSourceBinding({ expectedSourceMainSha, expectedSourceMainTreeSha, testRuntimeAuthorization });
         validateQuotaAdjudication(quotaAdjudication, {
             ledger,
             quotaConfig: config,
@@ -1936,9 +1944,11 @@ function assertRequestBudget({ ledger, quotaConfig, quotaConfigSha256 = null, qu
     });
 }
 
-function latestReconciledProviderQuota(ledger) {
+function latestReconciledProviderQuota(ledger, config) {
     return ledger.requests
         .filter(request => request.provider_quota?.reconciliation_status === 'RECONCILED')
+        .filter(request => Date.parse(request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.transmitted_at) < Date.parse(config.period_end_at))
+        .filter(request => Date.parse(request.response_received_at || request.transmitted_at) >= Date.parse(config.period_start_at) && Date.parse(request.response_received_at || request.transmitted_at) < Date.parse(config.period_end_at))
         .sort((left, right) => Date.parse(left.response_received_at || left.transmitted_at) - Date.parse(right.response_received_at || right.transmitted_at))
         .at(-1)?.provider_quota || null;
 }
@@ -1970,6 +1980,7 @@ function validateTrustedQuotaEvidence(value, config) {
 // eslint-disable-next-line complexity -- fail-closed validation enumerates every immutable adjudication binding.
 function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha256 = null, quotaAdjudicationSha256 = null, predecessor = null, predecessorSha256 = null, now, expectedSourceMainSha = null, expectedSourceMainTreeSha = null } = {}) {
     const successor = value?.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION;
+    const rollover = value?.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION;
     assertExactKeys(
         value,
         [
@@ -1998,11 +2009,12 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
             'source_main_sha',
             'source_main_tree_sha',
             'adjudication_policy_version',
+            ...(rollover ? ['rollover'] : []),
             ...(successor ? ['predecessor_adjudication_id', 'predecessor_sha256', 'predecessor_source_main_sha', 'predecessor_source_main_tree_sha', 'supersession_reason'] : []),
         ],
         'Stage D quota adjudication'
     );
-    if (![QUOTA_ADJUDICATION_SCHEMA_VERSION, QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION].includes(value.schema_version)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication schema is invalid');
+    if (![QUOTA_ADJUDICATION_SCHEMA_VERSION, QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION, QUOTA_ROLLOVER_SCHEMA_VERSION].includes(value.schema_version)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication schema is invalid');
     if (!/^sqa_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(value.adjudication_id || '')) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication ID is invalid');
     if (value.provider !== PROVIDER) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication provider is invalid');
     assertToken(value.accounting_epoch_id, 'quota adjudication accounting_epoch_id');
@@ -2020,7 +2032,7 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (!Array.isArray(value.evidence_references.classes) || value.evidence_references.classes.length < 1 || value.evidence_references.classes.length > 16) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence classes are invalid');
     if (!Array.isArray(value.evidence_references.ledger_request_ids) || value.evidence_references.ledger_request_ids.length < 1 || value.evidence_references.ledger_request_ids.length > 128) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence request IDs are invalid');
     for (const item of [...value.evidence_references.classes, ...value.evidence_references.ledger_request_ids]) assertToken(item, 'quota adjudication evidence reference');
-    if (value.adjudication_reason !== QUOTA_ADJUDICATION_REASON || value.adjudication_policy_version !== QUOTA_ADJUDICATION_POLICY_VERSION) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication policy identity is invalid');
+    if (value.adjudication_reason !== QUOTA_ADJUDICATION_REASON || value.adjudication_policy_version !== (rollover ? QUOTA_ROLLOVER_POLICY_VERSION : QUOTA_ADJUDICATION_POLICY_VERSION)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication policy identity is invalid');
     if (value.provider_exact_effect_known !== false || value.provider_quota_actual_effect !== 'UNKNOWN') fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication must preserve unknown provider effect');
     if (value.provider_effect_classification !== QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION || value.conservative_usage_basis !== QUOTA_ADJUDICATION_USAGE_BASIS) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication conservative policy is invalid');
     const config = validateQuotaConfiguration(quotaConfig, { now });
@@ -2057,11 +2069,12 @@ function validateQuotaAdjudication(value, { ledger, quotaConfig, quotaConfigSha2
     if (!value.evidence_references.ledger_request_ids.includes(value.historical_request_id)) fail('INVALID_QUOTA_ADJUDICATION', 'quota adjudication evidence does not reference the historical request');
     const historical = unresolved[0];
     if (!requestIsConsumed(historical) || historical.quota_units_charged_or_assumed !== EXPECTED_REQUEST_COST_CREDITS || historical.provider_quota !== null) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'historical quota divergence is not a consumed unresolved request');
-    const trusted = latestReconciledProviderQuota(ledger);
+    const trusted = latestReconciledProviderQuota(ledger, config);
     const validatedTrusted = validateTrustedQuotaEvidence(value.last_trusted_provider_quota_evidence, config);
     if ((trusted === null) !== (validatedTrusted === null)) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'quota adjudication trusted provider evidence does not match the ledger');
     if (trusted && (trusted.reported_used !== validatedTrusted.reported_used || trusted.reported_remaining !== validatedTrusted.reported_remaining || trusted.reported_last_cost !== validatedTrusted.reported_last_cost)) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'quota adjudication trusted provider evidence differs from the ledger');
-    const trustedUsed = validatedTrusted?.reported_used || 0;
+    const rolloverFloor = rollover ? validateQuotaRolloverLineage(value, { ledger, config, quotaConfigSha256, now }) : 0;
+    const trustedUsed = Math.max(validatedTrusted?.reported_used || 0, rolloverFloor);
     if (value.conservative_effective_provider_usage < Math.max(localUnits, trustedUsed)) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage would undercount known consumed evidence');
     if (value.conservative_effective_provider_usage > config.monthly_quota_limit) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative provider usage exceeds the configured plan limit');
     if (value.conservative_remaining_automatic_budget !== config.automated_spend_limit - value.conservative_effective_provider_usage) fail('QUOTA_ADJUDICATION_UNSAFE', 'conservative remaining automatic budget does not reconcile to the configured ceiling');
@@ -2115,7 +2128,7 @@ function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256,
     const historical = ledger.requests.find(request => request.request_id === historicalRequestId);
     if (unresolved.length !== 1 || !historical || unresolved[0].request_id !== historicalRequestId) fail('QUOTA_ADJUDICATION_EVIDENCE_INVALID', 'offline quota adjudication requires exactly one specified unresolved historical divergence');
     const localUnits = consumedQuotaUnitsInPeriod(ledger, config);
-    const trusted = latestReconciledProviderQuota(ledger);
+    const trusted = latestReconciledProviderQuota(ledger, config);
     const effectiveUsage = Math.max(localUnits, trusted?.reported_used || 0);
     const artifact = {
         adjudication_id: adjudicationId,
@@ -2162,6 +2175,163 @@ function createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256,
     });
 }
 
+// 同一永久账本上的逐月转换；不重写 epoch、旧 entry 或旧 v1/v2。
+function quotaMonthBounds(period) {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(period || '')) fail('QUOTA_ROLLOVER_PERIOD_INVALID', 'billing month is invalid');
+    const start = `${period}-01T00:00:00Z`;
+    const date = new Date(start);
+    date.setUTCMonth(date.getUTCMonth() + 1);
+    return { start, end: date.toISOString().replace('.000Z', 'Z'), next: date.toISOString().slice(0, 7) };
+}
+
+function quotaLedgerPrefix(ledger, count, tail) {
+    assertNonNegativeInteger(count, 'predecessor ledger entry count');
+    if (count > ledger.entries.length) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'predecessor ledger generation was rolled back');
+    const requests = new Map();
+    const entries = [];
+    let previousHash = validateEpoch(ledger.epoch).genesis_entry_hash;
+    for (const original of ledger.entries.slice(0, count)) {
+        const entry = validateEntry(original, { expectedSequence: entries.length + 1, previousHash, requests });
+        previousHash = entry.entry_hash;
+        entries.push(entry);
+    }
+    if (previousHash !== tail) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'predecessor ledger tail does not match the immutable prefix');
+    return { ...ledger, entries, requests: [...requests.values()], last_entry_hash: previousHash };
+}
+
+function rolloverDepth(value) {
+    let current = value;
+    let depth = 0;
+    while (current?.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION) {
+        if (++depth > 120) fail('QUOTA_ROLLOVER_LINEAGE_INVALID', 'rollover lineage exceeds the bounded ten-year history');
+        current = current.rollover?.previous_adjudication;
+    }
+    return depth;
+}
+
+function isInheritedQuotaTransmission(value, timestamp) {
+    rolloverDepth(value);
+    let current = value;
+    while (current?.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION) {
+        const config = JSON.parse(current.rollover.previous_quota_config_bytes);
+        if (timestamp >= Date.parse(config.period_start_at) && timestamp < Date.parse(config.period_end_at)) return true;
+        current = current.rollover.previous_adjudication;
+    }
+    return false;
+}
+
+// eslint-disable-next-line complexity -- the explicit Owner evidence contract enumerates independent fail-closed bindings.
+function validateQuotaRolloverEvidence(evidence, { config, configSha256, previousConfig, previousAdjudicationSha256, now }) {
+    assertExactKeys(evidence, ['schema_version', 'approval_status', 'provider', 'previous_billing_period_id', 'billing_period_id', 'previous_account_identity_sha256', 'account_identity_sha256', 'quota_config_sha256', 'previous_adjudication_sha256', 'reset_rule', 'provider_period_start_at', 'provider_period_end_at', 'observed_at', 'approved_at', 'reported_used', 'reported_remaining', 'account_evidence_reference', 'account_evidence_sha256'], 'Owner rollover evidence');
+    if (evidence.schema_version !== QUOTA_ROLLOVER_EVIDENCE_SCHEMA_VERSION || evidence.approval_status !== 'OWNER_APPROVED_BILLING_PERIOD_ROLLOVER' || evidence.provider !== PROVIDER) fail('QUOTA_ROLLOVER_EVIDENCE_REQUIRED', 'explicit Owner account/reset approval is required');
+    for (const field of ['account_identity_sha256', 'previous_account_identity_sha256', 'quota_config_sha256', 'previous_adjudication_sha256', 'account_evidence_sha256']) assertSha256(evidence[field], `rollover evidence ${field}`);
+    assertToken(evidence.account_evidence_reference, 'account evidence reference');
+    if (evidence.account_identity_sha256 !== evidence.previous_account_identity_sha256 || evidence.quota_config_sha256 !== configSha256 || evidence.previous_adjudication_sha256 !== previousAdjudicationSha256 || evidence.previous_billing_period_id !== previousConfig.billing_period_id || evidence.billing_period_id !== config.billing_period_id) fail('QUOTA_ROLLOVER_EVIDENCE_MISMATCH', 'account/config/predecessor/period approval does not match');
+    const bounds = quotaMonthBounds(config.billing_period_id);
+    if (evidence.reset_rule !== 'MONTHLY_FIRST_DAY_00_UTC' || evidence.provider_period_start_at !== bounds.start || evidence.provider_period_end_at !== bounds.end) fail('QUOTA_ROLLOVER_EVIDENCE_MISMATCH', 'Owner approval must prove the governed monthly reset boundaries');
+    for (const field of ['observed_at', 'approved_at']) assertUtc(evidence[field], `rollover evidence ${field}`);
+    if (Date.parse(evidence.observed_at) < Date.parse(bounds.start) || Date.parse(evidence.observed_at) > Date.parse(evidence.approved_at) || Date.parse(evidence.approved_at) > Date.parse(now) || Date.parse(now) - Date.parse(evidence.observed_at) > 24 * 60 * 60 * 1000) fail('QUOTA_ROLLOVER_EVIDENCE_STALE', 'account evidence must be current-period, ordered and no older than 24 hours at adjudication');
+    assertNonNegativeInteger(evidence.reported_used, 'Owner reported used');
+    assertNonNegativeInteger(evidence.reported_remaining, 'Owner reported remaining');
+    if (evidence.reported_used + evidence.reported_remaining !== 500) fail('QUOTA_ROLLOVER_EVIDENCE_MISMATCH', 'Owner account capacity does not match the governed plan');
+    return evidence.reported_used;
+}
+
+// eslint-disable-next-line complexity -- every predecessor, history and Owner binding is fail-closed.
+function validateQuotaRolloverLineage(value, { ledger, config, quotaConfigSha256 }) {
+    rolloverDepth(value);
+    const r = value.rollover;
+    assertExactKeys(r, ['previous_billing_period_id', 'previous_epoch_id', 'epoch_genesis_hash', 'previous_ledger_entry_count', 'previous_ledger_tail_sha256', 'historical_consumed_count', 'historical_unknown_classification', 'previous_quota_config_bytes', 'previous_quota_config_sha256', 'previous_adjudication', 'previous_adjudication_sha256', 'previous_v1', 'previous_v1_sha256', 'owner_evidence', 'owner_evidence_sha256'], 'quota rollover lineage');
+    const prior = r.previous_adjudication;
+    if (![QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION, QUOTA_ROLLOVER_SCHEMA_VERSION].includes(prior?.schema_version)) fail('QUOTA_ROLLOVER_LINEAGE_INVALID', 'first rollover requires v2; later rollover requires the previous monthly rollover');
+    assertSha256(r.previous_adjudication_sha256, 'previous adjudication hash');
+    assertSha256(r.previous_quota_config_sha256, 'previous quota config hash');
+    assertSha256(r.previous_ledger_tail_sha256, 'previous ledger tail');
+    assertSha256(r.owner_evidence_sha256, 'Owner evidence hash');
+    if (sha256Text(canonicalBytes(prior)) !== r.previous_adjudication_sha256 || typeof r.previous_quota_config_bytes !== 'string' || sha256Text(r.previous_quota_config_bytes) !== r.previous_quota_config_sha256 || sha256Text(canonicalBytes(r.owner_evidence)) !== r.owner_evidence_sha256) fail('QUOTA_ROLLOVER_HASH_MISMATCH', 'immutable predecessor/config/Owner evidence bytes do not match');
+    const previousConfig = validateQuotaConfiguration(JSON.parse(r.previous_quota_config_bytes), { now: prior.adjudicated_at });
+    const previousBounds = quotaMonthBounds(previousConfig.billing_period_id);
+    const bounds = quotaMonthBounds(config.billing_period_id);
+    if (r.previous_billing_period_id !== previousConfig.billing_period_id || config.billing_period_id !== previousBounds.next || previousConfig.period_end_at !== bounds.start || Date.parse(previousConfig.period_start_at) < Date.parse(previousBounds.start) || config.period_start_at !== bounds.start || config.period_end_at !== bounds.end) fail('QUOTA_ROLLOVER_PERIOD_INVALID', 'only adjacent non-overlapping governed UTC monthly periods are permitted');
+    for (const governed of [previousConfig, config]) {
+        if (governed.monthly_quota_limit !== 500 || governed.reserved_safety_buffer !== 50 || governed.automated_spend_limit !== 450 || governed.stop_before_quota_exhaustion_threshold !== 0) fail('QUOTA_ROLLOVER_EVIDENCE_MISMATCH', 'rollover cannot change the governed 500/50/450 budget');
+    }
+    if (r.previous_epoch_id !== ledger.epoch.epoch_id || r.epoch_genesis_hash !== ledger.epoch.genesis_entry_hash || r.previous_ledger_entry_count !== ledger.entries.length || r.previous_ledger_tail_sha256 !== ledger.last_entry_hash || r.historical_consumed_count !== ledgerUsageSummary(ledger).consumed_request_count || r.historical_unknown_classification !== QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'rollover must preserve the complete same-epoch historical generation and UNKNOWN risk');
+    const complete = quotaLedgerPrefix(ledger, ledger.entries.length, ledger.last_entry_hash);
+    const sortedRequests = requests => [...requests].sort((left, right) => left.request_id.localeCompare(right.request_id));
+    if (stableStringify(sortedRequests(complete.requests)) !== stableStringify(sortedRequests(ledger.requests))) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'request summary must match the complete validated hash chain');
+    const prefix = quotaLedgerPrefix(ledger, prior.ledger_entry_count, prior.ledger_last_entry_hash);
+    // 验证旧区间本身的安全性，不能仅验证其裁定 JSON。
+    assertBudgetLedgerValid(prefix, previousConfig, prior, { now: prior.adjudicated_at, quotaConfigSha256: r.previous_quota_config_sha256, quotaAdjudicationSha256: r.previous_adjudication_sha256, quotaAdjudicationPredecessor: r.previous_v1, quotaAdjudicationPredecessorSha256: r.previous_v1_sha256, expectedSourceMainSha: prior.source_main_sha, expectedSourceMainTreeSha: prior.source_main_tree_sha, historicalLineage: HISTORICAL_QUOTA_LINEAGE });
+    if (prior.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION && (r.previous_v1 !== null || r.previous_v1_sha256 !== null || prior.rollover.owner_evidence.account_identity_sha256 !== r.owner_evidence.account_identity_sha256)) fail('QUOTA_ROLLOVER_EVIDENCE_MISMATCH', 'monthly rollover must preserve the Owner-bound account identity');
+    for (const entry of ledger.entries.slice(prior.ledger_entry_count)) {
+        if (Date.parse(entry.recorded_at) < Date.parse(prior.adjudicated_at) || Date.parse(entry.recorded_at) >= Date.parse(bounds.start)) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'new history must follow the previous adjudication and precede the approved reset');
+        const timestamp = entry.request.transmitted_at;
+        if (timestamp !== null && (Date.parse(timestamp) < Date.parse(previousConfig.period_start_at) || Date.parse(timestamp) >= Date.parse(previousConfig.period_end_at))) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'appended transmissions must belong to the previous governed period');
+    }
+    if (ledger.requests.some(request => request.terminal_state === null || (request.transmitted_at !== null && Date.parse(request.transmitted_at) >= Date.parse(bounds.start)))) fail('QUOTA_ROLLOVER_LEDGER_MISMATCH', 'rollover requires sealed terminal history before any new-period transmission');
+    return validateQuotaRolloverEvidence(r.owner_evidence, { config, configSha256: quotaConfigSha256, previousConfig, previousAdjudicationSha256: r.previous_adjudication_sha256, now: value.adjudicated_at });
+}
+
+function createStageDQuotaRollover({ ledger, quotaConfig, quotaConfigSha256, previousQuotaConfigBytes, predecessor, predecessorSha256, previousV1 = null, previousV1Sha256 = null, ownerEvidence, ownerEvidenceSha256, sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization = null, adjudicatedAt, adjudicationId } = {}) {
+    const base = createStageDQuotaAdjudication({ ledger, quotaConfig, quotaConfigSha256, historicalRequestId: predecessor?.historical_request_id, sourceMainSha, sourceMainTreeSha, testRuntimeAuthorization, adjudicatedAt, adjudicationId });
+    const effectiveUsage = Math.max(base.conservative_effective_provider_usage, ownerEvidence?.reported_used || 0);
+    const artifact = { ...base, schema_version: QUOTA_ROLLOVER_SCHEMA_VERSION, adjudication_policy_version: QUOTA_ROLLOVER_POLICY_VERSION, conservative_effective_provider_usage: effectiveUsage, conservative_remaining_automatic_budget: quotaConfig.automated_spend_limit - effectiveUsage, rollover: {
+        previous_billing_period_id: predecessor?.billing_period_id,
+        previous_epoch_id: ledger.epoch.epoch_id,
+        epoch_genesis_hash: ledger.epoch.genesis_entry_hash,
+        previous_ledger_entry_count: ledger.entries.length,
+        previous_ledger_tail_sha256: ledger.last_entry_hash,
+        historical_consumed_count: ledgerUsageSummary(ledger).consumed_request_count,
+        historical_unknown_classification: QUOTA_ADJUDICATION_EFFECT_CLASSIFICATION,
+        previous_quota_config_bytes: previousQuotaConfigBytes,
+        previous_quota_config_sha256: typeof previousQuotaConfigBytes === 'string' ? sha256Text(previousQuotaConfigBytes) : null,
+        previous_adjudication: predecessor,
+        previous_adjudication_sha256: predecessorSha256,
+        previous_v1: previousV1,
+        previous_v1_sha256: previousV1Sha256,
+        owner_evidence: ownerEvidence,
+        owner_evidence_sha256: ownerEvidenceSha256,
+    } };
+    return validateQuotaAdjudication(artifact, { ledger, quotaConfig, quotaConfigSha256, now: adjudicatedAt, expectedSourceMainSha: base.source_main_sha, expectedSourceMainTreeSha: base.source_main_tree_sha });
+}
+
+function quotaRolloverFileName(value) {
+    return `stage-d-quota-adjudication-rollover-${sha256Text(value.accounting_epoch_id)}-${value.billing_period_id}.json`;
+}
+
+function readStageDQuotaRolloverEvidence({ evidencePath, ledgerRoot, runLockTrustRoot }) {
+    const descriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
+    try {
+        if (!isDirectChild(descriptor.path, path.resolve(evidencePath))) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'Owner evidence must be a direct trust-root child');
+        const observed = readRegularFileBytes(scopedPath(descriptor.fd, path.basename(evidencePath)), 'Owner rollover evidence');
+        const value = parseCanonicalJsonBytes(observed.bytes, 'Owner rollover evidence');
+        const sha256 = sha256Text(observed.bytes);
+        if (path.basename(evidencePath) !== `stage-d-billing-period-evidence-${sha256}.json`) fail('QUOTA_ROLLOVER_HASH_MISMATCH', 'Owner evidence filename must bind its bytes');
+        return { value, sha256 };
+    } finally { closeDirectoryDescriptor(descriptor); }
+}
+
+function assertRolloverTrustLineage(value, artifacts, descriptor) {
+    rolloverDepth(value);
+    let current = value;
+    while (current.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION) {
+        const r = current.rollover;
+        for (const [artifact, hash] of [[r.previous_adjudication, r.previous_adjudication_sha256], [r.previous_v1, r.previous_v1_sha256]]) {
+            if (artifact !== null && artifacts.filter(entry => entry.sha256 === hash && stableStringify(entry.value) === stableStringify(artifact)).length !== 1) fail('QUOTA_ROLLOVER_LINEAGE_INVALID', 'the immutable predecessor originals must remain in the trust root');
+        }
+        const evidence = readRegularFileBytes(scopedPath(descriptor.fd, `stage-d-billing-period-evidence-${r.owner_evidence_sha256}.json`), 'Owner rollover evidence');
+        if (sha256Text(evidence.bytes) !== r.owner_evidence_sha256 || stableStringify(parseCanonicalJsonBytes(evidence.bytes, 'Owner rollover evidence')) !== stableStringify(r.owner_evidence)) fail('QUOTA_ROLLOVER_HASH_MISMATCH', 'Owner evidence original does not match');
+        const siblings = artifacts.filter(entry => entry.value.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION && entry.value.rollover.previous_adjudication_sha256 === r.previous_adjudication_sha256);
+        if (siblings.length > 1 || siblings.some(entry => stableStringify(entry.value) !== stableStringify(current))) fail('QUOTA_ADJUDICATION_CONFLICT', 'conflicting monthly successor is forbidden');
+        const prior = r.previous_adjudication;
+        const periodArtifacts = artifacts.filter(entry => entry.value.accounting_epoch_id === prior.accounting_epoch_id && entry.value.billing_period_id === prior.billing_period_id);
+        const allowedHashes = prior.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION ? [r.previous_adjudication_sha256, r.previous_v1_sha256] : [r.previous_adjudication_sha256];
+        if (periodArtifacts.length !== allowedHashes.length || periodArtifacts.some(entry => !allowedHashes.includes(entry.sha256))) fail('QUOTA_ADJUDICATION_CONFLICT', 'the retained previous-period namespace has conflicting adjudications');
+        current = prior;
+    }
+}
+
 // A source refresh is an append-only lineage transition, never a replacement:
 // it carries the predecessor's conservative floor forward and can only be used
 // while the same ledger generation and billing period remain in force.
@@ -2172,7 +2342,7 @@ function createStageDQuotaAdjudicationSuccessor({ ledger, quotaConfig, quotaConf
     if (prior.schema_version !== QUOTA_ADJUDICATION_SCHEMA_VERSION) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'only an immutable v1 adjudication can be refreshed');
     if (prior.source_main_sha === source.source_main_sha && prior.source_main_tree_sha === source.source_main_tree_sha) fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'successor requires a distinct reviewed source binding');
     const localUnits = consumedQuotaUnitsInPeriod(ledger, config);
-    const trusted = latestReconciledProviderQuota(ledger);
+    const trusted = latestReconciledProviderQuota(ledger, config);
     const effectiveUsage = Math.max(localUnits, trusted?.reported_used || 0, prior.conservative_effective_provider_usage);
     const successor = {
         ...prior,
@@ -2240,6 +2410,10 @@ function readBoundQuotaAdjudication({ quotaAdjudicationPath, ledgerRoot, runLock
         if (!selected) fail('UNTRUSTED_QUOTA_ADJUDICATION', 'quota adjudication disappeared during trusted read');
         const observedSha256 = selected.sha256;
         const value = selected.value;
+        if (value.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION) {
+            if (artifactName !== quotaRolloverFileName(value)) fail('QUOTA_ROLLOVER_LINEAGE_INVALID', 'monthly rollover filename does not match');
+            assertRolloverTrustLineage(value, artifacts, trustDescriptor);
+        }
         const currentPeriod = artifacts.filter(entry => entry.name !== artifactName
             && entry.value.accounting_epoch_id === ledger?.epoch?.epoch_id
             && entry.value.billing_period_id === quotaConfig?.billing_period_id);
@@ -2268,7 +2442,12 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
             && path.basename(resolvedPath) !== quotaAdjudicationSuccessorFileName(artifact.predecessor_sha256)) {
             fail('QUOTA_ADJUDICATION_LINEAGE_INVALID', 'quota adjudication successor filename must be deterministic from its immutable predecessor');
         }
-        const currentPeriod = readQuotaAdjudicationArtifacts(trustDescriptor).filter(entry => entry.value.accounting_epoch_id === artifact.accounting_epoch_id && entry.value.billing_period_id === artifact.billing_period_id);
+        const artifacts = readQuotaAdjudicationArtifacts(trustDescriptor);
+        if (artifact.schema_version === QUOTA_ROLLOVER_SCHEMA_VERSION) {
+            if (path.basename(resolvedPath) !== quotaRolloverFileName(artifact)) fail('QUOTA_ROLLOVER_LINEAGE_INVALID', 'monthly rollover filename must bind epoch and target month');
+            assertRolloverTrustLineage(artifact, artifacts, trustDescriptor);
+        }
+        const currentPeriod = artifacts.filter(entry => entry.value.accounting_epoch_id === artifact.accounting_epoch_id && entry.value.billing_period_id === artifact.billing_period_id);
         const predecessors = currentPeriod.filter(entry => isDirectQuotaAdjudicationSuccessor(artifact, entry.value, entry.sha256));
         if (artifact.schema_version === QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION) {
             if (predecessors.length !== 1 || currentPeriod.length !== 1) fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor must have exactly one immutable direct predecessor');
@@ -3691,8 +3870,8 @@ async function executeStageDOneCycle({
                 headers: response.provider_quota,
                 quotaConfig,
                 expectedRequestCostCredits: budgetDecision.expected_request_cost_credits,
-                localConsumedAfterRequest: budgetDecision.monthly_used + budgetDecision.expected_request_cost_credits,
-                previousProviderQuota: latestReconciledProviderQuota(ledger),
+                localConsumedAfterRequest: budgetDecision.conservative_provider_usage + budgetDecision.expected_request_cost_credits,
+                previousProviderQuota: latestReconciledProviderQuota(ledger, quotaConfig),
             });
         } catch (error) {
             terminalizePostResponseFailure({ failurePhase: 'QUOTA_RECONCILIATION', errorCode: 'PROVIDER_QUOTA_RECONCILIATION_FAILED', raw: persistedRaw });
@@ -3901,6 +4080,8 @@ module.exports = {
     EXPECTED_REQUEST_COST_CREDITS,
     MAX_PROVIDER_REQUESTS_PER_CYCLE,
     REQUIRED_QUOTA_HEADERS,
+    QUOTA_ROLLOVER_SCHEMA_VERSION,
+    QUOTA_ROLLOVER_EVIDENCE_SCHEMA_VERSION,
     QUOTA_ADJUDICATION_SCHEMA_VERSION,
     QUOTA_ADJUDICATION_SUCCESSOR_SCHEMA_VERSION,
     QUOTA_ADJUDICATION_POLICY_VERSION,
@@ -3927,6 +4108,9 @@ module.exports = {
     validateQuotaAdjudication,
     createStageDQuotaAdjudication,
     createStageDQuotaAdjudicationSuccessor,
+    createStageDQuotaRollover,
+    quotaRolloverFileName,
+    readStageDQuotaRolloverEvidence,
     readBoundQuotaAdjudication,
     persistStageDQuotaAdjudication,
     validateProviderQuotaRecord,

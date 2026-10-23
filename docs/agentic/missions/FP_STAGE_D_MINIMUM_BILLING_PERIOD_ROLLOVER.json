@@ -1,0 +1,49 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "scripts/ops/stage_d_quota_adjudication.js",
+    "tests/unit/market_evidence/stage_d_billing_period_rollover.test.js",
+    "README.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "package.json",
+    "package-lock.json",
+    "Makefile"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "src/ml/",
+    "src/infrastructure/market_evidence/atomicPublisher.js",
+    "scripts/devops/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Permanent epoch and every historical ledger/adjudication byte remain unchanged; four consumed requests and pre-epoch uncertainty remain preserved.",
+    "No calendar-only reset: every adjacent period requires explicit hash-bound Owner account/reset approval and trusted immutable predecessors.",
+    "Legacy same-period v1 to v2 semantics remain unchanged; current commit/tree/config/ledger/adjudication/authorization admission remains fail-closed.",
+    "Single cycle h2h/uk max=1 cost=1; quota=500 reserve=50 automated ceiling=450.",
+    "Gate3 NOT_AUTHORIZED, Stage D NOT_STARTED; no production state mutation or live provider interaction."
+  ],
+  "forbidden_side_effects": [
+    "Push, PR creation/update, Merge, main or original feature branch modification",
+    "Real provider/account API request, credential use, proxy provisioning or connectivity probe, extra paid model review",
+    "Real epoch/ledger/config/adjudication/candidate/authorization/RAW/receipt/transaction or database mutation",
+    "Scheduler, training, prediction, backtest, model activation, Harness change"
+  ]
+}
