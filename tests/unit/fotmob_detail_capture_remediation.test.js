@@ -436,12 +436,13 @@ test('P1-3: Makefile defines the five canonical data-fotmob-detail-capture targe
 function runMake(target, envVars) {
     const fakeBin = fs.mkdtempSync('/tmp/fotmob_make_bin_');
     const logPath = path.join(fakeBin, 'docker-calls.log');
-    fs.writeFileSync(path.join(fakeBin, 'docker'),
-        '#!/bin/sh\nprintf called >> "$FOTMOB_MAKE_DOCKER_LOG"\n');
-    fs.chmodSync(path.join(fakeBin, 'docker'), 0o755);
+    const fakeDocker = path.join(fakeBin, 'docker');
+    fs.writeFileSync(fakeDocker,
+        '#!/bin/sh\nprintf called >> "$FOTMOB_MAKE_DOCKER_LOG"\n', { mode: 0o600 });
     try {
-        const env = { ...process.env, ...envVars, PATH: `${fakeBin}:${process.env.PATH}`, FOTMOB_MAKE_DOCKER_LOG: logPath };
-        const result = spawnSync('make', [target], { cwd: REPO_ROOT, encoding: 'utf8', env });
+        const env = { ...process.env, ...envVars, FOTMOB_MAKE_DOCKER_LOG: logPath };
+        // 解释器读取测试替身，兼容 /tmp noexec，且不会调用真实 Docker。
+        const result = spawnSync('make', [target, `COMPOSE_DEV=/bin/sh "${fakeDocker}"`], { cwd: REPO_ROOT, encoding: 'utf8', env });
         return { status: result.status, output: `${result.stdout}${result.stderr}`, dockerCalled: fs.existsSync(logPath) };
     } finally {
         fs.rmSync(fakeBin, { recursive: true, force: true });

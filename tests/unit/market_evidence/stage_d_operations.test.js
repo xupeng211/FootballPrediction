@@ -65,6 +65,18 @@ function removeRunLockArtifacts(rootOrToken) {
     }
 }
 
+function createRunLockFixture(t, prefix) {
+    const container = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+    // 父目录、祖父目录和独立 trust 域均留在本测试可写的 fixture 内。
+    const root = path.join(container, 'parent', 'operation');
+    t.after(() => {
+        removeRunLockArtifacts(root);
+        fs.rmSync(container, { recursive: true, force: true });
+    });
+    fs.mkdirSync(root, { recursive: true, mode: 0o700 });
+    return root;
+}
+
 const START = '2026-09-08T00:00:00Z';
 const AUTHORITY = Object.freeze({
     head_transaction_id: `tx_${'a'.repeat(64)}`,
@@ -705,11 +717,7 @@ test('ledger and lock readers reject symlink or inode replacement instead of fol
 });
 
 test('run-lock release rejects a byte-identical replacement inode before unlinking it', t => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-byte-identical-'));
-    t.after(() => {
-        removeRunLockArtifacts(root);
-        fs.rmSync(root, { recursive: true, force: true });
-    });
+    const root = createRunLockFixture(t, 'stage-d-lock-byte-identical-');
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'byte-identical-run', acquiredAt: START });
     const lockBytes = fs.readFileSync(token.lock_path);
     fs.renameSync(token.lock_path, `${token.lock_path}.replaced`);
@@ -723,11 +731,7 @@ test('run-lock release rejects a byte-identical replacement inode before unlinki
 });
 
 test('run lock rejects duplicate, stale and ambiguous ownership instead of reclaiming it', t => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-run-lock-'));
-    t.after(() => {
-        removeRunLockArtifacts(root);
-        fs.rmSync(root, { recursive: true, force: true });
-    });
+    const root = createRunLockFixture(t, 'stage-d-run-lock-');
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'run-a', acquiredAt: START });
     assert.throws(
         () => acquireStageDRunLock({ operationRoot: root, runId: 'run-b', acquiredAt: '2026-09-08T01:00:00Z' }),
@@ -753,17 +757,18 @@ test('run lock rejects duplicate, stale and ambiguous ownership instead of recla
 
 test('crash before request and crash after request both prevent another provider transmission until reconciliation', t => {
     const ctx = setup(t);
-    const before = acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-before', acquiredAt: START });
+    const root = createRunLockFixture(t, 'stage-d-crash-lock-');
+    const before = acquireStageDRunLock({ operationRoot: root, runId: 'run-before', acquiredAt: START });
     assert.throws(
-        () => acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-next', acquiredAt: '2026-09-08T01:00:00Z' }),
+        () => acquireStageDRunLock({ operationRoot: root, runId: 'run-next', acquiredAt: '2026-09-08T01:00:00Z' }),
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
     removeRunLockArtifacts(before); // explicit test-only recovery from a simulated crash.
     intent(ctx, 'request-after', 'run-after');
     markTransmissionStarted({ ledgerRoot: ctx.ledgerRoot, requestId: 'request-after', transmittedAt: '2026-09-08T06:00:00Z' });
-    acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-after', acquiredAt: '2026-09-08T06:00:00Z' });
+    acquireStageDRunLock({ operationRoot: root, runId: 'run-after', acquiredAt: '2026-09-08T06:00:00Z' });
     assert.throws(
-        () => acquireStageDRunLock({ operationRoot: ctx.root, runId: 'run-next', acquiredAt: '2026-09-08T06:00:01Z' }),
+        () => acquireStageDRunLock({ operationRoot: root, runId: 'run-next', acquiredAt: '2026-09-08T06:00:01Z' }),
         error => error.code === 'STAGE_D_RUN_ACTIVE_OR_STALE'
     );
     assert.deepEqual(ledgerUsageSummary(readRequestLedger({ ledgerRoot: ctx.ledgerRoot })).ambiguous_consumed_request_ids, ['request-after']);
@@ -1243,11 +1248,7 @@ test('evidence persistence rejects parent-directory replacement and unsafe captu
 });
 
 test('run-lock directory replacement fails closed and keeps the reconciliation fence', t => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-lock-identity-'));
-    t.after(() => {
-        removeRunLockArtifacts(root);
-        fs.rmSync(root, { recursive: true, force: true });
-    });
+    const root = createRunLockFixture(t, 'stage-d-lock-identity-');
     const token = acquireStageDRunLock({ operationRoot: root, runId: 'identity-run', acquiredAt: START });
     const moved = `${root}.moved`;
     fs.renameSync(root, moved);
