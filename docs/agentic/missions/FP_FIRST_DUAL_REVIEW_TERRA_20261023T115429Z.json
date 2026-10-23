@@ -1,0 +1,53 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FIRST_DUAL_REVIEW_TERRA_20261023T115429Z",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "tests/unit/TitanConfig.test.js",
+    "tests/unit/fotmob_detail_capture_remediation.test.js",
+    "tests/unit/market_evidence/stage_d_operations.test.js",
+    "docs/agentic/missions/FP_PAIRED_CALIBRATION_RETRY_20261022T182138Z.json",
+    "docs/agentic/missions/FP_STRICT_BASELINE_REPAIR_20261023T053753Z.json",
+    "docs/agentic/missions/FP_FIRST_DUAL_REVIEW_TERRA_20261023T115429Z.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/",
+    "src/infrastructure/",
+    "src/ml/training/",
+    "src/ml/inference/",
+    "src/ml/value_mvp/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Preserve all five business/test blobs and both historical scope blobs exactly as candidate a321461751fa1786a20b7486df34b83c400ea486",
+    "Review complete original base ebfd841164dc8fac1556932e726f95568b87d268 to final exact HEAD; include all seven existing paths and this combined scope",
+    "This scope does not embed its own commit SHA: canonical CLI arguments, exact-HEAD committed scope bytes, diff hash and challenge bind the target externally",
+    "Require independent Terra/medium official ChatGPT and approved deepseek-flash canonical receipts for the identical base/head/diff/mission/scope under existing CRITICAL policy",
+    "Only tests/unit/market_evidence/stage_d_operations.test.js is within scope; production Stage D, provider and ledger behavior remain protected",
+    "Keep all assertions, full coverage, STRICT plus verify-pr, DB_USER=validation, readonly rootfs, /tmp noexec,nosuid,nodev and bounded tmp_mb=1024",
+    "Retain original historical authorization and Receipt/UNKNOWN/Ledger evidence; old scope financial prohibitions grant no new financial authority",
+    "Preparation only: scope metadata is not a business delivery and authorizes no real review calls or charges; future actual calls require separate Owner approval"
+  ],
+  "forbidden_side_effects": [
+    "Real GPT/DeepSeek calls, Qualification, extra paid Credits, purchase/recharge or account/provider/model fallback without separate Owner authorization",
+    "Business source/test edits, production Stage D/DB/data collection/training/prediction/betting, Harness/reviewer/registry/security policy edits",
+    "Push, PR, merge, deployment and rewriting historical scopes/Receipt/UNKNOWN/Ledger"
+  ]
+}

@@ -1,4 +1,4 @@
-const { describe, it } = require('node:test');
+const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 const Module = require('node:module');
 const { TitanConfig } = require('../../src/infrastructure/config/TitanConfig');
@@ -13,6 +13,23 @@ function restoreEnv(key, value) {
 }
 
 describe('TitanConfig', () => {
+  let databaseEnv;
+
+  beforeEach(() => {
+    databaseEnv = {};
+    for (const key of ['DB_NAME', 'DB_USER', 'DB_PORT']) {
+      databaseEnv[key] = process.env[key];
+      // 空值阻止 dotenv 补入外部配置；隔离持续到惰性读取完成。
+      process.env[key] = '';
+    }
+  });
+
+  afterEach(() => {
+    for (const [key, value] of Object.entries(databaseEnv)) {
+      restoreEnv(key, value);
+    }
+  });
+
   it('应该加载默认配置', () => {
     const config = new TitanConfig();
     const db = config.getDatabase();
