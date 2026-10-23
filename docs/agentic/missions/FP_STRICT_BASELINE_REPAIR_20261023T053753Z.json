@@ -1,0 +1,51 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STRICT_BASELINE_REPAIR_20261023T053753Z",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "tests/unit/TitanConfig.test.js",
+    "tests/unit/fotmob_detail_capture_remediation.test.js",
+    "tests/unit/market_evidence/stage_d_operations.test.js",
+    "docs/agentic/missions/FP_STRICT_BASELINE_REPAIR_20261023T053753Z.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package-lock.json",
+    "docs/PROJECT_VISION.md",
+    "docs/PROJECT_MAP.md"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/",
+    "src/infrastructure/",
+    "src/ml/training/",
+    "src/ml/inference/",
+    "src/ml/value_mvp/"
+  ],
+  "excluded_tokens": [
+    "reviewer",
+    "harness"
+  ],
+  "protected_invariants": [
+    "Only test fixture/environment compatibility fixes; retain all existing assertions and production semantics",
+    "Preserve original paired_calibration Python source/test blobs byte-for-byte at fcdb69fe6f2e3637bc36d2b0f51869e84317de84",
+    "Keep STRICT, full coverage, QA DB_USER=validation, readonly rootfs and /tmp noexec,nosuid,nodev",
+    "No Stage D production/live/provider operations; only isolated test fixtures; no data/training/prediction changes",
+    "No Harness/source/config/governance changes outside the three authorized JS tests and Controller scope metadata"
+  ],
+  "forbidden_side_effects": [
+    "network/data collection, DB access/write, training, inference of business model, activation, real betting, Stage D Live",
+    "paid review/qualification, push, PR, merge, deployment, other worktrees or historical ledger mutation"
+  ]
+}
