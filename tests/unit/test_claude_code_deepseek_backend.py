@@ -1,4 +1,5 @@
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -81,6 +82,11 @@ def test_run_injects_synthetic_secret_only_into_claude_child(monkeypatch, tmp_pa
     assert "synthetic-secret" not in evidence.command
     assert b"synthetic-secret" not in raw
     assert result["review_result"] == "PASS"
+    status, digest = backend.validate_process_digest(evidence.process_digest)
+    assert status == "VALID"
+    assert digest["returncode"] == 0
+    assert digest["stdout_bytes"] == len(raw)
+    assert digest["stderr_bytes"] is None
 
 
 def test_run_uses_explicit_bounded_timeout(monkeypatch, tmp_path: Path):
@@ -181,6 +187,9 @@ def test_path_selected_launcher_outside_trusted_root_is_rejected_before_secret(
 ):
     binary = tmp_path / "claude"
     binary.write_bytes(b"path shim")
+    trusted = tmp_path / "trusted"
+    trusted.mkdir()
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (trusted,))
     monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
     monkeypatch.setattr(backend, "_secret", lambda _path: pytest.fail("secret was read"))
     with pytest.raises(backend.BackendInfrastructureError, match="launcher is untrusted"):
@@ -210,3 +219,105 @@ def test_unavailable_trusted_launcher_root_is_typed_infrastructure_failure(
         backend.BackendInfrastructureError, match="trusted Claude launcher root cannot be resolved"
     ):
         backend._approved_claude_binary(str(binary))
+
+
+def _safe_digest(code=7):
+    """A synthetic observation, never a real reviewer receipt."""
+    return {
+        "returncode": code,
+        "signal": -code if code < 0 else None,
+        "timeout": False,
+        "timeout_seconds": 900,
+        "stdout_bytes": 3,
+        "stderr_bytes": 5,
+        "count_scope": "complete",
+        "elapsed_seconds": 2.5,
+        "started_at": "2026-10-21T12:00:00Z",
+        "completed_at": "2026-10-21T12:00:02.500000Z",
+        "cli_version": "2.1.278",
+        "binary_sha256": "d" * 64,
+        "settings_sha256": "e" * 64,
+    }
+
+
+@pytest.mark.parametrize("scenario", ["nonzero", "signal", "timeout", "incomplete"])
+def test_failure_carries_safe_process_metadata(monkeypatch, tmp_path, scenario):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"fake cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    ticks = iter([10.0, 12.5])
+    monkeypatch.setattr(backend.time, "monotonic", lambda: next(ticks))
+    code = {"nonzero": 7, "signal": -15, "incomplete": 0}.get(scenario)
+
+    def invoke(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.278 (Claude Code)")
+        if scenario == "timeout":
+            raise backend.subprocess.TimeoutExpired(command, 900, output=b"{", stderr=None)
+        return SimpleNamespace(returncode=code, stdout=b"{", stderr=b"private")
+
+    monkeypatch.setattr(backend.subprocess, "run", invoke)
+    with pytest.raises(backend.BackendInfrastructureError) as raised:
+        backend.run(prompt="private prompt", cwd=tmp_path)
+    error = raised.value
+    assert error.process_digest_status == "VALID"
+    digest = error.process_digest
+    assert digest["returncode"] == code
+    assert digest["signal"] == (15 if scenario == "signal" else None)
+    assert digest["elapsed_seconds"] == _safe_digest()["elapsed_seconds"]
+    assert digest["stdout_bytes"] == 1
+    assert digest["stderr_bytes"] == (None if scenario == "timeout" else 7)
+    assert digest["timeout"] is (scenario == "timeout")
+    assert digest["count_scope"] == ("partial_observed" if scenario == "timeout" else "complete")
+    assert digest["cli_version"] == "2.1.278"
+    assert backend.validate_process_digest(None) == ("MISSING", None)
+    for invalid in (
+        {},
+        {**digest, "extra": "Authorization: secret"},
+        {**digest, "stdout_bytes": True},
+        {**digest, "elapsed_seconds": float("nan")},
+        {**digest, "elapsed_seconds": 10**400},
+        {**digest, "stdout_bytes": -1},
+        {**digest, "started_at": "secret"},
+    ):
+        assert backend.validate_process_digest(invalid) == ("INVALID", None)
+    positive = _safe_digest(137)
+    assert backend.validate_process_digest(positive)[0] == "VALID"
+    assert positive["signal"] is None
+    absent = {**digest, "stdout_bytes": None}
+    assert backend.validate_process_digest(absent)[1]["stdout_bytes"] is None
+    assert "private" not in str(error)
+
+
+@pytest.mark.parametrize("echo_secret", [True, False])
+def test_sensitive_error_stream_never_exported(monkeypatch, tmp_path, echo_secret):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"fake cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+    sensitive = b"Authorization: Bearer other-token; config=password"
+    stderr = sensitive + (b" synthetic-secret" if echo_secret else b"")
+
+    def invoke(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.278 (Claude Code)")
+        return SimpleNamespace(returncode=7, stdout=b"partial private response", stderr=stderr)
+
+    monkeypatch.setattr(backend.subprocess, "run", invoke)
+    with pytest.raises(backend.BackendInfrastructureError) as raised:
+        backend.run(prompt="private prompt", cwd=tmp_path)
+    serialized = str(raised.value) + json.dumps(vars(raised.value))
+    for marker in (
+        "synthetic-secret",
+        "Authorization",
+        "other-token",
+        "password",
+        "private response",
+        "private prompt",
+    ):
+        assert marker not in serialized
+    assert raised.value.process_digest["returncode"] == _safe_digest()["returncode"]
+    assert raised.value.process_digest["stderr_bytes"] == len(stderr)
+    if echo_secret:
+        assert str(raised.value) == "SECRET_LEAKAGE_DETECTED"

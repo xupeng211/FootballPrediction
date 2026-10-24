@@ -15,7 +15,6 @@ from scripts.devops.independent_review_backends import claude_code_deepseek, cod
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     IndependentReviewProtocolError,
-    validate_result,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -292,31 +291,31 @@ def _temporary_receipt_context(
     return receipt, context
 
 
-def test_valid_generic_pass_result():
-    result = validate_result(_result())
-    assert result["review_result"] == "PASS"
-    assert result["blocking_findings"] == 0
-
-
-def test_p1_fail_and_p3_only_pass_semantics():
-    finding = {"severity": "P1", "title": "bug", "evidence": "proof"}
-    assert validate_result(_result("FAIL", [finding]))["blocking_findings"] == 1
-    p3 = {"severity": "P3", "title": "note", "evidence": "proof"}
-    assert validate_result(_result("PASS", [p3]))["blocking_findings"] == 0
-
-
-@pytest.mark.parametrize(
-    "result",
-    [
-        _result("PASS", [{"severity": "P0", "title": "bad", "evidence": "proof"}]),
-        _result("FAIL", []),
-        _result("PASS", [{"severity": "P9", "title": "bad", "evidence": "proof"}]),
-        _result("PASS", [{"severity": "P3", "title": "", "evidence": "proof"}]),
-    ],
-)
-def test_invalid_result_semantics_rejected(result):
-    with pytest.raises(IndependentReviewProtocolError):
-        validate_result(result)
+def test_placeholder_receipt_fails_current_validation_without_rewrite():
+    receipt, context = _claude_receipt_and_context()
+    receipt.update(
+        review_result="FAIL",
+        findings=[{"severity": "P2", "title": "placeholder", "evidence": "placeholder"}],
+        finding_counts_by_severity={"P0": 0, "P1": 0, "P2": 1, "P3": 0},
+    )
+    result = _result("FAIL", receipt["findings"])
+    final = receipts.canonical_json(result)
+    raw = json.loads(context.raw_output_bytes)
+    raw["structured_output"] = result
+    values = {
+        **context.__dict__,
+        "raw_output_bytes": receipts.canonical_json(raw),
+        "final_result_bytes": final,
+    }
+    context = receipts.ReceiptEvidenceContext(**values)
+    receipt["raw_output_sha256"] = receipts.sha256_bytes(context.raw_output_bytes)
+    receipt["final_result_sha256"] = receipts.sha256_bytes(final)
+    _rehash(receipt)
+    before = receipts.canonical_json(receipt)
+    with pytest.raises(IndependentReviewProtocolError, match="INVALID_FINDING_EVIDENCE"):
+        receipts.validate_receipt(receipt, registry=_registry(), evidence_context=context)
+    assert receipts.canonical_json(receipt) == before
+    assert receipt["review_result"] == "FAIL"
 
 
 def test_receipt_validates_integrity_and_required_backend_facts():

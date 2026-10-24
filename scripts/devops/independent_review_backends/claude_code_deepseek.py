@@ -11,8 +11,10 @@ Owner: engineering workflow governance
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from hashlib import sha256
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -81,6 +83,118 @@ CLAUDE_RESULT_SCHEMA = {
 
 class BackendInfrastructureError(RuntimeError):
     """Never interpret runtime/provider failure as a code-review verdict."""
+
+    def __init__(self, message: str, *, process_digest: object = None):
+        super().__init__(message)
+        self.process_digest_status, self.process_digest = validate_process_digest(process_digest)
+
+
+def _digest_numbers_valid(value: dict) -> bool:
+    for name in ("returncode", "signal", "stdout_bytes", "stderr_bytes"):
+        number = value[name]
+        if number is not None and (
+            type(number) is not int or (name != "returncode" and number < 0)
+        ):
+            return False
+    code = value["returncode"]
+    if value["signal"] != (-code if code is not None and code < 0 else None):
+        return False
+    if type(value["timeout"]) is not bool or type(value["timeout_seconds"]) is not int:
+        return False
+    valid_timeout = (
+        MIN_REVIEW_TIMEOUT_SECONDS <= value["timeout_seconds"] <= MAX_REVIEW_TIMEOUT_SECONDS
+    )
+    status_available = (code is None) == value["timeout"]
+    expected_scope = "partial_observed" if value["timeout"] else "complete"
+    return valid_timeout and status_available and value["count_scope"] == expected_scope
+
+
+def _digest_times_valid(value: dict) -> bool:
+    elapsed = value["elapsed_seconds"]
+    if type(elapsed) not in (int, float) or elapsed < 0:
+        return False
+    try:
+        if not math.isfinite(elapsed):
+            return False
+        for name in ("started_at", "completed_at"):
+            stamp = value[name]
+            if not isinstance(stamp, str) or not re.fullmatch(
+                r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?Z", stamp
+            ):
+                return False
+            datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except (ValueError, OverflowError):
+        return False
+    return True
+
+
+def validate_process_digest(value: object) -> tuple[str, dict[str, Any] | None]:
+    """Copy only a complete, typed allowlist; missing and invalid are distinct."""
+    if value is None:
+        return "MISSING", None
+    fields = {
+        "returncode",
+        "signal",
+        "timeout",
+        "timeout_seconds",
+        "stdout_bytes",
+        "stderr_bytes",
+        "count_scope",
+        "elapsed_seconds",
+        "started_at",
+        "completed_at",
+        "cli_version",
+        "binary_sha256",
+        "settings_sha256",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        return "INVALID", None
+    if not _digest_numbers_valid(value) or not _digest_times_valid(value):
+        return "INVALID", None
+    if not isinstance(value["cli_version"], str) or not re.fullmatch(
+        r"\d+\.\d+\.\d+", value["cli_version"]
+    ):
+        return "INVALID", None
+    if any(
+        not isinstance(value[name], str) or not re.fullmatch(r"[0-9a-f]{64}", value[name])
+        for name in ("binary_sha256", "settings_sha256")
+    ):
+        return "INVALID", None
+    return "VALID", dict(value)
+
+
+def _process_digest(
+    *,
+    output: object,
+    started: float,
+    started_at: str,
+    timeout: int,
+    version: str,
+    binary_sha256: str,
+    timed_out: bool = False,
+) -> dict[str, Any]:
+    """Observe counts/status before dropping streams; never retain their contents."""
+
+    def byte_count(name: str) -> int | None:
+        raw = getattr(output, name, None)
+        return len(raw) if isinstance(raw, bytes) else None
+
+    code = None if timed_out else getattr(output, "returncode", None)
+    return {
+        "returncode": code,
+        "signal": -code if type(code) is int and code < 0 else None,
+        "timeout": timed_out,
+        "timeout_seconds": timeout,
+        "stdout_bytes": byte_count("stdout"),
+        "stderr_bytes": byte_count("stderr"),
+        "count_scope": "partial_observed" if timed_out else "complete",
+        "elapsed_seconds": round(time.monotonic() - started, 6),
+        "started_at": started_at,
+        "completed_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "cli_version": re.search(r"\b\d+\.\d+\.\d+\b", version).group(),
+        "binary_sha256": binary_sha256,
+        "settings_sha256": sha256(DEDICATED_SETTINGS).hexdigest(),
+    }
 
 
 _SAFE_NONZERO_CLASSES = (
@@ -204,6 +318,7 @@ class ExecutionEvidence:
     requested_model: str
     resolved_model: str
     session_id: str
+    process_digest: dict[str, Any] | None = None
 
 
 def _secret(path: Path = SECRET_PATH) -> str:
@@ -289,6 +404,7 @@ def run(
             prompt,
         )
         started = time.monotonic()
+        started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         try:
             output = subprocess.run(
                 command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=timeout
@@ -296,16 +412,36 @@ def run(
         except subprocess.TimeoutExpired as exc:
             # subprocess.run kills and reaps its direct child before raising.
             # Never expose captured stdout/stderr: either may contain model text.
-            raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
+            digest = _process_digest(
+                output=exc,
+                started=started,
+                started_at=started_at,
+                timeout=timeout,
+                version=version,
+                binary_sha256=binary_sha256,
+                timed_out=True,
+            )
+            raise BackendInfrastructureError(
+                "CLI_RUNTIME_TIMEOUT: no review verdict", process_digest=digest
+            ) from None
         else:
+            digest = _process_digest(
+                output=output,
+                started=started,
+                started_at=started_at,
+                timeout=timeout,
+                version=version,
+                binary_sha256=binary_sha256,
+            )
             if _output_contains_secret(output, secret):
-                raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED")
+                raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED", process_digest=digest)
         finally:
             child_env.clear()
             secret = ""
     if output.returncode:
         raise BackendInfrastructureError(
-            f"CLI_RUNTIME_FAILURE: {_safe_nonzero_detail(output, int(time.monotonic() - started))}"
+            f"CLI_RUNTIME_FAILURE: {_safe_nonzero_detail(output, int(digest['elapsed_seconds']))}",
+            process_digest=digest,
         )
     try:
         event = json.loads(output.stdout)
@@ -313,15 +449,17 @@ def run(
         usage = event["modelUsage"][MODEL]
         resolved = usage["canonicalModel"]
         session = event["session_id"]
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        raise BackendInfrastructureError("INVALID_STRUCTURED_OUTPUT") from exc
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        raise BackendInfrastructureError(
+            "INVALID_STRUCTURED_OUTPUT", process_digest=digest
+        ) from None
     if (
         event.get("is_error") is not False
         or resolved != MODEL
         or not isinstance(session, str)
         or not session
     ):
-        raise BackendInfrastructureError("MODEL_MISMATCH")
+        raise BackendInfrastructureError("MODEL_MISMATCH", process_digest=digest)
     return (
         output.stdout,
         result,
@@ -334,5 +472,6 @@ def run(
             MODEL,
             resolved,
             session,
+            digest,
         ),
     )

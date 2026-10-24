@@ -3,13 +3,24 @@
 from __future__ import annotations
 
 from argparse import Namespace
+import errno
+import json
+import os
 from pathlib import Path
+import stat
 from types import SimpleNamespace
 
 import pytest
 
 from scripts.devops import claude_deepseek_independent_review as runner
 from scripts.devops import deepseek_receipt_evidence as consumer
+from scripts.devops.review_policy import CandidateBinding, ReviewEvidence, evaluate_review_policy
+from tests.unit.test_claude_code_deepseek_backend import _approve_test_binary, _safe_digest
+
+_FAILED_CHUNK_INDEX = 1
+_FAKE_CHUNK_COUNT = 3
+_PRIVATE_FILE_MODE = 0o600
+_PRIVATE_DIRECTORY_MODE = 0o700
 
 
 def test_runner_rejects_non_current_head_before_creating_external_evidence(tmp_path: Path):
@@ -388,3 +399,284 @@ def test_chunked_runner_does_not_retry_infrastructure_failure(monkeypatch, tmp_p
             worktree=tmp_path,
         )
     assert len(calls) == 1
+
+
+def _offline_failure_setup(monkeypatch, tmp_path, *, chunked=False, quality=False):
+    """Exercise the real backend/runner using only local process substitutes."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    scope_path = "docs/agentic/missions/OFFLINE_TEST.json"
+    scope = repo / scope_path
+    scope.parent.mkdir(parents=True)
+    scope.write_bytes(b"{}")
+    args = Namespace(
+        repo_root=repo,
+        base_sha="a" * 40,
+        head_sha="b" * 40,
+        mission_id="OFFLINE_TEST",
+        mission_scope_file=scope,
+        evidence_dir=tmp_path / "evidence",
+    )
+    args.evidence_dir.mkdir(mode=0o700)
+    prior = args.evidence_dir / "claude-deepseek-raw-prior.json"
+    prior.write_bytes(b"prior evidence")
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"offline fake cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(runner.backend, "_secret", lambda _path: "synthetic-secret")
+    monkeypatch.setattr(
+        runner,
+        "load_mission_scope_file",
+        lambda *_a, **_kw: SimpleNamespace(mission_id="OFFLINE_TEST"),
+    )
+    monkeypatch.setattr(runner, "mission_scope_relative_path", lambda *_a: scope_path)
+    diff = b"diff --git a/a b/a\n" + b"+line\n" * (14000 if chunked else 1)
+    calls = []
+
+    def git(_root, *argv, **_kwargs):
+        if argv[0] == "rev-parse":
+            return "a" * 40 if argv[1].startswith("a" * 40) else "b" * 40
+        if argv[:2] == ("worktree", "add"):
+            Path(argv[3]).mkdir()
+            return ""
+        responses = {"status": "", "show": b"{}", "diff": diff}
+        assert argv[0] in responses, "unexpected Git call"
+        return responses[argv[0]]
+
+    def invoke(command, **_kwargs):
+        if command[:3] == ["git", "worktree", "remove"]:
+            Path(command[-1]).rmdir()
+            return SimpleNamespace(returncode=0)
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.278 (Claude Code)")
+        calls.append(command[-1])
+        if not chunked or len(calls) == _FAILED_CHUNK_INDEX + 1:
+            if not quality:
+                return SimpleNamespace(
+                    returncode=7, stdout=b"partial", stderr=b"Authorization: Bearer private-token"
+                )
+            result = {
+                "protocol_version": runner.PROTOCOL_VERSION,
+                "review_result": "FAIL",
+                "findings": [{"severity": "P2", "title": "placeholder", "evidence": "placeholder"}],
+            }
+        else:
+            result = {
+                "protocol_version": runner.PROTOCOL_VERSION,
+                "review_result": "PASS",
+                "findings": [],
+            }
+        event = {
+            "is_error": False,
+            "session_id": f"offline-{len(calls)}",
+            "structured_output": result,
+            "modelUsage": {"deepseek-flash": {"canonicalModel": "deepseek-flash"}},
+        }
+        return SimpleNamespace(returncode=0, stdout=json.dumps(event).encode(), stderr=b"")
+
+    monkeypatch.setattr(runner, "_git", git)
+    monkeypatch.setattr(runner.subprocess, "run", invoke)
+    return args, diff, calls
+
+
+def _read_diagnostic(args):
+    paths = list(args.evidence_dir.glob("review-failure-deepseek-*.json"))
+    assert len(paths) == 1
+    payload = json.loads(paths[0].read_bytes())
+    unsigned = dict(payload)
+    digest = unsigned.pop("payload_sha256")
+    assert digest == runner.sha256_bytes(runner.canonical_json(unsigned))
+    assert paths[0].stat().st_mode & 0o777 == _PRIVATE_FILE_MODE
+    assert args.evidence_dir.stat().st_mode & 0o777 == _PRIVATE_DIRECTORY_MODE
+    assert payload["artifact_kind"] == "independent-review-failure-diagnostic/v1"
+    assert payload["head_sha"] == args.head_sha
+    assert payload["base_sha"] == args.base_sha
+    assert payload["mission_scope_sha256"] == runner.sha256_bytes(b"{}")
+    assert payload["mission_id"] == args.mission_id
+    assert not list(args.evidence_dir.glob("claude-deepseek-receipt-*"))
+    assert not list(args.evidence_dir.glob("claude-deepseek-worktree-*"))
+    assert (args.evidence_dir / "claude-deepseek-raw-prior.json").read_bytes() == b"prior evidence"
+    for marker in ("Authorization", "private-token", "synthetic-secret", "placeholder", "partial"):
+        assert marker not in paths[0].read_text()
+    return paths[0], payload
+
+
+def test_invalid_chunk_aborts_run_without_aggregate(monkeypatch, tmp_path):
+    args, diff, calls = _offline_failure_setup(monkeypatch, tmp_path, chunked=True, quality=True)
+    with pytest.raises(runner.DeepSeekReviewError, match="INVALID_STRUCTURED_OUTPUT"):
+        runner.run_review(args)
+    _path, payload = _read_diagnostic(args)
+    manifest = runner.plan(
+        diff,
+        base_sha=args.base_sha,
+        head_sha=args.head_sha,
+        mission_id=args.mission_id,
+        mission_scope_sha256=runner.sha256_bytes(b"{}"),
+    )
+    assert len(calls) == _FAILED_CHUNK_INDEX + 1
+    assert payload["chunk_index"] == 1
+    assert payload["chunk_count"] == len(manifest.chunks) == _FAKE_CHUNK_COUNT
+    assert payload["manifest_sha256"] == manifest.sha256
+    assert payload["chunk_source_sha256"] == manifest.chunks[1].source_sha256
+    assert payload["prompt_sha256"] == runner.sha256_bytes(calls[1].encode())
+    assert payload["process_digest"]["returncode"] == 0
+    assert payload["process_digest_status"] == "VALID"
+
+
+@pytest.mark.parametrize("chunked", [True, False])
+def test_failure_diagnostic_survives_cleanup(monkeypatch, tmp_path, chunked):
+    args, diff, calls = _offline_failure_setup(monkeypatch, tmp_path, chunked=chunked)
+    with pytest.raises(runner.DeepSeekReviewError, match="UNKNOWN_NONZERO_EXIT"):
+        runner.run_review(args)
+    path, payload = _read_diagnostic(args)
+    assert payload["diff_sha256"] == runner.sha256_bytes(diff)
+    assert payload["process_digest"]["returncode"] == _safe_digest()["returncode"]
+    assert payload["process_digest"]["stdout_bytes"] == len(b"partial")
+    assert payload["process_digest"]["stderr_bytes"] == len(b"Authorization: Bearer private-token")
+    assert payload["process_digest"]["elapsed_seconds"] >= 0
+    assert payload["process_digest_status"] == "VALID"
+    assert payload["chunked"] is chunked
+    assert len(calls) == (2 if chunked else 1)
+    assert payload["cleanup_status"] == "COMPLETE"
+    assert set(payload["toolchain_sha256"]) == {"runner", "backend", "protocol"}
+    original = path.read_bytes()
+    with pytest.raises(FileExistsError):
+        runner._write_failure_diagnostic(args.evidence_dir, path.name, payload)
+    assert path.read_bytes() == original
+    link = args.evidence_dir / ("review-failure-deepseek-" + "c" * 12 + "-" + "d" * 32 + ".json")
+    link.symlink_to(path)
+    with pytest.raises(FileExistsError):
+        runner._write_failure_diagnostic(args.evidence_dir, link.name, payload)
+    assert path.read_bytes() == original
+    assert not list(args.evidence_dir.glob(".*.tmp"))
+    for observed, expected in [
+        (None, "MISSING"),
+        ({}, "INVALID"),
+        ({"stdout_bytes": "secret"}, "INVALID"),
+    ]:
+
+        def missing(_observed=observed, **_kwargs):
+            raise runner.backend.BackendInfrastructureError(
+                "CLI_RUNTIME_FAILURE", process_digest=_observed
+            )
+
+        monkeypatch.setattr(runner.backend, "run", missing)
+        with pytest.raises(runner.DeepSeekReviewError) as raised:
+            runner._invoke_review(prompt="private prompt", worktree=args.repo_root)
+        assert raised.value.diagnostic["process_digest_status"] == expected
+        assert raised.value.diagnostic["process_digest"] is None
+        assert "secret" not in json.dumps(raised.value.diagnostic)
+
+
+@pytest.mark.parametrize("failure_stage", ["before_write", "during_write"])
+def test_diagnostic_write_failure_preserves_no_verdict(
+    monkeypatch, tmp_path, capsys, failure_stage
+):
+    stages = (
+        ("before_write",)
+        if failure_stage == "before_write"
+        else ("file_fsync", "publish", "directory_fsync")
+    )
+    for stage in stages:
+        case = tmp_path / stage
+        case.mkdir()
+        with monkeypatch.context() as patch:
+            args, _diff, _calls = _offline_failure_setup(patch, case)
+
+            def fail(
+                *_args,
+                _error_code=errno.EACCES if stage == "before_write" else errno.EIO,
+                **_kwargs,
+            ):
+                raise OSError(_error_code, "Authorization: synthetic-secret private-token")
+
+            if stage == "before_write":
+                patch.setattr(runner, "_write_failure_diagnostic", fail)
+            elif stage == "publish":
+                patch.setattr(runner.os, "link", fail)
+            else:
+                original_fsync = runner.os.fsync
+
+                def fail_selected_fsync(fd, _stage=stage, _fsync=original_fsync):
+                    is_directory = stat.S_ISDIR(os.fstat(fd).st_mode)
+                    if is_directory == (_stage == "directory_fsync"):
+                        fail()
+                    _fsync(fd)
+
+                patch.setattr(runner.os, "fsync", fail_selected_fsync)
+            with pytest.raises(runner.DeepSeekReviewError, match="UNKNOWN_NONZERO_EXIT"):
+                runner.run_review(args)
+            output = capsys.readouterr().err
+            assert "DIAGNOSTIC_WRITE_FAILED" in output
+            assert "private-token" not in output
+            assert "Authorization" not in output
+            assert "synthetic-secret" not in output
+            payload = json.loads(output.split("DEEPSEEK_REVIEW_DIAGNOSTIC=", 1)[1])
+            assert payload["process_digest"]["returncode"] == _safe_digest()["returncode"]
+            assert not list(args.evidence_dir.glob("review-failure-*"))
+            assert not list(args.evidence_dir.glob(".*.tmp"))
+            assert not list(args.evidence_dir.glob("claude-deepseek-worktree-*"))
+            assert not list(args.evidence_dir.glob("claude-deepseek-receipt-*"))
+
+
+def test_cleanup_failure_retains_primary_diagnostic(monkeypatch, tmp_path):
+    args, _diff, _calls = _offline_failure_setup(monkeypatch, tmp_path)
+    cleanup = runner._cleanup_invocation
+
+    def fail_cleanup(**kwargs):
+        assert cleanup(**kwargs) is None
+        return OSError("private cleanup text")
+
+    monkeypatch.setattr(runner, "_cleanup_invocation", fail_cleanup)
+    with pytest.raises(runner.DeepSeekReviewError, match="UNKNOWN_NONZERO_EXIT"):
+        runner.run_review(args)
+    _path, payload = _read_diagnostic(args)
+    assert payload["cleanup_status"] == "FAILED"
+    assert payload["process_digest"]["returncode"] == _safe_digest()["returncode"]
+    assert payload["error_code"] == "CLI_RUNTIME_FAILURE:UNKNOWN_NONZERO_EXIT"
+
+
+def test_diagnostic_is_not_receipt_and_cannot_satisfy_policy(monkeypatch, tmp_path):
+    args, diff, _calls = _offline_failure_setup(monkeypatch, tmp_path)
+    with pytest.raises(runner.DeepSeekReviewError):
+        runner.run_review(args)
+    path, _payload = _read_diagnostic(args)
+    candidate = CandidateBinding(
+        args.base_sha,
+        args.head_sha,
+        runner.sha256_bytes(diff),
+        args.mission_id,
+        runner.sha256_bytes(b"{}"),
+    )
+    for artifact in (path, args.evidence_dir / "missing-receipt.json"):
+        facts = consumer._deepseek_receipt_evidence(
+            artifact,
+            repo_root=args.repo_root,
+            expected_base=args.base_sha,
+            expected_head=args.head_sha,
+            expected_mission_id=args.mission_id,
+            expected_scope_hash=candidate.mission_scope_sha256,
+        )
+        assert facts.result == "NO_VERDICT"
+        assert not facts.trusted
+        codex = ReviewEvidence(
+            "codex-cli",
+            True,
+            "PASS",
+            args.base_sha,
+            args.head_sha,
+            candidate.diff_sha256,
+            args.mission_id,
+            candidate.mission_scope_sha256,
+            {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+        )
+        outcome = evaluate_review_policy(
+            "CRITICAL",
+            candidate,
+            [codex, facts],
+            backend_eligibility={
+                "codex-cli": frozenset({"CRITICAL"}),
+                "claude-code-deepseek": frozenset({"CRITICAL"}),
+            },
+        )
+        assert outcome.status != "SATISFIED"

@@ -15,6 +15,7 @@ from hashlib import sha256
 import json
 import re
 from typing import Any
+import unicodedata
 
 from scripts.ops.helpers.agent_workflow_contract import (
     ALL_REVIEW_SEVERITIES,
@@ -40,6 +41,35 @@ INFRASTRUCTURE_FAILURES = frozenset(
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
 SHA1_RE = re.compile(r"^[0-9a-f]{40}$", re.I)
 SHA1_HEX_LENGTH = 40
+_FINDING_PLACEHOLDERS = frozenset(
+    {
+        "placeholder",
+        "todo",
+        "tbd",
+        "n/a",
+        "none",
+        "null",
+        "to be determined",
+        "fill in later",
+        "待补充",
+        "待填写",
+        "占位",
+        "insert evidence",
+        "insert title",
+    }
+)
+
+
+def _placeholder_field(value: str) -> bool:
+    """Reject only whole-field sentinels/punctuation, never prose or missing locations."""
+    text = " ".join(value.casefold().split())
+    punctuation_only = all(
+        unicodedata.category(char).startswith("P") for char in text if not char.isspace()
+    )
+    return (
+        punctuation_only
+        or text.strip(" [](){}<>\"'`.,:;!?。；：！？（）【】") in _FINDING_PLACEHOLDERS
+    )
 
 
 class IndependentReviewProtocolError(ValueError):
@@ -100,6 +130,12 @@ def validate_result(result: object) -> dict[str, Any]:  # noqa: C901, PLR0912
         severity = finding["severity"].upper()
         if severity not in ALL_REVIEW_SEVERITIES:
             raise IndependentReviewProtocolError(f"finding[{index}] has invalid severity")
+        if severity in BLOCKING_REVIEW_SEVERITIES:
+            for field in ("title", "evidence"):
+                if _placeholder_field(finding[field]):
+                    raise IndependentReviewProtocolError(
+                        f"INVALID_FINDING_EVIDENCE: finding[{index}] {field} is a placeholder"
+                    )
         line = finding.get("line")
         if line is not None and (not isinstance(line, int) or line < 1):
             raise IndependentReviewProtocolError(f"finding[{index}] line must be positive or null")
