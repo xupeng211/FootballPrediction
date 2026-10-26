@@ -12,6 +12,7 @@ import subprocess
 from typing import Any
 
 from scripts.devops.deepseek_review_chunks import (
+    MAX_CHUNK_PROMPT_BYTES,
     ChunkReviewError,
     build_chunk_prompt,
     chunk_evidence_manifest_bytes,
@@ -57,12 +58,16 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
             capture_output=True,
             check=True,
         ).stdout
+        if not isinstance(top_evidence, dict) or not isinstance(top_evidence.get("manifest"), dict):
+            raise ChunkReviewError("chunk manifest must be an object")  # noqa: TRY301
         manifest = plan(
             diff,
             base_sha=context.base_sha,
             head_sha=context.head_sha,
             mission_id=receipt["mission_id"],
             mission_scope_sha256=receipt["mission_scope_sha256"],
+            source_context_version=top_evidence.get("manifest", {}).get("source_context_version"),
+            repo_root=context.repo_root,
         )
         if (
             top_evidence.get("manifest") != manifest.payload()
@@ -171,6 +176,8 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
             manifest=manifest,
             scope_sha=receipt["mission_scope_sha256"],
         ).encode()
+        if len(prompt) > MAX_CHUNK_PROMPT_BYTES:
+            raise IndependentReviewProtocolError("chunk prompt exceeds canonical byte limit")
         if prompt != expected_prompt or not command or command[-1].encode() != prompt:
             raise IndependentReviewProtocolError(
                 "chunk prompt is not bound to the canonical source"

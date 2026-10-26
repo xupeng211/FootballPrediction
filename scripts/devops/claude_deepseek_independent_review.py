@@ -26,20 +26,22 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.devops import independent_review_receipt as receipts  # noqa: E402
+from scripts.devops.deepseek_review_chunks import (  # noqa: E402
+    MAX_CHUNK_DIFF_BYTES,
+    MAX_CHUNK_PROMPT_BYTES,
+    SOURCE_CONTEXT_MISSION,
+    SOURCE_CONTEXT_VERSION,
+    aggregate,
+    build_chunk_prompt,
+    chunk_evidence_manifest_bytes,
+    plan,
+)
 from scripts.devops.independent_review_backends import claude_code_deepseek as backend  # noqa: E402
 from scripts.devops.independent_review_protocol import (  # noqa: E402
     PROTOCOL_VERSION,
     canonical_json,
     sha256_bytes,
     validate_result,
-)
-from scripts.devops.deepseek_review_chunks import (  # noqa: E402
-    MAX_CHUNK_DIFF_BYTES,
-    MAX_CHUNK_PROMPT_BYTES,
-    aggregate,
-    build_chunk_prompt,
-    chunk_evidence_manifest_bytes,
-    plan,
 )
 from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     MissionScopeError,
@@ -141,6 +143,10 @@ def _run_chunked_review(
         head_sha=head,
         mission_id=scope.mission_id,
         mission_scope_sha256=scope_sha,
+        source_context_version=(
+            SOURCE_CONTEXT_VERSION if scope.mission_id == SOURCE_CONTEXT_MISSION else None
+        ),
+        repo_root=worktree,
     )
     values: list[dict] = []
     trusted: list[dict] = []
@@ -267,7 +273,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'replace')}"
     )
     started = _now()
-    chunked = len(diff) > MAX_CHUNK_DIFF_BYTES
+    chunked = len(diff) > MAX_CHUNK_DIFF_BYTES or scope.mission_id == SOURCE_CONTEXT_MISSION
     trusted_chunks: list[dict] = []
     if chunked:
         raw, normalized, trusted_chunks = _run_chunked_review(
