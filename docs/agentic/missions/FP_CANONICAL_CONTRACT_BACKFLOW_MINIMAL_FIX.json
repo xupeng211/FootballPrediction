@@ -1,0 +1,52 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/ops/helpers/documentation_backflow.py",
+    "tests/unit/test_project_knowledge_convergence.py",
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX.json",
+    "tests/unit/test_ai_workflow_gate_enforcement.py",
+    "scripts/ops/ai_workflow_gate.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "docs/DOCUMENTATION_GOVERNANCE.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    ".github/",
+    ".githooks/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "tests/unit/market_evidence/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Current Owner instruction to continue the approved M2 local rebinding and review-budget preparation authorizes only these seven existing governance paths on exact main BASE 512a9d3295bac47d8d6212d97127a6855b368d85. Mission ID remains FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX; this is local preparation, not paid review or publication approval.",
+    "Reuse the existing M2 patch from original BASE 40bab20cd16e8d91d1c999f1d6bd64eee863aa74 to HEAD 7ac022ea1ed81e4b1f29fe69048da7545dd6bc66. Preserve its finite Canonical domain mapping, actual contract update and deletion/rename-away rejection; do not redesign governance or expand the seven paths.",
+    "Preserve the complete merged M1 content from main BASE 512a9d3295bac47d8d6212d97127a6855b368d85. AGENTS.md and docs/AGENT_WORKFLOW.md retain M1 and add only the existing M2 documentation paragraphs; their old pre-M1 blob identities are historical, not overwrite instructions.",
+    "Keep the M1 canonical reviewer, chunk planner, source-context recipe, receipt validators and their tests unchanged from main. Use unchanged main canonical executors and validators outside this candidate; never certify governance changes with changed candidate gate code.",
+    "Preserve Stage D exact mapping, unknown-domain rejection, mixed business/governance prohibition, authorization matrix, CRITICAL Terra and DeepSeek dual current receipts, source binding, P0/P1/P2 blocking, P3 recording, Owner fee and final merge authority.",
+    "Do not change any frozen business implementation, CLI, tests, registry, inputs or historical candidate, receipt or evidence. Business publication and navigation remain separate future work; no business feature is claimed delivered by this governance candidate.",
+    "Bind the final complete BASE/HEAD, full canonical diff hash and committed scope hash through existing canonical arguments. New HEAD requires fresh validation and fresh separately authorized exact-head dual review; historical PASS or FAIL receipts are never reinterpreted.",
+    "Run necessary direct regression and existing canonical strict/pr validation under the fixed trusted QA policy including tmp_mb=1024, without reducing coverage, resource isolation or standards. No repeated 888-match or 19-artifact business replay. Prepare exact inputs and explicit request/fee unknowns offline only."
+  ],
+  "forbidden_side_effects": [
+    "Any source path outside the seven authorized paths; any business algorithm or production change; overwriting M1 with old workflow documentation; reviewer, receipt, source-context, Harness, Provider, ledger, Stage D, security or fee policy changes.",
+    "Any real Developer or Reviewer model call, qualification, payment, credits purchase, recharge, account or Provider change. Historical fee approvals are not authorization for this new HEAD.",
+    "Push, remote PR creation or update, Merge, deployment, force push, reset/amend/rebase of historical candidates or historical receipt/evidence mutation. This local rebinding creates an independent candidate only.",
+    "New data collection, production/raw/database writes, training, prediction, backtest, activation or M3/navigation execution. Isolated disposable QA fixtures remain governed by the existing trusted validation policy."
+  ]
+}

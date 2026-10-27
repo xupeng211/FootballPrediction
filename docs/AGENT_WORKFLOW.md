@@ -250,6 +250,17 @@ scope（见 §11.5）；merge readiness 和 reviewer 会再次读取同一 scope
 PR context、GitHub ruleset 和 required check runs 仍只能由 `make pr-ready PR=<number>`
 读取。
 
+Canonical Prematch Feature Frame 的有限业务领域映射复用
+`scripts/ops/helpers/documentation_backflow.py`：只有其中列明的诊断模块、既有 frame CLI、
+直接测试及明确伴随文档/mission 路径可以使用
+`docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md` 作为权威业务合同回流。
+该合同文档必须实际位于当前变更中、被正确声明，且 `contract changed=yes`；
+仅在 PR 正文填写路径不算更新。Stage D 保持其独立精确映射；未知合同、其他业务源码、
+Canonical 与 Stage D 或工程工作流混合继续 fail-closed，不提供通用路径豁免。
+修改映射治理逻辑本身仍属于工程工作流合同变更，必须回流到 `AGENTS.md` 和本文；
+这不改变 mixed governance/business 禁令、Owner 权限、CRITICAL 双审、Receipt、Source Binding、
+费用或远端发布/合并授权。业务候选与独立导航文档的发布依赖仍须明确。
+
 ### 11.3 Codex independent reviewer 与 receipt
 
 canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 证据读取与内部

@@ -27,23 +27,24 @@ from scripts.ops.helpers.agent_workflow_contract import (  # noqa: E402
     validate_mission_scope,
     validate_pr_metadata,
 )
-from scripts.ops.helpers.pr_authorization_matrix import parse_task_type  # noqa: E402
+from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
+    narrow_blocking_errors,
+    parse_task_type,
+    validate_authorization,
+)
 from scripts.ops.helpers.git_change_helpers import Change  # noqa: E402
 from scripts.ops.helpers.strict_review_evidence import parse_workflow_class  # noqa: E402
 
 
 _MARKDOWN_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 _TOP_LEVEL_HEADING_LEVEL = 2
-_README_LEGACY_MARKERS = (
-    "TITAN",
-    "V4.51",
-    "TOTAL-WAR",
-    "12061",
-    "3-Model",
-    "67.2%",
-    "V11",
-    "Recon",
-)
+
+
+def _fixture_items(value):
+    return tuple(value.split("|"))
+
+
+_README_LEGACY_MARKERS = _fixture_items("TITAN|V4.51|TOTAL-WAR|12061|3-Model|67.2%|V11|Recon")
 
 
 def _readme_headings_with_ancestry(readme: str):
@@ -52,22 +53,18 @@ def _readme_headings_with_ancestry(readme: str):
     This intentionally handles only the ATX headings needed by the README gate;
     fenced code blocks are ignored so command examples cannot become headings.
     """
-
     headings = []
     ancestry = []
     in_fenced_code = False
-
     for line_number, line in enumerate(readme.splitlines(), start=1):
         if line.lstrip().startswith("```"):
             in_fenced_code = not in_fenced_code
             continue
         if in_fenced_code:
             continue
-
         match = _MARKDOWN_HEADING_RE.match(line)
         if match is None:
             continue
-
         level = len(match.group(1))
         title = match.group(2).strip()
         while ancestry and ancestry[-1][0] >= level:
@@ -81,7 +78,6 @@ def _readme_headings_with_ancestry(readme: str):
                 "ancestry": tuple(item[1] for item in ancestry),
             }
         )
-
     return headings
 
 
@@ -142,7 +138,6 @@ def _impact_body(
 def test_capability_index_exists_and_agents_points_to_it():
     capability_index = ROOT / "docs/CAPABILITY_INDEX.md"
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-
     assert capability_index.is_file()
     assert "docs/CAPABILITY_INDEX.md" in agents
     assert "EXISTING_CAPABILITIES_REVIEWED=YES" in agents
@@ -153,16 +148,10 @@ def test_project_map_reading_order_uses_current_authorities():
     order_start = project_map.index("## 当前可信阅读顺序")
     order_end = project_map.index("## 技术栈摘要")
     reading_order = project_map[order_start:order_end]
-
-    labels = (
-        "`AGENTS.md`",
-        'README "Canonical Business Entrypoints"',
-        "`docs/AGENT_WORKFLOW.md`",
-        "本文档",
-        "`docs/CAPABILITY_INDEX.md`",
-        "`docs/ACTIVE_MILESTONE.md`",
-        "`docs/PROJECT_STATUS.md`",
-        "领域 current-state docs",
+    labels = _fixture_items(
+        '`AGENTS.md`|README "Canonical Business Entrypoints"|`docs/AGENT_WORKFLOW.md`|本文档'
+        "|`docs/CAPABILITY_INDEX.md`|`docs/ACTIVE_MILESTONE.md`|`docs/PROJECT_STATUS.md`|"
+        "领域 current-state docs"
     )
     positions = [reading_order.index(label) for label in labels]
     assert positions == sorted(positions)
@@ -172,19 +161,11 @@ def test_project_map_reading_order_uses_current_authorities():
 def test_active_milestone_snapshot_has_current_state_shape():
     milestone = (ROOT / "docs/ACTIVE_MILESTONE.md").read_text(encoding="utf-8")
     current_snapshot = milestone.split("## Historical evidence", maxsplit=1)[0]
-
-    for field in (
-        "LAST_KNOWLEDGE_AUDIT_BASE_SHA=",
-        "DOCUMENTED_SHA_ROLE=LAST_KNOWLEDGE_AUDIT_SNAPSHOT_ONLY",
-        "REALTIME_MAIN_AUTHORITY=Git/GitHub",
-        "CURRENT_BUSINESS_STAGE=",
-        "RECENTLY_COMPLETED=",
-        "CURRENT_MODEL_ASSET=",
-        "CURRENT_DATA_ASSETS=",
-        "CURRENT_MARKET_ASSETS=",
-        "CURRENT_HARD_BLOCKERS=",
-        "NEXT_OWNER_DECISION=",
-        "DO_NOT_START_WITHOUT_AUTHORIZATION=",
+    for field in _fixture_items(
+        "LAST_KNOWLEDGE_AUDIT_BASE_SHA=|DOCUMENTED_SHA_ROLE=LAST_KNOWLEDGE_AUDIT_SNAPSHOT"
+        "_ONLY|REALTIME_MAIN_AUTHORITY=Git/GitHub|CURRENT_BUSINESS_STAGE=|RECENTLY_COMPLE"
+        "TED=|CURRENT_MODEL_ASSET=|CURRENT_DATA_ASSETS=|CURRENT_MARKET_ASSETS=|CURRENT_HA"
+        "RD_BLOCKERS=|NEXT_OWNER_DECISION=|DO_NOT_START_WITHOUT_AUTHORIZATION="
     ):
         assert field in current_snapshot
     assert re.search(r"LAST_KNOWLEDGE_AUDIT_BASE_SHA=[0-9a-f]{40}", current_snapshot)
@@ -195,18 +176,12 @@ def test_active_milestone_snapshot_has_current_state_shape():
 
 def test_project_status_current_summary_precedes_historical_evidence():
     status = (ROOT / "docs/PROJECT_STATUS.md").read_text(encoding="utf-8")
-
     assert status.index("## Current State") < status.index("## Historical evidence")
     current_summary = status[: status.index("## Historical evidence")]
-    for field in (
-        "Last knowledge audit base",
-        "Current system stage",
-        "Completed canonical pipeline",
-        "Predictive evidence",
-        "Market / odds evidence",
-        "Hard blockers",
-        "Non-capabilities",
-        "Next Owner decision",
+    for field in _fixture_items(
+        "Last knowledge audit base|Current system stage|Completed canonical "
+        "pipeline|Predictive evidence|Market / odds evidence|Hard "
+        "blockers|Non-capabilities|Next Owner decision"
     ):
         assert field in current_summary
     assert "Current main" not in current_summary
@@ -216,7 +191,6 @@ def test_project_status_current_summary_precedes_historical_evidence():
 def test_readme_current_framing_rejects_legacy_production_claims():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     current = readme.split("## Historical / Legacy Background", maxsplit=1)[0]
-
     assert "pre-production research / evidence-building" in current
     assert "docs/PROJECT_VISION.md" in current
     assert "Canonical Business Entrypoints" in current
@@ -224,13 +198,8 @@ def test_readme_current_framing_rejects_legacy_production_claims():
     assert "PROFITABILITY_PROVEN=NO" in current
     assert "PRODUCTION_READY=NO" in current
     assert "MODEL_ACTIVATED=NO" in current
-    for forbidden_current_claim in (
-        "Production-Ready",
-        "67.2%",
-        "65.52%",
-        "12061",
-        "3-Model",
-        "3 Model",
+    for forbidden_current_claim in _fixture_items(
+        "Production-Ready|67.2%|65.52%|12061|3-Model|3 Model"
     ):
         assert forbidden_current_claim.casefold() not in current.casefold()
 
@@ -240,33 +209,21 @@ def test_readme_current_model_status_matches_current_state_docs():
     readme_current = readme.split("## Historical / Legacy Background", maxsplit=1)[0]
     status = (ROOT / "docs/PROJECT_STATUS.md").read_text(encoding="utf-8")
     status_current = status[: status.index("## Historical evidence")]
-
-    for fact in (
-        "canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41",
-        "xgboost_multiclass_1x2",
-        "canonical_prematch/vnext-v1",
-        "545",
-        "343",
-        "436",
-        "109",
-        "CONSUMED_FOR_OFFLINE_EVALUATION",
-        "MODEL_OFFLINE_QUALITY_STATUS=PROMISING",
-        "VALUE_MVP-1",
-        "MARKET_BETTER_THAN_MODEL",
+    for fact in _fixture_items(
+        "canonical-prematch-vnext-a74c9a9ad63dd48a86f15d41|xgboost_multiclass_1x2|canonic"
+        "al_prematch/vnext-v1|545|343|436|109|CONSUMED_FOR_OFFLINE_EVALUATION|MODEL_OFFLI"
+        "NE_QUALITY_STATUS=PROMISING|VALUE_MVP-1|MARKET_BETTER_THAN_MODEL"
     ):
         assert fact in readme_current
         assert fact in status_current
-
     assert "13-feature" in readme_current
     assert "canonical candidate" in readme_current
 
 
 def test_odds_and_l3_entrypoint_classification_converges_across_authorities():
     """Implemented direct npm callers must not be advertised as canonical surfaces."""
-
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     capability_index = (ROOT / "docs/CAPABILITY_INDEX.md").read_text(encoding="utf-8")
-
     canonical_section_start = readme.index("## Canonical Business Entrypoints")
     table_start = readme.index("| Domain | Canonical status |", canonical_section_start)
     table_end = readme.index("\n\n### Implemented but non-canonical surfaces", table_start)
@@ -274,13 +231,11 @@ def test_odds_and_l3_entrypoint_classification_converges_across_authorities():
     non_canonical_section = readme[
         table_end : readme.index("\n### Prediction authority", table_end)
     ]
-
     for command in ("odds:harvest", "l3:stitch"):
         assert f"`npm run {command}`" not in canonical_table
         assert f"`npm run {command}`" in non_canonical_section
         assert "DOCUMENTED_ONLY" in non_canonical_section
         assert "not default new-work entrypoints" in non_canonical_section
-
         row = next(
             line
             for line in capability_index.splitlines()
@@ -298,18 +253,15 @@ def test_readme_legacy_markers_remain_structurally_fenced():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     readme_lines = readme.splitlines()
     headings = _readme_headings_with_ancestry(readme)
-
     historical_background = next(
         heading for heading in headings if heading["title"] == "Historical / Legacy Background"
     )
     canonical_entrypoints = next(
         heading for heading in headings if heading["title"] == "Canonical Business Entrypoints"
     )
-
     assert historical_background["level"] == _TOP_LEVEL_HEADING_LEVEL
     assert canonical_entrypoints["level"] == _TOP_LEVEL_HEADING_LEVEL
     assert not _contains_legacy_fence(canonical_entrypoints["ancestry"])
-
     # A same-level generic heading would terminate the historical parent and
     # allow the old TITAN body to be retrieved as current material.
     for heading in headings:
@@ -318,7 +270,6 @@ def test_readme_legacy_markers_remain_structurally_fenced():
             and heading["level"] == historical_background["level"]
         ):
             assert _contains_legacy_fence((heading["title"],)), heading
-
     current_heading_titles = {
         "Current State",
         "Canonical Business Entrypoints",
@@ -328,7 +279,6 @@ def test_readme_legacy_markers_remain_structurally_fenced():
     for heading in headings:
         if heading["title"] in current_heading_titles:
             assert heading["level"] == _TOP_LEVEL_HEADING_LEVEL
-
     for marker in _README_LEGACY_MARKERS:
         for line_number, line in enumerate(readme_lines, start=1):
             if marker.casefold() not in line.casefold():
@@ -342,28 +292,20 @@ def test_readme_legacy_markers_remain_structurally_fenced():
 
 
 def test_retired_agent_specific_skills_are_absent_from_current_surface():
-    skill_paths = (
-        ".claude/skills/api-testing/SKILL.md",
-        ".claude/skills/data-collection/SKILL.md",
-        ".claude/skills/data-engineering/SKILL.md",
-        ".claude/skills/data-engineering/README.md",
-        ".claude/skills/database-operations/SKILL.md",
-        ".claude/skills/deployment-management/SKILL.md",
-        ".claude/skills/deployment-operations/SKILL.md",
-        ".claude/skills/docker-devops/SKILL.md",
-        ".claude/skills/football-prediction/SKILL.md",
-        ".claude/skills/feature-engineering/SKILL.md",
-        ".claude/skills/machine-learning-engineering/SKILL.md",
-        ".claude/skills/machine-learning-engineering/README.md",
-        ".claude/skills/fastapi-development/SKILL.md",
-        ".claude/skills/fastapi-development/README.md",
-        ".claude/skills/performance-monitoring/SKILL.md",
-        ".claude/skills/report-generation/SKILL.md",
-        ".claude/skills/v26-harvest/SKILL.md",
+    skill_paths = _fixture_items(
+        ".claude/skills/api-testing/SKILL.md|.claude/skills/data-collection/SKILL.md|.cla"
+        "ude/skills/data-engineering/SKILL.md|.claude/skills/data-engineering/README.md|."
+        "claude/skills/database-operations/SKILL.md|.claude/skills/deployment-management/"
+        "SKILL.md|.claude/skills/deployment-operations/SKILL.md|.claude/skills/docker-dev"
+        "ops/SKILL.md|.claude/skills/football-prediction/SKILL.md|.claude/skills/feature-"
+        "engineering/SKILL.md|.claude/skills/machine-learning-engineering/SKILL.md|.claud"
+        "e/skills/machine-learning-engineering/README.md|.claude/skills/fastapi-developme"
+        "nt/SKILL.md|.claude/skills/fastapi-development/README.md|.claude/skills/performa"
+        "nce-monitoring/SKILL.md|.claude/skills/report-generation/SKILL.md|.claude/skills"
+        "/v26-harvest/SKILL.md"
     )
     for relative_path in skill_paths:
         assert not (ROOT / relative_path).exists(), relative_path
-
     claude_readme = (ROOT / ".claude/README.md").read_text(encoding="utf-8")
     settings = (ROOT / ".claude/settings.json").read_text(encoding="utf-8")
     assert "retired" in claude_readme.casefold()
@@ -372,7 +314,6 @@ def test_retired_agent_specific_skills_are_absent_from_current_surface():
 
 def test_agents_keeps_agent_specific_files_out_of_project_authority():
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-
     assert ".claude/" in agents
     assert "GEMINI.md" in agents
     assert "agent skill/config" in agents
@@ -382,7 +323,6 @@ def test_agents_keeps_agent_specific_files_out_of_project_authority():
 def test_capability_change_without_current_state_update_fails():
     body = _impact_body(capability="yes")
     errors = check_documentation_backflow(body, {"src/ml/training/new_capability.py"})
-
     assert any("capability changed=yes cannot" in error for error in errors)
 
 
@@ -394,7 +334,6 @@ def test_capability_change_with_index_update_passes():
         reason="The capability row and status evidence are updated in the index.",
     )
     changed = {"src/ml/training/new_capability.py", "docs/CAPABILITY_INDEX.md"}
-
     assert check_documentation_backflow(body, changed) == []
 
 
@@ -404,7 +343,6 @@ def test_contract_change_without_current_state_update_fails():
         reason="This local gate fix does not change the documented contract boundary or semantics.",
     )
     errors = check_documentation_backflow(body, {"scripts/ops/ai_workflow_gate.py"})
-
     assert any("contract changed=yes cannot" in error for error in errors)
 
 
@@ -592,9 +530,7 @@ def test_unknown_domain_contract_still_fails_when_engineering_docs_are_present(u
 @pytest.mark.parametrize("declaration", ["no", "maybe", "", "missing_row", "missing_section"])
 def test_unknown_script_workflow_mixture_cannot_hide_behind_impact_declarations(declaration):
     body = _impact_body(
-        contract=declaration,
-        source_updated="yes",
-        updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md",
+        contract=declaration, source_updated="yes", updated_docs="AGENTS.md, docs/AGENT_WORKFLOW.md"
     )
     if declaration == "missing_row":
         body = body.replace("| Data/model/authorization contract changed? | missing_row |\n", "")
@@ -662,13 +598,98 @@ def test_stage_d_bugfix_still_requires_substantive_no_change_reason():
     assert any("specific reason" in error for error in errors)
 
 
+_CANONICAL_DOC = "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
+_CANONICAL_PATHS = {
+    _CANONICAL_DOC,
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "scripts/ops/canonical_prematch_feature_frame.js",
+    "tests/unit/canonical_prematch_feature_frame.test.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    "README.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1.json",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_CRITICAL_SCOPE_BRIDGE.json",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_REPACKAGE_BUSINESS.json",
+}
+_CANONICAL_DOCS = _STAGE_D_DECLARED_DOCS.replace(_STAGE_D_DOC, _CANONICAL_DOC)
+
+
+def _canonical_contract_body(**overrides):
+    return _stage_d_contract_body(
+        **({"entrypoint": "yes", "updated_docs": _CANONICAL_DOCS} | overrides)
+    )
+
+
+def test_canonical_exact_business_paths_use_actual_domain_contract():
+    body = _canonical_contract_body()
+    assert check_documentation_backflow(body, _CANONICAL_PATHS) == []
+    for status in ("A", "M"):
+        updates = [Change(status, _CANONICAL_DOC)]
+        assert check_documentation_backflow(body, _CANONICAL_PATHS, changes=updates) == []
+    assert check_mixed_governance_business(_CANONICAL_PATHS) == []
+    assert validate_authorization("source-code", _CANONICAL_PATHS, pr_body=body).errors == ()
+    matrix = validate_authorization(
+        "source-code",
+        _CANONICAL_PATHS | {"scripts/ops/helpers/documentation_backflow.py"},
+        pr_body=body,
+    )
+    assert any("source-code" in e for e in narrow_blocking_errors(matrix))
+    assert check_documentation_backflow(
+        _stage_d_contract_body(), _CANONICAL_PATHS | _STAGE_D_NINE_PATHS
+    )
+
+
+def _canonical_rejections():
+    for path in sorted(
+        path for path in _CANONICAL_PATHS if path.startswith(("src/", "scripts/", "tests/"))
+    ):
+        for declaration in ("yes", "no"):
+            yield {path}, {"contract": declaration}, "actual update of " + _CANONICAL_DOC
+    for declaration in ("no", "maybe", "", "missing"):
+        yield _CANONICAL_PATHS, {"contract": declaration}, "require contract changed=yes"
+    for substitute in ("docs/data/OTHER_CONTRACT.md", _STAGE_D_DOC, _CANONICAL_DOC + ".bak"):
+        yield (_CANONICAL_PATHS - {_CANONICAL_DOC}) | {substitute}, {}, ""
+    for extra in (
+        "src/other_domain/model.py",
+        "scripts/ops/unknown_domain.js",
+        "docs/data/OTHER_CONTRACT.md",
+        "config/other_domain.json",
+        "tests/unit/unrelated.test.js",
+        "docs/agentic/missions/UNAPPROVED.json",
+        "scripts/ops/helpers/documentation_backflow.py",
+        "AGENTS.md",
+        "docs/AGENT_WORKFLOW.md",
+        _STAGE_D_DOC,
+        "src/infrastructure/market_evidence/stageDOperations.js",
+    ):
+        for declaration in ("yes", "no"):
+            yield _CANONICAL_PATHS | {extra}, {"contract": declaration}, ""
+    yield _CANONICAL_PATHS, {"source_updated": "no"}, "contract changed=yes cannot"
+    yield (
+        _CANONICAL_PATHS,
+        {"updated_docs": "docs/CAPABILITY_INDEX.md"},
+        "requires " + _CANONICAL_DOC,
+    )
+
+
+@pytest.mark.parametrize(("paths", "overrides", "expected"), list(_canonical_rejections()))
+def test_canonical_domain_rejects_invalid_evidence(paths, overrides, expected):
+    body = _canonical_contract_body(**overrides)
+    if overrides.get("contract") == "missing":
+        body = body.replace("| Data/model/authorization contract changed? | missing |\n", "")
+    errors = check_documentation_backflow(body, paths)
+    assert errors
+    assert any(expected in error for error in errors)
+
+
 def test_api_capability_change_without_current_state_update_fails():
     body = _impact_body(
         capability="yes",
         reason="This API change is described as a capability change but omits its current-state index update.",
     )
     errors = check_documentation_backflow(body, {"src/api/model_management.py"})
-
     assert any("capability changed=yes cannot" in error for error in errors)
 
 
@@ -678,18 +699,15 @@ def test_feature_engine_capability_change_without_current_state_update_fails():
         reason="This feature-engine change is described as a capability change but omits its current-state update.",
     )
     errors = check_documentation_backflow(
-        body,
-        {"src/feature_engine/extractors/GoldenFeatureExtractor.js"},
+        body, {"src/feature_engine/extractors/GoldenFeatureExtractor.js"}
     )
-
     assert any("capability changed=yes cannot" in error for error in errors)
 
 
 def test_api_bugfix_without_capability_change_accepts_specific_reason():
     body = _impact_body(
-        reason="This API bugfix changes validation only and does not change capability, status, or contract.",
+        reason="This API bugfix changes validation only and does not change capability, status, or contract."
     )
-
     assert check_documentation_backflow(body, {"src/api/health.py"}) == []
 
 
@@ -697,37 +715,26 @@ def test_bugfix_without_capability_change_accepts_specific_reason():
     body = _impact_body(
         reason="This fixes validation of an existing path and changes no capability, status, or contract."
     )
-
     assert check_documentation_backflow(body, {"src/ml/training/existing.py"}) == []
 
 
 def test_hollow_no_update_reasons_are_rejected():
-    for reason in ("n/a", "none", "not needed", "no update needed", "无需", "无需更新"):
+    for reason in _fixture_items("n/a|none|not needed|no update needed|无需|无需更新"):
         body = _impact_body(reason=reason)
         errors = check_documentation_backflow(body, {"src/ml/training/existing.py"})
         assert any("specific, non-hollow" in error for error in errors)
 
 
 def test_entrypoint_change_requires_entrypoint_and_capability_docs():
-    body = _impact_body(
-        entrypoint="yes",
-        source_updated="yes",
-        updated_docs="README.md",
-    )
+    body = _impact_body(entrypoint="yes", source_updated="yes", updated_docs="README.md")
     errors = check_documentation_backflow(body, {"README.md"})
-
     assert any(
         "entrypoint changed=yes requires docs/CAPABILITY_INDEX.md" in error for error in errors
     )
 
 
 def test_project_map_change_requires_navigation_declaration():
-    body = _impact_body(
-        navigation="yes",
-        source_updated="yes",
-        updated_docs="docs/PROJECT_MAP.md",
-    )
-
+    body = _impact_body(navigation="yes", source_updated="yes", updated_docs="docs/PROJECT_MAP.md")
     assert check_documentation_backflow(body, {"docs/PROJECT_MAP.md"}) == []
 
 
@@ -737,18 +744,13 @@ def test_fotmob_current_state_is_the_blocker_mapping_when_changed():
         source_updated="yes",
         updated_docs="docs/PROJECT_STATUS.md, docs/data/FOTMOB_CURRENT_STATE.md",
     )
-    changed = {
-        "docs/data/FOTMOB_CURRENT_STATE.md",
-        "docs/PROJECT_STATUS.md",
-    }
-
+    changed = {"docs/data/FOTMOB_CURRENT_STATE.md", "docs/PROJECT_STATUS.md"}
     assert check_documentation_backflow(body, changed) == []
 
 
 def test_project_vision_exists_and_is_not_workflow_authority():
     vision = ROOT / "docs/PROJECT_VISION.md"
     text = vision.read_text(encoding="utf-8")
-
     assert vision.is_file()
     assert "lifecycle: permanent" in text
     assert "North Star" in text
@@ -764,7 +766,6 @@ def test_project_vision_is_in_startup_order_and_project_map_role_is_clear():
     order_start = project_map.index("## 当前可信阅读顺序")
     order_end = project_map.index("## 技术栈摘要")
     reading_order = project_map[order_start:order_end]
-
     assert reading_order.index("`docs/AGENT_WORKFLOW.md`") < reading_order.index(
         "`docs/PROJECT_VISION.md`"
     )
@@ -776,7 +777,6 @@ def test_project_vision_is_in_startup_order_and_project_map_role_is_clear():
 def test_vision_change_requires_vision_source_update():
     body = _impact_body(vision="yes", source_updated="yes", updated_docs="docs/PROJECT_MAP.md")
     errors = check_documentation_backflow(body, {"docs/PROJECT_MAP.md"})
-
     assert any("vision changed=yes requires docs/PROJECT_VISION.md" in error for error in errors)
 
 
@@ -786,15 +786,9 @@ def test_vision_change_cannot_use_no_update_reason():
         reason="The target-state change is intentional but this PR omits the vision source document.",
     )
     errors = check_documentation_backflow(body, {"docs/PROJECT_MAP.md"})
-
     assert any("vision changed=yes cannot" in error for error in errors)
 
 
 def test_vision_source_update_passes_when_declared():
-    body = _impact_body(
-        vision="yes",
-        source_updated="yes",
-        updated_docs="docs/PROJECT_VISION.md",
-    )
-
+    body = _impact_body(vision="yes", source_updated="yes", updated_docs="docs/PROJECT_VISION.md")
     assert check_documentation_backflow(body, {"docs/PROJECT_VISION.md"}) == []

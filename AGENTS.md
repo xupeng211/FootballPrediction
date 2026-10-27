@@ -65,6 +65,13 @@ PROJECT_VISION_UPDATE_REQUIRED=YES|NO
 
 ## 3. 任务分类
 
+Canonical Prematch Feature Frame 的已批准精确业务路径组合使用
+`docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md` 完成领域合同回流；
+必须实际更新并如实声明该文档，不能借用其他合同、任意业务路径或跨领域混合变更。
+具体有限路径集合由现有 `scripts/ops/helpers/documentation_backflow.py` 维护。
+业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
+`docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
+
 ### NORMAL
 
 小 bug、局部业务逻辑、UI、文档、低风险 refactor 和不改变 DB/write/runtime 安全边界的普通功能。默认流程：

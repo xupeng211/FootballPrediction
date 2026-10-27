@@ -11,6 +11,12 @@ README, capability, milestone, status, and domain current-state documents.
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from scripts.ops.helpers.git_change_helpers import Change
 
 from scripts.ops.helpers.pr_authorization_matrix import CATEGORY_WORKFLOW_GOVERNANCE, classify_path
 
@@ -114,8 +120,8 @@ REQUIRED_DOCS_BY_CATEGORY: dict[str, tuple[str, ...]] = {
     "contract": ("AGENTS.md", "docs/AGENT_WORKFLOW.md"),
 }
 
-# Only this audited domain has a business-contract mapping. Other domains and
-# cross-domain/workflow changes must not borrow its document as a substitute.
+# Audited business domains have exact mappings. Other domains and
+# cross-domain/workflow changes must not borrow their documents as substitutes.
 STAGE_D_CONTRACT_DOC = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
 STAGE_D_CONTRACT_PATHS = frozenset(
     {
@@ -132,6 +138,28 @@ STAGE_D_COMPANION_DOC_PATHS = frozenset(
         "docs/ACTIVE_MILESTONE.md",
         "docs/PROJECT_STATUS.md",
         "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json",
+    }
+)
+
+CANONICAL_PREMATCH_CONTRACT_DOC = "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
+CANONICAL_PREMATCH_CONTRACT_PATHS = frozenset(
+    {
+        CANONICAL_PREMATCH_CONTRACT_DOC,
+        "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+        "scripts/ops/canonical_prematch_feature_frame.js",
+        "tests/unit/canonical_prematch_feature_frame.test.js",
+        "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    }
+)
+CANONICAL_PREMATCH_COMPANION_DOC_PATHS = frozenset(
+    {
+        "README.md",
+        "docs/CAPABILITY_INDEX.md",
+        "docs/ACTIVE_MILESTONE.md",
+        "docs/PROJECT_STATUS.md",
+        "docs/agentic/missions/FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1.json",
+        "docs/agentic/missions/FP_FEATURE_QUALITY_CRITICAL_SCOPE_BRIDGE.json",
+        "docs/agentic/missions/FP_FEATURE_QUALITY_REPACKAGE_BUSINESS.json",
     }
 )
 
@@ -177,6 +205,8 @@ def classify_changed_paths(changed: set[str]) -> dict[str, set[str]]:
             classified[category] = matches
     if stage_d_paths := changed & STAGE_D_CONTRACT_PATHS:
         classified.setdefault("contract", set()).update(stage_d_paths)
+    if canonical_paths := changed & CANONICAL_PREMATCH_CONTRACT_PATHS:
+        classified.setdefault("contract", set()).update(canonical_paths)
     return classified
 
 
@@ -220,15 +250,25 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
         and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
     ):
         return (STAGE_D_CONTRACT_DOC,)
+    if (
+        category == "contract"
+        and changed & CANONICAL_PREMATCH_CONTRACT_PATHS
+        and not changed
+        - (CANONICAL_PREMATCH_CONTRACT_PATHS | CANONICAL_PREMATCH_COMPANION_DOC_PATHS)
+    ):
+        return (CANONICAL_PREMATCH_CONTRACT_DOC,)
     return REQUIRED_DOCS_BY_CATEGORY[category]
 
 
 def _contract_mapping_errors(changed: set[str]) -> list[str]:
-    """Reject unsupported domains and ambiguous Stage D/workflow mixtures."""
+    """Reject unsupported domains and ambiguous business/workflow mixtures."""
     unmapped_paths = {
         path
         for path in changed
-        if (_matches(path, "docs/data/*_CONTRACT.md") and path != STAGE_D_CONTRACT_DOC)
+        if (
+            _matches(path, "docs/data/*_CONTRACT.md")
+            and path not in {STAGE_D_CONTRACT_DOC, CANONICAL_PREMATCH_CONTRACT_DOC}
+        )
         or (
             (
                 path.startswith(("src/", "database/migrations/", "models/", "training/"))
@@ -238,12 +278,26 @@ def _contract_mapping_errors(changed: set[str]) -> list[str]:
                 )
             )
             and path not in STAGE_D_CONTRACT_PATHS
+            and path not in CANONICAL_PREMATCH_CONTRACT_PATHS
         )
     }
     if unmapped_paths:
         return [
             "contract paths have no approved domain mapping: " + ", ".join(sorted(unmapped_paths))
         ]
+    if changed & CANONICAL_PREMATCH_CONTRACT_PATHS:
+        unsupported = changed - (
+            CANONICAL_PREMATCH_CONTRACT_PATHS | CANONICAL_PREMATCH_COMPANION_DOC_PATHS
+        )
+        if unsupported:
+            return [
+                "contract mapping mixes Canonical prematch with other domains or workflow paths: "
+                + ", ".join(sorted(unsupported))
+            ]
+        if CANONICAL_PREMATCH_CONTRACT_DOC not in changed:
+            return [
+                f"Canonical prematch contract requires actual update of {CANONICAL_PREMATCH_CONTRACT_DOC}"
+            ]
     if changed & STAGE_D_CONTRACT_PATHS:
         unsupported = changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
         if unsupported:
@@ -256,8 +310,29 @@ def _contract_mapping_errors(changed: set[str]) -> list[str]:
     return []
 
 
+def _canonical_contract_status_errors(
+    changed: set[str], changes: Iterable[Change] | None
+) -> list[str]:
+    """Use Git change facts, never worktree existence, to reject lost authority."""
+    if changes is None or not changed & CANONICAL_PREMATCH_CONTRACT_PATHS:
+        return []
+    for change in changes:
+        deleted = change.status == "D" and change.path == CANONICAL_PREMATCH_CONTRACT_DOC
+        moved = (
+            change.status == "R"
+            and change.old_path == CANONICAL_PREMATCH_CONTRACT_DOC
+            and change.path != CANONICAL_PREMATCH_CONTRACT_DOC
+        )
+        if deleted or moved:
+            return [
+                "Canonical prematch contract cannot be deleted or renamed away as an update: "
+                + CANONICAL_PREMATCH_CONTRACT_DOC
+            ]
+    return []
+
+
 def check_documentation_backflow(  # noqa: C901, PLR0912
-    pr_body: str, changed: set[str]
+    pr_body: str, changed: set[str], *, changes: Iterable[Change] | None = None
 ) -> list[str]:
     """Validate declarations and mapped current-state backflow for a PR.
 
@@ -266,6 +341,10 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     legitimate bugfix that does not change the declared category.  A positive
     capability/status/entrypoint/milestone/vision declaration cannot be bypassed
     by a generic no-update reason.
+
+    The shared gate supplies its actual Git changes so deletion/rename-away
+    cannot satisfy Canonical authority backflow. Path-only callers retain their
+    declaration checks, but cannot establish a file's change status.
     """
     classified = classify_changed_paths(changed)
     vision_value = _table_value(pr_body, VISION_IMPACT_FIELD)
@@ -274,7 +353,8 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
         return []
 
     # Actual contract paths must not borrow a workflow mapping via a false declaration.
-    errors = (
+    errors = _canonical_contract_status_errors(changed, changes)
+    errors.extend(
         _contract_mapping_errors(changed)
         if "contract" in classified or _normalise(contract_value) == "yes"
         else []
@@ -287,6 +367,8 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
         ]
 
     values = {name: _table_value(pr_body, label) for name, label in YES_NO_FIELDS.items()}
+    if CANONICAL_PREMATCH_CONTRACT_DOC in changed and _normalise(values["contract"]) != "yes":
+        errors.append("Canonical prematch contract document changes require contract changed=yes")
     missing_fields = [
         label
         for name, label in YES_NO_FIELDS.items()
