@@ -22,8 +22,15 @@
 M3 本轮从已包含 M1/M2 的 main 基线
 `c928fabbb2423a614fb0c13d41d37ff8408378f8` 整理独立候选，保留原业务实现。
 既有 888 场、545/343 eligibility 与 19 份历史文件属于原版本的离线证据；
-历史回放不等于本轮新 HEAD 验收。本轮只复核其完整性、实现依赖等价性，
-并执行新候选所需的隔离测试和 canonical 验证，不重做整套业务回放。
+历史回放不等于本轮新 HEAD 验收。Owner 本轮授权先完成窄文档适配与本地提交，
+在最终 clean HEAD 上仅执行一次既有真实冻结输入的 build → validate → diagnose，
+只生成四个新业务文件及必要证据；不重做历史整套 19 文件。结果以仓库外执行记录为准，
+此处不预写 PASS，也不为写入结果再次改变已验收 HEAD。
+Owner 仅对 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS` 明确给予 AGENTS §2.1 同 PR 导航
+回流的单次例外：navigation=yes，导航未完成；业务实际合并且对应 merge SHA 的 main
+Production Gate 成功后，再以独立任务交付原 PROJECT_MAP 的 10 行及导航 mission Scope
+的必要真实绑定。后续任务仍须准确版本审核、CI、Owner 合并与对应 main Gate；
+本轮不开发或发布导航，不改变任何审核规则、通用映射或 required checks。
 当前送审 mission 为 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS`；原开发和 bridge scope
 只保留历史含义。真实独立审核、PR required CI 和 Owner 最终合并决定仍待后续授权，
 不能标记 M3 或本功能正式交付 DONE。

@@ -30,8 +30,16 @@ Last updated: 2026-09-21
 保持原样。原 888 场业务报告与 19 份文件是绑定旧代码版本的历史离线证据；
 其中包含日志、argv 和 receipt，并不是 19 份不同业务报告。完整性和实现依赖等价性
 可复核，但不能把旧 receipt 当作新 HEAD 的业务验收或正式审核凭证。
-本轮验证只覆盖新候选实际执行的隔离测试、静态预检及 canonical profiles，
-不重做采集、888 场回放或整套产物。实际命令、退出码和完整 HEAD 在仓库外任务证据中记录。
+Owner 本轮授权在窄文档适配提交后的最终 clean HEAD 上，执行一次最小真实冻结输入
+build → validate → diagnose，生成新 frame/receipt/quality JSON/中文 Markdown；
+命令、退出码、最终版本与业务断言均在仓库外证据记录，不预写本次验收成功，
+不为补写外部结果再改跟踪文件；不重做采集或历史整套 19 文件。
+仅对 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS`，Owner 已明确批准 AGENTS §2.1 同 PR
+PROJECT_MAP 回流的单次例外。导航影响仍为 yes、导航仍未交付：须在业务实际合并并
+确认该 merge SHA 的 main Production Gate 成功后，紧接独立任务完成原 10 行导航和
+`FP_FEATURE_QUALITY_REPACKAGE_NAVIGATION.json` 的必要真实绑定，再经该任务现行审核、
+CI、Owner 合并与对应 main Gate。本轮不实施导航、不把例外推广到其他任务或路径，
+不改审核规则、通用映射、required checks 或任何业务算法。
 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS` 是本轮唯一送审 Scope；原开发与 bridge Scope
 保留历史字节，不作为当前批准。正式独立审核、远端 required CI、Owner 合并决定与
 合并后准确版本 Gate 尚未完成，本功能和 M3 均不标记 DONE。
