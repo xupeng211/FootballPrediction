@@ -102,26 +102,10 @@ def rebind(receipt, context, manifest):
     context.raw_output_bytes = canonical_json(top)
 
 
-def test_legacy_and_complete_context_are_distinct_valid_contracts(frozen):
-    root, diff, manifest = frozen
+def test_required_complete_context_is_accepted(frozen):
+    _, diff, manifest = frozen
     receipt, context, _, _ = evidence(frozen)
     validator._validate_chunked_claude_evidence(receipt, context)
-    legacy = chunks.plan(
-        diff,
-        base_sha=manifest.base_sha,
-        head_sha=manifest.head_sha,
-        mission_id=manifest.mission_id,
-        mission_scope_sha256="c" * 64,
-    )
-    assert "source_context_version" not in legacy.payload()
-    old_receipt, old_context, _, _ = _chunk_validation_fixture(
-        root,
-        diff,
-        base_sha=manifest.base_sha,
-        head_sha=manifest.head_sha,
-        mission_id=manifest.mission_id,
-    )
-    validator._validate_chunked_claude_evidence(old_receipt, old_context)
     data = json.loads(manifest.source_context)
     assert len(data["definitions"]) == sum(map(len, chunks.SOURCE_CONTEXT_DEFINITIONS.values()))
     assert all(
@@ -131,6 +115,41 @@ def test_legacy_and_complete_context_are_distinct_valid_contracts(frozen):
     assert all(
         len(i["prompt"]) <= chunks.MAX_CHUNK_PROMPT_BYTES for i in context.chunked_claude_evidence
     )
+
+
+@pytest.mark.parametrize("mission", [chunks.SOURCE_CONTEXT_MISSION, "OTHER_MISSION"])
+def test_fully_rebuilt_legacy_only_accepted_for_other_missions(frozen, mission):
+    root, diff, manifest = frozen
+    legacy = chunks.plan(
+        diff,
+        base_sha=manifest.base_sha,
+        head_sha=manifest.head_sha,
+        mission_id=mission,
+        mission_scope_sha256="c" * 64,
+    )
+    assert "source_context_version" not in legacy.payload()
+    assert not legacy.source_context
+    # 完整重建旧分块、Prompt、执行argv和所有摘要，排除仅字段删除造成的拒绝。
+    receipt, context, _, _ = _chunk_validation_fixture(
+        root,
+        diff,
+        base_sha=manifest.base_sha,
+        head_sha=manifest.head_sha,
+        mission_id=mission,
+        manifest=legacy,
+    )
+    assert b"".join(item["source"] for item in context.chunked_claude_evidence) == diff
+    for descriptor, item in zip(legacy.chunks, context.chunked_claude_evidence, strict=True):
+        expected = chunks.build_chunk_prompt(
+            chunk=descriptor, source=item["source"], manifest=legacy, scope_sha="c" * 64
+        ).encode()
+        assert item["prompt"] == expected
+        assert item["execution"].reviewer_command[-1] == expected.decode()
+    if mission == chunks.SOURCE_CONTEXT_MISSION:
+        with pytest.raises(IndependentReviewProtocolError, match="manifest/coverage"):
+            validator._validate_chunked_claude_evidence(receipt, context)
+    else:
+        validator._validate_chunked_claude_evidence(receipt, context)
 
 
 @pytest.mark.parametrize("mutation", ["source", "commit", "path", "remove", "downgrade", "unknown"])

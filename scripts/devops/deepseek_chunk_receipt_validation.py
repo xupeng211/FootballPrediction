@@ -13,6 +13,8 @@ from typing import Any
 
 from scripts.devops.deepseek_review_chunks import (
     MAX_CHUNK_PROMPT_BYTES,
+    SOURCE_CONTEXT_MISSION,
+    SOURCE_CONTEXT_VERSION,
     ChunkReviewError,
     build_chunk_prompt,
     chunk_evidence_manifest_bytes,
@@ -66,7 +68,10 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
             head_sha=context.head_sha,
             mission_id=receipt["mission_id"],
             mission_scope_sha256=receipt["mission_scope_sha256"],
-            source_context_version=top_evidence.get("manifest", {}).get("source_context_version"),
+            # 外层已将 mission 绑定到冻结 Scope；输入不能自行选择较宽松的合同。
+            source_context_version=(
+                SOURCE_CONTEXT_VERSION if receipt["mission_id"] == SOURCE_CONTEXT_MISSION else None
+            ),
             repo_root=context.repo_root,
         )
         if (
