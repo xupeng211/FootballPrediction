@@ -124,8 +124,9 @@ def _chunk_validation_fixture(
     head_sha: str = "b" * 40,
     scope_sha: str = "c" * 64,
     mission_id: str = "MISSION",
+    manifest=None,
 ):
-    manifest = plan(
+    manifest = manifest or plan(
         diff,
         base_sha=base_sha,
         head_sha=head_sha,

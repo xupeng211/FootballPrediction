@@ -172,6 +172,27 @@ make pr-ready PR=<number> JSON=1
 
 workflow 收敛按 WF01–WF06 分阶段完成。每阶段独立 branch/commit/PR，先通过本阶段 acceptance 再进入下一阶段；前四阶段不大规模重写 `scripts/devops/gatekeeper.sh`。任何阶段发现真实 caller、远端规则或生产风险与旧假设不符，应记录 `AUDIT_ASSUMPTION_CHANGED`，停止危险 cleanup，保留 UNKNOWN 项。
 
+### 冻结 Git 源码上下文输入合同
+
+`frozen-git-source-context/v1` 在既有分块通道中，仅为
+`FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX` 提供已核实的11个顶层定义。
+固定路径/符号列表位于 `deepseek_review_chunks.py`，不是调用者自选路径接口。
+每个定义保留完整原始行、BASE/HEAD commit、blob、文件/片段 SHA256 和行范围；
+相同定义去重但保留两个版本身份，BASE 无定义明确记录，HEAD 缺失/歧义拒绝。
+上下文 JSON 加入每块 Prompt，重新规划 Diff 分块以保留全部原始字节。
+仍受40,000字节 Prompt、32,000字节 Diff 和64块上限约束，派发前检查所有 Prompt；
+缺失、越权、非普通Git文件、不可解析、超限或覆盖缺口拒绝，绝不截断。
+
+版本字段和上下文摘要绑定于既有 manifest/provenance；
+validator 从独立 Git 对象重新构建上下文、分块和完整 Prompt，并逐字节对比
+实际执行 argv 与证据。不新增 Receipt schema，不改变旧合同字节或历史含义。
+缺少版本的真实旧输入仍按原 v1 校验，不能把新版本 Prompt 降级伪装成旧输入。
+Reviewer 的 Read/Glob/Grep/网络/写入权限不开放，聚合、双审和 Gate 规则不变。
+
+此补丁的独立审核须由未修改可信 BASE 的原 runner/validator 完成，
+不得以候选新 validator 自证；双PASS后仍需独立发布许可、远端CI、Owner Merge
+及合并后 Production Gate，才能用于后续治理依赖与业务审核。
+
 ## 11. Agentic Engineering Workflow V1（当前 canonical contract）
 
 本节把 Builder、reviewer 和 controller 的职责固化为可执行合同。它服务于

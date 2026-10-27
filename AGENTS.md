@@ -93,6 +93,13 @@ STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider
 
 CRITICAL receipt 的 authority split 保持在现有 `ENGINEERING_INDEPENDENT_REVIEW` assurance model 内：本地 `agent-merge-ready`/Execution Controller 读取并验证 source tree 外的 owner-only physical receipts；GitHub required CI 不读取这些本地 external files，也不把 PR 正文自填的 provider/result 当作 receipt validity。远端 CI 只验证 exact PR HEAD、mission/workflow metadata、required checks 和最终 review-evidence contract；Owner/Controller 只有在本地双 receipt validation 与远端 required CI 均通过后才可 merge。这不提供 cryptographic 或 hostile-builder resistance。
 
+DeepSeek 冻结源码输入合同 `frozen-git-source-context/v1` 仅用于
+`FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX` 的固定已核实依赖。准备器只读准确
+BASE/HEAD Git blob，validator 独立重建上下文及实际 Prompt 字节；完整 Diff、
+分块覆盖与工具隔离不变。旧 v1 输入和 Receipt 含义保持，不追认旧结论。
+本合同补丁须由候选外未修改 BASE 的原 canonical 双审与验证器独立验收；
+测试不替代审核，正式发布、CI、Owner Merge 和合并后 Gate 仍须分别满足。
+
 ## 4. Canonical validation profiles
 
 最终公开给 agent 的验证接口只有三种：

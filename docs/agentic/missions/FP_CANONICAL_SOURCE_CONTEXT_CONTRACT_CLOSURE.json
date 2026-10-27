@@ -1,0 +1,45 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CANONICAL_SOURCE_CONTEXT_CONTRACT_CLOSURE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "tests/unit/test_deepseek_frozen_source_context.py",
+    "tests/unit/test_deepseek_review_chunks.py",
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_CANONICAL_SOURCE_CONTEXT_CONTRACT_CLOSURE.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "ruff.toml",
+    "docs/DOCUMENTATION_GOVERNANCE.md"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    ".github/",
+    ".githooks/",
+    "scripts/ops/",
+    "scripts/ci/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Owner mission FP_CANONICAL_SOURCE_CONTEXT_CONTRACT_CLOSURE permits only frozen Git source input and independent prompt reconstruction in existing runner/chunk builder/chunk validator, direct tests and workflow contract documentation. Independent review of this patch must use unchanged BASE 40bab20cd16e8d91d1c999f1d6bd64eee863aa74 canonical executors and validators outside candidate, preserving v1 inputs and receipts; candidate cannot certify itself.",
+    "New version frozen-git-source-context/v1 is limited to FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX fixed dependency recipe. Preserve exact complete original diff, coverage and byte limits, source isolation, P0/P1/P2 aggregation, source binding, CRITICAL dual review and Gate.",
+    "No business edits, no historic receipt reinterpretation, no provider/account/fee/qualification/Gate/Harness changes. Production use only after independent acceptance, separate publication authorization, required CI and Owner merge/postmerge Gate.",
+    "For offline verification, the frozen dependency-recipe target is BASE 40bab20cd16e8d91d1c999f1d6bd64eee863aa74, HEAD 7ac022ea1ed81e4b1f29fe69048da7545dd6bc66, mission FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX. M1 supplies the tool; that M2 target supplies the source definitions. These refs identify the existing reproduction, not approval to execute M2. Rebound targets require fresh verification."
+  ],
+  "forbidden_side_effects": [
+    "Real Provider execution, retries, payment, recharge, credentials, ledger/receipt/history mutation",
+    "Push, PR publication, merge, force push, main changes, production activation",
+    "New reviewer/trust root/Gate/qualification/framework, business code changes or repeated 888 match/19 artifact replay"
+  ]
+}
