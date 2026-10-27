@@ -156,6 +156,104 @@ MODEL_SCHEMA_SWITCH=NO
 这足以闭合第一版 kickoff-exclusive offline frame，但不等于真实线上 provider
 已接通，也不允许在本任务中启动训练或预测。
 
+## 离线特征质量诊断
+
+现有 CLI 增加来源绑定的报告 consumer，不改变 build/validate 输出或上述合同：
+
+```bash
+npm run feature:frame -- diagnose \
+  --artifact <absolute repository-external frame> \
+  --receipt <absolute repository-external frame-receipt> \
+  --gd-a03-artifact <absolute repository-external GD-A03 artifact> \
+  --gd-a03-receipt <absolute repository-external GD-A03 receipt> \
+  --expected-targets 888 \
+  --output <absolute repository-external new quality.json> \
+  --markdown-output <absolute repository-external new quality.zh.md>
+```
+
+`diagnose` 先执行与 validate 相同的 GD-A03 验证、registry/engine/adapter 绑定、
+frame 逐字节重投影与 leakage/eligibility 校验，以及 clean worktree / receipt
+`code_revision == HEAD` 检查。仅检查自洽 hash 的 frame 不足以生成报告。
+文件边界复用原 CLI：输入是仓库外普通文件；输出父目录预先存在、仓库外、无 symlink，
+两个输出必须不同且不存在，使用 `wx` 拒绝覆盖。两次写入不是事务；若第二次写入发生
+I/O 失败，第一次输出可能保留，命令失败不代表双报告已交付，须使用新的输出名重跑。
+纯模块 `buildQualityDiagnostics` 接收已验证的 GD-A03 输入与 frame 字节，内部继续复用
+`validateFrameAgainstInputs`；GD-A03 文件校验和真实 HEAD 探针由 CLI 承担。
+
+### 报告语义
+
+JSON schema 为 `canonical-prematch-feature-quality-diagnostics/v1`，绑定完整代码 SHA、
+frame/receipt bytes SHA、frame business hash 与原 source bindings；业务 hash 覆盖其余所有
+报告字段。中文 Markdown 是同一 JSON 对象的展示，均不包含当前时间、输出路径或随机数。
+同一输入、同一代码版本，JSON 与 Markdown 字节确定。
+
+- `features`：仅 registry 接受的 9 项，分母为所有 accounted 比赛；`AVAILABLE` 的有限数值
+  为有效值，包括合法 `0` 和负差值。缺失只按权威 `UNAVAILABLE` 统计，不推断或填补。
+  给出有效/缺失数、缺失率（空总体为 null）、缺失比赛、逐特征不可用原因；其他 8 项只在
+  `non_selected_features` 复制 registry 已有决策和理由，不计算其数值质量。
+- `numeric_quality`：观测数、不同值数、零值数、min/max、均值、总体标准差，以及线性插值
+  Q1/中位数/Q3。无观测统计值为 null；少于 2 个观测不宣称常量或全零。
+  至少 2 个有效观测且不同值数为 1 才标为常量；全零还要求所有有效观测等于 0，
+  缺失观测不在数值证据中。至少 4 个有效观测时，以严格小于 Q1−1.5×IQR 或大于
+  Q3+1.5×IQR 标出离群位置；小样本不做 IQR 标记。这些线索不自动判错或改 eligibility。
+- `eligibility`：保留 canonical population accounting、eligible/ineligible 比赛 ID、
+  canonical eligibility 原因命中与完整组合。标签不可用独立记录，不误算为特征缺失。
+- `unavailability`：原因命中单位是不同 `(比赛, 特征, 原因)`；同一 line 重复 code 去重，
+  同一原因命中多个特征仍是多次，但 `affected_match_count` 对比赛去重。标签以独立类型
+  单列，防止与同名 feature reason 混淆。每类原因保留比赛/特征定位。
+  `reason_combinations` 是每场全部去重原因集合的精确分区，不枚举子集；每场只进入一个
+  非空组合，组合计场数可加，单原因影响量不能直接相加。
+- `investigation`：不可用原因、常量、全零和 IQR 离群按各项受影响的不同比赛数降序排列，
+  同数按稳定 `issue_id` 排序；每项列 eligible/ineligible 影响量、完整比赛/特征/原因或
+  观测值证据。跨项合计影响量取比赛并集；`match_diagnostics` 反向定位所有问题。
+
+**受影响比赛数不等于修复后可新增训练样本数。** 同场其他问题、标签或后续独立证据仍可
+阻断 eligibility；无恢复样本数估计。常量/全零可以是合法冷启动或历史分布，仅提示调查。
+报告显式保留 `KICKOFF_REFERENCE_ONLY`、`NOT_PROVEN_KICKOFF_REFERENCE_ONLY` 和真实决策时点
+可用性 `NOT_PROVEN`，不授予训练、预测、回测、采集、DB/raw 写入或生产切换权限。
+
+### 恢复的 GD-A03 v4 冻结源复现
+
+本 mission 使用已恢复源，不重新采集或检索；下面两个文件预期 bytes SHA-256 分别为：
+
+```text
+8d8f4b4f3861f49e2b7d0c2247de55c85fc8de3ac7d6c5ced81e01e4bedf768e  /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-artifact.json
+6213b4a6da188d6e9bd0aec94882fca567299aac67e706c53194f7d2c1650825  /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-receipt.json
+```
+
+Controller 在最终 checkpoint、clean worktree 和可访问源的可信环境中执行；任何最终 HEAD
+变化后必须重新 build/validate/diagnose，禁止修改旧 receipt 或绕过 `CODE_REVISION_MISMATCH`。
+在仓库根目录执行以下命令，`quality_run_dir` 必须是全新目录；在 dev 容器执行时使用同一
+可见路径挂载源、候选仓库与输出，不需要 DB 或网络：
+
+```bash
+quality_head=$(git rev-parse HEAD)
+quality_run_dir="/home/xupeng/autonomous-delivery/football-canonical-feature-quality-20261023T175922Z/business-artifacts/${quality_head}"
+mkdir -m 700 "$quality_run_dir"
+npm run feature:frame -- build \
+  --gd-a03-artifact /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-artifact.json \
+  --gd-a03-receipt /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-receipt.json \
+  --expected-targets 888 --code-revision "$quality_head" \
+  --output "$quality_run_dir/frame.json" --receipt "$quality_run_dir/frame-receipt.json"
+npm run feature:frame -- validate \
+  --artifact "$quality_run_dir/frame.json" --receipt "$quality_run_dir/frame-receipt.json" \
+  --gd-a03-artifact /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-artifact.json \
+  --gd-a03-receipt /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-receipt.json \
+  --expected-targets 888
+npm run feature:frame -- diagnose \
+  --artifact "$quality_run_dir/frame.json" --receipt "$quality_run_dir/frame-receipt.json" \
+  --gd-a03-artifact /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-artifact.json \
+  --gd-a03-receipt /home/xupeng/fsc-v1-validation.final.0mEajJ/A/gd-a03-receipt.json \
+  --expected-targets 888 --output "$quality_run_dir/quality.json" \
+  --markdown-output "$quality_run_dir/quality.zh.md"
+make verify-strict
+make verify-pr
+```
+
+诊断的直接测试覆盖数值/计数/组合/排序、JSON/Markdown 确定性、来源/标签/eligibility
+协调重 hash 篡改，以及实际 GD-A03 assembler → frame build/validate → 双报告文件链与
+路径/版本失败边界；测试中的 Git 身份替身不作为真实 clean HEAD 或冻结源验收证据。
+
 ## Readiness boundary
 
 本 frame 可以报告：

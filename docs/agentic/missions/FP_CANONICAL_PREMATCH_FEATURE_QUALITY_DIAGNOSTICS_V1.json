@@ -1,0 +1,61 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "scripts/ops/canonical_prematch_feature_frame.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    "tests/unit/canonical_prematch_feature_frame.test.js",
+    "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md",
+    "README.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/agentic/missions/FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "docs/PROJECT_VISION.md",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/helpers/",
+    "src/infrastructure/market_evidence/",
+    "src/ml/",
+    "src/api/"
+  ],
+  "excluded_tokens": [
+    "reviewer",
+    "harness"
+  ],
+  "protected_invariants": [
+    "Only the eleven exact Owner-approved paths; no scope expansion or parallel feature registry",
+    "Registry and existing core frame contract immutable; reuse authoritative selection, source binding and leakage validation",
+    "Preserve KICKOFF_REFERENCE_ONLY; never claim real decision-time availability",
+    "No silent zero fill; distinguish legitimate zero from missing; reason hits are not distinct matches or guaranteed recoverable training samples",
+    "No training, activation, production prediction, Stage D, Provider, Ledger, historic/frozen evidence changes",
+    "Preserve complete STRICT, verify-pr, coverage, trusted QA and sandbox restrictions"
+  ],
+  "forbidden_side_effects": [
+    "Business network/data acquisition or paid data services, production DB or raw/L3 writes, training, prediction, backtest, activation",
+    "Formal review or qualification, push, PR creation, merge, deploy, credits purchase, model/provider/account fallback",
+    "Historic mission or UNKNOWN replay; edits outside eleven exact paths; weakening gates or frozen-input revision checks"
+  ]
+}
