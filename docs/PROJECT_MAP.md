@@ -167,6 +167,16 @@ schema change 放在哪里？”的唯一答案是：
   只有 Issue 明确授权且通过 M2 增长冻结门禁才允许最小必要记录（AGENTS.md §2.4）。
 - 现存历史资产不得替代 runtime 实现（AGENTS.md §2.4）。
 
+## Canonical frame 离线质量诊断
+
+`src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js` 是纯内存 consumer，
+复用 `CanonicalPrematchFeatureFrameContract.js` 的来源重投影验证；由现有
+`scripts/ops/canonical_prematch_feature_frame.js diagnose` 负责普通仓库外文件读写。
+特征选择与排除理由仍来自既有 registry，不增加第二套定义。
+直接测试位于 `tests/unit/canonical_prematch_feature_quality_diagnostics.test.js`，
+合同与正式用法见 `docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md`。
+不新增数据采集、训练或生产 runtime 路径。
+
 ## canonical ≠ 授权
 
 README canonical 表只定义"正式入口"，不授予执行权。所有含副作用的命令

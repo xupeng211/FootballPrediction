@@ -1,0 +1,49 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FEATURE_QUALITY_REPACKAGE_NAVIGATION",
+  "task_type": "docs-only",
+  "workflow_class": "NORMAL",
+  "authorized_paths": [
+    "docs/PROJECT_MAP.md",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_REPACKAGE_NAVIGATION.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/PROJECT_VISION.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/helpers/",
+    "src/infrastructure/market_evidence/",
+    "src/ml/",
+    "src/api/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Owner current instruction authorizes only independent M3 navigation local preparation, necessary task binding, related static validation and a local feature-branch commit. Latest fetched origin/main BASE is f7c4e9d80cb7177e8ba74073a67a8635fc3b4e41. Only docs/PROJECT_MAP.md and this mission Scope may change; prior candidates, commits, failures and evidence are preserved.",
+    "The one-time FP_FEATURE_QUALITY_REPACKAGE_BUSINESS navigation deferral prerequisite is fulfilled: PR #1951 actually merged as f7c4e9d80cb7177e8ba74073a67a8635fc3b4e41; its push/main Production Gate run 40563968832 succeeded, attempt 1. This is business merge acceptance, not production deployment or improved prediction performance. The exception does not apply to other missions or paths.",
+    "PROJECT_MAP adds only the original ten-line Canonical frame offline-quality-diagnostics navigation block from 8dbbcd0492a940b92501cfd9798da0864f8fd291 / 7068146d3b78086657a58260d3ee921c288b0054, pointing to existing module, core frame validation, CLI diagnose, direct test and domain contract. Other map content and all business implementation remain unchanged.",
+    "Current task is docs-only / NORMAL under current AGENTS and the task/path classifier, with one fresh exact-head independent claude-code-deepseek review required by canonical policy. Historical CRITICAL navigation scope, receipts, QA and approvals are provenance only, never approval of this candidate. No review policy, tool, trust boundary, authorization rule or required check is modified.",
+    "Navigation is locally prepared, NOT_PUBLISHED and NOT_DELIVERED. Completion still requires separately authorized current-head independent review, publication, required remote CI, Owner merge decision, actual navigation merge SHA and that SHA main push Production Gate success. External preparation records and PR draft may describe these facts; they cannot self-approve or replace model/CI evidence."
+  ],
+  "forbidden_side_effects": [
+    "This local preparation does not authorize reviewer/model/provider/qualification/probe requests, Push, remote PR writes, Merge, auto-merge, branch/worktree cleanup or historical evidence replacement. Later actions require separate explicit Owner authorization.",
+    "No business source, algorithm, CLI, test, registry, data/model/runtime semantics, Stage D, review/receipt/security/production authority, generic mapping, workflow rule, AGENTS or required CI changes.",
+    "No deployment, production/raw/database writes, acquisition, training, prediction, backtest, model activation, destructive operations, purchase, top-up, recharge or provider/account/credential changes."
+  ]
+}
