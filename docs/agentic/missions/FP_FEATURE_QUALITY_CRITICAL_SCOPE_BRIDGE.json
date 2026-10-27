@@ -1,0 +1,67 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FEATURE_QUALITY_CRITICAL_SCOPE_BRIDGE",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1.json",
+    "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md",
+    "scripts/ops/canonical_prematch_feature_frame.js",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "tests/unit/canonical_prematch_feature_frame.test.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_CRITICAL_SCOPE_BRIDGE.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "docs/PROJECT_VISION.md",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/helpers/",
+    "src/infrastructure/market_evidence/",
+    "src/ml/",
+    "src/api/"
+  ],
+  "excluded_tokens": [
+    "reviewer",
+    "harness"
+  ],
+  "protected_invariants": [
+    "Metadata-only bridge from accepted candidate bf70941359b4607ce2033801da794812e2599687: preserve every existing tracked tree entry and Git blob, including original STRICT development scope; only add this combined scope",
+    "Review the complete original BASE 40bab20cd16e8d91d1c999f1d6bd64eee863aa74 to final exact HEAD, including all eleven accepted paths and this scope; path coverage is not permission to edit accepted business code, tests, documentation or original scope",
+    "Bind identical mission ID, original BASE, final full HEAD, complete diff hash and committed scope hash using existing canonical CLI arguments, exact-HEAD scope lookup, review challenge and Receipt contracts; do not embed self-referential final HEAD in this scope",
+    "Existing CRITICAL policy requires independent codex-cli gpt-5.6-terra/medium official ChatGPT and canonical claude-code-deepseek deepseek-flash receipts for the identical binding; no downgrade, fallback or stale evidence",
+    "This bridge authorizes no actual model invocation or Qualification. Future real review of this exact candidate requires separate explicit Owner authorization; this committed review scope can be used only together with that authorization",
+    "Preserve registry, source binding, provenance, eligibility, leakage validation and KICKOFF_REFERENCE_ONLY; real decision-time availability remains NOT_PROVEN; no missing-value zero fill or recoverable-training-count claim",
+    "Keep all direct tests, full coverage, verify-strict and verify-pr, trusted tmp_mb=1024, isolated temporary validation DB, non-root readonly rootfs and existing security/resource controls",
+    "Regenerate working frame, Receipt and deterministic JSON/Chinese Markdown outside repository for final HEAD through existing offline build/validate/diagnose; preserve all historical frozen files and evidence",
+    "Original development scope and financial prohibitions remain historical stage evidence; this metadata neither grants nor impersonates future model fee authority",
+    "Only a new combined scope is added; no Harness, Reviewer, Registry, Qualification, production prediction/training, Stage D, Provider, Ledger or safety contract modifications"
+  ],
+  "forbidden_side_effects": [
+    "Any business source/test/document changes or original STRICT scope rewriting; changes outside this sole new scope file relative to accepted original candidate",
+    "Developer launch, unapproved real Reviewer model calls or charges, Qualification, account/provider/model changes, extra Credits purchase, recharge or payment changes",
+    "Production/raw/DB writes, new data collection, paid data services, training, prediction, backtest, model activation, Stage D or infrastructure changes",
+    "Push, PR creation, Merge, deployment, historical Receipt/Ledger/UNKNOWN/frozen evidence modification, external scope substitution or weakened CRITICAL gates"
+  ]
+}

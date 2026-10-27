@@ -11,6 +11,24 @@
 不回答：最终 target system（docs/PROJECT_VISION.md）、完整能力清单（docs/CAPABILITY_INDEX.md）、
 仓库结构（docs/PROJECT_MAP.md）。
 
+## 当前 Owner 授权增量：Canonical frame 离线质量诊断
+
+`FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1` 的候选实现增加现有 frame CLI
+`diagnose`：复用 build/validate 来源链，按不同比赛影响量定位不可用原因、共同出现组合
+与有直接数值依据的调查线索，生成 JSON / 中文 Markdown。缺失不填零、零值有效；
+8 项非获准特征只列 registry 理由，影响量不等于可恢复训练样本量。
+这是愿景赛前数据层的离线质量缺口修补，尚不证明真实决策时点可用性。
+直接测试见 `tests/unit/canonical_prematch_feature_quality_diagnostics.test.js`；
+M3 本轮从已包含 M1/M2 的 main 基线
+`c928fabbb2423a614fb0c13d41d37ff8408378f8` 整理独立候选，保留原业务实现。
+既有 888 场、545/343 eligibility 与 19 份历史文件属于原版本的离线证据；
+历史回放不等于本轮新 HEAD 验收。本轮只复核其完整性、实现依赖等价性，
+并执行新候选所需的隔离测试和 canonical 验证，不重做整套业务回放。
+当前送审 mission 为 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS`；原开发和 bridge scope
+只保留历史含义。真实独立审核、PR required CI 和 Owner 最终合并决定仍待后续授权，
+不能标记 M3 或本功能正式交付 DONE。
+既有 Stage D、provider/ledger、生产模型和训练授权合同不变。
+
 ## Current State Snapshot — 2026-09-21
 
 ### Owner 另行授权的离线业务研究（2026-10-08）

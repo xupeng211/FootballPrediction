@@ -1,0 +1,62 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FEATURE_QUALITY_REPACKAGE_BUSINESS",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_CANONICAL_PREMATCH_FEATURE_QUALITY_DIAGNOSTICS_V1.json",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_CRITICAL_SCOPE_BRIDGE.json",
+    "docs/agentic/missions/FP_FEATURE_QUALITY_REPACKAGE_BUSINESS.json",
+    "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md",
+    "scripts/ops/canonical_prematch_feature_frame.js",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "tests/unit/canonical_prematch_feature_frame.test.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/PROJECT_VISION.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "scripts/devops/",
+    "scripts/ci/",
+    "scripts/ops/helpers/",
+    "src/infrastructure/market_evidence/",
+    "src/ml/",
+    "src/api/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Owner current M3 preparation authorizes local rebind, minimal necessary adaptation, offline validation and a local feature-branch commit only. Actual main BASE is c928fabbb2423a614fb0c13d41d37ff8408378f8 and includes completed M1/M2; original business HEAD is 8cb4c12a6beedd4f6da960c23861e3b8e1adaf2e with parent 7ac022ea1ed81e4b1f29fe69048da7545dd6bc66. Apply only that twelve-file business diff, not its historical governance ancestry.",
+    "Keep original twelve-file delivery scope. Preserve original diagnostic implementation, CLI, direct tests, registry, core frame contract and all unchanged business/document blobs and modes; only this current Scope and the two current-state documentation sections may receive accurate preparation/baseline text.",
+    "Preserve population conservation, 888-match historical evidence and 545/343 eligibility, reason deduplication/cooccurrence, nine accepted features and eight restricted fields, KICKOFF_REFERENCE_ONLY, leakage checks and exact source/code-revision binding. Affected matches never imply recoverable training samples.",
+    "Retain the existing mission CRITICAL requirement: independent codex-cli gpt-5.6-terra/medium official ChatGPT and canonical claude-code-deepseek deepseek-flash exact-binding receipts. Current path classifier requires at least STRICT; this bounded rebind does not downgrade the mission or change reviewer policy. No calls are authorized by this preparation scope.",
+    "Original 888/19 results and the 1285d976d415ca6a834bbf16ff5bd8418d01e0e2 offline checkpoint remain historical evidence. Audit hashes and runtime dependency equivalence; do not call old artifacts new-HEAD acceptance, forge a new code_revision, regenerate the whole corpus, or reuse old review approvals.",
+    "Historical development and critical-bridge Scope files retain their original bytes and meaning only; this is the unique current mission Scope. PROJECT_MAP/navigation changes remain separate; existing README, capability, milestone, status and canonical feature-frame domain contract provide the bounded business backflow.",
+    "Use existing isolated trusted QA and canonical validation only, preserving non-root/read-only source and input, no network for business tests, resource limits and temporary test-database isolation. No business database, Provider, model, production, Stage D or governance-authority changes."
+  ],
+  "forbidden_side_effects": [
+    "Push, remote PR creation or update, Merge, auto-merge, deployment, rollback, Stage D operations, production/raw/business database writes, data acquisition, training, prediction, backtest or activation.",
+    "Any actual reviewer, qualification, model probe or other Provider request in this preparation round; future exact-candidate formal review requires separate explicit Owner authorization. No provider/model/account fallback or credentials/configuration changes.",
+    "Credits purchase, top-up, automatic recharge, unapproved Provider/account changes or weakening economic/safety/review contracts.",
+    "Harness, reviewer, Receipt, Source Binding, authorization-policy, required-CI or generic governance edits; unrelated refactoring, M2 P3 cleanup, new strategies, algorithms or data semantics; historical artifact/failed-record modification."
+  ]
+}

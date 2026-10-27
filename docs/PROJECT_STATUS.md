@@ -17,6 +17,27 @@ Last updated: 2026-09-21
 
 ## Current State
 
+### Canonical frame 离线质量诊断（当前候选实现）
+
+现有 frame CLI 新增 `diagnose`，在既有来源绑定验证后，输出 JSON 与中文 Markdown：
+9 项获准特征的有效/缺失与数值证据、8 项 registry 排除/阻断理由、原因命中与不同比赛
+影响量、完整共同原因组合、比赛/特征定位和调查排序。合法零值有效；多原因不重复计场，
+常量/全零/IQR 离群只提示调查；受影响比赛数不是修复后可新增训练样本数。
+这补齐 canonical 源绑定的诊断，不能用旧 L3 report 替代。
+`KICKOFF_REFERENCE_ONLY` 和真实决策时点可用性未证明边界保留。
+本轮 M3 从已完成 M1/M2 的基线
+`c928fabbb2423a614fb0c13d41d37ff8408378f8` 重绑原业务补丁，原诊断模块、CLI 和直接测试
+保持原样。原 888 场业务报告与 19 份文件是绑定旧代码版本的历史离线证据；
+其中包含日志、argv 和 receipt，并不是 19 份不同业务报告。完整性和实现依赖等价性
+可复核，但不能把旧 receipt 当作新 HEAD 的业务验收或正式审核凭证。
+本轮验证只覆盖新候选实际执行的隔离测试、静态预检及 canonical profiles，
+不重做采集、888 场回放或整套产物。实际命令、退出码和完整 HEAD 在仓库外任务证据中记录。
+`FP_FEATURE_QUALITY_REPACKAGE_BUSINESS` 是本轮唯一送审 Scope；原开发与 bridge Scope
+保留历史字节，不作为当前批准。正式独立审核、远端 required CI、Owner 合并决定与
+合并后准确版本 Gate 尚未完成，本功能和 M3 均不标记 DONE。
+复现与输出合同见 `docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md`。
+不更新既有模型、历史指标、Stage D 门禁或授权状态。
+
 本节是当前状态摘要；下方的 M3、VALUE_MVP-1、SC-002 和 FotMob 长篇段落是
 supporting history / completed evidence，保留用于追溯，不再把旧阶段标题当作
 当前战线。当前主线事实已按 `origin/main` 与 canonical code/config 独立核对。

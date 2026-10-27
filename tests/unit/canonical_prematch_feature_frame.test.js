@@ -373,3 +373,16 @@ test('CLI input errors are structured and return exit code 2 without a stack tra
         assert.equal(typeof error.error, 'string', label);
     }
 });
+
+test('adding diagnose preserves legacy build/validate argument contracts', () => {
+    const { parseArgs } = require('../../scripts/ops/canonical_prematch_feature_frame');
+    const sourceArgs = ['--gd-a03-artifact', '/tmp/source.json', '--gd-a03-receipt', '/tmp/source-receipt.json'];
+    const buildArgs = parseArgs(['build', ...sourceArgs, '--output', '/tmp/frame.json', '--receipt', '/tmp/frame-receipt.json', '--code-revision', 'a'.repeat(40)]);
+    assert.equal(buildArgs.codeRevision, 'a'.repeat(40));
+    assert.equal(buildArgs.outputPath, '/tmp/frame.json');
+    assert.equal(buildArgs.markdownOutputPath, undefined);
+    const validateArgs = parseArgs(['validate', ...sourceArgs, '--artifact', '/tmp/frame.json', '--receipt', '/tmp/frame-receipt.json']);
+    assert.equal(validateArgs.artifactPath, '/tmp/frame.json');
+    assert.equal(validateArgs.outputPath, undefined);
+    assert.equal(validateArgs.markdownOutputPath, undefined);
+});

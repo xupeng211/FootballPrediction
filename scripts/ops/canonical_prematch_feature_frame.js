@@ -21,6 +21,7 @@ const {
     validateFrameAgainstInputs,
     validateFrameOutputFiles,
 } = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureFrameContract');
+const { buildQualityDiagnostics } = require('../../src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics');
 
 const EXIT_CODES = Object.freeze({ OK: 0, INPUT: 2, VALIDATION: 6, UNEXPECTED: 5 });
 const FULL_GIT_SHA = /^[0-9a-f]{40}$/;
@@ -38,7 +39,12 @@ function usage() {
         '  npm run feature:frame -- validate --artifact <abs-artifact.json> --receipt <abs-receipt.json>',
         '    --gd-a03-artifact <abs.json> --gd-a03-receipt <abs.json> [--expected-targets <count>]',
         '',
-        'Only the two explicit output files are written by build.',
+        'Diagnose (validates the same source bindings before reporting):',
+        '  npm run feature:frame -- diagnose --artifact <abs-frame.json> --receipt <abs-frame-receipt.json>',
+        '    --gd-a03-artifact <abs.json> --gd-a03-receipt <abs.json> [--expected-targets <count>]',
+        '    --output <abs-quality.json> --markdown-output <abs-quality.md>',
+        '',
+        'Build/diagnose each writes only its two explicit, new repository-external outputs.',
     ].join('\n');
 }
 
@@ -55,7 +61,7 @@ function readValue(argv, index, option) {
 function parseArgs(argv = []) {
     const command = argv[0] || 'help';
     if (command === 'help' || command === '--help' || command === '-h') return { command: 'help' };
-    if (!['build', 'validate'].includes(command)) fail(`unsupported command ${command}`, 'INPUT_INVALID');
+    if (!['build', 'validate', 'diagnose'].includes(command)) fail(`unsupported command ${command}`, 'INPUT_INVALID');
     const options = new Map([
         ['--gd-a03-artifact', 'gdA03ArtifactPath'],
         ['--gd-a03-receipt', 'gdA03ReceiptPath'],
@@ -64,6 +70,7 @@ function parseArgs(argv = []) {
         ['--artifact', 'artifactPath'],
         ['--code-revision', 'codeRevision'],
         ['--expected-targets', 'expectedTargets'],
+        ['--markdown-output', 'markdownOutputPath'],
     ]);
     const values = {};
     for (let index = 1; index < argv.length; index += 1) {
@@ -81,7 +88,8 @@ function parseArgs(argv = []) {
     const required =
         command === 'build'
             ? ['gdA03ArtifactPath', 'gdA03ReceiptPath', 'outputPath', 'receiptPath', 'codeRevision']
-            : ['artifactPath', 'receiptPath', 'gdA03ArtifactPath', 'gdA03ReceiptPath'];
+            : ['artifactPath', 'receiptPath', 'gdA03ArtifactPath', 'gdA03ReceiptPath',
+                ...(command === 'diagnose' ? ['outputPath', 'markdownOutputPath'] : [])];
     for (const field of required) if (!values[field]) fail(`${field} is required for ${command}`, 'INPUT_INVALID');
     if (command === 'build' && !FULL_GIT_SHA.test(values.codeRevision)) {
         fail('--code-revision must be a full Git SHA', 'INPUT_INVALID');
@@ -247,7 +255,7 @@ function build(args, repositoryRoot) {
     return summary(result, { artifact: artifactPath, receipt: receiptPath });
 }
 
-function validate(args, repositoryRoot) {
+function loadFrameInputs(args, repositoryRoot) {
     const artifact = readExternalFile(args.artifactPath, 'frame artifact', repositoryRoot);
     const receipt = readExternalFile(args.receiptPath, 'frame receipt', repositoryRoot);
     const result = validateFrameOutputFiles(artifact.bytes, receipt.bytes);
@@ -272,7 +280,7 @@ function validate(args, repositoryRoot) {
         'canonical runtime adapter',
         repositoryRoot
     );
-    const bound = validateFrameAgainstInputs({
+    return {
         artifactBytes: artifact.bytes,
         receiptBytes: receipt.bytes,
         priorStateArtifact: validated.artifact,
@@ -283,8 +291,29 @@ function validate(args, repositoryRoot) {
         vNextContract: loadedContract.vNextContract,
         runtimeSemanticEngineBinding: { ...runtimeEngine, adapterSha256: runtimeAdapter.sha256 },
         codeRevision: result.receipt.code_revision,
-    });
-    return summary(bound);
+    };
+}
+
+function validate(args, repositoryRoot) {
+    return summary(validateFrameAgainstInputs(loadFrameInputs(args, repositoryRoot)));
+}
+
+function diagnose(args, repositoryRoot) {
+    const result = buildQualityDiagnostics(loadFrameInputs(args, repositoryRoot));
+    const jsonPath = outputPath(args.outputPath, 'quality JSON output', repositoryRoot);
+    const markdownPath = outputPath(args.markdownOutputPath, 'quality Markdown output', repositoryRoot);
+    if (jsonPath === markdownPath) fail('quality outputs must differ', 'PATH_INVALID');
+    fs.writeFileSync(jsonPath, result.jsonBytes, { flag: 'wx' });
+    fs.writeFileSync(markdownPath, result.markdownBytes, { flag: 'wx' });
+    return {
+        schema_version: result.report.schema_version,
+        code_revision: result.report.code_revision,
+        business_content_sha256: result.report.business_content_sha256,
+        population_accounting: result.report.population_accounting,
+        affected_unavailable_matches: result.report.unavailability.affected_match_count,
+        output: { json: jsonPath, markdown: markdownPath },
+        validation: 'PASS',
+    };
 }
 
 function main(argv = process.argv.slice(2)) {
@@ -295,7 +324,8 @@ function main(argv = process.argv.slice(2)) {
             process.stdout.write(`${usage()}\n`);
             return EXIT_CODES.OK;
         }
-        const result = args.command === 'build' ? build(args, repositoryRoot) : validate(args, repositoryRoot);
+        const actions = { build, validate, diagnose };
+        const result = actions[args.command](args, repositoryRoot);
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
         return EXIT_CODES.OK;
     } catch (error) {
@@ -309,6 +339,7 @@ if (require.main === module) process.exitCode = main();
 
 module.exports = {
     build,
+    diagnose,
     main,
     parseArgs,
     validate,
