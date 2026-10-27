@@ -9,6 +9,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "scripts/ops/ai_workflow_gate.py"
 
@@ -111,6 +113,72 @@ def test_db_write_guard_enforcement_function_exists():
     assert callable(gate.check_db_write_guard_enforcement)
 
 
+@pytest.mark.parametrize("operation", ["delete", "rename"])
+@pytest.mark.parametrize("declaration", ["yes", "no", "maybe", "missing"])
+def test_canonical_contract_real_git_removal_reaches_shared_gate(tmp_path, operation, declaration):
+    """A real D/R diff must fail backflow even while final review is pending."""
+    doc = "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], cwd=tmp_path, text=True).strip()
+
+    git("init", "-q", "-b", "fixture/canonical-contract-status")
+    git("config", "user.name", "Offline fixture")
+    git("config", "user.email", "fixture@example.invalid")
+    target = tmp_path / doc
+    target.parent.mkdir(parents=True)
+    target.write_text("# Canonical contract fixture\n", encoding="utf-8")
+    git("add", doc)
+    git("commit", "-qm", "fixture baseline")
+    base = git("rev-parse", "HEAD")
+    if operation == "delete":
+        target.unlink()
+    else:
+        target.rename(tmp_path / (doc + ".bak"))
+    git("add", "-A")
+    git("commit", "-qm", "fixture removal")
+    changes = gate.parse_name_status(git("diff", "--name-status", "-M", base, "HEAD"))
+    assert len(changes) == 1
+    change = changes[0]
+    assert change.status == ("D" if operation == "delete" else "R")
+    assert (change.path if operation == "delete" else change.old_path) == doc
+    body = textwrap.dedent(
+        f"""\
+        ## Summary
+        Negative fixture: actual contract removal must be rejected.
+        ## Scope
+        | Task type | source-code |
+        | Workflow class | CRITICAL |
+        ## Tests
+        Offline Git fixture only, no completed Reviewer receipt.
+        ## Risk
+        The update claim below is deliberately invalid for this negative test.
+        ## Rollback
+        Disposable fixture only; no real repository rollback.
+        ## Documentation Impact
+        | Capability changed? | no |
+        | Milestone changed? | no |
+        | Canonical entrypoint changed? | no |
+        | Current blocker changed? | no |
+        | Data/model/authorization contract changed? | {declaration} |
+        | Repository structure/authority navigation changed? | no |
+        | Project vision / target-state changed? | no |
+        | Source-of-truth docs updated | yes |
+        | Updated authoritative docs | {doc} |
+        | If not updated, explicit reason | No other capability or workflow authority is changed by this negative fixture. |
+        """
+    )
+    if declaration == "missing":
+        body = body.replace("| Data/model/authorization contract changed? | missing |\n", "")
+    helper_errors = gate.check_documentation_backflow(
+        body, gate.changed_paths(changes), changes=changes
+    )
+    assert any("cannot be deleted or renamed away as an update" in e for e in helper_errors)
+    errors = gate.validate(body, changes)
+    # Check the deletion-specific error, not an unrelated PENDING/metadata block.
+    assert any("cannot be deleted or renamed away as an update" in error for error in errors)
+
+
 def test_db_write_guard_enforcement_no_js_ops_changed():
     """When no scripts/ops/*.js files changed, returns empty errors/warnings."""
     errors, warnings = gate.check_db_write_guard_enforcement({"docs/README.md", "src/main.py"})
@@ -149,8 +217,26 @@ def test_enforcement_validate_integration_clean():
     assert db_errors == [], f"Should not have DB enforcement errors: {db_errors}"
 
 
+def _review_test_scope(task_type, workflow_class, paths):
+    return gate.MissionScope.from_mapping(
+        {
+            "schema_version": "agentic-mission-scope/v1",
+            "mission_id": "REVIEW_EVIDENCE_TEST",
+            "task_type": task_type,
+            "workflow_class": workflow_class,
+            "authorized_paths": paths,
+            "authorized_prefixes": [],
+            "excluded_paths": [],
+            "excluded_prefixes": [],
+            "excluded_tokens": [],
+            "protected_invariants": ["Exercise review metadata without executing a reviewer."],
+            "forbidden_side_effects": ["No deployment, migration or provider calls."],
+        }
+    )
+
+
 def test_strict_review_evidence_is_enforced_by_blocking_path():
-    """The existing blocking validation path rejects stale STRICT evidence."""
+    """A genuine STRICT path accepts current evidence and rejects stale evidence."""
     current_sha = subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=ROOT,
@@ -158,7 +244,25 @@ def test_strict_review_evidence_is_enforced_by_blocking_path():
         capture_output=True,
         check=True,
     ).stdout.strip()
-    body = _valid_pr_body().replace("| Workflow class | NORMAL |", "| Workflow class | STRICT |")
+    # Dockerfile is docker-deploy/STRICT, unlike unknown paths or workflow governance.
+    paths = ["Dockerfile"]
+    scope = _review_test_scope("docker-deploy", "STRICT", paths)
+    changes = [gate.Change("M", path) for path in paths]
+    body = (
+        _valid_pr_body()
+        .replace("| Task type | governance-only |", "| Task type | docker-deploy |")
+        .replace("| Workflow class | NORMAL |", "| Workflow class | STRICT |")
+        .replace(
+            "This fixture only exercises the gate CLI and does not authorize a production change.",
+            "The test fixture authorizes a Dockerfile packaging change only.\n"
+            "Validate the container build and review metadata before release; "
+            "rollback is a focused commit revert. This test does not deploy the container.",
+        )
+        .replace(
+            "scripts/ops/ai_workflow_gate.py, tests/unit/test_ai_workflow_gate_enforcement.py",
+            "Dockerfile",
+        )
+    )
     body += f"""
 
 ## Strict Review Evidence
@@ -172,46 +276,69 @@ def test_strict_review_evidence_is_enforced_by_blocking_path():
 | Result | PASS |
 | Timestamp | 2026-08-21T12:00:00Z |
 """
-    errors = gate.validate(
-        body,
-        [],
-        block_matrix=True,
-        enforce_strict_review=True,
-        base_ref=current_sha,
-        head_ref=current_sha,
-    )
-    assert not any(error.startswith("STRICT_REVIEW_") for error in errors), errors
+    kwargs = {
+        "block_matrix": True,
+        "enforce_strict_review": True,
+        "enforce_agent_workflow_scope": True,
+        "mission_scope": scope,
+        "base_ref": current_sha,
+        "head_ref": current_sha,
+    }
+    errors = gate.validate(body, changes, **kwargs)
+    assert errors == [], errors
 
-    stale_body = body.replace(current_sha, "b" * 40)
-    stale_errors = gate.validate(
-        stale_body,
-        [],
-        block_matrix=True,
-        enforce_strict_review=True,
-        base_ref=current_sha,
-        head_ref=current_sha,
+    stale_sha = "b" * 40 if current_sha != "b" * 40 else "c" * 40
+    stale_body = body.replace(
+        f"| Reviewed full SHA | {current_sha} |", f"| Reviewed full SHA | {stale_sha} |"
     )
-    assert any(error.startswith("STRICT_REVIEW_STALE") for error in stale_errors)
+    stale_errors = gate.validate(stale_body, changes, **kwargs)
+    assert stale_errors, "Stale STRICT evidence must be rejected."
+    assert all(error.startswith("STRICT_REVIEW_STALE") for error in stale_errors), stale_errors
+
+    normal_body = body.replace("| Workflow class | STRICT |", "| Workflow class | NORMAL |")
+    normal_errors = gate.validate(normal_body, changes, **kwargs)
+    assert any(
+        error.startswith("STRICT_REVIEW_CLASSIFICATION_REQUIRED") for error in normal_errors
+    ), normal_errors
+    assert not any(error.startswith("CRITICAL_REVIEW_") for error in normal_errors), normal_errors
 
 
-def test_blocking_path_rejects_normal_for_high_risk_changed_path():
-    """A high-risk path cannot opt out of STRICT review by declaring NORMAL."""
-    body = _valid_pr_body().replace(
-        "| Task type | governance-only |", "| Task type | db-migration-sql |"
+@pytest.mark.parametrize("workflow_class", ["NORMAL", "STRICT"])
+def test_blocking_path_rejects_normal_for_high_risk_changed_path(workflow_class):
+    """Neither NORMAL nor STRICT can waive database migration CRITICAL review."""
+    body = (
+        _valid_pr_body()
+        .replace("| Task type | governance-only |", "| Task type | db-migration-sql |")
+        .replace("| Workflow class | NORMAL |", f"| Workflow class | {workflow_class} |")
     )
-    changes = [gate.Change("M", "database/migrations/001.sql")]
+    paths = ["database/migrations/001.sql"]
+    changes = [gate.Change("M", path) for path in paths]
+    scope = _review_test_scope("db-migration-sql", workflow_class, paths)
     current_sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
     ).stdout.strip()
     errors = gate.validate(
         body,
         changes,
         block_matrix=True,
         enforce_strict_review=True,
+        enforce_agent_workflow_scope=True,
+        mission_scope=scope,
         base_ref=current_sha,
         head_ref=current_sha,
     )
-    assert any(error.startswith("STRICT_REVIEW_CLASSIFICATION_REQUIRED") for error in errors), (
+    classification_errors = [
+        error for error in errors if error.startswith("CRITICAL_REVIEW_CLASSIFICATION_REQUIRED")
+    ]
+    assert classification_errors, errors
+    assert any(
+        "db-migration-sql" in error and workflow_class in error for error in classification_errors
+    ), classification_errors
+    assert not any(error.startswith("STRICT_REVIEW_CLASSIFICATION_REQUIRED") for error in errors), (
         errors
     )
 
