@@ -100,6 +100,8 @@ STRICT PR 还必须在 PR 正文提供最小 `Strict Review Evidence`：provider
 
 CRITICAL receipt 的 authority split 保持在现有 `ENGINEERING_INDEPENDENT_REVIEW` assurance model 内：本地 `agent-merge-ready`/Execution Controller 读取并验证 source tree 外的 owner-only physical receipts；GitHub required CI 不读取这些本地 external files，也不把 PR 正文自填的 provider/result 当作 receipt validity。远端 CI 只验证 exact PR HEAD、mission/workflow metadata、required checks 和最终 review-evidence contract；Owner/Controller 只有在本地双 receipt validation 与远端 required CI 均通过后才可 merge。这不提供 cryptographic 或 hostile-builder resistance。
 
+DeepSeek canonical runner 的 `--retain-invocation` 模式保留本轮工作区、隔离运行目录及已安全写入的证据；旧调用默认清理行为不变。保留不构成审核结论；Controller 仍须验证原有 receipt，并在证明同一操作相关进程树停止之前不得消费该结论。停止不明时保留现场并拒绝后续派发；隔离运行目录中的未知内容按私有资料处理。
+
 DeepSeek 冻结源码输入合同 `frozen-git-source-context/v1` 仅用于
 `FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX` 的固定已核实依赖。准备器只读准确
 BASE/HEAD Git blob，validator 独立重建上下文及实际 Prompt 字节；完整 Diff、

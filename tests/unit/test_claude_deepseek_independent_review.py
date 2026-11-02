@@ -388,3 +388,32 @@ def test_chunked_runner_does_not_retry_infrastructure_failure(monkeypatch, tmp_p
             worktree=tmp_path,
         )
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize("failure", [None, runner.DeepSeekReviewError("no verdict"),
+                                    runner.backend.BackendInfrastructureError("timeout")])
+def test_retain_invocation_preserves_only_existing_safe_files(monkeypatch, tmp_path, failure):
+    args = _args(tmp_path)
+    args.retain_invocation = True
+    args.evidence_dir.mkdir(mode=0o700)
+    previous = args.evidence_dir / "claude-deepseek-raw-prior.json"
+    previous.write_text("prior")
+    worktree = args.evidence_dir / "claude-deepseek-worktree-current"
+    partial = args.evidence_dir / "claude-deepseek-raw-current.json"
+    def fake_run(_args):
+        worktree.mkdir()
+        partial.write_text("already safely written")
+        if failure is not None:
+            raise failure
+        return partial
+    monkeypatch.setattr(runner, "_run_review", fake_run)
+    monkeypatch.setattr(runner, "_cleanup_invocation", lambda **_: pytest.fail("must retain"))
+    if failure is None:
+        assert runner.run_review(args) == partial
+    else:
+        with pytest.raises(type(failure)):
+            runner.run_review(args)
+    assert worktree.is_dir()
+    assert partial.read_text() == "already safely written"
+    assert previous.read_text() == "prior"
+    assert not list(args.evidence_dir.glob("claude-deepseek-receipt-*"))

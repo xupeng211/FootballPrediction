@@ -10,6 +10,7 @@ Owner: engineering workflow governance
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -243,6 +244,7 @@ def run(
     cwd: Path,
     secret_path: Path = SECRET_PATH,
     timeout_seconds: int = DEFAULT_REVIEW_TIMEOUT_SECONDS,
+    retain_home_parent: Path | None = None,
 ) -> tuple[bytes, dict[str, Any], ExecutionEvidence]:
     """Run one isolated, schema-bound Claude/DeepSeek turn.
 
@@ -262,7 +264,12 @@ def run(
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
     schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
-    with tempfile.TemporaryDirectory(prefix="fp-claude-review-home-") as isolated_home:
+    # The retained Controller mode owns this private home until the entire
+    # review tree is confirmed stopped; it may contain untrusted runtime data.
+    home_context = (nullcontext(tempfile.mkdtemp(prefix="fp-claude-review-home-", dir=retain_home_parent))
+                    if retain_home_parent is not None
+                    else tempfile.TemporaryDirectory(prefix="fp-claude-review-home-"))
+    with home_context as isolated_home:
         runtime = Path(isolated_home)
         settings = runtime / "settings.json"
         settings.write_bytes(DEDICATED_SETTINGS)

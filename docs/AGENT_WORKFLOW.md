@@ -427,6 +427,10 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
 两种调用方式的 stdout JSON 都始终带有 `status`、`review_result`、`blocking_findings`、`finding_counts_by_severity`
 （`wait` 另带 `review_run_id` / `receipts_from_other_rounds`），因此机器可读的结论不依赖 exit code 的粒度。
 
+### DeepSeek Controller 保留模式
+
+`claude_deepseek_independent_review.py --retain-invocation` 保留本轮 detached worktree、隔离运行目录及已安全写入的原件；无此参数的既有调用保持原清理行为。保留目录可能包含工具运行产生的未知内容，按 owner-only 私有资料处理，不作为可公开的审核输出。超时或故障时没有写入的内存输出不重建，失败不产生新的审核 PASS。Controller 必须先确认同一操作的完整进程树停止并保存绑定原件，再按现有 canonical validator 消费 receipt；停止 UNKNOWN 保留现场、阻断依赖派发。此模式不改变 Provider、模型、独立性、review 结论或 exact-head 收据标准。
+
 ### 11.4 Exact-head 与 merge readiness
 
 所有 freshness 使用 `scripts/devops/exact_head.py` 的完整 40 位 SHA primitive：

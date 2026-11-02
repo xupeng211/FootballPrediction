@@ -135,7 +135,8 @@ def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: 
 
 
 def _run_chunked_review(
-    *, diff: bytes, base: str, head: str, scope: object, scope_sha: str, worktree: Path
+    *, diff: bytes, base: str, head: str, scope: object, scope_sha: str, worktree: Path,
+    retain_home_parent: Path | None = None,
 ) -> tuple[bytes, dict, list[dict]]:
     manifest = plan(
         diff,
@@ -167,7 +168,8 @@ def _run_chunked_review(
         source = diff[chunk.start : chunk.end]
         prompt = prompts[chunk.index]
         try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+            options = {"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}
+            raw, result, execution = backend.run(prompt=prompt, cwd=worktree, **options)
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
                 f"chunk {chunk.index} infrastructure failure [{_safe_backend_failure_code(exc)}]"
@@ -283,12 +285,16 @@ def _run_review(args: argparse.Namespace) -> Path:
             scope=scope,
             scope_sha=sha256_bytes(scope_bytes),
             worktree=worktree,
+            retain_home_parent=evidence if getattr(args, "retain_invocation", False) else None,
         )
         prompt = raw
         execution = trusted_chunks[0]["execution"]
     else:
         try:
-            raw, result, execution = backend.run(prompt=prompt, cwd=worktree)
+            raw, result, execution = backend.run(
+                prompt=prompt, cwd=worktree,
+                **({"retain_home_parent": evidence} if getattr(args, "retain_invocation", False) else {}),
+            )
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
                 f"backend infrastructure failure [{_safe_backend_failure_code(exc)}]; no verdict"
@@ -463,8 +469,13 @@ def _cleanup_invocation(
     return cleanup_error
 
 
+RETAIN_INVOCATION_CONTRACT = "retain-invocation-v1"
+
+
 def run_review(args: argparse.Namespace) -> Path:
-    """Run one review and always remove only this invocation's worktree."""
+    """Run one review; the Controller can retain this invocation for inspection."""
+    if getattr(args, "retain_invocation", False):
+        return _run_review(args)
     evidence = args.evidence_dir.resolve()
     before_dirs = set(evidence.glob("claude-deepseek-worktree-*")) if evidence.exists() else set()
     before_artifacts = set(evidence.glob("claude-deepseek-*")) if evidence.exists() else set()
@@ -494,6 +505,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mission-id", required=True)
     parser.add_argument("--mission-scope-file", type=Path, required=True)
     parser.add_argument("--evidence-dir", type=Path, required=True)
+    parser.add_argument("--retain-invocation", action="store_true",
+                        help="retain this invocation's worktree and safely written evidence")
     args = parser.parse_args(argv)
     try:
         receipt = run_review(args)
