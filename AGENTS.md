@@ -102,6 +102,8 @@ CRITICAL receipt 的 authority split 保持在现有 `ENGINEERING_INDEPENDENT_RE
 
 DeepSeek canonical runner 的 `--retain-invocation` 模式保留本轮工作区、隔离运行目录及已安全写入的证据；旧调用默认清理行为不变。保留不构成审核结论；Controller 仍须验证原有 receipt，并在证明同一操作相关进程树停止之前不得消费该结论。停止不明时保留现场并拒绝后续派发；隔离运行目录中的未知内容按私有资料处理。
 
+Receipt 的生成与结构/完整性验证只证明审核事实，不单独证明进程树停止或授予交付权限。通用 consumer 没有独立停止检查；集成方必须遵守“生成产物 → 同次整树证停及绑定原件核验 → 独立消费 → 后续派发”的既有前置条件，不能把 runner 退出或 receipt 出现当作停止证明。停止 UNKNOWN 必须保留现场、阻断消费及后续派发；具体已验证范围与局限见详细工作流的 DeepSeek Controller 保留模式章节。
+
 DeepSeek 冻结源码输入合同 `frozen-git-source-context/v1` 仅用于
 `FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX` 的固定已核实依赖。准备器只读准确
 BASE/HEAD Git blob，validator 独立重建上下文及实际 Prompt 字节；完整 Diff、

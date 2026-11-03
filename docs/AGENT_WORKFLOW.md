@@ -431,6 +431,19 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
 
 `claude_deepseek_independent_review.py --retain-invocation` 保留本轮 detached worktree、隔离运行目录及已安全写入的原件；无此参数的既有调用保持原清理行为。保留目录可能包含工具运行产生的未知内容，按 owner-only 私有资料处理，不作为可公开的审核输出。超时或故障时没有写入的内存输出不重建，失败不产生新的审核 PASS。Controller 必须先确认同一操作的完整进程树停止并保存绑定原件，再按现有 canonical validator 消费 receipt；停止 UNKNOWN 保留现场、阻断依赖派发。此模式不改变 Provider、模型、独立性、review 结论或 exact-head 收据标准。
 
+Receipt 生成及原 schema/完整性验证证明审核事实，不单独证明进程树停止，也不单独授予交付权限。通用 consumer 本身没有独立停止检查；集成方必须先完成上述 Controller 前置条件，不能把 runner 退出、receipt 出现或目录清理当作整树停止。受管顺序是：**生成产物 → 同次整树证停及绑定核验 → 独立消费 → 后续派发**；停止 UNKNOWN 时必须保留现场、阻断消费及后续派发。绑定原件由 Controller 保存，不因此改变 receipt 协议或原 validator。
+
+已核实的任务级 Controller 在 `supervised` 中先由既有监护器收回后代、核验同次 ECHILD 与 operation/argv/进程身份，再由 `lane` 启动原 classifier/consumer；后续岗位还需前岗有效 PASS 和配置检查通过。这是该受管路径的防护，不是所有外部集成都已认证安全；同 UID 残余风险也不免除普通停止错误与 UNKNOWN 的阻断义务。
+
+可复查的无模型合成验证绑定如下（不构成真实 Provider 或生产认证）：
+
+- 被测源码：BASE `a65464d1e5de498a072ed9a8fdf69ce46bcc04c5`、HEAD `dc7423487a8908d873d82000c6b8c2e083d8b7d4`；合成 mission `FIXTURE_CANONICAL_WIRING`、合成 HEAD `ab7ee84c66c5a27151d468291e328b40809c3d06`。
+- 主进程退出、receipt 已存在而子孙仍存活时，受管路径先收回后代再消费；停止 UNKNOWN 故障注入阻断消费与后续派发，真实 ECHILD 原件另存。使用真实 Controller/监护器与 BASE consumer，模型、认证及 backend 边界为替身；并非真实不可停止进程测试。
+- 刻意省略 Controller 证停步骤时，BASE 默认清理路径与 HEAD retain 路径的公开 review-policy 均可提前接受审核证据。整体 merge gate 为 NO 不消除这项局限；清理目录也不证明停止。retain 现场仍可能被未停后代修改。
+- 证据身份：任务 Controller SHA256 `c5ac774aa5be01b41d62033b969805029ae5cf1482439fe073ad4c9c7414a7cb`；五场景结果 `PROBE_RESULTS.json` SHA256 `f9907447428819ec65231b472bdaec5bf1dc1161ad52b960bfde7e26150084b6`。摘要给出验证场景及范围，hash 仅绑定 Owner 持有的仓库外私有原件，不意味着原件已公开或可凭 hash 重建。
+
+上述验证当轮真实 DeepSeek 未启动；受管离线验证不替代正式 exact-head canonical 审核，也不撤销已有 P1/FAIL。新 Git 版本仍须取得适用的正式审核与交付证据。
+
 ### 11.4 Exact-head 与 merge readiness
 
 所有 freshness 使用 `scripts/devops/exact_head.py` 的完整 40 位 SHA primitive：
