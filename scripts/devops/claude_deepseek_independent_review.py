@@ -274,6 +274,25 @@ def _run_review(args: argparse.Namespace) -> Path:
         f"Mission: {scope.mission_id}\nBase: {base}\nHead: {head}\n"
         f"Scope SHA256: {sha256_bytes(scope_bytes)}\nDiff:\n{diff.decode('utf-8', 'replace')}"
     )
+    # 在 backend 可能失败且无法生成收据之前，先绑定本轮保留目录。
+    retain_home_parent = None
+    if getattr(args, "retain_invocation", False):
+        retain_home_parent = evidence / f"claude-deepseek-runtime-{head[:12]}-{run_id}"
+        retain_home_parent.mkdir(mode=0o700)
+        _write(
+            retain_home_parent / "invocation.json",
+            canonical_json(
+                {
+                    "review_run_id": run_id,
+                    "base_sha": base,
+                    "head_sha": head,
+                    "mission_id": args.mission_id,
+                    "mission_scope_sha256": sha256_bytes(scope_bytes),
+                    "worktree": str(worktree),
+                    "runtime_parent": str(retain_home_parent),
+                }
+            ),
+        )
     started = _now()
     chunked = len(diff) > MAX_CHUNK_DIFF_BYTES or scope.mission_id == SOURCE_CONTEXT_MISSION
     trusted_chunks: list[dict] = []
@@ -285,7 +304,7 @@ def _run_review(args: argparse.Namespace) -> Path:
             scope=scope,
             scope_sha=sha256_bytes(scope_bytes),
             worktree=worktree,
-            retain_home_parent=evidence if getattr(args, "retain_invocation", False) else None,
+            retain_home_parent=retain_home_parent,
         )
         prompt = raw
         execution = trusted_chunks[0]["execution"]
@@ -293,7 +312,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         try:
             raw, result, execution = backend.run(
                 prompt=prompt, cwd=worktree,
-                **({"retain_home_parent": evidence} if getattr(args, "retain_invocation", False) else {}),
+                **({"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}),
             )
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
