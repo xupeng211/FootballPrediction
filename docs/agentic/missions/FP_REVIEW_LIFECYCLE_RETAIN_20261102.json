@@ -1,7 +1,7 @@
 {
   "schema_version": "agentic-mission-scope/v1",
   "mission_id": "FP_REVIEW_LIFECYCLE_RETAIN_20261102",
-  "task_type": "source-code",
+  "task_type": "workflow-governance",
   "workflow_class": "CRITICAL",
   "authorized_paths": [
     "AGENTS.md",
