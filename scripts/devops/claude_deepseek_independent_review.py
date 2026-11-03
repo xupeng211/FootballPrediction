@@ -135,7 +135,13 @@ def _chunk_prompt(*, chunk: object, source: bytes, manifest: object, scope_sha: 
 
 
 def _run_chunked_review(
-    *, diff: bytes, base: str, head: str, scope: object, scope_sha: str, worktree: Path,
+    *,
+    diff: bytes,
+    base: str,
+    head: str,
+    scope: object,
+    scope_sha: str,
+    worktree: Path,
     retain_home_parent: Path | None = None,
 ) -> tuple[bytes, dict, list[dict]]:
     manifest = plan(
@@ -168,7 +174,9 @@ def _run_chunked_review(
         source = diff[chunk.start : chunk.end]
         prompt = prompts[chunk.index]
         try:
-            options = {"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}
+            options = (
+                {"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}
+            )
             raw, result, execution = backend.run(prompt=prompt, cwd=worktree, **options)
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
@@ -311,8 +319,13 @@ def _run_review(args: argparse.Namespace) -> Path:
     else:
         try:
             raw, result, execution = backend.run(
-                prompt=prompt, cwd=worktree,
-                **({"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}),
+                prompt=prompt,
+                cwd=worktree,
+                **(
+                    {"retain_home_parent": retain_home_parent}
+                    if retain_home_parent is not None
+                    else {}
+                ),
             )
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
@@ -524,8 +537,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mission-id", required=True)
     parser.add_argument("--mission-scope-file", type=Path, required=True)
     parser.add_argument("--evidence-dir", type=Path, required=True)
-    parser.add_argument("--retain-invocation", action="store_true",
-                        help="retain this invocation's worktree and safely written evidence")
+    parser.add_argument(
+        "--retain-invocation",
+        action="store_true",
+        help="retain this invocation's worktree and safely written evidence",
+    )
     args = parser.parse_args(argv)
     try:
         receipt = run_review(args)

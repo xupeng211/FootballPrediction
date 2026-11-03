@@ -266,9 +266,11 @@ def run(
     schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
     # The retained Controller mode owns this private home until the entire
     # review tree is confirmed stopped; it may contain untrusted runtime data.
-    home_context = (nullcontext(tempfile.mkdtemp(prefix="fp-claude-review-home-", dir=retain_home_parent))
-                    if retain_home_parent is not None
-                    else tempfile.TemporaryDirectory(prefix="fp-claude-review-home-"))
+    home_context = (
+        nullcontext(tempfile.mkdtemp(prefix="fp-claude-review-home-", dir=retain_home_parent))
+        if retain_home_parent is not None
+        else tempfile.TemporaryDirectory(prefix="fp-claude-review-home-")
+    )
     with home_context as isolated_home:
         runtime = Path(isolated_home)
         settings = runtime / "settings.json"

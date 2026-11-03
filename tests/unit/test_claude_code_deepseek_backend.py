@@ -217,10 +217,12 @@ def test_retained_home_survives_timeout_without_writing_secret(monkeypatch, tmp_
     binary.write_bytes(b"synthetic cli")
     _approve_test_binary(monkeypatch, binary)
     monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+
     def fake_run(command, **_kwargs):
         if command[1:] == ["--version"]:
             return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
         raise backend.subprocess.TimeoutExpired(command, 30, output=b"synthetic-secret")
+
     monkeypatch.setattr(backend.subprocess, "run", fake_run)
     evidence = tmp_path / "evidence"
     evidence.mkdir(mode=0o700)
