@@ -1,0 +1,28 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_REVIEW_LIFECYCLE_RETAIN_20261102",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_REVIEW_LIFECYCLE_RETAIN_20261102.json",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "tests/unit/test_claude_deepseek_independent_review.py",
+    "tests/unit/test_claude_code_deepseek_backend.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Canonical exact BASE and HEAD, scope, model identity, independent review and receipt validation remain unchanged.",
+    "A retained file does not itself authorize a PASS or delivery.",
+    "The default legacy cleanup behavior remains unchanged unless retention is explicitly requested."
+  ],
+  "forbidden_side_effects": [
+    "No live provider calls, credentials access, deployment, database changes or business functionality changes.",
+    "No removal of evidence belonging to another review operation."
+  ]
+}

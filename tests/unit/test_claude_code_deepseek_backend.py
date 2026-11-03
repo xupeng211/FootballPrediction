@@ -210,3 +210,27 @@ def test_unavailable_trusted_launcher_root_is_typed_infrastructure_failure(
         backend.BackendInfrastructureError, match="trusted Claude launcher root cannot be resolved"
     ):
         backend._approved_claude_binary(str(binary))
+
+
+def test_retained_home_survives_timeout_without_writing_secret(monkeypatch, tmp_path: Path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+
+    def fake_run(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (Claude Code)\n")
+        raise backend.subprocess.TimeoutExpired(command, 30, output=b"synthetic-secret")
+
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    evidence = tmp_path / "evidence"
+    evidence.mkdir(mode=0o700)
+    with pytest.raises(backend.BackendInfrastructureError):
+        backend.run(prompt="fixture", cwd=tmp_path, timeout_seconds=30, retain_home_parent=evidence)
+    homes = list(evidence.glob("fp-claude-review-home-*"))
+    assert len(homes) == 1
+    private_mode = 0o700
+    assert homes[0].stat().st_mode & 0o777 == private_mode
+    assert (homes[0] / "settings.json").read_bytes() == backend.DEDICATED_SETTINGS
+    assert all(b"synthetic-secret" not in p.read_bytes() for p in homes[0].iterdir() if p.is_file())

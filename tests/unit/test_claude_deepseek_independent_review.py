@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from hashlib import sha256
+import json
 from pathlib import Path
+import shutil
 from types import SimpleNamespace
 
 import pytest
@@ -388,3 +391,268 @@ def test_chunked_runner_does_not_retry_infrastructure_failure(monkeypatch, tmp_p
             worktree=tmp_path,
         )
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        None,
+        runner.DeepSeekReviewError("no verdict"),
+        runner.backend.BackendInfrastructureError("timeout"),
+    ],
+)
+def test_retain_invocation_preserves_only_existing_safe_files(monkeypatch, tmp_path, failure):
+    args = _args(tmp_path)
+    args.retain_invocation = True
+    args.evidence_dir.mkdir(mode=0o700)
+    previous = args.evidence_dir / "claude-deepseek-raw-prior.json"
+    previous.write_text("prior")
+    worktree = args.evidence_dir / "claude-deepseek-worktree-current"
+    partial = args.evidence_dir / "claude-deepseek-raw-current.json"
+
+    def fake_run(_args):
+        worktree.mkdir()
+        partial.write_text("already safely written")
+        if failure is not None:
+            raise failure
+        return partial
+
+    monkeypatch.setattr(runner, "_run_review", fake_run)
+    monkeypatch.setattr(runner, "_cleanup_invocation", lambda **_: pytest.fail("must retain"))
+    if failure is None:
+        assert runner.run_review(args) == partial
+    else:
+        with pytest.raises(type(failure)):
+            runner.run_review(args)
+    assert worktree.is_dir()
+    assert partial.read_text() == "already safely written"
+    assert previous.read_text() == "prior"
+    assert not list(args.evidence_dir.glob("claude-deepseek-receipt-*"))
+
+
+def _retained_fixture_repo(tmp_path: Path, real_run):
+    """只创建本轮本地 Git 输入，不接触审核认证或网络。"""
+    repo = tmp_path / "fixture-repo"
+    repo.mkdir()
+
+    def git(*args):
+        return (
+            real_run(
+                [
+                    "git",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                    "-c",
+                    "user.name=Offline Fixture",
+                    "-c",
+                    "user.email=offline@example.invalid",
+                    *args,
+                ],
+                cwd=repo,
+                capture_output=True,
+                check=True,
+            )
+            .stdout.decode()
+            .strip()
+        )
+
+    git("init", "-b", "offline-fixture")
+    scope_path = repo / "docs/agentic/missions/OFFLINE_RETAIN_BINDING.json"
+    scope_path.parent.mkdir(parents=True)
+    scope_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "agentic-mission-scope/v1",
+                "mission_id": "OFFLINE_RETAIN_BINDING",
+                "task_type": "source-code",
+                "workflow_class": "CRITICAL",
+                "authorized_paths": ["fixture.py"],
+                "authorized_prefixes": [],
+                "excluded_paths": [],
+                "excluded_prefixes": [],
+                "excluded_tokens": [],
+                "protected_invariants": ["offline fixture"],
+                "forbidden_side_effects": ["no network"],
+            }
+        )
+    )
+    registry = repo / "docs/agentic/independent_review_backends.json"
+    shutil.copyfile(runner.ROOT / registry.relative_to(repo), registry)
+    (repo / "fixture.py").write_text("value = 1\n")
+    git("add", ".")
+    git("commit", "-m", "offline base")
+    base = git("rev-parse", "HEAD")
+    (repo / "fixture.py").write_text("value = 2\n")
+    git("add", "fixture.py")
+    git("commit", "-m", "offline head")
+    head = git("rev-parse", "HEAD")
+    evidence = tmp_path / "evidence"
+    return Namespace(
+        repo_root=repo,
+        base_sha=base,
+        head_sha=head,
+        mission_id="OFFLINE_RETAIN_BINDING",
+        mission_scope_file=scope_path,
+        evidence_dir=evidence,
+        retain_invocation=True,
+    )
+
+
+@pytest.fixture
+def retained_runtime_fixture(monkeypatch, tmp_path: Path):
+    """真实 runner/backend/validator，仅替换凭据读取和 CLI 执行边界。"""
+    real_run = runner.subprocess.run
+    args = _retained_fixture_repo(tmp_path, real_run)
+    binary = tmp_path / "synthetic-claude"
+    binary.write_bytes(b"offline fixture; never execute")
+    binary.chmod(0o700)
+    backend = runner.backend
+    monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (tmp_path,))
+    monkeypatch.setattr(
+        backend,
+        "TRUSTED_CLAUDE_BINARY_SHA256",
+        frozenset({sha256(binary.read_bytes()).hexdigest()}),
+    )
+    monkeypatch.setattr(backend, "_secret", lambda _path: "offline-synthetic-secret")
+    calls = []
+    mode = {"outcome": "PASS", "require_binding_before_cli": False}
+
+    def fake_cli(command, **kwargs):
+        if command[0] == "git":
+            return real_run(command, **kwargs)
+        assert command[0] == str(binary), "unexpected executable at offline boundary"
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="2.1.276 (offline fixture)\n")
+        settings = Path(command[command.index("--settings") + 1])
+        home = Path(kwargs["env"]["HOME"])
+        worktree = Path(kwargs["cwd"])
+        assert settings.parent == home
+        assert settings.read_bytes() == backend.DEDICATED_SETTINGS
+        calls.append({"home": home, "worktree": worktree, "command": command})
+        if mode["require_binding_before_cli"]:
+            binding = json.loads((home.parent / "invocation.json").read_text())
+            assert binding["review_run_id"] == worktree.name.rsplit("-", 1)[-1]
+            assert binding["worktree"] == str(worktree)
+        if mode["outcome"] == "timeout":
+            raise backend.subprocess.TimeoutExpired(command, 30, output=b"offline-synthetic-secret")
+        if mode["outcome"] == "nonzero":
+            return SimpleNamespace(returncode=1, stdout=b"network offline fixture", stderr=b"")
+        if mode["outcome"] == "invalid":
+            return SimpleNamespace(returncode=0, stdout=b"not-json", stderr=b"")
+        result = {
+            "protocol_version": runner.PROTOCOL_VERSION,
+            "review_result": mode["outcome"],
+            "findings": [],
+        }
+        if mode["outcome"] == "FAIL":
+            result["findings"] = [
+                {"severity": "P2", "title": "offline finding", "evidence": "fixture.py"}
+            ]
+        event = {
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "session_id": f"offline-session-{len(calls)}",
+            "structured_output": result,
+            "modelUsage": {"deepseek-flash": {"canonicalModel": "deepseek-flash"}},
+        }
+        return SimpleNamespace(returncode=0, stdout=json.dumps(event).encode(), stderr=b"")
+
+    monkeypatch.setattr(backend.subprocess, "run", fake_cli)
+    return SimpleNamespace(args=args, mode=mode, calls=calls)
+
+
+@pytest.mark.parametrize("verdict", ["PASS", "FAIL"])
+def test_retained_success_command_already_binds_home_to_receipt(retained_runtime_fixture, verdict):
+    """成功路径原有 command/settings 关联，不要求随机 HOME 自带 run id。"""
+    f = retained_runtime_fixture
+    f.mode["outcome"] = verdict
+    receipts = []
+    for _ in range(2):
+        receipt = json.loads(runner.run_review(f.args).read_text())
+        command = receipt["provenance"]["reviewer_command"]
+        settings = Path(command[command.index("--settings") + 1])
+        assert settings.parent == f.calls[-1]["home"]
+        assert settings.read_bytes() == runner.backend.DEDICATED_SETTINGS
+        assert f.calls[-1]["worktree"].name.endswith(receipt["review_run_id"])
+        assert receipt["review_result"] == verdict
+        receipts.append(receipt)
+    assert receipts[0]["review_run_id"] != receipts[1]["review_run_id"]
+    assert f.calls[0]["home"] != f.calls[1]["home"]
+
+
+@pytest.mark.parametrize("outcome", ["nonzero", "timeout", "invalid"])
+def test_retained_failure_binds_each_home_before_cli_without_receipt(
+    retained_runtime_fixture, outcome
+):
+    """同一 evidence 父目录重复失败，原始关联先于CLI落盘且现场均保留。"""
+    f = retained_runtime_fixture
+    f.mode.update(outcome=outcome, require_binding_before_cli=True)
+    calls_expected = 2
+    private_dir_mode, private_file_mode = 0o700, 0o600
+    for _ in range(calls_expected):
+        with pytest.raises(runner.DeepSeekReviewError, match="infrastructure failure"):
+            runner.run_review(f.args)
+    assert len(f.calls) == calls_expected
+    parents = []
+    for call in f.calls:
+        parent = call["home"].parent
+        record = json.loads((parent / "invocation.json").read_text())
+        run_id = call["worktree"].name.rsplit("-", 1)[-1]
+        assert parent.name == f"claude-deepseek-runtime-{f.args.head_sha[:12]}-{run_id}"
+        assert record == {
+            "review_run_id": run_id,
+            "base_sha": f.args.base_sha,
+            "head_sha": f.args.head_sha,
+            "mission_id": f.args.mission_id,
+            "mission_scope_sha256": runner.sha256_bytes(f.args.mission_scope_file.read_bytes()),
+            "worktree": str(call["worktree"]),
+            "runtime_parent": str(parent),
+        }
+        assert parent.stat().st_mode & 0o777 == private_dir_mode
+        assert (parent / "invocation.json").stat().st_mode & 0o777 == private_file_mode
+        assert (call["home"] / "settings.json").read_bytes() == runner.backend.DEDICATED_SETTINGS
+        assert call["worktree"].is_dir()
+        assert b"offline-synthetic-secret" not in (parent / "invocation.json").read_bytes()
+        parents.append(parent)
+    assert parents[0] != parents[1]
+    assert not list(f.args.evidence_dir.glob("claude-deepseek-receipt-*"))
+
+
+def test_retained_chunked_homes_use_same_bound_run_parent(retained_runtime_fixture, monkeypatch):
+    f = retained_runtime_fixture
+    f.mode["require_binding_before_cli"] = True
+    monkeypatch.setattr(runner, "MAX_CHUNK_DIFF_BYTES", 1)
+    receipt = json.loads(runner.run_review(f.args).read_text())
+    assert receipt["provenance"]["chunked_review"] is True
+    assert f.calls
+    assert all(call["home"].parent.name.endswith(receipt["review_run_id"]) for call in f.calls)
+
+
+def test_legacy_review_does_not_create_retained_runtime_parent(retained_runtime_fixture):
+    f = retained_runtime_fixture
+    f.args.retain_invocation = False
+    receipt = runner.run_review(f.args)
+    assert receipt.is_file()
+    assert not f.calls[0]["home"].exists()
+    assert not list(f.args.evidence_dir.glob("claude-deepseek-runtime-*"))
+    assert not list(f.args.evidence_dir.glob("claude-deepseek-worktree-*"))
+
+
+def test_retained_binding_write_failure_prevents_cli_and_receipt(
+    retained_runtime_fixture, monkeypatch
+):
+    f = retained_runtime_fixture
+    original_write = runner._write
+
+    def fail_binding(path, data):
+        if path.name == "invocation.json":
+            raise OSError("offline binding write failure")
+        return original_write(path, data)
+
+    monkeypatch.setattr(runner, "_write", fail_binding)
+    with pytest.raises(OSError, match="binding write failure"):
+        runner.run_review(f.args)
+    assert not f.calls
+    assert not list(f.args.evidence_dir.glob("claude-deepseek-receipt-*"))
