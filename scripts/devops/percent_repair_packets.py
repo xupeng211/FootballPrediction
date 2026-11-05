@@ -19,7 +19,7 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "6eda71ebd7f68d61d4ac5b8130598434af144c51017aa4a9333a1aa20a909f08"
+TABLE_SHA256 = "5e97237df37dd4f2e8f4349c8d3d67356bf48d90d0c9c0371ff71d26f846e97b"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
@@ -91,6 +91,8 @@ def _sources(root, base, head, selectors):
             f"blob={identity.split()[2]} file_sha256={sha256_bytes(raw)}\n"
             f"BASE {base} {old_identity}\n"
         )
+        if selector["symbols"] == "@identity" and path == TABLE:
+            continue
         if selector["symbols"] == "@file":
             rendered.append(raw.decode() + "\n")
             continue
@@ -98,6 +100,13 @@ def _sources(root, base, head, selectors):
         tree = ast.parse(raw)
         available = {getattr(node, "name", "") for node in tree.body}
         symbols = selector["symbols"]
+        definitions = [
+            node.name
+            for node in tree.body
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        if len(definitions) != len(set(definitions)):
+            raise ValueError("ambiguous repair definitions")
         if symbols != "*" and not set(symbols) <= available:
             raise ValueError("required repair definition is missing")
         for node in tree.body:

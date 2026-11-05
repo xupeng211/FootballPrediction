@@ -25,7 +25,7 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "6eda71ebd7f68d61d4ac5b8130598434af144c51017aa4a9333a1aa20a909f08"
+TABLE_SHA256 = "5e97237df37dd4f2e8f4349c8d3d67356bf48d90d0c9c0371ff71d26f846e97b"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
@@ -95,6 +95,8 @@ def _render(root, base, head, selectors):
             f"\nSOURCE {path}\nHEAD {head} {new.split()[0]} blob={new.split()[2]} "
             f"file_sha256={sha256_bytes(data)}\nBASE {base} {old}\n"
         )
+        if choice["symbols"] == "@identity" and path == TABLE:
+            continue
         if choice["symbols"] == "@file":
             pieces.append(data.decode() + "\n")
             continue
@@ -105,6 +107,13 @@ def _render(root, base, head, selectors):
             for node in body
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
         }
+        declared = [
+            node.name
+            for node in body
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        if len(declared) != len(set(declared)):
+            raise ValueError("ambiguous input definitions")
         wanted = choice["symbols"]
         if wanted != "*" and set(wanted) - definitions:
             raise ValueError("missing or ambiguous definition")
