@@ -62,6 +62,8 @@ def _git(root, *args):
 
 
 def _blob(root, revision, path):
+    if path not in SOURCE_PATHS:
+        raise ValueError("repair source path is not authorized")
     validate_sha(revision, name="repair source commit", length=40)
     row = _git(root, "ls-tree", "-z", revision, "--", path)
     if not row:
@@ -81,8 +83,6 @@ def _sources(root, base, head, selectors):
     rendered = []
     for selector in selectors:
         path = selector["path"]
-        if path not in SOURCE_PATHS:
-            raise ValueError("repair source path is not authorized")
         version = selector.get("version", "HEAD")
         if version not in {"BASE", "HEAD"}:
             raise ValueError("unapproved repair source version")
@@ -91,16 +91,11 @@ def _sources(root, base, head, selectors):
         if raw is None:
             raise ValueError("required repair source is missing")
         _, old_identity = _blob(root, base, path)
-        if version == "BASE":
-            rendered.append(
-                f"\nSOURCE {path}\nBASE {base} {identity} file_sha256={sha256_bytes(raw)}\n"
-            )
-        else:
-            rendered.append(
-                f"\nSOURCE {path}\nHEAD {head} {identity.split()[0]} "
-                f"blob={identity.split()[2]} file_sha256={sha256_bytes(raw)}\n"
-                f"BASE {base} {old_identity}\n"
-            )
+        rendered.append(
+            f"\nSOURCE {path}\n{version} {revision} {identity.split()[0]} "
+            f"blob={identity.split()[2]} file_sha256={sha256_bytes(raw)}\n"
+            f"BASE {base} {old_identity}\n"
+        )
         if selector["symbols"] == "@identity" and path == TABLE:
             continue
         if selector["symbols"] == "@file":

@@ -51,6 +51,8 @@ SOURCE_PATHS = frozenset(
 
 
 def _read(root, commit, path):
+    if path not in SOURCE_PATHS:
+        raise ValueError("unapproved source path")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("input commit must be exact")
     command = [
@@ -86,8 +88,6 @@ def _render(root, base, head, selectors):
     pieces = []
     for choice in selectors:
         path = choice["path"]
-        if path not in SOURCE_PATHS:
-            raise ValueError("unapproved source path")
         label = choice.get("version", "HEAD")
         if label not in ("BASE", "HEAD"):
             raise ValueError("source version rejected")
@@ -96,13 +96,10 @@ def _render(root, base, head, selectors):
         if data is None:
             raise ValueError("missing full source")
         _, old = _read(root, base, path)
-        if label == "BASE":
-            pieces.append(f"\nSOURCE {path}\nBASE {base} {new} file_sha256={sha256_bytes(data)}\n")
-        else:
-            pieces.append(
-                f"\nSOURCE {path}\nHEAD {head} {new.split()[0]} blob={new.split()[2]} "
-                f"file_sha256={sha256_bytes(data)}\nBASE {base} {old}\n"
-            )
+        pieces.append(
+            f"\nSOURCE {path}\n{label} {commit} {new.split()[0]} blob={new.split()[2]} "
+            f"file_sha256={sha256_bytes(data)}\nBASE {base} {old}\n"
+        )
         if choice["symbols"] == "@identity" and path == TABLE:
             continue
         if choice["symbols"] == "@file":
