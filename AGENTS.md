@@ -257,3 +257,31 @@ planner、runner、validator 从相同准确 HEAD 的三个普通 Git blob 提�
 不构成正式双审。Owner 需先决定是否采纳该有限输入合同，并依据可信 Git 在候选外
 独立重建来源、完整 diff、实际 prompt 和容量。原 canonical 双审、独立性、finding 等级、
 认证、模型及最终 Merge 权限不变；未解决独立验收前不得发布或启动业务试点。
+
+
+### 本次接入修复的固定手工 packet（待 Owner 采纳）
+
+`fixed-repair-packets/v1` 仅支持
+`FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105` 与准确 BASE
+`714ee95ebbd34aca3182697aab7348a0d4965af3`。固定表位于
+`docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json`，
+由 `percent_repair_packets.py` 按表读取普通 Git blob、完整 AST 定义和装饰器。
+不是任意 mission/path 的自动依赖发现或分组。表本身及生成端/消费端源码必须实际被
+两岗审核，不使用开发者 PASS、另一岗结论或跨会话摘要补齐源码。
+
+每包拥有固定问题、完整 diff 连续范围及自己的必要源码；完整 diff 无缺口、无截断。
+manifest 绑定表和每包源码上下文摘要，全部最终 backend prompt 在首次派发前检查
+40,000 bytes、每包 diff 32,000 bytes、总数 64；原 positional argv、无工具隔离、
+模型、schema、finding 门槛、保留与停止 UNKNOWN 规则不变。缺包/错绑/超限/无结论不能通过。
+
+`percent_repair_input.py` 使用另一份 Git/AST 实现重建表、覆盖、manifest 和完整 prompt，
+不调用候选生成器产生预期答案；原 chunk validator 将真实 executed argv/raw/final/session
+与其比较。此 consumer 的精确冻结副本仅在 Owner 有限采纳后，才可放入候选外可信 BASE
+overlay，复用原 `deepseek_receipt_evidence`、外层 receipt/schema、原 backend/认证与结论语义。
+旧 BASE 本身不认识新合同；替换点必须显式列出，不能声称旧 validator 原样支持。
+该 consumer 仍是开发者待审源码，不是第二名独立审核员。输入权威全部 PENDING。
+
+这只是本 repair 的 bootstrap 准备：不采纳任意业务输入，不续跑或升级旧证据。
+HEAD/tree、scope、表/adapter/consumer、来源、prompt、执行协议任一改变，须零后续派发，
+不能沿用旧批准。两份真实独立 current 结论、同次整树停止与原件绑定、测试/CI、
+独立 Harness 验收及 Owner 最终 Merge 仍各自必需。
