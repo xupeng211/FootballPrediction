@@ -445,7 +445,10 @@ def plan(
             else _pilot_source_context(repo_root, base_sha, head_sha, diff)
         )
         # 为完整身份/路径清单预留空间；最终Prompt仍逐块验证，不截断材料。
-        limit = min(limit, MAX_CHUNK_PROMPT_BYTES - len(context) - 4096)
+        # 本试点只有四个固定路径；实测完整 envelope < 2048 bytes。
+        # 不改变旧 v1 预留；若将来实际 envelope 超出，下面 final prompt 检查拒绝。
+        reserve = 2048 if mission_id == PILOT_SOURCE_CONTEXT_MISSION else 4096
+        limit = min(limit, MAX_CHUNK_PROMPT_BYTES - len(context) - reserve)
         if limit <= 0:
             raise ChunkReviewError("required source context exceeds canonical capacity")
     chunks: list[Chunk] = []
