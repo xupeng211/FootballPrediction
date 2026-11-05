@@ -19,12 +19,13 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "3f18a2cacff95f4a092c8d2b470f9b750c9f75985c85de2ecf1147ffbf51c74a"
+TABLE_SHA256 = "3488773dcca25535546a56e77156bd3a61af3b7ecd99412a883275185349e943"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
         "scripts/devops/claude_deepseek_independent_review.py",
         "scripts/devops/deepseek_chunk_receipt_validation.py",
+        "scripts/devops/deepseek_receipt_evidence.py",
         "scripts/devops/deepseek_review_chunks.py",
         "scripts/devops/independent_review_backends/claude_code_deepseek.py",
         "scripts/devops/independent_review_protocol.py",

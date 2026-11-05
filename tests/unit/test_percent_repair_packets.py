@@ -16,6 +16,7 @@ from scripts.devops import deepseek_review_chunks as chunks
 from scripts.devops import independent_review_receipt as receipts
 from scripts.devops import percent_repair_input as consumer
 from scripts.devops import percent_repair_packets as producer
+from scripts.devops.deepseek_receipt_evidence import _deepseek_receipt_evidence
 from scripts.devops.independent_review_protocol import (
     IndependentReviewProtocolError,
     canonical_json,
@@ -171,6 +172,10 @@ def test_preflight_rejects_before_any_backend(repair, monkeypatch, damage):
             worktree=root,
         )
     assert calls == []
+    if damage != "overcap":
+        monkeypatch.setattr(consumer, "_read", changed)
+        with pytest.raises(ValueError, match=r"unapproved|missing"):
+            consumer.reconstruct(root, producer.BASE, head, producer.MISSION, "c" * 64, diff)
 
 
 def test_wrong_diff_identity_and_downgrade_reject(repair):
@@ -192,3 +197,59 @@ def test_wrong_diff_identity_and_downgrade_reject(repair):
         receipts._validate_claude_deepseek_provenance(
             receipt, {"backend_id": "claude-code-deepseek"}, context
         )
+
+
+def test_physical_canonical_receipt_format_and_corruption(repair, monkeypatch, tmp_path):
+    """Full durable file format, fake backend only; never a formal receipt approval."""
+    root, head, _, _ = repair
+    _, fake, _, _ = fake_evidence(repair)
+    index = 0
+
+    def fake_backend(**kw):
+        nonlocal index
+        item = fake.chunked_claude_evidence[index]
+        index += 1
+        e = item["execution"]
+        return (
+            item["raw"],
+            json.loads(item["final"]),
+            SimpleNamespace(
+                command=(*e.reviewer_command[:-1], kw["prompt"]),
+                resolved_model=e.resolved_model,
+                cli_version=e.claude_cli_version,
+                binary_sha256=e.claude_binary_sha256,
+                settings_sha256=e.settings_sha256,
+                endpoint=e.provider_endpoint,
+                session_id=e.session_id,
+            ),
+        )
+
+    monkeypatch.setattr(runner.backend, "run", fake_backend)
+    scope_path = "docs/agentic/missions/" + producer.MISSION + ".json"
+    evidence = tmp_path / "SYNTHETIC_NOT_FORMAL_REVIEW"
+    args = SimpleNamespace(
+        repo_root=root,
+        base_sha=producer.BASE,
+        head_sha=head,
+        mission_id=producer.MISSION,
+        mission_scope_file=root / scope_path,
+        evidence_dir=evidence,
+        retain_invocation=False,
+    )
+    receipt_path = runner.run_review(args)
+    scope_hash = chunks.sha256_bytes(git(root, "show", head + ":" + scope_path))
+
+    def consume():
+        return _deepseek_receipt_evidence(
+            receipt_path,
+            repo_root=root,
+            expected_base=producer.BASE,
+            expected_head=head,
+            expected_mission_id=producer.MISSION,
+            expected_scope_hash=scope_hash,
+        )
+
+    assert consume().trusted is True
+    prompt = next(evidence.glob("claude-deepseek-chunk-prompt-*.txt"))
+    prompt.write_bytes(prompt.read_bytes() + b"corruption")
+    assert consume().trusted is False
