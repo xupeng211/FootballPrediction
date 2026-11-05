@@ -19,7 +19,7 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "3488773dcca25535546a56e77156bd3a61af3b7ecd99412a883275185349e943"
+TABLE_SHA256 = "7c6d7b882c65e45865ba37772aad7e3125efd761df80e60c2e42c1bf51c01694"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
@@ -83,15 +83,24 @@ def _sources(root, base, head, selectors):
         path = selector["path"]
         if path not in SOURCE_PATHS:
             raise ValueError("repair source path is not authorized")
-        raw, identity = _blob(root, head, path)
+        version = selector.get("version", "HEAD")
+        if version not in {"BASE", "HEAD"}:
+            raise ValueError("unapproved repair source version")
+        revision = base if version == "BASE" else head
+        raw, identity = _blob(root, revision, path)
         if raw is None:
             raise ValueError("required repair source is missing")
         _, old_identity = _blob(root, base, path)
-        rendered.append(
-            f"\nSOURCE {path}\nHEAD {head} {identity.split()[0]} "
-            f"blob={identity.split()[2]} file_sha256={sha256_bytes(raw)}\n"
-            f"BASE {base} {old_identity}\n"
-        )
+        if version == "BASE":
+            rendered.append(
+                f"\nSOURCE {path}\nBASE {base} {identity} file_sha256={sha256_bytes(raw)}\n"
+            )
+        else:
+            rendered.append(
+                f"\nSOURCE {path}\nHEAD {head} {identity.split()[0]} "
+                f"blob={identity.split()[2]} file_sha256={sha256_bytes(raw)}\n"
+                f"BASE {base} {old_identity}\n"
+            )
         if selector["symbols"] == "@identity" and path == TABLE:
             continue
         if selector["symbols"] == "@file":

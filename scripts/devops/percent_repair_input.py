@@ -25,7 +25,7 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "3488773dcca25535546a56e77156bd3a61af3b7ecd99412a883275185349e943"
+TABLE_SHA256 = "7c6d7b882c65e45865ba37772aad7e3125efd761df80e60c2e42c1bf51c01694"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
@@ -88,14 +88,21 @@ def _render(root, base, head, selectors):
         path = choice["path"]
         if path not in SOURCE_PATHS:
             raise ValueError("unapproved source path")
-        data, new = _read(root, head, path)
+        label = choice.get("version", "HEAD")
+        if label not in ("BASE", "HEAD"):
+            raise ValueError("source version rejected")
+        commit = {"BASE": base, "HEAD": head}[label]
+        data, new = _read(root, commit, path)
         if data is None:
             raise ValueError("missing full source")
         _, old = _read(root, base, path)
-        pieces.append(
-            f"\nSOURCE {path}\nHEAD {head} {new.split()[0]} blob={new.split()[2]} "
-            f"file_sha256={sha256_bytes(data)}\nBASE {base} {old}\n"
-        )
+        if label == "BASE":
+            pieces.append(f"\nSOURCE {path}\nBASE {base} {new} file_sha256={sha256_bytes(data)}\n")
+        else:
+            pieces.append(
+                f"\nSOURCE {path}\nHEAD {head} {new.split()[0]} blob={new.split()[2]} "
+                f"file_sha256={sha256_bytes(data)}\nBASE {base} {old}\n"
+            )
         if choice["symbols"] == "@identity" and path == TABLE:
             continue
         if choice["symbols"] == "@file":
