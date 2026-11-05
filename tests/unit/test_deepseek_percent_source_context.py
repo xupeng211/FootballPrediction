@@ -156,6 +156,28 @@ def test_final_prompt_capacity_checked_before_dispatch(pilot, monkeypatch):
     assert calls == []
 
 
+def test_runner_final_prompt_capacity_checked_after_planning(pilot, monkeypatch):
+    root, diff, manifest = pilot
+    calls = []
+    oversized = "界" * (chunks.MAX_CHUNK_PROMPT_BYTES // len("界".encode()) + 1)
+    assert len(oversized) <= chunks.MAX_CHUNK_PROMPT_BYTES < len(oversized.encode())
+    monkeypatch.setattr(runner, "plan", lambda *_a, **_k: manifest)
+    monkeypatch.setattr(runner, "_chunk_prompt", lambda **_kw: oversized)
+    monkeypatch.setattr(runner.backend, "run", lambda **kw: calls.append(kw))
+    with pytest.raises(
+        runner.DeepSeekReviewError, match="chunk prompt exceeds canonical byte limit"
+    ):
+        runner._run_chunked_review(
+            diff=diff,
+            base=manifest.base_sha,
+            head=manifest.head_sha,
+            scope=SimpleNamespace(mission_id=manifest.mission_id),
+            scope_sha="c" * 64,
+            worktree=root,
+        )
+    assert calls == []
+
+
 def test_real_runner_uses_exact_planner_prompts(pilot, monkeypatch):
     root, diff, manifest = pilot
     _, context, _, _ = evidence(pilot)

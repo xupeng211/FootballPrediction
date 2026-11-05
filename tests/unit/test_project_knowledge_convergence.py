@@ -803,26 +803,47 @@ _PERCENT_PILOT_PATHS = {
 
 
 def test_percent_pilot_exact_mapping_uses_real_contract():
-    body = _canonical_contract_body(entrypoint="no", capability="no")
+    body = _canonical_contract_body(entrypoint="no", capability="no", milestone="no", blocker="no")
     assert check_documentation_backflow(body, _PERCENT_PILOT_PATHS) == []
     assert check_mixed_governance_business(_PERCENT_PILOT_PATHS) == []
     assert validate_authorization("source-code", _PERCENT_PILOT_PATHS, pr_body=body).errors == ()
     assert check_documentation_backflow(body, _PERCENT_PILOT_PATHS - {_CANONICAL_DOC})
     assert check_documentation_backflow(
-        _canonical_contract_body(contract="no"), _PERCENT_PILOT_PATHS
+        _canonical_contract_body(
+            contract="no", entrypoint="no", capability="no", milestone="no", blocker="no"
+        ),
+        _PERCENT_PILOT_PATHS,
     )
 
 
 @pytest.mark.parametrize(
-    "extra",
+    ("extra", "expected_error"),
     [
-        "docs/agentic/missions/UNAPPROVED.json",
-        "scripts/ops/canonical_prematch_feature_frame.js",
-        "scripts/ops/helpers/documentation_backflow.py",
-        "AGENTS.md",
-        "src/other_domain/model.py",
-        _STAGE_D_DOC,
+        (
+            "docs/agentic/missions/UNAPPROVED.json",
+            "contract mapping mixes Canonical prematch with other domains or workflow paths:",
+        ),
+        (
+            "scripts/ops/canonical_prematch_feature_frame.js",
+            "contract mapping mixes Canonical prematch with other domains or workflow paths:",
+        ),
+        (
+            "scripts/ops/helpers/documentation_backflow.py",
+            "contract mapping mixes Canonical prematch with other domains or workflow paths:",
+        ),
+        (
+            "AGENTS.md",
+            "contract mapping mixes Canonical prematch with other domains or workflow paths:",
+        ),
+        ("src/other_domain/model.py", "contract paths have no approved domain mapping:"),
+        (
+            _STAGE_D_DOC,
+            "contract mapping mixes Canonical prematch with other domains or workflow paths:",
+        ),
     ],
 )
-def test_percent_pilot_does_not_expand_domain_or_mission_authority(extra):
-    assert check_documentation_backflow(_canonical_contract_body(), _PERCENT_PILOT_PATHS | {extra})
+def test_percent_pilot_does_not_expand_domain_or_mission_authority(extra, expected_error):
+    body = _canonical_contract_body(entrypoint="no", capability="no", milestone="no", blocker="no")
+    assert check_documentation_backflow(body, _PERCENT_PILOT_PATHS) == []
+    errors = check_documentation_backflow(body, _PERCENT_PILOT_PATHS | {extra})
+    assert any(error.startswith(expected_error) and extra in error for error in errors)

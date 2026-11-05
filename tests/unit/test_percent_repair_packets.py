@@ -103,10 +103,17 @@ def test_real_runner_and_consumer_use_identical_inputs(repair, monkeypatch):
         worktree=root,
     )
     assert len(calls) == len(manifest.chunks)
-    # A broken producer cannot become the consumer's expected answer.
-    monkeypatch.setattr(
-        chunks, "plan", lambda *_a, **_k: pytest.fail("producer called by consumer")
-    )
+    # 合法 fixture 和 runner 输入已准备好，再禁止验证路径借用 producer。
+    # 同时拦截直接导入的绑定别名，不能只 patch 定义模块的属性。
+    producer_entries = (chunks.plan, producer.repair_plan)
+
+    def producer_called(*_a, **_k):
+        pytest.fail("producer called by consumer")
+
+    for module in (chunks, producer, validator, consumer, runner):
+        for name, value in tuple(vars(module).items()):
+            if any(value is entry for entry in producer_entries):
+                monkeypatch.setattr(module, name, producer_called)
     validator._validate_chunked_claude_evidence(receipt, context)
 
 
