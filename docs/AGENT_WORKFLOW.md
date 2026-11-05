@@ -554,7 +554,7 @@ planner、runner、validator 从相同准确 HEAD 的三个普通 Git blob 提�
 认证、模型及最终 Merge 权限不变；未解决独立验收前不得发布或启动业务试点。
 
 
-### 本次接入修复的固定手工 packet（待 Owner 采纳）
+### 本次接入修复的固定手工 packet（采纳、执行与消费责任）
 
 `fixed-repair-packets/v1` 仅支持
 `FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105` 与准确 BASE
@@ -571,12 +571,34 @@ manifest 绑定表和每包源码上下文摘要，全部最终 backend prompt �
 
 `percent_repair_input.py` 使用另一份 Git/AST 实现重建表、覆盖、manifest 和完整 prompt，
 不调用候选生成器产生预期答案；原 chunk validator 将真实 executed argv/raw/final/session
-与其比较。此 consumer 的精确冻结副本仅在 Owner 有限采纳后，才可放入候选外可信 BASE
-overlay，复用原 `deepseek_receipt_evidence`、外层 receipt/schema、原 backend/认证与结论语义。
-旧 BASE 本身不认识新合同；替换点必须显式列出，不能声称旧 validator 原样支持。
-该 consumer 仍是开发者待审源码，不是第二名独立审核员。输入权威全部 PENDING。
+与其比较。旧 BASE 本身不认识新合同；替换点必须显式列出，不能声称旧 validator 原样支持。
+该 consumer 仍是开发者待审源码，不是第二名独立审核员。
 
-这只是本 repair 的 bootstrap 准备：不采纳任意业务输入，不续跑或升级旧证据。
-HEAD/tree、scope、表/adapter/consumer、来源、prompt、执行协议任一改变，须零后续派发，
-不能沿用旧批准。两份真实独立 current 结论、同次整树停止与原件绑定、测试/CI、
-独立 Harness 验收及 Owner 最终 Merge 仍各自必需。
+任何真实模型请求都须先取得 Owner 明确批准。可信 Controller 负责在派发前核对批准
+对应的准确 HEAD/tree、scope、输入、有限权威、调用范围和停止边界；不能自行批准费用、
+扩大授权，或以最终双审/CI/Merge 门槛代替收费执行前的 Owner 批准。
+
+准备阶段的 PENDING 申请是当时的快照；后续针对准确目标的 Owner 决定和外部记录，
+用于核实该次是否已获有限采纳及执行批准。保留 PENDING 文件名不自动否定后续批准，
+也绝不自动授予执行权限。HEAD/tree、scope、表/adapter/consumer、overlay、来源、prompt
+或执行边界变化时，须停止后续派发并重新核定适用性，不能沿用一次批准作为永久许可。
+
+已有 runner 核对准确目标、Git 中的 scope、隔离工作区和外部证据位置；planner/reader
+核对普通 Git blob、表和来源绑定、完整 diff 覆盖、manifest 与最终输入容量；validator
+核对实际 argv、prompt、raw/final、session 及结论绑定。可信 Controller 另须通过原监督/
+停止校验取得同次整树停止证明，并完成绑定原件核对，再独立消费及派发后续操作。
+这些检查各有实际范围；普通 runner、selector 和低层 validator 不鉴定 Owner 的自然语言
+决定。合同禁止未经批准调用，不等于每条 CLI 都已机器拒绝未经批准调用；CLI 技术上
+可调用也不构成绕过可信 Controller 的正式执行路径。
+
+低层函数通过或 receipt 有效，只能支持其实际核验范围；候选代码调用自己的 validator
+不会取得正式可信消费权威。精确冻结副本只有经 Owner 有限采纳，并由可信 Controller
+在相应阶段完成上述批准、目标、输入、权威及停止/原件前置核对，才可用于正式执行/
+消费。候选外可信 BASE overlay 复用原 `deepseek_receipt_evidence`、外层 receipt/schema、
+原 backend/认证与结论语义；离线准备副本本身不授予这一权威。
+
+收费执行许可、审核事实有效性和后续发布/合并许可分别判断。本合同只用于本 repair
+的有限 bootstrap，不采纳任意业务输入，不续跑或升级旧证据，也不宣称逐入口自动授权
+或完全自主业务交付。两岗独立、exact-head、两份真实独立 current 结论、P0/P1/P2 阻断、
+P3 记录不阻断、同次整树停止与原件绑定、测试/CI、独立 Harness 验收及 Owner 最终 Merge
+要求均保持；停止 UNKNOWN 时保留现场并拒绝消费及后续派发。
