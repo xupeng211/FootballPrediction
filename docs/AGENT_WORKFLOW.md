@@ -527,3 +527,28 @@ PR metadata 对 receipt payload、provider execution 或 hostile-builder resista
 证明；它只负责 exact PR HEAD、mission/workflow metadata、required tests/static/governance
 checks 和 provider-neutral 最终 evidence contract。Owner/Controller 只有在本地双 receipt
 validation 与远端 required CI 同时通过时才可 merge。
+
+
+### 百分比显示试点的有限冻结输入（本地候选，待独立验收）
+
+`frozen-git-source-context/percent-v1` 仅绑定
+`FP_QUALITY_MARKDOWN_PERCENT_20261105`，不是旧 v1 或历史证据升级。
+planner、runner、validator 从相同准确 HEAD 的三个普通 Git blob 提供完整 JS 文件：
+`CanonicalPrematchFeatureQualityDiagnostics.js`（统计、renderer、报告构造及 JSON/hash）、
+`StableValue.js`（稳定序列化/hash）、`canonical_prematch_feature_frame.js`（diagnose 调用和双输出）。
+精确路径固定在现有 planner；不做 JS 文本截取。完整 canonical diff 绑定 BASE→HEAD，
+只允许 diagnostics、对应业务单测、本 mission JSON 和领域合同四路径；完整 HEAD 加完整差异
+可核对旧实现，调用者及 hash 文件不能随本任务改变。未改动的 Frame/GdA01 内部不因本合同
+被宣称已重新审核；若 finding 需要其定义，停止并提出具体上下文缺口，不能猜测通过。
+
+实际 final prompt 逐块派发前校验；40,000-byte prompt、32,000-byte diff、64 chunks、
+原 argv/工具隔离/receipt/停止 UNKNOWN 规则不变。试点缺失上下文、非 chunk receipt、
+来源/差异不符或容量不足均拒绝。未来业务候选产生后仍须核算完整实际输入，不能用
+离线 scope/doc fixture 的块数代替。新 mission 文件仅有精确四路径领域回流映射；
+必须真实修改领域合同并如实声明 Documentation Impact，未知领域和治理混合继续拒绝。
+
+本次接入修复自身为独立 CRITICAL mission，不能借用试点身份或产生业务成果。
+候选外未修改 BASE 不认识 percent-v1，不能承诺其原验证器支持新合同；候选测试/验证器
+不构成正式双审。Owner 需先决定是否采纳该有限输入合同，并依据可信 Git 在候选外
+独立重建来源、完整 diff、实际 prompt 和容量。原 canonical 双审、独立性、finding 等级、
+认证、模型及最终 Merge 权限不变；未解决独立验收前不得发布或启动业务试点。

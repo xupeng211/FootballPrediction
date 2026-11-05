@@ -47,13 +47,49 @@ SOURCE_CONTEXT_DEFINITIONS = {
 }
 
 
+# 仅本次百分比显示试点；保留旧 v1 mission 及其输入字节。
+PILOT_SOURCE_CONTEXT_VERSION = "frozen-git-source-context/percent-v1"
+PILOT_SOURCE_CONTEXT_MISSION = "FP_QUALITY_MARKDOWN_PERCENT_20261105"
+PILOT_SOURCE_CONTEXT_FILES = (
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "src/infrastructure/canonical/StableValue.js",
+    "scripts/ops/canonical_prematch_feature_frame.js",
+)
+PILOT_CHANGED_PATHS = frozenset(
+    {
+        PILOT_SOURCE_CONTEXT_FILES[0],
+        "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+        "docs/agentic/missions/FP_QUALITY_MARKDOWN_PERCENT_20261105.json",
+        "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md",
+    }
+)
+
+
+def source_context_version_for(mission_id: str) -> str | None:
+    """选择有限任务合同；不接受调用者自选路径或默认放行新任务。"""
+    if mission_id == SOURCE_CONTEXT_MISSION:
+        return SOURCE_CONTEXT_VERSION
+    if mission_id == PILOT_SOURCE_CONTEXT_MISSION:
+        return PILOT_SOURCE_CONTEXT_VERSION
+    return None
+
+
 class ChunkReviewError(ValueError):
     """A chunk manifest or its evidence cannot establish a review verdict."""
 
 
-def _frozen_context_file(root: Path, commit: str, path: str) -> tuple[bytes, dict[str, str]]:
+def _frozen_context_file(
+    root: Path, commit: str, path: str, *, mission_id: str = SOURCE_CONTEXT_MISSION
+) -> tuple[bytes, dict[str, str]]:
     """只从完整commit的普通Git blob读取固定允许路径，绝不读工作区。"""
-    if path not in SOURCE_CONTEXT_DEFINITIONS:
+    allowed = (
+        SOURCE_CONTEXT_DEFINITIONS
+        if mission_id == SOURCE_CONTEXT_MISSION
+        else PILOT_SOURCE_CONTEXT_FILES
+        if mission_id == PILOT_SOURCE_CONTEXT_MISSION
+        else ()
+    )
+    if path not in allowed:
         raise ChunkReviewError("source context path is not authorized")
     validate_sha(commit, name="source context commit", length=40)
     try:
@@ -138,6 +174,50 @@ def _source_context(root: Path, base: str, head: str) -> bytes:
             "contract_version": SOURCE_CONTEXT_VERSION,
             "definitions": list(definitions.values()),
             "absent_at_base": absent,
+        }
+    )
+
+
+def _pilot_source_context(root: Path, base: str, head: str, diff: bytes) -> bytes:
+    """完整 JS 文件，精确 HEAD blob；仅四路径差异，不截取 JS 定义。"""
+    validate_sha(base, name="source context base", length=40)
+    validate_sha(head, name="source context head", length=40)
+    try:
+        diff.decode("utf-8")
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", base, head],
+            cwd=root,
+            capture_output=True,
+            check=True,
+        )
+    except (UnicodeDecodeError, OSError, subprocess.SubprocessError) as exc:
+        raise ChunkReviewError("pilot requires a complete UTF-8 ancestral diff") from exc
+    actual = subprocess.run(
+        ["git", "diff", "--binary", "--no-ext-diff", f"{base}...{head}"],
+        cwd=root,
+        capture_output=True,
+        check=True,
+    ).stdout
+    paths = _range_paths(_file_ranges(diff), 0, len(diff))
+    if actual != diff or not paths or set(paths) - PILOT_CHANGED_PATHS:
+        raise ChunkReviewError("pilot canonical diff or four-path binding mismatch")
+    files = []
+    for path in PILOT_SOURCE_CONTEXT_FILES:
+        raw, identity = _frozen_context_file(
+            root, head, path, mission_id=PILOT_SOURCE_CONTEXT_MISSION
+        )
+        try:
+            source = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ChunkReviewError("pilot source must be complete UTF-8") from exc
+        if not source or "\0" in source:
+            raise ChunkReviewError("pilot source must be a nonempty text blob")
+        files.append({"path": path, **identity, "source": source})
+    return canonical_json(
+        {
+            "contract_version": PILOT_SOURCE_CONTEXT_VERSION,
+            "mission_id": PILOT_SOURCE_CONTEXT_MISSION,
+            "files": files,
         }
     )
 
@@ -349,14 +429,21 @@ def plan(
         raise ChunkReviewError("empty canonical diff cannot be reviewed")
     context = b""
     limit = MAX_CHUNK_DIFF_BYTES
+    expected_version = source_context_version_for(mission_id)
+    if mission_id == PILOT_SOURCE_CONTEXT_MISSION and source_context_version != expected_version:
+        raise ChunkReviewError("pilot requires its frozen source context contract")
     if source_context_version is not None:
         if (
-            source_context_version != SOURCE_CONTEXT_VERSION
-            or mission_id != SOURCE_CONTEXT_MISSION
+            source_context_version != expected_version
+            or expected_version is None
             or repo_root is None
         ):
             raise ChunkReviewError("unsupported source context contract or mission")
-        context = _source_context(repo_root, base_sha, head_sha)
+        context = (
+            _source_context(repo_root, base_sha, head_sha)
+            if mission_id == SOURCE_CONTEXT_MISSION
+            else _pilot_source_context(repo_root, base_sha, head_sha, diff)
+        )
         # 为完整身份/路径清单预留空间；最终Prompt仍逐块验证，不截断材料。
         limit = min(limit, MAX_CHUNK_PROMPT_BYTES - len(context) - 4096)
         if limit <= 0:
@@ -385,6 +472,16 @@ def plan(
         limit,
     )
     validate_manifest(manifest, diff)
+    if source_context_version == PILOT_SOURCE_CONTEXT_VERSION:
+        for chunk in manifest.chunks:
+            prompt = build_chunk_prompt(
+                chunk=chunk,
+                source=diff[chunk.start : chunk.end],
+                manifest=manifest,
+                scope_sha=mission_scope_sha256,
+            )
+            if len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES:
+                raise ChunkReviewError("pilot final prompt exceeds canonical byte limit")
     return manifest
 
 

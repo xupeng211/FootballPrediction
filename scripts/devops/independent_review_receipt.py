@@ -27,6 +27,7 @@ from scripts.devops.codex_review_output import (
     reviewer_invocation_id,
 )
 from scripts.devops.codex_review_provenance import ReviewReceiptError
+from scripts.devops.deepseek_review_chunks import PILOT_SOURCE_CONTEXT_MISSION
 from scripts.devops.independent_review_protocol import (
     PROTOCOL_VERSION,
     RECEIPT_VERSION,
@@ -476,11 +477,21 @@ def _validate_codex_provenance(  # noqa: C901, PLR0912, PLR0915
         raise IndependentReviewProtocolError("raw output completion evidence is invalid") from exc
 
 
+def _require_frozen_pilot_evidence(receipt: dict[str, Any]) -> None:
+    """本试点不能用旧单段 receipt 绕过必要源码合同。"""
+    if (
+        receipt["mission_id"] == PILOT_SOURCE_CONTEXT_MISSION
+        and receipt["provenance"].get("chunked_review") is not True
+    ):
+        raise IndependentReviewProtocolError("pilot requires frozen-source chunk evidence")
+
+
 def _validate_claude_deepseek_provenance(  # noqa: C901
     receipt: dict[str, Any], backend: dict[str, Any], context: ReceiptEvidenceContext
 ) -> None:
     if backend["backend_id"] != "claude-code-deepseek":
         return
+    _require_frozen_pilot_evidence(receipt)
     if receipt["provenance"].get("chunked_review") is True:
         _validate_chunked_claude_evidence(receipt, context)
         return

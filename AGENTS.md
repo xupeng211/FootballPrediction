@@ -232,3 +232,28 @@ Canonical Codex reviewer authentication/transport is a separate lane: `make agen
 Independent reviewer 必须是新的 Codex 子进程/会话，运行于 exact-head 的 detached read-only worktree；Builder 的 reasoning 不能算 review，reviewer 不得修改、commit、push 或 merge。`make agent-review ...` 使用现有 Codex CLI 的 `codex exec --ephemeral --sandbox read-only`、stdin prompt、独立 schema 和 final-message 输出，并在 source tree 外生成 machine-readable receipt。receipt 必须绑定完整 base/head、diff hash、Codex invocation、fresh context、worktree clean-before/after、read-only sandbox、成功完成事件和原始输出；其中本地 hash/provenance 只是 integrity evidence，不是 cryptographic reviewer identity。项目 assurance model 是 `ENGINEERING_INDEPENDENT_REVIEW`，明确接受同一 OS uid 的恶意 Builder 理论上篡改本地 evidence 的 residual risk，不声称 hostile-builder resistance。`make agent-merge-ready ...` 只回答 `MERGE_READY=YES|NO`，永不 merge；YES 后必须停止并交回 Execution Controller 做 merge/gate 判断。
 
 `make agent-review` 与 `make agent-review-wait` 都把 receipt 当作 verdict 的唯一 authority：直接调用 `scripts/devops/codex_independent_review.py run|wait` 时 exit `0` = 已审 PASS 且无 blocking finding，exit `3` = 已审 FAIL 或存在任何 blocking finding，exit `1` = 无法建立 verdict；经 `make` 调用时 GNU make 会把任何 recipe 失败统一报成 exit `2`，因此 `make agent-review` 与 `make agent-review-wait` 的保证是"exit 0 ⟺ PASS，非 0 ⟺ 不是 PASS"（`3` 与 `1` 在 make 这一层不可区分，这是 make 的语义，不是可以保留的信息），精确 verdict 一律取 stdout JSON 的 `status`/`review_result`/`blocking_findings`。stdout 的 `status` 只是 receipt verdict 的投影，不是独立结论。review lifecycle 必须在**一个**由 harness 持有的命令内完成：前台跑 `make agent-review`（已记录的 40 个 receipt 耗时 65–222 秒），预计超时才改用 harness 追踪的后台任务；`make agent-review-wait HEAD_SHA=<full SHA> EVIDENCE_DIR=<external dir>` 用于阻塞等待一个已经在跑的 review 并取回它的 verdict。不得用 `nohup … &` 之类的自脱离进程，也不得用 `pgrep -f` 判断 writer 存活（watcher 自己的命令行就匹配该 pattern），更不得等待一个 writer 并不产生的固定 receipt 文件名。`agent-review-wait` 只做数字 pid 存活探测（拒绝非正 pid：`0` 与负数指向进程组或全部可访问进程，无法指定 writer）、按 `codex-review-receipt-<head12>-*.json` 绑定 exact head、重算 payload integrity，并要求 evidence directory 为 owner-only（`0700`）、receipt 属于当前 uid 且为 owner-only（`0600`）——payload digest 是可重算的，任何能写入该目录的进程都能伪造自洽的 exact-head PASS，所以读取侧与写入侧共用同一条 owner-only 规则——并在超时、writer 退出、receipt 缺失、权限不满足或 head 不匹配时以显式失败状态结束，绝不静默交还控制权。同一个 head 可以有多轮 review（finding 修复后重审），因此 mtime 顺序不是身份：`run` 用 run id 标识本轮，它写在每份产物名里，`agent-review-wait` 只消费它正在等待的那一轮的 receipt——`RUN_ID` 显式给出时以它为准，未给出时取该 head 最新 writer record 记录的 run id；属于其它轮次的 receipt 会被列出但永不被当作本轮 verdict 消费（即使它是 PASS、即使它更新），两种方式都拿不到轮次时才退回 mtime 最新并在 `detail` 里声明轮次未被指定；run id 必须是 canonical 小写 hex，非法值与无法规范化的 `HEAD_SHA` 都在开始等待前以结构化失败（exit `1`，`--json` 时 stdout 仍是一行 JSON）结束，不是 traceback。pid 不是身份：`run` 在启动时把自己 pid 与 `/proc` start time 写成 `codex-review-writer-<head12>-<runid>.json`，`agent-review-wait` 默认绑定这条已记录身份并逐次核对 start time（被复用的 pid 判为已退出），调用方也可用 `WRITER_PID`/`WRITER_STARTTIME` 显式指定——两者必须成对给出，只给 pid 时唯一可用的 start time 就是该 pid 自己提供的，等于把被复用的 pid 当作基线，因此这种未绑定身份在开始等待前即以 exit `1` 拒绝；没有可校验身份时不得把"没有探针"当成"writer 已死亡"。
+
+
+### 百分比显示试点的有限冻结输入（本地候选，待独立验收）
+
+`frozen-git-source-context/percent-v1` 仅绑定
+`FP_QUALITY_MARKDOWN_PERCENT_20261105`，不是旧 v1 或历史证据升级。
+planner、runner、validator 从相同准确 HEAD 的三个普通 Git blob 提供完整 JS 文件：
+`CanonicalPrematchFeatureQualityDiagnostics.js`（统计、renderer、报告构造及 JSON/hash）、
+`StableValue.js`（稳定序列化/hash）、`canonical_prematch_feature_frame.js`（diagnose 调用和双输出）。
+精确路径固定在现有 planner；不做 JS 文本截取。完整 canonical diff 绑定 BASE→HEAD，
+只允许 diagnostics、对应业务单测、本 mission JSON 和领域合同四路径；完整 HEAD 加完整差异
+可核对旧实现，调用者及 hash 文件不能随本任务改变。未改动的 Frame/GdA01 内部不因本合同
+被宣称已重新审核；若 finding 需要其定义，停止并提出具体上下文缺口，不能猜测通过。
+
+实际 final prompt 逐块派发前校验；40,000-byte prompt、32,000-byte diff、64 chunks、
+原 argv/工具隔离/receipt/停止 UNKNOWN 规则不变。试点缺失上下文、非 chunk receipt、
+来源/差异不符或容量不足均拒绝。未来业务候选产生后仍须核算完整实际输入，不能用
+离线 scope/doc fixture 的块数代替。新 mission 文件仅有精确四路径领域回流映射；
+必须真实修改领域合同并如实声明 Documentation Impact，未知领域和治理混合继续拒绝。
+
+本次接入修复自身为独立 CRITICAL mission，不能借用试点身份或产生业务成果。
+候选外未修改 BASE 不认识 percent-v1，不能承诺其原验证器支持新合同；候选测试/验证器
+不构成正式双审。Owner 需先决定是否采纳该有限输入合同，并依据可信 Git 在候选外
+独立重建来源、完整 diff、实际 prompt 和容量。原 canonical 双审、独立性、finding 等级、
+认证、模型及最终 Merge 权限不变；未解决独立验收前不得发布或启动业务试点。

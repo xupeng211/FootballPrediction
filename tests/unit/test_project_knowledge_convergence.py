@@ -792,3 +792,37 @@ def test_vision_change_cannot_use_no_update_reason():
 def test_vision_source_update_passes_when_declared():
     body = _impact_body(vision="yes", source_updated="yes", updated_docs="docs/PROJECT_VISION.md")
     assert check_documentation_backflow(body, {"docs/PROJECT_VISION.md"}) == []
+
+
+_PERCENT_PILOT_PATHS = {
+    "docs/agentic/missions/FP_QUALITY_MARKDOWN_PERCENT_20261105.json",
+    "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md",
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+}
+
+
+def test_percent_pilot_exact_mapping_uses_real_contract():
+    body = _canonical_contract_body(entrypoint="no", capability="no")
+    assert check_documentation_backflow(body, _PERCENT_PILOT_PATHS) == []
+    assert check_mixed_governance_business(_PERCENT_PILOT_PATHS) == []
+    assert validate_authorization("source-code", _PERCENT_PILOT_PATHS, pr_body=body).errors == ()
+    assert check_documentation_backflow(body, _PERCENT_PILOT_PATHS - {_CANONICAL_DOC})
+    assert check_documentation_backflow(
+        _canonical_contract_body(contract="no"), _PERCENT_PILOT_PATHS
+    )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "docs/agentic/missions/UNAPPROVED.json",
+        "scripts/ops/canonical_prematch_feature_frame.js",
+        "scripts/ops/helpers/documentation_backflow.py",
+        "AGENTS.md",
+        "src/other_domain/model.py",
+        _STAGE_D_DOC,
+    ],
+)
+def test_percent_pilot_does_not_expand_domain_or_mission_authority(extra):
+    assert check_documentation_backflow(_canonical_contract_body(), _PERCENT_PILOT_PATHS | {extra})

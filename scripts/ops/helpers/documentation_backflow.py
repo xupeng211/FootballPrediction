@@ -163,6 +163,17 @@ CANONICAL_PREMATCH_COMPANION_DOC_PATHS = frozenset(
     }
 )
 
+# 新试点身份只伴随这四条精确路径；不放开其他 mission 或扩大既有领域组合。
+PERCENT_PILOT_MISSION_PATH = "docs/agentic/missions/FP_QUALITY_MARKDOWN_PERCENT_20261105.json"
+PERCENT_PILOT_PATHS = frozenset(
+    {
+        PERCENT_PILOT_MISSION_PATH,
+        CANONICAL_PREMATCH_CONTRACT_DOC,
+        "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+        "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    }
+)
+
 HOLLOW_REASON_VALUES = frozenset(
     {
         "",
@@ -239,6 +250,8 @@ def _is_substantive_reason(value: str) -> bool:
 
 def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
     """Return current-state docs required by a declared category."""
+    if category == "contract" and PERCENT_PILOT_MISSION_PATH in changed:
+        return (CANONICAL_PREMATCH_CONTRACT_DOC,)
     if category == "blocker":
         required = list(REQUIRED_DOCS_BY_CATEGORY[category])
         if "docs/data/FOTMOB_CURRENT_STATE.md" in changed:
@@ -286,9 +299,12 @@ def _contract_mapping_errors(changed: set[str]) -> list[str]:
             "contract paths have no approved domain mapping: " + ", ".join(sorted(unmapped_paths))
         ]
     if changed & CANONICAL_PREMATCH_CONTRACT_PATHS:
-        unsupported = changed - (
-            CANONICAL_PREMATCH_CONTRACT_PATHS | CANONICAL_PREMATCH_COMPANION_DOC_PATHS
+        allowed = (
+            PERCENT_PILOT_PATHS
+            if PERCENT_PILOT_MISSION_PATH in changed
+            else CANONICAL_PREMATCH_CONTRACT_PATHS | CANONICAL_PREMATCH_COMPANION_DOC_PATHS
         )
+        unsupported = changed - allowed
         if unsupported:
             return [
                 "contract mapping mixes Canonical prematch with other domains or workflow paths: "
