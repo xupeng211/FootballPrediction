@@ -71,6 +71,7 @@ def _repair_sample(destination, source_root):
         .strip()
     )
     git(destination, "checkout", "-q", "-b", "repair-test", head)
+    git(destination, "checkout-index", "--all")
     return destination
 
 
