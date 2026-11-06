@@ -6,6 +6,7 @@ lifecycle: permanent
 from dataclasses import replace
 import json
 from pathlib import Path
+import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -25,9 +26,55 @@ from tests.unit.test_deepseek_frozen_source_context import git
 from tests.unit.test_deepseek_review_chunks import _chunk_validation_fixture
 
 
-@pytest.fixture
-def repair():
-    root = Path(__file__).resolve().parents[2]
+def _repair_sample(destination, source_root):
+    """仅投影表内源码到私有 TEST Git；不写源仓库，不改变正式完整 diff 规则。"""
+    try:
+        git(source_root, "cat-file", "-e", producer.BASE + "^{commit}")
+    except subprocess.CalledProcessError:
+        pytest.fail("repair TEST sample requires the original BASE object; no network fetch")
+    current = git(source_root, "rev-parse", "HEAD").decode().strip()
+    raw = git(source_root, "show", current + ":" + producer.TABLE)
+    assert chunks.sha256_bytes(raw) == producer.TABLE_SHA256
+    paths = tuple(dict.fromkeys(row["diff_path"] for row in json.loads(raw)["packets"]))
+    destination.mkdir()
+    git(destination, "init", "-q")
+    common = git(source_root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    # Git 只读借用来源对象，所有新增对象、索引和 refs 都在临时仓库。
+    (destination / ".git/objects/info/alternates").write_text(
+        str(Path(common.decode().strip()) / "objects") + "\n"
+    )
+    git(destination, "read-tree", producer.BASE + "^{tree}")
+    for path in paths:
+        entry = git(source_root, "ls-tree", "-z", current, "--", path).rstrip(b"\0")
+        metadata, actual = entry.split(b"\t")
+        mode, kind, oid = metadata.decode().split()
+        assert actual.decode() == path
+        assert kind == "blob"
+        assert mode in {"100644", "100755"}
+        git(destination, "update-index", "--add", "--cacheinfo", mode + "," + oid + "," + path)
+    tree = git(destination, "write-tree").decode().strip()
+    head = (
+        git(
+            destination,
+            "-c",
+            "user.name=offline",
+            "-c",
+            "user.email=offline@example.invalid",
+            "commit-tree",
+            tree,
+            "-p",
+            producer.BASE,
+            "-m",
+            "TEST ONLY table-path sample",
+        )
+        .decode()
+        .strip()
+    )
+    git(destination, "checkout", "-q", "-b", "repair-test", head)
+    return destination
+
+
+def _repair_inputs(root):
     head = git(root, "rev-parse", "HEAD").decode().strip()
     diff = git(root, "diff", "--binary", "--no-ext-diff", producer.BASE + "..." + head)
     manifest = chunks.plan(
@@ -40,6 +87,12 @@ def repair():
         repo_root=root,
     )
     return root, head, diff, manifest
+
+
+@pytest.fixture
+def repair(tmp_path):
+    source_root = Path(__file__).resolve().parents[2]
+    return _repair_inputs(_repair_sample(tmp_path / "repair", source_root))
 
 
 def test_independent_reconstruction_and_complete_coverage(repair):
@@ -55,6 +108,43 @@ def test_independent_reconstruction_and_complete_coverage(repair):
         assert len(actual) <= chunks.MAX_CHUNK_PROMPT_BYTES
         assert c.end - c.start <= chunks.MAX_CHUNK_DIFF_BYTES
     assert len(manifest.chunks) <= chunks.MAX_CHUNK_COUNT
+
+
+def test_isolated_sample_survives_unrelated_live_path(repair, tmp_path):
+    root, _, _, _ = repair
+    test_independent_reconstruction_and_complete_coverage(repair)
+    added = "docs/offline-test-unrelated.txt"
+    (root / added).write_text("TEST ONLY ordinary new path\n")
+    git(root, "add", "--", added)
+    git(
+        root,
+        "-c",
+        "user.name=offline",
+        "-c",
+        "user.email=offline@example.invalid",
+        "commit",
+        "-q",
+        "-m",
+        "TEST ONLY unrelated development",
+    )
+    live = git(root, "rev-parse", "HEAD").decode().strip()
+    full = git(root, "diff", "--binary", "--no-ext-diff", producer.BASE + "..." + live)
+    with pytest.raises(ValueError, match=r"^repair table does not cover the exact changed paths$"):
+        chunks.plan(
+            full,
+            base_sha=producer.BASE,
+            head_sha=live,
+            mission_id=producer.MISSION,
+            mission_scope_sha256="c" * 64,
+            source_context_version=producer.VERSION,
+            repo_root=root,
+        )
+    with pytest.raises(ValueError, match=r"^repair fixed ranges mismatch$"):
+        consumer.reconstruct(root, producer.BASE, live, producer.MISSION, "c" * 64, full)
+    projected = _repair_inputs(_repair_sample(tmp_path / "projected", root))
+    test_independent_reconstruction_and_complete_coverage(projected)
+    assert added not in projected[3].full_changed_paths
+    assert git(root, "rev-parse", "HEAD").decode().strip() == live
 
 
 def fake_evidence(repair):
@@ -146,7 +236,7 @@ def test_synthetic_execution_tampering_rejected(repair, damage):
         validator._validate_chunked_claude_evidence(receipt, context)
 
 
-@pytest.mark.parametrize("damage", ["table", "source", "range", "overcap"])
+@pytest.mark.parametrize("damage", ["table", "source", "overcap"])
 def test_preflight_rejects_before_any_backend(repair, monkeypatch, damage):
     root, head, diff, _ = repair
     read = producer._blob
@@ -156,10 +246,6 @@ def test_preflight_rejects_before_any_backend(repair, monkeypatch, damage):
         if path == producer.TABLE:
             if damage == "table":
                 return raw + b" ", identity
-            if damage == "range":
-                value = json.loads(raw)
-                value["packets"].pop()
-                return canonical_json(value), identity
         elif damage == "source":
             return None, "ABSENT"
         return raw, identity
@@ -183,6 +269,61 @@ def test_preflight_rejects_before_any_backend(repair, monkeypatch, damage):
         monkeypatch.setattr(consumer, "_read", changed)
         with pytest.raises(ValueError, match=r"unapproved|missing"):
             consumer.reconstruct(root, producer.BASE, head, producer.MISSION, "c" * 64, diff)
+
+
+def _admit_terminal_gap(repair, monkeypatch):
+    """只在测试进程内提供身份正确、摘要匹配的终端缺口表。"""
+    root, head, diff, _ = repair
+    original_blob, original_read = producer._blob, consumer._read
+    raw, identity = original_blob(root, head, producer.TABLE)
+    table = json.loads(raw)
+    table["packets"].pop()
+    damaged = canonical_json(table)
+
+    def changed_blob(root, revision, path):
+        return (
+            (damaged, identity) if path == producer.TABLE else original_blob(root, revision, path)
+        )
+
+    def changed_read(root, revision, path):
+        return (
+            (damaged, identity) if path == consumer.TABLE else original_read(root, revision, path)
+        )
+
+    monkeypatch.setattr(producer, "_blob", changed_blob)
+    monkeypatch.setattr(consumer, "_read", changed_read)
+    monkeypatch.setattr(producer, "TABLE_SHA256", chunks.sha256_bytes(damaged))
+    monkeypatch.setattr(consumer, "TABLE_SHA256", chunks.sha256_bytes(damaged))
+    calls = []
+    monkeypatch.setattr(runner.backend, "run", lambda **kw: calls.append(kw))
+    return root, head, diff, calls
+
+
+def test_producer_terminal_gap_rejected_after_digest(repair, monkeypatch):
+    # fixture 已由真实 planner 生成合法 manifest，然后才损坏覆盖。
+    assert repair[3].full_diff_bytes == len(repair[2])
+    root, head, diff, calls = _admit_terminal_gap(repair, monkeypatch)
+    with pytest.raises(ValueError, match=r"^repair packets are incomplete or over count$"):
+        runner._run_chunked_review(
+            diff=diff,
+            base=producer.BASE,
+            head=head,
+            scope=SimpleNamespace(mission_id=producer.MISSION),
+            scope_sha="c" * 64,
+            worktree=root,
+        )
+    assert calls == []
+
+
+def test_reader_terminal_gap_rejected_after_digest(repair, monkeypatch):
+    root, head, diff, manifest = repair
+    # reader 的合法基线与错误预期独立定义，不借 producer 生成期望答案。
+    legal = consumer.reconstruct(root, producer.BASE, head, producer.MISSION, "c" * 64, diff)
+    assert legal.payload() == manifest.payload()
+    root, head, diff, calls = _admit_terminal_gap(repair, monkeypatch)
+    with pytest.raises(ValueError, match=r"^repair coverage/count rejected$"):
+        consumer.reconstruct(root, producer.BASE, head, producer.MISSION, "c" * 64, diff)
+    assert calls == []
 
 
 def test_wrong_diff_identity_and_downgrade_reject(repair):
