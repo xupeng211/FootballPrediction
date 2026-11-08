@@ -10,6 +10,7 @@
     "scripts/devops/independent_review_receipt.py",
     "scripts/ops/helpers/documentation_backflow.py",
     "tests/unit/test_deepseek_percent_source_context.py",
+    "tests/unit/test_percent_pilot_documentation_backflow.py",
     "tests/unit/test_project_knowledge_convergence.py",
     "AGENTS.md",
     "docs/AGENT_WORKFLOW.md",

@@ -19,7 +19,7 @@ MAX_DIFF = 32_000
 MAX_PROMPT = 40_000
 MAX_COUNT = 64
 TABLE = "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
-TABLE_SHA256 = "c860289dbcc3be0bc9793a444d95df8309bc71457d53add7b87d99544e5b3370"
+TABLE_SHA256 = "011903643704efddc7bbb3c7cadfc1dd578a6cba7e1ce2044d90c27e9ab3fe98"
 SOURCE_PATHS = frozenset(
     (
         "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
@@ -38,6 +38,7 @@ SOURCE_PATHS = frozenset(
         "tests/unit/test_deepseek_frozen_source_context.py",
         "tests/unit/test_deepseek_percent_source_context.py",
         "tests/unit/test_deepseek_review_chunks.py",
+        "tests/unit/test_percent_pilot_documentation_backflow.py",
         "tests/unit/test_percent_repair_packets.py",
         "tests/unit/test_project_knowledge_convergence.py",
     )
