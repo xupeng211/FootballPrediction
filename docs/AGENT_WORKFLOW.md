@@ -527,3 +527,78 @@ PR metadata 对 receipt payload、provider execution 或 hostile-builder resista
 证明；它只负责 exact PR HEAD、mission/workflow metadata、required tests/static/governance
 checks 和 provider-neutral 最终 evidence contract。Owner/Controller 只有在本地双 receipt
 validation 与远端 required CI 同时通过时才可 merge。
+
+
+### 百分比显示试点的有限冻结输入（本地候选，待独立验收）
+
+`frozen-git-source-context/percent-v1` 仅绑定
+`FP_QUALITY_MARKDOWN_PERCENT_20261105`，不是旧 v1 或历史证据升级。
+planner、runner、validator 从相同准确 HEAD 的三个普通 Git blob 提供完整 JS 文件：
+`CanonicalPrematchFeatureQualityDiagnostics.js`（统计、renderer、报告构造及 JSON/hash）、
+`StableValue.js`（稳定序列化/hash）、`canonical_prematch_feature_frame.js`（diagnose 调用和双输出）。
+精确路径固定在现有 planner；不做 JS 文本截取。完整 canonical diff 绑定 BASE→HEAD，
+只允许 diagnostics、对应业务单测、本 mission JSON 和领域合同四路径；完整 HEAD 加完整差异
+可核对旧实现，调用者及 hash 文件不能随本任务改变。未改动的 Frame/GdA01 内部不因本合同
+被宣称已重新审核；若 finding 需要其定义，停止并提出具体上下文缺口，不能猜测通过。
+
+实际 final prompt 逐块派发前校验；40,000-byte prompt、32,000-byte diff、64 chunks、
+原 argv/工具隔离/receipt/停止 UNKNOWN 规则不变。试点缺失上下文、非 chunk receipt、
+来源/差异不符或容量不足均拒绝。未来业务候选产生后仍须核算完整实际输入，不能用
+离线 scope/doc fixture 的块数代替。新 mission 文件仅有精确四路径领域回流映射；
+必须真实修改领域合同并如实声明 Documentation Impact，未知领域和治理混合继续拒绝。
+
+本次接入修复自身为独立 CRITICAL mission，不能借用试点身份或产生业务成果。
+候选外未修改 BASE 不认识 percent-v1，不能承诺其原验证器支持新合同；候选测试/验证器
+不构成正式双审。Owner 需先决定是否采纳该有限输入合同，并依据可信 Git 在候选外
+独立重建来源、完整 diff、实际 prompt 和容量。原 canonical 双审、独立性、finding 等级、
+认证、模型及最终 Merge 权限不变；未解决独立验收前不得发布或启动业务试点。
+
+
+### 本次接入修复的固定手工 packet（采纳、执行与消费责任）
+
+`fixed-repair-packets/v1` 仅支持
+`FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105` 与准确 BASE
+`714ee95ebbd34aca3182697aab7348a0d4965af3`。固定表位于
+`docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json`，
+由 `percent_repair_packets.py` 按表读取普通 Git blob、完整 AST 定义和装饰器。
+不是任意 mission/path 的自动依赖发现或分组。表本身及生成端/消费端源码必须实际被
+两岗审核，不使用开发者 PASS、另一岗结论或跨会话摘要补齐源码。
+
+每包拥有固定问题、完整 diff 连续范围及自己的必要源码；完整 diff 无缺口、无截断。
+manifest 绑定表和每包源码上下文摘要，全部最终 backend prompt 在首次派发前检查
+40,000 bytes、每包 diff 32,000 bytes、总数 64；原 positional argv、无工具隔离、
+模型、schema、finding 门槛、保留与停止 UNKNOWN 规则不变。缺包/错绑/超限/无结论不能通过。
+
+`percent_repair_input.py` 使用另一份 Git/AST 实现重建表、覆盖、manifest 和完整 prompt，
+不调用候选生成器产生预期答案；原 chunk validator 将真实 executed argv/raw/final/session
+与其比较。旧 BASE 本身不认识新合同；替换点必须显式列出，不能声称旧 validator 原样支持。
+该 consumer 仍是开发者待审源码，不是第二名独立审核员。
+
+任何真实模型请求都须先取得 Owner 明确批准。可信 Controller 负责在派发前核对批准
+对应的准确 HEAD/tree、scope、输入、有限权威、调用范围和停止边界；不能自行批准费用、
+扩大授权，或以最终双审/CI/Merge 门槛代替收费执行前的 Owner 批准。
+
+准备阶段的 PENDING 申请是当时的快照；后续针对准确目标的 Owner 决定和外部记录，
+用于核实该次是否已获有限采纳及执行批准。保留 PENDING 文件名不自动否定后续批准，
+也绝不自动授予执行权限。HEAD/tree、scope、表/adapter/consumer、overlay、来源、prompt
+或执行边界变化时，须停止后续派发并重新核定适用性，不能沿用一次批准作为永久许可。
+
+已有 runner 核对准确目标、Git 中的 scope、隔离工作区和外部证据位置；planner/reader
+核对普通 Git blob、表和来源绑定、完整 diff 覆盖、manifest 与最终输入容量；validator
+核对实际 argv、prompt、raw/final、session 及结论绑定。可信 Controller 另须通过原监督/
+停止校验取得同次整树停止证明，并完成绑定原件核对，再独立消费及派发后续操作。
+这些检查各有实际范围；普通 runner、selector 和低层 validator 不鉴定 Owner 的自然语言
+决定。合同禁止未经批准调用，不等于每条 CLI 都已机器拒绝未经批准调用；CLI 技术上
+可调用也不构成绕过可信 Controller 的正式执行路径。
+
+低层函数通过或 receipt 有效，只能支持其实际核验范围；候选代码调用自己的 validator
+不会取得正式可信消费权威。精确冻结副本只有经 Owner 有限采纳，并由可信 Controller
+在相应阶段完成上述批准、目标、输入、权威及停止/原件前置核对，才可用于正式执行/
+消费。候选外可信 BASE overlay 复用原 `deepseek_receipt_evidence`、外层 receipt/schema、
+原 backend/认证与结论语义；离线准备副本本身不授予这一权威。
+
+收费执行许可、审核事实有效性和后续发布/合并许可分别判断。本合同只用于本 repair
+的有限 bootstrap，不采纳任意业务输入，不续跑或升级旧证据，也不宣称逐入口自动授权
+或完全自主业务交付。两岗独立、exact-head、两份真实独立 current 结论、P0/P1/P2 阻断、
+P3 记录不阻断、同次整树停止与原件绑定、测试/CI、独立 Harness 验收及 Owner 最终 Merge
+要求均保持；停止 UNKNOWN 时保留现场并拒绝消费及后续派发。

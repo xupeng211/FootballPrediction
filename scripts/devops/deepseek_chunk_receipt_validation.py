@@ -13,12 +13,11 @@ from typing import Any
 
 from scripts.devops.deepseek_review_chunks import (
     MAX_CHUNK_PROMPT_BYTES,
-    SOURCE_CONTEXT_MISSION,
-    SOURCE_CONTEXT_VERSION,
     ChunkReviewError,
     build_chunk_prompt,
     chunk_evidence_manifest_bytes,
     plan,
+    source_context_version_for,
     validate_manifest,
 )
 from scripts.devops.independent_review_protocol import (
@@ -62,17 +61,29 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
         ).stdout
         if not isinstance(top_evidence, dict) or not isinstance(top_evidence.get("manifest"), dict):
             raise ChunkReviewError("chunk manifest must be an object")  # noqa: TRY301
-        manifest = plan(
-            diff,
-            base_sha=context.base_sha,
-            head_sha=context.head_sha,
-            mission_id=receipt["mission_id"],
-            mission_scope_sha256=receipt["mission_scope_sha256"],
-            # 外层已将 mission 绑定到冻结 Scope；输入不能自行选择较宽松的合同。
-            source_context_version=(
-                SOURCE_CONTEXT_VERSION if receipt["mission_id"] == SOURCE_CONTEXT_MISSION else None
-            ),
-            repo_root=context.repo_root,
+        from scripts.devops.percent_repair_input import MISSION, reconstruct  # noqa: PLC0415
+
+        fixed_repair = receipt["mission_id"] == MISSION
+        manifest = (
+            reconstruct(
+                context.repo_root,
+                context.base_sha,
+                context.head_sha,
+                receipt["mission_id"],
+                receipt["mission_scope_sha256"],
+                diff,
+            )
+            if fixed_repair
+            else plan(
+                diff,
+                base_sha=context.base_sha,
+                head_sha=context.head_sha,
+                mission_id=receipt["mission_id"],
+                mission_scope_sha256=receipt["mission_scope_sha256"],
+                # 外层已将 mission 绑定到冻结 Scope；输入不能自行选择较宽松的合同。
+                source_context_version=source_context_version_for(receipt["mission_id"]),
+                repo_root=context.repo_root,
+            )
         )
         if (
             top_evidence.get("manifest") != manifest.payload()
@@ -175,12 +186,16 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
             or item.get("source_sha256") != descriptor.source_sha256
         ):
             raise IndependentReviewProtocolError("chunk source evidence is invalid")
-        expected_prompt = build_chunk_prompt(
-            chunk=descriptor,
-            source=source,
-            manifest=manifest,
-            scope_sha=receipt["mission_scope_sha256"],
-        ).encode()
+        expected_prompt = (
+            manifest.prompts[index]
+            if fixed_repair
+            else build_chunk_prompt(
+                chunk=descriptor,
+                source=source,
+                manifest=manifest,
+                scope_sha=receipt["mission_scope_sha256"],
+            ).encode()
+        )
         if len(prompt) > MAX_CHUNK_PROMPT_BYTES:
             raise IndependentReviewProtocolError("chunk prompt exceeds canonical byte limit")
         if prompt != expected_prompt or not command or command[-1].encode() != prompt:

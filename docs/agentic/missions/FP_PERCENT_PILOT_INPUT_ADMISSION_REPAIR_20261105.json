@@ -1,0 +1,49 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/deepseek_review_chunks.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "scripts/devops/independent_review_receipt.py",
+    "scripts/ops/helpers/documentation_backflow.py",
+    "tests/unit/test_deepseek_percent_source_context.py",
+    "tests/unit/test_percent_pilot_documentation_backflow.py",
+    "tests/unit/test_project_knowledge_convergence.py",
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json",
+    "scripts/devops/percent_repair_packets.py",
+    "scripts/devops/percent_repair_input.py",
+    "tests/unit/test_percent_repair_packets.py",
+    "docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "ruff.toml"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "config/",
+    "data/",
+    "database/",
+    ".github/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅本次有限源码输入及精确文档映射；可信 BASE 714ee95ebbd34aca3182697aab7348a0d4965af3。",
+    "保留旧 v1 输入、receipt、rubric、模型认证、容量、进程停止及 UNKNOWN 规则；不追认历史证据。",
+    "本地候选不是正式审核 PASS；新合同独立验收及任何模型调用、发布和 Merge 另待 Owner 决定。",
+    "固定手工 packet 表仅用于本 repair；审核员须实际读取 docs/agentic/review_inputs/FP_PERCENT_PILOT_INPUT_ADMISSION_REPAIR_20261105.json、scripts/devops/percent_repair_packets.py、scripts/devops/percent_repair_input.py 和完整相关测试，核对覆盖、独立会话充分性、真实 argv 和 receipt 消费。",
+    "候选外 consumer 为同源码精确冻结副本；Owner 输入执行/消费权威采纳 PENDING，不把脚本输出当独立审核 PASS。"
+  ],
+  "forbidden_side_effects": [
+    "真实模型/Provider/资格探测、factory-run、Docker、依赖安装、远端写入、业务开发、凭据和全局配置修改、子代理。",
+    "不更改未来业务源码/业务测试；不创建未来业务 mission scope 成果；不修改历史候选和原始证据。"
+  ]
+}
