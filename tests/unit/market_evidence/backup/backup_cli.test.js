@@ -48,20 +48,26 @@ function temporary(t, prefix) {
 }
 
 function runCli(scriptPath, args, options = {}) {
-    const result = spawnSync(process.execPath, [scriptPath, ...args], {
-        cwd: options.cwd || REPOSITORY_ROOT,
-        encoding: 'utf8',
-        // The child gets the tripwire as a preload, so the CLI's own process is
-        // sealed too.  The sentinel is what makes the helper install itself on
-        // load; a plain `--require` would be indistinguishable from an import
-        // and would leave the preloaded copy inert.
-        env: {
-            PATH: process.env.PATH || '',
-            [PRELOAD_ENV]: '1',
-            NODE_OPTIONS: `--require ${TRIPWIRE_PRELOAD}`,
-        },
-    });
-    return { status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' };
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'stage-d-cli-home-'));
+    try {
+        const result = spawnSync(process.execPath, [scriptPath, ...args], {
+            cwd: options.cwd || REPOSITORY_ROOT,
+            encoding: 'utf8',
+            // The child gets the tripwire as a preload, so the CLI's own process is
+            // sealed too.  The sentinel is what makes the helper install itself on
+            // load; a plain `--require` would be indistinguishable from an import
+            // and would leave the preloaded copy inert.
+            env: {
+                PATH: process.env.PATH || '',
+                HOME: home,
+                [PRELOAD_ENV]: '1',
+                NODE_OPTIONS: `--require ${TRIPWIRE_PRELOAD}`,
+            },
+        });
+        return { status: result.status, stdout: result.stdout || '', stderr: result.stderr || '' };
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
 }
 
 function payloadOf(result) {

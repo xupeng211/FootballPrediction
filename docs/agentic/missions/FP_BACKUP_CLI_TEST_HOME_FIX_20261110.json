@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_BACKUP_CLI_TEST_HOME_FIX_20261110",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "tests/unit/market_evidence/backup/backup_cli.test.js",
+    "docs/agentic/missions/FP_BACKUP_CLI_TEST_HOME_FIX_20261110.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "scripts/",
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "models/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅修复 backup_cli.test.js runCli() 的测试子进程 HOME：每次调用使用系统临时目录内独立空目录，try/finally 清理，包括失败路径。",
+    "保留 PATH、network tripwire sentinel、NODE_OPTIONS、参数、显式假凭据、原 status/stdout/stderr 返回语义及全部既有断言；继续环境白名单，不继承 process.env 或真实 HOME。",
+    "从准确 BASE 建立独立测试修复候选，不包含或修改百分比候选；scope 由 Controller 冻结。",
+    "保留 STRICT：固定隔离镜像内先完整备份测试，再一次 make verify-strict；实际日志及准确 HEAD 绑定，不把诊断当 canonical profile。",
+    "本轮当前执行 Codex 直接接管小补丁，无额外模型、Factory 开发/恢复、正式审核、远端 CI 或发布。"
+  ],
+  "forbidden_side_effects": [
+    "修改生产 transport、SDK 配置、备份 CLI、测试断言、依赖、镜像、Node 版本、验证规则、永久治理、CI 或其他路径。",
+    "读取真实凭据或真实 AWS 配置、继承用户真实 HOME、外网访问、连接共享业务容器或生产数据源、真实备份或生产操作。",
+    "调用其他开发或审核模型、DeepSeek/Gemini、提高额度、重放旧任务、清零/冲销/修改历史 UNKNOWN、BLOCKED_BUDGET、usage 或预留。",
+    "push、PR、Merge、采集、训练、预测、部署；以修复候选 PASS 冒充原百分比 HEAD PASS、独立审核或完整自主交付。"
+  ]
+}
