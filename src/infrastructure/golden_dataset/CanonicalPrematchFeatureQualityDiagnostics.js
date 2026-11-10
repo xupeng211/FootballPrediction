@@ -241,7 +241,8 @@ function renderQualityMarkdown(report) {
     ];
     for (const feature of report.features) {
         const q = feature.numeric_quality;
-        lines.push(`| ${cell(feature.feature_name)} | ${feature.valid_count} | ${feature.missing_count} | ${cell(feature.missing_rate)} | ${q.zero_count} | ${q.distinct_value_count} | ${cell(q.min)} / ${cell(q.max)} | ${cell(q.mean)} / ${cell(q.population_standard_deviation)} | ${cell(q.q1)} / ${cell(q.median)} / ${cell(q.q3)} | ${q.constant} / ${q.all_zero} |`);
+        const missingRate = feature.missing_rate === null ? '无' : `${(feature.missing_rate * 100).toFixed(2)}%`;
+        lines.push(`| ${cell(feature.feature_name)} | ${feature.valid_count} | ${feature.missing_count} | ${missingRate} | ${q.zero_count} | ${q.distinct_value_count} | ${cell(q.min)} / ${cell(q.max)} | ${cell(q.mean)} / ${cell(q.population_standard_deviation)} | ${cell(q.q1)} / ${cell(q.median)} / ${cell(q.q3)} | ${q.constant} / ${q.all_zero} |`);
     }
     lines.push('', '## Registry 排除或阻断（不做数值诊断）', '', '| 特征 | 决策 | 既有理由 |', '|---|---|---|');
     for (const item of report.non_selected_features) lines.push(`| ${cell(item.feature_name)} | ${cell(item.final_decision)} | ${cell(item.reason_code)} |`);

@@ -189,7 +189,8 @@ frame/receipt bytes SHA、frame business hash 与原 source bindings；业务 ha
 
 - `features`：仅 registry 接受的 9 项，分母为所有 accounted 比赛；`AVAILABLE` 的有限数值
   为有效值，包括合法 `0` 和负差值。缺失只按权威 `UNAVAILABLE` 统计，不推断或填补。
-  给出有效/缺失数、缺失率（空总体为 null）、缺失比赛、逐特征不可用原因；其他 8 项只在
+  给出有效/缺失数、缺失率（空总体为 null）、缺失比赛、逐特征不可用原因；Markdown 缺失率
+  列显示为两位小数百分比，null 显示“无”，JSON 保留原始数值/null。其他 8 项只在
   `non_selected_features` 复制 registry 已有决策和理由，不计算其数值质量。
 - `numeric_quality`：观测数、不同值数、零值数、min/max、均值、总体标准差，以及线性插值
   Q1/中位数/Q3。无观测统计值为 null；少于 2 个观测不宣称常量或全零。

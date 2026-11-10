@@ -209,6 +209,50 @@ test('同输入同版本 JSON 与中文 Markdown 字节确定、无改写输入'
     assert.equal(hash, require('../../src/infrastructure/canonical/StableValue').sha256Text(require('../../src/infrastructure/canonical/StableValue').stableStringify(business)));
 });
 
+test('Markdown 缺失率列显示两位小数百分比，JSON、其他列、统计与摘要保持原值', () => {
+    const output = result();
+    const jsonReport = JSON.parse(output.jsonBytes);
+    assert.equal(jsonReport.features[0].missing_rate, 2 / 6);
+    assert.equal(jsonReport.features.find(item => item.feature_name === 'home_points').missing_rate, 0);
+    assert.equal(JSON.parse(buildQualityDiagnostics(fixture(0)).jsonBytes).features[0].missing_rate, null);
+
+    const reportBefore = JSON.stringify(output.report);
+    const summaryHash = output.report.business_content_sha256;
+    const displayReport = JSON.parse(reportBefore);
+    const examples = [
+        [displayReport.features[0], 0.27591, '27.59%'],
+        [displayReport.features[1], 0, '0.00%'],
+        [displayReport.features[2], 1, '100.00%'],
+        [displayReport.features[3], null, '无'],
+    ];
+    for (const [feature, rate] of examples) feature.missing_rate = rate;
+    const displayReportBefore = JSON.stringify(displayReport);
+    const markdown = renderQualityMarkdown(displayReport);
+
+    assert.equal(JSON.stringify(displayReport), displayReportBefore);
+    assert.equal(JSON.stringify(output.report), reportBefore);
+    assert.equal(output.report.business_content_sha256, summaryHash);
+    assert.deepEqual(jsonReport, output.report);
+    for (const [feature, , displayedRate] of examples) {
+        const row = markdown.split('\n').find(line => line.startsWith(`| ${feature.feature_name} |`));
+        assert.ok(row, `missing Markdown row for ${feature.feature_name}`);
+        const q = feature.numeric_quality;
+        const shown = value => value === null ? '无' : String(value);
+        assert.deepEqual(row.split('|').slice(1, -1).map(value => value.trim()), [
+            feature.feature_name,
+            String(feature.valid_count),
+            String(feature.missing_count),
+            displayedRate,
+            String(q.zero_count),
+            String(q.distinct_value_count),
+            `${shown(q.min)} / ${shown(q.max)}`,
+            `${shown(q.mean)} / ${shown(q.population_standard_deviation)}`,
+            `${shown(q.q1)} / ${shown(q.median)} / ${shown(q.q3)}`,
+            `${q.constant} / ${q.all_zero}`,
+        ]);
+    }
+});
+
 test('拒绝未重 hash 的值篡改、receipt 篡改和错误来源 bytes', () => {
     const inputs = fixture();
     const changed = JSON.parse(inputs.artifactBytes);
