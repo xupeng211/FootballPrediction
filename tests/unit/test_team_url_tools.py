@@ -39,6 +39,30 @@ def test_extract_team_names_ignores_query_and_fragment(
     assert extract_teams(f"{LEAGUE_URL}arsenal-chelsea{match_id}{suffix}") == ("Arsenal", "Chelsea")
 
 
+@pytest.mark.parametrize("match_id", ["", "-AbCd1234", "-12345678"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "",
+        "/",
+        "?utm_source=test",
+        "#summary",
+        "?utm_source=test#summary",
+        "/?utm_source=test",
+        "/#summary",
+        "/?utm_source=test#summary",
+        "?utm_source=test&utm_medium=link",
+        "#summary?utm_source=test",
+        "?next=/other/path#summary",
+    ],
+)
+@pytest.mark.parametrize("slug", ["-chelsea", "arsenal-", "arsenal--chelsea"])
+def test_extract_team_names_rejects_empty_team_slug_segments(
+    extract_teams, slug: str, match_id: str, suffix: str
+) -> None:
+    assert extract_teams(f"{LEAGUE_URL}{slug}{match_id}{suffix}") is None
+
+
 @pytest.mark.parametrize("suffix", ["", "/", "?utm_source=test#summary"])
 @pytest.mark.parametrize("match_id", ["", "-AbCd1234"])
 def test_extract_team_names_preserves_multi_word_split(

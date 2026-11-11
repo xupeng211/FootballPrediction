@@ -50,7 +50,7 @@ def extract_team_names_from_url(url: str) -> tuple[str, str] | None:
                 break
 
     team_parts = parts[:id_idx] if id_idx is not None else parts
-    if len(team_parts) < MIN_TEAM_PARTS:
+    if len(team_parts) < MIN_TEAM_PARTS or any(not part for part in team_parts):
         return None
 
     home, away = _split_teams_smartly(team_parts)
