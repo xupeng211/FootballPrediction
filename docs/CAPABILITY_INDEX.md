@@ -105,6 +105,7 @@
   It preserves local consumed `4`, rejects sibling/replay/tampered lineage and any
   quota reset, and performs zero provider contact, live authorization, request intent
   or transmission; Stage D remains `NOT_STARTED`.
+- **Stage D 最小计费周期转换**：候选源码实现 `footballprediction-stage-d-quota-adjudication-rollover/v1`，复用既有离线裁定 CLI、Trust Root、Candidate 和 binder；同一永久 epoch/ledger 上逐月转换，原 v1/v2、Consumed 与 UNKNOWN 不改写。新月 Owner 账户/reset approval、完整前驱原件、账本 prefix/tail、配置和精确 source 缺一即拒绝。独立 CRITICAL 双审查待授权；真实配置/裁定未生成，`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO`。测试：`tests/unit/market_evidence/stage_d_billing_period_rollover.test.js`；正式语义见连续运行合同的 Billing-period rollover 节。
 - **仍未建立 / 未就绪**：continuous durable market-evidence capture、canonical value engine、
   canonical betting backtest、bankroll/staking、CLV、fresh independent future
   holdout、production model activation。
