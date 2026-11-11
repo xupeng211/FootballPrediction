@@ -1,0 +1,48 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_QUALITY_MARKDOWN_PERCENT_20261105",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/golden_dataset/CanonicalPrematchFeatureQualityDiagnostics.js",
+    "tests/unit/canonical_prematch_feature_quality_diagnostics.test.js",
+    "docs/agentic/missions/FP_QUALITY_MARKDOWN_PERCENT_20261105.json",
+    "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    "scripts/",
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "models/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "只改变 Markdown 缺失率列显示：0.27591→27.59%，0→0.00%，1→100.00%，null→无。",
+    "JSON missing_rate 原数值/null、统计计算、JSON 结构、哈希算法、其他数值列保持不变；renderQualityMarkdown 不修改输入 report。",
+    "本阶段仅 local_candidate：实现、现有本地 QA、准确 HEAD 候选交付；无正式审核、远端发布、PR 或 merge-ready 终态。",
+    "Controller 派发前冻结本 scope 字节和 SHA256；Builder 不得修改 scope 文件或扩大四路径。",
+    "保留 STRICT 原生审核与验证规则；后续方向为 canonical Codex 主审＋Gemini 人工独立第二审，均未执行；人工报告不伪装成 DeepSeek 回执。",
+    "不执行业务数据源连接、采集、训练、预测、backtest、模型激活、数据库写入、迁移、部署；只允许 Controller 隔离临时 QA 测试资源。"
+  ],
+  "forbidden_side_effects": [
+    "业务或生产数据库连接/读写、网络采集、raw 写入、迁移、训练、预测、backtest、模型激活、部署。",
+    "新增/升级依赖、工具、入口、业务功能、统计逻辑、哈希算法、JSON schema、其他数值列、永久治理、验证规则、CI 配置。",
+    "Builder 修改本 scope、调用外部 Provider、Docker、GitHub 写接口、push、PR、merge、发布或任何网络；正式审核、资格探测和其他代理派发。",
+    "复用旧授权/旧账务/旧 receipt、模型失败自动重试、模型或供应商 fallback、控制器手写业务实现。"
+  ]
+}
