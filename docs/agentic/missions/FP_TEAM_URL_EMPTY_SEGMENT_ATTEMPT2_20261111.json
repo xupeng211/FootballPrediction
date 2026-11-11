@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_TEAM_URL_EMPTY_SEGMENT_ATTEMPT2_20261111",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/utils/teams/url_tools.py",
+    "tests/unit/test_team_url_tools.py",
+    "docs/agentic/missions/FP_TEAM_URL_EMPTY_SEGMENT_ATTEMPT2_20261111.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    "scripts/",
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "models/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅修复现有球队 URL 解析器对队名部分空连字符片段的接受；保持现有合法 URL 的返回值、match-id 识别、主客队顺序、多词拆分、query/fragment 忽略规则及不支持 URL 返回 None。",
+    "不改变队名标准化、别名/阈值、其他解析器、数据模型、持久化/网络行为及公开函数签名。",
+    "Controller 在授权后冻结本范围；Builder 不得改写 scope。由原生 checkpoint 保存全部业务改动，由既有流程自动运行 targeted/strict/pr。",
+    "本阶段只交付 local_candidate；不执行正式审核、远端发布、PR、Merge、部署或真实业务数据操作。"
+  ],
+  "forbidden_side_effects": [
+    "真实网络抓取、业务/生产数据库连接或读写、迁移、训练、预测、backtest、模型激活、真实数据产物重建。",
+    "安装/升级依赖、拉取/构建镜像、修改治理/验证/CI规则、其他源码或测试断言以绕过失败。",
+    "Builder commit、Docker/GitHub访问、push、PR、merge、额外代理或资格推理探测；Controller 代写业务、补提交或人工逐项启动 QA。",
+    "恢复或重放历史任务、改写 UNKNOWN/BLOCKED_BUDGET/usage/预留、主动重试/fallback 或自动提高额度。"
+  ]
+}
