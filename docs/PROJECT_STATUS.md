@@ -2,12 +2,16 @@
 
 ## Engineering maintenance — Recon historical boundary
 
-The three ad hoc probes retained under `archive/recon_v2_research/` are detached
+The three ad hoc probes formerly retained under `archive/recon_v2_research/` are detached
 from current build/source-discovery inputs. Maintained Recon code and tests,
 canonical ingestion/training/evaluation and Stage D recovery assets remain in
 the active tree. This is an engineering asset-boundary change, not a business
 milestone, acquisition authorization, model activation or Stage D gate change.
-No historical assets are deleted. Boundary details: `docs/PROJECT_MAP.md`.
+Phase 2 removes those already retired probes and the 2,484,963-byte historical
+QA export from the tracked tree. The complete original export is retained
+externally; legacy raw/research fixtures, active tests and recovery assets remain.
+No business capability, Stage D authorization or production behavior changes.
+Boundary details and qualification scope: `docs/PROJECT_MAP.md`.
 
 
 - lifecycle: current-state
