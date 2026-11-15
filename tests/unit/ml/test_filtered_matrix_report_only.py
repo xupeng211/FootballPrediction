@@ -9,6 +9,7 @@ scope: GOLD-AUDIT-2AE report-only matrix validation
 from __future__ import annotations
 
 import importlib.util
+from copy import deepcopy
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -139,3 +140,86 @@ def test_report_only_signal_summary_and_readiness_are_conservative() -> None:
     assert readiness["SAFE_FOR_REAL_TRAINING"] is False
     assert readiness["SAFE_FOR_REAL_PREDICTION"] is False
     assert readiness["SAFE_FOR_BACKTEST"] is False
+
+
+def _report_value_rows(values: list) -> list[dict]:
+    return [
+        {
+            "external_id": str(index + 1),
+            "data_version": "fotmob_live_v1",
+            "golden_features": value,
+        }
+        for index, value in enumerate(values)
+    ]
+
+
+def test_report_only_text_source_is_not_numeric() -> None:
+    rows = _report_value_rows(
+        [
+            {"home_market_value_source": "totalStarterMarketValue", "home_injury_count": 0},
+            {"home_market_value_source": "totalStarterMarketValue", "home_injury_count": 1},
+        ]
+    )
+    report = filtered_matrix_report.build_filtered_feature_matrix_report(rows)
+    quality = report["Feature quality"]
+    assert quality["numeric_feature_count"] == 1, quality
+    assert quality["non_numeric_feature_count"] == 1
+    assert quality["low_variance_feature_examples"] == ["golden_features.home_injury_count"]
+    assert quality["constant_feature_examples"] == ["golden_features.home_market_value_source"]
+    assert report["Filtered matrix"]["model_signal_feature_columns"] == 2
+
+
+def test_report_only_numeric_conversion_boundaries_and_input_unchanged() -> None:
+    cases = [
+        ([0, "bad"], False, False, 0, 2),
+        (["0", "1"], True, False, 0, 2),
+        (["0", 0], True, True, 0, 2),
+        ([False, True], False, False, 0, 2),
+        ([0, float("inf")], False, False, 0, 2),
+        ([float("-inf"), "nan"], False, False, 0, 2),
+        (["inf", "-inf"], False, False, 0, 2),
+        ([None, ""], False, False, 1, 0),
+        ([0, None], True, False, 0, 1),
+        ([0, None, ""], True, False, 1, 1),
+        ([0, 1, 2], True, False, 0, 3),
+    ]
+    for values, numeric, all_zero, high_missing, non_null in cases:
+        rows = _report_value_rows([{"home_injury_count": value} for value in values])
+        before = deepcopy(rows)
+        report = filtered_matrix_report.build_filtered_feature_matrix_report(rows)
+        assert rows == before
+        quality = report["Feature quality"]
+        assert quality["numeric_feature_count"] == int(numeric), values
+        assert quality["non_numeric_feature_count"] == int(not numeric), values
+        assert quality["all_zero_feature_count"] == int(all_zero), values
+        assert quality["high_missing_feature_count"] == high_missing, values
+        assert quality["top_missing_features"][0]["non_null_count"] == non_null
+        expected_low_variance = (
+            numeric and len({float(v) for v in values if v is not None and v != ""}) <= 2
+        )
+        assert quality["low_variance_feature_examples"] == (
+            ["golden_features.home_injury_count"] if expected_low_variance else []
+        ), values
+        assert report["Readiness"]["TRAINING_READINESS_STATUS"] == "NOT_READY"
+        assert all(
+            value is False
+            for key, value in report["Readiness"].items()
+            if key.startswith("SAFE_FOR_")
+        )
+        assert all(
+            report[key] is False
+            for key in ("db_write", "artifact_write", "model_fit", "dataset_write")
+        )
+
+
+def test_report_only_absent_feature_remains_missing() -> None:
+    rows = _report_value_rows([{"home_injury_count": 0}, {}, {}])
+    report = filtered_matrix_report.build_filtered_feature_matrix_report(rows)
+    quality = report["Feature quality"]
+    assert quality["numeric_feature_count"] == 1
+    assert quality["non_numeric_feature_count"] == 0
+    assert quality["all_zero_feature_count"] == 0
+    assert quality["high_missing_feature_count"] == 1
+    assert quality["top_missing_features"][0]["non_null_count"] == 1
+    assert quality["low_variance_feature_examples"] == ["golden_features.home_injury_count"]
+    assert rows == _report_value_rows([{"home_injury_count": 0}, {}, {}])
