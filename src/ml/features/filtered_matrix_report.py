@@ -258,7 +258,7 @@ def _build_feature_stats(matrix: list[dict[str, Any]], columns: list[str]) -> li
         values = [row.get(column) for row in matrix]
         non_missing = [value for value in values if not _is_missing(value)]
         numbers = [_as_number(value) for value in non_missing]
-        numeric_convertible = bool(non_missing) and len(numbers) == len(non_missing)
+        numeric_convertible = bool(non_missing) and all(number is not None for number in numbers)
         unique_values = {_json_key(value) for value in non_missing}
         numeric_unique = {value for value in numbers if value is not None}
         all_zero = (
