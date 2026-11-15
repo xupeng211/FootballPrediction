@@ -1,0 +1,47 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_REPORT_ONLY_NUMERIC_CLASSIFICATION_FIX_20261115_LOCAL",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/features/filtered_matrix_report.py",
+    "tests/unit/ml/test_filtered_matrix_report_only.py",
+    "docs/ml/training_no_write_report_only_guard.md",
+    "docs/agentic/missions/FP_REPORT_ONLY_NUMERIC_CLASSIFICATION_FIX_20261115_LOCAL.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    "scripts/",
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "models/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "准确BASE及四路径由Owner批准；原两个任务、旧scope、候选及UNKNOWN账目原样保留。Builder不得修改Controller冻结scope。",
+    "保留_as_number、allowlist、列身份、阈值、缺失、标签、readiness及全部SAFE_FOR_*和no-write语义；不新增清洗、填补、训练能力或业务入口。",
+    "同一首次实施会话通过公开helper取得真实关键回归旧实现FAIL、修复后PASS证据，并覆盖批准边界及输入不变。",
+    "本local执行只交隔离候选与QA；STRICT single_openai独审及唯一PR/CI由Controller另行调度，准确HEAD须VALID_CURRENT/PASS，Owner保留Merge决定。",
+    "local最多首次实施加一次原生同线程QA修复；资源逐次准入，不承诺完整审核返工对；不额外格式恢复或重派。"
+  ],
+  "forbidden_side_effects": [
+    "训练、预测、backtest、采集、激活、部署及业务/生产DB连接。",
+    "范围外、治理、审核工具、Harness源码、认证/代理/持久配置修改；依赖/镜像拉取、联网安装、host fallback。",
+    "Builder网络、其他agent/模型、Docker、认证读取、commit、push、PR或merge；Controller仅按另行批准的B/C门禁执行独审和远端发布。",
+    "修改旧账、释放旧UNKNOWN预留、换ID自动续跑、人工代写产品、替换审核通道或修改运行器/环境续跑。"
+  ]
+}
