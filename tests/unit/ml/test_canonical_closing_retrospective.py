@@ -515,7 +515,9 @@ def test_markdown_summary_pure_threshold_and_empty(count):
     model = np.full((count, 3), 1 / 3)
     market = np.tile([0.1, 0.3, 0.6], (count, 1))
     result = {
-        "paired_calibration": diagnostic._paired_calibration_summary(model, market, np.zeros(count, dtype=int)),
+        "paired_calibration": diagnostic._paired_calibration_summary(
+            model, market, np.zeros(count, dtype=int)
+        ),
     }
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
@@ -542,7 +544,13 @@ def test_markdown_summary_pure_threshold_and_empty(count):
         assert ("历史描述" in "\n".join(rows)) == (count == EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT)
     else:
         assert all("无 | 无 | 无 | 无 | 无" in row for row in rows)
-    for boundary in ("并非市场独立分箱", "109 场已 consumed", "新 holdout", "盈利/ROI/CLV", "研究资格"):
+    for boundary in (
+        "并非市场独立分箱",
+        "109 场已 consumed",
+        "新 holdout",
+        "盈利/ROI/CLV",
+        "研究资格",
+    ):
         assert boundary in text
 
 
@@ -550,7 +558,11 @@ def test_markdown_boundary_asymmetry_and_actual_text_escaping():
     """零与一、两端非对称值以及真正插值的状态文本。"""
     model = np.array([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
     market = np.array([[0.8, 0.1, 0.1], [0.2, 0.7, 0.1]])
-    result = {"paired_calibration": diagnostic._paired_calibration_summary(model, market, np.array([0, 2]))}
+    result = {
+        "paired_calibration": diagnostic._paired_calibration_summary(
+            model, market, np.array([0, 2])
+        )
+    }
     text = diagnostic.render_summary_markdown(result)
     assert "| [0.0,0.2) | 1 | 0.000000 | 0.800000 | 1.000000 | 1.000000 | 0.200000 |" in text
     assert "| [0.8,1.0] | 1 | 1.000000 | 0.200000 | 0.000000 | 1.000000 | 0.200000 |" in text
@@ -627,7 +639,9 @@ def test_summary_cli_success(summary_cli, summary_format, tmp_path, monkeypatch,
 
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
-@pytest.mark.parametrize("fault", ["business", "relative", "internal", "symlink", "parent_symlink", "missing_parent"])
+@pytest.mark.parametrize(
+    "fault", ["business", "relative", "internal", "symlink", "parent_symlink", "missing_parent"]
+)
 def test_summary_cli_errors(summary_cli, summary_format, fault, tmp_path, monkeypatch, capsys):
     cli, _, calls = summary_cli
     output = tmp_path / "synthetic.json"
@@ -691,7 +705,16 @@ def test_summary_cli_create_race(summary_cli, summary_format, tmp_path, monkeypa
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
 @pytest.mark.parametrize(
     "fault",
-    ["success", "business", "relative", "internal", "existing", "symlink", "parent_symlink", "missing_parent"],
+    [
+        "success",
+        "business",
+        "relative",
+        "internal",
+        "existing",
+        "symlink",
+        "parent_symlink",
+        "missing_parent",
+    ],
 )
 def test_summary_cli_process(summary_cli, summary_format, fault, tmp_path):
     """仅启动注入合成结果的受控 Python；子进程禁止业务 loader/网络/模型动作。"""
@@ -740,7 +763,14 @@ raise SystemExit(cli.main())
 """
     # autouse 仍禁止 subprocess.run；这里仅允许这一固定程序通过 Popen 执行。
     with subprocess.Popen(
-        [sys.executable, "-c", code, json.dumps(result), fault, *_summary_cli_args(output, summary_format)],
+        [
+            sys.executable,
+            "-c",
+            code,
+            json.dumps(result),
+            fault,
+            *_summary_cli_args(output, summary_format),
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
