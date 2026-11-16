@@ -4,18 +4,25 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
 import socket
 import sqlite3
+import subprocess
+import sys
 
 import joblib
 import numpy as np
 import pytest
 import xgboost as xgb
 
+from scripts.model_evaluation import canonical_closing_retrospective as cli
 from src.ml.evaluation import canonical_closing_retrospective as diagnostic
 from src.ml.training import canonical_training_producer as producer
 
+EXPECTED_CLASS_COUNT = 3
+EXPECTED_TABLE_PIPE_COUNT = 9
+ARGPARSE_ERROR_EXIT_CODE = 2
 EXPECTED_CALIBRATION_BIN_COUNT = 5
 EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT = 10
 CALIBRATION_STATISTICS = (
@@ -420,7 +427,7 @@ def test_paired_calibration_all_boundaries_and_conservation(class_index):
     assert all(b["market_mean"] == round(1 / 3, 12) for b in bins)
 
 
-@pytest.mark.parametrize("count", [0, 9, 10])
+@pytest.mark.parametrize("count", [0, 1, 9, 10])
 def test_paired_calibration_fixed_sample_threshold_empty_bins_and_rounding(count):
     """非空箱门槛固定为 10；空箱不拉低顶层状态，五项均为空。"""
     model = np.full((count, 3), 1 / 3)
@@ -502,31 +509,37 @@ def test_analyze_paired_calibration_below_scoring_threshold(sources, monkeypatch
     )
 
 
-@pytest.mark.parametrize("count", [0, 9, 10])
+@pytest.mark.parametrize("count", [0, 1, 9, 10])
 def test_markdown_summary_pure_threshold_and_empty(count):
     """合成数组仅验证展示；不读取真实证据。"""
     model = np.full((count, 3), 1 / 3)
     market = np.tile([0.1, 0.3, 0.6], (count, 1))
-    result = {"paired_calibration": diagnostic._paired_calibration_summary(
-        model, market, np.zeros(count, dtype=int)
-    )}
+    result = {
+        "paired_calibration": diagnostic._paired_calibration_summary(model, market, np.zeros(count, dtype=int)),
+    }
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
     assert text == diagnostic.render_summary_markdown(result)
     assert result == before
     assert [line for line in text.splitlines() if line.startswith("## ")] == [
-        "## 客胜(AWAY)", "## 平局(DRAW)", "## 主胜(HOME)"
+        "## 客胜(AWAY)",
+        "## 平局(DRAW)",
+        "## 主胜(HOME)",
     ]
     rows = [line for line in text.splitlines() if line.startswith("| [")]
-    assert len(rows) == 15
+    assert len(rows) == EXPECTED_CLASS_COUNT * EXPECTED_CALIBRATION_BIN_COUNT
     for offset in (0, 5, 10):
-        assert [row.split(" | ")[0] for row in rows[offset:offset + 5]] == [
-            "| [0.0,0.2)", "| [0.2,0.4)", "| [0.4,0.6)", "| [0.6,0.8)", "| [0.8,1.0]"
+        assert [row.split(" | ")[0] for row in rows[offset : offset + 5]] == [
+            "| [0.0,0.2)",
+            "| [0.2,0.4)",
+            "| [0.4,0.6)",
+            "| [0.6,0.8)",
+            "| [0.8,1.0]",
         ]
     assert "| 0 | 无 | 无 | 无 | 无 | 无 | 样本不足 |" in text
     if count:
         assert f"| {count} | 0.333333 | 0.100000 | 1.000000 | 0.666667 | 0.900000 |" in text
-        assert ("历史描述" in "\n".join(rows)) == (count == 10)
+        assert ("历史描述" in "\n".join(rows)) == (count == EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT)
     else:
         assert all("无 | 无 | 无 | 无 | 无" in row for row in rows)
     for boundary in ("并非市场独立分箱", "109 场已 consumed", "新 holdout", "盈利/ROI/CLV", "研究资格"):
@@ -535,7 +548,7 @@ def test_markdown_summary_pure_threshold_and_empty(count):
 
 def test_markdown_boundary_asymmetry_and_actual_text_escaping():
     """零与一、两端非对称值以及真正插值的状态文本。"""
-    model = np.array([[0., 0., 1.], [1., 0., 0.]])
+    model = np.array([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
     market = np.array([[0.8, 0.1, 0.1], [0.2, 0.7, 0.1]])
     result = {"paired_calibration": diagnostic._paired_calibration_summary(model, market, np.array([0, 2]))}
     text = diagnostic.render_summary_markdown(result)
@@ -547,14 +560,26 @@ def test_markdown_boundary_asymmetry_and_actual_text_escaping():
     escaped = diagnostic.render_summary_markdown(result)
     row = next(line for line in escaped.splitlines() if line.startswith("| ["))
     assert "".join(f"&#{ord(char)};" for char in hostile) in row
-    assert row.count("|") == 9
+    assert row.count("|") == EXPECTED_TABLE_PIPE_COUNT
     assert len(escaped.splitlines()) == len(text.splitlines())
     assert result == before
 
 
 def _summary_cli_args(output, summary_format=None):
-    names = ("evaluation", "evaluation-receipt", "candidate", "metadata", "frame",
-             "frame-receipt", "gd03", "gd03-receipt", "gd02", "gd02-receipt", "gd01", "gd01-receipt")
+    names = (
+        "evaluation",
+        "evaluation-receipt",
+        "candidate",
+        "metadata",
+        "frame",
+        "frame-receipt",
+        "gd03",
+        "gd03-receipt",
+        "gd02",
+        "gd02-receipt",
+        "gd01",
+        "gd01-receipt",
+    )
     args = ["closing-test"]
     for name in names:
         args.extend([f"--{name}", "/synthetic-unused"])
@@ -566,31 +591,37 @@ def _summary_cli_args(output, summary_format=None):
 
 @pytest.fixture
 def summary_cli(monkeypatch, sources):
-    from scripts.model_evaluation import canonical_closing_retrospective as cli
     result = diagnostic.analyze(sources)
     calls = []
-    monkeypatch.setattr(diagnostic, "load_sources", lambda paths: calls.append("load") or sources)
-    monkeypatch.setattr(diagnostic, "analyze", lambda loaded: calls.append("analyze") or result)
+    monkeypatch.setattr(diagnostic, "load_sources", lambda _paths: calls.append("load") or sources)
+    monkeypatch.setattr(diagnostic, "analyze", lambda _loaded: calls.append("analyze") or result)
     return cli, result, calls
 
 
 @pytest.mark.parametrize("summary_format", [None, "json", "markdown"])
 def test_summary_cli_success(summary_cli, summary_format, tmp_path, monkeypatch, capsys):
-    import sys
     cli, result, calls = summary_cli
     output = tmp_path / "synthetic.json"
     monkeypatch.setattr(sys, "argv", _summary_cli_args(output, summary_format))
     assert cli.main() == 0
-    expected = (diagnostic.render_summary_markdown(result) if summary_format == "markdown" else json.dumps({
-        k: v for k, v in result.items() if k not in ("rows", "source_hashes", "candidate", "market_policy")
-    })) + "\n"
+    expected = (
+        diagnostic.render_summary_markdown(result)
+        if summary_format == "markdown"
+        else json.dumps(
+            {
+                k: v
+                for k, v in result.items()
+                if k not in ("rows", "source_hashes", "candidate", "market_policy")
+            }
+        )
+    ) + "\n"
     assert capsys.readouterr().out == expected
     payload = diagnostic.contract._canonical_json_bytes(result) + b"\n"
     assert output.read_bytes() == payload
     assert calls == ["load", "analyze"]
     with pytest.raises(SystemExit) as exc:
         cli.main()
-    assert exc.value.code == 2
+    assert exc.value.code == ARGPARSE_ERROR_EXIT_CODE
     assert output.read_bytes() == payload
     assert calls == ["load", "analyze"]
 
@@ -598,7 +629,6 @@ def test_summary_cli_success(summary_cli, summary_format, tmp_path, monkeypatch,
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
 @pytest.mark.parametrize("fault", ["business", "relative", "internal", "symlink", "parent_symlink", "missing_parent"])
 def test_summary_cli_errors(summary_cli, summary_format, fault, tmp_path, monkeypatch, capsys):
-    import sys
     cli, _, calls = summary_cli
     output = tmp_path / "synthetic.json"
     if fault == "relative":
@@ -613,21 +643,25 @@ def test_summary_cli_errors(summary_cli, summary_format, fault, tmp_path, monkey
         output = link / "absent"
     elif fault == "missing_parent":
         output = tmp_path / "absent" / "file"
+
     def fail(_sources):
         calls.append("analyze")
         raise ValueError("synthetic business failure")
+
     monkeypatch.setattr(diagnostic, "analyze", fail)
     monkeypatch.setattr(sys, "argv", _summary_cli_args(output, summary_format))
     if summary_format == "invalid" or fault == "missing_parent":
         with pytest.raises(SystemExit) as exc:
             cli.main()
-        assert exc.value.code == 2
+        assert exc.value.code == ARGPARSE_ERROR_EXIT_CODE
         assert calls == []
         assert capsys.readouterr().out == ""
     elif fault == "business":
         assert cli.main() == 1
         assert json.loads(capsys.readouterr().out) == {
-            "status": "INSUFFICIENT_EVIDENCE", "reason": "synthetic business failure", "metrics": None
+            "status": "INSUFFICIENT_EVIDENCE",
+            "reason": "synthetic business failure",
+            "metrics": None,
         }
         assert calls == ["load", "analyze"]
     else:
@@ -640,12 +674,13 @@ def test_summary_cli_errors(summary_cli, summary_format, fault, tmp_path, monkey
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown"])
 def test_summary_cli_create_race(summary_cli, summary_format, tmp_path, monkeypatch, capsys):
-    import sys
     cli, result, _ = summary_cli
     output = tmp_path / "race.json"
+
     def race(_sources):
         output.write_bytes(b"synthetic competitor")
         return result
+
     monkeypatch.setattr(diagnostic, "analyze", race)
     monkeypatch.setattr(sys, "argv", _summary_cli_args(output, summary_format))
     assert cli.main() == 1
@@ -654,12 +689,12 @@ def test_summary_cli_create_race(summary_cli, summary_format, tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
-@pytest.mark.parametrize("fault", ["success", "business", "relative", "internal", "existing", "symlink", "parent_symlink", "missing_parent"])
+@pytest.mark.parametrize(
+    "fault",
+    ["success", "business", "relative", "internal", "existing", "symlink", "parent_symlink", "missing_parent"],
+)
 def test_summary_cli_process(summary_cli, summary_format, fault, tmp_path):
     """仅启动注入合成结果的受控 Python；子进程禁止业务 loader/网络/模型动作。"""
-    import os
-    import subprocess
-    import sys
 
     _, result, _ = summary_cli
     output = tmp_path / "process.json"
@@ -705,14 +740,14 @@ raise SystemExit(cli.main())
 """
     # autouse 仍禁止 subprocess.run；这里仅允许这一固定程序通过 Popen 执行。
     with subprocess.Popen(
-        [sys.executable, "-c", code, json.dumps(result), fault,
-         *_summary_cli_args(output, summary_format)],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        [sys.executable, "-c", code, json.dumps(result), fault, *_summary_cli_args(output, summary_format)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     ) as child:
         stdout, stderr = child.communicate(timeout=60)
     if summary_format == "invalid" or fault in ("existing", "missing_parent"):
-        assert child.returncode == 2
+        assert child.returncode == ARGPARSE_ERROR_EXIT_CODE
         assert stdout == b""
         assert b"error:" in stderr
     elif fault in ("relative", "internal", "symlink", "parent_symlink"):
@@ -726,17 +761,23 @@ raise SystemExit(cli.main())
     else:
         assert child.returncode == 0
         assert stderr == b""
-        expected = (diagnostic.render_summary_markdown(result) if summary_format == "markdown" else json.dumps({
-            k: v for k, v in result.items() if k not in ("rows", "source_hashes", "candidate", "market_policy")
-        })) + "\n"
+        expected = (
+            diagnostic.render_summary_markdown(result)
+            if summary_format == "markdown"
+            else json.dumps(
+                {
+                    k: v
+                    for k, v in result.items()
+                    if k not in ("rows", "source_hashes", "candidate", "market_policy")
+                }
+            )
+        ) + "\n"
         assert stdout == expected.encode()
         assert output.read_bytes() == diagnostic.contract._canonical_json_bytes(result) + b"\n"
 
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown"])
 def test_summary_cli_write_error(summary_cli, summary_format, tmp_path, monkeypatch, capsys):
-    import sys
-
     cli, _, calls = summary_cli
     output = tmp_path / "denied.json"
 
@@ -748,7 +789,9 @@ def test_summary_cli_write_error(summary_cli, summary_format, tmp_path, monkeypa
     monkeypatch.setattr(sys, "argv", _summary_cli_args(output, summary_format))
     assert cli.main() == 1
     assert json.loads(capsys.readouterr().out) == {
-        "status": "INSUFFICIENT_EVIDENCE", "reason": "synthetic write denied", "metrics": None
+        "status": "INSUFFICIENT_EVIDENCE",
+        "reason": "synthetic write denied",
+        "metrics": None,
     }
     assert calls == ["load", "analyze"]
     assert not output.exists()

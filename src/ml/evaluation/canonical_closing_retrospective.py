@@ -414,7 +414,6 @@ def _paired_calibration_summary(
     }
 
 
-
 def _markdown_cell(value: Any) -> str:
     """将插值文本编码为单行 Markdown 单元格，避免 HTML 或表格注入。"""
     return "".join(
@@ -449,7 +448,9 @@ def render_summary_markdown(result: dict[str, Any]) -> str:
             cells = [interval, str(entry["count"])]
             cells.extend("无" if entry[key] is None else f"{entry[key]:.6f}" for key in statistics)
             cells.append(statuses.get(entry["sample_status"], entry["sample_status"]))
-            lines.append("| " + interval + " | " + " | ".join(_markdown_cell(cell) for cell in cells[1:]) + " |")
+            lines.append(
+                "| " + interval + " | " + " | ".join(_markdown_cell(cell) for cell in cells[1:]) + " |"
+            )
         lines.append("")
     lines.extend(
         [
