@@ -1,0 +1,62 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_CALIBRATION_MARKDOWN_STDOUT_20261115",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "scripts/model_evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "docs/CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "README.md",
+    "docs/agentic/missions/FP_CLOSING_CALIBRATION_MARKDOWN_STDOUT_20261115.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_VISION.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "scripts/devops",
+    "scripts/ops",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d",
+    "credential",
+    "secret",
+    "blocker"
+  ],
+  "protected_invariants": [
+    "仅新增成功 stdout 的 Markdown 展示；默认及显式 --summary-format json 的 stdout 与现行 JSON 字节/字段/序列化保持一致。",
+    "external JSON 的内容、canonical bytes、路径验证、create-only xb 写入、现存文件/符号链接拒绝及错误/退出码保持；格式选项不改变 external JSON。",
+    "复用 analyze() 已产生的 paired_calibration；不改变 load_sources/analyze/分箱/概率/指标/阈值/来源绑定/评分/bootstrap/标签映射或统计结论。",
+    "保留 AWAY/DRAW/HOME 顺序、五箱边界和最后箱包含 1.0；阈值沿用既有 minimum_nonempty_bin_count=10；显示舍入不得反写输入。",
+    "只添加纯 renderer 与 CLI 格式分派、必要测试及文档回流；不修改既有统计函数、protocol/registry、历史报告/receipt 或业务治理权威。",
+    "109 场 consumed 历史证据不等于新 holdout；provider-defined closing 不等于精确决策时点；不作盈利、ROI、CLV、可交易价值、未来表现或模型激活证明。",
+    "七路径精确授权、完整 BASE→HEAD diff 不超过 32768 bytes；准确 HEAD 的隔离 QA、canonical Codex 独审、required PR CI 与最终 merge-ready 均须通过；Owner 单独决定最终 Merge。"
+  ],
+  "forbidden_side_effects": [
+    "真实证据重算、新研究、真实业务数据采集/网络/provider 请求、真实训练/推理/回测、模型激活、生产数据库/raw/历史证据写入或 migration apply；Owner另批的开发/独审模型通道及GitHub交付链不属于业务provider动作。",
+    "修改认证、代理、凭据、持久配置、审核/CI 权威、workflow、依赖、Stage D、protected invariant，或借此扩展任务范围。",
+    "覆盖正式 main、用户改动、历史候选/证据；强推、admin/auto、绕过失败门禁、自行 Merge 或删除分支/工作区。",
+    "由外部执行 Codex 代写业务/测试/补交付后声称 Harness 自主完成；如果需要技术接手，先停止并报告。",
+    "把 synthetic fixture/测试临时文件/隔离 QA 临时数据库当成真实业务数据；除 Owner 批准的既有隔离 QA 与其临时 DB 外，不启动业务服务或连接生产数据库。"
+  ]
+}

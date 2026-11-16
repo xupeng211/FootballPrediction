@@ -414,6 +414,57 @@ def _paired_calibration_summary(
     }
 
 
+def _markdown_cell(value: Any) -> str:
+    """将插值文本编码为单行 Markdown 单元格，避免 HTML 或表格注入。"""
+    return "".join(
+        f"&#{ord(char)};" if char in "&<>\"'\\`*_{}[]()#+!|~\r\n" else char for char in str(value)
+    )
+
+
+def render_summary_markdown(result: dict[str, Any]) -> str:
+    """纯展示已有配对校准结果；不重算统计、不修改输入。"""
+    lines = ["# 中文配对校准摘要", ""]
+    statistics = (
+        "model_mean",
+        "market_mean",
+        "observed_frequency",
+        "model_absolute_gap",
+        "market_absolute_gap",
+    )
+    statuses = {"INSUFFICIENT_SAMPLE": "样本不足", "DESCRIPTIVE_ONLY": "历史描述"}
+    for name, title in (("AWAY", "客胜"), ("DRAW", "平局"), ("HOME", "主胜")):
+        lines.extend(
+            [
+                f"## {title}({name})",
+                "",
+                "| 模型概率箱 | 场数 | 模型均值 | 市场均值 | 观测频率 | 模型绝对差 | 市场绝对差 | 样本状态 |",
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+            ]
+        )
+        for entry in result["paired_calibration"]["classwise"][name]:
+            low, high = entry["bin"]
+            interval = f"[{low:.1f},{high:.1f}{']' if high == 1.0 else ')'}"
+            cells = [interval, str(entry["count"])]
+            cells.extend("无" if entry[key] is None else f"{entry[key]:.6f}" for key in statistics)
+            cells.append(statuses.get(entry["sample_status"], entry["sample_status"]))
+            lines.append(
+                "| "
+                + interval
+                + " | "
+                + " | ".join(_markdown_cell(cell) for cell in cells[1:])
+                + " |"
+            )
+        lines.append("")
+    lines.extend(
+        [
+            "按模型概率对同场配对分箱，并非市场独立分箱；数值为 0–1 原值，仅显示舍入。",
+            "109 场已 consumed，仅历史描述；不是新 holdout、精确决策时点、未来表现或盈利/ROI/CLV、",
+            "可交易价值证明，不改变原模型及研究资格。provider-defined closing 不等于精确决策时点。",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def analyze(sources: dict[str, Any]) -> dict[str, Any]:
     """每个 reserved ID 必须有去向；row 缺陷排除、全局合同缺陷停止评分。"""
     evaluation = sources["evaluation"]
