@@ -601,6 +601,38 @@ def _summary_cli_args(output, summary_format=None):
     return args
 
 
+SUMMARY_PATH_FAULTS = ("relative", "internal", "symlink", "parent_symlink", "missing_parent")
+
+
+def _summary_stdout(result, summary_format):
+    if summary_format == "markdown":
+        return diagnostic.render_summary_markdown(result) + "\n"
+    summary = {
+        k: v
+        for k, v in result.items()
+        if k not in ("rows", "source_hashes", "candidate", "market_policy")
+    }
+    return json.dumps(summary) + "\n"
+
+
+def _summary_output(tmp_path, fault, *, process=False):
+    internal_name = "never-created-process.json" if process else "never-created.json"
+    output = {
+        "relative": Path("relative.json"),
+        "internal": Path(__file__).resolve().parent / internal_name,
+        "missing_parent": tmp_path / "absent" / "file",
+    }.get(fault, tmp_path / ("process.json" if process else "synthetic.json"))
+    if fault == "parent_symlink":
+        link = tmp_path / "link"
+        link.symlink_to(tmp_path, target_is_directory=True)
+        return link / "absent"
+    if fault == "symlink":
+        output.symlink_to(tmp_path / "absent")
+    elif fault == "existing":
+        output.write_bytes(b"synthetic existing")
+    return output
+
+
 @pytest.fixture
 def summary_cli(monkeypatch, sources):
     result = diagnostic.analyze(sources)
@@ -616,18 +648,7 @@ def test_summary_cli_success(summary_cli, summary_format, tmp_path, monkeypatch,
     output = tmp_path / "synthetic.json"
     monkeypatch.setattr(sys, "argv", _summary_cli_args(output, summary_format))
     assert cli.main() == 0
-    expected = (
-        diagnostic.render_summary_markdown(result)
-        if summary_format == "markdown"
-        else json.dumps(
-            {
-                k: v
-                for k, v in result.items()
-                if k not in ("rows", "source_hashes", "candidate", "market_policy")
-            }
-        )
-    ) + "\n"
-    assert capsys.readouterr().out == expected
+    assert capsys.readouterr().out == _summary_stdout(result, summary_format)
     payload = diagnostic.contract._canonical_json_bytes(result) + b"\n"
     assert output.read_bytes() == payload
     assert calls == ["load", "analyze"]
@@ -639,24 +660,10 @@ def test_summary_cli_success(summary_cli, summary_format, tmp_path, monkeypatch,
 
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
-@pytest.mark.parametrize(
-    "fault", ["business", "relative", "internal", "symlink", "parent_symlink", "missing_parent"]
-)
+@pytest.mark.parametrize("fault", ["business", *SUMMARY_PATH_FAULTS])
 def test_summary_cli_errors(summary_cli, summary_format, fault, tmp_path, monkeypatch, capsys):
     cli, _, calls = summary_cli
-    output = tmp_path / "synthetic.json"
-    if fault == "relative":
-        output = Path("relative.json")
-    elif fault == "internal":
-        output = Path(__file__).resolve().parent / "never-created.json"
-    elif fault == "symlink":
-        output.symlink_to(tmp_path / "absent")
-    elif fault == "parent_symlink":
-        link = tmp_path / "link"
-        link.symlink_to(tmp_path, target_is_directory=True)
-        output = link / "absent"
-    elif fault == "missing_parent":
-        output = tmp_path / "absent" / "file"
+    output = _summary_output(tmp_path, fault)
 
     def fail(_sources):
         calls.append("analyze")
@@ -703,38 +710,12 @@ def test_summary_cli_create_race(summary_cli, summary_format, tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("summary_format", ["json", "markdown", "invalid"])
-@pytest.mark.parametrize(
-    "fault",
-    [
-        "success",
-        "business",
-        "relative",
-        "internal",
-        "existing",
-        "symlink",
-        "parent_symlink",
-        "missing_parent",
-    ],
-)
+@pytest.mark.parametrize("fault", ["success", "business", "existing", *SUMMARY_PATH_FAULTS])
 def test_summary_cli_process(summary_cli, summary_format, fault, tmp_path):
     """仅启动注入合成结果的受控 Python；子进程禁止业务 loader/网络/模型动作。"""
 
     _, result, _ = summary_cli
-    output = tmp_path / "process.json"
-    if fault == "relative":
-        output = Path("relative.json")
-    elif fault == "internal":
-        output = Path(__file__).resolve().parent / "never-created-process.json"
-    elif fault == "parent_symlink":
-        link = tmp_path / "link"
-        link.symlink_to(tmp_path, target_is_directory=True)
-        output = link / "absent"
-    elif fault == "existing":
-        output.write_bytes(b"synthetic existing")
-    elif fault == "symlink":
-        output.symlink_to(tmp_path / "absent")
-    elif fault == "missing_parent":
-        output = tmp_path / "absent" / "file"
+    output = _summary_output(tmp_path, fault, process=True)
     code = """
 import json, socket, sqlite3, subprocess, sys
 import joblib
@@ -762,15 +743,9 @@ cli.diagnostic.analyze = analyze
 raise SystemExit(cli.main())
 """
     # autouse 仍禁止 subprocess.run；这里仅允许这一固定程序通过 Popen 执行。
+    command = [sys.executable, "-c", code, json.dumps(result), fault]
     with subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            code,
-            json.dumps(result),
-            fault,
-            *_summary_cli_args(output, summary_format),
-        ],
+        command + _summary_cli_args(output, summary_format),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
@@ -791,18 +766,7 @@ raise SystemExit(cli.main())
     else:
         assert child.returncode == 0
         assert stderr == b""
-        expected = (
-            diagnostic.render_summary_markdown(result)
-            if summary_format == "markdown"
-            else json.dumps(
-                {
-                    k: v
-                    for k, v in result.items()
-                    if k not in ("rows", "source_hashes", "candidate", "market_policy")
-                }
-            )
-        ) + "\n"
-        assert stdout == expected.encode()
+        assert stdout == _summary_stdout(result, summary_format).encode()
         assert output.read_bytes() == diagnostic.contract._canonical_json_bytes(result) + b"\n"
 
 
