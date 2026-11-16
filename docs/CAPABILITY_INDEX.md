@@ -258,6 +258,8 @@ database, or raw-data mutation and is not a production acquisition entrypoint.
 只消费冻结预测，zero inference/training/DB/network。不是 canonical value/de-vig/backtest engine 的建立，
 也不是新 holdout 或盈利证明；详见 [正式报告](CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md)。
 代码/结果交付仍需独立审核及 Owner 接受，不把研究结果当作生产授权。
+支持 `--summary-format markdown` 中文配对校准成功 stdout（默认 json）；复用既有
+paired_calibration，不改统计、external JSON 或证据资格，不新增研究结论。
 
 ## 本索引不回答什么
 

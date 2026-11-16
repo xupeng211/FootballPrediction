@@ -185,3 +185,32 @@ feature-quality 诊断，锁定研究假设与新评价协议，再在单独授�
 不能围绕这 109 场调参并把改善称为泛化收益。现有 candidate 的 `PROMISING` 是对训练 prior 的评价，
 本次市场基准更强，不改写原评价协议或 status 来掩盖差距。
 不建议当前投入 value/staking/真实资金执行；Stage D、生产激活与旧 Harness 任务均没有启动。
+
+
+## 配对校准摘要展示选项
+
+`--summary-format` 只接受 `json` / `markdown`，默认 json；默认及显式 json 的成功
+stdout 保持原序列化。markdown 只替换成功 stdout，external JSON 内容、canonical bytes、
+路径拒绝、create-only 写入和错误行为保持。此选项不授权重算真实证据。
+
+纯 renderer 读取 analyze() 已有 paired_calibration.classwise：固定客胜(AWAY)、平局(DRAW)、
+主胜(HOME)，各五箱 [0.0,0.2)、[0.2,0.4)、[0.4,0.6)、[0.6,0.8)、[0.8,1.0]。
+场数为整数，概率及绝对差按 0–1 原数值六位小数显示；None 显示“无”，零保留。
+状态沿用既有阈值 10 及 sample_status：不足显示“样本不足”，达到仅显示“历史描述”。
+显示舍入不反写输入，插值文本转义，重复调用确定且不改变输入。
+
+按模型概率对同场配对分箱，并非市场独立分箱。109 场已 consumed，仅历史描述；
+不是新 holdout、精确决策时点、未来表现或盈利/ROI/CLV、可交易价值证明；
+不改变原模型及研究资格。provider-defined closing 不等于精确决策时点。
+新增回归仅使用合成 fixture，不读取或重算历史证据。
+
+本次 Documentation Impact：
+- EXISTING_CAPABILITIES_REVIEWED=YES；CURRENT_MILESTONE_REVIEWED=YES；
+  VISION_ALIGNMENT_REVIEWED=YES。复用离线概率诊断能力，改善概率质量证据的阅读，
+  属于愿景 Probability Engine 的既有诊断展示，不新增决策或研究系统。
+- CAPABILITY_INDEX_UPDATE_REQUIRED=YES：登记展示选项。
+- README_ENTRYPOINT_UPDATE_REQUIRED=YES：登记 CLI 参数及证据边界。
+- ACTIVE_MILESTONE_UPDATE_REQUIRED=NO：无研究推进或当前 blocker 变化。
+- PROJECT_STATUS_UPDATE_REQUIRED=NO：不产生新证据、状态或研究结论。
+- PROJECT_MAP_UPDATE_REQUIRED=NO：没有新增模块或结构、导航变化。
+- PROJECT_VISION_UPDATE_REQUIRED=NO：目标架构、长期能力 maturity 保持。

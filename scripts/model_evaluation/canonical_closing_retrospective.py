@@ -32,6 +32,7 @@ def main() -> int:
         parser.add_argument(f"--{name.replace('_', '-')}", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--csv-dir", type=Path, required=True)
+    parser.add_argument("--summary-format", choices=("json", "markdown"), default="json")
     args = parser.parse_args()
     paths = {name: getattr(args, name) for name in names}
     paths["csv_dir"] = args.csv_dir
@@ -46,6 +47,9 @@ def main() -> int:
     except (ValueError, OSError, KeyError, TypeError) as exc:
         print(json.dumps({"status": "INSUFFICIENT_EVIDENCE", "reason": str(exc), "metrics": None}))
         return 1
+    if args.summary_format == "markdown":
+        print(diagnostic.render_summary_markdown(result))
+        return 0
     print(
         json.dumps(
             {
