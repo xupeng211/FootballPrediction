@@ -424,6 +424,11 @@ def _markdown_cell(value: Any) -> str:
 def render_summary_markdown(result: dict[str, Any]) -> str:
     """纯展示已有配对校准结果；不重算统计、不修改输入。"""
     lines = ["# 中文配对校准摘要", ""]
+    overall_statuses = {"INSUFFICIENT_SAMPLE": "样本不足", "DESCRIPTIVE_ONLY": "仅供历史描述"}
+    sample_status = result["paired_calibration"]["sample_status"]
+    lines.extend(
+        [f"校准样本状态：{_markdown_cell(overall_statuses.get(sample_status, sample_status))}。", ""]
+    )
     statistics = (
         "model_mean",
         "market_mean",

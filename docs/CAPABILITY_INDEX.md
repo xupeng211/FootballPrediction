@@ -260,6 +260,9 @@ database, or raw-data mutation and is not a production acquisition entrypoint.
 代码/结果交付仍需独立审核及 Owner 接受，不把研究结果当作生产授权。
 支持 `--summary-format markdown` 中文配对校准成功 stdout（默认 json）；复用既有
 paired_calibration，不改统计、external JSON 或证据资格，不新增研究结论。
+标题下、三个结果分组前直接展示 `paired_calibration.sample_status`：
+`INSUFFICIENT_SAMPLE` 为「校准样本状态：样本不足。」，
+`DESCRIPTIVE_ONLY` 为「校准样本状态：仅供历史描述。」；保留分组、表格、每箱状态及历史用途说明。
 
 ## 本索引不回答什么
 
