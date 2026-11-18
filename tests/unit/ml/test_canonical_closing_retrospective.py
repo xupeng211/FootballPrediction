@@ -530,10 +530,11 @@ def test_markdown_summary_pure_threshold_and_empty(count):
         "## 平局(DRAW)",
         "## 主胜(HOME)",
     ]
-    assert text.count(
-        "| 模型概率箱 | 场数 | 模型均值 | 市场均值 | 观测频率 | 模型绝对差 | 市场绝对差 | 样本状态 |"
-    ) == EXPECTED_CLASS_COUNT
-    assert text.count("| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |") == EXPECTED_CLASS_COUNT
+    for header in (
+        "| 模型概率箱 | 场数 | 模型均值 | 市场均值 | 观测频率 | 模型绝对差 | 市场绝对差 | 样本状态 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    ):
+        assert text.count(header) == EXPECTED_CLASS_COUNT
     rows = [line for line in text.splitlines() if line.startswith("| [")]
     assert len(rows) == EXPECTED_CLASS_COUNT * EXPECTED_CALIBRATION_BIN_COUNT
     for offset in (0, 5, 10):
@@ -565,7 +566,9 @@ def test_markdown_summary_pure_threshold_and_empty(count):
         result["paired_calibration"]["sample_status"] = status
         before = deepcopy(result)
         rendered = diagnostic.render_summary_markdown(result)
-        assert rendered.startswith(f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n")
+        assert rendered.startswith(
+            f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n"
+        )
         assert rendered.count("校准样本状态：") == 1
         assert rendered.split("## 客胜(AWAY)", 1)[1] == text.split("## 客胜(AWAY)", 1)[1]
         assert rendered == diagnostic.render_summary_markdown(result)
@@ -613,11 +616,8 @@ SUMMARY_PATH_FAULTS = ("relative", "internal", "symlink", "parent_symlink", "mis
 def _summary_stdout(result, summary_format):
     if summary_format == "markdown":
         return diagnostic.render_summary_markdown(result) + "\n"
-    summary = {
-        k: v
-        for k, v in result.items()
-        if k not in ("rows", "source_hashes", "candidate", "market_policy")
-    }
+    excluded = ("rows", "source_hashes", "candidate", "market_policy")
+    summary = {k: v for k, v in result.items() if k not in excluded}
     return json.dumps(summary) + "\n"
 
 
