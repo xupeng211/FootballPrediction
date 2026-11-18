@@ -1,0 +1,27 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_SAMPLE_STATUS_20261118",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_SAMPLE_STATUS_20261118.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "docs/AGENT_WORKFLOW.md", "Makefile", "package.json", "package-lock.json", "pyproject.toml"],
+  "excluded_prefixes": [".github", ".devcontainer", "config", "database", "scripts", "src/ml/training", "src/ml/inference", "docs/agentic/review_inputs"],
+  "excluded_tokens": ["stage_d", "stage-d"],
+  "protected_invariants": [
+    "仅在既有 Markdown 标题下展示 paired_calibration.sample_status 的中文说明；复用已有状态判断，保留分箱、说明和研究边界。",
+    "保持 JSON、输入对象、统计、阈值、业务结论、来源绑定、CLI 参数、写入及错误语义。",
+    "四路径、32768 字节范围内，保留已有测试和门禁。Harness 在开发前纳入任务合同，最终对同一完整提交验收。",
+    "独立审查、同一版本的项目测试和 GitHub 必需检查均成功后交回 PR，最终合并由 Owner 决定。"
+  ],
+  "forbidden_side_effects": [
+    "禁止连接生产库，写入真实数据库、原始资产或历史证据，执行生产迁移、训练、推理、回测、采集或部署。允许项目既有隔离 QA 在一次性空白 PostgreSQL 内创建测试库、回放现有 schema 和写入合成测试记录，按原流程清理。",
+    "禁止修改门禁、审核、依赖、配置、账号、代理和历史状态。模型和 GitHub 只使用 Owner 另行批准的既有通道。",
+    "禁止外部代写、强推、自行合并、绕过门禁、覆盖主干或用户工作。"
+  ]
+}

@@ -427,13 +427,16 @@ def test_paired_calibration_all_boundaries_and_conservation(class_index):
     assert all(b["market_mean"] == round(1 / 3, 12) for b in bins)
 
 
+def _uniform_calibration(count):
+    return diagnostic._paired_calibration_summary(
+        np.full((count, 3), 1 / 3), np.tile([0.1, 0.3, 0.6], (count, 1)), np.zeros(count, dtype=int)
+    )
+
+
 @pytest.mark.parametrize("count", [0, 1, 9, 10])
 def test_paired_calibration_fixed_sample_threshold_empty_bins_and_rounding(count):
     """非空箱门槛固定为 10；空箱不拉低顶层状态，五项均为空。"""
-    model = np.full((count, 3), 1 / 3)
-    market = np.tile([0.1, 0.3, 0.6], (count, 1))
-    labels = np.zeros(count, dtype=int)
-    result = diagnostic._paired_calibration_summary(model, market, labels)
+    result = _uniform_calibration(count)
     is_small_sample = count < EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT
     expected_status = "INSUFFICIENT_SAMPLE" if is_small_sample else "DESCRIPTIVE_ONLY"
     assert result["sample_status"] == expected_status
@@ -468,6 +471,8 @@ def test_paired_calibration_top_level_uses_smallest_nonempty_bin():
     assert result["sample_status"] == "INSUFFICIENT_SAMPLE"
     assert result["classwise"]["AWAY"][0]["sample_status"] == "DESCRIPTIVE_ONLY"
     assert result["classwise"]["AWAY"][1]["sample_status"] == "INSUFFICIENT_SAMPLE"
+    text = diagnostic.render_summary_markdown({"paired_calibration": result})
+    assert text.startswith("# 中文配对校准摘要\n\n校准样本状态：样本不足。\n\n## 客胜(AWAY)\n")
 
 
 def test_analyze_paired_calibration_below_scoring_threshold(sources, monkeypatch):
@@ -512,22 +517,24 @@ def test_analyze_paired_calibration_below_scoring_threshold(sources, monkeypatch
 @pytest.mark.parametrize("count", [0, 1, 9, 10])
 def test_markdown_summary_pure_threshold_and_empty(count):
     """合成数组仅验证展示；不读取真实证据。"""
-    model = np.full((count, 3), 1 / 3)
-    market = np.tile([0.1, 0.3, 0.6], (count, 1))
-    result = {
-        "paired_calibration": diagnostic._paired_calibration_summary(
-            model, market, np.zeros(count, dtype=int)
-        ),
-    }
+    result = {"paired_calibration": _uniform_calibration(count)}
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
     assert text == diagnostic.render_summary_markdown(result)
     assert result == before
+    notice = "样本不足" if count < EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT else "仅供历史描述"
+    assert text.startswith(f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n")
+    assert text.count("校准样本状态：") == 1
     assert [line for line in text.splitlines() if line.startswith("## ")] == [
         "## 客胜(AWAY)",
         "## 平局(DRAW)",
         "## 主胜(HOME)",
     ]
+    for header in (
+        "| 模型概率箱 | 场数 | 模型均值 | 市场均值 | 观测频率 | 模型绝对差 | 市场绝对差 | 样本状态 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    ):
+        assert text.count(header) == EXPECTED_CLASS_COUNT
     rows = [line for line in text.splitlines() if line.startswith("| [")]
     assert len(rows) == EXPECTED_CLASS_COUNT * EXPECTED_CALIBRATION_BIN_COUNT
     for offset in (0, 5, 10):
@@ -552,6 +559,20 @@ def test_markdown_summary_pure_threshold_and_empty(count):
         "研究资格",
     ):
         assert boundary in text
+    for status, notice in (
+        ("INSUFFICIENT_SAMPLE", "样本不足"),
+        ("DESCRIPTIVE_ONLY", "仅供历史描述"),
+    ):
+        result["paired_calibration"]["sample_status"] = status
+        before = deepcopy(result)
+        rendered = diagnostic.render_summary_markdown(result)
+        assert rendered.startswith(
+            f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n"
+        )
+        assert rendered.count("校准样本状态：") == 1
+        assert rendered.split("## 客胜(AWAY)", 1)[1] == text.split("## 客胜(AWAY)", 1)[1]
+        assert rendered == diagnostic.render_summary_markdown(result)
+        assert result == before
 
 
 def test_markdown_boundary_asymmetry_and_actual_text_escaping():
@@ -578,23 +599,11 @@ def test_markdown_boundary_asymmetry_and_actual_text_escaping():
 
 
 def _summary_cli_args(output, summary_format=None):
-    names = (
-        "evaluation",
-        "evaluation-receipt",
-        "candidate",
-        "metadata",
-        "frame",
-        "frame-receipt",
-        "gd03",
-        "gd03-receipt",
-        "gd02",
-        "gd02-receipt",
-        "gd01",
-        "gd01-receipt",
-    )
     args = ["closing-test"]
-    for name in names:
+    for name in ("evaluation", "candidate", "metadata", "frame", "gd03", "gd02", "gd01"):
         args.extend([f"--{name}", "/synthetic-unused"])
+        if name not in ("candidate", "metadata"):
+            args.extend([f"--{name}-receipt", "/synthetic-unused"])
     args.extend(["--csv-dir", "/synthetic-unused", "--output", str(output)])
     if summary_format is not None:
         args.extend(["--summary-format", summary_format])
@@ -607,11 +616,8 @@ SUMMARY_PATH_FAULTS = ("relative", "internal", "symlink", "parent_symlink", "mis
 def _summary_stdout(result, summary_format):
     if summary_format == "markdown":
         return diagnostic.render_summary_markdown(result) + "\n"
-    summary = {
-        k: v
-        for k, v in result.items()
-        if k not in ("rows", "source_hashes", "candidate", "market_policy")
-    }
+    excluded = ("rows", "source_hashes", "candidate", "market_policy")
+    summary = {k: v for k, v in result.items() if k not in excluded}
     return json.dumps(summary) + "\n"
 
 
