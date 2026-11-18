@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_METRIC_COMPARISON_PILOT_2_RETRY1",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_METRIC_COMPARISON_PILOT_2_RETRY1.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "schemas",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "仅调整 diagnose:closing 已有中文 Markdown 成功输出。复用现有报告中的模型与市场 Log Loss、Brier 评分以及既有总体结果标记。未生成评分时明确说明证据不足。保留校准样本状态、分箱表与历史研究边界。",
+    "保留默认及显式 JSON、外部 JSON 字节、输入对象、统计、阈值、来源核验、写入规则、CLI 参数及错误语义。仅在展示阶段舍入，不把零当成缺失，也不通过舍入后分数重判结论。",
+    "使用合成 fixture 保留既有测试与门禁。五条精确授权路径，累计差异不超过 32768 字节。正式验证、独立审核与 GitHub 检查核对最终候选完整版本。"
+  ],
+  "forbidden_side_effects": [
+    "禁止接生产库、读取未授权真实资料、写业务数据、采集、训练、推理、回测、生产迁移或部署。仅允许既有 QA 在隔离的一次性空白 PostgreSQL 内创建测试库、回放既有 schema、写合成测试数据并清理。",
+    "模型与 GitHub 操作需要本轮 Owner 明确批准。禁止改动审核、门禁、配置、依赖、登录、代理和历史账目。禁止代写、强推、改动正式主干、自动合并或清理历史分支及目录。"
+  ]
+}

@@ -472,7 +472,7 @@ def test_paired_calibration_top_level_uses_smallest_nonempty_bin():
     assert result["classwise"]["AWAY"][0]["sample_status"] == "DESCRIPTIVE_ONLY"
     assert result["classwise"]["AWAY"][1]["sample_status"] == "INSUFFICIENT_SAMPLE"
     text = diagnostic.render_summary_markdown({"paired_calibration": result})
-    assert text.startswith("# 中文配对校准摘要\n\n校准样本状态：样本不足。\n\n## 客胜(AWAY)\n")
+    assert text.startswith("# 中文配对校准摘要\n\n校准样本状态：样本不足。\n\n")
 
 
 def test_analyze_paired_calibration_below_scoring_threshold(sources, monkeypatch):
@@ -523,7 +523,7 @@ def test_markdown_summary_pure_threshold_and_empty(count):
     assert text == diagnostic.render_summary_markdown(result)
     assert result == before
     notice = "样本不足" if count < EXPECTED_MINIMUM_NONEMPTY_BIN_COUNT else "仅供历史描述"
-    assert text.startswith(f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n")
+    assert text.startswith(f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n")
     assert text.count("校准样本状态：") == 1
     assert [line for line in text.splitlines() if line.startswith("## ")] == [
         "## 客胜(AWAY)",
@@ -566,9 +566,7 @@ def test_markdown_summary_pure_threshold_and_empty(count):
         result["paired_calibration"]["sample_status"] = status
         before = deepcopy(result)
         rendered = diagnostic.render_summary_markdown(result)
-        assert rendered.startswith(
-            f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n## 客胜(AWAY)\n"
-        )
+        assert rendered.startswith(f"# 中文配对校准摘要\n\n校准样本状态：{notice}。\n\n")
         assert rendered.count("校准样本状态：") == 1
         assert rendered.split("## 客胜(AWAY)", 1)[1] == text.split("## 客胜(AWAY)", 1)[1]
         assert rendered == diagnostic.render_summary_markdown(result)
