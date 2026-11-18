@@ -428,6 +428,31 @@ def render_summary_markdown(result: dict[str, Any]) -> str:
     sample_status = result["paired_calibration"]["sample_status"]
     overall_notice = _markdown_cell(overall_statuses.get(sample_status, sample_status))
     lines.extend([f"校准样本状态：{overall_notice}。", ""])
+    metrics = result.get("metrics")
+    if metrics is None:
+        lines.extend(["样本不足，无法给出评分，也未生成区间。", ""])
+    else:
+        lines.extend(["| 指标 | 模型 | 收盘市场 |", "| --- | ---: | ---: |"])
+        for key, title in (
+            ("multiclass_log_loss", "Log Loss"),
+            ("multiclass_brier_score", "Brier"),
+        ):
+            scores = [(metrics.get(side) or {}).get(key) for side in ("model", "market")]
+            cells = ["无" if score is None else f"{score:.6f}" for score in scores]
+            lines.append(f"| {title} | {cells[0]} | {cells[1]} |")
+        lines.extend(["", "Log Loss、Brier 两项均越低越好。", ""])
+    interpretations = {
+        "MODEL_BETTER_THAN_CLOSING": "模型更好",
+        "MARKET_BETTER_THAN_MODEL": "市场更好",
+        "INCONCLUSIVE": "证据不足以区分",
+        "INSUFFICIENT_EVIDENCE": "证据不足",
+    }
+    interpretation = result.get("result_interpretation", "INSUFFICIENT_EVIDENCE")
+    conclusion = _markdown_cell(interpretations.get(interpretation, interpretation))
+    lines.append(f"总体结论：{conclusion}。")
+    if metrics is not None:
+        lines.append("沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。")
+    lines.append("")
     statistics = (
         "model_mean",
         "market_mean",

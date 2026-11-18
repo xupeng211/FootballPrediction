@@ -263,6 +263,10 @@ paired_calibration，不改统计、external JSON 或证据资格，不新增研
 标题下、三个结果分组前直接展示 `paired_calibration.sample_status`：
 `INSUFFICIENT_SAMPLE` 为「校准样本状态：样本不足。」，
 `DESCRIPTIVE_ONLY` 为「校准样本状态：仅供历史描述。」；保留分组、表格、每箱状态及历史用途说明。
+总体样本状态与客胜分组之间增加模型/收盘市场的 Log Loss、Brier 两行评分（六位小数，均越低越好）；
+零值有效、缺失显示「无」，未生成评分时提示「样本不足，无法给出评分」。总体结论直接翻译既有
+`result_interpretation`（模型更好、市场更好、证据不足以区分、证据不足），沿用原 Log Loss 配对区间依据，
+不从展示评分重判；评分可用性与分箱样本状态各按原口径。仅扩展展示，不改 JSON、阈值或证据资格。
 
 ## 本索引不回答什么
 
