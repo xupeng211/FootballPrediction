@@ -464,6 +464,18 @@ def render_summary_markdown(result: dict[str, Any]) -> str:
             f"95% 配对 bootstrap 区间：{interval_text}。"
         )
         lines.append("沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。")
+    lines.extend(["", "### 比赛排除原因", ""])
+    exclusion_reasons = result.get("exclusion_reasons")
+    if exclusion_reasons is None:
+        lines.append("未提供排除原因")
+    elif not exclusion_reasons:
+        lines.append("无排除比赛")
+    else:
+        lines.extend(["| 原因码 | 场数 |", "| --- | ---: |"])
+        for reason, count in sorted(
+            exclusion_reasons.items(), key=lambda item: (-item[1], item[0])
+        ):
+            lines.append(f"| {_markdown_cell(reason)} | {_markdown_cell(count)} |")
     lines.append("")
     statistics = (
         "model_mean",

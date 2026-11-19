@@ -298,16 +298,23 @@ def test_null_uncertainty_is_not_zero():
 
 
 @pytest.mark.parametrize("has_scores", [False, True])
+@pytest.mark.parametrize("has_exclusions", [False, True])
 def test_real_analyze_to_cli_preserves_json_and_sources(
-    sources, has_scores, tmp_path, monkeypatch, capsys
+    sources, has_scores, has_exclusions, tmp_path, monkeypatch, capsys
 ):
     """仅替换 loader 的合成来源；真实 analyze、评分、renderer 和 CLI 均执行。"""
+    if has_exclusions:
+        sources["evaluation"]["prediction_rows"].pop()
     if not has_scores:
         monkeypatch.setattr(diagnostic, "MINIMUM_PAIRS", 30)
     before = deepcopy(sources)
     expected = diagnostic.analyze(sources)
     assert (expected["metrics"] is not None) == has_scores
     assert expected["paired_calibration"]["sample_status"] == "INSUFFICIENT_SAMPLE"
+    assert expected["exclusion_reasons"] == (
+        {"MISSING_FROZEN_PREDICTION": 1} if has_exclusions else {}
+    )
+    assert expected["excluded_matches"] == int(has_exclusions)
     expected_before = deepcopy(expected)
     expected_payload = diagnostic.contract._canonical_json_bytes(expected) + b"\n"
     calls = []
@@ -325,6 +332,16 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
         if summary_format == "markdown":
             assert captured.out == diagnostic.render_summary_markdown(expected) + "\n"
             assert "校准样本状态：样本不足。" in captured.out
+            if has_exclusions:
+                assert "| MISSING&#95;FROZEN&#95;PREDICTION | 1 |" in captured.out
+                assert "无排除比赛" not in captured.out
+            else:
+                assert "无排除比赛" in captured.out
+            assert (
+                captured.out.index("总体结论：")
+                < captured.out.index("### 比赛排除原因")
+                < captured.out.index("## 客胜(AWAY)")
+            )
             if has_scores:
                 for key, title in zip(SCORE_KEYS, ("Log Loss", "Brier"), strict=True):
                     model = expected["metrics"]["model"][key]
@@ -350,3 +367,59 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
     assert payloads == [expected_payload] * 3
     assert json_outputs[0] == json_outputs[1]
     assert diagnostic.contract._canonical_json_bytes(expected) + b"\n" == expected_payload
+
+
+@pytest.mark.parametrize("metrics_state", ["available", "missing", "null"])
+def test_exclusion_reasons_sorted_escaped_and_independent_of_scores(metrics_state):
+    result = _report()
+    if metrics_state == "missing":
+        del result["metrics"]
+    elif metrics_state == "null":
+        result["metrics"] = None
+    # 插入顺序与场数顺序不同；同数时按原始原因码而非转义后的文本排序。
+    result["exclusion_reasons"] = {"Z": 2, "A|\r\n": 2, "A": 1, "B": 12, "A~": 2, "A_": 2}
+    before = deepcopy(result)
+    payload = diagnostic.contract._canonical_json_bytes(result)
+    text = diagnostic.render_summary_markdown(result)
+    prefix, remaining = text.split("### 比赛排除原因\n\n", 1)
+    section, groups = remaining.split("## 客胜(AWAY)", 1)
+    assert "总体结论：市场更好。" in prefix
+    if metrics_state == "available":
+        assert prefix.endswith("沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。\n\n")
+    else:
+        assert "样本不足，无法给出评分，也未生成区间。" in prefix
+    assert section == (
+        "| 原因码 | 场数 |\n| --- | ---: |\n"
+        "| B | 12 |\n| A&#95; | 2 |\n| A&#124;&#13;&#10; | 2 |\n"
+        "| A&#126; | 2 |\n| Z | 2 |\n| A | 1 |\n\n"
+    )
+    assert text.count("### 比赛排除原因") == 1
+    assert "未提供排除原因" not in text
+    assert "无排除比赛" not in text
+    without_reasons = deepcopy(result)
+    del without_reasons["exclusion_reasons"]
+    baseline = diagnostic.render_summary_markdown(without_reasons)
+    assert baseline.split("### 比赛排除原因\n\n", 1)[0] == prefix
+    assert baseline.split("## 客胜(AWAY)", 1)[1] == groups
+    assert text == diagnostic.render_summary_markdown(result)
+    assert result == before
+    assert diagnostic.contract._canonical_json_bytes(result) == payload
+
+
+@pytest.mark.parametrize(
+    ("fields", "notice"),
+    [
+        ({"exclusion_reasons": {}}, "无排除比赛"),
+        ({}, "未提供排除原因"),
+        ({"exclusion_reasons": None}, "未提供排除原因"),
+    ],
+)
+def test_empty_or_unprovided_exclusion_reasons(fields, notice):
+    result = {**_report(), **fields}
+    before = deepcopy(result)
+    payload = diagnostic.contract._canonical_json_bytes(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert f"### 比赛排除原因\n\n{notice}\n\n## 客胜(AWAY)" in text
+    assert "| 原因码 | 场数 |" not in text
+    assert result == before
+    assert diagnostic.contract._canonical_json_bytes(result) == payload
