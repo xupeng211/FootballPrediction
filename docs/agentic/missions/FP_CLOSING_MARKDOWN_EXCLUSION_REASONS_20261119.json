@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_EXCLUSION_REASONS_20261119",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_EXCLUSION_REASONS_20261119.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml",
+    "ruff.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "schemas",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "仅在 diagnose:closing 的中文 Markdown 中展示已有 exclusion_reasons 的原因码与场数，按场数降序、同场数按原因码升序。空映射显示无排除比赛，缺失显示未提供。复用已有 Markdown 转义，不读取或输出明细比赛资料，不重算统计。",
+    "保留既有评分、配对区间、总体样本状态和结论、三个分箱与历史用途。保持报告输入对象、默认和显式 JSON stdout、三种输出模式所写外部 JSON 字节、来源、统计、阈值、CLI、写入和错误行为。",
+    "四条精确路径，完整差异不超过 32768 字节。沿用合成 fixture、现有测试选择、格式、文件长度及覆盖率门禁；QA、独审和 GitHub 必需检查绑定最终候选。"
+  ],
+  "forbidden_side_effects": [
+    "禁止读取真实研究资产、接生产库、写业务数据、采集、训练、推理、回测、迁移或部署。允许既有 QA 在隔离的一次性空白 PostgreSQL 回放现有 schema、写合成测试数据并清理。",
+    "实际模型派发和 GitHub 发布须经本轮 Owner 批准。禁止修改 Harness、审核、门禁、依赖、认证、代理、Ruff 规则或历史账目。禁止外部代改、强推、改动正式主干、自动合并或清理历史候选。"
+  ]
+}
