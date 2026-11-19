@@ -451,6 +451,18 @@ def render_summary_markdown(result: dict[str, Any]) -> str:
     conclusion = _markdown_cell(interpretations.get(interpretation, interpretation))
     lines.append(f"总体结论：{conclusion}。")
     if metrics is not None:
+        log_loss = (result.get("uncertainty") or {}).get("log_loss") or {}
+        mean = log_loss.get("paired_delta_mean")
+        mean_text = "未生成" if mean is None else f"{mean:+.6f}"
+        match log_loss.get("paired_delta_95_percentile_ci"):
+            case [low, high] if low is not None and high is not None:
+                interval_text = f"[{low:+.6f}, {high:+.6f}]"
+            case _:
+                interval_text = "未生成"
+        lines.append(
+            f"Log Loss 配对平均差值（模型减收盘市场）：{mean_text}；"
+            f"95% 配对 bootstrap 区间：{interval_text}。"
+        )
         lines.append("沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。")
     lines.append("")
     statistics = (

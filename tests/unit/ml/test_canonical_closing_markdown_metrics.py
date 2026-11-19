@@ -32,6 +32,12 @@ def _report():
             "model": dict(zip(SCORE_KEYS, (0.978340123456, 0.584560876543), strict=True)),
             "market": dict(zip(SCORE_KEYS, (0.899730876543, 0.512345123456), strict=True)),
         },
+        "uncertainty": {
+            "log_loss": {
+                "paired_delta_mean": 0.078609803723,
+                "paired_delta_95_percentile_ci": [0.015476340689, 0.140815637412],
+            }
+        },
         "result_interpretation": "MARKET_BETTER_THAN_MODEL",
     }
 
@@ -132,6 +138,7 @@ def test_no_metrics_explicitly_reports_insufficient_sample(missing):
     assert "校准样本状态：仅供历史描述。" in text
     assert text.index("样本不足，无法给出评分，也未生成区间。") < text.index("## 客胜(AWAY)")
     assert "| 指标 |" not in text
+    assert "Log Loss 配对平均差值" not in text
     assert "沿用原 Log Loss 配对差值区间" not in text
     assert "总体结论：证据不足。" in text
     assert text.count("| [") == base.EXPECTED_CLASS_COUNT * base.EXPECTED_CALIBRATION_BIN_COUNT
@@ -170,6 +177,126 @@ def test_unknown_conclusion_text_is_escaped():
     assert result == before
 
 
+@pytest.mark.parametrize(("label", "notice"), CONCLUSIONS)
+@pytest.mark.parametrize(
+    ("mean", "interval", "display"),
+    [
+        (
+            0.078609803723,
+            [0.015476340689, 0.140815637412],
+            "+0.078610；95% 配对 bootstrap 区间：[+0.015476, +0.140816]。",
+        ),
+        (
+            -0.078609803723,
+            [-0.140815637412, -0.015476340689],
+            "-0.078610；95% 配对 bootstrap 区间：[-0.140816, -0.015476]。",
+        ),
+        (
+            0.0123456789,
+            [-0.03456789, 0.05678912],
+            "+0.012346；95% 配对 bootstrap 区间：[-0.034568, +0.056789]。",
+        ),
+        (0.0, [0.0, 0.0], "+0.000000；95% 配对 bootstrap 区间：[+0.000000, +0.000000]。"),
+        (-0.0, [-0.0, 0.0], "-0.000000；95% 配对 bootstrap 区间：[-0.000000, +0.000000]。"),
+        (
+            -0.0000001,
+            [-0.0000002, 0.0000002],
+            "-0.000000；95% 配对 bootstrap 区间：[-0.000000, +0.000000]。",
+        ),
+    ],
+)
+def test_paired_delta_displays_source_values_without_rejudging(
+    label, notice, mean, interval, display
+):
+    result = _report()
+    result["result_interpretation"] = label
+    result["uncertainty"]["log_loss"] = {
+        "paired_delta_mean": mean,
+        "paired_delta_95_percentile_ci": interval,
+    }
+    # 评分舍入后相等，且与给定配对均值不一致；不得通过评分重算或改判。
+    result["metrics"]["model"] = dict.fromkeys(SCORE_KEYS, 0.5000001)
+    result["metrics"]["market"] = dict.fromkeys(SCORE_KEYS, 0.5000002)
+    before = deepcopy(result)
+    payload = diagnostic.contract._canonical_json_bytes(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert f"总体结论：{notice}。\nLog Loss 配对平均差值（模型减收盘市场）：{display}" in text
+    assert text.count("Log Loss 配对平均差值") == 1
+    assert text.index(display) < text.index("## 客胜(AWAY)")
+    for title in ("Log Loss", "Brier"):
+        assert f"| {title} | 0.500000 | 0.500000 |" in text
+    assert "未生成" not in text
+    assert result == before
+    assert diagnostic.contract._canonical_json_bytes(result) == payload
+
+
+@pytest.mark.parametrize(
+    ("uncertainty", "mean_text", "interval_text"),
+    [
+        (None, "未生成", "未生成"),
+        ({}, "未生成", "未生成"),
+        ({"log_loss": None}, "未生成", "未生成"),
+        ({"log_loss": {}}, "未生成", "未生成"),
+        ({"log_loss": {"paired_delta_mean": 0.0}}, "+0.000000", "未生成"),
+        (
+            {"log_loss": {"paired_delta_95_percentile_ci": [0.0, 0.0]}},
+            "未生成",
+            "[+0.000000, +0.000000]",
+        ),
+        (
+            {"log_loss": {"paired_delta_mean": None, "paired_delta_95_percentile_ci": [0.1, 0.2]}},
+            "未生成",
+            "[+0.100000, +0.200000]",
+        ),
+    ],
+)
+def test_missing_paired_information_preserves_scores(uncertainty, mean_text, interval_text):
+    result = _report()
+    if uncertainty is None:
+        del result["uncertainty"]
+    else:
+        result["uncertainty"] = uncertainty
+    before = deepcopy(result)
+    payload = diagnostic.contract._canonical_json_bytes(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert (
+        f"Log Loss 配对平均差值（模型减收盘市场）：{mean_text}；"
+        f"95% 配对 bootstrap 区间：{interval_text}。"
+    ) in text
+    assert "| Log Loss | 0.978340 | 0.899731 |" in text
+    assert "| Brier | 0.584561 | 0.512345 |" in text
+    assert "总体结论：市场更好。" in text
+    assert "样本不足，无法给出评分" not in text
+    assert text.count("| [") == base.EXPECTED_CLASS_COUNT * base.EXPECTED_CALIBRATION_BIN_COUNT
+    assert result == before
+    assert diagnostic.contract._canonical_json_bytes(result) == payload
+
+
+@pytest.mark.parametrize("interval", [None, [], [0.1], [None, 0.2], [0.1, None], [0.1, 0.2, 0.3]])
+def test_incomplete_interval_is_not_invented(interval):
+    result = _report()
+    result["uncertainty"]["log_loss"]["paired_delta_95_percentile_ci"] = interval
+    before = deepcopy(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert (
+        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；95% 配对 bootstrap 区间：未生成。"
+    ) in text
+    assert "0.000000" not in text.split("## 客胜(AWAY)", 1)[0]
+    assert result == before
+
+
+def test_null_uncertainty_is_not_zero():
+    result = _report()
+    result["uncertainty"] = None
+    before = deepcopy(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert (
+        "Log Loss 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。" in text
+    )
+    assert "| Log Loss | 0.978340 | 0.899731 |" in text
+    assert result == before
+
+
 @pytest.mark.parametrize("has_scores", [False, True])
 def test_real_analyze_to_cli_preserves_json_and_sources(
     sources, has_scores, tmp_path, monkeypatch, capsys
@@ -181,6 +308,7 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
     expected = diagnostic.analyze(sources)
     assert (expected["metrics"] is not None) == has_scores
     assert expected["paired_calibration"]["sample_status"] == "INSUFFICIENT_SAMPLE"
+    expected_before = deepcopy(expected)
     expected_payload = diagnostic.contract._canonical_json_bytes(expected) + b"\n"
     calls = []
     monkeypatch.setattr(diagnostic, "load_sources", lambda _paths: calls.append("load") or sources)
@@ -203,6 +331,12 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
                     market = expected["metrics"]["market"][key]
                     assert f"| {title} | {model:.6f} | {market:.6f} |" in captured.out
                 assert "无法给出评分" not in captured.out
+                log_loss = expected["uncertainty"]["log_loss"]
+                low, high = log_loss["paired_delta_95_percentile_ci"]
+                assert (
+                    f"Log Loss 配对平均差值（模型减收盘市场）：{log_loss['paired_delta_mean']:+.6f}；"
+                    f"95% 配对 bootstrap 区间：[{low:+.6f}, {high:+.6f}]。"
+                ) in captured.out
             else:
                 assert "样本不足，无法给出评分，也未生成区间。" in captured.out
                 assert "总体结论：证据不足。" in captured.out
@@ -211,6 +345,7 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
             json_outputs.append(captured.out)
             assert captured.out == base._summary_stdout(expected, summary_format)
         assert sources == before
+        assert expected == expected_before
     assert calls == ["load", "load", "load"]
     assert payloads == [expected_payload] * 3
     assert json_outputs[0] == json_outputs[1]
