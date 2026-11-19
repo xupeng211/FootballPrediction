@@ -1,0 +1,45 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_LOG_LOSS_INTERVAL_20261119",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_LOG_LOSS_INTERVAL_20261119.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "schemas",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "只在 diagnose:closing 的既有中文 Markdown 总体结论旁展示 uncertainty.log_loss 里的配对平均差值及已有 95% 配对 bootstrap 区间。方向为模型减收盘市场，展示六位小数，零是有效数值，缺失不编造。既有结论仍由 result_interpretation 决定。",
+    "保留两项原评分、总体样本状态、客胜／平局／主胜分箱及历史用途说明。保持默认、显式 JSON 及 Markdown 模式所写外部 JSON 字节、输入对象、统计、阈值、来源核验、参数、写入规则、错误和退出行为。",
+    "沿用既有合成 fixture 及格式、文件长度、测试选择、覆盖率门禁。仅四条精确授权路径，累计差异不超过 32768 字节。QA、独审和 GitHub 必需检查必须绑定最终版本。"
+  ],
+  "forbidden_side_effects": [
+    "禁止读取真实研究输入、接生产库、写业务数据、采集、训练、推理、回测、迁移或部署。允许现有 QA 在隔离的一次性空白 PostgreSQL 回放既有 schema、写合成测试数据并清理。",
+    "实际模型派发及 GitHub 发布须经本次 Owner 批准。禁止修改 Harness、审核、门禁、流程配置、依赖、认证、代理或旧账目。禁止外部代改、强推、修改正式主干、自动合并及清理历史分支或候选。"
+  ]
+}
