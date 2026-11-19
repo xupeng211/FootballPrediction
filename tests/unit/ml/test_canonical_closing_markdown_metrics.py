@@ -52,7 +52,9 @@ def test_scores_between_overall_status_and_unchanged_groups():
         "| 指标 | 模型 | 收盘市场 |\n| --- | ---: | ---: |\n"
         "| Log Loss | 0.978340 | 0.899731 |\n| Brier | 0.584561 | 0.512345 |\n"
     )
-    assert text.index("| Brier |") < text.index("总体结论：市场更好。") < text.index("## 客胜(AWAY)")
+    assert (
+        text.index("| Brier |") < text.index("总体结论：市场更好。") < text.index("## 客胜(AWAY)")
+    )
     assert "Log Loss、Brier 两项均越低越好。" in text
     assert "沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。" in text
     assert text.count("| 指标 | 模型 | 收盘市场 |") == 1
@@ -61,7 +63,9 @@ def test_scores_between_overall_status_and_unchanged_groups():
         "## 平局(DRAW)",
         "## 主胜(HOME)",
     ]
-    without_metrics = diagnostic.render_summary_markdown({"paired_calibration": result["paired_calibration"]})
+    without_metrics = diagnostic.render_summary_markdown(
+        {"paired_calibration": result["paired_calibration"]}
+    )
     assert text.split("## 客胜(AWAY)", 1)[1] == without_metrics.split("## 客胜(AWAY)", 1)[1]
     assert text == diagnostic.render_summary_markdown(result)
     assert result == before
@@ -201,7 +205,9 @@ def test_unknown_conclusion_text_is_escaped():
         ),
     ],
 )
-def test_paired_delta_displays_source_values_without_rejudging(label, notice, mean, interval, display):
+def test_paired_delta_displays_source_values_without_rejudging(
+    label, notice, mean, interval, display
+):
     result = _report()
     result["result_interpretation"] = label
     result["uncertainty"]["log_loss"] = {
@@ -273,8 +279,7 @@ def test_incomplete_interval_is_not_invented(interval):
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
     assert (
-        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；"
-        "95% 配对 bootstrap 区间：未生成。"
+        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；95% 配对 bootstrap 区间：未生成。"
     ) in text
     assert "0.000000" not in text.split("## 客胜(AWAY)", 1)[0]
     assert result == before
@@ -285,13 +290,17 @@ def test_null_uncertainty_is_not_zero():
     result["uncertainty"] = None
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
-    assert "Log Loss 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。" in text
+    assert (
+        "Log Loss 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。" in text
+    )
     assert "| Log Loss | 0.978340 | 0.899731 |" in text
     assert result == before
 
 
 @pytest.mark.parametrize("has_scores", [False, True])
-def test_real_analyze_to_cli_preserves_json_and_sources(sources, has_scores, tmp_path, monkeypatch, capsys):
+def test_real_analyze_to_cli_preserves_json_and_sources(
+    sources, has_scores, tmp_path, monkeypatch, capsys
+):
     """仅替换 loader 的合成来源；真实 analyze、评分、renderer 和 CLI 均执行。"""
     if not has_scores:
         monkeypatch.setattr(diagnostic, "MINIMUM_PAIRS", 30)
