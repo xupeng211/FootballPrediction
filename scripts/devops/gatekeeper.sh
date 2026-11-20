@@ -1332,6 +1332,9 @@ run_canonical_python_unit_gate() {
     tests/unit/scripts/ops/test_train_model_dry_run.py
     tests/unit/database/repositories/test_prediction_repo_l3_contract.py
     tests/unit/ml/test_training_no_write_guard.py
+    tests/unit/test_review_policy.py
+    tests/unit/test_review_recovery.py
+    tests/unit/test_review_coverage.py
   )
 
   export PYTHONPATH="${WORKSPACE_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
@@ -1584,6 +1587,9 @@ run_commit_smoke_tests() {
 }
 
 run_local_hook_checks() {
+  # npm --version may otherwise perform a background registry update check.
+  # Local hooks promise no network; keep the existing network trap effective.
+  export npm_config_update_notifier=false
   log "执行本地 Git Hook hermetic 门禁（mode=${MODE}，禁止 Docker/DB）。"
 
   if [[ "${GATEKEEPER_PRE_PUSH:-0}" == "1" ]]; then
