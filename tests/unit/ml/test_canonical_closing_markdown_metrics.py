@@ -49,6 +49,7 @@ def test_scores_between_overall_status_and_unchanged_groups():
     text = diagnostic.render_summary_markdown(result)
     assert text.startswith(
         "# 中文配对校准摘要\n\n校准样本状态：仅供历史描述。\n\n"
+        "分箱样本：最小非空分箱 10 场，至少需要 10 场。评分另按有效配对总数判断。\n\n"
         "| 指标 | 模型 | 收盘市场 |\n| --- | ---: | ---: |\n"
         "| Log Loss | 0.978340 | 0.899731 |\n| Brier | 0.584561 | 0.512345 |\n"
     )
@@ -70,6 +71,28 @@ def test_scores_between_overall_status_and_unchanged_groups():
     assert text == diagnostic.render_summary_markdown(result)
     assert result == before
     assert diagnostic.contract._canonical_json_bytes(result) == payload
+
+
+@pytest.mark.parametrize(
+    ("count", "status", "observed"),
+    [
+        (0, "样本不足", "没有非空分箱"),
+        (1, "样本不足", "最小非空分箱 1 场"),
+        (9, "样本不足", "最小非空分箱 9 场"),
+        (10, "仅供历史描述", "最小非空分箱 10 场"),
+    ],
+)
+def test_bin_sample_explanation_at_thresholds(count, status, observed):
+    result = {"paired_calibration": base._uniform_calibration(count)}
+    before = deepcopy(result)
+    markdown = diagnostic.render_summary_markdown(result)
+    assert (
+        f"校准样本状态：{status}。\n\n"
+        f"分箱样本：{observed}，至少需要 10 场。评分另按有效配对总数判断。\n\n"
+        "样本不足，无法给出评分，也未生成区间。"
+    ) in markdown
+    assert markdown.count("分箱样本：") == 1
+    assert result == before
 
 
 def test_exact_zero_scores_are_available():
@@ -331,7 +354,11 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
         assert json.loads(payloads[-1]) == expected
         if summary_format == "markdown":
             assert captured.out == diagnostic.render_summary_markdown(expected) + "\n"
-            assert "校准样本状态：样本不足。" in captured.out
+            assert (
+                "校准样本状态：样本不足。\n\n"
+                f"分箱样本：最小非空分箱 {3 - int(has_exclusions)} 场，"
+                "至少需要 10 场。评分另按有效配对总数判断。"
+            ) in captured.out
             if has_exclusions:
                 assert "| MISSING&#95;FROZEN&#95;PREDICTION | 1 |" in captured.out
                 assert "无排除比赛" not in captured.out
