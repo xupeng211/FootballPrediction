@@ -1,5 +1,5 @@
 {
-  "_description": "Python DB Write Allowlist — historical baseline. ALLOWLIST DOES NOT AUTHORIZE RUNTIME DB WRITES. Each entry is a pre-existing file with DB write risk that was classified in python_sql_migration_enforcement_design_phase1. New or modified Python files with DB write signals that are NOT in this allowlist will fail CI changed-files enforcement.",
+  "_description": "Python DB Write Allowlist — historical baseline. ALLOWLIST DOES NOT AUTHORIZE RUNTIME DB WRITES. Each entry is a pre-existing file with DB write risk that was classified in python_sql_migration_enforcement_design_phase1. New or modified Python files with DB write signals that are NOT in this allowlist will fail CI changed-files enforcement. New private execution state uses a separate explicit local_execution_state_write_runtime_guarded classification pinned to exact source bytes; it is not a historical exemption and grants no business DB access.",
   "_created": "2026-06-23",
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
@@ -542,6 +542,19 @@
       "expires_or_review_note": "Added to allowlist by gold-audit-2ae-fix2 (2026-07-07). All DB queries are SELECT-only. Filesystem artifact writes guarded by training_write_guard.py. --report-only mode enforces no-write. Review if file is modified to add INSERT/UPDATE/DELETE/DDL.",
       "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
       "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+    }
+  ],
+  "execution_state_entries": [
+    {
+      "path": "scripts/devops/controlled_api_budget.py",
+      "classification": "local_execution_state_write_runtime_guarded",
+      "reason": "Owner PR1947 mission authorizes fresh private execution-budget state only; not a business database, formal Receipt, Evidence history or historical Ledger. Initialization requires a new directory, owner-only marker and exclusive SQLite file. Every connection checks marker, permissions and application_id.",
+      "evidence": "Budget._guard_state() before each connection; fresh initialize uses O_EXCL; sqlite mode=rw never creates during recovery. Tests reject pre-existing directories, missing/tampered markers, arbitrary SQLite files and symlink replacements.",
+      "source_doc": "docs/agentic/controlled_direct_api.md",
+      "owner_task": "FOOTBALLPREDICTION_PR1947_AUTONOMOUS_ENGINEERING_DELIVERY",
+      "storage_contract": "private-fresh-directory-marker-application-id/v1",
+      "protected_business_store_access": false,
+      "source_sha256": "a795a1db443dc9eedbbede8d489516b00eb3e828a1ccc7161749525a53c65f95"
     }
   ]
 }
