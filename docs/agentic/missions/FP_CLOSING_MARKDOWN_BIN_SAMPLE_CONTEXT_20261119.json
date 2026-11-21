@@ -1,0 +1,44 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_BIN_SAMPLE_CONTEXT_20261119",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_BIN_SAMPLE_CONTEXT_20261119.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml",
+    "ruff.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "schemas",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "只在现有中文收盘校准 Markdown 增加分箱样本说明。直接展示报告已有的最小非空分箱场数和门槛，保留原状态、评分、区间、结论、排除原因、分箱及历史边界。",
+    "保持默认与显式 JSON、外部 JSON 字节、输入对象、统计、各自门槛、CLI 和写入及错误行为。完整差异不超过 32768 字节。"
+  ],
+  "forbidden_side_effects": [
+    "仅使用合成数据。禁止使用真实研究资产、生产库、采集、业务写入、训练、回测、模型推理、迁移或部署；既有 QA 可使用一次性隔离 PostgreSQL 和合成数据。",
+    "禁止修改 Harness、审核、门禁、依赖、认证、代理或历史账目；禁止外部代改、强推、改正式主干或自动合并。"
+  ]
+}

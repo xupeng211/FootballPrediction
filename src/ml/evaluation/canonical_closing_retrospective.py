@@ -421,13 +421,28 @@ def _markdown_cell(value: Any) -> str:
     )
 
 
+def _calibration_sample_lines(calibration: dict[str, Any]) -> list[str]:
+    overall_statuses = {"INSUFFICIENT_SAMPLE": "样本不足", "DESCRIPTIVE_ONLY": "仅供历史描述"}
+    sample_status = calibration["sample_status"]
+    overall_notice = _markdown_cell(overall_statuses.get(sample_status, sample_status))
+    minimum_observed = calibration["minimum_observed_nonempty_bin_count"]
+    minimum_required = _markdown_cell(calibration["minimum_nonempty_bin_count"])
+    observed = (
+        f"最小非空分箱 {_markdown_cell(minimum_observed)} 场"
+        if minimum_observed
+        else "没有非空分箱"
+    )
+    return [
+        f"校准样本状态：{overall_notice}。",
+        "",
+        f"分箱样本：{observed}，至少需要 {minimum_required} 场。评分另按有效配对总数判断。",
+        "",
+    ]
+
+
 def render_summary_markdown(result: dict[str, Any]) -> str:
     """纯展示已有配对校准结果；不重算统计、不修改输入。"""
-    lines = ["# 中文配对校准摘要", ""]
-    overall_statuses = {"INSUFFICIENT_SAMPLE": "样本不足", "DESCRIPTIVE_ONLY": "仅供历史描述"}
-    sample_status = result["paired_calibration"]["sample_status"]
-    overall_notice = _markdown_cell(overall_statuses.get(sample_status, sample_status))
-    lines.extend([f"校准样本状态：{overall_notice}。", ""])
+    lines = ["# 中文配对校准摘要", "", *_calibration_sample_lines(result["paired_calibration"])]
     metrics = result.get("metrics")
     if metrics is None:
         lines.extend(["样本不足，无法给出评分，也未生成区间。", ""])
