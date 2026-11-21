@@ -440,9 +440,24 @@ def _calibration_sample_lines(calibration: dict[str, Any]) -> list[str]:
     ]
 
 
+def _match_count_lines(result: dict[str, Any]) -> list[str]:
+    match_counts = tuple(
+        result.get(key) for key in ("accounted_matches", "valid_paired_matches", "excluded_matches")
+    )
+    if any(count is None for count in match_counts):
+        return []
+    total, paired, excluded = map(_markdown_cell, match_counts)
+    return [f"总场数：{total} 场，有效配对：{paired} 场，排除场数：{excluded} 场。", ""]
+
+
 def render_summary_markdown(result: dict[str, Any]) -> str:
     """纯展示已有配对校准结果；不重算统计、不修改输入。"""
-    lines = ["# 中文配对校准摘要", "", *_calibration_sample_lines(result["paired_calibration"])]
+    lines = [
+        "# 中文配对校准摘要",
+        "",
+        *_calibration_sample_lines(result["paired_calibration"]),
+        *_match_count_lines(result),
+    ]
     metrics = result.get("metrics")
     if metrics is None:
         lines.extend(["样本不足，无法给出评分，也未生成区间。", ""])
