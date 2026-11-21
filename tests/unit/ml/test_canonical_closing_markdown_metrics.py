@@ -321,19 +321,20 @@ def test_null_uncertainty_is_not_zero():
     assert result == before
 
 
-@pytest.mark.parametrize("missing_key", [None, *MATCH_COUNT_KEYS])
-def test_incomplete_match_counts_keep_legacy_markdown(missing_key):
+@pytest.mark.parametrize("missing_keys", [MATCH_COUNT_KEYS, *((key,) for key in MATCH_COUNT_KEYS)])
+@pytest.mark.parametrize("has_scores", [False, True])
+def test_incomplete_match_counts_keep_legacy_markdown(missing_keys, has_scores):
     legacy = _report()
+    if not has_scores:
+        legacy["metrics"] = None
     expected = diagnostic.render_summary_markdown(legacy)
     result = {**legacy, **dict(zip(MATCH_COUNT_KEYS, (11, 10, 1), strict=True))}
-    if missing_key is None:
-        for key in MATCH_COUNT_KEYS:
-            del result[key]
-    else:
-        del result[missing_key]
-        assert diagnostic.render_summary_markdown({**result, missing_key: None}) == expected
+    for key in missing_keys:
+        del result[key]
+    null_fields = dict.fromkeys(missing_keys)
     assert "总场数：" not in expected
     assert diagnostic.render_summary_markdown(result) == expected
+    assert diagnostic.render_summary_markdown({**result, **null_fields}) == expected
 
 
 @pytest.mark.parametrize(
@@ -373,9 +374,7 @@ def _assert_cli_markdown(text, expected, excluded, has_scores):
         assert "无排除比赛" not in text
     else:
         assert "无排除比赛" in text
-    assert (
-        text.index("总体结论：") < text.index("### 比赛排除原因") < text.index("## 客胜(AWAY)")
-    )
+    assert text.index("总体结论：") < text.index("### 比赛排除原因") < text.index("## 客胜(AWAY)")
     if has_scores:
         for key, title in zip(SCORE_KEYS, ("Log Loss", "Brier"), strict=True):
             model = expected["metrics"]["model"][key]
@@ -407,9 +406,8 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
     expected = diagnostic.analyze(sources)
     assert (expected["metrics"] is not None) == has_scores
     assert expected["paired_calibration"]["sample_status"] == "INSUFFICIENT_SAMPLE"
-    assert expected["exclusion_reasons"] == (
-        {"MISSING_FROZEN_PREDICTION": excluded} if excluded else {}
-    )
+    expected_reasons = {"MISSING_FROZEN_PREDICTION": excluded} if excluded else {}
+    assert expected["exclusion_reasons"] == expected_reasons
     assert tuple(expected[key] for key in MATCH_COUNT_KEYS) == (3, 3 - excluded, excluded)
     assert sources == before
     expected_before = deepcopy(expected)
