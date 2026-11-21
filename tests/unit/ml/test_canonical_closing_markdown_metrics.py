@@ -17,6 +17,7 @@ prohibit_side_effects = base.prohibit_side_effects
 sources = base.sources
 
 SCORE_KEYS = ("multiclass_log_loss", "multiclass_brier_score")
+MATCH_COUNT_KEYS = ("accounted_matches", "valid_paired_matches", "excluded_matches")
 CONCLUSIONS = (
     ("MODEL_BETTER_THAN_CLOSING", "模型更好"),
     ("MARKET_BETTER_THAN_MODEL", "市场更好"),
@@ -320,24 +321,95 @@ def test_null_uncertainty_is_not_zero():
     assert result == before
 
 
+@pytest.mark.parametrize("missing_keys", [MATCH_COUNT_KEYS, *((key,) for key in MATCH_COUNT_KEYS)])
 @pytest.mark.parametrize("has_scores", [False, True])
-@pytest.mark.parametrize("has_exclusions", [False, True])
+def test_incomplete_match_counts_keep_legacy_markdown(missing_keys, has_scores):
+    legacy = _report()
+    if not has_scores:
+        legacy["metrics"] = None
+    expected = diagnostic.render_summary_markdown(legacy)
+    result = {**legacy, **dict(zip(MATCH_COUNT_KEYS, (11, 10, 1), strict=True))}
+    for key in missing_keys:
+        del result[key]
+    null_fields = dict.fromkeys(missing_keys)
+    assert "总场数：" not in expected
+    assert diagnostic.render_summary_markdown(result) == expected
+    assert diagnostic.render_summary_markdown({**result, **null_fields}) == expected
+
+
+@pytest.mark.parametrize(
+    ("counts", "line"),
+    [
+        ((0, 0, 0), "总场数：0 场，有效配对：0 场，排除场数：0 场。"),
+        (("<7>\n", 2, 1), "总场数：&#60;7&#62;&#10; 场，有效配对：2 场，排除场数：1 场。"),
+    ],
+)
+def test_match_counts_display_source_values_unchanged(counts, line):
+    legacy = _report()
+    result = {**legacy, **dict(zip(MATCH_COUNT_KEYS, counts, strict=True))}
+    before = deepcopy(result)
+    text = diagnostic.render_summary_markdown(result)
+    assert text.count("总场数：") == 1
+    segment = f"{line}\n\n"
+    assert f"评分另按有效配对总数判断。\n\n{segment}| 指标 |" in text
+    assert text.replace(segment, "", 1) == diagnostic.render_summary_markdown(legacy)
+    assert result == before
+
+
+def _assert_cli_markdown(text, expected, excluded, has_scores):
+    paired = 3 - excluded
+    observed = f"最小非空分箱 {paired} 场" if paired else "没有非空分箱"
+    counts = f"总场数：3 场，有效配对：{paired} 场，排除场数：{excluded} 场。\n\n"
+    scoring = "| 指标 |" if has_scores else "样本不足，无法给出评分，也未生成区间。"
+    assert text.count("总场数：") == 1
+    assert (
+        "校准样本状态：样本不足。\n\n"
+        f"分箱样本：{observed}，至少需要 10 场。评分另按有效配对总数判断。\n\n"
+        f"{counts}{scoring}"
+    ) in text
+    legacy = {key: value for key, value in expected.items() if key not in MATCH_COUNT_KEYS}
+    assert text.replace(counts, "", 1) == diagnostic.render_summary_markdown(legacy) + "\n"
+    if excluded:
+        assert f"| MISSING&#95;FROZEN&#95;PREDICTION | {excluded} |" in text
+        assert "无排除比赛" not in text
+    else:
+        assert "无排除比赛" in text
+    assert text.index("总体结论：") < text.index("### 比赛排除原因") < text.index("## 客胜(AWAY)")
+    if has_scores:
+        for key, title in zip(SCORE_KEYS, ("Log Loss", "Brier"), strict=True):
+            model = expected["metrics"]["model"][key]
+            market = expected["metrics"]["market"][key]
+            assert f"| {title} | {model:.6f} | {market:.6f} |" in text
+        assert "无法给出评分" not in text
+        log_loss = expected["uncertainty"]["log_loss"]
+        low, high = log_loss["paired_delta_95_percentile_ci"]
+        assert (
+            f"Log Loss 配对平均差值（模型减收盘市场）：{log_loss['paired_delta_mean']:+.6f}；"
+            f"95% 配对 bootstrap 区间：[{low:+.6f}, {high:+.6f}]。"
+        ) in text
+    else:
+        assert "总体结论：证据不足。" in text
+        assert "沿用原 Log Loss 配对差值区间" not in text
+
+
+@pytest.mark.parametrize(
+    ("excluded", "has_scores"), [(0, True), (1, True), (0, False), (1, False), (3, False)]
+)
 def test_real_analyze_to_cli_preserves_json_and_sources(
-    sources, has_scores, has_exclusions, tmp_path, monkeypatch, capsys
+    sources, excluded, has_scores, tmp_path, monkeypatch, capsysbinary
 ):
     """仅替换 loader 的合成来源；真实 analyze、评分、renderer 和 CLI 均执行。"""
-    if has_exclusions:
-        sources["evaluation"]["prediction_rows"].pop()
+    del sources["evaluation"]["prediction_rows"][3 - excluded :]
     if not has_scores:
         monkeypatch.setattr(diagnostic, "MINIMUM_PAIRS", 30)
     before = deepcopy(sources)
     expected = diagnostic.analyze(sources)
     assert (expected["metrics"] is not None) == has_scores
     assert expected["paired_calibration"]["sample_status"] == "INSUFFICIENT_SAMPLE"
-    assert expected["exclusion_reasons"] == (
-        {"MISSING_FROZEN_PREDICTION": 1} if has_exclusions else {}
-    )
-    assert expected["excluded_matches"] == int(has_exclusions)
+    expected_reasons = {"MISSING_FROZEN_PREDICTION": excluded} if excluded else {}
+    assert expected["exclusion_reasons"] == expected_reasons
+    assert tuple(expected[key] for key in MATCH_COUNT_KEYS) == (3, 3 - excluded, excluded)
+    assert sources == before
     expected_before = deepcopy(expected)
     expected_payload = diagnostic.contract._canonical_json_bytes(expected) + b"\n"
     calls = []
@@ -348,46 +420,15 @@ def test_real_analyze_to_cli_preserves_json_and_sources(
         output = tmp_path / f"synthetic-{summary_format}.json"
         monkeypatch.setattr(sys, "argv", base._summary_cli_args(output, summary_format))
         assert cli.main() == 0
-        captured = capsys.readouterr()
-        assert captured.err == ""
+        captured = capsysbinary.readouterr()
+        assert captured.err == b""
         payloads.append(output.read_bytes())
         assert json.loads(payloads[-1]) == expected
         if summary_format == "markdown":
-            assert captured.out == diagnostic.render_summary_markdown(expected) + "\n"
-            assert (
-                "校准样本状态：样本不足。\n\n"
-                f"分箱样本：最小非空分箱 {3 - int(has_exclusions)} 场，"
-                "至少需要 10 场。评分另按有效配对总数判断。"
-            ) in captured.out
-            if has_exclusions:
-                assert "| MISSING&#95;FROZEN&#95;PREDICTION | 1 |" in captured.out
-                assert "无排除比赛" not in captured.out
-            else:
-                assert "无排除比赛" in captured.out
-            assert (
-                captured.out.index("总体结论：")
-                < captured.out.index("### 比赛排除原因")
-                < captured.out.index("## 客胜(AWAY)")
-            )
-            if has_scores:
-                for key, title in zip(SCORE_KEYS, ("Log Loss", "Brier"), strict=True):
-                    model = expected["metrics"]["model"][key]
-                    market = expected["metrics"]["market"][key]
-                    assert f"| {title} | {model:.6f} | {market:.6f} |" in captured.out
-                assert "无法给出评分" not in captured.out
-                log_loss = expected["uncertainty"]["log_loss"]
-                low, high = log_loss["paired_delta_95_percentile_ci"]
-                assert (
-                    f"Log Loss 配对平均差值（模型减收盘市场）：{log_loss['paired_delta_mean']:+.6f}；"
-                    f"95% 配对 bootstrap 区间：[{low:+.6f}, {high:+.6f}]。"
-                ) in captured.out
-            else:
-                assert "样本不足，无法给出评分，也未生成区间。" in captured.out
-                assert "总体结论：证据不足。" in captured.out
-                assert "沿用原 Log Loss 配对差值区间" not in captured.out
+            _assert_cli_markdown(captured.out.decode(), expected, excluded, has_scores)
         else:
             json_outputs.append(captured.out)
-            assert captured.out == base._summary_stdout(expected, summary_format)
+            assert captured.out == base._summary_stdout(expected, summary_format).encode()
         assert sources == before
         assert expected == expected_before
     assert calls == ["load", "load", "load"]
