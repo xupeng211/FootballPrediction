@@ -1,0 +1,45 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_MATCH_COUNTS_TEAM2_20261121",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_MATCH_COUNTS_TEAM2_20261121.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml",
+    "ruff.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "在既有中文收盘 Markdown 样本状态附近增加一行总场数、有效配对、排除场数。直接读取 accounted_matches、valid_paired_matches、excluded_matches。零要显示；字段缺失时保留可读旧输出，不推算数字。",
+    "保留样本状态、最小非空分箱说明、评分、配对区间、判定、排除原因、三个分箱和历史用途。保留输入、统计、阈值、JSON 字节、CLI 参数、写文件及退出行为。",
+    "四条精确路径，完整差异最多 32768 字节。已有 795 行收盘基础测试逐字不动，在现有较短的 Markdown 测试文件复用其合成 fixture。按 800 物理行限制和原有门禁运行。"
+  ],
+  "forbidden_side_effects": [
+    "仅使用合成来源。禁止生产库、真实数据采集、读写真实研究资产、训练、业务模型推理、回测、迁移、部署。既有 QA 可使用一次性隔离 PostgreSQL 和现有 schema。",
+    "禁止修改门禁、测试选择、审核、依赖、认证、代理或旧账目。禁止外部代改、强推、自动合并和修改正式主干。GitHub 仅在批准和正式检查后创建或更新一个 PR。"
+  ]
+}
