@@ -1,0 +1,45 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CLOSING_MARKDOWN_PAIRED_BRIER_TEAM2_20261122",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/evaluation/canonical_closing_retrospective.py",
+    "tests/unit/ml/test_canonical_closing_markdown_metrics.py",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_CLOSING_MARKDOWN_PAIRED_BRIER_TEAM2_20261122.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml",
+    "ruff.toml"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    ".devcontainer",
+    "config",
+    "database",
+    "scripts",
+    "src/ml/training",
+    "src/ml/inference",
+    "docs/agentic/review_inputs"
+  ],
+  "excluded_tokens": [
+    "stage_d",
+    "stage-d"
+  ],
+  "protected_invariants": [
+    "现有中文收盘 Markdown 在总体结论旁并排展示既有 Log Loss 与 Brier 的模型减收盘市场的配对平均差值和 95% 配对 bootstrap 区间。Brier 直接读取 uncertainty.brier，其均值和完整区间独立显示，缺失或端点不全显示未生成，零值有效，带符号六位小数。",
+    "总体结论沿用既有 result_interpretation 和 Log Loss 依据。Brier 是补充指标，即便两者方向不同也不重新判断。未生成评分时保留原样本不足提示，无新增区间行。保留原 Log Loss 行、其他 Markdown、输入、统计、阈值、JSON 字节、CLI 参数、写文件与退出行为。",
+    "四条精确路径，完整差异最多 32768 字节。795 行的现有收盘基础测试逐字不动，从较短的 Markdown 测试文件复用其合成 fixture。按 800 物理行限制和项目现有门禁运行。"
+  ],
+  "forbidden_side_effects": [
+    "仅使用合成来源。禁止生产库、真实数据采集、读写真实研究资产、训练、业务模型推理、回测、迁移、部署。既有 QA 可使用一次性隔离 PostgreSQL 和现有 schema。",
+    "禁止修改门禁、测试选择、审核、依赖、认证、代理或旧账目。禁止外部代改、强推、自动合并和修改正式主干。GitHub 仅在批准和正式检查后创建或更新一个 PR。"
+  ]
+}
