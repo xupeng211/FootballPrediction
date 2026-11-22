@@ -17,6 +17,7 @@ prohibit_side_effects = base.prohibit_side_effects
 sources = base.sources
 
 SCORE_KEYS = ("multiclass_log_loss", "multiclass_brier_score")
+PAIRED_METRICS = (("log_loss", "Log Loss"), ("brier", "Brier"))
 MATCH_COUNT_KEYS = ("accounted_matches", "valid_paired_matches", "excluded_matches")
 CONCLUSIONS = (
     ("MODEL_BETTER_THAN_CLOSING", "模型更好"),
@@ -37,7 +38,11 @@ def _report():
             "log_loss": {
                 "paired_delta_mean": 0.078609803723,
                 "paired_delta_95_percentile_ci": [0.015476340689, 0.140815637412],
-            }
+            },
+            "brier": {
+                "paired_delta_mean": -0.023456789,
+                "paired_delta_95_percentile_ci": [-0.034567891, -0.012345678],
+            },
         },
         "result_interpretation": "MARKET_BETTER_THAN_MODEL",
     }
@@ -58,7 +63,15 @@ def test_scores_between_overall_status_and_unchanged_groups():
         text.index("| Brier |") < text.index("总体结论：市场更好。") < text.index("## 客胜(AWAY)")
     )
     assert "Log Loss、Brier 两项均越低越好。" in text
-    assert "沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。" in text
+    assert (
+        "总体结论：市场更好。\n"
+        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；"
+        "95% 配对 bootstrap 区间：[+0.015476, +0.140816]。\n"
+        "Brier 配对平均差值（模型减收盘市场）：-0.023457；"
+        "95% 配对 bootstrap 区间：[-0.034568, -0.012346]。\n"
+        "Brier 为补充指标。\n"
+        "沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。\n"
+    ) in text
     assert text.count("| 指标 | 模型 | 收盘市场 |") == 1
     assert [line for line in text.splitlines() if line.startswith("## ")] == [
         "## 客胜(AWAY)",
@@ -163,6 +176,8 @@ def test_no_metrics_explicitly_reports_insufficient_sample(missing):
     assert text.index("样本不足，无法给出评分，也未生成区间。") < text.index("## 客胜(AWAY)")
     assert "| 指标 |" not in text
     assert "Log Loss 配对平均差值" not in text
+    assert "Brier 配对平均差值" not in text
+    assert "Brier 为补充指标。" not in text
     assert "沿用原 Log Loss 配对差值区间" not in text
     assert "总体结论：证据不足。" in text
     assert text.count("| [") == base.EXPECTED_CLASS_COUNT * base.EXPECTED_CALIBRATION_BIN_COUNT
@@ -201,6 +216,7 @@ def test_unknown_conclusion_text_is_escaped():
     assert result == before
 
 
+@pytest.mark.parametrize(("key", "title"), PAIRED_METRICS)
 @pytest.mark.parametrize(("label", "notice"), CONCLUSIONS)
 @pytest.mark.parametrize(
     ("mean", "interval", "display"),
@@ -230,11 +246,11 @@ def test_unknown_conclusion_text_is_escaped():
     ],
 )
 def test_paired_delta_displays_source_values_without_rejudging(
-    label, notice, mean, interval, display
+    key, title, label, notice, mean, interval, display
 ):
     result = _report()
     result["result_interpretation"] = label
-    result["uncertainty"]["log_loss"] = {
+    result["uncertainty"][key] = {
         "paired_delta_mean": mean,
         "paired_delta_95_percentile_ci": interval,
     }
@@ -244,81 +260,94 @@ def test_paired_delta_displays_source_values_without_rejudging(
     before = deepcopy(result)
     payload = diagnostic.contract._canonical_json_bytes(result)
     text = diagnostic.render_summary_markdown(result)
-    assert f"总体结论：{notice}。\nLog Loss 配对平均差值（模型减收盘市场）：{display}" in text
-    assert text.count("Log Loss 配对平均差值") == 1
-    assert text.index(display) < text.index("## 客胜(AWAY)")
-    for title in ("Log Loss", "Brier"):
-        assert f"| {title} | 0.500000 | 0.500000 |" in text
+    line = f"{title} 配对平均差值（模型减收盘市场）：{display}"
+    assert text.index(f"总体结论：{notice}。") < text.index(line) < text.index("## 客胜(AWAY)")
+    assert text.count(f"{title} 配对平均差值") == 1
+    for score_title in ("Log Loss", "Brier"):
+        assert f"| {score_title} | 0.500000 | 0.500000 |" in text
     assert "未生成" not in text
     assert result == before
     assert diagnostic.contract._canonical_json_bytes(result) == payload
 
 
+@pytest.mark.parametrize(("key", "title"), PAIRED_METRICS)
 @pytest.mark.parametrize(
-    ("uncertainty", "mean_text", "interval_text"),
+    ("paired", "mean_text", "interval_text"),
     [
         (None, "未生成", "未生成"),
         ({}, "未生成", "未生成"),
-        ({"log_loss": None}, "未生成", "未生成"),
-        ({"log_loss": {}}, "未生成", "未生成"),
-        ({"log_loss": {"paired_delta_mean": 0.0}}, "+0.000000", "未生成"),
+        ({"paired_delta_mean": 0.0}, "+0.000000", "未生成"),
         (
-            {"log_loss": {"paired_delta_95_percentile_ci": [0.0, 0.0]}},
+            {"paired_delta_95_percentile_ci": [0.0, 0.0]},
             "未生成",
             "[+0.000000, +0.000000]",
         ),
         (
-            {"log_loss": {"paired_delta_mean": None, "paired_delta_95_percentile_ci": [0.1, 0.2]}},
+            {"paired_delta_mean": None, "paired_delta_95_percentile_ci": [0.1, 0.2]},
             "未生成",
             "[+0.100000, +0.200000]",
         ),
     ],
 )
-def test_missing_paired_information_preserves_scores(uncertainty, mean_text, interval_text):
+def test_missing_paired_information_preserves_scores(key, title, paired, mean_text, interval_text):
     result = _report()
-    if uncertainty is None:
-        del result["uncertainty"]
-    else:
-        result["uncertainty"] = uncertainty
+    result["uncertainty"][key] = paired
     before = deepcopy(result)
     payload = diagnostic.contract._canonical_json_bytes(result)
     text = diagnostic.render_summary_markdown(result)
     assert (
-        f"Log Loss 配对平均差值（模型减收盘市场）：{mean_text}；"
+        f"{title} 配对平均差值（模型减收盘市场）：{mean_text}；"
         f"95% 配对 bootstrap 区间：{interval_text}。"
     ) in text
     assert "| Log Loss | 0.978340 | 0.899731 |" in text
     assert "| Brier | 0.584561 | 0.512345 |" in text
     assert "总体结论：市场更好。" in text
     assert "样本不足，无法给出评分" not in text
+    assert text.count("未生成") == (mean_text == "未生成") + (interval_text == "未生成")
     assert text.count("| [") == base.EXPECTED_CLASS_COUNT * base.EXPECTED_CALIBRATION_BIN_COUNT
     assert result == before
     assert diagnostic.contract._canonical_json_bytes(result) == payload
 
 
+@pytest.mark.parametrize(("key", "title"), PAIRED_METRICS)
 @pytest.mark.parametrize("interval", [None, [], [0.1], [None, 0.2], [0.1, None], [0.1, 0.2, 0.3]])
-def test_incomplete_interval_is_not_invented(interval):
+def test_incomplete_interval_is_not_invented(key, title, interval):
     result = _report()
-    result["uncertainty"]["log_loss"]["paired_delta_95_percentile_ci"] = interval
+    paired = result["uncertainty"][key]
+    paired["paired_delta_95_percentile_ci"] = interval
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
     assert (
-        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；95% 配对 bootstrap 区间：未生成。"
+        f"{title} 配对平均差值（模型减收盘市场）：{paired['paired_delta_mean']:+.6f}；"
+        "95% 配对 bootstrap 区间：未生成。"
     ) in text
     assert "0.000000" not in text.split("## 客胜(AWAY)", 1)[0]
     assert result == before
 
 
-def test_null_uncertainty_is_not_zero():
-    result = _report()
-    result["uncertainty"] = None
+@pytest.mark.parametrize("fields", [{}, {"uncertainty": None}, {"uncertainty": {}}])
+def test_unavailable_uncertainty_is_not_zero(fields):
+    result = {key: value for key, value in _report().items() if key != "uncertainty"} | fields
     before = deepcopy(result)
     text = diagnostic.render_summary_markdown(result)
-    assert (
-        "Log Loss 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。" in text
-    )
+    for _, title in PAIRED_METRICS:
+        assert (
+            f"{title} 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。"
+        ) in text
     assert "| Log Loss | 0.978340 | 0.899731 |" in text
     assert result == before
+
+
+def test_missing_brier_preserves_log_loss():
+    result = _report()
+    del result["uncertainty"]["brier"]
+    text = diagnostic.render_summary_markdown(result)
+    assert (
+        "Log Loss 配对平均差值（模型减收盘市场）：+0.078610；"
+        "95% 配对 bootstrap 区间：[+0.015476, +0.140816]。\n"
+        "Brier 配对平均差值（模型减收盘市场）：未生成；95% 配对 bootstrap 区间：未生成。\n"
+        "Brier 为补充指标。\n"
+    ) in text
 
 
 @pytest.mark.parametrize("missing_keys", [MATCH_COUNT_KEYS, *((key,) for key in MATCH_COUNT_KEYS)])
@@ -381,14 +410,19 @@ def _assert_cli_markdown(text, expected, excluded, has_scores):
             market = expected["metrics"]["market"][key]
             assert f"| {title} | {model:.6f} | {market:.6f} |" in text
         assert "无法给出评分" not in text
-        log_loss = expected["uncertainty"]["log_loss"]
-        low, high = log_loss["paired_delta_95_percentile_ci"]
-        assert (
-            f"Log Loss 配对平均差值（模型减收盘市场）：{log_loss['paired_delta_mean']:+.6f}；"
-            f"95% 配对 bootstrap 区间：[{low:+.6f}, {high:+.6f}]。"
-        ) in text
+        paired_lines = []
+        for key, title in PAIRED_METRICS:
+            paired = expected["uncertainty"][key]
+            low, high = paired["paired_delta_95_percentile_ci"]
+            paired_lines.append(
+                f"{title} 配对平均差值（模型减收盘市场）：{paired['paired_delta_mean']:+.6f}；"
+                f"95% 配对 bootstrap 区间：[{low:+.6f}, {high:+.6f}]。"
+            )
+        assert "\n".join([*paired_lines, "Brier 为补充指标。", ""]) in text
     else:
         assert "总体结论：证据不足。" in text
+        assert "配对平均差值" not in text
+        assert "Brier 为补充指标。" not in text
         assert "沿用原 Log Loss 配对差值区间" not in text
 
 

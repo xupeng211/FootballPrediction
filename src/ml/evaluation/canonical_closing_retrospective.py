@@ -450,6 +450,20 @@ def _match_count_lines(result: dict[str, Any]) -> list[str]:
     return [f"总场数：{total} 场，有效配对：{paired} 场，排除场数：{excluded} 场。", ""]
 
 
+def _paired_delta_line(title: str, uncertainty: dict[str, Any]) -> str:
+    mean = uncertainty.get("paired_delta_mean")
+    mean_text = "未生成" if mean is None else f"{mean:+.6f}"
+    match uncertainty.get("paired_delta_95_percentile_ci"):
+        case [low, high] if low is not None and high is not None:
+            interval_text = f"[{low:+.6f}, {high:+.6f}]"
+        case _:
+            interval_text = "未生成"
+    return (
+        f"{title} 配对平均差值（模型减收盘市场）：{mean_text}；"
+        f"95% 配对 bootstrap 区间：{interval_text}。"
+    )
+
+
 def render_summary_markdown(result: dict[str, Any]) -> str:
     """纯展示已有配对校准结果；不重算统计、不修改输入。"""
     lines = [
@@ -481,18 +495,10 @@ def render_summary_markdown(result: dict[str, Any]) -> str:
     conclusion = _markdown_cell(interpretations.get(interpretation, interpretation))
     lines.append(f"总体结论：{conclusion}。")
     if metrics is not None:
-        log_loss = (result.get("uncertainty") or {}).get("log_loss") or {}
-        mean = log_loss.get("paired_delta_mean")
-        mean_text = "未生成" if mean is None else f"{mean:+.6f}"
-        match log_loss.get("paired_delta_95_percentile_ci"):
-            case [low, high] if low is not None and high is not None:
-                interval_text = f"[{low:+.6f}, {high:+.6f}]"
-            case _:
-                interval_text = "未生成"
-        lines.append(
-            f"Log Loss 配对平均差值（模型减收盘市场）：{mean_text}；"
-            f"95% 配对 bootstrap 区间：{interval_text}。"
-        )
+        uncertainty = result.get("uncertainty") or {}
+        lines.append(_paired_delta_line("Log Loss", uncertainty.get("log_loss") or {}))
+        lines.append(_paired_delta_line("Brier", uncertainty.get("brier") or {}))
+        lines.append("Brier 为补充指标。")
         lines.append("沿用原 Log Loss 配对差值区间的结论依据，不按展示评分重新判断。")
     lines.extend(["", "### 比赛排除原因", ""])
     exclusion_reasons = result.get("exclusion_reasons")
