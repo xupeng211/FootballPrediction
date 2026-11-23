@@ -55,11 +55,12 @@ applicable to those legacy paths; they do not make those paths canonical.
 均经既有 `_as_number` 成功转换为有限数值时，才把该列计入 numeric。
 `None`、空字符串及不存在的键仍按原缺失规则统计；布尔、坏文本和非有限值
 不视为缺失，但使所在列计入 non-numeric。合法数值字符串仍可转换，不增加清洗或填补。
-低方差示例仍只接受 numeric 列，并保留原有唯一值数阈值及示例数量上限。
+低方差示例只接受至少有两次有效数值观测的 numeric 列，保留原有唯一值数阈值、
+名称排序和最多 12 项的上限。两次观测的数值可以相同，观测下限仅用于此示例列表。
 例如两行仅含同值 `home_market_value_source="totalStarterMarketValue"` 和
 `home_injury_count=0/1`，数值列与非数值列各为 1，仅 injury count 进入数值低方差示例。
 
-此修复只纠正转换成功判断，保留 allowlist、列身份、缺失率、常量与全零规则、
+报告沿用现有 allowlist、列身份、缺失率、常量与全零规则、
 标签、readiness、全部 `SAFE_FOR_*` 和 no-write 边界；不提供新的训练授权。
 直接回归位于 `tests/unit/ml/test_filtered_matrix_report_only.py`，通过公开 helper
 验证上述边界和输入不变，不连接数据库或执行训练。
