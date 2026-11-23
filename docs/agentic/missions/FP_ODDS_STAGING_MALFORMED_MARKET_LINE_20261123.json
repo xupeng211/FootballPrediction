@@ -1,0 +1,42 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_ODDS_STAGING_MALFORMED_MARKET_LINE_20261123",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/odds_staging/contracts.js",
+    "src/infrastructure/odds_staging/validators.js",
+    "tests/unit/odds_staging_historical.test.js",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_ODDS_STAGING_MALFORMED_MARKET_LINE_20261123.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    "config",
+    "data",
+    "database",
+    "deploy",
+    "models",
+    "schemas",
+    "scripts",
+    "src/ml"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅修复让球／大小球盘口线被隐式转换：拒绝纯空白字符串、布尔值、数组和对象，沿用 market_line_missing；缺键/null/空字符串以及原非法值继续隔离。",
+    "有限数字及非空有限数字字符串保持既有规范化（包括零、正负和前后空格的数值）；1X2 等其他市场、赔率金额、匹配、去重、幂等及合法输出字节保持既有行为。",
+    "只改五条精确路径，完整 diff 最多 32768 字节。测试、独审、远端 CI 与最终项目门禁绑定最终 HEAD。"
+  ],
+  "forbidden_side_effects": [
+    "禁止读取真实赔率、采集、访问真实服务或业务库、导入、生产写入、训练、预测、回测及部署。项目固定 QA 可使用一次性隔离 PostgreSQL、既有 schema 和合成数据。",
+    "禁止变更门禁、依赖、审核、认证、代理和历史账目。仅由 Harness 发布一个 PR，Owner 另批合并。禁止强推、自动合并和外部代改。"
+  ]
+}

@@ -233,7 +233,20 @@ function buildExactDuplicateKey(observation = {}) {
     });
 }
 
+function requiresMarketLine(market) {
+    return market === 'asian_handicap' || market === 'over_under';
+}
+
+function normalizeMarketLine(value) {
+    if (typeof value === 'string' && value.trim() !== '') {
+        return nullableFiniteNumber(value);
+    }
+    // 保留非法形状供隔离取证，并避免与合法盘口线共享去重键。
+    return value === '' ? null : (value ?? null);
+}
+
 function createCanonicalObservation(fields = {}) {
+    const market = nullableText(fields.market);
     const observation = {
         schema_version: nullableText(fields.schema_version) || OBSERVATION_SCHEMA_VERSION,
         source_provider: nullableText(fields.source_provider),
@@ -246,9 +259,9 @@ function createCanonicalObservation(fields = {}) {
         away_team: nullableText(fields.away_team),
         bookmaker: nullableText(fields.bookmaker),
         bookmaker_source_id: nullableText(fields.bookmaker_source_id),
-        market: nullableText(fields.market),
+        market,
         selection: nullableText(fields.selection),
-        line: nullableFiniteNumber(fields.line),
+        line: requiresMarketLine(market) ? normalizeMarketLine(fields.line) : nullableFiniteNumber(fields.line),
         decimal_odds: nullableFiniteNumber(fields.decimal_odds),
         snapshot_type: nullableText(fields.snapshot_type) || 'unknown',
         source_observed_at: nullableText(fields.source_observed_at),
@@ -313,7 +326,9 @@ module.exports = {
     buildSemanticDuplicateKey,
     createCanonicalObservation,
     isStrictAbsoluteTimestamp,
+    normalizeMarketLine,
     nullableText,
+    requiresMarketLine,
     sha256Text,
     sortedUniqueStrings,
     stableCanonicalize,

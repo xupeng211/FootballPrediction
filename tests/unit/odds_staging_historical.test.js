@@ -260,18 +260,23 @@ const MARKETS_REQUIRING_LINE = [
     { market: 'over_under', selection: 'over' },
 ];
 
+const MALFORMED_MARKET_LINES = [true, false, [], [2.5], ' \t\n ', { handicap: 0 }, 'invalid'];
+const PADDED_MARKET_LINES = [' \t0 ', ' +2.5 ', ' -0.25\n'];
+
 for (const market of MARKETS_REQUIRING_LINE) {
     test(`${market.market} 缺盘口线或盘口线无效时隔离，有限盘口线仍有效`, () => {
-        const missing = validateObservation(baseObservation(market));
-        assert.deepEqual(missing.quarantine_reasons, ['market_line_missing'], '缺 line 键');
-        for (const line of [null, '', NaN, Infinity, -Infinity, 'invalid']) {
+        const canonical = baseObservation(market);
+        const { quarantine_reasons: missing } = validateObservation(withoutField(canonical, 'line'));
+        assert.deepEqual(missing, ['market_line_missing']);
+        for (const line of [null, '', NaN, Infinity, -Infinity, ...MALFORMED_MARKET_LINES]) {
             const observation = validateObservation(baseObservation({ ...market, line }));
             assert.deepEqual(observation.quarantine_reasons, ['market_line_missing'], `line=${String(line)}`);
+            assert.deepEqual(validateObservation({ ...canonical, line }).quarantine_reasons, ['market_line_missing']);
         }
-        for (const line of [0, 2.5, -0.25]) {
+        for (const line of [0, 2.5, -0.25, ...PADDED_MARKET_LINES]) {
             const observation = validateObservation(baseObservation({ ...market, line }));
             assert.deepEqual(observation.quarantine_reasons, [], `line=${line}`);
-            assert.equal(observation.line, line);
+            assert.equal(observation.line, Number(line));
         }
     });
 }
@@ -294,8 +299,18 @@ test('离线 HTML staging 隔离缺盘口线记录并保留原始证据和合法
         { ...market, bookmaker: 'Fixture Book B', line: null },
         { ...market, bookmaker: 'Fixture Book C', line: '' },
     ]);
-    const validLines = MARKETS_REQUIRING_LINE.flatMap(market => [0, 2.5, -0.25].map(line => ({ ...market, line })));
-    const observations = [...missingLines, ...validLines, { market: '1X2', selection: 'home' }].map(entry => ({
+    const zeroLines = MARKETS_REQUIRING_LINE.map(market => ({ ...market, bookmaker: 'Collision Book', line: 0 }));
+    for (const market of zeroLines) {
+        missingLines.push(
+            ...MALFORMED_MARKET_LINES.map((line, index) => ({ ...market, bookmaker: `Malformed ${index}`, line })),
+            { ...market, line: false, decimal_odds: 2.5 }
+        );
+    }
+    const validLines = MARKETS_REQUIRING_LINE.flatMap(market => [
+        ...[0, 2.5, -0.25].map(line => ({ ...market, line })),
+        ...PADDED_MARKET_LINES.map(line => ({ ...market, bookmaker: 'Padded Book', line })),
+    ]);
+    const observations = [...missingLines, ...validLines, { market: '1X2', selection: 'home' }, ...zeroLines].map(entry => ({
         bookmaker: 'Fixture Book',
         decimal_odds: 2.1,
         ...entry,
@@ -330,22 +345,27 @@ test('离线 HTML staging 隔离缺盘口线记录并保留原始证据和合法
 
     const locator = index => `html:explicit-envelope:observations[${index}]`;
     const missingLocators = new Set(missingLines.map((_, index) => locator(index)));
-    const legal = result.accepted_observations.filter(entry => !missingLocators.has(entry.raw_record_locator));
-    const legalBytes = `${legal.map(stableStringify).join('\n')}\n`;
-    // 锁定 BASE 中合法记录的 JSONL 字节，包括幂等键。
-    assert.equal(
-        crypto.createHash('sha256').update(legalBytes).digest('hex'),
-        '7bcf74c662c3f2eb1a31d48e08bec3cc88a86525cef73fc790d2b3d1b6a7d584'
+    const zeroLocators = new Set(zeroLines.map((_, index) => locator(observations.length - zeroLines.length + index)));
+    const legal = result.accepted_observations.filter(({ raw_record_locator }) =>
+        !missingLocators.has(raw_record_locator) && !zeroLocators.has(raw_record_locator)
     );
-    assert.equal(result.summary.accepted_count, validLines.length + 1);
+    assert.equal(legal.length, validLines.length + 1);
+    const legalBytes = `${legal.map(stableStringify).join('\n')}\n`;
+    // 同一份 HTML 在 BASE 中的合法 JSONL 字节，含幂等键。
+    assert.equal(crypto.createHash('sha256').update(legalBytes).digest('hex'), 'd8c33754d78b9ff47b17503d09f1514b81b010c875e0d19ea2bc9c1ed08de6b0');
+    assert.equal(result.summary.accepted_count, validLines.length + 1 + zeroLines.length);
     assert.equal(result.summary.quarantine_count, missingLines.length);
     const quarantined = new Map(result.quarantine.map(entry => [entry.raw_record_locator, entry]));
-    for (const rawRecordLocator of missingLocators) {
+    for (const [index, rawRecordLocator] of [...missingLocators].entries()) {
         const entry = quarantined.get(rawRecordLocator);
         assert.ok(entry, rawRecordLocator);
         assert.equal(entry.raw_sha256, manifest.raw_sha256);
         assert.deepEqual(entry.reasons, ['market_line_missing']);
-        assert.equal(entry.evidence.parsed_fields.line, null);
+        const { line } = missingLines[index];
+        assert.deepEqual(entry.evidence.parsed_fields.line, line === '' ? null : (line ?? null));
+    }
+    for (const rawRecordLocator of zeroLocators) {
+        assert.equal(result.accepted_observations.find(entry => entry.raw_record_locator === rawRecordLocator)?.line, 0);
     }
 });
 
