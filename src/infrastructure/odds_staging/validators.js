@@ -6,7 +6,9 @@ const {
     ALLOWED_SNAPSHOT_TYPES,
     appendObservationSignals,
     isStrictAbsoluteTimestamp,
+    normalizeMarketLine,
     nullableText,
+    requiresMarketLine,
 } = require('./contracts');
 const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('./footballDataProviderContract');
 
@@ -19,10 +21,6 @@ const MARKET_SELECTIONS = Object.freeze({
     draw_no_bet: ['home', 'away'],
     both_teams_to_score: ['yes', 'no'],
 });
-
-function requiresLine(market) {
-    return market === 'asian_handicap' || market === 'over_under';
-}
 
 function hasSufficientIdentity(observation) {
     if (nullableText(observation.source_match_id)) {
@@ -75,12 +73,11 @@ function validateMarketOdds(observation) {
     }
 
     const line = observation.line;
-    const hasLine = line !== null && line !== undefined;
-    if (requiresLine(market)) {
-        if (!hasLine || !Number.isFinite(Number(line))) {
+    if (requiresMarketLine(market)) {
+        if (!Number.isFinite(normalizeMarketLine(line))) {
             reasons.push('market_line_missing');
         }
-    } else if (hasLine) {
+    } else if (line !== null && line !== undefined) {
         reasons.push('line_not_applicable');
     }
     return reasons;
