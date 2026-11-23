@@ -33,6 +33,7 @@ EXCLUDED_DATA_VERSIONS = {"PHASE4.23", "PHASE4.43_SYNTHETIC"}
 METADATA_KEYS = {"_source", "_version"}
 HIGH_MISSING_THRESHOLD = 0.5
 MIN_LABEL_CLASS_COUNT = 3
+LOW_VARIANCE_MIN_OBSERVATIONS = 2
 LOW_VARIANCE_UNIQUE_THRESHOLD = 2
 MIN_TRAINING_ROWS_FOR_DRY_RUN = 100
 MIN_MODEL_SIGNAL_FEATURES = 10
@@ -234,6 +235,7 @@ def build_filtered_feature_matrix_report(
                 stat["feature"]
                 for stat in model_stats
                 if stat["numeric_convertible"]
+                and stat["non_null_count"] >= LOW_VARIANCE_MIN_OBSERVATIONS
                 and stat["numeric_unique_count"] <= LOW_VARIANCE_UNIQUE_THRESHOLD
             ][:LOW_VARIANCE_EXAMPLE_LIMIT],
         },

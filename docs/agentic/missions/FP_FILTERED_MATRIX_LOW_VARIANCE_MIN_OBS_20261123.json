@@ -1,0 +1,43 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FILTERED_MATRIX_LOW_VARIANCE_MIN_OBS_20261123",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/features/filtered_matrix_report.py",
+    "tests/unit/ml/test_filtered_matrix_report_only.py",
+    "docs/ml/training_no_write_report_only_guard.md",
+    "docs/agentic/missions/FP_FILTERED_MATRIX_LOW_VARIANCE_MIN_OBS_20261123.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    "scripts/",
+    ".github/",
+    ".githooks/",
+    "config/",
+    "schemas/",
+    "database/",
+    "deploy/",
+    "data/",
+    "models/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅校正现有 report-only 赛前矩阵报告 Feature quality.low_variance_feature_examples。现有 numeric_convertible、最多两个不同数值、排序和最多 12 项继续沿用，额外要求至少两个非缺失有效数值。",
+    "除低方差示例列表外报告字段及序列化结果逐字节保持。保留常量、全零、缺失、数值转换、过滤、标签、readiness、SAFE_FOR_*、CLI 与 no-write 行为。",
+    "只改四条精确路径，完整差异最多 32768 字节，Python 每文件最多 800 物理行。任务合同原字节由 Controller 冻结。"
+  ],
+  "forbidden_side_effects": [
+    "只用合成输入，禁止业务/生产数据库连接、真实采集、训练、预测、回测、激活或部署。项目原 QA 可使用一次性隔离 PostgreSQL、既有 schema 与合成数据。",
+    "禁止变更门禁、评审路径、依赖、认证、代理、持久配置及历史账目。仅由 Harness 发布一个 PR，禁止合并、强推、自动合并及外部代改。"
+  ]
+}
