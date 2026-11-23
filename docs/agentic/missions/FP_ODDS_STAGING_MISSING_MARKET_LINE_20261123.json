@@ -1,0 +1,41 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_ODDS_STAGING_MISSING_MARKET_LINE_20261123",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/odds_staging/validators.js",
+    "tests/unit/odds_staging_historical.test.js",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_ODDS_STAGING_MISSING_MARKET_LINE_20261123.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    "config",
+    "data",
+    "database",
+    "deploy",
+    "models",
+    "schemas",
+    "scripts",
+    "src/ml"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅修复现有 odds staging 校验器把缺盘口线的让球和大小球当作零通过的问题。明确缺线及现有非法线使用 market_line_missing；显式有限零、正负盘口线和其他市场现有判定照常。",
+    "保持 CSV/HTML 适配、数值规范化、接受的有效记录、市场/选项/赔率规则、幂等键、去重、比赛身份、证据字段及现有 no-write 流程。只使用合成输入。",
+    "只改四条精确路径，完整 diff 最多 32768 字节。测试、独审及远端 CI 绑定最终 HEAD。"
+  ],
+  "forbidden_side_effects": [
+    "禁止读取真实赔率、采集、访问真实服务或业务库、导入、生产写入、训练、预测、回测及部署。项目固定 QA 可使用一次性隔离 PostgreSQL、既有 schema 和合成数据。",
+    "禁止变更门禁、依赖、审核、认证、代理和历史账目。仅由 Harness 发布一个 PR，Owner 另批合并。禁止强推、自动合并和外部代改。"
+  ]
+}
