@@ -12,6 +12,7 @@ const {
     buildIdempotencyPayload,
     buildSemanticDuplicateKey,
     createCanonicalObservation,
+    stableStringify,
 } = require('../../src/infrastructure/odds_staging/contracts');
 const { ADAPTER_VERSIONS, adaptFootballDataCsv } = require('../../src/infrastructure/odds_staging/adapters');
 const { detectFakeOdds } = require('../../src/infrastructure/odds_staging/fakeOddsDetector');
@@ -140,7 +141,6 @@ function baseObservation(overrides = {}) {
         bookmaker_source_id: 'fixture-book',
         market: '1X2',
         selection: 'home',
-        line: null,
         decimal_odds: 2.1,
         snapshot_type: 'unknown',
         source_observed_at: null,
@@ -253,6 +253,100 @@ test('historical_git_recovery manifest 只接受显式 unknown capture 语义与
         const nullCapture = validateSourceManifest({ ...manifest, captured_at: null });
         assert.equal(nullCapture.valid, false);
     });
+});
+
+const MARKETS_REQUIRING_LINE = [
+    { market: 'asian_handicap', selection: 'home' },
+    { market: 'over_under', selection: 'over' },
+];
+
+for (const market of MARKETS_REQUIRING_LINE) {
+    test(`${market.market} 缺盘口线或盘口线无效时隔离，有限盘口线仍有效`, () => {
+        const missing = validateObservation(baseObservation(market));
+        assert.deepEqual(missing.quarantine_reasons, ['market_line_missing'], '缺 line 键');
+        for (const line of [null, '', NaN, Infinity, -Infinity, 'invalid']) {
+            const observation = validateObservation(baseObservation({ ...market, line }));
+            assert.deepEqual(observation.quarantine_reasons, ['market_line_missing'], `line=${String(line)}`);
+        }
+        for (const line of [0, 2.5, -0.25]) {
+            const observation = validateObservation(baseObservation({ ...market, line }));
+            assert.deepEqual(observation.quarantine_reasons, [], `line=${line}`);
+            assert.equal(observation.line, line);
+        }
+    });
+}
+
+test('1X2 未给盘口线时接受，给出零线时仍隔离', () => {
+    assert.deepEqual(validateObservation(baseObservation()).quarantine_reasons, []);
+    assert.deepEqual(validateObservation(baseObservation({ line: 0 })).quarantine_reasons, ['line_not_applicable']);
+});
+
+test('离线 HTML staging 隔离缺盘口线记录并保留原始证据和合法输出字节', t => {
+    const match = {
+        source_match_id: 'fixture-html-market-lines',
+        competition: 'Fixture League',
+        kickoff_at: '2025-08-02T18:00:00Z',
+        home_team: 'Gamma FC',
+        away_team: 'Delta FC',
+    };
+    const missingLines = MARKETS_REQUIRING_LINE.flatMap(market => [
+        { ...market, bookmaker: 'Fixture Book A' },
+        { ...market, bookmaker: 'Fixture Book B', line: null },
+        { ...market, bookmaker: 'Fixture Book C', line: '' },
+    ]);
+    const validLines = MARKETS_REQUIRING_LINE.flatMap(market => [0, 2.5, -0.25].map(line => ({ ...market, line })));
+    const observations = [...missingLines, ...validLines, { market: '1X2', selection: 'home' }].map(entry => ({
+        bookmaker: 'Fixture Book',
+        decimal_odds: 2.1,
+        ...entry,
+    }));
+    const rawDirectory = createTempDirectory(t);
+    const rawPath = path.join(rawDirectory, 'market-lines.fixture.html');
+    const payload = JSON.stringify({ schema_version: 'oddsportal-explicit-envelope-html/v1', match, observations });
+    const rawBytes = Buffer.from(`<script type="application/json" data-odds-staging="explicit">${payload}</script>`);
+    fs.writeFileSync(rawPath, rawBytes);
+    const { manifest, manifestPath } = writeFixtureManifest(t, rawPath, {
+        source_provider: 'oddsportal-fixture',
+        source_url: 'fixture://oddsportal/market-lines',
+        source_match_id: match.source_match_id,
+        raw_media_type: 'text/html',
+        adapter: 'oddsportal-explicit-envelope-html',
+        adapter_version: ADAPTER_VERSIONS['oddsportal-explicit-envelope-html'],
+    });
+    const manifestBytes = fs.readFileSync(manifestPath);
+    const result = runOfflineStaging({
+        sourcePath: rawPath,
+        manifestPath,
+        adapter: manifest.adapter,
+        candidates: [{ ...match, id: 'fixture-local-market-lines', source_provider: manifest.source_provider }],
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+
+    assert.equal(result.summary.default_mode, 'dry_run_no_write');
+    assert.deepEqual(fs.readFileSync(rawPath), rawBytes);
+    assert.deepEqual(fs.readFileSync(manifestPath), manifestBytes);
+    assert.deepEqual(fs.readdirSync(rawDirectory), [path.basename(rawPath)]);
+    assert.deepEqual(fs.readdirSync(path.dirname(manifestPath)), [path.basename(manifestPath)]);
+
+    const locator = index => `html:explicit-envelope:observations[${index}]`;
+    const missingLocators = new Set(missingLines.map((_, index) => locator(index)));
+    const legal = result.accepted_observations.filter(entry => !missingLocators.has(entry.raw_record_locator));
+    const legalBytes = `${legal.map(stableStringify).join('\n')}\n`;
+    // 锁定 BASE 中合法记录的 JSONL 字节，包括幂等键。
+    assert.equal(
+        crypto.createHash('sha256').update(legalBytes).digest('hex'),
+        '7bcf74c662c3f2eb1a31d48e08bec3cc88a86525cef73fc790d2b3d1b6a7d584'
+    );
+    assert.equal(result.summary.accepted_count, validLines.length + 1);
+    assert.equal(result.summary.quarantine_count, missingLines.length);
+    const quarantined = new Map(result.quarantine.map(entry => [entry.raw_record_locator, entry]));
+    for (const rawRecordLocator of missingLocators) {
+        const entry = quarantined.get(rawRecordLocator);
+        assert.ok(entry, rawRecordLocator);
+        assert.equal(entry.raw_sha256, manifest.raw_sha256);
+        assert.deepEqual(entry.reasons, ['market_line_missing']);
+        assert.equal(entry.evidence.parsed_fields.line, null);
+    }
 });
 
 test('capture_time_status 语义只在显式 unknown 时放行 null captured_at', () => {
