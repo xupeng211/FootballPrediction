@@ -75,10 +75,12 @@ function validateMarketOdds(observation) {
     }
 
     const line = observation.line;
-    if (requiresLine(market) && !Number.isFinite(Number(line))) {
-        reasons.push('market_line_missing');
-    }
-    if (!requiresLine(market) && line !== null && line !== undefined) {
+    const hasLine = line !== null && line !== undefined;
+    if (requiresLine(market)) {
+        if (!hasLine || !Number.isFinite(Number(line))) {
+            reasons.push('market_line_missing');
+        }
+    } else if (hasLine) {
         reasons.push('line_not_applicable');
     }
     return reasons;
