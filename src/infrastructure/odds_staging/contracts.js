@@ -67,6 +67,11 @@ function nullableText(value) {
     return text === '' ? null : text;
 }
 
+function normalizeSourceObservedAt(value) {
+    // 保留异常类型，供校验器按原有原因隔离。
+    return typeof value === 'string' ? nullableText(value) : (value ?? null);
+}
+
 function nullableFiniteNumber(value) {
     if (value === null || value === undefined || value === '') {
         return null;
@@ -281,7 +286,7 @@ function createCanonicalObservation(fields = {}) {
         line: requiresMarketLine(market) ? normalizeMarketLine(fields.line) : nullableFiniteNumber(fields.line),
         decimal_odds: parseDecimalOdds(fields.decimal_odds),
         snapshot_type: nullableText(fields.snapshot_type) || 'unknown',
-        source_observed_at: nullableText(fields.source_observed_at),
+        source_observed_at: normalizeSourceObservedAt(fields.source_observed_at),
         captured_at: nullableText(fields.captured_at),
         source_timezone: nullableText(fields.source_timezone),
         raw_sha256: nullableText(fields.raw_sha256),
@@ -344,6 +349,7 @@ module.exports = {
     createCanonicalObservation,
     isStrictAbsoluteTimestamp,
     normalizeMarketLine,
+    normalizeSourceObservedAt,
     nullableText,
     parseDecimalOdds,
     requiresMarketLine,

@@ -143,7 +143,6 @@ function baseObservation(overrides = {}) {
         selection: 'home',
         decimal_odds: 2.1,
         snapshot_type: 'unknown',
-        source_observed_at: null,
         captured_at: '2025-08-01T10:00:00Z',
         source_timezone: 'UTC',
         raw_sha256: 'a'.repeat(64),
@@ -284,6 +283,66 @@ for (const market of MARKETS_REQUIRING_LINE) {
 test('1X2 未给盘口线时接受，给出零线时仍隔离', () => {
     assert.deepEqual(validateObservation(baseObservation()).quarantine_reasons, []);
     assert.deepEqual(validateObservation(baseObservation({ line: 0 })).quarantine_reasons, ['line_not_applicable']);
+});
+
+test('异常观测时间在构造后与直接校验时均使用现有隔离原因', () => {
+    const canonical = baseObservation();
+    const reasons = ['source_observed_at_invalid'];
+    const invalidValues = [['2025-08-01T10:00:00Z'], [], {}, 1, 0, true, false, '2025-08-01T10:00:00'];
+
+    for (const sourceObservedAt of invalidValues) {
+        const context = JSON.stringify(sourceObservedAt);
+        const observation = baseObservation({ source_observed_at: sourceObservedAt });
+        assert.equal(observation.source_observed_at, sourceObservedAt, context);
+        assert.deepEqual(validateObservation(observation).quarantine_reasons, reasons, context);
+        assert.deepEqual(
+            validateObservation({ ...canonical, source_observed_at: sourceObservedAt }).quarantine_reasons,
+            reasons,
+            context
+        );
+    }
+});
+
+test('合法绝对观测时间保留原格式，构造入口仍去掉外部空白', () => {
+    const canonical = baseObservation({ snapshot_type: 'opening' });
+    for (const timestamp of ['2025-08-01T10:00:00Z', '2025-08-01T12:00:00+02:00']) {
+        const paddedTimestamp = ` \t${timestamp}\n`;
+        const observation = baseObservation({ snapshot_type: 'opening', source_observed_at: paddedTimestamp });
+        assert.equal(observation.source_observed_at, timestamp);
+        for (const input of [observation, { ...canonical, source_observed_at: paddedTimestamp }]) {
+            const validated = validateObservation(input);
+            assert.deepEqual(validated.quarantine_reasons, []);
+            assert.deepEqual(validated.quality_flags, ['fixture_provenance']);
+        }
+    }
+});
+
+test('观测时间缺省时保留质量标记，纯空白仅在构造入口视为缺省', () => {
+    const canonical = baseObservation({ snapshot_type: 'opening' });
+    const whitespace = ' \t\n ';
+    const constructed = [
+        canonical,
+        ...[null, undefined, '', whitespace].map(sourceObservedAt =>
+            baseObservation({ snapshot_type: 'opening', source_observed_at: sourceObservedAt })
+        ),
+    ];
+    for (const observation of constructed) {
+        assert.equal(observation.source_observed_at, null);
+    }
+
+    const direct = [
+        withoutField(canonical, 'source_observed_at'),
+        ...[null, undefined, ''].map(sourceObservedAt => ({ ...canonical, source_observed_at: sourceObservedAt })),
+    ];
+    for (const observation of [...constructed, ...direct]) {
+        const validated = validateObservation(observation);
+        assert.deepEqual(validated.quarantine_reasons, []);
+        assert.deepEqual(validated.quality_flags, ['fixture_provenance', 'snapshot_source_time_unknown']);
+    }
+    assert.deepEqual(
+        validateObservation({ ...canonical, source_observed_at: whitespace }).quarantine_reasons,
+        ['source_observed_at_invalid']
+    );
 });
 
 test('有限十进制赔率大于 1 时通过两个入口校验，等值输入生成相同幂等键', () => {

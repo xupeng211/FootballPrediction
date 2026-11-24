@@ -84,6 +84,13 @@ function validateMarketOdds(observation) {
     return reasons;
 }
 
+function isValidSourceObservedAt(value) {
+    if (value === null || value === undefined || value === '') {
+        return true;
+    }
+    return typeof value === 'string' && isStrictAbsoluteTimestamp(value);
+}
+
 function validateTimeAndProvenance(observation) {
     const reasons = [];
     if (!ALLOWED_SNAPSHOT_TYPES.has(observation.snapshot_type)) {
@@ -96,7 +103,7 @@ function validateTimeAndProvenance(observation) {
     ) {
         reasons.push('provider_collection_phase_invalid');
     }
-    if (observation.source_observed_at && !isStrictAbsoluteTimestamp(observation.source_observed_at)) {
+    if (!isValidSourceObservedAt(observation.source_observed_at)) {
         reasons.push('source_observed_at_invalid');
     }
     if (!nullableText(observation.source_timezone)) {
