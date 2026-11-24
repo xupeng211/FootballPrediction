@@ -286,6 +286,75 @@ test('1X2 未给盘口线时接受，给出零线时仍隔离', () => {
     assert.deepEqual(validateObservation(baseObservation({ line: 0 })).quarantine_reasons, ['line_not_applicable']);
 });
 
+test('有限十进制赔率大于 1 时通过两个入口校验，等值输入生成相同幂等键', () => {
+    const canonical = baseObservation();
+    const validOdds = [
+        [2.1, 2.1],
+        ['2.1', 2.1],
+        [' \t+21e-1\n', 2.1],
+        ['.21E+1', 2.1],
+        ['2.', 2],
+        [1 + Number.EPSILON, 1 + Number.EPSILON],
+        ['1.0000000000000002', 1 + Number.EPSILON],
+    ];
+    for (const [decimalOdds, expected] of validOdds) {
+        const observation = baseObservation({ decimal_odds: decimalOdds });
+        assert.equal(observation.decimal_odds, expected);
+        assert.equal(observation.idempotency_key, baseObservation({ decimal_odds: expected }).idempotency_key);
+        assert.deepEqual(validateObservation(observation).quarantine_reasons, []);
+        assert.deepEqual(validateObservation({ ...canonical, decimal_odds: decimalOdds }).quarantine_reasons, []);
+    }
+});
+
+test('坏形状、非十进制、非有限及不大于 1 的赔率在两个入口均隔离', () => {
+    const canonical = baseObservation();
+    const reasons = ['decimal_odds_invalid'];
+    const malformedOdds = [
+        undefined,
+        null,
+        '',
+        ' \t\n ',
+        true,
+        false,
+        [],
+        [2.1],
+        {},
+        { valueOf: () => 2.1 },
+        '2.1x',
+        '2e',
+        '2 1',
+        '0x3',
+        '0b11',
+        '0o3',
+        NaN,
+        Infinity,
+        -Infinity,
+        'NaN',
+        'Infinity',
+        '1e309',
+    ];
+    const invalidOdds = [
+        ...malformedOdds.map(value => [value, null]),
+        [1, 1],
+        ['+1.0', 1],
+        [1 - Number.EPSILON / 2, 1 - Number.EPSILON / 2],
+        ['9e-1', 0.9],
+        ['-2.1', -2.1],
+    ];
+    assert.deepEqual(validateObservation(withoutField(canonical, 'decimal_odds')).quarantine_reasons, reasons);
+    for (const [decimalOdds, expected] of invalidOdds) {
+        const observation = baseObservation({ decimal_odds: decimalOdds });
+        const context = `decimal_odds=${typeof decimalOdds}:${String(decimalOdds)}`;
+        assert.equal(observation.decimal_odds, expected, context);
+        assert.deepEqual(validateObservation(observation).quarantine_reasons, reasons, context);
+        assert.deepEqual(
+            validateObservation({ ...canonical, decimal_odds: decimalOdds }).quarantine_reasons,
+            reasons,
+            context
+        );
+    }
+});
+
 test('离线 HTML staging 隔离缺盘口线记录并保留原始证据和合法输出字节', t => {
     const match = {
         source_match_id: 'fixture-html-market-lines',

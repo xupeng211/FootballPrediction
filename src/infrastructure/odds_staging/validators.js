@@ -8,6 +8,7 @@ const {
     isStrictAbsoluteTimestamp,
     normalizeMarketLine,
     nullableText,
+    parseDecimalOdds,
     requiresMarketLine,
 } = require('./contracts');
 const { FOOTBALL_DATA_PROVIDER_CONTRACT } = require('./footballDataProviderContract');
@@ -58,7 +59,7 @@ function validateMarketOdds(observation) {
     const reasons = [];
     const market = nullableText(observation.market);
     const selection = nullableText(observation.selection);
-    const decimalOdds = Number(observation.decimal_odds);
+    const decimalOdds = parseDecimalOdds(observation.decimal_odds);
     if (!nullableText(observation.bookmaker)) {
         reasons.push('bookmaker_missing_or_ambiguous');
     }
@@ -68,7 +69,7 @@ function validateMarketOdds(observation) {
     if (!selection || (MARKET_SELECTIONS[market] && !MARKET_SELECTIONS[market].includes(selection))) {
         reasons.push('selection_market_mismatch');
     }
-    if (!Number.isFinite(decimalOdds) || decimalOdds <= 1) {
+    if (decimalOdds === null || decimalOdds <= 1) {
         reasons.push('decimal_odds_invalid');
     }
 
