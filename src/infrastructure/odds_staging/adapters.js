@@ -3,7 +3,7 @@
 // lifecycle: permanent；只接受本地原始文本中明确字段的严格离线 adapter。
 
 const { parseFootballDataDate } = require('../../../scripts/lib/football_data_local_csv_parser');
-const { parseDecimalOdds } = require('./contracts');
+const { normalizeSourceObservedAt, parseDecimalOdds } = require('./contracts');
 const {
     buildKickoffInterpretationEvidence,
     deriveKickoffAt,
@@ -650,7 +650,7 @@ function mapExplicitHtmlObservations(payload, manifest) {
         line: entry?.line ?? null,
         decimal_odds: entry?.decimal_odds ?? null,
         snapshot_type: normalizeText(entry?.snapshot_type) || 'unknown',
-        source_observed_at: normalizeText(entry?.source_observed_at) || null,
+        source_observed_at: normalizeSourceObservedAt(entry?.source_observed_at),
         raw_record_locator: `html:explicit-envelope:observations[${index}]`,
         extraction_method: 'explicit_html_data_odds_staging_envelope',
         adapter_quarantine_reasons: identityReasons,

@@ -819,7 +819,7 @@ test('interpretation evidence 在 canonical key 生成前参与，缺失时不�
     assert.ok(!Object.hasOwn(noEvidence, 'kickoff_time_interpretation_evidence'));
 });
 
-function stagePriceFixture(t, sourcePath, adapter, matchCandidates) {
+function stageFixture(t, sourcePath, adapter, matchCandidates) {
     const { manifestPath } = writeFixtureManifest(t, sourcePath, adapter);
     return runOfflineStaging({ sourcePath, manifestPath, adapter, candidates: matchCandidates, ingestedAt: FIXED_INGESTED_AT });
 }
@@ -829,7 +829,7 @@ test('CSV 坏价逐条隔离并保留合法同伴及定位', t => {
     const rows = badPrices.map((price, index) => csvRow(`bad-${index}`, price, ' +3.4e0 ', 3.6));
     const rawPath = writeRawText(t, 'invalid-decimals.fixture.csv', [CSV_HEADER, ...rows, ''].join('\n'));
     const matches = badPrices.flatMap((_, index) => candidates(`bad-${index}`, `bad-${index}`));
-    const result = stagePriceFixture(t, rawPath, 'football-data-csv', matches);
+    const result = stageFixture(t, rawPath, 'football-data-csv', matches);
     const accepted = result.accepted_observations.map(entry => [entry.raw_record_locator, entry.decimal_odds]);
     const locators = badPrices.map((_, index) => `csv:row=${index + 2}:bet365-unknown`);
     assert.deepEqual(new Map(accepted), new Map(locators.flatMap(locator => [
@@ -853,7 +853,7 @@ test('显式 HTML 坏价逐条隔离并保留合法同伴及定位', t => {
     const payload = JSON.stringify({ schema_version: `${adapter}/v1`, match, observations });
     const rawPath = writeRawText(t, 'invalid-decimals.fixture.html',
         `<script type="application/json" data-odds-staging="explicit">${payload}</script>`);
-    const result = stagePriceFixture(t, rawPath, adapter, [match]);
+    const result = stageFixture(t, rawPath, adapter, [match]);
     const locator = index => `html:explicit-envelope:observations[${index}]`;
     const accepted = result.accepted_observations.map(entry => [entry.raw_record_locator, entry.decimal_odds]);
     assert.deepEqual(new Map(accepted), new Map([[locator(0), 2.15], [locator(1), 3.25]]));
@@ -861,5 +861,62 @@ test('显式 HTML 坏价逐条隔离并保留合法同伴及定位', t => {
     assert.deepEqual(
         new Map(result.quarantine.map(entry => [entry.raw_record_locator, [entry.raw_sha256, entry.reasons]])),
         new Map(badPrices.map((_, index) => [locator(index + 2), [rawHash, ['decimal_odds_invalid']]]))
+    );
+});
+
+test('显式 HTML 隔离异常观测时间并保留 BASE 的合法和缺省输出', t => {
+    const adapter = 'oddsportal-explicit-envelope-html';
+    const [match] = candidates('fixture-html-001');
+    const utc = '2025-08-01T09:00:00Z';
+    const offset = '2025-08-01T17:00:00+08:00';
+    const compatibleTimes = [` ${utc} `, offset, undefined, null, '', '  '];
+    const invalidTimes = [[utc], [], { timestamp: utc }, 42, 0, true, false, '2025-08-01T09:00:00'];
+    const observations = [...compatibleTimes, ...invalidTimes].map((sourceObservedAt, index) => ({
+        bookmaker: `Fixture Book ${index}`,
+        market: '1X2',
+        selection: 'home',
+        decimal_odds: 2.15,
+        snapshot_type: 'opening',
+        source_observed_at: sourceObservedAt,
+    }));
+    const payload = JSON.stringify({ schema_version: `${adapter}/v1`, match, observations });
+    const rawPath = writeRawText(
+        t,
+        'invalid-observed-at.fixture.html',
+        `<script type="application/json" data-odds-staging="explicit">${payload}</script>`
+    );
+    const result = stageFixture(t, rawPath, adapter, [match]);
+    const emitDirectory = createTempDirectory(t);
+    emitDeterministicResult(result, emitDirectory);
+    const quarantine = fs.readFileSync(path.join(emitDirectory, 'quarantine.jsonl'), 'utf8')
+        .trimEnd().split('\n').map(line => JSON.parse(line));
+    const locator = index => `html:explicit-envelope:observations[${index}]`;
+    const rawHash = sha256File(rawPath);
+    assert.equal(quarantine.length, invalidTimes.length);
+    assert.deepEqual(
+        new Map(quarantine.map(entry => [entry.raw_record_locator, [entry.raw_sha256, entry.reasons]])),
+        new Map(invalidTimes.map((_, index) => [
+            locator(index + compatibleTimes.length), [rawHash, ['source_observed_at_invalid']],
+        ]))
+    );
+    assert.deepEqual(
+        new Map(result.accepted_observations.map(entry => [entry.raw_record_locator, entry.source_observed_at])),
+        new Map([utc, offset, null, null, null, null].map((time, index) => [locator(index), time]))
+    );
+
+    const acceptedPath = path.join(emitDirectory, 'accepted-observations.jsonl');
+    // BASE 63cd6f3c1f6572f7313fd076a8141b0d8051cf2b 在同一输入上发出的兼容记录。
+    assert.equal(sha256File(acceptedPath), 'c089c5fb0a2db3c77e107394b2361bdfb7a9fbe5b70e34c4a3922a473a8136e4');
+    const baseKeys = [
+        '1b441aa6965a48395fbb01befd7879be77ecead28c3609034cbf3fad38c5d5a7',
+        '0a4ade55f74df49eb59a3e3aa5d31f38539f3512639c9b4f01cb0afc5aba639a',
+        'f14dafd18ea86f47c23271420e20635a932dd824ba86e71e335b03822d7e0459',
+        'f955e70f07bcd7b94093eeabe94da2a62a7591442597e231d6dcac6812f4edc8',
+        '3f94e01100c8bb6375af25ba01fad94cd0d89112ada9388c1a9e075d37558595',
+        'c6a23022bf3ffd7447d594536a48582f4ae5c3fd97cceaea271bf3e482d6808e',
+    ];
+    assert.deepEqual(
+        new Map(result.accepted_observations.map(entry => [entry.raw_record_locator, entry.idempotency_key])),
+        new Map(baseKeys.map((key, index) => [locator(index), key]))
     );
 });
