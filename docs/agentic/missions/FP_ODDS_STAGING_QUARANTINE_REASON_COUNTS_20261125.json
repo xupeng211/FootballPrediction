@@ -1,0 +1,47 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_ODDS_STAGING_QUARANTINE_REASON_COUNTS_20261125",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/odds_staging/quarantineReasonSummary.js",
+    "tests/unit/odds_staging_quarantine_reason_summary.test.js",
+    "docs/CAPABILITY_INDEX.md",
+    "scripts/ops/odds_staging_dry_run.js",
+    "tests/unit/odds_staging_cli.test.js",
+    "docs/agentic/missions/FP_ODDS_STAGING_QUARANTINE_REASON_COUNTS_20261125.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "scripts/ops/odds_staging/historical_odds_rebuild.js"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    "config",
+    "data",
+    "database",
+    "deploy",
+    "models",
+    "schemas",
+    "scripts/devops",
+    "scripts/ops/helpers",
+    "src/ml"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅既有 odds:staging:dry-run 加可选布尔参数 --quarantine-reason-counts。开启时只向 stdout JSON 摘要补 quarantine_reason_counts。不启用时保持摘要原字节，帮助文字只补新参数说明。",
+    "取已完成离线管线的 result.quarantine[].reasons。每条记录每种原因最多加一。多个不同原因各加一，相同原因跨记录相加，按原因代码字典序输出。无隔离输出空对象。quarantine_count 仍是隔离记录数。",
+    "默认无写入。保留 0/2/3/4/5 退出类别、stdout/stderr 错误路径、固定输入下四项 emit 产物文件名及字节。保留原适配、隔离、链接、去重和 rebuild 回执。",
+    "第一段只改纯统计 helper、专项单测及能力索引该条目。第二段只改既有 CLI 和 CLI 单测。仅从已验收、同一账本的第一段提交续接。",
+    "完整 BASE→HEAD 差异上限 32768 字节。原合成数据、固定隔离验证、STRICT 正式单审及两项远端 CI 和项目最终门禁均照常。"
+  ],
+  "forbidden_side_effects": [
+    "禁止连接真实赔率源、访问业务库、导入、采集、写生产、训练、预测、回测、部署、改代理、改审核门禁、改依赖或修改历史账目。",
+    "待取得本次 Owner 授权后，且仅同一终版通过本地测试、正式独审及既有发布门禁时，Harness 可发最多一个 PR 并跟进 CI。禁止合并、强推或发第二个 PR。"
+  ]
+}
