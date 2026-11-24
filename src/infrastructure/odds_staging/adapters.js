@@ -3,6 +3,7 @@
 // lifecycle: permanent；只接受本地原始文本中明确字段的严格离线 adapter。
 
 const { parseFootballDataDate } = require('../../../scripts/lib/football_data_local_csv_parser');
+const { parseDecimalOdds } = require('./contracts');
 const {
     buildKickoffInterpretationEvidence,
     deriveKickoffAt,
@@ -145,15 +146,6 @@ function normalizeSeasonFormat(value) {
         return `${century + start}/${century + end}`;
     }
     return text;
-}
-
-function parseDecimal(value) {
-    const text = normalizeText(value);
-    if (!text) {
-        return null;
-    }
-    const parsed = Number(text);
-    return Number.isFinite(parsed) ? parsed : value;
 }
 
 function splitCsvLine(line) {
@@ -561,7 +553,7 @@ function adaptFootballDataCsv(rawText, context = {}) {
                         identity,
                         effectiveGroup,
                         selection,
-                        parseDecimal(entry.row[group.columns[selection]]),
+                        parseDecimalOdds(entry.row[group.columns[selection]]),
                         entry.row_number
                     )
                 );
