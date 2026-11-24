@@ -1,0 +1,44 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_ODDS_STAGING_OBSERVED_AT_ARRAY_20261124",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/odds_staging/contracts.js",
+    "src/infrastructure/odds_staging/validators.js",
+    "tests/unit/odds_staging_historical.test.js",
+    "src/infrastructure/odds_staging/adapters.js",
+    "tests/unit/odds_staging_pipeline.test.js",
+    "docs/agentic/missions/FP_ODDS_STAGING_OBSERVED_AT_ARRAY_20261124.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    "config",
+    "data",
+    "database",
+    "deploy",
+    "models",
+    "schemas",
+    "scripts",
+    "src/ml"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "业务修复仅限 source_observed_at，保留既有合法绝对时间字符串和各入口原来允许的缺省值。单元素时间数组及其他异常类型沿用 source_observed_at_invalid。保留原始输入 SHA-256 和 raw_record_locator。",
+    "不扩展到 kickoff_at、captured_at、价格或盘口、时间来源、数据 schema、匹配、去重和写入边界。合法输入的输出字节及幂等键与批准 BASE 相同。",
+    "第一段在 contracts、validators 与历史测试实现内部构造和直接校验，Controller 对三个成果运行 verify-targeted 并保存检查点。第二段只改显式 HTML adapter 与管线测试，从第一段提交接续。",
+    "完整 BASE→HEAD 差异上限 32768 字节。终版本地定向、严格、PR 门禁和正式 STRICT 单审均绑定同一 HEAD。"
+  ],
+  "forbidden_side_effects": [
+    "只用既有固定隔离 QA 和合成输入，禁止访问真实赔率源及业务库、采集、导入、生产写入、训练、预测、回测、部署和修改历史账目。",
+    "禁止改门禁、审核、认证、代理、依赖、合并或强推。同一终版本地验证、正式独审和既有发布门禁通过后，Owner 本次授权可创建最多一个业务 PR 并跟进两项必需 CI。"
+  ]
+}
