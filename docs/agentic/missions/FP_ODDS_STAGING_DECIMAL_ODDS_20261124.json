@@ -1,0 +1,45 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_ODDS_STAGING_DECIMAL_ODDS_20261124",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/infrastructure/odds_staging/contracts.js",
+    "src/infrastructure/odds_staging/validators.js",
+    "tests/unit/odds_staging_historical.test.js",
+    "src/infrastructure/odds_staging/adapters.js",
+    "tests/unit/odds_staging_pipeline.test.js",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_ODDS_STAGING_DECIMAL_ODDS_20261124.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json"
+  ],
+  "excluded_prefixes": [
+    ".github",
+    "config",
+    "data",
+    "database",
+    "deploy",
+    "models",
+    "schemas",
+    "scripts",
+    "src/ml"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "复用一个离线 decimal_odds 解析规则。允许有限原始 number 和非空十进制 numeric string，允许空白包裹以及十进制指数写法；拒绝 0x/0b/0o 等非十进制、布尔值、数组、对象和非有限值。只有数值 >1 可通过现有价格校验。",
+    "错误值进现有 decimal_odds_invalid 隔离，保留 raw SHA、记录 locator 和既有汇总结构。CSV 全空组保持零观察，部分空组保持 incomplete_explicit_1x2_values，完整组中的坏价格按既有逐观察隔离。禁止扩大为整组新策略。",
+    "保持合法样本的输出字节与幂等键，以及盘口线、来源/时间、市场选择、匹配、去重、写入边界、CLI 和 schema 的既有合同。只更新能力索引的离线 pipeline 条目。",
+    "完整 diff 上限 32768 bytes。第一段必须改动三个已列明的成果文件；第二段从已验收提交继续。最终 QA、单路正式独审、PR 与 CI 绑定完整 BASE 到最终 HEAD。"
+  ],
+  "forbidden_side_effects": [
+    "禁止采集、访问真实赔率源/业务库、导入、生产写入、训练、预测、回测、部署和修改历史账目。只在既有隔离 QA 使用合成数据和一次性测试 PostgreSQL。",
+    "禁止改门禁、审核、认证、代理、依赖、合并或强推。另行批准后本任务最多由 Harness 发一个 PR。"
+  ]
+}

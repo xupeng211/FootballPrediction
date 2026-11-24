@@ -818,3 +818,48 @@ test('interpretation evidence 在 canonical key 生成前参与，缺失时不�
     assert.ok(Object.hasOwn(first, 'kickoff_time_interpretation_evidence'));
     assert.ok(!Object.hasOwn(noEvidence, 'kickoff_time_interpretation_evidence'));
 });
+
+function stagePriceFixture(t, sourcePath, adapter, matchCandidates) {
+    const { manifestPath } = writeFixtureManifest(t, sourcePath, adapter);
+    return runOfflineStaging({ sourcePath, manifestPath, adapter, candidates: matchCandidates, ingestedAt: FIXED_INGESTED_AT });
+}
+
+test('CSV 坏价逐条隔离并保留合法同伴及定位', t => {
+    const badPrices = ['0x10', '0b10000', '0o20'];
+    const rows = badPrices.map((price, index) => csvRow(`bad-${index}`, price, ' +3.4e0 ', 3.6));
+    const rawPath = writeRawText(t, 'invalid-decimals.fixture.csv', [CSV_HEADER, ...rows, ''].join('\n'));
+    const matches = badPrices.flatMap((_, index) => candidates(`bad-${index}`, `bad-${index}`));
+    const result = stagePriceFixture(t, rawPath, 'football-data-csv', matches);
+    const accepted = result.accepted_observations.map(entry => [entry.raw_record_locator, entry.decimal_odds]);
+    const locators = badPrices.map((_, index) => `csv:row=${index + 2}:bet365-unknown`);
+    assert.deepEqual(new Map(accepted), new Map(locators.flatMap(locator => [
+        [`${locator}:draw`, 3.4], [`${locator}:away`, 3.6],
+    ])));
+    const rawHash = sha256File(rawPath);
+    assert.deepEqual(
+        new Map(result.quarantine.map(entry => [entry.raw_record_locator, [entry.raw_sha256, entry.reasons]])),
+        new Map(locators.map(locator => [`${locator}:home`, [rawHash, ['decimal_odds_invalid']]]))
+    );
+});
+
+test('显式 HTML 坏价逐条隔离并保留合法同伴及定位', t => {
+    const adapter = 'oddsportal-explicit-envelope-html';
+    const [match] = candidates('fixture-html-001');
+    const badPrices = [[2.15], { odds: 2.15 }, true, false, '0x10', '2.15oops'];
+    const prices = [2.15, ' +3.25e0 ', ...badPrices];
+    const observations = prices.map((price, index) => ({
+        bookmaker: `Fixture Book ${index}`, market: '1X2', selection: 'home', decimal_odds: price,
+    }));
+    const payload = JSON.stringify({ schema_version: `${adapter}/v1`, match, observations });
+    const rawPath = writeRawText(t, 'invalid-decimals.fixture.html',
+        `<script type="application/json" data-odds-staging="explicit">${payload}</script>`);
+    const result = stagePriceFixture(t, rawPath, adapter, [match]);
+    const locator = index => `html:explicit-envelope:observations[${index}]`;
+    const accepted = result.accepted_observations.map(entry => [entry.raw_record_locator, entry.decimal_odds]);
+    assert.deepEqual(new Map(accepted), new Map([[locator(0), 2.15], [locator(1), 3.25]]));
+    const rawHash = sha256File(rawPath);
+    assert.deepEqual(
+        new Map(result.quarantine.map(entry => [entry.raw_record_locator, [entry.raw_sha256, entry.reasons]])),
+        new Map(badPrices.map((_, index) => [locator(index + 2), [rawHash, ['decimal_odds_invalid']]]))
+    );
+});

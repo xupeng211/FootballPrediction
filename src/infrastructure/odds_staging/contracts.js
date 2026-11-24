@@ -11,6 +11,7 @@ const ALLOWED_PROVENANCE_STATUSES = new Set(['verified', 'declared', 'unknown', 
 const ALLOWED_SNAPSHOT_TYPES = new Set(['opening', 'current', 'closing', 'unknown']);
 const STRICT_ABSOLUTE_TIMESTAMP_PATTERN =
     /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/;
+const DECIMAL_ODDS_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 // 可选合同字段：仅在来源真实提供该事实时写入 observation 与 idempotency payload，
 // 缺失时完全省略，避免旧观察因新增 null 字段而改变 canonical 输出或 key 结构。
@@ -73,6 +74,22 @@ function nullableFiniteNumber(value) {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : value;
+}
+
+function parseDecimalOdds(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const text = value.trim();
+    if (!DECIMAL_ODDS_PATTERN.test(text)) {
+        return null;
+    }
+    const parsed = Number(text);
+    return Number.isFinite(parsed) ? parsed : null;
 }
 
 function isStrictAbsoluteTimestamp(value) {
@@ -262,7 +279,7 @@ function createCanonicalObservation(fields = {}) {
         market,
         selection: nullableText(fields.selection),
         line: requiresMarketLine(market) ? normalizeMarketLine(fields.line) : nullableFiniteNumber(fields.line),
-        decimal_odds: nullableFiniteNumber(fields.decimal_odds),
+        decimal_odds: parseDecimalOdds(fields.decimal_odds),
         snapshot_type: nullableText(fields.snapshot_type) || 'unknown',
         source_observed_at: nullableText(fields.source_observed_at),
         captured_at: nullableText(fields.captured_at),
@@ -328,6 +345,7 @@ module.exports = {
     isStrictAbsoluteTimestamp,
     normalizeMarketLine,
     nullableText,
+    parseDecimalOdds,
     requiresMarketLine,
     sha256Text,
     sortedUniqueStrings,
