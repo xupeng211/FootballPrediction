@@ -127,6 +127,82 @@ def test_exact_observed_at_at_or_before_t_can_prove_availability() -> None:
     assert validate_model_as_of_context(_context(evidence=[evidence])) is True
 
 
+@pytest.mark.parametrize(
+    ("observed_at", "reason"),
+    [
+        pytest.param(DECISION_TIME, None, id="exact-cutoff"),
+        pytest.param("2026-08-17T11:59:59.999999Z", None, id="1us-early"),
+        pytest.param("2026-08-17T12:00:00.000000000Z", None, id="zero-tail-at-cutoff"),
+        pytest.param("2026-08-17T11:59:59.999999000+00:00", None, id="zero-tail-before-cutoff"),
+        pytest.param(
+            "2026-08-17T12:00:00.0000001Z",
+            "SOURCE_TIME_PRECISION_AMBIGUOUS",
+            id="100ns-late",
+        ),
+        pytest.param(
+            "2026-08-17T12:00:00,000000001+00:00",
+            "SOURCE_TIME_PRECISION_AMBIGUOUS",
+            id="lossy-comma-fraction",
+        ),
+        pytest.param(
+            "2026-08-17T12:00:00.000001Z",
+            "SOURCE_AVAILABLE_AFTER_DECISION",
+            id="1us-late",
+        ),
+    ],
+)
+def test_observation_precision_at_decision_boundary(observed_at: str, reason: str | None) -> None:
+    context = _context(
+        evidence=[
+            {
+                "SOURCE_OBSERVED_AT_UTC": observed_at,
+                "availability_proof": "EXACT_OBSERVATION_TIMESTAMP",
+            }
+        ]
+    )
+    if reason is None:
+        assert validate_model_as_of_context(context) is True
+    else:
+        with _raises_reason(reason):
+            validate_model_as_of_context(context)
+
+
+@pytest.mark.parametrize(
+    ("field", "reason"),
+    [
+        ("MODEL_DECISION_TIME_UTC", "MODEL_DECISION_TIME_INVALID"),
+        ("FEATURE_AS_OF_UTC", "FEATURE_AS_OF_INVALID"),
+        ("TARGET_KICKOFF_UTC", "TARGET_KICKOFF_INVALID"),
+        ("PREDICTION_GENERATED_AT_UTC", "PREDICTION_GENERATED_AT_INVALID"),
+    ],
+)
+def test_context_timestamp_precision_uses_existing_reason(field: str, reason: str) -> None:
+    context = _context(**{field: "2026-08-17T12:00:00.0000001Z"})
+    with _raises_reason(reason):
+        validate_model_as_of_context(context)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "SOURCE_EVENT_TIME_UTC",
+        "SOURCE_EFFECTIVE_TIME_UTC",
+        "SOURCE_CAPTURED_AT_UTC",
+        "SOURCE_AVAILABILITY_INTERVAL_START_UTC",
+        "SOURCE_AVAILABILITY_INTERVAL_END_UTC",
+    ],
+)
+def test_other_source_timestamp_precision_uses_existing_reason(field: str) -> None:
+    evidence = {
+        "SOURCE_AVAILABILITY_INTERVAL_START_UTC": "2026-08-17T10:00:00Z",
+        "SOURCE_AVAILABILITY_INTERVAL_END_UTC": "2026-08-17T11:00:00Z",
+        "availability_proof": "BOUNDED_INTERVAL_ENTIRELY_BEFORE_T",
+    }
+    evidence[field] = "2026-08-17T10:30:00.0000001Z"
+    with _raises_reason("SOURCE_TIME_PRECISION_AMBIGUOUS"):
+        validate_model_as_of_context(_context(evidence=[evidence]))
+
+
 def test_observed_at_after_t_is_rejected() -> None:
     evidence = {
         "SOURCE_OBSERVED_AT_UTC": "2026-08-17T12:00:01Z",
