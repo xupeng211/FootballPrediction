@@ -76,12 +76,13 @@ function writeInputs(t, rawPath, adapter) {
     return { candidatesPath, directory, manifestPath };
 }
 
-function invoke(argv) {
+function invoke(argv, dependencies = {}) {
     let stdout = '';
     let stderr = '';
     const status = main(argv, {
         clock: () => '2026-07-16T00:00:00.000Z',
         repositoryRoot: PROJECT_ROOT,
+        ...dependencies,
         stdout: text => {
             stdout += text;
         },
@@ -280,7 +281,7 @@ test('固定 ingested_at 的两次 emit 产生四个字节级相同文件', t =>
         '2026-07-16T00:00:00.000Z',
     ];
     const first = invoke([...baseArgs, '--emit-dir', firstDirectory]);
-    const second = invoke([...baseArgs, '--emit-dir', secondDirectory]);
+    const second = invoke([...baseArgs, '--emit-dir', secondDirectory, '--quarantine-reason-counts']);
     assert.equal(first.status, EXIT_CODES.success);
     assert.equal(second.status, EXIT_CODES.success);
     const expectedFiles = [
@@ -310,10 +311,60 @@ test('CLI 将 null explicit envelope 作为 adapter quarantine，而非裸 TypeE
         'oddsportal-explicit-envelope-html',
         '--candidates',
         inputs.candidatesPath,
+        '--quarantine-reason-counts',
     ]);
     assert.equal(result.status, EXIT_CODES.success);
     assert.equal(result.stderr, '');
     assert.equal(JSON.parse(result.stdout).quarantine_count, 1);
+    assert.deepEqual(JSON.parse(result.stdout).quarantine_reason_counts, { explicit_html_payload_not_object: 1 });
+});
+
+test('可选原因统计保留原 CLI 退出路径', t => {
+    const flag = '--quarantine-reason-counts';
+    const adapter = 'oddsportal-explicit-envelope-html';
+    const rawPath = path.join(createTempDirectory(t), 'mixed.fixture.html');
+    const [, payload] = fs.readFileSync(HTML_FIXTURE, 'utf8').match(/data-odds-staging="explicit">([\s\S]*?)<\/script>/);
+    const envelope = JSON.parse(payload);
+    const [first, second] = envelope.observations;
+    first.decimal_odds = 1;
+    first.source_observed_at = 'invalid';
+    second.decimal_odds = 1;
+    fs.writeFileSync(rawPath, `<script data-odds-staging="explicit">${JSON.stringify(envelope)}</script>`);
+
+    const mixed = writeInputs(t, rawPath, adapter);
+    const args = (source, inputs) => [
+        '--source', source, '--manifest', inputs.manifestPath, '--adapter', adapter,
+        '--candidates', inputs.candidatesPath,
+    ];
+    const mixedArgs = args(rawPath, mixed);
+    const counts = { decimal_odds_invalid: 2, source_observed_at_invalid: 1 };
+    const before = fs.readdirSync(mixed.directory);
+    for (const [argv, status, accepted, quarantined, reasons] of [
+        [mixedArgs, 0, 1, 2, counts],
+        [[...mixedArgs, '--strict'], 4, 1, 2, counts],
+        [[...args(HTML_FIXTURE, writeInputs(t, HTML_FIXTURE, adapter)), '--strict'], 0, 3, 0, {}],
+    ]) {
+        const baseline = invoke(argv);
+        const summary = JSON.parse(baseline.stdout);
+        assert.deepEqual([baseline.status, baseline.stderr], [status, '']);
+        assert.deepEqual([summary.accepted_count, summary.quarantine_count], [accepted, quarantined]);
+        assert.equal(summary.quarantine_reason_counts, undefined);
+        summary.quarantine_reason_counts = reasons;
+        assert.deepEqual(invoke([...argv, flag]), { ...baseline, stdout: `${JSON.stringify(summary)}\n` });
+    }
+    assert.deepEqual(fs.readdirSync(mixed.directory), before);
+
+    const loadCandidates = () => { throw new Error('候选读取失败'); };
+    for (const [argv, status, message, dependencies] of [
+        [[], 2, /--source is required/],
+        [args('https://example.invalid/input.html', mixed), 3, /local path, not a network URL/],
+        [mixedArgs, 5, /候选读取失败/, { loadCandidates }],
+    ]) {
+        const baseline = invoke(argv, dependencies);
+        assert.deepEqual([baseline.status, baseline.stdout], [status, '']);
+        assert.match(baseline.stderr, message);
+        assert.deepEqual(invoke([...argv, flag], dependencies), baseline);
+    }
 });
 
 test('CLI 明确拒绝旧 adapter_version manifest，不静默使用错误版本', t => {

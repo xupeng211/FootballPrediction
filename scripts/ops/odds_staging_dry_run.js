@@ -31,6 +31,7 @@ function usage() {
         '  --emit-dir <existing-absolute-directory-outside-repository>',
         '  --ingested-at <ISO-8601 with Z or numeric offset>',
         '  --strict',
+        '  --quarantine-reason-counts  Count quarantine reasons in stdout JSON.',
         '',
         'Safety:',
         '  Default mode writes nothing and prints a summary only.',
@@ -71,11 +72,12 @@ function parseArgs(argv = []) {
         '--emit-dir': 'emitDir',
         '--ingested-at': 'ingestedAt',
     };
+    const booleanOptions = { '--strict': 'strict', '--quarantine-reason-counts': 'quarantineReasonCounts' };
 
     for (let index = 0; index < argv.length; index += 1) {
         const token = String(argv[index]);
-        if (token === '--strict') {
-            args.strict = true;
+        if (Object.hasOwn(booleanOptions, token)) {
+            args[booleanOptions[token]] = true;
             continue;
         }
         if (token === '--help' || token === '-h') {
@@ -145,10 +147,16 @@ function main(argv = process.argv.slice(2), dependencies = {}) {
         const emittedFiles = args.emitDir
             ? emitDeterministicResult(result, args.emitDir, { repositoryRoot: dependencies.repositoryRoot })
             : [];
+        const counts = {};
+        if (args.quarantineReasonCounts) {
+            const { summarizeQuarantineReasons } = require('../../src/infrastructure/odds_staging/quarantineReasonSummary');
+            counts.quarantine_reason_counts = summarizeQuarantineReasons(result.quarantine);
+        }
         writeSummary(stdout, {
             ...result.summary,
             emitted_files: emittedFiles,
             strict: args.strict,
+            ...counts,
         });
         return args.strict && result.quarantine.length > 0 ? EXIT_CODES.strict_quarantine : EXIT_CODES.success;
     } catch (error) {
