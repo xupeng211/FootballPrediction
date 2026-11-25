@@ -413,7 +413,8 @@ def _canonical_contract_status_errors(
 
 def _visible_markdown_body(text: str) -> str:
     """忽略标题、排版空白和 Unicode 格式字符，保留正文文字。"""
-    text = "".join(char for char in text if unicodedata.category(char) != "Cf")
+    # U+034F 是无字形的组合字素连接符，Unicode 将它归为 Mn。
+    text = "".join(char for char in text if char != "\u034f" and unicodedata.category(char) != "Cf")
     text = unicodedata.normalize("NFC", text)
     lines = text.splitlines()
     body = []

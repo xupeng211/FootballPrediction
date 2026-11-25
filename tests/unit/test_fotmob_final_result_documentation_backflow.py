@@ -313,6 +313,27 @@ def test_unicode_format_character_alone_is_not_a_body_update(candidate, format_c
     assert any("changed visible document body" in error for error in _check(base, head))
 
 
+@pytest.mark.parametrize("phrase", ["曼城", "City", "2–1"])
+def test_combining_grapheme_joiner_alone_is_not_a_body_update(tmp_path, monkeypatch, phrase):
+    base_doc = _BASE_DOC + f"\n终场记录：{phrase}。\n"
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, base_doc)
+    revised = base_doc.replace(phrase, f"{phrase[0]}\u034f{phrase[1:]}")
+    _write(root, _ASOF_DOC, revised)
+    head = _commit(root, "Change only a combining grapheme joiner")
+    assert any("changed visible document body" in error for error in _check(base, head))
+
+
+@pytest.mark.parametrize(("original", "revised"), [("Malmo", "Malmo\u0308"), ("♥", "♥\ufe0f")])
+def test_team_name_accent_and_emoji_selection_are_preserved(
+    tmp_path, monkeypatch, original, revised
+):
+    base_doc = _BASE_DOC + "\n终场比分：Malmo 2–1 哥德堡。记录标记：♥。\n"
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, base_doc)
+    _write(root, _ASOF_DOC, base_doc.replace(original, revised))
+    head = _commit(root, "Keep an author-visible text change")
+    assert _check(base, head) == []
+
+
 @pytest.mark.parametrize("change_visible_score", [False, True])
 def test_existing_hidden_body_does_not_count_but_visible_score_does(
     tmp_path, monkeypatch, change_visible_score
