@@ -261,6 +261,15 @@ Canonical 与 Stage D 或工程工作流混合继续 fail-closed，不提供通�
 这不改变 mixed governance/business 禁令、Owner 权限、CRITICAL 双审、Receipt、Source Binding、
 费用或远端发布/合并授权。业务候选与独立导航文档的发布依赖仍须明确。
 
+FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
+CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
+分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
+合同及能力索引，并申报 `contract=yes`、`capability=yes` 和三份权威文档。
+门禁用共享 Git 变更事实和准确 Git blob 核对，拒绝删除、改名、替换成非常规文件、只改注释
+和只有标题或空白的替代。正文的业务正确性由独立审核核对。
+本地工作区预检只有在精确提交能证明上述内容时才可建立这条映射。映射本身不授予采集、
+发布或合并权限。
+
 ### 11.3 Codex independent reviewer 与 receipt
 
 canonical runner 是 `scripts/devops/codex_independent_review.py run`（receipt 证据读取与内部

@@ -16,9 +16,18 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from scripts.ops.helpers.agent_workflow_contract import MissionScope
     from scripts.ops.helpers.git_change_helpers import Change
 
-from scripts.ops.helpers.pr_authorization_matrix import CATEGORY_WORKFLOW_GOVERNANCE, classify_path
+from scripts.devops.exact_head import is_full_sha
+from scripts.ops.helpers.agent_workflow_contract import validate_mission_scope_reference
+from scripts.ops.helpers.git_change_helpers import changed_paths, collect_changes, git_output
+from scripts.ops.helpers.pr_authorization_matrix import (
+    CATEGORY_WORKFLOW_GOVERNANCE,
+    classify_path,
+    parse_task_type,
+)
+from scripts.ops.helpers.strict_review_evidence import parse_workflow_class
 
 DOCUMENTATION_IMPACT_HEADING = "## Documentation Impact"
 VISION_IMPACT_FIELD = "Project vision / target-state changed?"
@@ -174,6 +183,28 @@ PERCENT_PILOT_PATHS = frozenset(
     }
 )
 
+# 本业务任务只能使用实际验收的十一条路径。scope 自填列表不能扩展映射。
+FOTMOB_FINAL_RESULT_MISSION = "FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE"
+FOTMOB_FINAL_RESULT_SCOPE = f"docs/agentic/missions/{FOTMOB_FINAL_RESULT_MISSION}.json"
+FOTMOB_FINAL_RESULT_CONTRACT_DOCS = (
+    "docs/data/GD_A02_FACTS_CONTRACT.md",
+    "docs/data/MODEL_ASOF_CONTRACT.md",
+)
+FOTMOB_FINAL_RESULT_DOCS = (*FOTMOB_FINAL_RESULT_CONTRACT_DOCS, "docs/CAPABILITY_INDEX.md")
+FOTMOB_FINAL_RESULT_PATHS = frozenset(
+    {
+        FOTMOB_FINAL_RESULT_SCOPE,
+        *FOTMOB_FINAL_RESULT_DOCS,
+        "src/infrastructure/fotmob/FotMobDetailCaptureContract.js",
+        "src/infrastructure/fotmob/FotMobDetailCapturePipeline.js",
+        "src/infrastructure/golden_dataset/FotMobPriorResultProjection.js",
+        "src/ml/inference/fotmob_prior_result_asof.py",
+        "tests/unit/fotmob_detail_transport_observability.test.js",
+        "tests/unit/fotmob_prior_result_projection.test.js",
+        "tests/unit/ml/test_fotmob_prior_result_asof.py",
+    }
+)
+
 HOLLOW_REASON_VALUES = frozenset(
     {
         "",
@@ -250,6 +281,8 @@ def _is_substantive_reason(value: str) -> bool:
 
 def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
     """Return current-state docs required by a declared category."""
+    if category == "contract" and changed == FOTMOB_FINAL_RESULT_PATHS:
+        return FOTMOB_FINAL_RESULT_CONTRACT_DOCS
     if category == "contract" and PERCENT_PILOT_MISSION_PATH in changed:
         return (CANONICAL_PREMATCH_CONTRACT_DOC,)
     if category == "blocker":
@@ -347,8 +380,100 @@ def _canonical_contract_status_errors(
     return []
 
 
+def _visible_markdown_body(text: str) -> str:
+    """忽略 Markdown 标题、HTML 注释和空白，保留可见正文。"""
+    lines = re.sub(r"<!--.*?-->", "", text.lstrip("\ufeff"), flags=re.DOTALL).splitlines()
+    body = []
+    for index, raw_line in enumerate(lines):
+        line = raw_line.strip()
+        following = lines[index + 1].strip() if index + 1 < len(lines) else ""
+        if re.match(r"^#{1,6}(?:\s|$)", line) or re.fullmatch(r"=+|-+", following):
+            continue
+        if re.search(r"[^\W_]", line):
+            body.append(line)
+    return " ".join(" ".join(body).split())
+
+
+def _read_regular_git_markdown(revision: str, path: str) -> str:
+    entry = git_output(["ls-tree", revision, "--", path])
+    if not entry.startswith(("100644 blob ", "100755 blob ")):
+        raise RuntimeError(f"{path} is not a regular tracked document at {revision}")
+    return git_output(["show", f"{revision}:{path}"])
+
+
+def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
+    before = _visible_markdown_body(_read_regular_git_markdown(base, path))
+    after = _visible_markdown_body(_read_regular_git_markdown(head, path))
+    return bool(after) and before != after
+
+
+def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
+    if not base_ref or not head_ref or not is_full_sha(base_ref) or not is_full_sha(head_ref):
+        return ["FotMob final-result backflow requires exact committed base/head revisions"]
+    try:
+        committed = collect_changes(base_ref, head_ref, include_worktree=False)
+        if changed_paths(committed) != FOTMOB_FINAL_RESULT_PATHS:
+            return [
+                "FotMob final-result backflow requires all 11 changed paths at the exact revisions"
+            ]
+        if any(change.status not in {"A", "M"} for change in committed):
+            return ["FotMob final-result cannot delete or rename away a path as an update"]
+        updated = {change.path for change in committed if change.status == "M"}
+        if missing := set(FOTMOB_FINAL_RESULT_DOCS) - updated:
+            return [
+                "FotMob final-result requires in-place updates of existing authoritative documents: "
+                + ", ".join(sorted(missing))
+            ]
+        merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
+        return [
+            f"FotMob final-result requires changed visible document body: {path}"
+            for path in FOTMOB_FINAL_RESULT_DOCS
+            if not _fotmob_document_has_update(merge_base, head_ref, path)
+        ]
+    except (RuntimeError, OSError, UnicodeError) as exc:
+        return [f"FotMob final-result could not verify authoritative Git documents: {exc}"]
+
+
+def _fotmob_backflow_errors(
+    pr_body: str,
+    changed: set[str],
+    mission_scope: MissionScope | None,
+    base_ref: str | None,
+    head_ref: str | None,
+) -> list[str]:
+    if changed != FOTMOB_FINAL_RESULT_PATHS:
+        return [
+            "FotMob final-result requires the exact 11 mission paths"
+            f" (missing: {', '.join(sorted(FOTMOB_FINAL_RESULT_PATHS - changed)) or 'none'}"
+            f"; extra: {', '.join(sorted(changed - FOTMOB_FINAL_RESULT_PATHS)) or 'none'})"
+        ]
+    if (
+        mission_scope is None
+        or mission_scope.mission_id != FOTMOB_FINAL_RESULT_MISSION
+        or mission_scope.task_type != "source-code"
+        or mission_scope.workflow_class != "CRITICAL"
+        or parse_task_type(pr_body) != "source-code"
+        or parse_workflow_class(pr_body) != "CRITICAL"
+    ):
+        return ["FotMob final-result requires its validated CRITICAL business mission scope"]
+    errors = validate_mission_scope_reference(
+        pr_body, mission_scope=mission_scope, scope_path=FOTMOB_FINAL_RESULT_SCOPE
+    )
+    errors.extend(_fotmob_committed_document_errors(base_ref, head_ref))
+    for category in ("contract", "capability", "source_of_truth"):
+        if _normalise(_table_value(pr_body, YES_NO_FIELDS[category])) != "yes":
+            errors.append(f"FotMob final-result requires '{YES_NO_FIELDS[category]}' = yes")
+    return errors
+
+
 def check_documentation_backflow(  # noqa: C901, PLR0912
-    pr_body: str, changed: set[str], *, changes: Iterable[Change] | None = None
+    pr_body: str,
+    changed: set[str],
+    *,
+    changes: Iterable[Change] | None = None,
+    mission_scope: MissionScope | None = None,
+    base_ref: str | None = None,
+    head_ref: str | None = None,
 ) -> list[str]:
     """Validate declarations and mapped current-state backflow for a PR.
 
@@ -361,20 +486,28 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     The shared gate supplies its actual Git changes so deletion/rename-away
     cannot satisfy Canonical authority backflow. Path-only callers retain their
     declaration checks, but cannot establish a file's change status.
+    The FotMob mapping additionally requires committed Git documentation and
+    the canonical mission-scope validation context.
     """
     classified = classify_changed_paths(changed)
     vision_value = _table_value(pr_body, VISION_IMPACT_FIELD)
     contract_value = _table_value(pr_body, YES_NO_FIELDS["contract"])
-    if not classified and _normalise(vision_value) != "yes" and _normalise(contract_value) != "yes":
+    fotmob = FOTMOB_FINAL_RESULT_SCOPE in changed or (
+        mission_scope is not None and mission_scope.mission_id == FOTMOB_FINAL_RESULT_MISSION
+    )
+    if (
+        not (classified or fotmob)
+        and _normalise(vision_value) != "yes"
+        and _normalise(contract_value) != "yes"
+    ):
         return []
 
     # Actual contract paths must not borrow a workflow mapping via a false declaration.
     errors = _canonical_contract_status_errors(changed, changes)
-    errors.extend(
-        _contract_mapping_errors(changed)
-        if "contract" in classified or _normalise(contract_value) == "yes"
-        else []
-    )
+    if fotmob:
+        errors.extend(_fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref))
+    elif "contract" in classified or _normalise(contract_value) == "yes":
+        errors.extend(_contract_mapping_errors(changed))
     if DOCUMENTATION_IMPACT_HEADING not in pr_body:
         return [
             *errors,

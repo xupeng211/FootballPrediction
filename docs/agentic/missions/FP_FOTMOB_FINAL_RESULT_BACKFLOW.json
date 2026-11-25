@@ -1,0 +1,44 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_FOTMOB_FINAL_RESULT_BACKFLOW",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_FOTMOB_FINAL_RESULT_BACKFLOW.json",
+    "scripts/ops/ai_workflow_gate.py",
+    "scripts/ops/helpers/documentation_backflow.py",
+    "tests/unit/test_fotmob_final_result_documentation_backflow.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "README.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "pyproject.toml",
+    "requirements.txt"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "models/",
+    "src/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅为 FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE 的 CRITICAL 业务任务映射固定十一条路径。必须如实声明并在准确 Git 修订更新 GD-A02 事实合同、模型时点合同和能力索引。",
+    "保持 Stage D、Canonical Prematch、percent、未知领域、其他普通路径及治理与业务混合的原语义。保持 mission scope、分类及双审核权限。",
+    "与业务候选独立交付。AI Workflow Gate 调用点仅转交既有准确修订及 scope。保持真实采集、数据库、生产及发布的授权边界。"
+  ],
+  "forbidden_side_effects": [
+    "禁止供应商调用、真实采集、写数据库、开库、账本或真实 raw 写入。",
+    "禁止付费审核、推送、创建 PR、合并和部署。"
+  ]
+}
