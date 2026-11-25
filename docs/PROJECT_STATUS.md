@@ -17,7 +17,7 @@ Last updated: 2026-09-21
 
 ## Current State
 
-### Canonical frame 离线质量诊断（当前候选实现）
+### Canonical frame 离线质量诊断与项目导航（已交付）
 
 现有 frame CLI 新增 `diagnose`，在既有来源绑定验证后，输出 JSON 与中文 Markdown：
 9 项获准特征的有效/缺失与数值证据、8 项 registry 排除/阻断理由、原因命中与不同比赛
@@ -25,26 +25,28 @@ Last updated: 2026-09-21
 常量/全零/IQR 离群只提示调查；受影响比赛数不是修复后可新增训练样本数。
 这补齐 canonical 源绑定的诊断，不能用旧 L3 report 替代。
 `KICKOFF_REFERENCE_ONLY` 和真实决策时点可用性未证明边界保留。
-本轮 M3 从已完成 M1/M2 的基线
+
+- 离线质量诊断已合并到 main，merge SHA 为 `f7c4e9d80cb7177e8ba74073a67a8635fc3b4e41`。
+  该 SHA 的 main push Production Gate 成功。 [PR #1951](https://github.com/xupeng211/FootballPrediction/pull/1951) · [Production Gate](https://github.com/xupeng211/FootballPrediction/actions/runs/40563968832)
+- 相应的 `PROJECT_MAP` 导航和导航任务合同已合并到 main，merge SHA 为 `a65464d1e5de498a072ed9a8fdf69ce46bcc04c5`。
+  该 SHA 的 main push Production Gate 成功。 [PR #1952](https://github.com/xupeng211/FootballPrediction/pull/1952) · [Production Gate](https://github.com/xupeng211/FootballPrediction/actions/runs/40580358945)
+
+**当时状态。** M3 业务候选从已包含 M1/M2 的基线
 `c928fabbb2423a614fb0c13d41d37ff8408378f8` 重绑原业务补丁，原诊断模块、CLI 和直接测试
 保持原样。原 888 场业务报告与 19 份文件是绑定旧代码版本的历史离线证据；
 其中包含日志、argv 和 receipt，并不是 19 份不同业务报告。完整性和实现依赖等价性
 可复核，但不能把旧 receipt 当作新 HEAD 的业务验收或正式审核凭证。
-Owner 本轮授权在窄文档适配提交后的最终 clean HEAD 上，执行一次最小真实冻结输入
-build → validate → diagnose，生成新 frame/receipt/quality JSON/中文 Markdown；
-命令、退出码、最终版本与业务断言均在仓库外证据记录，不预写本次验收成功，
-不为补写外部结果再改跟踪文件；不重做采集或历史整套 19 文件。
-仅对 `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS`，Owner 已明确批准 AGENTS §2.1 同 PR
-PROJECT_MAP 回流的单次例外。导航影响仍为 yes、导航仍未交付：须在业务实际合并并
-确认该 merge SHA 的 main Production Gate 成功后，紧接独立任务完成原 10 行导航和
-`FP_FEATURE_QUALITY_REPACKAGE_NAVIGATION.json` 的必要真实绑定，再经该任务现行审核、
-CI、Owner 合并与对应 main Gate。本轮不实施导航、不把例外推广到其他任务或路径，
-不改审核规则、通用映射、required checks 或任何业务算法。
-`FP_FEATURE_QUALITY_REPACKAGE_BUSINESS` 是本轮唯一送审 Scope；原开发与 bridge Scope
-保留历史字节，不作为当前批准。正式独立审核、远端 required CI、Owner 合并决定与
-合并后准确版本 Gate 尚未完成，本功能和 M3 均不标记 DONE。
-复现与输出合同见 `docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md`。
-不更新既有模型、历史指标、Stage D 门禁或授权状态。
+Owner 当时授权在窄文档适配提交后的最终 clean HEAD 上执行一次最小真实冻结输入
+build → validate → diagnose，限生成新 frame/receipt/quality JSON/中文 Markdown。
+命令、退出码、最终版本与业务断言以仓库外证据记录为准，授权范围排除重新采集或重做历史整套 19 文件。
+
+Owner 仅对当时唯一送审 Scope `FP_FEATURE_QUALITY_REPACKAGE_BUSINESS` 批准 AGENTS §2.1
+同 PR `PROJECT_MAP` 回流的单次例外。导航须在业务合并且对应 main Gate 成功后独立交付，
+范围为原 10 行导航和 `FP_FEATURE_QUALITY_REPACKAGE_NAVIGATION.json` 的任务绑定，
+继续适用该任务的审核、CI、Owner 合并与对应 main Gate。原开发与 bridge Scope 保留历史含义。
+
+复现与输出合同见 [Canonical Prematch Feature Frame](data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md)。
+以上交付结论仅覆盖离线诊断和导航。整个 M3 的完成情况须另行核验，生产模型激活和 Stage D 仍需单独授权。
 
 本节是当前状态摘要；下方的 M3、VALUE_MVP-1、SC-002 和 FotMob 长篇段落是
 supporting history / completed evidence，保留用于追溯，不再把旧阶段标题当作
@@ -604,7 +606,11 @@ Brier model=0.584557279738、market=0.527801063082、delta=+0.056756216656。
 GD-A01/A02/A03、frame、candidate 与评价 receipt 均按原合同核对，不修改原资产/协议、不训练/推理。
 此研究是 9-feature frozen XGBoost / consumed 109，下面 VALUE_MVP 是 13-feature logistic / OOS 511，
 不能混合统计。报告：[CANONICAL_CLOSING_MARKET_RETROSPECTIVE](CANONICAL_CLOSING_MARKET_RETROSPECTIVE.md)。
-独立审核未运行（Owner 未授权新增付费调用），Draft 候选验收仍待审核与正式 CI；
+
+该离线比较已合并到 main，merge SHA 为 `05dc75eb9c2e9e5ec042840d91fee4a3d480ce60`。
+该 SHA 的 main push Production Gate 成功。 [PR #1940](https://github.com/xupeng211/FootballPrediction/pull/1940) · [Production Gate](https://github.com/xupeng211/FootballPrediction/actions/runs/37791824191)
+
+当时的交接记录为 Draft 待验收，独立审核尚未运行，Owner 当轮未授权新增付费调用。
 原 `PROMISING`（vs prior）、production activation=NO、Stage D/历史 UNKNOWN accounting 均保持。
 
 ## VALUE_MVP-1 — Offline probability benchmark: prematch baseline vs closing 1X2 market
