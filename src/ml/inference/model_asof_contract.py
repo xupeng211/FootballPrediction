@@ -11,6 +11,7 @@ or inferring an observation timestamp.
 """
 
 from datetime import UTC, datetime
+import re
 from typing import Any
 
 MODEL_ASOF_CONTRACT_ID = "canonical-model-asof/v1"
@@ -313,6 +314,11 @@ def _parse_model_asof_utc(value: Any, field: str, reason_code: str) -> datetime:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
         raise ModelAsOfValidationError(reason_code, f"{field} is malformed") from exc
+    # fromisoformat silently drops digits after six places. Extra zeros are exact.
+    if re.search(r"[.,][0-9]{6}[0-9]*[1-9]", value):
+        raise ModelAsOfValidationError(
+            reason_code, f"{field} has subsecond precision that cannot be represented exactly"
+        )
     if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
         raise ModelAsOfValidationError(reason_code, f"{field} must be absolute UTC")
     return parsed.astimezone(UTC)

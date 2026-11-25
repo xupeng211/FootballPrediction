@@ -1,0 +1,43 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_MODEL_ASOF_PRECISION",
+  "task_type": "source-code",
+  "workflow_class": "STRICT",
+  "authorized_paths": [
+    "src/ml/inference/model_asof_contract.py",
+    "tests/unit/ml/test_model_asof_contract.py",
+    "docs/agentic/missions/FP_MODEL_ASOF_PRECISION.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "README.md",
+    "Makefile",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "models/",
+    "scripts/",
+    "training/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "继续使用 canonical-model-asof/v1 的决策时点、可用性约束、UTC 格式和字段错误码。精确可表示的时间（含额外尾零）继续参与原有边界比较。",
+    "仅在共用 UTC 解析器拒绝截断会丢失非零精度的输入。保留现有调用者、模型授权、数据与持久化边界，以及 PR #1935 中的其他改动。",
+    "候选范围只包含总工程师已验收的两文件补丁和本任务合同。本阶段仅交付单一本地提交、预检和严格验证。"
+  ],
+  "forbidden_side_effects": [
+    "数据库授权仅限 canonical 严格验证在本任务独占的一次性测试实例中创建、探测和清理临时库。禁止接触正式、共享或长期保留的数据库。",
+    "禁止真实数据操作、网络抓取、供应商调用、训练、预测、回测和模型激活。",
+    "禁止正式模型审核、推送、创建或更新 PR、合并和部署。"
+  ]
+}
