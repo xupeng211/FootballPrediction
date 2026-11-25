@@ -215,7 +215,22 @@ def test_scope_and_body_identity_and_class_are_bound(candidate):
 
 @pytest.mark.parametrize(
     "mode",
-    ["delete", "rename", "symlink", "empty", "headings", "setext-heading", "comment", "shell"],
+    [
+        "delete",
+        "rename",
+        "symlink",
+        "empty",
+        "headings",
+        "setext-heading",
+        "comment",
+        "multiline-comment",
+        "unclosed-comment",
+        "unclosed-comment-before-body",
+        "hidden-html",
+        "multiline-hidden-html",
+        "heading-and-whitespace",
+        "shell",
+    ],
 )
 def test_non_updates_cannot_satisfy_authoritative_backflow(candidate, mode):
     root, base, _ = candidate
@@ -233,6 +248,13 @@ def test_non_updates_cannot_satisfy_authoritative_backflow(candidate, mode):
             "headings": "# Existing authority\n## Existing scope\n## Existing cutoff\n",
             "setext-heading": "A title with an underline\n=========================\n",
             "comment": _BASE_DOC + "\n<!-- A claimed update. -->",
+            "multiline-comment": _BASE_DOC + "\n<!--\nA claimed update.\n-->\n",
+            "unclosed-comment": _BASE_DOC + "\n<!-- A claimed update.\n",
+            "unclosed-comment-before-body": "# Existing authority\n<!--\n" + _BASE_DOC + _UPDATE,
+            "hidden-html": _BASE_DOC + "\n<div hidden>A claimed update.</div>\n",
+            "multiline-hidden-html": _BASE_DOC + "\n<div\nhidden>\nA claimed update.\n</div>\n",
+            "heading-and-whitespace": _BASE_DOC.replace("# Existing authority", "# Updated title")
+            + "\n\n",
             "shell": "# Placeholder\n\n<!-- A claimed update. -->\n",
         }
         _write(root, _ASOF_DOC, replacement[mode])
@@ -253,4 +275,15 @@ def test_title_and_entire_short_section_can_be_rewritten(candidate):
     )
     _write(root, _ASOF_DOC, doc)
     head = _commit(root, "Rewrite one authority section")
+    assert _check(base, head) == []
+
+
+def test_visible_body_after_multiline_comment_is_accepted(candidate):
+    root, base, _ = candidate
+    _write(
+        root,
+        _ASOF_DOC,
+        _BASE_DOC + "\n<!--\nLocal writing note.\n-->\n" + _UPDATE + "Use `--file <path>`.\n",
+    )
+    head = _commit(root, "Update visible text and retain a comment")
     assert _check(base, head) == []

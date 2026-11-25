@@ -10,6 +10,7 @@ README, capability, milestone, status, and domain current-state documents.
 
 from __future__ import annotations
 
+from collections import Counter
 import re
 from typing import TYPE_CHECKING
 
@@ -381,8 +382,8 @@ def _canonical_contract_status_errors(
 
 
 def _visible_markdown_body(text: str) -> str:
-    """忽略 Markdown 标题、HTML 注释和空白，保留可见正文。"""
-    lines = re.sub(r"<!--.*?-->", "", text.lstrip("\ufeff"), flags=re.DOTALL).splitlines()
+    """从已剔除 HTML 注释的 Markdown 中忽略标题和空白。"""
+    lines = text.splitlines()
     body = []
     for index, raw_line in enumerate(lines):
         line = raw_line.strip()
@@ -401,10 +402,29 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
     return git_output(["show", f"{revision}:{path}"])
 
 
+def _raw_html_tokens(text: str) -> Counter[str]:
+    """识别原始 HTML，同时保留行内代码示例。"""
+    outside_code = re.sub(r"(?<![\\`])(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`)", "", text)
+    return Counter(re.findall(r"<(?:/?[A-Za-z][A-Za-z0-9-]*(?=[\s/>])|[!?])[^>]*>", outside_code))
+
+
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
-    before = _visible_markdown_body(_read_regular_git_markdown(base, path))
-    after = _visible_markdown_body(_read_regular_git_markdown(head, path))
-    return bool(after) and before != after
+    before, after = (
+        re.sub(
+            r"<!--.*?-->",
+            "",
+            _read_regular_git_markdown(ref, path).lstrip("\ufeff"),
+            flags=re.DOTALL,
+        )
+        for ref in (base, head)
+    )
+    if "<!--" in before or "<!--" in after:
+        return False
+    # 禁止借新增 HTML 标签中的内容满足要求，原有格式和占位符可以保留。
+    if _raw_html_tokens(after) - _raw_html_tokens(before):
+        return False
+    updated_body = _visible_markdown_body(after)
+    return bool(updated_body) and updated_body != _visible_markdown_body(before)
 
 
 def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
