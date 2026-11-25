@@ -1,0 +1,44 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_CURRENT_STATE_HANDOFF_1940_1951_1952",
+  "task_type": "docs-only",
+  "workflow_class": "NORMAL",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_CURRENT_STATE_HANDOFF_1940_1951_1952.json"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "README.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_MAP.md",
+    "docs/PROJECT_VISION.md"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "schemas/",
+    "scripts/",
+    "src/",
+    "tests/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "基线为 6274f1cabc2e255d230c3edfb6653461fae98b88。总工程师验收的两份文档补丁按 git diff --binary --no-ext-diff 计算的 SHA-256 为 1353c0a54bbe3c2d1d21edfa533c77dc1097d8fa33df8a401bd760aaec4d60bc，提交时保持原字节。",
+    "文档交付结论仅覆盖 PR #1940、#1951、#1952 的合并及其准确 main push Production Gate。一次性授权、导航回流例外和历史研究记录保留其时间范围。",
+    "M3 整体交付、模型上线、Stage D 等业务授权分别使用其现有门禁。运行时语义、业务入口、数据模型合同、工作流、审核和生产授权沿用现行规则。",
+    "本轮范围为本地提交、PR 正文草稿和准确候选的本地预检。后续独立审核及远端发布须分别取得授权。"
+  ],
+  "forbidden_side_effects": [
+    "禁止推送、创建或更新远端 PR、合并、正式审核模型调用和推广旧任务授权。",
+    "禁止修改正式 main 工作区或旧 Stage D 草稿工作区，禁止覆盖历史证据。",
+    "禁止部署、采集、供应商调用、数据库或 raw 写入、迁移、训练、预测、回测和模型激活。"
+  ]
+}
