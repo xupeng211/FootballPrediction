@@ -11,8 +11,11 @@ README, capability, milestone, status, and domain current-state documents.
 from __future__ import annotations
 
 from collections import Counter
+from html import escape
+from html.parser import HTMLParser
 import re
 from typing import TYPE_CHECKING
+import unicodedata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -205,7 +208,33 @@ FOTMOB_FINAL_RESULT_PATHS = frozenset(
         "tests/unit/ml/test_fotmob_prior_result_asof.py",
     }
 )
-_MARKDOWN_INLINE_CODE = r"(?<![\\`])(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`)"
+_FOTMOB_MARKDOWN_TOKENS = re.compile(
+    r"^[ ]{0,3}(?P<fence>(?P<marker>`|~)(?P=marker){2,})[^\n]*\n"
+    r".*?(?:^[ ]{0,3}(?P=fence)(?P=marker)*[ \t]*(?=\n|$)|\Z)"
+    r"|(?<![\\`])(?P<ticks>`+)(?!`)[^\r\n]*?(?<!`)(?P=ticks)(?!`)"
+    r"|<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>"
+    r"|(?P<comment><!--.*?(?:-->|\Z))",
+    flags=re.DOTALL | re.MULTILINE,
+)
+_HTML_VOID_TAGS = frozenset(
+    (
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    )
+)
+_HTML_HIDDEN_TAGS = frozenset(("script", "style", "template"))
 
 HOLLOW_REASON_VALUES = frozenset(
     {
@@ -383,7 +412,9 @@ def _canonical_contract_status_errors(
 
 
 def _visible_markdown_body(text: str) -> str:
-    """从已剔除 HTML 注释的 Markdown 中忽略标题和空白。"""
+    """忽略标题、排版空白和 Unicode 格式字符，保留正文文字。"""
+    text = "".join(char for char in text if unicodedata.category(char) != "Cf")
+    text = unicodedata.normalize("NFC", text)
     lines = text.splitlines()
     body = []
     for index, raw_line in enumerate(lines):
@@ -403,40 +434,68 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
     return git_output(["show", f"{revision}:{path}"])
 
 
-def _raw_html_tokens(text: str) -> Counter[str]:
-    """识别原始 HTML，同时保留行内代码示例。"""
-    outside_code = re.sub(_MARKDOWN_INLINE_CODE, "", text)
-    return Counter(re.findall(r"<(?:/?[A-Za-z][A-Za-z0-9-]*(?=[\s/>])|[!?])[^>]*>", outside_code))
+class _FotMobVisibleHtml(HTMLParser):
+    """跟踪 HTML 标签，并只收集显式隐藏区域之外的文本。"""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text: list[str] = []
+        self.tags: Counter[str] = Counter()
+        self._hidden: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "br" and not attrs:
+            self.handle_data(" ")
+            return
+        self.tags[self.get_starttag_text() or tag] += 1
+        if tag not in _HTML_VOID_TAGS and (
+            self._hidden or tag in _HTML_HIDDEN_TAGS or any(name == "hidden" for name, _ in attrs)
+        ):
+            self._hidden.append(tag)
+
+    handle_startendtag = handle_starttag
+
+    def handle_endtag(self, tag: str) -> None:
+        self.tags[f"</{tag}>"] += 1
+        if tag in self._hidden:
+            while self._hidden.pop() != tag:
+                pass
+
+    def handle_decl(self, decl: str) -> None:
+        self.tags[f"<!{decl}>"] += 1
+
+    def handle_pi(self, data: str) -> None:
+        self.tags[f"<?{data}>"] += 1
+
+    def handle_data(self, data: str) -> None:
+        if not self._hidden:
+            self.text.append(data)
 
 
-def _normalise_markdown_line_breaks(text: str) -> str:
-    """普通 HTML 换行只提供排版，行内代码中的字面值继续参与正文比较。"""
-    return re.sub(
-        rf"{_MARKDOWN_INLINE_CODE}|(?i:<br[ \t]*/?>)",
-        lambda match: match[0] if match[1] is not None else " ",
-        text,
-    )
+def _fotmob_visible_document(text: str) -> tuple[str, Counter[str]]:
+    """保留常见 Markdown 字面示例，按有限 HTML 规则选择用于比较的文字。"""
+
+    def prepare(match: re.Match[str]) -> str:
+        if match["comment"] is None:
+            return escape(match[0], quote=False)
+        if not match[0].endswith("-->"):
+            raise ValueError("unterminated HTML comment")
+        return ""
+
+    html = _FotMobVisibleHtml()
+    html.feed(_FOTMOB_MARKDOWN_TOKENS.sub(prepare, text))
+    html.close()
+    return _visible_markdown_body("".join(html.text)), html.tags
 
 
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
-    before, after = (
-        re.sub(
-            r"<!--.*?-->",
-            "",
-            _read_regular_git_markdown(ref, path).lstrip("\ufeff"),
-            flags=re.DOTALL,
+    try:
+        (before, before_tags), (after, after_tags) = (
+            _fotmob_visible_document(_read_regular_git_markdown(ref, path)) for ref in (base, head)
         )
-        for ref in (base, head)
-    )
-    if "<!--" in before or "<!--" in after:
+    except (AssertionError, ValueError):
         return False
-    before = _normalise_markdown_line_breaks(before)
-    after = _normalise_markdown_line_breaks(after)
-    # 禁止借新增 HTML 标签中的内容满足要求，原有格式和占位符可以保留。
-    if _raw_html_tokens(after) - _raw_html_tokens(before):
-        return False
-    updated_body = _visible_markdown_body(after)
-    return bool(updated_body) and updated_body != _visible_markdown_body(before)
+    return bool(after) and after != before and not (after_tags - before_tags)
 
 
 def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None) -> list[str]:

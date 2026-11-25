@@ -103,20 +103,24 @@ def _write(root, path, value):
     file.write_text(value, encoding="utf-8")
 
 
-@pytest.fixture
-def candidate(tmp_path, monkeypatch):
+def _commit_candidate(tmp_path, monkeypatch, base_doc):
     monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
     _git(tmp_path, "init", "-q")
     for path in _DOCS:
-        _write(tmp_path, path, _BASE_DOC)
+        _write(tmp_path, path, base_doc)
     base = _commit(tmp_path, "Existing docs")
     for path in _DOCS:
-        _write(tmp_path, path, _BASE_DOC + _UPDATE)
+        _write(tmp_path, path, base_doc + _UPDATE)
     for path in _PATHS - set(_DOCS):
         value = json.dumps(_SCOPE.to_dict()) if path == _SCOPE_PATH else "bounded fixture change\n"
         _write(tmp_path, path, value)
     head = _commit(tmp_path, "One business change")
     return tmp_path, base, head
+
+
+@pytest.fixture
+def candidate(tmp_path, monkeypatch):
+    return _commit_candidate(tmp_path, monkeypatch, _BASE_DOC)
 
 
 def _check(base, head, *, body=None, scope=_SCOPE, changed=None):
@@ -298,4 +302,39 @@ def test_visible_body_after_line_break_is_accepted(candidate, line_break):
     root, base, _ = candidate
     _write(root, _ASOF_DOC, _BASE_DOC + f"\n{line_break}记录终场比分及其观察时间。\n")
     head = _commit(root, "Add a visible sentence after a line break")
+    assert _check(base, head) == []
+
+
+@pytest.mark.parametrize("format_character", ["\u200b", "\u200d"])
+def test_unicode_format_character_alone_is_not_a_body_update(candidate, format_character):
+    root, base, _ = candidate
+    _write(root, _ASOF_DOC, _BASE_DOC.replace("introductory", f"intro{format_character}ductory"))
+    head = _commit(root, "Change only a zero-width character")
+    assert any("changed visible document body" in error for error in _check(base, head))
+
+
+@pytest.mark.parametrize("change_visible_score", [False, True])
+def test_existing_hidden_body_does_not_count_but_visible_score_does(
+    tmp_path, monkeypatch, change_visible_score
+):
+    base_doc = (
+        _BASE_DOC + "\n<div hidden><p>内部备注。<br>暂存。</p></div>\n\n终场比分：曼城 1–1 狼队。\n"
+    )
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, base_doc)
+    revised = base_doc.replace("内部备注", "更新内部备注")
+    if change_visible_score:
+        revised = revised.replace("曼城 1–1", "曼城 2–1")
+    _write(root, _ASOF_DOC, revised)
+    head = _commit(root, "Edit hidden notes and optionally correct a visible score")
+    assert (not _check(base, head)) is change_visible_score
+
+
+def test_author_can_add_a_fenced_code_example(candidate):
+    root, base, _ = candidate
+    _write(
+        root,
+        _ASOF_DOC,
+        _BASE_DOC + "\n示例命令<br>输出模板如下。\n\n```text\n<result>2–1</result>\n```\n",
+    )
+    head = _commit(root, "Add a markup example as literal text")
     assert _check(base, head) == []
