@@ -205,6 +205,7 @@ FOTMOB_FINAL_RESULT_PATHS = frozenset(
         "tests/unit/ml/test_fotmob_prior_result_asof.py",
     }
 )
+_MARKDOWN_INLINE_CODE = r"(?<![\\`])(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`)"
 
 HOLLOW_REASON_VALUES = frozenset(
     {
@@ -404,8 +405,17 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
 
 def _raw_html_tokens(text: str) -> Counter[str]:
     """识别原始 HTML，同时保留行内代码示例。"""
-    outside_code = re.sub(r"(?<![\\`])(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`)", "", text)
+    outside_code = re.sub(_MARKDOWN_INLINE_CODE, "", text)
     return Counter(re.findall(r"<(?:/?[A-Za-z][A-Za-z0-9-]*(?=[\s/>])|[!?])[^>]*>", outside_code))
+
+
+def _normalise_markdown_line_breaks(text: str) -> str:
+    """普通 HTML 换行只提供排版，行内代码中的字面值继续参与正文比较。"""
+    return re.sub(
+        rf"{_MARKDOWN_INLINE_CODE}|(?i:<br[ \t]*/?>)",
+        lambda match: match[0] if match[1] is not None else " ",
+        text,
+    )
 
 
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
@@ -420,6 +430,8 @@ def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
     )
     if "<!--" in before or "<!--" in after:
         return False
+    before = _normalise_markdown_line_breaks(before)
+    after = _normalise_markdown_line_breaks(after)
     # 禁止借新增 HTML 标签中的内容满足要求，原有格式和占位符可以保留。
     if _raw_html_tokens(after) - _raw_html_tokens(before):
         return False

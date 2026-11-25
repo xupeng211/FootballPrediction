@@ -229,6 +229,8 @@ def test_scope_and_body_identity_and_class_are_bound(candidate):
         "hidden-html",
         "multiline-hidden-html",
         "heading-and-whitespace",
+        "line-break-only",
+        "line-break-with-attributes",
         "shell",
     ],
 )
@@ -255,6 +257,8 @@ def test_non_updates_cannot_satisfy_authoritative_backflow(candidate, mode):
             "multiline-hidden-html": _BASE_DOC + "\n<div\nhidden>\nA claimed update.\n</div>\n",
             "heading-and-whitespace": _BASE_DOC.replace("# Existing authority", "# Updated title")
             + "\n\n",
+            "line-break-only": _BASE_DOC.replace("Existing timing", "Existing<br />timing"),
+            "line-break-with-attributes": _BASE_DOC + "\n<br hidden>Claimed update.\n",
             "shell": "# Placeholder\n\n<!-- A claimed update. -->\n",
         }
         _write(root, _ASOF_DOC, replacement[mode])
@@ -286,4 +290,12 @@ def test_visible_body_after_multiline_comment_is_accepted(candidate):
         _BASE_DOC + "\n<!--\nLocal writing note.\n-->\n" + _UPDATE + "Use `--file <path>`.\n",
     )
     head = _commit(root, "Update visible text and retain a comment")
+    assert _check(base, head) == []
+
+
+@pytest.mark.parametrize("line_break", ["<br>", "<br/>", "<BR />"])
+def test_visible_body_after_line_break_is_accepted(candidate, line_break):
+    root, base, _ = candidate
+    _write(root, _ASOF_DOC, _BASE_DOC + f"\n{line_break}记录终场比分及其观察时间。\n")
+    head = _commit(root, "Add a visible sentence after a line break")
     assert _check(base, head) == []
