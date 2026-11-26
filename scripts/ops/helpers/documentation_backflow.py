@@ -173,6 +173,19 @@ STAGE_D_FORWARD_MISSION_PATHS = frozenset(
     }
 )
 STAGE_D_FORWARD_PATHS = STAGE_D_FORWARD_AUTHORITY_DOCS | STAGE_D_FORWARD_MISSION_PATHS
+STAGE_D_RUNTIME_MISSION = "FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME"
+STAGE_D_RUNTIME_PATHS = STAGE_D_FORWARD_AUTHORITY_DOCS | {
+    f"docs/agentic/missions/{STAGE_D_RUNTIME_MISSION}.json",
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "src/infrastructure/market_evidence/stageDForwardAccounting.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
+    "tests/unit/market_evidence/stage_d_forward_accounting.test.js",
+}
+STAGE_D_FORWARD_MAPPINGS = {
+    STAGE_D_FORWARD_MISSION: STAGE_D_FORWARD_PATHS,
+    STAGE_D_RUNTIME_MISSION: STAGE_D_RUNTIME_PATHS,
+}
 
 CANONICAL_PREMATCH_CONTRACT_DOC = "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
 CANONICAL_PREMATCH_CONTRACT_PATHS = frozenset(
@@ -315,7 +328,7 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
             required.append("docs/data/FOTMOB_CURRENT_STATE.md")
         return tuple(required)
     if category == "contract" and (
-        changed == STAGE_D_FORWARD_PATHS
+        changed in STAGE_D_FORWARD_MAPPINGS.values()
         or (
             changed & STAGE_D_CONTRACT_PATHS
             and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
@@ -490,16 +503,18 @@ def _fotmob_backflow_errors(
     return errors
 
 
-def _stage_d_forward_commit_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
+def _stage_d_forward_commit_errors(
+    base_ref: str | None, head_ref: str | None, required_paths: frozenset[str]
+) -> list[str]:
     if not base_ref or not head_ref or not is_full_sha(base_ref) or not is_full_sha(head_ref):
         return ["Stage D forward accounting requires exact committed base/head revisions"]
     try:
         committed = collect_changes(base_ref, head_ref, include_worktree=False)
-        if changed_paths(committed) != STAGE_D_FORWARD_PATHS or any(
+        if changed_paths(committed) != required_paths or any(
             change.status not in {"A", "M"} for change in committed
         ):
             return [
-                "Stage D forward accounting requires its exact nine paths with no removal or rename"
+                "Stage D forward accounting requires its exact committed paths with no removal or rename"
             ]
         updated = {change.path for change in committed if change.status == "M"}
         if STAGE_D_FORWARD_AUTHORITY_DOCS - updated:
@@ -507,6 +522,17 @@ def _stage_d_forward_commit_errors(base_ref: str | None, head_ref: str | None) -
                 "Stage D forward accounting requires in-place updates to all five authority documents"
             ]
         merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
+        if required_paths == STAGE_D_RUNTIME_PATHS:
+            # collect_changes 将 Git 类型变更记为 M，须另外核对两端现有条目的类型。
+            for revision in (merge_base, head_ref):
+                entries = git_output(["ls-tree", revision, "--", *sorted(required_paths)])
+                if any(
+                    not line.startswith(("100644 blob ", "100755 blob "))
+                    for line in entries.splitlines()
+                ):
+                    return [
+                        "Stage D runtime accounting requires regular tracked files at all 11 paths"
+                    ]
         paths = sorted(STAGE_D_FORWARD_AUTHORITY_DOCS)
         projections = visible_documents(
             *(
@@ -536,37 +562,52 @@ def _stage_d_forward_backflow_errors(
     mission_scope: MissionScope | None,
     base_ref: str | None,
     head_ref: str | None,
+    required_mission: str,
 ) -> list[str]:
-    if changed != STAGE_D_FORWARD_PATHS:
-        missing = ", ".join(sorted(STAGE_D_FORWARD_PATHS - changed)) or "none"
-        extra = ", ".join(sorted(changed - STAGE_D_FORWARD_PATHS)) or "none"
+    required_paths = STAGE_D_FORWARD_MAPPINGS[required_mission]
+    if changed != required_paths:
+        count = "nine" if required_mission == STAGE_D_FORWARD_MISSION else "11"
+        missing = ", ".join(sorted(required_paths - changed)) or "none"
+        extra = ", ".join(sorted(changed - required_paths)) or "none"
         return [
-            f"Stage D forward accounting requires the exact nine mission paths (missing: {missing}; extra: {extra})"
+            f"Stage D forward accounting requires the exact {count} mission paths (missing: {missing}; extra: {extra})"
         ]
     if (
         mission_scope is None
-        or mission_scope.mission_id != STAGE_D_FORWARD_MISSION
+        or mission_scope.mission_id != required_mission
         or mission_scope.task_type != "source-code"
         or mission_scope.workflow_class != "CRITICAL"
         or parse_task_type(pr_body) != "source-code"
         or parse_workflow_class(pr_body) != "CRITICAL"
     ):
         return ["Stage D forward accounting requires its validated CRITICAL business mission scope"]
-    errors = validate_mission_scope_reference(
-        pr_body, mission_scope=mission_scope, scope_path=STAGE_D_FORWARD_SCOPE
-    )
-    errors.extend(_stage_d_forward_commit_errors(base_ref, head_ref))
-    for category in (
-        "contract",
-        "capability",
-        "entrypoint",
-        "milestone",
-        "blocker",
-        "source_of_truth",
+    if required_mission == STAGE_D_RUNTIME_MISSION and (
+        mission_scope.authorized_prefixes or set(mission_scope.authorized_paths) != required_paths
     ):
-        if _normalise(_table_value(pr_body, YES_NO_FIELDS[category])) != "yes":
-            errors.append(f"Stage D forward accounting requires '{YES_NO_FIELDS[category]}' = yes")
+        return [
+            "Stage D runtime accounting requires exactly 11 authorized files and no authorized prefixes"
+        ]
+    errors = validate_mission_scope_reference(
+        pr_body,
+        mission_scope=mission_scope,
+        scope_path=f"docs/agentic/missions/{required_mission}.json",
+    )
+    errors.extend(_stage_d_forward_commit_errors(base_ref, head_ref, required_paths))
     declared_docs = _declared_document_paths(_table_value(pr_body, "Updated authoritative docs"))
+    impacts = dict.fromkeys(
+        ("contract", "capability", "entrypoint", "milestone", "blocker", "source_of_truth"), "yes"
+    )
+    if required_mission == STAGE_D_RUNTIME_MISSION:
+        impacts.update(navigation="no", vision="no")
+        if declared_docs - STAGE_D_FORWARD_AUTHORITY_DOCS:
+            errors.append(
+                "Stage D runtime accounting must declare only its five updated authority documents"
+            )
+    for category, expected in impacts.items():
+        if _normalise(_table_value(pr_body, YES_NO_FIELDS[category])) != expected:
+            errors.append(
+                f"Stage D forward accounting requires '{YES_NO_FIELDS[category]}' = {expected}"
+            )
     if missing_docs := STAGE_D_FORWARD_AUTHORITY_DOCS - declared_docs:
         errors.append(
             "Stage D forward accounting requires declaring all five authority documents: "
@@ -585,8 +626,14 @@ def _exact_mission_backflow_errors(
     mission_id = mission_scope.mission_id if mission_scope is not None else None
     if FOTMOB_FINAL_RESULT_SCOPE in changed or mission_id == FOTMOB_FINAL_RESULT_MISSION:
         return _fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
-    if STAGE_D_FORWARD_SCOPE in changed or mission_id == STAGE_D_FORWARD_MISSION:
-        return _stage_d_forward_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
+    for required_mission in STAGE_D_FORWARD_MAPPINGS:
+        if (
+            mission_id == required_mission
+            or f"docs/agentic/missions/{required_mission}.json" in changed
+        ):
+            return _stage_d_forward_backflow_errors(
+                pr_body, changed, mission_scope, base_ref, head_ref, required_mission
+            )
     return None
 
 

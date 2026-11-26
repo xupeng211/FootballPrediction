@@ -273,6 +273,15 @@ CRITICAL 业务工单。固定九条路径包含既有 cycle 入口、后续记�
 业务变化由独立审核判断。这项映射对应离线核验阶段，真实采集、生产启用与发布仍适用
 原授权流程。
 
+正式接入工单 `FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME` 单独映射十一条普通文件路径。
+五份既有权威文档以及该工单自己的范围合同，伴随受控初始化入口、
+`stageDOperations.js`、`stageDForwardAccounting.js` 及受控初始化与后续记账的两份单测。
+业务 scope 须为 `source-code`、`CRITICAL`，逐项列出十一条授权路径。门禁仅按变更中的
+专用范围合同路径或已验证的工单 ID 选择映射，核对 PR 的同一工单引用。五份权威文档须在
+准确 HEAD 相对共同 Git 祖先有可见正文更新，在 Documentation Impact 逐项声明，并确认
+能力、入口、里程碑、当前阻断、领域合同及权威文档回流的影响。正式接入与离线工单分别
+核对精确路径；其他工单修改共享运行时或测试仍沿用其适用规则。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点

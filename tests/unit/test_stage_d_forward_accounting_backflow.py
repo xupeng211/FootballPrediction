@@ -52,7 +52,7 @@ _SCOPE = MissionScope.from_mapping(
 )
 
 
-def _body(**overrides):
+def _body(mission=_MISSION, **overrides):
     fields = {
         "capability": "yes",
         "entrypoint": "yes",
@@ -67,8 +67,9 @@ def _body(**overrides):
         "## Scope\n\n"
         "| Task type | source-code |\n"
         "| Workflow class | CRITICAL |\n"
-        f"| Mission ID | {_MISSION} |\n"
-        f"| Mission scope contract | `{_SCOPE_PATH}` |\n\n" + _impact_body(**fields)
+        f"| Mission ID | {mission} |\n"
+        f"| Mission scope contract | `docs/agentic/missions/{mission}.json` |\n\n"
+        + _impact_body(**fields)
     )
 
 
@@ -261,3 +262,168 @@ def test_diverged_base_uses_merge_base_for_paths_and_visible_documents(candidate
 
     assert _git(root, "merge-base", advanced_base, head) == base
     assert _run(advanced_base, head) == []
+
+
+_RUNTIME = "FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME"
+_RUNTIME_SCOPE_PATH = f"docs/agentic/missions/{_RUNTIME}.json"
+_INITIALIZE = "scripts/ops/stage_d_controlled_initialization.js"
+_OPERATIONS = "src/infrastructure/market_evidence/stageDOperations.js"
+_INITIALIZE_TEST = "tests/unit/market_evidence/stage_d_controlled_initialization.test.js"
+_RUNTIME_PATHS = _DOCS | {
+    _RUNTIME_SCOPE_PATH,
+    _INITIALIZE,
+    _OPERATIONS,
+    _ACCOUNTING,
+    _INITIALIZE_TEST,
+    _ACCOUNTING_TEST,
+}
+_RUNTIME_SCOPE = replace(
+    _SCOPE, mission_id=_RUNTIME, authorized_paths=tuple(sorted(_RUNTIME_PATHS))
+)
+
+
+@pytest.fixture
+def runtime(tmp_path, monkeypatch):
+    monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
+    _git(tmp_path, "init", "-q")
+    for path in _RUNTIME_PATHS - {_RUNTIME_SCOPE_PATH}:
+        _write(tmp_path, path, _ORIGINAL)
+    base = _commit(tmp_path, "Existing main with the offline accounting module")
+    for path in _RUNTIME_PATHS:
+        value = (
+            json.dumps(_RUNTIME_SCOPE.to_dict())
+            if path == _RUNTIME_SCOPE_PATH
+            else _ORIGINAL + "正式入口接入记账。\n"
+        )
+        _write(tmp_path, path, value)
+    return tmp_path, base, _commit(tmp_path, "Runtime integration")
+
+
+def _runtime_check(base, head, *, paths=None, scope=_RUNTIME_SCOPE, body=None):
+    return _run(
+        base,
+        head,
+        body=_body(_RUNTIME) if body is None else body,
+        paths=_RUNTIME_PATHS if paths is None else paths,
+        scope=scope,
+    )
+
+
+def test_independent_runtime_path_set_and_diverged_target(runtime):
+    root, base, head = runtime
+    assert _runtime_check(base, head) == []
+    _git(root, "switch", "-c", "advanced-target", base)
+    _write(root, _DOMAIN, _ORIGINAL + "正式入口接入记账。\n")
+    _write(root, "target-only.txt", "only on main")
+    advanced = _commit(root, "Independent target change")
+    assert _git(root, "merge-base", advanced, head) == base
+    assert _runtime_check(advanced, head) == []
+
+
+@pytest.mark.parametrize("document", sorted(_DOCS))
+@pytest.mark.parametrize(
+    "content",
+    [
+        "# 新标题\n\n原有 项目内容\n",
+        _ORIGINAL + "<!-- 隐藏 -->\n",
+        _ORIGINAL + "  \n",
+        "# 空壳\n",
+    ],
+)
+def test_each_runtime_authority_must_change_committed_visible_body(runtime, document, content):
+    root, base, _ = runtime
+    _write(root, document, content)
+    head = _commit(root, "Replace an authority update")
+    _write(root, document, _ORIGINAL + "只有工作区里的更新。\n")
+    assert any(document in e for e in _runtime_check(base, head))
+
+
+@pytest.mark.parametrize(
+    "operation", ["delete", "rename", "symlink", "extra-governance", "mixed-offline"]
+)
+def test_runtime_exact_commit_rejects_removed_replaced_and_extra_paths(runtime, operation):
+    root, base, _ = runtime
+    target = root / _DOMAIN
+    if operation == "delete":
+        target.unlink()
+    elif operation == "rename":
+        target.rename(target.with_suffix(".moved"))
+    elif operation == "symlink":
+        target.unlink()
+        target.symlink_to("README.md")
+    elif operation == "extra-governance":
+        _write(root, "AGENTS.md", "混入治理。")
+    else:
+        _write(root, _SCOPE_PATH, json.dumps(_SCOPE.to_dict()))
+    head = _commit(root, operation)
+    assert _runtime_check(base, head)
+
+
+def test_runtime_scope_identity_authority_and_metadata_are_bound(runtime):
+    _, base, head = runtime
+    for scope in (
+        None,
+        _SCOPE,
+        replace(_RUNTIME_SCOPE, mission_id="OTHER"),
+        replace(_RUNTIME_SCOPE, workflow_class="STRICT"),
+        replace(_RUNTIME_SCOPE, task_type="workflow-governance"),
+        replace(_RUNTIME_SCOPE, authorized_prefixes=("src/",)),
+        replace(_RUNTIME_SCOPE, authorized_paths=tuple(sorted(_RUNTIME_PATHS | {_CYCLE}))),
+    ):
+        assert _runtime_check(base, head, scope=scope)
+    for body in (
+        _body(),
+        _body(_RUNTIME).replace(_RUNTIME_SCOPE_PATH, _SCOPE_PATH),
+        _body(_RUNTIME).replace("CRITICAL", "STRICT"),
+        _body(_RUNTIME).replace("source-code", "docs-only"),
+        _body(_RUNTIME, updated_docs=_DOMAIN),
+        _body(_RUNTIME, navigation="yes"),
+        _body(_RUNTIME, vision="yes"),
+        _body(_RUNTIME, updated_docs=", ".join(_DOCS | {"AGENTS.md"})),
+        *(
+            _body(_RUNTIME, **{key: "no"})
+            for key in (
+                "capability",
+                "entrypoint",
+                "milestone",
+                "contract",
+                "blocker",
+                "source_updated",
+            )
+        ),
+    ):
+        assert _runtime_check(base, head, body=body)
+    for path in _RUNTIME_PATHS:
+        assert _runtime_check(base, head, paths=_RUNTIME_PATHS - {path})
+    assert _runtime_check(base, head, paths=_RUNTIME_PATHS | _PATHS)
+    assert _runtime_check(base, head, paths=_RUNTIME_PATHS | {_SCOPE_PATH}, scope=_SCOPE)
+
+
+@pytest.mark.parametrize(
+    "path", [_INITIALIZE, _INITIALIZE_TEST, _OPERATIONS, _ACCOUNTING, _ACCOUNTING_TEST]
+)
+def test_shared_runtime_file_does_not_select_either_forward_mission(path):
+    other = replace(_RUNTIME_SCOPE, mission_id="OTHER", authorized_paths=(path,))
+    errors = check_documentation_backflow(_impact_body(), {path}, mission_scope=other)
+    assert errors == []
+
+
+def test_runtime_non_document_must_also_be_a_regular_file(runtime):
+    root, base, _ = runtime
+    source = root / _INITIALIZE
+    source.unlink()
+    source.symlink_to("stage_d_cycle.js")
+    head = _commit(root, "Substitute a symlink for the runtime entry")
+    assert any("regular tracked files" in e for e in _runtime_check(base, head))
+
+
+def test_runtime_cannot_repurpose_an_existing_nonregular_path(runtime):
+    root, base, head = runtime
+    _git(root, "switch", "-c", "alternate-history", base)
+    source = root / _INITIALIZE
+    source.unlink()
+    source.symlink_to("stage_d_cycle.js")
+    other_base = _commit(root, "An old symbolic link")
+    _git(root, "restore", "--source", head, "--", *sorted(_RUNTIME_PATHS))
+    other_head = _commit(root, "Use the runtime tree on a different baseline")
+    assert any("regular tracked files" in e for e in _runtime_check(other_base, other_head))

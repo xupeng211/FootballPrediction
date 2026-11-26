@@ -1,0 +1,38 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME_BACKFLOW",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME_BACKFLOW.json",
+    "scripts/ops/helpers/documentation_backflow.py",
+    "tests/unit/test_stage_d_forward_accounting_backflow.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "README.md",
+    "Makefile",
+    "package.json",
+    "pyproject.toml"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    ".githooks/",
+    "src/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "正式接入映射仅匹配 FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME 的 CRITICAL 业务任务、准确十一条已批准路径及其五份既有权威文档。要求按准确 Git 共同祖先原位更新可见正文并如实申报文档影响。",
+    "专用门禁仅由新业务工单已验证的 ID 或变更中的专用范围合同路径触发，所有原有映射、审核规则及共享业务文件的普通改动继续分别核验。",
+    "治理提交仅修改现有文档回流 helper、其测试、两份工作流权威及本工单范围合同。保留未知领域及治理业务混合变更的拒绝行为。"
+  ],
+  "forbidden_side_effects": [
+    "仅限本地离线开发与验证。禁止生产操作、供应商访问、真实采集、实际账本和数据库操作、付费正式审核、推送、建 PR、合并及部署。"
+  ]
+}
