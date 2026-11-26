@@ -261,6 +261,13 @@ Canonical 与 Stage D 或工程工作流混合继续 fail-closed，不提供通�
 这不改变 mixed governance/business 禁令、Owner 权限、CRITICAL 双审、Receipt、Source Binding、
 费用或远端发布/合并授权。业务候选与独立导航文档的发布依赖仍须明确。
 
+Stage D 后续记账离线核验使用独立的 `FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE`
+CRITICAL 业务工单。固定九条路径包含既有 cycle 入口、后续记账核验模块、专项测试、该工单
+范围合同，以及 Stage D 领域合同、README、能力索引、活动里程碑和项目状态。门禁核对
+准确 Git 修订、经过验证的 scope 和实际原位更新的普通文件，并要求声明全部五份文档及
+合同、能力、入口、里程碑和当前阻断的影响。路径缺失、额外路径或错工单会拒绝。
+这项映射对应离线核验阶段，真实采集、生产启用与发布仍适用原授权流程。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
