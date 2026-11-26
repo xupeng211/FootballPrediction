@@ -376,6 +376,11 @@ def test_author_can_add_a_fenced_code_example(candidate):
         ('\n\n[参考稿]:\n  <./notes draft.md>\n  "{text}"\n', False),
         ('\n\n> [参考稿]: ./notes.md "{text}"\n', False),
         ('\n\n> [参考稿]:\n>   ./notes.md\n>   "{text}"\n', False),
+        ('\n\n[参考稿]: ./notes.md "赛果资料\n{text}"\n', False),
+        ('\n\n- 准备赛果记录。\n\n    [备忘]: ./notes.md "{text}"\n', False),
+        ('\n\n- [备忘]: ./notes.md "{text}"\n', False),
+        ('\n\n- 准备赛果记录。\n\n      [示例]: ./notes.md "{text}"\n', True),
+        ('\n\n> ```md\n>\n> [示例]: ./notes.md "{text}"\n> ```\n', True),
         ('\n\n[观察]: ./observed.md\n[参考稿]: ./notes.md "{text}"\n', False),
         ('\n\n## 资料\n[参考稿]: ./notes.md "{text}"\n', False),
     ],
@@ -386,3 +391,18 @@ def test_reference_definition_syntax_and_visible_examples(tmp_path, monkeypatch,
     _write(root, _ASOF_DOC, _BASE_DOC + source.format(text="已核对"))
     head = _commit(root, "Edit author note or example")
     assert (not _check(base, head)) is visible
+
+
+def test_visible_result_update_outside_reference_block_is_accepted(tmp_path, monkeypatch):
+    original = (
+        _BASE_DOC + '\n\n- 资料准备。\n\n    [备忘]: ./notes.md "赛果资料\n'
+        '    待核对"\n\n终场比分：曼城 2–1 狼队。观察时点：09:30Z。\n'
+    )
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, original)
+    _write(root, _ASOF_DOC, original.replace("待核对", "已核对"))
+    head = _commit(root, "Edit only the list reference title")
+    assert any("changed visible document body" in error for error in _check(base, head))
+    revised = original.replace("待核对", "已核对").replace("2–1", "3–1").replace("09:30Z", "09:35Z")
+    _write(root, _ASOF_DOC, revised)
+    head = _commit(root, "Correct the visible result and observation time")
+    assert _check(base, head) == []

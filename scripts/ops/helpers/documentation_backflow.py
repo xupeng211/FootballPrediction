@@ -208,24 +208,34 @@ FOTMOB_FINAL_RESULT_PATHS = frozenset(
         "tests/unit/ml/test_fotmob_prior_result_asof.py",
     }
 )
-_MARKDOWN_QUOTE_PREFIX = r"(?: {0,3}>[ \t]?)*"
+_MARKDOWN_QUOTE_MARKER = r" {0,3}>[ \t]?"
+_MARKDOWN_QUOTE_PREFIX = rf"(?:{_MARKDOWN_QUOTE_MARKER})*"
+_MARKDOWN_LIST_MARKER = r"(?:[-+*]|[0-9]{1,9}[.)])[ \t]+"
 _LINK_REFERENCE_DESTINATION = (
     r"<(?:\\[^\r\n]|[^<>\\\r\n])*>"  # 尖括号允许目标含空格。
     r"|(?P<bare_destination>(?!<)(?:\\[^\s]|[^\s\\])+)"
 )
+_REFERENCE_NEXT_LINE = r"\r?\n(?P=quote)[ \t]*"
+_TITLE_NEXT_LINE = r"\r?\n(?P=quote)(?![ \t]*(?:\r?$|#{1,6}[ \t]|```|~~~))"
 _LINK_REFERENCE_TITLE = (
-    r""""(?:\\[^\r\n]|[^"\\\r\n])*"|'(?:\\[^\r\n]|[^'\\\r\n])*'|\((?:\\[^\r\n]|[^()\\\r\n])*\)"""
+    rf'''"(?:\\[^\r\n]|[^"\\\r\n]|{_TITLE_NEXT_LINE})*"'''
+    rf"""|'(?:\\[^\r\n]|[^'\\\r\n]|{_TITLE_NEXT_LINE})*'"""
+    rf"|\((?:\\[^\r\n]|[^()\\\r\n]|{_TITLE_NEXT_LINE})*\)"
 )
 _LINK_REFERENCE_BLOCK = (
-    rf"(?P<reference>^(?P<quote>{_MARKDOWN_QUOTE_PREFIX}) {{0,3}}"
+    rf"(?P<reference>^(?P<quote>{_MARKDOWN_QUOTE_PREFIX})(?P<indent>[ \t]*)"
+    rf"(?P<list_marker>{_MARKDOWN_LIST_MARKER})?"
     r"\[(?P<label>(?:\\[^\r\n]|[^\[\]\\\r\n]){1,999})\]:"
-    rf"[ \t]*(?:\r?\n(?P=quote)[ \t]*)?(?:{_LINK_REFERENCE_DESTINATION})"
-    rf"(?:(?:[ \t]+|[ \t]*\r?\n(?P=quote)[ \t]*)(?:{_LINK_REFERENCE_TITLE}))?"
+    rf"[ \t]*(?:{_REFERENCE_NEXT_LINE})?(?:{_LINK_REFERENCE_DESTINATION})"
+    rf"(?:(?:[ \t]+|[ \t]*{_REFERENCE_NEXT_LINE})(?:{_LINK_REFERENCE_TITLE}))?"
     r"[ \t]*(?=\r?$))"
 )
 _FOTMOB_MARKDOWN_TOKENS = re.compile(
-    r"^[ ]{0,3}(?P<fence>(?P<marker>`|~)(?P=marker){2,})[^\n]*\n"
-    r".*?(?:^[ ]{0,3}(?P=fence)(?P=marker)*[ \t]*(?=\n|$)|\Z)"
+    rf"^(?P<fence_quote>(?:{_MARKDOWN_QUOTE_MARKER})+)?[ ]{{0,3}}"
+    r"(?P<fence>(?P<marker>`|~)(?P=marker){2,})[^\n]*\n"
+    r"(?(fence_quote)(?:^ {0,3}>[^\n]*\n)*?|.*?)"
+    r"(?:^(?(fence_quote)(?P=fence_quote))[ ]{0,3}(?P=fence)(?P=marker)*[ \t]*(?=\n|$)"
+    r"|(?(fence_quote)(?=^(?! {0,3}>)|\Z)|\Z))"
     r"|(?<![\\`])(?P<ticks>`+)(?!`)[^\r\n]*?(?<!`)(?P=ticks)(?!`)"
     r"|<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>"
     r"|(?P<comment><!--.*?(?:-->|\Z))"
@@ -235,6 +245,8 @@ _FOTMOB_MARKDOWN_TOKENS = re.compile(
 _QUOTE_PREFIX = re.compile(_MARKDOWN_QUOTE_PREFIX)
 _ATX_HEADING = re.compile(r"^#{1,6}(?:\s|$)")
 _SETEXT_UNDERLINE = re.compile(r"=+|-+")
+_LIST_ITEM_PREFIX = re.compile(rf"^[ \t]*{_MARKDOWN_LIST_MARKER}")
+_MARKDOWN_CODE_INDENT = 4
 _MAX_LINK_DESTINATION_NESTING = 32  # 与 markdown-it 的裸链接目标限制一致。
 _HTML_VOID_TAGS = frozenset(
     (
@@ -511,6 +523,23 @@ def _starts_markdown_reference(text: str, match: re.Match[str], previous_block_e
     )
 
 
+def _list_content_indent(lines: list[str], index: int, quote: str, indent: int) -> int:
+    """以同一引用层中明确的列表标记推断内容缩进。"""
+    for line in reversed(lines[:index]):
+        if not line.strip():
+            continue
+        if not line.startswith(quote):
+            break
+        body = line[len(quote) :].expandtabs(_MARKDOWN_CODE_INDENT)
+        marker = _LIST_ITEM_PREFIX.match(body)
+        leader = len(body) - len(body.lstrip())
+        if marker and len(marker[0]) <= indent:
+            return len(marker[0])
+        if leader == 0 and body.strip():
+            break
+    return 0
+
+
 def _has_balanced_link_destination(destination: str) -> bool:
     depth = 0
     for part in re.findall(r"\\[^\s]|[()]", destination):
@@ -527,13 +556,24 @@ def _fotmob_visible_document(text: str) -> tuple[str, Counter[str]]:
     """保留常见 Markdown 字面示例，按有限 HTML 规则选择用于比较的文字。"""
 
     previous_block_end = -1
+    lines = text.split("\n")
 
     def prepare(match: re.Match[str]) -> str:
         nonlocal previous_block_end
         if match["reference"] is not None:
+            indent = len(match["indent"].expandtabs(_MARKDOWN_CODE_INDENT))
+            if indent >= _MARKDOWN_CODE_INDENT:
+                list_indent = _list_content_indent(
+                    lines, text.count("\n", 0, match.start()), match["quote"], indent
+                )
+                if indent - list_indent >= _MARKDOWN_CODE_INDENT:
+                    return escape(match[0], quote=False)
             if (
                 not match["label"].strip()
-                or not _starts_markdown_reference(text, match, previous_block_end)
+                or (
+                    match["list_marker"] is None
+                    and not _starts_markdown_reference(text, match, previous_block_end)
+                )
                 or not _has_balanced_link_destination(match["bare_destination"] or "")
             ):
                 return match[0]
