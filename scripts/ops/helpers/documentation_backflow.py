@@ -208,14 +208,34 @@ FOTMOB_FINAL_RESULT_PATHS = frozenset(
         "tests/unit/ml/test_fotmob_prior_result_asof.py",
     }
 )
+_MARKDOWN_QUOTE_PREFIX = r"(?: {0,3}>[ \t]?)*"
+_LINK_REFERENCE_DESTINATION = (
+    r"<(?:\\[^\r\n]|[^<>\\\r\n])*>"  # 尖括号允许目标含空格。
+    r"|(?P<bare_destination>(?!<)(?:\\[^\s]|[^\s\\])+)"
+)
+_LINK_REFERENCE_TITLE = (
+    r""""(?:\\[^\r\n]|[^"\\\r\n])*"|'(?:\\[^\r\n]|[^'\\\r\n])*'|\((?:\\[^\r\n]|[^()\\\r\n])*\)"""
+)
+_LINK_REFERENCE_BLOCK = (
+    rf"(?P<reference>^(?P<quote>{_MARKDOWN_QUOTE_PREFIX}) {{0,3}}"
+    r"\[(?P<label>(?:\\[^\r\n]|[^\[\]\\\r\n]){1,999})\]:"
+    rf"[ \t]*(?:\r?\n(?P=quote)[ \t]*)?(?:{_LINK_REFERENCE_DESTINATION})"
+    rf"(?:(?:[ \t]+|[ \t]*\r?\n(?P=quote)[ \t]*)(?:{_LINK_REFERENCE_TITLE}))?"
+    r"[ \t]*(?=\r?$))"
+)
 _FOTMOB_MARKDOWN_TOKENS = re.compile(
     r"^[ ]{0,3}(?P<fence>(?P<marker>`|~)(?P=marker){2,})[^\n]*\n"
     r".*?(?:^[ ]{0,3}(?P=fence)(?P=marker)*[ \t]*(?=\n|$)|\Z)"
     r"|(?<![\\`])(?P<ticks>`+)(?!`)[^\r\n]*?(?<!`)(?P=ticks)(?!`)"
     r"|<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>"
-    r"|(?P<comment><!--.*?(?:-->|\Z))",
+    r"|(?P<comment><!--.*?(?:-->|\Z))"
+    rf"|{_LINK_REFERENCE_BLOCK}",
     flags=re.DOTALL | re.MULTILINE,
 )
+_QUOTE_PREFIX = re.compile(_MARKDOWN_QUOTE_PREFIX)
+_ATX_HEADING = re.compile(r"^#{1,6}(?:\s|$)")
+_SETEXT_UNDERLINE = re.compile(r"=+|-+")
+_MAX_LINK_DESTINATION_NESTING = 32  # 与 markdown-it 的裸链接目标限制一致。
 _HTML_VOID_TAGS = frozenset(
     (
         "area",
@@ -421,7 +441,7 @@ def _visible_markdown_body(text: str) -> str:
     for index, raw_line in enumerate(lines):
         line = raw_line.strip()
         following = lines[index + 1].strip() if index + 1 < len(lines) else ""
-        if re.match(r"^#{1,6}(?:\s|$)", line) or re.fullmatch(r"=+|-+", following):
+        if _ATX_HEADING.match(line) or _SETEXT_UNDERLINE.fullmatch(following):
             continue
         if re.search(r"[^\W_]", line):
             body.append(line)
@@ -473,10 +493,54 @@ class _FotMobVisibleHtml(HTMLParser):
             self.text.append(data)
 
 
+def _starts_markdown_reference(text: str, match: re.Match[str], previous_block_end: int) -> bool:
+    """引用定义不能打断同一容器里已有的段落。"""
+    offset = match.start()
+    if offset == 0 or (previous_block_end >= 0 and not text[previous_block_end:offset].strip()):
+        return True
+    previous_start = text.rfind("\n", 0, offset - 1) + 1
+    previous = text[previous_start : offset - 1]
+    prefix = _QUOTE_PREFIX.match(previous)
+    quote = prefix[0] if prefix else ""
+    body = previous[len(quote) :].strip()
+    return (
+        match["quote"].count(">") > quote.count(">")
+        or not body
+        or bool(_ATX_HEADING.match(body))
+        or bool(_SETEXT_UNDERLINE.fullmatch(body))
+    )
+
+
+def _has_balanced_link_destination(destination: str) -> bool:
+    depth = 0
+    for part in re.findall(r"\\[^\s]|[()]", destination):
+        if part == "(":
+            depth += 1
+        elif part == ")":
+            depth -= 1
+        if not 0 <= depth <= _MAX_LINK_DESTINATION_NESTING:
+            return False
+    return depth == 0
+
+
 def _fotmob_visible_document(text: str) -> tuple[str, Counter[str]]:
     """保留常见 Markdown 字面示例，按有限 HTML 规则选择用于比较的文字。"""
 
+    previous_block_end = -1
+
     def prepare(match: re.Match[str]) -> str:
+        nonlocal previous_block_end
+        if match["reference"] is not None:
+            if (
+                not match["label"].strip()
+                or not _starts_markdown_reference(text, match, previous_block_end)
+                or not _has_balanced_link_destination(match["bare_destination"] or "")
+            ):
+                return match[0]
+            previous_block_end = match.end()
+            return ""
+        if match["fence"] is not None:
+            previous_block_end = match.end()
         if match["comment"] is None:
             return escape(match[0], quote=False)
         if not match[0].endswith("-->"):

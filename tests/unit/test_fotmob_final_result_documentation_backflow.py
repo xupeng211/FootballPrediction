@@ -359,3 +359,30 @@ def test_author_can_add_a_fenced_code_example(candidate):
     )
     head = _commit(root, "Add a markup example as literal text")
     assert _check(base, head) == []
+
+
+@pytest.mark.parametrize(
+    ("source", "visible"),
+    [
+        ("\n\n[备注]：{text}。\n", True),
+        ("\n\n观察记录：\n[备忘]: ./notes.md ({text})\n", True),
+        ("\n\n`[备忘]: ./notes.md ({text})`\n", True),
+        ("\n\n```md\n[备忘]: ./notes.md ({text})\n```\n", True),
+        ("\n\n    [备忘]: ./notes.md ({text})\n", True),
+        ("\n\n[//]: # ({text})\n", False),
+        ("\n\n[备忘]: ./notes.md ({text})\n", False),
+        ("\n\n[备注]:./notes(v2).md '{text}'\n", False),
+        ("\n\n[备注]:./notes(v2(draft)).md '{text}'\n", False),
+        ('\n\n[参考稿]:\n  <./notes draft.md>\n  "{text}"\n', False),
+        ('\n\n> [参考稿]: ./notes.md "{text}"\n', False),
+        ('\n\n> [参考稿]:\n>   ./notes.md\n>   "{text}"\n', False),
+        ('\n\n[观察]: ./observed.md\n[参考稿]: ./notes.md "{text}"\n', False),
+        ('\n\n## 资料\n[参考稿]: ./notes.md "{text}"\n', False),
+    ],
+)
+def test_reference_definition_syntax_and_visible_examples(tmp_path, monkeypatch, source, visible):
+    original = _BASE_DOC + source.format(text="待核对")
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, original)
+    _write(root, _ASOF_DOC, _BASE_DOC + source.format(text="已核对"))
+    head = _commit(root, "Edit author note or example")
+    assert (not _check(base, head)) is visible
