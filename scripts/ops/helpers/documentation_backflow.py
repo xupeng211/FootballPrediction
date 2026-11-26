@@ -585,9 +585,7 @@ def _exact_mission_backflow_errors(
     mission_id = mission_scope.mission_id if mission_scope is not None else None
     if FOTMOB_FINAL_RESULT_SCOPE in changed or mission_id == FOTMOB_FINAL_RESULT_MISSION:
         return _fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
-    if changed & (STAGE_D_FORWARD_MISSION_PATHS - {STAGE_D_FORWARD_CYCLE}) or (
-        mission_id == STAGE_D_FORWARD_MISSION
-    ):
+    if STAGE_D_FORWARD_SCOPE in changed or mission_id == STAGE_D_FORWARD_MISSION:
         return _stage_d_forward_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
     return None
 

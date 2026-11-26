@@ -21,6 +21,7 @@ _DOMAIN = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
 _ORIGINAL = "# 原有标题\n\n原有 项目内容\n"
 _CYCLE = "scripts/ops/stage_d_cycle.js"
 _ACCOUNTING = "src/infrastructure/market_evidence/stageDForwardAccounting.js"
+_ACCOUNTING_TEST = "tests/unit/market_evidence/stage_d_forward_accounting.test.js"
 _DOCS = {
     _DOMAIN,
     "README.md",
@@ -32,7 +33,7 @@ _PATHS = _DOCS | {
     _SCOPE_PATH,
     _CYCLE,
     _ACCOUNTING,
-    "tests/unit/market_evidence/stage_d_forward_accounting.test.js",
+    _ACCOUNTING_TEST,
 }
 _SCOPE = MissionScope.from_mapping(
     {
@@ -213,3 +214,50 @@ def test_missing_exact_commit_cannot_use_caller_paths(candidate):
 
 def test_existing_cycle_can_still_have_an_ordinary_non_contract_fix():
     assert check_documentation_backflow("", {_CYCLE}) == []
+
+
+@pytest.mark.parametrize("path", [_ACCOUNTING, _ACCOUNTING_TEST])
+@pytest.mark.parametrize("has_scope", [False, True], ids=["no-scope", "other-scope"])
+def test_ordinary_non_contract_fix_does_not_trigger_stage_d_gate(path, has_scope):
+    scope = (
+        replace(_SCOPE, mission_id="OTHER", workflow_class="NORMAL", authorized_paths=(path,))
+        if has_scope
+        else None
+    )
+    assert check_documentation_backflow(_impact_body(), {path}, mission_scope=scope) == []
+
+
+def test_ordinary_workflow_still_rejects_unmapped_contract_changes():
+    unknown_doc = "docs/data/UNKNOWN_CONTRACT.md"
+    errors = check_documentation_backflow(_impact_body(contract="yes"), {_ACCOUNTING, unknown_doc})
+    assert errors[0] == (
+        f"contract paths have no approved domain mapping: {unknown_doc}, {_ACCOUNTING}"
+    )
+
+
+@pytest.mark.parametrize("scope", [None, replace(_SCOPE, mission_id="OTHER")])
+def test_dedicated_scope_path_still_requires_the_validated_stage_d_mission(candidate, scope):
+    _, base, head = candidate
+    assert _run(base, head, scope=scope) == [
+        "Stage D forward accounting requires its validated CRITICAL business mission scope"
+    ]
+
+
+def test_stage_d_mission_without_its_scope_path_still_enters_exact_gate(candidate):
+    _, base, head = candidate
+    errors = _run(base, head, paths=_PATHS - {_SCOPE_PATH})
+    assert (
+        f"Stage D forward accounting requires the exact nine mission paths (missing: {_SCOPE_PATH}; extra: none)"
+        in errors
+    )
+
+
+def test_diverged_base_uses_merge_base_for_paths_and_visible_documents(candidate):
+    root, base, head = candidate
+    _git(root, "switch", "-c", "advanced-base", base)
+    _write(root, _DOMAIN, "后续记账的变更。\n")
+    _write(root, "only-on-advanced-base.txt", "目标分支的独立变更。\n")
+    advanced_base = _commit(root, "Advance target branch independently")
+
+    assert _git(root, "merge-base", advanced_base, head) == base
+    assert _run(advanced_base, head) == []

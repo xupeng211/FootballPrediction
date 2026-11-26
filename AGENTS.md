@@ -79,7 +79,8 @@ FotMob 单条终场赛果只为 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的 CRITIC
 Stage D 后续记账离线核验只为 `FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE` 的
 CRITICAL 业务工单映射固定九条路径。准确提交内须原位更新 Stage D 领域合同、README、
 能力索引、活动里程碑和项目状态的可见正文，并如实声明影响。只改标题、隐藏内容或空白
-不能满足回流要求。旧跨月映射与此次记账规则分别匹配。
+不能满足回流要求。专用门禁只由该工单的已验证 scope ID 或变更中的专用范围合同文件触发。
+其他工单对共享源码或测试的改动沿用通用门禁。旧跨月映射与此次记账规则分别匹配。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
 `docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
 

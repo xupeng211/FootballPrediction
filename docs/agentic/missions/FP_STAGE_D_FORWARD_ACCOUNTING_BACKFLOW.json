@@ -16,6 +16,7 @@
   "excluded_tokens": [],
   "protected_invariants": [
     "仅映射 FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE 的精确九条路径及五份可见正文原位更新的权威文档。复用现有锁定 Markdown 解析器，标题、隐藏内容或空白的改动不计作可见正文变化。",
+    "专用门禁仅由已验证的该业务工单 ID 或变更中的专用范围合同路径触发。其他工单修改共享源码或测试依然适用通用规则。",
     "原跨月账本、FotMob、Canonical Prematch、未知领域、混合发布与 CRITICAL 双审规则维持原语义。"
   ],
   "forbidden_side_effects": [
