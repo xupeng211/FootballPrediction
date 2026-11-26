@@ -152,6 +152,8 @@
 
 ### Stage D current capability note
 
+后续记账的只读核验复用同一账本格式。它能对照独立检查点核验两段历史和本期初始余额，并复核指定的一次请求。见 [Stage D 合同](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。生产接入仍待完成。
+
 Stage D's controlled adapter prospectively persists separate immutable,
 bounded/redacted diagnostics for non-2xx responses
 (`footballprediction-stage-d-failure-diagnostic/v1`) and post-boundary transport

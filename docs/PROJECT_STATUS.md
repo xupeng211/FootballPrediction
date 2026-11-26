@@ -148,6 +148,8 @@ credential rotation）连同 Blocker #2 的 runtime filesystem permission 至此
 也不启动 Stage D——`GATE_3=NOT_AUTHORIZED`、`STAGE_D_STARTED=NO` 保持不变，仍不得消耗 quota
 或启动 continuous scheduler。
 Stage C 细节见 [`Stage C pilot`](data/STAGE_C_CANONICAL_MARKET_EVIDENCE_PILOT.md)，
+后续记账准备增加了只读的期初余额与回执核验。它依赖外部提供的开账决定、历史原件、当期余额与最新账本锚点。当前缺口仍是生产切换和受控执行接入，账户实际余额与历史缺失原件仍待核实。
+
 Stage D contract 见 [`Stage D contract`](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
 
 Blocker #2（ordinary runtime user 无法可靠 cold-load committed transaction authority）的

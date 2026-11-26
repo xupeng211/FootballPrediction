@@ -1,0 +1,29 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/agentic/missions/FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE.json",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "README.md",
+    "scripts/ops/stage_d_cycle.js",
+    "src/infrastructure/market_evidence/stageDForwardAccounting.js",
+    "tests/unit/market_evidence/stage_d_forward_accounting.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "docs/AGENT_WORKFLOW.md", "Makefile"],
+  "excluded_prefixes": [".github/", "data/", "database/", "deploy/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "保留历史原件与缺口。后续段只读核验，必须绑定可验证历史、本期账户原件和当次请求。",
+    "沿用受控一次请求和账本格式，offline admission 不代表 Gate 3 或实际发送许可。",
+    "恢复后必须对照独立锚点，旧快照不能自行证明仍是当前版本。"
+  ],
+  "forbidden_side_effects": [
+    "本地隔离验证。禁止真实 provider、生产授权或账本写入、接触真实账户、付费审核及远端发布。"
+  ]
+}

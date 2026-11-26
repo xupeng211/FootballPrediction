@@ -401,6 +401,43 @@ remaining balance below the local safe budget, a missing/malformed header, or
 any local/provider divergence consumes the attempt and blocks later cycles
 until explicit reconciliation.
 
+## 历史有缺口时的后续记账离线核验
+
+在完整旧账无法恢复时，可以离线核对一个由批准记录绑定的后续账本。旧账按原读者加载，
+保留原始 epoch、留存条目和末尾摘要。历史候选原件证明当时记载的条目数、末尾摘要和
+已计消费。记录中的缺口和历史供应商扣费 `UNKNOWN` 是必要输入。
+
+复用 `scripts/ops/stage_d_cycle.js` 的 `--dry-run`。以下所有文件与目录使用显式绝对路径。
+任何后续记账专用参数均进入本节核验，缺少必填参数时明确拒绝。调用方独立保存并核实
+开账记录摘要和最新检查点摘要。后续账本采用既有账本格式，两个
+账本各自校验。专用开账记录固定后续 epoch 的身份、起点所见交易状态、允许核对的一次
+请求、外部历史候选及账户和预算配置的字节摘要。
+
+| 参数 | 输入 |
+| --- | --- |
+| `--forward-opening` 和 `--expected-opening-sha256` | `footballprediction-stage-d-forward-opening/v1` 的只读决定和独立持有的摘要 |
+| `--account-record`、`--history-record`、`--quota-config` | 只读账户额度记录、原始历史候选和当期预算配置 |
+| `--prior-ledger-root`、`--ledger-root` | 现存旧账和所核对的后续账本 |
+| `--authority-root`、`--allocation-authority`、`--run-lock-trust-root` | 交易权威、正式分配原件和既有受信运行锁目录 |
+| `--ledger-checkpoint`、`--expected-checkpoint-sha256` | 固定开账决定摘要和后续账本 epoch、genesis、条目数、尾摘要、消费数的独立检查点 |
+
+开账决定的账户字段使用非秘密账户标识摘要。账户原件须由 Owner 从同一账户的可信记录
+核对，额度记录使用核实后的字段。账户专用窗口及既有消费已计入期初用量的事实来自
+Owner 的批准。机器核对字节、字段、账期和时间窗口。证据观察到失效最多 24 小时，
+有效期止于同一账期。项目授权、可信账户身份及当前检查点在实际启用前仍需独立确认。
+
+计划只考虑英超胜平负 `h2h`、地区 `uk`、一次请求。离线输出中的 `would_reserve_one`
+表示该快照符合一次额度预留的条件。剩余不能低于 50，自动用量不能高于 450。收到回执
+后，从批准的当期已用和剩余推导精确加 1、减 1，供应商最后一次扣减也必须为 1。运行锁
+异常、时期越界、错账本、超出唯一请求或余额不符时，计划关闭。账本须有成功响应终态
+和回执证据引用才会输出 `RECONCILED`，该结果只复算账本记录中的扣费字段。发送后未
+终止、本地处理失败或回执缺失均保留原有账本状态，离线结果为 `STOPPED`，不会重复预留。
+
+隔离恢复时，先用现有备份工具保护旧账本。后续快照用现有 `--run-state` 显式纳入开账、
+账户与历史候选，并保留独立检查点。分别通过现有恢复工具恢复后，在新进程内用本节
+的只读入口复核，输入仍来自独立保存的最新检查点。缺少绑定文件或拿旧代账本比对最新
+检查点时拒绝。生产运行使用哪一个后续段、活动账本切换、授权消费和发送接入仍待完成。
+
 ## Capture, publication, duplicate and temporal policy
 
 The controlled adapter is ordered as follows:
