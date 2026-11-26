@@ -48,20 +48,23 @@ function authoritySnapshot(authorityRoot) {
     });
 }
 
-// eslint-disable-next-line complexity -- the offline entrypoint enumerates its mutually exclusive safety gates.
-const FORWARD_FLAGS = Object.freeze({
+const FORWARD_ONLY_FLAGS = Object.freeze({
     '--forward-opening': 'openingPath',
     '--expected-opening-sha256': 'openingSha256',
     '--account-record': 'accountPath',
     '--history-record': 'historyPath',
-    '--quota-config': 'quotaConfigPath',
     '--prior-ledger-root': 'priorLedgerRoot',
-    '--ledger-root': 'ledgerRoot',
-    '--authority-root': 'authorityRoot',
     '--allocation-authority': 'allocationAuthorityPath',
-    '--run-lock-trust-root': 'runLockTrustRoot',
     '--ledger-checkpoint': 'checkpointPath',
     '--expected-checkpoint-sha256': 'checkpointSha256',
+});
+
+const FORWARD_FLAGS = Object.freeze({
+    ...FORWARD_ONLY_FLAGS,
+    '--quota-config': 'quotaConfigPath',
+    '--ledger-root': 'ledgerRoot',
+    '--authority-root': 'authorityRoot',
+    '--run-lock-trust-root': 'runLockTrustRoot',
 });
 
 function forwardPlan(argv) {
@@ -160,7 +163,8 @@ function main() {
 
 if (require.main === module) {
     try {
-        if (process.argv.includes('--forward-opening')) forwardPlan(process.argv.slice(2));
+        const args = process.argv.slice(2);
+        if (args.some(arg => Object.hasOwn(FORWARD_ONLY_FLAGS, arg.split('=', 1)[0]))) forwardPlan(args);
         else main();
     } catch (error) {
         process.stderr.write(`STAGE_D_CYCLE_FAILED=${error.message.replace(/https?:\/\/\S+/g, '[redacted-url]')}\n`);

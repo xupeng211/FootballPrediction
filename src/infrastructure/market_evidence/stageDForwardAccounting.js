@@ -114,7 +114,8 @@ function verifyOpening(opening, account, config, ledger, now) {
     exact(opening.segment, ['epoch_id', 'genesis', 'head', 'state_hash']);
     requireFact(opening.schema_version === SCHEMA && opening.account_exclusive === true &&
         opening.account_prior_usage_reconciled === true, '缺少账户独占和已有消费归属记录');
-    requireFact(TOKEN.test(opening.run_id || '') && TOKEN.test(opening.request_id || ''), '缺少当次请求身份');
+    requireFact([opening.run_id, opening.request_id].every(value => typeof value === 'string' && TOKEN.test(value)),
+        '缺少当次请求身份');
     verifyAccount(account, opening, config);
     const observed = utc(account.observed_at);
     const approved = utc(opening.approved_at);
@@ -137,7 +138,10 @@ function verifySingleRequest(ledger, opening, account, config, now) {
         ledger.entries.every(entry => utc(entry.recorded_at) >= utc(ledger.epoch.started_at) &&
             utc(entry.recorded_at) <= utc(now)), '后续账本包含超出试点的活动');
     const request = ledger.requests[0];
-    if (request.transmitted_at === null || request.provider_quota === null) return { state: 'STOPPED', quota_receipt: null };
+    if (request.terminal_state !== 'RESPONSE_RECEIVED' || request.transmitted_at === null ||
+        request.provider_quota === null || request.receipt_evidence_reference === null) {
+        return { state: 'STOPPED', quota_receipt: null };
+    }
     requireFact(utc(request.transmitted_at) >= utc(ledger.epoch.started_at) &&
         utc(request.transmitted_at) < utc(opening.expires_at) &&
         request.response_received_at && utc(request.response_received_at) < utc(config.period_end_at),
