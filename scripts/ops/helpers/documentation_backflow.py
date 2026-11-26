@@ -10,12 +10,8 @@ README, capability, milestone, status, and domain current-state documents.
 
 from __future__ import annotations
 
-from collections import Counter
-from html import escape
-from html.parser import HTMLParser
 import re
 from typing import TYPE_CHECKING
-import unicodedata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -24,6 +20,7 @@ if TYPE_CHECKING:
     from scripts.ops.helpers.git_change_helpers import Change
 
 from scripts.devops.exact_head import is_full_sha
+from scripts.devops.fotmob_markdown import visible_documents
 from scripts.ops.helpers.agent_workflow_contract import validate_mission_scope_reference
 from scripts.ops.helpers.git_change_helpers import changed_paths, collect_changes, git_output
 from scripts.ops.helpers.pr_authorization_matrix import (
@@ -208,65 +205,6 @@ FOTMOB_FINAL_RESULT_PATHS = frozenset(
         "tests/unit/ml/test_fotmob_prior_result_asof.py",
     }
 )
-_MARKDOWN_QUOTE_MARKER = r" {0,3}>[ \t]?"
-_MARKDOWN_QUOTE_PREFIX = rf"(?:{_MARKDOWN_QUOTE_MARKER})*"
-_MARKDOWN_LIST_MARKER = r"(?:[-+*]|[0-9]{1,9}[.)])[ \t]+"
-_LINK_REFERENCE_DESTINATION = (
-    r"<(?:\\[^\r\n]|[^<>\\\r\n])*>"  # 尖括号允许目标含空格。
-    r"|(?P<bare_destination>(?!<)(?:\\[^\s]|[^\s\\])+)"
-)
-_REFERENCE_NEXT_LINE = r"\r?\n(?P=quote)[ \t]*"
-_REFERENCE_TEXT_NEXT_LINE = r"\r?\n(?P=quote)(?![ \t]*(?:\r?$|#{1,6}[ \t]|```|~~~))"
-_LINK_REFERENCE_TITLE = (
-    rf'''"(?:\\[^\r\n]|[^"\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*"'''
-    rf"""|'(?:\\[^\r\n]|[^'\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*'"""
-    rf"|\((?:\\[^\r\n]|[^()\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*\)"
-)
-_LINK_REFERENCE_BLOCK = (
-    rf"(?P<reference>^(?P<quote>{_MARKDOWN_QUOTE_PREFIX})(?P<indent>[ \t]*)"
-    rf"(?P<list_marker>{_MARKDOWN_LIST_MARKER})?"
-    rf"\[(?P<label>(?:\\[^\r\n]|[^\[\]\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE}){{1,999}})\]:"
-    rf"[ \t]*(?:{_REFERENCE_NEXT_LINE})?(?:{_LINK_REFERENCE_DESTINATION})"
-    rf"(?:(?:[ \t]+|[ \t]*{_REFERENCE_NEXT_LINE})(?:{_LINK_REFERENCE_TITLE}))?"
-    r"[ \t]*(?=\r?$))"
-)
-_FOTMOB_MARKDOWN_TOKENS = re.compile(
-    rf"^(?P<fence_quote>(?:{_MARKDOWN_QUOTE_MARKER})+)?[ ]{{0,3}}"
-    r"(?P<fence>(?P<marker>`|~)(?P=marker){2,})[^\n]*\n"
-    r"(?(fence_quote)(?:^ {0,3}>[^\n]*\n)*?|.*?)"
-    r"(?:^(?(fence_quote)(?P=fence_quote))[ ]{0,3}(?P=fence)(?P=marker)*[ \t]*(?=\n|$)"
-    r"|(?(fence_quote)(?=^(?! {0,3}>)|\Z)|\Z))"
-    r"|(?<![\\`])(?P<ticks>`+)(?!`)[^\r\n]*?(?<!`)(?P=ticks)(?!`)"
-    r"|<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>"
-    r"|(?P<comment><!--.*?(?:-->|\Z))"
-    rf"|{_LINK_REFERENCE_BLOCK}",
-    flags=re.DOTALL | re.MULTILINE,
-)
-_QUOTE_PREFIX = re.compile(_MARKDOWN_QUOTE_PREFIX)
-_ATX_HEADING = re.compile(r"^#{1,6}(?:\s|$)")
-_SETEXT_UNDERLINE = re.compile(r"=+|-+")
-_LIST_ITEM_PREFIX = re.compile(rf"^[ \t]*{_MARKDOWN_LIST_MARKER}")
-_MARKDOWN_CODE_INDENT = 4
-_MAX_LINK_DESTINATION_NESTING = 32  # 与 markdown-it 的裸链接目标限制一致。
-_HTML_VOID_TAGS = frozenset(
-    (
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "link",
-        "meta",
-        "param",
-        "source",
-        "track",
-        "wbr",
-    )
-)
-_HTML_HIDDEN_TAGS = frozenset(("script", "style", "template"))
 
 HOLLOW_REASON_VALUES = frozenset(
     {
@@ -443,23 +381,6 @@ def _canonical_contract_status_errors(
     return []
 
 
-def _visible_markdown_body(text: str) -> str:
-    """忽略标题、排版空白和 Unicode 格式字符，保留正文文字。"""
-    # U+034F 是无字形的组合字素连接符，Unicode 将它归为 Mn。
-    text = "".join(char for char in text if char != "\u034f" and unicodedata.category(char) != "Cf")
-    text = unicodedata.normalize("NFC", text)
-    lines = text.splitlines()
-    body = []
-    for index, raw_line in enumerate(lines):
-        line = raw_line.strip()
-        following = lines[index + 1].strip() if index + 1 < len(lines) else ""
-        if _ATX_HEADING.match(line) or _SETEXT_UNDERLINE.fullmatch(following):
-            continue
-        if re.search(r"[^\W_]", line):
-            body.append(line)
-    return " ".join(" ".join(body).split())
-
-
 def _read_regular_git_markdown(revision: str, path: str) -> str:
     entry = git_output(["ls-tree", revision, "--", path])
     if not entry.startswith(("100644 blob ", "100755 blob ")):
@@ -467,138 +388,12 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
     return git_output(["show", f"{revision}:{path}"])
 
 
-class _FotMobVisibleHtml(HTMLParser):
-    """跟踪 HTML 标签，并只收集显式隐藏区域之外的文本。"""
-
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.text: list[str] = []
-        self.tags: Counter[str] = Counter()
-        self._hidden: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag == "br" and not attrs:
-            self.handle_data(" ")
-            return
-        self.tags[self.get_starttag_text() or tag] += 1
-        if tag not in _HTML_VOID_TAGS and (
-            self._hidden or tag in _HTML_HIDDEN_TAGS or any(name == "hidden" for name, _ in attrs)
-        ):
-            self._hidden.append(tag)
-
-    handle_startendtag = handle_starttag
-
-    def handle_endtag(self, tag: str) -> None:
-        self.tags[f"</{tag}>"] += 1
-        if tag in self._hidden:
-            while self._hidden.pop() != tag:
-                pass
-
-    def handle_decl(self, decl: str) -> None:
-        self.tags[f"<!{decl}>"] += 1
-
-    def handle_pi(self, data: str) -> None:
-        self.tags[f"<?{data}>"] += 1
-
-    def handle_data(self, data: str) -> None:
-        if not self._hidden:
-            self.text.append(data)
-
-
-def _starts_markdown_reference(text: str, match: re.Match[str], previous_block_end: int) -> bool:
-    """引用定义不能打断同一容器里已有的段落。"""
-    offset = match.start()
-    if offset == 0 or (previous_block_end >= 0 and not text[previous_block_end:offset].strip()):
-        return True
-    previous_start = text.rfind("\n", 0, offset - 1) + 1
-    previous = text[previous_start : offset - 1]
-    prefix = _QUOTE_PREFIX.match(previous)
-    quote = prefix[0] if prefix else ""
-    body = previous[len(quote) :].strip()
-    return (
-        match["quote"].count(">") > quote.count(">")
-        or not body
-        or bool(_ATX_HEADING.match(body))
-        or bool(_SETEXT_UNDERLINE.fullmatch(body))
-    )
-
-
-def _list_content_indent(lines: list[str], index: int, quote: str, indent: int) -> int:
-    """以同一引用层中明确的列表标记推断内容缩进。"""
-    for line in reversed(lines[:index]):
-        if not line.strip():
-            continue
-        if not line.startswith(quote):
-            break
-        body = line[len(quote) :].expandtabs(_MARKDOWN_CODE_INDENT)
-        marker = _LIST_ITEM_PREFIX.match(body)
-        leader = len(body) - len(body.lstrip())
-        if marker and len(marker[0]) <= indent:
-            return len(marker[0])
-        if leader == 0 and body.strip():
-            break
-    return 0
-
-
-def _has_balanced_link_destination(destination: str) -> bool:
-    depth = 0
-    for part in re.findall(r"\\[^\s]|[()]", destination):
-        if part == "(":
-            depth += 1
-        elif part == ")":
-            depth -= 1
-        if not 0 <= depth <= _MAX_LINK_DESTINATION_NESTING:
-            return False
-    return depth == 0
-
-
-def _fotmob_visible_document(text: str) -> tuple[str, Counter[str]]:
-    """保留常见 Markdown 字面示例，按有限 HTML 规则选择用于比较的文字。"""
-
-    previous_block_end = -1
-    lines = text.split("\n")
-
-    def prepare(match: re.Match[str]) -> str:
-        nonlocal previous_block_end
-        if match["reference"] is not None:
-            indent = len(match["indent"].expandtabs(_MARKDOWN_CODE_INDENT))
-            if indent >= _MARKDOWN_CODE_INDENT:
-                list_indent = _list_content_indent(
-                    lines, text.count("\n", 0, match.start()), match["quote"], indent
-                )
-                if indent - list_indent >= _MARKDOWN_CODE_INDENT:
-                    return escape(match[0], quote=False)
-            if (
-                not match["label"].strip()
-                or (
-                    match["list_marker"] is None
-                    and not _starts_markdown_reference(text, match, previous_block_end)
-                )
-                or not _has_balanced_link_destination(match["bare_destination"] or "")
-            ):
-                return match[0]
-            previous_block_end = match.end()
-            return ""
-        if match["fence"] is not None:
-            previous_block_end = match.end()
-        if match["comment"] is None:
-            return escape(match[0], quote=False)
-        if not match[0].endswith("-->"):
-            raise ValueError("unterminated HTML comment")
-        return ""
-
-    html = _FotMobVisibleHtml()
-    html.feed(_FOTMOB_MARKDOWN_TOKENS.sub(prepare, text))
-    html.close()
-    return _visible_markdown_body("".join(html.text)), html.tags
-
-
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
     try:
-        (before, before_tags), (after, after_tags) = (
-            _fotmob_visible_document(_read_regular_git_markdown(ref, path)) for ref in (base, head)
+        (before, before_tags), (after, after_tags) = visible_documents(
+            _read_regular_git_markdown(base, path), _read_regular_git_markdown(head, path)
         )
-    except (AssertionError, ValueError):
+    except ValueError:
         return False
     return bool(after) and after != before and not (after_tags - before_tags)
 

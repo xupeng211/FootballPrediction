@@ -10,6 +10,7 @@ import subprocess
 
 import pytest
 
+from scripts.devops import fotmob_markdown
 from scripts.ops.helpers import git_change_helpers
 from scripts.ops.helpers.agent_workflow_contract import MissionScope
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow
@@ -381,6 +382,9 @@ def test_author_can_add_a_fenced_code_example(candidate):
         ('\n\n- [备忘]: ./notes.md "{text}"\n', False),
         ('\n\n- 准备赛果记录。\n\n      [示例]: ./notes.md "{text}"\n', True),
         ('\n\n> ```md\n>\n> [示例]: ./notes.md "{text}"\n> ```\n', True),
+        ('\n\n> - 留存说明\n>\n>   1. [备忘]: ./notes.md "{text}"\n', False),
+        ('\n\n- 来源资料\n\n  > [记录\n  > 标签]: ./notes.md "{text}"\n', False),
+        ('\n\n- 来源资料\n\n  > ```text\n  > [记录]: ./notes.md "{text}"\n  > ```\n', True),
         ('\n\n[观察]: ./observed.md\n[参考稿]: ./notes.md "{text}"\n', False),
         ('\n\n## 资料\n[参考稿]: ./notes.md "{text}"\n', False),
     ],
@@ -415,3 +419,15 @@ def test_reflow_of_a_referenced_link_label_does_not_count_as_prose(tmp_path, mon
     _write(root, _ASOF_DOC, revised)
     head = _commit(root, "Reflow a reference label while keeping its visible link")
     assert any("changed visible document body" in error for error in _check(base, head))
+
+
+def test_missing_parser_blocks_only_after_fotmob_scope_validation(candidate, monkeypatch):
+    root, base, head = candidate
+    monkeypatch.delenv("FP_FOTMOB_MARKDOWN_INSTALL", raising=False)
+    monkeypatch.setattr(fotmob_markdown, "_locked_target", lambda: root / "missing-parser")
+    errors = _check(base, head)
+    assert any(fotmob_markdown.PARSER_UNAVAILABLE in error for error in errors)
+    assert all(
+        fotmob_markdown.PARSER_UNAVAILABLE not in error
+        for error in _check(base, head, changed=_PATHS - {_ASOF_DOC})
+    )

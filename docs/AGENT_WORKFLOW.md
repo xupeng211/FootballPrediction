@@ -267,6 +267,17 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 合同及能力索引，并申报 `contract=yes`、`capability=yes` 和三份权威文档。
 门禁用共享 Git 变更事实和准确 Git blob 核对，拒绝删除、改名、替换成非常规文件、只改注释
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
+`make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
+版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
+只有该映射进入 Git 正文比较时才用宿主 `python3 -m pip` 安装到当前检出目录的
+`.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
+提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。
+公开验证 profile 的 dev 入口同样允许相关测试在首次使用时安装此锁。离线验证的
+wheel 目录须对 dev 容器可见。当前 PR 和 push 完整 profile 的 Python 测试集合
+不包含 FotMob 正文比较单测，PR 的正式比较由其后的宿主机门禁执行。
+缺少依赖、版本不符或解析失败时，FotMob 文档检查明确拒绝。
+比较依据标准 Markdown token 中的正文和字面代码，排除标题及显式隐藏内容。
+隐藏规则覆盖 HTML 注释、`hidden` 和脚本、样式、模板元素。CSS 和浏览器布局由人工核对。
 本地工作区预检只有在精确提交能证明上述内容时才可建立这条映射。映射本身不授予采集、
 发布或合并权限。
 

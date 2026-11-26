@@ -72,6 +72,7 @@ Canonical Prematch Feature Frame 的已批准精确业务路径组合使用
 FotMob 单条终场赛果只为 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的 CRITICAL
 业务任务映射精确十一条路径。按准确 Git 修订核对 GD-A02 事实合同、模型时点合同和能力
 索引的原位可见更新，并在 Documentation Impact 如实声明合同与能力均已变更。
+本地预检和远端 PR 门禁共用专用锁定 Markdown 解析器，只在 FotMob 文档比较时初始化。
 范围合同须经现有门禁验证。删除、改名、空壳替代、混入其他路径均拒绝；正文语义仍由
 正式独立审核判断。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及

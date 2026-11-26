@@ -99,7 +99,7 @@ help: ## 显示帮助信息
 # Docker 命令
 # ============================================
 COMPOSE_DEV=docker compose -f docker-compose.dev.yml
-VALIDATION_PROFILE_RUNNER=$(COMPOSE_DEV) exec -T dev python3 scripts/devops/validation_profiles.py
+VALIDATION_PROFILE_RUNNER=$(COMPOSE_DEV) exec -T dev env FP_FOTMOB_MARKDOWN_INSTALL=1 python3 scripts/devops/validation_profiles.py
 CANONICAL_PYTHON_TESTS=tests/unit/scripts/ops/test_train_model_dry_run.py tests/unit/database/repositories/test_prediction_repo_l3_contract.py tests/unit/ml/test_training_no_write_guard.py
 PRE_NETWORK_RUNBOOK_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTH_FORM_NODE?=$(COMPOSE_DEV) exec -T dev node
@@ -226,7 +226,7 @@ agent-preflight: ## Agentic Workflow V1 本地 governance preflight。Usage: mak
 		echo "ERROR: PR_BODY and MISSION_SCOPE_FILE are required."; \
 		exit 1; \
 	fi
-	@python3 scripts/devops/agent_workflow_preflight.py \
+	@FP_FOTMOB_MARKDOWN_INSTALL=1 python3 scripts/devops/agent_workflow_preflight.py \
 		--pr-body-file "$(PR_BODY)" \
 		--mission-scope-file "$(MISSION_SCOPE_FILE)" \
 		$(if $(BASE_REF),--base-ref $(BASE_REF),) \
