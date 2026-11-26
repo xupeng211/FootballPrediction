@@ -406,3 +406,12 @@ def test_visible_result_update_outside_reference_block_is_accepted(tmp_path, mon
     _write(root, _ASOF_DOC, revised)
     head = _commit(root, "Correct the visible result and observation time")
     assert _check(base, head) == []
+
+
+def test_reflow_of_a_referenced_link_label_does_not_count_as_prose(tmp_path, monkeypatch):
+    original = _BASE_DOC + "\n观察时间见[留存说明][赛果 资料]。\n\n[赛果 资料]: ./retained.md\n"
+    root, base, _ = _commit_candidate(tmp_path, monkeypatch, original)
+    revised = original.replace("[赛果 资料]:", "[赛果\n  资料]:")
+    _write(root, _ASOF_DOC, revised)
+    head = _commit(root, "Reflow a reference label while keeping its visible link")
+    assert any("changed visible document body" in error for error in _check(base, head))

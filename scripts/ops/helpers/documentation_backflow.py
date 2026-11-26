@@ -216,16 +216,16 @@ _LINK_REFERENCE_DESTINATION = (
     r"|(?P<bare_destination>(?!<)(?:\\[^\s]|[^\s\\])+)"
 )
 _REFERENCE_NEXT_LINE = r"\r?\n(?P=quote)[ \t]*"
-_TITLE_NEXT_LINE = r"\r?\n(?P=quote)(?![ \t]*(?:\r?$|#{1,6}[ \t]|```|~~~))"
+_REFERENCE_TEXT_NEXT_LINE = r"\r?\n(?P=quote)(?![ \t]*(?:\r?$|#{1,6}[ \t]|```|~~~))"
 _LINK_REFERENCE_TITLE = (
-    rf'''"(?:\\[^\r\n]|[^"\\\r\n]|{_TITLE_NEXT_LINE})*"'''
-    rf"""|'(?:\\[^\r\n]|[^'\\\r\n]|{_TITLE_NEXT_LINE})*'"""
-    rf"|\((?:\\[^\r\n]|[^()\\\r\n]|{_TITLE_NEXT_LINE})*\)"
+    rf'''"(?:\\[^\r\n]|[^"\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*"'''
+    rf"""|'(?:\\[^\r\n]|[^'\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*'"""
+    rf"|\((?:\\[^\r\n]|[^()\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE})*\)"
 )
 _LINK_REFERENCE_BLOCK = (
     rf"(?P<reference>^(?P<quote>{_MARKDOWN_QUOTE_PREFIX})(?P<indent>[ \t]*)"
     rf"(?P<list_marker>{_MARKDOWN_LIST_MARKER})?"
-    r"\[(?P<label>(?:\\[^\r\n]|[^\[\]\\\r\n]){1,999})\]:"
+    rf"\[(?P<label>(?:\\[^\r\n]|[^\[\]\\\r\n]|{_REFERENCE_TEXT_NEXT_LINE}){{1,999}})\]:"
     rf"[ \t]*(?:{_REFERENCE_NEXT_LINE})?(?:{_LINK_REFERENCE_DESTINATION})"
     rf"(?:(?:[ \t]+|[ \t]*{_REFERENCE_NEXT_LINE})(?:{_LINK_REFERENCE_TITLE}))?"
     r"[ \t]*(?=\r?$))"
