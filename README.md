@@ -253,6 +253,11 @@ this section rather than maintaining duplicate command lists.
 | **Backtest** | Not yet established | None — must be implemented and accepted in a future business milestone | Historical scripts (`recon_scanner.js`, `gold_pilot_50.js`, `titan_marathon.js`) are not canonical backtest entrypoints |
 | **Offline probability benchmark (Value MVP-1)** | Research evaluation (DOCUMENTED_ONLY) | Internal research-evaluation entrypoint: `scripts/model_training/value_mvp_baseline_vs_closing.py` (not a README canonical entrypoint; see Entry classification below) | Strictly offline probability benchmark evaluation: zero DB, zero network, zero new data, no odds as model features, walk-forward by season, protocol frozen before OOS. This is NOT an executable betting backtest and makes no ROI / profitability / CLV claim — the **Backtest** row above remains Not yet established |
 
+**Stage D 后续记账离线核验。** `scripts/ops/stage_d_cycle.js --dry-run --forward-opening`
+使用保留的旧账、当期额度凭据、后续账本和独立检查点验证一笔请求的额度。输入顺序及
+备份恢复方法见 [Stage D 合同](docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
+这个入口只输出分析结果，实际发送仍由既有受控执行入口管理。
+
 The **FotMob frozen replay packaging** bridge is a specialized internal offline
 surface: `npm run fotmob:frozen:replay-package -- --freeze=<path>
 --asset-manifest=<path> --input=<path> --output-root=<path>`. It validates
