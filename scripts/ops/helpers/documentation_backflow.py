@@ -523,15 +523,17 @@ def _stage_d_forward_commit_errors(
             ]
         merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
         if required_paths == STAGE_D_RUNTIME_PATHS:
-            # collect_changes 将 Git 类型变更记为 M，须另外核对两端现有条目的类型。
-            for revision in (merge_base, head_ref):
-                entries = git_output(["ls-tree", revision, "--", *sorted(required_paths)])
-                if any(
-                    not line.startswith(("100644 blob ", "100755 blob "))
-                    for line in entries.splitlines()
+            # 查询全部授权路径。在共同祖先只应看到 M，在 HEAD 应看到 M 和 A。
+            for revision, expected in ((merge_base, updated), (head_ref, required_paths)):
+                entries = git_output(
+                    ["ls-tree", revision, "--", *sorted(required_paths)]
+                ).splitlines()
+                returned_paths = sorted(line.partition("\t")[2] for line in entries)
+                if returned_paths != sorted(expected) or any(
+                    not line.startswith(("100644 blob ", "100755 blob ")) for line in entries
                 ):
                     return [
-                        "Stage D runtime accounting requires regular tracked files at all 11 paths"
+                        f"{STAGE_D_RUNTIME_MISSION} requires the expected regular tracked files at {revision}"
                     ]
         paths = sorted(STAGE_D_FORWARD_AUTHORITY_DOCS)
         projections = visible_documents(
@@ -601,16 +603,14 @@ def _stage_d_forward_backflow_errors(
         impacts.update(navigation="no", vision="no")
         if declared_docs - STAGE_D_FORWARD_AUTHORITY_DOCS:
             errors.append(
-                "Stage D runtime accounting must declare only its five updated authority documents"
+                f"{required_mission} must declare only its five updated authority documents"
             )
     for category, expected in impacts.items():
         if _normalise(_table_value(pr_body, YES_NO_FIELDS[category])) != expected:
-            errors.append(
-                f"Stage D forward accounting requires '{YES_NO_FIELDS[category]}' = {expected}"
-            )
+            errors.append(f"{required_mission} requires '{YES_NO_FIELDS[category]}' = {expected}")
     if missing_docs := STAGE_D_FORWARD_AUTHORITY_DOCS - declared_docs:
         errors.append(
-            "Stage D forward accounting requires declaring all five authority documents: "
+            f"{required_mission} requires declaring all five authority documents: "
             + ", ".join(sorted(missing_docs))
         )
     return errors

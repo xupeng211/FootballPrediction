@@ -9,7 +9,7 @@ import json
 import pytest
 
 from scripts.devops import fotmob_markdown
-from scripts.ops.helpers import git_change_helpers
+from scripts.ops.helpers import documentation_backflow, git_change_helpers
 from scripts.ops.helpers.agent_workflow_contract import MissionScope
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow
 from tests.unit.test_fotmob_final_result_documentation_backflow import _commit, _git, _write
@@ -427,3 +427,57 @@ def test_runtime_cannot_repurpose_an_existing_nonregular_path(runtime):
     _git(root, "restore", "--source", head, "--", *sorted(_RUNTIME_PATHS))
     other_head = _commit(root, "Use the runtime tree on a different baseline")
     assert any("regular tracked files" in e for e in _runtime_check(other_base, other_head))
+
+
+def test_added_runtime_scope_is_absent_at_base_and_regular_at_head(runtime):
+    root, base, head = runtime
+    assert not _git(root, "ls-tree", base, "--", _RUNTIME_SCOPE_PATH)
+    assert _git(root, "ls-tree", head, "--", _RUNTIME_SCOPE_PATH).startswith("100644 blob ")
+    assert _runtime_check(base, head) == []
+    added = root / _RUNTIME_SCOPE_PATH
+    added.unlink()
+    added.symlink_to("other.json")
+    wrong_type = _commit(root, "A new scope must be a regular file at HEAD")
+    assert any("regular tracked files" in e for e in _runtime_check(base, wrong_type))
+
+
+@pytest.mark.parametrize(
+    ("path", "wrong_status"),
+    [(_RUNTIME_SCOPE_PATH, "M"), (_INITIALIZE, "A"), (_ACCOUNTING_TEST, "M")],
+    ids=["missing-modified-at-base", "present-added-at-base", "missing-modified-at-head"],
+)
+def test_runtime_tree_must_agree_with_changed_file_status(runtime, monkeypatch, path, wrong_status):
+    root, base, head = runtime
+    if path == _ACCOUNTING_TEST:
+        (root / path).unlink()
+        head = _commit(root, "Remove an existing test from the candidate")
+    changes = git_change_helpers.collect_changes(base, head, include_worktree=False)
+    assert next(change for change in changes if change.path == path).status != wrong_status
+    conflicting = [
+        replace(change, status=wrong_status) if change.path == path else change
+        for change in changes
+    ]
+    # 仅注入与实际树条目不一致的差异状态，两次 ls-tree 均读取上述真实 Git 提交。
+    monkeypatch.setattr(
+        documentation_backflow, "collect_changes", lambda *_args, **_kwargs: conflicting
+    )
+    assert any("regular tracked files" in e for e in _runtime_check(base, head))
+
+
+def test_impact_diagnostics_identify_the_runtime_mission(runtime):
+    _, base, head = runtime
+    errors = _runtime_check(
+        base, head, body=_body(_RUNTIME, capability="no", navigation="yes", vision="yes")
+    )
+    assert f"{_RUNTIME} requires 'Capability changed?' = yes" in errors
+    assert (
+        f"{_RUNTIME} requires 'Repository structure/authority navigation changed?' = no" in errors
+    )
+    assert f"{_RUNTIME} requires 'Project vision / target-state changed?' = no" in errors
+
+
+def test_offline_mission_keeps_its_own_impact_expectations(candidate):
+    _, base, head = candidate
+    errors = _run(base, head, body=_body(capability="no", navigation="yes", vision="yes"))
+    assert f"{_MISSION} requires 'Capability changed?' = yes" in errors
+    assert not any(" = no" in error for error in errors)
