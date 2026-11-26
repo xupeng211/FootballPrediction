@@ -261,6 +261,18 @@ Canonical 与 Stage D 或工程工作流混合继续 fail-closed，不提供通�
 这不改变 mixed governance/business 禁令、Owner 权限、CRITICAL 双审、Receipt、Source Binding、
 费用或远端发布/合并授权。业务候选与独立导航文档的发布依赖仍须明确。
 
+Stage D 后续记账离线核验使用独立的 `FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE`
+CRITICAL 业务工单。固定九条路径包含既有 cycle 入口、后续记账核验模块、专项测试、该工单
+范围合同，以及 Stage D 领域合同、README、能力索引、活动里程碑和项目状态。门禁核对
+准确 Git 修订、经过验证的 scope 和普通文件的原位可见正文变化，并要求声明全部五份
+文档及合同、能力、入口、里程碑和当前阻断的影响。专用门禁仅在变更包含该工单的范围
+合同文件，或已验证 scope 的工单 ID 匹配时触发。触发后路径缺失、额外路径或错工单均
+拒绝。其他工单单独改动后续记账源码或测试时，按通用规则核验文档回流。
+正文比较复用下述锁定 Markdown 解析器，拒绝仅有标题、隐藏内容或空白的改动，也拒绝
+增加原始 HTML 标记。解析器不可用或解析失败时拒绝此映射。正文是否准确反映
+业务变化由独立审核判断。这项映射对应离线核验阶段，真实采集、生产启用与发布仍适用
+原授权流程。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
@@ -269,13 +281,13 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
 `make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
 版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
-只有该映射进入 Git 正文比较时才用宿主 `python3 -m pip` 安装到当前检出目录的
+只有获批的 FotMob 或 Stage D 后续记账映射进入 Git 正文比较时才用宿主 `python3 -m pip` 安装到当前检出目录的
 `.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
 提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。
 公开验证 profile 的 dev 入口同样允许相关测试在首次使用时安装此锁。离线验证的
 wheel 目录须对 dev 容器可见。当前 PR 和 push 完整 profile 的 Python 测试集合
 不包含 FotMob 正文比较单测，PR 的正式比较由其后的宿主机门禁执行。
-缺少依赖、版本不符或解析失败时，FotMob 文档检查明确拒绝。
+缺少依赖、版本不符或解析失败时，文档检查明确拒绝。
 比较依据标准 Markdown token 中的正文和字面代码，排除标题及显式隐藏内容。
 隐藏规则覆盖 HTML 注释、`hidden` 和脚本、样式、模板元素。CSS 和浏览器布局由人工核对。
 本地工作区预检只有在精确提交能证明上述内容时才可建立这条映射。映射本身不授予采集、

@@ -72,9 +72,15 @@ Canonical Prematch Feature Frame 的已批准精确业务路径组合使用
 FotMob 单条终场赛果只为 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的 CRITICAL
 业务任务映射精确十一条路径。按准确 Git 修订核对 GD-A02 事实合同、模型时点合同和能力
 索引的原位可见更新，并在 Documentation Impact 如实声明合同与能力均已变更。
-本地预检和远端 PR 门禁共用专用锁定 Markdown 解析器，只在 FotMob 文档比较时初始化。
+本地预检和远端 PR 门禁共用专用锁定 Markdown 解析器，只在获批的 FotMob 和 Stage D
+后续记账离线文档比较时初始化。
 范围合同须经现有门禁验证。删除、改名、空壳替代、混入其他路径均拒绝；正文语义仍由
 正式独立审核判断。
+Stage D 后续记账离线核验只为 `FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE` 的
+CRITICAL 业务工单映射固定九条路径。准确提交内须原位更新 Stage D 领域合同、README、
+能力索引、活动里程碑和项目状态的可见正文，并如实声明影响。只改标题、隐藏内容或空白
+不能满足回流要求。专用门禁只由该工单的已验证 scope ID 或变更中的专用范围合同文件触发。
+其他工单对共享源码或测试的改动沿用通用门禁。旧跨月映射与此次记账规则分别匹配。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
 `docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
 

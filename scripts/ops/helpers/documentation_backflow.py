@@ -14,6 +14,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections import Counter
     from collections.abc import Iterable
 
     from scripts.ops.helpers.agent_workflow_contract import MissionScope
@@ -150,6 +151,28 @@ STAGE_D_COMPANION_DOC_PATHS = frozenset(
         "docs/agentic/missions/FP_STAGE_D_MINIMUM_BILLING_PERIOD_ROLLOVER.json",
     }
 )
+
+STAGE_D_FORWARD_MISSION = "FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE"
+STAGE_D_FORWARD_SCOPE = f"docs/agentic/missions/{STAGE_D_FORWARD_MISSION}.json"
+STAGE_D_FORWARD_AUTHORITY_DOCS = frozenset(
+    {
+        STAGE_D_CONTRACT_DOC,
+        "README.md",
+        "docs/CAPABILITY_INDEX.md",
+        "docs/ACTIVE_MILESTONE.md",
+        "docs/PROJECT_STATUS.md",
+    }
+)
+STAGE_D_FORWARD_CYCLE = "scripts/ops/stage_d_cycle.js"
+STAGE_D_FORWARD_MISSION_PATHS = frozenset(
+    {
+        STAGE_D_FORWARD_SCOPE,
+        STAGE_D_FORWARD_CYCLE,
+        "src/infrastructure/market_evidence/stageDForwardAccounting.js",
+        "tests/unit/market_evidence/stage_d_forward_accounting.test.js",
+    }
+)
+STAGE_D_FORWARD_PATHS = STAGE_D_FORWARD_AUTHORITY_DOCS | STAGE_D_FORWARD_MISSION_PATHS
 
 CANONICAL_PREMATCH_CONTRACT_DOC = "docs/data/CANONICAL_PREMATCH_FEATURE_FRAME_CONTRACT.md"
 CANONICAL_PREMATCH_CONTRACT_PATHS = frozenset(
@@ -291,10 +314,12 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
         if "docs/data/FOTMOB_CURRENT_STATE.md" in changed:
             required.append("docs/data/FOTMOB_CURRENT_STATE.md")
         return tuple(required)
-    if (
-        category == "contract"
-        and changed & STAGE_D_CONTRACT_PATHS
-        and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
+    if category == "contract" and (
+        changed == STAGE_D_FORWARD_PATHS
+        or (
+            changed & STAGE_D_CONTRACT_PATHS
+            and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
+        )
     ):
         return (STAGE_D_CONTRACT_DOC,)
     if (
@@ -388,14 +413,22 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
     return git_output(["show", f"{revision}:{path}"])
 
 
+def _has_visible_document_update(
+    original: tuple[str, Counter[str]], candidate: tuple[str, Counter[str]]
+) -> bool:
+    before, before_tags = original
+    after, after_tags = candidate
+    return bool(after) and after != before and not (after_tags - before_tags)
+
+
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
     try:
-        (before, before_tags), (after, after_tags) = visible_documents(
+        before, after = visible_documents(
             _read_regular_git_markdown(base, path), _read_regular_git_markdown(head, path)
         )
     except ValueError:
         return False
-    return bool(after) and after != before and not (after_tags - before_tags)
+    return _has_visible_document_update(before, after)
 
 
 def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
@@ -457,6 +490,106 @@ def _fotmob_backflow_errors(
     return errors
 
 
+def _stage_d_forward_commit_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
+    if not base_ref or not head_ref or not is_full_sha(base_ref) or not is_full_sha(head_ref):
+        return ["Stage D forward accounting requires exact committed base/head revisions"]
+    try:
+        committed = collect_changes(base_ref, head_ref, include_worktree=False)
+        if changed_paths(committed) != STAGE_D_FORWARD_PATHS or any(
+            change.status not in {"A", "M"} for change in committed
+        ):
+            return [
+                "Stage D forward accounting requires its exact nine paths with no removal or rename"
+            ]
+        updated = {change.path for change in committed if change.status == "M"}
+        if STAGE_D_FORWARD_AUTHORITY_DOCS - updated:
+            return [
+                "Stage D forward accounting requires in-place updates to all five authority documents"
+            ]
+        merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
+        paths = sorted(STAGE_D_FORWARD_AUTHORITY_DOCS)
+        projections = visible_documents(
+            *(
+                _read_regular_git_markdown(revision, path)
+                for path in paths
+                for revision in (merge_base, head_ref)
+            )
+        )
+        errors = [
+            f"Stage D forward accounting requires changed visible document body: {path}"
+            for path, before, after in zip(paths, projections[::2], projections[1::2], strict=True)
+            if not _has_visible_document_update(before, after)
+        ]
+    except (RuntimeError, OSError, ValueError) as exc:
+        return [f"Stage D forward accounting could not verify authoritative Git documents: {exc}"]
+    else:
+        return errors
+
+
+def _declared_document_paths(value: str) -> set[str]:
+    return {token.strip("`\"'") for token in re.split(r"[,;\s]+", value) if token}
+
+
+def _stage_d_forward_backflow_errors(
+    pr_body: str,
+    changed: set[str],
+    mission_scope: MissionScope | None,
+    base_ref: str | None,
+    head_ref: str | None,
+) -> list[str]:
+    if changed != STAGE_D_FORWARD_PATHS:
+        missing = ", ".join(sorted(STAGE_D_FORWARD_PATHS - changed)) or "none"
+        extra = ", ".join(sorted(changed - STAGE_D_FORWARD_PATHS)) or "none"
+        return [
+            f"Stage D forward accounting requires the exact nine mission paths (missing: {missing}; extra: {extra})"
+        ]
+    if (
+        mission_scope is None
+        or mission_scope.mission_id != STAGE_D_FORWARD_MISSION
+        or mission_scope.task_type != "source-code"
+        or mission_scope.workflow_class != "CRITICAL"
+        or parse_task_type(pr_body) != "source-code"
+        or parse_workflow_class(pr_body) != "CRITICAL"
+    ):
+        return ["Stage D forward accounting requires its validated CRITICAL business mission scope"]
+    errors = validate_mission_scope_reference(
+        pr_body, mission_scope=mission_scope, scope_path=STAGE_D_FORWARD_SCOPE
+    )
+    errors.extend(_stage_d_forward_commit_errors(base_ref, head_ref))
+    for category in (
+        "contract",
+        "capability",
+        "entrypoint",
+        "milestone",
+        "blocker",
+        "source_of_truth",
+    ):
+        if _normalise(_table_value(pr_body, YES_NO_FIELDS[category])) != "yes":
+            errors.append(f"Stage D forward accounting requires '{YES_NO_FIELDS[category]}' = yes")
+    declared_docs = _declared_document_paths(_table_value(pr_body, "Updated authoritative docs"))
+    if missing_docs := STAGE_D_FORWARD_AUTHORITY_DOCS - declared_docs:
+        errors.append(
+            "Stage D forward accounting requires declaring all five authority documents: "
+            + ", ".join(sorted(missing_docs))
+        )
+    return errors
+
+
+def _exact_mission_backflow_errors(
+    pr_body: str,
+    changed: set[str],
+    mission_scope: MissionScope | None,
+    base_ref: str | None,
+    head_ref: str | None,
+) -> list[str] | None:
+    mission_id = mission_scope.mission_id if mission_scope is not None else None
+    if FOTMOB_FINAL_RESULT_SCOPE in changed or mission_id == FOTMOB_FINAL_RESULT_MISSION:
+        return _fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
+    if STAGE_D_FORWARD_SCOPE in changed or mission_id == STAGE_D_FORWARD_MISSION:
+        return _stage_d_forward_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
+    return None
+
+
 def check_documentation_backflow(  # noqa: C901, PLR0912
     pr_body: str,
     changed: set[str],
@@ -477,17 +610,18 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
     The shared gate supplies its actual Git changes so deletion/rename-away
     cannot satisfy Canonical authority backflow. Path-only callers retain their
     declaration checks, but cannot establish a file's change status.
-    The FotMob mapping additionally requires committed Git documentation and
-    the canonical mission-scope validation context.
+    Exact FotMob and Stage D forward mappings require committed Git
+    documentation and the canonical mission-scope validation context.
     """
     classified = classify_changed_paths(changed)
     vision_value = _table_value(pr_body, VISION_IMPACT_FIELD)
     contract_value = _table_value(pr_body, YES_NO_FIELDS["contract"])
-    fotmob = FOTMOB_FINAL_RESULT_SCOPE in changed or (
-        mission_scope is not None and mission_scope.mission_id == FOTMOB_FINAL_RESULT_MISSION
+    special_errors = _exact_mission_backflow_errors(
+        pr_body, changed, mission_scope, base_ref, head_ref
     )
     if (
-        not (classified or fotmob)
+        not classified
+        and special_errors is None
         and _normalise(vision_value) != "yes"
         and _normalise(contract_value) != "yes"
     ):
@@ -495,8 +629,8 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
 
     # Actual contract paths must not borrow a workflow mapping via a false declaration.
     errors = _canonical_contract_status_errors(changed, changes)
-    if fotmob:
-        errors.extend(_fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref))
+    if special_errors is not None:
+        errors.extend(special_errors)
     elif "contract" in classified or _normalise(contract_value) == "yes":
         errors.extend(_contract_mapping_errors(changed))
     if DOCUMENTATION_IMPACT_HEADING not in pr_body:
@@ -529,7 +663,7 @@ def check_documentation_backflow(  # noqa: C901, PLR0912
 
     source_updated = _normalise(values["source_of_truth"]) == "yes"
     updated_docs = _table_value(pr_body, "Updated authoritative docs")
-    declared_docs = {token.strip("`\"'") for token in re.split(r"[,;\s]+", updated_docs) if token}
+    declared_docs = _declared_document_paths(updated_docs)
     reason = _table_value(pr_body, "If not updated, explicit reason")
     if _normalise(values["contract"]) == "yes":
         classified.setdefault("contract", set())
