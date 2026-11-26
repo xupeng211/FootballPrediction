@@ -8,6 +8,7 @@ import json
 
 import pytest
 
+from scripts.devops import fotmob_markdown
 from scripts.ops.helpers import git_change_helpers
 from scripts.ops.helpers.agent_workflow_contract import MissionScope
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow
@@ -17,6 +18,7 @@ from tests.unit.test_project_knowledge_convergence import _impact_body
 _MISSION = "FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE"
 _SCOPE_PATH = f"docs/agentic/missions/{_MISSION}.json"
 _DOMAIN = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
+_ORIGINAL = "# 原有标题\n\n原有 项目内容\n"
 _CYCLE = "scripts/ops/stage_d_cycle.js"
 _ACCOUNTING = "src/infrastructure/market_evidence/stageDForwardAccounting.js"
 _DOCS = {
@@ -74,7 +76,7 @@ def candidate(tmp_path, monkeypatch):
     monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
     _git(tmp_path, "init", "-q")
     for file_path in _DOCS | {_CYCLE}:
-        _write(tmp_path, file_path, "原有项目内容\n")
+        _write(tmp_path, file_path, _ORIGINAL)
     base = _commit(tmp_path, "Base")
     for file_path in _PATHS:
         content = json.dumps(_SCOPE.to_dict()) if file_path == _SCOPE_PATH else "后续记账的变更。\n"
@@ -141,9 +143,67 @@ def test_committed_authority_is_required_even_when_caller_claims_all_paths(candi
         if broken == "symlink":
             target.symlink_to(root / "README.md")
     else:
-        target.write_text("原有项目内容\n" if broken == "unchanged" else "  \n", encoding="utf-8")
+        target.write_text(_ORIGINAL if broken == "unchanged" else "  \n", encoding="utf-8")
     bad_head = _commit(root, broken)
     assert _run(base, bad_head)
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        _ORIGINAL + "\n<!-- 仅有隐藏注释。 -->\n",
+        _ORIGINAL.replace("原有标题", "新标题"),
+        _ORIGINAL + "\n另一个 Setext 标题\n-------------------\n",
+        _ORIGINAL + "\n<div hidden>仅有隐藏 HTML。</div>\n",
+        _ORIGINAL + "\n<template>仅有模板内容。</template>\n",
+        "# 空壳文档\n\n<!-- 仅有隐藏注释。 -->\n",
+        "# 空壳文档\n\n<script>仅有脚本。</script>\n",
+        "# 空壳文档\n\n<style>仅有样式。</style>\n",
+        _ORIGINAL.replace("原有 项目", "原有<br />项目"),
+    ],
+    ids=["comment", "heading", "setext", "hidden", "template", "shell", "script", "style", "break"],
+)
+def test_non_body_edits_do_not_satisfy_forward_backflow(candidate, replacement):
+    root, base, _ = candidate
+    _write(root, _DOMAIN, replacement)
+    head = _commit(root, "Only non-body changes in the authority")
+    assert any("changed visible document body" in e and _DOMAIN in e for e in _run(base, head))
+
+
+@pytest.mark.parametrize("document", sorted(_DOCS))
+def test_each_committed_authority_needs_a_visible_update(candidate, document):
+    root, base, _ = candidate
+    _write(root, document, _ORIGINAL + "\n<!-- 仅有隐藏注释。 -->\n")
+    head = _commit(root, "One authority lacks a visible change")
+    _write(root, document, _ORIGINAL + "\n工作区有未提交的正文。\n")
+    errors = _run(base, head)
+    assert [e for e in errors if "changed visible document body" in e] == [
+        f"Stage D forward accounting requires changed visible document body: {document}"
+    ]
+
+
+def test_unclosed_comment_rejects_the_committed_authority(candidate):
+    root, base, _ = candidate
+    _write(root, _DOMAIN, _ORIGINAL + "\n<!-- 未闭合注释。\n")
+    head = _commit(root, "Unclosed authoritative comment")
+    assert any("invalid authoritative Markdown" in e for e in _run(base, head))
+
+
+def test_new_raw_html_is_rejected_even_with_a_visible_body_change(candidate):
+    root, base, _ = candidate
+    _write(root, _DOMAIN, _ORIGINAL + "\n<div>新增可见内容。</div>\n")
+    head = _commit(root, "New raw HTML in the authority")
+    assert any("changed visible document body" in e and _DOMAIN in e for e in _run(base, head))
+
+
+def test_unavailable_parser_rejects_valid_scope_only(candidate, monkeypatch):
+    root, base, head = candidate
+    monkeypatch.delenv("FP_FOTMOB_MARKDOWN_INSTALL", raising=False)
+    monkeypatch.setattr(fotmob_markdown, "_locked_target", lambda: root / "missing-parser")
+    assert any(fotmob_markdown.PARSER_UNAVAILABLE in e for e in _run(base, head))
+    errors = _run(base, head, paths=_PATHS - {_DOMAIN})
+    assert errors
+    assert all(fotmob_markdown.PARSER_UNAVAILABLE not in e for e in errors)
 
 
 def test_missing_exact_commit_cannot_use_caller_paths(candidate):

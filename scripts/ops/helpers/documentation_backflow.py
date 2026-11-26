@@ -14,6 +14,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections import Counter
     from collections.abc import Iterable
 
     from scripts.ops.helpers.agent_workflow_contract import MissionScope
@@ -412,14 +413,22 @@ def _read_regular_git_markdown(revision: str, path: str) -> str:
     return git_output(["show", f"{revision}:{path}"])
 
 
+def _has_visible_document_update(
+    original: tuple[str, Counter[str]], candidate: tuple[str, Counter[str]]
+) -> bool:
+    before, before_tags = original
+    after, after_tags = candidate
+    return bool(after) and after != before and not (after_tags - before_tags)
+
+
 def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
     try:
-        (before, before_tags), (after, after_tags) = visible_documents(
+        before, after = visible_documents(
             _read_regular_git_markdown(base, path), _read_regular_git_markdown(head, path)
         )
     except ValueError:
         return False
-    return bool(after) and after != before and not (after_tags - before_tags)
+    return _has_visible_document_update(before, after)
 
 
 def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None) -> list[str]:
@@ -498,15 +507,20 @@ def _stage_d_forward_commit_errors(base_ref: str | None, head_ref: str | None) -
                 "Stage D forward accounting requires in-place updates to all five authority documents"
             ]
         merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
-        errors = []
-        for path in sorted(STAGE_D_FORWARD_AUTHORITY_DOCS):
-            before = _read_regular_git_markdown(merge_base, path).strip()
-            after = _read_regular_git_markdown(head_ref, path).strip()
-            if not after or after == before:
-                errors.append(
-                    f"Stage D forward accounting requires an updated authority document: {path}"
-                )
-    except (RuntimeError, OSError, UnicodeError) as exc:
+        paths = sorted(STAGE_D_FORWARD_AUTHORITY_DOCS)
+        projections = visible_documents(
+            *(
+                _read_regular_git_markdown(revision, path)
+                for path in paths
+                for revision in (merge_base, head_ref)
+            )
+        )
+        errors = [
+            f"Stage D forward accounting requires changed visible document body: {path}"
+            for path, before, after in zip(paths, projections[::2], projections[1::2], strict=True)
+            if not _has_visible_document_update(before, after)
+        ]
+    except (RuntimeError, OSError, ValueError) as exc:
         return [f"Stage D forward accounting could not verify authoritative Git documents: {exc}"]
     else:
         return errors
