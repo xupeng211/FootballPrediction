@@ -543,7 +543,16 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     # 4b. Report artifacts require source-of-truth backflow or explicit reason
     if has_pr_metadata:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
-        errors.extend(check_documentation_backflow(pr_body, changed, changes=changes))
+        errors.extend(
+            check_documentation_backflow(
+                pr_body,
+                changed,
+                changes=changes,
+                mission_scope=mission_scope,
+                base_ref=base_ref,
+                head_ref=head_ref,
+            )
+        )
     if has_pr_metadata:
         errors.extend(
             check_report_restricted_task_type(added, pr_body, skip_body_checks=skip_body_checks)
