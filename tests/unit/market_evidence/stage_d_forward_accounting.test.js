@@ -344,3 +344,15 @@ test('either ledger being locked blocks the offline plan', t => {
         }
     }
 });
+
+
+test('offline replay rejects a reported transmission or receipt in the future of its inspection', t => {
+    const { input, checkpoint } = fixture(t);
+    const future = new Date(Date.parse(input.now) + 1000).toISOString();
+    transmit(input);
+    complete(input, 121, { at: future, recordedAt: input.now });
+    const end = checkpoint('future-response.json');
+    assert.throws(() => inspectForwardAccounting({
+        ...input, checkpointPath: end.filename, checkpointSha256: end.sha,
+    }), /核验时点/);
+});

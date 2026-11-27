@@ -13,7 +13,10 @@ const { bootstrapMarketEvidenceTransactionStore } = require('../../../src/infras
 const { openMarketEvidenceAuthoritySnapshot } = require('../../../src/infrastructure/market_evidence/authorityReader');
 const { buildProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/prospectiveBatch');
 const { publishProspectiveMarketEvidenceTransaction } = require('../../../src/infrastructure/market_evidence/atomicPublisher');
+const { createCaptureReceipt } = require('../../../src/infrastructure/market_evidence/evidenceStore');
 const { sha256Text, stableStringify } = require('../../../src/infrastructure/market_evidence/contracts');
+const backup = require('../../../src/infrastructure/market_evidence/backup');
+const { executeRestore } = require('../../../src/infrastructure/market_evidence/backup/restoreExecutor');
 const { parseArgs: parseControlledCliArgs } = require('../../../scripts/ops/stage_d_controlled_initialization');
 const {
     RUN_LOCK_FILE,
@@ -22,10 +25,16 @@ const {
     runLockTrustFile,
     initializeRequestAccountingEpoch,
     readRequestLedger,
+    recordRequestIntent,
+    markTransmissionStarted,
+    markRequestTerminal,
+    acquireStageDRunLock,
+    releaseStageDRunLock,
     createStageDEvidencePersistence,
     createStageDFakeTransport,
     createStageDProspectiveCandidateBuilder,
     createStageDFakePublisher,
+    createStageDTransactionPublisher,
     createStageDOddsApiTransport,
     createStageDProductionComponents,
     executeStageDControlledInitialization,
@@ -266,7 +275,7 @@ function consumptionMarkerContents(ctx) {
     return consumptionMarkers(ctx).map(name => JSON.parse(fs.readFileSync(path.join(ctx.trustRoot, name), 'utf8')));
 }
 
-function componentsFor(ctx, { error = null, transmissionClock = null, proxyPreflight = null } = {}) {
+function componentsFor(ctx, { error = null, transmissionClock = null, proxyPreflight = null, responseOverrides = {} } = {}) {
     const response = {
         raw_text: ctx.rawText,
         http_status: 200,
@@ -276,6 +285,7 @@ function componentsFor(ctx, { error = null, transmissionClock = null, proxyPrefl
             'x-requests-remaining': '19',
             'x-requests-last': '1',
         },
+        ...responseOverrides,
     };
     return {
         transport: createStageDFakeTransport({ response: error ? null : JSON.stringify(response), error, transmissionClock }),
@@ -823,4 +833,480 @@ test('the proxy preflight is a mandatory binder component and cannot be omitted'
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests.length, 0);
     assert.equal(components.transport.call_count, 0);
     assert.equal(components.proxyPreflight.call_count, 0);
+});
+
+
+const FORWARD_SCHEMA = 'footballprediction-stage-d-controlled-initialization-authorization/v3';
+const FORWARD_NOW = '2026-11-12T08:00:00Z';
+const FORWARD_STARTED = '2026-11-12T07:59:00Z';
+const FORWARD_EXPIRES = '2026-11-12T08:01:00Z';
+const FORWARD_ACCOUNT = 'b'.repeat(64);
+const FORWARD_EPOCH = 'sealed-forward-epoch';
+const FORWARD_FENCE = '.stage-d-forward-active.json';
+const DEPLOYMENT_LOCK = '.stage-d-controlled-deployment.lock.json';
+
+function writeBoundJson(filename, value) {
+    writeReadOnlyCanonicalJson(filename, value);
+    return sha256Text(fs.readFileSync(filename));
+}
+
+function ledgerBinding(ledgerRoot) {
+    const ledger = readRequestLedger({ ledgerRoot });
+    return {
+        epoch_id: ledger.epoch.epoch_id, genesis: ledger.epoch.genesis_entry_hash,
+        entries: ledger.entries.length, tail: ledger.last_entry_hash,
+        consumed: ledger.requests.filter(request => request.transmitted_at !== null).length,
+    };
+}
+
+function directoryBinding(root) {
+    const stat = fs.statSync(root);
+    return Object.fromEntries(['dev', 'ino', 'mode', 'uid', 'gid'].map(key => [key, stat[key]]));
+}
+
+function makeForwardContext(t, { used = 120, authorizationOverrides = {}, withPriorRequest = true } = {}) {
+    const legacy = makeContext(t);
+    const ctx = {
+        ...legacy,
+        legacy,
+        ledgerRoot: path.join(legacy.root, 'forward-accounting'),
+        quotaConfigPath: path.join(legacy.root, 'forward-quota-config.json'),
+        authorizationPath: path.join(legacy.trustRoot, 'forward-authorization.json'),
+    };
+    const forwardEpoch = initializeRequestAccountingEpoch({
+        ledgerRoot: ctx.ledgerRoot, authoritySnapshot: ctx.authoritySnapshot, startedAt: FORWARD_STARTED, epochId: FORWARD_EPOCH,
+    });
+    if (withPriorRequest) {
+        const input = { ledgerRoot: legacy.ledgerRoot, requestId: 'prior-request' };
+        recordRequestIntent({ ...input, runId: 'prior-run', createdAt: AUTHORIZATION_NOW });
+        markTransmissionStarted({ ...input, transmittedAt: AUTHORIZATION_NOW });
+        markRequestTerminal({ ...input, terminalState: 'HTTP_FAILURE_AFTER_TRANSMISSION', at: AUTHORIZATION_NOW, errorClassification: 'HTTP_503' });
+    }
+    ctx.quotaConfig = quotaConfiguration({
+        billing_period_id: '2026-11', period_start_at: '2026-11-01T00:00:00Z', period_end_at: '2026-12-01T00:00:00Z',
+        monthly_quota_limit: 500, reserved_safety_buffer: 50, automated_spend_limit: 450,
+        max_requests_per_day: null, stop_before_quota_exhaustion_threshold: 0,
+    });
+    ctx.quotaConfigSha256 = writeBoundJson(ctx.quotaConfigPath, ctx.quotaConfig);
+    const retained = ledgerBinding(legacy.ledgerRoot);
+    const reportedTail = 'a'.repeat(64);
+    const writeTrust = (name, value) => writeBoundJson(path.join(ctx.trustRoot, name), value);
+    const opening = {
+        schema_version: 'footballprediction-stage-d-forward-opening/v1',
+        account_identity_sha256: FORWARD_ACCOUNT,
+        account_sha256: writeTrust('account.json', {
+            provider: 'the-odds-api', account_identity_sha256: FORWARD_ACCOUNT,
+            period_id: ctx.quotaConfig.billing_period_id, period_start_at: ctx.quotaConfig.period_start_at,
+            period_end_at: ctx.quotaConfig.period_end_at, observed_at: FORWARD_STARTED,
+            used, remaining: 500 - used,
+        }),
+        history_sha256: writeTrust('history.json', {
+            candidate_status: 'PREPARED_NOT_AUTHORIZED', prepared_at: '2026-09-22T00:00:00Z',
+            runtime_bindings: {
+                accounting_epoch_id: retained.epoch_id, ledger_entries: 12,
+                ledger_last_entry_hash: reportedTail, consumed_requests: 4,
+            },
+        }),
+        quota_config_sha256: ctx.quotaConfigSha256,
+        history: {
+            retained, reported_entries: 12, reported_tail: reportedTail,
+            reported_consumed: 4, missing_entries: true, provider_effect: 'UNKNOWN',
+        },
+        segment: {
+            epoch_id: forwardEpoch.epoch_id, genesis: forwardEpoch.genesis_entry_hash,
+            head: forwardEpoch.start_authority_head, state_hash: forwardEpoch.start_authority_state_hash,
+        },
+        approved_at: FORWARD_STARTED, expires_at: '2026-11-12T09:00:00Z',
+        run_id: 'forward-run', request_id: 'forward-request',
+        account_exclusive: true, account_prior_usage_reconciled: true,
+    };
+    const openingSha = writeTrust('opening.json', opening);
+    const checkpointSha = writeTrust('checkpoint.json', { opening_sha256: openingSha, ledger: ledgerBinding(ctx.ledgerRoot) });
+    const authorization = makeAuthorization(ctx, {
+        schema_version: FORWARD_SCHEMA, authorization_id: 'sda_forward', accounting_epoch_id: FORWARD_EPOCH,
+        issued_at: FORWARD_STARTED, expires_at: FORWARD_EXPIRES, run_id: opening.run_id, request_id: opening.request_id,
+        ...authorizationOverrides,
+        forward_accounting: {
+            opening_file: 'opening.json', opening_sha256: openingSha,
+            account_file: 'account.json', history_file: 'history.json',
+            checkpoint_file: 'checkpoint.json', checkpoint_sha256: checkpointSha,
+            account_identity_sha256: FORWARD_ACCOUNT,
+            prior_ledger_root: legacy.ledgerRoot, prior_ledger_identity: directoryBinding(legacy.ledgerRoot),
+            ledger_root: ctx.ledgerRoot, ledger_identity: directoryBinding(ctx.ledgerRoot),
+            trust_root: ctx.trustRoot, trust_identity: directoryBinding(ctx.trustRoot),
+            consumption_inventory_sha256: sha256Text(stableStringify([])),
+        },
+    });
+    return { ...ctx, authorization, opening, used };
+}
+
+function forwardComponents(ctx, { responseOverrides = {}, ...options } = {}) {
+    return componentsFor(ctx, {
+        ...options,
+        responseOverrides: {
+            response_received_at: FORWARD_NOW,
+            provider_quota: {
+                'x-requests-used': String(ctx.used + 1), 'x-requests-remaining': String(499 - ctx.used), 'x-requests-last': '1',
+            },
+            ...responseOverrides,
+        },
+    });
+}
+
+function executeForward(ctx, components, clock = () => FORWARD_NOW) {
+    return executeStageDControlledInitialization(binderOptions(ctx, components, clock));
+}
+
+function assertForwardUnspent(ctx, components) {
+    assert.equal(components.transport.call_count, 0);
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, FORWARD_FENCE)), false);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).entries.length, 0);
+}
+
+test('v3 spends exactly one credit from the bound opening and publishes through transaction-v1', async t => {
+    const ctx = makeForwardContext(t, { used: 449 });
+    const prior = ledgerBinding(ctx.legacy.ledgerRoot);
+    const history = fs.readFileSync(path.join(ctx.trustRoot, 'history.json'));
+    const components = forwardComponents(ctx, { responseOverrides: { raw_text: ctx.rawText.replace('epl-fixture-001', 'epl-fixture-002') } });
+    components.transactionPublisher = createStageDTransactionPublisher({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath });
+    const result = await executeForward(ctx, components);
+    assert.equal(result.status, 'PUBLISHED_TRANSACTION_V1');
+    assert.equal(components.transport.call_count, 1);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, FORWARD_FENCE)), true);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, DEPLOYMENT_LOCK)), false);
+    assert.deepEqual(ledgerBinding(ctx.legacy.ledgerRoot), prior);
+    assert.deepEqual(fs.readFileSync(path.join(ctx.trustRoot, 'history.json')), history);
+    const [request] = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests;
+    assert.equal(request.terminal_state, 'RESPONSE_RECEIVED');
+    assert.equal(request.quota_units_charged_or_assumed, 1);
+    assert.equal(request.provider_quota.reported_used, 450);
+    assert.equal(request.provider_quota.reported_remaining, 50);
+    assert.equal(request.provider_quota.reported_last_cost, 1);
+    assert.equal(fs.existsSync(path.join(ctx.evidenceRoot, request.receipt_evidence_reference)), true);
+    assert.notEqual(result.publication.fresh_authority_snapshot.head_transaction_id, ctx.authoritySnapshot.head_transaction_id);
+});
+
+test('v3 rejects missing, substituted, or stale inputs before spending authorization', async t => {
+    const cases = [
+        ['opening missing', ctx => fs.unlinkSync(path.join(ctx.trustRoot, 'opening.json')), /ENOENT/],
+        ['account changed', ctx => overwriteReadOnlyFile(path.join(ctx.trustRoot, 'account.json'), '{}'), /摘要不符/],
+        ['checkpoint hash falsified', ctx => { ctx.authorization.forward_accounting.checkpoint_sha256 = '0'.repeat(64); }, /摘要不符/],
+        ['account identity mismatch', ctx => { ctx.authorization.forward_accounting.account_identity_sha256 = 'c'.repeat(64); }, /opening account/],
+        ['run mismatch', ctx => { ctx.authorization.run_id = 'other-run'; }, /single request/],
+        ['request mismatch', ctx => { ctx.authorization.request_id = 'other-request'; }, /single request/],
+        ['forward block missing', ctx => { delete ctx.authorization.forward_accounting; }, /fields are invalid/],
+    ];
+    for (const [label, alter, pattern] of cases) {
+        const ctx = makeForwardContext(t);
+        const components = forwardComponents(ctx);
+        alter(ctx);
+        writeReadOnlyCanonicalJson(ctx.authorizationPath, ctx.authorization);
+        await assert.rejects(executeForward(ctx, components), pattern, label);
+        assertForwardUnspent(ctx, components);
+        assert.equal(components.proxyPreflight.call_count, 0, label);
+    }
+    const exhausted = makeForwardContext(t, { used: 450 });
+    const components = forwardComponents(exhausted);
+    await assert.rejects(executeForward(exhausted, components), /超过预算/);
+    assertForwardUnspent(exhausted, components);
+});
+
+test('v3 rejects a changed checkpoint after preflight and a prior ledger held by another run', async t => {
+    const changed = makeForwardContext(t);
+    const components = forwardComponents(changed, {
+        proxyPreflight: createStageDFakeProxyPreflight({ onRun: () => overwriteReadOnlyFile(path.join(changed.trustRoot, 'checkpoint.json'), '{}') }),
+    });
+    await assert.rejects(executeForward(changed, components), /摘要不符/);
+    assertForwardUnspent(changed, components);
+    const locked = makeForwardContext(t);
+    const waiting = forwardComponents(locked);
+    const prior = acquireStageDRunLock({ operationRoot: locked.legacy.ledgerRoot, runId: 'earlier-run', acquiredAt: AUTHORIZATION_NOW, runLockTrustRoot: locked.trustRoot });
+    try {
+        await assert.rejects(executeForward(locked, waiting), { code: 'STAGE_D_RUN_ACTIVE_OR_STALE' });
+        assertForwardUnspent(locked, waiting);
+    } finally {
+        releaseStageDRunLock(prior);
+    }
+});
+
+test('v3 concurrent attempts and later v2 under the same deployment cannot spend a second credit', async t => {
+    const ctx = makeForwardContext(t, { withPriorRequest: false });
+    const first = forwardComponents(ctx);
+    const second = forwardComponents(ctx);
+    const outcomes = await Promise.allSettled([executeForward(ctx, first), executeForward(ctx, second)]);
+    assert.equal(outcomes.filter(result => result.status === 'fulfilled').length, 1);
+    assert.equal(first.transport.call_count + second.transport.call_count, 1);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    const legacy = componentsFor(ctx.legacy);
+    await assert.rejects(
+        executeStageDControlledInitialization(binderOptions(ctx.legacy, legacy, controlledClock())),
+        { code: 'STAGE_D_FORWARD_ALREADY_ACTIVE' },
+    );
+    assert.equal(legacy.transport.call_count, 0);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+});
+
+test('legacy binders on different ledgers still contend for one deployment lock', async t => {
+    const first = makeContext(t);
+    const second = makeContext(t, { authorization_id: 'sda_other_legacy' });
+    const secondAuth = path.join(first.trustRoot, 'other-legacy.json');
+    fs.copyFileSync(second.authorizationPath, secondAuth);
+    const firstComponents = componentsFor(first);
+    const secondComponents = componentsFor(second);
+    const results = await Promise.allSettled([
+        executeStageDControlledInitialization(binderOptions(first, firstComponents, controlledClock())),
+        executeStageDControlledInitialization(binderOptions({ ...second, authorizationPath: secondAuth, trustRoot: first.trustRoot }, secondComponents, controlledClock())),
+    ]);
+    assert.equal(firstComponents.transport.call_count + secondComponents.transport.call_count, 1);
+    assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+    assert.equal(results.find(result => result.status === 'rejected').reason.code, 'STAGE_D_CONTROLLED_DEPLOYMENT_ACTIVE_OR_STALE');
+    assert.equal(consumptionMarkers(first).length, 1);
+});
+
+test('a malformed activation fence still blocks v2 and v3 within that deployment', async t => {
+    const ctx = makeForwardContext(t, { withPriorRequest: false });
+    fs.writeFileSync(path.join(ctx.trustRoot, FORWARD_FENCE), 'incomplete', { mode: 0o400 });
+    const next = forwardComponents(ctx);
+    const legacy = componentsFor(ctx.legacy);
+    await assert.rejects(executeForward(ctx, next), { code: 'STAGE_D_FORWARD_ALREADY_ACTIVE' });
+    await assert.rejects(executeStageDControlledInitialization(binderOptions(ctx.legacy, legacy, controlledClock())), { code: 'STAGE_D_FORWARD_ALREADY_ACTIVE' });
+    assert.equal(next.transport.call_count + legacy.transport.call_count, 0);
+    assert.equal(consumptionMarkers(ctx).length, 0);
+    assert.equal(fs.readFileSync(path.join(ctx.trustRoot, FORWARD_FENCE), 'utf8'), 'incomplete');
+});
+
+test('physical bindings reject the same v3 authorization copied across roots or restored ledgers', async t => {
+    const ctx = makeForwardContext(t);
+    const otherRoot = path.join(ctx.root, 'other-deployment');
+    fs.cpSync(ctx.trustRoot, otherRoot, { recursive: true });
+    const components = forwardComponents(ctx);
+    await assert.rejects(executeForward({ ...ctx, trustRoot: otherRoot, authorizationPath: path.join(otherRoot, 'forward-authorization.json') }, components), { code: 'STAGE_D_FORWARD_BINDING_MISMATCH' });
+    const transport = backup.createLocalTransport({ root: fs.mkdtempSync(path.join(ctx.root, 'generations-')) });
+    const stored = await backup.writeSnapshot({
+        transport, authorityRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath,
+        ledgerRoot: ctx.ledgerRoot, quotaConfigPath: ctx.quotaConfigPath,
+    });
+    const restored = await executeRestore({ transport, snapshotId: stored.snapshot_id, destinationRoot: path.join(ctx.root, 'restore') });
+    assert.equal(restored.result, 'PASS');
+    await assert.rejects(executeForward({ ...ctx, ledgerRoot: restored.ledger_root }, components), { code: 'STAGE_D_FORWARD_BINDING_MISMATCH' });
+    fs.renameSync(ctx.ledgerRoot, `${ctx.ledgerRoot}.original`);
+    fs.renameSync(restored.ledger_root, ctx.ledgerRoot);
+    await assert.rejects(executeForward(ctx, components), { code: 'STAGE_D_FORWARD_BINDING_MISMATCH' });
+    assertForwardUnspent(ctx, components);
+});
+
+
+test('v3 revalidates time while locked and at transmission; late same-period response remains admissible', async t => {
+    const earlyExpired = makeForwardContext(t);
+    const early = forwardComponents(earlyExpired);
+    await assert.rejects(executeForward(earlyExpired, early, () => FORWARD_EXPIRES), { code: 'STAGE_D_AUTHORIZATION_EXPIRED' });
+    assertForwardUnspent(earlyExpired, early);
+
+    const changedUnderLock = makeForwardContext(t);
+    const changed = forwardComponents(changedUnderLock);
+    let altered = false;
+    await assert.rejects(executeForward(changedUnderLock, changed, () => {
+        if (!altered && fs.existsSync(path.join(changedUnderLock.ledgerRoot, RUN_LOCK_FILE))) {
+            altered = true;
+            overwriteReadOnlyFile(path.join(changedUnderLock.trustRoot, 'checkpoint.json'), '{}');
+        }
+        return FORWARD_NOW;
+    }), /摘要不符/);
+    assert.equal(altered, true);
+    assertForwardUnspent(changedUnderLock, changed);
+
+    const race = makeForwardContext(t);
+    const expired = forwardComponents(race);
+    await assert.rejects(executeForward(race, expired, () =>
+        readRequestLedger({ ledgerRoot: race.ledgerRoot }).entries.length === 1 ? FORWARD_EXPIRES : FORWARD_NOW,
+    ), { code: 'STAGE_D_AUTHORIZATION_EXPIRED' });
+    assert.equal(expired.transport.call_count, 0);
+    assert.equal(readRequestLedger({ ledgerRoot: race.ledgerRoot }).requests[0].terminal_state, 'CANCELLED_BEFORE_TRANSMISSION');
+    assert.equal(consumptionMarkers(race).length, 1);
+
+    const late = makeForwardContext(t);
+    const lateAt = '2026-11-12T08:02:00Z';
+    const components = forwardComponents(late, { responseOverrides: { response_received_at: lateAt } });
+    const response = await executeForward(late, components, () => components.transport.call_count ? lateAt : FORWARD_NOW);
+    assert.equal(response.status, 'NO_OP_DUPLICATE_RAW_HASH');
+    assert.equal(components.transport.call_count, 1);
+});
+
+test('v3 retains consumed state, RAW and diagnostics for invalid or future response times', async t => {
+    const invalidReports = [
+        [{ request_started_at: '2026-11-12T07:59:59Z' }, FORWARD_NOW],
+        [{ request_started_at: '2026-11-12T08:00:01Z' }, FORWARD_NOW],
+        [{ response_received_at: '2026-11-12T08:00:01Z' }, FORWARD_NOW],
+        [{ response_received_at: '2026-12-01T00:00:00Z' }, '2026-12-01T00:00:00Z'],
+        [{ response_received_at: '2026-11-12T07:59:59Z' }, FORWARD_NOW],
+        [{ response_received_at: null }, FORWARD_NOW],
+    ];
+    for (const [responseOverrides, checkTime] of invalidReports) {
+        const ctx = makeForwardContext(t);
+        const components = forwardComponents(ctx, { responseOverrides });
+        await assert.rejects(executeForward(ctx, components, () => components.transport.call_count ? checkTime : FORWARD_NOW), /超出绑定账期或核验时点|记账凭据时间无效/);
+        assert.equal(components.transport.call_count, 1);
+        assert.equal(components.transactionPublisher.call_count, 0);
+        const [request] = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests;
+        assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+        assert.equal(request.error_classification, 'PROVIDER_RESPONSE_TIME_INVALID');
+        assert.equal(request.quota_units_charged_or_assumed, 1);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')).length, 1);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'receipts')).length, 0);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'failure-diagnostics')).length, 1);
+        await assert.rejects(executeForward(ctx, components), { code: 'STAGE_D_FORWARD_ALREADY_ACTIVE' });
+        assert.equal(components.transport.call_count, 1);
+    }
+});
+
+test('v3 fails closed on divergent headers or a failed receipt write after durable RAW capture', async t => {
+    const failures = [
+        [{ 'x-requests-used': '122', 'x-requests-remaining': '378', 'x-requests-last': '1' }, 'PROVIDER_QUOTA_RECONCILIATION_FAILED', false],
+        [{ 'x-requests-used': '121', 'x-requests-remaining': '379', 'x-requests-last': '2' }, 'PROVIDER_QUOTA_RECONCILIATION_FAILED', false],
+        [null, 'RECEIPT_CONFLICT', true],
+    ];
+    for (const [headers, errorCode, failedReceipt] of failures) {
+        const ctx = makeForwardContext(t);
+        const components = forwardComponents(ctx, { responseOverrides: headers ? { provider_quota: headers } : {} });
+        if (failedReceipt) {
+            components.evidencePersistence.persistReceipt({ receipt: createCaptureReceipt({
+                capture_id: ctx.opening.request_id, acquisition_mode: 'LIVE_CAPTURE',
+                request_started_at: FORWARD_NOW, response_received_at: FORWARD_NOW, ingested_at: FORWARD_NOW, http_status: 200,
+                sanitized_request_parameters: { regions: 'uk', markets: 'h2h', oddsFormat: 'decimal' },
+                response_size_bytes: 10, raw_sha256: 'd'.repeat(64), raw_evidence_reference: 'raw/conflicting.json',
+            }) });
+        }
+        await assert.rejects(executeForward(ctx, components), { code: errorCode });
+        assert.equal(components.transport.call_count, 1);
+        assert.equal(components.transactionPublisher.call_count, 0);
+        const [request] = readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).requests;
+        assert.equal(request.terminal_state, 'POST_RESPONSE_PROCESSING_FAILURE');
+        assert.equal(request.error_classification, failedReceipt ? 'RECEIPT_PERSISTENCE_FAILED' : errorCode);
+        assert.equal(request.quota_units_charged_or_assumed, 1);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'raw')).length, 1);
+        assert.equal(fs.readdirSync(path.join(ctx.evidenceRoot, 'failure-diagnostics')).length, 1);
+    }
+});
+
+test('v3 preserves the deployment lock when publication cannot be safely finalized', async t => {
+    const ctx = makeForwardContext(t);
+    const components = forwardComponents(ctx, { responseOverrides: { raw_text: ctx.rawText.replace('epl-fixture-001', 'epl-fixture-002') } });
+    components.transactionPublisher = createStageDFakePublisher({ mode: 'ERROR', authorityRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath });
+    await assert.rejects(executeForward(ctx, components), { code: 'FAKE_PUBLISH_FAILURE' });
+    assert.equal(components.transport.call_count, 1);
+    assert.equal(components.transactionPublisher.call_count, 1);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, DEPLOYMENT_LOCK)), true);
+    assert.equal(fs.existsSync(path.join(ctx.ledgerRoot, RUN_LOCK_FILE)), true);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    await assert.rejects(executeForward(ctx, components), { code: 'STAGE_D_FORWARD_ALREADY_ACTIVE' });
+    assert.equal(components.transport.call_count, 1);
+});
+
+
+function advanceFixtureAuthority(ctx) {
+    const advancedRaw = ctx.rawText.replace('epl-fixture-001', 'epl-fixture-002');
+    const captureReceipt = createVerifiedTestReceipt({
+        root: path.join(ctx.root, 'advanced-receipt'), rawText: advancedRaw, overrides: { capture_id: 'advanced-capture' },
+    });
+    const candidate = buildProspectiveMarketEvidenceTransaction({
+        authoritySnapshot: ctx.authoritySnapshot, universe: ctx.fixture.universe, oddsRawText: advancedRaw, captureReceipt,
+    });
+    publishProspectiveMarketEvidenceTransaction({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath, candidate });
+    return openMarketEvidenceAuthoritySnapshot({ storeRoot: ctx.authorityRoot, allocationArtifactPath: ctx.allocationArtifactPath });
+}
+
+test('v3 must bind both a valid opening epoch and a valid authorization to the same authority pre-state', async t => {
+    const ctx = makeForwardContext(t);
+    const advanced = advanceFixtureAuthority(ctx);
+    assert.notEqual(advanced.head_transaction_id, ctx.opening.segment.head);
+    writeReadOnlyCanonicalJson(ctx.authorizationPath, {
+        ...ctx.authorization,
+        authority_pre_head: advanced.head_transaction_id,
+        authority_pre_state_hash: advanced.state_hash,
+        authority_pre_observation_count: advanced.observations.length,
+    });
+    const components = forwardComponents(ctx);
+    await assert.rejects(executeForward(ctx, components), /opening ledger epoch does not bind/);
+    assertForwardUnspent(ctx, components);
+    assert.equal(components.proxyPreflight.call_count, 0);
+});
+
+test('v3 detects an authority advance after reading the initial state while both ledgers are locked', async t => {
+    const ctx = makeForwardContext(t);
+    const components = forwardComponents(ctx);
+    let advanced = false;
+    await assert.rejects(executeForward(ctx, components, () => {
+        if (!advanced && fs.existsSync(path.join(ctx.legacy.ledgerRoot, RUN_LOCK_FILE)) && fs.existsSync(path.join(ctx.ledgerRoot, RUN_LOCK_FILE))) {
+            advanceFixtureAuthority(ctx);
+            advanced = true;
+        }
+        return FORWARD_NOW;
+    }), { code: 'AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH' });
+    assert.equal(advanced, true);
+    assertForwardUnspent(ctx, components);
+});
+
+test('v2 holding the shared deployment cannot race a v3 activation', async t => {
+    const ctx = makeForwardContext(t, { withPriorRequest: false });
+    const legacy = componentsFor(ctx.legacy);
+    const forward = forwardComponents(ctx);
+    const outcomes = await Promise.allSettled([
+        executeStageDControlledInitialization(binderOptions(ctx.legacy, legacy, controlledClock())),
+        executeForward(ctx, forward),
+    ]);
+    assert.equal(outcomes[0].status, 'fulfilled');
+    assert.equal(outcomes[1].reason.code, 'STAGE_D_CONTROLLED_DEPLOYMENT_ACTIVE_OR_STALE');
+    assert.equal(legacy.transport.call_count, 1);
+    assert.equal(forward.transport.call_count, 0);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, FORWARD_FENCE)), false);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).entries.length, 0);
+});
+
+
+test('a v2 spend on another ledger invalidates an already sealed v3 opening inventory', async t => {
+    const ctx = makeForwardContext(t);
+    const otherLedgerRoot = path.join(ctx.root, 'other-accounting');
+    const otherEpoch = initializeRequestAccountingEpoch({
+        ledgerRoot: otherLedgerRoot, authoritySnapshot: ctx.authoritySnapshot, startedAt: FORWARD_STARTED, epochId: 'other-epoch',
+    });
+    const other = { ...ctx, ledgerRoot: otherLedgerRoot, authorizationPath: path.join(ctx.trustRoot, 'other-authorization.json') };
+    makeAuthorization(other, { authorization_id: 'sda_other_cycle', accounting_epoch_id: otherEpoch.epoch_id, issued_at: FORWARD_STARTED, expires_at: FORWARD_EXPIRES });
+    const legacy = componentsFor(other, { responseOverrides: {
+        response_received_at: FORWARD_NOW,
+        provider_quota: { 'x-requests-used': '1', 'x-requests-remaining': '499', 'x-requests-last': '1' },
+    } });
+    assert.equal((await executeForward(other, legacy)).status, 'NO_OP_DUPLICATE_RAW_HASH');
+    const forward = forwardComponents(ctx);
+    await assert.rejects(executeForward(ctx, forward), { code: 'STAGE_D_FORWARD_CONSUMPTION_INVENTORY_CHANGED' });
+    assert.equal(legacy.transport.call_count, 1);
+    assert.equal(forward.transport.call_count, 0);
+    assert.equal(consumptionMarkers(ctx).length, 1);
+    assert.equal(fs.existsSync(path.join(ctx.trustRoot, FORWARD_FENCE)), false);
+    assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).entries.length, 0);
+});
+
+test('v3 accepts an unchanged inventory of consumption markers covered by opening evidence', async t => {
+    const ctx = makeForwardContext(t, { withPriorRequest: false });
+    const markers = componentsFor(ctx.legacy);
+    await executeStageDControlledInitialization(binderOptions(ctx.legacy, markers, controlledClock()));
+    assert.equal(markers.transport.call_count, 1);
+    const opening = ctx.opening;
+    opening.history.retained = ledgerBinding(ctx.legacy.ledgerRoot);
+    const binding = ctx.authorization.forward_accounting;
+    binding.opening_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'opening.json'), opening);
+    binding.checkpoint_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'checkpoint.json'), {
+        opening_sha256: binding.opening_sha256, ledger: ledgerBinding(ctx.ledgerRoot),
+    });
+    const inventory = consumptionMarkers(ctx).sort().map(filename => ({
+        filename, sha256: sha256Text(fs.readFileSync(path.join(ctx.trustRoot, filename))),
+    }));
+    binding.consumption_inventory_sha256 = sha256Text(stableStringify(inventory));
+    writeReadOnlyCanonicalJson(ctx.authorizationPath, ctx.authorization);
+    const forward = forwardComponents(ctx);
+    assert.equal((await executeForward(ctx, forward)).status, 'NO_OP_DUPLICATE_RAW_HASH');
+    assert.equal(forward.transport.call_count, 1);
+    assert.equal(consumptionMarkers(ctx).length, 2);
 });

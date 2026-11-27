@@ -93,6 +93,7 @@ function helpText() {
         ...REQUIRED_FLAGS.map(flag => `  ${flag} <path>`),
         '',
         'The authorization artifact must be a read-only direct child of the supplied runtime trust root.',
+        'Forward accounting is selected only by a v3 authorization bound to the dedicated deployment trust root and both ledgers.',
         'When the ledger contains an unresolved provider-quota divergence, --quota-adjudication is required and must match the authorization hash.',
         'The CLI does not accept run-time authorization tokens, live booleans, retries, or request counts.',
     ].join('\n');

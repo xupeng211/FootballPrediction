@@ -1,0 +1,42 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "README.md",
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "scripts/ops/stage_d_controlled_initialization.js",
+    "src/infrastructure/market_evidence/stageDForwardAccounting.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
+    "tests/unit/market_evidence/stage_d_forward_accounting.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "Makefile",
+    "scripts/ops/stage_d_cycle.js"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "复用既有受控单次入口、交易权威、持久账本、锁体系、HMAC 前置验证及 RAW 优先。v3 只接受同一部署受信根内绑定新旧账本、独立检查点、当期账户证据与批准的 EPL h2h/uk 一次请求。",
+    "保留历史原件及供应商扣费 UNKNOWN，预算上限 450、保留 50，禁止用空账本或恢复旧代绕过绑定及单次消费。",
+    "无切换标记的 v2 单次受控流程保持。固定单一受信部署根内的所有受控请求必须互斥，切换标记存在或写入状态不明时拒绝后续请求。"
+  ],
+  "forbidden_side_effects": [
+    "本地隔离验证仅使用夹具。禁止真实供应商、账户、凭据、备份服务、生产数据库或生产账本写入、RAW 和发布。禁止签发真实 Gate 3 授权、调度、远端写入和正式付费审核。"
+  ]
+}

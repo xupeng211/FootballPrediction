@@ -103,6 +103,11 @@ const STAGE_D_TEST_RUNTIME_AUTHORIZATION = Symbol('stage-d-test-runtime-authoriz
 const STAGE_D_TRANSPORT_CALL_TOKEN = Object.freeze({ stage_d: 'transport-call' });
 const CONTROLLED_AUTHORIZATION_WINDOW = Symbol('controlled-authorization-window');
 const CONTROLLED_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v2';
+const FORWARD_AUTHORIZATION_SCHEMA_VERSION = 'footballprediction-stage-d-controlled-initialization-authorization/v3';
+const FORWARD_RUNTIME = Symbol('stage-d-forward-runtime');
+const CONTROLLED_DEPLOYMENT = Symbol('stage-d-controlled-deployment');
+const FORWARD_DEPLOYMENT_FENCE = '.stage-d-forward-active.json';
+const CONTROLLED_DEPLOYMENT_LOCK = '.stage-d-controlled-deployment.lock.json';
 const CONTROLLED_AUTHORIZATION_STATUS = 'OWNER_AND_CHIEF_ENGINEER_AUTHORIZED';
 const CONTROLLED_AUTHORIZATION_MISSION = 'CONTROLLED_STAGE_D_SINGLE_CYCLE';
 const CONTROLLED_AUTHORIZATION_MAX_LIFETIME_MS = 24 * 60 * 60 * 1000;
@@ -192,6 +197,12 @@ function assertNonNegativeInteger(value, label) {
 
 function canonicalBytes(value) {
     return `${stableStringify(value)}\n`;
+}
+
+function assertDirectoryIdentityRecord(value, label) {
+    const fields = ['dev', 'ino', 'mode', 'uid', 'gid'];
+    assertExactKeys(value, fields, label);
+    for (const field of fields) assertNonNegativeInteger(value[field], `${label}.${field}`);
 }
 
 function directoryIdentity(directory, label) {
@@ -472,8 +483,8 @@ function parseJsonInputBytes(bytes, label) {
     }
 }
 
-function readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256 } = {}) {
-    const observed = readRegularFileBytes(quotaConfigPath, 'Stage D quota configuration', { immutable: false });
+function readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256, immutable = false } = {}) {
+    const observed = readRegularFileBytes(quotaConfigPath, 'Stage D quota configuration', { immutable });
     const observedSha256 = sha256Text(observed.bytes);
     if (observedSha256 !== expectedSha256) fail('AUTHORIZATION_QUOTA_MISMATCH', 'authorization quota configuration hash does not match the bytes read from the governed configuration');
     return Object.freeze({
@@ -626,13 +637,14 @@ function readStageDControlledAuthorization({ authorizationArtifactPath, ledgerRo
     try {
         const resolvedPath = path.resolve(authorizationArtifactPath);
         if (!isDirectChild(trustDescriptor.path, resolvedPath)) fail('UNTRUSTED_AUTHORIZATION', 'authorization artifact must be a direct child of the external runtime trust root');
-        const observed = readRegularFileBytes(resolvedPath, 'Stage D controlled authorization', { immutable: true });
+        const observed = readRegularFileBytes(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), 'Stage D controlled authorization', { immutable: true });
         const authorization = parseCanonicalJsonBytes(observed.bytes, 'Stage D controlled authorization');
         if (observed.stat.uid !== process.getuid?.() && observed.stat.uid !== 0) fail('UNTRUSTED_AUTHORIZATION', 'authorization artifact owner is not the runtime user or root');
         return Object.freeze({
             path: resolvedPath,
             authorization: Object.freeze(authorization),
             authorization_sha256: sha256Text(observed.bytes),
+            trust_identity: trustDescriptor.identity,
         });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);
@@ -659,14 +671,46 @@ function controlledAuthorizationScope(authorization) {
         authority_pre_allocation_authority_sha256: authorization.authority_pre_allocation_authority_sha256,
         quota_config_sha256: authorization.quota_config_sha256,
         quota_adjudication_sha256: authorization.quota_adjudication_sha256,
+        ...(authorization.forward_accounting ? { forward_accounting: authorization.forward_accounting } : {}),
         fixture_universe_raw_sha256: authorization.fixture_universe_raw_sha256,
         run_id: authorization.run_id,
         request_id: authorization.request_id,
     });
 }
 
+function validateForwardAuthorizationBinding(value) {
+    assertExactKeys(value, [
+        'opening_file', 'opening_sha256', 'account_file', 'history_file', 'checkpoint_file', 'checkpoint_sha256',
+        'account_identity_sha256', 'prior_ledger_root', 'prior_ledger_identity', 'ledger_root', 'ledger_identity',
+        'trust_root', 'trust_identity', 'consumption_inventory_sha256',
+    ], 'Stage D forward authorization binding');
+    for (const field of ['opening_sha256', 'checkpoint_sha256', 'account_identity_sha256', 'consumption_inventory_sha256']) assertSha256(value[field], field);
+    for (const field of ['opening_file', 'account_file', 'history_file', 'checkpoint_file']) {
+        const filename = value[field];
+        if (typeof filename !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\.json$/.test(filename)) {
+            fail('INVALID_AUTHORIZATION', `${field} must be a simple JSON filename within the runtime trust root`);
+        }
+    }
+    for (const field of ['prior_ledger_root', 'ledger_root', 'trust_root']) {
+        const root = value[field];
+        if (typeof root !== 'string' || !path.isAbsolute(root) || path.resolve(root) !== root) {
+            fail('INVALID_AUTHORIZATION', `${field} must be a normalized absolute directory path`);
+        }
+    }
+    for (const field of ['prior_ledger_identity', 'ledger_identity', 'trust_identity']) {
+        assertDirectoryIdentityRecord(value[field], field);
+    }
+    const relative = path.relative(value.prior_ledger_root, value.ledger_root);
+    const reverse = path.relative(value.ledger_root, value.prior_ledger_root);
+    const outside = item => item === '..' || item.startsWith(`..${path.sep}`);
+    if (!outside(relative) || !outside(reverse) || sameDirectoryIdentity(value.prior_ledger_identity, value.ledger_identity)) {
+        fail('INVALID_AUTHORIZATION', 'forward and prior ledger roots must be separate physical directories');
+    }
+}
+
 // eslint-disable-next-line complexity -- controlled authorization validates each immutable scope field independently.
 function validateStageDControlledAuthorization({ authorization, authoritySnapshot, authorityRoot, allocationArtifactPath, ledger, quotaConfig, quotaConfigSha256, quotaAdjudicationSha256, fixtureUniverseRawSha256, now } = {}) {
+    const forward = authorization?.schema_version === FORWARD_AUTHORIZATION_SCHEMA_VERSION;
     assertExactKeys(
         authorization,
         [
@@ -692,10 +736,15 @@ function validateStageDControlledAuthorization({ authorization, authoritySnapsho
             'request_id',
             'issued_at',
             'expires_at',
+            ...(forward ? ['forward_accounting'] : []),
         ],
         'Stage D controlled authorization'
     );
-    if (authorization.schema_version !== CONTROLLED_AUTHORIZATION_SCHEMA_VERSION || authorization.authorization_status !== CONTROLLED_AUTHORIZATION_STATUS) fail('INVALID_AUTHORIZATION', 'controlled authorization schema or approval status is invalid');
+    if ((!forward && authorization.schema_version !== CONTROLLED_AUTHORIZATION_SCHEMA_VERSION) || authorization.authorization_status !== CONTROLLED_AUTHORIZATION_STATUS) fail('INVALID_AUTHORIZATION', 'controlled authorization schema or approval status is invalid');
+    if (forward) {
+        validateForwardAuthorizationBinding(authorization.forward_accounting);
+        if (authorization.quota_adjudication_sha256 !== null) fail('INVALID_AUTHORIZATION', 'forward accounting cannot consume a prior quota adjudication');
+    }
     if (!/^sda_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(authorization.authorization_id)) fail('INVALID_AUTHORIZATION', 'authorization_id is invalid');
     if (authorization.mission !== CONTROLLED_AUTHORIZATION_MISSION || authorization.provider !== PROVIDER) fail('INVALID_AUTHORIZATION', 'authorization mission or provider scope is invalid');
     if (stableStringify(authorization.configured_markets) !== stableStringify(CONFIGURED_MARKETS) || stableStringify(authorization.configured_regions) !== stableStringify(CONFIGURED_REGIONS)) fail('INVALID_AUTHORIZATION', 'authorization market or region scope is invalid');
@@ -737,11 +786,15 @@ function validateStageDControlledAuthorization({ authorization, authoritySnapsho
     });
 }
 
+function controlledAuthorizationMarkerName(authorization) {
+    return `${CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX}${authorization.authorization_id}.json`;
+}
+
 function consumeStageDControlledAuthorization({ authorizationRecord, ledgerRoot, runLockTrustRoot, consumedAt } = {}) {
     assertPlainObject(authorizationRecord, 'authorizationRecord');
     const { authorization, scope, scope_sha256, authorization_sha256 } = authorizationRecord;
-    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot);
-    const markerName = `${CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX}${authorization.authorization_id}.json`;
+    const trustDescriptor = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot, authorizationRecord.trust_identity);
+    const markerName = controlledAuthorizationMarkerName(authorization);
     try {
         writeExclusiveImmutable(
             scopedPath(trustDescriptor.fd, markerName),
@@ -1135,11 +1188,7 @@ function validateRunLockGeneration(value) {
     ], 'Stage D ledger generation anchor');
     if (value.schema_version !== RUN_LOCK_GENERATION_SCHEMA_VERSION) fail('INVALID_LEDGER_GENERATION', 'ledger generation schema is invalid');
     if (typeof value.operation_root !== 'string' || !path.isAbsolute(value.operation_root)) fail('INVALID_LEDGER_GENERATION', 'ledger generation operation_root is invalid');
-    for (const identityField of ['operation_identity', 'ledger_identity']) {
-        assertPlainObject(value[identityField], `ledger generation ${identityField}`);
-        assertExactKeys(value[identityField], ['dev', 'ino', 'mode', 'uid', 'gid'], `ledger generation ${identityField}`);
-        for (const field of ['dev', 'ino', 'mode', 'uid', 'gid']) assertNonNegativeInteger(value[identityField][field], `ledger generation ${identityField}.${field}`);
-    }
+    for (const field of ['operation_identity', 'ledger_identity']) assertDirectoryIdentityRecord(value[field], `ledger generation ${field}`);
     if (typeof value.ledger_root !== 'string' || !path.isAbsolute(value.ledger_root)) fail('INVALID_LEDGER_GENERATION', 'ledger generation ledger_root is invalid');
     assertToken(value.epoch_id, 'ledger generation epoch_id');
     if (!/^[a-f0-9]{64}$/.test(value.epoch_genesis_hash || '') || !/^[a-f0-9]{64}$/.test(value.last_entry_hash || '')) {
@@ -1206,21 +1255,25 @@ function assertRunLockGenerationMatchesLedger(generation, ledger, { operationRoo
     if (observed !== generation.last_entry_hash) fail('LEDGER_GENERATION_ROLLBACK', 'request ledger history no longer contains the anchored last entry');
 }
 
-function bindStageDRunLockGeneration(token, { ledgerRoot = token?.root } = {}) {
-    if (!activeLockTokens.has(token)) fail('INVALID_LOCK_TOKEN', 'an active Stage D run lock token is required');
-    if (typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('LEDGER_GENERATION_CHANGED', 'request ledger root is required');
-    const resolvedLedgerRoot = path.resolve(ledgerRoot);
-    const ledger = readRequestLedger({ ledgerRoot: resolvedLedgerRoot });
-    const generations = readRunLockGenerations(token);
-    const latest = generations.at(-1);
+function latestBoundRunLockGeneration(token, ledger, ledgerRoot) {
+    const latest = readRunLockGenerations(token).at(-1);
     if (latest) {
         assertRunLockGenerationMatchesLedger(latest, ledger, {
             operationRoot: token.root,
             operationIdentity: token.root_identity,
-            ledgerRoot: resolvedLedgerRoot,
+            ledgerRoot,
             ledgerIdentity: ledger.root_identity,
         });
     }
+    return latest;
+}
+
+function bindStageDRunLockGeneration(token, { ledgerRoot = token?.root, expectedLedgerIdentity = null } = {}) {
+    if (!activeLockTokens.has(token)) fail('INVALID_LOCK_TOKEN', 'an active Stage D run lock token is required');
+    if (typeof ledgerRoot !== 'string' || !ledgerRoot.trim()) fail('LEDGER_GENERATION_CHANGED', 'request ledger root is required');
+    const resolvedLedgerRoot = path.resolve(ledgerRoot);
+    const ledger = readRequestLedger({ ledgerRoot: resolvedLedgerRoot, expectedRootIdentity: expectedLedgerIdentity });
+    const latest = latestBoundRunLockGeneration(token, ledger, resolvedLedgerRoot);
     const current = buildRunLockGeneration({
         operationRoot: token.root,
         operationIdentity: token.root_identity,
@@ -1397,7 +1450,7 @@ function inspectStageDRunLock({ operationRoot, runLockTrustRoot } = {}) {
 }
 
 // eslint-disable-next-line complexity -- lock acquisition enumerates trust/ancestor/parent/root reconciliation states.
-function acquireStageDRunLock({ operationRoot, runId, acquiredAt, runLockTrustRoot } = {}) {
+function acquireStageDRunLock({ operationRoot, runId, acquiredAt, runLockTrustRoot, expectedOperationIdentity = null, expectedTrustIdentity = null } = {}) {
     const root = path.resolve(operationRoot);
     assertToken(runId, 'run_id');
     assertUtc(acquiredAt, 'lock acquiredAt');
@@ -1408,10 +1461,10 @@ function acquireStageDRunLock({ operationRoot, runId, acquiredAt, runLockTrustRo
     const trustLockPath = path.join(trustRootPath, runLockTrustFile(root));
     const unsigned = { schema_version: RUN_LOCK_SCHEMA_VERSION, run_id: runId, acquired_at: acquiredAt };
     const lock = { ...unsigned, lock_hash: sha256Text(stableStringify(unsigned)) };
-    const trustDescriptor = openTrustedRuntimeRoot(root, trustRootPath);
+    const trustDescriptor = openTrustedRuntimeRoot(root, trustRootPath, expectedTrustIdentity);
     let rootBundle;
     try {
-        rootBundle = openTrustedRootWithParent(root, 'Stage D operation root');
+        rootBundle = openTrustedRootWithParent(root, 'Stage D operation root', expectedOperationIdentity);
     } catch (error) {
         closeDirectoryDescriptor(trustDescriptor);
         throw error;
@@ -2350,14 +2403,16 @@ const TRANSPORT_FAILURE_DIAGNOSTIC_SYSCALL_MAX_BYTES = 64;
 const TRANSPORT_FAILURE_PHASE = 'UNKNOWN_POST_BOUNDARY';
 const POST_RESPONSE_FAILURE_DIAGNOSTIC_SCHEMA_VERSION = 'footballprediction-stage-d-post-response-failure-diagnostic/v1';
 const POST_RESPONSE_FAILURE_DIAGNOSTIC_MAX_BYTES = 4096;
-const POST_RESPONSE_FAILURE_PHASES = new Set(['RAW_PERSISTENCE', 'QUOTA_RECONCILIATION', 'RECEIPT_PERSISTENCE']);
+const POST_RESPONSE_FAILURE_PHASES = new Set(['RAW_PERSISTENCE', 'RESPONSE_TIME_VALIDATION', 'QUOTA_RECONCILIATION', 'RECEIPT_PERSISTENCE']);
 const POST_RESPONSE_FAILURE_CODES = new Map([
     ['RAW_PERSISTENCE_FAILED', 'successful response RAW evidence persistence failed'],
+    ['PROVIDER_RESPONSE_TIME_INVALID', 'provider response time does not bind to the approved accounting window'],
     ['PROVIDER_QUOTA_RECONCILIATION_FAILED', 'provider quota reconciliation failed after response capture'],
     ['RECEIPT_PERSISTENCE_FAILED', 'successful response receipt persistence failed'],
 ]);
 const POST_RESPONSE_FAILURE_CODES_BY_PHASE = new Map([
     ['RAW_PERSISTENCE', 'RAW_PERSISTENCE_FAILED'],
+    ['RESPONSE_TIME_VALIDATION', 'PROVIDER_RESPONSE_TIME_INVALID'],
     ['QUOTA_RECONCILIATION', 'PROVIDER_QUOTA_RECONCILIATION_FAILED'],
     ['RECEIPT_PERSISTENCE', 'RECEIPT_PERSISTENCE_FAILED'],
 ]);
@@ -3159,6 +3214,167 @@ function createStageDProductionComponents({ evidenceRoot, authorityRoot, allocat
     });
 }
 
+function assertDeploymentRecordAbsent(trustDirectoryFd, name, code, detail) {
+    try {
+        fs.lstatSync(scopedPath(trustDirectoryFd, name));
+    } catch (error) {
+        if (error?.code === 'ENOENT') return;
+        throw error;
+    }
+    fail(code, detail);
+}
+
+function assertForwardDeploymentUnused(trustDirectoryFd) {
+    assertDeploymentRecordAbsent(trustDirectoryFd, FORWARD_DEPLOYMENT_FENCE,
+        'STAGE_D_FORWARD_ALREADY_ACTIVE', 'this deployment already has a forward accounting activation fence');
+}
+
+function assertForwardConsumptionInventory(trustDirectoryFd, expectedSha256) {
+    const files = fs.readdirSync(directoryFdPath(trustDirectoryFd))
+        .filter(name => name.startsWith(CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX)).sort();
+    const entries = files.map(name => {
+        const { bytes } = readRegularFileBytes(scopedPath(trustDirectoryFd, name), 'Stage D controlled consumption record');
+        const marker = parseCanonicalJsonBytes(bytes, 'Stage D controlled consumption record');
+        if (marker?.schema_version !== 'footballprediction-stage-d-controlled-initialization-consumption/v2' ||
+            typeof marker.authorization_id !== 'string' || name !== controlledAuthorizationMarkerName(marker)) {
+            fail('STAGE_D_FORWARD_CONSUMPTION_INVENTORY_INVALID', 'a prior deployment consumption marker is malformed');
+        }
+        assertUtc(marker.consumed_at, 'prior controlled authorization consumption time');
+        return { filename: name, sha256: sha256Text(bytes) };
+    });
+    if (sha256Text(stableStringify(entries)) !== expectedSha256) {
+        fail('STAGE_D_FORWARD_CONSUMPTION_INVENTORY_CHANGED', 'deployment consumption inventory changed after opening evidence was sealed');
+    }
+}
+
+function validateForwardRuntime({ authorizationRecord, ledgerRoot, runLockTrustRoot, quotaConfig, ledger, now, existingTrustFd = null, priorLock = null }) {
+    // 避免在两个模块初始化时互相加载。离线入口与 binder 调用同一证据验证函数。
+    const { readForwardAccountingEvidence, validateForwardAccountingEvidence } = require('./stageDForwardAccounting');
+    const { authorization, trust_identity: trustIdentity } = authorizationRecord;
+    const binding = authorization.forward_accounting;
+    if (binding.ledger_root !== path.resolve(ledgerRoot) || binding.trust_root !== path.resolve(runLockTrustRoot) ||
+        !sameDirectoryIdentity(binding.trust_identity, trustIdentity) || !sameDirectoryIdentity(binding.ledger_identity, ledger.root_identity)) {
+        fail('STAGE_D_FORWARD_BINDING_MISMATCH', 'forward authorization does not match the selected ledger or deployment trust root');
+    }
+    const trust = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot, trustIdentity);
+    try {
+        const trustFd = existingTrustFd ?? trust.fd;
+        assertForwardDeploymentUnused(trustFd);
+        assertForwardConsumptionInventory(trustFd, binding.consumption_inventory_sha256);
+        const prior = readRequestLedger({ ledgerRoot: binding.prior_ledger_root, expectedRootIdentity: binding.prior_ledger_identity });
+        if (priorLock !== null) latestBoundRunLockGeneration(priorLock, prior, binding.prior_ledger_root);
+        const evidence = readForwardAccountingEvidence({
+            openingPath: scopedPath(trustFd, binding.opening_file), openingSha256: binding.opening_sha256,
+            accountPath: scopedPath(trustFd, binding.account_file), historyPath: scopedPath(trustFd, binding.history_file),
+            checkpointPath: scopedPath(trustFd, binding.checkpoint_file), checkpointSha256: binding.checkpoint_sha256,
+        });
+        validateForwardAccountingEvidence({
+            evidence, prior, forward: ledger, config: quotaConfig, now,
+            openingSha256: binding.opening_sha256, quotaConfigSha256: authorization.quota_config_sha256,
+        });
+        const { opening, account } = evidence;
+        if (opening.segment.head !== authorization.authority_pre_head || opening.segment.state_hash !== authorization.authority_pre_state_hash) {
+            fail('AUTHORIZATION_AUTHORITY_PRESTATE_MISMATCH', 'opening ledger epoch does not bind the authorized transaction pre-state');
+        }
+        if (ledger.entries.length !== 0 || opening.run_id !== authorization.run_id || opening.request_id !== authorization.request_id ||
+            account.account_identity_sha256 !== binding.account_identity_sha256 || Date.parse(authorization.issued_at) < Date.parse(opening.approved_at) ||
+            Date.parse(authorization.expires_at) > Date.parse(opening.expires_at)) {
+            fail('STAGE_D_FORWARD_BINDING_MISMATCH', 'forward authorization, opening account, single request or approval window do not match');
+        }
+        assertControlledAuthorizationWindow({ issuedAt: authorization.issued_at, expiresAt: authorization.expires_at, now });
+        return { reported_used: account.used, reported_remaining: account.remaining };
+    } finally {
+        closeDirectoryDescriptor(trust);
+    }
+}
+
+function activateForwardDeployment({ runtime, token, runLockTrustRoot, consumedAt }) {
+    const { authorizationRecord } = runtime;
+    const { authorization } = authorizationRecord;
+    const binding = authorization.forward_accounting;
+    // The append-only deployment fence cannot be recreated by restoring either ledger.
+    // Publish it before consuming the authorization; a partial write blocks both lanes.
+    writeExclusiveImmutable(scopedPath(token.trust_directory_fd, FORWARD_DEPLOYMENT_FENCE), {
+        schema_version: 'footballprediction-stage-d-forward-activation/v1',
+        authorization_sha256: authorizationRecord.authorization_sha256,
+        opening_sha256: binding.opening_sha256,
+        checkpoint_sha256: binding.checkpoint_sha256,
+        account_identity_sha256: binding.account_identity_sha256,
+        consumption_inventory_sha256: binding.consumption_inventory_sha256,
+        accounting_epoch_id: authorization.accounting_epoch_id,
+        prior_ledger_root: binding.prior_ledger_root,
+        ledger_root: binding.ledger_root,
+        run_id: authorization.run_id,
+        request_id: authorization.request_id,
+        activated_at: consumedAt,
+    }, 'Stage D forward deployment activation fence', { directoryFd: token.trust_directory_fd });
+    return consumeStageDControlledAuthorization({ authorizationRecord, ledgerRoot: token.root, runLockTrustRoot, consumedAt });
+}
+
+async function runWithControlledDeploymentLock({ ledgerRoot, runLockTrustRoot, authorizationRecord, startedAt }, run) {
+    const trust = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot, authorizationRecord.trust_identity);
+    const lockPath = scopedPath(trust.fd, CONTROLLED_DEPLOYMENT_LOCK);
+    try {
+        assertForwardDeploymentUnused(trust.fd);
+        assertDeploymentRecordAbsent(trust.fd, controlledAuthorizationMarkerName(authorizationRecord.authorization),
+            'STAGE_D_AUTHORIZATION_REPLAY', 'controlled authorization has already been consumed');
+        try {
+            writeExclusiveImmutable(lockPath, {
+                schema_version: 'footballprediction-stage-d-controlled-deployment-lock/v1',
+                authorization_sha256: authorizationRecord.authorization_sha256,
+                started_at: startedAt,
+            }, 'Stage D controlled deployment lock', { directoryFd: trust.fd });
+        } catch (error) {
+            if (error?.code === 'EEXIST') fail('STAGE_D_CONTROLLED_DEPLOYMENT_ACTIVE_OR_STALE', 'Stage D deployment is active or requires reconciliation');
+            throw error;
+        }
+        const lock = fs.lstatSync(lockPath);
+        let outcomeKnown = true;
+        try {
+            return await run(() => { outcomeKnown = false; });
+        } finally {
+            if (outcomeKnown) {
+                const observed = fs.lstatSync(lockPath);
+                if (!observed.isFile() || lock.dev !== observed.dev || lock.ino !== observed.ino) {
+                    fail('AMBIGUOUS_RUN_LOCK', 'Stage D deployment lock changed; manual reconciliation is required');
+                }
+                assertDirectoryIdentity(runLockTrustRoot, trust.identity, 'Stage D deployment trust root');
+                fs.unlinkSync(lockPath);
+                fsyncDirectoryFd(trust.fd);
+            }
+        }
+    } finally {
+        closeDirectoryDescriptor(trust);
+    }
+}
+
+function releaseControlledLedgerLock(token, markUnknown) {
+    try {
+        releaseStageDRunLock(token);
+    } catch (error) {
+        markUnknown?.();
+        throw error;
+    }
+}
+
+async function runWithPriorLedgerLock(cycleOptions, quotaConfigPath) {
+    const { authorizationRecord, markUnknown } = cycleOptions[CONTROLLED_DEPLOYMENT];
+    const binding = authorizationRecord.authorization.forward_accounting;
+    const priorLock = acquireStageDRunLock({
+        operationRoot: binding.prior_ledger_root,
+        runId: cycleOptions.runId,
+        acquiredAt: cycleOptions.clock(),
+        runLockTrustRoot: cycleOptions.runLockTrustRoot,
+        expectedOperationIdentity: binding.prior_ledger_identity,
+        expectedTrustIdentity: binding.trust_identity,
+    });
+    try {
+        return await executeStageDOneCycle({ ...cycleOptions, [FORWARD_RUNTIME]: { authorizationRecord, quotaConfigPath, priorLock } });
+    } finally {
+        releaseControlledLedgerLock(priorLock, markUnknown);
+    }
+}
+
 // eslint-disable-next-line complexity -- the binder deliberately orders validation, consumption and shared-cycle admission.
 async function executeStageDControlledInitialization(options = {}) {
     assertPlainObject(options, 'Stage D controlled initialization options');
@@ -3192,8 +3408,10 @@ async function executeStageDControlledInitialization(options = {}) {
     const now = trustedClock();
     assertUtc(now, 'controlled authorization validation time');
     const authorizationRecord = readStageDControlledAuthorization({ authorizationArtifactPath, ledgerRoot, runLockTrustRoot });
+    const forward = authorizationRecord.authorization.schema_version === FORWARD_AUTHORIZATION_SCHEMA_VERSION;
+    if (forward && quotaAdjudicationPath !== undefined) fail('INVALID_AUTHORIZATION', 'do not mix forward accounting with a prior quota adjudication');
     if (process.env.NODE_ENV !== 'test' && Object.prototype.hasOwnProperty.call(options, 'fixtureUniverse')) fail('STAGE_D_INPUT_BINDING_FORBIDDEN', 'production fixture universe is constructed only from the bound RAW input');
-    const quotaSource = readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256: authorizationRecord.authorization.quota_config_sha256 });
+    const quotaSource = readBoundQuotaConfiguration({ quotaConfigPath, expectedSha256: authorizationRecord.authorization.quota_config_sha256, immutable: forward });
     const fixtureSource = readBoundFixtureUniverse({
         fixtureUniverseRawPath,
         allocationArtifactPath,
@@ -3238,6 +3456,16 @@ async function executeStageDControlledInitialization(options = {}) {
         fixtureUniverseRawSha256: fixtureSource.raw_sha256,
         now,
     });
+    const boundRecord = { ...authorizationRecord, ...validatedAuthorization };
+    if (forward) validateForwardRuntime({ authorizationRecord: boundRecord, ledgerRoot, runLockTrustRoot, quotaConfig: normalizedQuotaConfig, ledger, now });
+    if (!forward) {
+        const trust = openTrustedRuntimeRoot(ledgerRoot, runLockTrustRoot, authorizationRecord.trust_identity);
+        try {
+            assertForwardDeploymentUnused(trust.fd);
+        } finally {
+            closeDirectoryDescriptor(trust);
+        }
+    }
     const componentKeys = ['transport', 'evidencePersistence', 'candidateBuilder', 'transactionPublisher', 'proxyPreflight'];
     const hasComponentOverride = componentKeys.some(key => Object.prototype.hasOwnProperty.call(options, key));
     let boundTransport;
@@ -3300,13 +3528,7 @@ async function executeStageDControlledInitialization(options = {}) {
     const postPreflightNow = trustedClock();
     assertUtc(postPreflightNow, 'controlled authorization consumption time');
     assertControlledAuthorizationWindow({ ...controlledAuthorizationWindow, now: postPreflightNow });
-    const consumed = consumeStageDControlledAuthorization({
-        authorizationRecord: { ...authorizationRecord, ...validatedAuthorization },
-        ledgerRoot,
-        runLockTrustRoot,
-        consumedAt: postPreflightNow,
-    });
-    const cycleResult = await executeStageDOneCycle({
+    const cycleOptions = {
         authorityRoot,
         allocationArtifactPath,
         ledgerRoot,
@@ -3338,6 +3560,15 @@ async function executeStageDControlledInitialization(options = {}) {
             store_sha256: validatedAuthorization.authorization.authority_pre_store_sha256,
             allocation_authority_sha256: validatedAuthorization.authorization.authority_pre_allocation_authority_sha256,
         },
+    };
+    const cycleResult = await runWithControlledDeploymentLock({
+        ledgerRoot, runLockTrustRoot, authorizationRecord: boundRecord, startedAt: postPreflightNow,
+    }, markUnknown => {
+        const optionsWithDeployment = {
+            ...cycleOptions,
+            [CONTROLLED_DEPLOYMENT]: { authorizationRecord: boundRecord, startedAt: postPreflightNow, markUnknown },
+        };
+        return forward ? runWithPriorLedgerLock(optionsWithDeployment, quotaConfigPath) : executeStageDOneCycle(optionsWithDeployment);
     });
     const providerTransmissionAttempted = cycleResult.status !== 'CANCELLED_BEFORE_TRANSMISSION';
     return Object.freeze({
@@ -3348,7 +3579,7 @@ async function executeStageDControlledInitialization(options = {}) {
             authorization_id: validatedAuthorization.authorization.authorization_id,
             authorization_sha256: authorizationRecord.authorization_sha256,
             scope_sha256: validatedAuthorization.scope_sha256,
-            consumed_marker: consumed.marker_name,
+            consumed_marker: controlledAuthorizationMarkerName(validatedAuthorization.authorization),
             mission: CONTROLLED_AUTHORIZATION_MISSION,
             provider: PROVIDER,
             market: CONFIGURED_MARKETS[0],
@@ -3359,6 +3590,10 @@ async function executeStageDControlledInitialization(options = {}) {
             run_id: validatedAuthorization.authorization.run_id,
             request_id: validatedAuthorization.authorization.request_id,
             provider_transmission_attempted: providerTransmissionAttempted,
+            ...(forward ? {
+                opening_sha256: boundRecord.authorization.forward_accounting.opening_sha256,
+                checkpoint_sha256: boundRecord.authorization.forward_accounting.checkpoint_sha256,
+            } : {}),
             terminal_result: cycleResult.status,
         }),
     });
@@ -3388,6 +3623,8 @@ async function executeStageDOneCycle({
     clock = systemClock,
     controlledAuthorizationWindow = null,
     expectedAuthorityPreState = null,
+    [FORWARD_RUNTIME]: forwardRuntime = null,
+    [CONTROLLED_DEPLOYMENT]: deployment = null,
 } = {}) {
     if (runtimeAuthorization !== STAGE_D_RUNTIME_AUTHORIZATION
         && !(process.env.NODE_ENV === 'test' && runtimeAuthorization === STAGE_D_TEST_RUNTIME_AUTHORIZATION)) {
@@ -3419,7 +3656,13 @@ async function executeStageDOneCycle({
     const trustedClock = transport.network_capability === 'provider' ? systemClock : clock;
     const acquiredAt = trustedClock();
     assertUtc(acquiredAt, 'run lock acquired_at');
-    const token = acquireStageDRunLock({ operationRoot: ledgerRoot, runId, acquiredAt, runLockTrustRoot });
+    const forwardBinding = forwardRuntime?.authorizationRecord.authorization.forward_accounting;
+    const token = acquireStageDRunLock({
+        operationRoot: ledgerRoot, runId, acquiredAt, runLockTrustRoot,
+        expectedOperationIdentity: forwardBinding?.ledger_identity ?? null,
+        expectedTrustIdentity: deployment?.authorizationRecord.trust_identity ?? null,
+    });
+    let generationBound = false;
     let reconcileRequired = false;
     let intentPersisted = false;
     let authorityDescriptor;
@@ -3429,11 +3672,14 @@ async function executeStageDOneCycle({
     try {
         // eslint-disable-next-line complexity -- the inner cycle intentionally enumerates each durable boundary.
         cycleResult = await (async () => {
-        try {
-            bindStageDRunLockGeneration(token, { ledgerRoot });
-        } catch (error) {
-            reconcileRequired = true;
-            throw error;
+        if (forwardRuntime === null) {
+            try {
+                bindStageDRunLockGeneration(token, { ledgerRoot });
+                generationBound = true;
+            } catch (error) {
+                reconcileRequired = true;
+                throw error;
+            }
         }
         try {
             authorityDescriptor = openTrustedDirectoryDescriptor(canonicalAuthorityRoot, 'transaction authority root', canonicalAuthorityRootIdentity);
@@ -3485,6 +3731,7 @@ async function executeStageDOneCycle({
             now: budgetNow,
             requestedUnits: EXPECTED_REQUEST_COST_CREDITS,
         });
+        let forwardOpeningQuota = null;
         try {
             // The descriptor pins the authority read, while this path check
             // prevents a replaced public root from becoming the authority
@@ -3493,6 +3740,53 @@ async function executeStageDOneCycle({
         } catch (error) {
             reconcileRequired = true;
             throw error;
+        }
+        if (forwardRuntime !== null) {
+            if (transport.network_capability === 'provider') transport.preflight();
+            const consumedAt = trustedClock();
+            assertUtc(consumedAt, 'forward authorization consumption time');
+            if (Date.parse(consumedAt) < Date.parse(budgetNow)) fail('STAGE_D_FORWARD_CLOCK_REVERSED', 'clock moved backwards before consumption');
+            const freshLedger = readRequestLedger({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity });
+            latestBoundRunLockGeneration(token, freshLedger, ledgerRoot);
+            readBoundQuotaConfiguration({ quotaConfigPath: forwardRuntime.quotaConfigPath, expectedSha256: quotaConfigSha256, immutable: true });
+            const boundAuth = readRegularFileBytes(scopedPath(token.trust_directory_fd, path.basename(forwardRuntime.authorizationRecord.path)), 'Stage D controlled authorization');
+            if (sha256Text(boundAuth.bytes) !== forwardRuntime.authorizationRecord.authorization_sha256) fail('INVALID_AUTHORIZATION', 'controlled authorization changed after initial validation');
+            forwardOpeningQuota = validateForwardRuntime({
+                authorizationRecord: forwardRuntime.authorizationRecord, ledgerRoot, runLockTrustRoot, quotaConfig,
+                ledger: freshLedger, now: consumedAt, existingTrustFd: token.trust_directory_fd, priorLock: forwardRuntime.priorLock,
+            });
+            if (quotaConfig.max_requests_per_day !== null && forwardOpeningQuota.reported_used + 1 > quotaConfig.max_requests_per_day) {
+                fail('REQUEST_BUDGET_DENIED', 'opening usage does not prove room within the configured daily cap');
+            }
+            assertStageDAuthorityPreState({
+                authoritySnapshot: openMarketEvidenceAuthoritySnapshot(authoritySnapshotOptions), authorityRoot: pinnedAuthorityRoot,
+                allocationArtifactPath: canonicalAllocationArtifactPath, expected: expectedAuthorityPreState,
+            });
+            assertDirectoryIdentity(canonicalAuthorityRoot, canonicalAuthorityRootIdentity, 'transaction authority root');
+            try {
+                activateForwardDeployment({ runtime: forwardRuntime, token, runLockTrustRoot, consumedAt });
+            } catch (error) {
+                deployment.markUnknown();
+                throw error;
+            }
+            try {
+                bindStageDRunLockGeneration(token, { ledgerRoot, expectedLedgerIdentity: lockedLedgerRootIdentity });
+                generationBound = true;
+            } catch (error) {
+                reconcileRequired = true;
+                throw error;
+            }
+        } else if (deployment !== null) {
+            // A second check under the deployment and ledger locks closes the switch race.
+            assertForwardDeploymentUnused(token.trust_directory_fd);
+            try {
+                consumeStageDControlledAuthorization({
+                    authorizationRecord: deployment.authorizationRecord, ledgerRoot, runLockTrustRoot, consumedAt: deployment.startedAt,
+                });
+            } catch (error) {
+                if (error?.code !== 'STAGE_D_AUTHORIZATION_REPLAY') deployment.markUnknown();
+                throw error;
+            }
         }
         try {
             recordRequestIntent({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, runId, createdAt: budgetNow, recordedAt: budgetNow });
@@ -3504,7 +3798,7 @@ async function executeStageDOneCycle({
             reconcileRequired = true;
             throw error;
         }
-        if (transport.network_capability === 'provider' && typeof transport.preflight === 'function') {
+        if (forwardRuntime === null && transport.network_capability === 'provider' && typeof transport.preflight === 'function') {
             try {
                 // Credential readiness is a local check and must precede the
                 // transmission boundary; missing credentials cannot consume
@@ -3520,15 +3814,22 @@ async function executeStageDOneCycle({
                 throw error;
             }
         }
+        let transmissionStartedAt;
         if (controlledAuthorizationWindow !== null) {
             try {
                 assertPlainObject(controlledAuthorizationWindow, 'controlled authorization window');
                 assertExactKeys(controlledAuthorizationWindow, ['issuedAt', 'expiresAt'], 'controlled authorization window');
-                assertControlledAuthorizationWindow({
-                    issuedAt: controlledAuthorizationWindow.issuedAt,
-                    expiresAt: controlledAuthorizationWindow.expiresAt,
-                    now: trustedClock(),
-                });
+                const checkedAt = trustedClock();
+                assertControlledAuthorizationWindow({ ...controlledAuthorizationWindow, now: checkedAt });
+                if (forwardRuntime !== null) {
+                    if (Date.parse(checkedAt) < Date.parse(budgetNow)) fail('STAGE_D_FORWARD_CLOCK_REVERSED', 'clock moved backwards before transmission');
+                    assertDirectoryIdentity(ledgerRoot, token.root_identity, 'forward ledger root');
+                    assertDirectoryIdentity(forwardRuntime.priorLock.root, forwardRuntime.priorLock.root_identity, 'prior ledger root');
+                    assertDirectoryIdentity(runLockTrustRoot, token.trust_identity, 'forward deployment trust root');
+                    transmissionStartedAt = checkedAt;
+                } else if (deployment !== null) {
+                    assertForwardDeploymentUnused(token.trust_directory_fd);
+                }
             } catch (error) {
                 try {
                     markRequestTerminal({
@@ -3546,7 +3847,7 @@ async function executeStageDOneCycle({
                 throw error;
             }
         }
-        const transmissionStartedAt = trustedClock();
+        transmissionStartedAt ??= trustedClock();
         assertUtc(transmissionStartedAt, 'transmission_started_at');
         try {
             markTransmissionStarted({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, transmittedAt: transmissionStartedAt, recordedAt: transmissionStartedAt });
@@ -3607,17 +3908,36 @@ async function executeStageDOneCycle({
             throw error;
         };
         let responseAt;
+        let responseTimeError = null;
         try {
             assertPlainObject(response, 'provider transport response');
             if (!Number.isInteger(response.http_status) || response.http_status < 100 || response.http_status > 599) fail('TRANSPORT_RESPONSE_INVALID', 'provider HTTP status is invalid');
-            responseAt = response.response_received_at || trustedClock();
-            assertUtc(responseAt, 'response_received_at');
+            if (forwardRuntime === null) {
+                responseAt = response.response_received_at || trustedClock();
+                assertUtc(responseAt, 'response_received_at');
+            } else {
+                const { verifyForwardResponseTime } = require('./stageDForwardAccounting');
+                const checkedAt = trustedClock();
+                assertUtc(checkedAt, 'provider response validation time');
+                try {
+                    verifyForwardResponseTime({
+                        transmittedAt: transmissionStartedAt, requestStartedAt: response.request_started_at,
+                        responseAt: response.response_received_at, checkedAt, config: quotaConfig,
+                        expiresAt: controlledAuthorizationWindow.expiresAt,
+                    });
+                    responseAt = response.response_received_at;
+                } catch (error) {
+                    responseTimeError = error;
+                    // 只记录可信的本机观测，用于失败终态与诊断，拒绝外部的越界时点。
+                    responseAt = Date.parse(checkedAt) >= Date.parse(transmissionStartedAt) ? checkedAt : transmissionStartedAt;
+                }
+            }
         } catch (error) {
             terminalizePostBoundaryFailure(error);
         }
         if (response.http_status < 200 || response.http_status >= 300) {
             try {
-                markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'HTTP_FAILURE_AFTER_TRANSMISSION', at: responseAt, errorClassification: `HTTP_${response.http_status}` });
+                markRequestTerminal({ ledgerRoot, expectedRootIdentity: lockedLedgerRootIdentity, requestId, terminalState: 'HTTP_FAILURE_AFTER_TRANSMISSION', at: responseAt, errorClassification: responseTimeError === null ? `HTTP_${response.http_status}` : 'PROVIDER_RESPONSE_TIME_INVALID' });
             } catch (error) {
                 reconcileRequired = true;
                 throw error;
@@ -3639,6 +3959,7 @@ async function executeStageDOneCycle({
             } catch (error) {
                 fail('FAILURE_DIAGNOSTIC_PERSISTENCE_FAILED', 'post-boundary failure diagnostic persistence failed after durable terminal accounting');
             }
+            if (responseTimeError !== null) throw responseTimeError;
             return Object.freeze({ status: 'HTTP_FAILURE_AFTER_TRANSMISSION', request_id: requestId, run_id: runId, ...diagnostic });
         }
         const terminalizePostResponseFailure = ({ failurePhase, errorCode, raw = null, providerQuota = null } = {}) => {
@@ -3685,14 +4006,18 @@ async function executeStageDOneCycle({
             terminalizePostResponseFailure({ failurePhase: 'RAW_PERSISTENCE', errorCode: 'RAW_PERSISTENCE_FAILED' });
             throw error;
         }
+        if (responseTimeError !== null) {
+            terminalizePostResponseFailure({ failurePhase: 'RESPONSE_TIME_VALIDATION', errorCode: 'PROVIDER_RESPONSE_TIME_INVALID', raw: persistedRaw });
+            throw responseTimeError;
+        }
         let reconciledProviderQuota;
         try {
             reconciledProviderQuota = reconcileProviderQuotaHeaders({
                 headers: response.provider_quota,
                 quotaConfig,
                 expectedRequestCostCredits: budgetDecision.expected_request_cost_credits,
-                localConsumedAfterRequest: budgetDecision.monthly_used + budgetDecision.expected_request_cost_credits,
-                previousProviderQuota: latestReconciledProviderQuota(ledger),
+                localConsumedAfterRequest: (forwardOpeningQuota?.reported_used ?? budgetDecision.monthly_used) + budgetDecision.expected_request_cost_credits,
+                previousProviderQuota: forwardOpeningQuota ?? latestReconciledProviderQuota(ledger),
             });
         } catch (error) {
             terminalizePostResponseFailure({ failurePhase: 'QUOTA_RECONCILIATION', errorCode: 'PROVIDER_QUOTA_RECONCILIATION_FAILED', raw: persistedRaw });
@@ -3774,16 +4099,20 @@ async function executeStageDOneCycle({
         cycleError = error;
     } finally {
         try {
-            if (!reconcileRequired) {
+            if (!reconcileRequired && generationBound) {
                 try {
-                    bindStageDRunLockGeneration(token, { ledgerRoot });
+                    bindStageDRunLockGeneration(token, { ledgerRoot, expectedLedgerIdentity: forwardBinding?.ledger_identity ?? null });
                 } catch (error) {
                     reconcileRequired = true;
                     finalizationError = error;
                 }
             }
-            if (reconcileRequired) abandonStageDRunLock(token);
-            else releaseStageDRunLock(token);
+            if (reconcileRequired) {
+                deployment?.markUnknown();
+                abandonStageDRunLock(token);
+            } else {
+                releaseControlledLedgerLock(token, deployment?.markUnknown);
+            }
         } finally {
             closeDirectoryDescriptor(authorityDescriptor);
         }

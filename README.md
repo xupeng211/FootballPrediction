@@ -256,7 +256,9 @@ this section rather than maintaining duplicate command lists.
 **Stage D 后续记账离线核验。** `scripts/ops/stage_d_cycle.js --dry-run --forward-opening`
 使用保留的旧账、当期额度凭据、后续账本和独立检查点验证一笔请求的额度。输入顺序及
 备份恢复方法见 [Stage D 合同](docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
-这个入口只输出分析结果，实际发送仍由既有受控执行入口管理。
+离线入口只输出分析结果。`scripts/ops/stage_d_controlled_initialization.js` 识别外部
+受信部署根内绑定两段账本、账户开账和独立检查点的 v3 单次授权。实际启用依赖单一
+部署根、账户独占、当期原件和单笔 Gate 3 决定。
 
 The **FotMob frozen replay packaging** bridge is a specialized internal offline
 surface: `npm run fotmob:frozen:replay-package -- --freeze=<path>

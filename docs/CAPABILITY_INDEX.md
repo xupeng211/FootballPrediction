@@ -156,7 +156,7 @@ low。collector 正式开放继续取决于业务验收和 Gate 3。治理工具
 
 ### Stage D current capability note
 
-后续记账的只读核验复用同一账本格式。它能对照独立检查点核验两段历史和本期初始余额，并复核指定的一次请求。见 [Stage D 合同](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。生产接入仍待完成。
+后续记账复用同一账本格式及单次受控入口。v3 授权在隔离环境验证两段账本绑定、已核验期初用量与回执对账、RAW 留存和交易发布。该能力仍处于受控启用前状态，依赖部署、账户与 Gate 3 验收。见 [Stage D 合同](data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md)。
 
 Stage D's controlled adapter prospectively persists separate immutable,
 bounded/redacted diagnostics for non-2xx responses
