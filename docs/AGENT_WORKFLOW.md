@@ -125,6 +125,11 @@ Docker Build Validation
 
 规则可能由 owner 在 GitHub 上改变；报告时以 ruleset API 和实际 run 为准。PR source change 必须产生验证新 HEAD 的 run，不能复用历史 green run。merge 后必须记录实际 merge SHA，并确认 main push Production Gate 验证同一完整 SHA；仅有 PR green 或“已 merged”不算 DONE。
 
+合并后验收使用 `make pr-post-merge-check PR=<number> MERGE_COMMIT=<full SHA> BRANCH=<name>`。
+工具以 GitHub 返回的该 PR 的 `mergeCommit.oid` 为准。传入值缺失、不是完整 SHA 或与合并记录不符时，
+立即阻断该提交的 CI 验收。工具只查询该完整 SHA 在 `main` 上的 `push` Production Gate，
+并再次核对返回的事件、分支、完整提交和最终结论。保留 PR 号、CI run ID 及这三项来源信息作为交付证据。
+
 完整 SHA 的共享实现是 `scripts/devops/exact_head.py`。`pr_ready_check.py`、CI event
 ref helper 和 post-merge evidence check 必须通过这个 primitive 做 freshness/authority
 比较；任何同前 7 位但完整 SHA 不同的值都必须判为 stale 或不匹配。

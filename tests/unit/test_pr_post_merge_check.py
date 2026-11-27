@@ -14,6 +14,8 @@ import subprocess
 import sys
 from unittest import mock
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/devops/pr_post_merge_check.py"
 _PR_NUM = 1475
@@ -46,6 +48,8 @@ VALID_CI_RUN = [
         "status": "completed",
         "conclusion": "success",
         "headSha": _MERGE_COMMIT,
+        "event": "push",
+        "headBranch": "main",
     }
 ]
 
@@ -164,9 +168,18 @@ def test_all_checks_pass():
             return git_ok(args, **kwargs)
         raise RuntimeError(f"Unexpected command: {args}")
 
-    with mock.patch("subprocess.run", side_effect=_combined_run):
+    with mock.patch("subprocess.run", side_effect=_combined_run) as run:
         result = pp.evaluate(_PR_NUM, _MERGE_COMMIT, _BRANCH)
     _assert_pass(result)
+    ci_args = next(call.args[0] for call in run.call_args_list if call.args[0][:2] == ["gh", "run"])
+    assert ci_args[:3] == ["gh", "run", "list"]
+    filters = dict(zip(ci_args[3::2], ci_args[4::2], strict=True))
+    assert filters["--workflow"] == "production-gate.yml"
+    assert filters["--branch"] == "main"
+    assert filters["--event"] == "push"
+    assert filters["--commit"] == _MERGE_COMMIT
+    assert result.ci_event == "push"
+    assert result.ci_head_branch == "main"
 
 
 # ---------------------------------------------------------------------------
@@ -624,9 +637,8 @@ def test_main_json_output():
 
 
 def test_merge_commit_short_fails():
-    result = pp._check_merge_commit("abc")
-    assert len(result) >= 1
-    assert any("SHA" in r for r in result)
+    with pytest.raises(pp.ExactHeadError, match="full 40-hex commit SHA"):
+        pp._resolve_merge_commit(MERGED_PR_JSON, "abc")
 
 
 def test_ci_check_requires_current_full_head_when_expected():
@@ -642,8 +654,7 @@ def test_ci_check_requires_current_full_head_when_expected():
 
 
 def test_merge_commit_valid_passes():
-    result = pp._check_merge_commit(_MERGE_COMMIT)
-    assert len(result) == 0
+    assert pp._resolve_merge_commit(MERGED_PR_JSON, _MERGE_COMMIT.upper()) == _MERGE_COMMIT
 
 
 def test_pr_merged_check_passes():
@@ -664,14 +675,17 @@ def test_ci_check_success_passes():
         "run_id": "12345",
         "status": "completed",
         "conclusion": "success",
+        "event": "push",
+        "head_branch": "main",
+        "head_sha": _MERGE_COMMIT,
     }
-    result = pp._check_ci(ci_data)
+    result = pp._check_ci(ci_data, _MERGE_COMMIT)
     assert len(result) == 0
 
 
 def test_ci_check_not_found_fails():
     ci_data = {"found": False, "run_id": None, "status": "", "conclusion": ""}
-    result = pp._check_ci(ci_data)
+    result = pp._check_ci(ci_data, _MERGE_COMMIT)
     assert len(result) >= 1
     assert any("not found" in r for r in result)
 
@@ -683,7 +697,7 @@ def test_ci_check_failed_fails():
         "status": "completed",
         "conclusion": "failure",
     }
-    result = pp._check_ci(ci_data)
+    result = pp._check_ci(ci_data, _MERGE_COMMIT)
     assert len(result) >= 1
     assert any("failure" in r for r in result)
 

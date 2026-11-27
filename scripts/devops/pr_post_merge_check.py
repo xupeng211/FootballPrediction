@@ -10,22 +10,22 @@ cleanup is deliberately outside this completion utility.
 Usage:
   # Read-only check (default — safe)
   python scripts/devops/pr_post_merge_check.py --pr 1475 \
-      --merge-commit abc1234 --branch feature/my-branch
+      --merge-commit <full-merge-sha> --branch feature/my-branch
 
 Checks performed:
   1. PR state is MERGED
-  2. Merge commit is valid and non-empty
+  2. Supplied full merge SHA matches GitHub's merge commit for this PR
   3. Merge commit exists in origin/main
-  4. Production Gate CI workflow concluded with success on the merge commit
+  4. Production Gate CI succeeded for the exact merge commit on a main push
   5. Local main can fast-forward sync to origin/main
   6. Working tree is clean (no uncommitted changes)
   7. The supplied branch value is reported only; it never authorizes cleanup
 
 PASS conditions (ALL must be true):
   - PR state == MERGED
-  - Merge commit SHA present and exactly 40 hex characters
+  - GitHub merge SHA and supplied SHA are equal complete commit IDs
   - Merge commit reachable from origin/main
-  - Production Gate CI run exists for merge commit
+  - Production Gate CI run exists for a main push at that merge SHA
   - CI status is completed
   - CI conclusion is success
   - Local main is up-to-date or can ff-only sync
@@ -33,9 +33,9 @@ PASS conditions (ALL must be true):
 
 FAIL on any of:
   - PR not merged
-  - Merge commit missing/invalid
+  - Merge commit missing, invalid, or different from GitHub's merge commit
   - Merge commit not in origin/main
-  - CI run not found / pending / failed / cancelled
+  - CI run not found / wrong event or branch / pending / failed / cancelled
   - Local main diverged from origin/main
   - Working tree has uncommitted changes
 Cleanup is not performed here. `DONE` remains the responsibility of the exact
@@ -51,13 +51,14 @@ import subprocess
 import sys
 from typing import Any
 
-from exact_head import ExactHeadError, assert_ci_is_current, is_full_sha, normalize_full_sha
+from exact_head import ExactHeadError, assert_ci_is_current, assert_exact_head, is_full_sha
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
+PRODUCTION_GATE_FILE = "production-gate.yml"
 TIMEOUT_SECONDS = 30
 _AHEAD_BEHIND_COUNT_FIELDS = 2
 
@@ -83,6 +84,8 @@ class PostMergeResult:
     main_ff_ok: bool = False
     status_clean: bool = False
     ci_head_sha: str | None = None
+    ci_event: str | None = None
+    ci_head_branch: str | None = None
 
     def verdict(self) -> str:
         """Return 'PASS' or 'FAIL'."""
@@ -139,20 +142,24 @@ def fetch_pr(number: int) -> dict[str, Any]:
 
 
 def fetch_ci(commit_sha: str) -> dict[str, Any]:
-    """Find the most recent Production Gate run for a commit SHA."""
+    """Find the most recent main push Production Gate run for a commit SHA."""
     try:
         raw = run_gh(
             [
                 "run",
                 "list",
                 "--workflow",
-                PRODUCTION_GATE_WORKFLOW,
+                PRODUCTION_GATE_FILE,
+                "--branch",
+                "main",
+                "--event",
+                "push",
                 "--commit",
                 commit_sha,
                 "--limit",
                 "1",
                 "--json",
-                "name,status,conclusion,databaseId,headSha",
+                "name,status,conclusion,databaseId,headSha,event,headBranch",
             ]
         )
     except subprocess.CalledProcessError:
@@ -182,6 +189,8 @@ def fetch_ci(commit_sha: str) -> dict[str, Any]:
         "status": entry.get("status", ""),
         "conclusion": entry.get("conclusion", ""),
         "head_sha": str(entry.get("headSha") or "").lower(),
+        "event": entry.get("event"),
+        "head_branch": entry.get("headBranch"),
     }
 
 
@@ -255,12 +264,15 @@ def _check_pr_merged(pr_data: dict[str, Any]) -> list[str]:
     return []
 
 
-def _check_merge_commit(merge_commit: str) -> list[str]:
-    try:
-        normalize_full_sha(merge_commit.strip(), role="merge commit SHA")
-    except ExactHeadError:
-        return [f"Merge commit SHA must be a full 40-hex commit SHA: '{merge_commit}'"]
-    return []
+def _resolve_merge_commit(pr_data: dict[str, Any], supplied_sha: str) -> str:
+    """Bind the requested SHA to the merge commit reported by GitHub."""
+    merge_commit = pr_data.get("mergeCommit")
+    github_sha = merge_commit.get("oid") if isinstance(merge_commit, dict) else None
+    return assert_exact_head(
+        github_sha if isinstance(github_sha, str) else None,
+        supplied_sha.strip(),
+        role="PR merge SHA",
+    )
 
 
 def _check_merge_in_main(merge_commit: str) -> list[str]:
@@ -271,20 +283,26 @@ def _check_merge_in_main(merge_commit: str) -> list[str]:
     return []
 
 
-def _check_ci(ci_data: dict[str, Any], expected_head: str | None = None) -> list[str]:
+def _check_ci(ci_data: dict[str, Any], expected_head: str) -> list[str]:
     failures: list[str] = []
     if not ci_data.get("found"):
-        failures.append(f"CI workflow '{PRODUCTION_GATE_WORKFLOW}' not found for merge commit")
+        failures.append(
+            f"CI workflow '{PRODUCTION_GATE_WORKFLOW}' not found for main push at merge commit"
+        )
         return failures
+    if ci_data.get("event") != "push" or ci_data.get("head_branch") != "main":
+        failures.append(
+            f"CI must be a main push; observed event={ci_data.get('event')!r}, "
+            f"branch={ci_data.get('head_branch')!r}"
+        )
     if ci_data.get("status") != "completed":
         failures.append(f"CI status is '{ci_data.get('status')}', expected 'completed'")
     if ci_data.get("conclusion") != "success":
         failures.append(f"CI conclusion is '{ci_data.get('conclusion')}', expected 'success'")
-    if expected_head is not None:
-        try:
-            assert_ci_is_current(ci_data.get("head_sha"), expected_head)
-        except ExactHeadError as exc:
-            failures.append(str(exc))
+    try:
+        assert_ci_is_current(ci_data.get("head_sha"), expected_head)
+    except ExactHeadError as exc:
+        failures.append(str(exc))
     return failures
 
 
@@ -304,7 +322,7 @@ def _check_status_clean() -> list[str]:
 
 CHECKS: list[tuple[str, Any]] = [
     ("PR merged", None),  # placeholder — resolved dynamically
-    ("Merge commit valid", None),
+    ("Merge commit matches GitHub", None),
     ("Merge commit in origin/main", _check_merge_in_main),
     ("Production Gate CI success", None),
     ("Local main ff-only sync", _check_main_ff_sync),
@@ -326,33 +344,18 @@ def evaluate(
     """Fetch PR + CI data and run all checks, returning a verdict."""
     pr_data = fetch_pr(pr_number)
     pr_state = pr_data.get("state", "UNKNOWN")
-    merge_sha = merge_commit.strip()
-    ci_data = (
-        fetch_ci(merge_sha)
-        if is_full_sha(merge_sha)
-        else {
-            "found": False,
-            "run_id": None,
-            "status": "",
-            "conclusion": "",
-            "head_sha": "",
-        }
-    )
-
-    # Resolve checks dynamically with captured state
-    failures: list[str] = []
-
-    # Check 1: PR merged
-    failures.extend(_check_pr_merged(pr_data))
-
-    # Check 2: Merge commit valid
-    failures.extend(_check_merge_commit(merge_commit))
-
-    # Check 3: Merge commit in origin/main
-    failures.extend(_check_merge_in_main(merge_sha))
-
-    # Check 4: CI success
-    failures.extend(_check_ci(ci_data, merge_sha if is_full_sha(merge_sha) else None))
+    failures = _check_pr_merged(pr_data)
+    merge_sha = ""
+    ci_data: dict[str, Any] = {}
+    if not failures:
+        try:
+            merge_sha = _resolve_merge_commit(pr_data, merge_commit)
+        except ExactHeadError as exc:
+            failures.append(str(exc))
+    if merge_sha:
+        failures.extend(_check_merge_in_main(merge_sha))
+        ci_data = fetch_ci(merge_sha)
+        failures.extend(_check_ci(ci_data, merge_sha))
 
     # Check 5: Main ff-only sync. Capture this mutable state once and reuse
     # the exact result for both the verdict and the evidence fields below.
@@ -381,6 +384,8 @@ def evaluate(
         main_ff_ok=main_ff_ok,
         status_clean=status_clean,
         ci_head_sha=ci_data.get("head_sha") or None,
+        ci_event=ci_data.get("event"),
+        ci_head_branch=ci_data.get("head_branch"),
     )
 
 
@@ -403,6 +408,8 @@ def format_evidence(result: PostMergeResult, *, as_json: bool = False) -> str:
                 "ci_status": result.ci_status,
                 "ci_conclusion": result.ci_conclusion,
                 "ci_head_sha": result.ci_head_sha,
+                "ci_event": result.ci_event,
+                "ci_head_branch": result.ci_head_branch,
                 "main_ff_ok": result.main_ff_ok,
                 "status_clean": result.status_clean,
                 "verdict": result.verdict(),
@@ -427,6 +434,8 @@ def format_evidence(result: PostMergeResult, *, as_json: bool = False) -> str:
         f"  CI Status:       {result.ci_status or 'N/A'}",
         f"  CI Conclusion:   {result.ci_conclusion or 'N/A'}",
         f"  CI HEAD:         {result.ci_head_sha or 'N/A'}",
+        f"  CI Event:        {result.ci_event or 'N/A'}",
+        f"  CI Branch:       {result.ci_head_branch or 'N/A'}",
         "-" * 60,
     ]
 
