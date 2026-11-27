@@ -122,6 +122,15 @@ DeepSeek canonical runner 的 `--retain-invocation` 模式保留本轮工作区�
 
 Receipt 的生成与结构/完整性验证只证明审核事实，不单独证明进程树停止或授予交付权限。通用 consumer 没有独立停止检查；集成方必须遵守“生成产物 → 同次整树证停及绑定原件核验 → 独立消费 → 后续派发”的既有前置条件，不能把 runner 退出或 receipt 出现当作停止证明。停止 UNKNOWN 必须保留现场、阻断消费及后续派发；具体已验证范围与局限见详细工作流的 DeepSeek Controller 保留模式章节。
 
+Stage D 工单 `FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME` 的正式 DeepSeek 审核只接受受信 Controller
+按本轮批准冻结的四块输入，第 2 块显式 low，其余使用隔离默认设置。派发及正式消费均需
+Controller 先核验固定 Harness、业务 Git 来源及其注册的干净准确 BASE，再从该 BASE 导入工具。
+读取凭据、启动捕获进程和消费原件前重新验证捕获程序来自 BASE 的固定普通 Git blob。
+正式入口使用该受控上下文，通用 CLI 对此工单关闭。每块先核对同次监护器 ECHILD、
+实际子进程与原始会话，再封存该块并允许下一块启动。完成四块才可能形成专用 v2 收据；
+同一批准目录内的失败和已用额度保留。旧 v1 可按原规则作历史核验。治理补丁自身使用未修改
+可信 BASE 上的原默认双审。Controller 的信任来源和具体接口见详细工作流。
+
 DeepSeek 冻结源码输入合同 `frozen-git-source-context/v1` 仅用于
 `FP_CANONICAL_CONTRACT_BACKFLOW_MINIMAL_FIX` 的固定已核实依赖。准备器只读准确
 BASE/HEAD Git blob，validator 独立重建上下文及实际 Prompt 字节；完整 Diff、

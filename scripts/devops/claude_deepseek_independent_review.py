@@ -25,6 +25,7 @@ SHA1_LENGTH = 40
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.devops import deepseek_low_effort as low  # noqa: E402
 from scripts.devops import independent_review_receipt as receipts  # noqa: E402
 from scripts.devops.deepseek_review_chunks import (  # noqa: E402
     MAX_CHUNK_DIFF_BYTES,
@@ -143,6 +144,7 @@ def _run_chunked_review(
     scope_sha: str,
     worktree: Path,
     retain_home_parent: Path | None = None,
+    pilot: low.LowReview | None = None,
 ) -> tuple[bytes, dict, list[dict]]:
     manifest = plan(
         diff,
@@ -168,6 +170,9 @@ def _run_chunked_review(
     ]
     if any(len(prompt.encode()) > MAX_CHUNK_PROMPT_BYTES for prompt in prompts):
         raise DeepSeekReviewError("chunk prompt exceeds canonical byte limit")
+    if pilot is not None:
+        pilot.check_inputs(worktree, manifest, diff, [prompt.encode() for prompt in prompts])
+        pilot.claim()
     for chunk in manifest.chunks:
         source = diff[chunk.start : chunk.end]
         prompt = prompts[chunk.index]
@@ -175,6 +180,8 @@ def _run_chunked_review(
             options = (
                 {"retain_home_parent": retain_home_parent} if retain_home_parent is not None else {}
             )
+            if pilot is not None:
+                options["supervised_chunk"] = (pilot, chunk.index)
             raw, result, execution = backend.run(prompt=prompt, cwd=worktree, **options)
         except backend.BackendInfrastructureError as exc:
             raise DeepSeekReviewError(
@@ -210,6 +217,8 @@ def _run_chunked_review(
                 "session_id": execution_evidence.session_id,
             }
         )
+        if pilot is not None:
+            pilot.check_chunk(chunk.index, trusted[-1], seal=True)
     normalized = aggregate(values, manifest)
     evidence = [
         {
@@ -240,7 +249,7 @@ def _run_chunked_review(
     )
 
 
-def _run_review(args: argparse.Namespace) -> Path:
+def _run_review(args: argparse.Namespace, *, pilot: low.LowReview | None = None) -> Path:  # noqa: C901, PLR0912, PLR0915
     """Create an external generic receipt for a new DeepSeek review session."""
     root = args.repo_root.resolve()
     base, head = _sha(root, args.base_sha), _sha(root, args.head_sha)
@@ -260,12 +269,22 @@ def _run_review(args: argparse.Namespace) -> Path:
     ):
         raise DeepSeekReviewError("mission scope is not bound to reviewed HEAD")
     evidence = args.evidence_dir.resolve()
+    if (scope.mission_id == low.MISSION) != (pilot is not None):
+        raise DeepSeekReviewError("Stage D review requires its trusted Controller")
+    if pilot is not None and (
+        not getattr(args, "retain_invocation", False)
+        or evidence != pilot.evidence_dir
+        or pilot.target().get("head") != head
+        or pilot.target().get("base") != base
+        or pilot.trusted_dir.is_relative_to(root)
+    ):
+        raise DeepSeekReviewError("Stage D retained Controller target mismatch")
     if root in evidence.parents or evidence == root:
         raise DeepSeekReviewError("evidence directory must be outside the repository")
     evidence.mkdir(mode=0o700, parents=True, exist_ok=True)
     if evidence.stat().st_mode & 0o077:
         raise DeepSeekReviewError("evidence directory must be owner-only")
-    run_id = uuid.uuid4().hex
+    run_id = pilot.run_id if pilot else uuid.uuid4().hex
     worktree = evidence / f"claude-deepseek-worktree-{head[:12]}-{run_id}"
     _git(root, "worktree", "add", "--detach", str(worktree), head)
     if _sha(worktree, "HEAD") != head or _git(worktree, "status", "--porcelain"):
@@ -304,6 +323,8 @@ def _run_review(args: argparse.Namespace) -> Path:
         len(diff) > MAX_CHUNK_DIFF_BYTES or source_context_version_for(scope.mission_id) is not None
     )
     trusted_chunks: list[dict] = []
+    if pilot is not None and not chunked:
+        raise DeepSeekReviewError("Stage D supervised review requires four chunks")
     if chunked:
         raw, normalized, trusted_chunks = _run_chunked_review(
             diff=diff,
@@ -313,6 +334,7 @@ def _run_review(args: argparse.Namespace) -> Path:
             scope_sha=sha256_bytes(scope_bytes),
             worktree=worktree,
             retain_home_parent=retain_home_parent,
+            **({"pilot": pilot} if pilot else {}),
         )
         prompt = raw
         execution = trusted_chunks[0]["execution"]
@@ -375,7 +397,7 @@ def _run_review(args: argparse.Namespace) -> Path:
         _write(prompt_path, _canonical_prompt_bytes(prompt))
     receipt = {
         "protocol_version": PROTOCOL_VERSION,
-        "receipt_version": "independent-review-receipt/v1",
+        "receipt_version": low.VERSION if pilot else "independent-review-receipt/v1",
         "review_run_id": run_id,
         "review_backend": backend.BACKEND_ID,
         "review_harness": "claude-code",
@@ -451,11 +473,13 @@ def _run_review(args: argparse.Namespace) -> Path:
             session_id=execution.session_id,
         ),
         chunked_claude_evidence=tuple(trusted_chunks),
+        low_review=pilot,
     )
     receipts.validate_receipt(
         receipt,
         registry=receipts.load_backend_registry(
-            root / "docs/agentic/independent_review_backends.json"
+            (pilot.origin.checkout if pilot else root)
+            / "docs/agentic/independent_review_backends.json"
         ),
         evidence_context=context,
     )
@@ -504,8 +528,15 @@ def _cleanup_invocation(
 RETAIN_INVOCATION_CONTRACT = "retain-invocation-v1"
 
 
-def run_review(args: argparse.Namespace) -> Path:
+def run_review(args: argparse.Namespace, *, pilot: low.LowReview | None = None) -> Path:
     """Run one review; the Controller can retain this invocation for inspection."""
+    if getattr(args, "mission_id", None) == low.MISSION and pilot is None:
+        raise DeepSeekReviewError("Stage D review requires its trusted Controller")
+    if pilot is not None:
+        if Path(args.repo_root).resolve(strict=True) != pilot.origin.candidate:
+            raise DeepSeekReviewError("Stage D Builder checkout differs from approved candidate")
+        low.verified_capture(pilot, args.base_sha)
+        return _run_review(args, pilot=pilot)
     if getattr(args, "retain_invocation", False):
         return _run_review(args)
     evidence = args.evidence_dir.resolve()

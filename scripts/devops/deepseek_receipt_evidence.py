@@ -12,6 +12,7 @@ import re
 import subprocess
 from typing import Any, NoReturn
 
+from scripts.devops import deepseek_low_effort as low
 from scripts.devops.codex_review_verdict import (
     ReviewReceiptError,
     assert_owner_only_directory,
@@ -72,14 +73,32 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
     expected_head: str,
     expected_mission_id: str,
     expected_scope_hash: str,
+    pilot: low.LowReview | None = None,
 ) -> ReviewEvidence:
     """Read commit-last DeepSeek evidence or return one untrusted NO_VERDICT."""
 
     try:
+        if (expected_mission_id == low.MISSION) != (pilot is not None):
+            _reject("Stage D review requires its trusted Controller")
+        if pilot is not None:
+            if repo_root.resolve(strict=True) != pilot.origin.candidate:
+                _reject("approved Stage D Builder checkout differs")
+            low.verified_capture(pilot, expected_base)
         _assert_external_artifact(path, repo_root=repo_root, kind="receipt")
         value = _load_json(path)
+        if pilot is not None and (
+            value.get("receipt_version") != low.VERSION
+            or value.get("review_run_id") != pilot.run_id
+            or path
+            != pilot.evidence_dir
+            / f"claude-deepseek-receipt-{expected_head[:12]}-{pilot.run_id}.json"
+            or not isinstance(value.get("provenance"), dict)
+            or value["provenance"].get("chunked_review") is not True
+        ):
+            _reject("supervised four-chunk receipt required")
         registry = load_backend_registry(
-            repo_root / "docs/agentic/independent_review_backends.json"
+            (pilot.origin.checkout if pilot else repo_root)
+            / "docs/agentic/independent_review_backends.json"
         )
         backend = registry.get(value.get("review_backend"))
         if backend is None or value.get("review_backend") != BACKEND_DEEPSEEK:
@@ -266,6 +285,7 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
                 final_result_bytes=final_bytes,
                 claude_deepseek_execution=one_shot_execution,
                 chunked_claude_evidence=chunked_evidence,
+                low_review=pilot,
             ),
         )
         return ReviewEvidence(

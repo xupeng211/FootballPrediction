@@ -17,6 +17,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from scripts.devops import deepseek_low_effort as low
 from scripts.devops.codex_review_contract import (
     REVIEW_REASONING_EFFORT_PINNED,
     reviewer_selectors_from_command,
@@ -105,6 +106,7 @@ class ReceiptEvidenceContext:
     codex_execution: CodexExecutionEvidence | None = None
     claude_deepseek_execution: ClaudeDeepSeekExecutionEvidence | None = None
     chunked_claude_evidence: tuple[dict[str, Any], ...] = ()
+    low_review: low.LowReview | None = None
 
 
 SECRET_FIELD_TOKENS = (
@@ -645,11 +647,18 @@ def validate_receipt(  # noqa: C901, PLR0912
         required | {"resolved_model"}
     ).issubset(receipt):
         raise IndependentReviewProtocolError("receipt fields are invalid")
-    if (
-        receipt["protocol_version"] != PROTOCOL_VERSION
-        or receipt["receipt_version"] != RECEIPT_VERSION
+    if receipt["protocol_version"] != PROTOCOL_VERSION or receipt["receipt_version"] != (
+        low.VERSION if evidence_context.low_review else RECEIPT_VERSION
     ):
         raise IndependentReviewProtocolError("receipt protocol/version mismatch")
+    pilot = evidence_context.low_review
+    if pilot is not None and (
+        receipt["review_backend"] != "claude-code-deepseek"
+        or receipt["mission_id"] != low.MISSION
+        or receipt["review_run_id"] != pilot.run_id
+        or receipt["provenance"].get("chunked_review") is not True
+    ):
+        raise IndependentReviewProtocolError("Stage D supervised receipt target mismatch")
     if not _MISSION_ID_RE.fullmatch(receipt["mission_id"]):
         raise IndependentReviewProtocolError("receipt mission_id is invalid")
     started = _parse_timestamp(receipt["review_started_at"], "review_started_at")

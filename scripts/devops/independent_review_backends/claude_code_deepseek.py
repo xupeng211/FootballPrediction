@@ -10,6 +10,7 @@ Owner: engineering workflow governance
 
 from __future__ import annotations
 
+import base64
 from contextlib import nullcontext, suppress
 from dataclasses import dataclass
 from hashlib import sha256
@@ -20,6 +21,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 from typing import Any
@@ -192,9 +194,24 @@ def _observed_trace_row(row: dict[str, Any], session: str, cwd: str) -> bool:
     return row.get("sessionId") == session and row.get("cwd") == cwd
 
 
-def _trace_effort_levels(rows: list[dict[str, Any]], session: str, directory: str) -> set[str]:
+def _trace_effort_levels(
+    rows: list[dict[str, Any]], session: str, directory: str, *, strict: bool = False
+) -> set[str]:
     efforts = set()
     for row in rows:
+        if (
+            strict
+            and row.get("type") == "assistant"
+            and (
+                not isinstance(row.get("isApiErrorMessage", False), bool)
+                or (
+                    row.get("perTurnEffort") is not None
+                    and row.get("effort") is not None
+                    and row["perTurnEffort"] != row["effort"]
+                )
+            )
+        ):
+            raise ValueError("conflicting client turn metadata")
         if row.get("type") != "assistant" or row.get("isApiErrorMessage"):
             continue
         message = row.get("message")
@@ -216,7 +233,7 @@ def _trace_effort_levels(rows: list[dict[str, Any]], session: str, directory: st
 
 
 def _observe_client_effort(
-    home: Path, prompt: str, cwd: Path, reported_session: object
+    home: Path, prompt: str, cwd: Path, reported_session: object, *, strict: bool = False
 ) -> dict[str, Any]:
     projects = home / ".claude" / "projects"
     if projects.resolve(strict=True) != projects:
@@ -240,7 +257,9 @@ def _observe_client_effort(
         or first_user["message"].get("content") != prompt
     ):
         raise ValueError("trace does not match the submitted prompt")
-    efforts = _trace_effort_levels(rows, session, directory)
+    if strict and any(row.get("type") == "assistant" for row in rows[: rows.index(first_user)]):
+        raise ValueError("client response precedes submitted prompt")
+    efforts = _trace_effort_levels(rows, session, directory, strict=strict)
     return {
         "observed_client_effort": next(iter(efforts))
         if len(efforts) == 1
@@ -387,6 +406,48 @@ def child_environment(secret: str) -> dict[str, str]:
     }
 
 
+def reviewer_command(binary: Path, settings: Path, prompt: str) -> tuple[str, ...]:
+    """构建正式审核的完整固定命令，独立消费者也按此核对。"""
+    schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
+    return (
+        str(binary),
+        "--bare",
+        "--restricted",
+        "--print",
+        "--model",
+        MODEL,
+        "--settings",
+        str(settings),
+        "--strict-mcp-config",
+        "--tools",
+        "",
+        "--disallowed-tools",
+        "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch",
+        "--output-format",
+        "json",
+        "--json-schema",
+        schema_bytes.decode("utf-8"),
+        prompt,
+    )
+
+
+def _write_settings(settings: Path, *, private: bool) -> None:
+    if not private:
+        settings.write_bytes(DEDICATED_SETTINGS)
+        return
+    with os.fdopen(os.open(settings, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600), "wb") as stream:
+        stream.write(DEDICATED_SETTINGS)
+
+
+def _review_secret(path: Path, supervised_chunk) -> str:
+    if supervised_chunk is not None:
+        from scripts.devops.deepseek_low_effort import verified_capture  # noqa: PLC0415
+
+        pilot, _ = supervised_chunk
+        verified_capture(pilot, pilot.target()["base"])
+    return _secret(path)
+
+
 def run(
     *,
     prompt: str,
@@ -394,6 +455,7 @@ def run(
     secret_path: Path = SECRET_PATH,
     timeout_seconds: int = DEFAULT_REVIEW_TIMEOUT_SECONDS,
     retain_home_parent: Path | None = None,
+    supervised_chunk=None,
 ) -> tuple[bytes, dict[str, Any], ExecutionEvidence]:
     """Run one isolated, schema-bound Claude/DeepSeek turn.
 
@@ -409,10 +471,9 @@ def run(
     ).stdout.strip()
     if not _version_at_least(version):
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: unsupported Claude version")
-    secret = _secret(secret_path)
+    secret = _review_secret(secret_path, supervised_chunk)
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
-    schema_bytes = json.dumps(CLAUDE_RESULT_SCHEMA, separators=(",", ":")).encode("utf-8")
     # The retained Controller mode owns this private home until the entire
     # review tree is confirmed stopped; it may contain untrusted runtime data.
     home_context = (
@@ -424,34 +485,24 @@ def run(
         runtime = Path(isolated_home)
         diagnostics_home = runtime if retain_home_parent is not None else None
         settings = runtime / "settings.json"
-        settings.write_bytes(DEDICATED_SETTINGS)
+        _write_settings(settings, private=supervised_chunk is not None)
         child_env = child_environment(secret)
         child_env["HOME"] = isolated_home
-        command = (
-            str(binary),
-            "--bare",
-            "--restricted",
-            "--print",
-            "--model",
-            MODEL,
-            "--settings",
-            str(settings),
-            "--strict-mcp-config",
-            "--tools",
-            "",
-            "--disallowed-tools",
-            "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch",
-            "--output-format",
-            "json",
-            "--json-schema",
-            schema_bytes.decode("utf-8"),
-            prompt,
-        )
+        command = reviewer_command(binary, settings, prompt)
         started = time.monotonic()
         try:
-            output = subprocess.run(
-                command, cwd=cwd, env=child_env, capture_output=True, check=False, timeout=timeout
-            )
+            if supervised_chunk is None:
+                output = subprocess.run(
+                    command,
+                    cwd=cwd,
+                    env=child_env,
+                    capture_output=True,
+                    check=False,
+                    timeout=timeout,
+                )
+            else:
+                pilot, index = supervised_chunk
+                output = pilot.run_client(index, command, cwd, child_env, timeout)
         except subprocess.TimeoutExpired as exc:
             # subprocess.run kills and reaps its direct child before raising.
             # Never expose captured stdout/stderr: either may contain model text.
@@ -497,3 +548,68 @@ def run(
             session,
         ),
     )
+
+
+def _capture_supervised_client(command: list[str], binary_sha: str) -> None:
+    """在受监管进程内先过滤凭据，再向私有 transcript 输出原始响应及有限观测。"""
+    token = os.environ["ANTHROPIC_API_KEY"]
+    if (
+        not token
+        or token != os.environ["ANTHROPIC_AUTH_TOKEN"]
+        or os.environ["ANTHROPIC_BASE_URL"] != ENDPOINT
+    ):
+        raise ValueError("invalid supervised client environment")
+    binary = Path(command[0])
+    home = Path(os.environ["HOME"])
+    settings = home / "settings.json"
+    if (
+        binary.resolve(strict=True) != binary
+        or sha256(binary.read_bytes()).hexdigest() != binary_sha
+        or command != list(reviewer_command(binary, settings, command[-1]))
+        or home.resolve(strict=True) != home
+        or settings.resolve(strict=True) != settings
+        or settings.read_bytes() != DEDICATED_SETTINGS
+    ):
+        raise ValueError("supervised client inputs changed")
+    # 启动器已在注入凭据前验证。此子进程仅使用隔离环境，不读取磁盘凭据。
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as child:
+        proc = Path("/proc") / str(child.pid)
+        fields = (proc / "stat").read_text().rsplit(")", 1)[1].split()
+        cwd = str((proc / "cwd").readlink())
+        # 只导出该子进程实际环境中的一个无敏感策略键。
+        environ = (proc / "environ").read_bytes().split(b"\0")
+        if b"ANTHROPIC_BASE_URL=" + ENDPOINT.encode() not in environ:
+            raise ValueError("client environment unavailable")
+        effort = [
+            item.split(b"=", 1)[1].decode()
+            for item in environ
+            if item.startswith(b"CLAUDE_CODE_EFFORT_LEVEL=")
+        ]
+        if effort not in ([], ["low"]) or int(fields[1]) != os.getpid():
+            raise ValueError("client identity mismatch")
+        stdout, stderr = child.communicate()
+        completed = subprocess.CompletedProcess(command, child.returncode, stdout, stderr)
+    if _output_contains_secret(completed, token):
+        raise ValueError("client credential reflection")
+    result = {
+        "pid": child.pid,
+        "parent_pid": os.getpid(),
+        "parent_starttime": int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19]),
+        "starttime": int(fields[19]),
+        "cwd": cwd,
+        "effort_request": effort,
+        "returncode": completed.returncode,
+        "stdout": base64.b64encode(stdout).decode() if completed.returncode == 0 else "",
+        "error_class": _safe_nonzero_detail(completed, 0) if completed.returncode else "",
+    }
+    print(json.dumps(result))
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] != ["--capture-supervised"]:
+        sys.exit("unsupported invocation")
+    try:
+        _capture_supervised_client(sys.argv[3:], sys.argv[2])
+    except Exception:
+        # stderr 由监护器保留，不输出原始异常、环境或客户端内容。
+        sys.exit("supervised client evidence unavailable")
