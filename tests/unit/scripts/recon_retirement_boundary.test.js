@@ -58,3 +58,28 @@ test('legacy-test size inventory does not stat unrelated retired probe files', (
     fs.statSync = originalStat;
   }
 });
+
+
+test('recursive JSON discovery stays inside the registered data root and preserves active fixtures', () => {
+  const { listJsonFiles, parseArgs } = require('../../../scripts/ops/seed_fotmob_sample');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-export-boundary-'));
+  const retired = path.join(root, 'tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data');
+  const originalReadDir = fs.readdirSync;
+  try {
+    const activeRelative = 'data/matches/nested/active.json';
+    const realFixture = fs.readFileSync(path.join(ROOT, 'tests/fixtures/match_success.json'), 'utf8');
+    writeFixture(root, activeRelative, realFixture);
+    writeFixture(root, 'tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data/old-export.json', realFixture);
+    fs.readdirSync = (target, ...args) => {
+      assert.notEqual(path.resolve(String(target)), retired, 'registered data loader must not discover archived exports');
+      return originalReadDir(target, ...args);
+    };
+    assert.equal(parseArgs([]).sourceDir, path.join(ROOT, 'data/matches'));
+    assert.deepEqual(listJsonFiles(path.join(root, 'data/matches'), true), [path.join(root, activeRelative)]);
+    assert.ok(fs.existsSync(path.join(ROOT, 'tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/fixtures/premium_match_sample.json')));
+    assert.ok(fs.existsSync(path.join(ROOT, 'tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/data/fixtures/example_dataset.json')));
+  } finally {
+    fs.readdirSync = originalReadDir;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
