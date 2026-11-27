@@ -120,6 +120,13 @@ Stage D 后续记账工单的工程审核支持候选外 Controller 监督四次
 low。collector 正式开放继续取决于业务验收和 Gate 3。治理工具的绑定、历史 v1 与正式 v2
 消费及未接入的入口见 [详细工作流](AGENT_WORKFLOW.md#stage-d-第二块的受控低强度审核)。
 
+受控 Direct API 执行核心：**OFFLINE_CANDIDATE / UNQUALIFIED / LIVE_DISABLED**。
+`scripts/devops/controlled_api_{policy,budget,runner,sandbox}.py` 与
+`tests/unit/test_controlled_api_{budget,runner,sandbox}.py` 提供冻结请求、跨进程持久预留、
+逐 POST claim 及 AF_UNIX mock / bwrap 验收；不是正式 Reviewer 或生产金额硬帽。
+没有真实 HTTPS/凭据出口，不能生成合格 Receipt；旧 Registry、资格、AI Gate 保持。
+执行边界、条件性价格和迁移缺口见 [维护说明](agentic/controlled_direct_api.md)。
+
 ## Domain: 历史赔率（M3 odds staging / import foundation）
 
 下表「离线 staging pipeline」条目中的金额规则适用于既有离线校验。十进制赔率仅接受大于 1 的有限数值或等值十进制字符串，支持前后空白和指数写法。坏价逐条以 `decimal_odds_invalid` 隔离，并保留原始输入 SHA-256 和记录定位。
@@ -302,3 +309,12 @@ paired_calibration，不改统计、external JSON 或证据资格，不新增研
 - README canonical 表增删入口时同步本索引。
 - 任何状态变化（NOT_ESTABLISHED → CANONICAL、BLOCKED 解除、新能力落地）时更新对应行。
 - 新增能力前先查本索引；发现缺失即补行，同时声明新组件的生命周期（AGENTS.md §2.5）。
+
+- **PR1947 受控 HTTPS 预生产候选**：精确分类的私有 SQLite 执行状态、发送前原子 claim、
+  固定计划 TLS broker 和无凭据/无网络 worker 已实现，使用本地 TLS Provider 替身验收。
+  clean Git object source-binding 与未合格通道结果持久化已准备；真实 Provider admission、
+  金额硬帽、Qualification、正式 Receipt/AI Gate 迁移及合法自举仍 BLOCKED。
+  不继承 CLI 资格，不改变 #1946/#1941；见 [维护合同](agentic/controlled_direct_api.md)。
+  `controlled_api_admission` 现可复核同一 exact source 的完整本地 TLS 分块并持久化
+  **非正式**迁移证据包；拒绝换身份、缺块与历史资格冒用。既有正式 policy 对它仍不满足，
+  不授予资格或 Receipt 效力；首次信任来源需 Owner 的明确迁移合同。

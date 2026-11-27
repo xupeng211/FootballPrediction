@@ -27,6 +27,7 @@ Does NOT:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -339,7 +340,7 @@ def _load_allowlist(allowlist_path: Path | None = None) -> dict[str, dict]:
         return {}
     try:
         data = json.loads(allowlist_path.read_text(encoding="utf-8"))
-        entries = data.get("entries", [])
+        entries = data.get("entries", []) + data.get("execution_state_entries", [])
         return {entry["path"]: entry for entry in entries}
     except (json.JSONDecodeError, KeyError):
         return {}
@@ -384,6 +385,29 @@ def _apply_allowlist(
                     result["recommended_next_action"] = (
                         "historical_baseline_allowlisted_gate_disarmed"
                     )
+                elif cls == "local_execution_state_write_runtime_guarded":
+                    # 新执行状态不是历史豁免。仅接受显式审查的精确组件及字节；
+                    # 改代码、换路径或缺 guard evidence 必须重新分类，不能自动扩散。
+                    approved = (
+                        path == "scripts/devops/controlled_api_budget.py"
+                        and not missing
+                        and entry.get("storage_contract")
+                        == "private-fresh-directory-marker-application-id/v1"
+                        and entry.get("protected_business_store_access") is False
+                        and entry.get("source_sha256")
+                        == hashlib.sha256((REPO_ROOT / path).read_bytes()).hexdigest()
+                    )
+                    if approved:
+                        result["would_fail_changed_files_gate"] = False
+                        result["recommended_next_action"] = (
+                            "classified_private_execution_state_only"
+                        )
+                    else:
+                        result["allowlist_status"] = "not_in_allowlist"
+                        result["allowlist_entry_complete"] = False
+                        result["allowlist_missing_fields"] = [
+                            "valid_exact_execution_state_contract"
+                        ]
         else:
             result["allowlist_status"] = "not_in_allowlist"
     return results
