@@ -1,0 +1,54 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FOOTBALLPREDICTION_RISK_BASED_REVIEW_DELIVERY_RECOVERY",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "scripts/devops/review_recovery.py",
+    "scripts/devops/review_coverage.py",
+    "tests/unit/test_review_recovery.py",
+    "tests/unit/test_review_coverage.py",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/REVIEW_DELIVERY_RECOVERY.md",
+    "docs/agentic/missions/FOOTBALLPREDICTION_RISK_BASED_REVIEW_DELIVERY_RECOVERY.json",
+    "scripts/devops/gatekeeper.sh"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "scripts/devops/review_policy.py",
+    "scripts/devops/agent_workflow.py",
+    "scripts/ops/ai_workflow_gate.py",
+    "docs/agentic/independent_review_backends.json",
+    "AGENTS.md"
+  ],
+  "excluded_prefixes": [
+    "src/",
+    "config/",
+    "data/",
+    "models/",
+    "database/",
+    "deploy/",
+    "docker/",
+    ".github/",
+    "docs/data/",
+    "docs/_manifests/",
+    "docs/_reports/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "Existing NORMAL/STRICT/CRITICAL classifier, current Codex+DeepSeek CRITICAL policy, all merge and hosted gates remain unchanged.",
+    "Recovery evaluation is preview-only and cannot dispatch, publish approval receipts or set merge_ready; no activation override is provided.",
+    "A real P0/P1/P2 finding is never a fallback trigger; all UNKNOWN reservations and failed evidence are retained.",
+    "PR1937 and PR1938 remain Draft with unchanged contents; preserve both historical Harness tasks and accounting.",
+    "Full canonical diff and exact original changed/deleted blob bytes are retained; no compact summary qualifies as full review.",
+    "No new reviewer recipe becomes active without independent qualification and separate explicit Owner adoption."
+  ],
+  "forbidden_side_effects": [
+    "No merge, release, main edits, Gate bypass, production/database/raw writes, training, model activation or recovery execution.",
+    "No PR1937 production review, source changes, risk downgrade or business acceptance.",
+    "No Harness history resume, retry, ledger mutation or historical receipt rewrite.",
+    "At most four new real provider physical requests in this mission, only with proven attempt/token/wall bounds; no hidden retry, redirect resend or silent fallback."
+  ]
+}
