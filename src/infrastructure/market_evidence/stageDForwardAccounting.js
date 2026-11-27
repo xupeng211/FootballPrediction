@@ -142,10 +142,13 @@ function verifySingleRequest(ledger, opening, account, config, now) {
         request.provider_quota === null || request.receipt_evidence_reference === null) {
         return { state: 'STOPPED', quota_receipt: null };
     }
-    requireFact(utc(request.transmitted_at) >= utc(ledger.epoch.started_at) &&
-        utc(request.transmitted_at) < utc(opening.expires_at) &&
-        request.response_received_at && utc(request.response_received_at) < utc(config.period_end_at),
-    '传输或回执超出绑定账期');
+    const transmitted = utc(request.transmitted_at);
+    requireFact(transmitted >= utc(ledger.epoch.started_at) && transmitted < utc(opening.expires_at),
+        '传输超出绑定的记账窗口');
+    verifyForwardResponseTime({
+        transmittedAt: request.transmitted_at, requestStartedAt: request.transmitted_at,
+        responseAt: request.response_received_at, checkedAt: now, config,
+    });
     const reconciled = stage.reconcileProviderQuotaHeaders({
         headers: request.provider_quota.raw_headers,
         quotaConfig: config,
@@ -154,6 +157,15 @@ function verifySingleRequest(ledger, opening, account, config, now) {
         previousProviderQuota: { reported_used: account.used, reported_remaining: account.remaining },
     });
     return { state: 'RECONCILED', quota_receipt: reconciled };
+}
+
+function verifyForwardResponseTime({ transmittedAt, requestStartedAt, responseAt, checkedAt, config, expiresAt = config.period_end_at }) {
+    const transmitted = utc(transmittedAt);
+    const started = utc(requestStartedAt);
+    const response = utc(responseAt);
+    requireFact(transmitted >= utc(config.period_start_at) && transmitted <= started &&
+        started < utc(expiresAt) && started <= response && response < utc(config.period_end_at) &&
+        response <= utc(checkedAt), '传输或回执超出绑定账期或核验时点');
 }
 
 function verifyIdleAndCurrent(input, opening, pending) {
@@ -170,24 +182,40 @@ function verifyIdleAndCurrent(input, opening, pending) {
         authority.state_hash === opening.segment.state_hash, '交易状态已偏离记账起点');
 }
 
+function readForwardAccountingEvidence(input) {
+    const opening = readBoundFile(input.openingPath, input.openingSha256);
+    return {
+        opening,
+        account: readBoundFile(input.accountPath, opening.account_sha256),
+        history: readBoundFile(input.historyPath, opening.history_sha256),
+        checkpoint: readBoundFile(input.checkpointPath, input.checkpointSha256),
+    };
+}
+
+function validateForwardAccountingEvidence({ evidence, prior, forward, config, openingSha256, quotaConfigSha256, now }) {
+    const { opening, account, history, checkpoint } = evidence;
+    requireFact(opening.quota_config_sha256 === quotaConfigSha256, '开账记录与当期配额配置摘要不符');
+    verifyHistory(opening.history, prior, history, account.observed_at);
+    verifyOpening(opening, account, config, forward, now);
+    exact(checkpoint, ['opening_sha256', 'ledger']);
+    requireFact(checkpoint.opening_sha256 === openingSha256 && sameLedger(forward, checkpoint.ledger), '后续账本与独立锚点不符');
+    requireFact(account.used + 1 <= config.automated_spend_limit &&
+        account.remaining - 1 >= config.reserved_safety_buffer, '预留一次请求会超过预算');
+}
+
 function inspectForwardAccounting(input) {
     for (const root of [input.priorLedgerRoot, input.ledgerRoot, input.authorityRoot, input.allocationAuthorityPath, input.runLockTrustRoot]) {
         requireFact(typeof root === 'string' && path.isAbsolute(root), '必须显式指定隔离目录的绝对路径');
     }
-    const opening = readBoundFile(input.openingPath, input.openingSha256);
-    const account = readBoundFile(input.accountPath, opening.account_sha256);
-    const history = readBoundFile(input.historyPath, opening.history_sha256);
+    const evidence = readForwardAccountingEvidence(input);
+    const { opening, account } = evidence;
     const config = stage.validateQuotaConfiguration(readBoundFile(input.quotaConfigPath, opening.quota_config_sha256));
     const prior = stage.readRequestLedger({ ledgerRoot: input.priorLedgerRoot });
     const forward = stage.readRequestLedger({ ledgerRoot: input.ledgerRoot });
-    verifyHistory(opening.history, prior, history, account.observed_at);
-    verifyOpening(opening, account, config, forward, input.now);
-    const checkpoint = readBoundFile(input.checkpointPath, input.checkpointSha256);
-    exact(checkpoint, ['opening_sha256', 'ledger']);
-    requireFact(checkpoint.opening_sha256 === input.openingSha256 &&
-        sameLedger(forward, checkpoint.ledger), '后续账本与独立锚点不符');
-    requireFact(account.used + 1 <= config.automated_spend_limit &&
-        account.remaining - 1 >= config.reserved_safety_buffer, '预留一次请求会超过预算');
+    validateForwardAccountingEvidence({
+        evidence, prior, forward, config, openingSha256: input.openingSha256,
+        quotaConfigSha256: opening.quota_config_sha256, now: input.now,
+    });
     const reviewed = verifySingleRequest(forward, opening, account, config, input.now);
     const fresh = utc(input.now) < utc(opening.expires_at);
     const wouldReserve = reviewed.state === 'PENDING' && fresh;
@@ -207,4 +235,9 @@ function inspectForwardAccounting(input) {
     };
 }
 
-module.exports = { inspectForwardAccounting };
+module.exports = {
+    inspectForwardAccounting,
+    readForwardAccountingEvidence,
+    validateForwardAccountingEvidence,
+    verifyForwardResponseTime,
+};

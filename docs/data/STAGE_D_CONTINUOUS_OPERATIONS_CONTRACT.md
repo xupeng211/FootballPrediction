@@ -42,8 +42,8 @@ boolean, retry count, provider override or scheduler mode. It reads a
 canonical, read-only authorization artifact that must be a direct child of an
 explicit external runtime trust root, checks the immutable mission/provider/
 market/region/max-cost/epoch/authority/quota/fixture scope, writes a durable
-single-use consumption marker, and only then creates the module-private
-runtime capability before calling `executeStageDOneCycle`. The capability is
+single-use consumption marker after locking and checking live state, then
+uses the module-private capability inside `executeStageDOneCycle`. The capability is
 not exported, logged, serialized, or returned. In production the binder fixes
 the transport, evidence persistence, prospective candidate builder and
 transaction-v1 publisher to reviewed factories; in `NODE_ENV=test` every
@@ -52,9 +52,10 @@ This implementation closes the caller-binding gap only; it does not authorize
 Stage D, provider access, scheduler start, blocker #2 filesystem permission
 repair, or blocker #3 independent backup/restore.
 
-The authorization artifact schema is
-`footballprediction-stage-d-controlled-initialization-authorization/v2` and
-its approval status must be `OWNER_AND_CHIEF_ENGINEER_AUTHORIZED`. Its exact
+The existing authorization artifact schema is
+`footballprediction-stage-d-controlled-initialization-authorization/v2`. The
+following forward-accounting section defines the bounded v3 extension. The
+approval status must be `OWNER_AND_CHIEF_ENGINEER_AUTHORIZED`. Its exact
 scope includes `mission=CONTROLLED_STAGE_D_SINGLE_CYCLE`,
 `provider=the-odds-api`, `configured_markets=[h2h]`,
 `configured_regions=[uk]`, `max_provider_requests=1`,
@@ -436,7 +437,46 @@ Owner 的批准。机器核对字节、字段、账期和时间窗口。证据�
 隔离恢复时，先用现有备份工具保护旧账本。后续快照用现有 `--run-state` 显式纳入开账、
 账户与历史候选，并保留独立检查点。分别通过现有恢复工具恢复后，在新进程内用本节
 的只读入口复核，输入仍来自独立保存的最新检查点。缺少绑定文件或拿旧代账本比对最新
-检查点时拒绝。生产运行使用哪一个后续段、活动账本切换、授权消费和发送接入仍待完成。
+检查点时拒绝。
+
+### 受控单次入口的 v3 后续记账授权
+
+`stage_d_controlled_initialization.js` 沿用现有参数和受控入口。外部只读授权使用
+`footballprediction-stage-d-controlled-initialization-authorization/v3`，保留 v2 的单次
+身份、范围、交易前置状态、配置与赛事原件绑定。`quota_adjudication_sha256` 为 `null`，
+也不接受同时传入旧裁定路径。v3 还要求完整 `forward_accounting` 字段。
+
+| 字段 | 绑定 |
+| --- | --- |
+| `opening_file`、`opening_sha256` | 同一外部信任根内只读开账原件的文件名及独立持有的摘要 |
+| `account_file`、`history_file` | 同一根内的两个只读文件，其字节摘要由开账原件绑定 |
+| `checkpoint_file`、`checkpoint_sha256` | 同一根内的独立检查点文件及其字节摘要，首次发送前精确匹配后续账本 |
+| `account_identity_sha256` | 与开账及当期账户证据一致的非秘密账户身份摘要 |
+| `prior_ledger_root`、`prior_ledger_identity` | 旧账本绝对路径与 `dev/ino/mode/uid/gid` |
+| `ledger_root`、`ledger_identity` | 后续账本绝对路径与 `dev/ino/mode/uid/gid` |
+| `trust_root`、`trust_identity` | 唯一部署的外部受信根绝对路径与 `dev/ino/mode/uid/gid` |
+| `consumption_inventory_sha256` | 取证前确认受信部署根中的消费清单，按文件名排序，对 `{filename, sha256}` 数组的稳定序列化字节取摘要 |
+
+所有文件字段只接受同一受信根下的简单 JSON 文件名。期初账户、本期预算配置、旧账和
+交易状态由独立证据绑定，授权窗口落在已核准开账窗口内。v3 在既有 HMAC 前置检查后拿到
+部署互斥，并按旧账、后续账的固定顺序取得既有运行锁。它在锁内复读原件、部署根、检查点
+和交易状态。Owner 取证前先冻结部署并确认无在途，记录既有消费清单，再读取当期账户。
+授权同时绑定清单与开账原件，锁内重核清单。任何新增、修改、无效消费记录、非空后续账、
+代际回退、身份变化或字段不一致均关闭。验证通过才写持久的
+`.stage-d-forward-active.json` 和授权消费记录。标记存在（即使损坏）即禁止该部署根后续
+v2 或 v3 请求。已有 v2 在没有标记时仍按原单次合同执行。受控请求共享部署互斥，v2 在
+锁内及传输前重查切换标记。进程中断、部分写入或锁收尾不明须保全哨兵并人工核对。
+
+传输开始须在授权和配置窗口内。回执的发送与接收时点经可信时钟核验，传输在先、接收在后，
+且均不晚于核验时点；同账期内的真实回执可在单次发送授权到期后到达。期初已用作为对账
+基准，要求累计增 1、余额减 1、当次 1。自动预算仍上限 450，至少保留 50。若配置日限且
+现有证据只能证明本期用量，则以本期用量作为保守日用量上界。2xx 原始响应先于时点与额度
+对账留存，无法证明时点、对账或回执落盘时保留已消费事实与失败诊断，不进入交易发布。
+
+备份中两段账本、开账原件、最新检查点和部署受信根的独立留存须逐项验收。恢复后目录身份
+变化时旧 v3 授权不可复用。恢复旧账不会抹掉独立持久标记，即使后续账恢复为空也不重复发送。
+互斥范围仅是唯一受信部署根。Owner 启用前须核实账户独占与本期用量、清点停用其他部署根和
+旧授权、验收独立恢复，并单独批准 Gate 3 的一笔请求。
 
 ## Capture, publication, duplicate and temporal policy
 
