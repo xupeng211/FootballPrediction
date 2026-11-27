@@ -478,7 +478,8 @@ def _run_review(args: argparse.Namespace, *, pilot: low.LowReview | None = None)
     receipts.validate_receipt(
         receipt,
         registry=receipts.load_backend_registry(
-            root / "docs/agentic/independent_review_backends.json"
+            (pilot.origin.checkout if pilot else root)
+            / "docs/agentic/independent_review_backends.json"
         ),
         evidence_context=context,
     )
@@ -532,6 +533,9 @@ def run_review(args: argparse.Namespace, *, pilot: low.LowReview | None = None) 
     if getattr(args, "mission_id", None) == low.MISSION and pilot is None:
         raise DeepSeekReviewError("Stage D review requires its trusted Controller")
     if pilot is not None:
+        if Path(args.repo_root).resolve(strict=True) != pilot.origin.candidate:
+            raise DeepSeekReviewError("Stage D Builder checkout differs from approved candidate")
+        low.verified_capture(pilot, args.base_sha)
         return _run_review(args, pilot=pilot)
     if getattr(args, "retain_invocation", False):
         return _run_review(args)

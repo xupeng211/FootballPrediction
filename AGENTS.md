@@ -124,7 +124,9 @@ Receipt 的生成与结构/完整性验证只证明审核事实，不单独证�
 
 Stage D 工单 `FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME` 的正式 DeepSeek 审核只接受受信 Controller
 按本轮批准冻结的四块输入，第 2 块显式 low，其余使用隔离默认设置。派发及正式消费均需
-Controller 提供同一受控上下文，通用 CLI 对此工单关闭。每块先核对同次监护器 ECHILD、
+Controller 先核验固定 Harness、业务 Git 来源及其注册的干净准确 BASE，再从该 BASE 导入工具。
+读取凭据、启动捕获进程和消费原件前重新验证捕获程序来自 BASE 的固定普通 Git blob。
+正式入口使用该受控上下文，通用 CLI 对此工单关闭。每块先核对同次监护器 ECHILD、
 实际子进程与原始会话，再封存该块并允许下一块启动。完成四块才可能形成专用 v2 收据；
 同一批准目录内的失败和已用额度保留。旧 v1 可按原规则作历史核验。治理补丁自身使用未修改
 可信 BASE 上的原默认双审。Controller 的信任来源和具体接口见详细工作流。

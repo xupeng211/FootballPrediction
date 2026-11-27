@@ -439,6 +439,15 @@ def _write_settings(settings: Path, *, private: bool) -> None:
         stream.write(DEDICATED_SETTINGS)
 
 
+def _review_secret(path: Path, supervised_chunk) -> str:
+    if supervised_chunk is not None:
+        from scripts.devops.deepseek_low_effort import verified_capture  # noqa: PLC0415
+
+        pilot, _ = supervised_chunk
+        verified_capture(pilot, pilot.target()["base"])
+    return _secret(path)
+
+
 def run(
     *,
     prompt: str,
@@ -462,7 +471,7 @@ def run(
     ).stdout.strip()
     if not _version_at_least(version):
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: unsupported Claude version")
-    secret = _secret(secret_path)
+    secret = _review_secret(secret_path, supervised_chunk)
     if not cwd.is_dir():
         raise BackendInfrastructureError("CLI_RUNTIME_FAILURE: isolated review inputs unavailable")
     # The retained Controller mode owns this private home until the entire

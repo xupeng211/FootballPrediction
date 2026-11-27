@@ -485,6 +485,84 @@ Controller 持有唯一批准目录、专用审核证据目录和 run id。它�
 加载本仓库 runner/validator 和既有 Harness 监护器；业务候选之外的任意目录本身不能建立信任。
 本治理变更自身先由未修改 BASE 的原默认两岗审核。未来业务候选改基线后重新核准全部身份。
 
+Controller 先在仓库外开启空白进程，使用批准的系统 Python、`-I -B`、干净环境及可信依赖，
+分别绑定已登记的 Harness 和业务仓库 Git common directory、业务候选和已批准 BASE。以下启动段
+由外部 Controller 固定并在导入任何 Harness 或仓库模块之前执行。启动段必须从 Controller 单独冻结、已验收的版本加载；不得临时从候选工作区提取并执行。
+五个绝对路径或修订形参依次
+为监督器 checkout、其可信 Git common directory、Builder checkout、业务仓库可信 Git common
+directory、业务已批准 BASE。这些值来自 Controller 已核验的工单，不能从候选/收据提供的配置读取。
+
+<!-- stage-d-controller-bootstrap -->
+```python
+import hashlib
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+def require(value):
+    if not value:
+        raise RuntimeError("unverified Stage D Controller tool origin")
+
+def git(root, *args):
+    return subprocess.check_output(
+        ["/usr/bin/git", "--no-optional-locks", "--no-replace-objects",
+         "-c", "core.fsmonitor=false", "-C", str(root), *args],
+        env={"PATH": "/usr/bin:/bin", "GIT_CONFIG_NOSYSTEM": "1",
+             "GIT_CONFIG_GLOBAL": os.devnull, "GIT_TERMINAL_PROMPT": "0"})
+
+def admitted_tools(supervisor, supervisor_git, candidate, project_git, base):
+    require(sys.flags.isolated and sys.dont_write_bytecode)
+    require(not any(n.split(".")[0] in {"harness", "scripts"} for n in sys.modules))
+    require(all(p.is_absolute() and p.resolve(strict=True) == p
+                for p in (supervisor, supervisor_git, candidate, project_git)))
+    for checkout, common in ((supervisor, supervisor_git), (candidate, project_git)):
+        require(Path(os.fsdecode(git(checkout, "rev-parse", "--path-format=absolute",
+                                     "--git-common-dir")).strip()) == common)
+    revision = "f280615b10a44cc361ecc8cf01e86048d509acae"
+    require(git(supervisor, "rev-parse", "HEAD").decode().strip() == revision)
+    require(not git(supervisor, "status", "--porcelain=v1", "--untracked-files=all"))
+    registration = git(supervisor, "worktree", "list", "--porcelain").decode().split("\n\n")
+    require(any(r.splitlines()[:3] == [f"worktree {supervisor}", f"HEAD {revision}", "detached"]
+                for r in registration))
+    # 包括 ignored 文件在内的源码树按 Git 对象核实，拒绝额外的可导入文件与符号链接。
+    expected = set()
+    for row in git(supervisor, "ls-tree", "-rz", revision, "--", "src").split(b"\0"):
+        if not row:
+            continue
+        meta, relative = row.split(b"\t", 1)
+        mode, kind, oid = meta.split()
+        path = supervisor / os.fsdecode(relative)
+        require(mode in (b"100644", b"100755") and kind == b"blob"
+                and path.is_file() and path.resolve(strict=True) == path)
+        data = path.read_bytes()
+        require(hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data,
+                             usedforsecurity=False).hexdigest() == oid.decode())
+        expected.add(path)
+    entries = tuple((supervisor / "src").rglob("*"))
+    require(not any(p.is_symlink() for p in entries))
+    require({p for p in entries if not p.is_dir()} == expected)
+    sys.path.insert(0, str(supervisor / "src"))
+    from harness.adapters import FootballPredictionAdapter
+    adapter = FootballPredictionAdapter()
+    trusted = adapter._trusted_base_checkout(str(candidate), base)
+    # 这里才导入项目模块。该已有 resolver 已校验 registered/detached/clean、
+    # 同一 Git 仓库和全部 scripts 文件的集合、类型、模式及原始 Git blob。
+    sys.path.insert(0, str(trusted))
+    from scripts.devops.deepseek_low_effort import ToolOrigin
+    origin = ToolOrigin(candidate, base, trusted, supervisor)
+    origin.capture(base)
+    return origin
+```
+<!-- end-stage-d-controller-bootstrap -->
+
+执行和消费使用各自的新进程，重新进行上述装载。将 `admitted_tools(...)` 返回的
+`origin` 放入该次 `LowReview`，同时从已核验的 Harness 导入监护器和停止校验器。受控入口只接受该修订原生的
+`LocalRuntime` 实例方法和停止校验函数。
+每次读取凭据前、实际启动和读取原件时再次核对固定捕获程序路径及 BASE blob。只要
+受信 BASE 未包含正式试点能力、Builder 混入已加载模块、工具版本不同或物理文件不一致，
+该路径即关闭。保障范围为现有同 UID 工程独立模型，仍由 Owner/Controller 独立授权实际执行。
+
 Controller 用 `deepseek_low_effort.LowReview` 提供上述批准、Harness
 `LocalRuntime._supervised_review_step` 与 `validate_supervised_stop`，调用现有
 `claude_deepseek_independent_review.run_review(args, pilot=...)` 的保留模式。只有第二块

@@ -80,6 +80,10 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
     try:
         if (expected_mission_id == low.MISSION) != (pilot is not None):
             _reject("Stage D review requires its trusted Controller")
+        if pilot is not None:
+            if repo_root.resolve(strict=True) != pilot.origin.candidate:
+                _reject("approved Stage D Builder checkout differs")
+            low.verified_capture(pilot, expected_base)
         _assert_external_artifact(path, repo_root=repo_root, kind="receipt")
         value = _load_json(path)
         if pilot is not None and (
@@ -93,7 +97,8 @@ def _deepseek_receipt_evidence(  # noqa: C901, PLR0912, PLR0915
         ):
             _reject("supervised four-chunk receipt required")
         registry = load_backend_registry(
-            repo_root / "docs/agentic/independent_review_backends.json"
+            (pilot.origin.checkout if pilot else repo_root)
+            / "docs/agentic/independent_review_backends.json"
         )
         backend = registry.get(value.get("review_backend"))
         if backend is None or value.get("review_backend") != BACKEND_DEEPSEEK:

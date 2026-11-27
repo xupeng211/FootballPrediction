@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
+from hashlib import sha1
 import json
 import os
 from pathlib import Path
@@ -26,6 +27,9 @@ from scripts.devops.independent_review_protocol import canonical_json, sha256_by
 
 MISSION = "FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME"
 VERSION = "independent-review-receipt/stage-d-low-v2"
+HARNESS_REVISION = "f280615b10a44cc361ecc8cf01e86048d509acae"
+CAPTURE_PATH = "scripts/devops/independent_review_backends/claude_code_deepseek.py"
+POLICY_PATH = "scripts/devops/deepseek_low_effort.py"
 CHUNKS = 4
 LOW_INDEX = 1
 MAX_RECORD = 16 * 1024 * 1024
@@ -118,6 +122,112 @@ def frozen_target(worktree: Path, manifest, diff: bytes, prompts: list[bytes]) -
     }
 
 
+def _loaded_from(package: str, root: Path) -> bool:
+    for name, module in tuple(sys.modules.items()):
+        if name != package and not name.startswith(package + "."):
+            continue
+        file = getattr(module, "__file__", None)
+        paths = [file] if file else tuple(getattr(module, "__path__", ()))
+        if not paths or any(
+            not Path(path).resolve(strict=True).is_relative_to(root) for path in paths
+        ):
+            return False
+    return True
+
+
+@dataclass(frozen=True)
+class ToolOrigin:
+    """由候选外 Controller 在导入任何项目模块前解析的物理工作区与已批准 BASE。"""
+
+    candidate: Path
+    project_base: str
+    checkout: Path
+    harness_checkout: Path
+
+    def capture(self, expected_base: str) -> tuple[Path, str]:
+        """保持两级启动信任；固定目标来自 BASE Git blob，文件路径不由已加载模块指定。"""
+        # 只有已独立验证的 Controller 会预装此版本的 Harness。旧默认路径不依赖 Harness。
+        from harness import adapters  # noqa: PLC0415
+
+        _check(
+            self.project_base == expected_base
+            and re.fullmatch(r"[0-9a-f]{40}", expected_base) is not None
+            and self.candidate == self.candidate.resolve(strict=True)
+            and self.harness_checkout == self.harness_checkout.resolve(strict=True)
+            and Path(adapters.__file__) == self.harness_checkout / "src/harness/adapters.py",
+            "unverified tool origin",
+        )
+        adapter = adapters.FootballPredictionAdapter()
+        git = adapter._trusted_git_output
+        _check(
+            git(self.harness_checkout, "rev-parse", "HEAD").strip() == HARNESS_REVISION,
+            "unexpected Controller tool revision",
+        )
+        root = self.checkout
+        _check(
+            _loaded_from("scripts", root / "scripts")
+            and _loaded_from("harness", self.harness_checkout / "src/harness"),
+            "pre-import project or supervisor origin differs",
+        )
+        # 原 resolver 核验同库注册的干净 detached BASE 及全部脚本 blob。
+        _check(
+            adapter._trusted_base_checkout(str(self.candidate), expected_base) == root,
+            "trusted registered checkout differs",
+        )
+        _check(
+            root == root.resolve(strict=True)
+            and root != self.candidate
+            and Path(__file__) == root / POLICY_PATH
+            and Path(backend.__file__) == root / CAPTURE_PATH
+            and git(root, "rev-parse", "HEAD").strip() == expected_base,
+            "project import origin differs",
+        )
+        helper = root / CAPTURE_PATH
+        metadata = git(self.candidate, "ls-tree", expected_base, "--", CAPTURE_PATH).rstrip("\n")
+        kind, path = metadata.split("\t", 1)
+        mode, entry, oid = kind.split()
+        _check(
+            path == CAPTURE_PATH
+            and mode == "100644"
+            and entry == "blob"
+            and helper.resolve(strict=True) == helper,
+            "untrusted capture path",
+        )
+        with os.fdopen(
+            os.open(helper, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb"
+        ) as stream:
+            info = os.fstat(stream.fileno())
+            _check(
+                stat.S_ISREG(info.st_mode) and 0 < info.st_size <= MAX_RECORD,
+                "invalid capture metadata",
+            )
+            raw = stream.read(info.st_size + 1)
+        observed = sha1(f"blob {len(raw)}\0".encode() + raw, usedforsecurity=False).hexdigest()
+        _check(
+            len(raw) == info.st_size and observed == oid, "capture differs from approved BASE blob"
+        )
+        return helper, sha256_bytes(raw)
+
+
+def verified_capture(pilot: LowReview, base: str) -> tuple[Path, str]:
+    """核对接收凭据的监督方法及停止校验器，再返回可信 BASE 的固定捕获程序。"""
+    from harness.appserver_process import validate_supervised_stop  # noqa: PLC0415
+    from harness.factory_runtime import LocalRuntime  # noqa: PLC0415
+
+    _check(
+        type(pilot) is LowReview and type(pilot.origin) is ToolOrigin,
+        "unverified Controller context",
+    )
+    method = pilot.supervise
+    _check(
+        type(getattr(method, "__self__", None)) is LocalRuntime
+        and getattr(method, "__func__", None) is LocalRuntime._supervised_review_step
+        and pilot.verify_stop is validate_supervised_stop,
+        "unverified Controller methods",
+    )
+    return pilot.origin.capture(base)
+
+
 @dataclass(frozen=True)
 class LowReview:
     """仅由候选外可信 Controller 构造；无 CLI、配置文件或 receipt 转对象的入口。
@@ -133,6 +243,7 @@ class LowReview:
     approved_target: bytes
     supervise: Callable
     verify_stop: Callable
+    origin: ToolOrigin
 
     def target(self) -> dict:
         """核对私有目录与冻结的批准输入。"""
@@ -154,6 +265,7 @@ class LowReview:
 
     def check_inputs(self, root, manifest, diff, prompts) -> None:
         """逐字节匹配 Owner 批准的输入与本次重建。"""
+        verified_capture(self, self.target()["base"])
         _check(
             self.target() == frozen_target(root, manifest, diff, prompts), "approved inputs differ"
         )
@@ -202,7 +314,7 @@ class LowReview:
             and command == backend.reviewer_command(binary, settings, command[-1]),
             "noncanonical client inputs",
         )
-        helper = Path(backend.__file__).resolve()
+        helper, digest = verified_capture(self, target["base"])
         _check(not helper.is_relative_to(cwd), "trusted adapter must be outside reviewed candidate")
         args = [
             sys.executable,
@@ -220,7 +332,9 @@ class LowReview:
             "chunk_index": index,
             "effort_request": spec["effort_request"],
             "target_sha256": sha256_bytes(self.approved_target),
-            "adapter_sha256": sha256_bytes(helper.read_bytes()),
+            "adapter_sha256": digest,
+            "tool_base": self.origin.project_base,
+            "supervisor_revision": HARNESS_REVISION,
             "transcript": str(transcript),
         }
 

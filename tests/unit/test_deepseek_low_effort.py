@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+import importlib
 import json
 import os
+from pathlib import Path
+import shutil
 import subprocess
 import sys
 import uuid
@@ -75,20 +78,18 @@ print(json.dumps({"is_error":False,"type":"result","subtype":"success","structur
 """
 
 
-@pytest.fixture
-def controller(tmp_path, monkeypatch):
-    # 仓库不拥有另一套进程监护器。完整集成在挂载已安装 Harness 的禁网环境中验证。
-    runtime = None
-
-    def supervised(*args):
-        nonlocal runtime
-        if runtime is None:
-            runtime = pytest.importorskip("harness.factory_runtime").LocalRuntime()
-        return runtime._supervised_review_step(*args)
-
-    def stop(*args):
-        return pytest.importorskip("harness.appserver_process").validate_supervised_stop(*args)
-
+def _trusted_test_repo(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "dont_write_bytecode", True)
+    adapters = pytest.importorskip("harness.adapters")
+    harness_root = Path(adapters.__file__).resolve().parents[2]
+    if (
+        subprocess.check_output(
+            ["git", "-C", str(harness_root), "rev-parse", "HEAD"], text=True
+        ).strip()
+        != low.HARNESS_REVISION
+    ):
+        pytest.skip("integration requires the pinned Controller revision")
+    adapter = adapters.FootballPredictionAdapter()
     args = _retained_fixture_repo(tmp_path, subprocess.run)
     old = args.mission_scope_file
     scope = json.loads(old.read_bytes())
@@ -113,9 +114,47 @@ def controller(tmp_path, monkeypatch):
             cwd=args.repo_root,
         )
 
+    # 两个真实 Git 版本：BASE 提供项目工具，非 detached Builder 候选另行改动工具。
+    policy_files = {*adapter.REVIEW_CONTRACT_PATHS, "scripts/devops/percent_repair_input.py"}
+    project = runner.ROOT
+    policy_files.update(
+        Path(module.__file__).relative_to(project).as_posix()
+        for name, module in tuple(sys.modules.items())
+        if name.startswith("scripts.")
+        and getattr(module, "__file__", None)
+        and Path(module.__file__).is_relative_to(project)
+    )
+    for relative in policy_files:
+        dest = args.repo_root / relative
+        dest.parent.mkdir(exist_ok=True, parents=True)
+        shutil.copy(project / relative, dest)
+    git("add", "Makefile", "scripts", "schemas", "docs")
+    git("commit", "-qm", "trusted offline tooling base")
+    args.base_sha = git("rev-parse", "HEAD").decode().strip()
+    with (args.repo_root / low.CAPTURE_PATH).open("a") as stream:
+        stream.write("\n# independent Builder worktree marker\n")
     git("add", ".")
     git("commit", "-qm", "offline four-packet candidate")
     args.head_sha = git("rev-parse", "HEAD").decode().strip()
+    checkout = adapter._trusted_base_checkout(str(args.repo_root), args.base_sha)
+    # 模拟长驻 pytest 中隔离加载，另有新 -I/-B 子进程执行文档中的真实启动顺序。
+    original_paths = [
+        path for path in sys.path if not (Path(path or ".").resolve() / "scripts").exists()
+    ]
+    monkeypatch.setattr(sys, "path", [str(checkout), *original_paths])
+    original_modules = {
+        k: v for k, v in sys.modules.items() if k == "scripts" or k.startswith("scripts.")
+    }
+    for k in original_modules:
+        monkeypatch.delitem(sys.modules, k)
+    for name, suffix in (
+        ("low", "deepseek_low_effort"),
+        ("runner", "claude_deepseek_independent_review"),
+        ("consumer", "deepseek_receipt_evidence"),
+        ("agent_workflow", "agent_workflow"),
+    ):
+        monkeypatch.setitem(globals(), name, importlib.import_module("scripts.devops." + suffix))
+    origin = low.ToolOrigin(args.repo_root.resolve(), args.base_sha, checkout, harness_root)
     diff = git("diff", "--binary", "--no-ext-diff", args.base_sha + "..." + args.head_sha)
     scope_sha = sha256_bytes(args.mission_scope_file.read_bytes())
     manifest = runner.plan(
@@ -133,6 +172,16 @@ def controller(tmp_path, monkeypatch):
         for c in manifest.chunks
     ]
     target = low.frozen_target(args.repo_root, manifest, diff, prompts)
+    return args, origin, target, original_modules
+
+
+@pytest.fixture
+def controller(tmp_path, monkeypatch):
+    args, origin, target, original_modules = _trusted_test_repo(tmp_path, monkeypatch)
+    supervised = (
+        pytest.importorskip("harness.factory_runtime").LocalRuntime()._supervised_review_step
+    )
+    stop = pytest.importorskip("harness.appserver_process").validate_supervised_stop
     binary = tmp_path / "claude"
     binary.write_text("#!" + sys.executable + "\n" + _FAKE_CLIENT)
     binary.chmod(0o700)
@@ -149,9 +198,18 @@ def controller(tmp_path, monkeypatch):
     trusted.mkdir(mode=0o700)
     args.evidence_dir.mkdir(mode=0o700)
     pilot = low.LowReview(
-        uuid.uuid4().hex, trusted, args.evidence_dir, canonical_json(target), supervised, stop
+        uuid.uuid4().hex,
+        trusted,
+        args.evidence_dir,
+        canonical_json(target),
+        supervised,
+        stop,
+        origin,
     )
-    return args, pilot, mode
+    yield args, pilot, mode
+    for name in tuple(sys.modules):
+        if name.startswith("scripts.") and name not in original_modules:
+            del sys.modules[name]
 
 
 def _read(args, path, pilot):
@@ -282,12 +340,15 @@ def test_refuse_drift_before_first_dispatch(controller, changed):
     assert not list(pilot.trusted_dir.iterdir())
 
 
-def test_unknown_stop_preserves_originals_and_blocks_next(controller):
+def test_unknown_stop_preserves_originals_and_blocks_next(controller, monkeypatch):
     args, pilot, _ = controller
 
     def unknown(*_):
         raise ValueError("unknown stop")
 
+    monkeypatch.setattr(
+        sys.modules["harness.appserver_process"], "validate_supervised_stop", unknown
+    )
     with pytest.raises(ValueError, match="supervision incomplete"):
         runner.run_review(args, pilot=replace(pilot, verify_stop=unknown))
     assert len(list(pilot.trusted_dir.glob("*.started"))) == 1
@@ -296,7 +357,7 @@ def test_unknown_stop_preserves_originals_and_blocks_next(controller):
 
 
 def test_exclusive_approval_claim(tmp_path):
-    tx = low.LowReview("0" * 32, tmp_path, tmp_path, b"fixture", None, None)
+    tx = low.LowReview("0" * 32, tmp_path, tmp_path, b"fixture", None, None, None)
 
     def claim(_):
         try:
@@ -348,11 +409,11 @@ def test_supervised_start_refuses_wrong_command_or_environment(controller, bad):
     assert not list(pilot.trusted_dir.glob("chunk-*.stdout"))
 
 
-def test_real_supervisor_timeout_preserves_incomplete_second_chunk(controller):
+def test_real_supervisor_timeout_preserves_incomplete_second_chunk(controller, monkeypatch):
     args, pilot, mode = controller
     mode.write_text("timeout")
 
-    def bounded(binding, argv, cwd, environment, transcript, timeout):
+    def bounded(_runtime, binding, argv, cwd, environment, transcript, timeout):
         return pilot.supervise(
             binding,
             argv,
@@ -362,10 +423,168 @@ def test_real_supervisor_timeout_preserves_incomplete_second_chunk(controller):
             0.2 if binding["chunk_index"] == low.LOW_INDEX else timeout,
         )
 
+    runtime = pilot.supervise.__self__
+    monkeypatch.setattr(type(runtime), "_supervised_review_step", bounded)
     with pytest.raises(ValueError, match="supervision incomplete"):
-        runner.run_review(args, pilot=replace(pilot, supervise=bounded))
+        runner.run_review(args, pilot=replace(pilot, supervise=runtime._supervised_review_step))
     stop = json.loads((pilot.trusted_dir / "chunk-1.stdout.stop.json").read_bytes())
     assert stop["outcome"] == "timeout"
     assert stop["stop"]["proof"] == "ECHILD"
     assert len(list(pilot.trusted_dir.glob("*.started"))) == low.LOW_INDEX + 1
     assert not (pilot.trusted_dir / "chunk-1.seal").exists()
+
+
+def test_controller_preimport_and_supervised_round_in_fresh_process(controller):
+    args, pilot, mode = controller
+    docs = (Path(__file__).resolve().parents[2] / "docs/AGENT_WORKFLOW.md").read_text()
+    bootstrap = (
+        docs.split("<!-- stage-d-controller-bootstrap -->", 1)[1]
+        .split("```python\n", 1)[1]
+        .split("\n```", 1)[0]
+    )
+    client = mode.with_suffix("")
+    # 外部 Controller 的独立新解释器执行真实启动段及正式 runner 正例。
+    driver = """
+import json, uuid
+from argparse import Namespace
+harness, harness_git, candidate, common = [Path(v) for v in sys.argv[1:5]]
+base, head, mode = sys.argv[5:8]
+if mode == "preloaded":
+    sys.path.insert(0, str(candidate))
+    from scripts.devops import independent_review_protocol
+if mode == "wrong-repository":
+    common = harness_git
+origin = admitted_tools(harness, harness_git, candidate, common, base)
+from harness.appserver_process import validate_supervised_stop
+from harness.factory_runtime import LocalRuntime
+from scripts.devops import claude_deepseek_independent_review as runner
+from scripts.devops import deepseek_low_effort as low
+from scripts.devops import deepseek_receipt_evidence as consumer
+binary = Path(sys.argv[8])
+evidence, trusted = [Path(v) for v in sys.argv[9:11]]
+target = bytes.fromhex(sys.argv[11])
+pilot = low.LowReview(sys.argv[12], trusted, evidence, target,
+                      LocalRuntime()._supervised_review_step, validate_supervised_stop, origin)
+scope = candidate / "docs/agentic/missions" / (low.MISSION + ".json")
+args = Namespace(repo_root=candidate, base_sha=base, head_sha=head, mission_id=low.MISSION,
+                 mission_scope_file=scope, evidence_dir=evidence, retain_invocation=True)
+runner.backend.TRUSTED_CLAUDE_BINARY_ROOTS = (binary.parent,)
+runner.backend.TRUSTED_CLAUDE_BINARY_SHA256 = {hashlib.sha256(binary.read_bytes()).hexdigest()}
+def fake_secret(_):
+    with (trusted / "mock-secret-read").open("a") as stream:
+        stream.write("admitted\\n")
+    return "synthetic-fixture-token"
+runner.backend._secret = fake_secret
+os.environ["PATH"] = str(binary.parent) + os.pathsep + os.environ["PATH"]
+if mode == "run":
+    path = runner.run_review(args, pilot=pilot)
+    print(path.name)
+else:
+    path = evidence / ("claude-deepseek-receipt-" + head[:12] + "-" + pilot.run_id + ".json")
+    verified = consumer._deepseek_receipt_evidence(path, repo_root=candidate, expected_base=base,
+        expected_head=head, expected_mission_id=low.MISSION, expected_scope_hash=json.loads(target)["scope_sha256"],
+        pilot=pilot)
+    require(verified.trusted)
+"""
+    git = ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"]
+    harness_common = subprocess.check_output(
+        git, cwd=pilot.origin.harness_checkout, text=True
+    ).strip()
+    project_common = subprocess.check_output(git, cwd=args.repo_root, text=True).strip()
+
+    def invoke(case):
+        return subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-B",
+                "-c",
+                bootstrap + "\n" + driver,
+                str(pilot.origin.harness_checkout),
+                harness_common,
+                str(args.repo_root),
+                project_common,
+                args.base_sha,
+                args.head_sha,
+                case,
+                str(client),
+                str(args.evidence_dir),
+                str(pilot.trusted_dir),
+                pilot.approved_target.hex(),
+                pilot.run_id,
+            ],
+            cwd=pilot.trusted_dir,
+            env={"PATH": "/usr/bin:/bin"},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    for case in ("preloaded", "wrong-repository"):
+        refused = invoke(case)
+        assert refused.returncode != 0
+        assert "unverified Stage D Controller tool origin" in refused.stderr
+        assert not list(pilot.trusted_dir.iterdir())
+    executed = invoke("run")
+    assert executed.returncode == 0, executed.stderr
+    checked = invoke("consume")
+    assert checked.returncode == 0, checked.stderr
+    assert len((pilot.trusted_dir / "mock-secret-read").read_text().splitlines()) == low.CHUNKS
+    assert len(list(pilot.trusted_dir.glob("*.started"))) == low.CHUNKS
+
+
+@pytest.mark.parametrize(
+    "source", ["builder", "wrong-base", "wrong-origin", "dirty-capture", "foreign-method"]
+)
+def test_refuse_untrusted_helper_before_reading_credentials(controller, source, monkeypatch):
+    args, pilot, _ = controller
+    base_origin = pilot.origin
+    if source == "foreign-method":
+        pilot = replace(pilot, supervise=lambda *_: pytest.fail("unexpected dispatch"))
+    if source == "builder":
+        pilot = replace(pilot, origin=replace(base_origin, checkout=args.repo_root))
+    if source == "wrong-base":
+        pilot = replace(pilot, origin=replace(base_origin, project_base=args.head_sha))
+    if source == "wrong-origin":
+        pilot = replace(pilot, origin=replace(base_origin, harness_checkout=args.repo_root))
+    if source == "dirty-capture":
+        helper = base_origin.checkout / low.CAPTURE_PATH
+        helper.write_bytes(helper.read_bytes() + b"\n# harmless drift\n")
+    monkeypatch.setattr(
+        runner.backend, "_secret", lambda _: pytest.fail("unexpected credential access")
+    )
+    with pytest.raises((ValueError, RuntimeError)):
+        runner.run_review(args, pilot=pilot)
+    assert not list(pilot.trusted_dir.iterdir())
+
+
+def test_recheck_physical_helper_at_secret_read_and_consume(controller, monkeypatch):
+    args, pilot, _ = controller
+    receipt = runner.run_review(args, pilot=pilot)
+    assert _read(args, receipt, pilot).trusted
+    helper = pilot.origin.checkout / low.CAPTURE_PATH
+    original = helper.read_bytes()
+    helper.write_bytes(original + b"\n# harmless drift\n")
+    assert not _read(args, receipt, pilot).trusted
+    monkeypatch.setattr(
+        runner.backend, "_secret", lambda _: pytest.fail("unexpected credential access")
+    )
+    with pytest.raises((ValueError, RuntimeError)):
+        runner.backend.run(prompt="offline", cwd=pilot.worktree(), supervised_chunk=(pilot, 0))
+    assert len(list(pilot.trusted_dir.glob("*.started"))) == low.CHUNKS
+
+
+def test_capture_drift_after_secret_check_refuses_supervised_dispatch(controller, monkeypatch):
+    args, pilot, _ = controller
+    helper = pilot.origin.checkout / low.CAPTURE_PATH
+
+    def change_after_check(_):
+        helper.write_bytes(helper.read_bytes() + b"\n# harmless drift after credential check\n")
+        return "synthetic-fixture-token"
+
+    monkeypatch.setattr(runner.backend, "_secret", change_after_check)
+    with pytest.raises((RuntimeError, ValueError)):
+        runner.run_review(args, pilot=pilot)
+    assert (pilot.trusted_dir / "claimed.json").exists()
+    assert not list(pilot.trusted_dir.glob("*.started"))
+    assert not list(pilot.trusted_dir.glob("*.stdout"))
