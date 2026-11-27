@@ -1,0 +1,42 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_DEEPSEEK_EXPLICIT_LOW_REVIEW",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_DEEPSEEK_EXPLICIT_LOW_REVIEW.json",
+    "schemas/agentic/independent_review_receipt.schema.json",
+    "scripts/devops/agent_workflow.py",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/deepseek_chunk_receipt_validation.py",
+    "scripts/devops/deepseek_low_effort.py",
+    "scripts/devops/deepseek_receipt_evidence.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "scripts/devops/independent_review_receipt.py",
+    "tests/unit/test_deepseek_low_effort.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "Makefile",
+    "README.md"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "src/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "仅为 FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME 的受控四块审核设置第二块 low。受信 Controller 绑定 Owner 批准及准确 Git 输入。其余三块使用干净默认环境，维护正式双审、原件、完整差异和同次进程树停止要求。",
+    "治理补丁本身由候选外未修改 BASE 的两岗默认正式审核。历史收据和失败记录保留原含义。"
+  ],
+  "forbidden_side_effects": [
+    "Builder 仅限本地开发及禁网验证。正式审核、数据库、真实供应商调用、推送、PR、合并、采集及生产均需各自的 Owner 决定。"
+  ]
+}

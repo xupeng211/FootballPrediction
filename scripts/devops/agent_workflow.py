@@ -326,7 +326,7 @@ def _remote_pr_check(
     )
 
 
-def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912, PLR0915
+def merge_ready_command(args: argparse.Namespace, *, pilot=None) -> int:  # noqa: C901, PLR0912, PLR0915
     """Evaluate merge readiness without performing any merge-side effect."""
 
     repo_root = Path(args.repo_root).resolve()
@@ -529,6 +529,7 @@ def merge_ready_command(args: argparse.Namespace) -> int:  # noqa: C901, PLR0912
                 expected_head=expected_head,
                 expected_mission_id=args.mission_id,
                 expected_scope_hash=mission_scope_hash,
+                **({"pilot": pilot} if pilot is not None else {}),
             )
         )
     if mission_scope is not None and mission_scope_hash is not None:

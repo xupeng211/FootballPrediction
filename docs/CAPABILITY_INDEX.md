@@ -116,6 +116,10 @@
 | Engineering | 持久化 Agentic Engineering Workflow V1 | CANONICAL | `make agent-preflight`、`make agent-review`、`make agent-deepseek-review`、`make agent-policy-evaluate`、`make agent-merge-ready` | `AGENTS.md`、`docs/AGENT_WORKFLOW.md`、`scripts/devops/review_policy.py`、`scripts/devops/agent_workflow.py`、`scripts/devops/codex_reviewer_isolation.py` | `tests/unit/test_agentic_workflow_v1.py`、`tests/unit/test_codex_reviewer_auth_transport_isolation.py`、`tests/unit/test_review_policy.py` | policy-owned NORMAL=一份 DeepSeek（可显式 Codex）、STRICT=一份 Codex、CRITICAL=同一 candidate 上的 Codex+DeepSeek；canonical Codex review 强制 repo 外 0700 state、官方 ChatGPT stored auth、清洗 Builder auth/provider routing；通用 HTTP(S)/SOCKS network proxy 可保留 | Builder self-review、同一 session、短 SHA、缺失/stale receipt、Builder `CODEX_HOME`/API key/base URL/custom provider、隐式 backend/model fallback、`gh pr merge` | v3 Codex receipt 记录非敏感 auth/transport isolation assertions；旧 v1/v2 仍是历史证据，不能因新 policy 被升级为当前 approval |
 | Engineering | Claude Code / DeepSeek review backend | CANONICAL / POLICY-SELECTABLE | `make agent-deepseek-review` 或 policy-owned NORMAL/CRITICAL selection | `scripts/devops/independent_review_backends/claude_code_deepseek.py` + `scripts/devops/independent_review_receipt.py` | `tests/unit/test_claude_code_deepseek_backend.py`、`tests/unit/test_independent_review_protocol.py`、`tests/unit/test_review_policy.py` | 外部 0600 secret 仅在 Claude 子进程注入；固定 DeepSeek Anthropic endpoint 与 `deepseek-flash`；fresh bare process、严格 MCP、restricted no-tools；raw/final/CLI/settings/endpoint/model/session 必须由 harness 绑定 | `~/.claude`、用户环境 provider routing、plugins/MCP/session reuse、凭据写入 artifact | DeepSeek 满足 NORMAL 默认或 CRITICAL 的第二独立 review，不能替代 STRICT 的 Codex approval。保留模式可记录客户端推理强度，输出触顶明确归类并保留 `NO_VERDICT` |
 
+Stage D 后续记账工单的工程审核支持候选外 Controller 监督四次 Claude 启动，仅第 2 块指定
+low。collector 正式开放继续取决于业务验收和 Gate 3。治理工具的绑定、历史 v1 与正式 v2
+消费及未接入的入口见 [详细工作流](AGENT_WORKFLOW.md#stage-d-第二块的受控低强度审核)。
+
 ## Domain: 历史赔率（M3 odds staging / import foundation）
 
 下表「离线 staging pipeline」条目中的金额规则适用于既有离线校验。十进制赔率仅接受大于 1 的有限数值或等值十进制字符串，支持前后空白和指数写法。坏价逐条以 `decimal_odds_invalid` 隔离，并保留原始输入 SHA-256 和记录定位。

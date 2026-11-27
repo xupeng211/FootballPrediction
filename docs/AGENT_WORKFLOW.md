@@ -476,6 +476,35 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
 两种调用方式的 stdout JSON 都始终带有 `status`、`review_result`、`blocking_findings`、`finding_counts_by_severity`
 （`wait` 另带 `review_run_id` / `receipts_from_other_rounds`），因此机器可读的结论不依赖 exit code 的粒度。
 
+### Stage D 第二块的受控低强度审核
+
+适用工单为 `FP_STAGE_D_FORWARD_ACCOUNTING_RUNTIME`。Owner 批准准确候选、独立账号/路线、
+一次审核、最多四次 Claude 启动及费用边界后，候选外 Controller 先从可信 Git 重建、核对全部
+四块及 prompt，并将准确 BASE/HEAD/tree/diff/mission/scope、manifest 和每块摘要固定到批准。
+Controller 持有唯一批准目录、专用审核证据目录和 run id。它必须从独立验收过的固定工具修订
+加载本仓库 runner/validator 和既有 Harness 监护器；业务候选之外的任意目录本身不能建立信任。
+本治理变更自身先由未修改 BASE 的原默认两岗审核。未来业务候选改基线后重新核准全部身份。
+
+Controller 用 `deepseek_low_effort.LowReview` 提供上述批准、Harness
+`LocalRuntime._supervised_review_step` 与 `validate_supervised_stop`，调用现有
+`claude_deepseek_independent_review.run_review(args, pilot=...)` 的保留模式。只有第二块
+子进程出现 `CLAUDE_CODE_EFFORT_LEVEL=low`。每块都记录实际客户端强度、唯一会话、真实
+子进程的 pid/starttime、工作目录和准确命令。凭据只在受控执行链的内存和子进程环境中使用；
+监督 transcript 仅收到先过滤凭据的结果与非敏感字段。客户端内部续写、服务端设置和账单另行核实。
+
+Controller 的批准目录对整轮及每块分别独占写入启动标记。目录由可信 Controller 与 Owner
+原决定唯一绑定，本仓库的独占文件只防止同一目录内的重复使用。Controller 须先独立查验同次
+停止原件、进程日志、实际返回的原文、隔离设置和私有会话 trace，再封存该块；缺失、混用、
+停止未知或输出触顶时保留现场，阻断后续派发。所有阶段沿用 P0/P1/P2 阻断、P3 留档的规则。
+
+独立消费使用独立加载的同一可信工具与批准原件，调用既有
+`agent_workflow.merge_ready_command(args, pilot=...)`。external reader 在读取收据版本和
+分块声明之前根据预期业务工单选择策略。专用 `independent-review-receipt/stage-d-low-v2`
+必须重新核验四块及原始 trace/stop 证据。没有 Controller 上下文的普通 runner/merge-ready
+对该工单关闭；其他工单继续原 v1 路径。旧版本拒绝新收据。低层 v1 规则可历史复核，
+策略汇总 CLI 只消费经核验事实。普通 Make/CLI 及原有 Harness adapter 没有接线提供本轮批准，
+不能用于正式试点。候选外可信 Controller 的装载、账号、预算和自然语言决定仍需另行核定。
+
 ### DeepSeek Controller 保留模式
 
 `claude_deepseek_independent_review.py --retain-invocation` 保留本轮 detached worktree、隔离运行目录及已安全写入的原件；无此参数的既有调用保持原清理行为。保留目录可能包含工具运行产生的未知内容，按 owner-only 私有资料处理，不作为可公开的审核输出。超时或故障时没有写入的内存输出不重建，失败不产生新的审核 PASS。Controller 必须先确认同一操作的完整进程树停止并保存绑定原件，再按现有 canonical validator 消费 receipt；停止 UNKNOWN 保留现场、阻断依赖派发。此模式不改变 Provider、模型、独立性、review 结论或 exact-head 收据标准。

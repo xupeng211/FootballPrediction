@@ -93,6 +93,21 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
         ):
             raise ChunkReviewError("chunk manifest binding mismatch")  # noqa: TRY301
         validate_manifest(manifest, diff)
+        if getattr(context, "low_review", None) is not None:
+            context.low_review.check_inputs(
+                context.repo_root,
+                manifest,
+                diff,
+                [
+                    build_chunk_prompt(
+                        chunk=c,
+                        source=diff[c.start : c.end],
+                        manifest=manifest,
+                        scope_sha=receipt["mission_scope_sha256"],
+                    ).encode()
+                    for c in manifest.chunks
+                ],
+            )
         top_chunks = top_evidence.get("chunks")
         if (
             not isinstance(top_chunks, list)
@@ -212,6 +227,21 @@ def _validate_chunked_claude_evidence(  # noqa: C901, PLR0912, PLR0915
                 "session_id": execution.session_id,
             }
         )
+        if getattr(context, "low_review", None) is not None:
+            try:
+                context.low_review.check_chunk(index, item, seal=False)
+            except (
+                OSError,
+                RuntimeError,
+                ValueError,
+                TypeError,
+                IndexError,
+                KeyError,
+                StopIteration,
+            ) as exc:
+                raise IndependentReviewProtocolError(
+                    "Stage D supervised originals are invalid"
+                ) from exc
         all_findings.extend(normalized["findings"])
     if provenance.get("chunk_evidence_manifest_sha256") != sha256_bytes(
         chunk_evidence_manifest_bytes(evidence_payload)
