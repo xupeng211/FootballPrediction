@@ -1,0 +1,28 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_POST_MERGE_EVIDENCE_BINDING",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_POST_MERGE_EVIDENCE_BINDING.json",
+    "scripts/devops/pr_post_merge_check.py",
+    "tests/unit/test_pr_post_merge_check.py",
+    "tests/unit/test_pr_post_merge_check_protected.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [],
+  "excluded_prefixes": [],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "合并后验收绑定 GitHub 的实际 PR 合并提交及该提交的 main push Production Gate",
+    "保留现有 make 入口、只读验收、实际主干可达性、工作区清洁和快进同步核对",
+    "正式审核、合并权限和业务运行边界沿用现有合同"
+  ],
+  "forbidden_side_effects": [
+    "修改 main、删除或清理工作区、分支、远端状态或历史证据",
+    "真实采集、供应商请求、数据库操作、训练、预测或生产变更，除非取得对应的另行授权",
+    "未经对应授权派发正式审核、推送、创建 PR 或合并"
+  ]
+}

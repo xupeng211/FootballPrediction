@@ -167,7 +167,7 @@ PR 生命周期：
 3. push feature branch，创建或更新 PR；source change 后重新验证当前 PR HEAD。
 4. GitHub `Environment / Proxy / Static / Unit Gate` 和 `Docker Build Validation` 是当前 ruleset 的 required checks；它们必须验证当前 PR HEAD。
 5. owner 判断是否接受风险并合并。仓库远端 merge settings 已收敛为 Squash Merge；若 ruleset 的允许方法仍未同步，按真实 GitHub 状态报告并由 owner 处理。
-6. merge 不等于完成。必须找到实际 merge SHA，并确认 main push 的 Production Gate 对该完整 SHA 成功。
+6. 合并后使用 `make pr-post-merge-check` 核对 GitHub 记录的实际 merge SHA。传入的完整 SHA 必须与该 PR 的合并记录一致，且 `main` 的 `push` 事件必须为这个 SHA 产生成功的 Production Gate。
 
 合并前只使用一个状态预检入口：
 
