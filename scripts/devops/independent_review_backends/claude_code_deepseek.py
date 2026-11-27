@@ -192,6 +192,29 @@ def _observed_trace_row(row: dict[str, Any], session: str, cwd: str) -> bool:
     return row.get("sessionId") == session and row.get("cwd") == cwd
 
 
+def _trace_effort_levels(rows: list[dict[str, Any]], session: str, directory: str) -> set[str]:
+    efforts = set()
+    for row in rows:
+        if row.get("type") != "assistant" or row.get("isApiErrorMessage"):
+            continue
+        message = row.get("message")
+        if isinstance(message, dict) and message.get("model") == "<synthetic>":
+            continue
+        value = row.get("perTurnEffort")
+        if value is None:
+            value = row.get("effort")
+        if (
+            not _observed_trace_row(row, session, directory)
+            or not isinstance(message, dict)
+            or message.get("model") != MODEL
+            or not isinstance(value, str)
+            or value not in _CLIENT_EFFORT_LEVELS
+        ):
+            raise ValueError("client turn lacks bound effort metadata")
+        efforts.add(value)
+    return efforts
+
+
 def _observe_client_effort(
     home: Path, prompt: str, cwd: Path, reported_session: object
 ) -> dict[str, Any]:
@@ -217,25 +240,7 @@ def _observe_client_effort(
         or first_user["message"].get("content") != prompt
     ):
         raise ValueError("trace does not match the submitted prompt")
-    efforts = set()
-    for row in rows:
-        if row.get("type") != "assistant" or row.get("isApiErrorMessage"):
-            continue
-        message = row.get("message")
-        if isinstance(message, dict) and message.get("model") == "<synthetic>":
-            continue
-        value = row.get("perTurnEffort")
-        if value is None:
-            value = row.get("effort")
-        if (
-            not _observed_trace_row(row, session, directory)
-            or not isinstance(message, dict)
-            or message.get("model") != MODEL
-            or not isinstance(value, str)
-            or value not in _CLIENT_EFFORT_LEVELS
-        ):
-            raise ValueError("client turn lacks bound effort metadata")
-        efforts.add(value)
+    efforts = _trace_effort_levels(rows, session, directory)
     return {
         "observed_client_effort": next(iter(efforts))
         if len(efforts) == 1

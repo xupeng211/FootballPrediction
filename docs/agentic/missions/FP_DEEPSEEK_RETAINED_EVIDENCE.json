@@ -1,13 +1,13 @@
 {
   "schema_version": "agentic-mission-scope/v1",
-  "mission_id": "FP_DEEPSEEK_RETAINED_DIAGNOSTICS",
+  "mission_id": "FP_DEEPSEEK_RETAINED_EVIDENCE",
   "task_type": "workflow-governance",
   "workflow_class": "CRITICAL",
   "authorized_paths": [
     "AGENTS.md",
     "docs/AGENT_WORKFLOW.md",
     "docs/CAPABILITY_INDEX.md",
-    "docs/agentic/missions/FP_DEEPSEEK_RETAINED_DIAGNOSTICS.json",
+    "docs/agentic/missions/FP_DEEPSEEK_RETAINED_EVIDENCE.json",
     "scripts/devops/claude_deepseek_independent_review.py",
     "scripts/devops/independent_review_backends/claude_code_deepseek.py",
     "tests/unit/test_claude_code_deepseek_backend.py",
