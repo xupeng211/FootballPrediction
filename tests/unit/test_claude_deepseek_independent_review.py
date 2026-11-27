@@ -133,6 +133,14 @@ def test_backend_failure_exposes_only_allowlisted_classification():
         )
         == "AUTH_FAILURE"
     )
+    assert (
+        runner._safe_backend_failure_code(
+            runner.backend.BackendInfrastructureError(
+                "CLI_RUNTIME_FAILURE: OUTPUT_TOKEN_LIMIT: private detail"
+            )
+        )
+        == "CLI_RUNTIME_FAILURE:OUTPUT_TOKEN_LIMIT"
+    )
 
 
 def test_chunked_receipt_prompt_bytes_hash_without_double_encoding():

@@ -70,6 +70,7 @@ _SAFE_NONZERO_DETAILS = frozenset(
         "USAGE_LIMIT",
         "REQUEST_TOO_LARGE",
         "CONTEXT_LIMIT",
+        "OUTPUT_TOKEN_LIMIT",
         "INVALID_MODEL",
         "UNSUPPORTED_PARAMETER",
         "INVALID_SCHEMA",

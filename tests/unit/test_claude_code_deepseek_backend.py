@@ -1,4 +1,5 @@
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,6 +29,7 @@ def test_child_environment_is_allowlisted_and_has_no_competing_route():
     assert env["ANTHROPIC_AUTH_TOKEN"] == "synthetic-secret"
     assert env["ANTHROPIC_API_KEY"] == "synthetic-secret"
     assert "HTTPS_PROXY" not in env
+    assert "CLAUDE_CODE_EFFORT_LEVEL" not in env
 
 
 def test_secret_source_rejects_symlink_and_unsafe_permissions(tmp_path: Path):
@@ -176,11 +178,139 @@ def test_nonzero_diagnostic_is_allowlisted_and_does_not_reflect_output():
     assert "secret" not in detail
 
 
+_OUTPUT_LIMIT = (
+    "Claude's response exceeded the 32000 output token maximum. "
+    "To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable."
+)
+_SESSION = "f8aeddc7-2a7c-4db9-8be0-0bb7a20b21af"
+
+
+@pytest.mark.parametrize(
+    ("subtype", "detail"),
+    [
+        ("error_during_execution", {"errors": [_OUTPUT_LIMIT]}),
+        ("success", {"result": "API Error: " + _OUTPUT_LIMIT}),
+    ],
+)
+def test_nonzero_distinguishes_client_output_limit_from_review_prose(subtype, detail):
+    envelope = {"type": "result", "is_error": True, "subtype": subtype, **detail}
+    output = SimpleNamespace(returncode=1, stdout=json.dumps(envelope).encode(), stderr=b"private")
+    classified = backend._safe_nonzero_detail(output, 12)
+    assert classified.startswith("OUTPUT_TOKEN_LIMIT: exit=1;")
+    assert "private" not in classified
+    assert _OUTPUT_LIMIT not in classified
+    output.stdout = json.dumps({**envelope, "is_error": False}).encode()
+    assert backend._safe_nonzero_detail(output, 12).startswith("UNKNOWN_NONZERO_EXIT:")
+    output.stdout = b'{"error":"context window exceeded: max_output_tokens"}'
+    assert backend._safe_nonzero_detail(output, 12).startswith("CONTEXT_LIMIT:")
+
+
+@pytest.mark.parametrize(
+    ("trace_prompt", "reported_session", "efforts", "expected"),
+    [
+        ("review", _SESSION, ["high"], "high"),
+        ("review", _SESSION, ["high", "low"], "MIXED"),
+        ("wrong prompt", _SESSION, ["high"], "UNKNOWN"),
+        ("review", "wrong session", ["low"], "UNKNOWN"),
+        ("review", _SESSION, ["unknown private value"], "UNKNOWN"),
+    ],
+)
+def test_retained_effort_binds_trace_to_call_without_copying_messages(
+    monkeypatch, tmp_path, trace_prompt, reported_session, efforts, expected
+):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+
+    def fake_run(command, **kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.278 (Claude Code)\n")
+        trace_dir = Path(kwargs["env"]["HOME"]) / ".claude" / "projects" / "fixture"
+        trace_dir.mkdir(parents=True)
+        trace = trace_dir / f"{_SESSION}.jsonl"
+        binding = {"sessionId": _SESSION, "cwd": str(kwargs["cwd"])}
+        rows = [binding | {"type": "user", "message": {"content": trace_prompt}}]
+        rows.extend(
+            binding
+            | {
+                "type": "assistant",
+                "perTurnEffort": None,
+                "effort": effort,
+                "message": {"model": backend.MODEL, "content": "private native record"},
+            }
+            for effort in efforts
+        )
+        trace.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+        trace.chmod(0o600)
+        return SimpleNamespace(
+            returncode=0,
+            stderr=b"",
+            stdout=json.dumps(
+                {
+                    "is_error": False,
+                    "session_id": reported_session,
+                    "structured_output": {"review_result": "PASS"},
+                    "modelUsage": {backend.MODEL: {"canonicalModel": backend.MODEL}},
+                }
+            ).encode(),
+        )
+
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    evidence = tmp_path / "evidence"
+    evidence.mkdir(mode=0o700)
+    _, result, _ = backend.run(prompt="review", cwd=tmp_path, retain_home_parent=evidence)
+    assert result["review_result"] == "PASS"
+    (note,) = evidence.glob("*/client-effort.json")
+    raw = note.read_bytes()
+    private_mode = 0o600
+    assert note.stat().st_mode & 0o777 == private_mode
+    assert json.loads(raw)["observed_client_effort"] == expected
+    assert json.loads(raw)["prompt_sha256"] == sha256(b"review").hexdigest()
+    assert b"private" not in raw
+    assert b"synthetic-secret" not in raw
+
+
+def test_effort_observation_handles_client_creating_cyclic_trace_directory(tmp_path):
+    profile = tmp_path / ".claude"
+    profile.mkdir()
+    projects = profile / "projects"
+    projects.symlink_to(projects)
+
+    backend._record_client_effort(tmp_path, prompt="review", cwd=tmp_path)
+
+    note = json.loads((tmp_path / "client-effort.json").read_bytes())
+    assert note["observed_client_effort"] == "UNKNOWN"
+    assert "trace_sha256" not in note
+
+
+def test_zero_exit_client_limit_still_reports_failure(monkeypatch, tmp_path):
+    binary = tmp_path / "claude"
+    binary.write_bytes(b"synthetic cli")
+    _approve_test_binary(monkeypatch, binary)
+    monkeypatch.setattr(backend, "_secret", lambda _path: "synthetic-secret")
+
+    def fake_run(command, **_kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(stdout="2.1.278 (Claude Code)\n")
+        error = {"type": "result", "is_error": True, "subtype": "success", "result": _OUTPUT_LIMIT}
+        return SimpleNamespace(returncode=0, stdout=json.dumps(error).encode(), stderr=b"")
+
+    monkeypatch.setattr(backend.subprocess, "run", fake_run)
+    with pytest.raises(
+        backend.BackendInfrastructureError, match="CLI_RUNTIME_FAILURE: OUTPUT_TOKEN_LIMIT"
+    ):
+        backend.run(prompt="review", cwd=tmp_path)
+
+
 def test_path_selected_launcher_outside_trusted_root_is_rejected_before_secret(
     monkeypatch, tmp_path
 ):
     binary = tmp_path / "claude"
     binary.write_bytes(b"path shim")
+    trusted_root = tmp_path / "trusted"
+    trusted_root.mkdir()
+    monkeypatch.setattr(backend, "TRUSTED_CLAUDE_BINARY_ROOTS", (trusted_root,))
     monkeypatch.setattr(backend.shutil, "which", lambda _name: str(binary))
     monkeypatch.setattr(backend, "_secret", lambda _path: pytest.fail("secret was read"))
     with pytest.raises(backend.BackendInfrastructureError, match="launcher is untrusted"):
@@ -233,4 +363,8 @@ def test_retained_home_survives_timeout_without_writing_secret(monkeypatch, tmp_
     private_mode = 0o700
     assert homes[0].stat().st_mode & 0o777 == private_mode
     assert (homes[0] / "settings.json").read_bytes() == backend.DEDICATED_SETTINGS
+    assert (
+        json.loads((homes[0] / "client-effort.json").read_bytes())["observed_client_effort"]
+        == "UNKNOWN"
+    )
     assert all(b"synthetic-secret" not in p.read_bytes() for p in homes[0].iterdir() if p.is_file())

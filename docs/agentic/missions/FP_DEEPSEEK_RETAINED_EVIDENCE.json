@@ -1,0 +1,29 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_DEEPSEEK_RETAINED_EVIDENCE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/agentic/missions/FP_DEEPSEEK_RETAINED_EVIDENCE.json",
+    "scripts/devops/claude_deepseek_independent_review.py",
+    "scripts/devops/independent_review_backends/claude_code_deepseek.py",
+    "tests/unit/test_claude_code_deepseek_backend.py",
+    "tests/unit/test_claude_deepseek_independent_review.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["Makefile", "README.md"],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "schemas/", "src/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "采用原审核入口、客户端、模型、路由和隔离环境。禁止在正式审核引入推理强度覆盖、改变输出限制或改变重试与 fallback。",
+    "仅在保留模式写私有的客户端观测摘要，保持既有原件、正式收据格式与审核门槛。诊断不得授权派发或被当作服务端证据。",
+    "精准识别客户端输出上限错误并维持 NO_VERDICT。旧记录不重写，不把一般审核文字或未知错误解释为输出触顶。",
+    "整树证停、原件绑定、独立消费及精确提交审核均按原合同执行。"
+  ],
+  "forbidden_side_effects": [
+    "Builder 仅限本地隔离开发验证。正式审核及发布分别由 Controller 按 Owner 授权推进。禁止真实供应商调用、生产、真实采集、账本和数据库操作、凭据操作或合并。"
+  ]
+}

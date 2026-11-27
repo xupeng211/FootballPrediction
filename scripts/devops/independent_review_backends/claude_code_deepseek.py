@@ -10,7 +10,7 @@ Owner: engineering workflow governance
 
 from __future__ import annotations
 
-from contextlib import nullcontext
+from contextlib import nullcontext, suppress
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -102,6 +102,15 @@ _SAFE_NONZERO_CLASSES = (
     (b"status 5", "PROVIDER_5XX"),
     (b"http 5", "PROVIDER_5XX"),
 )
+_OUTPUT_TOKEN_LIMIT_MESSAGE = re.compile(
+    r"(?:API Error: )?Claude's response exceeded the [1-9][0-9]* output token maximum\. "
+    r"To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable\."
+)
+_CLIENT_EFFORT_LEVELS = frozenset({"low", "medium", "high", "xhigh", "max"})
+_SESSION_ID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")
+_MAX_EFFORT_TRACE_BYTES = 8 * 1024 * 1024
+_MAX_EFFORT_TRACE_LINES = 4096
+_PRIVATE_FILE_MODE = 0o600
 
 
 def _output_contains_secret(output: subprocess.CompletedProcess[bytes], secret: str) -> bool:
@@ -113,6 +122,29 @@ def _output_contains_secret(output: subprocess.CompletedProcess[bytes], secret: 
     )
 
 
+def _json_record(raw: bytes) -> dict[str, Any]:
+    try:
+        value = json.loads(raw)
+    except (ValueError, RecursionError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _client_reported_output_limit(stdout: bytes) -> bool:
+    event = _json_record(stdout)
+    if event.get("type") != "result" or event.get("is_error") is not True:
+        return False
+    if event.get("subtype") == "error_during_execution":
+        errors = event.get("errors")
+    elif event.get("subtype") == "success":
+        errors = [event.get("result")]
+    else:
+        return False
+    return isinstance(errors, list) and any(
+        isinstance(error, str) and _OUTPUT_TOKEN_LIMIT_MESSAGE.fullmatch(error) for error in errors
+    )
+
+
 def _safe_nonzero_detail(output: subprocess.CompletedProcess[bytes], elapsed_seconds: int) -> str:
     """Classify only allowlisted provider markers; never surface raw output."""
 
@@ -121,14 +153,131 @@ def _safe_nonzero_detail(output: subprocess.CompletedProcess[bytes], elapsed_sec
         for value in (getattr(output, "stdout", b""), getattr(output, "stderr", b""))
         if isinstance(value, bytes)
     ).lower()
-    category = next(
-        (label for marker, label in _SAFE_NONZERO_CLASSES if marker in observed),
-        "UNKNOWN_NONZERO_EXIT",
+    category = (
+        "OUTPUT_TOKEN_LIMIT"
+        if _client_reported_output_limit(getattr(output, "stdout", b""))
+        else next(
+            (label for marker, label in _SAFE_NONZERO_CLASSES if marker in observed),
+            "UNKNOWN_NONZERO_EXIT",
+        )
     )
     return (
         f"{category}: exit={output.returncode}; stdout_bytes={len(getattr(output, 'stdout', b'') or b'')}; "
         f"stderr_bytes={len(getattr(output, 'stderr', b'') or b'')}; elapsed_seconds={elapsed_seconds}"
     )
+
+
+def _read_private_trace(path: Path) -> bytes:
+    if path.resolve(strict=True) != path:
+        raise ValueError("trace must be a direct file in the isolated home")
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as stream:
+        info = os.fstat(stream.fileno())
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != _PRIVATE_FILE_MODE
+            or info.st_nlink != 1
+            or not 0 < info.st_size <= _MAX_EFFORT_TRACE_BYTES
+        ):
+            raise ValueError("trace is not a private bounded file")
+        raw = stream.read(info.st_size + 1)
+        if len(raw) != info.st_size or os.fstat(stream.fileno()).st_mtime_ns != info.st_mtime_ns:
+            raise ValueError("trace changed during observation")
+        if raw.count(b"\n") >= _MAX_EFFORT_TRACE_LINES:
+            raise ValueError("trace has too many records")
+        return raw
+
+
+def _observed_trace_row(row: dict[str, Any], session: str, cwd: str) -> bool:
+    return row.get("sessionId") == session and row.get("cwd") == cwd
+
+
+def _trace_effort_levels(rows: list[dict[str, Any]], session: str, directory: str) -> set[str]:
+    efforts = set()
+    for row in rows:
+        if row.get("type") != "assistant" or row.get("isApiErrorMessage"):
+            continue
+        message = row.get("message")
+        if isinstance(message, dict) and message.get("model") == "<synthetic>":
+            continue
+        value = row.get("perTurnEffort")
+        if value is None:
+            value = row.get("effort")
+        if (
+            not _observed_trace_row(row, session, directory)
+            or not isinstance(message, dict)
+            or message.get("model") != MODEL
+            or not isinstance(value, str)
+            or value not in _CLIENT_EFFORT_LEVELS
+        ):
+            raise ValueError("client turn lacks bound effort metadata")
+        efforts.add(value)
+    return efforts
+
+
+def _observe_client_effort(
+    home: Path, prompt: str, cwd: Path, reported_session: object
+) -> dict[str, Any]:
+    projects = home / ".claude" / "projects"
+    if projects.resolve(strict=True) != projects:
+        raise ValueError("trace directory changed")
+    traces = projects.glob("*/*.jsonl")
+    trace = next(traces, None)
+    if trace is None or next(traces, None) is not None or not _SESSION_ID.fullmatch(trace.stem):
+        raise ValueError("unique client session trace required")
+    session = trace.stem
+    if reported_session is not None and reported_session != session:
+        raise ValueError("trace does not match the CLI session")
+    raw = _read_private_trace(trace)
+    rows = [_json_record(line) for line in raw.splitlines()]
+    if not all(rows):
+        raise ValueError("incomplete client trace")
+    directory = str(cwd)
+    first_user = next(row for row in rows if row.get("type") == "user" and not row.get("isMeta"))
+    if (
+        not _observed_trace_row(first_user, session, directory)
+        or not isinstance(first_user.get("message"), dict)
+        or first_user["message"].get("content") != prompt
+    ):
+        raise ValueError("trace does not match the submitted prompt")
+    efforts = _trace_effort_levels(rows, session, directory)
+    return {
+        "observed_client_effort": next(iter(efforts))
+        if len(efforts) == 1
+        else ("MIXED" if efforts else "UNKNOWN"),
+        "session_id": session,
+        "trace_sha256": sha256(raw).hexdigest(),
+    }
+
+
+def _record_client_effort(
+    home: Path | None, *, prompt: str, cwd: Path, stdout: bytes = b""
+) -> None:
+    if home is None:
+        return
+    observation: dict[str, Any] = {"observed_client_effort": "UNKNOWN"}
+    with suppress(OSError, RuntimeError, ValueError, StopIteration):
+        observation = _observe_client_effort(
+            home, prompt, cwd, _json_record(stdout).get("session_id")
+        )
+    observation.update(
+        schema="claude-client-effort-observation/v1",
+        prompt_sha256=sha256(prompt.encode()).hexdigest(),
+    )
+    # This optional record is private diagnostics. It cannot affect the receipt or verdict.
+    with (
+        suppress(OSError),
+        os.fdopen(
+            os.open(
+                home / "client-effort.json",
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                _PRIVATE_FILE_MODE,
+            ),
+            "w",
+        ) as stream,
+    ):
+        json.dump(observation, stream, sort_keys=True)
+        stream.write("\n")
 
 
 def _version_at_least(version: str) -> bool:
@@ -273,6 +422,7 @@ def run(
     )
     with home_context as isolated_home:
         runtime = Path(isolated_home)
+        diagnostics_home = runtime if retain_home_parent is not None else None
         settings = runtime / "settings.json"
         settings.write_bytes(DEDICATED_SETTINGS)
         child_env = child_environment(secret)
@@ -305,14 +455,16 @@ def run(
         except subprocess.TimeoutExpired as exc:
             # subprocess.run kills and reaps its direct child before raising.
             # Never expose captured stdout/stderr: either may contain model text.
+            _record_client_effort(diagnostics_home, prompt=prompt, cwd=cwd)
             raise BackendInfrastructureError("CLI_RUNTIME_TIMEOUT: no review verdict") from exc
         else:
             if _output_contains_secret(output, secret):
                 raise BackendInfrastructureError("SECRET_LEAKAGE_DETECTED")
+            _record_client_effort(diagnostics_home, prompt=prompt, cwd=cwd, stdout=output.stdout)
         finally:
             child_env.clear()
             secret = ""
-    if output.returncode:
+    if output.returncode or _client_reported_output_limit(output.stdout):
         raise BackendInfrastructureError(
             f"CLI_RUNTIME_FAILURE: {_safe_nonzero_detail(output, int(time.monotonic() - started))}"
         )
