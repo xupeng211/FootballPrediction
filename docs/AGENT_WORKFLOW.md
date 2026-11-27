@@ -475,6 +475,10 @@ canonical 的 review lifecycle 形状是**单命令阻塞**：
 
 `claude_deepseek_independent_review.py --retain-invocation` 保留本轮 detached worktree、隔离运行目录及已安全写入的原件；无此参数的既有调用保持原清理行为。保留目录可能包含工具运行产生的未知内容，按 owner-only 私有资料处理，不作为可公开的审核输出。超时或故障时没有写入的内存输出不重建，失败不产生新的审核 PASS。Controller 必须先确认同一操作的完整进程树停止并保存绑定原件，再按现有 canonical validator 消费 receipt；停止 UNKNOWN 保留现场、阻断依赖派发。此模式不改变 Provider、模型、独立性、review 结论或 exact-head 收据标准。
 
+保留模式下，每次 Claude 调用的私有 HOME 可以留下 `client-effort.json`。适配器从唯一、权限受限且大小受限的客户端会话记录核对工作目录、提交内容和会话身份，只保留推理强度枚举、摘要及匹配的会话标识。多种强度记录为 `MIXED`。缺记录、绑定失败或无法写入摘要时按 `UNKNOWN` 处理。该字段反映 Claude Code 客户端记录的强度，供应商服务端设置与账单仍需各自证据。Controller 在同次整树证停后读取这些诊断记录。
+
+Claude 返回符合已知格式的输出上限错误时，runner 报告 `CLI_RUNTIME_FAILURE:OUTPUT_TOKEN_LIMIT` 并停在 `NO_VERDICT`。上下文超限、普通审核文字和模糊错误仍按各自原有分类处理。诊断不改变调用参数、自动续写、fallback、审核门槛或正式收据格式。
+
 Receipt 生成及原 schema/完整性验证证明审核事实，不单独证明进程树停止，也不单独授予交付权限。通用 consumer 本身没有独立停止检查；集成方必须先完成上述 Controller 前置条件，不能把 runner 退出、receipt 出现或目录清理当作整树停止。受管顺序是：**生成产物 → 同次整树证停及绑定核验 → 独立消费 → 后续派发**；停止 UNKNOWN 时必须保留现场、阻断消费及后续派发。绑定原件由 Controller 保存，不因此改变 receipt 协议或原 validator。
 
 已核实的任务级 Controller 在 `supervised` 中先由既有监护器收回后代、核验同次 ECHILD 与 operation/argv/进程身份，再由 `lane` 启动原 classifier/consumer；后续岗位还需前岗有效 PASS 和配置检查通过。这是该受管路径的防护，不是所有外部集成都已认证安全；同 UID 残余风险也不免除普通停止错误与 UNKNOWN 的阻断义务。
