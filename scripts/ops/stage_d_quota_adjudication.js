@@ -14,6 +14,9 @@ const { sha256Text } = require('../../src/infrastructure/market_evidence/contrac
 const {
     createStageDQuotaAdjudication,
     createStageDQuotaAdjudicationSuccessor,
+    createStageDQuotaRollover,
+    readStageDQuotaRolloverEvidence,
+    inspectStageDRunLock,
     persistStageDQuotaAdjudication,
     readRequestLedger,
     resolveStageDGitSourceBinding,
@@ -60,7 +63,7 @@ function readBoundPredecessor(filePath, claimedSha256) {
 
 function parseArgs(argv = process.argv.slice(2)) {
     const values = {};
-    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--predecessor', '--predecessor-sha256', '--help']);
+    const allowed = new Set([...REQUIRED_FLAGS, '--adjudicated-at', '--predecessor', '--predecessor-sha256', '--previous-quota-config', '--owner-rollover-evidence', '--previous-v1', '--previous-v1-sha256', '--help']);
     for (let index = 0; index < argv.length; index += 1) {
         const flag = argv[index];
         if (flag === '--help') return Object.freeze({ help: true });
@@ -82,6 +85,8 @@ function helpText() {
         ...REQUIRED_FLAGS.map(flag => `  ${flag} <value>`),
         '  --adjudicated-at <UTC timestamp> (optional; defaults to current UTC time)',
         '  --predecessor <immutable v1 adjudication> --predecessor-sha256 <SHA256> (together, for a source successor)',
+        '  --previous-quota-config <old bytes> --owner-rollover-evidence <immutable trust-root child> (together, for monthly rollover)',
+        '  --previous-v1 <immutable v1> --previous-v1-sha256 <SHA256> (required when rollover predecessor is v2)',
         '',
         'The output must be a new direct child of the explicit runtime trust root.',
         'The command never contacts or resolves The Odds API and never changes the request ledger.',
@@ -98,6 +103,7 @@ function resolveGitSourceBinding({ sourceMainSha, sourceMainTreeSha, testRuntime
     return runtimeSource;
 }
 
+// eslint-disable-next-line complexity -- CLI modes and paired evidence flags are validated before create-only persistence.
 function main(argv = process.argv.slice(2)) {
     const args = parseArgs(argv);
     if (args.help) {
@@ -114,7 +120,15 @@ function main(argv = process.argv.slice(2)) {
     const hasPredecessor = Boolean(args['--predecessor']);
     if (hasPredecessor !== Boolean(args['--predecessor-sha256'])) throw new Error('--predecessor and --predecessor-sha256 must be supplied together');
     const predecessor = hasPredecessor ? readBoundPredecessor(args['--predecessor'], args['--predecessor-sha256']) : null;
-    const create = predecessor === null ? createStageDQuotaAdjudication : createStageDQuotaAdjudicationSuccessor;
+    const rollover = Boolean(args['--previous-quota-config']);
+    if (rollover !== Boolean(args['--owner-rollover-evidence']) || (rollover && predecessor === null)) throw new Error('rollover requires previous config, Owner evidence and a hash-bound predecessor');
+    if (Boolean(args['--previous-v1']) !== Boolean(args['--previous-v1-sha256']) || (!rollover && args['--previous-v1'])) throw new Error('previous v1 flags must be paired and are rollover-only');
+    if (rollover && inspectStageDRunLock({ operationRoot: ledger.root, runLockTrustRoot: path.resolve(args['--run-lock-trust-root']) }).state !== 'ABSENT') throw new Error('rollover requires an absent run lock');
+    if (rollover && predecessor.value.historical_request_id !== args['--historical-request-id']) throw new Error('rollover historical request must match the predecessor');
+    const previousConfig = rollover ? readRegularJsonFile(args['--previous-quota-config'], '--previous-quota-config') : null;
+    const ownerEvidence = rollover ? readStageDQuotaRolloverEvidence({ evidencePath: args['--owner-rollover-evidence'], ledgerRoot: ledger.root, runLockTrustRoot: path.resolve(args['--run-lock-trust-root']) }) : null;
+    const previousV1 = args['--previous-v1'] ? readBoundPredecessor(args['--previous-v1'], args['--previous-v1-sha256']) : null;
+    const create = rollover ? createStageDQuotaRollover : predecessor === null ? createStageDQuotaAdjudication : createStageDQuotaAdjudicationSuccessor;
     const artifact = create({
         ledger,
         quotaConfig: configSource.value,
@@ -125,6 +139,7 @@ function main(argv = process.argv.slice(2)) {
         adjudicatedAt,
         adjudicationId: args['--adjudication-id'],
         ...(predecessor === null ? {} : { predecessor: predecessor.value, predecessorSha256: predecessor.sha256 }),
+        ...(rollover ? { previousQuotaConfigBytes: previousConfig.bytes, ownerEvidence: ownerEvidence.value, ownerEvidenceSha256: ownerEvidence.sha256, previousV1: previousV1?.value || null, previousV1Sha256: previousV1?.sha256 || null } : {}),
     });
     const persisted = persistStageDQuotaAdjudication({
         artifactPath: args['--output'],
