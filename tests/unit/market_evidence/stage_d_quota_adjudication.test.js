@@ -742,6 +742,38 @@ test('immutable source successor preserves historical bytes, UNKNOWN effect, and
     assert.throws(() => readBound(ctx, config, state.predecessorPath, state.predecessorSha256), error => error.code === 'QUOTA_ADJUDICATION_CONFLICT');
 });
 
+test('quota adjudication becomes visible under its canonical name only after writing', t => {
+    const ctx = setup(t);
+    const config = quotaConfig();
+    createDivergence(ctx);
+    const { artifact } = buildArtifact(ctx, config);
+    const name = `stage-d-quota-adjudication-${artifact.adjudication_id}.json`;
+    const artifactPath = path.join(ctx.trustRoot, name);
+    const expectedBytes = Buffer.from(`${stableStringify(artifact)}\n`);
+    const writeSync = fs.writeSync;
+    const before = fs.readdirSync(ctx.trustRoot).sort();
+    const persist = () => persistStageDQuotaAdjudication({
+        artifactPath, ledgerRoot: ctx.ledgerRoot, runLockTrustRoot: ctx.trustRoot, artifact,
+    });
+    let observedWrites = 0;
+    t.mock.method(fs, 'writeSync', (fd, data, ...args) => {
+        if (Buffer.isBuffer(data) && data.equals(expectedBytes)) {
+            assert.equal(fs.existsSync(artifactPath), false, 'canonical name appeared before the JSON was written');
+            observedWrites += 1;
+            if (observedWrites === 1) throw new Error('injected adjudication write failure');
+        }
+        return writeSync(fd, data, ...args);
+    });
+
+    assert.throws(persist, /injected adjudication write failure/);
+    assert.deepEqual(fs.readdirSync(ctx.trustRoot).sort(), before);
+    persist();
+    assert.equal(observedWrites, 2);
+    assert.deepEqual(fs.readFileSync(artifactPath), expectedBytes);
+    assert.equal(fs.statSync(artifactPath).mode & 0o777, 0o400);
+    assert.deepEqual(fs.readdirSync(ctx.trustRoot).sort(), [...before, name].sort());
+});
+
 test('two concurrent successor writers atomically admit exactly one canonical successor', async t => {
     await raceSuccessorWriters(t, 2);
 });
