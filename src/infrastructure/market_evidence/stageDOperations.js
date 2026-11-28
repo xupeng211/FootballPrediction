@@ -3066,7 +3066,7 @@ function createStageDCandidateBuilder({ errorCode = 'CANDIDATE_BUILDER_NOT_CONFI
     return builder;
 }
 
-function createStageDProspectiveCandidateBuilder({ universe, projectionVersion = '1', supportedMarketKeys = ['h2h'], authorizedSupersessions = [] } = {}) {
+function createStageDProspectiveCandidateBuilder({ universe, projectionVersion = '1', supportedMarketKeys = ['h2h'], ignoreUnrequestedH2hLay = false, authorizedSupersessions = [] } = {}) {
     if (!universe || typeof universe !== 'object') fail('INVALID_CANDIDATE_BUILDER', 'verified fixture universe is required');
     return createReviewedCandidateBuilder(({ authoritySnapshot, evidence }) => buildProspectiveMarketEvidenceTransaction({
         authoritySnapshot,
@@ -3075,6 +3075,7 @@ function createStageDProspectiveCandidateBuilder({ universe, projectionVersion =
         captureReceipt: evidence.receipt_evidence,
         projectionVersion,
         supportedMarketKeys,
+        ignoreUnrequestedH2hLay,
         authorizedSupersessions,
     }));
 }
@@ -3218,7 +3219,7 @@ function createStageDProductionComponents({ evidenceRoot, authorityRoot, allocat
     return Object.freeze({
         transport: createStageDOddsApiTransport({ apiKey: env.THE_ODDS_API_KEY, endpoint: proxyEndpoint }),
         evidencePersistence: createStageDEvidencePersistence({ evidenceRoot, redactionValues: diagnosticRedactionValues }),
-        candidateBuilder: createStageDProspectiveCandidateBuilder({ universe: fixtureUniverse, supportedMarketKeys: CONFIGURED_MARKETS }),
+        candidateBuilder: createStageDProspectiveCandidateBuilder({ universe: fixtureUniverse, supportedMarketKeys: CONFIGURED_MARKETS, ignoreUnrequestedH2hLay: true }),
         transactionPublisher: createStageDTransactionPublisher({ storeRoot: authorityRoot, allocationArtifactPath }),
         proxyPreflight: createStageDHttpConnectProxyPreflight({ endpoint: proxyEndpoint, target: proxyPreflightTarget, secret: proxyPreflightSecret }),
     });

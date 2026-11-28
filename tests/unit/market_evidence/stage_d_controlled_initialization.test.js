@@ -755,7 +755,7 @@ test('the production Stage D transport exposes the stable proxy contract and no 
     assert.equal(transport.proxy_contract, STAGE_D_STABLE_PROXY_CONTRACT);
 });
 
-test('the real production component assembly keeps the resolved HMAC secret opaque and supplies only strings to diagnostic redaction', t => {
+test('production components restrict projected markets and redact the opaque proxy secret', async t => {
     const ctx = makeContext(t);
     const apiKey = 'production-wiring-test-api-key';
     const proxyUrl = 'http://test-user:test-password@127.0.0.1:3128';
@@ -778,6 +778,38 @@ test('the real production component assembly keeps the resolved HMAC secret opaq
         env,
     });
     assert.equal(Object.isFrozen(components), true);
+    const events = JSON.parse(ctx.rawText);
+    const [event] = events;
+    event.id = 'provider-event-with-lay';
+    event.home_team = event.home_team.toLowerCase();
+    event.commence_time = '2026-09-12T15:01:00Z';
+    const bookmaker = event.bookmakers[0];
+    const [backMarket] = bookmaker.markets;
+    const layMarket = { ...backMarket, key: 'h2h_lay' };
+    const buildCandidate = markets => {
+        bookmaker.markets = markets;
+        const rawText = JSON.stringify(events);
+        const captureReceipt = createVerifiedTestReceipt({
+            root: path.join(ctx.root, 'production-wiring', sha256Text(rawText)),
+            rawText,
+            overrides: { capture_id: 'production-wiring-regression-capture' },
+        });
+        return components.candidateBuilder.build({
+            authoritySnapshot: ctx.authoritySnapshot,
+            evidence: { raw_text: rawText, receipt_evidence: captureReceipt },
+        });
+    };
+    const candidate = await buildCandidate([layMarket, backMarket]);
+    assert.equal(candidate.observations.length, 3);
+    assert.ok(candidate.observations.every(row =>
+        row.provider_market_id === 'h2h' && row.price_side !== 'LAY' &&
+        row.home_team === 'Arsenal' && row.kickoff_utc === '2026-09-12T15:00:00Z'
+    ));
+    assert.equal(candidate.metadata.source.raw_sha256, sha256Text(JSON.stringify(events)));
+    assert.throws(() => buildCandidate([backMarket, { ...layMarket, key: 'totals' }]), /unsupported Stage C provider market: totals/);
+    assert.throws(() => buildCandidate([layMarket]), /unsupported Stage C provider market: h2h_lay/);
+    assert.throws(() => buildCandidate([backMarket, layMarket, layMarket]), /duplicate provider market identity/);
+
     const persisted = components.evidencePersistence.persistFailureDiagnostic({
         runId: 'production-wiring-regression-run',
         requestId: 'production-wiring-regression-request',
