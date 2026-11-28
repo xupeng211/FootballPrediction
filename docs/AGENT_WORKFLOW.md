@@ -335,8 +335,8 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
 `make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
 版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
-获批的 FotMob、Stage D 后续记账、历史消费凭证兼容及单次试采赔率投影映射进入
-Git 正文比较时才用宿主
+获批的 FotMob、Stage D 后续记账、历史消费凭证兼容、单次试采赔率投影及已保存响应补录
+映射进入 Git 正文比较时才用宿主
 `python3 -m pip` 安装到当前检出目录的
 `.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
 提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。
