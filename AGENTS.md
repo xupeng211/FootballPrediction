@@ -73,7 +73,7 @@ FotMob 单条终场赛果只为 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的 CRITIC
 业务任务映射精确十一条路径。按准确 Git 修订核对 GD-A02 事实合同、模型时点合同和能力
 索引的原位可见更新，并在 Documentation Impact 如实声明合同与能力均已变更。
 本地预检和远端 PR 门禁共用专用锁定 Markdown 解析器，只在获批的 FotMob 和 Stage D
-后续记账的离线核验或正式接入工单比较文档时初始化。
+后续记账或历史消费凭证兼容工单比较文档时初始化。
 范围合同须经现有门禁验证。删除、改名、空壳替代、混入其他路径均拒绝；正文语义仍由
 正式独立审核判断。
 Stage D 后续记账离线核验只为 `FP_STAGE_D_FORWARD_ACCOUNTING_OFFLINE` 的
@@ -89,6 +89,9 @@ Stage D 后续记账正式接入使用独立的 `FP_STAGE_D_FORWARD_ACCOUNTING_R
 业务工单识别三条精确路径。须在准确 Git 修订新增专用范围合同、原位修改既有实现和
 回归测试，三条均为普通文件。门禁核对工单与 PR 引用，并要求文档影响各项为 no、
 提供具体理由。该映射不授予真实执行权限。
+历史消费凭证兼容仅匹配 `FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT` 的 CRITICAL
+业务工单和四条固定路径。须新增专用范围合同，原位修改实现、回归测试和 Stage D 领域合同。
+现有锁定解析器核对准确 Git 修订的可见合同正文变化，PR 须声明实际领域合同回流。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
 `docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
 

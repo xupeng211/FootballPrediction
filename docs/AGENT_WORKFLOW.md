@@ -300,6 +300,14 @@ CRITICAL 业务工单。固定九条路径包含既有 cycle 入口、后续记�
 写入时序修复沿用既有额度语义、入口及授权合同。无需初始化锁定 Markdown 解析器。
 完整验证、独立双审、发布和合并仍按 CRITICAL 流程执行。
 
+历史消费凭证兼容专项 `FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT` 使用独立
+CRITICAL 业务范围。只接受新增的同名 scope JSON、原位修改的 `stageDOperations.js`、
+`tests/unit/market_evidence/stage_d_controlled_initialization.test.js` 和 Stage D
+领域合同。按已验证工单 ID 或变更中的专用 scope 触发，核对 PR 引用、逐文件授权、
+准确 Git 基线及 HEAD 的普通文件。领域合同须在原位置更新可见正文，使用现有锁定
+Markdown 解析器。Documentation Impact 声明合同和权威文档确实更新，唯一回流文档为
+Stage D 领域合同。门禁继续拒绝未映射路径、混合发布及违规授权。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
@@ -308,7 +316,8 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
 `make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
 版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
-只有获批的 FotMob 或 Stage D 后续记账映射进入 Git 正文比较时才用宿主 `python3 -m pip` 安装到当前检出目录的
+只有获批的 FotMob、Stage D 后续记账或历史消费凭证兼容映射进入 Git 正文比较时才用宿主
+`python3 -m pip` 安装到当前检出目录的
 `.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
 提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。
 公开验证 profile 的 dev 入口同样允许相关测试在首次使用时安装此锁。离线验证的
