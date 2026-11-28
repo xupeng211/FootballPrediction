@@ -1,0 +1,26 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE.json",
+    "scripts/ops/helpers/documentation_backflow.py",
+    "scripts/ops/helpers/stage_d_quota_atomic_backflow.py",
+    "tests/unit/test_stage_d_forward_accounting_backflow.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["README.md", "Makefile", "package.json", "pyproject.toml"],
+  "excluded_prefixes": [".github/", ".githooks/", "src/", "config/", "data/", "database/", "deploy/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "单次试采赔率投影仅核对固定九条路径及已验证 CRITICAL 范围",
+    "保留既有工单的路径、回流及双审要求"
+  ],
+  "forbidden_side_effects": [
+    "真实采集、供应商访问、生产数据或账本修改",
+    "未经单独授权进行付费审核、推送、建 PR 或合并"
+  ]
+}

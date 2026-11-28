@@ -635,3 +635,119 @@ def test_historical_marker_requires_visible_contract_edit(marker_compat_candidat
     assert any(
         "changed visible document body" in error for error in _marker_check(base, hidden_head)
     )
+
+
+_PROJECTION = "FP_STAGE_D_SINGLE_CAPTURE_PROJECTION"
+_PROJECTION_SCOPE_PATH = f"docs/agentic/missions/{_PROJECTION}.json"
+_PROJECTION_DOCS = _DOCS - {"README.md"}
+_PROJECTION_PATHS = _PROJECTION_DOCS | {
+    _PROJECTION_SCOPE_PATH,
+    _ATOMIC_SOURCE,
+    _MARKER_COMPAT_TEST,
+    "src/infrastructure/market_evidence/prospectiveBatch.js",
+    "src/infrastructure/market_evidence/theOddsApiAdapter.js",
+}
+_PROJECTION_SCOPE = replace(
+    _SCOPE, mission_id=_PROJECTION, authorized_paths=tuple(sorted(_PROJECTION_PATHS))
+)
+
+
+@pytest.fixture
+def projection_candidate(tmp_path, monkeypatch):
+    monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
+    _git(tmp_path, "init", "-q")
+    updated_paths = _PROJECTION_PATHS - {_PROJECTION_SCOPE_PATH}
+    for file_path in updated_paths:
+        _write(tmp_path, file_path, _ORIGINAL)
+    base = _commit(tmp_path, "Projection base")
+    for file_path in updated_paths:
+        _write(tmp_path, file_path, _ORIGINAL + "\n真实响应的投影与回读。\n")
+    _write(tmp_path, _PROJECTION_SCOPE_PATH, json.dumps(_PROJECTION_SCOPE.to_dict()))
+    return tmp_path, base, _commit(tmp_path, "Projection candidate")
+
+
+def _projection_body(**impact):
+    return _body(
+        _PROJECTION,
+        **{"entrypoint": "no", "updated_docs": ", ".join(sorted(_PROJECTION_DOCS)), **impact},
+    )
+
+
+def _projection_check(base, head, *, paths=None, scope=_PROJECTION_SCOPE, body=None):
+    return check_documentation_backflow(
+        _projection_body() if body is None else body,
+        _PROJECTION_PATHS if paths is None else paths,
+        mission_scope=scope,
+        base_ref=base,
+        head_ref=head,
+    )
+
+
+def test_single_capture_projection_uses_only_its_approved_files(projection_candidate):
+    _, base, head = projection_candidate
+    assert _projection_check(base, head) == []
+    for paths in (
+        _PROJECTION_PATHS - {_ATOMIC_SOURCE},
+        _PROJECTION_PATHS | {"AGENTS.md"},
+    ):
+        assert any(
+            "exact nine mission paths" in error
+            for error in _projection_check(base, head, paths=paths)
+        )
+    for scope in (
+        None,
+        replace(_PROJECTION_SCOPE, authorized_prefixes=("src/",)),
+        replace(_PROJECTION_SCOPE, workflow_class="STRICT"),
+        replace(_PROJECTION_SCOPE, authorized_paths=(_PROJECTION_SCOPE_PATH,)),
+    ):
+        assert any(
+            "validated CRITICAL nine-file scope" in error
+            for error in _projection_check(base, head, scope=scope)
+        )
+    assert _projection_check(base, head, scope=_MARKER_COMPAT_SCOPE)
+    assert _projection_check(base, head, paths=_PROJECTION_PATHS | {_MARKER_COMPAT_SCOPE_PATH})
+    wrong_reference = _projection_body().replace(_PROJECTION_SCOPE_PATH, _MARKER_COMPAT_SCOPE_PATH)
+    assert _projection_check(base, head, body=wrong_reference)
+    assert _projection_check(base[:8], head)
+    assert _projection_check(base, head, paths=_PROJECTION_PATHS - {_PROJECTION_SCOPE_PATH})
+
+
+@pytest.mark.parametrize(
+    "impact",
+    [
+        {"capability": "no"},
+        {"milestone": "no"},
+        {"blocker": "no"},
+        {"entrypoint": "yes"},
+        {"contract": "no"},
+        {"updated_docs": _DOMAIN},
+        {"updated_docs": ", ".join(sorted(_PROJECTION_DOCS | {"README.md"}))},
+    ],
+)
+def test_single_capture_projection_requires_exact_documentation_claims(
+    projection_candidate, impact
+):
+    _, base, head = projection_candidate
+    assert _projection_check(base, head, body=_projection_body(**impact))
+
+
+@pytest.mark.parametrize("document", sorted(_PROJECTION_DOCS))
+def test_single_capture_projection_requires_each_visible_git_document(
+    projection_candidate, document
+):
+    repo, base, _ = projection_candidate
+    _write(repo, document, _ORIGINAL + "\n<!-- 仅隐藏注释 -->\n")
+    hidden_head = _commit(repo, "Only a hidden addition")
+    _write(repo, document, _ORIGINAL + "\n工作区包含尚未提交的可见修改。\n")
+    assert _projection_check(base, hidden_head) == [
+        f"{_PROJECTION} requires changed visible document body: {document}"
+    ]
+
+
+def test_single_capture_projection_rejects_nonregular_git_source(projection_candidate):
+    repo, base, _ = projection_candidate
+    source = repo / "src/infrastructure/market_evidence/theOddsApiAdapter.js"
+    source.unlink()
+    source.symlink_to("stageDOperations.js")
+    head = _commit(repo, "Replace adapter with symlink")
+    assert _projection_check(base, head)

@@ -1,4 +1,4 @@
-"""核对两个有独立固定路径的 Stage D 修复工单。
+"""核对有独立固定路径的 Stage D 修复工单。
 
 lifecycle: permanent
 """
@@ -28,7 +28,8 @@ class StageDBoundedBackflow:
     label: str
     count_label: str
     updated_paths: frozenset[str]
-    contract_doc: str | None = None
+    authority_docs: tuple[str, ...] = ()
+    additional_impacts: tuple[str, ...] = ()
 
     @property
     def scope(self) -> str:
@@ -42,7 +43,7 @@ class StageDBoundedBackflow:
 
 
 _STAGE_D_OPERATIONS = "src/infrastructure/market_evidence/stageDOperations.js"
-_MARKER_CONTRACT = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
+_STAGE_D_CONTRACT = "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md"
 STAGE_D_MARKER_COMPAT = StageDBoundedBackflow(
     "FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT",
     "Stage D historical consumption marker compatibility",
@@ -51,10 +52,16 @@ STAGE_D_MARKER_COMPAT = StageDBoundedBackflow(
         {
             _STAGE_D_OPERATIONS,
             "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
-            _MARKER_CONTRACT,
+            _STAGE_D_CONTRACT,
         }
     ),
-    _MARKER_CONTRACT,
+    (_STAGE_D_CONTRACT,),
+)
+_PROJECTION_DOCS = (
+    _STAGE_D_CONTRACT,
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
 )
 STAGE_D_BOUNDED_BACKFLOWS = (
     StageDBoundedBackflow(
@@ -69,6 +76,22 @@ STAGE_D_BOUNDED_BACKFLOWS = (
         ),
     ),
     STAGE_D_MARKER_COMPAT,
+    StageDBoundedBackflow(
+        "FP_STAGE_D_SINGLE_CAPTURE_PROJECTION",
+        "Stage D single capture projection",
+        "nine",
+        frozenset(
+            {
+                *_PROJECTION_DOCS,
+                _STAGE_D_OPERATIONS,
+                "src/infrastructure/market_evidence/prospectiveBatch.js",
+                "src/infrastructure/market_evidence/theOddsApiAdapter.js",
+                "tests/unit/market_evidence/stage_d_controlled_initialization.test.js",
+            }
+        ),
+        _PROJECTION_DOCS,
+        ("capability", "milestone", "blocker"),
+    ),
 )
 
 
@@ -99,11 +122,13 @@ def _stage_d_bounded_commit_errors(
             }
             if regular != required or len(entries) != len(required):
                 return [f"{spec.label} requires regular tracked files"]
-        if spec.contract_doc and not document_has_update(merge_base, head_ref, spec.contract_doc):
-            return [f"{spec.mission_id} requires changed visible document body"]
+        return [
+            f"{spec.mission_id} requires changed visible document body: {document}"
+            for document in spec.authority_docs
+            if not document_has_update(merge_base, head_ref, document)
+        ]
     except (RuntimeError, OSError, ValueError) as exc:
         return [f"{spec.label} could not verify committed paths: {exc}"]
-    return []
 
 
 def validate_stage_d_bounded_backflow(
