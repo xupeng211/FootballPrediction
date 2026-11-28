@@ -3269,6 +3269,7 @@ function validateHistoricalConsumptionMarker(marker, filename) {
     }
     assertSha256(marker.authorization_sha256, `${label}.authorization_sha256`);
     assertSha256(marker.scope_sha256, `${label}.scope_sha256`);
+    // v1 没有裁定字段。v2 必须携带该字段，无额度分歧时由写入端记录 null。
     if (!legacy && marker.quota_adjudication_sha256 !== null) {
         assertSha256(marker.quota_adjudication_sha256, `${label}.quota_adjudication_sha256`);
     }
