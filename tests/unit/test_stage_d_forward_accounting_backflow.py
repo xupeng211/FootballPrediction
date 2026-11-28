@@ -622,9 +622,8 @@ def test_historical_marker_compat_uses_exact_four_files_and_domain_contract(
         "exact four" in error
         for error in _marker_check(base, head, paths=_MARKER_COMPAT_PATHS | {"AGENTS.md"})
     )
-    assert any(
-        "four-file scope" in error for error in _marker_check(base, head, scope=_ATOMIC_SCOPE)
-    )
+    assert any("four-file scope" in error for error in _marker_check(base, head, scope=_SCOPE))
+    assert _marker_check(base, head, scope=_ATOMIC_SCOPE)
     assert _marker_check(base, head, updated_docs=f"{_DOMAIN}, AGENTS.md")
     assert _marker_check(base, head, contract="no")
 
