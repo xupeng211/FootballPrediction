@@ -481,3 +481,91 @@ def test_offline_mission_keeps_its_own_impact_expectations(candidate):
     errors = _run(base, head, body=_body(capability="no", navigation="yes", vision="yes"))
     assert f"{_MISSION} requires 'Capability changed?' = yes" in errors
     assert not any(" = no" in error for error in errors)
+
+
+_ATOMIC = "FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_PUBLISH"
+_ATOMIC_SCOPE_PATH = f"docs/agentic/missions/{_ATOMIC}.json"
+_ATOMIC_SOURCE = "src/infrastructure/market_evidence/stageDOperations.js"
+_ATOMIC_TEST = "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
+_ATOMIC_PATHS = {_ATOMIC_SCOPE_PATH, _ATOMIC_SOURCE, _ATOMIC_TEST}
+_ATOMIC_SCOPE = replace(_SCOPE, mission_id=_ATOMIC, authorized_paths=tuple(sorted(_ATOMIC_PATHS)))
+
+
+@pytest.fixture
+def atomic_candidate(tmp_path, monkeypatch):
+    monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
+    _git(tmp_path, "init", "-q")
+    for file_path in (_ATOMIC_SOURCE, _ATOMIC_TEST):
+        _write(tmp_path, file_path, "原有内容\n")
+    base = _commit(tmp_path, "Base")
+    for file_path in (_ATOMIC_SOURCE, _ATOMIC_TEST):
+        _write(tmp_path, file_path, "修复后的内容\n")
+    _write(tmp_path, _ATOMIC_SCOPE_PATH, json.dumps(_ATOMIC_SCOPE.to_dict()))
+    return tmp_path, base, _commit(tmp_path, "Atomic publication")
+
+
+def _atomic_check(base, head, *, body=None, paths=None, scope=_ATOMIC_SCOPE):
+    if body is None:
+        body = (
+            "## Scope\n\n"
+            "| Task type | source-code |\n"
+            "| Workflow class | CRITICAL |\n"
+            f"| Mission ID | {_ATOMIC} |\n"
+            f"| Mission scope contract | `{_ATOMIC_SCOPE_PATH}` |\n\n" + _impact_body()
+        )
+    return check_documentation_backflow(
+        body,
+        _ATOMIC_PATHS if paths is None else paths,
+        mission_scope=scope,
+        base_ref=base,
+        head_ref=head,
+    )
+
+
+def test_atomic_publication_accepts_exact_scope_without_markdown_parser(
+    atomic_candidate, monkeypatch
+):
+    def unexpected_parser(*_args):
+        pytest.fail("The narrowly scoped bugfix must not initialize the Markdown parser")
+
+    monkeypatch.setattr(documentation_backflow, "visible_documents", unexpected_parser)
+    _, base, head = atomic_candidate
+    assert _atomic_check(base, head) == []
+
+
+def test_atomic_publication_rejects_other_scope_paths_and_declarations(atomic_candidate):
+    _, base, head = atomic_candidate
+    for paths in (_ATOMIC_PATHS - {_ATOMIC_TEST}, _ATOMIC_PATHS | {"AGENTS.md"}):
+        assert any("exact three mission paths" in e for e in _atomic_check(base, head, paths=paths))
+    for scope in (
+        None,
+        replace(_ATOMIC_SCOPE, mission_id="OTHER"),
+        replace(_ATOMIC_SCOPE, workflow_class="STRICT"),
+        replace(_ATOMIC_SCOPE, authorized_prefixes=("src/",)),
+        replace(_ATOMIC_SCOPE, authorized_paths=tuple(sorted(_ATOMIC_PATHS | {"README.md"}))),
+    ):
+        assert any(
+            "validated CRITICAL three-file scope" in e
+            for e in _atomic_check(base, head, scope=scope)
+        )
+    body = _body(_ATOMIC, contract="yes").replace(_ATOMIC_SCOPE_PATH, _RUNTIME_SCOPE_PATH)
+    assert any(
+        "requires 'Data/model/authorization contract changed?' = no" in e
+        for e in _atomic_check(base, head, body=body)
+    )
+    assert any("scope" in e for e in _atomic_check(base, head, body=body))
+
+
+@pytest.mark.parametrize("invalid", ["delete", "symlink", "extra"])
+def test_atomic_publication_verifies_committed_paths(atomic_candidate, invalid):
+    root, base, _ = atomic_candidate
+    target = root / _ATOMIC_TEST
+    if invalid in {"delete", "symlink"}:
+        target.unlink()
+        if invalid == "symlink":
+            target.symlink_to("other.test.js")
+    else:
+        _write(root, "AGENTS.md", "unexpected governance change\n")
+    bad_head = _commit(root, invalid)
+    assert _atomic_check(base, bad_head)
+    assert _atomic_check(base[:8], bad_head)

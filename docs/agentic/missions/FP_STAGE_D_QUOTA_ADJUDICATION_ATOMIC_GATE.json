@@ -1,0 +1,26 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_GATE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_GATE.json",
+    "scripts/ops/helpers/documentation_backflow.py",
+    "scripts/ops/helpers/stage_d_quota_atomic_backflow.py",
+    "tests/unit/test_stage_d_forward_accounting_backflow.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["README.md", "Makefile", "package.json", "pyproject.toml"],
+  "excluded_prefixes": [".github/", ".githooks/", "src/", "config/", "database/", "deploy/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "三路径映射只为已验证的额度裁决原子发布 CRITICAL 工单提供。",
+    "其他业务映射、范围拒绝结果和正式双审权威不变。"
+  ],
+  "forbidden_side_effects": [
+    "禁止真实采集、供应商、数据库、生产证据及真实账本操作。",
+    "正式审核、推送、创建 PR 与合并须按当前授权分别执行。"
+  ]
+}

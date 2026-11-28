@@ -29,6 +29,11 @@ from scripts.ops.helpers.pr_authorization_matrix import (
     classify_path,
     parse_task_type,
 )
+from scripts.ops.helpers.stage_d_quota_atomic_backflow import (
+    STAGE_D_QUOTA_ATOMIC_MISSION,
+    STAGE_D_QUOTA_ATOMIC_SCOPE,
+    validate_stage_d_quota_atomic_backflow,
+)
 from scripts.ops.helpers.strict_review_evidence import parse_workflow_class
 
 DOCUMENTATION_IMPACT_HEADING = "## Documentation Impact"
@@ -626,6 +631,15 @@ def _exact_mission_backflow_errors(
     mission_id = mission_scope.mission_id if mission_scope is not None else None
     if FOTMOB_FINAL_RESULT_SCOPE in changed or mission_id == FOTMOB_FINAL_RESULT_MISSION:
         return _fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
+    if STAGE_D_QUOTA_ATOMIC_SCOPE in changed or mission_id == STAGE_D_QUOTA_ATOMIC_MISSION:
+        errors = validate_stage_d_quota_atomic_backflow(
+            pr_body, changed, mission_scope, base_ref, head_ref
+        )
+        for field in (*YES_NO_FIELDS.values(), "Updated authoritative docs"):
+            expected = "none" if field == "Updated authoritative docs" else "no"
+            if _normalise(_table_value(pr_body, field)) != expected:
+                errors.append(f"{STAGE_D_QUOTA_ATOMIC_MISSION} requires '{field}' = {expected}")
+        return errors
     for required_mission in STAGE_D_FORWARD_MAPPINGS:
         if (
             mission_id == required_mission
