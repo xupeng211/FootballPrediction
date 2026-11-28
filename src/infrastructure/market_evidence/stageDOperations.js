@@ -3239,17 +3239,52 @@ function assertForwardDeploymentUnused(trustDirectoryFd) {
         'STAGE_D_FORWARD_ALREADY_ACTIVE', 'this deployment already has a forward accounting activation fence');
 }
 
+function validateHistoricalConsumptionMarker(marker, filename) {
+    const version = marker?.schema_version;
+    const legacy = version === 'footballprediction-stage-d-controlled-initialization-consumption/v1';
+    if ((!legacy && version !== 'footballprediction-stage-d-controlled-initialization-consumption/v2') ||
+        typeof marker.authorization_id !== 'string' ||
+        !/^sda_[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(marker.authorization_id) ||
+        filename !== controlledAuthorizationMarkerName(marker)) {
+        fail('STAGE_D_FORWARD_CONSUMPTION_INVENTORY_INVALID', 'a prior deployment consumption marker is malformed');
+    }
+    const label = 'Stage D controlled consumption record';
+    assertExactKeys(marker, [
+        'schema_version', 'authorization_id', 'authorization_sha256', 'scope_sha256',
+        'mission', 'provider', 'market', 'region', 'max_provider_requests',
+        'expected_request_cost_credits', 'accounting_epoch_id', 'authority_pre_head',
+        'run_id', 'request_id', 'consumed_at', ...(legacy ? [] : ['quota_adjudication_sha256']),
+    ], label);
+    const requiredScope = {
+        mission: CONTROLLED_AUTHORIZATION_MISSION,
+        provider: PROVIDER,
+        market: CONFIGURED_MARKETS[0],
+        region: CONFIGURED_REGIONS[0],
+        max_provider_requests: MAX_PROVIDER_REQUESTS_PER_CYCLE,
+        expected_request_cost_credits: EXPECTED_REQUEST_COST_CREDITS,
+    };
+    if (Object.entries(requiredScope).some(([key, expected]) => marker[key] !== expected) ||
+        typeof marker.authority_pre_head !== 'string' || !/^tx_[a-f0-9]{64}$/.test(marker.authority_pre_head)) {
+        fail('STAGE_D_FORWARD_CONSUMPTION_INVENTORY_INVALID', 'a prior deployment consumption marker has invalid scope');
+    }
+    assertSha256(marker.authorization_sha256, `${label}.authorization_sha256`);
+    assertSha256(marker.scope_sha256, `${label}.scope_sha256`);
+    if (!legacy && marker.quota_adjudication_sha256 !== null) {
+        assertSha256(marker.quota_adjudication_sha256, `${label}.quota_adjudication_sha256`);
+    }
+    for (const field of ['accounting_epoch_id', 'run_id', 'request_id']) {
+        assertToken(marker[field], `${label}.${field}`);
+    }
+    assertUtc(marker.consumed_at, `${label}.consumed_at`);
+}
+
 function assertForwardConsumptionInventory(trustDirectoryFd, expectedSha256) {
     const files = fs.readdirSync(directoryFdPath(trustDirectoryFd))
         .filter(name => name.startsWith(CONTROLLED_AUTHORIZATION_CONSUMPTION_FILE_PREFIX)).sort();
     const entries = files.map(name => {
         const { bytes } = readRegularFileBytes(scopedPath(trustDirectoryFd, name), 'Stage D controlled consumption record');
         const marker = parseCanonicalJsonBytes(bytes, 'Stage D controlled consumption record');
-        if (marker?.schema_version !== 'footballprediction-stage-d-controlled-initialization-consumption/v2' ||
-            typeof marker.authorization_id !== 'string' || name !== controlledAuthorizationMarkerName(marker)) {
-            fail('STAGE_D_FORWARD_CONSUMPTION_INVENTORY_INVALID', 'a prior deployment consumption marker is malformed');
-        }
-        assertUtc(marker.consumed_at, 'prior controlled authorization consumption time');
+        validateHistoricalConsumptionMarker(marker, name);
         return { filename: name, sha256: sha256Text(bytes) };
     });
     if (sha256Text(stableStringify(entries)) !== expectedSha256) {
