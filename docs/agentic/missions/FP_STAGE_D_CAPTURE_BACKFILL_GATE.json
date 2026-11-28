@@ -1,0 +1,25 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_CAPTURE_BACKFILL_GATE",
+  "task_type": "workflow-governance",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "AGENTS.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/agentic/missions/FP_STAGE_D_CAPTURE_BACKFILL_GATE.json",
+    "scripts/ops/helpers/stage_d_quota_atomic_backflow.py",
+    "tests/unit/test_stage_d_capture_backfill_gate.py"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["README.md", "Makefile", "package.json"],
+  "excluded_prefixes": [".github/", "src/", "config/", "data/", "database/", "deploy/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "只有确切八条已保存响应补录业务路径使用专用文档回流映射",
+    "保留其他 Stage D 工单及正式双审要求"
+  ],
+  "forbidden_side_effects": [
+    "供应商调用、真实补录、账本或正式赔率库修改",
+    "未经批准的付费审核、发布或合并"
+  ]
+}

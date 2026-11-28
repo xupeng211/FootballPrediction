@@ -319,6 +319,14 @@ Documentation Impact 声明领域合同、能力、里程碑和当前阻断与�
 分类为 `workflow-governance`、`CRITICAL`。其同名范围合同仅授权六条治理文件路径。
 上述九条业务路径由业务候选中的 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION` 同名范围合同授权。
 
+Stage D 已保存响应补录的 `FP_STAGE_D_CAPTURE_BACKFILL` 限定八条路径，分类为
+`source-code`、`CRITICAL`。新增自身范围合同、`scripts/ops/stage_d_capture_backfill.js`
+及同名业务测试。原位更新 README、Stage D 领域合同、能力索引、活动里程碑和项目状态。
+门禁从准确共同 Git 基线和 HEAD 检查普通文件、增改状态和五份文档的可见正文。
+Documentation Impact 确认新入口、领域合同、能力、里程碑和当前阻断的影响。
+登记该映射的 `FP_STAGE_D_CAPTURE_BACKFILL_GATE` 为独立 CRITICAL 治理工单，范围限于
+其自身合同与四个治理文件。补录业务工单及实际写入分别验收和批准。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
@@ -327,8 +335,8 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
 `make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
 版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
-获批的 FotMob、Stage D 后续记账、历史消费凭证兼容及单次试采赔率投影映射进入
-Git 正文比较时才用宿主
+获批的 FotMob、Stage D 后续记账、历史消费凭证兼容、单次试采赔率投影及已保存响应补录
+映射进入 Git 正文比较时才用宿主
 `python3 -m pip` 安装到当前检出目录的
 `.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
 提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。
