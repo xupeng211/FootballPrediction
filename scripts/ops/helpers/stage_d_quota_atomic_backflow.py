@@ -1,6 +1,6 @@
 """核对有独立固定路径的 Stage D 修复工单。
 
-覆盖额度裁决原子发布、历史消费凭证兼容、单次试采赔率投影。
+覆盖额度裁决原子发布、历史消费凭证兼容、单次试采赔率投影和已保存响应补录。
 
 lifecycle: permanent
 """
@@ -32,6 +32,7 @@ class StageDBoundedBackflow:
     updated_paths: frozenset[str]
     authority_docs: tuple[str, ...] = ()
     additional_impacts: tuple[str, ...] = ()
+    added_paths: frozenset[str] = frozenset()
 
     @property
     def scope(self) -> str:
@@ -41,7 +42,7 @@ class StageDBoundedBackflow:
     @property
     def paths(self) -> frozenset[str]:
         """返回允许的完整路径集合。"""
-        return self.updated_paths | {self.scope}
+        return self.updated_paths | self.added_paths | {self.scope}
 
 
 _STAGE_D_OPERATIONS = "src/infrastructure/market_evidence/stageDOperations.js"
@@ -94,6 +95,20 @@ STAGE_D_BOUNDED_BACKFLOWS = (
         _PROJECTION_DOCS,
         ("capability", "milestone", "blocker"),
     ),
+    StageDBoundedBackflow(
+        "FP_STAGE_D_CAPTURE_BACKFILL",
+        "Stage D retained capture backfill",
+        "eight",
+        frozenset({*_PROJECTION_DOCS, "README.md"}),
+        (*_PROJECTION_DOCS, "README.md"),
+        ("capability", "milestone", "blocker", "entrypoint"),
+        frozenset(
+            {
+                "scripts/ops/stage_d_capture_backfill.js",
+                "tests/unit/market_evidence/stage_d_capture_backfill.test.js",
+            }
+        ),
+    ),
 )
 
 
@@ -106,11 +121,16 @@ def _stage_d_bounded_commit_errors(
     if not base_ref or not head_ref or not is_full_sha(base_ref) or not is_full_sha(head_ref):
         return [f"{spec.label} requires exact committed base/head revisions"]
     expected_changes = {(path, "M") for path in spec.updated_paths}
-    expected_changes.add((spec.scope, "A"))
+    expected_changes.update((path, "A") for path in spec.added_paths | {spec.scope})
     try:
         committed = collect_changes(base_ref, head_ref, include_worktree=False)
         if {(change.path, change.status) for change in committed} != expected_changes:
-            return [f"{spec.label} requires in-place edits to its existing paths and a new scope"]
+            detail = (
+                "in-place edits and the specified new files"
+                if spec.added_paths
+                else "in-place edits to its existing paths and a new scope"
+            )
+            return [f"{spec.label} requires {detail}"]
         merge_base = git_output(["merge-base", base_ref, head_ref]).strip()
         for revision, required in (
             (merge_base, spec.updated_paths),

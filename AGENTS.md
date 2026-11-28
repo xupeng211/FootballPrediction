@@ -100,6 +100,11 @@ Stage D 领域合同、能力索引、活动里程碑及项目状态须在准确
 登记此映射的 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE` 是独立的
 `workflow-governance`、CRITICAL 工单。其同名范围合同仅授权六条治理文件路径，
 不能作为九条业务路径的发布依据。
+已保存响应补录对应独立 `FP_STAGE_D_CAPTURE_BACKFILL` CRITICAL 业务工单。
+范围为八条普通文件路径，新增补录入口、专项测试及同名范围合同，原位更新 README、
+Stage D 领域合同、能力索引、活动里程碑和项目状态。门禁核对准确 Git 修订与五份
+文档的可见正文。登记该映射的独立治理工单为 `FP_STAGE_D_CAPTURE_BACKFILL_GATE`，
+其范围合同仅授权五条治理文件路径。正式补录须经原有 Owner 授权。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
 `docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
 
