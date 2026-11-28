@@ -483,6 +483,12 @@ v2 或 v3 请求。已有 v2 在没有标记时仍按原单次合同执行。受
 
 ## Capture, publication, duplicate and temporal policy
 
+Stage D 请求的市场为 `h2h`。同一博彩公司在响应里同时返回 `h2h` 和
+`h2h_lay` 时，采集原件与回执完整留存，正式赔率投影只提取 `h2h`。
+独立返回的 `h2h_lay`、未知市场和重复市场标识仍由既有校验拒绝。
+通过赛事身份匹配的赔率记录使用权威赛程的球队名称和开球时间。供应商开球时间仍用于
+上游身份校验，并随原件留存。匹配容差及隔离规则沿用现有赛事身份合同。
+
 The controlled adapter is ordered as follows:
 
 ```text

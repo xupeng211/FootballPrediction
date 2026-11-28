@@ -103,7 +103,7 @@ function duplicateSafeObservations(parent, observations) {
 }
 function buildProspectiveMarketEvidenceTransaction(options = {}) {
     assertStrictInputObject(options, 'prospective builder options');
-    const { authoritySnapshot, universe, oddsRawText, captureReceipt, projectionVersion = '1', projectionAvailableAt = undefined, supportedMarketKeys = ['h2h'], authorizedSupersessions = [], registrySchemaVersion = REGISTRY_DELTA_SCHEMA_VERSION } = options;
+    const { authoritySnapshot, universe, oddsRawText, captureReceipt, projectionVersion = '1', projectionAvailableAt = undefined, supportedMarketKeys = ['h2h'], ignoreUnrequestedH2hLay = false, authorizedSupersessions = [], registrySchemaVersion = REGISTRY_DELTA_SCHEMA_VERSION } = options;
     if (projectionAvailableAt !== undefined && projectionAvailableAt !== null) throw new Error('projection_available_at is publisher-owned and cannot be supplied to the prospective builder');
     if (!isVerifiedMarketEvidenceAuthoritySnapshot(authoritySnapshot)) throw new Error('verified MarketEvidenceAuthoritySnapshot is required');
     if (!SUPPORTED_REGISTRY_DELTA_SCHEMA_VERSIONS.has(registrySchemaVersion)) throw new Error('registrySchemaVersion is invalid');
@@ -120,7 +120,7 @@ function buildProspectiveMarketEvidenceTransaction(options = {}) {
     const parentDecisionIds = new Set(authoritySnapshot.decisions.map(row => row.identity_decision_id));
     const decisions = Object.freeze(sortedRows(resolved.decisions.filter(row => !parentDecisionIds.has(row.identity_decision_id)).map(row => snapshotPlainData(row, 'identity decision')), decisionKey));
     const overlay = createProspectiveGovernanceContext({ authoritySnapshot, allocationAuthority: authority, candidateDecisions: decisions });
-    const adapted = adaptTheOddsApiRaw({ rawText: oddsRawText, capture, registry: resolved.registry, decisionLedger: overlay, projectionVersion, allowedProviderEventIds: new Set(resolved.aliases.map(alias => alias.provider_event_id)), supportedMarketKeys: safeSupportedMarketKeys });
+    const adapted = adaptTheOddsApiRaw({ rawText: oddsRawText, capture, registry: resolved.registry, decisionLedger: overlay, projectionVersion, allowedProviderEventIds: new Set(resolved.aliases.map(alias => alias.provider_event_id)), supportedMarketKeys: safeSupportedMarketKeys, ignoreUnrequestedH2hLay });
     const registry = buildRegistryDelta({ authoritySnapshot, registry: resolved.registry, candidateDecisions: decisions, observations: adapted, schemaVersion: registrySchemaVersion });
     const observationState = duplicateSafeObservations(authoritySnapshot, adapted.map(row => createObservation(row)));
     const allDecisions = [...authoritySnapshot.decisions, ...decisions]; const projected = projectIdentityDecisionState(allDecisions, authority);

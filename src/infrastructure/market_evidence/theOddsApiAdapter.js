@@ -208,6 +208,7 @@ function adaptTheOddsApiRawInternal({
     decisionLedger = null,
     allowedProviderEventIds = null,
     supportedMarketKeys = ['h2h'],
+    ignoreUnrequestedH2hLay = false,
 }) {
     assertCaptureMetadata({ rawText, capture, registry, projectionVersion });
     if (projectionAvailableAt !== null && projectionAvailableAt !== undefined) throw new Error('projection availability is publisher-owned and cannot be supplied by the caller');
@@ -225,6 +226,9 @@ function adaptTheOddsApiRawInternal({
     }
     if (!Array.isArray(supportedMarketKeys) || supportedMarketKeys.some(key => typeof key !== 'string')) {
         throw new Error('supportedMarketKeys must be a string array');
+    }
+    if (typeof ignoreUnrequestedH2hLay !== 'boolean') {
+        throw new Error('ignoreUnrequestedH2hLay must be a boolean');
     }
     const seenObservationIds = new Set();
     const seenProviderEventIds = new Set();
@@ -283,7 +287,8 @@ function adaptTheOddsApiRawInternal({
             seenProviderBookmakerIds.add(bookmaker.key);
             const canonicalBookmaker = registry.resolve('bookmaker', 'the-odds-api', bookmaker.key);
             const seenProviderMarketIds = new Set();
-            for (const rawMarket of requireNonEmptyArray(bookmaker.markets, `bookmaker ${bookmaker.key} markets`)) {
+            const markets = requireNonEmptyArray(bookmaker.markets, `bookmaker ${bookmaker.key} markets`);
+            for (const rawMarket of markets) {
                 const market = requireObject(rawMarket, 'provider market');
                 if (typeof market.key !== 'string' || !market.key.trim()) {
                     throw new Error(`provider market identity is incomplete: ${bookmaker.key}`);
@@ -293,6 +298,9 @@ function adaptTheOddsApiRawInternal({
                 }
                 seenProviderMarketIds.add(market.key);
                 if (!supportedMarketKeys.includes(market.key)) {
+                    // Stage D may receive exchange lay prices alongside the requested h2h prices.
+                    if (ignoreUnrequestedH2hLay && market.key === 'h2h_lay' &&
+                        markets.some(item => item?.key === 'h2h')) continue;
                     throw new Error(`unsupported Stage C provider market: ${market.key}`);
                 }
                 const canonicalMarket = registry.resolve('market', 'the-odds-api', market.key);
@@ -372,9 +380,9 @@ function adaptTheOddsApiRawInternal({
                         provider_bookmaker_name: bookmaker.title,
                         competition: COMPETITION,
                         season: canonicalEvent.season || null,
-                        home_team: event.home_team,
-                        away_team: event.away_team,
-                        kickoff_utc: event.commence_time,
+                        home_team: canonicalEvent.home_team,
+                        away_team: canonicalEvent.away_team,
+                        kickoff_utc: canonicalEvent.kickoff_utc,
                         period: canonicalMarket.period,
                         market_type: canonicalMarket.market_type,
                         line: canonicalMarket.line ?? null,

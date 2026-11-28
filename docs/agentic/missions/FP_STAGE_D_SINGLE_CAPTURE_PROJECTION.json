@@ -1,0 +1,44 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_SINGLE_CAPTURE_PROJECTION",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/ACTIVE_MILESTONE.md",
+    "docs/CAPABILITY_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/agentic/missions/FP_STAGE_D_SINGLE_CAPTURE_PROJECTION.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "src/infrastructure/market_evidence/prospectiveBatch.js",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "src/infrastructure/market_evidence/theOddsApiAdapter.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": [
+    "AGENTS.md",
+    "Makefile",
+    "README.md",
+    "package.json",
+    "docs/AGENT_WORKFLOW.md"
+  ],
+  "excluded_prefixes": [
+    ".github/",
+    "config/",
+    "data/",
+    "database/",
+    "deploy/",
+    "scripts/ops/helpers/"
+  ],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "供应商调用等级、请求市场与额度边界继续为单次 h2h uk",
+    "真实响应、回执、旧账及后续账保持原始字节",
+    "球队与开球时间匹配规则和身份裁决保持原语义",
+    "新交易仍需既有原子发布和独立回读校验"
+  ],
+  "forbidden_side_effects": [
+    "真实供应商请求、生成新采集授权、正式补录与生产写入",
+    "门禁策略或任务授权变更"
+  ]
+}
