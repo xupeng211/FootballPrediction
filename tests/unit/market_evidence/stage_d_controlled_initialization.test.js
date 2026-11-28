@@ -1288,25 +1288,71 @@ test('a v2 spend on another ledger invalidates an already sealed v3 opening inve
     assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).entries.length, 0);
 });
 
-test('v3 accepts an unchanged inventory of consumption markers covered by opening evidence', async t => {
-    const ctx = makeForwardContext(t, { withPriorRequest: false });
-    const markers = componentsFor(ctx.legacy);
-    await executeStageDControlledInitialization(binderOptions(ctx.legacy, markers, controlledClock()));
-    assert.equal(markers.transport.call_count, 1);
-    const opening = ctx.opening;
-    opening.history.retained = ledgerBinding(ctx.legacy.ledgerRoot);
-    const binding = ctx.authorization.forward_accounting;
-    binding.opening_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'opening.json'), opening);
-    binding.checkpoint_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'checkpoint.json'), {
-        opening_sha256: binding.opening_sha256, ledger: ledgerBinding(ctx.ledgerRoot),
+const inventoryCases = [
+    ['current marker without a quota divergence', marker => {
+        assert.equal(marker.quota_adjudication_sha256, null);
+    }, null],
+    ['historical marker', marker => {
+        marker.schema_version = marker.schema_version.replace('/v2', '/v1');
+        delete marker.quota_adjudication_sha256;
+    }, null],
+    ['historical marker with missing scope hash', marker => {
+        marker.schema_version = marker.schema_version.replace('/v2', '/v1');
+        delete marker.quota_adjudication_sha256;
+        delete marker.scope_sha256;
+    }, 'INVALID_CONTRACT'],
+    ['historical marker with a different authorization ID', marker => {
+        marker.schema_version = marker.schema_version.replace('/v2', '/v1');
+        delete marker.quota_adjudication_sha256;
+        marker.authorization_id = 'sda_wrong_id';
+    }, 'STAGE_D_FORWARD_CONSUMPTION_INVENTORY_INVALID'],
+    ['current marker with invalid quota adjudication SHA', marker => {
+        marker.quota_adjudication_sha256 = 'not-a-sha256';
+    }, 'INVALID_AUTHORIZATION'],
+    ['historical marker edited after inventory sealing', marker => {
+        marker.schema_version = marker.schema_version.replace('/v2', '/v1');
+        delete marker.quota_adjudication_sha256;
+    }, 'STAGE_D_FORWARD_CONSUMPTION_INVENTORY_CHANGED', true],
+];
+
+for (const [label, adaptMarker, expectedError, editAfterSeal] of inventoryCases) {
+    test(`v3 validates a sealed consumption inventory with a ${label}`, async t => {
+        const ctx = makeForwardContext(t, { withPriorRequest: false });
+        const markers = componentsFor(ctx.legacy);
+        await executeStageDControlledInitialization(binderOptions(ctx.legacy, markers, controlledClock()));
+        assert.equal(markers.transport.call_count, 1);
+        const [priorMarker] = consumptionMarkers(ctx);
+        const priorPath = path.join(ctx.trustRoot, priorMarker);
+        const marker = JSON.parse(fs.readFileSync(priorPath, 'utf8'));
+        adaptMarker(marker);
+        if (!editAfterSeal) writeReadOnlyCanonicalJson(priorPath, marker);
+        const opening = ctx.opening;
+        opening.history.retained = ledgerBinding(ctx.legacy.ledgerRoot);
+        const binding = ctx.authorization.forward_accounting;
+        binding.opening_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'opening.json'), opening);
+        binding.checkpoint_sha256 = writeBoundJson(path.join(ctx.trustRoot, 'checkpoint.json'), {
+            opening_sha256: binding.opening_sha256, ledger: ledgerBinding(ctx.ledgerRoot),
+        });
+        // 清单与开账、检查点各自绑定到同一份单次授权。
+        const inventory = consumptionMarkers(ctx).sort().map(filename => ({
+            filename, sha256: sha256Text(fs.readFileSync(path.join(ctx.trustRoot, filename))),
+        }));
+        binding.consumption_inventory_sha256 = sha256Text(stableStringify(inventory));
+        writeReadOnlyCanonicalJson(ctx.authorizationPath, ctx.authorization);
+        if (editAfterSeal) writeReadOnlyCanonicalJson(priorPath, marker);
+        const priorBytes = fs.readFileSync(priorPath);
+        const forward = forwardComponents(ctx);
+        if (expectedError) {
+            await assert.rejects(executeForward(ctx, forward), { code: expectedError });
+            assert.equal(forward.transport.call_count, 0);
+            assert.equal(fs.existsSync(path.join(ctx.trustRoot, FORWARD_FENCE)), false);
+            assert.equal(readRequestLedger({ ledgerRoot: ctx.ledgerRoot }).entries.length, 0);
+            assert.deepEqual(fs.readFileSync(priorPath), priorBytes);
+            return;
+        }
+        assert.equal((await executeForward(ctx, forward)).status, 'NO_OP_DUPLICATE_RAW_HASH');
+        assert.equal(forward.transport.call_count, 1);
+        assert.equal(consumptionMarkers(ctx).length, 2);
+        assert.deepEqual(fs.readFileSync(priorPath), priorBytes);
     });
-    const inventory = consumptionMarkers(ctx).sort().map(filename => ({
-        filename, sha256: sha256Text(fs.readFileSync(path.join(ctx.trustRoot, filename))),
-    }));
-    binding.consumption_inventory_sha256 = sha256Text(stableStringify(inventory));
-    writeReadOnlyCanonicalJson(ctx.authorizationPath, ctx.authorization);
-    const forward = forwardComponents(ctx);
-    assert.equal((await executeForward(ctx, forward)).status, 'NO_OP_DUPLICATE_RAW_HASH');
-    assert.equal(forward.transport.call_count, 1);
-    assert.equal(consumptionMarkers(ctx).length, 2);
-});
+}

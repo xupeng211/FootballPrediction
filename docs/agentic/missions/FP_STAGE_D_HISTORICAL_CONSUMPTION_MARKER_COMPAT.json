@@ -1,0 +1,26 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/agentic/missions/FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT.json",
+    "docs/data/STAGE_D_CONTINUOUS_OPERATIONS_CONTRACT.md",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_controlled_initialization.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "Makefile", "README.md", "package.json"],
+  "excluded_prefixes": [".github/", "config/", "data/", "database/", "deploy/", "scripts/ops/helpers/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "历史消费凭证以原字节和文件名绑定清单",
+    "拒绝未知格式、错绑和篡改",
+    "保留单次消费门禁与切换锁"
+  ],
+  "forbidden_side_effects": [
+    "真实采集、供应商调用、生产变更",
+    "历史凭证和账本改写",
+    "门禁和授权规则变更"
+  ]
+}
