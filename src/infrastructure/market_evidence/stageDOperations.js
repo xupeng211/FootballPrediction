@@ -2328,12 +2328,22 @@ function persistStageDQuotaAdjudication({ artifactPath, ledgerRoot, runLockTrust
         } else if (currentPeriod.length !== 0) {
             fail('QUOTA_ADJUDICATION_CONFLICT', 'multiple quota adjudications exist for the current accounting epoch and billing period');
         }
+        // 扫描者只能看见写完的证据。同目录硬链接原子发布，且不会覆盖竞争者。
+        const staging = fs.mkdtempSync(scopedPath(trustDescriptor.fd, '.quota-adjudication-'));
+        const stagedArtifact = path.join(staging, 'artifact.json');
         try {
-            writeExclusiveImmutable(scopedPath(trustDescriptor.fd, path.basename(resolvedPath)), artifact, 'Stage D quota adjudication', { directoryFd: trustDescriptor.fd });
-        } catch (error) {
-            if (error?.code === 'EEXIST') fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor claim already exists');
-            throw error;
+            writeExclusiveImmutable(stagedArtifact, artifact, 'Stage D quota adjudication');
+            try {
+                fs.linkSync(stagedArtifact, scopedPath(trustDescriptor.fd, path.basename(resolvedPath)));
+            } catch (error) {
+                if (error?.code === 'EEXIST') fail('QUOTA_ADJUDICATION_CONFLICT', 'quota adjudication successor claim already exists');
+                throw error;
+            }
+        } finally {
+            fs.rmSync(stagedArtifact, { force: true });
+            fs.rmdirSync(staging);
         }
+        fsyncDirectoryFd(trustDescriptor.fd);
         return Object.freeze({ path: resolvedPath, sha256: sha256Text(canonicalBytes(artifact)) });
     } finally {
         closeDirectoryDescriptor(trustDescriptor);

@@ -1,0 +1,27 @@
+{
+  "schema_version": "agentic-mission-scope/v1",
+  "mission_id": "FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_PUBLISH",
+  "task_type": "source-code",
+  "workflow_class": "CRITICAL",
+  "authorized_paths": [
+    "docs/agentic/missions/FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_PUBLISH.json",
+    "src/infrastructure/market_evidence/stageDOperations.js",
+    "tests/unit/market_evidence/stage_d_quota_adjudication.test.js"
+  ],
+  "authorized_prefixes": [],
+  "excluded_paths": ["AGENTS.md", "Makefile", "README.md", "package.json", "package-lock.json"],
+  "excluded_prefixes": [".github/", "config/", "database/", "deploy/", "docker/", "schemas/"],
+  "excluded_tokens": [],
+  "protected_invariants": [
+    "QUOTA_ADJUDICATION_CANONICAL_BYTES_AND_SOURCE_BINDING",
+    "HISTORICAL_ADJUDICATION_IMMUTABLE",
+    "EXACTLY_ONE_DIRECT_SUCCESSOR",
+    "NO_QUOTA_RESET",
+    "ZERO_PROVIDER_CONTACT"
+  ],
+  "forbidden_side_effects": [
+    "provider requests or real Stage D run",
+    "live authorization, request ledger mutation or production evidence mutation",
+    "policy or review gate changes"
+  ]
+}
