@@ -308,6 +308,17 @@ CRITICAL 业务范围。只接受新增的同名 scope JSON、原位修改的 `s
 Markdown 解析器。Documentation Impact 声明合同和权威文档确实更新，唯一回流文档为
 Stage D 领域合同。门禁继续拒绝未映射路径、混合发布及违规授权。
 
+Stage D 单次试采赔率投影仅映射 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION` 的九条路径。
+范围为 `source-code`、`CRITICAL`。工单须新增自身范围合同，并原位修改
+`stageDOperations.js`、`prospectiveBatch.js`、`theOddsApiAdapter.js`、受控初始化单测、
+Stage D 领域合同、能力索引、活动里程碑及项目状态。门禁按已验证工单 ID 或变更中的专用
+范围文件触发，核对完整文件集合、逐项授权、准确 Git 修订及四份文档的可见正文。
+Documentation Impact 声明领域合同、能力、里程碑和当前阻断与四份权威文档均有更新，
+入口、导航和愿景沿用既有合同。单次采集和正式补录各自沿用独立授权及验收。
+登记该映射的工程工单 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE` 独立发布，
+分类为 `workflow-governance`、`CRITICAL`。其同名范围合同仅授权六条治理文件路径。
+上述九条业务路径由业务候选中的 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION` 同名范围合同授权。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
@@ -316,7 +327,8 @@ CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scop
 和只有标题或空白的替代。正文的业务正确性由独立审核核对。
 `make agent-preflight` 和 Production Gate 的 PR 入口使用同一宿主 Python 解析器，
 版本及 wheel 哈希由 `scripts/devops/fotmob_markdown_requirements.txt` 锁定。
-只有获批的 FotMob、Stage D 后续记账或历史消费凭证兼容映射进入 Git 正文比较时才用宿主
+获批的 FotMob、Stage D 后续记账、历史消费凭证兼容及单次试采赔率投影映射进入
+Git 正文比较时才用宿主
 `python3 -m pip` 安装到当前检出目录的
 `.venv/fotmob-markdown/`。离线环境可通过 `FP_FOTMOB_MARKDOWN_WHEELHOUSE`
 提供锁定 wheel 的本地目录。直接运行 Python 检查默认只读已安装目录。

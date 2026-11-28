@@ -31,7 +31,6 @@ from scripts.ops.helpers.pr_authorization_matrix import (
 )
 from scripts.ops.helpers.stage_d_quota_atomic_backflow import (
     STAGE_D_BOUNDED_BACKFLOWS,
-    STAGE_D_MARKER_COMPAT,
     validate_stage_d_bounded_backflow,
 )
 from scripts.ops.helpers.strict_review_evidence import parse_workflow_class
@@ -333,7 +332,7 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
             required.append("docs/data/FOTMOB_CURRENT_STATE.md")
         return tuple(required)
     if category == "contract" and (
-        changed == STAGE_D_MARKER_COMPAT.paths
+        any(changed == spec.paths for spec in STAGE_D_BOUNDED_BACKFLOWS if spec.authority_docs)
         or changed in STAGE_D_FORWARD_MAPPINGS.values()
         or (
             changed & STAGE_D_CONTRACT_PATHS
@@ -645,14 +644,13 @@ def _exact_mission_backflow_errors(
             document_has_update=_committed_document_has_update,
         )
         expected = dict.fromkeys(YES_NO_FIELDS.values(), "no")
-        expected["Updated authoritative docs"] = spec.contract_doc or "none"
-        if spec.contract_doc:
-            expected.update(
-                {YES_NO_FIELDS["contract"]: "yes", YES_NO_FIELDS["source_of_truth"]: "yes"}
-            )
+        expected["Updated authoritative docs"] = ", ".join(sorted(spec.authority_docs)) or "none"
+        if spec.authority_docs:
+            for category in ("contract", "source_of_truth", *spec.additional_impacts):
+                expected[YES_NO_FIELDS[category]] = "yes"
         for field, value in expected.items():
             actual = _table_value(pr_body, field)
-            if field == "Updated authoritative docs" and spec.contract_doc:
+            if field == "Updated authoritative docs" and spec.authority_docs:
                 actual = ", ".join(sorted(_declared_document_paths(actual)))
             if _normalise(actual) != value.lower():
                 errors.append(f"{spec.mission_id} requires '{field}' = {value}")
