@@ -290,6 +290,16 @@ CRITICAL 业务工单。固定九条路径包含既有 cycle 入口、后续记�
 能力、入口、里程碑、当前阻断、领域合同及权威文档回流的影响。正式接入与离线工单分别
 核对精确路径；其他工单修改共享运行时或测试仍沿用其适用规则。
 
+额度裁决原子发布专项 `FP_STAGE_D_QUOTA_ADJUDICATION_ATOMIC_PUBLISH` 的路径固定为
+其新增 scope JSON、`src/infrastructure/market_evidence/stageDOperations.js` 和
+`tests/unit/market_evidence/stage_d_quota_adjudication.test.js`。同一预检及 PR 门禁
+仅凭已验证的工单 ID 或变更中的专项 scope 路径选择此规则。范围必须是
+`source-code`、`CRITICAL`，逐项授权三条路径，PR 引用须一致。相对准确 Git
+共同祖先，旧实现和测试须为原位修改的普通文件，scope 须新增为普通文件。缺项、
+额外路径、改名和类型替换均拒绝。Documentation Impact 各项为 no，并说明这次
+写入时序修复沿用既有额度语义、入口及授权合同。无需初始化锁定 Markdown 解析器。
+完整验证、独立双审、发布和合并仍按 CRITICAL 流程执行。
+
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
 分类，路径集合由门禁固定。业务候选须在准确提交中原位更新 GD-A02 事实合同、模型时点
