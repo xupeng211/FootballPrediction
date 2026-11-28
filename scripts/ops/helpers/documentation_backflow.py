@@ -30,9 +30,9 @@ from scripts.ops.helpers.pr_authorization_matrix import (
     parse_task_type,
 )
 from scripts.ops.helpers.stage_d_quota_atomic_backflow import (
-    STAGE_D_QUOTA_ATOMIC_MISSION,
-    STAGE_D_QUOTA_ATOMIC_SCOPE,
-    validate_stage_d_quota_atomic_backflow,
+    STAGE_D_BOUNDED_BACKFLOWS,
+    STAGE_D_MARKER_COMPAT,
+    validate_stage_d_bounded_backflow,
 )
 from scripts.ops.helpers.strict_review_evidence import parse_workflow_class
 
@@ -333,7 +333,8 @@ def _required_docs_for(category: str, changed: set[str]) -> tuple[str, ...]:
             required.append("docs/data/FOTMOB_CURRENT_STATE.md")
         return tuple(required)
     if category == "contract" and (
-        changed in STAGE_D_FORWARD_MAPPINGS.values()
+        changed == STAGE_D_MARKER_COMPAT.paths
+        or changed in STAGE_D_FORWARD_MAPPINGS.values()
         or (
             changed & STAGE_D_CONTRACT_PATHS
             and not changed - (STAGE_D_CONTRACT_PATHS | STAGE_D_COMPANION_DOC_PATHS)
@@ -439,7 +440,7 @@ def _has_visible_document_update(
     return bool(after) and after != before and not (after_tags - before_tags)
 
 
-def _fotmob_document_has_update(base: str, head: str, path: str) -> bool:
+def _committed_document_has_update(base: str, head: str, path: str) -> bool:
     try:
         before, after = visible_documents(
             _read_regular_git_markdown(base, path), _read_regular_git_markdown(head, path)
@@ -470,7 +471,7 @@ def _fotmob_committed_document_errors(base_ref: str | None, head_ref: str | None
         return [
             f"FotMob final-result requires changed visible document body: {path}"
             for path in FOTMOB_FINAL_RESULT_DOCS
-            if not _fotmob_document_has_update(merge_base, head_ref, path)
+            if not _committed_document_has_update(merge_base, head_ref, path)
         ]
     except (RuntimeError, OSError, UnicodeError) as exc:
         return [f"FotMob final-result could not verify authoritative Git documents: {exc}"]
@@ -631,14 +632,30 @@ def _exact_mission_backflow_errors(
     mission_id = mission_scope.mission_id if mission_scope is not None else None
     if FOTMOB_FINAL_RESULT_SCOPE in changed or mission_id == FOTMOB_FINAL_RESULT_MISSION:
         return _fotmob_backflow_errors(pr_body, changed, mission_scope, base_ref, head_ref)
-    if STAGE_D_QUOTA_ATOMIC_SCOPE in changed or mission_id == STAGE_D_QUOTA_ATOMIC_MISSION:
-        errors = validate_stage_d_quota_atomic_backflow(
-            pr_body, changed, mission_scope, base_ref, head_ref
+    for spec in STAGE_D_BOUNDED_BACKFLOWS:
+        if spec.scope not in changed and spec.mission_id != mission_id:
+            continue
+        errors = validate_stage_d_bounded_backflow(
+            spec,
+            pr_body,
+            changed,
+            mission_scope,
+            base_ref,
+            head_ref,
+            document_has_update=_committed_document_has_update,
         )
-        for field in (*YES_NO_FIELDS.values(), "Updated authoritative docs"):
-            expected = "none" if field == "Updated authoritative docs" else "no"
-            if _normalise(_table_value(pr_body, field)) != expected:
-                errors.append(f"{STAGE_D_QUOTA_ATOMIC_MISSION} requires '{field}' = {expected}")
+        expected = dict.fromkeys(YES_NO_FIELDS.values(), "no")
+        expected["Updated authoritative docs"] = spec.contract_doc or "none"
+        if spec.contract_doc:
+            expected.update(
+                {YES_NO_FIELDS["contract"]: "yes", YES_NO_FIELDS["source_of_truth"]: "yes"}
+            )
+        for field, value in expected.items():
+            actual = _table_value(pr_body, field)
+            if field == "Updated authoritative docs" and spec.contract_doc:
+                actual = ", ".join(sorted(_declared_document_paths(actual)))
+            if _normalise(actual) != value.lower():
+                errors.append(f"{spec.mission_id} requires '{field}' = {value}")
         return errors
     for required_mission in STAGE_D_FORWARD_MAPPINGS:
         if (

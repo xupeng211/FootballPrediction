@@ -569,3 +569,69 @@ def test_atomic_publication_verifies_committed_paths(atomic_candidate, invalid):
     bad_head = _commit(root, invalid)
     assert _atomic_check(base, bad_head)
     assert _atomic_check(base[:8], bad_head)
+
+
+_MARKER_COMPAT = "FP_STAGE_D_HISTORICAL_CONSUMPTION_MARKER_COMPAT"
+_MARKER_COMPAT_SCOPE_PATH = f"docs/agentic/missions/{_MARKER_COMPAT}.json"
+_MARKER_COMPAT_TEST = "tests/unit/market_evidence/stage_d_controlled_initialization.test.js"
+_MARKER_COMPAT_PATHS = {_MARKER_COMPAT_SCOPE_PATH, _ATOMIC_SOURCE, _MARKER_COMPAT_TEST, _DOMAIN}
+_MARKER_COMPAT_SCOPE = replace(
+    _SCOPE, mission_id=_MARKER_COMPAT, authorized_paths=tuple(sorted(_MARKER_COMPAT_PATHS))
+)
+
+
+@pytest.fixture
+def marker_compat_candidate(tmp_path, monkeypatch):
+    monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", tmp_path)
+    _git(tmp_path, "init", "-q")
+    for file_path in (_ATOMIC_SOURCE, _MARKER_COMPAT_TEST, _DOMAIN):
+        _write(tmp_path, file_path, _ORIGINAL)
+    base = _commit(tmp_path, "Existing files")
+    for file_path in (_ATOMIC_SOURCE, _MARKER_COMPAT_TEST, _DOMAIN):
+        _write(tmp_path, file_path, _ORIGINAL + "\n兼容历史凭证的原位修改。\n")
+    _write(tmp_path, _MARKER_COMPAT_SCOPE_PATH, json.dumps(_MARKER_COMPAT_SCOPE.to_dict()))
+    return tmp_path, base, _commit(tmp_path, "Historical marker compatibility")
+
+
+def _marker_check(base, head, *, paths=None, scope=_MARKER_COMPAT_SCOPE, **impact):
+    return check_documentation_backflow(
+        _body(
+            _MARKER_COMPAT,
+            **{
+                "capability": "no",
+                "entrypoint": "no",
+                "milestone": "no",
+                "blocker": "no",
+                "updated_docs": _DOMAIN,
+                **impact,
+            },
+        ),
+        _MARKER_COMPAT_PATHS if paths is None else paths,
+        mission_scope=scope,
+        base_ref=base,
+        head_ref=head,
+    )
+
+
+def test_historical_marker_compat_uses_exact_four_files_and_domain_contract(
+    marker_compat_candidate,
+):
+    _, base, head = marker_compat_candidate
+    assert _marker_check(base, head) == []
+    assert any(
+        "exact four" in error
+        for error in _marker_check(base, head, paths=_MARKER_COMPAT_PATHS | {"AGENTS.md"})
+    )
+    assert any("four-file scope" in error for error in _marker_check(base, head, scope=_SCOPE))
+    assert _marker_check(base, head, scope=_ATOMIC_SCOPE)
+    assert _marker_check(base, head, updated_docs=f"{_DOMAIN}, AGENTS.md")
+    assert _marker_check(base, head, contract="no")
+
+
+def test_historical_marker_requires_visible_contract_edit(marker_compat_candidate):
+    repo, base, _ = marker_compat_candidate
+    _write(repo, _DOMAIN, _ORIGINAL + "\n<!-- 隐藏文字不能替代合同回流 -->\n")
+    hidden_head = _commit(repo, "Hidden edit")
+    assert any(
+        "changed visible document body" in error for error in _marker_check(base, hidden_head)
+    )
