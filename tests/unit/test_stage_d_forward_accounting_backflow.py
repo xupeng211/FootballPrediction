@@ -5,12 +5,13 @@ lifecycle: permanent
 
 from dataclasses import replace
 import json
+from pathlib import Path
 
 import pytest
 
 from scripts.devops import fotmob_markdown
 from scripts.ops.helpers import documentation_backflow, git_change_helpers
-from scripts.ops.helpers.agent_workflow_contract import MissionScope
+from scripts.ops.helpers.agent_workflow_contract import MissionScope, load_mission_scope_file
 from scripts.ops.helpers.documentation_backflow import check_documentation_backflow
 from tests.unit.test_fotmob_final_result_documentation_backflow import _commit, _git, _write
 from tests.unit.test_project_knowledge_convergence import _impact_body
@@ -710,6 +711,33 @@ def test_single_capture_projection_uses_only_its_approved_files(projection_candi
     assert _projection_check(base, head, body=wrong_reference)
     assert _projection_check(base[:8], head)
     assert _projection_check(base, head, paths=_PROJECTION_PATHS - {_PROJECTION_SCOPE_PATH})
+
+
+def test_projection_governance_scope_cannot_authorize_business_files(projection_candidate):
+    _, base, head = projection_candidate
+    repo_root = Path(__file__).resolve().parents[2]
+    gate_mission = f"{_PROJECTION}_GATE"
+    gate_scope = load_mission_scope_file(
+        repo_root / "docs" / "agentic" / "missions" / f"{gate_mission}.json",
+        repo_root=repo_root,
+        expected_mission_id=gate_mission,
+    )
+
+    assert gate_scope.task_type == "workflow-governance"
+    assert gate_scope.workflow_class == "CRITICAL"
+    assert set(gate_scope.authorized_paths) == {
+        "AGENTS.md",
+        "docs/AGENT_WORKFLOW.md",
+        f"docs/agentic/missions/{gate_mission}.json",
+        "scripts/ops/helpers/documentation_backflow.py",
+        "scripts/ops/helpers/stage_d_quota_atomic_backflow.py",
+        "tests/unit/test_stage_d_forward_accounting_backflow.py",
+    }
+    assert not gate_scope.authorized_prefixes
+    assert _PROJECTION_PATHS.isdisjoint(gate_scope.authorized_paths)
+    assert _projection_check(base, head, scope=gate_scope) == [
+        "Stage D single capture projection requires its validated CRITICAL nine-file scope"
+    ]
 
 
 @pytest.mark.parametrize(

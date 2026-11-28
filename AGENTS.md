@@ -94,8 +94,12 @@ Stage D 后续记账正式接入使用独立的 `FP_STAGE_D_FORWARD_ACCOUNTING_R
 现有锁定解析器核对准确 Git 修订的可见合同正文变化，PR 须声明实际领域合同回流。
 单次试采赔率投影仅匹配 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION` 的 CRITICAL 业务工单。
 门禁固定九条路径，含新范围合同、三份赔率投影源码、一份回归测试和四份现有权威文档。
+该业务工单的任务类型是 `source-code`，使用自己的同名范围合同。
 Stage D 领域合同、能力索引、活动里程碑及项目状态须在准确 Git 修订原位更新可见正文。
 工单须按四份文档声明实际影响。此映射只约束发布范围，正式补录与采集权限仍由原流程决定。
+登记此映射的 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE` 是独立的
+`workflow-governance`、CRITICAL 工单。其同名范围合同仅授权六条治理文件路径，
+不能作为九条业务路径的发布依据。
 业务领域合同不等于工程工作流授权合同：实际修改治理逻辑仍须更新本文件及
 `docs/AGENT_WORKFLOW.md`；Stage D 精确映射、未知领域拒绝、混合发布禁令及原有安全与审核要求不变。
 

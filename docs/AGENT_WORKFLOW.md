@@ -315,6 +315,9 @@ Stage D 领域合同、能力索引、活动里程碑及项目状态。门禁按
 范围文件触发，核对完整文件集合、逐项授权、准确 Git 修订及四份文档的可见正文。
 Documentation Impact 声明领域合同、能力、里程碑和当前阻断与四份权威文档均有更新，
 入口、导航和愿景沿用既有合同。单次采集和正式补录各自沿用独立授权及验收。
+登记该映射的工程工单 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION_GATE` 独立发布，
+分类为 `workflow-governance`、`CRITICAL`。其同名范围合同仅授权六条治理文件路径。
+上述九条业务路径由业务候选中的 `FP_STAGE_D_SINGLE_CAPTURE_PROJECTION` 同名范围合同授权。
 
 FotMob 单条终场赛果仅映射 `FP_FOTMOB_FINAL_RESULT_ASOF_OFFLINE` 的
 CRITICAL 业务任务及机器规则列明的精确十一条路径。现有 scope 绑定负责核对任务和
